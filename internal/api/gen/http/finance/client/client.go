@@ -17,6 +17,42 @@ import (
 
 // Client lists the finance service endpoint HTTP clients.
 type Client struct {
+	// CreateAccountNode Doer is the HTTP client used to make requests to the
+	// createAccountNode endpoint.
+	CreateAccountNodeDoer goahttp.Doer
+
+	// GetAccountNode Doer is the HTTP client used to make requests to the
+	// getAccountNode endpoint.
+	GetAccountNodeDoer goahttp.Doer
+
+	// GetAccountNodeByCode Doer is the HTTP client used to make requests to the
+	// getAccountNodeByCode endpoint.
+	GetAccountNodeByCodeDoer goahttp.Doer
+
+	// ListAccountNodes Doer is the HTTP client used to make requests to the
+	// listAccountNodes endpoint.
+	ListAccountNodesDoer goahttp.Doer
+
+	// UpdateAccountNode Doer is the HTTP client used to make requests to the
+	// updateAccountNode endpoint.
+	UpdateAccountNodeDoer goahttp.Doer
+
+	// DeleteAccountNode Doer is the HTTP client used to make requests to the
+	// deleteAccountNode endpoint.
+	DeleteAccountNodeDoer goahttp.Doer
+
+	// SearchAccountNodes Doer is the HTTP client used to make requests to the
+	// searchAccountNodes endpoint.
+	SearchAccountNodesDoer goahttp.Doer
+
+	// GetAccountBalance Doer is the HTTP client used to make requests to the
+	// getAccountBalance endpoint.
+	GetAccountBalanceDoer goahttp.Doer
+
+	// GetHierarchyAnalysis Doer is the HTTP client used to make requests to the
+	// getHierarchyAnalysis endpoint.
+	GetHierarchyAnalysisDoer goahttp.Doer
+
 	// CreateAccount Doer is the HTTP client used to make requests to the
 	// createAccount endpoint.
 	CreateAccountDoer goahttp.Doer
@@ -48,10 +84,6 @@ type Client struct {
 	// GetAccountHierarchy Doer is the HTTP client used to make requests to the
 	// getAccountHierarchy endpoint.
 	GetAccountHierarchyDoer goahttp.Doer
-
-	// GetAccountBalance Doer is the HTTP client used to make requests to the
-	// getAccountBalance endpoint.
-	GetAccountBalanceDoer goahttp.Doer
 
 	// CreateTransaction Doer is the HTTP client used to make requests to the
 	// createTransaction endpoint.
@@ -85,6 +117,22 @@ type Client struct {
 	// validateTransaction endpoint.
 	ValidateTransactionDoer goahttp.Doer
 
+	// GetTransactionStatus Doer is the HTTP client used to make requests to the
+	// getTransactionStatus endpoint.
+	GetTransactionStatusDoer goahttp.Doer
+
+	// SubmitApprovalDecision Doer is the HTTP client used to make requests to the
+	// submitApprovalDecision endpoint.
+	SubmitApprovalDecisionDoer goahttp.Doer
+
+	// RequestTransactionChanges Doer is the HTTP client used to make requests to
+	// the requestTransactionChanges endpoint.
+	RequestTransactionChangesDoer goahttp.Doer
+
+	// GetTransactionWorkflow Doer is the HTTP client used to make requests to the
+	// getTransactionWorkflow endpoint.
+	GetTransactionWorkflowDoer goahttp.Doer
+
 	// GetTrialBalance Doer is the HTTP client used to make requests to the
 	// getTrialBalance endpoint.
 	GetTrialBalanceDoer goahttp.Doer
@@ -109,29 +157,242 @@ func NewClient(
 	restoreBody bool,
 ) *Client {
 	return &Client{
-		CreateAccountDoer:          doer,
-		GetAccountDoer:             doer,
-		GetAccountByCodeDoer:       doer,
-		GetAccountByNameDoer:       doer,
-		ListAccountsDoer:           doer,
-		UpdateAccountDoer:          doer,
-		DeleteAccountDoer:          doer,
-		GetAccountHierarchyDoer:    doer,
-		GetAccountBalanceDoer:      doer,
-		CreateTransactionDoer:      doer,
-		GetTransactionDoer:         doer,
-		GetTransactionByNumberDoer: doer,
-		ListTransactionsDoer:       doer,
-		PostTransactionDoer:        doer,
-		ReverseTransactionDoer:     doer,
-		ApproveTransactionDoer:     doer,
-		ValidateTransactionDoer:    doer,
-		GetTrialBalanceDoer:        doer,
-		RestoreResponseBody:        restoreBody,
-		scheme:                     scheme,
-		host:                       host,
-		decoder:                    dec,
-		encoder:                    enc,
+		CreateAccountNodeDoer:         doer,
+		GetAccountNodeDoer:            doer,
+		GetAccountNodeByCodeDoer:      doer,
+		ListAccountNodesDoer:          doer,
+		UpdateAccountNodeDoer:         doer,
+		DeleteAccountNodeDoer:         doer,
+		SearchAccountNodesDoer:        doer,
+		GetAccountBalanceDoer:         doer,
+		GetHierarchyAnalysisDoer:      doer,
+		CreateAccountDoer:             doer,
+		GetAccountDoer:                doer,
+		GetAccountByCodeDoer:          doer,
+		GetAccountByNameDoer:          doer,
+		ListAccountsDoer:              doer,
+		UpdateAccountDoer:             doer,
+		DeleteAccountDoer:             doer,
+		GetAccountHierarchyDoer:       doer,
+		CreateTransactionDoer:         doer,
+		GetTransactionDoer:            doer,
+		GetTransactionByNumberDoer:    doer,
+		ListTransactionsDoer:          doer,
+		PostTransactionDoer:           doer,
+		ReverseTransactionDoer:        doer,
+		ApproveTransactionDoer:        doer,
+		ValidateTransactionDoer:       doer,
+		GetTransactionStatusDoer:      doer,
+		SubmitApprovalDecisionDoer:    doer,
+		RequestTransactionChangesDoer: doer,
+		GetTransactionWorkflowDoer:    doer,
+		GetTrialBalanceDoer:           doer,
+		RestoreResponseBody:           restoreBody,
+		scheme:                        scheme,
+		host:                          host,
+		decoder:                       dec,
+		encoder:                       enc,
+	}
+}
+
+// CreateAccountNode returns an endpoint that makes HTTP requests to the
+// finance service createAccountNode server.
+func (c *Client) CreateAccountNode() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeCreateAccountNodeRequest(c.encoder)
+		decodeResponse = DecodeCreateAccountNodeResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildCreateAccountNodeRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.CreateAccountNodeDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("finance", "createAccountNode", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// GetAccountNode returns an endpoint that makes HTTP requests to the finance
+// service getAccountNode server.
+func (c *Client) GetAccountNode() goa.Endpoint {
+	var (
+		decodeResponse = DecodeGetAccountNodeResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildGetAccountNodeRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.GetAccountNodeDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("finance", "getAccountNode", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// GetAccountNodeByCode returns an endpoint that makes HTTP requests to the
+// finance service getAccountNodeByCode server.
+func (c *Client) GetAccountNodeByCode() goa.Endpoint {
+	var (
+		decodeResponse = DecodeGetAccountNodeByCodeResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildGetAccountNodeByCodeRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.GetAccountNodeByCodeDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("finance", "getAccountNodeByCode", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// ListAccountNodes returns an endpoint that makes HTTP requests to the finance
+// service listAccountNodes server.
+func (c *Client) ListAccountNodes() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeListAccountNodesRequest(c.encoder)
+		decodeResponse = DecodeListAccountNodesResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildListAccountNodesRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.ListAccountNodesDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("finance", "listAccountNodes", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// UpdateAccountNode returns an endpoint that makes HTTP requests to the
+// finance service updateAccountNode server.
+func (c *Client) UpdateAccountNode() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeUpdateAccountNodeRequest(c.encoder)
+		decodeResponse = DecodeUpdateAccountNodeResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildUpdateAccountNodeRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.UpdateAccountNodeDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("finance", "updateAccountNode", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// DeleteAccountNode returns an endpoint that makes HTTP requests to the
+// finance service deleteAccountNode server.
+func (c *Client) DeleteAccountNode() goa.Endpoint {
+	var (
+		decodeResponse = DecodeDeleteAccountNodeResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildDeleteAccountNodeRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.DeleteAccountNodeDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("finance", "deleteAccountNode", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// SearchAccountNodes returns an endpoint that makes HTTP requests to the
+// finance service searchAccountNodes server.
+func (c *Client) SearchAccountNodes() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeSearchAccountNodesRequest(c.encoder)
+		decodeResponse = DecodeSearchAccountNodesResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildSearchAccountNodesRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.SearchAccountNodesDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("finance", "searchAccountNodes", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// GetAccountBalance returns an endpoint that makes HTTP requests to the
+// finance service getAccountBalance server.
+func (c *Client) GetAccountBalance() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeGetAccountBalanceRequest(c.encoder)
+		decodeResponse = DecodeGetAccountBalanceResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildGetAccountBalanceRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.GetAccountBalanceDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("finance", "getAccountBalance", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// GetHierarchyAnalysis returns an endpoint that makes HTTP requests to the
+// finance service getHierarchyAnalysis server.
+func (c *Client) GetHierarchyAnalysis() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeGetHierarchyAnalysisRequest(c.encoder)
+		decodeResponse = DecodeGetHierarchyAnalysisResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildGetHierarchyAnalysisRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.GetHierarchyAnalysisDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("finance", "getHierarchyAnalysis", err)
+		}
+		return decodeResponse(resp)
 	}
 }
 
@@ -307,30 +568,6 @@ func (c *Client) GetAccountHierarchy() goa.Endpoint {
 		resp, err := c.GetAccountHierarchyDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("finance", "getAccountHierarchy", err)
-		}
-		return decodeResponse(resp)
-	}
-}
-
-// GetAccountBalance returns an endpoint that makes HTTP requests to the
-// finance service getAccountBalance server.
-func (c *Client) GetAccountBalance() goa.Endpoint {
-	var (
-		encodeRequest  = EncodeGetAccountBalanceRequest(c.encoder)
-		decodeResponse = DecodeGetAccountBalanceResponse(c.decoder, c.RestoreResponseBody)
-	)
-	return func(ctx context.Context, v any) (any, error) {
-		req, err := c.BuildGetAccountBalanceRequest(ctx, v)
-		if err != nil {
-			return nil, err
-		}
-		err = encodeRequest(req, v)
-		if err != nil {
-			return nil, err
-		}
-		resp, err := c.GetAccountBalanceDoer.Do(req)
-		if err != nil {
-			return nil, goahttp.ErrRequestError("finance", "getAccountBalance", err)
 		}
 		return decodeResponse(resp)
 	}
@@ -513,6 +750,92 @@ func (c *Client) ValidateTransaction() goa.Endpoint {
 		resp, err := c.ValidateTransactionDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("finance", "validateTransaction", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// GetTransactionStatus returns an endpoint that makes HTTP requests to the
+// finance service getTransactionStatus server.
+func (c *Client) GetTransactionStatus() goa.Endpoint {
+	var (
+		decodeResponse = DecodeGetTransactionStatusResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildGetTransactionStatusRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.GetTransactionStatusDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("finance", "getTransactionStatus", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// SubmitApprovalDecision returns an endpoint that makes HTTP requests to the
+// finance service submitApprovalDecision server.
+func (c *Client) SubmitApprovalDecision() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeSubmitApprovalDecisionRequest(c.encoder)
+		decodeResponse = DecodeSubmitApprovalDecisionResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildSubmitApprovalDecisionRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.SubmitApprovalDecisionDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("finance", "submitApprovalDecision", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// RequestTransactionChanges returns an endpoint that makes HTTP requests to
+// the finance service requestTransactionChanges server.
+func (c *Client) RequestTransactionChanges() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeRequestTransactionChangesRequest(c.encoder)
+		decodeResponse = DecodeRequestTransactionChangesResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildRequestTransactionChangesRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.RequestTransactionChangesDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("finance", "requestTransactionChanges", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// GetTransactionWorkflow returns an endpoint that makes HTTP requests to the
+// finance service getTransactionWorkflow server.
+func (c *Client) GetTransactionWorkflow() goa.Endpoint {
+	var (
+		decodeResponse = DecodeGetTransactionWorkflowResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildGetTransactionWorkflowRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.GetTransactionWorkflowDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("finance", "getTransactionWorkflow", err)
 		}
 		return decodeResponse(resp)
 	}

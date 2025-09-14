@@ -35,11 +35,11 @@ func UsageCommands() []string {
 	return []string{
 		"access-request (create|get|process|revoke|list|stats|evaluate-conditional-access|create-conditional-rule|user-behavior-analytics|user-risk-assessment|user-insights|detect-anomalies)",
 		"auth (login|refresh|logout|validate)",
-		"finance (create-account|get-account|get-account-by-code|get-account-by-name|list-accounts|update-account|delete-account|get-account-hierarchy|get-account-balance|create-transaction|get-transaction|get-transaction-by-number|list-transactions|post-transaction|reverse-transaction|approve-transaction|validate-transaction|get-trial-balance)",
 		"health (health|ready)",
 		"abac (evaluate|evaluate-bulk|authorize|explain|discover-policies|collect-attributes|audit-decisions|invalidate-cache|health|metrics)",
 		"admin-featureflag (bulk-enable|bulk-disable|system-health)",
 		"featureflag (create|get|get-by-id|list|update|delete|evaluate|evaluate-multiple|get-stats|search|get-by-type|health)",
+		"finance (create-account-node|get-account-node|get-account-node-by-code|list-account-nodes|update-account-node|delete-account-node|search-account-nodes|get-account-balance|get-hierarchy-analysis|create-account|get-account|get-account-by-code|get-account-by-name|list-accounts|update-account|delete-account|get-account-hierarchy|create-transaction|get-transaction|get-transaction-by-number|list-transactions|post-transaction|reverse-transaction|approve-transaction|validate-transaction|get-transaction-status|submit-approval-decision|request-transaction-changes|get-transaction-workflow|get-trial-balance)",
 		"organization (create|get|list|update|hierarchy|archive)",
 		"tenant (create|get|list|update|delete|health)",
 		"user (get-attributes|set-attributes|bulk-update-attributes|check-permission|authorize-action|get-session-attributes|set-session-context|get-user-context|validate-attributes|refresh-attributes|create|get|list|update|deactivate|permissions|assign-role|remove-role)",
@@ -54,8 +54,7 @@ func UsageExamples() string {
       "duration_hours": 24,
       "entity_id": "123e4567-e89b-12d3-a456-426614174000",
       "metadata": {
-         "Nihil minus error magni cumque dolorem non.": "Ab est est.",
-         "Ut molestiae maxime amet non soluta eum.": "Aut maiores accusamus sapiente a ad."
+         "Inventore recusandae autem qui nostrum officiis voluptas.": "Voluptas quae ad."
       },
       "reason": "Need access to review quarterly reports",
       "requester_id": "123e4567-e89b-12d3-a456-426614174000",
@@ -66,42 +65,29 @@ func UsageExamples() string {
       "password": "password123",
       "tenant_id": "550e8400-e29b-41d4-a716-446655440000"
    }'` + "\n" +
-		os.Args[0] + ` finance create-account --body '{
-      "account_category": "Current Assets",
-      "account_code": "1100",
-      "account_description": "mll",
-      "account_group_id": "17859a53-5d5e-4a08-a0f9-e26562d3c338",
-      "account_header_id": "86a87f59-09e1-40ce-be4f-ee64541a390e",
-      "account_name": "Cash - Operating Account",
-      "account_subtype": "Qui delectus.",
-      "account_type": "BANK",
-      "cash_flow_type": "OPERATING",
-      "consolidation_account": "kqa",
-      "currency_code": "USD",
-      "display_order": 1469364543,
-      "entity_id": "d1c73250-8813-497f-bad5-3d4b9bac2fa5",
-      "is_active": true,
-      "normal_balance": "DEBIT",
-      "parent_account_id": "01f99fd9-2885-418b-bd33-b653c5ba0814",
-      "root_type": "ASSET",
-      "show_in_reports": false,
-      "sub_category": "Cash and Equivalents"
-   }'` + "\n" +
 		os.Args[0] + ` health health` + "\n" +
 		os.Args[0] + ` abac evaluate --body '{
-      "action": "Reiciendis ab rerum quis veniam.",
-      "cache_results": true,
+      "action": "Laboriosam ut iure minus.",
+      "cache_results": false,
       "context": {
-         "Earum et at qui nihil corrupti cupiditate.": "Numquam doloremque iure temporibus."
+         "Facere quis illum impedit.": "Illum numquam nam nemo velit placeat.",
+         "Quo veritatis ipsum fuga quisquam.": "Fugiat et."
       },
       "explain_decision": true,
-      "include_advice": true,
-      "request_id": "Nostrum aut sunt modi ipsum.",
-      "resource_id": "Enim hic enim beatae.",
-      "resource_type": "Veritatis illum quis illum sed possimus nostrum.",
-      "use_cache": false,
-      "user_id": "Iusto numquam reprehenderit maxime voluptatum deleniti at."
-   }' --token "Aut unde veritatis labore nesciunt ea dolor."` + "\n" +
+      "include_advice": false,
+      "request_id": "Impedit sunt sequi.",
+      "resource_id": "Commodi aliquid veritatis rerum iusto.",
+      "resource_type": "Recusandae distinctio facilis.",
+      "use_cache": true,
+      "user_id": "Quo quaerat vitae impedit."
+   }' --token "Maxime cupiditate distinctio autem."` + "\n" +
+		os.Args[0] + ` admin-featureflag bulk-enable --body '{
+      "flag_names": [
+         "Molestiae nihil quia ut eum.",
+         "Eos ut."
+      ],
+      "reason": "Qui earum delectus deserunt."
+   }' --tenant-id "Ipsa ut qui quisquam." --token "Sit nostrum tenetur tempore qui repellendus."` + "\n" +
 		""
 }
 
@@ -170,81 +156,6 @@ func ParseEndpoint(
 
 		authValidateFlags     = flag.NewFlagSet("validate", flag.ExitOnError)
 		authValidateTokenFlag = authValidateFlags.String("token", "", "")
-
-		financeFlags = flag.NewFlagSet("finance", flag.ContinueOnError)
-
-		financeCreateAccountFlags    = flag.NewFlagSet("create-account", flag.ExitOnError)
-		financeCreateAccountBodyFlag = financeCreateAccountFlags.String("body", "REQUIRED", "")
-
-		financeGetAccountFlags  = flag.NewFlagSet("get-account", flag.ExitOnError)
-		financeGetAccountIDFlag = financeGetAccountFlags.String("id", "REQUIRED", "Account ID")
-
-		financeGetAccountByCodeFlags           = flag.NewFlagSet("get-account-by-code", flag.ExitOnError)
-		financeGetAccountByCodeAccountCodeFlag = financeGetAccountByCodeFlags.String("account-code", "REQUIRED", "Account code")
-
-		financeGetAccountByNameFlags           = flag.NewFlagSet("get-account-by-name", flag.ExitOnError)
-		financeGetAccountByNameAccountNameFlag = financeGetAccountByNameFlags.String("account-name", "REQUIRED", "")
-
-		financeListAccountsFlags           = flag.NewFlagSet("list-accounts", flag.ExitOnError)
-		financeListAccountsRootTypeFlag    = financeListAccountsFlags.String("root-type", "", "")
-		financeListAccountsAccountTypeFlag = financeListAccountsFlags.String("account-type", "", "")
-		financeListAccountsIsActiveFlag    = financeListAccountsFlags.String("is-active", "", "")
-		financeListAccountsParentIDFlag    = financeListAccountsFlags.String("parent-id", "", "")
-		financeListAccountsSearchFlag      = financeListAccountsFlags.String("search", "", "")
-		financeListAccountsLimitFlag       = financeListAccountsFlags.String("limit", "50", "")
-		financeListAccountsOffsetFlag      = financeListAccountsFlags.String("offset", "", "")
-
-		financeUpdateAccountFlags    = flag.NewFlagSet("update-account", flag.ExitOnError)
-		financeUpdateAccountBodyFlag = financeUpdateAccountFlags.String("body", "REQUIRED", "")
-		financeUpdateAccountIDFlag   = financeUpdateAccountFlags.String("id", "REQUIRED", "Account ID")
-
-		financeDeleteAccountFlags  = flag.NewFlagSet("delete-account", flag.ExitOnError)
-		financeDeleteAccountIDFlag = financeDeleteAccountFlags.String("id", "REQUIRED", "Account ID")
-
-		financeGetAccountHierarchyFlags      = flag.NewFlagSet("get-account-hierarchy", flag.ExitOnError)
-		financeGetAccountHierarchyRootIDFlag = financeGetAccountHierarchyFlags.String("root-id", "", "")
-
-		financeGetAccountBalanceFlags         = flag.NewFlagSet("get-account-balance", flag.ExitOnError)
-		financeGetAccountBalanceAccountIDFlag = financeGetAccountBalanceFlags.String("account-id", "REQUIRED", "Account ID")
-		financeGetAccountBalanceAsOfDateFlag  = financeGetAccountBalanceFlags.String("as-of-date", "", "")
-
-		financeCreateTransactionFlags    = flag.NewFlagSet("create-transaction", flag.ExitOnError)
-		financeCreateTransactionBodyFlag = financeCreateTransactionFlags.String("body", "REQUIRED", "")
-
-		financeGetTransactionFlags  = flag.NewFlagSet("get-transaction", flag.ExitOnError)
-		financeGetTransactionIDFlag = financeGetTransactionFlags.String("id", "REQUIRED", "Transaction ID")
-
-		financeGetTransactionByNumberFlags                 = flag.NewFlagSet("get-transaction-by-number", flag.ExitOnError)
-		financeGetTransactionByNumberTransactionNumberFlag = financeGetTransactionByNumberFlags.String("transaction-number", "REQUIRED", "Transaction number")
-
-		financeListTransactionsFlags         = flag.NewFlagSet("list-transactions", flag.ExitOnError)
-		financeListTransactionsStatusFlag    = financeListTransactionsFlags.String("status", "", "")
-		financeListTransactionsTypeFlag      = financeListTransactionsFlags.String("type", "", "")
-		financeListTransactionsDateFromFlag  = financeListTransactionsFlags.String("date-from", "", "")
-		financeListTransactionsDateToFlag    = financeListTransactionsFlags.String("date-to", "", "")
-		financeListTransactionsAccountIDFlag = financeListTransactionsFlags.String("account-id", "", "")
-		financeListTransactionsSearchFlag    = financeListTransactionsFlags.String("search", "", "")
-		financeListTransactionsLimitFlag     = financeListTransactionsFlags.String("limit", "50", "")
-		financeListTransactionsOffsetFlag    = financeListTransactionsFlags.String("offset", "", "")
-
-		financePostTransactionFlags    = flag.NewFlagSet("post-transaction", flag.ExitOnError)
-		financePostTransactionBodyFlag = financePostTransactionFlags.String("body", "REQUIRED", "")
-		financePostTransactionIDFlag   = financePostTransactionFlags.String("id", "REQUIRED", "Transaction ID")
-
-		financeReverseTransactionFlags    = flag.NewFlagSet("reverse-transaction", flag.ExitOnError)
-		financeReverseTransactionBodyFlag = financeReverseTransactionFlags.String("body", "REQUIRED", "")
-		financeReverseTransactionIDFlag   = financeReverseTransactionFlags.String("id", "REQUIRED", "Transaction ID")
-
-		financeApproveTransactionFlags    = flag.NewFlagSet("approve-transaction", flag.ExitOnError)
-		financeApproveTransactionBodyFlag = financeApproveTransactionFlags.String("body", "REQUIRED", "")
-		financeApproveTransactionIDFlag   = financeApproveTransactionFlags.String("id", "REQUIRED", "Transaction ID")
-
-		financeValidateTransactionFlags    = flag.NewFlagSet("validate-transaction", flag.ExitOnError)
-		financeValidateTransactionBodyFlag = financeValidateTransactionFlags.String("body", "REQUIRED", "")
-
-		financeGetTrialBalanceFlags                   = flag.NewFlagSet("get-trial-balance", flag.ExitOnError)
-		financeGetTrialBalanceAsOfDateFlag            = financeGetTrialBalanceFlags.String("as-of-date", "", "")
-		financeGetTrialBalanceIncludeZeroBalancesFlag = financeGetTrialBalanceFlags.String("include-zero-balances", "", "")
 
 		healthFlags = flag.NewFlagSet("health", flag.ContinueOnError)
 
@@ -353,6 +264,135 @@ func ParseEndpoint(
 		featureflagGetByTypeFlagTypeFlag = featureflagGetByTypeFlags.String("flag-type", "REQUIRED", "Flag type")
 
 		featureflagHealthFlags = flag.NewFlagSet("health", flag.ExitOnError)
+
+		financeFlags = flag.NewFlagSet("finance", flag.ContinueOnError)
+
+		financeCreateAccountNodeFlags    = flag.NewFlagSet("create-account-node", flag.ExitOnError)
+		financeCreateAccountNodeBodyFlag = financeCreateAccountNodeFlags.String("body", "REQUIRED", "")
+
+		financeGetAccountNodeFlags  = flag.NewFlagSet("get-account-node", flag.ExitOnError)
+		financeGetAccountNodeIDFlag = financeGetAccountNodeFlags.String("id", "REQUIRED", "Node ID")
+
+		financeGetAccountNodeByCodeFlags    = flag.NewFlagSet("get-account-node-by-code", flag.ExitOnError)
+		financeGetAccountNodeByCodeCodeFlag = financeGetAccountNodeByCodeFlags.String("code", "REQUIRED", "Node code")
+
+		financeListAccountNodesFlags                         = flag.NewFlagSet("list-account-nodes", flag.ExitOnError)
+		financeListAccountNodesBodyFlag                      = financeListAccountNodesFlags.String("body", "REQUIRED", "")
+		financeListAccountNodesNodeTypesFlag                 = financeListAccountNodesFlags.String("node-types", "", "")
+		financeListAccountNodesParentIDFlag                  = financeListAccountNodesFlags.String("parent-id", "", "")
+		financeListAccountNodesMaxLevelFlag                  = financeListAccountNodesFlags.String("max-level", "", "")
+		financeListAccountNodesIncludeChildrenFlag           = financeListAccountNodesFlags.String("include-children", "", "")
+		financeListAccountNodesRootTypeFlag                  = financeListAccountNodesFlags.String("root-type", "", "")
+		financeListAccountNodesAccountTypeFlag               = financeListAccountNodesFlags.String("account-type", "", "")
+		financeListAccountNodesFinancialStatementSectionFlag = financeListAccountNodesFlags.String("financial-statement-section", "", "")
+		financeListAccountNodesCashFlowCategoryFlag          = financeListAccountNodesFlags.String("cash-flow-category", "", "")
+		financeListAccountNodesIsActiveFlag                  = financeListAccountNodesFlags.String("is-active", "", "")
+		financeListAccountNodesSearchQueryFlag               = financeListAccountNodesFlags.String("search-query", "", "")
+		financeListAccountNodesIncludeBalancesFlag           = financeListAccountNodesFlags.String("include-balances", "true", "")
+		financeListAccountNodesSortByFlag                    = financeListAccountNodesFlags.String("sort-by", "code", "")
+		financeListAccountNodesSortOrderFlag                 = financeListAccountNodesFlags.String("sort-order", "asc", "")
+
+		financeUpdateAccountNodeFlags    = flag.NewFlagSet("update-account-node", flag.ExitOnError)
+		financeUpdateAccountNodeBodyFlag = financeUpdateAccountNodeFlags.String("body", "REQUIRED", "")
+		financeUpdateAccountNodeIDFlag   = financeUpdateAccountNodeFlags.String("id", "REQUIRED", "Node ID")
+
+		financeDeleteAccountNodeFlags  = flag.NewFlagSet("delete-account-node", flag.ExitOnError)
+		financeDeleteAccountNodeIDFlag = financeDeleteAccountNodeFlags.String("id", "REQUIRED", "Node ID")
+
+		financeSearchAccountNodesFlags               = flag.NewFlagSet("search-account-nodes", flag.ExitOnError)
+		financeSearchAccountNodesQueryFlag           = financeSearchAccountNodesFlags.String("query", "REQUIRED", "")
+		financeSearchAccountNodesNodeTypesFlag       = financeSearchAccountNodesFlags.String("node-types", "", "")
+		financeSearchAccountNodesLimitFlag           = financeSearchAccountNodesFlags.String("limit", "20", "")
+		financeSearchAccountNodesIncludeInactiveFlag = financeSearchAccountNodesFlags.String("include-inactive", "", "")
+
+		financeGetAccountBalanceFlags         = flag.NewFlagSet("get-account-balance", flag.ExitOnError)
+		financeGetAccountBalanceAccountIDFlag = financeGetAccountBalanceFlags.String("account-id", "REQUIRED", "Account ID")
+		financeGetAccountBalanceAsOfDateFlag  = financeGetAccountBalanceFlags.String("as-of-date", "", "")
+
+		financeGetHierarchyAnalysisFlags                  = flag.NewFlagSet("get-hierarchy-analysis", flag.ExitOnError)
+		financeGetHierarchyAnalysisParentIDFlag           = financeGetHierarchyAnalysisFlags.String("parent-id", "REQUIRED", "Parent node ID")
+		financeGetHierarchyAnalysisIncludeBalanceDataFlag = financeGetHierarchyAnalysisFlags.String("include-balance-data", "true", "")
+		financeGetHierarchyAnalysisMaxDepthFlag           = financeGetHierarchyAnalysisFlags.String("max-depth", "", "")
+		financeGetHierarchyAnalysisAsOfDateFlag           = financeGetHierarchyAnalysisFlags.String("as-of-date", "", "")
+
+		financeCreateAccountFlags    = flag.NewFlagSet("create-account", flag.ExitOnError)
+		financeCreateAccountBodyFlag = financeCreateAccountFlags.String("body", "REQUIRED", "")
+
+		financeGetAccountFlags  = flag.NewFlagSet("get-account", flag.ExitOnError)
+		financeGetAccountIDFlag = financeGetAccountFlags.String("id", "REQUIRED", "Account ID")
+
+		financeGetAccountByCodeFlags           = flag.NewFlagSet("get-account-by-code", flag.ExitOnError)
+		financeGetAccountByCodeAccountCodeFlag = financeGetAccountByCodeFlags.String("account-code", "REQUIRED", "Account code")
+
+		financeGetAccountByNameFlags           = flag.NewFlagSet("get-account-by-name", flag.ExitOnError)
+		financeGetAccountByNameAccountNameFlag = financeGetAccountByNameFlags.String("account-name", "REQUIRED", "")
+
+		financeListAccountsFlags           = flag.NewFlagSet("list-accounts", flag.ExitOnError)
+		financeListAccountsBodyFlag        = financeListAccountsFlags.String("body", "REQUIRED", "")
+		financeListAccountsRootTypeFlag    = financeListAccountsFlags.String("root-type", "", "")
+		financeListAccountsAccountTypeFlag = financeListAccountsFlags.String("account-type", "", "")
+		financeListAccountsIsActiveFlag    = financeListAccountsFlags.String("is-active", "", "")
+		financeListAccountsParentIDFlag    = financeListAccountsFlags.String("parent-id", "", "")
+		financeListAccountsSearchFlag      = financeListAccountsFlags.String("search", "", "")
+
+		financeUpdateAccountFlags    = flag.NewFlagSet("update-account", flag.ExitOnError)
+		financeUpdateAccountBodyFlag = financeUpdateAccountFlags.String("body", "REQUIRED", "")
+		financeUpdateAccountIDFlag   = financeUpdateAccountFlags.String("id", "REQUIRED", "Account ID")
+
+		financeDeleteAccountFlags  = flag.NewFlagSet("delete-account", flag.ExitOnError)
+		financeDeleteAccountIDFlag = financeDeleteAccountFlags.String("id", "REQUIRED", "Account ID")
+
+		financeGetAccountHierarchyFlags      = flag.NewFlagSet("get-account-hierarchy", flag.ExitOnError)
+		financeGetAccountHierarchyRootIDFlag = financeGetAccountHierarchyFlags.String("root-id", "", "")
+
+		financeCreateTransactionFlags    = flag.NewFlagSet("create-transaction", flag.ExitOnError)
+		financeCreateTransactionBodyFlag = financeCreateTransactionFlags.String("body", "REQUIRED", "")
+
+		financeGetTransactionFlags  = flag.NewFlagSet("get-transaction", flag.ExitOnError)
+		financeGetTransactionIDFlag = financeGetTransactionFlags.String("id", "REQUIRED", "Transaction ID")
+
+		financeGetTransactionByNumberFlags                 = flag.NewFlagSet("get-transaction-by-number", flag.ExitOnError)
+		financeGetTransactionByNumberTransactionNumberFlag = financeGetTransactionByNumberFlags.String("transaction-number", "REQUIRED", "Transaction number")
+
+		financeListTransactionsFlags         = flag.NewFlagSet("list-transactions", flag.ExitOnError)
+		financeListTransactionsBodyFlag      = financeListTransactionsFlags.String("body", "REQUIRED", "")
+		financeListTransactionsStatusFlag    = financeListTransactionsFlags.String("status", "", "")
+		financeListTransactionsTypeFlag      = financeListTransactionsFlags.String("type", "", "")
+		financeListTransactionsAccountIDFlag = financeListTransactionsFlags.String("account-id", "", "")
+		financeListTransactionsSearchFlag    = financeListTransactionsFlags.String("search", "", "")
+
+		financePostTransactionFlags    = flag.NewFlagSet("post-transaction", flag.ExitOnError)
+		financePostTransactionBodyFlag = financePostTransactionFlags.String("body", "REQUIRED", "")
+		financePostTransactionIDFlag   = financePostTransactionFlags.String("id", "REQUIRED", "Transaction ID")
+
+		financeReverseTransactionFlags    = flag.NewFlagSet("reverse-transaction", flag.ExitOnError)
+		financeReverseTransactionBodyFlag = financeReverseTransactionFlags.String("body", "REQUIRED", "")
+		financeReverseTransactionIDFlag   = financeReverseTransactionFlags.String("id", "REQUIRED", "Transaction ID")
+
+		financeApproveTransactionFlags    = flag.NewFlagSet("approve-transaction", flag.ExitOnError)
+		financeApproveTransactionBodyFlag = financeApproveTransactionFlags.String("body", "REQUIRED", "")
+		financeApproveTransactionIDFlag   = financeApproveTransactionFlags.String("id", "REQUIRED", "Transaction ID")
+
+		financeValidateTransactionFlags    = flag.NewFlagSet("validate-transaction", flag.ExitOnError)
+		financeValidateTransactionBodyFlag = financeValidateTransactionFlags.String("body", "REQUIRED", "")
+
+		financeGetTransactionStatusFlags  = flag.NewFlagSet("get-transaction-status", flag.ExitOnError)
+		financeGetTransactionStatusIDFlag = financeGetTransactionStatusFlags.String("id", "REQUIRED", "Transaction ID")
+
+		financeSubmitApprovalDecisionFlags    = flag.NewFlagSet("submit-approval-decision", flag.ExitOnError)
+		financeSubmitApprovalDecisionBodyFlag = financeSubmitApprovalDecisionFlags.String("body", "REQUIRED", "")
+		financeSubmitApprovalDecisionIDFlag   = financeSubmitApprovalDecisionFlags.String("id", "REQUIRED", "Transaction ID")
+
+		financeRequestTransactionChangesFlags    = flag.NewFlagSet("request-transaction-changes", flag.ExitOnError)
+		financeRequestTransactionChangesBodyFlag = financeRequestTransactionChangesFlags.String("body", "REQUIRED", "")
+		financeRequestTransactionChangesIDFlag   = financeRequestTransactionChangesFlags.String("id", "REQUIRED", "Transaction ID")
+
+		financeGetTransactionWorkflowFlags  = flag.NewFlagSet("get-transaction-workflow", flag.ExitOnError)
+		financeGetTransactionWorkflowIDFlag = financeGetTransactionWorkflowFlags.String("id", "REQUIRED", "Transaction ID")
+
+		financeGetTrialBalanceFlags                   = flag.NewFlagSet("get-trial-balance", flag.ExitOnError)
+		financeGetTrialBalanceAsOfDateFlag            = financeGetTrialBalanceFlags.String("as-of-date", "", "")
+		financeGetTrialBalanceIncludeZeroBalancesFlag = financeGetTrialBalanceFlags.String("include-zero-balances", "", "")
 
 		organizationFlags = flag.NewFlagSet("organization", flag.ContinueOnError)
 
@@ -515,26 +555,6 @@ func ParseEndpoint(
 	authLogoutFlags.Usage = authLogoutUsage
 	authValidateFlags.Usage = authValidateUsage
 
-	financeFlags.Usage = financeUsage
-	financeCreateAccountFlags.Usage = financeCreateAccountUsage
-	financeGetAccountFlags.Usage = financeGetAccountUsage
-	financeGetAccountByCodeFlags.Usage = financeGetAccountByCodeUsage
-	financeGetAccountByNameFlags.Usage = financeGetAccountByNameUsage
-	financeListAccountsFlags.Usage = financeListAccountsUsage
-	financeUpdateAccountFlags.Usage = financeUpdateAccountUsage
-	financeDeleteAccountFlags.Usage = financeDeleteAccountUsage
-	financeGetAccountHierarchyFlags.Usage = financeGetAccountHierarchyUsage
-	financeGetAccountBalanceFlags.Usage = financeGetAccountBalanceUsage
-	financeCreateTransactionFlags.Usage = financeCreateTransactionUsage
-	financeGetTransactionFlags.Usage = financeGetTransactionUsage
-	financeGetTransactionByNumberFlags.Usage = financeGetTransactionByNumberUsage
-	financeListTransactionsFlags.Usage = financeListTransactionsUsage
-	financePostTransactionFlags.Usage = financePostTransactionUsage
-	financeReverseTransactionFlags.Usage = financeReverseTransactionUsage
-	financeApproveTransactionFlags.Usage = financeApproveTransactionUsage
-	financeValidateTransactionFlags.Usage = financeValidateTransactionUsage
-	financeGetTrialBalanceFlags.Usage = financeGetTrialBalanceUsage
-
 	healthFlags.Usage = healthUsage
 	healthHealthFlags.Usage = healthHealthUsage
 	healthReadyFlags.Usage = healthReadyUsage
@@ -569,6 +589,38 @@ func ParseEndpoint(
 	featureflagSearchFlags.Usage = featureflagSearchUsage
 	featureflagGetByTypeFlags.Usage = featureflagGetByTypeUsage
 	featureflagHealthFlags.Usage = featureflagHealthUsage
+
+	financeFlags.Usage = financeUsage
+	financeCreateAccountNodeFlags.Usage = financeCreateAccountNodeUsage
+	financeGetAccountNodeFlags.Usage = financeGetAccountNodeUsage
+	financeGetAccountNodeByCodeFlags.Usage = financeGetAccountNodeByCodeUsage
+	financeListAccountNodesFlags.Usage = financeListAccountNodesUsage
+	financeUpdateAccountNodeFlags.Usage = financeUpdateAccountNodeUsage
+	financeDeleteAccountNodeFlags.Usage = financeDeleteAccountNodeUsage
+	financeSearchAccountNodesFlags.Usage = financeSearchAccountNodesUsage
+	financeGetAccountBalanceFlags.Usage = financeGetAccountBalanceUsage
+	financeGetHierarchyAnalysisFlags.Usage = financeGetHierarchyAnalysisUsage
+	financeCreateAccountFlags.Usage = financeCreateAccountUsage
+	financeGetAccountFlags.Usage = financeGetAccountUsage
+	financeGetAccountByCodeFlags.Usage = financeGetAccountByCodeUsage
+	financeGetAccountByNameFlags.Usage = financeGetAccountByNameUsage
+	financeListAccountsFlags.Usage = financeListAccountsUsage
+	financeUpdateAccountFlags.Usage = financeUpdateAccountUsage
+	financeDeleteAccountFlags.Usage = financeDeleteAccountUsage
+	financeGetAccountHierarchyFlags.Usage = financeGetAccountHierarchyUsage
+	financeCreateTransactionFlags.Usage = financeCreateTransactionUsage
+	financeGetTransactionFlags.Usage = financeGetTransactionUsage
+	financeGetTransactionByNumberFlags.Usage = financeGetTransactionByNumberUsage
+	financeListTransactionsFlags.Usage = financeListTransactionsUsage
+	financePostTransactionFlags.Usage = financePostTransactionUsage
+	financeReverseTransactionFlags.Usage = financeReverseTransactionUsage
+	financeApproveTransactionFlags.Usage = financeApproveTransactionUsage
+	financeValidateTransactionFlags.Usage = financeValidateTransactionUsage
+	financeGetTransactionStatusFlags.Usage = financeGetTransactionStatusUsage
+	financeSubmitApprovalDecisionFlags.Usage = financeSubmitApprovalDecisionUsage
+	financeRequestTransactionChangesFlags.Usage = financeRequestTransactionChangesUsage
+	financeGetTransactionWorkflowFlags.Usage = financeGetTransactionWorkflowUsage
+	financeGetTrialBalanceFlags.Usage = financeGetTrialBalanceUsage
 
 	organizationFlags.Usage = organizationUsage
 	organizationCreateFlags.Usage = organizationCreateUsage
@@ -629,8 +681,6 @@ func ParseEndpoint(
 			svcf = accessRequestFlags
 		case "auth":
 			svcf = authFlags
-		case "finance":
-			svcf = financeFlags
 		case "health":
 			svcf = healthFlags
 		case "abac":
@@ -639,6 +689,8 @@ func ParseEndpoint(
 			svcf = adminFeatureflagFlags
 		case "featureflag":
 			svcf = featureflagFlags
+		case "finance":
+			svcf = financeFlags
 		case "organization":
 			svcf = organizationFlags
 		case "tenant":
@@ -715,64 +767,6 @@ func ParseEndpoint(
 
 			case "validate":
 				epf = authValidateFlags
-
-			}
-
-		case "finance":
-			switch epn {
-			case "create-account":
-				epf = financeCreateAccountFlags
-
-			case "get-account":
-				epf = financeGetAccountFlags
-
-			case "get-account-by-code":
-				epf = financeGetAccountByCodeFlags
-
-			case "get-account-by-name":
-				epf = financeGetAccountByNameFlags
-
-			case "list-accounts":
-				epf = financeListAccountsFlags
-
-			case "update-account":
-				epf = financeUpdateAccountFlags
-
-			case "delete-account":
-				epf = financeDeleteAccountFlags
-
-			case "get-account-hierarchy":
-				epf = financeGetAccountHierarchyFlags
-
-			case "get-account-balance":
-				epf = financeGetAccountBalanceFlags
-
-			case "create-transaction":
-				epf = financeCreateTransactionFlags
-
-			case "get-transaction":
-				epf = financeGetTransactionFlags
-
-			case "get-transaction-by-number":
-				epf = financeGetTransactionByNumberFlags
-
-			case "list-transactions":
-				epf = financeListTransactionsFlags
-
-			case "post-transaction":
-				epf = financePostTransactionFlags
-
-			case "reverse-transaction":
-				epf = financeReverseTransactionFlags
-
-			case "approve-transaction":
-				epf = financeApproveTransactionFlags
-
-			case "validate-transaction":
-				epf = financeValidateTransactionFlags
-
-			case "get-trial-balance":
-				epf = financeGetTrialBalanceFlags
 
 			}
 
@@ -870,6 +864,100 @@ func ParseEndpoint(
 
 			case "health":
 				epf = featureflagHealthFlags
+
+			}
+
+		case "finance":
+			switch epn {
+			case "create-account-node":
+				epf = financeCreateAccountNodeFlags
+
+			case "get-account-node":
+				epf = financeGetAccountNodeFlags
+
+			case "get-account-node-by-code":
+				epf = financeGetAccountNodeByCodeFlags
+
+			case "list-account-nodes":
+				epf = financeListAccountNodesFlags
+
+			case "update-account-node":
+				epf = financeUpdateAccountNodeFlags
+
+			case "delete-account-node":
+				epf = financeDeleteAccountNodeFlags
+
+			case "search-account-nodes":
+				epf = financeSearchAccountNodesFlags
+
+			case "get-account-balance":
+				epf = financeGetAccountBalanceFlags
+
+			case "get-hierarchy-analysis":
+				epf = financeGetHierarchyAnalysisFlags
+
+			case "create-account":
+				epf = financeCreateAccountFlags
+
+			case "get-account":
+				epf = financeGetAccountFlags
+
+			case "get-account-by-code":
+				epf = financeGetAccountByCodeFlags
+
+			case "get-account-by-name":
+				epf = financeGetAccountByNameFlags
+
+			case "list-accounts":
+				epf = financeListAccountsFlags
+
+			case "update-account":
+				epf = financeUpdateAccountFlags
+
+			case "delete-account":
+				epf = financeDeleteAccountFlags
+
+			case "get-account-hierarchy":
+				epf = financeGetAccountHierarchyFlags
+
+			case "create-transaction":
+				epf = financeCreateTransactionFlags
+
+			case "get-transaction":
+				epf = financeGetTransactionFlags
+
+			case "get-transaction-by-number":
+				epf = financeGetTransactionByNumberFlags
+
+			case "list-transactions":
+				epf = financeListTransactionsFlags
+
+			case "post-transaction":
+				epf = financePostTransactionFlags
+
+			case "reverse-transaction":
+				epf = financeReverseTransactionFlags
+
+			case "approve-transaction":
+				epf = financeApproveTransactionFlags
+
+			case "validate-transaction":
+				epf = financeValidateTransactionFlags
+
+			case "get-transaction-status":
+				epf = financeGetTransactionStatusFlags
+
+			case "submit-approval-decision":
+				epf = financeSubmitApprovalDecisionFlags
+
+			case "request-transaction-changes":
+				epf = financeRequestTransactionChangesFlags
+
+			case "get-transaction-workflow":
+				epf = financeGetTransactionWorkflowFlags
+
+			case "get-trial-balance":
+				epf = financeGetTrialBalanceFlags
 
 			}
 
@@ -1060,64 +1148,6 @@ func ParseEndpoint(
 				endpoint = c.Validate()
 				data, err = authc.BuildValidatePayload(*authValidateTokenFlag)
 			}
-		case "finance":
-			c := financec.NewClient(scheme, host, doer, enc, dec, restore)
-			switch epn {
-			case "create-account":
-				endpoint = c.CreateAccount()
-				data, err = financec.BuildCreateAccountPayload(*financeCreateAccountBodyFlag)
-			case "get-account":
-				endpoint = c.GetAccount()
-				data, err = financec.BuildGetAccountPayload(*financeGetAccountIDFlag)
-			case "get-account-by-code":
-				endpoint = c.GetAccountByCode()
-				data, err = financec.BuildGetAccountByCodePayload(*financeGetAccountByCodeAccountCodeFlag)
-			case "get-account-by-name":
-				endpoint = c.GetAccountByName()
-				data, err = financec.BuildGetAccountByNamePayload(*financeGetAccountByNameAccountNameFlag)
-			case "list-accounts":
-				endpoint = c.ListAccounts()
-				data, err = financec.BuildListAccountsPayload(*financeListAccountsRootTypeFlag, *financeListAccountsAccountTypeFlag, *financeListAccountsIsActiveFlag, *financeListAccountsParentIDFlag, *financeListAccountsSearchFlag, *financeListAccountsLimitFlag, *financeListAccountsOffsetFlag)
-			case "update-account":
-				endpoint = c.UpdateAccount()
-				data, err = financec.BuildUpdateAccountPayload(*financeUpdateAccountBodyFlag, *financeUpdateAccountIDFlag)
-			case "delete-account":
-				endpoint = c.DeleteAccount()
-				data, err = financec.BuildDeleteAccountPayload(*financeDeleteAccountIDFlag)
-			case "get-account-hierarchy":
-				endpoint = c.GetAccountHierarchy()
-				data, err = financec.BuildGetAccountHierarchyPayload(*financeGetAccountHierarchyRootIDFlag)
-			case "get-account-balance":
-				endpoint = c.GetAccountBalance()
-				data, err = financec.BuildGetAccountBalancePayload(*financeGetAccountBalanceAccountIDFlag, *financeGetAccountBalanceAsOfDateFlag)
-			case "create-transaction":
-				endpoint = c.CreateTransaction()
-				data, err = financec.BuildCreateTransactionPayload(*financeCreateTransactionBodyFlag)
-			case "get-transaction":
-				endpoint = c.GetTransaction()
-				data, err = financec.BuildGetTransactionPayload(*financeGetTransactionIDFlag)
-			case "get-transaction-by-number":
-				endpoint = c.GetTransactionByNumber()
-				data, err = financec.BuildGetTransactionByNumberPayload(*financeGetTransactionByNumberTransactionNumberFlag)
-			case "list-transactions":
-				endpoint = c.ListTransactions()
-				data, err = financec.BuildListTransactionsPayload(*financeListTransactionsStatusFlag, *financeListTransactionsTypeFlag, *financeListTransactionsDateFromFlag, *financeListTransactionsDateToFlag, *financeListTransactionsAccountIDFlag, *financeListTransactionsSearchFlag, *financeListTransactionsLimitFlag, *financeListTransactionsOffsetFlag)
-			case "post-transaction":
-				endpoint = c.PostTransaction()
-				data, err = financec.BuildPostTransactionPayload(*financePostTransactionBodyFlag, *financePostTransactionIDFlag)
-			case "reverse-transaction":
-				endpoint = c.ReverseTransaction()
-				data, err = financec.BuildReverseTransactionPayload(*financeReverseTransactionBodyFlag, *financeReverseTransactionIDFlag)
-			case "approve-transaction":
-				endpoint = c.ApproveTransaction()
-				data, err = financec.BuildApproveTransactionPayload(*financeApproveTransactionBodyFlag, *financeApproveTransactionIDFlag)
-			case "validate-transaction":
-				endpoint = c.ValidateTransaction()
-				data, err = financec.BuildValidateTransactionPayload(*financeValidateTransactionBodyFlag)
-			case "get-trial-balance":
-				endpoint = c.GetTrialBalance()
-				data, err = financec.BuildGetTrialBalancePayload(*financeGetTrialBalanceAsOfDateFlag, *financeGetTrialBalanceIncludeZeroBalancesFlag)
-			}
 		case "health":
 			c := healthc.NewClient(scheme, host, doer, enc, dec, restore)
 			switch epn {
@@ -1210,6 +1240,100 @@ func ParseEndpoint(
 				data, err = featureflagc.BuildGetByTypePayload(*featureflagGetByTypeFlagTypeFlag)
 			case "health":
 				endpoint = c.Health()
+			}
+		case "finance":
+			c := financec.NewClient(scheme, host, doer, enc, dec, restore)
+			switch epn {
+			case "create-account-node":
+				endpoint = c.CreateAccountNode()
+				data, err = financec.BuildCreateAccountNodePayload(*financeCreateAccountNodeBodyFlag)
+			case "get-account-node":
+				endpoint = c.GetAccountNode()
+				data, err = financec.BuildGetAccountNodePayload(*financeGetAccountNodeIDFlag)
+			case "get-account-node-by-code":
+				endpoint = c.GetAccountNodeByCode()
+				data, err = financec.BuildGetAccountNodeByCodePayload(*financeGetAccountNodeByCodeCodeFlag)
+			case "list-account-nodes":
+				endpoint = c.ListAccountNodes()
+				data, err = financec.BuildListAccountNodesPayload(*financeListAccountNodesBodyFlag, *financeListAccountNodesNodeTypesFlag, *financeListAccountNodesParentIDFlag, *financeListAccountNodesMaxLevelFlag, *financeListAccountNodesIncludeChildrenFlag, *financeListAccountNodesRootTypeFlag, *financeListAccountNodesAccountTypeFlag, *financeListAccountNodesFinancialStatementSectionFlag, *financeListAccountNodesCashFlowCategoryFlag, *financeListAccountNodesIsActiveFlag, *financeListAccountNodesSearchQueryFlag, *financeListAccountNodesIncludeBalancesFlag, *financeListAccountNodesSortByFlag, *financeListAccountNodesSortOrderFlag)
+			case "update-account-node":
+				endpoint = c.UpdateAccountNode()
+				data, err = financec.BuildUpdateAccountNodePayload(*financeUpdateAccountNodeBodyFlag, *financeUpdateAccountNodeIDFlag)
+			case "delete-account-node":
+				endpoint = c.DeleteAccountNode()
+				data, err = financec.BuildDeleteAccountNodePayload(*financeDeleteAccountNodeIDFlag)
+			case "search-account-nodes":
+				endpoint = c.SearchAccountNodes()
+				data, err = financec.BuildSearchAccountNodesPayload(*financeSearchAccountNodesQueryFlag, *financeSearchAccountNodesNodeTypesFlag, *financeSearchAccountNodesLimitFlag, *financeSearchAccountNodesIncludeInactiveFlag)
+			case "get-account-balance":
+				endpoint = c.GetAccountBalance()
+				data, err = financec.BuildGetAccountBalancePayload(*financeGetAccountBalanceAccountIDFlag, *financeGetAccountBalanceAsOfDateFlag)
+			case "get-hierarchy-analysis":
+				endpoint = c.GetHierarchyAnalysis()
+				data, err = financec.BuildGetHierarchyAnalysisPayload(*financeGetHierarchyAnalysisParentIDFlag, *financeGetHierarchyAnalysisIncludeBalanceDataFlag, *financeGetHierarchyAnalysisMaxDepthFlag, *financeGetHierarchyAnalysisAsOfDateFlag)
+			case "create-account":
+				endpoint = c.CreateAccount()
+				data, err = financec.BuildCreateAccountPayload(*financeCreateAccountBodyFlag)
+			case "get-account":
+				endpoint = c.GetAccount()
+				data, err = financec.BuildGetAccountPayload(*financeGetAccountIDFlag)
+			case "get-account-by-code":
+				endpoint = c.GetAccountByCode()
+				data, err = financec.BuildGetAccountByCodePayload(*financeGetAccountByCodeAccountCodeFlag)
+			case "get-account-by-name":
+				endpoint = c.GetAccountByName()
+				data, err = financec.BuildGetAccountByNamePayload(*financeGetAccountByNameAccountNameFlag)
+			case "list-accounts":
+				endpoint = c.ListAccounts()
+				data, err = financec.BuildListAccountsPayload(*financeListAccountsBodyFlag, *financeListAccountsRootTypeFlag, *financeListAccountsAccountTypeFlag, *financeListAccountsIsActiveFlag, *financeListAccountsParentIDFlag, *financeListAccountsSearchFlag)
+			case "update-account":
+				endpoint = c.UpdateAccount()
+				data, err = financec.BuildUpdateAccountPayload(*financeUpdateAccountBodyFlag, *financeUpdateAccountIDFlag)
+			case "delete-account":
+				endpoint = c.DeleteAccount()
+				data, err = financec.BuildDeleteAccountPayload(*financeDeleteAccountIDFlag)
+			case "get-account-hierarchy":
+				endpoint = c.GetAccountHierarchy()
+				data, err = financec.BuildGetAccountHierarchyPayload(*financeGetAccountHierarchyRootIDFlag)
+			case "create-transaction":
+				endpoint = c.CreateTransaction()
+				data, err = financec.BuildCreateTransactionPayload(*financeCreateTransactionBodyFlag)
+			case "get-transaction":
+				endpoint = c.GetTransaction()
+				data, err = financec.BuildGetTransactionPayload(*financeGetTransactionIDFlag)
+			case "get-transaction-by-number":
+				endpoint = c.GetTransactionByNumber()
+				data, err = financec.BuildGetTransactionByNumberPayload(*financeGetTransactionByNumberTransactionNumberFlag)
+			case "list-transactions":
+				endpoint = c.ListTransactions()
+				data, err = financec.BuildListTransactionsPayload(*financeListTransactionsBodyFlag, *financeListTransactionsStatusFlag, *financeListTransactionsTypeFlag, *financeListTransactionsAccountIDFlag, *financeListTransactionsSearchFlag)
+			case "post-transaction":
+				endpoint = c.PostTransaction()
+				data, err = financec.BuildPostTransactionPayload(*financePostTransactionBodyFlag, *financePostTransactionIDFlag)
+			case "reverse-transaction":
+				endpoint = c.ReverseTransaction()
+				data, err = financec.BuildReverseTransactionPayload(*financeReverseTransactionBodyFlag, *financeReverseTransactionIDFlag)
+			case "approve-transaction":
+				endpoint = c.ApproveTransaction()
+				data, err = financec.BuildApproveTransactionPayload(*financeApproveTransactionBodyFlag, *financeApproveTransactionIDFlag)
+			case "validate-transaction":
+				endpoint = c.ValidateTransaction()
+				data, err = financec.BuildValidateTransactionPayload(*financeValidateTransactionBodyFlag)
+			case "get-transaction-status":
+				endpoint = c.GetTransactionStatus()
+				data, err = financec.BuildGetTransactionStatusPayload(*financeGetTransactionStatusIDFlag)
+			case "submit-approval-decision":
+				endpoint = c.SubmitApprovalDecision()
+				data, err = financec.BuildSubmitApprovalDecisionPayload(*financeSubmitApprovalDecisionBodyFlag, *financeSubmitApprovalDecisionIDFlag)
+			case "request-transaction-changes":
+				endpoint = c.RequestTransactionChanges()
+				data, err = financec.BuildRequestTransactionChangesPayload(*financeRequestTransactionChangesBodyFlag, *financeRequestTransactionChangesIDFlag)
+			case "get-transaction-workflow":
+				endpoint = c.GetTransactionWorkflow()
+				data, err = financec.BuildGetTransactionWorkflowPayload(*financeGetTransactionWorkflowIDFlag)
+			case "get-trial-balance":
+				endpoint = c.GetTrialBalance()
+				data, err = financec.BuildGetTrialBalancePayload(*financeGetTrialBalanceAsOfDateFlag, *financeGetTrialBalanceIncludeZeroBalancesFlag)
 			}
 		case "organization":
 			c := organizationc.NewClient(scheme, host, doer, enc, dec, restore)
@@ -1366,8 +1490,7 @@ Example:
       "duration_hours": 24,
       "entity_id": "123e4567-e89b-12d3-a456-426614174000",
       "metadata": {
-         "Nihil minus error magni cumque dolorem non.": "Ab est est.",
-         "Ut molestiae maxime amet non soluta eum.": "Aut maiores accusamus sapiente a ad."
+         "Inventore recusandae autem qui nostrum officiis voluptas.": "Voluptas quae ad."
       },
       "reason": "Need access to review quarterly reports",
       "requester_id": "123e4567-e89b-12d3-a456-426614174000",
@@ -1582,7 +1705,7 @@ Logout user and invalidate token
     -token STRING: 
 
 Example:
-    %[1]s auth logout --token "Cum accusamus vitae possimus similique quisquam et."
+    %[1]s auth logout --token "Voluptas animi."
 `, os.Args[0])
 }
 
@@ -1593,392 +1716,7 @@ Validate JWT token
     -token STRING: 
 
 Example:
-    %[1]s auth validate --token "Iure dignissimos iure eveniet aut ipsum."
-`, os.Args[0])
-}
-
-// financeUsage displays the usage of the finance command and its subcommands.
-func financeUsage() {
-	fmt.Fprintf(os.Stderr, `Financial management service for double-entry bookkeeping and accounting
-Usage:
-    %[1]s [globalflags] finance COMMAND [flags]
-
-COMMAND:
-    create-account: Create a new chart of accounts entry
-    get-account: Get account by ID
-    get-account-by-code: Get account by account code
-    get-account-by-name: Get account by exact account name
-    list-accounts: List accounts with filtering and pagination
-    update-account: Update an existing account
-    delete-account: Soft delete an account
-    get-account-hierarchy: Get account hierarchy tree
-    get-account-balance: Get current balance for an account
-    create-transaction: Create a new financial transaction
-    get-transaction: Get transaction by ID with entries
-    get-transaction-by-number: Get transaction by transaction number
-    list-transactions: List transactions with filtering and pagination
-    post-transaction: Post a transaction (make it permanent)
-    reverse-transaction: Reverse a posted transaction
-    approve-transaction: Approve a transaction for posting
-    validate-transaction: Validate transaction before posting
-    get-trial-balance: Generate trial balance report
-
-Additional help:
-    %[1]s finance COMMAND --help
-`, os.Args[0])
-}
-func financeCreateAccountUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance create-account -body JSON
-
-Create a new chart of accounts entry
-    -body JSON: 
-
-Example:
-    %[1]s finance create-account --body '{
-      "account_category": "Current Assets",
-      "account_code": "1100",
-      "account_description": "mll",
-      "account_group_id": "17859a53-5d5e-4a08-a0f9-e26562d3c338",
-      "account_header_id": "86a87f59-09e1-40ce-be4f-ee64541a390e",
-      "account_name": "Cash - Operating Account",
-      "account_subtype": "Qui delectus.",
-      "account_type": "BANK",
-      "cash_flow_type": "OPERATING",
-      "consolidation_account": "kqa",
-      "currency_code": "USD",
-      "display_order": 1469364543,
-      "entity_id": "d1c73250-8813-497f-bad5-3d4b9bac2fa5",
-      "is_active": true,
-      "normal_balance": "DEBIT",
-      "parent_account_id": "01f99fd9-2885-418b-bd33-b653c5ba0814",
-      "root_type": "ASSET",
-      "show_in_reports": false,
-      "sub_category": "Cash and Equivalents"
-   }'
-`, os.Args[0])
-}
-
-func financeGetAccountUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-account -id STRING
-
-Get account by ID
-    -id STRING: Account ID
-
-Example:
-    %[1]s finance get-account --id "0d4bc657-a802-44b1-8f74-eade7773eaa5"
-`, os.Args[0])
-}
-
-func financeGetAccountByCodeUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-account-by-code -account-code STRING
-
-Get account by account code
-    -account-code STRING: Account code
-
-Example:
-    %[1]s finance get-account-by-code --account-code "1100"
-`, os.Args[0])
-}
-
-func financeGetAccountByNameUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-account-by-name -account-name STRING
-
-Get account by exact account name
-    -account-name STRING: 
-
-Example:
-    %[1]s finance get-account-by-name --account-name "Cash - Operating Account"
-`, os.Args[0])
-}
-
-func financeListAccountsUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance list-accounts -root-type STRING -account-type STRING -is-active BOOL -parent-id STRING -search STRING -limit INT32 -offset INT32
-
-List accounts with filtering and pagination
-    -root-type STRING: 
-    -account-type STRING: 
-    -is-active BOOL: 
-    -parent-id STRING: 
-    -search STRING: 
-    -limit INT32: 
-    -offset INT32: 
-
-Example:
-    %[1]s finance list-accounts --root-type "ASSET" --account-type "Odit est." --is-active false --parent-id "6183b962-9128-4bdd-958e-2945c9c33eac" --search "Quam enim eum sapiente ut." --limit 980 --offset 403669997
-`, os.Args[0])
-}
-
-func financeUpdateAccountUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance update-account -body JSON -id STRING
-
-Update an existing account
-    -body JSON: 
-    -id STRING: Account ID
-
-Example:
-    %[1]s finance update-account --body '{
-      "account_category": "r4t",
-      "account_description": "Quod et.",
-      "account_group_id": "37fe2608-0603-4041-93da-e62ae2c194ef",
-      "account_header_id": "408ab5b4-23d9-40bb-86de-e813afce6ee1",
-      "account_name": "g4l",
-      "allow_manual_entries": false,
-      "cash_flow_type": "INVESTING",
-      "consolidation_account": "0wa",
-      "display_order": 981280541,
-      "is_active": false,
-      "require_reference": false,
-      "show_in_reports": false,
-      "sub_category": "gqc"
-   }' --id "311b7fd7-ad96-48d5-8e83-335b33da83f2"
-`, os.Args[0])
-}
-
-func financeDeleteAccountUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance delete-account -id STRING
-
-Soft delete an account
-    -id STRING: Account ID
-
-Example:
-    %[1]s finance delete-account --id "ab38b6a3-d14c-48f6-be0c-698e5bba19c2"
-`, os.Args[0])
-}
-
-func financeGetAccountHierarchyUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-account-hierarchy -root-id STRING
-
-Get account hierarchy tree
-    -root-id STRING: 
-
-Example:
-    %[1]s finance get-account-hierarchy --root-id "f102f563-3f2a-4677-8b3b-22354d4bbf12"
-`, os.Args[0])
-}
-
-func financeGetAccountBalanceUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-account-balance -account-id STRING -as-of-date STRING
-
-Get current balance for an account
-    -account-id STRING: Account ID
-    -as-of-date STRING: 
-
-Example:
-    %[1]s finance get-account-balance --account-id "cf825f84-fc9d-44fe-a45a-89345ef7ef9f" --as-of-date "1999-06-01"
-`, os.Args[0])
-}
-
-func financeCreateTransactionUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance create-transaction -body JSON
-
-Create a new financial transaction
-    -body JSON: 
-
-Example:
-    %[1]s finance create-transaction --body '{
-      "currency_code": "MBO",
-      "description": "Monthly rent payment",
-      "entity_id": "7c47039d-6355-4f14-a44d-19437f2cb7a7",
-      "entries": [
-         {
-            "account_id": "9908230a-60c6-4ef3-bb98-0db6140396eb",
-            "cost_center": "Et minus earum corrupti voluptatem voluptatem.",
-            "credit_amount": "1500.00",
-            "debit_amount": "1500.00",
-            "department": "Est et itaque temporibus est et aliquid.",
-            "description": "0",
-            "project_id": "a0f22374-8944-4197-a03f-605beaf8acd1",
-            "reference": "Vel nostrum quia sint aut ut.",
-            "tax_code": "Distinctio in beatae ea non.",
-            "tax_rate": "Omnis fuga laborum eum occaecati."
-         },
-         {
-            "account_id": "9908230a-60c6-4ef3-bb98-0db6140396eb",
-            "cost_center": "Et minus earum corrupti voluptatem voluptatem.",
-            "credit_amount": "1500.00",
-            "debit_amount": "1500.00",
-            "department": "Est et itaque temporibus est et aliquid.",
-            "description": "0",
-            "project_id": "a0f22374-8944-4197-a03f-605beaf8acd1",
-            "reference": "Vel nostrum quia sint aut ut.",
-            "tax_code": "Distinctio in beatae ea non.",
-            "tax_rate": "Omnis fuga laborum eum occaecati."
-         },
-         {
-            "account_id": "9908230a-60c6-4ef3-bb98-0db6140396eb",
-            "cost_center": "Et minus earum corrupti voluptatem voluptatem.",
-            "credit_amount": "1500.00",
-            "debit_amount": "1500.00",
-            "department": "Est et itaque temporibus est et aliquid.",
-            "description": "0",
-            "project_id": "a0f22374-8944-4197-a03f-605beaf8acd1",
-            "reference": "Vel nostrum quia sint aut ut.",
-            "tax_code": "Distinctio in beatae ea non.",
-            "tax_rate": "Omnis fuga laborum eum occaecati."
-         }
-      ],
-      "reference_number": "Dolorum nostrum corporis ut molestias.",
-      "transaction_date": "2025-08-31",
-      "transaction_number": "Blanditiis aperiam voluptatum expedita illum nostrum.",
-      "transaction_type": "JOURNAL_ENTRY"
-   }'
-`, os.Args[0])
-}
-
-func financeGetTransactionUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-transaction -id STRING
-
-Get transaction by ID with entries
-    -id STRING: Transaction ID
-
-Example:
-    %[1]s finance get-transaction --id "e03d04bb-2490-4a38-9536-40ccc7399c71"
-`, os.Args[0])
-}
-
-func financeGetTransactionByNumberUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-transaction-by-number -transaction-number STRING
-
-Get transaction by transaction number
-    -transaction-number STRING: Transaction number
-
-Example:
-    %[1]s finance get-transaction-by-number --transaction-number "TXN-2025-001"
-`, os.Args[0])
-}
-
-func financeListTransactionsUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance list-transactions -status STRING -type STRING -date-from STRING -date-to STRING -account-id STRING -search STRING -limit INT32 -offset INT32
-
-List transactions with filtering and pagination
-    -status STRING: 
-    -type STRING: 
-    -date-from STRING: 
-    -date-to STRING: 
-    -account-id STRING: 
-    -search STRING: 
-    -limit INT32: 
-    -offset INT32: 
-
-Example:
-    %[1]s finance list-transactions --status "DRAFT" --type "BANK_TRANSFER" --date-from "1991-10-19" --date-to "2004-04-09" --account-id "074f0211-3fa4-43b6-b5b6-19bb78749f08" --search "Tempora amet." --limit 444 --offset 1761820139
-`, os.Args[0])
-}
-
-func financePostTransactionUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance post-transaction -body JSON -id STRING
-
-Post a transaction (make it permanent)
-    -body JSON: 
-    -id STRING: Transaction ID
-
-Example:
-    %[1]s finance post-transaction --body '{
-      "force_post": true,
-      "posting_date": "1982-10-02",
-      "validate_before_posting": false
-   }' --id "9d580c19-2ad3-4d18-8bf6-10af4217730d"
-`, os.Args[0])
-}
-
-func financeReverseTransactionUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance reverse-transaction -body JSON -id STRING
-
-Reverse a posted transaction
-    -body JSON: 
-    -id STRING: Transaction ID
-
-Example:
-    %[1]s finance reverse-transaction --body '{
-      "reason": "Incorrect entry - duplicate payment",
-      "reversal_date": "1986-09-22"
-   }' --id "d5d73c40-b9c3-4d1d-a4e2-77caee5ad587"
-`, os.Args[0])
-}
-
-func financeApproveTransactionUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance approve-transaction -body JSON -id STRING
-
-Approve a transaction for posting
-    -body JSON: 
-    -id STRING: Transaction ID
-
-Example:
-    %[1]s finance approve-transaction --body '{
-      "notes": "h0o"
-   }' --id "560b6722-e765-4523-954d-2bb3e48156dc"
-`, os.Args[0])
-}
-
-func financeValidateTransactionUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance validate-transaction -body JSON
-
-Validate transaction before posting
-    -body JSON: 
-
-Example:
-    %[1]s finance validate-transaction --body '{
-      "transaction": {
-         "currency_code": "TZC",
-         "description": "Monthly rent payment",
-         "entity_id": "59d6823f-4fbd-4c89-9413-f9ecaff6d1a0",
-         "entries": [
-            {
-               "account_id": "9908230a-60c6-4ef3-bb98-0db6140396eb",
-               "cost_center": "Et minus earum corrupti voluptatem voluptatem.",
-               "credit_amount": "1500.00",
-               "debit_amount": "1500.00",
-               "department": "Est et itaque temporibus est et aliquid.",
-               "description": "0",
-               "project_id": "a0f22374-8944-4197-a03f-605beaf8acd1",
-               "reference": "Vel nostrum quia sint aut ut.",
-               "tax_code": "Distinctio in beatae ea non.",
-               "tax_rate": "Omnis fuga laborum eum occaecati."
-            },
-            {
-               "account_id": "9908230a-60c6-4ef3-bb98-0db6140396eb",
-               "cost_center": "Et minus earum corrupti voluptatem voluptatem.",
-               "credit_amount": "1500.00",
-               "debit_amount": "1500.00",
-               "department": "Est et itaque temporibus est et aliquid.",
-               "description": "0",
-               "project_id": "a0f22374-8944-4197-a03f-605beaf8acd1",
-               "reference": "Vel nostrum quia sint aut ut.",
-               "tax_code": "Distinctio in beatae ea non.",
-               "tax_rate": "Omnis fuga laborum eum occaecati."
-            },
-            {
-               "account_id": "9908230a-60c6-4ef3-bb98-0db6140396eb",
-               "cost_center": "Et minus earum corrupti voluptatem voluptatem.",
-               "credit_amount": "1500.00",
-               "debit_amount": "1500.00",
-               "department": "Est et itaque temporibus est et aliquid.",
-               "description": "0",
-               "project_id": "a0f22374-8944-4197-a03f-605beaf8acd1",
-               "reference": "Vel nostrum quia sint aut ut.",
-               "tax_code": "Distinctio in beatae ea non.",
-               "tax_rate": "Omnis fuga laborum eum occaecati."
-            }
-         ],
-         "reference_number": "Natus amet delectus fuga.",
-         "transaction_date": "2025-08-31",
-         "transaction_number": "Non dolor voluptas est.",
-         "transaction_type": "JOURNAL_ENTRY"
-      },
-      "validation_level": "STRICT"
-   }'
-`, os.Args[0])
-}
-
-func financeGetTrialBalanceUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-trial-balance -as-of-date STRING -include-zero-balances BOOL
-
-Generate trial balance report
-    -as-of-date STRING: 
-    -include-zero-balances BOOL: 
-
-Example:
-    %[1]s finance get-trial-balance --as-of-date "2025-08-31" --include-zero-balances false
+    %[1]s auth validate --token "Distinctio qui in sapiente rerum culpa."
 `, os.Args[0])
 }
 
@@ -2047,19 +1785,20 @@ Evaluate a policy decision request.
 
 Example:
     %[1]s abac evaluate --body '{
-      "action": "Reiciendis ab rerum quis veniam.",
-      "cache_results": true,
+      "action": "Laboriosam ut iure minus.",
+      "cache_results": false,
       "context": {
-         "Earum et at qui nihil corrupti cupiditate.": "Numquam doloremque iure temporibus."
+         "Facere quis illum impedit.": "Illum numquam nam nemo velit placeat.",
+         "Quo veritatis ipsum fuga quisquam.": "Fugiat et."
       },
       "explain_decision": true,
-      "include_advice": true,
-      "request_id": "Nostrum aut sunt modi ipsum.",
-      "resource_id": "Enim hic enim beatae.",
-      "resource_type": "Veritatis illum quis illum sed possimus nostrum.",
-      "use_cache": false,
-      "user_id": "Iusto numquam reprehenderit maxime voluptatum deleniti at."
-   }' --token "Aut unde veritatis labore nesciunt ea dolor."
+      "include_advice": false,
+      "request_id": "Impedit sunt sequi.",
+      "resource_id": "Commodi aliquid veritatis rerum iusto.",
+      "resource_type": "Recusandae distinctio facilis.",
+      "use_cache": true,
+      "user_id": "Quo quaerat vitae impedit."
+   }' --token "Maxime cupiditate distinctio autem."
 `, os.Args[0])
 }
 
@@ -2072,59 +1811,42 @@ Evaluate a bulk policy decision request.
 
 Example:
     %[1]s abac evaluate-bulk --body '{
-      "cache_results": false,
-      "fail_fast": true,
-      "request_id": "Repudiandae earum necessitatibus quo aut saepe dolorum.",
+      "cache_results": true,
+      "fail_fast": false,
+      "request_id": "Incidunt dicta voluptatibus nihil nemo quisquam ullam.",
       "requests": [
          {
-            "action": "Voluptatem repellendus ratione ut facere.",
-            "cache_results": false,
+            "action": "Quia dolor et sit eligendi cumque.",
+            "cache_results": true,
             "context": {
-               "Quibusdam iusto corrupti.": "Ipsam illum et est animi.",
-               "Soluta nihil rerum minima.": "Ipsa et."
+               "Et nemo aut asperiores voluptatem.": "Accusantium quis provident dolorum consequatur."
             },
-            "explain_decision": true,
-            "include_advice": false,
-            "request_id": "Quam libero itaque porro quia adipisci exercitationem.",
-            "resource_id": "Cumque vero eaque nisi nisi dolores deleniti.",
-            "resource_type": "Aut maiores sed aut qui cupiditate qui.",
+            "explain_decision": false,
+            "include_advice": true,
+            "request_id": "Nihil deserunt est.",
+            "resource_id": "In vitae.",
+            "resource_type": "Voluptas delectus qui esse explicabo dolorem.",
             "use_cache": false,
-            "user_id": "Aut earum facilis aut."
+            "user_id": "Necessitatibus voluptatem laudantium quo dolores quam."
          },
          {
-            "action": "Voluptatem repellendus ratione ut facere.",
-            "cache_results": false,
+            "action": "Quia dolor et sit eligendi cumque.",
+            "cache_results": true,
             "context": {
-               "Quibusdam iusto corrupti.": "Ipsam illum et est animi.",
-               "Soluta nihil rerum minima.": "Ipsa et."
+               "Et nemo aut asperiores voluptatem.": "Accusantium quis provident dolorum consequatur."
             },
-            "explain_decision": true,
-            "include_advice": false,
-            "request_id": "Quam libero itaque porro quia adipisci exercitationem.",
-            "resource_id": "Cumque vero eaque nisi nisi dolores deleniti.",
-            "resource_type": "Aut maiores sed aut qui cupiditate qui.",
+            "explain_decision": false,
+            "include_advice": true,
+            "request_id": "Nihil deserunt est.",
+            "resource_id": "In vitae.",
+            "resource_type": "Voluptas delectus qui esse explicabo dolorem.",
             "use_cache": false,
-            "user_id": "Aut earum facilis aut."
-         },
-         {
-            "action": "Voluptatem repellendus ratione ut facere.",
-            "cache_results": false,
-            "context": {
-               "Quibusdam iusto corrupti.": "Ipsam illum et est animi.",
-               "Soluta nihil rerum minima.": "Ipsa et."
-            },
-            "explain_decision": true,
-            "include_advice": false,
-            "request_id": "Quam libero itaque porro quia adipisci exercitationem.",
-            "resource_id": "Cumque vero eaque nisi nisi dolores deleniti.",
-            "resource_type": "Aut maiores sed aut qui cupiditate qui.",
-            "use_cache": false,
-            "user_id": "Aut earum facilis aut."
+            "user_id": "Necessitatibus voluptatem laudantium quo dolores quam."
          }
       ],
-      "use_cache": true,
-      "user_id": "Et harum."
-   }' --token "Esse dolor quis et."
+      "use_cache": false,
+      "user_id": "Nihil ipsum unde perferendis nobis et rerum."
+   }' --token "Sed fugit dolore unde."
 `, os.Args[0])
 }
 
@@ -2137,16 +1859,14 @@ Simple authorization check.
 
 Example:
     %[1]s abac authorize --body '{
-      "action": "Libero aut repudiandae excepturi corrupti praesentium at.",
+      "action": "Voluptas ut aut alias.",
       "context": {
-         "Ipsa iure id tempora tempore.": "Non aut corrupti quisquam molestiae voluptatem consequatur.",
-         "Sint cupiditate eveniet autem.": "Repellendus quaerat repellendus est et et repellendus.",
-         "Tempora ea quia facilis ipsum.": "Odio iste repellendus veritatis est."
+         "Ut mollitia autem.": "Et qui corrupti perspiciatis ea neque excepturi."
       },
-      "resource_id": "Velit iusto illum necessitatibus.",
-      "resource_type": "Repudiandae ea ut dicta iure quia rerum.",
-      "user_id": "Tenetur minima."
-   }' --token "Ut et amet doloribus."
+      "resource_id": "Facilis saepe.",
+      "resource_type": "Inventore incidunt aspernatur officiis.",
+      "user_id": "Expedita praesentium dolore animi."
+   }' --token "Dicta odio."
 `, os.Args[0])
 }
 
@@ -2159,16 +1879,15 @@ Explain a policy decision.
 
 Example:
     %[1]s abac explain --body '{
-      "action": "Et officiis consequuntur.",
+      "action": "Ipsa cum minus.",
       "context": {
-         "Tenetur omnis ex quas et voluptas porro.": "Quos sed molestiae rem quaerat molestiae.",
-         "Ut illum aut odit vel officiis porro.": "Repudiandae veritatis necessitatibus est debitis."
+         "Quaerat cupiditate magni.": "Dolorum enim ratione."
       },
-      "detail_level": "Dicta cupiditate assumenda.",
-      "resource_id": "Et nihil eius.",
-      "resource_type": "Itaque cum nemo qui nihil voluptas asperiores.",
-      "user_id": "Accusamus doloremque possimus."
-   }' --token "Nostrum ea."
+      "detail_level": "A dolorem in tenetur.",
+      "resource_id": "Iure error.",
+      "resource_type": "Autem voluptatibus.",
+      "user_id": "Et quis."
+   }' --token "Autem autem et repudiandae optio vitae."
 `, os.Args[0])
 }
 
@@ -2181,15 +1900,14 @@ Discover applicable policies.
 
 Example:
     %[1]s abac discover-policies --body '{
-      "action": "Ea officiis ut ut qui est laboriosam.",
+      "action": "Blanditiis reprehenderit beatae culpa.",
       "context": {
-         "Dolorem natus.": "Repudiandae ullam sapiente hic laudantium ut nemo.",
-         "Dolores molestias.": "Recusandae consequatur et delectus.",
-         "Odit maiores recusandae quis.": "Veniam velit provident quidem."
+         "Natus laboriosam.": "Sapiente illo nostrum.",
+         "Ullam sit excepturi id.": "Laboriosam commodi."
       },
-      "resource_type": "Et harum ipsam.",
-      "user_id": "Nihil non vero."
-   }' --token "Possimus reprehenderit magnam libero impedit animi asperiores."
+      "resource_type": "Eaque nisi vitae accusamus nostrum.",
+      "user_id": "Doloremque sequi quia."
+   }' --token "Qui sed qui amet reprehenderit."
 `, os.Args[0])
 }
 
@@ -2202,13 +1920,13 @@ Collect attributes for a given context.
 
 Example:
     %[1]s abac collect-attributes --body '{
-      "action": "Assumenda consequuntur.",
-      "entity_id": "Quaerat est aspernatur accusamus.",
-      "include_expired": false,
-      "resource_id": "Pariatur odio ipsam nam dolor id.",
-      "resource_type": "Sed dolorem dolorem molestiae repudiandae.",
-      "user_id": "Molestiae quae."
-   }' --token "Distinctio amet."
+      "action": "Omnis blanditiis nihil non quam aspernatur reprehenderit.",
+      "entity_id": "Similique optio quibusdam veritatis reprehenderit iure.",
+      "include_expired": true,
+      "resource_id": "Explicabo placeat voluptas et.",
+      "resource_type": "Error repudiandae ab molestiae laudantium.",
+      "user_id": "Est qui."
+   }' --token "Architecto rem."
 `, os.Args[0])
 }
 
@@ -2221,9 +1939,9 @@ Get a history of policy decisions.
 
 Example:
     %[1]s abac audit-decisions --body '{
-      "limit": 4123854160006049823,
-      "user_id": "Necessitatibus molestiae."
-   }' --token "Sed atque et et ipsum voluptas."
+      "limit": 7598806631191103766,
+      "user_id": "Id totam est non nesciunt."
+   }' --token "Numquam id impedit."
 `, os.Args[0])
 }
 
@@ -2236,10 +1954,10 @@ Invalidate the ABAC cache.
 
 Example:
     %[1]s abac invalidate-cache --body '{
-      "pattern": "Omnis qui.",
-      "resource_type": "Non nemo quia et.",
-      "user_id": "Id consequatur ut doloremque reprehenderit numquam et."
-   }' --token "Voluptate qui id dolores ullam magnam ipsum."
+      "pattern": "Voluptatem est libero laboriosam quis magnam aliquam.",
+      "resource_type": "Sunt tempora nam iure nihil.",
+      "user_id": "Fugiat delectus optio et."
+   }' --token "Quisquam sed suscipit incidunt voluptatem qui numquam."
 `, os.Args[0])
 }
 
@@ -2250,7 +1968,7 @@ Health check for the ABAC service.
     -token STRING: 
 
 Example:
-    %[1]s abac health --token "Quod hic laboriosam."
+    %[1]s abac health --token "Voluptas fuga assumenda voluptates adipisci."
 `, os.Args[0])
 }
 
@@ -2261,7 +1979,7 @@ Get performance metrics for the ABAC service.
     -token STRING: 
 
 Example:
-    %[1]s abac metrics --token "Aut blanditiis non."
+    %[1]s abac metrics --token "Aliquam explicabo voluptatibus."
 `, os.Args[0])
 }
 
@@ -2292,13 +2010,11 @@ Enable multiple feature flags in bulk
 Example:
     %[1]s admin-featureflag bulk-enable --body '{
       "flag_names": [
-         "Explicabo aut sunt.",
-         "Eius ullam ipsa doloremque.",
-         "Est excepturi doloribus qui vero quaerat.",
-         "Quisquam temporibus magnam."
+         "Molestiae nihil quia ut eum.",
+         "Eos ut."
       ],
-      "reason": "Officia at nulla."
-   }' --tenant-id "Ducimus perferendis assumenda." --token "Est velit quia nihil voluptatem minima."
+      "reason": "Qui earum delectus deserunt."
+   }' --tenant-id "Ipsa ut qui quisquam." --token "Sit nostrum tenetur tempore qui repellendus."
 `, os.Args[0])
 }
 
@@ -2313,12 +2029,13 @@ Disable multiple feature flags in bulk
 Example:
     %[1]s admin-featureflag bulk-disable --body '{
       "flag_names": [
-         "Quasi molestiae veniam ab porro delectus.",
-         "Esse maiores ipsa aut magni.",
-         "Quod non quae aut."
+         "Dolor et est atque aut ad vel.",
+         "Quaerat et sit maxime.",
+         "Exercitationem aut tempore.",
+         "Ullam quod omnis iure nihil vero."
       ],
-      "reason": "Ipsam temporibus nihil dolores distinctio."
-   }' --tenant-id "Exercitationem adipisci." --token "Libero est veniam officia dicta nihil."
+      "reason": "Eum qui."
+   }' --tenant-id "Enim voluptatem facilis." --token "Velit reiciendis nisi velit rem ullam."
 `, os.Args[0])
 }
 
@@ -2330,7 +2047,7 @@ Get system health status
     -token STRING: 
 
 Example:
-    %[1]s admin-featureflag system-health --tenant-id "Molestiae excepturi voluptatem laborum." --token "Harum alias in."
+    %[1]s admin-featureflag system-health --tenant-id "Repellendus natus beatae non velit." --token "Hic harum beatae in doloribus accusamus."
 `, os.Args[0])
 }
 
@@ -2583,6 +2300,653 @@ Example:
 `, os.Args[0])
 }
 
+// financeUsage displays the usage of the finance command and its subcommands.
+func financeUsage() {
+	fmt.Fprintf(os.Stderr, `Financial management service for double-entry bookkeeping and accounting
+Usage:
+    %[1]s [globalflags] finance COMMAND [flags]
+
+COMMAND:
+    create-account-node: Create a new account or account group using unified endpoint
+    get-account-node: Get account or account group by ID
+    get-account-node-by-code: Get account or account group by code
+    list-account-nodes: List unified accounts and groups with filtering
+    update-account-node: Update an existing account or account group
+    delete-account-node: Soft delete an account or account group
+    search-account-nodes: Search accounts and groups
+    get-account-balance: Get current balance for an account
+    get-hierarchy-analysis: Get hierarchy analysis for a parent node
+    create-account: Create a new chart of accounts entry
+    get-account: Get account by ID
+    get-account-by-code: Get account by account code
+    get-account-by-name: Get account by exact account name
+    list-accounts: List accounts with filtering and pagination
+    update-account: Update an existing account
+    delete-account: Soft delete an account
+    get-account-hierarchy: Get account hierarchy tree
+    create-transaction: Create a new financial transaction
+    get-transaction: Get transaction by ID with entries
+    get-transaction-by-number: Get transaction by transaction number
+    list-transactions: List transactions with filtering and pagination
+    post-transaction: Post a transaction (make it permanent)
+    reverse-transaction: Reverse a posted transaction
+    approve-transaction: Approve a transaction for posting
+    validate-transaction: Validate transaction before posting
+    get-transaction-status: Get detailed transaction status and workflow progress
+    submit-approval-decision: Submit approval decision (approve/reject/request changes)
+    request-transaction-changes: Request modifications to a submitted transaction
+    get-transaction-workflow: Get complete workflow history and available actions for a transaction
+    get-trial-balance: Generate trial balance report
+
+Additional help:
+    %[1]s finance COMMAND --help
+`, os.Args[0])
+}
+func financeCreateAccountNodeUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance create-account-node -body JSON
+
+Create a new account or account group using unified endpoint
+    -body JSON: 
+
+Example:
+    %[1]s finance create-account-node --body '{
+      "account_type": "BANK",
+      "allows_manual_entries": true,
+      "cash_flow_category": "OPERATING",
+      "code": "1100",
+      "consolidation_method": "MIN",
+      "currency_code": "USD",
+      "description": "gt6",
+      "display_order": 605222966,
+      "entity_id": "5a3f4c68-208d-48d0-a9f0-ba6f5b9dd2fb",
+      "financial_statement_section": "BALANCE_SHEET_ASSETS",
+      "indent_level": 1,
+      "is_active": true,
+      "is_header": true,
+      "name": "Cash - Operating Account",
+      "node_type": "account",
+      "normal_balance": "DEBIT",
+      "parent_id": "546fe2e9-64db-42f6-a29c-7c43a953290b",
+      "requires_reconciliation": true,
+      "root_type": "ASSET",
+      "show_totals": false
+   }'
+`, os.Args[0])
+}
+
+func financeGetAccountNodeUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-account-node -id STRING
+
+Get account or account group by ID
+    -id STRING: Node ID
+
+Example:
+    %[1]s finance get-account-node --id "2f71db9a-2feb-4809-861a-004cf435afda"
+`, os.Args[0])
+}
+
+func financeGetAccountNodeByCodeUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-account-node-by-code -code STRING
+
+Get account or account group by code
+    -code STRING: Node code
+
+Example:
+    %[1]s finance get-account-node-by-code --code "1100"
+`, os.Args[0])
+}
+
+func financeListAccountNodesUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance list-account-nodes -body JSON -node-types JSON -parent-id STRING -max-level INT32 -include-children BOOL -root-type STRING -account-type STRING -financial-statement-section STRING -cash-flow-category STRING -is-active BOOL -search-query STRING -include-balances BOOL -sort-by STRING -sort-order STRING
+
+List unified accounts and groups with filtering
+    -body JSON: 
+    -node-types JSON: 
+    -parent-id STRING: 
+    -max-level INT32: 
+    -include-children BOOL: 
+    -root-type STRING: 
+    -account-type STRING: 
+    -financial-statement-section STRING: 
+    -cash-flow-category STRING: 
+    -is-active BOOL: 
+    -search-query STRING: 
+    -include-balances BOOL: 
+    -sort-by STRING: 
+    -sort-order STRING: 
+
+Example:
+    %[1]s finance list-account-nodes --body '{
+      "pagination": {
+         "page": 1,
+         "page_size": 20,
+         "sort_by": "created_at",
+         "sort_order": "desc"
+      }
+   }' --node-types '[
+      "account",
+      "group"
+   ]' --parent-id "136ad97f-014f-4900-9319-8cb02bba3f59" --max-level 1975039705 --include-children false --root-type "EXPENSE" --account-type "Quos voluptatem qui dolorem debitis exercitationem." --financial-statement-section "Enim fuga quia amet iste aut eos." --cash-flow-category "FINANCING" --is-active true --search-query "Corporis magni et corporis eligendi et." --include-balances true --sort-by "code" --sort-order "asc"
+`, os.Args[0])
+}
+
+func financeUpdateAccountNodeUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance update-account-node -body JSON -id STRING
+
+Update an existing account or account group
+    -body JSON: 
+    -id STRING: Node ID
+
+Example:
+    %[1]s finance update-account-node --body '{
+      "allows_manual_entries": true,
+      "description": "Cum eligendi rerum repudiandae illum tempora.",
+      "display_order": 569260575,
+      "indent_level": 1,
+      "is_active": false,
+      "name": "l",
+      "requires_reconciliation": true,
+      "show_totals": true
+   }' --id "009a289e-03ab-4d8a-851e-9c9bd15e28f8"
+`, os.Args[0])
+}
+
+func financeDeleteAccountNodeUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance delete-account-node -id STRING
+
+Soft delete an account or account group
+    -id STRING: Node ID
+
+Example:
+    %[1]s finance delete-account-node --id "d9f14ef4-9864-4df5-90a0-95894a3eb73e"
+`, os.Args[0])
+}
+
+func financeSearchAccountNodesUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance search-account-nodes -query STRING -node-types JSON -limit INT32 -include-inactive BOOL
+
+Search accounts and groups
+    -query STRING: 
+    -node-types JSON: 
+    -limit INT32: 
+    -include-inactive BOOL: 
+
+Example:
+    %[1]s finance search-account-nodes --query "cash" --node-types '[
+      "group",
+      "group",
+      "account"
+   ]' --limit 17 --include-inactive false
+`, os.Args[0])
+}
+
+func financeGetAccountBalanceUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-account-balance -account-id STRING -as-of-date STRING
+
+Get current balance for an account
+    -account-id STRING: Account ID
+    -as-of-date STRING: 
+
+Example:
+    %[1]s finance get-account-balance --account-id "8100b2b0-8f61-47c9-ad8a-967d0e366c1e" --as-of-date "2014-08-22"
+`, os.Args[0])
+}
+
+func financeGetHierarchyAnalysisUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-hierarchy-analysis -parent-id STRING -include-balance-data BOOL -max-depth INT32 -as-of-date STRING
+
+Get hierarchy analysis for a parent node
+    -parent-id STRING: Parent node ID
+    -include-balance-data BOOL: 
+    -max-depth INT32: 
+    -as-of-date STRING: 
+
+Example:
+    %[1]s finance get-hierarchy-analysis --parent-id "0ce28dc9-a946-43b4-93cc-7b3cea31a60d" --include-balance-data true --max-depth 1717144653 --as-of-date "1973-09-23"
+`, os.Args[0])
+}
+
+func financeCreateAccountUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance create-account -body JSON
+
+Create a new chart of accounts entry
+    -body JSON: 
+
+Example:
+    %[1]s finance create-account --body '{
+      "account_code": "1100",
+      "account_description": "byz",
+      "account_name": "Cash - Operating Account",
+      "account_type": "BANK",
+      "allow_manual_entries": false,
+      "cash_flow_type": "INVESTING",
+      "currency_code": "USD",
+      "entity_id": "14105608-4056-4455-989e-fd153e760ff6",
+      "is_active": false,
+      "normal_balance": "DEBIT",
+      "parent_account_id": "8e4c1159-7702-4b03-8a82-eb18dc8f3a42",
+      "require_reference": true,
+      "root_type": "ASSET"
+   }'
+`, os.Args[0])
+}
+
+func financeGetAccountUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-account -id STRING
+
+Get account by ID
+    -id STRING: Account ID
+
+Example:
+    %[1]s finance get-account --id "495f8b9e-ca63-4024-9aba-a86a66df4e16"
+`, os.Args[0])
+}
+
+func financeGetAccountByCodeUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-account-by-code -account-code STRING
+
+Get account by account code
+    -account-code STRING: Account code
+
+Example:
+    %[1]s finance get-account-by-code --account-code "1100"
+`, os.Args[0])
+}
+
+func financeGetAccountByNameUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-account-by-name -account-name STRING
+
+Get account by exact account name
+    -account-name STRING: 
+
+Example:
+    %[1]s finance get-account-by-name --account-name "Cash - Operating Account"
+`, os.Args[0])
+}
+
+func financeListAccountsUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance list-accounts -body JSON -root-type STRING -account-type STRING -is-active BOOL -parent-id STRING -search STRING
+
+List accounts with filtering and pagination
+    -body JSON: 
+    -root-type STRING: 
+    -account-type STRING: 
+    -is-active BOOL: 
+    -parent-id STRING: 
+    -search STRING: 
+
+Example:
+    %[1]s finance list-accounts --body '{
+      "pagination": {
+         "page": 1,
+         "page_size": 20,
+         "sort_by": "created_at",
+         "sort_order": "desc"
+      }
+   }' --root-type "REVENUE" --account-type "Sint vel dolor recusandae." --is-active false --parent-id "933a57d1-0f73-4389-9476-0b9edbacabc7" --search "Quia et asperiores et ratione rerum distinctio."
+`, os.Args[0])
+}
+
+func financeUpdateAccountUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance update-account -body JSON -id STRING
+
+Update an existing account
+    -body JSON: 
+    -id STRING: Account ID
+
+Example:
+    %[1]s finance update-account --body '{
+      "account_description": "Qui non ea et voluptatem iure.",
+      "account_name": "6",
+      "allow_manual_entries": true,
+      "cash_flow_type": "FINANCING",
+      "display_order": 340555540,
+      "is_active": true,
+      "require_reference": false,
+      "show_in_reports": false
+   }' --id "5250e646-5ce1-4c32-b80d-ad9c84da109d"
+`, os.Args[0])
+}
+
+func financeDeleteAccountUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance delete-account -id STRING
+
+Soft delete an account
+    -id STRING: Account ID
+
+Example:
+    %[1]s finance delete-account --id "ab869f10-6903-4910-867a-3c26b71737d0"
+`, os.Args[0])
+}
+
+func financeGetAccountHierarchyUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-account-hierarchy -root-id STRING
+
+Get account hierarchy tree
+    -root-id STRING: 
+
+Example:
+    %[1]s finance get-account-hierarchy --root-id "9adda640-be81-4a75-8e12-ff2268f7ff50"
+`, os.Args[0])
+}
+
+func financeCreateTransactionUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance create-transaction -body JSON
+
+Create a new financial transaction
+    -body JSON: 
+
+Example:
+    %[1]s finance create-transaction --body '{
+      "attachments": [
+         "receipt-uuid",
+         "approval-form-uuid"
+      ],
+      "auto_approve": true,
+      "cost_center": "CC001",
+      "currency": "OVR",
+      "department": "administration",
+      "description": "Office supplies purchase",
+      "entity_id": "26a4a848-d1ac-48aa-b23a-23589570e135",
+      "entries": [
+         {
+            "account_code": "1100",
+            "account_id": "ef866680-2edf-4aa2-aef8-df80904f4b55",
+            "cost_center": "Autem voluptatum et odio minima neque.",
+            "credit_amount": "0.00",
+            "debit_amount": "1500.00",
+            "department": "Et voluptas alias et harum sapiente.",
+            "description": "Cash payment for supplies",
+            "project_id": "92fb89c1-ff41-492b-9b0f-7aaa9ffeebe9",
+            "reference": "Quod aut.",
+            "tax_code": "Est eos aut accusamus placeat.",
+            "tax_rate": "Fugit rerum aspernatur accusantium expedita."
+         },
+         {
+            "account_code": "1100",
+            "account_id": "ef866680-2edf-4aa2-aef8-df80904f4b55",
+            "cost_center": "Autem voluptatum et odio minima neque.",
+            "credit_amount": "0.00",
+            "debit_amount": "1500.00",
+            "department": "Et voluptas alias et harum sapiente.",
+            "description": "Cash payment for supplies",
+            "project_id": "92fb89c1-ff41-492b-9b0f-7aaa9ffeebe9",
+            "reference": "Quod aut.",
+            "tax_code": "Est eos aut accusamus placeat.",
+            "tax_rate": "Fugit rerum aspernatur accusantium expedita."
+         },
+         {
+            "account_code": "1100",
+            "account_id": "ef866680-2edf-4aa2-aef8-df80904f4b55",
+            "cost_center": "Autem voluptatum et odio minima neque.",
+            "credit_amount": "0.00",
+            "debit_amount": "1500.00",
+            "department": "Et voluptas alias et harum sapiente.",
+            "description": "Cash payment for supplies",
+            "project_id": "92fb89c1-ff41-492b-9b0f-7aaa9ffeebe9",
+            "reference": "Quod aut.",
+            "tax_code": "Est eos aut accusamus placeat.",
+            "tax_rate": "Fugit rerum aspernatur accusantium expedita."
+         }
+      ],
+      "priority": "urgent",
+      "reference_number": "PO-2025-089",
+      "transaction_date": "2025-09-13",
+      "transaction_number": "Non officia qui qui a sit placeat.",
+      "transaction_type": "EXPENSE_PAYMENT"
+   }'
+`, os.Args[0])
+}
+
+func financeGetTransactionUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-transaction -id STRING
+
+Get transaction by ID with entries
+    -id STRING: Transaction ID
+
+Example:
+    %[1]s finance get-transaction --id "d2d49d49-02f0-4e00-981a-983ccf8891cc"
+`, os.Args[0])
+}
+
+func financeGetTransactionByNumberUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-transaction-by-number -transaction-number STRING
+
+Get transaction by transaction number
+    -transaction-number STRING: Transaction number
+
+Example:
+    %[1]s finance get-transaction-by-number --transaction-number "TXN-2025-001"
+`, os.Args[0])
+}
+
+func financeListTransactionsUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance list-transactions -body JSON -status STRING -type STRING -account-id STRING -search STRING
+
+List transactions with filtering and pagination
+    -body JSON: 
+    -status STRING: 
+    -type STRING: 
+    -account-id STRING: 
+    -search STRING: 
+
+Example:
+    %[1]s finance list-transactions --body '{
+      "date_range": {
+         "end_date": "2023-12-31T23:59:59Z",
+         "start_date": "2023-12-01T00:00:00Z"
+      },
+      "pagination": {
+         "page": 1,
+         "page_size": 20,
+         "sort_by": "created_at",
+         "sort_order": "desc"
+      }
+   }' --status "DRAFT" --type "JOURNAL_ENTRY" --account-id "0fb0ba17-3a4d-45f0-8656-71382a5b0fd4" --search "Quis ipsum et."
+`, os.Args[0])
+}
+
+func financePostTransactionUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance post-transaction -body JSON -id STRING
+
+Post a transaction (make it permanent)
+    -body JSON: 
+    -id STRING: Transaction ID
+
+Example:
+    %[1]s finance post-transaction --body '{
+      "force_post": true,
+      "posting_date": "1980-07-24",
+      "validate_before_posting": false
+   }' --id "9fdeded2-9def-4183-998f-15e3e0afaa77"
+`, os.Args[0])
+}
+
+func financeReverseTransactionUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance reverse-transaction -body JSON -id STRING
+
+Reverse a posted transaction
+    -body JSON: 
+    -id STRING: Transaction ID
+
+Example:
+    %[1]s finance reverse-transaction --body '{
+      "reason": "Incorrect entry - duplicate payment",
+      "reversal_date": "2010-07-06"
+   }' --id "8814279a-482d-4829-b8e4-5cdc086e829a"
+`, os.Args[0])
+}
+
+func financeApproveTransactionUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance approve-transaction -body JSON -id STRING
+
+Approve a transaction for posting
+    -body JSON: 
+    -id STRING: Transaction ID
+
+Example:
+    %[1]s finance approve-transaction --body '{
+      "notes": "tqk"
+   }' --id "ca786a4c-f18b-4a14-ae6e-fd9cd0b44dca"
+`, os.Args[0])
+}
+
+func financeValidateTransactionUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance validate-transaction -body JSON
+
+Validate transaction before posting
+    -body JSON: 
+
+Example:
+    %[1]s finance validate-transaction --body '{
+      "transaction": {
+         "attachments": [
+            "receipt-uuid",
+            "approval-form-uuid"
+         ],
+         "auto_approve": true,
+         "cost_center": "CC001",
+         "currency": "FWN",
+         "department": "administration",
+         "description": "Office supplies purchase",
+         "entity_id": "cd263e38-1cf0-49b2-a6a4-1bde1fa69f93",
+         "entries": [
+            {
+               "account_code": "1100",
+               "account_id": "ef866680-2edf-4aa2-aef8-df80904f4b55",
+               "cost_center": "Autem voluptatum et odio minima neque.",
+               "credit_amount": "0.00",
+               "debit_amount": "1500.00",
+               "department": "Et voluptas alias et harum sapiente.",
+               "description": "Cash payment for supplies",
+               "project_id": "92fb89c1-ff41-492b-9b0f-7aaa9ffeebe9",
+               "reference": "Quod aut.",
+               "tax_code": "Est eos aut accusamus placeat.",
+               "tax_rate": "Fugit rerum aspernatur accusantium expedita."
+            },
+            {
+               "account_code": "1100",
+               "account_id": "ef866680-2edf-4aa2-aef8-df80904f4b55",
+               "cost_center": "Autem voluptatum et odio minima neque.",
+               "credit_amount": "0.00",
+               "debit_amount": "1500.00",
+               "department": "Et voluptas alias et harum sapiente.",
+               "description": "Cash payment for supplies",
+               "project_id": "92fb89c1-ff41-492b-9b0f-7aaa9ffeebe9",
+               "reference": "Quod aut.",
+               "tax_code": "Est eos aut accusamus placeat.",
+               "tax_rate": "Fugit rerum aspernatur accusantium expedita."
+            },
+            {
+               "account_code": "1100",
+               "account_id": "ef866680-2edf-4aa2-aef8-df80904f4b55",
+               "cost_center": "Autem voluptatum et odio minima neque.",
+               "credit_amount": "0.00",
+               "debit_amount": "1500.00",
+               "department": "Et voluptas alias et harum sapiente.",
+               "description": "Cash payment for supplies",
+               "project_id": "92fb89c1-ff41-492b-9b0f-7aaa9ffeebe9",
+               "reference": "Quod aut.",
+               "tax_code": "Est eos aut accusamus placeat.",
+               "tax_rate": "Fugit rerum aspernatur accusantium expedita."
+            }
+         ],
+         "priority": "urgent",
+         "reference_number": "PO-2025-089",
+         "transaction_date": "2025-09-13",
+         "transaction_number": "Officiis rerum necessitatibus qui perferendis corrupti minima.",
+         "transaction_type": "EXPENSE_PAYMENT"
+      },
+      "validation_level": "COMPLETE"
+   }'
+`, os.Args[0])
+}
+
+func financeGetTransactionStatusUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-transaction-status -id STRING
+
+Get detailed transaction status and workflow progress
+    -id STRING: Transaction ID
+
+Example:
+    %[1]s finance get-transaction-status --id "a112c0b5-2307-4878-86c2-a3164164e248"
+`, os.Args[0])
+}
+
+func financeSubmitApprovalDecisionUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance submit-approval-decision -body JSON -id STRING
+
+Submit approval decision (approve/reject/request changes)
+    -body JSON: 
+    -id STRING: Transaction ID
+
+Example:
+    %[1]s finance submit-approval-decision --body '{
+      "approval_level": "system",
+      "approver_id": "8fd55358-a016-4d9c-bf5f-7efd337eb19a",
+      "comments": "wh7",
+      "decision": "rejected",
+      "escalation_reason": "Deleniti enim et."
+   }' --id "b9b4c6fb-d32e-4acb-ac9e-9001b870ac4b"
+`, os.Args[0])
+}
+
+func financeRequestTransactionChangesUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance request-transaction-changes -body JSON -id STRING
+
+Request modifications to a submitted transaction
+    -body JSON: 
+    -id STRING: Transaction ID
+
+Example:
+    %[1]s finance request-transaction-changes --body '{
+      "due_date": "2009-05-18T13:13:41Z",
+      "priority": "urgent",
+      "reason": "7g",
+      "requested_by": "f88caa2d-89cc-4a2e-9724-49eadcda389a",
+      "required_changes": [
+         {
+            "current_value": "Assumenda incidunt labore reiciendis impedit.",
+            "field": "Et consequatur voluptatem debitis praesentium et veniam.",
+            "is_mandatory": false,
+            "reason": "Enim ut numquam explicabo odit maxime dolores.",
+            "suggested_value": "Nisi est aliquam omnis ab dignissimos."
+         },
+         {
+            "current_value": "Assumenda incidunt labore reiciendis impedit.",
+            "field": "Et consequatur voluptatem debitis praesentium et veniam.",
+            "is_mandatory": false,
+            "reason": "Enim ut numquam explicabo odit maxime dolores.",
+            "suggested_value": "Nisi est aliquam omnis ab dignissimos."
+         }
+      ]
+   }' --id "81a8b777-1402-451a-9154-dff79a8aa28b"
+`, os.Args[0])
+}
+
+func financeGetTransactionWorkflowUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-transaction-workflow -id STRING
+
+Get complete workflow history and available actions for a transaction
+    -id STRING: Transaction ID
+
+Example:
+    %[1]s finance get-transaction-workflow --id "72f09db9-9637-4e09-82c6-9b059c0f68ce"
+`, os.Args[0])
+}
+
+func financeGetTrialBalanceUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] finance get-trial-balance -as-of-date STRING -include-zero-balances BOOL
+
+Generate trial balance report
+    -as-of-date STRING: 
+    -include-zero-balances BOOL: 
+
+Example:
+    %[1]s finance get-trial-balance --as-of-date "2011-07-02" --include-zero-balances true
+`, os.Args[0])
+}
+
 // organizationUsage displays the usage of the organization command and its
 // subcommands.
 func organizationUsage() {
@@ -2646,6 +3010,18 @@ Example:
          }
       ],
       "contacts": [
+         {
+            "email": "john.doe@acme.com",
+            "name": "John Doe",
+            "phone": "+1-555-123-4567",
+            "title": "Chief Technology Officer"
+         },
+         {
+            "email": "john.doe@acme.com",
+            "name": "John Doe",
+            "phone": "+1-555-123-4567",
+            "title": "Chief Technology Officer"
+         },
          {
             "email": "john.doe@acme.com",
             "name": "John Doe",
@@ -2726,11 +3102,10 @@ Example:
          "currency": "USD",
          "fiscal_year_start": "01-01",
          "integrations": {
-            "Aut dolores iure et debitis molestias tempore.": "Quisquam possimus fugit eveniet autem illum."
+            "Dolor maiores consequuntur sequi dicta.": "Doloremque nihil repellat dignissimos iste rem rem."
          },
          "preferences": {
-            "Distinctio doloremque dolorum sunt odio.": "Odio vitae aperiam tempora iste.",
-            "Facere aut eos quam magnam esse atque.": "Quas facere nihil."
+            "Qui nobis omnis quibusdam.": "Tempore id tempora quisquam ad."
          },
          "timezone": "America/New_York"
       },
@@ -2810,26 +3185,9 @@ Example:
             "street_address_1": "123 Main Street",
             "street_address_2": "Suite 456",
             "type": "HEADQUARTERS"
-         },
-         {
-            "city": "New York",
-            "country": "United States",
-            "country_code": "US",
-            "is_primary": true,
-            "postal_code": "10001",
-            "state_province": "NY",
-            "street_address_1": "123 Main Street",
-            "street_address_2": "Suite 456",
-            "type": "HEADQUARTERS"
          }
       ],
       "contacts": [
-         {
-            "email": "john.doe@acme.com",
-            "name": "John Doe",
-            "phone": "+1-555-123-4567",
-            "title": "Chief Technology Officer"
-         },
          {
             "email": "john.doe@acme.com",
             "name": "John Doe",
@@ -2910,11 +3268,10 @@ Example:
          "currency": "USD",
          "fiscal_year_start": "01-01",
          "integrations": {
-            "Aut dolores iure et debitis molestias tempore.": "Quisquam possimus fugit eveniet autem illum."
+            "Dolor maiores consequuntur sequi dicta.": "Doloremque nihil repellat dignissimos iste rem rem."
          },
          "preferences": {
-            "Distinctio doloremque dolorum sunt odio.": "Odio vitae aperiam tempora iste.",
-            "Facere aut eos quam magnam esse atque.": "Quas facere nihil."
+            "Qui nobis omnis quibusdam.": "Tempore id tempora quisquam ad."
          },
          "timezone": "America/New_York"
       },
@@ -3132,7 +3489,7 @@ Get user attributes for ABAC evaluation
     -attribute-filter STRING: 
 
 Example:
-    %[1]s user get-attributes --id "550e8400-e29b-41d4-a716-446655440000" --include-metadata false --include-derived false --fresh-only true --attribute-filter "user.security_level,user.department"
+    %[1]s user get-attributes --id "550e8400-e29b-41d4-a716-446655440000" --include-metadata false --include-derived true --fresh-only false --attribute-filter "user.security_level,user.department"
 `, os.Args[0])
 }
 
@@ -3181,14 +3538,13 @@ Example:
          "batch_size": 100,
          "fail_on_error": true,
          "invalidate_cache": true,
-         "parallel_processing": false,
+         "parallel_processing": true,
          "validate_all": false
       },
       "updates": [
          {
             "attributes": {
-               "Commodi doloribus ut ipsam consequatur tenetur.": "Dolor eos voluptatem.",
-               "Quae officia blanditiis vitae consequatur.": "Quam quo dolores aut expedita ratione."
+               "Et magnam quis.": "Maxime sed eos iure quos ipsum."
             },
             "metadata": {
                "confidence_score": 1,
@@ -3202,23 +3558,7 @@ Example:
          },
          {
             "attributes": {
-               "Commodi doloribus ut ipsam consequatur tenetur.": "Dolor eos voluptatem.",
-               "Quae officia blanditiis vitae consequatur.": "Quam quo dolores aut expedita ratione."
-            },
-            "metadata": {
-               "confidence_score": 1,
-               "data_classification": "internal",
-               "expires_at": "2025-01-16T14:30:00Z",
-               "last_verified": "2025-01-15T14:30:00Z",
-               "source": "hr_system",
-               "updated_by": "hr_sync_service"
-            },
-            "user_id": "550e8400-e29b-41d4-a716-446655440000"
-         },
-         {
-            "attributes": {
-               "Commodi doloribus ut ipsam consequatur tenetur.": "Dolor eos voluptatem.",
-               "Quae officia blanditiis vitae consequatur.": "Quam quo dolores aut expedita ratione."
+               "Et magnam quis.": "Maxime sed eos iure quos ipsum."
             },
             "metadata": {
                "confidence_score": 1,
@@ -3267,9 +3607,7 @@ Example:
     %[1]s user authorize-action --body '{
       "action": "read",
       "additional_context": {
-         "Dolores nostrum nihil quis similique est quia.": "Eveniet ut ipsa.",
-         "Eaque facilis placeat debitis.": "Aliquam perferendis explicabo.",
-         "Voluptatem ea qui eaque officiis.": "In a non et."
+         "Corrupti vel dolorem id adipisci facere in.": "Deserunt voluptas dicta magnam nemo quisquam voluptate."
       },
       "environment": {
          "location": {
@@ -3326,7 +3664,7 @@ Get user session attributes for ABAC
     -include-risk-assessment BOOL: 
 
 Example:
-    %[1]s user get-session-attributes --user-id "550e8400-e29b-41d4-a716-446655440000" --session-id "session_abc123" --include-analytics true --include-risk-assessment true
+    %[1]s user get-session-attributes --user-id "550e8400-e29b-41d4-a716-446655440000" --session-id "session_abc123" --include-analytics true --include-risk-assessment false
 `, os.Args[0])
 }
 
@@ -3341,8 +3679,9 @@ Set session context for user
 Example:
     %[1]s user set-session-context --body '{
       "computed_attributes": {
-         "Animi a occaecati.": "Laboriosam laboriosam maxime consequuntur accusantium sequi.",
-         "Atque id alias.": "Modi recusandae eos voluptatem."
+         "Beatae reprehenderit voluptatem.": "Ad tempore.",
+         "Est ducimus recusandae nemo quos modi atque.": "Molestias voluptates ut ut nesciunt distinctio.",
+         "Et aperiam consequuntur voluptatem qui sunt voluptatibus.": "Veritatis amet."
       },
       "session": {
          "device_type": "desktop",
@@ -3353,7 +3692,7 @@ Example:
          "security_score": 0.95,
          "user_agent": "Mozilla/5.0..."
       }
-   }' --user-id "6b245a90-a8da-46e2-8483-45bf6ec362b1" --session-id "session_abc123"
+   }' --user-id "441cb2e7-b311-40bb-955d-e1fb63c7da1f" --session-id "session_abc123"
 `, os.Args[0])
 }
 
@@ -3367,7 +3706,7 @@ Get user context for ABAC
     -include-access-patterns BOOL: 
 
 Example:
-    %[1]s user get-user-context --id "550e8400-e29b-41d4-a716-446655440000" --include-derived true --include-session false --include-access-patterns true
+    %[1]s user get-user-context --id "550e8400-e29b-41d4-a716-446655440000" --include-derived false --include-session true --include-access-patterns true
 `, os.Args[0])
 }
 
@@ -3381,9 +3720,7 @@ Validate user attributes for ABAC compliance
 Example:
     %[1]s user validate-attributes --body '{
       "attributes": {
-         "Cum quia et quaerat veritatis.": "Praesentium aut ut totam.",
-         "Ea ad labore.": "Ipsum dolorem.",
-         "Ullam animi molestias.": "Dolore consequatur eum explicabo placeat."
+         "Voluptas incidunt laboriosam iste cumque.": "Quis qui consequuntur quia quasi minus."
       },
       "validation_rules": [
          "security_clearance",

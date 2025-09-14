@@ -18,25 +18,37 @@ import (
 
 // Server lists the finance service endpoint HTTP handlers.
 type Server struct {
-	Mounts                 []*MountPoint
-	CreateAccount          http.Handler
-	GetAccount             http.Handler
-	GetAccountByCode       http.Handler
-	GetAccountByName       http.Handler
-	ListAccounts           http.Handler
-	UpdateAccount          http.Handler
-	DeleteAccount          http.Handler
-	GetAccountHierarchy    http.Handler
-	GetAccountBalance      http.Handler
-	CreateTransaction      http.Handler
-	GetTransaction         http.Handler
-	GetTransactionByNumber http.Handler
-	ListTransactions       http.Handler
-	PostTransaction        http.Handler
-	ReverseTransaction     http.Handler
-	ApproveTransaction     http.Handler
-	ValidateTransaction    http.Handler
-	GetTrialBalance        http.Handler
+	Mounts                    []*MountPoint
+	CreateAccountNode         http.Handler
+	GetAccountNode            http.Handler
+	GetAccountNodeByCode      http.Handler
+	ListAccountNodes          http.Handler
+	UpdateAccountNode         http.Handler
+	DeleteAccountNode         http.Handler
+	SearchAccountNodes        http.Handler
+	GetAccountBalance         http.Handler
+	GetHierarchyAnalysis      http.Handler
+	CreateAccount             http.Handler
+	GetAccount                http.Handler
+	GetAccountByCode          http.Handler
+	GetAccountByName          http.Handler
+	ListAccounts              http.Handler
+	UpdateAccount             http.Handler
+	DeleteAccount             http.Handler
+	GetAccountHierarchy       http.Handler
+	CreateTransaction         http.Handler
+	GetTransaction            http.Handler
+	GetTransactionByNumber    http.Handler
+	ListTransactions          http.Handler
+	PostTransaction           http.Handler
+	ReverseTransaction        http.Handler
+	ApproveTransaction        http.Handler
+	ValidateTransaction       http.Handler
+	GetTransactionStatus      http.Handler
+	SubmitApprovalDecision    http.Handler
+	RequestTransactionChanges http.Handler
+	GetTransactionWorkflow    http.Handler
+	GetTrialBalance           http.Handler
 }
 
 // MountPoint holds information about the mounted endpoints.
@@ -66,7 +78,16 @@ func New(
 ) *Server {
 	return &Server{
 		Mounts: []*MountPoint{
-			{"CreateAccount", "POST", "/api/v1/finance/accounts"},
+			{"CreateAccountNode", "POST", "/api/v1/finance/accounts"},
+			{"GetAccountNode", "GET", "/api/v1/finance/{id}"},
+			{"GetAccountNodeByCode", "GET", "/api/v1/finance/accounts/by-code/{code}"},
+			{"ListAccountNodes", "GET", "/api/v1/finance/accounts"},
+			{"UpdateAccountNode", "PUT", "/api/v1/finance/{id}"},
+			{"DeleteAccountNode", "DELETE", "/api/v1/finance/{id}"},
+			{"SearchAccountNodes", "GET", "/api/v1/finance/accounts/search"},
+			{"GetAccountBalance", "GET", "/api/v1/finance/accounts/{account_id}/balance"},
+			{"GetHierarchyAnalysis", "GET", "/api/v1/finance/analytics/hierarchy/{parent_id}"},
+			{"CreateAccount", "POST", "/api/v1/finance/legacy/accounts"},
 			{"GetAccount", "GET", "/api/v1/finance/{id}"},
 			{"GetAccountByCode", "GET", "/api/v1/finance/accounts/by-code/{account_code}"},
 			{"GetAccountByName", "GET", "/api/v1/finance/accounts/by-name"},
@@ -74,7 +95,6 @@ func New(
 			{"UpdateAccount", "PUT", "/api/v1/finance/{id}"},
 			{"DeleteAccount", "DELETE", "/api/v1/finance/{id}"},
 			{"GetAccountHierarchy", "GET", "/api/v1/finance/accounts/hierarchy"},
-			{"GetAccountBalance", "GET", "/api/v1/finance/accounts/{account_id}/balance"},
 			{"CreateTransaction", "POST", "/api/v1/finance/transactions"},
 			{"GetTransaction", "GET", "/api/v1/finance/transactions/{id}"},
 			{"GetTransactionByNumber", "GET", "/api/v1/finance/transactions/by-number/{transaction_number}"},
@@ -83,26 +103,42 @@ func New(
 			{"ReverseTransaction", "POST", "/api/v1/finance/transactions/{id}/reverse"},
 			{"ApproveTransaction", "POST", "/api/v1/finance/transactions/{id}/approve"},
 			{"ValidateTransaction", "POST", "/api/v1/finance/transactions/validate"},
+			{"GetTransactionStatus", "GET", "/api/v1/finance/transactions/{id}/status"},
+			{"SubmitApprovalDecision", "POST", "/api/v1/finance/transactions/{id}/approvals"},
+			{"RequestTransactionChanges", "POST", "/api/v1/finance/transactions/{id}/change-requests"},
+			{"GetTransactionWorkflow", "GET", "/api/v1/finance/transactions/{id}/workflow"},
 			{"GetTrialBalance", "GET", "/api/v1/finance/reports/trial-balance"},
 		},
-		CreateAccount:          NewCreateAccountHandler(e.CreateAccount, mux, decoder, encoder, errhandler, formatter),
-		GetAccount:             NewGetAccountHandler(e.GetAccount, mux, decoder, encoder, errhandler, formatter),
-		GetAccountByCode:       NewGetAccountByCodeHandler(e.GetAccountByCode, mux, decoder, encoder, errhandler, formatter),
-		GetAccountByName:       NewGetAccountByNameHandler(e.GetAccountByName, mux, decoder, encoder, errhandler, formatter),
-		ListAccounts:           NewListAccountsHandler(e.ListAccounts, mux, decoder, encoder, errhandler, formatter),
-		UpdateAccount:          NewUpdateAccountHandler(e.UpdateAccount, mux, decoder, encoder, errhandler, formatter),
-		DeleteAccount:          NewDeleteAccountHandler(e.DeleteAccount, mux, decoder, encoder, errhandler, formatter),
-		GetAccountHierarchy:    NewGetAccountHierarchyHandler(e.GetAccountHierarchy, mux, decoder, encoder, errhandler, formatter),
-		GetAccountBalance:      NewGetAccountBalanceHandler(e.GetAccountBalance, mux, decoder, encoder, errhandler, formatter),
-		CreateTransaction:      NewCreateTransactionHandler(e.CreateTransaction, mux, decoder, encoder, errhandler, formatter),
-		GetTransaction:         NewGetTransactionHandler(e.GetTransaction, mux, decoder, encoder, errhandler, formatter),
-		GetTransactionByNumber: NewGetTransactionByNumberHandler(e.GetTransactionByNumber, mux, decoder, encoder, errhandler, formatter),
-		ListTransactions:       NewListTransactionsHandler(e.ListTransactions, mux, decoder, encoder, errhandler, formatter),
-		PostTransaction:        NewPostTransactionHandler(e.PostTransaction, mux, decoder, encoder, errhandler, formatter),
-		ReverseTransaction:     NewReverseTransactionHandler(e.ReverseTransaction, mux, decoder, encoder, errhandler, formatter),
-		ApproveTransaction:     NewApproveTransactionHandler(e.ApproveTransaction, mux, decoder, encoder, errhandler, formatter),
-		ValidateTransaction:    NewValidateTransactionHandler(e.ValidateTransaction, mux, decoder, encoder, errhandler, formatter),
-		GetTrialBalance:        NewGetTrialBalanceHandler(e.GetTrialBalance, mux, decoder, encoder, errhandler, formatter),
+		CreateAccountNode:         NewCreateAccountNodeHandler(e.CreateAccountNode, mux, decoder, encoder, errhandler, formatter),
+		GetAccountNode:            NewGetAccountNodeHandler(e.GetAccountNode, mux, decoder, encoder, errhandler, formatter),
+		GetAccountNodeByCode:      NewGetAccountNodeByCodeHandler(e.GetAccountNodeByCode, mux, decoder, encoder, errhandler, formatter),
+		ListAccountNodes:          NewListAccountNodesHandler(e.ListAccountNodes, mux, decoder, encoder, errhandler, formatter),
+		UpdateAccountNode:         NewUpdateAccountNodeHandler(e.UpdateAccountNode, mux, decoder, encoder, errhandler, formatter),
+		DeleteAccountNode:         NewDeleteAccountNodeHandler(e.DeleteAccountNode, mux, decoder, encoder, errhandler, formatter),
+		SearchAccountNodes:        NewSearchAccountNodesHandler(e.SearchAccountNodes, mux, decoder, encoder, errhandler, formatter),
+		GetAccountBalance:         NewGetAccountBalanceHandler(e.GetAccountBalance, mux, decoder, encoder, errhandler, formatter),
+		GetHierarchyAnalysis:      NewGetHierarchyAnalysisHandler(e.GetHierarchyAnalysis, mux, decoder, encoder, errhandler, formatter),
+		CreateAccount:             NewCreateAccountHandler(e.CreateAccount, mux, decoder, encoder, errhandler, formatter),
+		GetAccount:                NewGetAccountHandler(e.GetAccount, mux, decoder, encoder, errhandler, formatter),
+		GetAccountByCode:          NewGetAccountByCodeHandler(e.GetAccountByCode, mux, decoder, encoder, errhandler, formatter),
+		GetAccountByName:          NewGetAccountByNameHandler(e.GetAccountByName, mux, decoder, encoder, errhandler, formatter),
+		ListAccounts:              NewListAccountsHandler(e.ListAccounts, mux, decoder, encoder, errhandler, formatter),
+		UpdateAccount:             NewUpdateAccountHandler(e.UpdateAccount, mux, decoder, encoder, errhandler, formatter),
+		DeleteAccount:             NewDeleteAccountHandler(e.DeleteAccount, mux, decoder, encoder, errhandler, formatter),
+		GetAccountHierarchy:       NewGetAccountHierarchyHandler(e.GetAccountHierarchy, mux, decoder, encoder, errhandler, formatter),
+		CreateTransaction:         NewCreateTransactionHandler(e.CreateTransaction, mux, decoder, encoder, errhandler, formatter),
+		GetTransaction:            NewGetTransactionHandler(e.GetTransaction, mux, decoder, encoder, errhandler, formatter),
+		GetTransactionByNumber:    NewGetTransactionByNumberHandler(e.GetTransactionByNumber, mux, decoder, encoder, errhandler, formatter),
+		ListTransactions:          NewListTransactionsHandler(e.ListTransactions, mux, decoder, encoder, errhandler, formatter),
+		PostTransaction:           NewPostTransactionHandler(e.PostTransaction, mux, decoder, encoder, errhandler, formatter),
+		ReverseTransaction:        NewReverseTransactionHandler(e.ReverseTransaction, mux, decoder, encoder, errhandler, formatter),
+		ApproveTransaction:        NewApproveTransactionHandler(e.ApproveTransaction, mux, decoder, encoder, errhandler, formatter),
+		ValidateTransaction:       NewValidateTransactionHandler(e.ValidateTransaction, mux, decoder, encoder, errhandler, formatter),
+		GetTransactionStatus:      NewGetTransactionStatusHandler(e.GetTransactionStatus, mux, decoder, encoder, errhandler, formatter),
+		SubmitApprovalDecision:    NewSubmitApprovalDecisionHandler(e.SubmitApprovalDecision, mux, decoder, encoder, errhandler, formatter),
+		RequestTransactionChanges: NewRequestTransactionChangesHandler(e.RequestTransactionChanges, mux, decoder, encoder, errhandler, formatter),
+		GetTransactionWorkflow:    NewGetTransactionWorkflowHandler(e.GetTransactionWorkflow, mux, decoder, encoder, errhandler, formatter),
+		GetTrialBalance:           NewGetTrialBalanceHandler(e.GetTrialBalance, mux, decoder, encoder, errhandler, formatter),
 	}
 }
 
@@ -111,6 +147,15 @@ func (s *Server) Service() string { return "finance" }
 
 // Use wraps the server handlers with the given middleware.
 func (s *Server) Use(m func(http.Handler) http.Handler) {
+	s.CreateAccountNode = m(s.CreateAccountNode)
+	s.GetAccountNode = m(s.GetAccountNode)
+	s.GetAccountNodeByCode = m(s.GetAccountNodeByCode)
+	s.ListAccountNodes = m(s.ListAccountNodes)
+	s.UpdateAccountNode = m(s.UpdateAccountNode)
+	s.DeleteAccountNode = m(s.DeleteAccountNode)
+	s.SearchAccountNodes = m(s.SearchAccountNodes)
+	s.GetAccountBalance = m(s.GetAccountBalance)
+	s.GetHierarchyAnalysis = m(s.GetHierarchyAnalysis)
 	s.CreateAccount = m(s.CreateAccount)
 	s.GetAccount = m(s.GetAccount)
 	s.GetAccountByCode = m(s.GetAccountByCode)
@@ -119,7 +164,6 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.UpdateAccount = m(s.UpdateAccount)
 	s.DeleteAccount = m(s.DeleteAccount)
 	s.GetAccountHierarchy = m(s.GetAccountHierarchy)
-	s.GetAccountBalance = m(s.GetAccountBalance)
 	s.CreateTransaction = m(s.CreateTransaction)
 	s.GetTransaction = m(s.GetTransaction)
 	s.GetTransactionByNumber = m(s.GetTransactionByNumber)
@@ -128,6 +172,10 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.ReverseTransaction = m(s.ReverseTransaction)
 	s.ApproveTransaction = m(s.ApproveTransaction)
 	s.ValidateTransaction = m(s.ValidateTransaction)
+	s.GetTransactionStatus = m(s.GetTransactionStatus)
+	s.SubmitApprovalDecision = m(s.SubmitApprovalDecision)
+	s.RequestTransactionChanges = m(s.RequestTransactionChanges)
+	s.GetTransactionWorkflow = m(s.GetTransactionWorkflow)
 	s.GetTrialBalance = m(s.GetTrialBalance)
 }
 
@@ -136,6 +184,15 @@ func (s *Server) MethodNames() []string { return finance.MethodNames[:] }
 
 // Mount configures the mux to serve the finance endpoints.
 func Mount(mux goahttp.Muxer, h *Server) {
+	MountCreateAccountNodeHandler(mux, h.CreateAccountNode)
+	MountGetAccountNodeHandler(mux, h.GetAccountNode)
+	MountGetAccountNodeByCodeHandler(mux, h.GetAccountNodeByCode)
+	MountListAccountNodesHandler(mux, h.ListAccountNodes)
+	MountUpdateAccountNodeHandler(mux, h.UpdateAccountNode)
+	MountDeleteAccountNodeHandler(mux, h.DeleteAccountNode)
+	MountSearchAccountNodesHandler(mux, h.SearchAccountNodes)
+	MountGetAccountBalanceHandler(mux, h.GetAccountBalance)
+	MountGetHierarchyAnalysisHandler(mux, h.GetHierarchyAnalysis)
 	MountCreateAccountHandler(mux, h.CreateAccount)
 	MountGetAccountHandler(mux, h.GetAccount)
 	MountGetAccountByCodeHandler(mux, h.GetAccountByCode)
@@ -144,7 +201,6 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountUpdateAccountHandler(mux, h.UpdateAccount)
 	MountDeleteAccountHandler(mux, h.DeleteAccount)
 	MountGetAccountHierarchyHandler(mux, h.GetAccountHierarchy)
-	MountGetAccountBalanceHandler(mux, h.GetAccountBalance)
 	MountCreateTransactionHandler(mux, h.CreateTransaction)
 	MountGetTransactionHandler(mux, h.GetTransaction)
 	MountGetTransactionByNumberHandler(mux, h.GetTransactionByNumber)
@@ -153,12 +209,493 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountReverseTransactionHandler(mux, h.ReverseTransaction)
 	MountApproveTransactionHandler(mux, h.ApproveTransaction)
 	MountValidateTransactionHandler(mux, h.ValidateTransaction)
+	MountGetTransactionStatusHandler(mux, h.GetTransactionStatus)
+	MountSubmitApprovalDecisionHandler(mux, h.SubmitApprovalDecision)
+	MountRequestTransactionChangesHandler(mux, h.RequestTransactionChanges)
+	MountGetTransactionWorkflowHandler(mux, h.GetTransactionWorkflow)
 	MountGetTrialBalanceHandler(mux, h.GetTrialBalance)
 }
 
 // Mount configures the mux to serve the finance endpoints.
 func (s *Server) Mount(mux goahttp.Muxer) {
 	Mount(mux, s)
+}
+
+// MountCreateAccountNodeHandler configures the mux to serve the "finance"
+// service "createAccountNode" endpoint.
+func MountCreateAccountNodeHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/api/v1/finance/accounts", f)
+}
+
+// NewCreateAccountNodeHandler creates a HTTP handler which loads the HTTP
+// request and calls the "finance" service "createAccountNode" endpoint.
+func NewCreateAccountNodeHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeCreateAccountNodeRequest(mux, decoder)
+		encodeResponse = EncodeCreateAccountNodeResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "createAccountNode")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountGetAccountNodeHandler configures the mux to serve the "finance" service
+// "getAccountNode" endpoint.
+func MountGetAccountNodeHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/api/v1/finance/{id}", f)
+}
+
+// NewGetAccountNodeHandler creates a HTTP handler which loads the HTTP request
+// and calls the "finance" service "getAccountNode" endpoint.
+func NewGetAccountNodeHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeGetAccountNodeRequest(mux, decoder)
+		encodeResponse = EncodeGetAccountNodeResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "getAccountNode")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountGetAccountNodeByCodeHandler configures the mux to serve the "finance"
+// service "getAccountNodeByCode" endpoint.
+func MountGetAccountNodeByCodeHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/api/v1/finance/accounts/by-code/{code}", f)
+}
+
+// NewGetAccountNodeByCodeHandler creates a HTTP handler which loads the HTTP
+// request and calls the "finance" service "getAccountNodeByCode" endpoint.
+func NewGetAccountNodeByCodeHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeGetAccountNodeByCodeRequest(mux, decoder)
+		encodeResponse = EncodeGetAccountNodeByCodeResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "getAccountNodeByCode")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountListAccountNodesHandler configures the mux to serve the "finance"
+// service "listAccountNodes" endpoint.
+func MountListAccountNodesHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/api/v1/finance/accounts", f)
+}
+
+// NewListAccountNodesHandler creates a HTTP handler which loads the HTTP
+// request and calls the "finance" service "listAccountNodes" endpoint.
+func NewListAccountNodesHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeListAccountNodesRequest(mux, decoder)
+		encodeResponse = EncodeListAccountNodesResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "listAccountNodes")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountUpdateAccountNodeHandler configures the mux to serve the "finance"
+// service "updateAccountNode" endpoint.
+func MountUpdateAccountNodeHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("PUT", "/api/v1/finance/{id}", f)
+}
+
+// NewUpdateAccountNodeHandler creates a HTTP handler which loads the HTTP
+// request and calls the "finance" service "updateAccountNode" endpoint.
+func NewUpdateAccountNodeHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeUpdateAccountNodeRequest(mux, decoder)
+		encodeResponse = EncodeUpdateAccountNodeResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "updateAccountNode")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountDeleteAccountNodeHandler configures the mux to serve the "finance"
+// service "deleteAccountNode" endpoint.
+func MountDeleteAccountNodeHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("DELETE", "/api/v1/finance/{id}", f)
+}
+
+// NewDeleteAccountNodeHandler creates a HTTP handler which loads the HTTP
+// request and calls the "finance" service "deleteAccountNode" endpoint.
+func NewDeleteAccountNodeHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeDeleteAccountNodeRequest(mux, decoder)
+		encodeResponse = EncodeDeleteAccountNodeResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "deleteAccountNode")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountSearchAccountNodesHandler configures the mux to serve the "finance"
+// service "searchAccountNodes" endpoint.
+func MountSearchAccountNodesHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/api/v1/finance/accounts/search", f)
+}
+
+// NewSearchAccountNodesHandler creates a HTTP handler which loads the HTTP
+// request and calls the "finance" service "searchAccountNodes" endpoint.
+func NewSearchAccountNodesHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeSearchAccountNodesRequest(mux, decoder)
+		encodeResponse = EncodeSearchAccountNodesResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "searchAccountNodes")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountGetAccountBalanceHandler configures the mux to serve the "finance"
+// service "getAccountBalance" endpoint.
+func MountGetAccountBalanceHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/api/v1/finance/accounts/{account_id}/balance", f)
+}
+
+// NewGetAccountBalanceHandler creates a HTTP handler which loads the HTTP
+// request and calls the "finance" service "getAccountBalance" endpoint.
+func NewGetAccountBalanceHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeGetAccountBalanceRequest(mux, decoder)
+		encodeResponse = EncodeGetAccountBalanceResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "getAccountBalance")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountGetHierarchyAnalysisHandler configures the mux to serve the "finance"
+// service "getHierarchyAnalysis" endpoint.
+func MountGetHierarchyAnalysisHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/api/v1/finance/analytics/hierarchy/{parent_id}", f)
+}
+
+// NewGetHierarchyAnalysisHandler creates a HTTP handler which loads the HTTP
+// request and calls the "finance" service "getHierarchyAnalysis" endpoint.
+func NewGetHierarchyAnalysisHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeGetHierarchyAnalysisRequest(mux, decoder)
+		encodeResponse = EncodeGetHierarchyAnalysisResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "getHierarchyAnalysis")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
 }
 
 // MountCreateAccountHandler configures the mux to serve the "finance" service
@@ -170,7 +707,7 @@ func MountCreateAccountHandler(mux goahttp.Muxer, h http.Handler) {
 			h.ServeHTTP(w, r)
 		}
 	}
-	mux.Handle("POST", "/api/v1/finance/accounts", f)
+	mux.Handle("POST", "/api/v1/finance/legacy/accounts", f)
 }
 
 // NewCreateAccountHandler creates a HTTP handler which loads the HTTP request
@@ -562,59 +1099,6 @@ func NewGetAccountHierarchyHandler(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "getAccountHierarchy")
-		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
-		payload, err := decodeRequest(r)
-		if err != nil {
-			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
-				errhandler(ctx, w, err)
-			}
-			return
-		}
-		res, err := endpoint(ctx, payload)
-		if err != nil {
-			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
-				errhandler(ctx, w, err)
-			}
-			return
-		}
-		if err := encodeResponse(ctx, w, res); err != nil {
-			if errhandler != nil {
-				errhandler(ctx, w, err)
-			}
-		}
-	})
-}
-
-// MountGetAccountBalanceHandler configures the mux to serve the "finance"
-// service "getAccountBalance" endpoint.
-func MountGetAccountBalanceHandler(mux goahttp.Muxer, h http.Handler) {
-	f, ok := h.(http.HandlerFunc)
-	if !ok {
-		f = func(w http.ResponseWriter, r *http.Request) {
-			h.ServeHTTP(w, r)
-		}
-	}
-	mux.Handle("GET", "/api/v1/finance/accounts/{account_id}/balance", f)
-}
-
-// NewGetAccountBalanceHandler creates a HTTP handler which loads the HTTP
-// request and calls the "finance" service "getAccountBalance" endpoint.
-func NewGetAccountBalanceHandler(
-	endpoint goa.Endpoint,
-	mux goahttp.Muxer,
-	decoder func(*http.Request) goahttp.Decoder,
-	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
-	errhandler func(context.Context, http.ResponseWriter, error),
-	formatter func(ctx context.Context, err error) goahttp.Statuser,
-) http.Handler {
-	var (
-		decodeRequest  = DecodeGetAccountBalanceRequest(mux, decoder)
-		encodeResponse = EncodeGetAccountBalanceResponse(encoder)
-		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
-	)
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
-		ctx = context.WithValue(ctx, goa.MethodKey, "getAccountBalance")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
 		payload, err := decodeRequest(r)
 		if err != nil {
@@ -1039,6 +1523,219 @@ func NewValidateTransactionHandler(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "validateTransaction")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountGetTransactionStatusHandler configures the mux to serve the "finance"
+// service "getTransactionStatus" endpoint.
+func MountGetTransactionStatusHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/api/v1/finance/transactions/{id}/status", f)
+}
+
+// NewGetTransactionStatusHandler creates a HTTP handler which loads the HTTP
+// request and calls the "finance" service "getTransactionStatus" endpoint.
+func NewGetTransactionStatusHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeGetTransactionStatusRequest(mux, decoder)
+		encodeResponse = EncodeGetTransactionStatusResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "getTransactionStatus")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountSubmitApprovalDecisionHandler configures the mux to serve the "finance"
+// service "submitApprovalDecision" endpoint.
+func MountSubmitApprovalDecisionHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/api/v1/finance/transactions/{id}/approvals", f)
+}
+
+// NewSubmitApprovalDecisionHandler creates a HTTP handler which loads the HTTP
+// request and calls the "finance" service "submitApprovalDecision" endpoint.
+func NewSubmitApprovalDecisionHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeSubmitApprovalDecisionRequest(mux, decoder)
+		encodeResponse = EncodeSubmitApprovalDecisionResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "submitApprovalDecision")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountRequestTransactionChangesHandler configures the mux to serve the
+// "finance" service "requestTransactionChanges" endpoint.
+func MountRequestTransactionChangesHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/api/v1/finance/transactions/{id}/change-requests", f)
+}
+
+// NewRequestTransactionChangesHandler creates a HTTP handler which loads the
+// HTTP request and calls the "finance" service "requestTransactionChanges"
+// endpoint.
+func NewRequestTransactionChangesHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeRequestTransactionChangesRequest(mux, decoder)
+		encodeResponse = EncodeRequestTransactionChangesResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "requestTransactionChanges")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountGetTransactionWorkflowHandler configures the mux to serve the "finance"
+// service "getTransactionWorkflow" endpoint.
+func MountGetTransactionWorkflowHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/api/v1/finance/transactions/{id}/workflow", f)
+}
+
+// NewGetTransactionWorkflowHandler creates a HTTP handler which loads the HTTP
+// request and calls the "finance" service "getTransactionWorkflow" endpoint.
+func NewGetTransactionWorkflowHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeGetTransactionWorkflowRequest(mux, decoder)
+		encodeResponse = EncodeGetTransactionWorkflowResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "getTransactionWorkflow")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
 		payload, err := decodeRequest(r)
 		if err != nil {

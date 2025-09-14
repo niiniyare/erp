@@ -13,11 +13,546 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"unicode/utf8"
 
 	finance "github.com/niiniyare/erp/internal/api/gen/finance"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
 )
+
+// EncodeCreateAccountNodeResponse returns an encoder for responses returned by
+// the finance createAccountNode endpoint.
+func EncodeCreateAccountNodeResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*finance.AccountNodeResult)
+		enc := encoder(ctx, w)
+		body := NewCreateAccountNodeResponseBody(res)
+		w.WriteHeader(http.StatusCreated)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeCreateAccountNodeRequest returns a decoder for requests sent to the
+// finance createAccountNode endpoint.
+func DecodeCreateAccountNodeRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.CreateAccountNodePayload, error) {
+	return func(r *http.Request) (*finance.CreateAccountNodePayload, error) {
+		var (
+			body CreateAccountNodeRequestBody
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil, goa.MissingPayloadError()
+			}
+			var gerr *goa.ServiceError
+			if errors.As(err, &gerr) {
+				return nil, gerr
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateCreateAccountNodeRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+		payload := NewCreateAccountNodePayload(&body)
+
+		return payload, nil
+	}
+}
+
+// EncodeGetAccountNodeResponse returns an encoder for responses returned by
+// the finance getAccountNode endpoint.
+func EncodeGetAccountNodeResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*finance.AccountNodeResult)
+		enc := encoder(ctx, w)
+		body := NewGetAccountNodeResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeGetAccountNodeRequest returns a decoder for requests sent to the
+// finance getAccountNode endpoint.
+func DecodeGetAccountNodeRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetAccountNodeByIDPayload, error) {
+	return func(r *http.Request) (*finance.GetAccountNodeByIDPayload, error) {
+		var (
+			id  string
+			err error
+
+			params = mux.Vars(r)
+		)
+		id = params["id"]
+		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
+		if err != nil {
+			return nil, err
+		}
+		payload := NewGetAccountNodeByIDPayload(id)
+
+		return payload, nil
+	}
+}
+
+// EncodeGetAccountNodeByCodeResponse returns an encoder for responses returned
+// by the finance getAccountNodeByCode endpoint.
+func EncodeGetAccountNodeByCodeResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*finance.AccountNodeResult)
+		enc := encoder(ctx, w)
+		body := NewGetAccountNodeByCodeResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeGetAccountNodeByCodeRequest returns a decoder for requests sent to the
+// finance getAccountNodeByCode endpoint.
+func DecodeGetAccountNodeByCodeRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetAccountNodeByCodePayload, error) {
+	return func(r *http.Request) (*finance.GetAccountNodeByCodePayload, error) {
+		var (
+			code string
+
+			params = mux.Vars(r)
+		)
+		code = params["code"]
+		payload := NewGetAccountNodeByCodePayload(code)
+
+		return payload, nil
+	}
+}
+
+// EncodeListAccountNodesResponse returns an encoder for responses returned by
+// the finance listAccountNodes endpoint.
+func EncodeListAccountNodesResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*finance.AccountNodeListResult)
+		enc := encoder(ctx, w)
+		body := NewListAccountNodesResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeListAccountNodesRequest returns a decoder for requests sent to the
+// finance listAccountNodes endpoint.
+func DecodeListAccountNodesRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.ListAccountNodesPayload, error) {
+	return func(r *http.Request) (*finance.ListAccountNodesPayload, error) {
+		var (
+			body ListAccountNodesRequestBody
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil, goa.MissingPayloadError()
+			}
+			var gerr *goa.ServiceError
+			if errors.As(err, &gerr) {
+				return nil, gerr
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateListAccountNodesRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+
+		var (
+			nodeTypes                 []string
+			parentID                  *string
+			maxLevel                  *int32
+			includeChildren           bool
+			rootType                  *string
+			accountType               *string
+			financialStatementSection *string
+			cashFlowCategory          *string
+			isActive                  *bool
+			searchQuery               *string
+			includeBalances           bool
+			sortBy                    string
+			sortOrder                 string
+		)
+		qp := r.URL.Query()
+		nodeTypes = qp["node_types"]
+		for _, e := range nodeTypes {
+			if !(e == "account" || e == "group") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError("node_types[*]", e, []any{"account", "group"}))
+			}
+		}
+		parentIDRaw := qp.Get("parent_id")
+		if parentIDRaw != "" {
+			parentID = &parentIDRaw
+		}
+		if parentID != nil {
+			err = goa.MergeErrors(err, goa.ValidateFormat("parent_id", *parentID, goa.FormatUUID))
+		}
+		{
+			maxLevelRaw := qp.Get("max_level")
+			if maxLevelRaw != "" {
+				v, err2 := strconv.ParseInt(maxLevelRaw, 10, 32)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("max_level", maxLevelRaw, "integer"))
+				}
+				pv := int32(v)
+				maxLevel = &pv
+			}
+		}
+		{
+			includeChildrenRaw := qp.Get("include_children")
+			if includeChildrenRaw != "" {
+				v, err2 := strconv.ParseBool(includeChildrenRaw)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("include_children", includeChildrenRaw, "boolean"))
+				}
+				includeChildren = v
+			}
+		}
+		rootTypeRaw := qp.Get("root_type")
+		if rootTypeRaw != "" {
+			rootType = &rootTypeRaw
+		}
+		if rootType != nil {
+			if !(*rootType == "ASSET" || *rootType == "LIABILITY" || *rootType == "EQUITY" || *rootType == "REVENUE" || *rootType == "EXPENSE") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError("root_type", *rootType, []any{"ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE"}))
+			}
+		}
+		accountTypeRaw := qp.Get("account_type")
+		if accountTypeRaw != "" {
+			accountType = &accountTypeRaw
+		}
+		financialStatementSectionRaw := qp.Get("financial_statement_section")
+		if financialStatementSectionRaw != "" {
+			financialStatementSection = &financialStatementSectionRaw
+		}
+		cashFlowCategoryRaw := qp.Get("cash_flow_category")
+		if cashFlowCategoryRaw != "" {
+			cashFlowCategory = &cashFlowCategoryRaw
+		}
+		if cashFlowCategory != nil {
+			if !(*cashFlowCategory == "OPERATING" || *cashFlowCategory == "INVESTING" || *cashFlowCategory == "FINANCING") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError("cash_flow_category", *cashFlowCategory, []any{"OPERATING", "INVESTING", "FINANCING"}))
+			}
+		}
+		{
+			isActiveRaw := qp.Get("is_active")
+			if isActiveRaw != "" {
+				v, err2 := strconv.ParseBool(isActiveRaw)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("is_active", isActiveRaw, "boolean"))
+				}
+				isActive = &v
+			}
+		}
+		searchQueryRaw := qp.Get("search_query")
+		if searchQueryRaw != "" {
+			searchQuery = &searchQueryRaw
+		}
+		{
+			includeBalancesRaw := qp.Get("include_balances")
+			if includeBalancesRaw == "" {
+				includeBalances = true
+			} else {
+				v, err2 := strconv.ParseBool(includeBalancesRaw)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("include_balances", includeBalancesRaw, "boolean"))
+				}
+				includeBalances = v
+			}
+		}
+		sortByRaw := qp.Get("sort_by")
+		if sortByRaw != "" {
+			sortBy = sortByRaw
+		} else {
+			sortBy = "code"
+		}
+		if !(sortBy == "code" || sortBy == "name" || sortBy == "level" || sortBy == "created_at" || sortBy == "updated_at") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("sort_by", sortBy, []any{"code", "name", "level", "created_at", "updated_at"}))
+		}
+		sortOrderRaw := qp.Get("sort_order")
+		if sortOrderRaw != "" {
+			sortOrder = sortOrderRaw
+		} else {
+			sortOrder = "asc"
+		}
+		if !(sortOrder == "asc" || sortOrder == "desc") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("sort_order", sortOrder, []any{"asc", "desc"}))
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewListAccountNodesPayload(&body, nodeTypes, parentID, maxLevel, includeChildren, rootType, accountType, financialStatementSection, cashFlowCategory, isActive, searchQuery, includeBalances, sortBy, sortOrder)
+
+		return payload, nil
+	}
+}
+
+// EncodeUpdateAccountNodeResponse returns an encoder for responses returned by
+// the finance updateAccountNode endpoint.
+func EncodeUpdateAccountNodeResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*finance.AccountNodeResult)
+		enc := encoder(ctx, w)
+		body := NewUpdateAccountNodeResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeUpdateAccountNodeRequest returns a decoder for requests sent to the
+// finance updateAccountNode endpoint.
+func DecodeUpdateAccountNodeRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.UpdateAccountNodePayload, error) {
+	return func(r *http.Request) (*finance.UpdateAccountNodePayload, error) {
+		var (
+			body UpdateAccountNodeRequestBody
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil, goa.MissingPayloadError()
+			}
+			var gerr *goa.ServiceError
+			if errors.As(err, &gerr) {
+				return nil, gerr
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateUpdateAccountNodeRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+
+		var (
+			id string
+
+			params = mux.Vars(r)
+		)
+		id = params["id"]
+		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
+		if err != nil {
+			return nil, err
+		}
+		payload := NewUpdateAccountNodePayload(&body, id)
+
+		return payload, nil
+	}
+}
+
+// EncodeDeleteAccountNodeResponse returns an encoder for responses returned by
+// the finance deleteAccountNode endpoint.
+func EncodeDeleteAccountNodeResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		w.WriteHeader(http.StatusNoContent)
+		return nil
+	}
+}
+
+// DecodeDeleteAccountNodeRequest returns a decoder for requests sent to the
+// finance deleteAccountNode endpoint.
+func DecodeDeleteAccountNodeRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.DeleteAccountNodePayload, error) {
+	return func(r *http.Request) (*finance.DeleteAccountNodePayload, error) {
+		var (
+			id  string
+			err error
+
+			params = mux.Vars(r)
+		)
+		id = params["id"]
+		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
+		if err != nil {
+			return nil, err
+		}
+		payload := NewDeleteAccountNodePayload(id)
+
+		return payload, nil
+	}
+}
+
+// EncodeSearchAccountNodesResponse returns an encoder for responses returned
+// by the finance searchAccountNodes endpoint.
+func EncodeSearchAccountNodesResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*finance.SearchAccountNodesResult)
+		enc := encoder(ctx, w)
+		body := NewSearchAccountNodesResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeSearchAccountNodesRequest returns a decoder for requests sent to the
+// finance searchAccountNodes endpoint.
+func DecodeSearchAccountNodesRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.SearchAccountNodesPayload, error) {
+	return func(r *http.Request) (*finance.SearchAccountNodesPayload, error) {
+		var (
+			query           string
+			nodeTypes       []string
+			limit           int32
+			includeInactive bool
+			err             error
+		)
+		qp := r.URL.Query()
+		query = qp.Get("query")
+		if query == "" {
+			err = goa.MergeErrors(err, goa.MissingFieldError("query", "query string"))
+		}
+		if utf8.RuneCountInString(query) < 1 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("query", query, utf8.RuneCountInString(query), 1, true))
+		}
+		if utf8.RuneCountInString(query) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("query", query, utf8.RuneCountInString(query), 100, false))
+		}
+		nodeTypes = qp["node_types"]
+		for _, e := range nodeTypes {
+			if !(e == "account" || e == "group") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError("node_types[*]", e, []any{"account", "group"}))
+			}
+		}
+		{
+			limitRaw := qp.Get("limit")
+			if limitRaw == "" {
+				limit = 20
+			} else {
+				v, err2 := strconv.ParseInt(limitRaw, 10, 32)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("limit", limitRaw, "integer"))
+				}
+				limit = int32(v)
+			}
+		}
+		if limit < 1 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("limit", limit, 1, true))
+		}
+		if limit > 100 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("limit", limit, 100, false))
+		}
+		{
+			includeInactiveRaw := qp.Get("include_inactive")
+			if includeInactiveRaw != "" {
+				v, err2 := strconv.ParseBool(includeInactiveRaw)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("include_inactive", includeInactiveRaw, "boolean"))
+				}
+				includeInactive = v
+			}
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewSearchAccountNodesPayload(query, nodeTypes, limit, includeInactive)
+
+		return payload, nil
+	}
+}
+
+// EncodeGetAccountBalanceResponse returns an encoder for responses returned by
+// the finance getAccountBalance endpoint.
+func EncodeGetAccountBalanceResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*finance.AccountBalanceResult)
+		enc := encoder(ctx, w)
+		body := NewGetAccountBalanceResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeGetAccountBalanceRequest returns a decoder for requests sent to the
+// finance getAccountBalance endpoint.
+func DecodeGetAccountBalanceRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetAccountBalancePayload, error) {
+	return func(r *http.Request) (*finance.GetAccountBalancePayload, error) {
+		var (
+			accountID string
+			asOfDate  *string
+			err       error
+
+			params = mux.Vars(r)
+		)
+		accountID = params["account_id"]
+		err = goa.MergeErrors(err, goa.ValidateFormat("account_id", accountID, goa.FormatUUID))
+		asOfDateRaw := r.URL.Query().Get("as_of_date")
+		if asOfDateRaw != "" {
+			asOfDate = &asOfDateRaw
+		}
+		if asOfDate != nil {
+			err = goa.MergeErrors(err, goa.ValidateFormat("as_of_date", *asOfDate, goa.FormatDate))
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewGetAccountBalancePayload(accountID, asOfDate)
+
+		return payload, nil
+	}
+}
+
+// EncodeGetHierarchyAnalysisResponse returns an encoder for responses returned
+// by the finance getHierarchyAnalysis endpoint.
+func EncodeGetHierarchyAnalysisResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*finance.HierarchyAnalysisResult)
+		enc := encoder(ctx, w)
+		body := NewGetHierarchyAnalysisResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeGetHierarchyAnalysisRequest returns a decoder for requests sent to the
+// finance getHierarchyAnalysis endpoint.
+func DecodeGetHierarchyAnalysisRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetHierarchyAnalysisPayload, error) {
+	return func(r *http.Request) (*finance.GetHierarchyAnalysisPayload, error) {
+		var (
+			parentID           string
+			includeBalanceData bool
+			maxDepth           *int32
+			asOfDate           *string
+			err                error
+
+			params = mux.Vars(r)
+		)
+		parentID = params["parent_id"]
+		err = goa.MergeErrors(err, goa.ValidateFormat("parent_id", parentID, goa.FormatUUID))
+		qp := r.URL.Query()
+		{
+			includeBalanceDataRaw := qp.Get("include_balance_data")
+			if includeBalanceDataRaw == "" {
+				includeBalanceData = true
+			} else {
+				v, err2 := strconv.ParseBool(includeBalanceDataRaw)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("include_balance_data", includeBalanceDataRaw, "boolean"))
+				}
+				includeBalanceData = v
+			}
+		}
+		{
+			maxDepthRaw := qp.Get("max_depth")
+			if maxDepthRaw != "" {
+				v, err2 := strconv.ParseInt(maxDepthRaw, 10, 32)
+				if err2 != nil {
+					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("max_depth", maxDepthRaw, "integer"))
+				}
+				pv := int32(v)
+				maxDepth = &pv
+			}
+		}
+		asOfDateRaw := qp.Get("as_of_date")
+		if asOfDateRaw != "" {
+			asOfDate = &asOfDateRaw
+		}
+		if asOfDate != nil {
+			err = goa.MergeErrors(err, goa.ValidateFormat("as_of_date", *asOfDate, goa.FormatDate))
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewGetHierarchyAnalysisPayload(parentID, includeBalanceData, maxDepth, asOfDate)
+
+		return payload, nil
+	}
+}
 
 // EncodeCreateAccountResponse returns an encoder for responses returned by the
 // finance createAccount endpoint.
@@ -74,8 +609,8 @@ func EncodeGetAccountResponse(encoder func(context.Context, http.ResponseWriter)
 
 // DecodeGetAccountRequest returns a decoder for requests sent to the finance
 // getAccount endpoint.
-func DecodeGetAccountRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetAccountPayload, error) {
-	return func(r *http.Request) (*finance.GetAccountPayload, error) {
+func DecodeGetAccountRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetAccountByIDPayload, error) {
+	return func(r *http.Request) (*finance.GetAccountByIDPayload, error) {
 		var (
 			id  string
 			err error
@@ -87,7 +622,7 @@ func DecodeGetAccountRequest(mux goahttp.Muxer, decoder func(*http.Request) goah
 		if err != nil {
 			return nil, err
 		}
-		payload := NewGetAccountPayload(id)
+		payload := NewGetAccountByIDPayload(id)
 
 		return payload, nil
 	}
@@ -171,14 +706,31 @@ func EncodeListAccountsResponse(encoder func(context.Context, http.ResponseWrite
 func DecodeListAccountsRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.ListAccountsPayload, error) {
 	return func(r *http.Request) (*finance.ListAccountsPayload, error) {
 		var (
+			body ListAccountsRequestBody
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil, goa.MissingPayloadError()
+			}
+			var gerr *goa.ServiceError
+			if errors.As(err, &gerr) {
+				return nil, gerr
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateListAccountsRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+
+		var (
 			rootType    *string
 			accountType *string
 			isActive    *bool
 			parentID    *string
 			search      *string
-			limit       int32
-			offset      int32
-			err         error
 		)
 		qp := r.URL.Query()
 		rootTypeRaw := qp.Get("root_type")
@@ -215,41 +767,10 @@ func DecodeListAccountsRequest(mux goahttp.Muxer, decoder func(*http.Request) go
 		if searchRaw != "" {
 			search = &searchRaw
 		}
-		{
-			limitRaw := qp.Get("limit")
-			if limitRaw == "" {
-				limit = 50
-			} else {
-				v, err2 := strconv.ParseInt(limitRaw, 10, 32)
-				if err2 != nil {
-					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("limit", limitRaw, "integer"))
-				}
-				limit = int32(v)
-			}
-		}
-		if limit < 1 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("limit", limit, 1, true))
-		}
-		if limit > 1000 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("limit", limit, 1000, false))
-		}
-		{
-			offsetRaw := qp.Get("offset")
-			if offsetRaw != "" {
-				v, err2 := strconv.ParseInt(offsetRaw, 10, 32)
-				if err2 != nil {
-					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("offset", offsetRaw, "integer"))
-				}
-				offset = int32(v)
-			}
-		}
-		if offset < 0 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("offset", offset, 0, true))
-		}
 		if err != nil {
 			return nil, err
 		}
-		payload := NewListAccountsPayload(rootType, accountType, isActive, parentID, search, limit, offset)
+		payload := NewListAccountsPayload(&body, rootType, accountType, isActive, parentID, search)
 
 		return payload, nil
 	}
@@ -341,7 +862,7 @@ func DecodeDeleteAccountRequest(mux goahttp.Muxer, decoder func(*http.Request) g
 // by the finance getAccountHierarchy endpoint.
 func EncodeGetAccountHierarchyResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
-		res, _ := v.(*finance.AccountHierarchyResult)
+		res, _ := v.(*finance.AccountListResult)
 		enc := encoder(ctx, w)
 		body := NewGetAccountHierarchyResponseBody(res)
 		w.WriteHeader(http.StatusOK)
@@ -368,47 +889,6 @@ func DecodeGetAccountHierarchyRequest(mux goahttp.Muxer, decoder func(*http.Requ
 			return nil, err
 		}
 		payload := NewGetAccountHierarchyPayload(rootID)
-
-		return payload, nil
-	}
-}
-
-// EncodeGetAccountBalanceResponse returns an encoder for responses returned by
-// the finance getAccountBalance endpoint.
-func EncodeGetAccountBalanceResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
-	return func(ctx context.Context, w http.ResponseWriter, v any) error {
-		res, _ := v.(*finance.AccountBalanceResult)
-		enc := encoder(ctx, w)
-		body := NewGetAccountBalanceResponseBody(res)
-		w.WriteHeader(http.StatusOK)
-		return enc.Encode(body)
-	}
-}
-
-// DecodeGetAccountBalanceRequest returns a decoder for requests sent to the
-// finance getAccountBalance endpoint.
-func DecodeGetAccountBalanceRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetAccountBalancePayload, error) {
-	return func(r *http.Request) (*finance.GetAccountBalancePayload, error) {
-		var (
-			accountID string
-			asOfDate  *string
-			err       error
-
-			params = mux.Vars(r)
-		)
-		accountID = params["account_id"]
-		err = goa.MergeErrors(err, goa.ValidateFormat("account_id", accountID, goa.FormatUUID))
-		asOfDateRaw := r.URL.Query().Get("as_of_date")
-		if asOfDateRaw != "" {
-			asOfDate = &asOfDateRaw
-		}
-		if asOfDate != nil {
-			err = goa.MergeErrors(err, goa.ValidateFormat("as_of_date", *asOfDate, goa.FormatDate))
-		}
-		if err != nil {
-			return nil, err
-		}
-		payload := NewGetAccountBalancePayload(accountID, asOfDate)
 
 		return payload, nil
 	}
@@ -469,8 +949,8 @@ func EncodeGetTransactionResponse(encoder func(context.Context, http.ResponseWri
 
 // DecodeGetTransactionRequest returns a decoder for requests sent to the
 // finance getTransaction endpoint.
-func DecodeGetTransactionRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetTransactionPayload, error) {
-	return func(r *http.Request) (*finance.GetTransactionPayload, error) {
+func DecodeGetTransactionRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetTransactionByIDPayload, error) {
+	return func(r *http.Request) (*finance.GetTransactionByIDPayload, error) {
 		var (
 			id  string
 			err error
@@ -482,7 +962,7 @@ func DecodeGetTransactionRequest(mux goahttp.Muxer, decoder func(*http.Request) 
 		if err != nil {
 			return nil, err
 		}
-		payload := NewGetTransactionPayload(id)
+		payload := NewGetTransactionByIDPayload(id)
 
 		return payload, nil
 	}
@@ -533,15 +1013,30 @@ func EncodeListTransactionsResponse(encoder func(context.Context, http.ResponseW
 func DecodeListTransactionsRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.ListTransactionsPayload, error) {
 	return func(r *http.Request) (*finance.ListTransactionsPayload, error) {
 		var (
+			body ListTransactionsRequestBody
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil, goa.MissingPayloadError()
+			}
+			var gerr *goa.ServiceError
+			if errors.As(err, &gerr) {
+				return nil, gerr
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateListTransactionsRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+
+		var (
 			status    *string
 			type_     *string
-			dateFrom  *string
-			dateTo    *string
 			accountID *string
 			search    *string
-			limit     int32
-			offset    int32
-			err       error
 		)
 		qp := r.URL.Query()
 		statusRaw := qp.Get("status")
@@ -562,20 +1057,6 @@ func DecodeListTransactionsRequest(mux goahttp.Muxer, decoder func(*http.Request
 				err = goa.MergeErrors(err, goa.InvalidEnumValueError("type", *type_, []any{"MANUAL", "SALES_INVOICE", "PURCHASE_INVOICE", "PAYMENT", "RECEIPT", "JOURNAL_ENTRY", "BANK_TRANSFER", "ADJUSTMENT", "OPENING_BALANCE", "CLOSING_ENTRY"}))
 			}
 		}
-		dateFromRaw := qp.Get("date_from")
-		if dateFromRaw != "" {
-			dateFrom = &dateFromRaw
-		}
-		if dateFrom != nil {
-			err = goa.MergeErrors(err, goa.ValidateFormat("date_from", *dateFrom, goa.FormatDate))
-		}
-		dateToRaw := qp.Get("date_to")
-		if dateToRaw != "" {
-			dateTo = &dateToRaw
-		}
-		if dateTo != nil {
-			err = goa.MergeErrors(err, goa.ValidateFormat("date_to", *dateTo, goa.FormatDate))
-		}
 		accountIDRaw := qp.Get("account_id")
 		if accountIDRaw != "" {
 			accountID = &accountIDRaw
@@ -587,41 +1068,10 @@ func DecodeListTransactionsRequest(mux goahttp.Muxer, decoder func(*http.Request
 		if searchRaw != "" {
 			search = &searchRaw
 		}
-		{
-			limitRaw := qp.Get("limit")
-			if limitRaw == "" {
-				limit = 50
-			} else {
-				v, err2 := strconv.ParseInt(limitRaw, 10, 32)
-				if err2 != nil {
-					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("limit", limitRaw, "integer"))
-				}
-				limit = int32(v)
-			}
-		}
-		if limit < 1 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("limit", limit, 1, true))
-		}
-		if limit > 1000 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("limit", limit, 1000, false))
-		}
-		{
-			offsetRaw := qp.Get("offset")
-			if offsetRaw != "" {
-				v, err2 := strconv.ParseInt(offsetRaw, 10, 32)
-				if err2 != nil {
-					err = goa.MergeErrors(err, goa.InvalidFieldTypeError("offset", offsetRaw, "integer"))
-				}
-				offset = int32(v)
-			}
-		}
-		if offset < 0 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("offset", offset, 0, true))
-		}
 		if err != nil {
 			return nil, err
 		}
-		payload := NewListTransactionsPayload(status, type_, dateFrom, dateTo, accountID, search, limit, offset)
+		payload := NewListTransactionsPayload(&body, status, type_, accountID, search)
 
 		return payload, nil
 	}
@@ -824,6 +1274,176 @@ func DecodeValidateTransactionRequest(mux goahttp.Muxer, decoder func(*http.Requ
 	}
 }
 
+// EncodeGetTransactionStatusResponse returns an encoder for responses returned
+// by the finance getTransactionStatus endpoint.
+func EncodeGetTransactionStatusResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*finance.TransactionStatusResult)
+		enc := encoder(ctx, w)
+		body := NewGetTransactionStatusResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeGetTransactionStatusRequest returns a decoder for requests sent to the
+// finance getTransactionStatus endpoint.
+func DecodeGetTransactionStatusRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetTransactionStatusPayload, error) {
+	return func(r *http.Request) (*finance.GetTransactionStatusPayload, error) {
+		var (
+			id  string
+			err error
+
+			params = mux.Vars(r)
+		)
+		id = params["id"]
+		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
+		if err != nil {
+			return nil, err
+		}
+		payload := NewGetTransactionStatusPayload(id)
+
+		return payload, nil
+	}
+}
+
+// EncodeSubmitApprovalDecisionResponse returns an encoder for responses
+// returned by the finance submitApprovalDecision endpoint.
+func EncodeSubmitApprovalDecisionResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*finance.ApprovalDecisionResult)
+		enc := encoder(ctx, w)
+		body := NewSubmitApprovalDecisionResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeSubmitApprovalDecisionRequest returns a decoder for requests sent to
+// the finance submitApprovalDecision endpoint.
+func DecodeSubmitApprovalDecisionRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.ApprovalDecisionPayload, error) {
+	return func(r *http.Request) (*finance.ApprovalDecisionPayload, error) {
+		var (
+			body SubmitApprovalDecisionRequestBody
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil, goa.MissingPayloadError()
+			}
+			var gerr *goa.ServiceError
+			if errors.As(err, &gerr) {
+				return nil, gerr
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateSubmitApprovalDecisionRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+
+		var (
+			id string
+
+			params = mux.Vars(r)
+		)
+		id = params["id"]
+		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
+		if err != nil {
+			return nil, err
+		}
+		payload := NewSubmitApprovalDecisionApprovalDecisionPayload(&body, id)
+
+		return payload, nil
+	}
+}
+
+// EncodeRequestTransactionChangesResponse returns an encoder for responses
+// returned by the finance requestTransactionChanges endpoint.
+func EncodeRequestTransactionChangesResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*finance.ChangeRequestResult)
+		enc := encoder(ctx, w)
+		body := NewRequestTransactionChangesResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeRequestTransactionChangesRequest returns a decoder for requests sent
+// to the finance requestTransactionChanges endpoint.
+func DecodeRequestTransactionChangesRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.ChangeRequestPayload, error) {
+	return func(r *http.Request) (*finance.ChangeRequestPayload, error) {
+		var (
+			body RequestTransactionChangesRequestBody
+			err  error
+		)
+		err = decoder(r).Decode(&body)
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil, goa.MissingPayloadError()
+			}
+			var gerr *goa.ServiceError
+			if errors.As(err, &gerr) {
+				return nil, gerr
+			}
+			return nil, goa.DecodePayloadError(err.Error())
+		}
+		err = ValidateRequestTransactionChangesRequestBody(&body)
+		if err != nil {
+			return nil, err
+		}
+
+		var (
+			id string
+
+			params = mux.Vars(r)
+		)
+		id = params["id"]
+		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
+		if err != nil {
+			return nil, err
+		}
+		payload := NewRequestTransactionChangesChangeRequestPayload(&body, id)
+
+		return payload, nil
+	}
+}
+
+// EncodeGetTransactionWorkflowResponse returns an encoder for responses
+// returned by the finance getTransactionWorkflow endpoint.
+func EncodeGetTransactionWorkflowResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*finance.TransactionWorkflowResult)
+		enc := encoder(ctx, w)
+		body := NewGetTransactionWorkflowResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeGetTransactionWorkflowRequest returns a decoder for requests sent to
+// the finance getTransactionWorkflow endpoint.
+func DecodeGetTransactionWorkflowRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetTransactionWorkflowPayload, error) {
+	return func(r *http.Request) (*finance.GetTransactionWorkflowPayload, error) {
+		var (
+			id  string
+			err error
+
+			params = mux.Vars(r)
+		)
+		id = params["id"]
+		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
+		if err != nil {
+			return nil, err
+		}
+		payload := NewGetTransactionWorkflowPayload(id)
+
+		return payload, nil
+	}
+}
+
 // EncodeGetTrialBalanceResponse returns an encoder for responses returned by
 // the finance getTrialBalance endpoint.
 func EncodeGetTrialBalanceResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
@@ -838,8 +1458,8 @@ func EncodeGetTrialBalanceResponse(encoder func(context.Context, http.ResponseWr
 
 // DecodeGetTrialBalanceRequest returns a decoder for requests sent to the
 // finance getTrialBalance endpoint.
-func DecodeGetTrialBalanceRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.TrialBalancePayload, error) {
-	return func(r *http.Request) (*finance.TrialBalancePayload, error) {
+func DecodeGetTrialBalanceRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetTrialBalancePayload, error) {
+	return func(r *http.Request) (*finance.GetTrialBalancePayload, error) {
 		var (
 			asOfDate            *string
 			includeZeroBalances bool
@@ -866,57 +1486,148 @@ func DecodeGetTrialBalanceRequest(mux goahttp.Muxer, decoder func(*http.Request)
 		if err != nil {
 			return nil, err
 		}
-		payload := NewGetTrialBalanceTrialBalancePayload(asOfDate, includeZeroBalances)
+		payload := NewGetTrialBalancePayload(asOfDate, includeZeroBalances)
 
 		return payload, nil
 	}
+}
+
+// unmarshalPaginationRequestBodyToFinancePagination builds a value of type
+// *finance.Pagination from a value of type *PaginationRequestBody.
+func unmarshalPaginationRequestBodyToFinancePagination(v *PaginationRequestBody) *finance.Pagination {
+	if v == nil {
+		return nil
+	}
+	res := &finance.Pagination{
+		SortBy: v.SortBy,
+	}
+	if v.Page != nil {
+		res.Page = *v.Page
+	}
+	if v.PageSize != nil {
+		res.PageSize = *v.PageSize
+	}
+	if v.SortOrder != nil {
+		res.SortOrder = *v.SortOrder
+	}
+	if v.Page == nil {
+		res.Page = 1
+	}
+	if v.PageSize == nil {
+		res.PageSize = 20
+	}
+	if v.SortOrder == nil {
+		res.SortOrder = "desc"
+	}
+
+	return res
+}
+
+// marshalFinanceAccountNodeResultToAccountNodeResultResponseBody builds a
+// value of type *AccountNodeResultResponseBody from a value of type
+// *finance.AccountNodeResult.
+func marshalFinanceAccountNodeResultToAccountNodeResultResponseBody(v *finance.AccountNodeResult) *AccountNodeResultResponseBody {
+	res := &AccountNodeResultResponseBody{
+		ID:                        v.ID,
+		NodeType:                  v.NodeType,
+		Code:                      v.Code,
+		Name:                      v.Name,
+		Description:               v.Description,
+		ParentID:                  v.ParentID,
+		Level:                     v.Level,
+		Path:                      v.Path,
+		HasChildren:               v.HasChildren,
+		ChildCount:                v.ChildCount,
+		IsActive:                  v.IsActive,
+		AccountType:               v.AccountType,
+		RootType:                  v.RootType,
+		NormalBalance:             v.NormalBalance,
+		CurrencyCode:              v.CurrencyCode,
+		CurrentBalance:            v.CurrentBalance,
+		AllowsManualEntries:       v.AllowsManualEntries,
+		RequiresReconciliation:    v.RequiresReconciliation,
+		FinancialStatementSection: v.FinancialStatementSection,
+		ConsolidationMethod:       v.ConsolidationMethod,
+		CashFlowCategory:          v.CashFlowCategory,
+		DisplayOrder:              v.DisplayOrder,
+		IsHeader:                  v.IsHeader,
+		ShowTotals:                v.ShowTotals,
+		IndentLevel:               v.IndentLevel,
+		TotalBalance:              v.TotalBalance,
+		CreatedAt:                 v.CreatedAt,
+		UpdatedAt:                 v.UpdatedAt,
+		CreatedBy:                 v.CreatedBy,
+		UpdatedBy:                 v.UpdatedBy,
+	}
+
+	return res
+}
+
+// marshalFinancePaginationMetaToPaginationMetaResponseBody builds a value of
+// type *PaginationMetaResponseBody from a value of type
+// *finance.PaginationMeta.
+func marshalFinancePaginationMetaToPaginationMetaResponseBody(v *finance.PaginationMeta) *PaginationMetaResponseBody {
+	res := &PaginationMetaResponseBody{
+		CurrentPage: v.CurrentPage,
+		PageSize:    v.PageSize,
+		TotalItems:  v.TotalItems,
+		TotalPages:  v.TotalPages,
+		HasNext:     v.HasNext,
+		HasPrev:     v.HasPrev,
+	}
+
+	return res
+}
+
+// marshalFinanceSearchResultItemToSearchResultItemResponseBody builds a value
+// of type *SearchResultItemResponseBody from a value of type
+// *finance.SearchResultItem.
+func marshalFinanceSearchResultItemToSearchResultItemResponseBody(v *finance.SearchResultItem) *SearchResultItemResponseBody {
+	res := &SearchResultItemResponseBody{
+		ID:             v.ID,
+		NodeType:       v.NodeType,
+		Code:           v.Code,
+		Name:           v.Name,
+		Path:           v.Path,
+		MatchType:      v.MatchType,
+		RelevanceScore: v.RelevanceScore,
+		CurrentBalance: v.CurrentBalance,
+		CurrencyCode:   v.CurrencyCode,
+		ChildCount:     v.ChildCount,
+		TotalBalance:   v.TotalBalance,
+	}
+
+	return res
 }
 
 // marshalFinanceAccountResultToAccountResultResponseBody builds a value of
 // type *AccountResultResponseBody from a value of type *finance.AccountResult.
 func marshalFinanceAccountResultToAccountResultResponseBody(v *finance.AccountResult) *AccountResultResponseBody {
 	res := &AccountResultResponseBody{
-		ID:                      v.ID,
-		TenantID:                v.TenantID,
-		EntityID:                v.EntityID,
-		AccountCode:             v.AccountCode,
-		AccountName:             v.AccountName,
-		AccountDescription:      v.AccountDescription,
-		ParentAccountID:         v.ParentAccountID,
-		AccountLevel:            v.AccountLevel,
-		AccountPath:             v.AccountPath,
-		HasChildren:             v.HasChildren,
-		IsLeafAccount:           v.IsLeafAccount,
-		AccountGroupID:          v.AccountGroupID,
-		AccountHeaderID:         v.AccountHeaderID,
-		RootType:                v.RootType,
-		AccountType:             v.AccountType,
-		AccountSubtype:          v.AccountSubtype,
-		AccountCategory:         v.AccountCategory,
-		SubCategory:             v.SubCategory,
-		NormalBalance:           v.NormalBalance,
-		IsActive:                v.IsActive,
-		IsSystemAccount:         v.IsSystemAccount,
-		AllowManualEntries:      v.AllowManualEntries,
-		RequireReference:        v.RequireReference,
-		CurrentBalance:          v.CurrentBalance,
-		YtdBalance:              v.YtdBalance,
-		LastTransactionDate:     v.LastTransactionDate,
-		FinancialStatementLine:  v.FinancialStatementLine,
-		ReportOrder:             v.ReportOrder,
-		DisplayOrder:            v.DisplayOrder,
-		ShowInReports:           v.ShowInReports,
-		ConsolidationAccount:    v.ConsolidationAccount,
-		CashFlowType:            v.CashFlowType,
-		CurrencyCode:            v.CurrencyCode,
-		IsMultiCurrency:         v.IsMultiCurrency,
-		IsBudgetable:            v.IsBudgetable,
-		BudgetVarianceThreshold: v.BudgetVarianceThreshold,
-		Version:                 v.Version,
-		ValidationStatus:        v.ValidationStatus,
-		LastValidationRun:       v.LastValidationRun,
-		CreatedAt:               v.CreatedAt,
-		UpdatedAt:               v.UpdatedAt,
+		ID:                  v.ID,
+		TenantID:            v.TenantID,
+		EntityID:            v.EntityID,
+		AccountCode:         v.AccountCode,
+		AccountName:         v.AccountName,
+		AccountDescription:  v.AccountDescription,
+		ParentAccountID:     v.ParentAccountID,
+		AccountLevel:        v.AccountLevel,
+		AccountPath:         v.AccountPath,
+		HasChildren:         v.HasChildren,
+		RootType:            v.RootType,
+		AccountType:         v.AccountType,
+		NormalBalance:       v.NormalBalance,
+		IsActive:            v.IsActive,
+		AllowManualEntries:  v.AllowManualEntries,
+		RequireReference:    v.RequireReference,
+		CurrentBalance:      v.CurrentBalance,
+		YtdBalance:          v.YtdBalance,
+		LastTransactionDate: v.LastTransactionDate,
+		CurrencyCode:        v.CurrencyCode,
+		CreatedAt:           v.CreatedAt,
+		UpdatedAt:           v.UpdatedAt,
+		CreatedBy:           v.CreatedBy,
+		UpdatedBy:           v.UpdatedBy,
 	}
 
 	return res
@@ -927,7 +1638,8 @@ func marshalFinanceAccountResultToAccountResultResponseBody(v *finance.AccountRe
 // *TransactionEntryPayloadRequestBody.
 func unmarshalTransactionEntryPayloadRequestBodyToFinanceTransactionEntryPayload(v *TransactionEntryPayloadRequestBody) *finance.TransactionEntryPayload {
 	res := &finance.TransactionEntryPayload{
-		AccountID:    *v.AccountID,
+		AccountID:    v.AccountID,
+		AccountCode:  v.AccountCode,
 		DebitAmount:  v.DebitAmount,
 		CreditAmount: v.CreditAmount,
 		Description:  *v.Description,
@@ -947,24 +1659,32 @@ func unmarshalTransactionEntryPayloadRequestBodyToFinanceTransactionEntryPayload
 // *finance.TransactionResult.
 func marshalFinanceTransactionResultToTransactionResultResponseBody(v *finance.TransactionResult) *TransactionResultResponseBody {
 	res := &TransactionResultResponseBody{
-		ID:                v.ID,
-		TenantID:          v.TenantID,
-		EntityID:          v.EntityID,
-		TransactionNumber: v.TransactionNumber,
-		TransactionType:   v.TransactionType,
-		TransactionStatus: v.TransactionStatus,
-		TransactionDate:   v.TransactionDate,
-		PostingDate:       v.PostingDate,
-		Description:       v.Description,
-		ReferenceNumber:   v.ReferenceNumber,
-		CurrencyCode:      v.CurrencyCode,
-		ExchangeRate:      v.ExchangeRate,
-		TotalDebitAmount:  v.TotalDebitAmount,
-		TotalCreditAmount: v.TotalCreditAmount,
-		ApprovalStatus:    v.ApprovalStatus,
-		ApprovalRequired:  v.ApprovalRequired,
-		CreatedAt:         v.CreatedAt,
-		UpdatedAt:         v.UpdatedAt,
+		ID:                  v.ID,
+		TenantID:            v.TenantID,
+		EntityID:            v.EntityID,
+		TransactionNumber:   v.TransactionNumber,
+		TransactionType:     v.TransactionType,
+		Status:              v.Status,
+		CurrentStage:        v.CurrentStage,
+		TransactionDate:     v.TransactionDate,
+		PostingDate:         v.PostingDate,
+		Description:         v.Description,
+		ReferenceNumber:     v.ReferenceNumber,
+		Amount:              v.Amount,
+		Currency:            v.Currency,
+		ExchangeRate:        v.ExchangeRate,
+		TotalDebitAmount:    v.TotalDebitAmount,
+		TotalCreditAmount:   v.TotalCreditAmount,
+		CostCenter:          v.CostCenter,
+		Department:          v.Department,
+		EstimatedCompletion: v.EstimatedCompletion,
+		ProgressPercentage:  v.ProgressPercentage,
+		ApprovalStatus:      v.ApprovalStatus,
+		ApprovalRequired:    v.ApprovalRequired,
+		CreatedAt:           v.CreatedAt,
+		UpdatedAt:           v.UpdatedAt,
+		CreatedBy:           v.CreatedBy,
+		UpdatedBy:           v.UpdatedBy,
 	}
 
 	return res
@@ -996,18 +1716,32 @@ func marshalFinanceTransactionEntryResultToTransactionEntryResultResponseBody(v 
 	return res
 }
 
-// marshalFinanceValidationErrorResultToValidationErrorResultResponseBody
-// builds a value of type *ValidationErrorResultResponseBody from a value of
-// type *finance.ValidationErrorResult.
-func marshalFinanceValidationErrorResultToValidationErrorResultResponseBody(v *finance.ValidationErrorResult) *ValidationErrorResultResponseBody {
+// marshalFinanceValidationErrorToValidationErrorResponseBody builds a value of
+// type *ValidationErrorResponseBody from a value of type
+// *finance.ValidationError.
+func marshalFinanceValidationErrorToValidationErrorResponseBody(v *finance.ValidationError) *ValidationErrorResponseBody {
 	if v == nil {
 		return nil
 	}
-	res := &ValidationErrorResultResponseBody{
-		Field:    v.Field,
-		Message:  v.Message,
-		Code:     v.Code,
-		Severity: v.Severity,
+	res := &ValidationErrorResponseBody{
+		Field:   v.Field,
+		Message: v.Message,
+		Code:    v.Code,
+		Value:   v.Value,
+	}
+
+	return res
+}
+
+// unmarshalTimeRangeRequestBodyToFinanceTimeRange builds a value of type
+// *finance.TimeRange from a value of type *TimeRangeRequestBody.
+func unmarshalTimeRangeRequestBodyToFinanceTimeRange(v *TimeRangeRequestBody) *finance.TimeRange {
+	if v == nil {
+		return nil
+	}
+	res := &finance.TimeRange{
+		StartDate: *v.StartDate,
+		EndDate:   *v.EndDate,
 	}
 
 	return res
@@ -1024,16 +1758,36 @@ func unmarshalCreateTransactionPayloadRequestBodyToFinanceCreateTransactionPaylo
 		TransactionDate:   *v.TransactionDate,
 		Description:       *v.Description,
 		ReferenceNumber:   v.ReferenceNumber,
+		CostCenter:        v.CostCenter,
+		Department:        v.Department,
 	}
-	if v.CurrencyCode != nil {
-		res.CurrencyCode = *v.CurrencyCode
+	if v.Currency != nil {
+		res.Currency = *v.Currency
 	}
-	if v.CurrencyCode == nil {
-		res.CurrencyCode = "USD"
+	if v.AutoApprove != nil {
+		res.AutoApprove = *v.AutoApprove
+	}
+	if v.Priority != nil {
+		res.Priority = *v.Priority
+	}
+	if v.Currency == nil {
+		res.Currency = "USD"
 	}
 	res.Entries = make([]*finance.TransactionEntryPayload, len(v.Entries))
 	for i, val := range v.Entries {
 		res.Entries[i] = unmarshalTransactionEntryPayloadRequestBodyToFinanceTransactionEntryPayload(val)
+	}
+	if v.Attachments != nil {
+		res.Attachments = make([]string, len(v.Attachments))
+		for i, val := range v.Attachments {
+			res.Attachments[i] = val
+		}
+	}
+	if v.AutoApprove == nil {
+		res.AutoApprove = false
+	}
+	if v.Priority == nil {
+		res.Priority = "normal"
 	}
 
 	return res
@@ -1055,20 +1809,184 @@ func marshalFinanceValidationWarningResultToValidationWarningResultResponseBody(
 	return res
 }
 
+// marshalFinanceWorkflowStageResultToWorkflowStageResultResponseBody builds a
+// value of type *WorkflowStageResultResponseBody from a value of type
+// *finance.WorkflowStageResult.
+func marshalFinanceWorkflowStageResultToWorkflowStageResultResponseBody(v *finance.WorkflowStageResult) *WorkflowStageResultResponseBody {
+	if v == nil {
+		return nil
+	}
+	res := &WorkflowStageResultResponseBody{
+		Stage:       v.Stage,
+		Status:      v.Status,
+		StartedAt:   v.StartedAt,
+		CompletedAt: v.CompletedAt,
+		Actor:       v.Actor,
+		AssignedTo:  v.AssignedTo,
+		DueDate:     v.DueDate,
+		Comments:    v.Comments,
+	}
+	if v.ValidationResults != nil {
+		res.ValidationResults = marshalFinanceValidationResultToValidationResultResponseBody(v.ValidationResults)
+	}
+
+	return res
+}
+
+// marshalFinanceValidationResultToValidationResultResponseBody builds a value
+// of type *ValidationResultResponseBody from a value of type
+// *finance.ValidationResult.
+func marshalFinanceValidationResultToValidationResultResponseBody(v *finance.ValidationResult) *ValidationResultResponseBody {
+	if v == nil {
+		return nil
+	}
+	res := &ValidationResultResponseBody{
+		IsValid:           v.IsValid,
+		IsBalanced:        v.IsBalanced,
+		TotalDebits:       v.TotalDebits,
+		TotalCredits:      v.TotalCredits,
+		BalanceDifference: v.BalanceDifference,
+		ValidationLevel:   v.ValidationLevel,
+	}
+	if v.Errors != nil {
+		res.Errors = make([]*ValidationErrorResponseBody, len(v.Errors))
+		for i, val := range v.Errors {
+			res.Errors[i] = marshalFinanceValidationErrorToValidationErrorResponseBody(val)
+		}
+	}
+	if v.Warnings != nil {
+		res.Warnings = make([]*ValidationWarningResultResponseBody, len(v.Warnings))
+		for i, val := range v.Warnings {
+			res.Warnings[i] = marshalFinanceValidationWarningResultToValidationWarningResultResponseBody(val)
+		}
+	}
+
+	return res
+}
+
+// marshalFinanceApproverResultToApproverResultResponseBody builds a value of
+// type *ApproverResultResponseBody from a value of type
+// *finance.ApproverResult.
+func marshalFinanceApproverResultToApproverResultResponseBody(v *finance.ApproverResult) *ApproverResultResponseBody {
+	if v == nil {
+		return nil
+	}
+	res := &ApproverResultResponseBody{
+		ID:         v.ID,
+		Name:       v.Name,
+		Role:       v.Role,
+		Email:      v.Email,
+		Department: v.Department,
+	}
+
+	return res
+}
+
+// marshalFinanceApprovalDecisionDataToApprovalDecisionDataResponseBody builds
+// a value of type *ApprovalDecisionDataResponseBody from a value of type
+// *finance.ApprovalDecisionData.
+func marshalFinanceApprovalDecisionDataToApprovalDecisionDataResponseBody(v *finance.ApprovalDecisionData) *ApprovalDecisionDataResponseBody {
+	res := &ApprovalDecisionDataResponseBody{
+		Decision:   v.Decision,
+		ApprovedAt: v.ApprovedAt,
+		Comments:   v.Comments,
+	}
+	if v.Approver != nil {
+		res.Approver = marshalFinanceApproverResultToApproverResultResponseBody(v.Approver)
+	}
+
+	return res
+}
+
+// unmarshalRequiredChangeItemRequestBodyToFinanceRequiredChangeItem builds a
+// value of type *finance.RequiredChangeItem from a value of type
+// *RequiredChangeItemRequestBody.
+func unmarshalRequiredChangeItemRequestBodyToFinanceRequiredChangeItem(v *RequiredChangeItemRequestBody) *finance.RequiredChangeItem {
+	res := &finance.RequiredChangeItem{
+		Field:          *v.Field,
+		CurrentValue:   v.CurrentValue,
+		SuggestedValue: v.SuggestedValue,
+		Reason:         *v.Reason,
+	}
+	if v.IsMandatory != nil {
+		res.IsMandatory = *v.IsMandatory
+	}
+	if v.IsMandatory == nil {
+		res.IsMandatory = true
+	}
+
+	return res
+}
+
+// marshalFinanceWorkflowActionResultToWorkflowActionResultResponseBody builds
+// a value of type *WorkflowActionResultResponseBody from a value of type
+// *finance.WorkflowActionResult.
+func marshalFinanceWorkflowActionResultToWorkflowActionResultResponseBody(v *finance.WorkflowActionResult) *WorkflowActionResultResponseBody {
+	res := &WorkflowActionResultResponseBody{
+		Action:          v.Action,
+		Label:           v.Label,
+		Description:     v.Description,
+		RequiresComment: v.RequiresComment,
+	}
+	if v.PermissionsRequired != nil {
+		res.PermissionsRequired = make([]string, len(v.PermissionsRequired))
+		for i, val := range v.PermissionsRequired {
+			res.PermissionsRequired[i] = val
+		}
+	}
+
+	return res
+}
+
+// marshalFinanceEscalationRuleResultToEscalationRuleResultResponseBody builds
+// a value of type *EscalationRuleResultResponseBody from a value of type
+// *finance.EscalationRuleResult.
+func marshalFinanceEscalationRuleResultToEscalationRuleResultResponseBody(v *finance.EscalationRuleResult) *EscalationRuleResultResponseBody {
+	if v == nil {
+		return nil
+	}
+	res := &EscalationRuleResultResponseBody{
+		RuleName:             v.RuleName,
+		TriggerCondition:     v.TriggerCondition,
+		EscalateTo:           v.EscalateTo,
+		EscalationDelayHours: v.EscalationDelayHours,
+		IsActive:             v.IsActive,
+	}
+
+	return res
+}
+
+// marshalFinanceSLAMetricsToSLAMetricsResponseBody builds a value of type
+// *SLAMetricsResponseBody from a value of type *finance.SLAMetrics.
+func marshalFinanceSLAMetricsToSLAMetricsResponseBody(v *finance.SLAMetrics) *SLAMetricsResponseBody {
+	if v == nil {
+		return nil
+	}
+	res := &SLAMetricsResponseBody{
+		TargetCompletionHours: v.TargetCompletionHours,
+		ElapsedHours:          v.ElapsedHours,
+		RemainingHours:        v.RemainingHours,
+		IsOverdue:             v.IsOverdue,
+	}
+
+	return res
+}
+
 // marshalFinanceTrialBalanceEntryToTrialBalanceEntryResponseBody builds a
 // value of type *TrialBalanceEntryResponseBody from a value of type
 // *finance.TrialBalanceEntry.
 func marshalFinanceTrialBalanceEntryToTrialBalanceEntryResponseBody(v *finance.TrialBalanceEntry) *TrialBalanceEntryResponseBody {
 	res := &TrialBalanceEntryResponseBody{
-		AccountID:     v.AccountID,
-		AccountCode:   v.AccountCode,
-		AccountName:   v.AccountName,
-		RootType:      v.RootType,
-		AccountType:   v.AccountType,
-		NormalBalance: v.NormalBalance,
-		TotalDebits:   v.TotalDebits,
-		TotalCredits:  v.TotalCredits,
-		NetBalance:    v.NetBalance,
+		AccountID:          v.AccountID,
+		AccountCode:        v.AccountCode,
+		AccountName:        v.AccountName,
+		RootType:           v.RootType,
+		AccountType:        v.AccountType,
+		NormalBalance:      v.NormalBalance,
+		TotalDebits:        v.TotalDebits,
+		TotalCredits:       v.TotalCredits,
+		NetBalance:         v.NetBalance,
+		VarianceFromNormal: v.VarianceFromNormal,
 	}
 
 	return res

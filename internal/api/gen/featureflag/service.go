@@ -59,7 +59,7 @@ type Service interface {
 }
 
 // APIName is the name of the API as defined in the design.
-const APIName = "awo"
+const APIName = "Awo"
 
 // APIVersion is the version of the API as defined in the design.
 const APIVersion = "1.0.0"

@@ -15,10 +15,28 @@ import (
 
 // Financial management service for double-entry bookkeeping and accounting
 type Service interface {
+	// Create a new account or account group using unified endpoint
+	CreateAccountNode(context.Context, *CreateAccountNodePayload) (res *AccountNodeResult, err error)
+	// Get account or account group by ID
+	GetAccountNode(context.Context, *GetAccountNodeByIDPayload) (res *AccountNodeResult, err error)
+	// Get account or account group by code
+	GetAccountNodeByCode(context.Context, *GetAccountNodeByCodePayload) (res *AccountNodeResult, err error)
+	// List unified accounts and groups with filtering
+	ListAccountNodes(context.Context, *ListAccountNodesPayload) (res *AccountNodeListResult, err error)
+	// Update an existing account or account group
+	UpdateAccountNode(context.Context, *UpdateAccountNodePayload) (res *AccountNodeResult, err error)
+	// Soft delete an account or account group
+	DeleteAccountNode(context.Context, *DeleteAccountNodePayload) (err error)
+	// Search accounts and groups
+	SearchAccountNodes(context.Context, *SearchAccountNodesPayload) (res *SearchAccountNodesResult, err error)
+	// Get current balance for an account
+	GetAccountBalance(context.Context, *GetAccountBalancePayload) (res *AccountBalanceResult, err error)
+	// Get hierarchy analysis for a parent node
+	GetHierarchyAnalysis(context.Context, *GetHierarchyAnalysisPayload) (res *HierarchyAnalysisResult, err error)
 	// Create a new chart of accounts entry
 	CreateAccount(context.Context, *CreateAccountPayload) (res *AccountResult, err error)
 	// Get account by ID
-	GetAccount(context.Context, *GetAccountPayload) (res *AccountResult, err error)
+	GetAccount(context.Context, *GetAccountByIDPayload) (res *AccountResult, err error)
 	// Get account by account code
 	GetAccountByCode(context.Context, *GetAccountByCodePayload) (res *AccountResult, err error)
 	// Get account by exact account name
@@ -30,13 +48,13 @@ type Service interface {
 	// Soft delete an account
 	DeleteAccount(context.Context, *DeleteAccountPayload) (err error)
 	// Get account hierarchy tree
-	GetAccountHierarchy(context.Context, *GetAccountHierarchyPayload) (res *AccountHierarchyResult, err error)
+	GetAccountHierarchy(context.Context, *GetAccountHierarchyPayload) (res *AccountListResult, err error)
 	// Get current balance for an account
-	GetAccountBalance(context.Context, *GetAccountBalancePayload) (res *AccountBalanceResult, err error)
+	GetAccountBalanceEndpoint(context.Context, *GetAccountBalancePayload) (res *AccountBalanceResult, err error)
 	// Create a new financial transaction
 	CreateTransaction(context.Context, *CreateTransactionPayload) (res *TransactionResult, err error)
 	// Get transaction by ID with entries
-	GetTransaction(context.Context, *GetTransactionPayload) (res *TransactionWithEntriesResult, err error)
+	GetTransaction(context.Context, *GetTransactionByIDPayload) (res *TransactionWithEntriesResult, err error)
 	// Get transaction by transaction number
 	GetTransactionByNumber(context.Context, *GetTransactionByNumberPayload) (res *TransactionWithEntriesResult, err error)
 	// List transactions with filtering and pagination
@@ -49,12 +67,20 @@ type Service interface {
 	ApproveTransaction(context.Context, *ApproveTransactionPayload) (res *TransactionResult, err error)
 	// Validate transaction before posting
 	ValidateTransaction(context.Context, *ValidateTransactionPayload) (res *ValidationResult, err error)
+	// Get detailed transaction status and workflow progress
+	GetTransactionStatus(context.Context, *GetTransactionStatusPayload) (res *TransactionStatusResult, err error)
+	// Submit approval decision (approve/reject/request changes)
+	SubmitApprovalDecision(context.Context, *ApprovalDecisionPayload) (res *ApprovalDecisionResult, err error)
+	// Request modifications to a submitted transaction
+	RequestTransactionChanges(context.Context, *ChangeRequestPayload) (res *ChangeRequestResult, err error)
+	// Get complete workflow history and available actions for a transaction
+	GetTransactionWorkflow(context.Context, *GetTransactionWorkflowPayload) (res *TransactionWorkflowResult, err error)
 	// Generate trial balance report
-	GetTrialBalance(context.Context, *TrialBalancePayload) (res *TrialBalanceResult, err error)
+	GetTrialBalance(context.Context, *GetTrialBalancePayload) (res *TrialBalanceResult, err error)
 }
 
 // APIName is the name of the API as defined in the design.
-const APIName = "awo"
+const APIName = "Awo"
 
 // APIVersion is the version of the API as defined in the design.
 const APIVersion = "1.0.0"
@@ -67,7 +93,7 @@ const ServiceName = "finance"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [18]string{"createAccount", "getAccount", "getAccountByCode", "getAccountByName", "listAccounts", "updateAccount", "deleteAccount", "getAccountHierarchy", "getAccountBalance", "createTransaction", "getTransaction", "getTransactionByNumber", "listTransactions", "postTransaction", "reverseTransaction", "approveTransaction", "validateTransaction", "getTrialBalance"}
+var MethodNames = [31]string{"createAccountNode", "getAccountNode", "getAccountNodeByCode", "listAccountNodes", "updateAccountNode", "deleteAccountNode", "searchAccountNodes", "getAccountBalance", "getHierarchyAnalysis", "createAccount", "getAccount", "getAccountByCode", "getAccountByName", "listAccounts", "updateAccount", "deleteAccount", "getAccountHierarchy", "getAccountBalance", "createTransaction", "getTransaction", "getTransactionByNumber", "listTransactions", "postTransaction", "reverseTransaction", "approveTransaction", "validateTransaction", "getTransactionStatus", "submitApprovalDecision", "requestTransactionChanges", "getTransactionWorkflow", "getTrialBalance"}
 
 // AccountBalanceResult is the result type of the finance service
 // getAccountBalance method.
@@ -90,26 +116,87 @@ type AccountBalanceResult struct {
 	LastTransactionDate *string
 }
 
-// AccountHierarchyResult is the result type of the finance service
-// getAccountHierarchy method.
-type AccountHierarchyResult struct {
-	// Accounts in hierarchical order
-	Accounts []*AccountResult
-	// Total number of accounts in hierarchy
-	TotalCount int32
-}
-
 // AccountListResult is the result type of the finance service listAccounts
 // method.
 type AccountListResult struct {
 	// List of accounts
 	Accounts []*AccountResult
-	// Total number of accounts
-	TotalCount int64
-	// Results limit used
-	Limit int32
-	// Results offset used
-	Offset int32
+	// Pagination metadata
+	Pagination *PaginationMeta
+}
+
+// AccountNodeListResult is the result type of the finance service
+// listAccountNodes method.
+type AccountNodeListResult struct {
+	// List of account nodes
+	Nodes []*AccountNodeResult
+	// Pagination metadata
+	Pagination *PaginationMeta
+}
+
+// AccountNodeResult is the result type of the finance service
+// createAccountNode method.
+type AccountNodeResult struct {
+	// Node ID
+	ID string
+	// Node type discriminator
+	NodeType string
+	// Node code
+	Code string
+	// Node name
+	Name string
+	// Node description
+	Description *string
+	// Parent node ID
+	ParentID *string
+	// Hierarchy level (1 = root)
+	Level int32
+	// Materialized path
+	Path string
+	// Whether node has child nodes
+	HasChildren bool
+	// Number of direct children
+	ChildCount int32
+	// Whether node is active
+	IsActive bool
+	// Account type (if account)
+	AccountType *string
+	// Root type (if account)
+	RootType *string
+	// Normal balance side (if account)
+	NormalBalance *string
+	// Currency code (if account)
+	CurrencyCode *string
+	// Current balance (if account)
+	CurrentBalance *string
+	// Allows manual entries (if account)
+	AllowsManualEntries *bool
+	// Requires reconciliation (if account)
+	RequiresReconciliation *bool
+	// Financial statement section (if group)
+	FinancialStatementSection *string
+	// Consolidation method (if group)
+	ConsolidationMethod *string
+	// Cash flow category (if group)
+	CashFlowCategory *string
+	// Display order (if group)
+	DisplayOrder *int32
+	// Is header group (if group)
+	IsHeader *bool
+	// Show totals (if group)
+	ShowTotals *bool
+	// Indent level (if group)
+	IndentLevel *int32
+	// Total balance
+	TotalBalance *string
+	// Creation timestamp
+	CreatedAt *string
+	// Last update timestamp
+	UpdatedAt *string
+	// ID of user who created the record
+	CreatedBy *string
+	// ID of user who last updated the record
+	UpdatedBy *string
 }
 
 // AccountResult is the result type of the finance service createAccount method.
@@ -134,28 +221,14 @@ type AccountResult struct {
 	AccountPath *string
 	// Whether account has child accounts
 	HasChildren *bool
-	// Whether account is a leaf node
-	IsLeafAccount *bool
-	// Account group ID
-	AccountGroupID *string
-	// Account header ID
-	AccountHeaderID *string
 	// Root account type
 	RootType string
 	// Account type
 	AccountType string
-	// Account subtype
-	AccountSubtype *string
-	// Account category for grouping
-	AccountCategory *string
-	// Sub-category within main category
-	SubCategory *string
 	// Normal balance side
 	NormalBalance string
 	// Whether account is active
 	IsActive bool
-	// Whether this is a system account
-	IsSystemAccount *bool
 	// Whether manual entries are allowed
 	AllowManualEntries *bool
 	// Whether reference is required
@@ -166,36 +239,62 @@ type AccountResult struct {
 	YtdBalance *string
 	// Last transaction date
 	LastTransactionDate *string
-	// Financial statement line grouping
-	FinancialStatementLine *string
-	// Sort order in reports
-	ReportOrder *int32
-	// Display order in UI/reports
-	DisplayOrder *int32
-	// Whether to include in standard reports
-	ShowInReports *bool
-	// Consolidation mapping for multi-entity
-	ConsolidationAccount *string
-	// Cash flow statement classification
-	CashFlowType *string
 	// Primary currency code
 	CurrencyCode *string
-	// Whether account accepts multiple currencies
-	IsMultiCurrency *bool
-	// Whether account can have budgets
-	IsBudgetable *bool
-	// Budget variance alert threshold
-	BudgetVarianceThreshold *string
-	// Version for optimistic locking
-	Version *int32
-	// Current validation status
-	ValidationStatus *string
-	// Last validation timestamp
-	LastValidationRun *string
 	// Creation timestamp
 	CreatedAt *string
 	// Last update timestamp
 	UpdatedAt *string
+	// ID of user who created the record
+	CreatedBy *string
+	// ID of user who last updated the record
+	UpdatedBy *string
+}
+
+// Approval decision data
+type ApprovalDecisionData struct {
+	// Decision made
+	Decision *string
+	// Approver who made decision
+	Approver *ApproverResult
+	// Decision timestamp
+	ApprovedAt *string
+	// Approval comments
+	Comments *string
+}
+
+// ApprovalDecisionPayload is the payload type of the finance service
+// submitApprovalDecision method.
+type ApprovalDecisionPayload struct {
+	// Transaction ID
+	ID string
+	// Approval decision
+	Decision string
+	// Approval comments
+	Comments *string
+	// Approver user ID
+	ApproverID string
+	// Level of approval
+	ApprovalLevel string
+	// Reason for escalation (optional)
+	EscalationReason *string
+}
+
+// ApprovalDecisionResult is the result type of the finance service
+// submitApprovalDecision method.
+type ApprovalDecisionResult struct {
+	// Transaction ID
+	ID string
+	// Updated transaction status
+	Status string
+	// Updated workflow stage
+	CurrentStage string
+	// Approval decision details
+	ApprovalDecision *ApprovalDecisionData
+	// Updated completion estimate
+	EstimatedCompletion *string
+	// Next workflow stage
+	NextStage *string
 }
 
 // ApproveTransactionPayload is the payload type of the finance service
@@ -207,6 +306,105 @@ type ApproveTransactionPayload struct {
 	Notes *string
 }
 
+// Approver information
+type ApproverResult struct {
+	// Approver user ID
+	ID string
+	// Approver full name
+	Name string
+	// Approver role
+	Role string
+	// Approver email
+	Email *string
+	// Approver department
+	Department *string
+}
+
+// ChangeRequestPayload is the payload type of the finance service
+// requestTransactionChanges method.
+type ChangeRequestPayload struct {
+	// Transaction ID
+	ID string
+	// User requesting changes
+	RequestedBy string
+	// Reason for change request
+	Reason string
+	// List of required changes
+	RequiredChanges []*RequiredChangeItem
+	// Due date for changes
+	DueDate *string
+	// Change request priority
+	Priority string
+}
+
+// ChangeRequestResult is the result type of the finance service
+// requestTransactionChanges method.
+type ChangeRequestResult struct {
+	// Change request ID
+	ChangeRequestID string
+	// Original transaction ID
+	TransactionID string
+	// Change request status
+	Status string
+	// User assigned to make changes
+	AssignedTo *string
+	// Due date for changes
+	DueDate *string
+	// Creation timestamp
+	CreatedAt *string
+	// Last update timestamp
+	UpdatedAt *string
+	// ID of user who created the record
+	CreatedBy *string
+	// ID of user who last updated the record
+	UpdatedBy *string
+}
+
+// CreateAccountNodePayload is the payload type of the finance service
+// createAccountNode method.
+type CreateAccountNodePayload struct {
+	// Node type discriminator (account or group)
+	NodeType string
+	// Entity ID (optional)
+	EntityID *string
+	// Unique code (account_code for accounts, group_code for groups)
+	Code string
+	// Name (account_name for accounts, group_name for groups)
+	Name string
+	// Description (optional)
+	Description *string
+	// Parent node ID (can be account or group)
+	ParentID *string
+	// Detailed account type (accounts only)
+	AccountType *string
+	// Root type (accounts only)
+	RootType *string
+	// Normal balance side (accounts only)
+	NormalBalance *string
+	// Primary currency code (accounts only)
+	CurrencyCode *string
+	// Allow manual journal entries (accounts only)
+	AllowsManualEntries bool
+	// Require reconciliation (accounts only)
+	RequiresReconciliation bool
+	// Financial statement section (groups only)
+	FinancialStatementSection *string
+	// Balance consolidation method (groups only)
+	ConsolidationMethod string
+	// Cash flow statement category (groups only)
+	CashFlowCategory *string
+	// Display order in reports (groups only)
+	DisplayOrder int32
+	// Is header group (groups only)
+	IsHeader bool
+	// Show group totals (groups only)
+	ShowTotals bool
+	// Indentation level for display (groups only)
+	IndentLevel int32
+	// Whether node is active
+	IsActive bool
+}
+
 // CreateAccountPayload is the payload type of the finance service
 // createAccount method.
 type CreateAccountPayload struct {
@@ -216,36 +414,24 @@ type CreateAccountPayload struct {
 	AccountCode string
 	// Account name
 	AccountName string
-	// Account description (optional)
+	// Account description
 	AccountDescription *string
-	// Parent account ID for hierarchy (optional)
+	// Parent account ID (optional)
 	ParentAccountID *string
-	// Account group ID for organization (optional)
-	AccountGroupID *string
-	// Account header ID for grouping (optional)
-	AccountHeaderID *string
 	// Root account type
 	RootType string
 	// Detailed account type
-	AccountType *string
-	// Account subtype (optional)
-	AccountSubtype *string
-	// Account category for grouping (optional)
-	AccountCategory *string
-	// Sub-category within main category (optional)
-	SubCategory *string
+	AccountType string
 	// Normal balance side
 	NormalBalance string
-	// Primary currency code (optional)
-	CurrencyCode *string
+	// Primary currency code
+	CurrencyCode string
 	// Whether account is active
 	IsActive bool
-	// Display order in UI/reports
-	DisplayOrder int32
-	// Whether to include in standard reports
-	ShowInReports bool
-	// Consolidation mapping for multi-entity (optional)
-	ConsolidationAccount *string
+	// Allow manual journal entries
+	AllowManualEntries bool
+	// Require reference for entries
+	RequireReference bool
 	// Cash flow statement classification (optional)
 	CashFlowType *string
 }
@@ -266,9 +452,26 @@ type CreateTransactionPayload struct {
 	// External reference number
 	ReferenceNumber *string
 	// Transaction currency
-	CurrencyCode string
+	Currency string
+	// Cost center code
+	CostCenter *string
+	// Department
+	Department *string
 	// Transaction entries
 	Entries []*TransactionEntryPayload
+	// Document attachment UUIDs
+	Attachments []string
+	// Skip approval if user has sufficient privileges
+	AutoApprove bool
+	// Processing priority
+	Priority string
+}
+
+// DeleteAccountNodePayload is the payload type of the finance service
+// deleteAccountNode method.
+type DeleteAccountNodePayload struct {
+	// Node ID
+	ID string
 }
 
 // DeleteAccountPayload is the payload type of the finance service
@@ -276,6 +479,20 @@ type CreateTransactionPayload struct {
 type DeleteAccountPayload struct {
 	// Account ID
 	ID string
+}
+
+// Escalation rule information
+type EscalationRuleResult struct {
+	// Escalation rule name
+	RuleName string
+	// Condition that triggers escalation
+	TriggerCondition string
+	// User to escalate to
+	EscalateTo *string
+	// Hours before escalation
+	EscalationDelayHours *int32
+	// Whether rule is currently active
+	IsActive *bool
 }
 
 // GetAccountBalancePayload is the payload type of the finance service
@@ -294,6 +511,13 @@ type GetAccountByCodePayload struct {
 	AccountCode string
 }
 
+// GetAccountByIDPayload is the payload type of the finance service getAccount
+// method.
+type GetAccountByIDPayload struct {
+	// Account ID
+	ID string
+}
+
 // GetAccountByNamePayload is the payload type of the finance service
 // getAccountByName method.
 type GetAccountByNamePayload struct {
@@ -308,10 +532,37 @@ type GetAccountHierarchyPayload struct {
 	RootID *string
 }
 
-// GetAccountPayload is the payload type of the finance service getAccount
-// method.
-type GetAccountPayload struct {
-	// Account ID
+// GetAccountNodeByCodePayload is the payload type of the finance service
+// getAccountNodeByCode method.
+type GetAccountNodeByCodePayload struct {
+	// Node code
+	Code string
+}
+
+// GetAccountNodeByIDPayload is the payload type of the finance service
+// getAccountNode method.
+type GetAccountNodeByIDPayload struct {
+	// Node ID
+	ID string
+}
+
+// GetHierarchyAnalysisPayload is the payload type of the finance service
+// getHierarchyAnalysis method.
+type GetHierarchyAnalysisPayload struct {
+	// Parent node ID
+	ParentID string
+	// Include balance information
+	IncludeBalanceData bool
+	// Maximum depth to analyze
+	MaxDepth *int32
+	// Analysis date
+	AsOfDate *string
+}
+
+// GetTransactionByIDPayload is the payload type of the finance service
+// getTransaction method.
+type GetTransactionByIDPayload struct {
+	// Transaction ID
 	ID string
 }
 
@@ -322,11 +573,71 @@ type GetTransactionByNumberPayload struct {
 	TransactionNumber string
 }
 
-// GetTransactionPayload is the payload type of the finance service
-// getTransaction method.
-type GetTransactionPayload struct {
+// GetTransactionStatusPayload is the payload type of the finance service
+// getTransactionStatus method.
+type GetTransactionStatusPayload struct {
 	// Transaction ID
 	ID string
+}
+
+// GetTransactionWorkflowPayload is the payload type of the finance service
+// getTransactionWorkflow method.
+type GetTransactionWorkflowPayload struct {
+	// Transaction ID
+	ID string
+}
+
+// GetTrialBalancePayload is the payload type of the finance service
+// getTrialBalance method.
+type GetTrialBalancePayload struct {
+	// Balance as of date (optional)
+	AsOfDate *string
+	// Include accounts with zero balances
+	IncludeZeroBalances bool
+}
+
+// HierarchyAnalysisResult is the result type of the finance service
+// getHierarchyAnalysis method.
+type HierarchyAnalysisResult struct {
+	ParentID       string
+	HierarchyDepth int32
+	TotalAccounts  int32
+	TotalGroups    int32
+	TotalBalance   string
+	AnalysisDate   *string
+}
+
+// ListAccountNodesPayload is the payload type of the finance service
+// listAccountNodes method.
+type ListAccountNodesPayload struct {
+	// Filter by node types
+	NodeTypes []string
+	// Filter by parent node ID
+	ParentID *string
+	// Maximum hierarchy depth to include
+	MaxLevel *int32
+	// Include child count and hierarchy info
+	IncludeChildren bool
+	// Filter by root type (accounts only)
+	RootType *string
+	// Filter by account type (accounts only)
+	AccountType *string
+	// Filter by financial statement section (groups only)
+	FinancialStatementSection *string
+	// Filter by cash flow category (groups only)
+	CashFlowCategory *string
+	// Filter by active status
+	IsActive *bool
+	// Search in codes, names, or descriptions
+	SearchQuery *string
+	// Include current balances
+	IncludeBalances bool
+	// Pagination parameters
+	Pagination *Pagination
+	// Sort field
+	SortBy string
+	// Sort order
+	SortOrder string
 }
 
 // ListAccountsPayload is the payload type of the finance service listAccounts
@@ -342,10 +653,8 @@ type ListAccountsPayload struct {
 	ParentID *string
 	// Search in account code or name
 	Search *string
-	// Maximum number of results
-	Limit int32
-	// Number of results to skip
-	Offset int32
+	// Pagination parameters
+	Pagination *Pagination
 }
 
 // ListTransactionsPayload is the payload type of the finance service
@@ -355,18 +664,42 @@ type ListTransactionsPayload struct {
 	Status *string
 	// Filter by transaction type
 	Type *string
-	// Start date filter
-	DateFrom *string
-	// End date filter
-	DateTo *string
+	// Date range filter
+	DateRange *TimeRange
 	// Filter by account
 	AccountID *string
 	// Search in transaction number or description
 	Search *string
-	// Maximum number of results
-	Limit int32
-	// Number of results to skip
-	Offset int32
+	// Pagination parameters
+	Pagination *Pagination
+}
+
+// Pagination parameters
+type Pagination struct {
+	// Page number (1-based)
+	Page uint
+	// Number of items per page
+	PageSize uint
+	// Field to sort by
+	SortBy *string
+	// Sort order
+	SortOrder string
+}
+
+// Pagination metadata
+type PaginationMeta struct {
+	// Current page number
+	CurrentPage uint
+	// Items per page
+	PageSize uint
+	// Total number of items
+	TotalItems uint
+	// Total number of pages
+	TotalPages uint
+	// Whether there is a next page
+	HasNext bool
+	// Whether there is a previous page
+	HasPrev bool
 }
 
 // PostTransactionPayload is the payload type of the finance service
@@ -382,6 +715,20 @@ type PostTransactionPayload struct {
 	ForcePost bool
 }
 
+// Individual change requirement
+type RequiredChangeItem struct {
+	// Field that needs to be changed
+	Field string
+	// Current field value
+	CurrentValue *string
+	// Suggested new value
+	SuggestedValue *string
+	// Reason for this specific change
+	Reason string
+	// Whether this change is mandatory
+	IsMandatory bool
+}
+
 // ReverseTransactionPayload is the payload type of the finance service
 // reverseTransaction method.
 type ReverseTransactionPayload struct {
@@ -393,10 +740,82 @@ type ReverseTransactionPayload struct {
 	ReversalDate *string
 }
 
+// Service Level Agreement metrics
+type SLAMetrics struct {
+	// Target completion time in hours
+	TargetCompletionHours *int32
+	// Elapsed time in hours
+	ElapsedHours *int32
+	// Remaining time in hours
+	RemainingHours *int32
+	// Whether workflow is overdue
+	IsOverdue *bool
+}
+
+// SearchAccountNodesPayload is the payload type of the finance service
+// searchAccountNodes method.
+type SearchAccountNodesPayload struct {
+	// Search term
+	Query string
+	// Filter by node types
+	NodeTypes []string
+	// Maximum results
+	Limit int32
+	// Include inactive nodes
+	IncludeInactive bool
+}
+
+// SearchAccountNodesResult is the result type of the finance service
+// searchAccountNodes method.
+type SearchAccountNodesResult struct {
+	// Search results
+	Results []*SearchResultItem
+	// Total number of results
+	TotalResults int32
+	// Search execution time
+	SearchDurationMs int32
+}
+
+// Individual search result
+type SearchResultItem struct {
+	// Node ID
+	ID string
+	// Node type
+	NodeType string
+	// Node code
+	Code string
+	// Node name
+	Name string
+	// Hierarchy path
+	Path string
+	// Type of match
+	MatchType string
+	// Relevance score (0-1)
+	RelevanceScore float64
+	// Current balance (if account)
+	CurrentBalance *string
+	// Currency code (if account)
+	CurrencyCode *string
+	// Number of children (if group)
+	ChildCount *int32
+	// Total balance (if group)
+	TotalBalance *string
+}
+
+// Time range with start and end dates
+type TimeRange struct {
+	// Start date
+	StartDate string
+	// End date
+	EndDate string
+}
+
 // Transaction entry for double-entry bookkeeping
 type TransactionEntryPayload struct {
-	// Account ID
-	AccountID string
+	// Account ID (alternative to account_code)
+	AccountID *string
+	// Account code (alternative to account_id)
+	AccountCode *string
 	// Debit amount (decimal)
 	DebitAmount *string
 	// Credit amount (decimal)
@@ -458,12 +877,8 @@ type TransactionEntryResult struct {
 type TransactionListResult struct {
 	// List of transactions
 	Transactions []*TransactionResult
-	// Total number of transactions
-	TotalCount int64
-	// Results limit used
-	Limit int32
-	// Results offset used
-	Offset int32
+	// Pagination metadata
+	Pagination *PaginationMeta
 }
 
 // TransactionResult is the result type of the finance service
@@ -479,8 +894,10 @@ type TransactionResult struct {
 	TransactionNumber string
 	// Transaction type
 	TransactionType string
-	// Transaction status
-	TransactionStatus string
+	// Current transaction status
+	Status string
+	// Current workflow stage
+	CurrentStage string
 	// Transaction date
 	TransactionDate string
 	// Posting date
@@ -489,14 +906,24 @@ type TransactionResult struct {
 	Description string
 	// Reference number
 	ReferenceNumber *string
+	// Total transaction amount
+	Amount *string
 	// Currency code
-	CurrencyCode *string
+	Currency *string
 	// Exchange rate
 	ExchangeRate *string
 	// Total debit amount
 	TotalDebitAmount *string
 	// Total credit amount
 	TotalCreditAmount *string
+	// Cost center
+	CostCenter *string
+	// Department
+	Department *string
+	// Estimated completion time
+	EstimatedCompletion *string
+	// Workflow progress (0-100)
+	ProgressPercentage *int32
 	// Approval status
 	ApprovalStatus *string
 	// Whether approval is required
@@ -505,6 +932,33 @@ type TransactionResult struct {
 	CreatedAt *string
 	// Last update timestamp
 	UpdatedAt *string
+	// ID of user who created the record
+	CreatedBy *string
+	// ID of user who last updated the record
+	UpdatedBy *string
+}
+
+// TransactionStatusResult is the result type of the finance service
+// getTransactionStatus method.
+type TransactionStatusResult struct {
+	// Transaction ID
+	ID string
+	// Transaction number
+	TransactionNumber string
+	// Current transaction status
+	Status string
+	// Current workflow stage
+	CurrentStage string
+	// Completion percentage (0-100)
+	ProgressPercentage int32
+	// Estimated completion time
+	EstimatedCompletion *string
+	// Complete workflow history
+	WorkflowHistory []*WorkflowStageResult
+	// Available actions for current user
+	AvailableActions []string
+	// Next approver information
+	NextApprover *ApproverResult
 }
 
 // TransactionWithEntriesResult is the result type of the finance service
@@ -517,7 +971,24 @@ type TransactionWithEntriesResult struct {
 	// Whether transaction is balanced
 	IsBalanced bool
 	// Validation errors if any
-	ValidationErrors []*ValidationErrorResult
+	ValidationErrors []*ValidationError
+}
+
+// TransactionWorkflowResult is the result type of the finance service
+// getTransactionWorkflow method.
+type TransactionWorkflowResult struct {
+	// Transaction ID
+	TransactionID string
+	// Workflow template used
+	WorkflowTemplate string
+	// All workflow stages
+	Stages []*WorkflowStageResult
+	// Available actions by stage
+	AvailableActions map[string]*WorkflowActionResult
+	// Applicable escalation rules
+	EscalationRules []*EscalationRuleResult
+	// SLA tracking metrics
+	SLAMetrics *SLAMetrics
 }
 
 // Trial balance account entry
@@ -540,15 +1011,8 @@ type TrialBalanceEntry struct {
 	TotalCredits string
 	// Net balance amount
 	NetBalance string
-}
-
-// TrialBalancePayload is the payload type of the finance service
-// getTrialBalance method.
-type TrialBalancePayload struct {
-	// Balance as of date (optional, defaults to today)
-	AsOfDate *string
-	// Include accounts with zero balances
-	IncludeZeroBalances bool
+	// Variance from normal balance
+	VarianceFromNormal *string
 }
 
 // TrialBalanceResult is the result type of the finance service getTrialBalance
@@ -564,8 +1028,39 @@ type TrialBalanceResult struct {
 	TotalCredits string
 	// Whether debits equal credits
 	IsBalanced bool
+	// Difference if not balanced
+	BalanceDifference *string
+	// Report currency
+	Currency string
+	// Entity ID (if filtered)
+	EntityID *string
 	// Report generation timestamp
 	GeneratedAt string
+	// Report generated by user
+	GeneratedBy *string
+}
+
+// UpdateAccountNodePayload is the payload type of the finance service
+// updateAccountNode method.
+type UpdateAccountNodePayload struct {
+	// Node ID
+	ID string
+	// Node name
+	Name *string
+	// Node description
+	Description *string
+	// Allow manual journal entries (accounts only)
+	AllowsManualEntries *bool
+	// Require reconciliation (accounts only)
+	RequiresReconciliation *bool
+	// Display order in reports (groups only)
+	DisplayOrder *int32
+	// Show group totals (groups only)
+	ShowTotals *bool
+	// Indentation level (groups only)
+	IndentLevel *int32
+	// Whether node is active
+	IsActive *bool
 }
 
 // UpdateAccountPayload is the payload type of the finance service
@@ -577,14 +1072,6 @@ type UpdateAccountPayload struct {
 	AccountName *string
 	// Account description
 	AccountDescription *string
-	// Account group ID (optional)
-	AccountGroupID *string
-	// Account header ID (optional)
-	AccountHeaderID *string
-	// Account category for grouping (optional)
-	AccountCategory *string
-	// Sub-category within main category (optional)
-	SubCategory *string
 	// Whether account is active
 	IsActive *bool
 	// Allow manual journal entries
@@ -595,8 +1082,6 @@ type UpdateAccountPayload struct {
 	DisplayOrder *int32
 	// Whether to include in standard reports
 	ShowInReports *bool
-	// Consolidation mapping for multi-entity (optional)
-	ConsolidationAccount *string
 	// Cash flow statement classification (optional)
 	CashFlowType *string
 }
@@ -611,15 +1096,15 @@ type ValidateTransactionPayload struct {
 }
 
 // Validation error details
-type ValidationErrorResult struct {
-	// Field that failed validation
+type ValidationError struct {
+	// Field name that failed validation
 	Field string
-	// Error message
+	// Validation error message
 	Message string
-	// Error code
+	// Validation error code
 	Code string
-	// Error severity
-	Severity string
+	// The invalid value
+	Value any
 }
 
 // ValidationResult is the result type of the finance service
@@ -636,7 +1121,7 @@ type ValidationResult struct {
 	// Difference between debits and credits
 	BalanceDifference *string
 	// Validation errors
-	Errors []*ValidationErrorResult
+	Errors []*ValidationError
 	// Validation warnings
 	Warnings []*ValidationWarningResult
 	// Validation level used
@@ -651,6 +1136,42 @@ type ValidationWarningResult struct {
 	Message string
 	// Warning code
 	Code string
+}
+
+// Available workflow action
+type WorkflowActionResult struct {
+	// Action name
+	Action string
+	// Human-readable label
+	Label string
+	// Action description
+	Description *string
+	// Whether action requires a comment
+	RequiresComment *bool
+	// Required permissions
+	PermissionsRequired []string
+}
+
+// Workflow stage information
+type WorkflowStageResult struct {
+	// Stage name
+	Stage string
+	// Stage status
+	Status string
+	// Stage start time
+	StartedAt *string
+	// Stage completion time
+	CompletedAt *string
+	// User who performed the action
+	Actor *string
+	// User assigned to this stage
+	AssignedTo *string
+	// Due date for this stage
+	DueDate *string
+	// Validation results if applicable
+	ValidationResults *ValidationResult
+	// Stage comments or notes
+	Comments *string
 }
 
 // MakeBadRequest builds a goa.ServiceError from an error.

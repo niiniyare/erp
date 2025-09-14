@@ -1,7 +1,7 @@
-# Awo ERP Goa API Implementation Guide
-## *Design-First API Development with Modular Handler Architecture*
+# ERP GOA API Implementation Guide
+## *Design-First API Development with Modular Type Architecture*
 
-*A guide for implementing Goa-based APIs in Awo ERP using design-first development and modular handler organization*
+*A comprehensive guide for implementing GOA-based APIs in ERP using design-first development, feature-specific type organization, and reusable domain models*
 
 > **📚 Essential Reading:** This guide focuses on API layer implementation. For complementary patterns, also review:
 > - `docs/contributing/service.md` - Service layer and business logic implementation
@@ -9,511 +9,455 @@
 > - `docs/contributing/general-testing.md` - API testing strategies and patterns
 > - `docs/contributing/error-handling.md` - Error handling and response patterns
 
-## **🏗️ Handler Architecture Pattern**
+## **🏗️ Modern API Architecture Pattern**
 
-Each module in Awo ERP follows a consistent handler organization pattern that promotes modularity and maintainability:
-
-```
-internal/api/handlers/
-├── {module}.go                    # 🔥 MAIN MODULE ENTRY POINT - Called by main
-├── {module}/                      # Module-specific handler directory
-│   ├── service_handler.go         # Core service handler (implements Goa interface)
-│   ├── {feature}_handler.go       # Feature-specific handlers
-│   ├── types.go                   # Request/response type adapters
-│   ├── validation.go              # Input validation helpers
-│   └── errors.go                  # Module-specific error handling
-├── common/                        # Shared handler utilities
-│   ├── middleware.go              # Common middleware (auth, ABAC, tracing)
-│   ├── responses.go               # Standard response helpers
-│   └── validation.go              # Shared validation utilities
-└── router.go                      # Main router configuration
-```
-
-**Example: Finance Module Structure**
-```
-internal/api/handlers/
-├── finance.go                     # Entry point - exports NewFinanceHandler()
-├── finance/
-│   ├── service_handler.go         # Main finance service handler
-│   ├── account_handler.go         # Account management endpoints
-│   ├── transaction_handler.go     # Transaction processing endpoints
-│   ├── report_handler.go          # Financial reporting endpoints
-│   ├── types.go                   # Finance-specific type conversions
-│   └── validation.go              # Finance business rule validation
-```
-
-## **📁 Complete Project Structure**
+Our ERP system follows a sophisticated multi-layered architecture that promotes modularity, reusability, and maintainability:
 
 ```
 internal/api/
-├── design/                         # Goa Design Specifications
-│   ├── design.go                   # Main API definition
-│   ├── services/
-│   │   ├── {module}.go             # Module service design
-│   │   └── types.go                # Module types and validation
-│   └── types/
-│       ├── common.go               # Shared types across modules
-│       └── errors.go               # Standard error definitions
+├── design/                               # 🎨 GOA Design Layer (Design-First)
+│   ├── design.go                         # Main API definition
+│   ├── services/                         # Service definitions by domain
+│   │   └── {domain}/                     # Domain-specific service files
+│   │       ├── {main_service}.go         # Main service (e.g., transactions.go)
+│   │       ├── {feature}_service.go      # Feature services (e.g., accounts.go) 
+│   │       ├── types_{feature}.go        # Feature-specific payload/result types
+│   │       ├── types_{workflow}.go       # Workflow-related types
+│   │       ├── types_{reporting}.go      # Reporting types
+│   │       └── types.go                  # Legacy/backward compatibility types
+│   └── types/                            # 🔄 Reusable Domain Types (Cross-System)
+│       ├── common.go                     # Universal patterns, pagination, audit
+│       ├── {domain}.go                   # Domain models & enums (e.g., finance.go)
+│       └── abac.go                       # ABAC-specific types
 │
-├── gen/                            # Generated Goa code
-│   ├── {module}/                   # Generated service interfaces
-│   └── http/{module}/              # Generated HTTP transport
+├── gen/                                  # 🤖 Generated GOA Code
+│   ├── {service}/                        # Generated service interfaces
+│   └── http/{service}/                   # Generated HTTP transport
 │
-├── handlers/                       # Handler Implementation Layer
-│   ├── {module}.go                 # Module entry points
-│   ├── {module}/                   # Module handler directories
-│   │   ├── service_handler.go      # Core service implementation
-│   │   ├── {feature}_handler.go    # Feature handlers
-│   │   ├── types.go                # Type conversions
-│   │   ├── validation.go           # Input validation
-│   │   └── errors.go               # Error handling
-│   ├── common/                     # Shared utilities
-│   │   ├── middleware.go           # Authentication, ABAC, logging
-│   │   ├── responses.go            # Response helpers
-│   │   └── validation.go           # Common validation
-│   └── router.go                   # Router setup
+└── handlers/                             # 🛠️ Handler Implementation Layer
+    ├── {domain}.go                       # Domain entry points
+    ├── {domain}/                         # Domain handler directories
+    │   ├── service_handler.go            # Main service implementation
+    │   ├── {feature}_handler.go          # Feature-specific handlers
+    │   ├── types.go                      # Type conversions
+    │   ├── validation.go                 # Business validation
+    │   └── errors.go                     # Error handling
+    └── common/                           # Shared utilities
 ```
 
-## **🎨 1. Design-First Development with Goa**
+## **📁 Type Organization Architecture**
 
-### **Main API Design Entry Point**
+### **1. Reusable Domain Types (`/types/`)**
+Common types shared across multiple systems to prevent circular dependencies:
 
 ```go
-// internal/api/design/design.go
-package design
+// internal/api/design/types/finance.go - Reusable Financial Domain Types
+package types
 
-import (
-    . "goa.design/goa/v3/dsl"
-)
+// Financial Domain Enums - Reusable across all financial services
+var AccountRootType = func() {
+    Enum("ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE")
+}
 
-// API describes the global properties of Awo ERP API server
-var _ = API("awo-erp", func() {
-    Title("Awo Enterprise ERP System")
-    Description("Multi-tenant ERP system with ABAC authorization and Temporal workflows")
-    Version("1.0.0")
-    
-    Contact(func() {
-        Name("Awo Development Team")
-        Email("dev@awo.com")
-        URL("https://awo.com")
+var TransactionStatus = func() {
+    Enum("DRAFT", "PENDING_APPROVAL", "APPROVED", "POSTED", "REVERSED")
+}
+
+// Core Financial Domain Models - For cross-system usage
+var FinancialAmount = Type("FinancialAmount", func() {
+    Description("Financial amount with currency information")
+    Attribute("amount", String, "Amount as decimal string", func() {
+        Pattern(DecimalPattern)
+        Example("1234.56")
     })
-    
-    License(func() {
-        Name("Proprietary")
-        URL("https://awo.com/license")
+    Attribute("currency", String, "Currency code (ISO 4217)", func() {
+        Pattern(CurrencyCodePattern)
+        Example("USD")
     })
-    
-    Server("awo-erp", func() {
-        Host("localhost", func() {
-            URI("http://localhost:8080")
-            URI("https://localhost:8443")
-        })
+    Required("amount", "currency")
+})
+
+var AccountReference = Type("AccountReference", func() {
+    Description("Lightweight reference to an account")
+    Attribute("id", String, "Account ID", func() {
+        Format(FormatUUID)
     })
-    
-    // Global security schemes
-    JWTSecurity("jwt", func() {
-        Description("JWT token authentication")
-        Header("Authorization")
-        Prefix("Bearer ")
+    Attribute("code", String, "Account code", func() {
+        Example("1100")
     })
-    
-    // Global error responses
-    Error("internal_error", String, "Internal server error")
-    Error("bad_request", String, "Bad request")
-    Error("unauthorized", String, "Unauthorized access")
-    Error("forbidden", String, "Forbidden access")
-    Error("not_found", String, "Resource not found")
-    Error("conflict", String, "Resource conflict")
-    Error("validation_error", String, "Validation failed")
+    Attribute("name", String, "Account name", func() {
+        Example("Cash - Operating Account")
+    })
+    Required("id", "code", "name")
 })
 ```
 
-### **Module Service Design Pattern**
-
-Each module defines its own service design following consistent patterns:
+### **2. Feature-Specific Service Types**
+Each feature maintains its own payload and result types:
 
 ```go
-// internal/api/design/services/finance.go
-package services
+// internal/api/design/services/finance/types_transactions.go
+package finance
+
+import (
+    . "github.com/niiniyare/erp/internal/api/design/types"
+    . "goa.design/goa/v3/dsl"
+)
+
+var CreateTransactionPayload = Type("CreateTransactionPayload", func() {
+    Description("Payload for creating a new transaction")
+    
+    Attribute("transaction_type", String, "Transaction type", func() {
+        Enum("GENERAL_JOURNAL", "ACCOUNTS_PAYABLE", "ACCOUNTS_RECEIVABLE")
+    })
+    Attribute("amount", FinancialAmount, "Transaction amount") // Reusing domain type
+    Attribute("entries", ArrayOf(TransactionEntryPayload), "Journal entries")
+    
+    Required("transaction_type", "amount", "entries")
+})
+
+// Inline payloads from service definitions
+var GetTransactionByIdPayload = Type("GetTransactionByIdPayload", func() {
+    Description("Payload for getting transaction by ID")
+    Attribute("id", String, "Transaction ID", func() {
+        Format(FormatUUID)
+    })
+    Required("id")
+})
+```
+
+### **3. Service Definition Pattern**
+Clean, minimal service definitions that reference organized types:
+
+```go
+// internal/api/design/services/finance/transactions.go
+package finance
 
 import (
     . "goa.design/goa/v3/dsl"
 )
 
-// Finance service design
+// Service describes the finance management service
 var _ = Service("finance", func() {
-    Description("Financial management operations including accounts, transactions, and reporting")
-    
-    // Common security and error handling
-    Security(JWTAuth)
-    Error("unauthorized", ErrorResult, "Credentials are invalid")
-    Error("forbidden", ErrorResult, "Insufficient permissions")
-    Error("not_found", ErrorResult, "Resource not found")
-    
-    // Account management endpoints
-    Method("create_account", func() {
-        Description("Create a new financial account")
-        Payload(CreateAccountRequest)
-        Result(AccountResponse)
-        HTTP(func() {
-            POST("/accounts")
-            Response(StatusCreated)
-        })
+    Description("Financial management service for double-entry bookkeeping and accounting")
+
+    HTTP(func() {
+        Path("/api/v1/finance")
     })
-    
-    Method("list_accounts", func() {
-        Description("List financial accounts with filtering")
-        Payload(ListAccountsRequest)
-        Result(CollectionOf(AccountResponse))
-        HTTP(func() {
-            GET("/accounts")
-            Param("type")        // Query parameter for account type
-            Param("status")      // Query parameter for account status
-            Response(StatusOK)
-        })
-    })
-    
-    // Transaction management endpoints
-    Method("create_transaction", func() {
+
+    // Clean method definitions referencing types
+    Method("createTransaction", func() {
         Description("Create a new financial transaction")
-        Payload(CreateTransactionRequest)
-        Result(TransactionResponse)
+        Payload(CreateTransactionPayload)        // From types_transactions.go
+        Result(TransactionResult)                // From types_transactions.go
+        Error("bad_request")
+        Error("unauthorized")
+        Error("unprocessable_entity")
         HTTP(func() {
             POST("/transactions")
             Response(StatusCreated)
         })
     })
+
+    Method("getTransaction", func() {
+        Description("Get transaction by ID with entries")
+        Payload(GetTransactionByIdPayload)       // Moved from inline definition
+        Result(TransactionWithEntriesResult)
+        Error("not_found")
+        Error("unauthorized")
+        HTTP(func() {
+            GET("/transactions/{id}")
+            Param("id")
+        })
+    })
 })
 ```
 
-## **🔧 2. Handler Implementation Pattern**
+## **🎯 Type Organization Best Practices**
 
-### **Module Entry Point Pattern**
+### **1. Domain Types Placement Rules**
 
-Each module must have a main entry point that exports the handler constructor:
+- **`/types/finance.go`**: Core financial models, enums, validation types that other systems might need
+- **`/services/finance/types_transactions.go`**: Transaction-specific payloads and results
+- **`/services/finance/types_accounts.go`**: Account management payloads and results  
+- **`/services/finance/types_workflow.go`**: Workflow and approval types
+- **`/services/finance/types_reporting.go`**: Financial reporting types
+- **`/services/finance/types.go`**: Legacy compatibility types
+
+### **2. Import Patterns**
 
 ```go
-// internal/api/handlers/finance.go
-package handlers
-
+// In reusable types files (types/finance.go)
+package types
 import (
-    "github.com/niiniyare/erp/internal/api/handlers/finance"
-    goaFinance "github.com/niiniyare/erp/internal/api/gen/finance"
-    financeService "github.com/niiniyare/erp/internal/core/finance"
-    "github.com/niiniyare/erp/internal/shared/metrics"
-    "github.com/niiniyare/erp/internal/shared/tracing"
+    . "goa.design/goa/v3/dsl"
 )
 
-// NewFinanceHandler creates a new finance handler that implements the Goa service interface
-// This is the ONLY function that main.go should call for this module
-func NewFinanceHandler(
-    financeService financeService.Service,
-    tracing tracing.TracingService,
-    metrics metrics.MetricsProvider,
-) goaFinance.Service {
-    return finance.NewFinanceHandler(financeService, tracing, metrics)
-}
-```
-
-### **Core Service Handler Implementation**
-
-```go
-// internal/api/handlers/finance/service_handler.go
+// In feature-specific types files (services/finance/types_transactions.go)
 package finance
-
 import (
-    "context"
-    "errors"
-
-    goaFinance "github.com/niiniyare/erp/internal/api/gen/finance"
-    financeService "github.com/niiniyare/erp/internal/core/finance"
-    sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
-    "github.com/niiniyare/erp/internal/shared/metrics"
-    "github.com/niiniyare/erp/internal/shared/tracing"
+    . "github.com/niiniyare/erp/internal/api/design/types"  // Access to reusable types
+    . "goa.design/goa/v3/dsl"
 )
 
-// FinanceHandler implements the Goa finance service interface
-type FinanceHandler struct {
-    financeService financeService.Service
-    tracing        tracing.TracingService
-    metrics        metrics.MetricsProvider
-}
-
-// NewFinanceHandler creates a new finance handler
-func NewFinanceHandler(
-    financeService financeService.Service,
-    tracing tracing.TracingService,
-    metrics metrics.MetricsProvider,
-) goaFinance.Service {
-    return &FinanceHandler{
-        financeService: financeService,
-        tracing:        tracing,
-        metrics:        metrics,
-    }
-}
-
-// CreateAccount implements the create_account endpoint
-func (h *FinanceHandler) CreateAccount(ctx context.Context, p *goaFinance.CreateAccountPayload) (*goaFinance.Account, error) {
-    // Start tracing span
-    ctx, span := h.tracing.Start(ctx, "finance.CreateAccount")
-    defer span.End()
-    
-    // Record metrics
-    h.metrics.Counter("api.finance.create_account.requests").Add(1)
-    
-    // Convert Goa payload to domain request
-    request := h.payloadToCreateAccountRequest(p)
-    
-    // Call business service
-    account, err := h.financeService.Account().CreateAccount(ctx, request)
-    if err != nil {
-        h.metrics.Counter("api.finance.create_account.errors").Add(1)
-        return nil, h.handleError(err)
-    }
-    
-    // Convert domain response to Goa response
-    response := h.accountToGoaResponse(account)
-    
-    h.metrics.Counter("api.finance.create_account.success").Add(1)
-    return response, nil
-}
-
-// handleError converts domain errors to appropriate Goa errors
-func (h *FinanceHandler) handleError(err error) error {
-    var businessErr *sharedErrors.BusinessError
-    if errors.As(err, &businessErr) {
-        switch businessErr.HTTPStatus {
-        case 400:
-            return goaFinance.MakeBadRequest(err)
-        case 404:
-            return goaFinance.MakeNotFound(err)
-        case 409:
-            return goaFinance.MakeConflict(err)
-        case 422:
-            return goaFinance.MakeUnprocessableEntity(err)
-        default:
-            return goaFinance.MakeBadRequest(err)
-        }
-    }
-    return goaFinance.MakeInternalError(err)
-}
-```
-
-### **Type Conversion Helpers**
-
-```go
-// internal/api/handlers/finance/types.go
+// In service definition files (services/finance/transactions.go)
 package finance
-
 import (
-    goaFinance "github.com/niiniyare/erp/internal/api/gen/finance"
-    "github.com/niiniyare/erp/internal/core/finance/domain"
+    . "goa.design/goa/v3/dsl"  // Only GOA DSL needed
 )
-
-// Convert Goa payload to domain request
-func (h *FinanceHandler) payloadToCreateAccountRequest(p *goaFinance.CreateAccountPayload) *domain.CreateAccountRequest {
-    return &domain.CreateAccountRequest{
-        Code:        p.Code,
-        Name:        p.Name,
-        AccountType: domain.AccountType(p.Type),
-        Description: p.Description,
-        ParentID:    p.ParentID,
-    }
-}
-
-// Convert domain entity to Goa response
-func (h *FinanceHandler) accountToGoaResponse(account *domain.Account) *goaFinance.Account {
-    return &goaFinance.Account{
-        ID:          account.ID.String(),
-        Code:        account.Code,
-        Name:        account.Name,
-        Type:        string(account.AccountType),
-        Description: account.Description,
-        Balance:     account.Balance.String(),
-        Status:      string(account.Status),
-        CreatedAt:   account.CreatedAt.Format(time.RFC3339),
-        UpdatedAt:   account.UpdatedAt.Format(time.RFC3339),
-    }
-}
+// Note: Types are automatically accessible due to same package
 ```
 
-## **🔗 3. Main Application Integration**
+### **3. Type Naming Conventions**
 
-### **Handler Registration in Main**
+| Type Category | Naming Pattern | Example | Location |
+|---------------|----------------|---------|-----------|
+| **Payloads** | `{Action}{Entity}Payload` | `CreateTransactionPayload` | `types_{feature}.go` |
+| **Results** | `{Entity}Result` | `TransactionResult` | `types_{feature}.go` |  
+| **Lists** | `{Entity}ListResult` | `AccountListResult` | `types_{feature}.go` |
+| **Domain Models** | `{Entity}` | `FinancialAmount` | `types/{domain}.go` |
+| **Enums** | `{Entity}Type` or `{Entity}Status` | `AccountType`, `TransactionStatus` | `types/{domain}.go` |
+| **Inline Service Payloads** | `Get{Entity}ByIdPayload` | `GetTransactionByIdPayload` | `types_{feature}.go` |
+
+## **🔧 Service Design Patterns**
+
+### **Single Service Architecture**
+All related functionality consolidated into one service for better organization:
 
 ```go
-// cmd/server/goa.go (modification)
-func InitializeGOAServer(services *Services, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*GOAServer, error) {
-    // Initialize GOA services using module entry points
-    var (
-        authSvc      auth.Service
-        tenantSvc    goaTenant.Service
-        financeSvc   goaFinance.Service  // New finance service
-        // ... other services
-    )
-
-    // Initialize services using entry point functions
-    authSvc = handlers.NewAuthHandler(services.IdentityService, tracingService, metricsService)
-    tenantSvc = handlers.NewTenantGoaHandler(services.TenantService, tracingService, metricsService)
-    financeSvc = handlers.NewFinanceHandler(services.FinanceService, tracingService, metricsService) // New
+// ✅ GOOD: Single finance service with multiple feature areas
+var _ = Service("finance", func() {
+    Description("Financial management service")
     
-    // Create endpoints
-    authEndpoints := auth.NewEndpoints(authSvc)
-    tenantEndpoints := goaTenant.NewEndpoints(tenantSvc)
-    financeEndpoints := goaFinance.NewEndpoints(financeSvc) // New
+    // Legacy account management (backward compatibility)
+    Method("createAccount", func() { /* ... */ })
+    Method("getAccount", func() { /* ... */ })
     
-    // Create and mount servers
-    mux := goahttp.NewMuxer()
-    eh := createProductionErrorHandler()
+    // Modern unified account/group management  
+    Method("createAccountNode", func() { /* ... */ })
+    Method("listAccountNodes", func() { /* ... */ })
     
-    authServer := authsvr.New(authEndpoints, mux, dec, enc, eh, nil)
-    tenantServer := tenantsvr.New(tenantEndpoints, mux, dec, enc, eh, nil)
-    financeServer := financesvr.New(financeEndpoints, mux, dec, enc, eh, nil) // New
+    // Transaction management
+    Method("createTransaction", func() { /* ... */ })
+    Method("postTransaction", func() { /* ... */ })
     
-    // Mount servers
-    authsvr.Mount(mux, authServer)
-    tenantsvr.Mount(mux, tenantServer)
-    financesvr.Mount(mux, financeServer) // New
+    // Workflow management
+    Method("getTransactionStatus", func() { /* ... */ })
+    Method("submitApprovalDecision", func() { /* ... */ })
     
-    return &GOAServer{Handler: mux, Mux: mux}, nil
-}
+    // Financial reporting
+    Method("getTrialBalance", func() { /* ... */ })
+})
 ```
 
-## **🧪 4. Testing Strategy**
-
-### **Handler Unit Tests**
+### **Method Organization Patterns**
 
 ```go
-// internal/api/handlers/finance/service_handler_test.go
-package finance
+// Group related methods with clear comments
+var _ = Service("finance", func() {
+    
+    // Legacy Account Management Methods (for backward compatibility)
+    Method("createAccount", func() { /* ... */ })
+    Method("getAccount", func() { /* ... */ })
+    Method("deleteAccount", func() { /* ... */ })
+    
+    // Modern Unified Account/Group Management Methods
+    Method("createAccountNode", func() { /* ... */ })
+    Method("getAccountNode", func() { /* ... */ })
+    Method("listAccountNodes", func() { /* ... */ })
+    
+    // Transaction Management Methods
+    Method("createTransaction", func() { /* ... */ })
+    Method("getTransaction", func() { /* ... */ })
+    Method("postTransaction", func() { /* ... */ })
+    
+    // Transaction Workflow Management Methods
+    Method("getTransactionStatus", func() { /* ... */ })
+    Method("submitApprovalDecision", func() { /* ... */ })
+    
+    // Advanced Financial Reporting Methods
+    Method("getTrialBalance", func() { /* ... */ })
+})
+```
 
-import (
-    "context"
-    "testing"
-    
-    "github.com/stretchr/testify/assert"
-    "github.com/stretchr/testify/mock"
-    
-    goaFinance "github.com/niiniyare/erp/internal/api/gen/finance"
-    "github.com/niiniyare/erp/internal/core/finance/domain"
-    "github.com/niiniyare/erp/internal/core/finance/mocks"
-)
+## **📐 Advanced Type Composition**
 
-func TestCreateAccount_Success(t *testing.T) {
-    // Setup
-    mockService := mocks.NewMockService(t)
-    mockAccount := mocks.NewMockAccountService(t)
-    mockService.On("Account").Return(mockAccount)
+### **Reusable Pattern Usage**
+
+```go
+// Using common patterns from types/common.go
+var ListTransactionsPayload = Type("ListTransactionsPayload", func() {
+    Description("Payload for listing transactions")
     
-    handler := NewFinanceHandler(mockService, nil, nil)
+    // Business-specific filters
+    Attribute("status", String, "Filter by status", TransactionStatus)
+    Attribute("account_id", String, "Filter by account", func() {
+        Format(FormatUUID)
+    })
     
-    // Mock successful account creation
-    expectedAccount := &domain.Account{
-        Code: "1000",
-        Name: "Cash",
-        AccountType: domain.AssetAccount,
+    // Reuse common patterns
+    Attribute("date_range", TimeRange, "Date range filter")         // From common.go
+    Attribute("pagination", Pagination, "Pagination parameters")     // From common.go
+})
+
+var TransactionListResult = Type("TransactionListResult", func() {
+    Description("List of transactions with pagination")
+    
+    Attribute("transactions", ArrayOf(TransactionResult), "Transaction list")
+    Attribute("pagination", PaginationMeta, "Pagination metadata")   // From common.go
+    
+    Required("transactions", "pagination")
+})
+```
+
+### **Domain Type Composition**
+
+```go
+// Compose complex types from domain building blocks
+var JournalEntry = Type("JournalEntry", func() {
+    Description("Individual journal entry")
+    
+    Attribute("account", AccountReference, "Account being debited/credited")  // Domain type
+    Attribute("debit_amount", FinancialAmount, "Debit amount")               // Domain type
+    Attribute("credit_amount", FinancialAmount, "Credit amount")             // Domain type
+    Attribute("description", String, "Entry description")
+    
+    Required("account", "debit_amount", "credit_amount", "description")
+})
+```
+
+## **🧪 Testing Patterns**
+
+### **Type Validation Testing**
+
+```go
+func TestCreateTransactionPayload_Validation(t *testing.T) {
+    tests := []struct {
+        name    string
+        payload *goaFinance.CreateTransactionPayload
+        wantErr bool
+    }{
+        {
+            name: "valid_payload",
+            payload: &goaFinance.CreateTransactionPayload{
+                TransactionType: "GENERAL_JOURNAL",
+                Amount: &goaFinance.FinancialAmount{
+                    Amount:   "1234.56",
+                    Currency: "USD",
+                },
+                Entries: []*goaFinance.TransactionEntryPayload{
+                    {Description: "Test entry 1"},
+                    {Description: "Test entry 2"},
+                },
+            },
+            wantErr: false,
+        },
+        {
+            name: "missing_required_fields",
+            payload: &goaFinance.CreateTransactionPayload{
+                TransactionType: "GENERAL_JOURNAL",
+                // Missing Amount and Entries
+            },
+            wantErr: true,
+        },
     }
     
-    mockAccount.On("CreateAccount", mock.Anything, mock.Anything).
-        Return(expectedAccount, nil)
-    
-    // Execute
-    payload := &goaFinance.CreateAccountPayload{
-        Code: "1000",
-        Name: "Cash",
-        Type: "asset",
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            // Validation testing logic
+        })
     }
-    
-    result, err := handler.CreateAccount(context.Background(), payload)
-    
-    // Verify
-    assert.NoError(t, err)
-    assert.NotNil(t, result)
-    assert.Equal(t, "1000", result.Code)
-    assert.Equal(t, "Cash", result.Name)
-    mockAccount.AssertExpectations(t)
 }
 ```
 
-## **📝 5. Development Workflow**
+## **🔄 Development Workflow**
 
-### **Step-by-Step Implementation**
+### **Adding New Features**
 
 1. **Design Phase**
    ```bash
-   # Create service design
-   touch internal/api/design/services/your_module.go
-   
-   # Generate Goa code
+   # 1. Add domain types (if needed) to types/{domain}.go
+   # 2. Create feature-specific types in services/{domain}/types_{feature}.go
+   # 3. Update service definition to use new types
+   # 4. Generate GOA code
    make goa
    ```
 
-2. **Handler Structure Setup**
-   ```bash
-   # Create module directory
-   mkdir -p internal/api/handlers/your_module
-   
-   # Create entry point
-   touch internal/api/handlers/your_module.go
-   
-   # Create core handler
-   touch internal/api/handlers/your_module/service_handler.go
-   ```
-
-3. **Implementation**
+2. **Type Organization Steps**
    ```go
-   // Follow the patterns shown above for:
-   // - Entry point function
-   // - Core service handler
-   // - Type conversions
-   // - Error handling
-   ```
-
-4. **Integration**
-   ```go
-   // Add to cmd/server/goa.go:
-   // - Import module entry point
-   // - Call constructor function
-   // - Create endpoints
-   // - Mount server
-   ```
-
-5. **Testing**
-   ```bash
-   # Run handler tests
-   make test-unit
+   // Step 1: Define reusable domain types (types/finance.go)
+   var NewDomainType = Type("NewDomainType", func() {
+       // Common fields that other systems might use
+   })
    
-   # Test API integration
-   make test-integration
+   // Step 2: Define feature payloads (services/finance/types_newfeature.go)
+   var CreateNewFeaturePayload = Type("CreateNewFeaturePayload", func() {
+       // Feature-specific request fields
+       Attribute("domain_field", NewDomainType, "Reused domain type")
+   })
+   
+   // Step 3: Reference in service (services/finance/main_service.go)
+   Method("createNewFeature", func() {
+       Payload(CreateNewFeaturePayload)  // Clean reference
+       Result(NewFeatureResult)
+   })
    ```
 
-## **✅ Best Practices**
+3. **Type Migration Process**
+   ```go
+   // Move inline payloads to appropriate types files:
+   
+   // ❌ Before (inline definition)
+   Method("getItem", func() {
+       Payload(func() {
+           Attribute("id", String, "Item ID", func() {
+               Format(FormatUUID)
+           })
+           Required("id")
+       })
+   })
+   
+   // ✅ After (extracted to types file)
+   Method("getItem", func() {
+       Payload(GetItemByIdPayload)  // Defined in types_{feature}.go
+   })
+   ```
 
-1. **Module Independence**: Each module should be self-contained with its own entry point
-2. **Service Interface Compliance**: All handlers must implement the generated Goa service interface
-3. **Context Propagation**: Always pass context through all layers for tracing and cancellation
-4. **Error Handling**: Convert domain errors to appropriate HTTP status codes
-5. **Type Safety**: Use type conversion helpers to maintain separation between API and domain layers
-6. **Testing**: Write unit tests for all handlers
-7. **Observability**: Include tracing spans and metrics in all handlers
-8. **Validation**: Validate input at both Goa design and handler levels
-
-## **🔄 Code Generation Commands**
+### **Code Generation Commands**
 
 ```bash
-# Generate all Goa code from design
+# Generate all GOA code
 make goa
-
-# Generate specific modules (if configured)
-goa gen github.com/niiniyare/erp/internal/api/design
 
 # Clean and regenerate
 make clean && make goa
+
+# Verify no generation errors
+make goa 2>&1 | grep -i error
 ```
 
-This modular approach ensures that:
-- Each module has a clear, single entry point
-- Business logic stays in the service layer
-- API concerns are properly separated
-- Testing is straightforward and modular
-- Main application only imports entry points, not internal handler details
+## **✅ Architecture Benefits**
+
+1. **🎯 Clear Separation of Concerns**: Types organized by feature and reusability
+2. **🔄 Reusability**: Domain types prevent duplication across services  
+3. **🚫 No Circular Dependencies**: Clean import hierarchy with `/types/` at the base
+4. **🧹 Minimal Service Definitions**: Services focus on method definitions, not type declarations
+5. **🔍 Easy Navigation**: Developers can quickly find feature-specific types
+6. **📈 Scalability**: New features can easily reuse existing domain types
+7. **🤝 Cross-System Integration**: Other services can import domain types from `/types/`
+8. **🧪 Testability**: Clear type boundaries make testing straightforward
+
+## **⚠️ Common Pitfalls to Avoid**
+
+1. **❌ Don't** put business-specific payloads in `/types/common.go`
+2. **❌ Don't** create circular imports between service types and domain types  
+3. **❌ Don't** use inline type definitions in service files
+4. **❌ Don't** mix feature-specific types in wrong files (e.g., transaction types in account types file)
+5. **❌ Don't** forget to use domain enums for consistent validation
+6. **✅ Do** keep service definitions minimal and clean
+7. **✅ Do** reuse common patterns (pagination, audit fields, time ranges)
+8. **✅ Do** follow consistent naming conventions
+9. **✅ Do** organize types by feature and logical grouping
+10. **✅ Do** validate GOA generation after every change
+
+This architecture ensures maintainable, scalable, and well-organized API definitions that support complex business domains while remaining developer-friendly and preventing common architectural issues.

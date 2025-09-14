@@ -15,48 +15,209 @@ import (
 
 // Client is the "finance" service client.
 type Client struct {
-	CreateAccountEndpoint          goa.Endpoint
-	GetAccountEndpoint             goa.Endpoint
-	GetAccountByCodeEndpoint       goa.Endpoint
-	GetAccountByNameEndpoint       goa.Endpoint
-	ListAccountsEndpoint           goa.Endpoint
-	UpdateAccountEndpoint          goa.Endpoint
-	DeleteAccountEndpoint          goa.Endpoint
-	GetAccountHierarchyEndpoint    goa.Endpoint
-	GetAccountBalanceEndpoint      goa.Endpoint
-	CreateTransactionEndpoint      goa.Endpoint
-	GetTransactionEndpoint         goa.Endpoint
-	GetTransactionByNumberEndpoint goa.Endpoint
-	ListTransactionsEndpoint       goa.Endpoint
-	PostTransactionEndpoint        goa.Endpoint
-	ReverseTransactionEndpoint     goa.Endpoint
-	ApproveTransactionEndpoint     goa.Endpoint
-	ValidateTransactionEndpoint    goa.Endpoint
-	GetTrialBalanceEndpoint        goa.Endpoint
+	CreateAccountNodeEndpoint         goa.Endpoint
+	GetAccountNodeEndpoint            goa.Endpoint
+	GetAccountNodeByCodeEndpoint      goa.Endpoint
+	ListAccountNodesEndpoint          goa.Endpoint
+	UpdateAccountNodeEndpoint         goa.Endpoint
+	DeleteAccountNodeEndpoint         goa.Endpoint
+	SearchAccountNodesEndpoint        goa.Endpoint
+	GetAccountBalanceEndpoint         goa.Endpoint
+	GetHierarchyAnalysisEndpoint      goa.Endpoint
+	CreateAccountEndpoint             goa.Endpoint
+	GetAccountEndpoint                goa.Endpoint
+	GetAccountByCodeEndpoint          goa.Endpoint
+	GetAccountByNameEndpoint          goa.Endpoint
+	ListAccountsEndpoint              goa.Endpoint
+	UpdateAccountEndpoint             goa.Endpoint
+	DeleteAccountEndpoint             goa.Endpoint
+	GetAccountHierarchyEndpoint       goa.Endpoint
+	GetAccountBalanceEndpointEndpoint goa.Endpoint
+	CreateTransactionEndpoint         goa.Endpoint
+	GetTransactionEndpoint            goa.Endpoint
+	GetTransactionByNumberEndpoint    goa.Endpoint
+	ListTransactionsEndpoint          goa.Endpoint
+	PostTransactionEndpoint           goa.Endpoint
+	ReverseTransactionEndpoint        goa.Endpoint
+	ApproveTransactionEndpoint        goa.Endpoint
+	ValidateTransactionEndpoint       goa.Endpoint
+	GetTransactionStatusEndpoint      goa.Endpoint
+	SubmitApprovalDecisionEndpoint    goa.Endpoint
+	RequestTransactionChangesEndpoint goa.Endpoint
+	GetTransactionWorkflowEndpoint    goa.Endpoint
+	GetTrialBalanceEndpoint           goa.Endpoint
 }
 
 // NewClient initializes a "finance" service client given the endpoints.
-func NewClient(createAccount, getAccount, getAccountByCode, getAccountByName, listAccounts, updateAccount, deleteAccount, getAccountHierarchy, getAccountBalance, createTransaction, getTransaction, getTransactionByNumber, listTransactions, postTransaction, reverseTransaction, approveTransaction, validateTransaction, getTrialBalance goa.Endpoint) *Client {
+func NewClient(createAccountNode, getAccountNode, getAccountNodeByCode, listAccountNodes, updateAccountNode, deleteAccountNode, searchAccountNodes, getAccountBalance, getHierarchyAnalysis, createAccount, getAccount, getAccountByCode, getAccountByName, listAccounts, updateAccount, deleteAccount, getAccountHierarchy, getAccountBalanceEndpoint, createTransaction, getTransaction, getTransactionByNumber, listTransactions, postTransaction, reverseTransaction, approveTransaction, validateTransaction, getTransactionStatus, submitApprovalDecision, requestTransactionChanges, getTransactionWorkflow, getTrialBalance goa.Endpoint) *Client {
 	return &Client{
-		CreateAccountEndpoint:          createAccount,
-		GetAccountEndpoint:             getAccount,
-		GetAccountByCodeEndpoint:       getAccountByCode,
-		GetAccountByNameEndpoint:       getAccountByName,
-		ListAccountsEndpoint:           listAccounts,
-		UpdateAccountEndpoint:          updateAccount,
-		DeleteAccountEndpoint:          deleteAccount,
-		GetAccountHierarchyEndpoint:    getAccountHierarchy,
-		GetAccountBalanceEndpoint:      getAccountBalance,
-		CreateTransactionEndpoint:      createTransaction,
-		GetTransactionEndpoint:         getTransaction,
-		GetTransactionByNumberEndpoint: getTransactionByNumber,
-		ListTransactionsEndpoint:       listTransactions,
-		PostTransactionEndpoint:        postTransaction,
-		ReverseTransactionEndpoint:     reverseTransaction,
-		ApproveTransactionEndpoint:     approveTransaction,
-		ValidateTransactionEndpoint:    validateTransaction,
-		GetTrialBalanceEndpoint:        getTrialBalance,
+		CreateAccountNodeEndpoint:         createAccountNode,
+		GetAccountNodeEndpoint:            getAccountNode,
+		GetAccountNodeByCodeEndpoint:      getAccountNodeByCode,
+		ListAccountNodesEndpoint:          listAccountNodes,
+		UpdateAccountNodeEndpoint:         updateAccountNode,
+		DeleteAccountNodeEndpoint:         deleteAccountNode,
+		SearchAccountNodesEndpoint:        searchAccountNodes,
+		GetAccountBalanceEndpoint:         getAccountBalance,
+		GetHierarchyAnalysisEndpoint:      getHierarchyAnalysis,
+		CreateAccountEndpoint:             createAccount,
+		GetAccountEndpoint:                getAccount,
+		GetAccountByCodeEndpoint:          getAccountByCode,
+		GetAccountByNameEndpoint:          getAccountByName,
+		ListAccountsEndpoint:              listAccounts,
+		UpdateAccountEndpoint:             updateAccount,
+		DeleteAccountEndpoint:             deleteAccount,
+		GetAccountHierarchyEndpoint:       getAccountHierarchy,
+		GetAccountBalanceEndpointEndpoint: getAccountBalanceEndpoint,
+		CreateTransactionEndpoint:         createTransaction,
+		GetTransactionEndpoint:            getTransaction,
+		GetTransactionByNumberEndpoint:    getTransactionByNumber,
+		ListTransactionsEndpoint:          listTransactions,
+		PostTransactionEndpoint:           postTransaction,
+		ReverseTransactionEndpoint:        reverseTransaction,
+		ApproveTransactionEndpoint:        approveTransaction,
+		ValidateTransactionEndpoint:       validateTransaction,
+		GetTransactionStatusEndpoint:      getTransactionStatus,
+		SubmitApprovalDecisionEndpoint:    submitApprovalDecision,
+		RequestTransactionChangesEndpoint: requestTransactionChanges,
+		GetTransactionWorkflowEndpoint:    getTransactionWorkflow,
+		GetTrialBalanceEndpoint:           getTrialBalance,
 	}
+}
+
+// CreateAccountNode calls the "createAccountNode" endpoint of the "finance"
+// service.
+// CreateAccountNode may return the following errors:
+//   - "bad_request" (type *goa.ServiceError)
+//   - "conflict" (type *goa.ServiceError)
+//   - "unauthorized" (type *goa.ServiceError)
+//   - "unprocessable_entity" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) CreateAccountNode(ctx context.Context, p *CreateAccountNodePayload) (res *AccountNodeResult, err error) {
+	var ires any
+	ires, err = c.CreateAccountNodeEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*AccountNodeResult), nil
+}
+
+// GetAccountNode calls the "getAccountNode" endpoint of the "finance" service.
+// GetAccountNode may return the following errors:
+//   - "not_found" (type *goa.ServiceError)
+//   - "unauthorized" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) GetAccountNode(ctx context.Context, p *GetAccountNodeByIDPayload) (res *AccountNodeResult, err error) {
+	var ires any
+	ires, err = c.GetAccountNodeEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*AccountNodeResult), nil
+}
+
+// GetAccountNodeByCode calls the "getAccountNodeByCode" endpoint of the
+// "finance" service.
+// GetAccountNodeByCode may return the following errors:
+//   - "not_found" (type *goa.ServiceError)
+//   - "unauthorized" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) GetAccountNodeByCode(ctx context.Context, p *GetAccountNodeByCodePayload) (res *AccountNodeResult, err error) {
+	var ires any
+	ires, err = c.GetAccountNodeByCodeEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*AccountNodeResult), nil
+}
+
+// ListAccountNodes calls the "listAccountNodes" endpoint of the "finance"
+// service.
+// ListAccountNodes may return the following errors:
+//   - "bad_request" (type *goa.ServiceError)
+//   - "unauthorized" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) ListAccountNodes(ctx context.Context, p *ListAccountNodesPayload) (res *AccountNodeListResult, err error) {
+	var ires any
+	ires, err = c.ListAccountNodesEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*AccountNodeListResult), nil
+}
+
+// UpdateAccountNode calls the "updateAccountNode" endpoint of the "finance"
+// service.
+// UpdateAccountNode may return the following errors:
+//   - "not_found" (type *goa.ServiceError)
+//   - "bad_request" (type *goa.ServiceError)
+//   - "unauthorized" (type *goa.ServiceError)
+//   - "unprocessable_entity" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) UpdateAccountNode(ctx context.Context, p *UpdateAccountNodePayload) (res *AccountNodeResult, err error) {
+	var ires any
+	ires, err = c.UpdateAccountNodeEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*AccountNodeResult), nil
+}
+
+// DeleteAccountNode calls the "deleteAccountNode" endpoint of the "finance"
+// service.
+// DeleteAccountNode may return the following errors:
+//   - "not_found" (type *goa.ServiceError)
+//   - "unauthorized" (type *goa.ServiceError)
+//   - "conflict" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) DeleteAccountNode(ctx context.Context, p *DeleteAccountNodePayload) (err error) {
+	_, err = c.DeleteAccountNodeEndpoint(ctx, p)
+	return
+}
+
+// SearchAccountNodes calls the "searchAccountNodes" endpoint of the "finance"
+// service.
+// SearchAccountNodes may return the following errors:
+//   - "bad_request" (type *goa.ServiceError)
+//   - "unauthorized" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) SearchAccountNodes(ctx context.Context, p *SearchAccountNodesPayload) (res *SearchAccountNodesResult, err error) {
+	var ires any
+	ires, err = c.SearchAccountNodesEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*SearchAccountNodesResult), nil
+}
+
+// GetAccountBalance calls the "getAccountBalance" endpoint of the "finance"
+// service.
+// GetAccountBalance may return the following errors:
+//   - "not_found" (type *goa.ServiceError)
+//   - "unauthorized" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) GetAccountBalance(ctx context.Context, p *GetAccountBalancePayload) (res *AccountBalanceResult, err error) {
+	var ires any
+	ires, err = c.GetAccountBalanceEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*AccountBalanceResult), nil
+}
+
+// GetHierarchyAnalysis calls the "getHierarchyAnalysis" endpoint of the
+// "finance" service.
+// GetHierarchyAnalysis may return the following errors:
+//   - "not_found" (type *goa.ServiceError)
+//   - "unauthorized" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) GetHierarchyAnalysis(ctx context.Context, p *GetHierarchyAnalysisPayload) (res *HierarchyAnalysisResult, err error) {
+	var ires any
+	ires, err = c.GetHierarchyAnalysisEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*HierarchyAnalysisResult), nil
 }
 
 // CreateAccount calls the "createAccount" endpoint of the "finance" service.
@@ -80,7 +241,7 @@ func (c *Client) CreateAccount(ctx context.Context, p *CreateAccountPayload) (re
 //   - "not_found" (type *goa.ServiceError)
 //   - "unauthorized" (type *goa.ServiceError)
 //   - error: internal error
-func (c *Client) GetAccount(ctx context.Context, p *GetAccountPayload) (res *AccountResult, err error) {
+func (c *Client) GetAccount(ctx context.Context, p *GetAccountByIDPayload) (res *AccountResult, err error) {
 	var ires any
 	ires, err = c.GetAccountEndpoint(ctx, p)
 	if err != nil {
@@ -165,24 +326,24 @@ func (c *Client) DeleteAccount(ctx context.Context, p *DeleteAccountPayload) (er
 // GetAccountHierarchy may return the following errors:
 //   - "unauthorized" (type *goa.ServiceError)
 //   - error: internal error
-func (c *Client) GetAccountHierarchy(ctx context.Context, p *GetAccountHierarchyPayload) (res *AccountHierarchyResult, err error) {
+func (c *Client) GetAccountHierarchy(ctx context.Context, p *GetAccountHierarchyPayload) (res *AccountListResult, err error) {
 	var ires any
 	ires, err = c.GetAccountHierarchyEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(*AccountHierarchyResult), nil
+	return ires.(*AccountListResult), nil
 }
 
-// GetAccountBalance calls the "getAccountBalance" endpoint of the "finance"
-// service.
-// GetAccountBalance may return the following errors:
+// GetAccountBalanceEndpoint calls the "getAccountBalance" endpoint of the
+// "finance" service.
+// GetAccountBalanceEndpoint may return the following errors:
 //   - "not_found" (type *goa.ServiceError)
 //   - "unauthorized" (type *goa.ServiceError)
 //   - error: internal error
-func (c *Client) GetAccountBalance(ctx context.Context, p *GetAccountBalancePayload) (res *AccountBalanceResult, err error) {
+func (c *Client) GetAccountBalanceEndpoint(ctx context.Context, p *GetAccountBalancePayload) (res *AccountBalanceResult, err error) {
 	var ires any
-	ires, err = c.GetAccountBalanceEndpoint(ctx, p)
+	ires, err = c.GetAccountBalanceEndpointEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
@@ -210,7 +371,7 @@ func (c *Client) CreateTransaction(ctx context.Context, p *CreateTransactionPayl
 //   - "not_found" (type *goa.ServiceError)
 //   - "unauthorized" (type *goa.ServiceError)
 //   - error: internal error
-func (c *Client) GetTransaction(ctx context.Context, p *GetTransactionPayload) (res *TransactionWithEntriesResult, err error) {
+func (c *Client) GetTransaction(ctx context.Context, p *GetTransactionByIDPayload) (res *TransactionWithEntriesResult, err error) {
 	var ires any
 	ires, err = c.GetTransactionEndpoint(ctx, p)
 	if err != nil {
@@ -314,13 +475,76 @@ func (c *Client) ValidateTransaction(ctx context.Context, p *ValidateTransaction
 	return ires.(*ValidationResult), nil
 }
 
+// GetTransactionStatus calls the "getTransactionStatus" endpoint of the
+// "finance" service.
+// GetTransactionStatus may return the following errors:
+//   - "not_found" (type *goa.ServiceError)
+//   - "unauthorized" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) GetTransactionStatus(ctx context.Context, p *GetTransactionStatusPayload) (res *TransactionStatusResult, err error) {
+	var ires any
+	ires, err = c.GetTransactionStatusEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*TransactionStatusResult), nil
+}
+
+// SubmitApprovalDecision calls the "submitApprovalDecision" endpoint of the
+// "finance" service.
+// SubmitApprovalDecision may return the following errors:
+//   - "not_found" (type *goa.ServiceError)
+//   - "bad_request" (type *goa.ServiceError)
+//   - "unauthorized" (type *goa.ServiceError)
+//   - "conflict" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) SubmitApprovalDecision(ctx context.Context, p *ApprovalDecisionPayload) (res *ApprovalDecisionResult, err error) {
+	var ires any
+	ires, err = c.SubmitApprovalDecisionEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*ApprovalDecisionResult), nil
+}
+
+// RequestTransactionChanges calls the "requestTransactionChanges" endpoint of
+// the "finance" service.
+// RequestTransactionChanges may return the following errors:
+//   - "not_found" (type *goa.ServiceError)
+//   - "bad_request" (type *goa.ServiceError)
+//   - "unauthorized" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) RequestTransactionChanges(ctx context.Context, p *ChangeRequestPayload) (res *ChangeRequestResult, err error) {
+	var ires any
+	ires, err = c.RequestTransactionChangesEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*ChangeRequestResult), nil
+}
+
+// GetTransactionWorkflow calls the "getTransactionWorkflow" endpoint of the
+// "finance" service.
+// GetTransactionWorkflow may return the following errors:
+//   - "not_found" (type *goa.ServiceError)
+//   - "unauthorized" (type *goa.ServiceError)
+//   - error: internal error
+func (c *Client) GetTransactionWorkflow(ctx context.Context, p *GetTransactionWorkflowPayload) (res *TransactionWorkflowResult, err error) {
+	var ires any
+	ires, err = c.GetTransactionWorkflowEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*TransactionWorkflowResult), nil
+}
+
 // GetTrialBalance calls the "getTrialBalance" endpoint of the "finance"
 // service.
 // GetTrialBalance may return the following errors:
 //   - "bad_request" (type *goa.ServiceError)
 //   - "unauthorized" (type *goa.ServiceError)
 //   - error: internal error
-func (c *Client) GetTrialBalance(ctx context.Context, p *TrialBalancePayload) (res *TrialBalanceResult, err error) {
+func (c *Client) GetTrialBalance(ctx context.Context, p *GetTrialBalancePayload) (res *TrialBalanceResult, err error) {
 	var ires any
 	ires, err = c.GetTrialBalanceEndpoint(ctx, p)
 	if err != nil {

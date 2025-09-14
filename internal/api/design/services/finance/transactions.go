@@ -13,7 +13,7 @@ var _ = Service("finance", func() {
 		Path("/api/v1/finance")
 	})
 
-	// Account Management Methods
+	// Legacy Account Management Methods (for backward compatibility)
 	Method("createAccount", func() {
 		Description("Create a new chart of accounts entry")
 		Payload(CreateAccountPayload)
@@ -23,19 +23,14 @@ var _ = Service("finance", func() {
 		Error("unauthorized")
 		Error("unprocessable_entity")
 		HTTP(func() {
-			POST("/accounts")
+			POST("/legacy/accounts")
 			Response(StatusCreated)
 		})
 	})
 
 	Method("getAccount", func() {
 		Description("Get account by ID")
-		Payload(func() {
-			Attribute("id", String, "Account ID", func() {
-				Format(FormatUUID)
-			})
-			Required("id")
-		})
+		Payload(GetAccountByIdPayload)
 		Result(AccountResult)
 		Error("not_found")
 		Error("unauthorized")
@@ -47,12 +42,7 @@ var _ = Service("finance", func() {
 
 	Method("getAccountByCode", func() {
 		Description("Get account by account code")
-		Payload(func() {
-			Attribute("account_code", String, "Account code", func() {
-				Example("1100")
-			})
-			Required("account_code")
-		})
+		Payload(GetAccountByCodePayload)
 		Result(AccountResult)
 		Error("not_found")
 		Error("unauthorized")
@@ -64,12 +54,7 @@ var _ = Service("finance", func() {
 
 	Method("getAccountByName", func() {
 		Description("Get account by exact account name")
-		Payload(func() {
-			Attribute("account_name", String, "Account name", func() {
-				Example("Cash - Operating Account")
-			})
-			Required("account_name")
-		})
+		Payload(GetAccountByNamePayload)
 		Result(AccountResult)
 		Error("not_found")
 		Error("unauthorized")
@@ -92,8 +77,6 @@ var _ = Service("finance", func() {
 			Param("is_active")
 			Param("parent_id")
 			Param("search")
-			Param("limit")
-			Param("offset")
 		})
 	})
 
@@ -113,12 +96,7 @@ var _ = Service("finance", func() {
 
 	Method("deleteAccount", func() {
 		Description("Soft delete an account")
-		Payload(func() {
-			Attribute("id", String, "Account ID", func() {
-				Format(FormatUUID)
-			})
-			Required("id")
-		})
+		Payload(DeleteAccountPayload)
 		Error("not_found")
 		Error("unauthorized")
 		Error("conflict")
@@ -131,12 +109,8 @@ var _ = Service("finance", func() {
 
 	Method("getAccountHierarchy", func() {
 		Description("Get account hierarchy tree")
-		Payload(func() {
-			Attribute("root_id", String, "Root account ID (optional)", func() {
-				Format(FormatUUID)
-			})
-		})
-		Result(AccountHierarchyResult)
+		Payload(GetAccountHierarchyPayload)
+		Result(AccountListResult)
 		Error("unauthorized")
 		HTTP(func() {
 			GET("/accounts/hierarchy")
@@ -146,15 +120,7 @@ var _ = Service("finance", func() {
 
 	Method("getAccountBalance", func() {
 		Description("Get current balance for an account")
-		Payload(func() {
-			Attribute("account_id", String, "Account ID", func() {
-				Format(FormatUUID)
-			})
-			Attribute("as_of_date", String, "Balance as of date (optional)", func() {
-				Format(FormatDate)
-			})
-			Required("account_id")
-		})
+		Payload(GetAccountBalancePayload)
 		Result(AccountBalanceResult)
 		Error("not_found")
 		Error("unauthorized")
@@ -181,12 +147,7 @@ var _ = Service("finance", func() {
 
 	Method("getTransaction", func() {
 		Description("Get transaction by ID with entries")
-		Payload(func() {
-			Attribute("id", String, "Transaction ID", func() {
-				Format(FormatUUID)
-			})
-			Required("id")
-		})
+		Payload(GetTransactionByIdPayload)
 		Result(TransactionWithEntriesResult)
 		Error("not_found")
 		Error("unauthorized")
@@ -198,12 +159,7 @@ var _ = Service("finance", func() {
 
 	Method("getTransactionByNumber", func() {
 		Description("Get transaction by transaction number")
-		Payload(func() {
-			Attribute("transaction_number", String, "Transaction number", func() {
-				Example("TXN-2025-001")
-			})
-			Required("transaction_number")
-		})
+		Payload(GetTransactionByNumberPayload)
 		Result(TransactionWithEntriesResult)
 		Error("not_found")
 		Error("unauthorized")
@@ -223,12 +179,8 @@ var _ = Service("finance", func() {
 			GET("/transactions")
 			Param("status")
 			Param("type")
-			Param("date_from")
-			Param("date_to")
 			Param("account_id")
 			Param("search")
-			Param("limit")
-			Param("offset")
 		})
 	})
 
@@ -284,10 +236,62 @@ var _ = Service("finance", func() {
 		})
 	})
 
-	// Financial Reporting Methods
+	// Transaction Workflow Management Methods
+	Method("getTransactionStatus", func() {
+		Description("Get detailed transaction status and workflow progress")
+		Payload(GetTransactionStatusPayload)
+		Result(TransactionStatusResult)
+		Error("not_found")
+		Error("unauthorized")
+		HTTP(func() {
+			GET("/transactions/{id}/status")
+			Param("id")
+		})
+	})
+
+	Method("submitApprovalDecision", func() {
+		Description("Submit approval decision (approve/reject/request changes)")
+		Payload(ApprovalDecisionPayload)
+		Result(ApprovalDecisionResult)
+		Error("not_found")
+		Error("bad_request")
+		Error("unauthorized")
+		Error("conflict")
+		HTTP(func() {
+			POST("/transactions/{id}/approvals")
+			Param("id")
+		})
+	})
+
+	Method("requestTransactionChanges", func() {
+		Description("Request modifications to a submitted transaction")
+		Payload(ChangeRequestPayload)
+		Result(ChangeRequestResult)
+		Error("not_found")
+		Error("bad_request")
+		Error("unauthorized")
+		HTTP(func() {
+			POST("/transactions/{id}/change-requests")
+			Param("id")
+		})
+	})
+
+	Method("getTransactionWorkflow", func() {
+		Description("Get complete workflow history and available actions for a transaction")
+		Payload(GetTransactionWorkflowPayload)
+		Result(TransactionWorkflowResult)
+		Error("not_found")
+		Error("unauthorized")
+		HTTP(func() {
+			GET("/transactions/{id}/workflow")
+			Param("id")
+		})
+	})
+
+	// Advanced Financial Reporting Methods
 	Method("getTrialBalance", func() {
 		Description("Generate trial balance report")
-		Payload(TrialBalancePayload)
+		Payload(GetTrialBalancePayload)
 		Result(TrialBalanceResult)
 		Error("bad_request")
 		Error("unauthorized")
@@ -297,4 +301,6 @@ var _ = Service("finance", func() {
 			Param("include_zero_balances")
 		})
 	})
+
+	// Note: Balance Sheet, P&L, and Cash Flow reports will be added in future iterations
 })

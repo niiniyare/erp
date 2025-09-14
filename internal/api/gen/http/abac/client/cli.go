@@ -22,7 +22,7 @@ func BuildEvaluatePayload(abacEvaluateBody string, abacEvaluateToken string) (*a
 	{
 		err = json.Unmarshal([]byte(abacEvaluateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"action\": \"Reiciendis ab rerum quis veniam.\",\n      \"cache_results\": true,\n      \"context\": {\n         \"Earum et at qui nihil corrupti cupiditate.\": \"Numquam doloremque iure temporibus.\"\n      },\n      \"explain_decision\": true,\n      \"include_advice\": true,\n      \"request_id\": \"Nostrum aut sunt modi ipsum.\",\n      \"resource_id\": \"Enim hic enim beatae.\",\n      \"resource_type\": \"Veritatis illum quis illum sed possimus nostrum.\",\n      \"use_cache\": false,\n      \"user_id\": \"Iusto numquam reprehenderit maxime voluptatum deleniti at.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"action\": \"Laboriosam ut iure minus.\",\n      \"cache_results\": false,\n      \"context\": {\n         \"Facere quis illum impedit.\": \"Illum numquam nam nemo velit placeat.\",\n         \"Quo veritatis ipsum fuga quisquam.\": \"Fugiat et.\"\n      },\n      \"explain_decision\": true,\n      \"include_advice\": false,\n      \"request_id\": \"Impedit sunt sequi.\",\n      \"resource_id\": \"Commodi aliquid veritatis rerum iusto.\",\n      \"resource_type\": \"Recusandae distinctio facilis.\",\n      \"use_cache\": true,\n      \"user_id\": \"Quo quaerat vitae impedit.\"\n   }'")
 		}
 	}
 	var token *string
@@ -63,7 +63,7 @@ func BuildEvaluateBulkPayload(abacEvaluateBulkBody string, abacEvaluateBulkToken
 	{
 		err = json.Unmarshal([]byte(abacEvaluateBulkBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"cache_results\": false,\n      \"fail_fast\": true,\n      \"request_id\": \"Repudiandae earum necessitatibus quo aut saepe dolorum.\",\n      \"requests\": [\n         {\n            \"action\": \"Voluptatem repellendus ratione ut facere.\",\n            \"cache_results\": false,\n            \"context\": {\n               \"Quibusdam iusto corrupti.\": \"Ipsam illum et est animi.\",\n               \"Soluta nihil rerum minima.\": \"Ipsa et.\"\n            },\n            \"explain_decision\": true,\n            \"include_advice\": false,\n            \"request_id\": \"Quam libero itaque porro quia adipisci exercitationem.\",\n            \"resource_id\": \"Cumque vero eaque nisi nisi dolores deleniti.\",\n            \"resource_type\": \"Aut maiores sed aut qui cupiditate qui.\",\n            \"use_cache\": false,\n            \"user_id\": \"Aut earum facilis aut.\"\n         },\n         {\n            \"action\": \"Voluptatem repellendus ratione ut facere.\",\n            \"cache_results\": false,\n            \"context\": {\n               \"Quibusdam iusto corrupti.\": \"Ipsam illum et est animi.\",\n               \"Soluta nihil rerum minima.\": \"Ipsa et.\"\n            },\n            \"explain_decision\": true,\n            \"include_advice\": false,\n            \"request_id\": \"Quam libero itaque porro quia adipisci exercitationem.\",\n            \"resource_id\": \"Cumque vero eaque nisi nisi dolores deleniti.\",\n            \"resource_type\": \"Aut maiores sed aut qui cupiditate qui.\",\n            \"use_cache\": false,\n            \"user_id\": \"Aut earum facilis aut.\"\n         },\n         {\n            \"action\": \"Voluptatem repellendus ratione ut facere.\",\n            \"cache_results\": false,\n            \"context\": {\n               \"Quibusdam iusto corrupti.\": \"Ipsam illum et est animi.\",\n               \"Soluta nihil rerum minima.\": \"Ipsa et.\"\n            },\n            \"explain_decision\": true,\n            \"include_advice\": false,\n            \"request_id\": \"Quam libero itaque porro quia adipisci exercitationem.\",\n            \"resource_id\": \"Cumque vero eaque nisi nisi dolores deleniti.\",\n            \"resource_type\": \"Aut maiores sed aut qui cupiditate qui.\",\n            \"use_cache\": false,\n            \"user_id\": \"Aut earum facilis aut.\"\n         }\n      ],\n      \"use_cache\": true,\n      \"user_id\": \"Et harum.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"cache_results\": true,\n      \"fail_fast\": false,\n      \"request_id\": \"Incidunt dicta voluptatibus nihil nemo quisquam ullam.\",\n      \"requests\": [\n         {\n            \"action\": \"Quia dolor et sit eligendi cumque.\",\n            \"cache_results\": true,\n            \"context\": {\n               \"Et nemo aut asperiores voluptatem.\": \"Accusantium quis provident dolorum consequatur.\"\n            },\n            \"explain_decision\": false,\n            \"include_advice\": true,\n            \"request_id\": \"Nihil deserunt est.\",\n            \"resource_id\": \"In vitae.\",\n            \"resource_type\": \"Voluptas delectus qui esse explicabo dolorem.\",\n            \"use_cache\": false,\n            \"user_id\": \"Necessitatibus voluptatem laudantium quo dolores quam.\"\n         },\n         {\n            \"action\": \"Quia dolor et sit eligendi cumque.\",\n            \"cache_results\": true,\n            \"context\": {\n               \"Et nemo aut asperiores voluptatem.\": \"Accusantium quis provident dolorum consequatur.\"\n            },\n            \"explain_decision\": false,\n            \"include_advice\": true,\n            \"request_id\": \"Nihil deserunt est.\",\n            \"resource_id\": \"In vitae.\",\n            \"resource_type\": \"Voluptas delectus qui esse explicabo dolorem.\",\n            \"use_cache\": false,\n            \"user_id\": \"Necessitatibus voluptatem laudantium quo dolores quam.\"\n         }\n      ],\n      \"use_cache\": false,\n      \"user_id\": \"Nihil ipsum unde perferendis nobis et rerum.\"\n   }'")
 		}
 	}
 	var token *string
@@ -98,7 +98,7 @@ func BuildAuthorizePayload(abacAuthorizeBody string, abacAuthorizeToken string) 
 	{
 		err = json.Unmarshal([]byte(abacAuthorizeBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"action\": \"Libero aut repudiandae excepturi corrupti praesentium at.\",\n      \"context\": {\n         \"Ipsa iure id tempora tempore.\": \"Non aut corrupti quisquam molestiae voluptatem consequatur.\",\n         \"Sint cupiditate eveniet autem.\": \"Repellendus quaerat repellendus est et et repellendus.\",\n         \"Tempora ea quia facilis ipsum.\": \"Odio iste repellendus veritatis est.\"\n      },\n      \"resource_id\": \"Velit iusto illum necessitatibus.\",\n      \"resource_type\": \"Repudiandae ea ut dicta iure quia rerum.\",\n      \"user_id\": \"Tenetur minima.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"action\": \"Voluptas ut aut alias.\",\n      \"context\": {\n         \"Ut mollitia autem.\": \"Et qui corrupti perspiciatis ea neque excepturi.\"\n      },\n      \"resource_id\": \"Facilis saepe.\",\n      \"resource_type\": \"Inventore incidunt aspernatur officiis.\",\n      \"user_id\": \"Expedita praesentium dolore animi.\"\n   }'")
 		}
 	}
 	var token *string
@@ -134,7 +134,7 @@ func BuildExplainPayload(abacExplainBody string, abacExplainToken string) (*abac
 	{
 		err = json.Unmarshal([]byte(abacExplainBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"action\": \"Et officiis consequuntur.\",\n      \"context\": {\n         \"Tenetur omnis ex quas et voluptas porro.\": \"Quos sed molestiae rem quaerat molestiae.\",\n         \"Ut illum aut odit vel officiis porro.\": \"Repudiandae veritatis necessitatibus est debitis.\"\n      },\n      \"detail_level\": \"Dicta cupiditate assumenda.\",\n      \"resource_id\": \"Et nihil eius.\",\n      \"resource_type\": \"Itaque cum nemo qui nihil voluptas asperiores.\",\n      \"user_id\": \"Accusamus doloremque possimus.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"action\": \"Ipsa cum minus.\",\n      \"context\": {\n         \"Quaerat cupiditate magni.\": \"Dolorum enim ratione.\"\n      },\n      \"detail_level\": \"A dolorem in tenetur.\",\n      \"resource_id\": \"Iure error.\",\n      \"resource_type\": \"Autem voluptatibus.\",\n      \"user_id\": \"Et quis.\"\n   }'")
 		}
 	}
 	var token *string
@@ -171,7 +171,7 @@ func BuildDiscoverPoliciesPayload(abacDiscoverPoliciesBody string, abacDiscoverP
 	{
 		err = json.Unmarshal([]byte(abacDiscoverPoliciesBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"action\": \"Ea officiis ut ut qui est laboriosam.\",\n      \"context\": {\n         \"Dolorem natus.\": \"Repudiandae ullam sapiente hic laudantium ut nemo.\",\n         \"Dolores molestias.\": \"Recusandae consequatur et delectus.\",\n         \"Odit maiores recusandae quis.\": \"Veniam velit provident quidem.\"\n      },\n      \"resource_type\": \"Et harum ipsam.\",\n      \"user_id\": \"Nihil non vero.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"action\": \"Blanditiis reprehenderit beatae culpa.\",\n      \"context\": {\n         \"Natus laboriosam.\": \"Sapiente illo nostrum.\",\n         \"Ullam sit excepturi id.\": \"Laboriosam commodi.\"\n      },\n      \"resource_type\": \"Eaque nisi vitae accusamus nostrum.\",\n      \"user_id\": \"Doloremque sequi quia.\"\n   }'")
 		}
 	}
 	var token *string
@@ -206,7 +206,7 @@ func BuildCollectAttributesPayload(abacCollectAttributesBody string, abacCollect
 	{
 		err = json.Unmarshal([]byte(abacCollectAttributesBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"action\": \"Assumenda consequuntur.\",\n      \"entity_id\": \"Quaerat est aspernatur accusamus.\",\n      \"include_expired\": false,\n      \"resource_id\": \"Pariatur odio ipsam nam dolor id.\",\n      \"resource_type\": \"Sed dolorem dolorem molestiae repudiandae.\",\n      \"user_id\": \"Molestiae quae.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"action\": \"Omnis blanditiis nihil non quam aspernatur reprehenderit.\",\n      \"entity_id\": \"Similique optio quibusdam veritatis reprehenderit iure.\",\n      \"include_expired\": true,\n      \"resource_id\": \"Explicabo placeat voluptas et.\",\n      \"resource_type\": \"Error repudiandae ab molestiae laudantium.\",\n      \"user_id\": \"Est qui.\"\n   }'")
 		}
 	}
 	var token *string
@@ -236,7 +236,7 @@ func BuildAuditDecisionsPayload(abacAuditDecisionsBody string, abacAuditDecision
 	{
 		err = json.Unmarshal([]byte(abacAuditDecisionsBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"limit\": 4123854160006049823,\n      \"user_id\": \"Necessitatibus molestiae.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"limit\": 7598806631191103766,\n      \"user_id\": \"Id totam est non nesciunt.\"\n   }'")
 		}
 	}
 	var token *string
@@ -262,7 +262,7 @@ func BuildInvalidateCachePayload(abacInvalidateCacheBody string, abacInvalidateC
 	{
 		err = json.Unmarshal([]byte(abacInvalidateCacheBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"pattern\": \"Omnis qui.\",\n      \"resource_type\": \"Non nemo quia et.\",\n      \"user_id\": \"Id consequatur ut doloremque reprehenderit numquam et.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"pattern\": \"Voluptatem est libero laboriosam quis magnam aliquam.\",\n      \"resource_type\": \"Sunt tempora nam iure nihil.\",\n      \"user_id\": \"Fugiat delectus optio et.\"\n   }'")
 		}
 	}
 	var token *string

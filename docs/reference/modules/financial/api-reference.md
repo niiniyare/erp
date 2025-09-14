@@ -1,6 +1,6 @@
 # Financial Module - API Reference
 
-**Version**: 3.0  
+**Version**: 4.0  
 **Date**: September 13, 2025  
 **Status**: Production  
 **OpenAPI Version**: 3.0.3
@@ -99,117 +99,226 @@ X-Cost-Center: cost-center-code (optional)
 
 ## Business Process Endpoints
 
-### Account Management
+### Unified Account and Account Group Management
 
-#### Create Account
-Create a new account within the chart of accounts structure.
+#### Create Account or Account Group
+Create a new account or account group within the chart of accounts structure using a unified endpoint with discriminator-based routing.
 
 **Endpoint**: `POST /api/v1/finance/accounts`
 
-**Request Body**:
+**Request Body for Account**:
 ```json
 {
+  "node_type": "account",
   "code": "1200",
   "name": "Accounts Receivable",
   "description": "Customer payment receivables",
-  "parent_group": "CURRENT_ASSETS",
+  "parent_id": "550e8400-e29b-41d4-a716-446655440001",
   "account_type": "RECEIVABLE",
-  "currency": "USD",
+  "root_type": "ASSET",
+  "normal_balance": "DEBIT",
+  "currency_code": "USD",
   "cost_center": "CC001",
   "department": "sales",
-  "enable_manual_entries": true
+  "allows_manual_entries": true,
+  "requires_reconciliation": true
 }
 ```
 
-**Response** (201 Created):
+**Request Body for Account Group**:
 ```json
 {
-  "id": "acc-uuid",
+  "node_type": "group",
+  "code": "CURR_ASSETS",
+  "name": "Current Assets", 
+  "description": "Assets expected to be converted to cash within one year",
+  "parent_id": "550e8400-e29b-41d4-a716-446655440000",
+  "financial_statement_section": "BALANCE_SHEET_ASSETS",
+  "consolidation_method": "SUM",
+  "cash_flow_category": "OPERATING",
+  "display_order": 100,
+  "is_header": false,
+  "show_totals": true,
+  "indent_level": 2
+}
+```
+
+**Response for Account** (201 Created):
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440010",
+  "node_type": "account",
   "code": "1200",
   "name": "Accounts Receivable",
   "description": "Customer payment receivables",
-  "account_type": "RECEIVABLE",
-  "parent_group": {
-    "id": "group-uuid",
-    "code": "CURRENT_ASSETS", 
-    "name": "Current Assets"
-  },
-  "current_balance": "0.00",
-  "currency": "USD",
+  "parent_id": "550e8400-e29b-41d4-a716-446655440001",
+  "level": 3,
+  "path": "/ASSETS/CURR_ASSETS/1200",
+  "has_children": false,
+  "child_count": 0,
   "is_active": true,
+  "account": {
+    "account_type": "RECEIVABLE",
+    "root_type": "ASSET",
+    "normal_balance": "DEBIT",
+    "currency_code": "USD",
+    "current_balance": "0.00",
+    "allows_manual_entries": true,
+    "requires_reconciliation": true
+  },
+  "group": null,
   "created_at": "2025-09-13T10:30:00Z",
-  "version": 1,
-  "_links": {
-    "self": {"href": "/api/v1/finance/accounts/acc-uuid"},
-    "balance": {"href": "/api/v1/finance/accounts/acc-uuid/balance"},
-    "hierarchy": {"href": "/api/v1/finance/accounts?parent_id=acc-uuid"}
-  }
+  "updated_at": "2025-09-13T10:30:00Z",
+  "created_by": "550e8400-e29b-41d4-a716-446655440020",
+  "updated_by": "550e8400-e29b-41d4-a716-446655440020"
+}
+```
+
+**Response for Account Group** (201 Created):
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440001",
+  "node_type": "group",
+  "code": "CURR_ASSETS",
+  "name": "Current Assets",
+  "description": "Assets expected to be converted to cash within one year",
+  "parent_id": "550e8400-e29b-41d4-a716-446655440000",
+  "level": 2,
+  "path": "/ASSETS/CURR_ASSETS",
+  "has_children": true,
+  "child_count": 15,
+  "is_active": true,
+  "account": null,
+  "group": {
+    "financial_statement_section": "BALANCE_SHEET_ASSETS",
+    "consolidation_method": "SUM",
+    "cash_flow_category": "OPERATING",
+    "display_order": 100,
+    "is_header": false,
+    "show_totals": true,
+    "indent_level": 2
+  },
+  "created_at": "2025-09-13T10:30:00Z",
+  "updated_at": "2025-09-13T10:30:00Z",
+  "created_by": "550e8400-e29b-41d4-a716-446655440020",
+  "updated_by": "550e8400-e29b-41d4-a716-446655440020"
 }
 ```
 
 #####  **Business Rules**:
-- Account code must be unique within tenant
-- Parent group must exist and be appropriate for account type
-- Cost center assignment validated against user permissions
-- Automatic assignment to appropriate financial statement section
+- Node type discriminator (`account` or `group`) determines validation and processing logic
+- Account/group code must be unique within tenant and node type
+- Parent ID must exist and be appropriate hierarchy parent (groups can parent accounts or groups)
+- Cost center assignment validated against user permissions via ABAC
+- Automatic hierarchy path generation and level calculation
+- Consolidated balance calculation for groups based on consolidation method
 
-#### Get Account Hierarchy
-Retrieve accounts with hierarchical group structure for financial reporting.
+#### Get Unified Account and Group Hierarchy  
+Retrieve unified hierarchy containing both accounts and account groups with advanced filtering capabilities.
 
 **Endpoint**: `GET /api/v1/finance/accounts`
 
 #####  **Query Parameters**:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `include_groups` | boolean | No | Include group hierarchy (default: false) |
-| `depth` | integer | No | Hierarchy depth to include (default: all) |
+| `node_types` | array | No | Filter by node types: ["account", "group"] (default: both) |
+| `parent_id` | uuid | No | Filter by parent ID |
+| `max_level` | integer | No | Maximum hierarchy depth to include |
 | `root_type` | string | No | Filter by root type (ASSET, LIABILITY, etc.) |
-| `statement_section` | string | No | Filter by financial statement section |
-| `cost_center` | string | No | Filter by cost center |
+| `financial_statement_section` | string | No | Filter by financial statement section |
+| `cash_flow_category` | string | No | Filter by cash flow category |
 | `include_balances` | boolean | No | Include current balances (default: true) |
+| `include_children` | boolean | No | Include child count and hierarchy info |
+| `search_query` | string | No | Search accounts and groups by name or code |
+| `is_active` | boolean | No | Filter by active status |
+| `limit` | integer | No | Maximum results to return |
+| `offset` | integer | No | Number of results to skip |
 
 **Response** (200 OK):
 ```json
 {
-  "items": [
+  "nodes": [
     {
-      "id": "group-uuid",
-      "type": "group",
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "node_type": "group",
       "code": "ASSETS",
       "name": "Assets",
       "description": "All asset accounts",
-      "statement_section": "BALANCE_SHEET",
-      "display_order": 1,
-      "children_count": 15,
-      "total_balance": "250000.00"
+      "parent_id": null,
+      "level": 1,
+      "path": "/ASSETS",
+      "has_children": true,
+      "child_count": 25,
+      "is_active": true,
+      "account": null,
+      "group": {
+        "financial_statement_section": "BALANCE_SHEET_ASSETS",
+        "consolidation_method": "SUM",
+        "display_order": 1,
+        "is_header": true,
+        "show_totals": true,
+        "indent_level": 1
+      },
+      "total_balance": "5750000.00"
     },
     {
-      "id": "subgroup-uuid",
-      "type": "group", 
-      "code": "CURRENT_ASSETS",
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "node_type": "group",
+      "code": "CURR_ASSETS",
       "name": "Current Assets",
-      "parent_id": "group-uuid",
-      "statement_section": "BALANCE_SHEET",
-      "display_order": 1,
-      "children_count": 8,
-      "total_balance": "150000.00"
+      "parent_id": "550e8400-e29b-41d4-a716-446655440000",
+      "level": 2,
+      "path": "/ASSETS/CURR_ASSETS",
+      "has_children": true,
+      "child_count": 15,
+      "is_active": true,
+      "account": null,
+      "group": {
+        "financial_statement_section": "BALANCE_SHEET_ASSETS",
+        "consolidation_method": "SUM",
+        "cash_flow_category": "OPERATING",
+        "display_order": 100,
+        "is_header": false,
+        "show_totals": true,
+        "indent_level": 2
+      },
+      "total_balance": "1250000.00"
     },
     {
-      "id": "account-uuid",
-      "type": "account",
+      "id": "550e8400-e29b-41d4-a716-446655440010",
+      "node_type": "account",
       "code": "1100",
-      "name": "Cash - Operating Account", 
-      "parent_id": "subgroup-uuid",
-      "account_type": "CASH",
-      "current_balance": "50000.00",
-      "currency": "USD",
-      "is_active": true
+      "name": "Cash - Operating Account",
+      "parent_id": "550e8400-e29b-41d4-a716-446655440001",
+      "level": 3,
+      "path": "/ASSETS/CURR_ASSETS/1100",
+      "has_children": false,
+      "child_count": 0,
+      "is_active": true,
+      "account": {
+        "account_type": "BANK",
+        "root_type": "ASSET",
+        "normal_balance": "DEBIT",
+        "currency_code": "USD",
+        "current_balance": "250000.00",
+        "allows_manual_entries": true,
+        "requires_reconciliation": true
+      },
+      "group": null
     }
   ],
   "summary": {
+    "total_nodes": 133,
     "total_groups": 8,
     "total_accounts": 125,
-    "active_accounts": 118
+    "active_nodes": 126,
+    "max_hierarchy_depth": 5
+  },
+  "pagination": {
+    "total_count": 133,
+    "limit": 50,
+    "offset": 0,
+    "has_more": false
   }
 }
 ```
@@ -373,6 +482,382 @@ Request modifications to a submitted transaction.
   "due_date": "2025-09-14T17:00:00Z"
 }
 ```
+
+#### Get Account or Account Group by ID
+Retrieve a specific account or account group with complete hierarchy context.
+
+**Endpoint**: `GET /api/v1/finance/accounts/{id}`
+
+**Response** (200 OK):
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440010",
+  "node_type": "account",
+  "code": "1100",
+  "name": "Cash - Operating Account",
+  "description": "Primary operating cash account",
+  "parent_id": "550e8400-e29b-41d4-a716-446655440001",
+  "level": 3,
+  "path": "/ASSETS/CURR_ASSETS/1100",
+  "has_children": false,
+  "child_count": 0,
+  "is_active": true,
+  "account": {
+    "account_type": "BANK",
+    "root_type": "ASSET",
+    "normal_balance": "DEBIT",
+    "currency_code": "USD",
+    "current_balance": "250000.00",
+    "allows_manual_entries": true,
+    "requires_reconciliation": true,
+    "last_reconciled_at": "2025-09-12T10:30:00Z"
+  },
+  "group": null,
+  "hierarchy_context": {
+    "breadcrumb": [
+      {"name": "Assets", "code": "ASSETS", "level": 1},
+      {"name": "Current Assets", "code": "CURR_ASSETS", "level": 2},
+      {"name": "Cash - Operating Account", "code": "1100", "level": 3}
+    ],
+    "parent": {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "name": "Current Assets",
+      "code": "CURR_ASSETS"
+    },
+    "siblings_count": 4
+  },
+  "created_at": "2025-09-13T10:30:00Z",
+  "updated_at": "2025-09-13T10:30:00Z"
+}
+```
+
+#### Update Account or Account Group
+Update an existing account or account group using unified endpoint.
+
+**Endpoint**: `PUT /api/v1/finance/accounts/{id}`
+
+**Request Body** (Account Update):
+```json
+{
+  "name": "Cash - Main Operating Account",
+  "description": "Updated primary operating cash account",
+  "allows_manual_entries": false,
+  "requires_reconciliation": true
+}
+```
+
+**Request Body** (Group Update):
+```json
+{
+  "name": "Current Assets - Updated",
+  "description": "Updated current assets grouping",
+  "display_order": 110,
+  "show_totals": false
+}
+```
+
+#### Delete Account or Account Group
+Soft delete an account or account group with dependency validation.
+
+**Endpoint**: `DELETE /api/v1/finance/accounts/{id}`
+
+**Response** (204 No Content) - Success
+
+**Response** (409 Conflict) - Has Dependencies:
+```json
+{
+  "status": 1,
+  "msg": "Cannot delete account with existing transactions",
+  "data": {
+    "error_code": "DEPENDENCY_EXISTS",
+    "error_type": "business_rule_violation",
+    "dependencies": {
+      "transactions": 45,
+      "child_accounts": 0,
+      "active_balances": "1250.00"
+    },
+    "suggested_actions": [
+      "Transfer transactions to another account",
+      "Zero out account balance",
+      "Mark account as inactive instead"
+    ],
+    "alternative_endpoints": {
+      "deactivate": "/api/v1/finance/accounts/{id}/deactivate",
+      "transfer_balance": "/api/v1/finance/accounts/{id}/transfer"
+    }
+  }
+}
+```
+
+#### Search Unified Accounts and Groups
+Advanced search across both accounts and account groups with relevance scoring.
+
+**Endpoint**: `GET /api/v1/finance/accounts/search`
+
+##### **Query Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | string | Yes | Search term for names, codes, descriptions |
+| `node_types` | array | No | Filter by ["account", "group"] |
+| `limit` | integer | No | Maximum results (default: 20) |
+| `include_inactive` | boolean | No | Include inactive nodes |
+
+**Response** (200 OK):
+```json
+{
+  "results": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440010",
+      "node_type": "account",
+      "code": "1100",
+      "name": "Cash - Operating Account",
+      "path": "/ASSETS/CURR_ASSETS/1100",
+      "match_type": "NAME",
+      "relevance_score": 0.95,
+      "account": {
+        "current_balance": "250000.00",
+        "currency_code": "USD"
+      }
+    },
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440004",
+      "node_type": "group",
+      "code": "CASH_EQUIV",
+      "name": "Cash and Cash Equivalents",
+      "path": "/ASSETS/CURR_ASSETS/CASH_EQUIV",
+      "match_type": "NAME",
+      "relevance_score": 0.92,
+      "group": {
+        "child_count": 8,
+        "total_balance": "450000.00"
+      }
+    }
+  ],
+  "search_metadata": {
+    "query": "cash",
+    "total_results": 2,
+    "search_duration_ms": 45,
+    "filters_applied": ["active_only", "tenant_scope"]
+  }
+}
+```
+
+---
+
+## Analytics and Business Intelligence Endpoints
+
+#### Get Account Hierarchy Analytics
+Retrieve comprehensive hierarchy analysis with balance aggregation and performance metrics.
+
+**Endpoint**: `GET /api/v1/finance/analytics/hierarchy/{parent_id}`
+
+###### **Query Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `include_balance_data` | boolean | No | Include balance information (default: true) |
+| `max_depth` | integer | No | Maximum depth to analyze |
+| `as_of_date` | date | No | Analysis date (default: current) |
+
+**Response** (200 OK):
+```json
+{
+  "hierarchy_analysis": {
+    "parent": {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "name": "Current Assets",
+      "code": "CURR_ASSETS"
+    },
+    "children": [
+      {
+        "id": "550e8400-e29b-41d4-a716-446655440010",
+        "node_type": "account",
+        "code": "1100",
+        "name": "Cash - Operating Account",
+        "level": 3,
+        "balance_data": {
+          "current_balance": "250000.00",
+          "percentage_of_parent": "20.0",
+          "balance_trend": "increasing",
+          "monthly_change": "5.2"
+        },
+        "activity_metrics": {
+          "transaction_count_30d": 145,
+          "avg_transaction_amount": "1750.25",
+          "last_activity_date": "2025-09-12T15:30:00Z"
+        }
+      }
+    ],
+    "summary": {
+      "total_balance": "1250000.00",
+      "account_count": 15,
+      "group_count": 3,
+      "balance_distribution": {
+        "largest_account_percentage": "20.0",
+        "smallest_account_percentage": "0.5",
+        "variance_coefficient": "0.45"
+      }
+    }
+  }
+}
+```
+
+#### Get Account Performance Analytics
+Analyze account or group performance with trend analysis and variance reporting.
+
+**Endpoint**: `GET /api/v1/finance/analytics/performance`
+
+###### **Query Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `account_id` | uuid | No | Specific account ID |
+| `group_id` | uuid | No | Specific group ID |
+| `period` | string | No | Analysis period: MONTHLY, QUARTERLY, YEARLY |
+| `include_trends` | boolean | No | Include trend analysis |
+| `include_variance` | boolean | No | Include variance analysis |
+
+**Response** (200 OK):
+```json
+{
+  "performance_analysis": {
+    "entity": {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "name": "Current Assets",
+      "node_type": "group",
+      "analysis_period": "QUARTERLY"
+    },
+    "current_period": {
+      "period": "2025-Q3",
+      "total_balance": "1250000.00",
+      "transaction_count": 1847,
+      "average_transaction_amount": "678.45",
+      "growth_rate": "3.2",
+      "activity_score": "high"
+    },
+    "trend_analysis": {
+      "periods": [
+        {
+          "period": "2025-Q1",
+          "balance": "1100000.00",
+          "growth_rate": "2.1",
+          "activity_level": "medium"
+        },
+        {
+          "period": "2025-Q2", 
+          "balance": "1180000.00",
+          "growth_rate": "7.3",
+          "activity_level": "high"
+        },
+        {
+          "period": "2025-Q3",
+          "balance": "1250000.00",
+          "growth_rate": "5.9",
+          "activity_level": "high"
+        }
+      ],
+      "trend_direction": "upward",
+      "volatility": "low",
+      "consistency_score": 0.85
+    },
+    "variance_analysis": {
+      "budget_variance": {
+        "amount": "50000.00",
+        "percentage": "4.2",
+        "variance_type": "favorable",
+        "explanation": "Higher than expected cash receipts from Q3 sales"
+      },
+      "forecast_variance": {
+        "amount": "25000.00",
+        "percentage": "2.0",
+        "variance_type": "favorable"
+      },
+      "key_drivers": [
+        {
+          "account_code": "1100",
+          "account_name": "Cash - Operating Account",
+          "contribution_amount": "35000.00",
+          "impact_percentage": "70.0",
+          "explanation": "Increased customer payments ahead of schedule"
+        }
+      ]
+    }
+  }
+}
+```
+
+#### Get Real-time Financial Metrics
+Calculate real-time financial ratios and key performance indicators.
+
+**Endpoint**: `GET /api/v1/finance/analytics/real-time-metrics`
+
+##### **Query Parameters**:
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `metrics` | array | Yes | Metrics to calculate: ["current_ratio", "quick_ratio", "working_capital"] |
+| `entity_id` | uuid | No | Specific entity scope |
+| `benchmark_comparison` | boolean | No | Include industry benchmarks |
+
+**Response** (200 OK):
+```json
+{
+  "metrics": {
+    "current_ratio": {
+      "value": "2.15",
+      "calculation": "current_assets / current_liabilities",
+      "components": {
+        "current_assets": "1250000.00",
+        "current_liabilities": "581395.35"
+      },
+      "status": "healthy",
+      "benchmark_comparison": {
+        "industry_average": "1.8",
+        "percentile_rank": "75",
+        "status": "above_average"
+      },
+      "trend": {
+        "direction": "improving",
+        "change_30d": "0.05",
+        "change_percentage": "2.4"
+      }
+    },
+    "quick_ratio": {
+      "value": "1.85",
+      "calculation": "(current_assets - inventory) / current_liabilities",
+      "components": {
+        "quick_assets": "1075000.00",
+        "current_liabilities": "581395.35"
+      },
+      "status": "healthy",
+      "benchmark_comparison": {
+        "industry_average": "1.2",
+        "percentile_rank": "85",
+        "status": "excellent"
+      }
+    },
+    "working_capital": {
+      "value": "668604.65",
+      "calculation": "current_assets - current_liabilities",
+      "status": "positive",
+      "trend": {
+        "direction": "improving",
+        "change_30d": "25000.00",
+        "change_percentage": "3.9"
+      },
+      "liquidity_analysis": {
+        "cash_conversion_cycle": "35 days",
+        "operating_cash_flow_ratio": "0.25"
+      }
+    }
+  },
+  "calculation_metadata": {
+    "timestamp": "2025-09-13T10:30:00Z",
+    "data_freshness": "real_time",
+    "calculation_duration_ms": 156,
+    "data_sources": ["accounts_balances", "transactions_current"]
+  }
+}
+```
+
+---
 
 ### Financial Reporting
 
@@ -605,7 +1090,167 @@ Retrieve account balance changes over time for analysis.
 }
 ```
 
-### Account Hierarchy Model
+### Unified Account Node Model
+```json
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier"
+    },
+    "node_type": {
+      "type": "string",
+      "enum": ["account", "group"],
+      "description": "Discriminator for node type"
+    },
+    "code": {
+      "type": "string",
+      "maxLength": 50,
+      "description": "Business code (unique within tenant and node_type)"
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 255,
+      "description": "Business name"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 500,
+      "description": "Optional description"
+    },
+    "parent_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Parent node identifier"
+    },
+    "level": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Hierarchy level (1 = root)"
+    },
+    "path": {
+      "type": "string",
+      "description": "Materialized path (e.g., /ASSETS/CURR_ASSETS/1100)"
+    },
+    "has_children": {
+      "type": "boolean",
+      "description": "Whether node has child nodes"
+    },
+    "child_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of direct children"
+    },
+    "is_active": {
+      "type": "boolean",
+      "description": "Active status"
+    },
+    "account": {
+      "type": "object",
+      "description": "Account-specific data (null for groups)",
+      "properties": {
+        "account_type": {
+          "type": "string",
+          "enum": ["BANK", "CASH", "RECEIVABLE", "PAYABLE", "EXPENSE", "REVENUE", "EQUITY", "INVENTORY"]
+        },
+        "root_type": {
+          "type": "string",
+          "enum": ["ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE"]
+        },
+        "normal_balance": {
+          "type": "string",
+          "enum": ["DEBIT", "CREDIT"]
+        },
+        "currency_code": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "current_balance": {
+          "type": "string",
+          "format": "decimal"
+        },
+        "allows_manual_entries": {
+          "type": "boolean"
+        },
+        "requires_reconciliation": {
+          "type": "boolean"
+        },
+        "last_reconciled_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "group": {
+      "type": "object",
+      "description": "Group-specific data (null for accounts)",
+      "properties": {
+        "financial_statement_section": {
+          "type": "string",
+          "enum": ["BALANCE_SHEET_ASSETS", "BALANCE_SHEET_LIABILITIES", "BALANCE_SHEET_EQUITY", "INCOME_STATEMENT_REVENUE", "INCOME_STATEMENT_EXPENSES", "CASH_FLOW"]
+        },
+        "consolidation_method": {
+          "type": "string",
+          "enum": ["SUM", "AVERAGE", "MAX", "MIN", "CUSTOM"]
+        },
+        "cash_flow_category": {
+          "type": "string",
+          "enum": ["OPERATING", "INVESTING", "FINANCING"]
+        },
+        "display_order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "is_header": {
+          "type": "boolean"
+        },
+        "show_totals": {
+          "type": "boolean"
+        },
+        "indent_level": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        }
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "readOnly": true
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "readOnly": true
+    },
+    "created_by": {
+      "type": "string",
+      "format": "uuid",
+      "readOnly": true
+    },
+    "updated_by": {
+      "type": "string",
+      "format": "uuid",
+      "readOnly": true
+    }
+  },
+  "required": ["node_type", "code", "name"],
+  "discriminator": {
+    "propertyName": "node_type",
+    "mapping": {
+      "account": "#/components/schemas/AccountNode",
+      "group": "#/components/schemas/GroupNode"
+    }
+  }
+}
+```
+
+### Analytics Data Models
+
+#### Hierarchy Analysis Model
 ```json
 {
   "type": "object",
@@ -614,37 +1259,122 @@ Retrieve account balance changes over time for analysis.
       "type": "string",
       "format": "uuid"
     },
-    "type": {
+    "node_type": {
       "type": "string",
-      "enum": ["account", "group"],
-      "description": "Item type in hierarchy"
+      "enum": ["account", "group"]
     },
     "code": {
-      "type": "string",
-      "description": "Business account or group code"
+      "type": "string"
     },
     "name": {
-      "type": "string",
-      "description": "Business name"
+      "type": "string"
     },
-    "parent_id": {
-      "type": "string",
-      "format": "uuid",
-      "description": "Parent group identifier"
+    "level": {
+      "type": "integer"
     },
-    "statement_section": {
-      "type": "string",
-      "enum": ["BALANCE_SHEET", "INCOME_STATEMENT", "CASH_FLOW"],
-      "description": "Financial statement section"
+    "balance_data": {
+      "type": "object",
+      "properties": {
+        "current_balance": {
+          "type": "string",
+          "format": "decimal"
+        },
+        "percentage_of_parent": {
+          "type": "string",
+          "format": "decimal"
+        },
+        "balance_trend": {
+          "type": "string",
+          "enum": ["increasing", "decreasing", "stable"]
+        },
+        "monthly_change": {
+          "type": "string",
+          "format": "decimal"
+        }
+      }
     },
-    "current_balance": {
-      "type": "string",
-      "format": "decimal",
-      "description": "Current account balance"
+    "activity_metrics": {
+      "type": "object",
+      "properties": {
+        "transaction_count_30d": {
+          "type": "integer"
+        },
+        "avg_transaction_amount": {
+          "type": "string",
+          "format": "decimal"
+        },
+        "last_activity_date": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "activity_score": {
+          "type": "string",
+          "enum": ["low", "medium", "high"]
+        }
+      }
+    }
+  }
+}
+```
+
+#### Performance Analysis Model
+```json
+{
+  "type": "object",
+  "properties": {
+    "entity": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "name": {"type": "string"},
+        "node_type": {"type": "string", "enum": ["account", "group"]},
+        "analysis_period": {"type": "string", "enum": ["MONTHLY", "QUARTERLY", "YEARLY"]}
+      }
     },
-    "children_count": {
-      "type": "integer",
-      "description": "Number of child items"
+    "current_period": {
+      "type": "object",
+      "properties": {
+        "period": {"type": "string"},
+        "total_balance": {"type": "string", "format": "decimal"},
+        "transaction_count": {"type": "integer"},
+        "average_transaction_amount": {"type": "string", "format": "decimal"},
+        "growth_rate": {"type": "string", "format": "decimal"},
+        "activity_score": {"type": "string", "enum": ["low", "medium", "high"]}
+      }
+    },
+    "trend_analysis": {
+      "type": "object",
+      "properties": {
+        "periods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "period": {"type": "string"},
+              "balance": {"type": "string", "format": "decimal"},
+              "growth_rate": {"type": "string", "format": "decimal"},
+              "activity_level": {"type": "string", "enum": ["low", "medium", "high"]}
+            }
+          }
+        },
+        "trend_direction": {"type": "string", "enum": ["upward", "downward", "stable"]},
+        "volatility": {"type": "string", "enum": ["low", "medium", "high"]},
+        "consistency_score": {"type": "number", "minimum": 0, "maximum": 1}
+      }
+    },
+    "variance_analysis": {
+      "type": "object",
+      "properties": {
+        "budget_variance": {
+          "type": "object",
+          "properties": {
+            "amount": {"type": "string", "format": "decimal"},
+            "percentage": {"type": "string", "format": "decimal"},
+            "variance_type": {"type": "string", "enum": ["favorable", "unfavorable"]},
+            "explanation": {"type": "string"}
+          }
+        }
+      }
     }
   }
 }
@@ -700,17 +1430,227 @@ Retrieve account balance changes over time for analysis.
 }
 ```
 
+### **Structured Error Responses for UI Integration**
+
+All error responses follow a consistent, UI-friendly structure compatible with AMIS and frontend frameworks:
+
+#### Standard Error Response Format
+```json
+{
+  "status": 1,
+  "msg": "Human-readable error message",
+  "data": {
+    "error_code": "SPECIFIC_ERROR_CODE",
+    "error_type": "validation|business_rule|authorization|system",
+    "field_errors": [
+      {
+        "field": "account_code",
+        "message": "Account code already exists",
+        "error_code": "DUPLICATE_ACCOUNT_CODE",
+        "current_value": "1100",
+        "constraints": {
+          "unique": true,
+          "max_length": 20
+        }
+      }
+    ],
+    "business_context": {
+      "rule_violated": "Account code uniqueness",
+      "policy_reference": "FIN-POL-001",
+      "compliance_impact": "GAAP requirement"
+    },
+    "user_actions": {
+      "suggested_actions": [
+        "Choose a different account code",
+        "Review existing accounts with similar codes"
+      ],
+      "retry_allowed": true,
+      "alternative_endpoints": {
+        "suggest_codes": "/api/v1/finance/accounts/suggest-codes",
+        "check_availability": "/api/v1/finance/accounts/check-code/{code}"
+      }
+    },
+    "ui_display": {
+      "show_field_highlights": ["account_code"],
+      "modal_type": "error",
+      "auto_dismiss": false,
+      "focus_field": "account_code"
+    }
+  },
+  "timestamp": "2025-09-13T10:30:00Z",
+  "request_id": "req_550e8400-e29b-41d4-a716-446655440123"
+}
+```
+
 ### **Standard Business Error Codes**
 
-| HTTP Status | Error Code | Business Context |
-|-------------|------------|------------------|
-| 400 | `transaction_validation_failed` | Business rule validation failure |
-| 403 | `segregation_of_duties_violation` | SOX compliance violation |
-| 403 | `insufficient_authorization` | User lacks business authority |
-| 422 | `approval_threshold_exceeded` | Transaction exceeds approval limits |
-| 422 | `cost_center_restricted` | Cost center access denied |
-| 409 | `approval_conflict` | Conflicting approval decisions |
-| 428 | `approval_required` | Transaction requires approval |
+| HTTP Status | Error Code | Business Context | UI Action |
+|-------------|------------|------------------|------------|
+| 400 | `VALIDATION_FAILED` | Field validation errors | Highlight fields, show inline errors |
+| 400 | `DUPLICATE_ACCOUNT_CODE` | Account code already exists | Focus code field, suggest alternatives |
+| 400 | `INVALID_HIERARCHY` | Invalid parent-child relationship | Show hierarchy tree, highlight conflict |
+| 400 | `UNBALANCED_TRANSACTION` | Debits don't equal credits | Show balance calculator, highlight entries |
+| 403 | `SEGREGATION_OF_DUTIES_VIOLATION` | SOX compliance violation | Show approval workflow, suggest approver |
+| 403 | `INSUFFICIENT_AUTHORIZATION` | User lacks business authority | Show permission requirements, contact admin |
+| 403 | `COST_CENTER_RESTRICTED` | Cost center access denied | Show authorized cost centers |
+| 409 | `DEPENDENCY_EXISTS` | Cannot delete due to dependencies | Show dependency details, suggest alternatives |
+| 409 | `APPROVAL_CONFLICT` | Conflicting approval decisions | Show approval history, escalate options |
+| 422 | `APPROVAL_THRESHOLD_EXCEEDED` | Transaction exceeds approval limits | Show workflow, estimate approval time |
+| 422 | `BUSINESS_RULE_VIOLATION` | Violates business logic | Show rule details, suggest corrections |
+| 428 | `APPROVAL_REQUIRED` | Transaction requires approval | Redirect to approval workflow |
+
+#### Validation Error Example
+```json
+{
+  "status": 1,
+  "msg": "Account validation failed",
+  "data": {
+    "error_code": "VALIDATION_FAILED",
+    "error_type": "validation",
+    "field_errors": [
+      {
+        "field": "account_code",
+        "message": "Account code must be unique within tenant",
+        "error_code": "DUPLICATE_ACCOUNT_CODE",
+        "current_value": "1100",
+        "conflicting_account": {
+          "id": "550e8400-e29b-41d4-a716-446655440010",
+          "name": "Cash - Operating Account",
+          "status": "active"
+        }
+      },
+      {
+        "field": "parent_id",
+        "message": "Parent group does not allow this account type",
+        "error_code": "INVALID_PARENT_TYPE",
+        "current_value": "550e8400-e29b-41d4-a716-446655440005",
+        "allowed_parents": [
+          {"id": "550e8400-e29b-41d4-a716-446655440001", "name": "Current Assets"},
+          {"id": "550e8400-e29b-41d4-a716-446655440002", "name": "Fixed Assets"}
+        ]
+      }
+    ],
+    "user_actions": {
+      "suggested_actions": [
+        "Generate suggested account codes",
+        "Select appropriate parent group",
+        "Review account type compatibility"
+      ],
+      "quick_fixes": {
+        "suggest_code": "/api/v1/finance/accounts/suggest-codes?type=BANK",
+        "valid_parents": "/api/v1/finance/accounts/valid-parents?account_type=BANK"
+      }
+    },
+    "ui_display": {
+      "show_field_highlights": ["account_code", "parent_id"],
+      "modal_type": "validation_error",
+      "form_section_focus": "basic_info"
+    }
+  }
+}
+```
+
+#### Business Rule Violation Example
+```json
+{
+  "status": 1,
+  "msg": "Cannot delete account with active transactions",
+  "data": {
+    "error_code": "DEPENDENCY_EXISTS",
+    "error_type": "business_rule",
+    "dependencies": {
+      "transactions": {
+        "count": 45,
+        "total_amount": "125000.00",
+        "date_range": {
+          "oldest": "2025-01-15",
+          "newest": "2025-09-10"
+        }
+      },
+      "child_accounts": 0,
+      "pending_reconciliations": 2
+    },
+    "business_context": {
+      "rule_violated": "Account deletion with active data",
+      "compliance_impact": "Audit trail preservation required",
+      "policy_reference": "SOX-404-AUDIT-TRAIL"
+    },
+    "user_actions": {
+      "suggested_actions": [
+        "Mark account as inactive instead of deleting",
+        "Transfer transactions to another account",
+        "Complete pending reconciliations first",
+        "Archive account for audit compliance"
+      ],
+      "alternative_endpoints": {
+        "deactivate": "/api/v1/finance/accounts/{id}/deactivate",
+        "transfer_transactions": "/api/v1/finance/accounts/{id}/transfer-transactions",
+        "archive": "/api/v1/finance/accounts/{id}/archive"
+      },
+      "workflow_options": {
+        "guided_cleanup": "/api/v1/finance/workflows/account-cleanup/{id}",
+        "bulk_transfer": "/api/v1/finance/tools/bulk-transfer"
+      }
+    },
+    "ui_display": {
+      "modal_type": "warning",
+      "show_dependency_details": true,
+      "action_buttons": [
+        {"label": "Deactivate Instead", "action": "deactivate", "style": "primary"},
+        {"label": "Transfer Data", "action": "transfer", "style": "info"},
+        {"label": "Cancel", "action": "cancel", "style": "default"}
+      ]
+    }
+  }
+}
+```
+
+#### Authorization Error Example
+```json
+{
+  "status": 1,
+  "msg": "Insufficient authorization for this operation",
+  "data": {
+    "error_code": "INSUFFICIENT_AUTHORIZATION",
+    "error_type": "authorization",
+    "permission_details": {
+      "required_permissions": ["finance:accounts:create", "finance:cost_center:CC002"],
+      "user_permissions": ["finance:accounts:read", "finance:cost_center:CC001"],
+      "missing_permissions": ["finance:accounts:create", "finance:cost_center:CC002"]
+    },
+    "business_context": {
+      "operation": "Create account in cost center CC002",
+      "policy_applied": "ABAC-FINANCE-001",
+      "approval_required": true
+    },
+    "user_actions": {
+      "suggested_actions": [
+        "Request permission from system administrator",
+        "Create account in authorized cost center CC001",
+        "Submit approval request for cost center access"
+      ],
+      "contact_info": {
+        "administrator": "finance-admin@company.com",
+        "help_desk": "/support/permissions"
+      },
+      "alternative_options": {
+        "authorized_cost_centers": ["CC001", "CC003"],
+        "request_access": "/api/v1/iam/access-requests"
+      }
+    },
+    "ui_display": {
+      "modal_type": "authorization_error",
+      "show_permission_details": true,
+      "highlight_restrictions": ["cost_center"],
+      "action_buttons": [
+        {"label": "Request Access", "action": "request_access", "style": "primary"},
+        {"label": "Change Cost Center", "action": "modify_request", "style": "info"},
+        {"label": "Cancel", "action": "cancel", "style": "default"}
+      ]
+    }
+  }
+}
+```
 
 ---
 
@@ -2043,26 +2983,26 @@ The code follows Go standards and integrates perfectly with AMIS's data structur
 ---
 
 **Document Control**  
-- **Version**: 3.0
+- **Version**: 4.0
 - **Last Updated**: September 13, 2025
 - **API Status**: Production
 - **Architecture**: Business-Focused, Implementation-Agnostic
 
-#####  **Key Changes from v2.0**
-- Removed all implementation-specific references (Temporal, workflow engines)
-- Redesigned endpoints around business capabilities
-- ABAC documentation with business policy examples
-- Unified account hierarchy endpoint
-- Business-oriented error messages and codes
-- Added approval workflow documentation
-- Focused on compliance and business rule enforcement
+#####  **Key Changes from v3.0**
+- **Unified endpoint design**: Single endpoint for accounts and groups with discriminator routing
+- **Advanced analytics endpoints**: Hierarchy analysis, performance metrics, real-time calculations
+- **Structured error responses**: UI-friendly error format with actionable suggestions
+- **Enhanced data models**: Unified AccountNode model with discriminator pattern
+- **Search and navigation**: Cross-entity search with relevance scoring
+- **Business intelligence**: Real-time financial ratios and KPI calculations
+- **AMIS compatibility**: Optimized response structures for frontend integration
 
 ##### **Related Documents**
-- [Business Process Documentation](business-processes.md)
-- [Compliance Guide](compliance.md) 
-- [ABAC Policy Reference](abac-policies.md)
-- [Integration Guide](integration.md)
-- [Product Requirements Document](PRD.md)
-- [Testing Strategy](testing.md)
-- [Architecture Guide](architecture-guide.md)
-- [Module Overview](README.md)
+- [Business Process Documentation](./business-processes.md)
+- [Compliance Guide](./compliance.md) 
+- [ABAC Policy Reference](./abac-policies.md)
+- [Integration Guide](./integration.md)
+- [Product Requirements Document](./PRD.md)
+- [Testing Strategy](./testing.md)
+- [Architecture Guide](./architecture-guide.md)
+- [Module Overview](./README.md)

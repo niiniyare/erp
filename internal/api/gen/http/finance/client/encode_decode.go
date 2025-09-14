@@ -19,6 +19,690 @@ import (
 	goahttp "goa.design/goa/v3/http"
 )
 
+// BuildCreateAccountNodeRequest instantiates a HTTP request object with method
+// and path set to call the "finance" service "createAccountNode" endpoint
+func (c *Client) BuildCreateAccountNodeRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: CreateAccountNodeFinancePath()}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("finance", "createAccountNode", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeCreateAccountNodeRequest returns an encoder for requests sent to the
+// finance createAccountNode server.
+func EncodeCreateAccountNodeRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*finance.CreateAccountNodePayload)
+		if !ok {
+			return goahttp.ErrInvalidType("finance", "createAccountNode", "*finance.CreateAccountNodePayload", v)
+		}
+		body := NewCreateAccountNodeRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("finance", "createAccountNode", err)
+		}
+		return nil
+	}
+}
+
+// DecodeCreateAccountNodeResponse returns a decoder for responses returned by
+// the finance createAccountNode endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+func DecodeCreateAccountNodeResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusCreated:
+			var (
+				body CreateAccountNodeResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("finance", "createAccountNode", err)
+			}
+			err = ValidateCreateAccountNodeResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("finance", "createAccountNode", err)
+			}
+			res := NewCreateAccountNodeAccountNodeResultCreated(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("finance", "createAccountNode", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildGetAccountNodeRequest instantiates a HTTP request object with method
+// and path set to call the "finance" service "getAccountNode" endpoint
+func (c *Client) BuildGetAccountNodeRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*finance.GetAccountNodeByIDPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("finance", "getAccountNode", "*finance.GetAccountNodeByIDPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetAccountNodeFinancePath(id)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("finance", "getAccountNode", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeGetAccountNodeResponse returns a decoder for responses returned by the
+// finance getAccountNode endpoint. restoreBody controls whether the response
+// body should be restored after having been read.
+func DecodeGetAccountNodeResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body GetAccountNodeResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("finance", "getAccountNode", err)
+			}
+			err = ValidateGetAccountNodeResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("finance", "getAccountNode", err)
+			}
+			res := NewGetAccountNodeAccountNodeResultOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("finance", "getAccountNode", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildGetAccountNodeByCodeRequest instantiates a HTTP request object with
+// method and path set to call the "finance" service "getAccountNodeByCode"
+// endpoint
+func (c *Client) BuildGetAccountNodeByCodeRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		code string
+	)
+	{
+		p, ok := v.(*finance.GetAccountNodeByCodePayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("finance", "getAccountNodeByCode", "*finance.GetAccountNodeByCodePayload", v)
+		}
+		code = p.Code
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetAccountNodeByCodeFinancePath(code)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("finance", "getAccountNodeByCode", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeGetAccountNodeByCodeResponse returns a decoder for responses returned
+// by the finance getAccountNodeByCode endpoint. restoreBody controls whether
+// the response body should be restored after having been read.
+func DecodeGetAccountNodeByCodeResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body GetAccountNodeByCodeResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("finance", "getAccountNodeByCode", err)
+			}
+			err = ValidateGetAccountNodeByCodeResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("finance", "getAccountNodeByCode", err)
+			}
+			res := NewGetAccountNodeByCodeAccountNodeResultOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("finance", "getAccountNodeByCode", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildListAccountNodesRequest instantiates a HTTP request object with method
+// and path set to call the "finance" service "listAccountNodes" endpoint
+func (c *Client) BuildListAccountNodesRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ListAccountNodesFinancePath()}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("finance", "listAccountNodes", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeListAccountNodesRequest returns an encoder for requests sent to the
+// finance listAccountNodes server.
+func EncodeListAccountNodesRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*finance.ListAccountNodesPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("finance", "listAccountNodes", "*finance.ListAccountNodesPayload", v)
+		}
+		values := req.URL.Query()
+		for _, value := range p.NodeTypes {
+			values.Add("node_types", value)
+		}
+		if p.ParentID != nil {
+			values.Add("parent_id", *p.ParentID)
+		}
+		if p.MaxLevel != nil {
+			values.Add("max_level", fmt.Sprintf("%v", *p.MaxLevel))
+		}
+		values.Add("include_children", fmt.Sprintf("%v", p.IncludeChildren))
+		if p.RootType != nil {
+			values.Add("root_type", *p.RootType)
+		}
+		if p.AccountType != nil {
+			values.Add("account_type", *p.AccountType)
+		}
+		if p.FinancialStatementSection != nil {
+			values.Add("financial_statement_section", *p.FinancialStatementSection)
+		}
+		if p.CashFlowCategory != nil {
+			values.Add("cash_flow_category", *p.CashFlowCategory)
+		}
+		if p.IsActive != nil {
+			values.Add("is_active", fmt.Sprintf("%v", *p.IsActive))
+		}
+		if p.SearchQuery != nil {
+			values.Add("search_query", *p.SearchQuery)
+		}
+		values.Add("include_balances", fmt.Sprintf("%v", p.IncludeBalances))
+		values.Add("sort_by", p.SortBy)
+		values.Add("sort_order", p.SortOrder)
+		req.URL.RawQuery = values.Encode()
+		body := NewListAccountNodesRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("finance", "listAccountNodes", err)
+		}
+		return nil
+	}
+}
+
+// DecodeListAccountNodesResponse returns a decoder for responses returned by
+// the finance listAccountNodes endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+func DecodeListAccountNodesResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body ListAccountNodesResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("finance", "listAccountNodes", err)
+			}
+			err = ValidateListAccountNodesResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("finance", "listAccountNodes", err)
+			}
+			res := NewListAccountNodesAccountNodeListResultOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("finance", "listAccountNodes", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildUpdateAccountNodeRequest instantiates a HTTP request object with method
+// and path set to call the "finance" service "updateAccountNode" endpoint
+func (c *Client) BuildUpdateAccountNodeRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*finance.UpdateAccountNodePayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("finance", "updateAccountNode", "*finance.UpdateAccountNodePayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: UpdateAccountNodeFinancePath(id)}
+	req, err := http.NewRequest("PUT", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("finance", "updateAccountNode", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeUpdateAccountNodeRequest returns an encoder for requests sent to the
+// finance updateAccountNode server.
+func EncodeUpdateAccountNodeRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*finance.UpdateAccountNodePayload)
+		if !ok {
+			return goahttp.ErrInvalidType("finance", "updateAccountNode", "*finance.UpdateAccountNodePayload", v)
+		}
+		body := NewUpdateAccountNodeRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("finance", "updateAccountNode", err)
+		}
+		return nil
+	}
+}
+
+// DecodeUpdateAccountNodeResponse returns a decoder for responses returned by
+// the finance updateAccountNode endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+func DecodeUpdateAccountNodeResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body UpdateAccountNodeResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("finance", "updateAccountNode", err)
+			}
+			err = ValidateUpdateAccountNodeResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("finance", "updateAccountNode", err)
+			}
+			res := NewUpdateAccountNodeAccountNodeResultOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("finance", "updateAccountNode", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildDeleteAccountNodeRequest instantiates a HTTP request object with method
+// and path set to call the "finance" service "deleteAccountNode" endpoint
+func (c *Client) BuildDeleteAccountNodeRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*finance.DeleteAccountNodePayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("finance", "deleteAccountNode", "*finance.DeleteAccountNodePayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: DeleteAccountNodeFinancePath(id)}
+	req, err := http.NewRequest("DELETE", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("finance", "deleteAccountNode", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeDeleteAccountNodeResponse returns a decoder for responses returned by
+// the finance deleteAccountNode endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+func DecodeDeleteAccountNodeResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusNoContent:
+			return nil, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("finance", "deleteAccountNode", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildSearchAccountNodesRequest instantiates a HTTP request object with
+// method and path set to call the "finance" service "searchAccountNodes"
+// endpoint
+func (c *Client) BuildSearchAccountNodesRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: SearchAccountNodesFinancePath()}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("finance", "searchAccountNodes", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeSearchAccountNodesRequest returns an encoder for requests sent to the
+// finance searchAccountNodes server.
+func EncodeSearchAccountNodesRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*finance.SearchAccountNodesPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("finance", "searchAccountNodes", "*finance.SearchAccountNodesPayload", v)
+		}
+		values := req.URL.Query()
+		values.Add("query", p.Query)
+		for _, value := range p.NodeTypes {
+			values.Add("node_types", value)
+		}
+		values.Add("limit", fmt.Sprintf("%v", p.Limit))
+		values.Add("include_inactive", fmt.Sprintf("%v", p.IncludeInactive))
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+
+// DecodeSearchAccountNodesResponse returns a decoder for responses returned by
+// the finance searchAccountNodes endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+func DecodeSearchAccountNodesResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body SearchAccountNodesResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("finance", "searchAccountNodes", err)
+			}
+			err = ValidateSearchAccountNodesResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("finance", "searchAccountNodes", err)
+			}
+			res := NewSearchAccountNodesResultOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("finance", "searchAccountNodes", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildGetAccountBalanceRequest instantiates a HTTP request object with method
+// and path set to call the "finance" service "getAccountBalance" endpoint
+func (c *Client) BuildGetAccountBalanceRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		accountID string
+	)
+	{
+		p, ok := v.(*finance.GetAccountBalancePayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("finance", "getAccountBalance", "*finance.GetAccountBalancePayload", v)
+		}
+		accountID = p.AccountID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetAccountBalanceFinancePath(accountID)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("finance", "getAccountBalance", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeGetAccountBalanceRequest returns an encoder for requests sent to the
+// finance getAccountBalance server.
+func EncodeGetAccountBalanceRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*finance.GetAccountBalancePayload)
+		if !ok {
+			return goahttp.ErrInvalidType("finance", "getAccountBalance", "*finance.GetAccountBalancePayload", v)
+		}
+		values := req.URL.Query()
+		if p.AsOfDate != nil {
+			values.Add("as_of_date", *p.AsOfDate)
+		}
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+
+// DecodeGetAccountBalanceResponse returns a decoder for responses returned by
+// the finance getAccountBalance endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+func DecodeGetAccountBalanceResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body GetAccountBalanceResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("finance", "getAccountBalance", err)
+			}
+			err = ValidateGetAccountBalanceResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("finance", "getAccountBalance", err)
+			}
+			res := NewGetAccountBalanceAccountBalanceResultOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("finance", "getAccountBalance", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildGetHierarchyAnalysisRequest instantiates a HTTP request object with
+// method and path set to call the "finance" service "getHierarchyAnalysis"
+// endpoint
+func (c *Client) BuildGetHierarchyAnalysisRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		parentID string
+	)
+	{
+		p, ok := v.(*finance.GetHierarchyAnalysisPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("finance", "getHierarchyAnalysis", "*finance.GetHierarchyAnalysisPayload", v)
+		}
+		parentID = p.ParentID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetHierarchyAnalysisFinancePath(parentID)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("finance", "getHierarchyAnalysis", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeGetHierarchyAnalysisRequest returns an encoder for requests sent to
+// the finance getHierarchyAnalysis server.
+func EncodeGetHierarchyAnalysisRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*finance.GetHierarchyAnalysisPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("finance", "getHierarchyAnalysis", "*finance.GetHierarchyAnalysisPayload", v)
+		}
+		values := req.URL.Query()
+		values.Add("include_balance_data", fmt.Sprintf("%v", p.IncludeBalanceData))
+		if p.MaxDepth != nil {
+			values.Add("max_depth", fmt.Sprintf("%v", *p.MaxDepth))
+		}
+		if p.AsOfDate != nil {
+			values.Add("as_of_date", *p.AsOfDate)
+		}
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+
+// DecodeGetHierarchyAnalysisResponse returns a decoder for responses returned
+// by the finance getHierarchyAnalysis endpoint. restoreBody controls whether
+// the response body should be restored after having been read.
+func DecodeGetHierarchyAnalysisResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body GetHierarchyAnalysisResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("finance", "getHierarchyAnalysis", err)
+			}
+			err = ValidateGetHierarchyAnalysisResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("finance", "getHierarchyAnalysis", err)
+			}
+			res := NewGetHierarchyAnalysisHierarchyAnalysisResultOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("finance", "getHierarchyAnalysis", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildCreateAccountRequest instantiates a HTTP request object with method and
 // path set to call the "finance" service "createAccount" endpoint
 func (c *Client) BuildCreateAccountRequest(ctx context.Context, v any) (*http.Request, error) {
@@ -97,9 +781,9 @@ func (c *Client) BuildGetAccountRequest(ctx context.Context, v any) (*http.Reque
 		id string
 	)
 	{
-		p, ok := v.(*finance.GetAccountPayload)
+		p, ok := v.(*finance.GetAccountByIDPayload)
 		if !ok {
-			return nil, goahttp.ErrInvalidType("finance", "getAccount", "*finance.GetAccountPayload", v)
+			return nil, goahttp.ErrInvalidType("finance", "getAccount", "*finance.GetAccountByIDPayload", v)
 		}
 		id = p.ID
 	}
@@ -329,9 +1013,11 @@ func EncodeListAccountsRequest(encoder func(*http.Request) goahttp.Encoder) func
 		if p.Search != nil {
 			values.Add("search", *p.Search)
 		}
-		values.Add("limit", fmt.Sprintf("%v", p.Limit))
-		values.Add("offset", fmt.Sprintf("%v", p.Offset))
 		req.URL.RawQuery = values.Encode()
+		body := NewListAccountsRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("finance", "listAccounts", err)
+		}
 		return nil
 	}
 }
@@ -573,93 +1259,11 @@ func DecodeGetAccountHierarchyResponse(decoder func(*http.Response) goahttp.Deco
 			if err != nil {
 				return nil, goahttp.ErrValidationError("finance", "getAccountHierarchy", err)
 			}
-			res := NewGetAccountHierarchyAccountHierarchyResultOK(&body)
+			res := NewGetAccountHierarchyAccountListResultOK(&body)
 			return res, nil
 		default:
 			body, _ := io.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("finance", "getAccountHierarchy", resp.StatusCode, string(body))
-		}
-	}
-}
-
-// BuildGetAccountBalanceRequest instantiates a HTTP request object with method
-// and path set to call the "finance" service "getAccountBalance" endpoint
-func (c *Client) BuildGetAccountBalanceRequest(ctx context.Context, v any) (*http.Request, error) {
-	var (
-		accountID string
-	)
-	{
-		p, ok := v.(*finance.GetAccountBalancePayload)
-		if !ok {
-			return nil, goahttp.ErrInvalidType("finance", "getAccountBalance", "*finance.GetAccountBalancePayload", v)
-		}
-		accountID = p.AccountID
-	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetAccountBalanceFinancePath(accountID)}
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		return nil, goahttp.ErrInvalidURL("finance", "getAccountBalance", u.String(), err)
-	}
-	if ctx != nil {
-		req = req.WithContext(ctx)
-	}
-
-	return req, nil
-}
-
-// EncodeGetAccountBalanceRequest returns an encoder for requests sent to the
-// finance getAccountBalance server.
-func EncodeGetAccountBalanceRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
-	return func(req *http.Request, v any) error {
-		p, ok := v.(*finance.GetAccountBalancePayload)
-		if !ok {
-			return goahttp.ErrInvalidType("finance", "getAccountBalance", "*finance.GetAccountBalancePayload", v)
-		}
-		values := req.URL.Query()
-		if p.AsOfDate != nil {
-			values.Add("as_of_date", *p.AsOfDate)
-		}
-		req.URL.RawQuery = values.Encode()
-		return nil
-	}
-}
-
-// DecodeGetAccountBalanceResponse returns a decoder for responses returned by
-// the finance getAccountBalance endpoint. restoreBody controls whether the
-// response body should be restored after having been read.
-func DecodeGetAccountBalanceResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
-	return func(resp *http.Response) (any, error) {
-		if restoreBody {
-			b, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
-			}
-			resp.Body = io.NopCloser(bytes.NewBuffer(b))
-			defer func() {
-				resp.Body = io.NopCloser(bytes.NewBuffer(b))
-			}()
-		} else {
-			defer resp.Body.Close()
-		}
-		switch resp.StatusCode {
-		case http.StatusOK:
-			var (
-				body GetAccountBalanceResponseBody
-				err  error
-			)
-			err = decoder(resp).Decode(&body)
-			if err != nil {
-				return nil, goahttp.ErrDecodingError("finance", "getAccountBalance", err)
-			}
-			err = ValidateGetAccountBalanceResponseBody(&body)
-			if err != nil {
-				return nil, goahttp.ErrValidationError("finance", "getAccountBalance", err)
-			}
-			res := NewGetAccountBalanceAccountBalanceResultOK(&body)
-			return res, nil
-		default:
-			body, _ := io.ReadAll(resp.Body)
-			return nil, goahttp.ErrInvalidResponse("finance", "getAccountBalance", resp.StatusCode, string(body))
 		}
 	}
 }
@@ -742,9 +1346,9 @@ func (c *Client) BuildGetTransactionRequest(ctx context.Context, v any) (*http.R
 		id string
 	)
 	{
-		p, ok := v.(*finance.GetTransactionPayload)
+		p, ok := v.(*finance.GetTransactionByIDPayload)
 		if !ok {
-			return nil, goahttp.ErrInvalidType("finance", "getTransaction", "*finance.GetTransactionPayload", v)
+			return nil, goahttp.ErrInvalidType("finance", "getTransaction", "*finance.GetTransactionByIDPayload", v)
 		}
 		id = p.ID
 	}
@@ -896,21 +1500,17 @@ func EncodeListTransactionsRequest(encoder func(*http.Request) goahttp.Encoder) 
 		if p.Type != nil {
 			values.Add("type", *p.Type)
 		}
-		if p.DateFrom != nil {
-			values.Add("date_from", *p.DateFrom)
-		}
-		if p.DateTo != nil {
-			values.Add("date_to", *p.DateTo)
-		}
 		if p.AccountID != nil {
 			values.Add("account_id", *p.AccountID)
 		}
 		if p.Search != nil {
 			values.Add("search", *p.Search)
 		}
-		values.Add("limit", fmt.Sprintf("%v", p.Limit))
-		values.Add("offset", fmt.Sprintf("%v", p.Offset))
 		req.URL.RawQuery = values.Encode()
+		body := NewListTransactionsRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("finance", "listTransactions", err)
+		}
 		return nil
 	}
 }
@@ -1272,6 +1872,302 @@ func DecodeValidateTransactionResponse(decoder func(*http.Response) goahttp.Deco
 	}
 }
 
+// BuildGetTransactionStatusRequest instantiates a HTTP request object with
+// method and path set to call the "finance" service "getTransactionStatus"
+// endpoint
+func (c *Client) BuildGetTransactionStatusRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*finance.GetTransactionStatusPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("finance", "getTransactionStatus", "*finance.GetTransactionStatusPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetTransactionStatusFinancePath(id)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("finance", "getTransactionStatus", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeGetTransactionStatusResponse returns a decoder for responses returned
+// by the finance getTransactionStatus endpoint. restoreBody controls whether
+// the response body should be restored after having been read.
+func DecodeGetTransactionStatusResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body GetTransactionStatusResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("finance", "getTransactionStatus", err)
+			}
+			err = ValidateGetTransactionStatusResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("finance", "getTransactionStatus", err)
+			}
+			res := NewGetTransactionStatusTransactionStatusResultOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("finance", "getTransactionStatus", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildSubmitApprovalDecisionRequest instantiates a HTTP request object with
+// method and path set to call the "finance" service "submitApprovalDecision"
+// endpoint
+func (c *Client) BuildSubmitApprovalDecisionRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*finance.ApprovalDecisionPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("finance", "submitApprovalDecision", "*finance.ApprovalDecisionPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: SubmitApprovalDecisionFinancePath(id)}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("finance", "submitApprovalDecision", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeSubmitApprovalDecisionRequest returns an encoder for requests sent to
+// the finance submitApprovalDecision server.
+func EncodeSubmitApprovalDecisionRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*finance.ApprovalDecisionPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("finance", "submitApprovalDecision", "*finance.ApprovalDecisionPayload", v)
+		}
+		body := NewSubmitApprovalDecisionRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("finance", "submitApprovalDecision", err)
+		}
+		return nil
+	}
+}
+
+// DecodeSubmitApprovalDecisionResponse returns a decoder for responses
+// returned by the finance submitApprovalDecision endpoint. restoreBody
+// controls whether the response body should be restored after having been read.
+func DecodeSubmitApprovalDecisionResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body SubmitApprovalDecisionResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("finance", "submitApprovalDecision", err)
+			}
+			err = ValidateSubmitApprovalDecisionResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("finance", "submitApprovalDecision", err)
+			}
+			res := NewSubmitApprovalDecisionApprovalDecisionResultOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("finance", "submitApprovalDecision", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildRequestTransactionChangesRequest instantiates a HTTP request object
+// with method and path set to call the "finance" service
+// "requestTransactionChanges" endpoint
+func (c *Client) BuildRequestTransactionChangesRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*finance.ChangeRequestPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("finance", "requestTransactionChanges", "*finance.ChangeRequestPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: RequestTransactionChangesFinancePath(id)}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("finance", "requestTransactionChanges", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeRequestTransactionChangesRequest returns an encoder for requests sent
+// to the finance requestTransactionChanges server.
+func EncodeRequestTransactionChangesRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*finance.ChangeRequestPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("finance", "requestTransactionChanges", "*finance.ChangeRequestPayload", v)
+		}
+		body := NewRequestTransactionChangesRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("finance", "requestTransactionChanges", err)
+		}
+		return nil
+	}
+}
+
+// DecodeRequestTransactionChangesResponse returns a decoder for responses
+// returned by the finance requestTransactionChanges endpoint. restoreBody
+// controls whether the response body should be restored after having been read.
+func DecodeRequestTransactionChangesResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body RequestTransactionChangesResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("finance", "requestTransactionChanges", err)
+			}
+			err = ValidateRequestTransactionChangesResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("finance", "requestTransactionChanges", err)
+			}
+			res := NewRequestTransactionChangesChangeRequestResultOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("finance", "requestTransactionChanges", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildGetTransactionWorkflowRequest instantiates a HTTP request object with
+// method and path set to call the "finance" service "getTransactionWorkflow"
+// endpoint
+func (c *Client) BuildGetTransactionWorkflowRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*finance.GetTransactionWorkflowPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("finance", "getTransactionWorkflow", "*finance.GetTransactionWorkflowPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetTransactionWorkflowFinancePath(id)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("finance", "getTransactionWorkflow", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// DecodeGetTransactionWorkflowResponse returns a decoder for responses
+// returned by the finance getTransactionWorkflow endpoint. restoreBody
+// controls whether the response body should be restored after having been read.
+func DecodeGetTransactionWorkflowResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body GetTransactionWorkflowResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("finance", "getTransactionWorkflow", err)
+			}
+			err = ValidateGetTransactionWorkflowResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("finance", "getTransactionWorkflow", err)
+			}
+			res := NewGetTransactionWorkflowTransactionWorkflowResultOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("finance", "getTransactionWorkflow", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // BuildGetTrialBalanceRequest instantiates a HTTP request object with method
 // and path set to call the "finance" service "getTrialBalance" endpoint
 func (c *Client) BuildGetTrialBalanceRequest(ctx context.Context, v any) (*http.Request, error) {
@@ -1291,9 +2187,9 @@ func (c *Client) BuildGetTrialBalanceRequest(ctx context.Context, v any) (*http.
 // finance getTrialBalance server.
 func EncodeGetTrialBalanceRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
 	return func(req *http.Request, v any) error {
-		p, ok := v.(*finance.TrialBalancePayload)
+		p, ok := v.(*finance.GetTrialBalancePayload)
 		if !ok {
-			return goahttp.ErrInvalidType("finance", "getTrialBalance", "*finance.TrialBalancePayload", v)
+			return goahttp.ErrInvalidType("finance", "getTrialBalance", "*finance.GetTrialBalancePayload", v)
 		}
 		values := req.URL.Query()
 		if p.AsOfDate != nil {
@@ -1345,51 +2241,179 @@ func DecodeGetTrialBalanceResponse(decoder func(*http.Response) goahttp.Decoder,
 	}
 }
 
+// marshalFinancePaginationToPaginationRequestBody builds a value of type
+// *PaginationRequestBody from a value of type *finance.Pagination.
+func marshalFinancePaginationToPaginationRequestBody(v *finance.Pagination) *PaginationRequestBody {
+	if v == nil {
+		return nil
+	}
+	res := &PaginationRequestBody{
+		Page:      v.Page,
+		PageSize:  v.PageSize,
+		SortBy:    v.SortBy,
+		SortOrder: v.SortOrder,
+	}
+	{
+		var zero uint
+		if res.Page == zero {
+			res.Page = 1
+		}
+	}
+	{
+		var zero uint
+		if res.PageSize == zero {
+			res.PageSize = 20
+		}
+	}
+	{
+		var zero string
+		if res.SortOrder == zero {
+			res.SortOrder = "desc"
+		}
+	}
+
+	return res
+}
+
+// marshalPaginationRequestBodyToFinancePagination builds a value of type
+// *finance.Pagination from a value of type *PaginationRequestBody.
+func marshalPaginationRequestBodyToFinancePagination(v *PaginationRequestBody) *finance.Pagination {
+	if v == nil {
+		return nil
+	}
+	res := &finance.Pagination{
+		Page:      v.Page,
+		PageSize:  v.PageSize,
+		SortBy:    v.SortBy,
+		SortOrder: v.SortOrder,
+	}
+	{
+		var zero uint
+		if res.Page == zero {
+			res.Page = 1
+		}
+	}
+	{
+		var zero uint
+		if res.PageSize == zero {
+			res.PageSize = 20
+		}
+	}
+	{
+		var zero string
+		if res.SortOrder == zero {
+			res.SortOrder = "desc"
+		}
+	}
+
+	return res
+}
+
+// unmarshalAccountNodeResultResponseBodyToFinanceAccountNodeResult builds a
+// value of type *finance.AccountNodeResult from a value of type
+// *AccountNodeResultResponseBody.
+func unmarshalAccountNodeResultResponseBodyToFinanceAccountNodeResult(v *AccountNodeResultResponseBody) *finance.AccountNodeResult {
+	res := &finance.AccountNodeResult{
+		ID:                        *v.ID,
+		NodeType:                  *v.NodeType,
+		Code:                      *v.Code,
+		Name:                      *v.Name,
+		Description:               v.Description,
+		ParentID:                  v.ParentID,
+		Level:                     *v.Level,
+		Path:                      *v.Path,
+		HasChildren:               *v.HasChildren,
+		ChildCount:                *v.ChildCount,
+		IsActive:                  *v.IsActive,
+		AccountType:               v.AccountType,
+		RootType:                  v.RootType,
+		NormalBalance:             v.NormalBalance,
+		CurrencyCode:              v.CurrencyCode,
+		CurrentBalance:            v.CurrentBalance,
+		AllowsManualEntries:       v.AllowsManualEntries,
+		RequiresReconciliation:    v.RequiresReconciliation,
+		FinancialStatementSection: v.FinancialStatementSection,
+		ConsolidationMethod:       v.ConsolidationMethod,
+		CashFlowCategory:          v.CashFlowCategory,
+		DisplayOrder:              v.DisplayOrder,
+		IsHeader:                  v.IsHeader,
+		ShowTotals:                v.ShowTotals,
+		IndentLevel:               v.IndentLevel,
+		TotalBalance:              v.TotalBalance,
+		CreatedAt:                 v.CreatedAt,
+		UpdatedAt:                 v.UpdatedAt,
+		CreatedBy:                 v.CreatedBy,
+		UpdatedBy:                 v.UpdatedBy,
+	}
+
+	return res
+}
+
+// unmarshalPaginationMetaResponseBodyToFinancePaginationMeta builds a value of
+// type *finance.PaginationMeta from a value of type
+// *PaginationMetaResponseBody.
+func unmarshalPaginationMetaResponseBodyToFinancePaginationMeta(v *PaginationMetaResponseBody) *finance.PaginationMeta {
+	res := &finance.PaginationMeta{
+		CurrentPage: *v.CurrentPage,
+		PageSize:    *v.PageSize,
+		TotalItems:  *v.TotalItems,
+		TotalPages:  *v.TotalPages,
+		HasNext:     *v.HasNext,
+		HasPrev:     *v.HasPrev,
+	}
+
+	return res
+}
+
+// unmarshalSearchResultItemResponseBodyToFinanceSearchResultItem builds a
+// value of type *finance.SearchResultItem from a value of type
+// *SearchResultItemResponseBody.
+func unmarshalSearchResultItemResponseBodyToFinanceSearchResultItem(v *SearchResultItemResponseBody) *finance.SearchResultItem {
+	res := &finance.SearchResultItem{
+		ID:             *v.ID,
+		NodeType:       *v.NodeType,
+		Code:           *v.Code,
+		Name:           *v.Name,
+		Path:           *v.Path,
+		MatchType:      *v.MatchType,
+		RelevanceScore: *v.RelevanceScore,
+		CurrentBalance: v.CurrentBalance,
+		CurrencyCode:   v.CurrencyCode,
+		ChildCount:     v.ChildCount,
+		TotalBalance:   v.TotalBalance,
+	}
+
+	return res
+}
+
 // unmarshalAccountResultResponseBodyToFinanceAccountResult builds a value of
 // type *finance.AccountResult from a value of type *AccountResultResponseBody.
 func unmarshalAccountResultResponseBodyToFinanceAccountResult(v *AccountResultResponseBody) *finance.AccountResult {
 	res := &finance.AccountResult{
-		ID:                      *v.ID,
-		TenantID:                v.TenantID,
-		EntityID:                v.EntityID,
-		AccountCode:             *v.AccountCode,
-		AccountName:             *v.AccountName,
-		AccountDescription:      v.AccountDescription,
-		ParentAccountID:         v.ParentAccountID,
-		AccountLevel:            v.AccountLevel,
-		AccountPath:             v.AccountPath,
-		HasChildren:             v.HasChildren,
-		IsLeafAccount:           v.IsLeafAccount,
-		AccountGroupID:          v.AccountGroupID,
-		AccountHeaderID:         v.AccountHeaderID,
-		RootType:                *v.RootType,
-		AccountType:             *v.AccountType,
-		AccountSubtype:          v.AccountSubtype,
-		AccountCategory:         v.AccountCategory,
-		SubCategory:             v.SubCategory,
-		NormalBalance:           *v.NormalBalance,
-		IsActive:                *v.IsActive,
-		IsSystemAccount:         v.IsSystemAccount,
-		AllowManualEntries:      v.AllowManualEntries,
-		RequireReference:        v.RequireReference,
-		CurrentBalance:          v.CurrentBalance,
-		YtdBalance:              v.YtdBalance,
-		LastTransactionDate:     v.LastTransactionDate,
-		FinancialStatementLine:  v.FinancialStatementLine,
-		ReportOrder:             v.ReportOrder,
-		DisplayOrder:            v.DisplayOrder,
-		ShowInReports:           v.ShowInReports,
-		ConsolidationAccount:    v.ConsolidationAccount,
-		CashFlowType:            v.CashFlowType,
-		CurrencyCode:            v.CurrencyCode,
-		IsMultiCurrency:         v.IsMultiCurrency,
-		IsBudgetable:            v.IsBudgetable,
-		BudgetVarianceThreshold: v.BudgetVarianceThreshold,
-		Version:                 v.Version,
-		ValidationStatus:        v.ValidationStatus,
-		LastValidationRun:       v.LastValidationRun,
-		CreatedAt:               v.CreatedAt,
-		UpdatedAt:               v.UpdatedAt,
+		ID:                  *v.ID,
+		TenantID:            v.TenantID,
+		EntityID:            v.EntityID,
+		AccountCode:         *v.AccountCode,
+		AccountName:         *v.AccountName,
+		AccountDescription:  v.AccountDescription,
+		ParentAccountID:     v.ParentAccountID,
+		AccountLevel:        v.AccountLevel,
+		AccountPath:         v.AccountPath,
+		HasChildren:         v.HasChildren,
+		RootType:            *v.RootType,
+		AccountType:         *v.AccountType,
+		NormalBalance:       *v.NormalBalance,
+		IsActive:            *v.IsActive,
+		AllowManualEntries:  v.AllowManualEntries,
+		RequireReference:    v.RequireReference,
+		CurrentBalance:      v.CurrentBalance,
+		YtdBalance:          v.YtdBalance,
+		LastTransactionDate: v.LastTransactionDate,
+		CurrencyCode:        v.CurrencyCode,
+		CreatedAt:           v.CreatedAt,
+		UpdatedAt:           v.UpdatedAt,
+		CreatedBy:           v.CreatedBy,
+		UpdatedBy:           v.UpdatedBy,
 	}
 
 	return res
@@ -1401,6 +2425,7 @@ func unmarshalAccountResultResponseBodyToFinanceAccountResult(v *AccountResultRe
 func marshalFinanceTransactionEntryPayloadToTransactionEntryPayloadRequestBody(v *finance.TransactionEntryPayload) *TransactionEntryPayloadRequestBody {
 	res := &TransactionEntryPayloadRequestBody{
 		AccountID:    v.AccountID,
+		AccountCode:  v.AccountCode,
 		DebitAmount:  v.DebitAmount,
 		CreditAmount: v.CreditAmount,
 		Description:  v.Description,
@@ -1421,6 +2446,7 @@ func marshalFinanceTransactionEntryPayloadToTransactionEntryPayloadRequestBody(v
 func marshalTransactionEntryPayloadRequestBodyToFinanceTransactionEntryPayload(v *TransactionEntryPayloadRequestBody) *finance.TransactionEntryPayload {
 	res := &finance.TransactionEntryPayload{
 		AccountID:    v.AccountID,
+		AccountCode:  v.AccountCode,
 		DebitAmount:  v.DebitAmount,
 		CreditAmount: v.CreditAmount,
 		Description:  v.Description,
@@ -1440,24 +2466,32 @@ func marshalTransactionEntryPayloadRequestBodyToFinanceTransactionEntryPayload(v
 // *TransactionResultResponseBody.
 func unmarshalTransactionResultResponseBodyToFinanceTransactionResult(v *TransactionResultResponseBody) *finance.TransactionResult {
 	res := &finance.TransactionResult{
-		ID:                *v.ID,
-		TenantID:          v.TenantID,
-		EntityID:          v.EntityID,
-		TransactionNumber: *v.TransactionNumber,
-		TransactionType:   *v.TransactionType,
-		TransactionStatus: *v.TransactionStatus,
-		TransactionDate:   *v.TransactionDate,
-		PostingDate:       v.PostingDate,
-		Description:       *v.Description,
-		ReferenceNumber:   v.ReferenceNumber,
-		CurrencyCode:      v.CurrencyCode,
-		ExchangeRate:      v.ExchangeRate,
-		TotalDebitAmount:  v.TotalDebitAmount,
-		TotalCreditAmount: v.TotalCreditAmount,
-		ApprovalStatus:    v.ApprovalStatus,
-		ApprovalRequired:  v.ApprovalRequired,
-		CreatedAt:         v.CreatedAt,
-		UpdatedAt:         v.UpdatedAt,
+		ID:                  *v.ID,
+		TenantID:            v.TenantID,
+		EntityID:            v.EntityID,
+		TransactionNumber:   *v.TransactionNumber,
+		TransactionType:     *v.TransactionType,
+		Status:              *v.Status,
+		CurrentStage:        *v.CurrentStage,
+		TransactionDate:     *v.TransactionDate,
+		PostingDate:         v.PostingDate,
+		Description:         *v.Description,
+		ReferenceNumber:     v.ReferenceNumber,
+		Amount:              v.Amount,
+		Currency:            v.Currency,
+		ExchangeRate:        v.ExchangeRate,
+		TotalDebitAmount:    v.TotalDebitAmount,
+		TotalCreditAmount:   v.TotalCreditAmount,
+		CostCenter:          v.CostCenter,
+		Department:          v.Department,
+		EstimatedCompletion: v.EstimatedCompletion,
+		ProgressPercentage:  v.ProgressPercentage,
+		ApprovalStatus:      v.ApprovalStatus,
+		ApprovalRequired:    v.ApprovalRequired,
+		CreatedAt:           v.CreatedAt,
+		UpdatedAt:           v.UpdatedAt,
+		CreatedBy:           v.CreatedBy,
+		UpdatedBy:           v.UpdatedBy,
 	}
 
 	return res
@@ -1489,18 +2523,46 @@ func unmarshalTransactionEntryResultResponseBodyToFinanceTransactionEntryResult(
 	return res
 }
 
-// unmarshalValidationErrorResultResponseBodyToFinanceValidationErrorResult
-// builds a value of type *finance.ValidationErrorResult from a value of type
-// *ValidationErrorResultResponseBody.
-func unmarshalValidationErrorResultResponseBodyToFinanceValidationErrorResult(v *ValidationErrorResultResponseBody) *finance.ValidationErrorResult {
+// unmarshalValidationErrorResponseBodyToFinanceValidationError builds a value
+// of type *finance.ValidationError from a value of type
+// *ValidationErrorResponseBody.
+func unmarshalValidationErrorResponseBodyToFinanceValidationError(v *ValidationErrorResponseBody) *finance.ValidationError {
 	if v == nil {
 		return nil
 	}
-	res := &finance.ValidationErrorResult{
-		Field:    *v.Field,
-		Message:  *v.Message,
-		Code:     *v.Code,
-		Severity: *v.Severity,
+	res := &finance.ValidationError{
+		Field:   *v.Field,
+		Message: *v.Message,
+		Code:    *v.Code,
+		Value:   v.Value,
+	}
+
+	return res
+}
+
+// marshalFinanceTimeRangeToTimeRangeRequestBody builds a value of type
+// *TimeRangeRequestBody from a value of type *finance.TimeRange.
+func marshalFinanceTimeRangeToTimeRangeRequestBody(v *finance.TimeRange) *TimeRangeRequestBody {
+	if v == nil {
+		return nil
+	}
+	res := &TimeRangeRequestBody{
+		StartDate: v.StartDate,
+		EndDate:   v.EndDate,
+	}
+
+	return res
+}
+
+// marshalTimeRangeRequestBodyToFinanceTimeRange builds a value of type
+// *finance.TimeRange from a value of type *TimeRangeRequestBody.
+func marshalTimeRangeRequestBodyToFinanceTimeRange(v *TimeRangeRequestBody) *finance.TimeRange {
+	if v == nil {
+		return nil
+	}
+	res := &finance.TimeRange{
+		StartDate: v.StartDate,
+		EndDate:   v.EndDate,
 	}
 
 	return res
@@ -1517,12 +2579,16 @@ func marshalFinanceCreateTransactionPayloadToCreateTransactionPayloadRequestBody
 		TransactionDate:   v.TransactionDate,
 		Description:       v.Description,
 		ReferenceNumber:   v.ReferenceNumber,
-		CurrencyCode:      v.CurrencyCode,
+		Currency:          v.Currency,
+		CostCenter:        v.CostCenter,
+		Department:        v.Department,
+		AutoApprove:       v.AutoApprove,
+		Priority:          v.Priority,
 	}
 	{
 		var zero string
-		if res.CurrencyCode == zero {
-			res.CurrencyCode = "USD"
+		if res.Currency == zero {
+			res.Currency = "USD"
 		}
 	}
 	if v.Entries != nil {
@@ -1532,6 +2598,24 @@ func marshalFinanceCreateTransactionPayloadToCreateTransactionPayloadRequestBody
 		}
 	} else {
 		res.Entries = []*TransactionEntryPayloadRequestBody{}
+	}
+	if v.Attachments != nil {
+		res.Attachments = make([]string, len(v.Attachments))
+		for i, val := range v.Attachments {
+			res.Attachments[i] = val
+		}
+	}
+	{
+		var zero bool
+		if res.AutoApprove == zero {
+			res.AutoApprove = false
+		}
+	}
+	{
+		var zero string
+		if res.Priority == zero {
+			res.Priority = "normal"
+		}
 	}
 
 	return res
@@ -1548,12 +2632,16 @@ func marshalCreateTransactionPayloadRequestBodyToFinanceCreateTransactionPayload
 		TransactionDate:   v.TransactionDate,
 		Description:       v.Description,
 		ReferenceNumber:   v.ReferenceNumber,
-		CurrencyCode:      v.CurrencyCode,
+		Currency:          v.Currency,
+		CostCenter:        v.CostCenter,
+		Department:        v.Department,
+		AutoApprove:       v.AutoApprove,
+		Priority:          v.Priority,
 	}
 	{
 		var zero string
-		if res.CurrencyCode == zero {
-			res.CurrencyCode = "USD"
+		if res.Currency == zero {
+			res.Currency = "USD"
 		}
 	}
 	if v.Entries != nil {
@@ -1563,6 +2651,24 @@ func marshalCreateTransactionPayloadRequestBodyToFinanceCreateTransactionPayload
 		}
 	} else {
 		res.Entries = []*finance.TransactionEntryPayload{}
+	}
+	if v.Attachments != nil {
+		res.Attachments = make([]string, len(v.Attachments))
+		for i, val := range v.Attachments {
+			res.Attachments[i] = val
+		}
+	}
+	{
+		var zero bool
+		if res.AutoApprove == zero {
+			res.AutoApprove = false
+		}
+	}
+	{
+		var zero string
+		if res.Priority == zero {
+			res.Priority = "normal"
+		}
 	}
 
 	return res
@@ -1584,20 +2690,206 @@ func unmarshalValidationWarningResultResponseBodyToFinanceValidationWarningResul
 	return res
 }
 
+// unmarshalWorkflowStageResultResponseBodyToFinanceWorkflowStageResult builds
+// a value of type *finance.WorkflowStageResult from a value of type
+// *WorkflowStageResultResponseBody.
+func unmarshalWorkflowStageResultResponseBodyToFinanceWorkflowStageResult(v *WorkflowStageResultResponseBody) *finance.WorkflowStageResult {
+	if v == nil {
+		return nil
+	}
+	res := &finance.WorkflowStageResult{
+		Stage:       *v.Stage,
+		Status:      *v.Status,
+		StartedAt:   v.StartedAt,
+		CompletedAt: v.CompletedAt,
+		Actor:       v.Actor,
+		AssignedTo:  v.AssignedTo,
+		DueDate:     v.DueDate,
+		Comments:    v.Comments,
+	}
+	if v.ValidationResults != nil {
+		res.ValidationResults = unmarshalValidationResultResponseBodyToFinanceValidationResult(v.ValidationResults)
+	}
+
+	return res
+}
+
+// unmarshalValidationResultResponseBodyToFinanceValidationResult builds a
+// value of type *finance.ValidationResult from a value of type
+// *ValidationResultResponseBody.
+func unmarshalValidationResultResponseBodyToFinanceValidationResult(v *ValidationResultResponseBody) *finance.ValidationResult {
+	if v == nil {
+		return nil
+	}
+	res := &finance.ValidationResult{
+		IsValid:           *v.IsValid,
+		IsBalanced:        *v.IsBalanced,
+		TotalDebits:       *v.TotalDebits,
+		TotalCredits:      *v.TotalCredits,
+		BalanceDifference: v.BalanceDifference,
+		ValidationLevel:   *v.ValidationLevel,
+	}
+	if v.Errors != nil {
+		res.Errors = make([]*finance.ValidationError, len(v.Errors))
+		for i, val := range v.Errors {
+			res.Errors[i] = unmarshalValidationErrorResponseBodyToFinanceValidationError(val)
+		}
+	}
+	if v.Warnings != nil {
+		res.Warnings = make([]*finance.ValidationWarningResult, len(v.Warnings))
+		for i, val := range v.Warnings {
+			res.Warnings[i] = unmarshalValidationWarningResultResponseBodyToFinanceValidationWarningResult(val)
+		}
+	}
+
+	return res
+}
+
+// unmarshalApproverResultResponseBodyToFinanceApproverResult builds a value of
+// type *finance.ApproverResult from a value of type
+// *ApproverResultResponseBody.
+func unmarshalApproverResultResponseBodyToFinanceApproverResult(v *ApproverResultResponseBody) *finance.ApproverResult {
+	if v == nil {
+		return nil
+	}
+	res := &finance.ApproverResult{
+		ID:         *v.ID,
+		Name:       *v.Name,
+		Role:       *v.Role,
+		Email:      v.Email,
+		Department: v.Department,
+	}
+
+	return res
+}
+
+// unmarshalApprovalDecisionDataResponseBodyToFinanceApprovalDecisionData
+// builds a value of type *finance.ApprovalDecisionData from a value of type
+// *ApprovalDecisionDataResponseBody.
+func unmarshalApprovalDecisionDataResponseBodyToFinanceApprovalDecisionData(v *ApprovalDecisionDataResponseBody) *finance.ApprovalDecisionData {
+	res := &finance.ApprovalDecisionData{
+		Decision:   v.Decision,
+		ApprovedAt: v.ApprovedAt,
+		Comments:   v.Comments,
+	}
+	if v.Approver != nil {
+		res.Approver = unmarshalApproverResultResponseBodyToFinanceApproverResult(v.Approver)
+	}
+
+	return res
+}
+
+// marshalFinanceRequiredChangeItemToRequiredChangeItemRequestBody builds a
+// value of type *RequiredChangeItemRequestBody from a value of type
+// *finance.RequiredChangeItem.
+func marshalFinanceRequiredChangeItemToRequiredChangeItemRequestBody(v *finance.RequiredChangeItem) *RequiredChangeItemRequestBody {
+	res := &RequiredChangeItemRequestBody{
+		Field:          v.Field,
+		CurrentValue:   v.CurrentValue,
+		SuggestedValue: v.SuggestedValue,
+		Reason:         v.Reason,
+		IsMandatory:    v.IsMandatory,
+	}
+	{
+		var zero bool
+		if res.IsMandatory == zero {
+			res.IsMandatory = true
+		}
+	}
+
+	return res
+}
+
+// marshalRequiredChangeItemRequestBodyToFinanceRequiredChangeItem builds a
+// value of type *finance.RequiredChangeItem from a value of type
+// *RequiredChangeItemRequestBody.
+func marshalRequiredChangeItemRequestBodyToFinanceRequiredChangeItem(v *RequiredChangeItemRequestBody) *finance.RequiredChangeItem {
+	res := &finance.RequiredChangeItem{
+		Field:          v.Field,
+		CurrentValue:   v.CurrentValue,
+		SuggestedValue: v.SuggestedValue,
+		Reason:         v.Reason,
+		IsMandatory:    v.IsMandatory,
+	}
+	{
+		var zero bool
+		if res.IsMandatory == zero {
+			res.IsMandatory = true
+		}
+	}
+
+	return res
+}
+
+// unmarshalWorkflowActionResultResponseBodyToFinanceWorkflowActionResult
+// builds a value of type *finance.WorkflowActionResult from a value of type
+// *WorkflowActionResultResponseBody.
+func unmarshalWorkflowActionResultResponseBodyToFinanceWorkflowActionResult(v *WorkflowActionResultResponseBody) *finance.WorkflowActionResult {
+	res := &finance.WorkflowActionResult{
+		Action:          *v.Action,
+		Label:           *v.Label,
+		Description:     v.Description,
+		RequiresComment: v.RequiresComment,
+	}
+	if v.PermissionsRequired != nil {
+		res.PermissionsRequired = make([]string, len(v.PermissionsRequired))
+		for i, val := range v.PermissionsRequired {
+			res.PermissionsRequired[i] = val
+		}
+	}
+
+	return res
+}
+
+// unmarshalEscalationRuleResultResponseBodyToFinanceEscalationRuleResult
+// builds a value of type *finance.EscalationRuleResult from a value of type
+// *EscalationRuleResultResponseBody.
+func unmarshalEscalationRuleResultResponseBodyToFinanceEscalationRuleResult(v *EscalationRuleResultResponseBody) *finance.EscalationRuleResult {
+	if v == nil {
+		return nil
+	}
+	res := &finance.EscalationRuleResult{
+		RuleName:             *v.RuleName,
+		TriggerCondition:     *v.TriggerCondition,
+		EscalateTo:           v.EscalateTo,
+		EscalationDelayHours: v.EscalationDelayHours,
+		IsActive:             v.IsActive,
+	}
+
+	return res
+}
+
+// unmarshalSLAMetricsResponseBodyToFinanceSLAMetrics builds a value of type
+// *finance.SLAMetrics from a value of type *SLAMetricsResponseBody.
+func unmarshalSLAMetricsResponseBodyToFinanceSLAMetrics(v *SLAMetricsResponseBody) *finance.SLAMetrics {
+	if v == nil {
+		return nil
+	}
+	res := &finance.SLAMetrics{
+		TargetCompletionHours: v.TargetCompletionHours,
+		ElapsedHours:          v.ElapsedHours,
+		RemainingHours:        v.RemainingHours,
+		IsOverdue:             v.IsOverdue,
+	}
+
+	return res
+}
+
 // unmarshalTrialBalanceEntryResponseBodyToFinanceTrialBalanceEntry builds a
 // value of type *finance.TrialBalanceEntry from a value of type
 // *TrialBalanceEntryResponseBody.
 func unmarshalTrialBalanceEntryResponseBodyToFinanceTrialBalanceEntry(v *TrialBalanceEntryResponseBody) *finance.TrialBalanceEntry {
 	res := &finance.TrialBalanceEntry{
-		AccountID:     *v.AccountID,
-		AccountCode:   *v.AccountCode,
-		AccountName:   *v.AccountName,
-		RootType:      *v.RootType,
-		AccountType:   v.AccountType,
-		NormalBalance: v.NormalBalance,
-		TotalDebits:   *v.TotalDebits,
-		TotalCredits:  *v.TotalCredits,
-		NetBalance:    *v.NetBalance,
+		AccountID:          *v.AccountID,
+		AccountCode:        *v.AccountCode,
+		AccountName:        *v.AccountName,
+		RootType:           *v.RootType,
+		AccountType:        v.AccountType,
+		NormalBalance:      v.NormalBalance,
+		TotalDebits:        *v.TotalDebits,
+		TotalCredits:       *v.TotalCredits,
+		NetBalance:         *v.NetBalance,
+		VarianceFromNormal: v.VarianceFromNormal,
 	}
 
 	return res

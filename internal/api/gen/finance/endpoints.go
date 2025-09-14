@@ -15,52 +15,87 @@ import (
 
 // Endpoints wraps the "finance" service endpoints.
 type Endpoints struct {
-	CreateAccount          goa.Endpoint
-	GetAccount             goa.Endpoint
-	GetAccountByCode       goa.Endpoint
-	GetAccountByName       goa.Endpoint
-	ListAccounts           goa.Endpoint
-	UpdateAccount          goa.Endpoint
-	DeleteAccount          goa.Endpoint
-	GetAccountHierarchy    goa.Endpoint
-	GetAccountBalance      goa.Endpoint
-	CreateTransaction      goa.Endpoint
-	GetTransaction         goa.Endpoint
-	GetTransactionByNumber goa.Endpoint
-	ListTransactions       goa.Endpoint
-	PostTransaction        goa.Endpoint
-	ReverseTransaction     goa.Endpoint
-	ApproveTransaction     goa.Endpoint
-	ValidateTransaction    goa.Endpoint
-	GetTrialBalance        goa.Endpoint
+	CreateAccountNode         goa.Endpoint
+	GetAccountNode            goa.Endpoint
+	GetAccountNodeByCode      goa.Endpoint
+	ListAccountNodes          goa.Endpoint
+	UpdateAccountNode         goa.Endpoint
+	DeleteAccountNode         goa.Endpoint
+	SearchAccountNodes        goa.Endpoint
+	GetAccountBalance         goa.Endpoint
+	GetHierarchyAnalysis      goa.Endpoint
+	CreateAccount             goa.Endpoint
+	GetAccount                goa.Endpoint
+	GetAccountByCode          goa.Endpoint
+	GetAccountByName          goa.Endpoint
+	ListAccounts              goa.Endpoint
+	UpdateAccount             goa.Endpoint
+	DeleteAccount             goa.Endpoint
+	GetAccountHierarchy       goa.Endpoint
+	GetAccountBalanceEndpoint goa.Endpoint
+	CreateTransaction         goa.Endpoint
+	GetTransaction            goa.Endpoint
+	GetTransactionByNumber    goa.Endpoint
+	ListTransactions          goa.Endpoint
+	PostTransaction           goa.Endpoint
+	ReverseTransaction        goa.Endpoint
+	ApproveTransaction        goa.Endpoint
+	ValidateTransaction       goa.Endpoint
+	GetTransactionStatus      goa.Endpoint
+	SubmitApprovalDecision    goa.Endpoint
+	RequestTransactionChanges goa.Endpoint
+	GetTransactionWorkflow    goa.Endpoint
+	GetTrialBalance           goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "finance" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
-		CreateAccount:          NewCreateAccountEndpoint(s),
-		GetAccount:             NewGetAccountEndpoint(s),
-		GetAccountByCode:       NewGetAccountByCodeEndpoint(s),
-		GetAccountByName:       NewGetAccountByNameEndpoint(s),
-		ListAccounts:           NewListAccountsEndpoint(s),
-		UpdateAccount:          NewUpdateAccountEndpoint(s),
-		DeleteAccount:          NewDeleteAccountEndpoint(s),
-		GetAccountHierarchy:    NewGetAccountHierarchyEndpoint(s),
-		GetAccountBalance:      NewGetAccountBalanceEndpoint(s),
-		CreateTransaction:      NewCreateTransactionEndpoint(s),
-		GetTransaction:         NewGetTransactionEndpoint(s),
-		GetTransactionByNumber: NewGetTransactionByNumberEndpoint(s),
-		ListTransactions:       NewListTransactionsEndpoint(s),
-		PostTransaction:        NewPostTransactionEndpoint(s),
-		ReverseTransaction:     NewReverseTransactionEndpoint(s),
-		ApproveTransaction:     NewApproveTransactionEndpoint(s),
-		ValidateTransaction:    NewValidateTransactionEndpoint(s),
-		GetTrialBalance:        NewGetTrialBalanceEndpoint(s),
+		CreateAccountNode:         NewCreateAccountNodeEndpoint(s),
+		GetAccountNode:            NewGetAccountNodeEndpoint(s),
+		GetAccountNodeByCode:      NewGetAccountNodeByCodeEndpoint(s),
+		ListAccountNodes:          NewListAccountNodesEndpoint(s),
+		UpdateAccountNode:         NewUpdateAccountNodeEndpoint(s),
+		DeleteAccountNode:         NewDeleteAccountNodeEndpoint(s),
+		SearchAccountNodes:        NewSearchAccountNodesEndpoint(s),
+		GetAccountBalance:         NewGetAccountBalanceEndpoint(s),
+		GetHierarchyAnalysis:      NewGetHierarchyAnalysisEndpoint(s),
+		CreateAccount:             NewCreateAccountEndpoint(s),
+		GetAccount:                NewGetAccountEndpoint(s),
+		GetAccountByCode:          NewGetAccountByCodeEndpoint(s),
+		GetAccountByName:          NewGetAccountByNameEndpoint(s),
+		ListAccounts:              NewListAccountsEndpoint(s),
+		UpdateAccount:             NewUpdateAccountEndpoint(s),
+		DeleteAccount:             NewDeleteAccountEndpoint(s),
+		GetAccountHierarchy:       NewGetAccountHierarchyEndpoint(s),
+		GetAccountBalanceEndpoint: NewGetAccountBalanceEndpointEndpoint(s),
+		CreateTransaction:         NewCreateTransactionEndpoint(s),
+		GetTransaction:            NewGetTransactionEndpoint(s),
+		GetTransactionByNumber:    NewGetTransactionByNumberEndpoint(s),
+		ListTransactions:          NewListTransactionsEndpoint(s),
+		PostTransaction:           NewPostTransactionEndpoint(s),
+		ReverseTransaction:        NewReverseTransactionEndpoint(s),
+		ApproveTransaction:        NewApproveTransactionEndpoint(s),
+		ValidateTransaction:       NewValidateTransactionEndpoint(s),
+		GetTransactionStatus:      NewGetTransactionStatusEndpoint(s),
+		SubmitApprovalDecision:    NewSubmitApprovalDecisionEndpoint(s),
+		RequestTransactionChanges: NewRequestTransactionChangesEndpoint(s),
+		GetTransactionWorkflow:    NewGetTransactionWorkflowEndpoint(s),
+		GetTrialBalance:           NewGetTrialBalanceEndpoint(s),
 	}
 }
 
 // Use applies the given middleware to all the "finance" service endpoints.
 func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
+	e.CreateAccountNode = m(e.CreateAccountNode)
+	e.GetAccountNode = m(e.GetAccountNode)
+	e.GetAccountNodeByCode = m(e.GetAccountNodeByCode)
+	e.ListAccountNodes = m(e.ListAccountNodes)
+	e.UpdateAccountNode = m(e.UpdateAccountNode)
+	e.DeleteAccountNode = m(e.DeleteAccountNode)
+	e.SearchAccountNodes = m(e.SearchAccountNodes)
+	e.GetAccountBalance = m(e.GetAccountBalance)
+	e.GetHierarchyAnalysis = m(e.GetHierarchyAnalysis)
 	e.CreateAccount = m(e.CreateAccount)
 	e.GetAccount = m(e.GetAccount)
 	e.GetAccountByCode = m(e.GetAccountByCode)
@@ -69,7 +104,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.UpdateAccount = m(e.UpdateAccount)
 	e.DeleteAccount = m(e.DeleteAccount)
 	e.GetAccountHierarchy = m(e.GetAccountHierarchy)
-	e.GetAccountBalance = m(e.GetAccountBalance)
+	e.GetAccountBalanceEndpoint = m(e.GetAccountBalanceEndpoint)
 	e.CreateTransaction = m(e.CreateTransaction)
 	e.GetTransaction = m(e.GetTransaction)
 	e.GetTransactionByNumber = m(e.GetTransactionByNumber)
@@ -78,7 +113,92 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.ReverseTransaction = m(e.ReverseTransaction)
 	e.ApproveTransaction = m(e.ApproveTransaction)
 	e.ValidateTransaction = m(e.ValidateTransaction)
+	e.GetTransactionStatus = m(e.GetTransactionStatus)
+	e.SubmitApprovalDecision = m(e.SubmitApprovalDecision)
+	e.RequestTransactionChanges = m(e.RequestTransactionChanges)
+	e.GetTransactionWorkflow = m(e.GetTransactionWorkflow)
 	e.GetTrialBalance = m(e.GetTrialBalance)
+}
+
+// NewCreateAccountNodeEndpoint returns an endpoint function that calls the
+// method "createAccountNode" of service "finance".
+func NewCreateAccountNodeEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*CreateAccountNodePayload)
+		return s.CreateAccountNode(ctx, p)
+	}
+}
+
+// NewGetAccountNodeEndpoint returns an endpoint function that calls the method
+// "getAccountNode" of service "finance".
+func NewGetAccountNodeEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*GetAccountNodeByIDPayload)
+		return s.GetAccountNode(ctx, p)
+	}
+}
+
+// NewGetAccountNodeByCodeEndpoint returns an endpoint function that calls the
+// method "getAccountNodeByCode" of service "finance".
+func NewGetAccountNodeByCodeEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*GetAccountNodeByCodePayload)
+		return s.GetAccountNodeByCode(ctx, p)
+	}
+}
+
+// NewListAccountNodesEndpoint returns an endpoint function that calls the
+// method "listAccountNodes" of service "finance".
+func NewListAccountNodesEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*ListAccountNodesPayload)
+		return s.ListAccountNodes(ctx, p)
+	}
+}
+
+// NewUpdateAccountNodeEndpoint returns an endpoint function that calls the
+// method "updateAccountNode" of service "finance".
+func NewUpdateAccountNodeEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*UpdateAccountNodePayload)
+		return s.UpdateAccountNode(ctx, p)
+	}
+}
+
+// NewDeleteAccountNodeEndpoint returns an endpoint function that calls the
+// method "deleteAccountNode" of service "finance".
+func NewDeleteAccountNodeEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*DeleteAccountNodePayload)
+		return nil, s.DeleteAccountNode(ctx, p)
+	}
+}
+
+// NewSearchAccountNodesEndpoint returns an endpoint function that calls the
+// method "searchAccountNodes" of service "finance".
+func NewSearchAccountNodesEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*SearchAccountNodesPayload)
+		return s.SearchAccountNodes(ctx, p)
+	}
+}
+
+// NewGetAccountBalanceEndpoint returns an endpoint function that calls the
+// method "getAccountBalance" of service "finance".
+func NewGetAccountBalanceEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*GetAccountBalancePayload)
+		return s.GetAccountBalance(ctx, p)
+	}
+}
+
+// NewGetHierarchyAnalysisEndpoint returns an endpoint function that calls the
+// method "getHierarchyAnalysis" of service "finance".
+func NewGetHierarchyAnalysisEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*GetHierarchyAnalysisPayload)
+		return s.GetHierarchyAnalysis(ctx, p)
+	}
 }
 
 // NewCreateAccountEndpoint returns an endpoint function that calls the method
@@ -94,7 +214,7 @@ func NewCreateAccountEndpoint(s Service) goa.Endpoint {
 // "getAccount" of service "finance".
 func NewGetAccountEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*GetAccountPayload)
+		p := req.(*GetAccountByIDPayload)
 		return s.GetAccount(ctx, p)
 	}
 }
@@ -153,12 +273,12 @@ func NewGetAccountHierarchyEndpoint(s Service) goa.Endpoint {
 	}
 }
 
-// NewGetAccountBalanceEndpoint returns an endpoint function that calls the
-// method "getAccountBalance" of service "finance".
-func NewGetAccountBalanceEndpoint(s Service) goa.Endpoint {
+// NewGetAccountBalanceEndpointEndpoint returns an endpoint function that calls
+// the method "getAccountBalance" of service "finance".
+func NewGetAccountBalanceEndpointEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*GetAccountBalancePayload)
-		return s.GetAccountBalance(ctx, p)
+		return s.GetAccountBalanceEndpoint(ctx, p)
 	}
 }
 
@@ -175,7 +295,7 @@ func NewCreateTransactionEndpoint(s Service) goa.Endpoint {
 // "getTransaction" of service "finance".
 func NewGetTransactionEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*GetTransactionPayload)
+		p := req.(*GetTransactionByIDPayload)
 		return s.GetTransaction(ctx, p)
 	}
 }
@@ -234,11 +354,47 @@ func NewValidateTransactionEndpoint(s Service) goa.Endpoint {
 	}
 }
 
+// NewGetTransactionStatusEndpoint returns an endpoint function that calls the
+// method "getTransactionStatus" of service "finance".
+func NewGetTransactionStatusEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*GetTransactionStatusPayload)
+		return s.GetTransactionStatus(ctx, p)
+	}
+}
+
+// NewSubmitApprovalDecisionEndpoint returns an endpoint function that calls
+// the method "submitApprovalDecision" of service "finance".
+func NewSubmitApprovalDecisionEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*ApprovalDecisionPayload)
+		return s.SubmitApprovalDecision(ctx, p)
+	}
+}
+
+// NewRequestTransactionChangesEndpoint returns an endpoint function that calls
+// the method "requestTransactionChanges" of service "finance".
+func NewRequestTransactionChangesEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*ChangeRequestPayload)
+		return s.RequestTransactionChanges(ctx, p)
+	}
+}
+
+// NewGetTransactionWorkflowEndpoint returns an endpoint function that calls
+// the method "getTransactionWorkflow" of service "finance".
+func NewGetTransactionWorkflowEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*GetTransactionWorkflowPayload)
+		return s.GetTransactionWorkflow(ctx, p)
+	}
+}
+
 // NewGetTrialBalanceEndpoint returns an endpoint function that calls the
 // method "getTrialBalance" of service "finance".
 func NewGetTrialBalanceEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*TrialBalancePayload)
+		p := req.(*GetTrialBalancePayload)
 		return s.GetTrialBalance(ctx, p)
 	}
 }

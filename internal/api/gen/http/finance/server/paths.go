@@ -11,9 +11,54 @@ import (
 	"fmt"
 )
 
+// CreateAccountNodeFinancePath returns the URL path to the finance service createAccountNode HTTP endpoint.
+func CreateAccountNodeFinancePath() string {
+	return "/api/v1/finance/accounts"
+}
+
+// GetAccountNodeFinancePath returns the URL path to the finance service getAccountNode HTTP endpoint.
+func GetAccountNodeFinancePath(id string) string {
+	return fmt.Sprintf("/api/v1/finance/%v", id)
+}
+
+// GetAccountNodeByCodeFinancePath returns the URL path to the finance service getAccountNodeByCode HTTP endpoint.
+func GetAccountNodeByCodeFinancePath(code string) string {
+	return fmt.Sprintf("/api/v1/finance/accounts/by-code/%v", code)
+}
+
+// ListAccountNodesFinancePath returns the URL path to the finance service listAccountNodes HTTP endpoint.
+func ListAccountNodesFinancePath() string {
+	return "/api/v1/finance/accounts"
+}
+
+// UpdateAccountNodeFinancePath returns the URL path to the finance service updateAccountNode HTTP endpoint.
+func UpdateAccountNodeFinancePath(id string) string {
+	return fmt.Sprintf("/api/v1/finance/%v", id)
+}
+
+// DeleteAccountNodeFinancePath returns the URL path to the finance service deleteAccountNode HTTP endpoint.
+func DeleteAccountNodeFinancePath(id string) string {
+	return fmt.Sprintf("/api/v1/finance/%v", id)
+}
+
+// SearchAccountNodesFinancePath returns the URL path to the finance service searchAccountNodes HTTP endpoint.
+func SearchAccountNodesFinancePath() string {
+	return "/api/v1/finance/accounts/search"
+}
+
+// GetAccountBalanceFinancePath returns the URL path to the finance service getAccountBalance HTTP endpoint.
+func GetAccountBalanceFinancePath(accountID string) string {
+	return fmt.Sprintf("/api/v1/finance/accounts/%v/balance", accountID)
+}
+
+// GetHierarchyAnalysisFinancePath returns the URL path to the finance service getHierarchyAnalysis HTTP endpoint.
+func GetHierarchyAnalysisFinancePath(parentID string) string {
+	return fmt.Sprintf("/api/v1/finance/analytics/hierarchy/%v", parentID)
+}
+
 // CreateAccountFinancePath returns the URL path to the finance service createAccount HTTP endpoint.
 func CreateAccountFinancePath() string {
-	return "/api/v1/finance/accounts"
+	return "/api/v1/finance/legacy/accounts"
 }
 
 // GetAccountFinancePath returns the URL path to the finance service getAccount HTTP endpoint.
@@ -49,11 +94,6 @@ func DeleteAccountFinancePath(id string) string {
 // GetAccountHierarchyFinancePath returns the URL path to the finance service getAccountHierarchy HTTP endpoint.
 func GetAccountHierarchyFinancePath() string {
 	return "/api/v1/finance/accounts/hierarchy"
-}
-
-// GetAccountBalanceFinancePath returns the URL path to the finance service getAccountBalance HTTP endpoint.
-func GetAccountBalanceFinancePath(accountID string) string {
-	return fmt.Sprintf("/api/v1/finance/accounts/%v/balance", accountID)
 }
 
 // CreateTransactionFinancePath returns the URL path to the finance service createTransaction HTTP endpoint.
@@ -94,6 +134,26 @@ func ApproveTransactionFinancePath(id string) string {
 // ValidateTransactionFinancePath returns the URL path to the finance service validateTransaction HTTP endpoint.
 func ValidateTransactionFinancePath() string {
 	return "/api/v1/finance/transactions/validate"
+}
+
+// GetTransactionStatusFinancePath returns the URL path to the finance service getTransactionStatus HTTP endpoint.
+func GetTransactionStatusFinancePath(id string) string {
+	return fmt.Sprintf("/api/v1/finance/transactions/%v/status", id)
+}
+
+// SubmitApprovalDecisionFinancePath returns the URL path to the finance service submitApprovalDecision HTTP endpoint.
+func SubmitApprovalDecisionFinancePath(id string) string {
+	return fmt.Sprintf("/api/v1/finance/transactions/%v/approvals", id)
+}
+
+// RequestTransactionChangesFinancePath returns the URL path to the finance service requestTransactionChanges HTTP endpoint.
+func RequestTransactionChangesFinancePath(id string) string {
+	return fmt.Sprintf("/api/v1/finance/transactions/%v/change-requests", id)
+}
+
+// GetTransactionWorkflowFinancePath returns the URL path to the finance service getTransactionWorkflow HTTP endpoint.
+func GetTransactionWorkflowFinancePath(id string) string {
+	return fmt.Sprintf("/api/v1/finance/transactions/%v/workflow", id)
 }
 
 // GetTrialBalanceFinancePath returns the URL path to the finance service getTrialBalance HTTP endpoint.

@@ -14,6 +14,79 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
+// CreateAccountNodeRequestBody is the type of the "finance" service
+// "createAccountNode" endpoint HTTP request body.
+type CreateAccountNodeRequestBody struct {
+	// Node type discriminator (account or group)
+	NodeType string `form:"node_type" json:"node_type" xml:"node_type"`
+	// Entity ID (optional)
+	EntityID *string `form:"entity_id,omitempty" json:"entity_id,omitempty" xml:"entity_id,omitempty"`
+	// Unique code (account_code for accounts, group_code for groups)
+	Code string `form:"code" json:"code" xml:"code"`
+	// Name (account_name for accounts, group_name for groups)
+	Name string `form:"name" json:"name" xml:"name"`
+	// Description (optional)
+	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Parent node ID (can be account or group)
+	ParentID *string `form:"parent_id,omitempty" json:"parent_id,omitempty" xml:"parent_id,omitempty"`
+	// Detailed account type (accounts only)
+	AccountType *string `form:"account_type,omitempty" json:"account_type,omitempty" xml:"account_type,omitempty"`
+	// Root type (accounts only)
+	RootType *string `form:"root_type,omitempty" json:"root_type,omitempty" xml:"root_type,omitempty"`
+	// Normal balance side (accounts only)
+	NormalBalance *string `form:"normal_balance,omitempty" json:"normal_balance,omitempty" xml:"normal_balance,omitempty"`
+	// Primary currency code (accounts only)
+	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	// Allow manual journal entries (accounts only)
+	AllowsManualEntries bool `form:"allows_manual_entries" json:"allows_manual_entries" xml:"allows_manual_entries"`
+	// Require reconciliation (accounts only)
+	RequiresReconciliation bool `form:"requires_reconciliation" json:"requires_reconciliation" xml:"requires_reconciliation"`
+	// Financial statement section (groups only)
+	FinancialStatementSection *string `form:"financial_statement_section,omitempty" json:"financial_statement_section,omitempty" xml:"financial_statement_section,omitempty"`
+	// Balance consolidation method (groups only)
+	ConsolidationMethod string `form:"consolidation_method" json:"consolidation_method" xml:"consolidation_method"`
+	// Cash flow statement category (groups only)
+	CashFlowCategory *string `form:"cash_flow_category,omitempty" json:"cash_flow_category,omitempty" xml:"cash_flow_category,omitempty"`
+	// Display order in reports (groups only)
+	DisplayOrder int32 `form:"display_order" json:"display_order" xml:"display_order"`
+	// Is header group (groups only)
+	IsHeader bool `form:"is_header" json:"is_header" xml:"is_header"`
+	// Show group totals (groups only)
+	ShowTotals bool `form:"show_totals" json:"show_totals" xml:"show_totals"`
+	// Indentation level for display (groups only)
+	IndentLevel int32 `form:"indent_level" json:"indent_level" xml:"indent_level"`
+	// Whether node is active
+	IsActive bool `form:"is_active" json:"is_active" xml:"is_active"`
+}
+
+// ListAccountNodesRequestBody is the type of the "finance" service
+// "listAccountNodes" endpoint HTTP request body.
+type ListAccountNodesRequestBody struct {
+	// Pagination parameters
+	Pagination *PaginationRequestBody `form:"pagination,omitempty" json:"pagination,omitempty" xml:"pagination,omitempty"`
+}
+
+// UpdateAccountNodeRequestBody is the type of the "finance" service
+// "updateAccountNode" endpoint HTTP request body.
+type UpdateAccountNodeRequestBody struct {
+	// Node name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Node description
+	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Allow manual journal entries (accounts only)
+	AllowsManualEntries *bool `form:"allows_manual_entries,omitempty" json:"allows_manual_entries,omitempty" xml:"allows_manual_entries,omitempty"`
+	// Require reconciliation (accounts only)
+	RequiresReconciliation *bool `form:"requires_reconciliation,omitempty" json:"requires_reconciliation,omitempty" xml:"requires_reconciliation,omitempty"`
+	// Display order in reports (groups only)
+	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
+	// Show group totals (groups only)
+	ShowTotals *bool `form:"show_totals,omitempty" json:"show_totals,omitempty" xml:"show_totals,omitempty"`
+	// Indentation level (groups only)
+	IndentLevel *int32 `form:"indent_level,omitempty" json:"indent_level,omitempty" xml:"indent_level,omitempty"`
+	// Whether node is active
+	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
+}
+
 // CreateAccountRequestBody is the type of the "finance" service
 // "createAccount" endpoint HTTP request body.
 type CreateAccountRequestBody struct {
@@ -23,38 +96,33 @@ type CreateAccountRequestBody struct {
 	AccountCode string `form:"account_code" json:"account_code" xml:"account_code"`
 	// Account name
 	AccountName string `form:"account_name" json:"account_name" xml:"account_name"`
-	// Account description (optional)
+	// Account description
 	AccountDescription *string `form:"account_description,omitempty" json:"account_description,omitempty" xml:"account_description,omitempty"`
-	// Parent account ID for hierarchy (optional)
+	// Parent account ID (optional)
 	ParentAccountID *string `form:"parent_account_id,omitempty" json:"parent_account_id,omitempty" xml:"parent_account_id,omitempty"`
-	// Account group ID for organization (optional)
-	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
-	// Account header ID for grouping (optional)
-	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
 	// Root account type
 	RootType string `form:"root_type" json:"root_type" xml:"root_type"`
 	// Detailed account type
-	AccountType *string `form:"account_type,omitempty" json:"account_type,omitempty" xml:"account_type,omitempty"`
-	// Account subtype (optional)
-	AccountSubtype *string `form:"account_subtype,omitempty" json:"account_subtype,omitempty" xml:"account_subtype,omitempty"`
-	// Account category for grouping (optional)
-	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
-	// Sub-category within main category (optional)
-	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
+	AccountType string `form:"account_type" json:"account_type" xml:"account_type"`
 	// Normal balance side
 	NormalBalance string `form:"normal_balance" json:"normal_balance" xml:"normal_balance"`
-	// Primary currency code (optional)
-	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	// Primary currency code
+	CurrencyCode string `form:"currency_code" json:"currency_code" xml:"currency_code"`
 	// Whether account is active
 	IsActive bool `form:"is_active" json:"is_active" xml:"is_active"`
-	// Display order in UI/reports
-	DisplayOrder int32 `form:"display_order" json:"display_order" xml:"display_order"`
-	// Whether to include in standard reports
-	ShowInReports bool `form:"show_in_reports" json:"show_in_reports" xml:"show_in_reports"`
-	// Consolidation mapping for multi-entity (optional)
-	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
+	// Allow manual journal entries
+	AllowManualEntries bool `form:"allow_manual_entries" json:"allow_manual_entries" xml:"allow_manual_entries"`
+	// Require reference for entries
+	RequireReference bool `form:"require_reference" json:"require_reference" xml:"require_reference"`
 	// Cash flow statement classification (optional)
 	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
+}
+
+// ListAccountsRequestBody is the type of the "finance" service "listAccounts"
+// endpoint HTTP request body.
+type ListAccountsRequestBody struct {
+	// Pagination parameters
+	Pagination *PaginationRequestBody `form:"pagination,omitempty" json:"pagination,omitempty" xml:"pagination,omitempty"`
 }
 
 // UpdateAccountRequestBody is the type of the "finance" service
@@ -64,14 +132,6 @@ type UpdateAccountRequestBody struct {
 	AccountName *string `form:"account_name,omitempty" json:"account_name,omitempty" xml:"account_name,omitempty"`
 	// Account description
 	AccountDescription *string `form:"account_description,omitempty" json:"account_description,omitempty" xml:"account_description,omitempty"`
-	// Account group ID (optional)
-	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
-	// Account header ID (optional)
-	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
-	// Account category for grouping (optional)
-	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
-	// Sub-category within main category (optional)
-	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Whether account is active
 	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
 	// Allow manual journal entries
@@ -82,8 +142,6 @@ type UpdateAccountRequestBody struct {
 	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
 	// Whether to include in standard reports
 	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
-	// Consolidation mapping for multi-entity (optional)
-	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
 	// Cash flow statement classification (optional)
 	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
 }
@@ -104,9 +162,28 @@ type CreateTransactionRequestBody struct {
 	// External reference number
 	ReferenceNumber *string `form:"reference_number,omitempty" json:"reference_number,omitempty" xml:"reference_number,omitempty"`
 	// Transaction currency
-	CurrencyCode string `form:"currency_code" json:"currency_code" xml:"currency_code"`
+	Currency string `form:"currency" json:"currency" xml:"currency"`
+	// Cost center code
+	CostCenter *string `form:"cost_center,omitempty" json:"cost_center,omitempty" xml:"cost_center,omitempty"`
+	// Department
+	Department *string `form:"department,omitempty" json:"department,omitempty" xml:"department,omitempty"`
 	// Transaction entries
 	Entries []*TransactionEntryPayloadRequestBody `form:"entries" json:"entries" xml:"entries"`
+	// Document attachment UUIDs
+	Attachments []string `form:"attachments,omitempty" json:"attachments,omitempty" xml:"attachments,omitempty"`
+	// Skip approval if user has sufficient privileges
+	AutoApprove bool `form:"auto_approve" json:"auto_approve" xml:"auto_approve"`
+	// Processing priority
+	Priority string `form:"priority" json:"priority" xml:"priority"`
+}
+
+// ListTransactionsRequestBody is the type of the "finance" service
+// "listTransactions" endpoint HTTP request body.
+type ListTransactionsRequestBody struct {
+	// Date range filter
+	DateRange *TimeRangeRequestBody `form:"date_range,omitempty" json:"date_range,omitempty" xml:"date_range,omitempty"`
+	// Pagination parameters
+	Pagination *PaginationRequestBody `form:"pagination,omitempty" json:"pagination,omitempty" xml:"pagination,omitempty"`
 }
 
 // PostTransactionRequestBody is the type of the "finance" service
@@ -145,6 +222,348 @@ type ValidateTransactionRequestBody struct {
 	ValidationLevel string `form:"validation_level" json:"validation_level" xml:"validation_level"`
 }
 
+// SubmitApprovalDecisionRequestBody is the type of the "finance" service
+// "submitApprovalDecision" endpoint HTTP request body.
+type SubmitApprovalDecisionRequestBody struct {
+	// Approval decision
+	Decision string `form:"decision" json:"decision" xml:"decision"`
+	// Approval comments
+	Comments *string `form:"comments,omitempty" json:"comments,omitempty" xml:"comments,omitempty"`
+	// Approver user ID
+	ApproverID string `form:"approver_id" json:"approver_id" xml:"approver_id"`
+	// Level of approval
+	ApprovalLevel string `form:"approval_level" json:"approval_level" xml:"approval_level"`
+	// Reason for escalation (optional)
+	EscalationReason *string `form:"escalation_reason,omitempty" json:"escalation_reason,omitempty" xml:"escalation_reason,omitempty"`
+}
+
+// RequestTransactionChangesRequestBody is the type of the "finance" service
+// "requestTransactionChanges" endpoint HTTP request body.
+type RequestTransactionChangesRequestBody struct {
+	// User requesting changes
+	RequestedBy string `form:"requested_by" json:"requested_by" xml:"requested_by"`
+	// Reason for change request
+	Reason string `form:"reason" json:"reason" xml:"reason"`
+	// List of required changes
+	RequiredChanges []*RequiredChangeItemRequestBody `form:"required_changes" json:"required_changes" xml:"required_changes"`
+	// Due date for changes
+	DueDate *string `form:"due_date,omitempty" json:"due_date,omitempty" xml:"due_date,omitempty"`
+	// Change request priority
+	Priority string `form:"priority" json:"priority" xml:"priority"`
+}
+
+// CreateAccountNodeResponseBody is the type of the "finance" service
+// "createAccountNode" endpoint HTTP response body.
+type CreateAccountNodeResponseBody struct {
+	// Node ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Node type discriminator
+	NodeType *string `form:"node_type,omitempty" json:"node_type,omitempty" xml:"node_type,omitempty"`
+	// Node code
+	Code *string `form:"code,omitempty" json:"code,omitempty" xml:"code,omitempty"`
+	// Node name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Node description
+	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Parent node ID
+	ParentID *string `form:"parent_id,omitempty" json:"parent_id,omitempty" xml:"parent_id,omitempty"`
+	// Hierarchy level (1 = root)
+	Level *int32 `form:"level,omitempty" json:"level,omitempty" xml:"level,omitempty"`
+	// Materialized path
+	Path *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
+	// Whether node has child nodes
+	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
+	// Number of direct children
+	ChildCount *int32 `form:"child_count,omitempty" json:"child_count,omitempty" xml:"child_count,omitempty"`
+	// Whether node is active
+	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
+	// Account type (if account)
+	AccountType *string `form:"account_type,omitempty" json:"account_type,omitempty" xml:"account_type,omitempty"`
+	// Root type (if account)
+	RootType *string `form:"root_type,omitempty" json:"root_type,omitempty" xml:"root_type,omitempty"`
+	// Normal balance side (if account)
+	NormalBalance *string `form:"normal_balance,omitempty" json:"normal_balance,omitempty" xml:"normal_balance,omitempty"`
+	// Currency code (if account)
+	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	// Current balance (if account)
+	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
+	// Allows manual entries (if account)
+	AllowsManualEntries *bool `form:"allows_manual_entries,omitempty" json:"allows_manual_entries,omitempty" xml:"allows_manual_entries,omitempty"`
+	// Requires reconciliation (if account)
+	RequiresReconciliation *bool `form:"requires_reconciliation,omitempty" json:"requires_reconciliation,omitempty" xml:"requires_reconciliation,omitempty"`
+	// Financial statement section (if group)
+	FinancialStatementSection *string `form:"financial_statement_section,omitempty" json:"financial_statement_section,omitempty" xml:"financial_statement_section,omitempty"`
+	// Consolidation method (if group)
+	ConsolidationMethod *string `form:"consolidation_method,omitempty" json:"consolidation_method,omitempty" xml:"consolidation_method,omitempty"`
+	// Cash flow category (if group)
+	CashFlowCategory *string `form:"cash_flow_category,omitempty" json:"cash_flow_category,omitempty" xml:"cash_flow_category,omitempty"`
+	// Display order (if group)
+	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
+	// Is header group (if group)
+	IsHeader *bool `form:"is_header,omitempty" json:"is_header,omitempty" xml:"is_header,omitempty"`
+	// Show totals (if group)
+	ShowTotals *bool `form:"show_totals,omitempty" json:"show_totals,omitempty" xml:"show_totals,omitempty"`
+	// Indent level (if group)
+	IndentLevel *int32 `form:"indent_level,omitempty" json:"indent_level,omitempty" xml:"indent_level,omitempty"`
+	// Total balance
+	TotalBalance *string `form:"total_balance,omitempty" json:"total_balance,omitempty" xml:"total_balance,omitempty"`
+	// Creation timestamp
+	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	// Last update timestamp
+	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
+}
+
+// GetAccountNodeResponseBody is the type of the "finance" service
+// "getAccountNode" endpoint HTTP response body.
+type GetAccountNodeResponseBody struct {
+	// Node ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Node type discriminator
+	NodeType *string `form:"node_type,omitempty" json:"node_type,omitempty" xml:"node_type,omitempty"`
+	// Node code
+	Code *string `form:"code,omitempty" json:"code,omitempty" xml:"code,omitempty"`
+	// Node name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Node description
+	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Parent node ID
+	ParentID *string `form:"parent_id,omitempty" json:"parent_id,omitempty" xml:"parent_id,omitempty"`
+	// Hierarchy level (1 = root)
+	Level *int32 `form:"level,omitempty" json:"level,omitempty" xml:"level,omitempty"`
+	// Materialized path
+	Path *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
+	// Whether node has child nodes
+	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
+	// Number of direct children
+	ChildCount *int32 `form:"child_count,omitempty" json:"child_count,omitempty" xml:"child_count,omitempty"`
+	// Whether node is active
+	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
+	// Account type (if account)
+	AccountType *string `form:"account_type,omitempty" json:"account_type,omitempty" xml:"account_type,omitempty"`
+	// Root type (if account)
+	RootType *string `form:"root_type,omitempty" json:"root_type,omitempty" xml:"root_type,omitempty"`
+	// Normal balance side (if account)
+	NormalBalance *string `form:"normal_balance,omitempty" json:"normal_balance,omitempty" xml:"normal_balance,omitempty"`
+	// Currency code (if account)
+	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	// Current balance (if account)
+	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
+	// Allows manual entries (if account)
+	AllowsManualEntries *bool `form:"allows_manual_entries,omitempty" json:"allows_manual_entries,omitempty" xml:"allows_manual_entries,omitempty"`
+	// Requires reconciliation (if account)
+	RequiresReconciliation *bool `form:"requires_reconciliation,omitempty" json:"requires_reconciliation,omitempty" xml:"requires_reconciliation,omitempty"`
+	// Financial statement section (if group)
+	FinancialStatementSection *string `form:"financial_statement_section,omitempty" json:"financial_statement_section,omitempty" xml:"financial_statement_section,omitempty"`
+	// Consolidation method (if group)
+	ConsolidationMethod *string `form:"consolidation_method,omitempty" json:"consolidation_method,omitempty" xml:"consolidation_method,omitempty"`
+	// Cash flow category (if group)
+	CashFlowCategory *string `form:"cash_flow_category,omitempty" json:"cash_flow_category,omitempty" xml:"cash_flow_category,omitempty"`
+	// Display order (if group)
+	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
+	// Is header group (if group)
+	IsHeader *bool `form:"is_header,omitempty" json:"is_header,omitempty" xml:"is_header,omitempty"`
+	// Show totals (if group)
+	ShowTotals *bool `form:"show_totals,omitempty" json:"show_totals,omitempty" xml:"show_totals,omitempty"`
+	// Indent level (if group)
+	IndentLevel *int32 `form:"indent_level,omitempty" json:"indent_level,omitempty" xml:"indent_level,omitempty"`
+	// Total balance
+	TotalBalance *string `form:"total_balance,omitempty" json:"total_balance,omitempty" xml:"total_balance,omitempty"`
+	// Creation timestamp
+	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	// Last update timestamp
+	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
+}
+
+// GetAccountNodeByCodeResponseBody is the type of the "finance" service
+// "getAccountNodeByCode" endpoint HTTP response body.
+type GetAccountNodeByCodeResponseBody struct {
+	// Node ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Node type discriminator
+	NodeType *string `form:"node_type,omitempty" json:"node_type,omitempty" xml:"node_type,omitempty"`
+	// Node code
+	Code *string `form:"code,omitempty" json:"code,omitempty" xml:"code,omitempty"`
+	// Node name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Node description
+	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Parent node ID
+	ParentID *string `form:"parent_id,omitempty" json:"parent_id,omitempty" xml:"parent_id,omitempty"`
+	// Hierarchy level (1 = root)
+	Level *int32 `form:"level,omitempty" json:"level,omitempty" xml:"level,omitempty"`
+	// Materialized path
+	Path *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
+	// Whether node has child nodes
+	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
+	// Number of direct children
+	ChildCount *int32 `form:"child_count,omitempty" json:"child_count,omitempty" xml:"child_count,omitempty"`
+	// Whether node is active
+	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
+	// Account type (if account)
+	AccountType *string `form:"account_type,omitempty" json:"account_type,omitempty" xml:"account_type,omitempty"`
+	// Root type (if account)
+	RootType *string `form:"root_type,omitempty" json:"root_type,omitempty" xml:"root_type,omitempty"`
+	// Normal balance side (if account)
+	NormalBalance *string `form:"normal_balance,omitempty" json:"normal_balance,omitempty" xml:"normal_balance,omitempty"`
+	// Currency code (if account)
+	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	// Current balance (if account)
+	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
+	// Allows manual entries (if account)
+	AllowsManualEntries *bool `form:"allows_manual_entries,omitempty" json:"allows_manual_entries,omitempty" xml:"allows_manual_entries,omitempty"`
+	// Requires reconciliation (if account)
+	RequiresReconciliation *bool `form:"requires_reconciliation,omitempty" json:"requires_reconciliation,omitempty" xml:"requires_reconciliation,omitempty"`
+	// Financial statement section (if group)
+	FinancialStatementSection *string `form:"financial_statement_section,omitempty" json:"financial_statement_section,omitempty" xml:"financial_statement_section,omitempty"`
+	// Consolidation method (if group)
+	ConsolidationMethod *string `form:"consolidation_method,omitempty" json:"consolidation_method,omitempty" xml:"consolidation_method,omitempty"`
+	// Cash flow category (if group)
+	CashFlowCategory *string `form:"cash_flow_category,omitempty" json:"cash_flow_category,omitempty" xml:"cash_flow_category,omitempty"`
+	// Display order (if group)
+	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
+	// Is header group (if group)
+	IsHeader *bool `form:"is_header,omitempty" json:"is_header,omitempty" xml:"is_header,omitempty"`
+	// Show totals (if group)
+	ShowTotals *bool `form:"show_totals,omitempty" json:"show_totals,omitempty" xml:"show_totals,omitempty"`
+	// Indent level (if group)
+	IndentLevel *int32 `form:"indent_level,omitempty" json:"indent_level,omitempty" xml:"indent_level,omitempty"`
+	// Total balance
+	TotalBalance *string `form:"total_balance,omitempty" json:"total_balance,omitempty" xml:"total_balance,omitempty"`
+	// Creation timestamp
+	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	// Last update timestamp
+	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
+}
+
+// ListAccountNodesResponseBody is the type of the "finance" service
+// "listAccountNodes" endpoint HTTP response body.
+type ListAccountNodesResponseBody struct {
+	// List of account nodes
+	Nodes []*AccountNodeResultResponseBody `form:"nodes,omitempty" json:"nodes,omitempty" xml:"nodes,omitempty"`
+	// Pagination metadata
+	Pagination *PaginationMetaResponseBody `form:"pagination,omitempty" json:"pagination,omitempty" xml:"pagination,omitempty"`
+}
+
+// UpdateAccountNodeResponseBody is the type of the "finance" service
+// "updateAccountNode" endpoint HTTP response body.
+type UpdateAccountNodeResponseBody struct {
+	// Node ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Node type discriminator
+	NodeType *string `form:"node_type,omitempty" json:"node_type,omitempty" xml:"node_type,omitempty"`
+	// Node code
+	Code *string `form:"code,omitempty" json:"code,omitempty" xml:"code,omitempty"`
+	// Node name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Node description
+	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Parent node ID
+	ParentID *string `form:"parent_id,omitempty" json:"parent_id,omitempty" xml:"parent_id,omitempty"`
+	// Hierarchy level (1 = root)
+	Level *int32 `form:"level,omitempty" json:"level,omitempty" xml:"level,omitempty"`
+	// Materialized path
+	Path *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
+	// Whether node has child nodes
+	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
+	// Number of direct children
+	ChildCount *int32 `form:"child_count,omitempty" json:"child_count,omitempty" xml:"child_count,omitempty"`
+	// Whether node is active
+	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
+	// Account type (if account)
+	AccountType *string `form:"account_type,omitempty" json:"account_type,omitempty" xml:"account_type,omitempty"`
+	// Root type (if account)
+	RootType *string `form:"root_type,omitempty" json:"root_type,omitempty" xml:"root_type,omitempty"`
+	// Normal balance side (if account)
+	NormalBalance *string `form:"normal_balance,omitempty" json:"normal_balance,omitempty" xml:"normal_balance,omitempty"`
+	// Currency code (if account)
+	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	// Current balance (if account)
+	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
+	// Allows manual entries (if account)
+	AllowsManualEntries *bool `form:"allows_manual_entries,omitempty" json:"allows_manual_entries,omitempty" xml:"allows_manual_entries,omitempty"`
+	// Requires reconciliation (if account)
+	RequiresReconciliation *bool `form:"requires_reconciliation,omitempty" json:"requires_reconciliation,omitempty" xml:"requires_reconciliation,omitempty"`
+	// Financial statement section (if group)
+	FinancialStatementSection *string `form:"financial_statement_section,omitempty" json:"financial_statement_section,omitempty" xml:"financial_statement_section,omitempty"`
+	// Consolidation method (if group)
+	ConsolidationMethod *string `form:"consolidation_method,omitempty" json:"consolidation_method,omitempty" xml:"consolidation_method,omitempty"`
+	// Cash flow category (if group)
+	CashFlowCategory *string `form:"cash_flow_category,omitempty" json:"cash_flow_category,omitempty" xml:"cash_flow_category,omitempty"`
+	// Display order (if group)
+	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
+	// Is header group (if group)
+	IsHeader *bool `form:"is_header,omitempty" json:"is_header,omitempty" xml:"is_header,omitempty"`
+	// Show totals (if group)
+	ShowTotals *bool `form:"show_totals,omitempty" json:"show_totals,omitempty" xml:"show_totals,omitempty"`
+	// Indent level (if group)
+	IndentLevel *int32 `form:"indent_level,omitempty" json:"indent_level,omitempty" xml:"indent_level,omitempty"`
+	// Total balance
+	TotalBalance *string `form:"total_balance,omitempty" json:"total_balance,omitempty" xml:"total_balance,omitempty"`
+	// Creation timestamp
+	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	// Last update timestamp
+	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
+}
+
+// SearchAccountNodesResponseBody is the type of the "finance" service
+// "searchAccountNodes" endpoint HTTP response body.
+type SearchAccountNodesResponseBody struct {
+	// Search results
+	Results []*SearchResultItemResponseBody `form:"results,omitempty" json:"results,omitempty" xml:"results,omitempty"`
+	// Total number of results
+	TotalResults *int32 `form:"total_results,omitempty" json:"total_results,omitempty" xml:"total_results,omitempty"`
+	// Search execution time
+	SearchDurationMs *int32 `form:"search_duration_ms,omitempty" json:"search_duration_ms,omitempty" xml:"search_duration_ms,omitempty"`
+}
+
+// GetAccountBalanceResponseBody is the type of the "finance" service
+// "getAccountBalance" endpoint HTTP response body.
+type GetAccountBalanceResponseBody struct {
+	// Account ID
+	AccountID *string `form:"account_id,omitempty" json:"account_id,omitempty" xml:"account_id,omitempty"`
+	// Account code
+	AccountCode *string `form:"account_code,omitempty" json:"account_code,omitempty" xml:"account_code,omitempty"`
+	// Account name
+	AccountName *string `form:"account_name,omitempty" json:"account_name,omitempty" xml:"account_name,omitempty"`
+	// Current balance
+	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
+	// Total debit transactions
+	TotalDebits *string `form:"total_debits,omitempty" json:"total_debits,omitempty" xml:"total_debits,omitempty"`
+	// Total credit transactions
+	TotalCredits *string `form:"total_credits,omitempty" json:"total_credits,omitempty" xml:"total_credits,omitempty"`
+	// Balance calculation date
+	AsOfDate *string `form:"as_of_date,omitempty" json:"as_of_date,omitempty" xml:"as_of_date,omitempty"`
+	// Date of last transaction
+	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
+}
+
+// GetHierarchyAnalysisResponseBody is the type of the "finance" service
+// "getHierarchyAnalysis" endpoint HTTP response body.
+type GetHierarchyAnalysisResponseBody struct {
+	ParentID       *string `form:"parent_id,omitempty" json:"parent_id,omitempty" xml:"parent_id,omitempty"`
+	HierarchyDepth *int32  `form:"hierarchy_depth,omitempty" json:"hierarchy_depth,omitempty" xml:"hierarchy_depth,omitempty"`
+	TotalAccounts  *int32  `form:"total_accounts,omitempty" json:"total_accounts,omitempty" xml:"total_accounts,omitempty"`
+	TotalGroups    *int32  `form:"total_groups,omitempty" json:"total_groups,omitempty" xml:"total_groups,omitempty"`
+	TotalBalance   *string `form:"total_balance,omitempty" json:"total_balance,omitempty" xml:"total_balance,omitempty"`
+	AnalysisDate   *string `form:"analysis_date,omitempty" json:"analysis_date,omitempty" xml:"analysis_date,omitempty"`
+}
+
 // CreateAccountResponseBody is the type of the "finance" service
 // "createAccount" endpoint HTTP response body.
 type CreateAccountResponseBody struct {
@@ -168,28 +587,14 @@ type CreateAccountResponseBody struct {
 	AccountPath *string `form:"account_path,omitempty" json:"account_path,omitempty" xml:"account_path,omitempty"`
 	// Whether account has child accounts
 	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
-	// Whether account is a leaf node
-	IsLeafAccount *bool `form:"is_leaf_account,omitempty" json:"is_leaf_account,omitempty" xml:"is_leaf_account,omitempty"`
-	// Account group ID
-	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
-	// Account header ID
-	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
 	// Root account type
 	RootType *string `form:"root_type,omitempty" json:"root_type,omitempty" xml:"root_type,omitempty"`
 	// Account type
 	AccountType *string `form:"account_type,omitempty" json:"account_type,omitempty" xml:"account_type,omitempty"`
-	// Account subtype
-	AccountSubtype *string `form:"account_subtype,omitempty" json:"account_subtype,omitempty" xml:"account_subtype,omitempty"`
-	// Account category for grouping
-	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
-	// Sub-category within main category
-	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Normal balance side
 	NormalBalance *string `form:"normal_balance,omitempty" json:"normal_balance,omitempty" xml:"normal_balance,omitempty"`
 	// Whether account is active
 	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
-	// Whether this is a system account
-	IsSystemAccount *bool `form:"is_system_account,omitempty" json:"is_system_account,omitempty" xml:"is_system_account,omitempty"`
 	// Whether manual entries are allowed
 	AllowManualEntries *bool `form:"allow_manual_entries,omitempty" json:"allow_manual_entries,omitempty" xml:"allow_manual_entries,omitempty"`
 	// Whether reference is required
@@ -200,36 +605,16 @@ type CreateAccountResponseBody struct {
 	YtdBalance *string `form:"ytd_balance,omitempty" json:"ytd_balance,omitempty" xml:"ytd_balance,omitempty"`
 	// Last transaction date
 	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
-	// Financial statement line grouping
-	FinancialStatementLine *string `form:"financial_statement_line,omitempty" json:"financial_statement_line,omitempty" xml:"financial_statement_line,omitempty"`
-	// Sort order in reports
-	ReportOrder *int32 `form:"report_order,omitempty" json:"report_order,omitempty" xml:"report_order,omitempty"`
-	// Display order in UI/reports
-	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
-	// Whether to include in standard reports
-	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
-	// Consolidation mapping for multi-entity
-	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
-	// Cash flow statement classification
-	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
 	// Primary currency code
 	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
-	// Whether account accepts multiple currencies
-	IsMultiCurrency *bool `form:"is_multi_currency,omitempty" json:"is_multi_currency,omitempty" xml:"is_multi_currency,omitempty"`
-	// Whether account can have budgets
-	IsBudgetable *bool `form:"is_budgetable,omitempty" json:"is_budgetable,omitempty" xml:"is_budgetable,omitempty"`
-	// Budget variance alert threshold
-	BudgetVarianceThreshold *string `form:"budget_variance_threshold,omitempty" json:"budget_variance_threshold,omitempty" xml:"budget_variance_threshold,omitempty"`
-	// Version for optimistic locking
-	Version *int32 `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
-	// Current validation status
-	ValidationStatus *string `form:"validation_status,omitempty" json:"validation_status,omitempty" xml:"validation_status,omitempty"`
-	// Last validation timestamp
-	LastValidationRun *string `form:"last_validation_run,omitempty" json:"last_validation_run,omitempty" xml:"last_validation_run,omitempty"`
 	// Creation timestamp
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
 	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
 }
 
 // GetAccountResponseBody is the type of the "finance" service "getAccount"
@@ -255,28 +640,14 @@ type GetAccountResponseBody struct {
 	AccountPath *string `form:"account_path,omitempty" json:"account_path,omitempty" xml:"account_path,omitempty"`
 	// Whether account has child accounts
 	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
-	// Whether account is a leaf node
-	IsLeafAccount *bool `form:"is_leaf_account,omitempty" json:"is_leaf_account,omitempty" xml:"is_leaf_account,omitempty"`
-	// Account group ID
-	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
-	// Account header ID
-	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
 	// Root account type
 	RootType *string `form:"root_type,omitempty" json:"root_type,omitempty" xml:"root_type,omitempty"`
 	// Account type
 	AccountType *string `form:"account_type,omitempty" json:"account_type,omitempty" xml:"account_type,omitempty"`
-	// Account subtype
-	AccountSubtype *string `form:"account_subtype,omitempty" json:"account_subtype,omitempty" xml:"account_subtype,omitempty"`
-	// Account category for grouping
-	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
-	// Sub-category within main category
-	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Normal balance side
 	NormalBalance *string `form:"normal_balance,omitempty" json:"normal_balance,omitempty" xml:"normal_balance,omitempty"`
 	// Whether account is active
 	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
-	// Whether this is a system account
-	IsSystemAccount *bool `form:"is_system_account,omitempty" json:"is_system_account,omitempty" xml:"is_system_account,omitempty"`
 	// Whether manual entries are allowed
 	AllowManualEntries *bool `form:"allow_manual_entries,omitempty" json:"allow_manual_entries,omitempty" xml:"allow_manual_entries,omitempty"`
 	// Whether reference is required
@@ -287,36 +658,16 @@ type GetAccountResponseBody struct {
 	YtdBalance *string `form:"ytd_balance,omitempty" json:"ytd_balance,omitempty" xml:"ytd_balance,omitempty"`
 	// Last transaction date
 	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
-	// Financial statement line grouping
-	FinancialStatementLine *string `form:"financial_statement_line,omitempty" json:"financial_statement_line,omitempty" xml:"financial_statement_line,omitempty"`
-	// Sort order in reports
-	ReportOrder *int32 `form:"report_order,omitempty" json:"report_order,omitempty" xml:"report_order,omitempty"`
-	// Display order in UI/reports
-	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
-	// Whether to include in standard reports
-	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
-	// Consolidation mapping for multi-entity
-	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
-	// Cash flow statement classification
-	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
 	// Primary currency code
 	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
-	// Whether account accepts multiple currencies
-	IsMultiCurrency *bool `form:"is_multi_currency,omitempty" json:"is_multi_currency,omitempty" xml:"is_multi_currency,omitempty"`
-	// Whether account can have budgets
-	IsBudgetable *bool `form:"is_budgetable,omitempty" json:"is_budgetable,omitempty" xml:"is_budgetable,omitempty"`
-	// Budget variance alert threshold
-	BudgetVarianceThreshold *string `form:"budget_variance_threshold,omitempty" json:"budget_variance_threshold,omitempty" xml:"budget_variance_threshold,omitempty"`
-	// Version for optimistic locking
-	Version *int32 `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
-	// Current validation status
-	ValidationStatus *string `form:"validation_status,omitempty" json:"validation_status,omitempty" xml:"validation_status,omitempty"`
-	// Last validation timestamp
-	LastValidationRun *string `form:"last_validation_run,omitempty" json:"last_validation_run,omitempty" xml:"last_validation_run,omitempty"`
 	// Creation timestamp
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
 	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
 }
 
 // GetAccountByCodeResponseBody is the type of the "finance" service
@@ -342,28 +693,14 @@ type GetAccountByCodeResponseBody struct {
 	AccountPath *string `form:"account_path,omitempty" json:"account_path,omitempty" xml:"account_path,omitempty"`
 	// Whether account has child accounts
 	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
-	// Whether account is a leaf node
-	IsLeafAccount *bool `form:"is_leaf_account,omitempty" json:"is_leaf_account,omitempty" xml:"is_leaf_account,omitempty"`
-	// Account group ID
-	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
-	// Account header ID
-	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
 	// Root account type
 	RootType *string `form:"root_type,omitempty" json:"root_type,omitempty" xml:"root_type,omitempty"`
 	// Account type
 	AccountType *string `form:"account_type,omitempty" json:"account_type,omitempty" xml:"account_type,omitempty"`
-	// Account subtype
-	AccountSubtype *string `form:"account_subtype,omitempty" json:"account_subtype,omitempty" xml:"account_subtype,omitempty"`
-	// Account category for grouping
-	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
-	// Sub-category within main category
-	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Normal balance side
 	NormalBalance *string `form:"normal_balance,omitempty" json:"normal_balance,omitempty" xml:"normal_balance,omitempty"`
 	// Whether account is active
 	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
-	// Whether this is a system account
-	IsSystemAccount *bool `form:"is_system_account,omitempty" json:"is_system_account,omitempty" xml:"is_system_account,omitempty"`
 	// Whether manual entries are allowed
 	AllowManualEntries *bool `form:"allow_manual_entries,omitempty" json:"allow_manual_entries,omitempty" xml:"allow_manual_entries,omitempty"`
 	// Whether reference is required
@@ -374,36 +711,16 @@ type GetAccountByCodeResponseBody struct {
 	YtdBalance *string `form:"ytd_balance,omitempty" json:"ytd_balance,omitempty" xml:"ytd_balance,omitempty"`
 	// Last transaction date
 	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
-	// Financial statement line grouping
-	FinancialStatementLine *string `form:"financial_statement_line,omitempty" json:"financial_statement_line,omitempty" xml:"financial_statement_line,omitempty"`
-	// Sort order in reports
-	ReportOrder *int32 `form:"report_order,omitempty" json:"report_order,omitempty" xml:"report_order,omitempty"`
-	// Display order in UI/reports
-	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
-	// Whether to include in standard reports
-	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
-	// Consolidation mapping for multi-entity
-	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
-	// Cash flow statement classification
-	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
 	// Primary currency code
 	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
-	// Whether account accepts multiple currencies
-	IsMultiCurrency *bool `form:"is_multi_currency,omitempty" json:"is_multi_currency,omitempty" xml:"is_multi_currency,omitempty"`
-	// Whether account can have budgets
-	IsBudgetable *bool `form:"is_budgetable,omitempty" json:"is_budgetable,omitempty" xml:"is_budgetable,omitempty"`
-	// Budget variance alert threshold
-	BudgetVarianceThreshold *string `form:"budget_variance_threshold,omitempty" json:"budget_variance_threshold,omitempty" xml:"budget_variance_threshold,omitempty"`
-	// Version for optimistic locking
-	Version *int32 `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
-	// Current validation status
-	ValidationStatus *string `form:"validation_status,omitempty" json:"validation_status,omitempty" xml:"validation_status,omitempty"`
-	// Last validation timestamp
-	LastValidationRun *string `form:"last_validation_run,omitempty" json:"last_validation_run,omitempty" xml:"last_validation_run,omitempty"`
 	// Creation timestamp
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
 	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
 }
 
 // GetAccountByNameResponseBody is the type of the "finance" service
@@ -429,28 +746,14 @@ type GetAccountByNameResponseBody struct {
 	AccountPath *string `form:"account_path,omitempty" json:"account_path,omitempty" xml:"account_path,omitempty"`
 	// Whether account has child accounts
 	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
-	// Whether account is a leaf node
-	IsLeafAccount *bool `form:"is_leaf_account,omitempty" json:"is_leaf_account,omitempty" xml:"is_leaf_account,omitempty"`
-	// Account group ID
-	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
-	// Account header ID
-	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
 	// Root account type
 	RootType *string `form:"root_type,omitempty" json:"root_type,omitempty" xml:"root_type,omitempty"`
 	// Account type
 	AccountType *string `form:"account_type,omitempty" json:"account_type,omitempty" xml:"account_type,omitempty"`
-	// Account subtype
-	AccountSubtype *string `form:"account_subtype,omitempty" json:"account_subtype,omitempty" xml:"account_subtype,omitempty"`
-	// Account category for grouping
-	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
-	// Sub-category within main category
-	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Normal balance side
 	NormalBalance *string `form:"normal_balance,omitempty" json:"normal_balance,omitempty" xml:"normal_balance,omitempty"`
 	// Whether account is active
 	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
-	// Whether this is a system account
-	IsSystemAccount *bool `form:"is_system_account,omitempty" json:"is_system_account,omitempty" xml:"is_system_account,omitempty"`
 	// Whether manual entries are allowed
 	AllowManualEntries *bool `form:"allow_manual_entries,omitempty" json:"allow_manual_entries,omitempty" xml:"allow_manual_entries,omitempty"`
 	// Whether reference is required
@@ -461,36 +764,16 @@ type GetAccountByNameResponseBody struct {
 	YtdBalance *string `form:"ytd_balance,omitempty" json:"ytd_balance,omitempty" xml:"ytd_balance,omitempty"`
 	// Last transaction date
 	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
-	// Financial statement line grouping
-	FinancialStatementLine *string `form:"financial_statement_line,omitempty" json:"financial_statement_line,omitempty" xml:"financial_statement_line,omitempty"`
-	// Sort order in reports
-	ReportOrder *int32 `form:"report_order,omitempty" json:"report_order,omitempty" xml:"report_order,omitempty"`
-	// Display order in UI/reports
-	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
-	// Whether to include in standard reports
-	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
-	// Consolidation mapping for multi-entity
-	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
-	// Cash flow statement classification
-	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
 	// Primary currency code
 	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
-	// Whether account accepts multiple currencies
-	IsMultiCurrency *bool `form:"is_multi_currency,omitempty" json:"is_multi_currency,omitempty" xml:"is_multi_currency,omitempty"`
-	// Whether account can have budgets
-	IsBudgetable *bool `form:"is_budgetable,omitempty" json:"is_budgetable,omitempty" xml:"is_budgetable,omitempty"`
-	// Budget variance alert threshold
-	BudgetVarianceThreshold *string `form:"budget_variance_threshold,omitempty" json:"budget_variance_threshold,omitempty" xml:"budget_variance_threshold,omitempty"`
-	// Version for optimistic locking
-	Version *int32 `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
-	// Current validation status
-	ValidationStatus *string `form:"validation_status,omitempty" json:"validation_status,omitempty" xml:"validation_status,omitempty"`
-	// Last validation timestamp
-	LastValidationRun *string `form:"last_validation_run,omitempty" json:"last_validation_run,omitempty" xml:"last_validation_run,omitempty"`
 	// Creation timestamp
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
 	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
 }
 
 // ListAccountsResponseBody is the type of the "finance" service "listAccounts"
@@ -498,12 +781,8 @@ type GetAccountByNameResponseBody struct {
 type ListAccountsResponseBody struct {
 	// List of accounts
 	Accounts []*AccountResultResponseBody `form:"accounts,omitempty" json:"accounts,omitempty" xml:"accounts,omitempty"`
-	// Total number of accounts
-	TotalCount *int64 `form:"total_count,omitempty" json:"total_count,omitempty" xml:"total_count,omitempty"`
-	// Results limit used
-	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty" xml:"limit,omitempty"`
-	// Results offset used
-	Offset *int32 `form:"offset,omitempty" json:"offset,omitempty" xml:"offset,omitempty"`
+	// Pagination metadata
+	Pagination *PaginationMetaResponseBody `form:"pagination,omitempty" json:"pagination,omitempty" xml:"pagination,omitempty"`
 }
 
 // UpdateAccountResponseBody is the type of the "finance" service
@@ -529,28 +808,14 @@ type UpdateAccountResponseBody struct {
 	AccountPath *string `form:"account_path,omitempty" json:"account_path,omitempty" xml:"account_path,omitempty"`
 	// Whether account has child accounts
 	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
-	// Whether account is a leaf node
-	IsLeafAccount *bool `form:"is_leaf_account,omitempty" json:"is_leaf_account,omitempty" xml:"is_leaf_account,omitempty"`
-	// Account group ID
-	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
-	// Account header ID
-	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
 	// Root account type
 	RootType *string `form:"root_type,omitempty" json:"root_type,omitempty" xml:"root_type,omitempty"`
 	// Account type
 	AccountType *string `form:"account_type,omitempty" json:"account_type,omitempty" xml:"account_type,omitempty"`
-	// Account subtype
-	AccountSubtype *string `form:"account_subtype,omitempty" json:"account_subtype,omitempty" xml:"account_subtype,omitempty"`
-	// Account category for grouping
-	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
-	// Sub-category within main category
-	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Normal balance side
 	NormalBalance *string `form:"normal_balance,omitempty" json:"normal_balance,omitempty" xml:"normal_balance,omitempty"`
 	// Whether account is active
 	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
-	// Whether this is a system account
-	IsSystemAccount *bool `form:"is_system_account,omitempty" json:"is_system_account,omitempty" xml:"is_system_account,omitempty"`
 	// Whether manual entries are allowed
 	AllowManualEntries *bool `form:"allow_manual_entries,omitempty" json:"allow_manual_entries,omitempty" xml:"allow_manual_entries,omitempty"`
 	// Whether reference is required
@@ -561,66 +826,25 @@ type UpdateAccountResponseBody struct {
 	YtdBalance *string `form:"ytd_balance,omitempty" json:"ytd_balance,omitempty" xml:"ytd_balance,omitempty"`
 	// Last transaction date
 	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
-	// Financial statement line grouping
-	FinancialStatementLine *string `form:"financial_statement_line,omitempty" json:"financial_statement_line,omitempty" xml:"financial_statement_line,omitempty"`
-	// Sort order in reports
-	ReportOrder *int32 `form:"report_order,omitempty" json:"report_order,omitempty" xml:"report_order,omitempty"`
-	// Display order in UI/reports
-	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
-	// Whether to include in standard reports
-	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
-	// Consolidation mapping for multi-entity
-	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
-	// Cash flow statement classification
-	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
 	// Primary currency code
 	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
-	// Whether account accepts multiple currencies
-	IsMultiCurrency *bool `form:"is_multi_currency,omitempty" json:"is_multi_currency,omitempty" xml:"is_multi_currency,omitempty"`
-	// Whether account can have budgets
-	IsBudgetable *bool `form:"is_budgetable,omitempty" json:"is_budgetable,omitempty" xml:"is_budgetable,omitempty"`
-	// Budget variance alert threshold
-	BudgetVarianceThreshold *string `form:"budget_variance_threshold,omitempty" json:"budget_variance_threshold,omitempty" xml:"budget_variance_threshold,omitempty"`
-	// Version for optimistic locking
-	Version *int32 `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
-	// Current validation status
-	ValidationStatus *string `form:"validation_status,omitempty" json:"validation_status,omitempty" xml:"validation_status,omitempty"`
-	// Last validation timestamp
-	LastValidationRun *string `form:"last_validation_run,omitempty" json:"last_validation_run,omitempty" xml:"last_validation_run,omitempty"`
 	// Creation timestamp
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
 	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
 }
 
 // GetAccountHierarchyResponseBody is the type of the "finance" service
 // "getAccountHierarchy" endpoint HTTP response body.
 type GetAccountHierarchyResponseBody struct {
-	// Accounts in hierarchical order
+	// List of accounts
 	Accounts []*AccountResultResponseBody `form:"accounts,omitempty" json:"accounts,omitempty" xml:"accounts,omitempty"`
-	// Total number of accounts in hierarchy
-	TotalCount *int32 `form:"total_count,omitempty" json:"total_count,omitempty" xml:"total_count,omitempty"`
-}
-
-// GetAccountBalanceResponseBody is the type of the "finance" service
-// "getAccountBalance" endpoint HTTP response body.
-type GetAccountBalanceResponseBody struct {
-	// Account ID
-	AccountID *string `form:"account_id,omitempty" json:"account_id,omitempty" xml:"account_id,omitempty"`
-	// Account code
-	AccountCode *string `form:"account_code,omitempty" json:"account_code,omitempty" xml:"account_code,omitempty"`
-	// Account name
-	AccountName *string `form:"account_name,omitempty" json:"account_name,omitempty" xml:"account_name,omitempty"`
-	// Current balance
-	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
-	// Total debit transactions
-	TotalDebits *string `form:"total_debits,omitempty" json:"total_debits,omitempty" xml:"total_debits,omitempty"`
-	// Total credit transactions
-	TotalCredits *string `form:"total_credits,omitempty" json:"total_credits,omitempty" xml:"total_credits,omitempty"`
-	// Balance calculation date
-	AsOfDate *string `form:"as_of_date,omitempty" json:"as_of_date,omitempty" xml:"as_of_date,omitempty"`
-	// Date of last transaction
-	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
+	// Pagination metadata
+	Pagination *PaginationMetaResponseBody `form:"pagination,omitempty" json:"pagination,omitempty" xml:"pagination,omitempty"`
 }
 
 // CreateTransactionResponseBody is the type of the "finance" service
@@ -636,8 +860,10 @@ type CreateTransactionResponseBody struct {
 	TransactionNumber *string `form:"transaction_number,omitempty" json:"transaction_number,omitempty" xml:"transaction_number,omitempty"`
 	// Transaction type
 	TransactionType *string `form:"transaction_type,omitempty" json:"transaction_type,omitempty" xml:"transaction_type,omitempty"`
-	// Transaction status
-	TransactionStatus *string `form:"transaction_status,omitempty" json:"transaction_status,omitempty" xml:"transaction_status,omitempty"`
+	// Current transaction status
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// Current workflow stage
+	CurrentStage *string `form:"current_stage,omitempty" json:"current_stage,omitempty" xml:"current_stage,omitempty"`
 	// Transaction date
 	TransactionDate *string `form:"transaction_date,omitempty" json:"transaction_date,omitempty" xml:"transaction_date,omitempty"`
 	// Posting date
@@ -646,14 +872,24 @@ type CreateTransactionResponseBody struct {
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
 	// Reference number
 	ReferenceNumber *string `form:"reference_number,omitempty" json:"reference_number,omitempty" xml:"reference_number,omitempty"`
+	// Total transaction amount
+	Amount *string `form:"amount,omitempty" json:"amount,omitempty" xml:"amount,omitempty"`
 	// Currency code
-	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	Currency *string `form:"currency,omitempty" json:"currency,omitempty" xml:"currency,omitempty"`
 	// Exchange rate
 	ExchangeRate *string `form:"exchange_rate,omitempty" json:"exchange_rate,omitempty" xml:"exchange_rate,omitempty"`
 	// Total debit amount
 	TotalDebitAmount *string `form:"total_debit_amount,omitempty" json:"total_debit_amount,omitempty" xml:"total_debit_amount,omitempty"`
 	// Total credit amount
 	TotalCreditAmount *string `form:"total_credit_amount,omitempty" json:"total_credit_amount,omitempty" xml:"total_credit_amount,omitempty"`
+	// Cost center
+	CostCenter *string `form:"cost_center,omitempty" json:"cost_center,omitempty" xml:"cost_center,omitempty"`
+	// Department
+	Department *string `form:"department,omitempty" json:"department,omitempty" xml:"department,omitempty"`
+	// Estimated completion time
+	EstimatedCompletion *string `form:"estimated_completion,omitempty" json:"estimated_completion,omitempty" xml:"estimated_completion,omitempty"`
+	// Workflow progress (0-100)
+	ProgressPercentage *int32 `form:"progress_percentage,omitempty" json:"progress_percentage,omitempty" xml:"progress_percentage,omitempty"`
 	// Approval status
 	ApprovalStatus *string `form:"approval_status,omitempty" json:"approval_status,omitempty" xml:"approval_status,omitempty"`
 	// Whether approval is required
@@ -662,6 +898,10 @@ type CreateTransactionResponseBody struct {
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
 	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
 }
 
 // GetTransactionResponseBody is the type of the "finance" service
@@ -674,7 +914,7 @@ type GetTransactionResponseBody struct {
 	// Whether transaction is balanced
 	IsBalanced *bool `form:"is_balanced,omitempty" json:"is_balanced,omitempty" xml:"is_balanced,omitempty"`
 	// Validation errors if any
-	ValidationErrors []*ValidationErrorResultResponseBody `form:"validation_errors,omitempty" json:"validation_errors,omitempty" xml:"validation_errors,omitempty"`
+	ValidationErrors []*ValidationErrorResponseBody `form:"validation_errors,omitempty" json:"validation_errors,omitempty" xml:"validation_errors,omitempty"`
 }
 
 // GetTransactionByNumberResponseBody is the type of the "finance" service
@@ -687,7 +927,7 @@ type GetTransactionByNumberResponseBody struct {
 	// Whether transaction is balanced
 	IsBalanced *bool `form:"is_balanced,omitempty" json:"is_balanced,omitempty" xml:"is_balanced,omitempty"`
 	// Validation errors if any
-	ValidationErrors []*ValidationErrorResultResponseBody `form:"validation_errors,omitempty" json:"validation_errors,omitempty" xml:"validation_errors,omitempty"`
+	ValidationErrors []*ValidationErrorResponseBody `form:"validation_errors,omitempty" json:"validation_errors,omitempty" xml:"validation_errors,omitempty"`
 }
 
 // ListTransactionsResponseBody is the type of the "finance" service
@@ -695,12 +935,8 @@ type GetTransactionByNumberResponseBody struct {
 type ListTransactionsResponseBody struct {
 	// List of transactions
 	Transactions []*TransactionResultResponseBody `form:"transactions,omitempty" json:"transactions,omitempty" xml:"transactions,omitempty"`
-	// Total number of transactions
-	TotalCount *int64 `form:"total_count,omitempty" json:"total_count,omitempty" xml:"total_count,omitempty"`
-	// Results limit used
-	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty" xml:"limit,omitempty"`
-	// Results offset used
-	Offset *int32 `form:"offset,omitempty" json:"offset,omitempty" xml:"offset,omitempty"`
+	// Pagination metadata
+	Pagination *PaginationMetaResponseBody `form:"pagination,omitempty" json:"pagination,omitempty" xml:"pagination,omitempty"`
 }
 
 // PostTransactionResponseBody is the type of the "finance" service
@@ -716,8 +952,10 @@ type PostTransactionResponseBody struct {
 	TransactionNumber *string `form:"transaction_number,omitempty" json:"transaction_number,omitempty" xml:"transaction_number,omitempty"`
 	// Transaction type
 	TransactionType *string `form:"transaction_type,omitempty" json:"transaction_type,omitempty" xml:"transaction_type,omitempty"`
-	// Transaction status
-	TransactionStatus *string `form:"transaction_status,omitempty" json:"transaction_status,omitempty" xml:"transaction_status,omitempty"`
+	// Current transaction status
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// Current workflow stage
+	CurrentStage *string `form:"current_stage,omitempty" json:"current_stage,omitempty" xml:"current_stage,omitempty"`
 	// Transaction date
 	TransactionDate *string `form:"transaction_date,omitempty" json:"transaction_date,omitempty" xml:"transaction_date,omitempty"`
 	// Posting date
@@ -726,14 +964,24 @@ type PostTransactionResponseBody struct {
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
 	// Reference number
 	ReferenceNumber *string `form:"reference_number,omitempty" json:"reference_number,omitempty" xml:"reference_number,omitempty"`
+	// Total transaction amount
+	Amount *string `form:"amount,omitempty" json:"amount,omitempty" xml:"amount,omitempty"`
 	// Currency code
-	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	Currency *string `form:"currency,omitempty" json:"currency,omitempty" xml:"currency,omitempty"`
 	// Exchange rate
 	ExchangeRate *string `form:"exchange_rate,omitempty" json:"exchange_rate,omitempty" xml:"exchange_rate,omitempty"`
 	// Total debit amount
 	TotalDebitAmount *string `form:"total_debit_amount,omitempty" json:"total_debit_amount,omitempty" xml:"total_debit_amount,omitempty"`
 	// Total credit amount
 	TotalCreditAmount *string `form:"total_credit_amount,omitempty" json:"total_credit_amount,omitempty" xml:"total_credit_amount,omitempty"`
+	// Cost center
+	CostCenter *string `form:"cost_center,omitempty" json:"cost_center,omitempty" xml:"cost_center,omitempty"`
+	// Department
+	Department *string `form:"department,omitempty" json:"department,omitempty" xml:"department,omitempty"`
+	// Estimated completion time
+	EstimatedCompletion *string `form:"estimated_completion,omitempty" json:"estimated_completion,omitempty" xml:"estimated_completion,omitempty"`
+	// Workflow progress (0-100)
+	ProgressPercentage *int32 `form:"progress_percentage,omitempty" json:"progress_percentage,omitempty" xml:"progress_percentage,omitempty"`
 	// Approval status
 	ApprovalStatus *string `form:"approval_status,omitempty" json:"approval_status,omitempty" xml:"approval_status,omitempty"`
 	// Whether approval is required
@@ -742,6 +990,10 @@ type PostTransactionResponseBody struct {
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
 	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
 }
 
 // ReverseTransactionResponseBody is the type of the "finance" service
@@ -757,8 +1009,10 @@ type ReverseTransactionResponseBody struct {
 	TransactionNumber *string `form:"transaction_number,omitempty" json:"transaction_number,omitempty" xml:"transaction_number,omitempty"`
 	// Transaction type
 	TransactionType *string `form:"transaction_type,omitempty" json:"transaction_type,omitempty" xml:"transaction_type,omitempty"`
-	// Transaction status
-	TransactionStatus *string `form:"transaction_status,omitempty" json:"transaction_status,omitempty" xml:"transaction_status,omitempty"`
+	// Current transaction status
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// Current workflow stage
+	CurrentStage *string `form:"current_stage,omitempty" json:"current_stage,omitempty" xml:"current_stage,omitempty"`
 	// Transaction date
 	TransactionDate *string `form:"transaction_date,omitempty" json:"transaction_date,omitempty" xml:"transaction_date,omitempty"`
 	// Posting date
@@ -767,14 +1021,24 @@ type ReverseTransactionResponseBody struct {
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
 	// Reference number
 	ReferenceNumber *string `form:"reference_number,omitempty" json:"reference_number,omitempty" xml:"reference_number,omitempty"`
+	// Total transaction amount
+	Amount *string `form:"amount,omitempty" json:"amount,omitempty" xml:"amount,omitempty"`
 	// Currency code
-	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	Currency *string `form:"currency,omitempty" json:"currency,omitempty" xml:"currency,omitempty"`
 	// Exchange rate
 	ExchangeRate *string `form:"exchange_rate,omitempty" json:"exchange_rate,omitempty" xml:"exchange_rate,omitempty"`
 	// Total debit amount
 	TotalDebitAmount *string `form:"total_debit_amount,omitempty" json:"total_debit_amount,omitempty" xml:"total_debit_amount,omitempty"`
 	// Total credit amount
 	TotalCreditAmount *string `form:"total_credit_amount,omitempty" json:"total_credit_amount,omitempty" xml:"total_credit_amount,omitempty"`
+	// Cost center
+	CostCenter *string `form:"cost_center,omitempty" json:"cost_center,omitempty" xml:"cost_center,omitempty"`
+	// Department
+	Department *string `form:"department,omitempty" json:"department,omitempty" xml:"department,omitempty"`
+	// Estimated completion time
+	EstimatedCompletion *string `form:"estimated_completion,omitempty" json:"estimated_completion,omitempty" xml:"estimated_completion,omitempty"`
+	// Workflow progress (0-100)
+	ProgressPercentage *int32 `form:"progress_percentage,omitempty" json:"progress_percentage,omitempty" xml:"progress_percentage,omitempty"`
 	// Approval status
 	ApprovalStatus *string `form:"approval_status,omitempty" json:"approval_status,omitempty" xml:"approval_status,omitempty"`
 	// Whether approval is required
@@ -783,6 +1047,10 @@ type ReverseTransactionResponseBody struct {
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
 	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
 }
 
 // ApproveTransactionResponseBody is the type of the "finance" service
@@ -798,8 +1066,10 @@ type ApproveTransactionResponseBody struct {
 	TransactionNumber *string `form:"transaction_number,omitempty" json:"transaction_number,omitempty" xml:"transaction_number,omitempty"`
 	// Transaction type
 	TransactionType *string `form:"transaction_type,omitempty" json:"transaction_type,omitempty" xml:"transaction_type,omitempty"`
-	// Transaction status
-	TransactionStatus *string `form:"transaction_status,omitempty" json:"transaction_status,omitempty" xml:"transaction_status,omitempty"`
+	// Current transaction status
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// Current workflow stage
+	CurrentStage *string `form:"current_stage,omitempty" json:"current_stage,omitempty" xml:"current_stage,omitempty"`
 	// Transaction date
 	TransactionDate *string `form:"transaction_date,omitempty" json:"transaction_date,omitempty" xml:"transaction_date,omitempty"`
 	// Posting date
@@ -808,14 +1078,24 @@ type ApproveTransactionResponseBody struct {
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
 	// Reference number
 	ReferenceNumber *string `form:"reference_number,omitempty" json:"reference_number,omitempty" xml:"reference_number,omitempty"`
+	// Total transaction amount
+	Amount *string `form:"amount,omitempty" json:"amount,omitempty" xml:"amount,omitempty"`
 	// Currency code
-	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	Currency *string `form:"currency,omitempty" json:"currency,omitempty" xml:"currency,omitempty"`
 	// Exchange rate
 	ExchangeRate *string `form:"exchange_rate,omitempty" json:"exchange_rate,omitempty" xml:"exchange_rate,omitempty"`
 	// Total debit amount
 	TotalDebitAmount *string `form:"total_debit_amount,omitempty" json:"total_debit_amount,omitempty" xml:"total_debit_amount,omitempty"`
 	// Total credit amount
 	TotalCreditAmount *string `form:"total_credit_amount,omitempty" json:"total_credit_amount,omitempty" xml:"total_credit_amount,omitempty"`
+	// Cost center
+	CostCenter *string `form:"cost_center,omitempty" json:"cost_center,omitempty" xml:"cost_center,omitempty"`
+	// Department
+	Department *string `form:"department,omitempty" json:"department,omitempty" xml:"department,omitempty"`
+	// Estimated completion time
+	EstimatedCompletion *string `form:"estimated_completion,omitempty" json:"estimated_completion,omitempty" xml:"estimated_completion,omitempty"`
+	// Workflow progress (0-100)
+	ProgressPercentage *int32 `form:"progress_percentage,omitempty" json:"progress_percentage,omitempty" xml:"progress_percentage,omitempty"`
 	// Approval status
 	ApprovalStatus *string `form:"approval_status,omitempty" json:"approval_status,omitempty" xml:"approval_status,omitempty"`
 	// Whether approval is required
@@ -824,6 +1104,10 @@ type ApproveTransactionResponseBody struct {
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
 	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
 }
 
 // ValidateTransactionResponseBody is the type of the "finance" service
@@ -840,11 +1124,91 @@ type ValidateTransactionResponseBody struct {
 	// Difference between debits and credits
 	BalanceDifference *string `form:"balance_difference,omitempty" json:"balance_difference,omitempty" xml:"balance_difference,omitempty"`
 	// Validation errors
-	Errors []*ValidationErrorResultResponseBody `form:"errors,omitempty" json:"errors,omitempty" xml:"errors,omitempty"`
+	Errors []*ValidationErrorResponseBody `form:"errors,omitempty" json:"errors,omitempty" xml:"errors,omitempty"`
 	// Validation warnings
 	Warnings []*ValidationWarningResultResponseBody `form:"warnings,omitempty" json:"warnings,omitempty" xml:"warnings,omitempty"`
 	// Validation level used
 	ValidationLevel *string `form:"validation_level,omitempty" json:"validation_level,omitempty" xml:"validation_level,omitempty"`
+}
+
+// GetTransactionStatusResponseBody is the type of the "finance" service
+// "getTransactionStatus" endpoint HTTP response body.
+type GetTransactionStatusResponseBody struct {
+	// Transaction ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Transaction number
+	TransactionNumber *string `form:"transaction_number,omitempty" json:"transaction_number,omitempty" xml:"transaction_number,omitempty"`
+	// Current transaction status
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// Current workflow stage
+	CurrentStage *string `form:"current_stage,omitempty" json:"current_stage,omitempty" xml:"current_stage,omitempty"`
+	// Completion percentage (0-100)
+	ProgressPercentage *int32 `form:"progress_percentage,omitempty" json:"progress_percentage,omitempty" xml:"progress_percentage,omitempty"`
+	// Estimated completion time
+	EstimatedCompletion *string `form:"estimated_completion,omitempty" json:"estimated_completion,omitempty" xml:"estimated_completion,omitempty"`
+	// Complete workflow history
+	WorkflowHistory []*WorkflowStageResultResponseBody `form:"workflow_history,omitempty" json:"workflow_history,omitempty" xml:"workflow_history,omitempty"`
+	// Available actions for current user
+	AvailableActions []string `form:"available_actions,omitempty" json:"available_actions,omitempty" xml:"available_actions,omitempty"`
+	// Next approver information
+	NextApprover *ApproverResultResponseBody `form:"next_approver,omitempty" json:"next_approver,omitempty" xml:"next_approver,omitempty"`
+}
+
+// SubmitApprovalDecisionResponseBody is the type of the "finance" service
+// "submitApprovalDecision" endpoint HTTP response body.
+type SubmitApprovalDecisionResponseBody struct {
+	// Transaction ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Updated transaction status
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// Updated workflow stage
+	CurrentStage *string `form:"current_stage,omitempty" json:"current_stage,omitempty" xml:"current_stage,omitempty"`
+	// Approval decision details
+	ApprovalDecision *ApprovalDecisionDataResponseBody `form:"approval_decision,omitempty" json:"approval_decision,omitempty" xml:"approval_decision,omitempty"`
+	// Updated completion estimate
+	EstimatedCompletion *string `form:"estimated_completion,omitempty" json:"estimated_completion,omitempty" xml:"estimated_completion,omitempty"`
+	// Next workflow stage
+	NextStage *string `form:"next_stage,omitempty" json:"next_stage,omitempty" xml:"next_stage,omitempty"`
+}
+
+// RequestTransactionChangesResponseBody is the type of the "finance" service
+// "requestTransactionChanges" endpoint HTTP response body.
+type RequestTransactionChangesResponseBody struct {
+	// Change request ID
+	ChangeRequestID *string `form:"change_request_id,omitempty" json:"change_request_id,omitempty" xml:"change_request_id,omitempty"`
+	// Original transaction ID
+	TransactionID *string `form:"transaction_id,omitempty" json:"transaction_id,omitempty" xml:"transaction_id,omitempty"`
+	// Change request status
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// User assigned to make changes
+	AssignedTo *string `form:"assigned_to,omitempty" json:"assigned_to,omitempty" xml:"assigned_to,omitempty"`
+	// Due date for changes
+	DueDate *string `form:"due_date,omitempty" json:"due_date,omitempty" xml:"due_date,omitempty"`
+	// Creation timestamp
+	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	// Last update timestamp
+	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
+}
+
+// GetTransactionWorkflowResponseBody is the type of the "finance" service
+// "getTransactionWorkflow" endpoint HTTP response body.
+type GetTransactionWorkflowResponseBody struct {
+	// Transaction ID
+	TransactionID *string `form:"transaction_id,omitempty" json:"transaction_id,omitempty" xml:"transaction_id,omitempty"`
+	// Workflow template used
+	WorkflowTemplate *string `form:"workflow_template,omitempty" json:"workflow_template,omitempty" xml:"workflow_template,omitempty"`
+	// All workflow stages
+	Stages []*WorkflowStageResultResponseBody `form:"stages,omitempty" json:"stages,omitempty" xml:"stages,omitempty"`
+	// Available actions by stage
+	AvailableActions map[string]*WorkflowActionResultResponseBody `form:"available_actions,omitempty" json:"available_actions,omitempty" xml:"available_actions,omitempty"`
+	// Applicable escalation rules
+	EscalationRules []*EscalationRuleResultResponseBody `form:"escalation_rules,omitempty" json:"escalation_rules,omitempty" xml:"escalation_rules,omitempty"`
+	// SLA tracking metrics
+	SLAMetrics *SLAMetricsResponseBody `form:"sla_metrics,omitempty" json:"sla_metrics,omitempty" xml:"sla_metrics,omitempty"`
 }
 
 // GetTrialBalanceResponseBody is the type of the "finance" service
@@ -860,8 +1224,135 @@ type GetTrialBalanceResponseBody struct {
 	TotalCredits *string `form:"total_credits,omitempty" json:"total_credits,omitempty" xml:"total_credits,omitempty"`
 	// Whether debits equal credits
 	IsBalanced *bool `form:"is_balanced,omitempty" json:"is_balanced,omitempty" xml:"is_balanced,omitempty"`
+	// Difference if not balanced
+	BalanceDifference *string `form:"balance_difference,omitempty" json:"balance_difference,omitempty" xml:"balance_difference,omitempty"`
+	// Report currency
+	Currency *string `form:"currency,omitempty" json:"currency,omitempty" xml:"currency,omitempty"`
+	// Entity ID (if filtered)
+	EntityID *string `form:"entity_id,omitempty" json:"entity_id,omitempty" xml:"entity_id,omitempty"`
 	// Report generation timestamp
 	GeneratedAt *string `form:"generated_at,omitempty" json:"generated_at,omitempty" xml:"generated_at,omitempty"`
+	// Report generated by user
+	GeneratedBy *string `form:"generated_by,omitempty" json:"generated_by,omitempty" xml:"generated_by,omitempty"`
+}
+
+// PaginationRequestBody is used to define fields on request body types.
+type PaginationRequestBody struct {
+	// Page number (1-based)
+	Page uint `form:"page" json:"page" xml:"page"`
+	// Number of items per page
+	PageSize uint `form:"page_size" json:"page_size" xml:"page_size"`
+	// Field to sort by
+	SortBy *string `form:"sort_by,omitempty" json:"sort_by,omitempty" xml:"sort_by,omitempty"`
+	// Sort order
+	SortOrder string `form:"sort_order" json:"sort_order" xml:"sort_order"`
+}
+
+// AccountNodeResultResponseBody is used to define fields on response body
+// types.
+type AccountNodeResultResponseBody struct {
+	// Node ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Node type discriminator
+	NodeType *string `form:"node_type,omitempty" json:"node_type,omitempty" xml:"node_type,omitempty"`
+	// Node code
+	Code *string `form:"code,omitempty" json:"code,omitempty" xml:"code,omitempty"`
+	// Node name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Node description
+	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Parent node ID
+	ParentID *string `form:"parent_id,omitempty" json:"parent_id,omitempty" xml:"parent_id,omitempty"`
+	// Hierarchy level (1 = root)
+	Level *int32 `form:"level,omitempty" json:"level,omitempty" xml:"level,omitempty"`
+	// Materialized path
+	Path *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
+	// Whether node has child nodes
+	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
+	// Number of direct children
+	ChildCount *int32 `form:"child_count,omitempty" json:"child_count,omitempty" xml:"child_count,omitempty"`
+	// Whether node is active
+	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
+	// Account type (if account)
+	AccountType *string `form:"account_type,omitempty" json:"account_type,omitempty" xml:"account_type,omitempty"`
+	// Root type (if account)
+	RootType *string `form:"root_type,omitempty" json:"root_type,omitempty" xml:"root_type,omitempty"`
+	// Normal balance side (if account)
+	NormalBalance *string `form:"normal_balance,omitempty" json:"normal_balance,omitempty" xml:"normal_balance,omitempty"`
+	// Currency code (if account)
+	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	// Current balance (if account)
+	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
+	// Allows manual entries (if account)
+	AllowsManualEntries *bool `form:"allows_manual_entries,omitempty" json:"allows_manual_entries,omitempty" xml:"allows_manual_entries,omitempty"`
+	// Requires reconciliation (if account)
+	RequiresReconciliation *bool `form:"requires_reconciliation,omitempty" json:"requires_reconciliation,omitempty" xml:"requires_reconciliation,omitempty"`
+	// Financial statement section (if group)
+	FinancialStatementSection *string `form:"financial_statement_section,omitempty" json:"financial_statement_section,omitempty" xml:"financial_statement_section,omitempty"`
+	// Consolidation method (if group)
+	ConsolidationMethod *string `form:"consolidation_method,omitempty" json:"consolidation_method,omitempty" xml:"consolidation_method,omitempty"`
+	// Cash flow category (if group)
+	CashFlowCategory *string `form:"cash_flow_category,omitempty" json:"cash_flow_category,omitempty" xml:"cash_flow_category,omitempty"`
+	// Display order (if group)
+	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
+	// Is header group (if group)
+	IsHeader *bool `form:"is_header,omitempty" json:"is_header,omitempty" xml:"is_header,omitempty"`
+	// Show totals (if group)
+	ShowTotals *bool `form:"show_totals,omitempty" json:"show_totals,omitempty" xml:"show_totals,omitempty"`
+	// Indent level (if group)
+	IndentLevel *int32 `form:"indent_level,omitempty" json:"indent_level,omitempty" xml:"indent_level,omitempty"`
+	// Total balance
+	TotalBalance *string `form:"total_balance,omitempty" json:"total_balance,omitempty" xml:"total_balance,omitempty"`
+	// Creation timestamp
+	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	// Last update timestamp
+	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
+}
+
+// PaginationMetaResponseBody is used to define fields on response body types.
+type PaginationMetaResponseBody struct {
+	// Current page number
+	CurrentPage *uint `form:"current_page,omitempty" json:"current_page,omitempty" xml:"current_page,omitempty"`
+	// Items per page
+	PageSize *uint `form:"page_size,omitempty" json:"page_size,omitempty" xml:"page_size,omitempty"`
+	// Total number of items
+	TotalItems *uint `form:"total_items,omitempty" json:"total_items,omitempty" xml:"total_items,omitempty"`
+	// Total number of pages
+	TotalPages *uint `form:"total_pages,omitempty" json:"total_pages,omitempty" xml:"total_pages,omitempty"`
+	// Whether there is a next page
+	HasNext *bool `form:"has_next,omitempty" json:"has_next,omitempty" xml:"has_next,omitempty"`
+	// Whether there is a previous page
+	HasPrev *bool `form:"has_prev,omitempty" json:"has_prev,omitempty" xml:"has_prev,omitempty"`
+}
+
+// SearchResultItemResponseBody is used to define fields on response body types.
+type SearchResultItemResponseBody struct {
+	// Node ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Node type
+	NodeType *string `form:"node_type,omitempty" json:"node_type,omitempty" xml:"node_type,omitempty"`
+	// Node code
+	Code *string `form:"code,omitempty" json:"code,omitempty" xml:"code,omitempty"`
+	// Node name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Hierarchy path
+	Path *string `form:"path,omitempty" json:"path,omitempty" xml:"path,omitempty"`
+	// Type of match
+	MatchType *string `form:"match_type,omitempty" json:"match_type,omitempty" xml:"match_type,omitempty"`
+	// Relevance score (0-1)
+	RelevanceScore *float64 `form:"relevance_score,omitempty" json:"relevance_score,omitempty" xml:"relevance_score,omitempty"`
+	// Current balance (if account)
+	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
+	// Currency code (if account)
+	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	// Number of children (if group)
+	ChildCount *int32 `form:"child_count,omitempty" json:"child_count,omitempty" xml:"child_count,omitempty"`
+	// Total balance (if group)
+	TotalBalance *string `form:"total_balance,omitempty" json:"total_balance,omitempty" xml:"total_balance,omitempty"`
 }
 
 // AccountResultResponseBody is used to define fields on response body types.
@@ -886,28 +1377,14 @@ type AccountResultResponseBody struct {
 	AccountPath *string `form:"account_path,omitempty" json:"account_path,omitempty" xml:"account_path,omitempty"`
 	// Whether account has child accounts
 	HasChildren *bool `form:"has_children,omitempty" json:"has_children,omitempty" xml:"has_children,omitempty"`
-	// Whether account is a leaf node
-	IsLeafAccount *bool `form:"is_leaf_account,omitempty" json:"is_leaf_account,omitempty" xml:"is_leaf_account,omitempty"`
-	// Account group ID
-	AccountGroupID *string `form:"account_group_id,omitempty" json:"account_group_id,omitempty" xml:"account_group_id,omitempty"`
-	// Account header ID
-	AccountHeaderID *string `form:"account_header_id,omitempty" json:"account_header_id,omitempty" xml:"account_header_id,omitempty"`
 	// Root account type
 	RootType *string `form:"root_type,omitempty" json:"root_type,omitempty" xml:"root_type,omitempty"`
 	// Account type
 	AccountType *string `form:"account_type,omitempty" json:"account_type,omitempty" xml:"account_type,omitempty"`
-	// Account subtype
-	AccountSubtype *string `form:"account_subtype,omitempty" json:"account_subtype,omitempty" xml:"account_subtype,omitempty"`
-	// Account category for grouping
-	AccountCategory *string `form:"account_category,omitempty" json:"account_category,omitempty" xml:"account_category,omitempty"`
-	// Sub-category within main category
-	SubCategory *string `form:"sub_category,omitempty" json:"sub_category,omitempty" xml:"sub_category,omitempty"`
 	// Normal balance side
 	NormalBalance *string `form:"normal_balance,omitempty" json:"normal_balance,omitempty" xml:"normal_balance,omitempty"`
 	// Whether account is active
 	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
-	// Whether this is a system account
-	IsSystemAccount *bool `form:"is_system_account,omitempty" json:"is_system_account,omitempty" xml:"is_system_account,omitempty"`
 	// Whether manual entries are allowed
 	AllowManualEntries *bool `form:"allow_manual_entries,omitempty" json:"allow_manual_entries,omitempty" xml:"allow_manual_entries,omitempty"`
 	// Whether reference is required
@@ -918,43 +1395,25 @@ type AccountResultResponseBody struct {
 	YtdBalance *string `form:"ytd_balance,omitempty" json:"ytd_balance,omitempty" xml:"ytd_balance,omitempty"`
 	// Last transaction date
 	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
-	// Financial statement line grouping
-	FinancialStatementLine *string `form:"financial_statement_line,omitempty" json:"financial_statement_line,omitempty" xml:"financial_statement_line,omitempty"`
-	// Sort order in reports
-	ReportOrder *int32 `form:"report_order,omitempty" json:"report_order,omitempty" xml:"report_order,omitempty"`
-	// Display order in UI/reports
-	DisplayOrder *int32 `form:"display_order,omitempty" json:"display_order,omitempty" xml:"display_order,omitempty"`
-	// Whether to include in standard reports
-	ShowInReports *bool `form:"show_in_reports,omitempty" json:"show_in_reports,omitempty" xml:"show_in_reports,omitempty"`
-	// Consolidation mapping for multi-entity
-	ConsolidationAccount *string `form:"consolidation_account,omitempty" json:"consolidation_account,omitempty" xml:"consolidation_account,omitempty"`
-	// Cash flow statement classification
-	CashFlowType *string `form:"cash_flow_type,omitempty" json:"cash_flow_type,omitempty" xml:"cash_flow_type,omitempty"`
 	// Primary currency code
 	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
-	// Whether account accepts multiple currencies
-	IsMultiCurrency *bool `form:"is_multi_currency,omitempty" json:"is_multi_currency,omitempty" xml:"is_multi_currency,omitempty"`
-	// Whether account can have budgets
-	IsBudgetable *bool `form:"is_budgetable,omitempty" json:"is_budgetable,omitempty" xml:"is_budgetable,omitempty"`
-	// Budget variance alert threshold
-	BudgetVarianceThreshold *string `form:"budget_variance_threshold,omitempty" json:"budget_variance_threshold,omitempty" xml:"budget_variance_threshold,omitempty"`
-	// Version for optimistic locking
-	Version *int32 `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
-	// Current validation status
-	ValidationStatus *string `form:"validation_status,omitempty" json:"validation_status,omitempty" xml:"validation_status,omitempty"`
-	// Last validation timestamp
-	LastValidationRun *string `form:"last_validation_run,omitempty" json:"last_validation_run,omitempty" xml:"last_validation_run,omitempty"`
 	// Creation timestamp
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
 	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
 }
 
 // TransactionEntryPayloadRequestBody is used to define fields on request body
 // types.
 type TransactionEntryPayloadRequestBody struct {
-	// Account ID
-	AccountID string `form:"account_id" json:"account_id" xml:"account_id"`
+	// Account ID (alternative to account_code)
+	AccountID *string `form:"account_id,omitempty" json:"account_id,omitempty" xml:"account_id,omitempty"`
+	// Account code (alternative to account_id)
+	AccountCode *string `form:"account_code,omitempty" json:"account_code,omitempty" xml:"account_code,omitempty"`
 	// Debit amount (decimal)
 	DebitAmount *string `form:"debit_amount,omitempty" json:"debit_amount,omitempty" xml:"debit_amount,omitempty"`
 	// Credit amount (decimal)
@@ -988,8 +1447,10 @@ type TransactionResultResponseBody struct {
 	TransactionNumber *string `form:"transaction_number,omitempty" json:"transaction_number,omitempty" xml:"transaction_number,omitempty"`
 	// Transaction type
 	TransactionType *string `form:"transaction_type,omitempty" json:"transaction_type,omitempty" xml:"transaction_type,omitempty"`
-	// Transaction status
-	TransactionStatus *string `form:"transaction_status,omitempty" json:"transaction_status,omitempty" xml:"transaction_status,omitempty"`
+	// Current transaction status
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// Current workflow stage
+	CurrentStage *string `form:"current_stage,omitempty" json:"current_stage,omitempty" xml:"current_stage,omitempty"`
 	// Transaction date
 	TransactionDate *string `form:"transaction_date,omitempty" json:"transaction_date,omitempty" xml:"transaction_date,omitempty"`
 	// Posting date
@@ -998,14 +1459,24 @@ type TransactionResultResponseBody struct {
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
 	// Reference number
 	ReferenceNumber *string `form:"reference_number,omitempty" json:"reference_number,omitempty" xml:"reference_number,omitempty"`
+	// Total transaction amount
+	Amount *string `form:"amount,omitempty" json:"amount,omitempty" xml:"amount,omitempty"`
 	// Currency code
-	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
+	Currency *string `form:"currency,omitempty" json:"currency,omitempty" xml:"currency,omitempty"`
 	// Exchange rate
 	ExchangeRate *string `form:"exchange_rate,omitempty" json:"exchange_rate,omitempty" xml:"exchange_rate,omitempty"`
 	// Total debit amount
 	TotalDebitAmount *string `form:"total_debit_amount,omitempty" json:"total_debit_amount,omitempty" xml:"total_debit_amount,omitempty"`
 	// Total credit amount
 	TotalCreditAmount *string `form:"total_credit_amount,omitempty" json:"total_credit_amount,omitempty" xml:"total_credit_amount,omitempty"`
+	// Cost center
+	CostCenter *string `form:"cost_center,omitempty" json:"cost_center,omitempty" xml:"cost_center,omitempty"`
+	// Department
+	Department *string `form:"department,omitempty" json:"department,omitempty" xml:"department,omitempty"`
+	// Estimated completion time
+	EstimatedCompletion *string `form:"estimated_completion,omitempty" json:"estimated_completion,omitempty" xml:"estimated_completion,omitempty"`
+	// Workflow progress (0-100)
+	ProgressPercentage *int32 `form:"progress_percentage,omitempty" json:"progress_percentage,omitempty" xml:"progress_percentage,omitempty"`
 	// Approval status
 	ApprovalStatus *string `form:"approval_status,omitempty" json:"approval_status,omitempty" xml:"approval_status,omitempty"`
 	// Whether approval is required
@@ -1014,6 +1485,10 @@ type TransactionResultResponseBody struct {
 	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
 	// Last update timestamp
 	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
 }
 
 // TransactionEntryResultResponseBody is used to define fields on response body
@@ -1053,17 +1528,24 @@ type TransactionEntryResultResponseBody struct {
 	Reconciled *bool `form:"reconciled,omitempty" json:"reconciled,omitempty" xml:"reconciled,omitempty"`
 }
 
-// ValidationErrorResultResponseBody is used to define fields on response body
-// types.
-type ValidationErrorResultResponseBody struct {
-	// Field that failed validation
+// ValidationErrorResponseBody is used to define fields on response body types.
+type ValidationErrorResponseBody struct {
+	// Field name that failed validation
 	Field *string `form:"field,omitempty" json:"field,omitempty" xml:"field,omitempty"`
-	// Error message
+	// Validation error message
 	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Error code
+	// Validation error code
 	Code *string `form:"code,omitempty" json:"code,omitempty" xml:"code,omitempty"`
-	// Error severity
-	Severity *string `form:"severity,omitempty" json:"severity,omitempty" xml:"severity,omitempty"`
+	// The invalid value
+	Value any `form:"value,omitempty" json:"value,omitempty" xml:"value,omitempty"`
+}
+
+// TimeRangeRequestBody is used to define fields on request body types.
+type TimeRangeRequestBody struct {
+	// Start date
+	StartDate string `form:"start_date" json:"start_date" xml:"start_date"`
+	// End date
+	EndDate string `form:"end_date" json:"end_date" xml:"end_date"`
 }
 
 // CreateTransactionPayloadRequestBody is used to define fields on request body
@@ -1082,9 +1564,19 @@ type CreateTransactionPayloadRequestBody struct {
 	// External reference number
 	ReferenceNumber *string `form:"reference_number,omitempty" json:"reference_number,omitempty" xml:"reference_number,omitempty"`
 	// Transaction currency
-	CurrencyCode string `form:"currency_code" json:"currency_code" xml:"currency_code"`
+	Currency string `form:"currency" json:"currency" xml:"currency"`
+	// Cost center code
+	CostCenter *string `form:"cost_center,omitempty" json:"cost_center,omitempty" xml:"cost_center,omitempty"`
+	// Department
+	Department *string `form:"department,omitempty" json:"department,omitempty" xml:"department,omitempty"`
 	// Transaction entries
 	Entries []*TransactionEntryPayloadRequestBody `form:"entries" json:"entries" xml:"entries"`
+	// Document attachment UUIDs
+	Attachments []string `form:"attachments,omitempty" json:"attachments,omitempty" xml:"attachments,omitempty"`
+	// Skip approval if user has sufficient privileges
+	AutoApprove bool `form:"auto_approve" json:"auto_approve" xml:"auto_approve"`
+	// Processing priority
+	Priority string `form:"priority" json:"priority" xml:"priority"`
 }
 
 // ValidationWarningResultResponseBody is used to define fields on response
@@ -1096,6 +1588,132 @@ type ValidationWarningResultResponseBody struct {
 	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
 	// Warning code
 	Code *string `form:"code,omitempty" json:"code,omitempty" xml:"code,omitempty"`
+}
+
+// WorkflowStageResultResponseBody is used to define fields on response body
+// types.
+type WorkflowStageResultResponseBody struct {
+	// Stage name
+	Stage *string `form:"stage,omitempty" json:"stage,omitempty" xml:"stage,omitempty"`
+	// Stage status
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// Stage start time
+	StartedAt *string `form:"started_at,omitempty" json:"started_at,omitempty" xml:"started_at,omitempty"`
+	// Stage completion time
+	CompletedAt *string `form:"completed_at,omitempty" json:"completed_at,omitempty" xml:"completed_at,omitempty"`
+	// User who performed the action
+	Actor *string `form:"actor,omitempty" json:"actor,omitempty" xml:"actor,omitempty"`
+	// User assigned to this stage
+	AssignedTo *string `form:"assigned_to,omitempty" json:"assigned_to,omitempty" xml:"assigned_to,omitempty"`
+	// Due date for this stage
+	DueDate *string `form:"due_date,omitempty" json:"due_date,omitempty" xml:"due_date,omitempty"`
+	// Validation results if applicable
+	ValidationResults *ValidationResultResponseBody `form:"validation_results,omitempty" json:"validation_results,omitempty" xml:"validation_results,omitempty"`
+	// Stage comments or notes
+	Comments *string `form:"comments,omitempty" json:"comments,omitempty" xml:"comments,omitempty"`
+}
+
+// ValidationResultResponseBody is used to define fields on response body types.
+type ValidationResultResponseBody struct {
+	// Whether transaction is valid
+	IsValid *bool `form:"is_valid,omitempty" json:"is_valid,omitempty" xml:"is_valid,omitempty"`
+	// Whether debits equal credits
+	IsBalanced *bool `form:"is_balanced,omitempty" json:"is_balanced,omitempty" xml:"is_balanced,omitempty"`
+	// Total debit amount
+	TotalDebits *string `form:"total_debits,omitempty" json:"total_debits,omitempty" xml:"total_debits,omitempty"`
+	// Total credit amount
+	TotalCredits *string `form:"total_credits,omitempty" json:"total_credits,omitempty" xml:"total_credits,omitempty"`
+	// Difference between debits and credits
+	BalanceDifference *string `form:"balance_difference,omitempty" json:"balance_difference,omitempty" xml:"balance_difference,omitempty"`
+	// Validation errors
+	Errors []*ValidationErrorResponseBody `form:"errors,omitempty" json:"errors,omitempty" xml:"errors,omitempty"`
+	// Validation warnings
+	Warnings []*ValidationWarningResultResponseBody `form:"warnings,omitempty" json:"warnings,omitempty" xml:"warnings,omitempty"`
+	// Validation level used
+	ValidationLevel *string `form:"validation_level,omitempty" json:"validation_level,omitempty" xml:"validation_level,omitempty"`
+}
+
+// ApproverResultResponseBody is used to define fields on response body types.
+type ApproverResultResponseBody struct {
+	// Approver user ID
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Approver full name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Approver role
+	Role *string `form:"role,omitempty" json:"role,omitempty" xml:"role,omitempty"`
+	// Approver email
+	Email *string `form:"email,omitempty" json:"email,omitempty" xml:"email,omitempty"`
+	// Approver department
+	Department *string `form:"department,omitempty" json:"department,omitempty" xml:"department,omitempty"`
+}
+
+// ApprovalDecisionDataResponseBody is used to define fields on response body
+// types.
+type ApprovalDecisionDataResponseBody struct {
+	// Decision made
+	Decision *string `form:"decision,omitempty" json:"decision,omitempty" xml:"decision,omitempty"`
+	// Approver who made decision
+	Approver *ApproverResultResponseBody `form:"approver,omitempty" json:"approver,omitempty" xml:"approver,omitempty"`
+	// Decision timestamp
+	ApprovedAt *string `form:"approved_at,omitempty" json:"approved_at,omitempty" xml:"approved_at,omitempty"`
+	// Approval comments
+	Comments *string `form:"comments,omitempty" json:"comments,omitempty" xml:"comments,omitempty"`
+}
+
+// RequiredChangeItemRequestBody is used to define fields on request body types.
+type RequiredChangeItemRequestBody struct {
+	// Field that needs to be changed
+	Field string `form:"field" json:"field" xml:"field"`
+	// Current field value
+	CurrentValue *string `form:"current_value,omitempty" json:"current_value,omitempty" xml:"current_value,omitempty"`
+	// Suggested new value
+	SuggestedValue *string `form:"suggested_value,omitempty" json:"suggested_value,omitempty" xml:"suggested_value,omitempty"`
+	// Reason for this specific change
+	Reason string `form:"reason" json:"reason" xml:"reason"`
+	// Whether this change is mandatory
+	IsMandatory bool `form:"is_mandatory" json:"is_mandatory" xml:"is_mandatory"`
+}
+
+// WorkflowActionResultResponseBody is used to define fields on response body
+// types.
+type WorkflowActionResultResponseBody struct {
+	// Action name
+	Action *string `form:"action,omitempty" json:"action,omitempty" xml:"action,omitempty"`
+	// Human-readable label
+	Label *string `form:"label,omitempty" json:"label,omitempty" xml:"label,omitempty"`
+	// Action description
+	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Whether action requires a comment
+	RequiresComment *bool `form:"requires_comment,omitempty" json:"requires_comment,omitempty" xml:"requires_comment,omitempty"`
+	// Required permissions
+	PermissionsRequired []string `form:"permissions_required,omitempty" json:"permissions_required,omitempty" xml:"permissions_required,omitempty"`
+}
+
+// EscalationRuleResultResponseBody is used to define fields on response body
+// types.
+type EscalationRuleResultResponseBody struct {
+	// Escalation rule name
+	RuleName *string `form:"rule_name,omitempty" json:"rule_name,omitempty" xml:"rule_name,omitempty"`
+	// Condition that triggers escalation
+	TriggerCondition *string `form:"trigger_condition,omitempty" json:"trigger_condition,omitempty" xml:"trigger_condition,omitempty"`
+	// User to escalate to
+	EscalateTo *string `form:"escalate_to,omitempty" json:"escalate_to,omitempty" xml:"escalate_to,omitempty"`
+	// Hours before escalation
+	EscalationDelayHours *int32 `form:"escalation_delay_hours,omitempty" json:"escalation_delay_hours,omitempty" xml:"escalation_delay_hours,omitempty"`
+	// Whether rule is currently active
+	IsActive *bool `form:"is_active,omitempty" json:"is_active,omitempty" xml:"is_active,omitempty"`
+}
+
+// SLAMetricsResponseBody is used to define fields on response body types.
+type SLAMetricsResponseBody struct {
+	// Target completion time in hours
+	TargetCompletionHours *int32 `form:"target_completion_hours,omitempty" json:"target_completion_hours,omitempty" xml:"target_completion_hours,omitempty"`
+	// Elapsed time in hours
+	ElapsedHours *int32 `form:"elapsed_hours,omitempty" json:"elapsed_hours,omitempty" xml:"elapsed_hours,omitempty"`
+	// Remaining time in hours
+	RemainingHours *int32 `form:"remaining_hours,omitempty" json:"remaining_hours,omitempty" xml:"remaining_hours,omitempty"`
+	// Whether workflow is overdue
+	IsOverdue *bool `form:"is_overdue,omitempty" json:"is_overdue,omitempty" xml:"is_overdue,omitempty"`
 }
 
 // TrialBalanceEntryResponseBody is used to define fields on response body
@@ -1119,36 +1737,51 @@ type TrialBalanceEntryResponseBody struct {
 	TotalCredits *string `form:"total_credits,omitempty" json:"total_credits,omitempty" xml:"total_credits,omitempty"`
 	// Net balance amount
 	NetBalance *string `form:"net_balance,omitempty" json:"net_balance,omitempty" xml:"net_balance,omitempty"`
+	// Variance from normal balance
+	VarianceFromNormal *string `form:"variance_from_normal,omitempty" json:"variance_from_normal,omitempty" xml:"variance_from_normal,omitempty"`
 }
 
-// NewCreateAccountRequestBody builds the HTTP request body from the payload of
-// the "createAccount" endpoint of the "finance" service.
-func NewCreateAccountRequestBody(p *finance.CreateAccountPayload) *CreateAccountRequestBody {
-	body := &CreateAccountRequestBody{
-		EntityID:             p.EntityID,
-		AccountCode:          p.AccountCode,
-		AccountName:          p.AccountName,
-		AccountDescription:   p.AccountDescription,
-		ParentAccountID:      p.ParentAccountID,
-		AccountGroupID:       p.AccountGroupID,
-		AccountHeaderID:      p.AccountHeaderID,
-		RootType:             p.RootType,
-		AccountType:          p.AccountType,
-		AccountSubtype:       p.AccountSubtype,
-		AccountCategory:      p.AccountCategory,
-		SubCategory:          p.SubCategory,
-		NormalBalance:        p.NormalBalance,
-		CurrencyCode:         p.CurrencyCode,
-		IsActive:             p.IsActive,
-		DisplayOrder:         p.DisplayOrder,
-		ShowInReports:        p.ShowInReports,
-		ConsolidationAccount: p.ConsolidationAccount,
-		CashFlowType:         p.CashFlowType,
+// NewCreateAccountNodeRequestBody builds the HTTP request body from the
+// payload of the "createAccountNode" endpoint of the "finance" service.
+func NewCreateAccountNodeRequestBody(p *finance.CreateAccountNodePayload) *CreateAccountNodeRequestBody {
+	body := &CreateAccountNodeRequestBody{
+		NodeType:                  p.NodeType,
+		EntityID:                  p.EntityID,
+		Code:                      p.Code,
+		Name:                      p.Name,
+		Description:               p.Description,
+		ParentID:                  p.ParentID,
+		AccountType:               p.AccountType,
+		RootType:                  p.RootType,
+		NormalBalance:             p.NormalBalance,
+		CurrencyCode:              p.CurrencyCode,
+		AllowsManualEntries:       p.AllowsManualEntries,
+		RequiresReconciliation:    p.RequiresReconciliation,
+		FinancialStatementSection: p.FinancialStatementSection,
+		ConsolidationMethod:       p.ConsolidationMethod,
+		CashFlowCategory:          p.CashFlowCategory,
+		DisplayOrder:              p.DisplayOrder,
+		IsHeader:                  p.IsHeader,
+		ShowTotals:                p.ShowTotals,
+		IndentLevel:               p.IndentLevel,
+		IsActive:                  p.IsActive,
 	}
 	{
 		var zero bool
-		if body.IsActive == zero {
-			body.IsActive = true
+		if body.AllowsManualEntries == zero {
+			body.AllowsManualEntries = true
+		}
+	}
+	{
+		var zero bool
+		if body.RequiresReconciliation == zero {
+			body.RequiresReconciliation = false
+		}
+	}
+	{
+		var zero string
+		if body.ConsolidationMethod == zero {
+			body.ConsolidationMethod = "SUM"
 		}
 	}
 	{
@@ -1159,9 +1792,108 @@ func NewCreateAccountRequestBody(p *finance.CreateAccountPayload) *CreateAccount
 	}
 	{
 		var zero bool
-		if body.ShowInReports == zero {
-			body.ShowInReports = true
+		if body.IsHeader == zero {
+			body.IsHeader = false
 		}
+	}
+	{
+		var zero bool
+		if body.ShowTotals == zero {
+			body.ShowTotals = true
+		}
+	}
+	{
+		var zero int32
+		if body.IndentLevel == zero {
+			body.IndentLevel = 0
+		}
+	}
+	{
+		var zero bool
+		if body.IsActive == zero {
+			body.IsActive = true
+		}
+	}
+	return body
+}
+
+// NewListAccountNodesRequestBody builds the HTTP request body from the payload
+// of the "listAccountNodes" endpoint of the "finance" service.
+func NewListAccountNodesRequestBody(p *finance.ListAccountNodesPayload) *ListAccountNodesRequestBody {
+	body := &ListAccountNodesRequestBody{}
+	if p.Pagination != nil {
+		body.Pagination = marshalFinancePaginationToPaginationRequestBody(p.Pagination)
+	}
+	return body
+}
+
+// NewUpdateAccountNodeRequestBody builds the HTTP request body from the
+// payload of the "updateAccountNode" endpoint of the "finance" service.
+func NewUpdateAccountNodeRequestBody(p *finance.UpdateAccountNodePayload) *UpdateAccountNodeRequestBody {
+	body := &UpdateAccountNodeRequestBody{
+		Name:                   p.Name,
+		Description:            p.Description,
+		AllowsManualEntries:    p.AllowsManualEntries,
+		RequiresReconciliation: p.RequiresReconciliation,
+		DisplayOrder:           p.DisplayOrder,
+		ShowTotals:             p.ShowTotals,
+		IndentLevel:            p.IndentLevel,
+		IsActive:               p.IsActive,
+	}
+	return body
+}
+
+// NewCreateAccountRequestBody builds the HTTP request body from the payload of
+// the "createAccount" endpoint of the "finance" service.
+func NewCreateAccountRequestBody(p *finance.CreateAccountPayload) *CreateAccountRequestBody {
+	body := &CreateAccountRequestBody{
+		EntityID:           p.EntityID,
+		AccountCode:        p.AccountCode,
+		AccountName:        p.AccountName,
+		AccountDescription: p.AccountDescription,
+		ParentAccountID:    p.ParentAccountID,
+		RootType:           p.RootType,
+		AccountType:        p.AccountType,
+		NormalBalance:      p.NormalBalance,
+		CurrencyCode:       p.CurrencyCode,
+		IsActive:           p.IsActive,
+		AllowManualEntries: p.AllowManualEntries,
+		RequireReference:   p.RequireReference,
+		CashFlowType:       p.CashFlowType,
+	}
+	{
+		var zero string
+		if body.CurrencyCode == zero {
+			body.CurrencyCode = "USD"
+		}
+	}
+	{
+		var zero bool
+		if body.IsActive == zero {
+			body.IsActive = true
+		}
+	}
+	{
+		var zero bool
+		if body.AllowManualEntries == zero {
+			body.AllowManualEntries = true
+		}
+	}
+	{
+		var zero bool
+		if body.RequireReference == zero {
+			body.RequireReference = false
+		}
+	}
+	return body
+}
+
+// NewListAccountsRequestBody builds the HTTP request body from the payload of
+// the "listAccounts" endpoint of the "finance" service.
+func NewListAccountsRequestBody(p *finance.ListAccountsPayload) *ListAccountsRequestBody {
+	body := &ListAccountsRequestBody{}
+	if p.Pagination != nil {
+		body.Pagination = marshalFinancePaginationToPaginationRequestBody(p.Pagination)
 	}
 	return body
 }
@@ -1170,19 +1902,14 @@ func NewCreateAccountRequestBody(p *finance.CreateAccountPayload) *CreateAccount
 // the "updateAccount" endpoint of the "finance" service.
 func NewUpdateAccountRequestBody(p *finance.UpdateAccountPayload) *UpdateAccountRequestBody {
 	body := &UpdateAccountRequestBody{
-		AccountName:          p.AccountName,
-		AccountDescription:   p.AccountDescription,
-		AccountGroupID:       p.AccountGroupID,
-		AccountHeaderID:      p.AccountHeaderID,
-		AccountCategory:      p.AccountCategory,
-		SubCategory:          p.SubCategory,
-		IsActive:             p.IsActive,
-		AllowManualEntries:   p.AllowManualEntries,
-		RequireReference:     p.RequireReference,
-		DisplayOrder:         p.DisplayOrder,
-		ShowInReports:        p.ShowInReports,
-		ConsolidationAccount: p.ConsolidationAccount,
-		CashFlowType:         p.CashFlowType,
+		AccountName:        p.AccountName,
+		AccountDescription: p.AccountDescription,
+		IsActive:           p.IsActive,
+		AllowManualEntries: p.AllowManualEntries,
+		RequireReference:   p.RequireReference,
+		DisplayOrder:       p.DisplayOrder,
+		ShowInReports:      p.ShowInReports,
+		CashFlowType:       p.CashFlowType,
 	}
 	return body
 }
@@ -1197,12 +1924,16 @@ func NewCreateTransactionRequestBody(p *finance.CreateTransactionPayload) *Creat
 		TransactionDate:   p.TransactionDate,
 		Description:       p.Description,
 		ReferenceNumber:   p.ReferenceNumber,
-		CurrencyCode:      p.CurrencyCode,
+		Currency:          p.Currency,
+		CostCenter:        p.CostCenter,
+		Department:        p.Department,
+		AutoApprove:       p.AutoApprove,
+		Priority:          p.Priority,
 	}
 	{
 		var zero string
-		if body.CurrencyCode == zero {
-			body.CurrencyCode = "USD"
+		if body.Currency == zero {
+			body.Currency = "USD"
 		}
 	}
 	if p.Entries != nil {
@@ -1212,6 +1943,37 @@ func NewCreateTransactionRequestBody(p *finance.CreateTransactionPayload) *Creat
 		}
 	} else {
 		body.Entries = []*TransactionEntryPayloadRequestBody{}
+	}
+	if p.Attachments != nil {
+		body.Attachments = make([]string, len(p.Attachments))
+		for i, val := range p.Attachments {
+			body.Attachments[i] = val
+		}
+	}
+	{
+		var zero bool
+		if body.AutoApprove == zero {
+			body.AutoApprove = false
+		}
+	}
+	{
+		var zero string
+		if body.Priority == zero {
+			body.Priority = "normal"
+		}
+	}
+	return body
+}
+
+// NewListTransactionsRequestBody builds the HTTP request body from the payload
+// of the "listTransactions" endpoint of the "finance" service.
+func NewListTransactionsRequestBody(p *finance.ListTransactionsPayload) *ListTransactionsRequestBody {
+	body := &ListTransactionsRequestBody{}
+	if p.DateRange != nil {
+		body.DateRange = marshalFinanceTimeRangeToTimeRangeRequestBody(p.DateRange)
+	}
+	if p.Pagination != nil {
+		body.Pagination = marshalFinancePaginationToPaginationRequestBody(p.Pagination)
 	}
 	return body
 }
@@ -1276,281 +2038,225 @@ func NewValidateTransactionRequestBody(p *finance.ValidateTransactionPayload) *V
 	return body
 }
 
-// NewCreateAccountAccountResultCreated builds a "finance" service
-// "createAccount" endpoint result from a HTTP "Created" response.
-func NewCreateAccountAccountResultCreated(body *CreateAccountResponseBody) *finance.AccountResult {
-	v := &finance.AccountResult{
-		ID:                      *body.ID,
-		TenantID:                body.TenantID,
-		EntityID:                body.EntityID,
-		AccountCode:             *body.AccountCode,
-		AccountName:             *body.AccountName,
-		AccountDescription:      body.AccountDescription,
-		ParentAccountID:         body.ParentAccountID,
-		AccountLevel:            body.AccountLevel,
-		AccountPath:             body.AccountPath,
-		HasChildren:             body.HasChildren,
-		IsLeafAccount:           body.IsLeafAccount,
-		AccountGroupID:          body.AccountGroupID,
-		AccountHeaderID:         body.AccountHeaderID,
-		RootType:                *body.RootType,
-		AccountType:             *body.AccountType,
-		AccountSubtype:          body.AccountSubtype,
-		AccountCategory:         body.AccountCategory,
-		SubCategory:             body.SubCategory,
-		NormalBalance:           *body.NormalBalance,
-		IsActive:                *body.IsActive,
-		IsSystemAccount:         body.IsSystemAccount,
-		AllowManualEntries:      body.AllowManualEntries,
-		RequireReference:        body.RequireReference,
-		CurrentBalance:          body.CurrentBalance,
-		YtdBalance:              body.YtdBalance,
-		LastTransactionDate:     body.LastTransactionDate,
-		FinancialStatementLine:  body.FinancialStatementLine,
-		ReportOrder:             body.ReportOrder,
-		DisplayOrder:            body.DisplayOrder,
-		ShowInReports:           body.ShowInReports,
-		ConsolidationAccount:    body.ConsolidationAccount,
-		CashFlowType:            body.CashFlowType,
-		CurrencyCode:            body.CurrencyCode,
-		IsMultiCurrency:         body.IsMultiCurrency,
-		IsBudgetable:            body.IsBudgetable,
-		BudgetVarianceThreshold: body.BudgetVarianceThreshold,
-		Version:                 body.Version,
-		ValidationStatus:        body.ValidationStatus,
-		LastValidationRun:       body.LastValidationRun,
-		CreatedAt:               body.CreatedAt,
-		UpdatedAt:               body.UpdatedAt,
+// NewSubmitApprovalDecisionRequestBody builds the HTTP request body from the
+// payload of the "submitApprovalDecision" endpoint of the "finance" service.
+func NewSubmitApprovalDecisionRequestBody(p *finance.ApprovalDecisionPayload) *SubmitApprovalDecisionRequestBody {
+	body := &SubmitApprovalDecisionRequestBody{
+		Decision:         p.Decision,
+		Comments:         p.Comments,
+		ApproverID:       p.ApproverID,
+		ApprovalLevel:    p.ApprovalLevel,
+		EscalationReason: p.EscalationReason,
+	}
+	return body
+}
+
+// NewRequestTransactionChangesRequestBody builds the HTTP request body from
+// the payload of the "requestTransactionChanges" endpoint of the "finance"
+// service.
+func NewRequestTransactionChangesRequestBody(p *finance.ChangeRequestPayload) *RequestTransactionChangesRequestBody {
+	body := &RequestTransactionChangesRequestBody{
+		RequestedBy: p.RequestedBy,
+		Reason:      p.Reason,
+		DueDate:     p.DueDate,
+		Priority:    p.Priority,
+	}
+	if p.RequiredChanges != nil {
+		body.RequiredChanges = make([]*RequiredChangeItemRequestBody, len(p.RequiredChanges))
+		for i, val := range p.RequiredChanges {
+			body.RequiredChanges[i] = marshalFinanceRequiredChangeItemToRequiredChangeItemRequestBody(val)
+		}
+	} else {
+		body.RequiredChanges = []*RequiredChangeItemRequestBody{}
+	}
+	{
+		var zero string
+		if body.Priority == zero {
+			body.Priority = "medium"
+		}
+	}
+	return body
+}
+
+// NewCreateAccountNodeAccountNodeResultCreated builds a "finance" service
+// "createAccountNode" endpoint result from a HTTP "Created" response.
+func NewCreateAccountNodeAccountNodeResultCreated(body *CreateAccountNodeResponseBody) *finance.AccountNodeResult {
+	v := &finance.AccountNodeResult{
+		ID:                        *body.ID,
+		NodeType:                  *body.NodeType,
+		Code:                      *body.Code,
+		Name:                      *body.Name,
+		Description:               body.Description,
+		ParentID:                  body.ParentID,
+		Level:                     *body.Level,
+		Path:                      *body.Path,
+		HasChildren:               *body.HasChildren,
+		ChildCount:                *body.ChildCount,
+		IsActive:                  *body.IsActive,
+		AccountType:               body.AccountType,
+		RootType:                  body.RootType,
+		NormalBalance:             body.NormalBalance,
+		CurrencyCode:              body.CurrencyCode,
+		CurrentBalance:            body.CurrentBalance,
+		AllowsManualEntries:       body.AllowsManualEntries,
+		RequiresReconciliation:    body.RequiresReconciliation,
+		FinancialStatementSection: body.FinancialStatementSection,
+		ConsolidationMethod:       body.ConsolidationMethod,
+		CashFlowCategory:          body.CashFlowCategory,
+		DisplayOrder:              body.DisplayOrder,
+		IsHeader:                  body.IsHeader,
+		ShowTotals:                body.ShowTotals,
+		IndentLevel:               body.IndentLevel,
+		TotalBalance:              body.TotalBalance,
+		CreatedAt:                 body.CreatedAt,
+		UpdatedAt:                 body.UpdatedAt,
+		CreatedBy:                 body.CreatedBy,
+		UpdatedBy:                 body.UpdatedBy,
 	}
 
 	return v
 }
 
-// NewGetAccountAccountResultOK builds a "finance" service "getAccount"
-// endpoint result from a HTTP "OK" response.
-func NewGetAccountAccountResultOK(body *GetAccountResponseBody) *finance.AccountResult {
-	v := &finance.AccountResult{
-		ID:                      *body.ID,
-		TenantID:                body.TenantID,
-		EntityID:                body.EntityID,
-		AccountCode:             *body.AccountCode,
-		AccountName:             *body.AccountName,
-		AccountDescription:      body.AccountDescription,
-		ParentAccountID:         body.ParentAccountID,
-		AccountLevel:            body.AccountLevel,
-		AccountPath:             body.AccountPath,
-		HasChildren:             body.HasChildren,
-		IsLeafAccount:           body.IsLeafAccount,
-		AccountGroupID:          body.AccountGroupID,
-		AccountHeaderID:         body.AccountHeaderID,
-		RootType:                *body.RootType,
-		AccountType:             *body.AccountType,
-		AccountSubtype:          body.AccountSubtype,
-		AccountCategory:         body.AccountCategory,
-		SubCategory:             body.SubCategory,
-		NormalBalance:           *body.NormalBalance,
-		IsActive:                *body.IsActive,
-		IsSystemAccount:         body.IsSystemAccount,
-		AllowManualEntries:      body.AllowManualEntries,
-		RequireReference:        body.RequireReference,
-		CurrentBalance:          body.CurrentBalance,
-		YtdBalance:              body.YtdBalance,
-		LastTransactionDate:     body.LastTransactionDate,
-		FinancialStatementLine:  body.FinancialStatementLine,
-		ReportOrder:             body.ReportOrder,
-		DisplayOrder:            body.DisplayOrder,
-		ShowInReports:           body.ShowInReports,
-		ConsolidationAccount:    body.ConsolidationAccount,
-		CashFlowType:            body.CashFlowType,
-		CurrencyCode:            body.CurrencyCode,
-		IsMultiCurrency:         body.IsMultiCurrency,
-		IsBudgetable:            body.IsBudgetable,
-		BudgetVarianceThreshold: body.BudgetVarianceThreshold,
-		Version:                 body.Version,
-		ValidationStatus:        body.ValidationStatus,
-		LastValidationRun:       body.LastValidationRun,
-		CreatedAt:               body.CreatedAt,
-		UpdatedAt:               body.UpdatedAt,
+// NewGetAccountNodeAccountNodeResultOK builds a "finance" service
+// "getAccountNode" endpoint result from a HTTP "OK" response.
+func NewGetAccountNodeAccountNodeResultOK(body *GetAccountNodeResponseBody) *finance.AccountNodeResult {
+	v := &finance.AccountNodeResult{
+		ID:                        *body.ID,
+		NodeType:                  *body.NodeType,
+		Code:                      *body.Code,
+		Name:                      *body.Name,
+		Description:               body.Description,
+		ParentID:                  body.ParentID,
+		Level:                     *body.Level,
+		Path:                      *body.Path,
+		HasChildren:               *body.HasChildren,
+		ChildCount:                *body.ChildCount,
+		IsActive:                  *body.IsActive,
+		AccountType:               body.AccountType,
+		RootType:                  body.RootType,
+		NormalBalance:             body.NormalBalance,
+		CurrencyCode:              body.CurrencyCode,
+		CurrentBalance:            body.CurrentBalance,
+		AllowsManualEntries:       body.AllowsManualEntries,
+		RequiresReconciliation:    body.RequiresReconciliation,
+		FinancialStatementSection: body.FinancialStatementSection,
+		ConsolidationMethod:       body.ConsolidationMethod,
+		CashFlowCategory:          body.CashFlowCategory,
+		DisplayOrder:              body.DisplayOrder,
+		IsHeader:                  body.IsHeader,
+		ShowTotals:                body.ShowTotals,
+		IndentLevel:               body.IndentLevel,
+		TotalBalance:              body.TotalBalance,
+		CreatedAt:                 body.CreatedAt,
+		UpdatedAt:                 body.UpdatedAt,
+		CreatedBy:                 body.CreatedBy,
+		UpdatedBy:                 body.UpdatedBy,
 	}
 
 	return v
 }
 
-// NewGetAccountByCodeAccountResultOK builds a "finance" service
-// "getAccountByCode" endpoint result from a HTTP "OK" response.
-func NewGetAccountByCodeAccountResultOK(body *GetAccountByCodeResponseBody) *finance.AccountResult {
-	v := &finance.AccountResult{
-		ID:                      *body.ID,
-		TenantID:                body.TenantID,
-		EntityID:                body.EntityID,
-		AccountCode:             *body.AccountCode,
-		AccountName:             *body.AccountName,
-		AccountDescription:      body.AccountDescription,
-		ParentAccountID:         body.ParentAccountID,
-		AccountLevel:            body.AccountLevel,
-		AccountPath:             body.AccountPath,
-		HasChildren:             body.HasChildren,
-		IsLeafAccount:           body.IsLeafAccount,
-		AccountGroupID:          body.AccountGroupID,
-		AccountHeaderID:         body.AccountHeaderID,
-		RootType:                *body.RootType,
-		AccountType:             *body.AccountType,
-		AccountSubtype:          body.AccountSubtype,
-		AccountCategory:         body.AccountCategory,
-		SubCategory:             body.SubCategory,
-		NormalBalance:           *body.NormalBalance,
-		IsActive:                *body.IsActive,
-		IsSystemAccount:         body.IsSystemAccount,
-		AllowManualEntries:      body.AllowManualEntries,
-		RequireReference:        body.RequireReference,
-		CurrentBalance:          body.CurrentBalance,
-		YtdBalance:              body.YtdBalance,
-		LastTransactionDate:     body.LastTransactionDate,
-		FinancialStatementLine:  body.FinancialStatementLine,
-		ReportOrder:             body.ReportOrder,
-		DisplayOrder:            body.DisplayOrder,
-		ShowInReports:           body.ShowInReports,
-		ConsolidationAccount:    body.ConsolidationAccount,
-		CashFlowType:            body.CashFlowType,
-		CurrencyCode:            body.CurrencyCode,
-		IsMultiCurrency:         body.IsMultiCurrency,
-		IsBudgetable:            body.IsBudgetable,
-		BudgetVarianceThreshold: body.BudgetVarianceThreshold,
-		Version:                 body.Version,
-		ValidationStatus:        body.ValidationStatus,
-		LastValidationRun:       body.LastValidationRun,
-		CreatedAt:               body.CreatedAt,
-		UpdatedAt:               body.UpdatedAt,
+// NewGetAccountNodeByCodeAccountNodeResultOK builds a "finance" service
+// "getAccountNodeByCode" endpoint result from a HTTP "OK" response.
+func NewGetAccountNodeByCodeAccountNodeResultOK(body *GetAccountNodeByCodeResponseBody) *finance.AccountNodeResult {
+	v := &finance.AccountNodeResult{
+		ID:                        *body.ID,
+		NodeType:                  *body.NodeType,
+		Code:                      *body.Code,
+		Name:                      *body.Name,
+		Description:               body.Description,
+		ParentID:                  body.ParentID,
+		Level:                     *body.Level,
+		Path:                      *body.Path,
+		HasChildren:               *body.HasChildren,
+		ChildCount:                *body.ChildCount,
+		IsActive:                  *body.IsActive,
+		AccountType:               body.AccountType,
+		RootType:                  body.RootType,
+		NormalBalance:             body.NormalBalance,
+		CurrencyCode:              body.CurrencyCode,
+		CurrentBalance:            body.CurrentBalance,
+		AllowsManualEntries:       body.AllowsManualEntries,
+		RequiresReconciliation:    body.RequiresReconciliation,
+		FinancialStatementSection: body.FinancialStatementSection,
+		ConsolidationMethod:       body.ConsolidationMethod,
+		CashFlowCategory:          body.CashFlowCategory,
+		DisplayOrder:              body.DisplayOrder,
+		IsHeader:                  body.IsHeader,
+		ShowTotals:                body.ShowTotals,
+		IndentLevel:               body.IndentLevel,
+		TotalBalance:              body.TotalBalance,
+		CreatedAt:                 body.CreatedAt,
+		UpdatedAt:                 body.UpdatedAt,
+		CreatedBy:                 body.CreatedBy,
+		UpdatedBy:                 body.UpdatedBy,
 	}
 
 	return v
 }
 
-// NewGetAccountByNameAccountResultOK builds a "finance" service
-// "getAccountByName" endpoint result from a HTTP "OK" response.
-func NewGetAccountByNameAccountResultOK(body *GetAccountByNameResponseBody) *finance.AccountResult {
-	v := &finance.AccountResult{
-		ID:                      *body.ID,
-		TenantID:                body.TenantID,
-		EntityID:                body.EntityID,
-		AccountCode:             *body.AccountCode,
-		AccountName:             *body.AccountName,
-		AccountDescription:      body.AccountDescription,
-		ParentAccountID:         body.ParentAccountID,
-		AccountLevel:            body.AccountLevel,
-		AccountPath:             body.AccountPath,
-		HasChildren:             body.HasChildren,
-		IsLeafAccount:           body.IsLeafAccount,
-		AccountGroupID:          body.AccountGroupID,
-		AccountHeaderID:         body.AccountHeaderID,
-		RootType:                *body.RootType,
-		AccountType:             *body.AccountType,
-		AccountSubtype:          body.AccountSubtype,
-		AccountCategory:         body.AccountCategory,
-		SubCategory:             body.SubCategory,
-		NormalBalance:           *body.NormalBalance,
-		IsActive:                *body.IsActive,
-		IsSystemAccount:         body.IsSystemAccount,
-		AllowManualEntries:      body.AllowManualEntries,
-		RequireReference:        body.RequireReference,
-		CurrentBalance:          body.CurrentBalance,
-		YtdBalance:              body.YtdBalance,
-		LastTransactionDate:     body.LastTransactionDate,
-		FinancialStatementLine:  body.FinancialStatementLine,
-		ReportOrder:             body.ReportOrder,
-		DisplayOrder:            body.DisplayOrder,
-		ShowInReports:           body.ShowInReports,
-		ConsolidationAccount:    body.ConsolidationAccount,
-		CashFlowType:            body.CashFlowType,
-		CurrencyCode:            body.CurrencyCode,
-		IsMultiCurrency:         body.IsMultiCurrency,
-		IsBudgetable:            body.IsBudgetable,
-		BudgetVarianceThreshold: body.BudgetVarianceThreshold,
-		Version:                 body.Version,
-		ValidationStatus:        body.ValidationStatus,
-		LastValidationRun:       body.LastValidationRun,
-		CreatedAt:               body.CreatedAt,
-		UpdatedAt:               body.UpdatedAt,
+// NewListAccountNodesAccountNodeListResultOK builds a "finance" service
+// "listAccountNodes" endpoint result from a HTTP "OK" response.
+func NewListAccountNodesAccountNodeListResultOK(body *ListAccountNodesResponseBody) *finance.AccountNodeListResult {
+	v := &finance.AccountNodeListResult{}
+	v.Nodes = make([]*finance.AccountNodeResult, len(body.Nodes))
+	for i, val := range body.Nodes {
+		v.Nodes[i] = unmarshalAccountNodeResultResponseBodyToFinanceAccountNodeResult(val)
+	}
+	v.Pagination = unmarshalPaginationMetaResponseBodyToFinancePaginationMeta(body.Pagination)
+
+	return v
+}
+
+// NewUpdateAccountNodeAccountNodeResultOK builds a "finance" service
+// "updateAccountNode" endpoint result from a HTTP "OK" response.
+func NewUpdateAccountNodeAccountNodeResultOK(body *UpdateAccountNodeResponseBody) *finance.AccountNodeResult {
+	v := &finance.AccountNodeResult{
+		ID:                        *body.ID,
+		NodeType:                  *body.NodeType,
+		Code:                      *body.Code,
+		Name:                      *body.Name,
+		Description:               body.Description,
+		ParentID:                  body.ParentID,
+		Level:                     *body.Level,
+		Path:                      *body.Path,
+		HasChildren:               *body.HasChildren,
+		ChildCount:                *body.ChildCount,
+		IsActive:                  *body.IsActive,
+		AccountType:               body.AccountType,
+		RootType:                  body.RootType,
+		NormalBalance:             body.NormalBalance,
+		CurrencyCode:              body.CurrencyCode,
+		CurrentBalance:            body.CurrentBalance,
+		AllowsManualEntries:       body.AllowsManualEntries,
+		RequiresReconciliation:    body.RequiresReconciliation,
+		FinancialStatementSection: body.FinancialStatementSection,
+		ConsolidationMethod:       body.ConsolidationMethod,
+		CashFlowCategory:          body.CashFlowCategory,
+		DisplayOrder:              body.DisplayOrder,
+		IsHeader:                  body.IsHeader,
+		ShowTotals:                body.ShowTotals,
+		IndentLevel:               body.IndentLevel,
+		TotalBalance:              body.TotalBalance,
+		CreatedAt:                 body.CreatedAt,
+		UpdatedAt:                 body.UpdatedAt,
+		CreatedBy:                 body.CreatedBy,
+		UpdatedBy:                 body.UpdatedBy,
 	}
 
 	return v
 }
 
-// NewListAccountsAccountListResultOK builds a "finance" service "listAccounts"
-// endpoint result from a HTTP "OK" response.
-func NewListAccountsAccountListResultOK(body *ListAccountsResponseBody) *finance.AccountListResult {
-	v := &finance.AccountListResult{
-		TotalCount: *body.TotalCount,
-		Limit:      *body.Limit,
-		Offset:     *body.Offset,
+// NewSearchAccountNodesResultOK builds a "finance" service
+// "searchAccountNodes" endpoint result from a HTTP "OK" response.
+func NewSearchAccountNodesResultOK(body *SearchAccountNodesResponseBody) *finance.SearchAccountNodesResult {
+	v := &finance.SearchAccountNodesResult{
+		TotalResults:     *body.TotalResults,
+		SearchDurationMs: *body.SearchDurationMs,
 	}
-	v.Accounts = make([]*finance.AccountResult, len(body.Accounts))
-	for i, val := range body.Accounts {
-		v.Accounts[i] = unmarshalAccountResultResponseBodyToFinanceAccountResult(val)
-	}
-
-	return v
-}
-
-// NewUpdateAccountAccountResultOK builds a "finance" service "updateAccount"
-// endpoint result from a HTTP "OK" response.
-func NewUpdateAccountAccountResultOK(body *UpdateAccountResponseBody) *finance.AccountResult {
-	v := &finance.AccountResult{
-		ID:                      *body.ID,
-		TenantID:                body.TenantID,
-		EntityID:                body.EntityID,
-		AccountCode:             *body.AccountCode,
-		AccountName:             *body.AccountName,
-		AccountDescription:      body.AccountDescription,
-		ParentAccountID:         body.ParentAccountID,
-		AccountLevel:            body.AccountLevel,
-		AccountPath:             body.AccountPath,
-		HasChildren:             body.HasChildren,
-		IsLeafAccount:           body.IsLeafAccount,
-		AccountGroupID:          body.AccountGroupID,
-		AccountHeaderID:         body.AccountHeaderID,
-		RootType:                *body.RootType,
-		AccountType:             *body.AccountType,
-		AccountSubtype:          body.AccountSubtype,
-		AccountCategory:         body.AccountCategory,
-		SubCategory:             body.SubCategory,
-		NormalBalance:           *body.NormalBalance,
-		IsActive:                *body.IsActive,
-		IsSystemAccount:         body.IsSystemAccount,
-		AllowManualEntries:      body.AllowManualEntries,
-		RequireReference:        body.RequireReference,
-		CurrentBalance:          body.CurrentBalance,
-		YtdBalance:              body.YtdBalance,
-		LastTransactionDate:     body.LastTransactionDate,
-		FinancialStatementLine:  body.FinancialStatementLine,
-		ReportOrder:             body.ReportOrder,
-		DisplayOrder:            body.DisplayOrder,
-		ShowInReports:           body.ShowInReports,
-		ConsolidationAccount:    body.ConsolidationAccount,
-		CashFlowType:            body.CashFlowType,
-		CurrencyCode:            body.CurrencyCode,
-		IsMultiCurrency:         body.IsMultiCurrency,
-		IsBudgetable:            body.IsBudgetable,
-		BudgetVarianceThreshold: body.BudgetVarianceThreshold,
-		Version:                 body.Version,
-		ValidationStatus:        body.ValidationStatus,
-		LastValidationRun:       body.LastValidationRun,
-		CreatedAt:               body.CreatedAt,
-		UpdatedAt:               body.UpdatedAt,
-	}
-
-	return v
-}
-
-// NewGetAccountHierarchyAccountHierarchyResultOK builds a "finance" service
-// "getAccountHierarchy" endpoint result from a HTTP "OK" response.
-func NewGetAccountHierarchyAccountHierarchyResultOK(body *GetAccountHierarchyResponseBody) *finance.AccountHierarchyResult {
-	v := &finance.AccountHierarchyResult{
-		TotalCount: *body.TotalCount,
-	}
-	v.Accounts = make([]*finance.AccountResult, len(body.Accounts))
-	for i, val := range body.Accounts {
-		v.Accounts[i] = unmarshalAccountResultResponseBodyToFinanceAccountResult(val)
+	v.Results = make([]*finance.SearchResultItem, len(body.Results))
+	for i, val := range body.Results {
+		v.Results[i] = unmarshalSearchResultItemResponseBodyToFinanceSearchResultItem(val)
 	}
 
 	return v
@@ -1573,28 +2279,242 @@ func NewGetAccountBalanceAccountBalanceResultOK(body *GetAccountBalanceResponseB
 	return v
 }
 
+// NewGetHierarchyAnalysisHierarchyAnalysisResultOK builds a "finance" service
+// "getHierarchyAnalysis" endpoint result from a HTTP "OK" response.
+func NewGetHierarchyAnalysisHierarchyAnalysisResultOK(body *GetHierarchyAnalysisResponseBody) *finance.HierarchyAnalysisResult {
+	v := &finance.HierarchyAnalysisResult{
+		ParentID:       *body.ParentID,
+		HierarchyDepth: *body.HierarchyDepth,
+		TotalAccounts:  *body.TotalAccounts,
+		TotalGroups:    *body.TotalGroups,
+		TotalBalance:   *body.TotalBalance,
+		AnalysisDate:   body.AnalysisDate,
+	}
+
+	return v
+}
+
+// NewCreateAccountAccountResultCreated builds a "finance" service
+// "createAccount" endpoint result from a HTTP "Created" response.
+func NewCreateAccountAccountResultCreated(body *CreateAccountResponseBody) *finance.AccountResult {
+	v := &finance.AccountResult{
+		ID:                  *body.ID,
+		TenantID:            body.TenantID,
+		EntityID:            body.EntityID,
+		AccountCode:         *body.AccountCode,
+		AccountName:         *body.AccountName,
+		AccountDescription:  body.AccountDescription,
+		ParentAccountID:     body.ParentAccountID,
+		AccountLevel:        body.AccountLevel,
+		AccountPath:         body.AccountPath,
+		HasChildren:         body.HasChildren,
+		RootType:            *body.RootType,
+		AccountType:         *body.AccountType,
+		NormalBalance:       *body.NormalBalance,
+		IsActive:            *body.IsActive,
+		AllowManualEntries:  body.AllowManualEntries,
+		RequireReference:    body.RequireReference,
+		CurrentBalance:      body.CurrentBalance,
+		YtdBalance:          body.YtdBalance,
+		LastTransactionDate: body.LastTransactionDate,
+		CurrencyCode:        body.CurrencyCode,
+		CreatedAt:           body.CreatedAt,
+		UpdatedAt:           body.UpdatedAt,
+		CreatedBy:           body.CreatedBy,
+		UpdatedBy:           body.UpdatedBy,
+	}
+
+	return v
+}
+
+// NewGetAccountAccountResultOK builds a "finance" service "getAccount"
+// endpoint result from a HTTP "OK" response.
+func NewGetAccountAccountResultOK(body *GetAccountResponseBody) *finance.AccountResult {
+	v := &finance.AccountResult{
+		ID:                  *body.ID,
+		TenantID:            body.TenantID,
+		EntityID:            body.EntityID,
+		AccountCode:         *body.AccountCode,
+		AccountName:         *body.AccountName,
+		AccountDescription:  body.AccountDescription,
+		ParentAccountID:     body.ParentAccountID,
+		AccountLevel:        body.AccountLevel,
+		AccountPath:         body.AccountPath,
+		HasChildren:         body.HasChildren,
+		RootType:            *body.RootType,
+		AccountType:         *body.AccountType,
+		NormalBalance:       *body.NormalBalance,
+		IsActive:            *body.IsActive,
+		AllowManualEntries:  body.AllowManualEntries,
+		RequireReference:    body.RequireReference,
+		CurrentBalance:      body.CurrentBalance,
+		YtdBalance:          body.YtdBalance,
+		LastTransactionDate: body.LastTransactionDate,
+		CurrencyCode:        body.CurrencyCode,
+		CreatedAt:           body.CreatedAt,
+		UpdatedAt:           body.UpdatedAt,
+		CreatedBy:           body.CreatedBy,
+		UpdatedBy:           body.UpdatedBy,
+	}
+
+	return v
+}
+
+// NewGetAccountByCodeAccountResultOK builds a "finance" service
+// "getAccountByCode" endpoint result from a HTTP "OK" response.
+func NewGetAccountByCodeAccountResultOK(body *GetAccountByCodeResponseBody) *finance.AccountResult {
+	v := &finance.AccountResult{
+		ID:                  *body.ID,
+		TenantID:            body.TenantID,
+		EntityID:            body.EntityID,
+		AccountCode:         *body.AccountCode,
+		AccountName:         *body.AccountName,
+		AccountDescription:  body.AccountDescription,
+		ParentAccountID:     body.ParentAccountID,
+		AccountLevel:        body.AccountLevel,
+		AccountPath:         body.AccountPath,
+		HasChildren:         body.HasChildren,
+		RootType:            *body.RootType,
+		AccountType:         *body.AccountType,
+		NormalBalance:       *body.NormalBalance,
+		IsActive:            *body.IsActive,
+		AllowManualEntries:  body.AllowManualEntries,
+		RequireReference:    body.RequireReference,
+		CurrentBalance:      body.CurrentBalance,
+		YtdBalance:          body.YtdBalance,
+		LastTransactionDate: body.LastTransactionDate,
+		CurrencyCode:        body.CurrencyCode,
+		CreatedAt:           body.CreatedAt,
+		UpdatedAt:           body.UpdatedAt,
+		CreatedBy:           body.CreatedBy,
+		UpdatedBy:           body.UpdatedBy,
+	}
+
+	return v
+}
+
+// NewGetAccountByNameAccountResultOK builds a "finance" service
+// "getAccountByName" endpoint result from a HTTP "OK" response.
+func NewGetAccountByNameAccountResultOK(body *GetAccountByNameResponseBody) *finance.AccountResult {
+	v := &finance.AccountResult{
+		ID:                  *body.ID,
+		TenantID:            body.TenantID,
+		EntityID:            body.EntityID,
+		AccountCode:         *body.AccountCode,
+		AccountName:         *body.AccountName,
+		AccountDescription:  body.AccountDescription,
+		ParentAccountID:     body.ParentAccountID,
+		AccountLevel:        body.AccountLevel,
+		AccountPath:         body.AccountPath,
+		HasChildren:         body.HasChildren,
+		RootType:            *body.RootType,
+		AccountType:         *body.AccountType,
+		NormalBalance:       *body.NormalBalance,
+		IsActive:            *body.IsActive,
+		AllowManualEntries:  body.AllowManualEntries,
+		RequireReference:    body.RequireReference,
+		CurrentBalance:      body.CurrentBalance,
+		YtdBalance:          body.YtdBalance,
+		LastTransactionDate: body.LastTransactionDate,
+		CurrencyCode:        body.CurrencyCode,
+		CreatedAt:           body.CreatedAt,
+		UpdatedAt:           body.UpdatedAt,
+		CreatedBy:           body.CreatedBy,
+		UpdatedBy:           body.UpdatedBy,
+	}
+
+	return v
+}
+
+// NewListAccountsAccountListResultOK builds a "finance" service "listAccounts"
+// endpoint result from a HTTP "OK" response.
+func NewListAccountsAccountListResultOK(body *ListAccountsResponseBody) *finance.AccountListResult {
+	v := &finance.AccountListResult{}
+	v.Accounts = make([]*finance.AccountResult, len(body.Accounts))
+	for i, val := range body.Accounts {
+		v.Accounts[i] = unmarshalAccountResultResponseBodyToFinanceAccountResult(val)
+	}
+	v.Pagination = unmarshalPaginationMetaResponseBodyToFinancePaginationMeta(body.Pagination)
+
+	return v
+}
+
+// NewUpdateAccountAccountResultOK builds a "finance" service "updateAccount"
+// endpoint result from a HTTP "OK" response.
+func NewUpdateAccountAccountResultOK(body *UpdateAccountResponseBody) *finance.AccountResult {
+	v := &finance.AccountResult{
+		ID:                  *body.ID,
+		TenantID:            body.TenantID,
+		EntityID:            body.EntityID,
+		AccountCode:         *body.AccountCode,
+		AccountName:         *body.AccountName,
+		AccountDescription:  body.AccountDescription,
+		ParentAccountID:     body.ParentAccountID,
+		AccountLevel:        body.AccountLevel,
+		AccountPath:         body.AccountPath,
+		HasChildren:         body.HasChildren,
+		RootType:            *body.RootType,
+		AccountType:         *body.AccountType,
+		NormalBalance:       *body.NormalBalance,
+		IsActive:            *body.IsActive,
+		AllowManualEntries:  body.AllowManualEntries,
+		RequireReference:    body.RequireReference,
+		CurrentBalance:      body.CurrentBalance,
+		YtdBalance:          body.YtdBalance,
+		LastTransactionDate: body.LastTransactionDate,
+		CurrencyCode:        body.CurrencyCode,
+		CreatedAt:           body.CreatedAt,
+		UpdatedAt:           body.UpdatedAt,
+		CreatedBy:           body.CreatedBy,
+		UpdatedBy:           body.UpdatedBy,
+	}
+
+	return v
+}
+
+// NewGetAccountHierarchyAccountListResultOK builds a "finance" service
+// "getAccountHierarchy" endpoint result from a HTTP "OK" response.
+func NewGetAccountHierarchyAccountListResultOK(body *GetAccountHierarchyResponseBody) *finance.AccountListResult {
+	v := &finance.AccountListResult{}
+	v.Accounts = make([]*finance.AccountResult, len(body.Accounts))
+	for i, val := range body.Accounts {
+		v.Accounts[i] = unmarshalAccountResultResponseBodyToFinanceAccountResult(val)
+	}
+	v.Pagination = unmarshalPaginationMetaResponseBodyToFinancePaginationMeta(body.Pagination)
+
+	return v
+}
+
 // NewCreateTransactionTransactionResultCreated builds a "finance" service
 // "createTransaction" endpoint result from a HTTP "Created" response.
 func NewCreateTransactionTransactionResultCreated(body *CreateTransactionResponseBody) *finance.TransactionResult {
 	v := &finance.TransactionResult{
-		ID:                *body.ID,
-		TenantID:          body.TenantID,
-		EntityID:          body.EntityID,
-		TransactionNumber: *body.TransactionNumber,
-		TransactionType:   *body.TransactionType,
-		TransactionStatus: *body.TransactionStatus,
-		TransactionDate:   *body.TransactionDate,
-		PostingDate:       body.PostingDate,
-		Description:       *body.Description,
-		ReferenceNumber:   body.ReferenceNumber,
-		CurrencyCode:      body.CurrencyCode,
-		ExchangeRate:      body.ExchangeRate,
-		TotalDebitAmount:  body.TotalDebitAmount,
-		TotalCreditAmount: body.TotalCreditAmount,
-		ApprovalStatus:    body.ApprovalStatus,
-		ApprovalRequired:  body.ApprovalRequired,
-		CreatedAt:         body.CreatedAt,
-		UpdatedAt:         body.UpdatedAt,
+		ID:                  *body.ID,
+		TenantID:            body.TenantID,
+		EntityID:            body.EntityID,
+		TransactionNumber:   *body.TransactionNumber,
+		TransactionType:     *body.TransactionType,
+		Status:              *body.Status,
+		CurrentStage:        *body.CurrentStage,
+		TransactionDate:     *body.TransactionDate,
+		PostingDate:         body.PostingDate,
+		Description:         *body.Description,
+		ReferenceNumber:     body.ReferenceNumber,
+		Amount:              body.Amount,
+		Currency:            body.Currency,
+		ExchangeRate:        body.ExchangeRate,
+		TotalDebitAmount:    body.TotalDebitAmount,
+		TotalCreditAmount:   body.TotalCreditAmount,
+		CostCenter:          body.CostCenter,
+		Department:          body.Department,
+		EstimatedCompletion: body.EstimatedCompletion,
+		ProgressPercentage:  body.ProgressPercentage,
+		ApprovalStatus:      body.ApprovalStatus,
+		ApprovalRequired:    body.ApprovalRequired,
+		CreatedAt:           body.CreatedAt,
+		UpdatedAt:           body.UpdatedAt,
+		CreatedBy:           body.CreatedBy,
+		UpdatedBy:           body.UpdatedBy,
 	}
 
 	return v
@@ -1612,9 +2532,9 @@ func NewGetTransactionTransactionWithEntriesResultOK(body *GetTransactionRespons
 		v.Entries[i] = unmarshalTransactionEntryResultResponseBodyToFinanceTransactionEntryResult(val)
 	}
 	if body.ValidationErrors != nil {
-		v.ValidationErrors = make([]*finance.ValidationErrorResult, len(body.ValidationErrors))
+		v.ValidationErrors = make([]*finance.ValidationError, len(body.ValidationErrors))
 		for i, val := range body.ValidationErrors {
-			v.ValidationErrors[i] = unmarshalValidationErrorResultResponseBodyToFinanceValidationErrorResult(val)
+			v.ValidationErrors[i] = unmarshalValidationErrorResponseBodyToFinanceValidationError(val)
 		}
 	}
 
@@ -1633,9 +2553,9 @@ func NewGetTransactionByNumberTransactionWithEntriesResultOK(body *GetTransactio
 		v.Entries[i] = unmarshalTransactionEntryResultResponseBodyToFinanceTransactionEntryResult(val)
 	}
 	if body.ValidationErrors != nil {
-		v.ValidationErrors = make([]*finance.ValidationErrorResult, len(body.ValidationErrors))
+		v.ValidationErrors = make([]*finance.ValidationError, len(body.ValidationErrors))
 		for i, val := range body.ValidationErrors {
-			v.ValidationErrors[i] = unmarshalValidationErrorResultResponseBodyToFinanceValidationErrorResult(val)
+			v.ValidationErrors[i] = unmarshalValidationErrorResponseBodyToFinanceValidationError(val)
 		}
 	}
 
@@ -1645,15 +2565,12 @@ func NewGetTransactionByNumberTransactionWithEntriesResultOK(body *GetTransactio
 // NewListTransactionsTransactionListResultOK builds a "finance" service
 // "listTransactions" endpoint result from a HTTP "OK" response.
 func NewListTransactionsTransactionListResultOK(body *ListTransactionsResponseBody) *finance.TransactionListResult {
-	v := &finance.TransactionListResult{
-		TotalCount: *body.TotalCount,
-		Limit:      *body.Limit,
-		Offset:     *body.Offset,
-	}
+	v := &finance.TransactionListResult{}
 	v.Transactions = make([]*finance.TransactionResult, len(body.Transactions))
 	for i, val := range body.Transactions {
 		v.Transactions[i] = unmarshalTransactionResultResponseBodyToFinanceTransactionResult(val)
 	}
+	v.Pagination = unmarshalPaginationMetaResponseBodyToFinancePaginationMeta(body.Pagination)
 
 	return v
 }
@@ -1662,24 +2579,32 @@ func NewListTransactionsTransactionListResultOK(body *ListTransactionsResponseBo
 // "postTransaction" endpoint result from a HTTP "OK" response.
 func NewPostTransactionTransactionResultOK(body *PostTransactionResponseBody) *finance.TransactionResult {
 	v := &finance.TransactionResult{
-		ID:                *body.ID,
-		TenantID:          body.TenantID,
-		EntityID:          body.EntityID,
-		TransactionNumber: *body.TransactionNumber,
-		TransactionType:   *body.TransactionType,
-		TransactionStatus: *body.TransactionStatus,
-		TransactionDate:   *body.TransactionDate,
-		PostingDate:       body.PostingDate,
-		Description:       *body.Description,
-		ReferenceNumber:   body.ReferenceNumber,
-		CurrencyCode:      body.CurrencyCode,
-		ExchangeRate:      body.ExchangeRate,
-		TotalDebitAmount:  body.TotalDebitAmount,
-		TotalCreditAmount: body.TotalCreditAmount,
-		ApprovalStatus:    body.ApprovalStatus,
-		ApprovalRequired:  body.ApprovalRequired,
-		CreatedAt:         body.CreatedAt,
-		UpdatedAt:         body.UpdatedAt,
+		ID:                  *body.ID,
+		TenantID:            body.TenantID,
+		EntityID:            body.EntityID,
+		TransactionNumber:   *body.TransactionNumber,
+		TransactionType:     *body.TransactionType,
+		Status:              *body.Status,
+		CurrentStage:        *body.CurrentStage,
+		TransactionDate:     *body.TransactionDate,
+		PostingDate:         body.PostingDate,
+		Description:         *body.Description,
+		ReferenceNumber:     body.ReferenceNumber,
+		Amount:              body.Amount,
+		Currency:            body.Currency,
+		ExchangeRate:        body.ExchangeRate,
+		TotalDebitAmount:    body.TotalDebitAmount,
+		TotalCreditAmount:   body.TotalCreditAmount,
+		CostCenter:          body.CostCenter,
+		Department:          body.Department,
+		EstimatedCompletion: body.EstimatedCompletion,
+		ProgressPercentage:  body.ProgressPercentage,
+		ApprovalStatus:      body.ApprovalStatus,
+		ApprovalRequired:    body.ApprovalRequired,
+		CreatedAt:           body.CreatedAt,
+		UpdatedAt:           body.UpdatedAt,
+		CreatedBy:           body.CreatedBy,
+		UpdatedBy:           body.UpdatedBy,
 	}
 
 	return v
@@ -1689,24 +2614,32 @@ func NewPostTransactionTransactionResultOK(body *PostTransactionResponseBody) *f
 // "reverseTransaction" endpoint result from a HTTP "OK" response.
 func NewReverseTransactionTransactionResultOK(body *ReverseTransactionResponseBody) *finance.TransactionResult {
 	v := &finance.TransactionResult{
-		ID:                *body.ID,
-		TenantID:          body.TenantID,
-		EntityID:          body.EntityID,
-		TransactionNumber: *body.TransactionNumber,
-		TransactionType:   *body.TransactionType,
-		TransactionStatus: *body.TransactionStatus,
-		TransactionDate:   *body.TransactionDate,
-		PostingDate:       body.PostingDate,
-		Description:       *body.Description,
-		ReferenceNumber:   body.ReferenceNumber,
-		CurrencyCode:      body.CurrencyCode,
-		ExchangeRate:      body.ExchangeRate,
-		TotalDebitAmount:  body.TotalDebitAmount,
-		TotalCreditAmount: body.TotalCreditAmount,
-		ApprovalStatus:    body.ApprovalStatus,
-		ApprovalRequired:  body.ApprovalRequired,
-		CreatedAt:         body.CreatedAt,
-		UpdatedAt:         body.UpdatedAt,
+		ID:                  *body.ID,
+		TenantID:            body.TenantID,
+		EntityID:            body.EntityID,
+		TransactionNumber:   *body.TransactionNumber,
+		TransactionType:     *body.TransactionType,
+		Status:              *body.Status,
+		CurrentStage:        *body.CurrentStage,
+		TransactionDate:     *body.TransactionDate,
+		PostingDate:         body.PostingDate,
+		Description:         *body.Description,
+		ReferenceNumber:     body.ReferenceNumber,
+		Amount:              body.Amount,
+		Currency:            body.Currency,
+		ExchangeRate:        body.ExchangeRate,
+		TotalDebitAmount:    body.TotalDebitAmount,
+		TotalCreditAmount:   body.TotalCreditAmount,
+		CostCenter:          body.CostCenter,
+		Department:          body.Department,
+		EstimatedCompletion: body.EstimatedCompletion,
+		ProgressPercentage:  body.ProgressPercentage,
+		ApprovalStatus:      body.ApprovalStatus,
+		ApprovalRequired:    body.ApprovalRequired,
+		CreatedAt:           body.CreatedAt,
+		UpdatedAt:           body.UpdatedAt,
+		CreatedBy:           body.CreatedBy,
+		UpdatedBy:           body.UpdatedBy,
 	}
 
 	return v
@@ -1716,24 +2649,32 @@ func NewReverseTransactionTransactionResultOK(body *ReverseTransactionResponseBo
 // "approveTransaction" endpoint result from a HTTP "OK" response.
 func NewApproveTransactionTransactionResultOK(body *ApproveTransactionResponseBody) *finance.TransactionResult {
 	v := &finance.TransactionResult{
-		ID:                *body.ID,
-		TenantID:          body.TenantID,
-		EntityID:          body.EntityID,
-		TransactionNumber: *body.TransactionNumber,
-		TransactionType:   *body.TransactionType,
-		TransactionStatus: *body.TransactionStatus,
-		TransactionDate:   *body.TransactionDate,
-		PostingDate:       body.PostingDate,
-		Description:       *body.Description,
-		ReferenceNumber:   body.ReferenceNumber,
-		CurrencyCode:      body.CurrencyCode,
-		ExchangeRate:      body.ExchangeRate,
-		TotalDebitAmount:  body.TotalDebitAmount,
-		TotalCreditAmount: body.TotalCreditAmount,
-		ApprovalStatus:    body.ApprovalStatus,
-		ApprovalRequired:  body.ApprovalRequired,
-		CreatedAt:         body.CreatedAt,
-		UpdatedAt:         body.UpdatedAt,
+		ID:                  *body.ID,
+		TenantID:            body.TenantID,
+		EntityID:            body.EntityID,
+		TransactionNumber:   *body.TransactionNumber,
+		TransactionType:     *body.TransactionType,
+		Status:              *body.Status,
+		CurrentStage:        *body.CurrentStage,
+		TransactionDate:     *body.TransactionDate,
+		PostingDate:         body.PostingDate,
+		Description:         *body.Description,
+		ReferenceNumber:     body.ReferenceNumber,
+		Amount:              body.Amount,
+		Currency:            body.Currency,
+		ExchangeRate:        body.ExchangeRate,
+		TotalDebitAmount:    body.TotalDebitAmount,
+		TotalCreditAmount:   body.TotalCreditAmount,
+		CostCenter:          body.CostCenter,
+		Department:          body.Department,
+		EstimatedCompletion: body.EstimatedCompletion,
+		ProgressPercentage:  body.ProgressPercentage,
+		ApprovalStatus:      body.ApprovalStatus,
+		ApprovalRequired:    body.ApprovalRequired,
+		CreatedAt:           body.CreatedAt,
+		UpdatedAt:           body.UpdatedAt,
+		CreatedBy:           body.CreatedBy,
+		UpdatedBy:           body.UpdatedBy,
 	}
 
 	return v
@@ -1751,9 +2692,9 @@ func NewValidateTransactionValidationResultOK(body *ValidateTransactionResponseB
 		ValidationLevel:   *body.ValidationLevel,
 	}
 	if body.Errors != nil {
-		v.Errors = make([]*finance.ValidationErrorResult, len(body.Errors))
+		v.Errors = make([]*finance.ValidationError, len(body.Errors))
 		for i, val := range body.Errors {
-			v.Errors[i] = unmarshalValidationErrorResultResponseBodyToFinanceValidationErrorResult(val)
+			v.Errors[i] = unmarshalValidationErrorResponseBodyToFinanceValidationError(val)
 		}
 	}
 	if body.Warnings != nil {
@@ -1766,44 +2707,153 @@ func NewValidateTransactionValidationResultOK(body *ValidateTransactionResponseB
 	return v
 }
 
-// NewGetTrialBalanceTrialBalanceResultOK builds a "finance" service
-// "getTrialBalance" endpoint result from a HTTP "OK" response.
-func NewGetTrialBalanceTrialBalanceResultOK(body *GetTrialBalanceResponseBody) *finance.TrialBalanceResult {
-	v := &finance.TrialBalanceResult{
-		AsOfDate:     *body.AsOfDate,
-		TotalDebits:  *body.TotalDebits,
-		TotalCredits: *body.TotalCredits,
-		IsBalanced:   *body.IsBalanced,
-		GeneratedAt:  *body.GeneratedAt,
+// NewGetTransactionStatusTransactionStatusResultOK builds a "finance" service
+// "getTransactionStatus" endpoint result from a HTTP "OK" response.
+func NewGetTransactionStatusTransactionStatusResultOK(body *GetTransactionStatusResponseBody) *finance.TransactionStatusResult {
+	v := &finance.TransactionStatusResult{
+		ID:                  *body.ID,
+		TransactionNumber:   *body.TransactionNumber,
+		Status:              *body.Status,
+		CurrentStage:        *body.CurrentStage,
+		ProgressPercentage:  *body.ProgressPercentage,
+		EstimatedCompletion: body.EstimatedCompletion,
 	}
-	v.Accounts = make([]*finance.TrialBalanceEntry, len(body.Accounts))
-	for i, val := range body.Accounts {
-		v.Accounts[i] = unmarshalTrialBalanceEntryResponseBodyToFinanceTrialBalanceEntry(val)
+	if body.WorkflowHistory != nil {
+		v.WorkflowHistory = make([]*finance.WorkflowStageResult, len(body.WorkflowHistory))
+		for i, val := range body.WorkflowHistory {
+			v.WorkflowHistory[i] = unmarshalWorkflowStageResultResponseBodyToFinanceWorkflowStageResult(val)
+		}
+	}
+	v.AvailableActions = make([]string, len(body.AvailableActions))
+	for i, val := range body.AvailableActions {
+		v.AvailableActions[i] = val
+	}
+	if body.NextApprover != nil {
+		v.NextApprover = unmarshalApproverResultResponseBodyToFinanceApproverResult(body.NextApprover)
 	}
 
 	return v
 }
 
-// ValidateCreateAccountResponseBody runs the validations defined on
-// CreateAccountResponseBody
-func ValidateCreateAccountResponseBody(body *CreateAccountResponseBody) (err error) {
+// NewSubmitApprovalDecisionApprovalDecisionResultOK builds a "finance" service
+// "submitApprovalDecision" endpoint result from a HTTP "OK" response.
+func NewSubmitApprovalDecisionApprovalDecisionResultOK(body *SubmitApprovalDecisionResponseBody) *finance.ApprovalDecisionResult {
+	v := &finance.ApprovalDecisionResult{
+		ID:                  *body.ID,
+		Status:              *body.Status,
+		CurrentStage:        *body.CurrentStage,
+		EstimatedCompletion: body.EstimatedCompletion,
+		NextStage:           body.NextStage,
+	}
+	v.ApprovalDecision = unmarshalApprovalDecisionDataResponseBodyToFinanceApprovalDecisionData(body.ApprovalDecision)
+
+	return v
+}
+
+// NewRequestTransactionChangesChangeRequestResultOK builds a "finance" service
+// "requestTransactionChanges" endpoint result from a HTTP "OK" response.
+func NewRequestTransactionChangesChangeRequestResultOK(body *RequestTransactionChangesResponseBody) *finance.ChangeRequestResult {
+	v := &finance.ChangeRequestResult{
+		ChangeRequestID: *body.ChangeRequestID,
+		TransactionID:   *body.TransactionID,
+		Status:          *body.Status,
+		AssignedTo:      body.AssignedTo,
+		DueDate:         body.DueDate,
+		CreatedAt:       body.CreatedAt,
+		UpdatedAt:       body.UpdatedAt,
+		CreatedBy:       body.CreatedBy,
+		UpdatedBy:       body.UpdatedBy,
+	}
+
+	return v
+}
+
+// NewGetTransactionWorkflowTransactionWorkflowResultOK builds a "finance"
+// service "getTransactionWorkflow" endpoint result from a HTTP "OK" response.
+func NewGetTransactionWorkflowTransactionWorkflowResultOK(body *GetTransactionWorkflowResponseBody) *finance.TransactionWorkflowResult {
+	v := &finance.TransactionWorkflowResult{
+		TransactionID:    *body.TransactionID,
+		WorkflowTemplate: *body.WorkflowTemplate,
+	}
+	v.Stages = make([]*finance.WorkflowStageResult, len(body.Stages))
+	for i, val := range body.Stages {
+		v.Stages[i] = unmarshalWorkflowStageResultResponseBodyToFinanceWorkflowStageResult(val)
+	}
+	v.AvailableActions = make(map[string]*finance.WorkflowActionResult, len(body.AvailableActions))
+	for key, val := range body.AvailableActions {
+		tk := key
+		if val == nil {
+			v.AvailableActions[tk] = nil
+			continue
+		}
+		v.AvailableActions[tk] = unmarshalWorkflowActionResultResponseBodyToFinanceWorkflowActionResult(val)
+	}
+	if body.EscalationRules != nil {
+		v.EscalationRules = make([]*finance.EscalationRuleResult, len(body.EscalationRules))
+		for i, val := range body.EscalationRules {
+			v.EscalationRules[i] = unmarshalEscalationRuleResultResponseBodyToFinanceEscalationRuleResult(val)
+		}
+	}
+	if body.SLAMetrics != nil {
+		v.SLAMetrics = unmarshalSLAMetricsResponseBodyToFinanceSLAMetrics(body.SLAMetrics)
+	}
+
+	return v
+}
+
+// NewGetTrialBalanceTrialBalanceResultOK builds a "finance" service
+// "getTrialBalance" endpoint result from a HTTP "OK" response.
+func NewGetTrialBalanceTrialBalanceResultOK(body *GetTrialBalanceResponseBody) *finance.TrialBalanceResult {
+	v := &finance.TrialBalanceResult{
+		AsOfDate:          *body.AsOfDate,
+		TotalDebits:       *body.TotalDebits,
+		TotalCredits:      *body.TotalCredits,
+		IsBalanced:        *body.IsBalanced,
+		BalanceDifference: body.BalanceDifference,
+		EntityID:          body.EntityID,
+		GeneratedAt:       *body.GeneratedAt,
+		GeneratedBy:       body.GeneratedBy,
+	}
+	if body.Currency != nil {
+		v.Currency = *body.Currency
+	}
+	v.Accounts = make([]*finance.TrialBalanceEntry, len(body.Accounts))
+	for i, val := range body.Accounts {
+		v.Accounts[i] = unmarshalTrialBalanceEntryResponseBodyToFinanceTrialBalanceEntry(val)
+	}
+	if body.Currency == nil {
+		v.Currency = "USD"
+	}
+
+	return v
+}
+
+// ValidateCreateAccountNodeResponseBody runs the validations defined on
+// CreateAccountNodeResponseBody
+func ValidateCreateAccountNodeResponseBody(body *CreateAccountNodeResponseBody) (err error) {
 	if body.ID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
 	}
-	if body.AccountCode == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_code", "body"))
+	if body.NodeType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("node_type", "body"))
 	}
-	if body.AccountName == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_name", "body"))
+	if body.Code == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("code", "body"))
 	}
-	if body.RootType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("root_type", "body"))
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
 	}
-	if body.AccountType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_type", "body"))
+	if body.Level == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("level", "body"))
 	}
-	if body.NormalBalance == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("normal_balance", "body"))
+	if body.Path == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("path", "body"))
+	}
+	if body.HasChildren == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("has_children", "body"))
+	}
+	if body.ChildCount == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("child_count", "body"))
 	}
 	if body.IsActive == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("is_active", "body"))
@@ -1811,26 +2861,13 @@ func ValidateCreateAccountResponseBody(body *CreateAccountResponseBody) (err err
 	if body.ID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
 	}
-	if body.TenantID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
+	if body.NodeType != nil {
+		if !(*body.NodeType == "account" || *body.NodeType == "group") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.node_type", *body.NodeType, []any{"account", "group"}))
+		}
 	}
-	if body.EntityID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
-	}
-	if body.ParentAccountID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_account_id", *body.ParentAccountID, goa.FormatUUID))
-	}
-	if body.AccountGroupID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_group_id", *body.AccountGroupID, goa.FormatUUID))
-	}
-	if body.AccountHeaderID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_header_id", *body.AccountHeaderID, goa.FormatUUID))
-	}
-	if body.LastTransactionDate != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_transaction_date", *body.LastTransactionDate, goa.FormatDateTime))
-	}
-	if body.LastValidationRun != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_validation_run", *body.LastValidationRun, goa.FormatDateTime))
+	if body.ParentID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_id", *body.ParentID, goa.FormatUUID))
 	}
 	if body.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
@@ -1838,29 +2875,41 @@ func ValidateCreateAccountResponseBody(body *CreateAccountResponseBody) (err err
 	if body.UpdatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
 	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
+	}
 	return
 }
 
-// ValidateGetAccountResponseBody runs the validations defined on
-// GetAccountResponseBody
-func ValidateGetAccountResponseBody(body *GetAccountResponseBody) (err error) {
+// ValidateGetAccountNodeResponseBody runs the validations defined on
+// GetAccountNodeResponseBody
+func ValidateGetAccountNodeResponseBody(body *GetAccountNodeResponseBody) (err error) {
 	if body.ID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
 	}
-	if body.AccountCode == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_code", "body"))
+	if body.NodeType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("node_type", "body"))
 	}
-	if body.AccountName == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_name", "body"))
+	if body.Code == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("code", "body"))
 	}
-	if body.RootType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("root_type", "body"))
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
 	}
-	if body.AccountType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_type", "body"))
+	if body.Level == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("level", "body"))
 	}
-	if body.NormalBalance == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("normal_balance", "body"))
+	if body.Path == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("path", "body"))
+	}
+	if body.HasChildren == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("has_children", "body"))
+	}
+	if body.ChildCount == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("child_count", "body"))
 	}
 	if body.IsActive == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("is_active", "body"))
@@ -1868,26 +2917,13 @@ func ValidateGetAccountResponseBody(body *GetAccountResponseBody) (err error) {
 	if body.ID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
 	}
-	if body.TenantID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
+	if body.NodeType != nil {
+		if !(*body.NodeType == "account" || *body.NodeType == "group") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.node_type", *body.NodeType, []any{"account", "group"}))
+		}
 	}
-	if body.EntityID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
-	}
-	if body.ParentAccountID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_account_id", *body.ParentAccountID, goa.FormatUUID))
-	}
-	if body.AccountGroupID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_group_id", *body.AccountGroupID, goa.FormatUUID))
-	}
-	if body.AccountHeaderID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_header_id", *body.AccountHeaderID, goa.FormatUUID))
-	}
-	if body.LastTransactionDate != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_transaction_date", *body.LastTransactionDate, goa.FormatDateTime))
-	}
-	if body.LastValidationRun != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_validation_run", *body.LastValidationRun, goa.FormatDateTime))
+	if body.ParentID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_id", *body.ParentID, goa.FormatUUID))
 	}
 	if body.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
@@ -1895,29 +2931,41 @@ func ValidateGetAccountResponseBody(body *GetAccountResponseBody) (err error) {
 	if body.UpdatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
 	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
+	}
 	return
 }
 
-// ValidateGetAccountByCodeResponseBody runs the validations defined on
-// GetAccountByCodeResponseBody
-func ValidateGetAccountByCodeResponseBody(body *GetAccountByCodeResponseBody) (err error) {
+// ValidateGetAccountNodeByCodeResponseBody runs the validations defined on
+// GetAccountNodeByCodeResponseBody
+func ValidateGetAccountNodeByCodeResponseBody(body *GetAccountNodeByCodeResponseBody) (err error) {
 	if body.ID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
 	}
-	if body.AccountCode == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_code", "body"))
+	if body.NodeType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("node_type", "body"))
 	}
-	if body.AccountName == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_name", "body"))
+	if body.Code == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("code", "body"))
 	}
-	if body.RootType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("root_type", "body"))
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
 	}
-	if body.AccountType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_type", "body"))
+	if body.Level == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("level", "body"))
 	}
-	if body.NormalBalance == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("normal_balance", "body"))
+	if body.Path == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("path", "body"))
+	}
+	if body.HasChildren == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("has_children", "body"))
+	}
+	if body.ChildCount == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("child_count", "body"))
 	}
 	if body.IsActive == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("is_active", "body"))
@@ -1925,26 +2973,13 @@ func ValidateGetAccountByCodeResponseBody(body *GetAccountByCodeResponseBody) (e
 	if body.ID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
 	}
-	if body.TenantID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
+	if body.NodeType != nil {
+		if !(*body.NodeType == "account" || *body.NodeType == "group") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.node_type", *body.NodeType, []any{"account", "group"}))
+		}
 	}
-	if body.EntityID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
-	}
-	if body.ParentAccountID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_account_id", *body.ParentAccountID, goa.FormatUUID))
-	}
-	if body.AccountGroupID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_group_id", *body.AccountGroupID, goa.FormatUUID))
-	}
-	if body.AccountHeaderID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_header_id", *body.AccountHeaderID, goa.FormatUUID))
-	}
-	if body.LastTransactionDate != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_transaction_date", *body.LastTransactionDate, goa.FormatDateTime))
-	}
-	if body.LastValidationRun != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_validation_run", *body.LastValidationRun, goa.FormatDateTime))
+	if body.ParentID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_id", *body.ParentID, goa.FormatUUID))
 	}
 	if body.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
@@ -1952,111 +2987,65 @@ func ValidateGetAccountByCodeResponseBody(body *GetAccountByCodeResponseBody) (e
 	if body.UpdatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
 	}
-	return
-}
-
-// ValidateGetAccountByNameResponseBody runs the validations defined on
-// GetAccountByNameResponseBody
-func ValidateGetAccountByNameResponseBody(body *GetAccountByNameResponseBody) (err error) {
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
 	}
-	if body.AccountCode == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_code", "body"))
-	}
-	if body.AccountName == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_name", "body"))
-	}
-	if body.RootType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("root_type", "body"))
-	}
-	if body.AccountType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_type", "body"))
-	}
-	if body.NormalBalance == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("normal_balance", "body"))
-	}
-	if body.IsActive == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("is_active", "body"))
-	}
-	if body.ID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
-	}
-	if body.TenantID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
-	}
-	if body.EntityID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
-	}
-	if body.ParentAccountID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_account_id", *body.ParentAccountID, goa.FormatUUID))
-	}
-	if body.AccountGroupID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_group_id", *body.AccountGroupID, goa.FormatUUID))
-	}
-	if body.AccountHeaderID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_header_id", *body.AccountHeaderID, goa.FormatUUID))
-	}
-	if body.LastTransactionDate != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_transaction_date", *body.LastTransactionDate, goa.FormatDateTime))
-	}
-	if body.LastValidationRun != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_validation_run", *body.LastValidationRun, goa.FormatDateTime))
-	}
-	if body.CreatedAt != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
-	}
-	if body.UpdatedAt != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
 	}
 	return
 }
 
-// ValidateListAccountsResponseBody runs the validations defined on
-// ListAccountsResponseBody
-func ValidateListAccountsResponseBody(body *ListAccountsResponseBody) (err error) {
-	if body.Accounts == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("accounts", "body"))
+// ValidateListAccountNodesResponseBody runs the validations defined on
+// ListAccountNodesResponseBody
+func ValidateListAccountNodesResponseBody(body *ListAccountNodesResponseBody) (err error) {
+	if body.Nodes == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("nodes", "body"))
 	}
-	if body.TotalCount == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("total_count", "body"))
+	if body.Pagination == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("pagination", "body"))
 	}
-	if body.Limit == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("limit", "body"))
-	}
-	if body.Offset == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("offset", "body"))
-	}
-	for _, e := range body.Accounts {
+	for _, e := range body.Nodes {
 		if e != nil {
-			if err2 := ValidateAccountResultResponseBody(e); err2 != nil {
+			if err2 := ValidateAccountNodeResultResponseBody(e); err2 != nil {
 				err = goa.MergeErrors(err, err2)
 			}
+		}
+	}
+	if body.Pagination != nil {
+		if err2 := ValidatePaginationMetaResponseBody(body.Pagination); err2 != nil {
+			err = goa.MergeErrors(err, err2)
 		}
 	}
 	return
 }
 
-// ValidateUpdateAccountResponseBody runs the validations defined on
-// UpdateAccountResponseBody
-func ValidateUpdateAccountResponseBody(body *UpdateAccountResponseBody) (err error) {
+// ValidateUpdateAccountNodeResponseBody runs the validations defined on
+// UpdateAccountNodeResponseBody
+func ValidateUpdateAccountNodeResponseBody(body *UpdateAccountNodeResponseBody) (err error) {
 	if body.ID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
 	}
-	if body.AccountCode == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_code", "body"))
+	if body.NodeType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("node_type", "body"))
 	}
-	if body.AccountName == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_name", "body"))
+	if body.Code == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("code", "body"))
 	}
-	if body.RootType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("root_type", "body"))
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
 	}
-	if body.AccountType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("account_type", "body"))
+	if body.Level == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("level", "body"))
 	}
-	if body.NormalBalance == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("normal_balance", "body"))
+	if body.Path == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("path", "body"))
+	}
+	if body.HasChildren == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("has_children", "body"))
+	}
+	if body.ChildCount == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("child_count", "body"))
 	}
 	if body.IsActive == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("is_active", "body"))
@@ -2064,26 +3053,13 @@ func ValidateUpdateAccountResponseBody(body *UpdateAccountResponseBody) (err err
 	if body.ID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
 	}
-	if body.TenantID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
+	if body.NodeType != nil {
+		if !(*body.NodeType == "account" || *body.NodeType == "group") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.node_type", *body.NodeType, []any{"account", "group"}))
+		}
 	}
-	if body.EntityID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
-	}
-	if body.ParentAccountID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_account_id", *body.ParentAccountID, goa.FormatUUID))
-	}
-	if body.AccountGroupID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_group_id", *body.AccountGroupID, goa.FormatUUID))
-	}
-	if body.AccountHeaderID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_header_id", *body.AccountHeaderID, goa.FormatUUID))
-	}
-	if body.LastTransactionDate != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_transaction_date", *body.LastTransactionDate, goa.FormatDateTime))
-	}
-	if body.LastValidationRun != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_validation_run", *body.LastValidationRun, goa.FormatDateTime))
+	if body.ParentID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_id", *body.ParentID, goa.FormatUUID))
 	}
 	if body.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
@@ -2091,21 +3067,30 @@ func ValidateUpdateAccountResponseBody(body *UpdateAccountResponseBody) (err err
 	if body.UpdatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
 	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
+	}
 	return
 }
 
-// ValidateGetAccountHierarchyResponseBody runs the validations defined on
-// GetAccountHierarchyResponseBody
-func ValidateGetAccountHierarchyResponseBody(body *GetAccountHierarchyResponseBody) (err error) {
-	if body.Accounts == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("accounts", "body"))
+// ValidateSearchAccountNodesResponseBody runs the validations defined on
+// SearchAccountNodesResponseBody
+func ValidateSearchAccountNodesResponseBody(body *SearchAccountNodesResponseBody) (err error) {
+	if body.Results == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("results", "body"))
 	}
-	if body.TotalCount == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("total_count", "body"))
+	if body.TotalResults == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("total_results", "body"))
 	}
-	for _, e := range body.Accounts {
+	if body.SearchDurationMs == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("search_duration_ms", "body"))
+	}
+	for _, e := range body.Results {
 		if e != nil {
-			if err2 := ValidateAccountResultResponseBody(e); err2 != nil {
+			if err2 := ValidateSearchResultItemResponseBody(e); err2 != nil {
 				err = goa.MergeErrors(err, err2)
 			}
 		}
@@ -2149,6 +3134,351 @@ func ValidateGetAccountBalanceResponseBody(body *GetAccountBalanceResponseBody) 
 	return
 }
 
+// ValidateGetHierarchyAnalysisResponseBody runs the validations defined on
+// GetHierarchyAnalysisResponseBody
+func ValidateGetHierarchyAnalysisResponseBody(body *GetHierarchyAnalysisResponseBody) (err error) {
+	if body.ParentID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("parent_id", "body"))
+	}
+	if body.HierarchyDepth == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("hierarchy_depth", "body"))
+	}
+	if body.TotalAccounts == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("total_accounts", "body"))
+	}
+	if body.TotalGroups == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("total_groups", "body"))
+	}
+	if body.TotalBalance == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("total_balance", "body"))
+	}
+	if body.ParentID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_id", *body.ParentID, goa.FormatUUID))
+	}
+	if body.AnalysisDate != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.analysis_date", *body.AnalysisDate, goa.FormatDate))
+	}
+	return
+}
+
+// ValidateCreateAccountResponseBody runs the validations defined on
+// CreateAccountResponseBody
+func ValidateCreateAccountResponseBody(body *CreateAccountResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.AccountCode == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_code", "body"))
+	}
+	if body.AccountName == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_name", "body"))
+	}
+	if body.RootType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("root_type", "body"))
+	}
+	if body.AccountType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_type", "body"))
+	}
+	if body.NormalBalance == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("normal_balance", "body"))
+	}
+	if body.IsActive == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("is_active", "body"))
+	}
+	if body.ID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
+	}
+	if body.TenantID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
+	}
+	if body.EntityID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
+	}
+	if body.ParentAccountID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_account_id", *body.ParentAccountID, goa.FormatUUID))
+	}
+	if body.LastTransactionDate != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_transaction_date", *body.LastTransactionDate, goa.FormatDateTime))
+	}
+	if body.CreatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
+	}
+	if body.UpdatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
+	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
+	}
+	return
+}
+
+// ValidateGetAccountResponseBody runs the validations defined on
+// GetAccountResponseBody
+func ValidateGetAccountResponseBody(body *GetAccountResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.AccountCode == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_code", "body"))
+	}
+	if body.AccountName == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_name", "body"))
+	}
+	if body.RootType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("root_type", "body"))
+	}
+	if body.AccountType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_type", "body"))
+	}
+	if body.NormalBalance == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("normal_balance", "body"))
+	}
+	if body.IsActive == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("is_active", "body"))
+	}
+	if body.ID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
+	}
+	if body.TenantID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
+	}
+	if body.EntityID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
+	}
+	if body.ParentAccountID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_account_id", *body.ParentAccountID, goa.FormatUUID))
+	}
+	if body.LastTransactionDate != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_transaction_date", *body.LastTransactionDate, goa.FormatDateTime))
+	}
+	if body.CreatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
+	}
+	if body.UpdatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
+	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
+	}
+	return
+}
+
+// ValidateGetAccountByCodeResponseBody runs the validations defined on
+// GetAccountByCodeResponseBody
+func ValidateGetAccountByCodeResponseBody(body *GetAccountByCodeResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.AccountCode == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_code", "body"))
+	}
+	if body.AccountName == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_name", "body"))
+	}
+	if body.RootType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("root_type", "body"))
+	}
+	if body.AccountType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_type", "body"))
+	}
+	if body.NormalBalance == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("normal_balance", "body"))
+	}
+	if body.IsActive == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("is_active", "body"))
+	}
+	if body.ID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
+	}
+	if body.TenantID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
+	}
+	if body.EntityID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
+	}
+	if body.ParentAccountID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_account_id", *body.ParentAccountID, goa.FormatUUID))
+	}
+	if body.LastTransactionDate != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_transaction_date", *body.LastTransactionDate, goa.FormatDateTime))
+	}
+	if body.CreatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
+	}
+	if body.UpdatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
+	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
+	}
+	return
+}
+
+// ValidateGetAccountByNameResponseBody runs the validations defined on
+// GetAccountByNameResponseBody
+func ValidateGetAccountByNameResponseBody(body *GetAccountByNameResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.AccountCode == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_code", "body"))
+	}
+	if body.AccountName == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_name", "body"))
+	}
+	if body.RootType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("root_type", "body"))
+	}
+	if body.AccountType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_type", "body"))
+	}
+	if body.NormalBalance == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("normal_balance", "body"))
+	}
+	if body.IsActive == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("is_active", "body"))
+	}
+	if body.ID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
+	}
+	if body.TenantID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
+	}
+	if body.EntityID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
+	}
+	if body.ParentAccountID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_account_id", *body.ParentAccountID, goa.FormatUUID))
+	}
+	if body.LastTransactionDate != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_transaction_date", *body.LastTransactionDate, goa.FormatDateTime))
+	}
+	if body.CreatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
+	}
+	if body.UpdatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
+	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
+	}
+	return
+}
+
+// ValidateListAccountsResponseBody runs the validations defined on
+// ListAccountsResponseBody
+func ValidateListAccountsResponseBody(body *ListAccountsResponseBody) (err error) {
+	if body.Accounts == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("accounts", "body"))
+	}
+	if body.Pagination == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("pagination", "body"))
+	}
+	for _, e := range body.Accounts {
+		if e != nil {
+			if err2 := ValidateAccountResultResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	if body.Pagination != nil {
+		if err2 := ValidatePaginationMetaResponseBody(body.Pagination); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
+// ValidateUpdateAccountResponseBody runs the validations defined on
+// UpdateAccountResponseBody
+func ValidateUpdateAccountResponseBody(body *UpdateAccountResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.AccountCode == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_code", "body"))
+	}
+	if body.AccountName == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_name", "body"))
+	}
+	if body.RootType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("root_type", "body"))
+	}
+	if body.AccountType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_type", "body"))
+	}
+	if body.NormalBalance == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("normal_balance", "body"))
+	}
+	if body.IsActive == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("is_active", "body"))
+	}
+	if body.ID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
+	}
+	if body.TenantID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
+	}
+	if body.EntityID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
+	}
+	if body.ParentAccountID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_account_id", *body.ParentAccountID, goa.FormatUUID))
+	}
+	if body.LastTransactionDate != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_transaction_date", *body.LastTransactionDate, goa.FormatDateTime))
+	}
+	if body.CreatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
+	}
+	if body.UpdatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
+	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
+	}
+	return
+}
+
+// ValidateGetAccountHierarchyResponseBody runs the validations defined on
+// GetAccountHierarchyResponseBody
+func ValidateGetAccountHierarchyResponseBody(body *GetAccountHierarchyResponseBody) (err error) {
+	if body.Accounts == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("accounts", "body"))
+	}
+	if body.Pagination == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("pagination", "body"))
+	}
+	for _, e := range body.Accounts {
+		if e != nil {
+			if err2 := ValidateAccountResultResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	if body.Pagination != nil {
+		if err2 := ValidatePaginationMetaResponseBody(body.Pagination); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
 // ValidateCreateTransactionResponseBody runs the validations defined on
 // CreateTransactionResponseBody
 func ValidateCreateTransactionResponseBody(body *CreateTransactionResponseBody) (err error) {
@@ -2161,8 +3491,11 @@ func ValidateCreateTransactionResponseBody(body *CreateTransactionResponseBody) 
 	if body.TransactionType == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_type", "body"))
 	}
-	if body.TransactionStatus == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_status", "body"))
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	}
+	if body.CurrentStage == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("current_stage", "body"))
 	}
 	if body.TransactionDate == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_date", "body"))
@@ -2179,17 +3512,36 @@ func ValidateCreateTransactionResponseBody(body *CreateTransactionResponseBody) 
 	if body.EntityID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
 	}
+	if body.Status != nil {
+		if !(*body.Status == "submitted" || *body.Status == "awaiting_approval" || *body.Status == "processing" || *body.Status == "posted" || *body.Status == "rejected" || *body.Status == "cancelled") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"submitted", "awaiting_approval", "processing", "posted", "rejected", "cancelled"}))
+		}
+	}
+	if body.CurrentStage != nil {
+		if !(*body.CurrentStage == "validation" || *body.CurrentStage == "manager_review" || *body.CurrentStage == "cfo_approval" || *body.CurrentStage == "posting" || *body.CurrentStage == "balance_update" || *body.CurrentStage == "completed") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.current_stage", *body.CurrentStage, []any{"validation", "manager_review", "cfo_approval", "posting", "balance_update", "completed"}))
+		}
+	}
 	if body.TransactionDate != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.transaction_date", *body.TransactionDate, goa.FormatDate))
 	}
 	if body.PostingDate != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.posting_date", *body.PostingDate, goa.FormatDate))
 	}
+	if body.EstimatedCompletion != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.estimated_completion", *body.EstimatedCompletion, goa.FormatDateTime))
+	}
 	if body.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
 	}
 	if body.UpdatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
+	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
 	}
 	return
 }
@@ -2220,7 +3572,7 @@ func ValidateGetTransactionResponseBody(body *GetTransactionResponseBody) (err e
 	}
 	for _, e := range body.ValidationErrors {
 		if e != nil {
-			if err2 := ValidateValidationErrorResultResponseBody(e); err2 != nil {
+			if err2 := ValidateValidationErrorResponseBody(e); err2 != nil {
 				err = goa.MergeErrors(err, err2)
 			}
 		}
@@ -2254,7 +3606,7 @@ func ValidateGetTransactionByNumberResponseBody(body *GetTransactionByNumberResp
 	}
 	for _, e := range body.ValidationErrors {
 		if e != nil {
-			if err2 := ValidateValidationErrorResultResponseBody(e); err2 != nil {
+			if err2 := ValidateValidationErrorResponseBody(e); err2 != nil {
 				err = goa.MergeErrors(err, err2)
 			}
 		}
@@ -2268,20 +3620,19 @@ func ValidateListTransactionsResponseBody(body *ListTransactionsResponseBody) (e
 	if body.Transactions == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("transactions", "body"))
 	}
-	if body.TotalCount == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("total_count", "body"))
-	}
-	if body.Limit == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("limit", "body"))
-	}
-	if body.Offset == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("offset", "body"))
+	if body.Pagination == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("pagination", "body"))
 	}
 	for _, e := range body.Transactions {
 		if e != nil {
 			if err2 := ValidateTransactionResultResponseBody(e); err2 != nil {
 				err = goa.MergeErrors(err, err2)
 			}
+		}
+	}
+	if body.Pagination != nil {
+		if err2 := ValidatePaginationMetaResponseBody(body.Pagination); err2 != nil {
+			err = goa.MergeErrors(err, err2)
 		}
 	}
 	return
@@ -2299,8 +3650,11 @@ func ValidatePostTransactionResponseBody(body *PostTransactionResponseBody) (err
 	if body.TransactionType == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_type", "body"))
 	}
-	if body.TransactionStatus == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_status", "body"))
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	}
+	if body.CurrentStage == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("current_stage", "body"))
 	}
 	if body.TransactionDate == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_date", "body"))
@@ -2317,17 +3671,36 @@ func ValidatePostTransactionResponseBody(body *PostTransactionResponseBody) (err
 	if body.EntityID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
 	}
+	if body.Status != nil {
+		if !(*body.Status == "submitted" || *body.Status == "awaiting_approval" || *body.Status == "processing" || *body.Status == "posted" || *body.Status == "rejected" || *body.Status == "cancelled") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"submitted", "awaiting_approval", "processing", "posted", "rejected", "cancelled"}))
+		}
+	}
+	if body.CurrentStage != nil {
+		if !(*body.CurrentStage == "validation" || *body.CurrentStage == "manager_review" || *body.CurrentStage == "cfo_approval" || *body.CurrentStage == "posting" || *body.CurrentStage == "balance_update" || *body.CurrentStage == "completed") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.current_stage", *body.CurrentStage, []any{"validation", "manager_review", "cfo_approval", "posting", "balance_update", "completed"}))
+		}
+	}
 	if body.TransactionDate != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.transaction_date", *body.TransactionDate, goa.FormatDate))
 	}
 	if body.PostingDate != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.posting_date", *body.PostingDate, goa.FormatDate))
 	}
+	if body.EstimatedCompletion != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.estimated_completion", *body.EstimatedCompletion, goa.FormatDateTime))
+	}
 	if body.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
 	}
 	if body.UpdatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
+	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
 	}
 	return
 }
@@ -2344,8 +3717,11 @@ func ValidateReverseTransactionResponseBody(body *ReverseTransactionResponseBody
 	if body.TransactionType == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_type", "body"))
 	}
-	if body.TransactionStatus == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_status", "body"))
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	}
+	if body.CurrentStage == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("current_stage", "body"))
 	}
 	if body.TransactionDate == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_date", "body"))
@@ -2362,17 +3738,36 @@ func ValidateReverseTransactionResponseBody(body *ReverseTransactionResponseBody
 	if body.EntityID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
 	}
+	if body.Status != nil {
+		if !(*body.Status == "submitted" || *body.Status == "awaiting_approval" || *body.Status == "processing" || *body.Status == "posted" || *body.Status == "rejected" || *body.Status == "cancelled") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"submitted", "awaiting_approval", "processing", "posted", "rejected", "cancelled"}))
+		}
+	}
+	if body.CurrentStage != nil {
+		if !(*body.CurrentStage == "validation" || *body.CurrentStage == "manager_review" || *body.CurrentStage == "cfo_approval" || *body.CurrentStage == "posting" || *body.CurrentStage == "balance_update" || *body.CurrentStage == "completed") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.current_stage", *body.CurrentStage, []any{"validation", "manager_review", "cfo_approval", "posting", "balance_update", "completed"}))
+		}
+	}
 	if body.TransactionDate != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.transaction_date", *body.TransactionDate, goa.FormatDate))
 	}
 	if body.PostingDate != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.posting_date", *body.PostingDate, goa.FormatDate))
 	}
+	if body.EstimatedCompletion != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.estimated_completion", *body.EstimatedCompletion, goa.FormatDateTime))
+	}
 	if body.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
 	}
 	if body.UpdatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
+	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
 	}
 	return
 }
@@ -2389,8 +3784,11 @@ func ValidateApproveTransactionResponseBody(body *ApproveTransactionResponseBody
 	if body.TransactionType == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_type", "body"))
 	}
-	if body.TransactionStatus == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_status", "body"))
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	}
+	if body.CurrentStage == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("current_stage", "body"))
 	}
 	if body.TransactionDate == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_date", "body"))
@@ -2407,17 +3805,36 @@ func ValidateApproveTransactionResponseBody(body *ApproveTransactionResponseBody
 	if body.EntityID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
 	}
+	if body.Status != nil {
+		if !(*body.Status == "submitted" || *body.Status == "awaiting_approval" || *body.Status == "processing" || *body.Status == "posted" || *body.Status == "rejected" || *body.Status == "cancelled") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"submitted", "awaiting_approval", "processing", "posted", "rejected", "cancelled"}))
+		}
+	}
+	if body.CurrentStage != nil {
+		if !(*body.CurrentStage == "validation" || *body.CurrentStage == "manager_review" || *body.CurrentStage == "cfo_approval" || *body.CurrentStage == "posting" || *body.CurrentStage == "balance_update" || *body.CurrentStage == "completed") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.current_stage", *body.CurrentStage, []any{"validation", "manager_review", "cfo_approval", "posting", "balance_update", "completed"}))
+		}
+	}
 	if body.TransactionDate != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.transaction_date", *body.TransactionDate, goa.FormatDate))
 	}
 	if body.PostingDate != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.posting_date", *body.PostingDate, goa.FormatDate))
 	}
+	if body.EstimatedCompletion != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.estimated_completion", *body.EstimatedCompletion, goa.FormatDateTime))
+	}
 	if body.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
 	}
 	if body.UpdatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
+	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
 	}
 	return
 }
@@ -2442,7 +3859,7 @@ func ValidateValidateTransactionResponseBody(body *ValidateTransactionResponseBo
 	}
 	for _, e := range body.Errors {
 		if e != nil {
-			if err2 := ValidateValidationErrorResultResponseBody(e); err2 != nil {
+			if err2 := ValidateValidationErrorResponseBody(e); err2 != nil {
 				err = goa.MergeErrors(err, err2)
 			}
 		}
@@ -2450,6 +3867,166 @@ func ValidateValidateTransactionResponseBody(body *ValidateTransactionResponseBo
 	for _, e := range body.Warnings {
 		if e != nil {
 			if err2 := ValidateValidationWarningResultResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}
+
+// ValidateGetTransactionStatusResponseBody runs the validations defined on
+// GetTransactionStatusResponseBody
+func ValidateGetTransactionStatusResponseBody(body *GetTransactionStatusResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.TransactionNumber == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_number", "body"))
+	}
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	}
+	if body.CurrentStage == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("current_stage", "body"))
+	}
+	if body.ProgressPercentage == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("progress_percentage", "body"))
+	}
+	if body.AvailableActions == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("available_actions", "body"))
+	}
+	if body.ID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
+	}
+	if body.Status != nil {
+		if !(*body.Status == "submitted" || *body.Status == "awaiting_approval" || *body.Status == "processing" || *body.Status == "posted" || *body.Status == "rejected" || *body.Status == "cancelled") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"submitted", "awaiting_approval", "processing", "posted", "rejected", "cancelled"}))
+		}
+	}
+	if body.CurrentStage != nil {
+		if !(*body.CurrentStage == "validation" || *body.CurrentStage == "manager_review" || *body.CurrentStage == "cfo_approval" || *body.CurrentStage == "posting" || *body.CurrentStage == "balance_update" || *body.CurrentStage == "completed") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.current_stage", *body.CurrentStage, []any{"validation", "manager_review", "cfo_approval", "posting", "balance_update", "completed"}))
+		}
+	}
+	if body.EstimatedCompletion != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.estimated_completion", *body.EstimatedCompletion, goa.FormatDateTime))
+	}
+	for _, e := range body.WorkflowHistory {
+		if e != nil {
+			if err2 := ValidateWorkflowStageResultResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	if body.NextApprover != nil {
+		if err2 := ValidateApproverResultResponseBody(body.NextApprover); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
+// ValidateSubmitApprovalDecisionResponseBody runs the validations defined on
+// SubmitApprovalDecisionResponseBody
+func ValidateSubmitApprovalDecisionResponseBody(body *SubmitApprovalDecisionResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	}
+	if body.CurrentStage == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("current_stage", "body"))
+	}
+	if body.ApprovalDecision == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("approval_decision", "body"))
+	}
+	if body.ID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
+	}
+	if body.ApprovalDecision != nil {
+		if err2 := ValidateApprovalDecisionDataResponseBody(body.ApprovalDecision); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	if body.EstimatedCompletion != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.estimated_completion", *body.EstimatedCompletion, goa.FormatDateTime))
+	}
+	return
+}
+
+// ValidateRequestTransactionChangesResponseBody runs the validations defined
+// on RequestTransactionChangesResponseBody
+func ValidateRequestTransactionChangesResponseBody(body *RequestTransactionChangesResponseBody) (err error) {
+	if body.ChangeRequestID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("change_request_id", "body"))
+	}
+	if body.TransactionID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_id", "body"))
+	}
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	}
+	if body.ChangeRequestID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.change_request_id", *body.ChangeRequestID, goa.FormatUUID))
+	}
+	if body.TransactionID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.transaction_id", *body.TransactionID, goa.FormatUUID))
+	}
+	if body.Status != nil {
+		if !(*body.Status == "pending" || *body.Status == "in_progress" || *body.Status == "completed" || *body.Status == "rejected") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"pending", "in_progress", "completed", "rejected"}))
+		}
+	}
+	if body.AssignedTo != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.assigned_to", *body.AssignedTo, goa.FormatUUID))
+	}
+	if body.DueDate != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.due_date", *body.DueDate, goa.FormatDateTime))
+	}
+	if body.CreatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
+	}
+	if body.UpdatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
+	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
+	}
+	return
+}
+
+// ValidateGetTransactionWorkflowResponseBody runs the validations defined on
+// GetTransactionWorkflowResponseBody
+func ValidateGetTransactionWorkflowResponseBody(body *GetTransactionWorkflowResponseBody) (err error) {
+	if body.TransactionID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_id", "body"))
+	}
+	if body.WorkflowTemplate == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("workflow_template", "body"))
+	}
+	if body.Stages == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("stages", "body"))
+	}
+	if body.AvailableActions == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("available_actions", "body"))
+	}
+	if body.TransactionID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.transaction_id", *body.TransactionID, goa.FormatUUID))
+	}
+	for _, e := range body.Stages {
+		if e != nil {
+			if err2 := ValidateWorkflowStageResultResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	for _, e := range body.EscalationRules {
+		if e != nil {
+			if err2 := ValidateEscalationRuleResultResponseBody(e); err2 != nil {
 				err = goa.MergeErrors(err, err2)
 			}
 		}
@@ -2488,8 +4065,155 @@ func ValidateGetTrialBalanceResponseBody(body *GetTrialBalanceResponseBody) (err
 			}
 		}
 	}
+	if body.Currency != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.currency", *body.Currency, "^[A-Z]{3}$"))
+	}
+	if body.EntityID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
+	}
 	if body.GeneratedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.generated_at", *body.GeneratedAt, goa.FormatDateTime))
+	}
+	if body.GeneratedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.generated_by", *body.GeneratedBy, goa.FormatUUID))
+	}
+	return
+}
+
+// ValidatePaginationRequestBody runs the validations defined on
+// PaginationRequestBody
+func ValidatePaginationRequestBody(body *PaginationRequestBody) (err error) {
+	if body.Page < 1 {
+		err = goa.MergeErrors(err, goa.InvalidRangeError("body.page", body.Page, 1, true))
+	}
+	if body.PageSize < 1 {
+		err = goa.MergeErrors(err, goa.InvalidRangeError("body.page_size", body.PageSize, 1, true))
+	}
+	if body.PageSize > 100 {
+		err = goa.MergeErrors(err, goa.InvalidRangeError("body.page_size", body.PageSize, 100, false))
+	}
+	if !(body.SortOrder == "asc" || body.SortOrder == "desc") {
+		err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.sort_order", body.SortOrder, []any{"asc", "desc"}))
+	}
+	return
+}
+
+// ValidateAccountNodeResultResponseBody runs the validations defined on
+// AccountNodeResultResponseBody
+func ValidateAccountNodeResultResponseBody(body *AccountNodeResultResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.NodeType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("node_type", "body"))
+	}
+	if body.Code == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("code", "body"))
+	}
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.Level == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("level", "body"))
+	}
+	if body.Path == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("path", "body"))
+	}
+	if body.HasChildren == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("has_children", "body"))
+	}
+	if body.ChildCount == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("child_count", "body"))
+	}
+	if body.IsActive == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("is_active", "body"))
+	}
+	if body.ID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
+	}
+	if body.NodeType != nil {
+		if !(*body.NodeType == "account" || *body.NodeType == "group") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.node_type", *body.NodeType, []any{"account", "group"}))
+		}
+	}
+	if body.ParentID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_id", *body.ParentID, goa.FormatUUID))
+	}
+	if body.CreatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
+	}
+	if body.UpdatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
+	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
+	}
+	return
+}
+
+// ValidatePaginationMetaResponseBody runs the validations defined on
+// PaginationMetaResponseBody
+func ValidatePaginationMetaResponseBody(body *PaginationMetaResponseBody) (err error) {
+	if body.CurrentPage == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("current_page", "body"))
+	}
+	if body.PageSize == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("page_size", "body"))
+	}
+	if body.TotalItems == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("total_items", "body"))
+	}
+	if body.TotalPages == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("total_pages", "body"))
+	}
+	if body.HasNext == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("has_next", "body"))
+	}
+	if body.HasPrev == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("has_prev", "body"))
+	}
+	return
+}
+
+// ValidateSearchResultItemResponseBody runs the validations defined on
+// SearchResultItemResponseBody
+func ValidateSearchResultItemResponseBody(body *SearchResultItemResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.NodeType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("node_type", "body"))
+	}
+	if body.Code == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("code", "body"))
+	}
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.Path == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("path", "body"))
+	}
+	if body.MatchType == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("match_type", "body"))
+	}
+	if body.RelevanceScore == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("relevance_score", "body"))
+	}
+	if body.ID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
+	}
+	if body.NodeType != nil {
+		if !(*body.NodeType == "account" || *body.NodeType == "group") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.node_type", *body.NodeType, []any{"account", "group"}))
+		}
+	}
+	if body.MatchType != nil {
+		if !(*body.MatchType == "NAME" || *body.MatchType == "CODE" || *body.MatchType == "DESCRIPTION") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.match_type", *body.MatchType, []any{"NAME", "CODE", "DESCRIPTION"}))
+		}
 	}
 	return
 }
@@ -2530,17 +4254,8 @@ func ValidateAccountResultResponseBody(body *AccountResultResponseBody) (err err
 	if body.ParentAccountID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_account_id", *body.ParentAccountID, goa.FormatUUID))
 	}
-	if body.AccountGroupID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_group_id", *body.AccountGroupID, goa.FormatUUID))
-	}
-	if body.AccountHeaderID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_header_id", *body.AccountHeaderID, goa.FormatUUID))
-	}
 	if body.LastTransactionDate != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_transaction_date", *body.LastTransactionDate, goa.FormatDateTime))
-	}
-	if body.LastValidationRun != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_validation_run", *body.LastValidationRun, goa.FormatDateTime))
 	}
 	if body.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
@@ -2548,13 +4263,27 @@ func ValidateAccountResultResponseBody(body *AccountResultResponseBody) (err err
 	if body.UpdatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
 	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
+	}
 	return
 }
 
 // ValidateTransactionEntryPayloadRequestBody runs the validations defined on
 // TransactionEntryPayloadRequestBody
 func ValidateTransactionEntryPayloadRequestBody(body *TransactionEntryPayloadRequestBody) (err error) {
-	err = goa.MergeErrors(err, goa.ValidateFormat("body.account_id", body.AccountID, goa.FormatUUID))
+	if body.AccountID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_id", *body.AccountID, goa.FormatUUID))
+	}
+	if body.DebitAmount != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.debit_amount", *body.DebitAmount, "^\\d+(\\.\\d{1,4})?$"))
+	}
+	if body.CreditAmount != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.credit_amount", *body.CreditAmount, "^\\d+(\\.\\d{1,4})?$"))
+	}
 	if utf8.RuneCountInString(body.Description) < 1 {
 		err = goa.MergeErrors(err, goa.InvalidLengthError("body.description", body.Description, utf8.RuneCountInString(body.Description), 1, true))
 	}
@@ -2579,8 +4308,11 @@ func ValidateTransactionResultResponseBody(body *TransactionResultResponseBody) 
 	if body.TransactionType == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_type", "body"))
 	}
-	if body.TransactionStatus == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_status", "body"))
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	}
+	if body.CurrentStage == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("current_stage", "body"))
 	}
 	if body.TransactionDate == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("transaction_date", "body"))
@@ -2597,17 +4329,36 @@ func ValidateTransactionResultResponseBody(body *TransactionResultResponseBody) 
 	if body.EntityID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
 	}
+	if body.Status != nil {
+		if !(*body.Status == "submitted" || *body.Status == "awaiting_approval" || *body.Status == "processing" || *body.Status == "posted" || *body.Status == "rejected" || *body.Status == "cancelled") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"submitted", "awaiting_approval", "processing", "posted", "rejected", "cancelled"}))
+		}
+	}
+	if body.CurrentStage != nil {
+		if !(*body.CurrentStage == "validation" || *body.CurrentStage == "manager_review" || *body.CurrentStage == "cfo_approval" || *body.CurrentStage == "posting" || *body.CurrentStage == "balance_update" || *body.CurrentStage == "completed") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.current_stage", *body.CurrentStage, []any{"validation", "manager_review", "cfo_approval", "posting", "balance_update", "completed"}))
+		}
+	}
 	if body.TransactionDate != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.transaction_date", *body.TransactionDate, goa.FormatDate))
 	}
 	if body.PostingDate != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.posting_date", *body.PostingDate, goa.FormatDate))
 	}
+	if body.EstimatedCompletion != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.estimated_completion", *body.EstimatedCompletion, goa.FormatDateTime))
+	}
 	if body.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
 	}
 	if body.UpdatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_at", *body.UpdatedAt, goa.FormatDateTime))
+	}
+	if body.CreatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_by", *body.CreatedBy, goa.FormatUUID))
+	}
+	if body.UpdatedBy != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
 	}
 	return
 }
@@ -2645,9 +4396,9 @@ func ValidateTransactionEntryResultResponseBody(body *TransactionEntryResultResp
 	return
 }
 
-// ValidateValidationErrorResultResponseBody runs the validations defined on
-// ValidationErrorResultResponseBody
-func ValidateValidationErrorResultResponseBody(body *ValidationErrorResultResponseBody) (err error) {
+// ValidateValidationErrorResponseBody runs the validations defined on
+// ValidationErrorResponseBody
+func ValidateValidationErrorResponseBody(body *ValidationErrorResponseBody) (err error) {
 	if body.Field == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("field", "body"))
 	}
@@ -2657,14 +4408,14 @@ func ValidateValidationErrorResultResponseBody(body *ValidationErrorResultRespon
 	if body.Code == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("code", "body"))
 	}
-	if body.Severity == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("severity", "body"))
-	}
-	if body.Severity != nil {
-		if !(*body.Severity == "ERROR" || *body.Severity == "WARNING" || *body.Severity == "INFO") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.severity", *body.Severity, []any{"ERROR", "WARNING", "INFO"}))
-		}
-	}
+	return
+}
+
+// ValidateTimeRangeRequestBody runs the validations defined on
+// TimeRangeRequestBody
+func ValidateTimeRangeRequestBody(body *TimeRangeRequestBody) (err error) {
+	err = goa.MergeErrors(err, goa.ValidateFormat("body.start_date", body.StartDate, goa.FormatDateTime))
+	err = goa.MergeErrors(err, goa.ValidateFormat("body.end_date", body.EndDate, goa.FormatDateTime))
 	return
 }
 
@@ -2677,8 +4428,8 @@ func ValidateCreateTransactionPayloadRequestBody(body *CreateTransactionPayloadR
 	if body.EntityID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", *body.EntityID, goa.FormatUUID))
 	}
-	if !(body.TransactionType == "MANUAL" || body.TransactionType == "SALES_INVOICE" || body.TransactionType == "PURCHASE_INVOICE" || body.TransactionType == "PAYMENT" || body.TransactionType == "RECEIPT" || body.TransactionType == "JOURNAL_ENTRY" || body.TransactionType == "BANK_TRANSFER" || body.TransactionType == "ADJUSTMENT" || body.TransactionType == "OPENING_BALANCE" || body.TransactionType == "CLOSING_ENTRY") {
-		err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.transaction_type", body.TransactionType, []any{"MANUAL", "SALES_INVOICE", "PURCHASE_INVOICE", "PAYMENT", "RECEIPT", "JOURNAL_ENTRY", "BANK_TRANSFER", "ADJUSTMENT", "OPENING_BALANCE", "CLOSING_ENTRY"}))
+	if !(body.TransactionType == "MANUAL" || body.TransactionType == "SALES_INVOICE" || body.TransactionType == "PURCHASE_INVOICE" || body.TransactionType == "EXPENSE_PAYMENT" || body.TransactionType == "PAYMENT" || body.TransactionType == "RECEIPT" || body.TransactionType == "JOURNAL_ENTRY" || body.TransactionType == "BANK_TRANSFER" || body.TransactionType == "ADJUSTMENT" || body.TransactionType == "OPENING_BALANCE" || body.TransactionType == "CLOSING_ENTRY") {
+		err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.transaction_type", body.TransactionType, []any{"MANUAL", "SALES_INVOICE", "PURCHASE_INVOICE", "EXPENSE_PAYMENT", "PAYMENT", "RECEIPT", "JOURNAL_ENTRY", "BANK_TRANSFER", "ADJUSTMENT", "OPENING_BALANCE", "CLOSING_ENTRY"}))
 	}
 	err = goa.MergeErrors(err, goa.ValidateFormat("body.transaction_date", body.TransactionDate, goa.FormatDate))
 	if utf8.RuneCountInString(body.Description) < 1 {
@@ -2687,7 +4438,7 @@ func ValidateCreateTransactionPayloadRequestBody(body *CreateTransactionPayloadR
 	if utf8.RuneCountInString(body.Description) > 1000 {
 		err = goa.MergeErrors(err, goa.InvalidLengthError("body.description", body.Description, utf8.RuneCountInString(body.Description), 1000, false))
 	}
-	err = goa.MergeErrors(err, goa.ValidatePattern("body.currency_code", body.CurrencyCode, "^[A-Z]{3}$"))
+	err = goa.MergeErrors(err, goa.ValidatePattern("body.currency", body.Currency, "^[A-Z]{3}$"))
 	if len(body.Entries) < 2 {
 		err = goa.MergeErrors(err, goa.InvalidLengthError("body.entries", body.Entries, len(body.Entries), 2, true))
 	}
@@ -2697,6 +4448,12 @@ func ValidateCreateTransactionPayloadRequestBody(body *CreateTransactionPayloadR
 				err = goa.MergeErrors(err, err2)
 			}
 		}
+	}
+	for _, e := range body.Attachments {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.attachments[*]", e, goa.FormatUUID))
+	}
+	if !(body.Priority == "low" || body.Priority == "normal" || body.Priority == "high" || body.Priority == "urgent") {
+		err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.priority", body.Priority, []any{"low", "normal", "high", "urgent"}))
 	}
 	return
 }
@@ -2712,6 +4469,140 @@ func ValidateValidationWarningResultResponseBody(body *ValidationWarningResultRe
 	}
 	if body.Code == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("code", "body"))
+	}
+	return
+}
+
+// ValidateWorkflowStageResultResponseBody runs the validations defined on
+// WorkflowStageResultResponseBody
+func ValidateWorkflowStageResultResponseBody(body *WorkflowStageResultResponseBody) (err error) {
+	if body.Stage == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("stage", "body"))
+	}
+	if body.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
+	}
+	if body.Status != nil {
+		if !(*body.Status == "pending" || *body.Status == "in_progress" || *body.Status == "completed" || *body.Status == "skipped" || *body.Status == "failed") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"pending", "in_progress", "completed", "skipped", "failed"}))
+		}
+	}
+	if body.StartedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.started_at", *body.StartedAt, goa.FormatDateTime))
+	}
+	if body.CompletedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.completed_at", *body.CompletedAt, goa.FormatDateTime))
+	}
+	if body.Actor != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.actor", *body.Actor, goa.FormatUUID))
+	}
+	if body.AssignedTo != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.assigned_to", *body.AssignedTo, goa.FormatUUID))
+	}
+	if body.DueDate != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.due_date", *body.DueDate, goa.FormatDateTime))
+	}
+	if body.ValidationResults != nil {
+		if err2 := ValidateValidationResultResponseBody(body.ValidationResults); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
+// ValidateValidationResultResponseBody runs the validations defined on
+// ValidationResultResponseBody
+func ValidateValidationResultResponseBody(body *ValidationResultResponseBody) (err error) {
+	if body.IsValid == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("is_valid", "body"))
+	}
+	if body.IsBalanced == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("is_balanced", "body"))
+	}
+	if body.TotalDebits == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("total_debits", "body"))
+	}
+	if body.TotalCredits == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("total_credits", "body"))
+	}
+	if body.ValidationLevel == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("validation_level", "body"))
+	}
+	for _, e := range body.Errors {
+		if e != nil {
+			if err2 := ValidateValidationErrorResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	for _, e := range body.Warnings {
+		if e != nil {
+			if err2 := ValidateValidationWarningResultResponseBody(e); err2 != nil {
+				err = goa.MergeErrors(err, err2)
+			}
+		}
+	}
+	return
+}
+
+// ValidateApproverResultResponseBody runs the validations defined on
+// ApproverResultResponseBody
+func ValidateApproverResultResponseBody(body *ApproverResultResponseBody) (err error) {
+	if body.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
+	}
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.Role == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("role", "body"))
+	}
+	if body.ID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
+	}
+	if body.Email != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.email", *body.Email, goa.FormatEmail))
+	}
+	return
+}
+
+// ValidateApprovalDecisionDataResponseBody runs the validations defined on
+// ApprovalDecisionDataResponseBody
+func ValidateApprovalDecisionDataResponseBody(body *ApprovalDecisionDataResponseBody) (err error) {
+	if body.Approver != nil {
+		if err2 := ValidateApproverResultResponseBody(body.Approver); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	if body.ApprovedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.approved_at", *body.ApprovedAt, goa.FormatDateTime))
+	}
+	return
+}
+
+// ValidateWorkflowActionResultResponseBody runs the validations defined on
+// WorkflowActionResultResponseBody
+func ValidateWorkflowActionResultResponseBody(body *WorkflowActionResultResponseBody) (err error) {
+	if body.Action == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("action", "body"))
+	}
+	if body.Label == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("label", "body"))
+	}
+	return
+}
+
+// ValidateEscalationRuleResultResponseBody runs the validations defined on
+// EscalationRuleResultResponseBody
+func ValidateEscalationRuleResultResponseBody(body *EscalationRuleResultResponseBody) (err error) {
+	if body.RuleName == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("rule_name", "body"))
+	}
+	if body.TriggerCondition == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("trigger_condition", "body"))
+	}
+	if body.EscalateTo != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.escalate_to", *body.EscalateTo, goa.FormatUUID))
 	}
 	return
 }
