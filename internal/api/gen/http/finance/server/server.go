@@ -26,7 +26,7 @@ type Server struct {
 	UpdateAccountNode         http.Handler
 	DeleteAccountNode         http.Handler
 	SearchAccountNodes        http.Handler
-	GetAccountBalance         http.Handler
+	GetAccountNodeBalance     http.Handler
 	GetHierarchyAnalysis      http.Handler
 	CreateAccount             http.Handler
 	GetAccount                http.Handler
@@ -36,6 +36,7 @@ type Server struct {
 	UpdateAccount             http.Handler
 	DeleteAccount             http.Handler
 	GetAccountHierarchy       http.Handler
+	GetAccountBalance         http.Handler
 	CreateTransaction         http.Handler
 	GetTransaction            http.Handler
 	GetTransactionByNumber    http.Handler
@@ -85,7 +86,7 @@ func New(
 			{"UpdateAccountNode", "PUT", "/api/v1/finance/{id}"},
 			{"DeleteAccountNode", "DELETE", "/api/v1/finance/{id}"},
 			{"SearchAccountNodes", "GET", "/api/v1/finance/accounts/search"},
-			{"GetAccountBalance", "GET", "/api/v1/finance/accounts/{account_id}/balance"},
+			{"GetAccountNodeBalance", "GET", "/api/v1/finance/accounts/{account_id}/balance"},
 			{"GetHierarchyAnalysis", "GET", "/api/v1/finance/analytics/hierarchy/{parent_id}"},
 			{"CreateAccount", "POST", "/api/v1/finance/legacy/accounts"},
 			{"GetAccount", "GET", "/api/v1/finance/{id}"},
@@ -95,6 +96,7 @@ func New(
 			{"UpdateAccount", "PUT", "/api/v1/finance/{id}"},
 			{"DeleteAccount", "DELETE", "/api/v1/finance/{id}"},
 			{"GetAccountHierarchy", "GET", "/api/v1/finance/accounts/hierarchy"},
+			{"GetAccountBalance", "GET", "/api/v1/finance/accounts/{account_id}/balance"},
 			{"CreateTransaction", "POST", "/api/v1/finance/transactions"},
 			{"GetTransaction", "GET", "/api/v1/finance/transactions/{id}"},
 			{"GetTransactionByNumber", "GET", "/api/v1/finance/transactions/by-number/{transaction_number}"},
@@ -116,7 +118,7 @@ func New(
 		UpdateAccountNode:         NewUpdateAccountNodeHandler(e.UpdateAccountNode, mux, decoder, encoder, errhandler, formatter),
 		DeleteAccountNode:         NewDeleteAccountNodeHandler(e.DeleteAccountNode, mux, decoder, encoder, errhandler, formatter),
 		SearchAccountNodes:        NewSearchAccountNodesHandler(e.SearchAccountNodes, mux, decoder, encoder, errhandler, formatter),
-		GetAccountBalance:         NewGetAccountBalanceHandler(e.GetAccountBalance, mux, decoder, encoder, errhandler, formatter),
+		GetAccountNodeBalance:     NewGetAccountNodeBalanceHandler(e.GetAccountNodeBalance, mux, decoder, encoder, errhandler, formatter),
 		GetHierarchyAnalysis:      NewGetHierarchyAnalysisHandler(e.GetHierarchyAnalysis, mux, decoder, encoder, errhandler, formatter),
 		CreateAccount:             NewCreateAccountHandler(e.CreateAccount, mux, decoder, encoder, errhandler, formatter),
 		GetAccount:                NewGetAccountHandler(e.GetAccount, mux, decoder, encoder, errhandler, formatter),
@@ -126,6 +128,7 @@ func New(
 		UpdateAccount:             NewUpdateAccountHandler(e.UpdateAccount, mux, decoder, encoder, errhandler, formatter),
 		DeleteAccount:             NewDeleteAccountHandler(e.DeleteAccount, mux, decoder, encoder, errhandler, formatter),
 		GetAccountHierarchy:       NewGetAccountHierarchyHandler(e.GetAccountHierarchy, mux, decoder, encoder, errhandler, formatter),
+		GetAccountBalance:         NewGetAccountBalanceHandler(e.GetAccountBalance, mux, decoder, encoder, errhandler, formatter),
 		CreateTransaction:         NewCreateTransactionHandler(e.CreateTransaction, mux, decoder, encoder, errhandler, formatter),
 		GetTransaction:            NewGetTransactionHandler(e.GetTransaction, mux, decoder, encoder, errhandler, formatter),
 		GetTransactionByNumber:    NewGetTransactionByNumberHandler(e.GetTransactionByNumber, mux, decoder, encoder, errhandler, formatter),
@@ -154,7 +157,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.UpdateAccountNode = m(s.UpdateAccountNode)
 	s.DeleteAccountNode = m(s.DeleteAccountNode)
 	s.SearchAccountNodes = m(s.SearchAccountNodes)
-	s.GetAccountBalance = m(s.GetAccountBalance)
+	s.GetAccountNodeBalance = m(s.GetAccountNodeBalance)
 	s.GetHierarchyAnalysis = m(s.GetHierarchyAnalysis)
 	s.CreateAccount = m(s.CreateAccount)
 	s.GetAccount = m(s.GetAccount)
@@ -164,6 +167,7 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.UpdateAccount = m(s.UpdateAccount)
 	s.DeleteAccount = m(s.DeleteAccount)
 	s.GetAccountHierarchy = m(s.GetAccountHierarchy)
+	s.GetAccountBalance = m(s.GetAccountBalance)
 	s.CreateTransaction = m(s.CreateTransaction)
 	s.GetTransaction = m(s.GetTransaction)
 	s.GetTransactionByNumber = m(s.GetTransactionByNumber)
@@ -191,7 +195,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountUpdateAccountNodeHandler(mux, h.UpdateAccountNode)
 	MountDeleteAccountNodeHandler(mux, h.DeleteAccountNode)
 	MountSearchAccountNodesHandler(mux, h.SearchAccountNodes)
-	MountGetAccountBalanceHandler(mux, h.GetAccountBalance)
+	MountGetAccountNodeBalanceHandler(mux, h.GetAccountNodeBalance)
 	MountGetHierarchyAnalysisHandler(mux, h.GetHierarchyAnalysis)
 	MountCreateAccountHandler(mux, h.CreateAccount)
 	MountGetAccountHandler(mux, h.GetAccount)
@@ -201,6 +205,7 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountUpdateAccountHandler(mux, h.UpdateAccount)
 	MountDeleteAccountHandler(mux, h.DeleteAccount)
 	MountGetAccountHierarchyHandler(mux, h.GetAccountHierarchy)
+	MountGetAccountBalanceHandler(mux, h.GetAccountBalance)
 	MountCreateTransactionHandler(mux, h.CreateTransaction)
 	MountGetTransactionHandler(mux, h.GetTransaction)
 	MountGetTransactionByNumberHandler(mux, h.GetTransactionByNumber)
@@ -592,9 +597,9 @@ func NewSearchAccountNodesHandler(
 	})
 }
 
-// MountGetAccountBalanceHandler configures the mux to serve the "finance"
-// service "getAccountBalance" endpoint.
-func MountGetAccountBalanceHandler(mux goahttp.Muxer, h http.Handler) {
+// MountGetAccountNodeBalanceHandler configures the mux to serve the "finance"
+// service "getAccountNodeBalance" endpoint.
+func MountGetAccountNodeBalanceHandler(mux goahttp.Muxer, h http.Handler) {
 	f, ok := h.(http.HandlerFunc)
 	if !ok {
 		f = func(w http.ResponseWriter, r *http.Request) {
@@ -604,9 +609,9 @@ func MountGetAccountBalanceHandler(mux goahttp.Muxer, h http.Handler) {
 	mux.Handle("GET", "/api/v1/finance/accounts/{account_id}/balance", f)
 }
 
-// NewGetAccountBalanceHandler creates a HTTP handler which loads the HTTP
-// request and calls the "finance" service "getAccountBalance" endpoint.
-func NewGetAccountBalanceHandler(
+// NewGetAccountNodeBalanceHandler creates a HTTP handler which loads the HTTP
+// request and calls the "finance" service "getAccountNodeBalance" endpoint.
+func NewGetAccountNodeBalanceHandler(
 	endpoint goa.Endpoint,
 	mux goahttp.Muxer,
 	decoder func(*http.Request) goahttp.Decoder,
@@ -615,13 +620,13 @@ func NewGetAccountBalanceHandler(
 	formatter func(ctx context.Context, err error) goahttp.Statuser,
 ) http.Handler {
 	var (
-		decodeRequest  = DecodeGetAccountBalanceRequest(mux, decoder)
-		encodeResponse = EncodeGetAccountBalanceResponse(encoder)
+		decodeRequest  = DecodeGetAccountNodeBalanceRequest(mux, decoder)
+		encodeResponse = EncodeGetAccountNodeBalanceResponse(encoder)
 		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
 	)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
-		ctx = context.WithValue(ctx, goa.MethodKey, "getAccountBalance")
+		ctx = context.WithValue(ctx, goa.MethodKey, "getAccountNodeBalance")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
 		payload, err := decodeRequest(r)
 		if err != nil {
@@ -1099,6 +1104,59 @@ func NewGetAccountHierarchyHandler(
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
 		ctx = context.WithValue(ctx, goa.MethodKey, "getAccountHierarchy")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountGetAccountBalanceHandler configures the mux to serve the "finance"
+// service "getAccountBalance" endpoint.
+func MountGetAccountBalanceHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/api/v1/finance/accounts/{account_id}/balance", f)
+}
+
+// NewGetAccountBalanceHandler creates a HTTP handler which loads the HTTP
+// request and calls the "finance" service "getAccountBalance" endpoint.
+func NewGetAccountBalanceHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeGetAccountBalanceRequest(mux, decoder)
+		encodeResponse = EncodeGetAccountBalanceResponse(encoder)
+		encodeError    = goahttp.ErrorEncoder(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "getAccountBalance")
 		ctx = context.WithValue(ctx, goa.ServiceKey, "finance")
 		payload, err := decodeRequest(r)
 		if err != nil {

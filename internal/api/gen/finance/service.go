@@ -29,8 +29,8 @@ type Service interface {
 	DeleteAccountNode(context.Context, *DeleteAccountNodePayload) (err error)
 	// Search accounts and groups
 	SearchAccountNodes(context.Context, *SearchAccountNodesPayload) (res *SearchAccountNodesResult, err error)
-	// Get current balance for an account
-	GetAccountBalance(context.Context, *GetAccountBalancePayload) (res *AccountBalanceResult, err error)
+	// Get current balance for an account node
+	GetAccountNodeBalance(context.Context, *GetAccountBalancePayload) (res *AccountBalanceResult, err error)
 	// Get hierarchy analysis for a parent node
 	GetHierarchyAnalysis(context.Context, *GetHierarchyAnalysisPayload) (res *HierarchyAnalysisResult, err error)
 	// Create a new chart of accounts entry
@@ -50,7 +50,7 @@ type Service interface {
 	// Get account hierarchy tree
 	GetAccountHierarchy(context.Context, *GetAccountHierarchyPayload) (res *AccountListResult, err error)
 	// Get current balance for an account
-	GetAccountBalanceEndpoint(context.Context, *GetAccountBalancePayload) (res *AccountBalanceResult, err error)
+	GetAccountBalance(context.Context, *GetAccountBalancePayload) (res *AccountBalanceResult, err error)
 	// Create a new financial transaction
 	CreateTransaction(context.Context, *CreateTransactionPayload) (res *TransactionResult, err error)
 	// Get transaction by ID with entries
@@ -93,10 +93,10 @@ const ServiceName = "finance"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [31]string{"createAccountNode", "getAccountNode", "getAccountNodeByCode", "listAccountNodes", "updateAccountNode", "deleteAccountNode", "searchAccountNodes", "getAccountBalance", "getHierarchyAnalysis", "createAccount", "getAccount", "getAccountByCode", "getAccountByName", "listAccounts", "updateAccount", "deleteAccount", "getAccountHierarchy", "getAccountBalance", "createTransaction", "getTransaction", "getTransactionByNumber", "listTransactions", "postTransaction", "reverseTransaction", "approveTransaction", "validateTransaction", "getTransactionStatus", "submitApprovalDecision", "requestTransactionChanges", "getTransactionWorkflow", "getTrialBalance"}
+var MethodNames = [31]string{"createAccountNode", "getAccountNode", "getAccountNodeByCode", "listAccountNodes", "updateAccountNode", "deleteAccountNode", "searchAccountNodes", "getAccountNodeBalance", "getHierarchyAnalysis", "createAccount", "getAccount", "getAccountByCode", "getAccountByName", "listAccounts", "updateAccount", "deleteAccount", "getAccountHierarchy", "getAccountBalance", "createTransaction", "getTransaction", "getTransactionByNumber", "listTransactions", "postTransaction", "reverseTransaction", "approveTransaction", "validateTransaction", "getTransactionStatus", "submitApprovalDecision", "requestTransactionChanges", "getTransactionWorkflow", "getTrialBalance"}
 
 // AccountBalanceResult is the result type of the finance service
-// getAccountBalance method.
+// getAccountNodeBalance method.
 type AccountBalanceResult struct {
 	// Account ID
 	AccountID string
@@ -496,7 +496,7 @@ type EscalationRuleResult struct {
 }
 
 // GetAccountBalancePayload is the payload type of the finance service
-// getAccountBalance method.
+// getAccountNodeBalance method.
 type GetAccountBalancePayload struct {
 	// Account ID
 	AccountID string

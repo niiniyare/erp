@@ -520,13 +520,13 @@ func BuildSearchAccountNodesPayload(financeSearchAccountNodesQuery string, finan
 	return v, nil
 }
 
-// BuildGetAccountBalancePayload builds the payload for the finance
-// getAccountBalance endpoint from CLI flags.
-func BuildGetAccountBalancePayload(financeGetAccountBalanceAccountID string, financeGetAccountBalanceAsOfDate string) (*finance.GetAccountBalancePayload, error) {
+// BuildGetAccountNodeBalancePayload builds the payload for the finance
+// getAccountNodeBalance endpoint from CLI flags.
+func BuildGetAccountNodeBalancePayload(financeGetAccountNodeBalanceAccountID string, financeGetAccountNodeBalanceAsOfDate string) (*finance.GetAccountBalancePayload, error) {
 	var err error
 	var accountID string
 	{
-		accountID = financeGetAccountBalanceAccountID
+		accountID = financeGetAccountNodeBalanceAccountID
 		err = goa.MergeErrors(err, goa.ValidateFormat("account_id", accountID, goa.FormatUUID))
 		if err != nil {
 			return nil, err
@@ -534,8 +534,8 @@ func BuildGetAccountBalancePayload(financeGetAccountBalanceAccountID string, fin
 	}
 	var asOfDate *string
 	{
-		if financeGetAccountBalanceAsOfDate != "" {
-			asOfDate = &financeGetAccountBalanceAsOfDate
+		if financeGetAccountNodeBalanceAsOfDate != "" {
+			asOfDate = &financeGetAccountNodeBalanceAsOfDate
 			err = goa.MergeErrors(err, goa.ValidateFormat("as_of_date", *asOfDate, goa.FormatDate))
 			if err != nil {
 				return nil, err
@@ -904,6 +904,35 @@ func BuildGetAccountHierarchyPayload(financeGetAccountHierarchyRootID string) (*
 	return v, nil
 }
 
+// BuildGetAccountBalancePayload builds the payload for the finance
+// getAccountBalance endpoint from CLI flags.
+func BuildGetAccountBalancePayload(financeGetAccountBalanceAccountID string, financeGetAccountBalanceAsOfDate string) (*finance.GetAccountBalancePayload, error) {
+	var err error
+	var accountID string
+	{
+		accountID = financeGetAccountBalanceAccountID
+		err = goa.MergeErrors(err, goa.ValidateFormat("account_id", accountID, goa.FormatUUID))
+		if err != nil {
+			return nil, err
+		}
+	}
+	var asOfDate *string
+	{
+		if financeGetAccountBalanceAsOfDate != "" {
+			asOfDate = &financeGetAccountBalanceAsOfDate
+			err = goa.MergeErrors(err, goa.ValidateFormat("as_of_date", *asOfDate, goa.FormatDate))
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	v := &finance.GetAccountBalancePayload{}
+	v.AccountID = accountID
+	v.AsOfDate = asOfDate
+
+	return v, nil
+}
+
 // BuildCreateTransactionPayload builds the payload for the finance
 // createTransaction endpoint from CLI flags.
 func BuildCreateTransactionPayload(financeCreateTransactionBody string) (*finance.CreateTransactionPayload, error) {
@@ -912,7 +941,7 @@ func BuildCreateTransactionPayload(financeCreateTransactionBody string) (*financ
 	{
 		err = json.Unmarshal([]byte(financeCreateTransactionBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"attachments\": [\n         \"receipt-uuid\",\n         \"approval-form-uuid\"\n      ],\n      \"auto_approve\": true,\n      \"cost_center\": \"CC001\",\n      \"currency\": \"OVR\",\n      \"department\": \"administration\",\n      \"description\": \"Office supplies purchase\",\n      \"entity_id\": \"26a4a848-d1ac-48aa-b23a-23589570e135\",\n      \"entries\": [\n         {\n            \"account_code\": \"1100\",\n            \"account_id\": \"ef866680-2edf-4aa2-aef8-df80904f4b55\",\n            \"cost_center\": \"Autem voluptatum et odio minima neque.\",\n            \"credit_amount\": \"0.00\",\n            \"debit_amount\": \"1500.00\",\n            \"department\": \"Et voluptas alias et harum sapiente.\",\n            \"description\": \"Cash payment for supplies\",\n            \"project_id\": \"92fb89c1-ff41-492b-9b0f-7aaa9ffeebe9\",\n            \"reference\": \"Quod aut.\",\n            \"tax_code\": \"Est eos aut accusamus placeat.\",\n            \"tax_rate\": \"Fugit rerum aspernatur accusantium expedita.\"\n         },\n         {\n            \"account_code\": \"1100\",\n            \"account_id\": \"ef866680-2edf-4aa2-aef8-df80904f4b55\",\n            \"cost_center\": \"Autem voluptatum et odio minima neque.\",\n            \"credit_amount\": \"0.00\",\n            \"debit_amount\": \"1500.00\",\n            \"department\": \"Et voluptas alias et harum sapiente.\",\n            \"description\": \"Cash payment for supplies\",\n            \"project_id\": \"92fb89c1-ff41-492b-9b0f-7aaa9ffeebe9\",\n            \"reference\": \"Quod aut.\",\n            \"tax_code\": \"Est eos aut accusamus placeat.\",\n            \"tax_rate\": \"Fugit rerum aspernatur accusantium expedita.\"\n         },\n         {\n            \"account_code\": \"1100\",\n            \"account_id\": \"ef866680-2edf-4aa2-aef8-df80904f4b55\",\n            \"cost_center\": \"Autem voluptatum et odio minima neque.\",\n            \"credit_amount\": \"0.00\",\n            \"debit_amount\": \"1500.00\",\n            \"department\": \"Et voluptas alias et harum sapiente.\",\n            \"description\": \"Cash payment for supplies\",\n            \"project_id\": \"92fb89c1-ff41-492b-9b0f-7aaa9ffeebe9\",\n            \"reference\": \"Quod aut.\",\n            \"tax_code\": \"Est eos aut accusamus placeat.\",\n            \"tax_rate\": \"Fugit rerum aspernatur accusantium expedita.\"\n         }\n      ],\n      \"priority\": \"urgent\",\n      \"reference_number\": \"PO-2025-089\",\n      \"transaction_date\": \"2025-09-13\",\n      \"transaction_number\": \"Non officia qui qui a sit placeat.\",\n      \"transaction_type\": \"EXPENSE_PAYMENT\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"attachments\": [\n         \"receipt-uuid\",\n         \"approval-form-uuid\"\n      ],\n      \"auto_approve\": true,\n      \"cost_center\": \"CC001\",\n      \"currency\": \"CND\",\n      \"department\": \"administration\",\n      \"description\": \"Office supplies purchase\",\n      \"entity_id\": \"a11f03ef-d2bb-4544-ba9b-acbda43ceaf3\",\n      \"entries\": [\n         {\n            \"account_code\": \"1100\",\n            \"account_id\": \"d3beaa70-e1ac-4ba6-8fec-79a35d65c374\",\n            \"cost_center\": \"Eos quas molestiae.\",\n            \"credit_amount\": \"0.00\",\n            \"debit_amount\": \"1500.00\",\n            \"department\": \"Aut eligendi.\",\n            \"description\": \"Cash payment for supplies\",\n            \"project_id\": \"57b059b9-f88a-4dc9-b02a-c937a2c1a96c\",\n            \"reference\": \"Reiciendis nemo dolorem.\",\n            \"tax_code\": \"Aliquam ipsa voluptas rerum culpa deserunt.\",\n            \"tax_rate\": \"Rerum hic ex aspernatur velit alias.\"\n         },\n         {\n            \"account_code\": \"1100\",\n            \"account_id\": \"d3beaa70-e1ac-4ba6-8fec-79a35d65c374\",\n            \"cost_center\": \"Eos quas molestiae.\",\n            \"credit_amount\": \"0.00\",\n            \"debit_amount\": \"1500.00\",\n            \"department\": \"Aut eligendi.\",\n            \"description\": \"Cash payment for supplies\",\n            \"project_id\": \"57b059b9-f88a-4dc9-b02a-c937a2c1a96c\",\n            \"reference\": \"Reiciendis nemo dolorem.\",\n            \"tax_code\": \"Aliquam ipsa voluptas rerum culpa deserunt.\",\n            \"tax_rate\": \"Rerum hic ex aspernatur velit alias.\"\n         },\n         {\n            \"account_code\": \"1100\",\n            \"account_id\": \"d3beaa70-e1ac-4ba6-8fec-79a35d65c374\",\n            \"cost_center\": \"Eos quas molestiae.\",\n            \"credit_amount\": \"0.00\",\n            \"debit_amount\": \"1500.00\",\n            \"department\": \"Aut eligendi.\",\n            \"description\": \"Cash payment for supplies\",\n            \"project_id\": \"57b059b9-f88a-4dc9-b02a-c937a2c1a96c\",\n            \"reference\": \"Reiciendis nemo dolorem.\",\n            \"tax_code\": \"Aliquam ipsa voluptas rerum culpa deserunt.\",\n            \"tax_rate\": \"Rerum hic ex aspernatur velit alias.\"\n         }\n      ],\n      \"priority\": \"urgent\",\n      \"reference_number\": \"PO-2025-089\",\n      \"transaction_date\": \"2025-09-13\",\n      \"transaction_number\": \"Aliquam minus ut eum.\",\n      \"transaction_type\": \"EXPENSE_PAYMENT\"\n   }'")
 		}
 		if body.Entries == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("entries", "body"))
@@ -1105,7 +1134,7 @@ func BuildPostTransactionPayload(financePostTransactionBody string, financePostT
 	{
 		err = json.Unmarshal([]byte(financePostTransactionBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"force_post\": true,\n      \"posting_date\": \"1980-07-24\",\n      \"validate_before_posting\": false\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"force_post\": true,\n      \"posting_date\": \"2011-06-27\",\n      \"validate_before_posting\": true\n   }'")
 		}
 		if body.PostingDate != nil {
 			err = goa.MergeErrors(err, goa.ValidateFormat("body.posting_date", *body.PostingDate, goa.FormatDate))
@@ -1152,7 +1181,7 @@ func BuildReverseTransactionPayload(financeReverseTransactionBody string, financ
 	{
 		err = json.Unmarshal([]byte(financeReverseTransactionBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"reason\": \"Incorrect entry - duplicate payment\",\n      \"reversal_date\": \"2010-07-06\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"reason\": \"Incorrect entry - duplicate payment\",\n      \"reversal_date\": \"1994-01-14\"\n   }'")
 		}
 		if utf8.RuneCountInString(body.Reason) < 1 {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", body.Reason, utf8.RuneCountInString(body.Reason), 1, true))
@@ -1192,7 +1221,7 @@ func BuildApproveTransactionPayload(financeApproveTransactionBody string, financ
 	{
 		err = json.Unmarshal([]byte(financeApproveTransactionBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"notes\": \"tqk\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"notes\": \"u5f\"\n   }'")
 		}
 		if body.Notes != nil {
 			if utf8.RuneCountInString(*body.Notes) > 1000 {
@@ -1227,7 +1256,7 @@ func BuildValidateTransactionPayload(financeValidateTransactionBody string) (*fi
 	{
 		err = json.Unmarshal([]byte(financeValidateTransactionBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"transaction\": {\n         \"attachments\": [\n            \"receipt-uuid\",\n            \"approval-form-uuid\"\n         ],\n         \"auto_approve\": true,\n         \"cost_center\": \"CC001\",\n         \"currency\": \"FWN\",\n         \"department\": \"administration\",\n         \"description\": \"Office supplies purchase\",\n         \"entity_id\": \"cd263e38-1cf0-49b2-a6a4-1bde1fa69f93\",\n         \"entries\": [\n            {\n               \"account_code\": \"1100\",\n               \"account_id\": \"ef866680-2edf-4aa2-aef8-df80904f4b55\",\n               \"cost_center\": \"Autem voluptatum et odio minima neque.\",\n               \"credit_amount\": \"0.00\",\n               \"debit_amount\": \"1500.00\",\n               \"department\": \"Et voluptas alias et harum sapiente.\",\n               \"description\": \"Cash payment for supplies\",\n               \"project_id\": \"92fb89c1-ff41-492b-9b0f-7aaa9ffeebe9\",\n               \"reference\": \"Quod aut.\",\n               \"tax_code\": \"Est eos aut accusamus placeat.\",\n               \"tax_rate\": \"Fugit rerum aspernatur accusantium expedita.\"\n            },\n            {\n               \"account_code\": \"1100\",\n               \"account_id\": \"ef866680-2edf-4aa2-aef8-df80904f4b55\",\n               \"cost_center\": \"Autem voluptatum et odio minima neque.\",\n               \"credit_amount\": \"0.00\",\n               \"debit_amount\": \"1500.00\",\n               \"department\": \"Et voluptas alias et harum sapiente.\",\n               \"description\": \"Cash payment for supplies\",\n               \"project_id\": \"92fb89c1-ff41-492b-9b0f-7aaa9ffeebe9\",\n               \"reference\": \"Quod aut.\",\n               \"tax_code\": \"Est eos aut accusamus placeat.\",\n               \"tax_rate\": \"Fugit rerum aspernatur accusantium expedita.\"\n            },\n            {\n               \"account_code\": \"1100\",\n               \"account_id\": \"ef866680-2edf-4aa2-aef8-df80904f4b55\",\n               \"cost_center\": \"Autem voluptatum et odio minima neque.\",\n               \"credit_amount\": \"0.00\",\n               \"debit_amount\": \"1500.00\",\n               \"department\": \"Et voluptas alias et harum sapiente.\",\n               \"description\": \"Cash payment for supplies\",\n               \"project_id\": \"92fb89c1-ff41-492b-9b0f-7aaa9ffeebe9\",\n               \"reference\": \"Quod aut.\",\n               \"tax_code\": \"Est eos aut accusamus placeat.\",\n               \"tax_rate\": \"Fugit rerum aspernatur accusantium expedita.\"\n            }\n         ],\n         \"priority\": \"urgent\",\n         \"reference_number\": \"PO-2025-089\",\n         \"transaction_date\": \"2025-09-13\",\n         \"transaction_number\": \"Officiis rerum necessitatibus qui perferendis corrupti minima.\",\n         \"transaction_type\": \"EXPENSE_PAYMENT\"\n      },\n      \"validation_level\": \"COMPLETE\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"transaction\": {\n         \"attachments\": [\n            \"receipt-uuid\",\n            \"approval-form-uuid\"\n         ],\n         \"auto_approve\": false,\n         \"cost_center\": \"CC001\",\n         \"currency\": \"YZQ\",\n         \"department\": \"administration\",\n         \"description\": \"Office supplies purchase\",\n         \"entity_id\": \"ce646e94-f8f2-42c9-a6db-fc18e7ea2bb0\",\n         \"entries\": [\n            {\n               \"account_code\": \"1100\",\n               \"account_id\": \"d3beaa70-e1ac-4ba6-8fec-79a35d65c374\",\n               \"cost_center\": \"Eos quas molestiae.\",\n               \"credit_amount\": \"0.00\",\n               \"debit_amount\": \"1500.00\",\n               \"department\": \"Aut eligendi.\",\n               \"description\": \"Cash payment for supplies\",\n               \"project_id\": \"57b059b9-f88a-4dc9-b02a-c937a2c1a96c\",\n               \"reference\": \"Reiciendis nemo dolorem.\",\n               \"tax_code\": \"Aliquam ipsa voluptas rerum culpa deserunt.\",\n               \"tax_rate\": \"Rerum hic ex aspernatur velit alias.\"\n            },\n            {\n               \"account_code\": \"1100\",\n               \"account_id\": \"d3beaa70-e1ac-4ba6-8fec-79a35d65c374\",\n               \"cost_center\": \"Eos quas molestiae.\",\n               \"credit_amount\": \"0.00\",\n               \"debit_amount\": \"1500.00\",\n               \"department\": \"Aut eligendi.\",\n               \"description\": \"Cash payment for supplies\",\n               \"project_id\": \"57b059b9-f88a-4dc9-b02a-c937a2c1a96c\",\n               \"reference\": \"Reiciendis nemo dolorem.\",\n               \"tax_code\": \"Aliquam ipsa voluptas rerum culpa deserunt.\",\n               \"tax_rate\": \"Rerum hic ex aspernatur velit alias.\"\n            },\n            {\n               \"account_code\": \"1100\",\n               \"account_id\": \"d3beaa70-e1ac-4ba6-8fec-79a35d65c374\",\n               \"cost_center\": \"Eos quas molestiae.\",\n               \"credit_amount\": \"0.00\",\n               \"debit_amount\": \"1500.00\",\n               \"department\": \"Aut eligendi.\",\n               \"description\": \"Cash payment for supplies\",\n               \"project_id\": \"57b059b9-f88a-4dc9-b02a-c937a2c1a96c\",\n               \"reference\": \"Reiciendis nemo dolorem.\",\n               \"tax_code\": \"Aliquam ipsa voluptas rerum culpa deserunt.\",\n               \"tax_rate\": \"Rerum hic ex aspernatur velit alias.\"\n            }\n         ],\n         \"priority\": \"urgent\",\n         \"reference_number\": \"PO-2025-089\",\n         \"transaction_date\": \"2025-09-13\",\n         \"transaction_number\": \"Eos facere.\",\n         \"transaction_type\": \"EXPENSE_PAYMENT\"\n      },\n      \"validation_level\": \"BASIC\"\n   }'")
 		}
 		if body.Transaction == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("transaction", "body"))
@@ -1286,7 +1315,7 @@ func BuildSubmitApprovalDecisionPayload(financeSubmitApprovalDecisionBody string
 	{
 		err = json.Unmarshal([]byte(financeSubmitApprovalDecisionBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"approval_level\": \"system\",\n      \"approver_id\": \"8fd55358-a016-4d9c-bf5f-7efd337eb19a\",\n      \"comments\": \"wh7\",\n      \"decision\": \"rejected\",\n      \"escalation_reason\": \"Deleniti enim et.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"approval_level\": \"cfo\",\n      \"approver_id\": \"8b1b3353-0afc-4ed9-ab2a-d7ca9da71e5d\",\n      \"comments\": \"vcd\",\n      \"decision\": \"approved\",\n      \"escalation_reason\": \"At commodi laboriosam.\"\n   }'")
 		}
 		if !(body.Decision == "approved" || body.Decision == "rejected" || body.Decision == "request_changes") {
 			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.decision", body.Decision, []any{"approved", "rejected", "request_changes"}))
@@ -1332,7 +1361,7 @@ func BuildRequestTransactionChangesPayload(financeRequestTransactionChangesBody 
 	{
 		err = json.Unmarshal([]byte(financeRequestTransactionChangesBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"due_date\": \"2009-05-18T13:13:41Z\",\n      \"priority\": \"urgent\",\n      \"reason\": \"7g\",\n      \"requested_by\": \"f88caa2d-89cc-4a2e-9724-49eadcda389a\",\n      \"required_changes\": [\n         {\n            \"current_value\": \"Assumenda incidunt labore reiciendis impedit.\",\n            \"field\": \"Et consequatur voluptatem debitis praesentium et veniam.\",\n            \"is_mandatory\": false,\n            \"reason\": \"Enim ut numquam explicabo odit maxime dolores.\",\n            \"suggested_value\": \"Nisi est aliquam omnis ab dignissimos.\"\n         },\n         {\n            \"current_value\": \"Assumenda incidunt labore reiciendis impedit.\",\n            \"field\": \"Et consequatur voluptatem debitis praesentium et veniam.\",\n            \"is_mandatory\": false,\n            \"reason\": \"Enim ut numquam explicabo odit maxime dolores.\",\n            \"suggested_value\": \"Nisi est aliquam omnis ab dignissimos.\"\n         }\n      ]\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"due_date\": \"1970-10-14T12:15:01Z\",\n      \"priority\": \"low\",\n      \"reason\": \"7c\",\n      \"requested_by\": \"9d8c49e3-4f12-4e9d-9977-64abbd04bb55\",\n      \"required_changes\": [\n         {\n            \"current_value\": \"Illo quia reiciendis.\",\n            \"field\": \"Corrupti consectetur quasi est.\",\n            \"is_mandatory\": true,\n            \"reason\": \"Quae maiores sit fuga.\",\n            \"suggested_value\": \"Saepe et blanditiis.\"\n         },\n         {\n            \"current_value\": \"Illo quia reiciendis.\",\n            \"field\": \"Corrupti consectetur quasi est.\",\n            \"is_mandatory\": true,\n            \"reason\": \"Quae maiores sit fuga.\",\n            \"suggested_value\": \"Saepe et blanditiis.\"\n         },\n         {\n            \"current_value\": \"Illo quia reiciendis.\",\n            \"field\": \"Corrupti consectetur quasi est.\",\n            \"is_mandatory\": true,\n            \"reason\": \"Quae maiores sit fuga.\",\n            \"suggested_value\": \"Saepe et blanditiis.\"\n         },\n         {\n            \"current_value\": \"Illo quia reiciendis.\",\n            \"field\": \"Corrupti consectetur quasi est.\",\n            \"is_mandatory\": true,\n            \"reason\": \"Quae maiores sit fuga.\",\n            \"suggested_value\": \"Saepe et blanditiis.\"\n         }\n      ]\n   }'")
 		}
 		if body.RequiredChanges == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("required_changes", "body"))

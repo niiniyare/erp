@@ -22,7 +22,7 @@ type Client struct {
 	UpdateAccountNodeEndpoint         goa.Endpoint
 	DeleteAccountNodeEndpoint         goa.Endpoint
 	SearchAccountNodesEndpoint        goa.Endpoint
-	GetAccountBalanceEndpoint         goa.Endpoint
+	GetAccountNodeBalanceEndpoint     goa.Endpoint
 	GetHierarchyAnalysisEndpoint      goa.Endpoint
 	CreateAccountEndpoint             goa.Endpoint
 	GetAccountEndpoint                goa.Endpoint
@@ -32,7 +32,7 @@ type Client struct {
 	UpdateAccountEndpoint             goa.Endpoint
 	DeleteAccountEndpoint             goa.Endpoint
 	GetAccountHierarchyEndpoint       goa.Endpoint
-	GetAccountBalanceEndpointEndpoint goa.Endpoint
+	GetAccountBalanceEndpoint         goa.Endpoint
 	CreateTransactionEndpoint         goa.Endpoint
 	GetTransactionEndpoint            goa.Endpoint
 	GetTransactionByNumberEndpoint    goa.Endpoint
@@ -49,7 +49,7 @@ type Client struct {
 }
 
 // NewClient initializes a "finance" service client given the endpoints.
-func NewClient(createAccountNode, getAccountNode, getAccountNodeByCode, listAccountNodes, updateAccountNode, deleteAccountNode, searchAccountNodes, getAccountBalance, getHierarchyAnalysis, createAccount, getAccount, getAccountByCode, getAccountByName, listAccounts, updateAccount, deleteAccount, getAccountHierarchy, getAccountBalanceEndpoint, createTransaction, getTransaction, getTransactionByNumber, listTransactions, postTransaction, reverseTransaction, approveTransaction, validateTransaction, getTransactionStatus, submitApprovalDecision, requestTransactionChanges, getTransactionWorkflow, getTrialBalance goa.Endpoint) *Client {
+func NewClient(createAccountNode, getAccountNode, getAccountNodeByCode, listAccountNodes, updateAccountNode, deleteAccountNode, searchAccountNodes, getAccountNodeBalance, getHierarchyAnalysis, createAccount, getAccount, getAccountByCode, getAccountByName, listAccounts, updateAccount, deleteAccount, getAccountHierarchy, getAccountBalance, createTransaction, getTransaction, getTransactionByNumber, listTransactions, postTransaction, reverseTransaction, approveTransaction, validateTransaction, getTransactionStatus, submitApprovalDecision, requestTransactionChanges, getTransactionWorkflow, getTrialBalance goa.Endpoint) *Client {
 	return &Client{
 		CreateAccountNodeEndpoint:         createAccountNode,
 		GetAccountNodeEndpoint:            getAccountNode,
@@ -58,7 +58,7 @@ func NewClient(createAccountNode, getAccountNode, getAccountNodeByCode, listAcco
 		UpdateAccountNodeEndpoint:         updateAccountNode,
 		DeleteAccountNodeEndpoint:         deleteAccountNode,
 		SearchAccountNodesEndpoint:        searchAccountNodes,
-		GetAccountBalanceEndpoint:         getAccountBalance,
+		GetAccountNodeBalanceEndpoint:     getAccountNodeBalance,
 		GetHierarchyAnalysisEndpoint:      getHierarchyAnalysis,
 		CreateAccountEndpoint:             createAccount,
 		GetAccountEndpoint:                getAccount,
@@ -68,7 +68,7 @@ func NewClient(createAccountNode, getAccountNode, getAccountNodeByCode, listAcco
 		UpdateAccountEndpoint:             updateAccount,
 		DeleteAccountEndpoint:             deleteAccount,
 		GetAccountHierarchyEndpoint:       getAccountHierarchy,
-		GetAccountBalanceEndpointEndpoint: getAccountBalanceEndpoint,
+		GetAccountBalanceEndpoint:         getAccountBalance,
 		CreateTransactionEndpoint:         createTransaction,
 		GetTransactionEndpoint:            getTransaction,
 		GetTransactionByNumberEndpoint:    getTransactionByNumber,
@@ -190,15 +190,15 @@ func (c *Client) SearchAccountNodes(ctx context.Context, p *SearchAccountNodesPa
 	return ires.(*SearchAccountNodesResult), nil
 }
 
-// GetAccountBalance calls the "getAccountBalance" endpoint of the "finance"
-// service.
-// GetAccountBalance may return the following errors:
+// GetAccountNodeBalance calls the "getAccountNodeBalance" endpoint of the
+// "finance" service.
+// GetAccountNodeBalance may return the following errors:
 //   - "not_found" (type *goa.ServiceError)
 //   - "unauthorized" (type *goa.ServiceError)
 //   - error: internal error
-func (c *Client) GetAccountBalance(ctx context.Context, p *GetAccountBalancePayload) (res *AccountBalanceResult, err error) {
+func (c *Client) GetAccountNodeBalance(ctx context.Context, p *GetAccountBalancePayload) (res *AccountBalanceResult, err error) {
 	var ires any
-	ires, err = c.GetAccountBalanceEndpoint(ctx, p)
+	ires, err = c.GetAccountNodeBalanceEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
@@ -335,15 +335,15 @@ func (c *Client) GetAccountHierarchy(ctx context.Context, p *GetAccountHierarchy
 	return ires.(*AccountListResult), nil
 }
 
-// GetAccountBalanceEndpoint calls the "getAccountBalance" endpoint of the
-// "finance" service.
-// GetAccountBalanceEndpoint may return the following errors:
+// GetAccountBalance calls the "getAccountBalance" endpoint of the "finance"
+// service.
+// GetAccountBalance may return the following errors:
 //   - "not_found" (type *goa.ServiceError)
 //   - "unauthorized" (type *goa.ServiceError)
 //   - error: internal error
-func (c *Client) GetAccountBalanceEndpoint(ctx context.Context, p *GetAccountBalancePayload) (res *AccountBalanceResult, err error) {
+func (c *Client) GetAccountBalance(ctx context.Context, p *GetAccountBalancePayload) (res *AccountBalanceResult, err error) {
 	var ires any
-	ires, err = c.GetAccountBalanceEndpointEndpoint(ctx, p)
+	ires, err = c.GetAccountBalanceEndpoint(ctx, p)
 	if err != nil {
 		return
 	}

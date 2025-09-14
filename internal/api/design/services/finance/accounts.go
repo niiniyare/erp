@@ -119,8 +119,8 @@ var _ = Service("finance", func() {
 	})
 
 	// Account Balance Methods
-	Method("getAccountBalance", func() {
-		Description("Get current balance for an account")
+	Method("getAccountNodeBalance", func() {
+		Description("Get current balance for an account node")
 		Payload(GetAccountBalancePayload)
 		Result(AccountBalanceResult)
 		Error("not_found")

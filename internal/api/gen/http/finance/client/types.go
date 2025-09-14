@@ -532,9 +532,9 @@ type SearchAccountNodesResponseBody struct {
 	SearchDurationMs *int32 `form:"search_duration_ms,omitempty" json:"search_duration_ms,omitempty" xml:"search_duration_ms,omitempty"`
 }
 
-// GetAccountBalanceResponseBody is the type of the "finance" service
-// "getAccountBalance" endpoint HTTP response body.
-type GetAccountBalanceResponseBody struct {
+// GetAccountNodeBalanceResponseBody is the type of the "finance" service
+// "getAccountNodeBalance" endpoint HTTP response body.
+type GetAccountNodeBalanceResponseBody struct {
 	// Account ID
 	AccountID *string `form:"account_id,omitempty" json:"account_id,omitempty" xml:"account_id,omitempty"`
 	// Account code
@@ -845,6 +845,27 @@ type GetAccountHierarchyResponseBody struct {
 	Accounts []*AccountResultResponseBody `form:"accounts,omitempty" json:"accounts,omitempty" xml:"accounts,omitempty"`
 	// Pagination metadata
 	Pagination *PaginationMetaResponseBody `form:"pagination,omitempty" json:"pagination,omitempty" xml:"pagination,omitempty"`
+}
+
+// GetAccountBalanceResponseBody is the type of the "finance" service
+// "getAccountBalance" endpoint HTTP response body.
+type GetAccountBalanceResponseBody struct {
+	// Account ID
+	AccountID *string `form:"account_id,omitempty" json:"account_id,omitempty" xml:"account_id,omitempty"`
+	// Account code
+	AccountCode *string `form:"account_code,omitempty" json:"account_code,omitempty" xml:"account_code,omitempty"`
+	// Account name
+	AccountName *string `form:"account_name,omitempty" json:"account_name,omitempty" xml:"account_name,omitempty"`
+	// Current balance
+	CurrentBalance *string `form:"current_balance,omitempty" json:"current_balance,omitempty" xml:"current_balance,omitempty"`
+	// Total debit transactions
+	TotalDebits *string `form:"total_debits,omitempty" json:"total_debits,omitempty" xml:"total_debits,omitempty"`
+	// Total credit transactions
+	TotalCredits *string `form:"total_credits,omitempty" json:"total_credits,omitempty" xml:"total_credits,omitempty"`
+	// Balance calculation date
+	AsOfDate *string `form:"as_of_date,omitempty" json:"as_of_date,omitempty" xml:"as_of_date,omitempty"`
+	// Date of last transaction
+	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
 }
 
 // CreateTransactionResponseBody is the type of the "finance" service
@@ -2262,9 +2283,9 @@ func NewSearchAccountNodesResultOK(body *SearchAccountNodesResponseBody) *financ
 	return v
 }
 
-// NewGetAccountBalanceAccountBalanceResultOK builds a "finance" service
-// "getAccountBalance" endpoint result from a HTTP "OK" response.
-func NewGetAccountBalanceAccountBalanceResultOK(body *GetAccountBalanceResponseBody) *finance.AccountBalanceResult {
+// NewGetAccountNodeBalanceAccountBalanceResultOK builds a "finance" service
+// "getAccountNodeBalance" endpoint result from a HTTP "OK" response.
+func NewGetAccountNodeBalanceAccountBalanceResultOK(body *GetAccountNodeBalanceResponseBody) *finance.AccountBalanceResult {
 	v := &finance.AccountBalanceResult{
 		AccountID:           *body.AccountID,
 		AccountCode:         *body.AccountCode,
@@ -2481,6 +2502,23 @@ func NewGetAccountHierarchyAccountListResultOK(body *GetAccountHierarchyResponse
 		v.Accounts[i] = unmarshalAccountResultResponseBodyToFinanceAccountResult(val)
 	}
 	v.Pagination = unmarshalPaginationMetaResponseBodyToFinancePaginationMeta(body.Pagination)
+
+	return v
+}
+
+// NewGetAccountBalanceAccountBalanceResultOK builds a "finance" service
+// "getAccountBalance" endpoint result from a HTTP "OK" response.
+func NewGetAccountBalanceAccountBalanceResultOK(body *GetAccountBalanceResponseBody) *finance.AccountBalanceResult {
+	v := &finance.AccountBalanceResult{
+		AccountID:           *body.AccountID,
+		AccountCode:         *body.AccountCode,
+		AccountName:         *body.AccountName,
+		CurrentBalance:      *body.CurrentBalance,
+		TotalDebits:         *body.TotalDebits,
+		TotalCredits:        *body.TotalCredits,
+		AsOfDate:            *body.AsOfDate,
+		LastTransactionDate: body.LastTransactionDate,
+	}
 
 	return v
 }
@@ -3098,9 +3136,9 @@ func ValidateSearchAccountNodesResponseBody(body *SearchAccountNodesResponseBody
 	return
 }
 
-// ValidateGetAccountBalanceResponseBody runs the validations defined on
-// GetAccountBalanceResponseBody
-func ValidateGetAccountBalanceResponseBody(body *GetAccountBalanceResponseBody) (err error) {
+// ValidateGetAccountNodeBalanceResponseBody runs the validations defined on
+// GetAccountNodeBalanceResponseBody
+func ValidateGetAccountNodeBalanceResponseBody(body *GetAccountNodeBalanceResponseBody) (err error) {
 	if body.AccountID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("account_id", "body"))
 	}
@@ -3475,6 +3513,42 @@ func ValidateGetAccountHierarchyResponseBody(body *GetAccountHierarchyResponseBo
 		if err2 := ValidatePaginationMetaResponseBody(body.Pagination); err2 != nil {
 			err = goa.MergeErrors(err, err2)
 		}
+	}
+	return
+}
+
+// ValidateGetAccountBalanceResponseBody runs the validations defined on
+// GetAccountBalanceResponseBody
+func ValidateGetAccountBalanceResponseBody(body *GetAccountBalanceResponseBody) (err error) {
+	if body.AccountID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_id", "body"))
+	}
+	if body.AccountCode == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_code", "body"))
+	}
+	if body.AccountName == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("account_name", "body"))
+	}
+	if body.CurrentBalance == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("current_balance", "body"))
+	}
+	if body.TotalDebits == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("total_debits", "body"))
+	}
+	if body.TotalCredits == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("total_credits", "body"))
+	}
+	if body.AsOfDate == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("as_of_date", "body"))
+	}
+	if body.AccountID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.account_id", *body.AccountID, goa.FormatUUID))
+	}
+	if body.AsOfDate != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.as_of_date", *body.AsOfDate, goa.FormatDate))
+	}
+	if body.LastTransactionDate != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.last_transaction_date", *body.LastTransactionDate, goa.FormatDate))
 	}
 	return
 }

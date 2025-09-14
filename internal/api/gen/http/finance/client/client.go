@@ -45,9 +45,9 @@ type Client struct {
 	// searchAccountNodes endpoint.
 	SearchAccountNodesDoer goahttp.Doer
 
-	// GetAccountBalance Doer is the HTTP client used to make requests to the
-	// getAccountBalance endpoint.
-	GetAccountBalanceDoer goahttp.Doer
+	// GetAccountNodeBalance Doer is the HTTP client used to make requests to the
+	// getAccountNodeBalance endpoint.
+	GetAccountNodeBalanceDoer goahttp.Doer
 
 	// GetHierarchyAnalysis Doer is the HTTP client used to make requests to the
 	// getHierarchyAnalysis endpoint.
@@ -84,6 +84,10 @@ type Client struct {
 	// GetAccountHierarchy Doer is the HTTP client used to make requests to the
 	// getAccountHierarchy endpoint.
 	GetAccountHierarchyDoer goahttp.Doer
+
+	// GetAccountBalance Doer is the HTTP client used to make requests to the
+	// getAccountBalance endpoint.
+	GetAccountBalanceDoer goahttp.Doer
 
 	// CreateTransaction Doer is the HTTP client used to make requests to the
 	// createTransaction endpoint.
@@ -164,7 +168,7 @@ func NewClient(
 		UpdateAccountNodeDoer:         doer,
 		DeleteAccountNodeDoer:         doer,
 		SearchAccountNodesDoer:        doer,
-		GetAccountBalanceDoer:         doer,
+		GetAccountNodeBalanceDoer:     doer,
 		GetHierarchyAnalysisDoer:      doer,
 		CreateAccountDoer:             doer,
 		GetAccountDoer:                doer,
@@ -174,6 +178,7 @@ func NewClient(
 		UpdateAccountDoer:             doer,
 		DeleteAccountDoer:             doer,
 		GetAccountHierarchyDoer:       doer,
+		GetAccountBalanceDoer:         doer,
 		CreateTransactionDoer:         doer,
 		GetTransactionDoer:            doer,
 		GetTransactionByNumberDoer:    doer,
@@ -348,15 +353,15 @@ func (c *Client) SearchAccountNodes() goa.Endpoint {
 	}
 }
 
-// GetAccountBalance returns an endpoint that makes HTTP requests to the
-// finance service getAccountBalance server.
-func (c *Client) GetAccountBalance() goa.Endpoint {
+// GetAccountNodeBalance returns an endpoint that makes HTTP requests to the
+// finance service getAccountNodeBalance server.
+func (c *Client) GetAccountNodeBalance() goa.Endpoint {
 	var (
-		encodeRequest  = EncodeGetAccountBalanceRequest(c.encoder)
-		decodeResponse = DecodeGetAccountBalanceResponse(c.decoder, c.RestoreResponseBody)
+		encodeRequest  = EncodeGetAccountNodeBalanceRequest(c.encoder)
+		decodeResponse = DecodeGetAccountNodeBalanceResponse(c.decoder, c.RestoreResponseBody)
 	)
 	return func(ctx context.Context, v any) (any, error) {
-		req, err := c.BuildGetAccountBalanceRequest(ctx, v)
+		req, err := c.BuildGetAccountNodeBalanceRequest(ctx, v)
 		if err != nil {
 			return nil, err
 		}
@@ -364,9 +369,9 @@ func (c *Client) GetAccountBalance() goa.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		resp, err := c.GetAccountBalanceDoer.Do(req)
+		resp, err := c.GetAccountNodeBalanceDoer.Do(req)
 		if err != nil {
-			return nil, goahttp.ErrRequestError("finance", "getAccountBalance", err)
+			return nil, goahttp.ErrRequestError("finance", "getAccountNodeBalance", err)
 		}
 		return decodeResponse(resp)
 	}
@@ -568,6 +573,30 @@ func (c *Client) GetAccountHierarchy() goa.Endpoint {
 		resp, err := c.GetAccountHierarchyDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("finance", "getAccountHierarchy", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// GetAccountBalance returns an endpoint that makes HTTP requests to the
+// finance service getAccountBalance server.
+func (c *Client) GetAccountBalance() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeGetAccountBalanceRequest(c.encoder)
+		decodeResponse = DecodeGetAccountBalanceResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildGetAccountBalanceRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.GetAccountBalanceDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("finance", "getAccountBalance", err)
 		}
 		return decodeResponse(resp)
 	}

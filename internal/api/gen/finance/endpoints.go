@@ -22,7 +22,7 @@ type Endpoints struct {
 	UpdateAccountNode         goa.Endpoint
 	DeleteAccountNode         goa.Endpoint
 	SearchAccountNodes        goa.Endpoint
-	GetAccountBalance         goa.Endpoint
+	GetAccountNodeBalance     goa.Endpoint
 	GetHierarchyAnalysis      goa.Endpoint
 	CreateAccount             goa.Endpoint
 	GetAccount                goa.Endpoint
@@ -32,7 +32,7 @@ type Endpoints struct {
 	UpdateAccount             goa.Endpoint
 	DeleteAccount             goa.Endpoint
 	GetAccountHierarchy       goa.Endpoint
-	GetAccountBalanceEndpoint goa.Endpoint
+	GetAccountBalance         goa.Endpoint
 	CreateTransaction         goa.Endpoint
 	GetTransaction            goa.Endpoint
 	GetTransactionByNumber    goa.Endpoint
@@ -58,7 +58,7 @@ func NewEndpoints(s Service) *Endpoints {
 		UpdateAccountNode:         NewUpdateAccountNodeEndpoint(s),
 		DeleteAccountNode:         NewDeleteAccountNodeEndpoint(s),
 		SearchAccountNodes:        NewSearchAccountNodesEndpoint(s),
-		GetAccountBalance:         NewGetAccountBalanceEndpoint(s),
+		GetAccountNodeBalance:     NewGetAccountNodeBalanceEndpoint(s),
 		GetHierarchyAnalysis:      NewGetHierarchyAnalysisEndpoint(s),
 		CreateAccount:             NewCreateAccountEndpoint(s),
 		GetAccount:                NewGetAccountEndpoint(s),
@@ -68,7 +68,7 @@ func NewEndpoints(s Service) *Endpoints {
 		UpdateAccount:             NewUpdateAccountEndpoint(s),
 		DeleteAccount:             NewDeleteAccountEndpoint(s),
 		GetAccountHierarchy:       NewGetAccountHierarchyEndpoint(s),
-		GetAccountBalanceEndpoint: NewGetAccountBalanceEndpointEndpoint(s),
+		GetAccountBalance:         NewGetAccountBalanceEndpoint(s),
 		CreateTransaction:         NewCreateTransactionEndpoint(s),
 		GetTransaction:            NewGetTransactionEndpoint(s),
 		GetTransactionByNumber:    NewGetTransactionByNumberEndpoint(s),
@@ -94,7 +94,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.UpdateAccountNode = m(e.UpdateAccountNode)
 	e.DeleteAccountNode = m(e.DeleteAccountNode)
 	e.SearchAccountNodes = m(e.SearchAccountNodes)
-	e.GetAccountBalance = m(e.GetAccountBalance)
+	e.GetAccountNodeBalance = m(e.GetAccountNodeBalance)
 	e.GetHierarchyAnalysis = m(e.GetHierarchyAnalysis)
 	e.CreateAccount = m(e.CreateAccount)
 	e.GetAccount = m(e.GetAccount)
@@ -104,7 +104,7 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.UpdateAccount = m(e.UpdateAccount)
 	e.DeleteAccount = m(e.DeleteAccount)
 	e.GetAccountHierarchy = m(e.GetAccountHierarchy)
-	e.GetAccountBalanceEndpoint = m(e.GetAccountBalanceEndpoint)
+	e.GetAccountBalance = m(e.GetAccountBalance)
 	e.CreateTransaction = m(e.CreateTransaction)
 	e.GetTransaction = m(e.GetTransaction)
 	e.GetTransactionByNumber = m(e.GetTransactionByNumber)
@@ -183,12 +183,12 @@ func NewSearchAccountNodesEndpoint(s Service) goa.Endpoint {
 	}
 }
 
-// NewGetAccountBalanceEndpoint returns an endpoint function that calls the
-// method "getAccountBalance" of service "finance".
-func NewGetAccountBalanceEndpoint(s Service) goa.Endpoint {
+// NewGetAccountNodeBalanceEndpoint returns an endpoint function that calls the
+// method "getAccountNodeBalance" of service "finance".
+func NewGetAccountNodeBalanceEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*GetAccountBalancePayload)
-		return s.GetAccountBalance(ctx, p)
+		return s.GetAccountNodeBalance(ctx, p)
 	}
 }
 
@@ -273,12 +273,12 @@ func NewGetAccountHierarchyEndpoint(s Service) goa.Endpoint {
 	}
 }
 
-// NewGetAccountBalanceEndpointEndpoint returns an endpoint function that calls
-// the method "getAccountBalance" of service "finance".
-func NewGetAccountBalanceEndpointEndpoint(s Service) goa.Endpoint {
+// NewGetAccountBalanceEndpoint returns an endpoint function that calls the
+// method "getAccountBalance" of service "finance".
+func NewGetAccountBalanceEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*GetAccountBalancePayload)
-		return s.GetAccountBalanceEndpoint(ctx, p)
+		return s.GetAccountBalance(ctx, p)
 	}
 }
 

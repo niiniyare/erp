@@ -10,7 +10,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/metrics"
 )
 
-func (h *FinanceHandler) GetTrialBalance(ctx context.Context, payload *goaFinance.TrialBalancePayload) (*goaFinance.TrialBalanceResult, error) {
+func (h *FinanceHandler) GetTrialBalance(ctx context.Context, payload *goaFinance.GetTrialBalancePayload) (*goaFinance.TrialBalanceResult, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "finance_handler.get_trial_balance")
 	defer span.End()
 

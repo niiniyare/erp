@@ -532,9 +532,9 @@ type SearchAccountNodesResponseBody struct {
 	SearchDurationMs int32 `form:"search_duration_ms" json:"search_duration_ms" xml:"search_duration_ms"`
 }
 
-// GetAccountBalanceResponseBody is the type of the "finance" service
-// "getAccountBalance" endpoint HTTP response body.
-type GetAccountBalanceResponseBody struct {
+// GetAccountNodeBalanceResponseBody is the type of the "finance" service
+// "getAccountNodeBalance" endpoint HTTP response body.
+type GetAccountNodeBalanceResponseBody struct {
 	// Account ID
 	AccountID string `form:"account_id" json:"account_id" xml:"account_id"`
 	// Account code
@@ -845,6 +845,27 @@ type GetAccountHierarchyResponseBody struct {
 	Accounts []*AccountResultResponseBody `form:"accounts" json:"accounts" xml:"accounts"`
 	// Pagination metadata
 	Pagination *PaginationMetaResponseBody `form:"pagination" json:"pagination" xml:"pagination"`
+}
+
+// GetAccountBalanceResponseBody is the type of the "finance" service
+// "getAccountBalance" endpoint HTTP response body.
+type GetAccountBalanceResponseBody struct {
+	// Account ID
+	AccountID string `form:"account_id" json:"account_id" xml:"account_id"`
+	// Account code
+	AccountCode string `form:"account_code" json:"account_code" xml:"account_code"`
+	// Account name
+	AccountName string `form:"account_name" json:"account_name" xml:"account_name"`
+	// Current balance
+	CurrentBalance string `form:"current_balance" json:"current_balance" xml:"current_balance"`
+	// Total debit transactions
+	TotalDebits string `form:"total_debits" json:"total_debits" xml:"total_debits"`
+	// Total credit transactions
+	TotalCredits string `form:"total_credits" json:"total_credits" xml:"total_credits"`
+	// Balance calculation date
+	AsOfDate string `form:"as_of_date" json:"as_of_date" xml:"as_of_date"`
+	// Date of last transaction
+	LastTransactionDate *string `form:"last_transaction_date,omitempty" json:"last_transaction_date,omitempty" xml:"last_transaction_date,omitempty"`
 }
 
 // CreateTransactionResponseBody is the type of the "finance" service
@@ -1929,10 +1950,10 @@ func NewSearchAccountNodesResponseBody(res *finance.SearchAccountNodesResult) *S
 	return body
 }
 
-// NewGetAccountBalanceResponseBody builds the HTTP response body from the
-// result of the "getAccountBalance" endpoint of the "finance" service.
-func NewGetAccountBalanceResponseBody(res *finance.AccountBalanceResult) *GetAccountBalanceResponseBody {
-	body := &GetAccountBalanceResponseBody{
+// NewGetAccountNodeBalanceResponseBody builds the HTTP response body from the
+// result of the "getAccountNodeBalance" endpoint of the "finance" service.
+func NewGetAccountNodeBalanceResponseBody(res *finance.AccountBalanceResult) *GetAccountNodeBalanceResponseBody {
+	body := &GetAccountNodeBalanceResponseBody{
 		AccountID:           res.AccountID,
 		AccountCode:         res.AccountCode,
 		AccountName:         res.AccountName,
@@ -2151,6 +2172,22 @@ func NewGetAccountHierarchyResponseBody(res *finance.AccountListResult) *GetAcco
 	}
 	if res.Pagination != nil {
 		body.Pagination = marshalFinancePaginationMetaToPaginationMetaResponseBody(res.Pagination)
+	}
+	return body
+}
+
+// NewGetAccountBalanceResponseBody builds the HTTP response body from the
+// result of the "getAccountBalance" endpoint of the "finance" service.
+func NewGetAccountBalanceResponseBody(res *finance.AccountBalanceResult) *GetAccountBalanceResponseBody {
+	body := &GetAccountBalanceResponseBody{
+		AccountID:           res.AccountID,
+		AccountCode:         res.AccountCode,
+		AccountName:         res.AccountName,
+		CurrentBalance:      res.CurrentBalance,
+		TotalDebits:         res.TotalDebits,
+		TotalCredits:        res.TotalCredits,
+		AsOfDate:            res.AsOfDate,
+		LastTransactionDate: res.LastTransactionDate,
 	}
 	return body
 }
@@ -2671,9 +2708,9 @@ func NewSearchAccountNodesPayload(query string, nodeTypes []string, limit int32,
 	return v
 }
 
-// NewGetAccountBalancePayload builds a finance service getAccountBalance
-// endpoint payload.
-func NewGetAccountBalancePayload(accountID string, asOfDate *string) *finance.GetAccountBalancePayload {
+// NewGetAccountNodeBalanceGetAccountBalancePayload builds a finance service
+// getAccountNodeBalance endpoint payload.
+func NewGetAccountNodeBalanceGetAccountBalancePayload(accountID string, asOfDate *string) *finance.GetAccountBalancePayload {
 	v := &finance.GetAccountBalancePayload{}
 	v.AccountID = accountID
 	v.AsOfDate = asOfDate
@@ -2810,6 +2847,16 @@ func NewDeleteAccountPayload(id string) *finance.DeleteAccountPayload {
 func NewGetAccountHierarchyPayload(rootID *string) *finance.GetAccountHierarchyPayload {
 	v := &finance.GetAccountHierarchyPayload{}
 	v.RootID = rootID
+
+	return v
+}
+
+// NewGetAccountBalancePayload builds a finance service getAccountBalance
+// endpoint payload.
+func NewGetAccountBalancePayload(accountID string, asOfDate *string) *finance.GetAccountBalancePayload {
+	v := &finance.GetAccountBalancePayload{}
+	v.AccountID = accountID
+	v.AsOfDate = asOfDate
 
 	return v
 }

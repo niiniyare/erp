@@ -69,10 +69,7 @@ func (h *FinanceHandler) CreateAccount(ctx context.Context, payload *goaFinance.
 		return nil, goaFinance.MakeBadRequest(sharedErrors.NewBusinessError("INVALID_NORMAL_BALANCE", "Invalid normal balance"))
 	}
 
-	accountType := ""
-	if payload.AccountType != nil {
-		accountType = *payload.AccountType
-	}
+	accountType := payload.AccountType
 
 	req := domain.CreateAccountRequest{
 		EntityID:           entityID,
@@ -110,7 +107,7 @@ func (h *FinanceHandler) CreateAccount(ctx context.Context, payload *goaFinance.
 	return h.convertAccountToResult(account), nil
 }
 
-func (h *FinanceHandler) GetAccount(ctx context.Context, payload *goaFinance.GetAccountPayload) (*goaFinance.AccountResult, error) {
+func (h *FinanceHandler) GetAccount(ctx context.Context, payload *goaFinance.GetAccountByIDPayload) (*goaFinance.AccountResult, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "finance_handler.get_account")
 	defer span.End()
 
@@ -348,7 +345,7 @@ func (h *FinanceHandler) DeleteAccount(ctx context.Context, payload *goaFinance.
 	return nil
 }
 
-func (h *FinanceHandler) GetAccountHierarchy(ctx context.Context, payload *goaFinance.GetAccountHierarchyPayload) (*goaFinance.AccountHierarchyResult, error) {
+func (h *FinanceHandler) GetAccountHierarchy(ctx context.Context, payload *goaFinance.GetAccountHierarchyPayload) (*goaFinance.AccountListResult, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "finance_handler.get_account_hierarchy")
 	defer span.End()
 

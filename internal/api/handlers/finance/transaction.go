@@ -101,7 +101,7 @@ func (h *FinanceHandler) CreateTransaction(ctx context.Context, payload *goaFina
 	return h.convertTransactionToResult(transaction), nil
 }
 
-func (h *FinanceHandler) GetTransaction(ctx context.Context, payload *goaFinance.GetTransactionPayload) (*goaFinance.TransactionWithEntriesResult, error) {
+func (h *FinanceHandler) GetTransaction(ctx context.Context, payload *goaFinance.GetTransactionByIDPayload) (*goaFinance.TransactionWithEntriesResult, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "finance_handler.get_transaction")
 	defer span.End()
 

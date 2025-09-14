@@ -46,8 +46,8 @@ func SearchAccountNodesFinancePath() string {
 	return "/api/v1/finance/accounts/search"
 }
 
-// GetAccountBalanceFinancePath returns the URL path to the finance service getAccountBalance HTTP endpoint.
-func GetAccountBalanceFinancePath(accountID string) string {
+// GetAccountNodeBalanceFinancePath returns the URL path to the finance service getAccountNodeBalance HTTP endpoint.
+func GetAccountNodeBalanceFinancePath(accountID string) string {
 	return fmt.Sprintf("/api/v1/finance/accounts/%v/balance", accountID)
 }
 
@@ -94,6 +94,11 @@ func DeleteAccountFinancePath(id string) string {
 // GetAccountHierarchyFinancePath returns the URL path to the finance service getAccountHierarchy HTTP endpoint.
 func GetAccountHierarchyFinancePath() string {
 	return "/api/v1/finance/accounts/hierarchy"
+}
+
+// GetAccountBalanceFinancePath returns the URL path to the finance service getAccountBalance HTTP endpoint.
+func GetAccountBalanceFinancePath(accountID string) string {
+	return fmt.Sprintf("/api/v1/finance/accounts/%v/balance", accountID)
 }
 
 // CreateTransactionFinancePath returns the URL path to the finance service createTransaction HTTP endpoint.

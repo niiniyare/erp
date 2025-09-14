@@ -534,23 +534,24 @@ func DecodeSearchAccountNodesResponse(decoder func(*http.Response) goahttp.Decod
 	}
 }
 
-// BuildGetAccountBalanceRequest instantiates a HTTP request object with method
-// and path set to call the "finance" service "getAccountBalance" endpoint
-func (c *Client) BuildGetAccountBalanceRequest(ctx context.Context, v any) (*http.Request, error) {
+// BuildGetAccountNodeBalanceRequest instantiates a HTTP request object with
+// method and path set to call the "finance" service "getAccountNodeBalance"
+// endpoint
+func (c *Client) BuildGetAccountNodeBalanceRequest(ctx context.Context, v any) (*http.Request, error) {
 	var (
 		accountID string
 	)
 	{
 		p, ok := v.(*finance.GetAccountBalancePayload)
 		if !ok {
-			return nil, goahttp.ErrInvalidType("finance", "getAccountBalance", "*finance.GetAccountBalancePayload", v)
+			return nil, goahttp.ErrInvalidType("finance", "getAccountNodeBalance", "*finance.GetAccountBalancePayload", v)
 		}
 		accountID = p.AccountID
 	}
-	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetAccountBalanceFinancePath(accountID)}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetAccountNodeBalanceFinancePath(accountID)}
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
-		return nil, goahttp.ErrInvalidURL("finance", "getAccountBalance", u.String(), err)
+		return nil, goahttp.ErrInvalidURL("finance", "getAccountNodeBalance", u.String(), err)
 	}
 	if ctx != nil {
 		req = req.WithContext(ctx)
@@ -559,13 +560,13 @@ func (c *Client) BuildGetAccountBalanceRequest(ctx context.Context, v any) (*htt
 	return req, nil
 }
 
-// EncodeGetAccountBalanceRequest returns an encoder for requests sent to the
-// finance getAccountBalance server.
-func EncodeGetAccountBalanceRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+// EncodeGetAccountNodeBalanceRequest returns an encoder for requests sent to
+// the finance getAccountNodeBalance server.
+func EncodeGetAccountNodeBalanceRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
 	return func(req *http.Request, v any) error {
 		p, ok := v.(*finance.GetAccountBalancePayload)
 		if !ok {
-			return goahttp.ErrInvalidType("finance", "getAccountBalance", "*finance.GetAccountBalancePayload", v)
+			return goahttp.ErrInvalidType("finance", "getAccountNodeBalance", "*finance.GetAccountBalancePayload", v)
 		}
 		values := req.URL.Query()
 		if p.AsOfDate != nil {
@@ -576,10 +577,10 @@ func EncodeGetAccountBalanceRequest(encoder func(*http.Request) goahttp.Encoder)
 	}
 }
 
-// DecodeGetAccountBalanceResponse returns a decoder for responses returned by
-// the finance getAccountBalance endpoint. restoreBody controls whether the
-// response body should be restored after having been read.
-func DecodeGetAccountBalanceResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+// DecodeGetAccountNodeBalanceResponse returns a decoder for responses returned
+// by the finance getAccountNodeBalance endpoint. restoreBody controls whether
+// the response body should be restored after having been read.
+func DecodeGetAccountNodeBalanceResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
 	return func(resp *http.Response) (any, error) {
 		if restoreBody {
 			b, err := io.ReadAll(resp.Body)
@@ -596,22 +597,22 @@ func DecodeGetAccountBalanceResponse(decoder func(*http.Response) goahttp.Decode
 		switch resp.StatusCode {
 		case http.StatusOK:
 			var (
-				body GetAccountBalanceResponseBody
+				body GetAccountNodeBalanceResponseBody
 				err  error
 			)
 			err = decoder(resp).Decode(&body)
 			if err != nil {
-				return nil, goahttp.ErrDecodingError("finance", "getAccountBalance", err)
+				return nil, goahttp.ErrDecodingError("finance", "getAccountNodeBalance", err)
 			}
-			err = ValidateGetAccountBalanceResponseBody(&body)
+			err = ValidateGetAccountNodeBalanceResponseBody(&body)
 			if err != nil {
-				return nil, goahttp.ErrValidationError("finance", "getAccountBalance", err)
+				return nil, goahttp.ErrValidationError("finance", "getAccountNodeBalance", err)
 			}
-			res := NewGetAccountBalanceAccountBalanceResultOK(&body)
+			res := NewGetAccountNodeBalanceAccountBalanceResultOK(&body)
 			return res, nil
 		default:
 			body, _ := io.ReadAll(resp.Body)
-			return nil, goahttp.ErrInvalidResponse("finance", "getAccountBalance", resp.StatusCode, string(body))
+			return nil, goahttp.ErrInvalidResponse("finance", "getAccountNodeBalance", resp.StatusCode, string(body))
 		}
 	}
 }
@@ -1264,6 +1265,88 @@ func DecodeGetAccountHierarchyResponse(decoder func(*http.Response) goahttp.Deco
 		default:
 			body, _ := io.ReadAll(resp.Body)
 			return nil, goahttp.ErrInvalidResponse("finance", "getAccountHierarchy", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildGetAccountBalanceRequest instantiates a HTTP request object with method
+// and path set to call the "finance" service "getAccountBalance" endpoint
+func (c *Client) BuildGetAccountBalanceRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		accountID string
+	)
+	{
+		p, ok := v.(*finance.GetAccountBalancePayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("finance", "getAccountBalance", "*finance.GetAccountBalancePayload", v)
+		}
+		accountID = p.AccountID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetAccountBalanceFinancePath(accountID)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("finance", "getAccountBalance", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeGetAccountBalanceRequest returns an encoder for requests sent to the
+// finance getAccountBalance server.
+func EncodeGetAccountBalanceRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*finance.GetAccountBalancePayload)
+		if !ok {
+			return goahttp.ErrInvalidType("finance", "getAccountBalance", "*finance.GetAccountBalancePayload", v)
+		}
+		values := req.URL.Query()
+		if p.AsOfDate != nil {
+			values.Add("as_of_date", *p.AsOfDate)
+		}
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+
+// DecodeGetAccountBalanceResponse returns a decoder for responses returned by
+// the finance getAccountBalance endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+func DecodeGetAccountBalanceResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body GetAccountBalanceResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("finance", "getAccountBalance", err)
+			}
+			err = ValidateGetAccountBalanceResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("finance", "getAccountBalance", err)
+			}
+			res := NewGetAccountBalanceAccountBalanceResultOK(&body)
+			return res, nil
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("finance", "getAccountBalance", resp.StatusCode, string(body))
 		}
 	}
 }

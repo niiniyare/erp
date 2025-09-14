@@ -446,21 +446,21 @@ func DecodeSearchAccountNodesRequest(mux goahttp.Muxer, decoder func(*http.Reque
 	}
 }
 
-// EncodeGetAccountBalanceResponse returns an encoder for responses returned by
-// the finance getAccountBalance endpoint.
-func EncodeGetAccountBalanceResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+// EncodeGetAccountNodeBalanceResponse returns an encoder for responses
+// returned by the finance getAccountNodeBalance endpoint.
+func EncodeGetAccountNodeBalanceResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
 		res, _ := v.(*finance.AccountBalanceResult)
 		enc := encoder(ctx, w)
-		body := NewGetAccountBalanceResponseBody(res)
+		body := NewGetAccountNodeBalanceResponseBody(res)
 		w.WriteHeader(http.StatusOK)
 		return enc.Encode(body)
 	}
 }
 
-// DecodeGetAccountBalanceRequest returns a decoder for requests sent to the
-// finance getAccountBalance endpoint.
-func DecodeGetAccountBalanceRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetAccountBalancePayload, error) {
+// DecodeGetAccountNodeBalanceRequest returns a decoder for requests sent to
+// the finance getAccountNodeBalance endpoint.
+func DecodeGetAccountNodeBalanceRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetAccountBalancePayload, error) {
 	return func(r *http.Request) (*finance.GetAccountBalancePayload, error) {
 		var (
 			accountID string
@@ -481,7 +481,7 @@ func DecodeGetAccountBalanceRequest(mux goahttp.Muxer, decoder func(*http.Reques
 		if err != nil {
 			return nil, err
 		}
-		payload := NewGetAccountBalancePayload(accountID, asOfDate)
+		payload := NewGetAccountNodeBalanceGetAccountBalancePayload(accountID, asOfDate)
 
 		return payload, nil
 	}
@@ -889,6 +889,47 @@ func DecodeGetAccountHierarchyRequest(mux goahttp.Muxer, decoder func(*http.Requ
 			return nil, err
 		}
 		payload := NewGetAccountHierarchyPayload(rootID)
+
+		return payload, nil
+	}
+}
+
+// EncodeGetAccountBalanceResponse returns an encoder for responses returned by
+// the finance getAccountBalance endpoint.
+func EncodeGetAccountBalanceResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
+	return func(ctx context.Context, w http.ResponseWriter, v any) error {
+		res, _ := v.(*finance.AccountBalanceResult)
+		enc := encoder(ctx, w)
+		body := NewGetAccountBalanceResponseBody(res)
+		w.WriteHeader(http.StatusOK)
+		return enc.Encode(body)
+	}
+}
+
+// DecodeGetAccountBalanceRequest returns a decoder for requests sent to the
+// finance getAccountBalance endpoint.
+func DecodeGetAccountBalanceRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.Decoder) func(*http.Request) (*finance.GetAccountBalancePayload, error) {
+	return func(r *http.Request) (*finance.GetAccountBalancePayload, error) {
+		var (
+			accountID string
+			asOfDate  *string
+			err       error
+
+			params = mux.Vars(r)
+		)
+		accountID = params["account_id"]
+		err = goa.MergeErrors(err, goa.ValidateFormat("account_id", accountID, goa.FormatUUID))
+		asOfDateRaw := r.URL.Query().Get("as_of_date")
+		if asOfDateRaw != "" {
+			asOfDate = &asOfDateRaw
+		}
+		if asOfDate != nil {
+			err = goa.MergeErrors(err, goa.ValidateFormat("as_of_date", *asOfDate, goa.FormatDate))
+		}
+		if err != nil {
+			return nil, err
+		}
+		payload := NewGetAccountBalancePayload(accountID, asOfDate)
 
 		return payload, nil
 	}
