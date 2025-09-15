@@ -448,7 +448,7 @@ LIMIT
   sqlc.arg('limit') OFFSET sqlc.arg('offset');
 
 -- name: GetUserRiskProfile :one
--- Get comprehensive risk profile for a user
+-- Get risk profile for a user
 SELECT
   al.user_id,
   COUNT(*) AS total_events,

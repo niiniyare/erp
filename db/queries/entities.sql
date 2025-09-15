@@ -1513,7 +1513,7 @@ LIMIT
   sqlc.arg(page_size) OFFSET sqlc.arg(page_offset);
 
 /*
-I'll create comprehensive sqlc functions for your entity management schema. This will include CRUD operations, hierarchy management, and state tracking.I've created a comprehensive set of sqlc functions for your entity management schema. Here's what's included:
+I'll create sqlc functions for your entity management schema. This will include CRUD operations, hierarchy management, and state tracking.I've created a set of sqlc functions for your entity management schema. Here's what's included:
 
 ## Core Entity Operations
 - **CRUD**: Create, read, update, soft/hard delete entities

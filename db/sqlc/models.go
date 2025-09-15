@@ -364,7 +364,7 @@ type FeatureFlag struct {
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
-// Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and comprehensive financial reporting requirements.
+// Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and financial reporting requirements.
 type FinanceAccount struct {
 	ID       uuid.UUID  `json:"id"`
 	TenantID uuid.UUID  `json:"tenant_id"`

@@ -235,7 +235,7 @@ func setupServer() {
 }
 */
 
-// GetMiddlewareReport returns a comprehensive report of applied middleware
+// GetMiddlewareReport returns a report of applied middleware
 func (g *GOAMiddlewareSetup) GetMiddlewareReport() MiddlewareReport {
 	report := MiddlewareReport{
 		Environment: g.MiddlewareStack.Config.Environment,
@@ -253,7 +253,7 @@ func (g *GOAMiddlewareSetup) GetMiddlewareReport() MiddlewareReport {
 	return report
 }
 
-// MiddlewareReport provides comprehensive middleware status
+// MiddlewareReport provides middleware status
 type MiddlewareReport struct {
 	Environment    string                 `json:"environment"`
 	Security       SecuritySummary        `json:"security"`

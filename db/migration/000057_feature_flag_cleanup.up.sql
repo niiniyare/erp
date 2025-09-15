@@ -914,7 +914,7 @@ COMMENT ON FUNCTION cleanup_old_feature_flag_audit_logs(INTEGER) IS 'Cleans up f
 
 COMMENT ON FUNCTION cleanup_soft_deleted_feature_flags(INTEGER) IS 'Permanently removes feature flags that have been soft-deleted for specified days';
 
-COMMENT ON FUNCTION get_feature_flags_health_metrics() IS 'Returns comprehensive health metrics for the feature flag system';
+COMMENT ON FUNCTION get_feature_flags_health_metrics() IS 'Returns health metrics for the feature flag system';
 
 COMMENT ON FUNCTION get_tenant_feature_flag_stats(UUID) IS 'Returns detailed statistics for a specific tenant''s feature flags';
 

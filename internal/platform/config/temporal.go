@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-// TemporalConfig represents comprehensive system-wide Temporal configuration
+// TemporalConfig represents system-wide Temporal configuration
 type TemporalConfig struct {
 	// Connection settings
 	HostPort  string `yaml:"host_port" mapstructure:"host_port"`

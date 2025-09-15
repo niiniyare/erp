@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// TestSuite defines comprehensive test suite for core domain model validation
+// TestSuite defines test suite for core domain model validation
 // Implements Phase 3 Task 3.1.1: Core Domain Model Testing (IAM-CORE-001 to IAM-CORE-007)
 type TestSuite struct {
 	suite.Suite
@@ -23,7 +23,7 @@ func (s *TestSuite) SetupTest() {
 	s.entityID = uuid.New()
 }
 
-// TestIAMModels runs the comprehensive core domain model test suite
+// TestIAMModels runs the core domain model test suite
 func TestIAMModels(t *testing.T) {
 	suite.Run(t, new(TestSuite))
 }

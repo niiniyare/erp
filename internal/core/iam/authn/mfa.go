@@ -23,7 +23,7 @@ import (
 )
 
 // MFAService handles Multi-Factor Authentication operations
-// NOTE: This service provides comprehensive MFA support including TOTP, SMS, and Email verification
+// NOTE: This service provides MFA support including TOTP, SMS, and Email verification
 // TODO: Add hardware token support (YubiKey, FIDO2) for enhanced security
 type MFAService interface {
 	// Enrollment flows
@@ -47,7 +47,7 @@ type MFAService interface {
 	GetMFAStatistics(ctx context.Context, req *MFAStatisticsRequest) (*MFAStatistics, error)
 }
 
-// mfaService implements MFAService with comprehensive multi-factor authentication support
+// mfaService implements MFAService with multi-factor authentication support
 type mfaService struct {
 	userRepo        repo.UserRepository
 	sessionRepo     repo.SessionRepository
@@ -66,7 +66,7 @@ type mfaService struct {
 	tracer  tracing.TracingService
 }
 
-// NewMFAService creates a new MFA service instance with comprehensive authentication support
+// NewMFAService creates a new MFA service instance with authentication support
 func NewMFAService(
 	userRepo repo.UserRepository,
 	sessionRepo repo.SessionRepository,
@@ -687,7 +687,7 @@ func (s *mfaService) hashCode(code string) string {
 
 func (s *mfaService) isValidPhoneNumber(phone string) bool {
 	// Basic phone number validation - in production, use a proper phone validation library
-	// TODO: Integrate with libphonenumber for comprehensive phone validation
+	// TODO: Integrate with libphonenumber for phone validation
 	return len(phone) >= 10 && len(phone) <= 15
 }
 
@@ -717,7 +717,7 @@ func (s *mfaService) maskEmail(email string) string {
 }
 
 // Additional MFA service methods (ListUserMFAMethods, DisableMFAMethod, etc.)
-// NOTE: These methods provide comprehensive MFA management capabilities
+// NOTE: These methods provide MFA management capabilities
 // TODO: Add rate limiting for MFA validation attempts
 // TODO: Implement geolocation-based MFA requirements
 
@@ -830,7 +830,7 @@ func (s *mfaService) UpdateMFASettings(ctx context.Context, req *UpdateMFASettin
 
 // GetMFAStatistics returns MFA statistics for reporting
 func (s *mfaService) GetMFAStatistics(ctx context.Context, req *MFAStatisticsRequest) (*MFAStatistics, error) {
-	// TODO: Implement comprehensive MFA statistics collection
+	// TODO: Implement MFA statistics collection
 	return &MFAStatistics{
 		TotalUsers:            0,
 		MFAEnabledUsers:       0,

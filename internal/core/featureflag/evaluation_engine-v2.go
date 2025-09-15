@@ -214,7 +214,7 @@ func NewCELExpressionEngine(logger *slog.Logger, config ...EngineConfig) (Expres
 		cfg = config[0]
 	}
 
-	// Create CEL environment with comprehensive type system
+	// Create CEL environment with type system
 	env, err := cel.NewEnv(
 		// Core variable declarations for feature flag evaluation
 		cel.Variable("user", cel.MapType(cel.StringType, cel.AnyType)),

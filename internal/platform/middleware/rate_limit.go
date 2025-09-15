@@ -48,7 +48,7 @@ type EndpointLimit struct {
 	WindowSize time.Duration `json:"window_size"`
 }
 
-// RateLimitMiddleware provides comprehensive rate limiting middleware
+// RateLimitMiddleware provides rate limiting middleware
 type RateLimitMiddleware struct {
 	cache   cache.Service
 	config  RateLimitConfig

@@ -21,7 +21,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// AuthzAdapterTestSuite provides comprehensive test coverage for the authorization adapter
+// AuthzAdapterTestSuite provides test coverage for the authorization adapter
 type AuthzAdapterTestSuite struct {
 	suite.Suite
 	ctrl          *gomock.Controller

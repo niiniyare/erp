@@ -62,7 +62,7 @@ type ResourceMapping struct {
 	OwnershipCheck bool   `json:"ownership_check"`
 }
 
-// AuthorizationMiddleware provides comprehensive authorization middleware using IAM
+// AuthorizationMiddleware provides authorization middleware using IAM
 type AuthorizationMiddleware struct {
 	iamService iam.Service
 	config     AuthorizationConfig

@@ -3329,7 +3329,7 @@ IF FOUND THEN RETURN v_cached_result;
 
 END IF;
 
--- Build comprehensive user context for ABAC evaluation
+-- Build user context for ABAC evaluation
 SELECT
   jsonb_build_object(
     'user_id',
@@ -3451,7 +3451,7 @@ END;
 $$
 LANGUAGE plpgsql SECURITY DEFINER;
 
-COMMENT ON FUNCTION user_has_permission(UUID, VARCHAR, VARCHAR, UUID, UUID, JSONB) IS 'Evaluates user permissions with ABAC context, caching, and comprehensive policy evaluation including direct permissions and role-based permissions.';
+COMMENT ON FUNCTION user_has_permission(UUID, VARCHAR, VARCHAR, UUID, UUID, JSONB) IS 'Evaluates user permissions with ABAC context, caching, and policy evaluation including direct permissions and role-based permissions.';
 
 -- ------------------------------------------------------------------------------------------------
 -- Cleanup function for expired data and maintenance
@@ -7191,7 +7191,7 @@ COMMENT ON FUNCTION cleanup_old_feature_flag_audit_logs(INTEGER) IS 'Cleans up f
 
 COMMENT ON FUNCTION cleanup_soft_deleted_feature_flags(INTEGER) IS 'Permanently removes feature flags that have been soft-deleted for specified days';
 
-COMMENT ON FUNCTION get_feature_flags_health_metrics() IS 'Returns comprehensive health metrics for the feature flag system';
+COMMENT ON FUNCTION get_feature_flags_health_metrics() IS 'Returns health metrics for the feature flag system';
 
 COMMENT ON FUNCTION get_tenant_feature_flag_stats(UUID) IS 'Returns detailed statistics for a specific tenant''s feature flags';
 
@@ -7790,7 +7790,7 @@ CREATE TABLE finance_accounts (
 );
 
 -- Table comments
-COMMENT ON TABLE finance_accounts IS 'Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and comprehensive financial reporting requirements.';
+COMMENT ON TABLE finance_accounts IS 'Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and financial reporting requirements.';
 
 -- Key column comments
 COMMENT ON COLUMN finance_accounts.account_code IS 'Unique account code within tenant - Used for transaction posting and reporting';
@@ -9753,7 +9753,7 @@ COMMIT;
 -- ================================================================================================
 --
 -- Core tables for ERP Settings Module implementing configuration inheritance, templates,
--- and comprehensive audit trails for enterprise configuration management.
+-- and audit trails for enterprise configuration management.
 --
 -- Prerequisites:
 -- - tenants table with UUID primary key

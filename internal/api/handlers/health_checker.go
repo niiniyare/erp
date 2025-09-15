@@ -14,7 +14,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// HealthChecker provides comprehensive health check functionality for dependencies
+// HealthChecker provides health check functionality for dependencies
 // NOTE: This service validates critical system dependencies including database and cache
 // TODO: Add external service health checks (auth providers, notification services)
 type HealthChecker interface {
@@ -32,7 +32,7 @@ type HealthCheckResult struct {
 	Details   map[string]any `json:"details,omitempty"`
 }
 
-// healthChecker implements HealthChecker with comprehensive dependency validation
+// healthChecker implements HealthChecker with dependency validation
 type healthChecker struct {
 	store   db.Store
 	redis   redis.Cmdable
@@ -64,7 +64,7 @@ func NewHealthChecker(
 	}
 }
 
-// CheckDatabase performs comprehensive database health checks
+// CheckDatabase performs database health checks
 func (h *healthChecker) CheckDatabase(ctx context.Context) HealthCheckResult {
 	ctx, span := h.tracer.StartSpan(ctx, "health.check_database")
 	defer span.End()
@@ -160,7 +160,7 @@ func (h *healthChecker) CheckDatabase(ctx context.Context) HealthCheckResult {
 	return result
 }
 
-// CheckCache performs comprehensive Redis cache health checks
+// CheckCache performs Redis cache health checks
 func (h *healthChecker) CheckCache(ctx context.Context) HealthCheckResult {
 	ctx, span := h.tracer.StartSpan(ctx, "health.check_cache")
 	defer span.End()

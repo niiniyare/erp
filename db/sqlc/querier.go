@@ -863,7 +863,7 @@ type Querier interface {
 	GetUserEvaluationHistory(ctx context.Context, arg GetUserEvaluationHistoryParams) ([]*PolicyEvaluation, error)
 	GetUserNotificationPreferences(ctx context.Context, userID uuid.UUID) (*NotificationPreference, error)
 	GetUserPasswordByID(ctx context.Context, id uuid.UUID) (*string, error)
-	// Get comprehensive risk profile for a user
+	// Get risk profile for a user
 	GetUserRiskProfile(ctx context.Context, arg GetUserRiskProfileParams) (*GetUserRiskProfileRow, error)
 	// Get audit events for a specific session
 	GetUserSessionEvents(ctx context.Context, sessionID *uuid.UUID) ([]*GetUserSessionEventsRow, error)

@@ -20,7 +20,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// TransactionRepositoryTestSuite defines comprehensive test suite for transaction repository operations
+// TransactionRepositoryTestSuite defines test suite for transaction repository operations
 // Tests cover multi-tenant isolation, CRUD operations, transaction management, and error handling
 type TransactionRepositoryTestSuite struct {
 	suite.Suite

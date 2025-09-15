@@ -324,7 +324,7 @@ jobs:
           
       - name: Generate Test Report
         run: |
-          # Generate comprehensive test report
+          # Generate test report
           echo "# IAM TDD Test Report" > test-report.md
           echo "Generated on: $(date)" >> test-report.md
           echo "" >> test-report.md

@@ -41,7 +41,7 @@ func NewSecurityValidator(
 	}
 }
 
-// ValidateMiddlewareStack performs comprehensive validation of the middleware stack
+// ValidateMiddlewareStack performs validation of the middleware stack
 func (sv *SecurityValidator) ValidateMiddlewareStack(stack *GoaMiddlewareStack) *SecurityValidationResult {
 	ctx, span := sv.tracing.StartSpan(context.Background(), "security_validator.validate_stack")
 	defer span.End()
@@ -55,7 +55,7 @@ func (sv *SecurityValidator) ValidateMiddlewareStack(stack *GoaMiddlewareStack) 
 		SecurityScore:    0,
 	}
 
-	sv.logger.InfoContext(ctx, "Starting comprehensive security middleware validation")
+	sv.logger.InfoContext(ctx, "Starting security middleware validation")
 
 	// Validate each middleware component
 	sv.validateCORS(stack.corsConfig, result)

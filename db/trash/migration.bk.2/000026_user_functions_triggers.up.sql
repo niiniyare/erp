@@ -134,7 +134,7 @@ BEGIN
         RETURN v_cached_result;
     END IF;
 
-    -- Build comprehensive user context for ABAC evaluation
+    -- Build user context for ABAC evaluation
     SELECT jsonb_build_object(
         'user_id', u.id,
         'user_type', u.user_type,
@@ -210,7 +210,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 COMMENT ON FUNCTION user_has_permission(UUID, VARCHAR, VARCHAR, UUID, UUID, JSONB) IS
-'Evaluates user permissions with ABAC context, caching, and comprehensive policy evaluation including direct permissions and role-based permissions.';
+'Evaluates user permissions with ABAC context, caching, and policy evaluation including direct permissions and role-based permissions.';
 
 -- ------------------------------------------------------------------------------------------------
 -- Cleanup function for expired data and maintenance

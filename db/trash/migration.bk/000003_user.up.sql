@@ -2,7 +2,7 @@
 -- PostgreSQL  RBAC/ABAC Schema with UUID Primary Keys and Row Level Security (RLS)
 -- ================================================================================================
 -- 
--- This schema implements a comprehensive Role-Based Access Control (RBAC) and 
+-- This schema implements a Role-Based Access Control (RBAC) and 
 -- Attribute-Based Access Control (ABAC) system with the following features:
 -- 
 -- * UUID primary keys throughout for better distributed system support
@@ -1247,7 +1247,7 @@ BEGIN
         RETURN v_cached_result;
     END IF;
     
-    -- Build comprehensive user context for ABAC evaluation
+    -- Build user context for ABAC evaluation
     SELECT jsonb_build_object(
         'user_id', u.id,
         'user_type', u.user_type,
@@ -1323,7 +1323,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 COMMENT ON FUNCTION user_has_permission(UUID, VARCHAR, VARCHAR, INTEGER, UUID, JSONB) IS 
-'Evaluates user permissions with ABAC context, caching, and comprehensive policy evaluation including direct permissions and role-based permissions.';
+'Evaluates user permissions with ABAC context, caching, and policy evaluation including direct permissions and role-based permissions.';
 
 -- ------------------------------------------------------------------------------------------------
 -- Cleanup function for expired data and maintenance
@@ -1571,7 +1571,7 @@ CREATE POLICY access_requests_admin_access ON access_requests
 
 -- Add final schema-level comment
 COMMENT ON SCHEMA public IS 
-' RBAC/ABAC authorization schema with UUID primary keys, Row Level Security, comprehensive audit logging, and ABAC policy engine for multi-tenant applications.';
+' RBAC/ABAC authorization schema with UUID primary keys, Row Level Security, audit logging, and ABAC policy engine for multi-tenant applications.';
 
 -- Success message
 DO $$

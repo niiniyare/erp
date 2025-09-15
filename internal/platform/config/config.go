@@ -297,7 +297,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("redis.password", "")
 	v.SetDefault("redis.db", 0)
 
-	// Temporal defaults - comprehensive system-wide configuration
+	// Temporal defaults - system-wide configuration
 	SetTemporalDefaults(v)
 
 	// Auth defaults
@@ -349,7 +349,7 @@ func bindEnvVars(v *viper.Viper) {
 	v.BindEnv("redis.password", "REDIS_PASSWORD")
 	v.BindEnv("redis.db", "REDIS_DB")
 
-	// Temporal - comprehensive system-wide environment bindings
+	// Temporal - system-wide environment bindings
 	BindTemporalEnvVars(v)
 
 	// Auth

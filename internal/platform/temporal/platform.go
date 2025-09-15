@@ -181,7 +181,7 @@ func (p *Platform) IsStarted() bool {
 	return p.started
 }
 
-// HealthCheck performs a comprehensive health check of the platform
+// HealthCheck performs a health check of the platform
 func (p *Platform) HealthCheck(ctx context.Context) error {
 	p.mu.RLock()
 	defer p.mu.RUnlock()

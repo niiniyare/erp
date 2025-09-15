@@ -14,7 +14,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// DoubleEntryValidator provides comprehensive validation for double-entry transactions
+// DoubleEntryValidator provides validation for double-entry transactions
 type DoubleEntryValidator interface {
 	// ValidateTransaction validates a complete transaction for double-entry compliance
 	ValidateTransaction(ctx context.Context, transaction *domain.Transaction, accounts map[uuid.UUID]*domain.Accounts) *ValidationResult

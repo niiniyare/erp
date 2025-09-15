@@ -1,7 +1,7 @@
 -- =============================================================================
 -- ACCOUNTING SYSTEM DATABASE SCHEMA
 -- =============================================================================
--- This schema represents a comprehensive accounting system with support for:
+-- This schema represents a accounting system with support for:
 -- - Chart of Accounts management
 -- - Bank transaction imports and processing
 -- - Customer/Vendor management

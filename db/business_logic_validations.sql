@@ -620,7 +620,7 @@ $$ LANGUAGE plpgsql;
 /*
 BUSINESS LOGIC VALIDATION USAGE:
 
-1. Run comprehensive business logic check:
+1. Run business logic check:
    SELECT * FROM check_all_business_logic();
 
 2. Get summary report:

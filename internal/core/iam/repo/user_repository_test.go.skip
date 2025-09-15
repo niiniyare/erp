@@ -17,7 +17,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// UserRepositoryTestSuite implements IAM-REPO-002: UserRepository comprehensive testing
+// UserRepositoryTestSuite implements IAM-REPO-002: UserRepository testing
 // Covers password hashing, account status updates, MFA field management, and security features
 type UserRepositoryTestSuite struct {
 	suite.Suite
@@ -52,7 +52,7 @@ func (s *UserRepositoryTestSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
-// TestUserRepository runs the comprehensive user repository test suite
+// TestUserRepository runs the user repository test suite
 func TestUserRepository(t *testing.T) {
 	suite.Run(t, new(UserRepositoryTestSuite))
 }

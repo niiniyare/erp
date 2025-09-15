@@ -1,7 +1,7 @@
 package handlers
 
 // DEPRECATED: This file contains legacy Gin-based workflow handlers.
-// The system now uses comprehensive Goa-based feature flag handlers.
+// The system now uses Goa-based feature flag handlers.
 // Workflow functionality is available through the Goa API endpoints.
 
 /*

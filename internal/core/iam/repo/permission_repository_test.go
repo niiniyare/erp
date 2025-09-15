@@ -17,7 +17,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// PermissionRepositoryTestSuite implements IAM-REPO-004: PermissionRepository comprehensive testing
+// PermissionRepositoryTestSuite implements IAM-REPO-004: PermissionRepository testing
 // Covers conditional access rules validation, risk metadata management, and permission lifecycle
 type PermissionRepositoryTestSuite struct {
 	suite.Suite
@@ -52,7 +52,7 @@ func (s *PermissionRepositoryTestSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
-// TestPermissionRepository runs the comprehensive permission repository test suite
+// TestPermissionRepository runs the permission repository test suite
 func TestPermissionRepository(t *testing.T) {
 	suite.Run(t, new(PermissionRepositoryTestSuite))
 }

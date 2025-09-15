@@ -21,7 +21,7 @@ import (
 )
 
 // FinanceRepositoryIntegrationTestSuite tests integration between chart of accounts and transactions
-// with comprehensive tenant isolation verification
+// with tenant isolation verification
 type FinanceRepositoryIntegrationTestSuite struct {
 	suite.Suite
 	ctx             context.Context

@@ -2,7 +2,7 @@
 -- INTEGRATED VALIDATION SYSTEM
 -- =====================================================
 -- Combines structural validation with business logic validation
--- for comprehensive ERP/Accounting system validation
+-- for ERP/Accounting system validation
 -- =====================================================
 
 -- =====================================================
@@ -563,7 +563,7 @@ CI/CD INTEGRATION:
 #!/bin/bash
 # deployment-validation.sh
 
-echo "Running comprehensive validation..."
+echo "Running validation..."
 psql -d $DATABASE_URL -c "
 DO \$\$
 DECLARE

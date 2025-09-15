@@ -56,7 +56,7 @@ type EndpointValidationRule struct {
 	CustomPatterns      []string `json:"custom_patterns"`
 }
 
-// ValidationMiddleware provides comprehensive input validation and sanitization
+// ValidationMiddleware provides input validation and sanitization
 type ValidationMiddleware struct {
 	config  ValidationConfig
 	logger  logger.Logger

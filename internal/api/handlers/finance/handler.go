@@ -682,7 +682,7 @@ func (h *FinanceHandler) ValidateTransaction(ctx context.Context, payload *goaFi
 		"validation_level": payload.ValidationLevel,
 	})
 
-	// TODO: Implement comprehensive validation
+	// TODO: Implement validation
 	result := &goaFinance.ValidationResult{
 		IsValid:           true,
 		IsBalanced:        true,

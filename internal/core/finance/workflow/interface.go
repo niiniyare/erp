@@ -63,7 +63,7 @@ type ProcessResult struct {
 	NextAction          string        `json:"next_action,omitempty"`
 }
 
-// TransactionStatus provides comprehensive status information
+// TransactionStatus provides status information
 type TransactionStatus struct {
 	TransactionID     uuid.UUID         `json:"transaction_id"`
 	Status           ProcessingStatus   `json:"status"`

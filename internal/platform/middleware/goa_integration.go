@@ -13,7 +13,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// GoaMiddlewareStack provides comprehensive middleware integration for Goa framework
+// GoaMiddlewareStack provides middleware integration for Goa framework
 type GoaMiddlewareStack struct {
 	logger        logger.Logger
 	cache         cache.Service

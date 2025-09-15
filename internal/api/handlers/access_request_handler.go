@@ -1,7 +1,7 @@
 package handlers
 
 // DEPRECATED: This file contains legacy Gin-based access request handlers.
-// The system now uses comprehensive Goa-based access request handlers.
+// The system now uses Goa-based access request handlers.
 // This file is kept for reference but all functionality has been replaced.
 
 /*

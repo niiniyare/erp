@@ -661,7 +661,7 @@ DECLARE
 BEGIN
     start_time := NOW();
     
-    -- Run the comprehensive validation
+    -- Run the validation
     SELECT generate_migration_validation_report_json() INTO validation_result;
     
     end_time := NOW();

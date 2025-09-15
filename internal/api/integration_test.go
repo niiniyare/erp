@@ -27,7 +27,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// APIIntegrationTestSuite defines comprehensive API integration test suite
+// APIIntegrationTestSuite defines API integration test suite
 // Tests cover: API-INTEGRATION-001 through API-INTEGRATION-020 with full HTTP request/response validation
 // NOTE: These tests validate complete API workflows including authentication, authorization, and data persistence
 // TODO: Add performance benchmarking and load testing capabilities
@@ -451,11 +451,11 @@ func (s *APIIntegrationTestSuite) TestCacheConnectivityValidation() {
 }
 
 // Test Specification: API-INTEGRATION-007
-// Description: Validate comprehensive dependency health check aggregation
+// Description: Validate dependency health check aggregation
 func (s *APIIntegrationTestSuite) TestDependencyHealthCheck() {
 	s.T().Log("Running API-INTEGRATION-007:  Dependency Health Check")
 
-	// Test comprehensive health check
+	// Test health check
 	results := s.healthChecker.CheckDependencies(s.ctx)
 
 	// Validate all expected dependencies are checked

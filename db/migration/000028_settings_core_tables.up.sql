@@ -3,7 +3,7 @@
 -- ================================================================================================
 --
 -- Core tables for ERP Settings Module implementing configuration inheritance, templates,
--- and comprehensive audit trails for enterprise configuration management.
+-- and audit trails for enterprise configuration management.
 --
 -- Prerequisites:
 -- - tenants table with UUID primary key

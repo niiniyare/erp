@@ -817,7 +817,7 @@ func (pm *policyManager) GetPolicyUsageStats(ctx context.Context, req *PolicyUsa
 			"group_by":   req.GroupBy,
 		})
 
-	// NOTE: Advanced usage statistics with comprehensive analytics
+	// NOTE: Advanced usage statistics with analytics
 	// TODO: Implement real-time usage tracking with event streaming
 	// TODO: Add machine learning for trend analysis and predictions
 	// TODO: Implement usage pattern anomaly detection

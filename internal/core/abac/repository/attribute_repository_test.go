@@ -23,7 +23,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// AttributeRepositoryTestSuite defines comprehensive test suite for ABAC attribute repository operations
+// AttributeRepositoryTestSuite defines test suite for ABAC attribute repository operations
 // Tests cover: ABAC-ATTR-REPO-001 through ABAC-ATTR-REPO-008 with multi-tenant RLS verification
 type AttributeRepositoryTestSuite struct {
 	suite.Suite

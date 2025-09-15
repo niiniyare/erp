@@ -2549,7 +2549,7 @@ type GetUserRiskProfileRow struct {
 	EventsLast7d       int64       `json:"events_last_7d"`
 }
 
-// Get comprehensive risk profile for a user
+// Get risk profile for a user
 func (q *Queries) GetUserRiskProfile(ctx context.Context, arg GetUserRiskProfileParams) (*GetUserRiskProfileRow, error) {
 	row := q.db.QueryRow(ctx, getUserRiskProfile, arg.UserID, arg.StartTime)
 	var i GetUserRiskProfileRow

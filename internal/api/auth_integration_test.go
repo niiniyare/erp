@@ -30,7 +30,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// AuthAPIIntegrationTestSuite defines comprehensive authentication API integration tests
+// AuthAPIIntegrationTestSuite defines authentication API integration tests
 // Tests cover: AUTH-API-001 through AUTH-API-015 with full authentication workflow validation
 // NOTE: These tests validate JWT authentication, user management, and security workflows
 // TODO: Add OAuth2 integration testing and external identity provider validation

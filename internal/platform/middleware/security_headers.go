@@ -47,7 +47,7 @@ type SecurityHeadersConfig struct {
 	Development bool `json:"development"`
 }
 
-// SecurityHeadersMiddleware provides comprehensive security headers middleware
+// SecurityHeadersMiddleware provides security headers middleware
 type SecurityHeadersMiddleware struct {
 	config  SecurityHeadersConfig
 	logger  logger.Logger

@@ -654,7 +654,7 @@ func NewCompoundValidator() *CompoundValidator {
 	}
 }
 
-// ValidateAccount performs comprehensive account validation
+// ValidateAccount performs account validation
 func (v *CompoundValidator) ValidateAccount(account *Accounts, parentAccount *Accounts) *ValidationResult {
 	result := &ValidationResult{IsValid: true}
 
@@ -670,7 +670,7 @@ func (v *CompoundValidator) ValidateAccount(account *Accounts, parentAccount *Ac
 	return result
 }
 
-// ValidateTransaction performs comprehensive transaction validation
+// ValidateTransaction performs transaction validation
 func (v *CompoundValidator) ValidateTransaction(transaction *Transaction) *ValidationResult {
 	result := &ValidationResult{IsValid: true}
 
@@ -935,7 +935,7 @@ func NewBatchValidator(maxBatchSize int) *BatchValidator {
 	}
 }
 
-// ValidateTransactionBatch validates a batch of transactions with comprehensive checks
+// ValidateTransactionBatch validates a batch of transactions with checks
 func (v *BatchValidator) ValidateTransactionBatch(transactions []*Transaction, ctx *ValidationContext) *BatchValidationResult {
 	result := &BatchValidationResult{
 		OverallValid:  true,
@@ -1443,7 +1443,7 @@ func (v *BatchValidator) ValidateTransactionBatch(transactions []*Transaction, c
 // 	}
 // }
 //
-// // ValidateAccount performs comprehensive account validation
+// // ValidateAccount performs account validation
 // func (v *CompoundValidator) ValidateAccount(account *Accounts, parentAccount *Accounts) *ValidationResult {
 // 	result := &ValidationResult{IsValid: true}
 //
@@ -1459,7 +1459,7 @@ func (v *BatchValidator) ValidateTransactionBatch(transactions []*Transaction, c
 // 	return result
 // }
 //
-// // ValidateTransaction performs comprehensive transaction validation
+// // ValidateTransaction performs transaction validation
 // func (v *CompoundValidator) ValidateTransaction(transaction *Transaction) *ValidationResult {
 // 	result := &ValidationResult{IsValid: true}
 //

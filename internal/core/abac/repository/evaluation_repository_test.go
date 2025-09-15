@@ -23,7 +23,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// PolicyEvaluationRepositoryTestSuite defines comprehensive test suite for ABAC policy evaluation repository operations
+// PolicyEvaluationRepositoryTestSuite defines test suite for ABAC policy evaluation repository operations
 // Tests cover: ABAC-EVAL-REPO-001 through ABAC-EVAL-REPO-008 with multi-tenant RLS verification
 type PolicyEvaluationRepositoryTestSuite struct {
 	suite.Suite

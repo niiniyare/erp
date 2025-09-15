@@ -26,7 +26,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/types"
 )
 
-// PolicyRepositoryTestSuite defines comprehensive test suite for ABAC policy repository operations
+// PolicyRepositoryTestSuite defines test suite for ABAC policy repository operations
 // Tests cover: ABAC-REPO-001 through ABAC-REPO-010 with multi-tenant RLS verification
 type PolicyRepositoryTestSuite struct {
 	suite.Suite
@@ -878,7 +878,7 @@ func (s *PolicyRepositoryTestSuite) TestGetPoliciesForEvaluation() {
 // TestMultiTenantRLSIntegrity tests ABAC-REPO-007:  Multi-tenant RLS Integrity
 func (s *PolicyRepositoryTestSuite) TestMultiTenantRLSIntegrity() {
 	s.Run("ABAC-REPO-007_RLSVerification", func() {
-		// Test comprehensive multi-tenant RLS enforcement
+		// Test multi-tenant RLS enforcement
 
 		// 1. Create policies in both tenants
 		var tenantAPolicies, tenantBPolicies []*models.Policy

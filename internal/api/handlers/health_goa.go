@@ -12,7 +12,7 @@ import (
 )
 
 // HealthGoaHandler implements the GOA health service
-// NOTE: Enhanced with comprehensive dependency health checking
+// NOTE: Enhanced with dependency health checking
 // TODO: Add external service health checks (notification services, etc.)
 type HealthGoaHandler struct {
 	healthChecker HealthChecker
@@ -20,7 +20,7 @@ type HealthGoaHandler struct {
 	metrics       metrics.MetricsProvider
 }
 
-// NewHealthGoaHandler creates a new GOA health handler with comprehensive health checking
+// NewHealthGoaHandler creates a new GOA health handler with health checking
 func NewHealthGoaHandler(
 	healthChecker HealthChecker,
 	tracing tracing.TracingService,
@@ -77,7 +77,7 @@ func (h *HealthGoaHandler) Health(ctx context.Context) (*health.HealthStatus, er
 	return healthStatus, nil
 }
 
-// Ready implements the readiness check endpoint with comprehensive dependency validation
+// Ready implements the readiness check endpoint with dependency validation
 func (h *HealthGoaHandler) Ready(ctx context.Context) (*health.ReadinessStatus, error) {
 	// Start tracing span
 	ctx, span := h.tracing.StartSpan(ctx, "health.ready",
@@ -96,7 +96,7 @@ func (h *HealthGoaHandler) Ready(ctx context.Context) (*health.ReadinessStatus, 
 	// Log readiness check request
 	logger.DebugContext(ctx, "Processing readiness check request")
 
-	// Perform comprehensive dependency health checks
+	// Perform dependency health checks
 	healthResults := h.healthChecker.CheckDependencies(ctx)
 
 	// Convert health check results to API response format

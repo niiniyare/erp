@@ -89,7 +89,7 @@ CREATE TABLE finance_accounts (
 );
 
 -- Table comments
-COMMENT ON TABLE finance_accounts IS 'Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and comprehensive financial reporting requirements.';
+COMMENT ON TABLE finance_accounts IS 'Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and financial reporting requirements.';
 
 -- Key column comments
 COMMENT ON COLUMN finance_accounts.account_code IS 'Unique account code within tenant - Used for transaction posting and reporting';

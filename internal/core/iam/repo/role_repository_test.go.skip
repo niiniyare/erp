@@ -17,7 +17,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// RoleRepositoryTestSuite implements IAM-REPO-003: RoleRepository comprehensive testing
+// RoleRepositoryTestSuite implements IAM-REPO-003: RoleRepository testing
 // Covers hierarchical role queries, circular dependency detection, and role inheritance validation
 type RoleRepositoryTestSuite struct {
 	suite.Suite
@@ -50,7 +50,7 @@ func (s *RoleRepositoryTestSuite) TearDownTest() {
 	s.ctrl.Finish()
 }
 
-// TestRoleRepository runs the comprehensive role repository test suite
+// TestRoleRepository runs the role repository test suite
 func TestRoleRepository(t *testing.T) {
 	suite.Run(t, new(RoleRepositoryTestSuite))
 }

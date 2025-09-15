@@ -1,7 +1,7 @@
 package handlers
 
 // DEPRECATED: This file contains legacy Gin-based WebSocket handlers.
-// The system now uses comprehensive Goa-based feature flag handlers with native HTTP.
+// The system now uses Goa-based feature flag handlers with native HTTP.
 // WebSocket functionality should be integrated through standard HTTP handlers.
 
 /*

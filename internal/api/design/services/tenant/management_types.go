@@ -1,0 +1,623 @@
+package tenant
+
+import (
+	"github.com/niiniyare/erp/internal/api/design/types"
+	. "goa.design/goa/v3/dsl"
+)
+
+// ProvisionTenantPayload describes the payload for provisioning a new tenant
+var ProvisionTenantPayload = Type("ProvisionTenantPayload", func() {
+	Description("payload for provisioning a new tenant with full setup")
+	
+	// Basic tenant information
+	Attribute("name", String, "Tenant display name", func() {
+		MinLength(1)
+		MaxLength(100)
+		Example("Acme Corporation")
+	})
+	Attribute("subdomain", String, "Desired subdomain", func() {
+		Pattern("^[a-z0-9][a-z0-9-]*[a-z0-9]$")
+		MinLength(3)
+		MaxLength(50)
+		Example("acme-corp")
+	})
+	Attribute("description", String, "Tenant description", func() {
+		MaxLength(500)
+		Example("Leading provider of roadrunner traps and anvils")
+	})
+
+	// Business information
+	Attribute("industry", String, "Industry classification", func() {
+		Enum("technology", "healthcare", "finance", "retail", "manufacturing", "education", "government", "other")
+		Example("technology")
+	})
+	Attribute("company_size", String, "Company size category", func() {
+		Enum("startup", "small", "medium", "large", "enterprise")
+		Default("small")
+		Example("medium")
+	})
+	Attribute("country", String, "Primary country of operation", func() {
+		Pattern(types.CountryCodePattern)
+		Example("US")
+	})
+
+	// Subscription and plan
+	Attribute("plan_type", String, "Initial subscription plan", func() {
+		Enum("starter", "professional", "enterprise")
+		Default("starter")
+		Example("professional")
+	})
+	Attribute("billing_cycle", String, "Billing cycle", func() {
+		Enum("monthly", "yearly")
+		Default("monthly")
+		Example("monthly")
+	})
+
+	// Contact information
+	Attribute("contact", types.ContactInfo, "Primary contact information")
+
+	// Admin user for the tenant
+	Attribute("admin_user", AdminUserPayload, "Initial admin user for the tenant")
+
+	// Initial configuration
+	Attribute("initial_settings", TenantInitialSettings, "Initial tenant settings and configuration")
+
+	// Features to enable
+	Attribute("enabled_modules", ArrayOf(String), "Modules to enable initially", func() {
+		Enum("finance", "inventory", "hr", "crm", "project_management", "reporting")
+		Example([]string{"finance", "inventory"})
+	})
+
+	// Usage limits
+	Attribute("initial_limits", TenantLimits, "Initial usage limits")
+
+	Required("name", "subdomain", "contact", "admin_user")
+})
+
+// AdminUserPayload describes the initial admin user for a tenant
+var AdminUserPayload = Type("AdminUserPayload", func() {
+	Description("Initial admin user information for tenant provisioning")
+	
+	Attribute("email", String, "Admin user email", func() {
+		Format(FormatEmail)
+		Example("admin@acme.com")
+	})
+	Attribute("first_name", String, "Admin user first name", func() {
+		MinLength(1)
+		MaxLength(50)
+		Example("John")
+	})
+	Attribute("last_name", String, "Admin user last name", func() {
+		MinLength(1)
+		MaxLength(50)
+		Example("Doe")
+	})
+	Attribute("phone", String, "Admin user phone number", func() {
+		Pattern(types.PhonePattern)
+		Example("+1-555-123-4567")
+	})
+	Attribute("timezone", String, "Admin user timezone", func() {
+		Example("America/New_York")
+		Default("UTC")
+	})
+	Attribute("language", String, "Preferred language", func() {
+		Pattern("^[a-z]{2}$")
+		Example("en")
+		Default("en")
+	})
+	Attribute("send_welcome_email", Boolean, "Whether to send welcome email", func() {
+		Default(true)
+	})
+
+	Required("email", "first_name", "last_name")
+})
+
+// TenantInitialSettings describes initial tenant configuration
+var TenantInitialSettings = Type("TenantInitialSettings", func() {
+	Description("Initial settings and configuration for new tenant")
+	
+	Attribute("timezone", String, "Default timezone", func() {
+		Example("America/New_York")
+		Default("UTC")
+	})
+	Attribute("currency", String, "Default currency", func() {
+		Pattern(types.CurrencyCodePattern)
+		Example("USD")
+		Default("USD")
+	})
+	Attribute("fiscal_year_start", UInt, "Fiscal year start month (1-12)", func() {
+		Minimum(1)
+		Maximum(12)
+		Default(1)
+		Example(1)
+	})
+	Attribute("date_format", String, "Preferred date format", func() {
+		Enum("MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD")
+		Default("MM/DD/YYYY")
+		Example("MM/DD/YYYY")
+	})
+	Attribute("number_format", String, "Number format", func() {
+		Enum("1,234.56", "1.234,56", "1 234.56")
+		Default("1,234.56")
+		Example("1,234.56")
+	})
+	Attribute("language", String, "Default language", func() {
+		Pattern("^[a-z]{2}$")
+		Example("en")
+		Default("en")
+	})
+	Attribute("accounting_method", String, "Accounting method", func() {
+		Enum("accrual", "cash")
+		Default("accrual")
+		Example("accrual")
+	})
+})
+
+// ProvisionTenantResult describes the result of tenant provisioning
+var ProvisionTenantResult = Type("ProvisionTenantResult", func() {
+	Description("Result of tenant provisioning operation")
+	
+	Attribute("tenant", DetailedTenantResult, "Created tenant information")
+	Attribute("admin_user", AdminUserResult, "Created admin user information")
+	Attribute("setup_status", TenantSetupStatus, "Setup completion status")
+	Attribute("access_info", TenantAccessInfo, "Access information for the new tenant")
+	
+	Required("tenant", "admin_user", "setup_status", "access_info")
+})
+
+// AdminUserResult describes admin user creation result
+var AdminUserResult = Type("AdminUserResult", func() {
+	Description("Admin user creation result")
+	
+	Attribute("id", String, "User ID", func() {
+		Format(FormatUUID)
+		Example("550e8400-e29b-41d4-a716-446655440000")
+	})
+	Attribute("email", String, "User email", func() {
+		Format(FormatEmail)
+		Example("admin@acme.com")
+	})
+	Attribute("first_name", String, "First name", func() {
+		Example("John")
+	})
+	Attribute("last_name", String, "Last name", func() {
+		Example("Doe")
+	})
+	Attribute("status", String, "User status", func() {
+		Enum("active", "pending_verification", "suspended")
+		Example("pending_verification")
+	})
+	Attribute("welcome_email_sent", Boolean, "Whether welcome email was sent")
+	types.AuditFields()
+	
+	Required("id", "email", "first_name", "last_name", "status", "welcome_email_sent")
+})
+
+// TenantSetupStatus describes tenant setup completion status
+var TenantSetupStatus = Type("TenantSetupStatus", func() {
+	Description("Tenant setup completion status")
+	
+	Attribute("overall_status", String, "Overall setup status", func() {
+		Enum("completed", "partial", "failed")
+		Example("completed")
+	})
+	Attribute("completed_steps", ArrayOf(String), "Successfully completed setup steps", func() {
+		Example([]string{"tenant_created", "admin_user_created", "configuration_applied", "modules_enabled"})
+	})
+	Attribute("failed_steps", ArrayOf(String), "Failed setup steps", func() {
+		Example([]string{})
+	})
+	Attribute("next_steps", ArrayOf(String), "Recommended next steps", func() {
+		Example([]string{"verify_admin_email", "configure_payment_method"})
+	})
+	
+	Required("overall_status", "completed_steps", "failed_steps", "next_steps")
+})
+
+// TenantAccessInfo describes access information for new tenant
+var TenantAccessInfo = Type("TenantAccessInfo", func() {
+	Description("Access information for newly provisioned tenant")
+	
+	Attribute("tenant_url", String, "Primary tenant URL", func() {
+		Format(FormatURI)
+		Example("https://acme-corp.yourdomain.com")
+	})
+	Attribute("admin_portal_url", String, "Admin portal URL", func() {
+		Format(FormatURI)
+		Example("https://acme-corp.yourdomain.com/admin")
+	})
+	Attribute("api_base_url", String, "API base URL", func() {
+		Format(FormatURI)
+		Example("https://acme-corp.yourdomain.com/api/v1")
+	})
+	Attribute("documentation_url", String, "Documentation URL", func() {
+		Format(FormatURI)
+		Example("https://docs.yourdomain.com")
+	})
+	
+	Required("tenant_url", "admin_portal_url", "api_base_url")
+})
+
+// DetailedTenantResult extends TenantResult with additional admin information
+var DetailedTenantResult = ResultType("application/vnd.detailed-tenant", func() {
+	Description("Detailed tenant information for administrative purposes")
+	
+	// Extend the basic tenant result
+	Extend(TenantResult)
+	
+	// Add administrative fields
+	Attribute("configuration", TenantConfigurationResult, "Tenant configuration")
+	Attribute("usage_stats", TenantUsageStatsResult, "Current usage statistics")
+	Attribute("subscription_details", SubscriptionDetails, "Detailed subscription information")
+	Attribute("billing_info", BillingInfo, "Billing and payment information")
+	Attribute("security_settings", SecuritySettings, "Security configuration")
+	Attribute("audit_summary", AuditSummary, "Recent audit activity summary")
+	
+	View("default", func() {
+		// Include all basic fields
+		Attribute("id")
+		Attribute("name")
+		Attribute("slug")
+		Attribute("subdomain")
+		Attribute("status")
+		Attribute("plan_type")
+		Attribute("description")
+		Attribute("settings")
+		Attribute("subscription")
+		Attribute("contact")
+		Attribute("created_at")
+		Attribute("updated_at")
+		
+		// Include detailed fields
+		Attribute("configuration")
+		Attribute("usage_stats")
+		Attribute("subscription_details")
+		Attribute("billing_info")
+		Attribute("security_settings")
+		Attribute("audit_summary")
+	})
+	
+	View("summary", func() {
+		Attribute("id")
+		Attribute("name")
+		Attribute("subdomain")
+		Attribute("status")
+		Attribute("plan_type")
+		Attribute("created_at")
+		Attribute("usage_stats", func() {
+			View("basic")
+		})
+	})
+})
+
+// TenantConfigurationResult describes tenant configuration
+var TenantConfigurationResult = Type("TenantConfigurationResult", func() {
+	Description("Tenant configuration information")
+	
+	Attribute("limits", TenantLimits, "Usage limits")
+	Attribute("enabled_features", ArrayOf(String), "Enabled features", func() {
+		Example([]string{"finance", "inventory", "reporting"})
+	})
+	Attribute("security_policies", SecurityPolicies, "Security policies")
+	Attribute("integration_settings", IntegrationSettings, "Third-party integration settings")
+	Attribute("notification_preferences", NotificationPreferences, "Notification preferences")
+	
+	Required("limits", "enabled_features")
+})
+
+// TenantUsageStatsResult describes current usage statistics
+var TenantUsageStatsResult = Type("TenantUsageStatsResult", func() {
+	Description("Current tenant usage statistics")
+	
+	Attribute("period_start", String, "Statistics period start", func() {
+		Format(FormatDate)
+		Example("2023-12-01")
+	})
+	Attribute("period_end", String, "Statistics period end", func() {
+		Format(FormatDate)
+		Example("2023-12-31")
+	})
+	Attribute("active_users", UInt, "Number of active users", func() {
+		Example(25)
+	})
+	Attribute("total_entities", UInt, "Total number of entities", func() {
+		Example(150)
+	})
+	Attribute("storage_used_mb", UInt64, "Storage used in MB", func() {
+		Example(1024)
+	})
+	Attribute("api_calls", UInt64, "Total API calls in period", func() {
+		Example(50000)
+	})
+	Attribute("transactions_processed", UInt64, "Financial transactions processed", func() {
+		Example(1200)
+	})
+	
+	View("basic", func() {
+		Attribute("active_users")
+		Attribute("storage_used_mb")
+		Attribute("api_calls")
+	})
+	
+	Required("period_start", "period_end", "active_users", "total_entities")
+})
+
+// UpdateTenantConfigurationPayload describes configuration update payload
+var UpdateTenantConfigurationPayload = Type("UpdateTenantConfigurationPayload", func() {
+	Description("Payload for updating tenant configuration")
+	
+	Attribute("id", String, "Tenant ID", func() {
+		Format(FormatUUID)
+		Example("550e8400-e29b-41d4-a716-446655440000")
+	})
+	Attribute("limits", TenantLimits, "Updated usage limits")
+	Attribute("enabled_features", ArrayOf(String), "Features to enable/disable", func() {
+		Example([]string{"finance", "inventory", "hr"})
+	})
+	Attribute("security_policies", SecurityPolicies, "Updated security policies")
+	Attribute("notification_preferences", NotificationPreferences, "Updated notification preferences")
+	Attribute("reason", String, "Reason for configuration change", func() {
+		MinLength(10)
+		MaxLength(500)
+		Example("Upgrading to professional plan with additional features")
+	})
+	
+	Required("id", "reason")
+})
+
+// TenantActionResult describes the result of tenant actions
+var TenantActionResult = Type("TenantActionResult", func() {
+	Description("Result of tenant lifecycle actions")
+	
+	Attribute("tenant_id", String, "Tenant ID", func() {
+		Format(FormatUUID)
+		Example("550e8400-e29b-41d4-a716-446655440000")
+	})
+	Attribute("action", String, "Action performed", func() {
+		Example("suspend")
+	})
+	Attribute("status", String, "Action status", func() {
+		Enum("completed", "failed", "partial")
+		Example("completed")
+	})
+	Attribute("message", String, "Human-readable status message", func() {
+		Example("Tenant successfully suspended")
+	})
+	Attribute("effective_date", String, "When the action takes effect", func() {
+		Format(FormatDateTime)
+		Example("2023-12-07T10:30:00Z")
+	})
+	Attribute("audit_log_id", String, "Reference to audit log entry", func() {
+		Format(FormatUUID)
+		Example("550e8400-e29b-41d4-a716-446655440000")
+	})
+	
+	Required("tenant_id", "action", "status", "message", "effective_date")
+})
+
+// TenantUsageAnalyticsResult describes usage analytics
+var TenantUsageAnalyticsResult = Type("TenantUsageAnalyticsResult", func() {
+	Description("tenant usage analytics")
+	
+	Attribute("tenant_id", String, "Tenant ID", func() {
+		Format(FormatUUID)
+		Example("550e8400-e29b-41d4-a716-446655440000")
+	})
+	Attribute("period", String, "Analytics period", func() {
+		Example("current_month")
+	})
+	Attribute("user_metrics", UserMetrics, "User activity metrics")
+	Attribute("storage_metrics", StorageMetrics, "Storage usage metrics")
+	Attribute("api_metrics", APIMetrics, "API usage metrics")
+	Attribute("financial_metrics", FinancialMetrics, "Financial activity metrics")
+	Attribute("feature_usage", FeatureUsageMetrics, "Feature usage breakdown")
+	
+	Required("tenant_id", "period")
+})
+
+// Supporting types for analytics
+var UserMetrics = Type("UserMetrics", func() {
+	Description("User activity metrics")
+	Attribute("total_users", UInt, "Total users", func() { Example(50) })
+	Attribute("active_users", UInt, "Active users", func() { Example(35) })
+	Attribute("new_users", UInt, "New users in period", func() { Example(5) })
+	Attribute("avg_session_duration", UInt, "Average session duration in minutes", func() { Example(45) })
+})
+
+var StorageMetrics = Type("StorageMetrics", func() {
+	Description("Storage usage metrics")
+	Attribute("total_used_mb", UInt64, "Total storage used in MB", func() { Example(2048) })
+	Attribute("documents_count", UInt, "Number of documents", func() { Example(1500) })
+	Attribute("media_used_mb", UInt64, "Media storage used in MB", func() { Example(512) })
+	Attribute("growth_rate", Float64, "Storage growth rate percentage", func() { Example(15.5) })
+})
+
+var APIMetrics = Type("APIMetrics", func() {
+	Description("API usage metrics")
+	Attribute("total_calls", UInt64, "Total API calls", func() { Example(75000) })
+	Attribute("successful_calls", UInt64, "Successful API calls", func() { Example(74250) })
+	Attribute("error_rate", Float64, "Error rate percentage", func() { Example(1.0) })
+	Attribute("avg_response_time", UInt, "Average response time in milliseconds", func() { Example(150) })
+})
+
+var FinancialMetrics = Type("FinancialMetrics", func() {
+	Description("Financial activity metrics")
+	Attribute("transactions_count", UInt, "Number of transactions", func() { Example(850) })
+	Attribute("total_amount", types.Money, "Total transaction amount")
+	Attribute("avg_transaction_amount", types.Money, "Average transaction amount")
+})
+
+var FeatureUsageMetrics = Type("FeatureUsageMetrics", func() {
+	Description("Feature usage breakdown")
+	Attribute("finance_usage", UInt, "Finance module usage percentage", func() { Example(85) })
+	Attribute("inventory_usage", UInt, "Inventory module usage percentage", func() { Example(60) })
+	Attribute("hr_usage", UInt, "HR module usage percentage", func() { Example(40) })
+	Attribute("reporting_usage", UInt, "Reporting module usage percentage", func() { Example(75) })
+})
+
+// TenantSummaryStats describes summary statistics for tenant listings
+var TenantSummaryStats = Type("TenantSummaryStats", func() {
+	Description("Summary statistics for tenant listings")
+	
+	Attribute("total_tenants", UInt, "Total number of tenants", func() {
+		Example(156)
+	})
+	Attribute("active_tenants", UInt, "Number of active tenants", func() {
+		Example(142)
+	})
+	Attribute("suspended_tenants", UInt, "Number of suspended tenants", func() {
+		Example(8)
+	})
+	Attribute("pending_tenants", UInt, "Number of pending tenants", func() {
+		Example(6)
+	})
+	Attribute("archived_tenants", UInt, "Number of archived tenants", func() {
+		Example(12)
+	})
+	Attribute("total_revenue", types.Money, "Total monthly recurring revenue")
+	Attribute("avg_users_per_tenant", Float64, "Average users per tenant", func() {
+		Example(23.5)
+	})
+	
+	Required("total_tenants", "active_tenants", "suspended_tenants", "pending_tenants")
+})
+
+// TenantAuditLogEntry describes audit log entries
+var TenantAuditLogEntry = Type("TenantAuditLogEntry", func() {
+	Description("Tenant audit log entry")
+	
+	Attribute("id", String, "Audit log entry ID", func() {
+		Format(FormatUUID)
+		Example("550e8400-e29b-41d4-a716-446655440000")
+	})
+	Attribute("action", String, "Action performed", func() {
+		Example("tenant_suspended")
+	})
+	Attribute("actor_id", String, "ID of user who performed the action", func() {
+		Format(FormatUUID)
+		Example("550e8400-e29b-41d4-a716-446655440000")
+	})
+	Attribute("actor_name", String, "Name of user who performed the action", func() {
+		Example("John Doe")
+	})
+	Attribute("description", String, "Human-readable description", func() {
+		Example("Tenant suspended due to non-payment")
+	})
+	Attribute("metadata", MapOf(String, Any), "Additional action metadata", func() {
+		Example(map[string]any{
+			"reason": "Non-payment of subscription fees",
+			"previous_status": "active",
+			"new_status": "suspended",
+		})
+	})
+	Attribute("timestamp", String, "When the action occurred", func() {
+		Format(FormatDateTime)
+		Example("2023-12-07T10:30:00Z")
+	})
+	Attribute("ip_address", String, "IP address of the actor", func() {
+		Example("192.168.1.100")
+	})
+	
+	Required("id", "action", "actor_id", "description", "timestamp")
+})
+
+// Supporting configuration types
+var SecurityPolicies = Type("SecurityPolicies", func() {
+	Description("Security policies configuration")
+	Attribute("password_policy", PasswordPolicy, "Password requirements")
+	Attribute("session_timeout", UInt, "Session timeout in minutes", func() { Example(60) })
+	Attribute("require_mfa", Boolean, "Whether MFA is required", func() { Example(false) })
+	Attribute("allowed_ip_ranges", ArrayOf(String), "Allowed IP ranges", func() {
+		Example([]string{"192.168.1.0/24", "10.0.0.0/8"})
+	})
+})
+
+var PasswordPolicy = Type("PasswordPolicy", func() {
+	Description("Password policy configuration")
+	Attribute("min_length", UInt, "Minimum password length", func() { Example(8) })
+	Attribute("require_uppercase", Boolean, "Require uppercase letters", func() { Example(true) })
+	Attribute("require_lowercase", Boolean, "Require lowercase letters", func() { Example(true) })
+	Attribute("require_numbers", Boolean, "Require numbers", func() { Example(true) })
+	Attribute("require_symbols", Boolean, "Require symbols", func() { Example(false) })
+})
+
+var IntegrationSettings = Type("IntegrationSettings", func() {
+	Description("Third-party integration settings")
+	Attribute("webhook_endpoints", ArrayOf(String), "Webhook URLs", func() {
+		Example([]string{"https://api.partner.com/webhooks/tenant-events"})
+	})
+	Attribute("api_rate_limits", MapOf(String, UInt), "API rate limits per endpoint", func() {
+		Example(map[string]any{
+			"default": 1000,
+			"reports": 100,
+		})
+	})
+})
+
+var NotificationPreferences = Type("NotificationPreferences", func() {
+	Description("Notification preferences")
+	Attribute("email_notifications", Boolean, "Enable email notifications", func() { Example(true) })
+	Attribute("webhook_notifications", Boolean, "Enable webhook notifications", func() { Example(false) })
+	Attribute("notification_types", ArrayOf(String), "Enabled notification types", func() {
+		Example([]string{"billing", "security", "updates"})
+	})
+})
+
+// Additional supporting types
+var SubscriptionDetails = Type("SubscriptionDetails", func() {
+	Description("Detailed subscription information")
+	Extend(SubscriptionInfo)
+	Attribute("subscription_id", String, "External subscription ID", func() {
+		Example("sub_1234567890")
+	})
+	Attribute("payment_method", String, "Primary payment method", func() {
+		Example("**** **** **** 1234")
+	})
+	Attribute("last_payment_date", String, "Last successful payment", func() {
+		Format(FormatDate)
+		Example("2023-11-07")
+	})
+	Attribute("last_payment_amount", types.Money, "Last payment amount")
+})
+
+var BillingInfo = Type("BillingInfo", func() {
+	Description("Billing and payment information")
+	Attribute("billing_address", types.Address, "Billing address")
+	Attribute("payment_status", String, "Current payment status", func() {
+		Enum("current", "past_due", "failed", "cancelled")
+		Example("current")
+	})
+	Attribute("outstanding_amount", types.Money, "Outstanding amount")
+	Attribute("credit_balance", types.Money, "Available credit balance")
+})
+
+var SecuritySettings = Type("SecuritySettings", func() {
+	Description("Security configuration and status")
+	Attribute("last_security_scan", String, "Last security scan date", func() {
+		Format(FormatDate)
+		Example("2023-12-01")
+	})
+	Attribute("security_score", UInt, "Security score (0-100)", func() {
+		Minimum(0)
+		Maximum(100)
+		Example(85)
+	})
+	Attribute("enabled_features", ArrayOf(String), "Enabled security features", func() {
+		Example([]string{"audit_logging", "ip_whitelisting", "session_monitoring"})
+	})
+})
+
+var AuditSummary = Type("AuditSummary", func() {
+	Description("Recent audit activity summary")
+	Attribute("last_login", String, "Last user login", func() {
+		Format(FormatDateTime)
+		Example("2023-12-07T09:15:00Z")
+	})
+	Attribute("recent_changes", UInt, "Number of recent configuration changes", func() {
+		Example(3)
+	})
+	Attribute("last_backup", String, "Last data backup", func() {
+		Format(FormatDateTime)
+		Example("2023-12-07T02:00:00Z")
+	})
+})

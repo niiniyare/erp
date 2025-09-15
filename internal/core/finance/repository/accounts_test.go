@@ -20,7 +20,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// AccountsRepositoryTestSuite defines comprehensive test suite for chart of accounts repository operations
+// AccountsRepositoryTestSuite defines test suite for chart of accounts repository operations
 // Tests cover multi-tenant isolation, CRUD operations, hierarchical operations, and error handling
 type AccountsRepositoryTestSuite struct {
 	suite.Suite
