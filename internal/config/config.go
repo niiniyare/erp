@@ -76,6 +76,19 @@ type DatabaseSettings struct {
 	ConnMaxLifetime time.Duration `yaml:"conn_max_lifetime" mapstructure:"conn_max_lifetime"`
 }
 
+// GetDatabaseURL returns the PostgreSQL connection URL
+func (d *DatabaseSettings) GetDatabaseURL() string {
+	return fmt.Sprintf(
+		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		d.User,
+		d.Password,
+		d.Host,
+		d.Port,
+		d.Database,
+		d.SSLMode,
+	)
+}
+
 type RedisSettings struct {
 	Host     string `yaml:"host" mapstructure:"host"`
 	Port     int    `yaml:"port" mapstructure:"port"`
