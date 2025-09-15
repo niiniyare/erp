@@ -7,12 +7,25 @@ import (
 	"time"
 
 	"github.com/niiniyare/erp/internal/shared/logger"
+	newconfig "github.com/niiniyare/erp/internal/config"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func main() {
+	// TEST: Load new configuration system (Phase 1)
+	newCfg, err := newconfig.Load()
+	if err != nil {
+		panic("Failed to load new configuration: " + err.Error())
+	}
+	// Log the new config to verify it works
+	println("✅ New config loaded successfully:")
+	println("  App Name:", newCfg.App.Name)
+	println("  Server Port:", newCfg.Server.Port)
+	println("  Database Host:", newCfg.Database.Host)
+	println("  Environment:", newCfg.App.Environment)
+
 	// Initialize infrastructure (logger, tracing, metrics, config)
 	infra, err := InitializeInfrastructure()
 	if err != nil {
