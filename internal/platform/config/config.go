@@ -175,9 +175,6 @@ func Load() *Config {
 	v.AddConfigPath("../../../")
 	v.AddConfigPath("/etc/myapp")
 
-	// Try to read .env file first (for backward compatibility)
-	loadDotEnvFile(v)
-
 	// Enable reading from environment variables
 	v.AutomaticEnv()
 	// Set environment variable replacer for nested keys
@@ -189,6 +186,10 @@ func Load() *Config {
 	// Bind environment variables BEFORE reading config files
 	// This ensures env vars take precedence over config files
 	bindEnvVars(v)
+
+	// Try to read .env file (for backward compatibility)
+	// This must come AFTER bindEnvVars to not override exported env vars
+	loadDotEnvFile(v)
 	// Try to read config file (optional)
 	if err := v.ReadInConfig(); err != nil {
 		// Config file not found or error reading - continue with env vars and defaults
@@ -595,7 +596,9 @@ func loadDotEnvFile(v *viper.Viper) {
 				}
 				// Only set the environment variable if it's not already set
 				// This allows command-line env vars to override .env file values
-				os.Setenv(key, value)
+				if os.Getenv(key) == "" {
+					os.Setenv(key, value)
+				}
 			}
 		}
 	}

@@ -51,14 +51,14 @@ func main() {
 	}
 
 	// Determine server mode from environment
-	serverMode := getServerMode()
+	serverMode := getEnvironment()
 	var handler http.Handler
 
 	switch serverMode {
 	case "goa-only":
 		// Production mode: Pure GOA server with native middleware
 		handler = goaServer.Handler
-		logger.Info("Server starting in GOA-only mode (production)", logger.Fields{
+		logger.Info("Server starting ...", logger.Fields{
 			"port":       infra.Config.Server.Port,
 			"address":    ":" + infra.Config.Server.Port,
 			"mode":       "goa-only",
