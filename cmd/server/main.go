@@ -84,7 +84,7 @@ func initializeHTTPServer(app *application.Core) (http.Handler, error) {
 	// Extract services from application core
 	services := app.GetServices()
 	cfg := app.GetConfig()
-	
+
 	// For now, we'll use a simple handler
 	// TODO: Integrate with existing GOA server setup
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -105,7 +105,7 @@ func initializeHTTPServer(app *application.Core) (http.Handler, error) {
 		// Placeholder response
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		
+
 		// Simple JSON response (avoiding external deps for now)
 		w.Write([]byte(`{
 			"app": "` + cfg.App.Name + `",
@@ -113,16 +113,16 @@ func initializeHTTPServer(app *application.Core) (http.Handler, error) {
 			"status": "running",
 			"message": "New architecture working! (placeholder)"
 		}`))
-		
+
 		// Log the request
 		logger.Info("HTTP request handled", logger.Fields{
 			"method": r.Method,
 			"path":   r.URL.Path,
 			"status": 200,
 		})
-		
+
 		// Use services to show they're working
-		_ = services.Store    // Database connection
+		_ = services.Store       // Database connection
 		_ = services.RedisClient // Cache connection
 		// More integration will be added in next phase
 	}), nil

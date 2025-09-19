@@ -15,23 +15,33 @@ import (
 
 // Endpoints wraps the "tenant" service endpoints.
 type Endpoints struct {
-	Create goa.Endpoint
-	Get    goa.Endpoint
-	List   goa.Endpoint
-	Update goa.Endpoint
-	Delete goa.Endpoint
-	Health goa.Endpoint
+	Create              goa.Endpoint
+	Get                 goa.Endpoint
+	List                goa.Endpoint
+	Update              goa.Endpoint
+	Delete              goa.Endpoint
+	Health              goa.Endpoint
+	Provision           goa.Endpoint
+	Suspend             goa.Endpoint
+	Reactivate          goa.Endpoint
+	UpdateConfiguration goa.Endpoint
+	GetUsageAnalytics   goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "tenant" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
-		Create: NewCreateEndpoint(s),
-		Get:    NewGetEndpoint(s),
-		List:   NewListEndpoint(s),
-		Update: NewUpdateEndpoint(s),
-		Delete: NewDeleteEndpoint(s),
-		Health: NewHealthEndpoint(s),
+		Create:              NewCreateEndpoint(s),
+		Get:                 NewGetEndpoint(s),
+		List:                NewListEndpoint(s),
+		Update:              NewUpdateEndpoint(s),
+		Delete:              NewDeleteEndpoint(s),
+		Health:              NewHealthEndpoint(s),
+		Provision:           NewProvisionEndpoint(s),
+		Suspend:             NewSuspendEndpoint(s),
+		Reactivate:          NewReactivateEndpoint(s),
+		UpdateConfiguration: NewUpdateConfigurationEndpoint(s),
+		GetUsageAnalytics:   NewGetUsageAnalyticsEndpoint(s),
 	}
 }
 
@@ -43,6 +53,11 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 	e.Update = m(e.Update)
 	e.Delete = m(e.Delete)
 	e.Health = m(e.Health)
+	e.Provision = m(e.Provision)
+	e.Suspend = m(e.Suspend)
+	e.Reactivate = m(e.Reactivate)
+	e.UpdateConfiguration = m(e.UpdateConfiguration)
+	e.GetUsageAnalytics = m(e.GetUsageAnalytics)
 }
 
 // NewCreateEndpoint returns an endpoint function that calls the method
@@ -110,5 +125,50 @@ func NewDeleteEndpoint(s Service) goa.Endpoint {
 func NewHealthEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		return s.Health(ctx)
+	}
+}
+
+// NewProvisionEndpoint returns an endpoint function that calls the method
+// "provision" of service "tenant".
+func NewProvisionEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*ProvisionPayload)
+		return s.Provision(ctx, p)
+	}
+}
+
+// NewSuspendEndpoint returns an endpoint function that calls the method
+// "suspend" of service "tenant".
+func NewSuspendEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*SuspendPayload)
+		return s.Suspend(ctx, p)
+	}
+}
+
+// NewReactivateEndpoint returns an endpoint function that calls the method
+// "reactivate" of service "tenant".
+func NewReactivateEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*ReactivatePayload)
+		return s.Reactivate(ctx, p)
+	}
+}
+
+// NewUpdateConfigurationEndpoint returns an endpoint function that calls the
+// method "update_configuration" of service "tenant".
+func NewUpdateConfigurationEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*UpdateConfigurationPayload)
+		return s.UpdateConfiguration(ctx, p)
+	}
+}
+
+// NewGetUsageAnalyticsEndpoint returns an endpoint function that calls the
+// method "get_usage_analytics" of service "tenant".
+func NewGetUsageAnalyticsEndpoint(s Service) goa.Endpoint {
+	return func(ctx context.Context, req any) (any, error) {
+		p := req.(*GetUsageAnalyticsPayload)
+		return s.GetUsageAnalytics(ctx, p)
 	}
 }

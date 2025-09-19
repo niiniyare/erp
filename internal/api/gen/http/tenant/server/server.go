@@ -18,13 +18,18 @@ import (
 
 // Server lists the tenant service endpoint HTTP handlers.
 type Server struct {
-	Mounts []*MountPoint
-	Create http.Handler
-	Get    http.Handler
-	List   http.Handler
-	Update http.Handler
-	Delete http.Handler
-	Health http.Handler
+	Mounts              []*MountPoint
+	Create              http.Handler
+	Get                 http.Handler
+	List                http.Handler
+	Update              http.Handler
+	Delete              http.Handler
+	Health              http.Handler
+	Provision           http.Handler
+	Suspend             http.Handler
+	Reactivate          http.Handler
+	UpdateConfiguration http.Handler
+	GetUsageAnalytics   http.Handler
 }
 
 // MountPoint holds information about the mounted endpoints.
@@ -60,13 +65,23 @@ func New(
 			{"Update", "PUT", "/api/v1/tenants/{id}"},
 			{"Delete", "DELETE", "/api/v1/tenants/{id}"},
 			{"Health", "GET", "/api/v1/tenants/health"},
+			{"Provision", "POST", "/api/v1/tenants/provision"},
+			{"Suspend", "POST", "/api/v1/tenants/{id}/suspend"},
+			{"Reactivate", "POST", "/api/v1/tenants/{id}/reactivate"},
+			{"UpdateConfiguration", "PUT", "/api/v1/tenants/{id}/configuration"},
+			{"GetUsageAnalytics", "GET", "/api/v1/tenants/{id}/analytics"},
 		},
-		Create: NewCreateHandler(e.Create, mux, decoder, encoder, errhandler, formatter),
-		Get:    NewGetHandler(e.Get, mux, decoder, encoder, errhandler, formatter),
-		List:   NewListHandler(e.List, mux, decoder, encoder, errhandler, formatter),
-		Update: NewUpdateHandler(e.Update, mux, decoder, encoder, errhandler, formatter),
-		Delete: NewDeleteHandler(e.Delete, mux, decoder, encoder, errhandler, formatter),
-		Health: NewHealthHandler(e.Health, mux, decoder, encoder, errhandler, formatter),
+		Create:              NewCreateHandler(e.Create, mux, decoder, encoder, errhandler, formatter),
+		Get:                 NewGetHandler(e.Get, mux, decoder, encoder, errhandler, formatter),
+		List:                NewListHandler(e.List, mux, decoder, encoder, errhandler, formatter),
+		Update:              NewUpdateHandler(e.Update, mux, decoder, encoder, errhandler, formatter),
+		Delete:              NewDeleteHandler(e.Delete, mux, decoder, encoder, errhandler, formatter),
+		Health:              NewHealthHandler(e.Health, mux, decoder, encoder, errhandler, formatter),
+		Provision:           NewProvisionHandler(e.Provision, mux, decoder, encoder, errhandler, formatter),
+		Suspend:             NewSuspendHandler(e.Suspend, mux, decoder, encoder, errhandler, formatter),
+		Reactivate:          NewReactivateHandler(e.Reactivate, mux, decoder, encoder, errhandler, formatter),
+		UpdateConfiguration: NewUpdateConfigurationHandler(e.UpdateConfiguration, mux, decoder, encoder, errhandler, formatter),
+		GetUsageAnalytics:   NewGetUsageAnalyticsHandler(e.GetUsageAnalytics, mux, decoder, encoder, errhandler, formatter),
 	}
 }
 
@@ -81,6 +96,11 @@ func (s *Server) Use(m func(http.Handler) http.Handler) {
 	s.Update = m(s.Update)
 	s.Delete = m(s.Delete)
 	s.Health = m(s.Health)
+	s.Provision = m(s.Provision)
+	s.Suspend = m(s.Suspend)
+	s.Reactivate = m(s.Reactivate)
+	s.UpdateConfiguration = m(s.UpdateConfiguration)
+	s.GetUsageAnalytics = m(s.GetUsageAnalytics)
 }
 
 // MethodNames returns the methods served.
@@ -94,6 +114,11 @@ func Mount(mux goahttp.Muxer, h *Server) {
 	MountUpdateHandler(mux, h.Update)
 	MountDeleteHandler(mux, h.Delete)
 	MountHealthHandler(mux, h.Health)
+	MountProvisionHandler(mux, h.Provision)
+	MountSuspendHandler(mux, h.Suspend)
+	MountReactivateHandler(mux, h.Reactivate)
+	MountUpdateConfigurationHandler(mux, h.UpdateConfiguration)
+	MountGetUsageAnalyticsHandler(mux, h.GetUsageAnalytics)
 }
 
 // Mount configures the mux to serve the tenant endpoints.
@@ -398,6 +423,271 @@ func NewHealthHandler(
 		ctx = context.WithValue(ctx, goa.ServiceKey, "tenant")
 		var err error
 		res, err := endpoint(ctx, nil)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountProvisionHandler configures the mux to serve the "tenant" service
+// "provision" endpoint.
+func MountProvisionHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/api/v1/tenants/provision", f)
+}
+
+// NewProvisionHandler creates a HTTP handler which loads the HTTP request and
+// calls the "tenant" service "provision" endpoint.
+func NewProvisionHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeProvisionRequest(mux, decoder)
+		encodeResponse = EncodeProvisionResponse(encoder)
+		encodeError    = EncodeProvisionError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "provision")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "tenant")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountSuspendHandler configures the mux to serve the "tenant" service
+// "suspend" endpoint.
+func MountSuspendHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/api/v1/tenants/{id}/suspend", f)
+}
+
+// NewSuspendHandler creates a HTTP handler which loads the HTTP request and
+// calls the "tenant" service "suspend" endpoint.
+func NewSuspendHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeSuspendRequest(mux, decoder)
+		encodeResponse = EncodeSuspendResponse(encoder)
+		encodeError    = EncodeSuspendError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "suspend")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "tenant")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountReactivateHandler configures the mux to serve the "tenant" service
+// "reactivate" endpoint.
+func MountReactivateHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("POST", "/api/v1/tenants/{id}/reactivate", f)
+}
+
+// NewReactivateHandler creates a HTTP handler which loads the HTTP request and
+// calls the "tenant" service "reactivate" endpoint.
+func NewReactivateHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeReactivateRequest(mux, decoder)
+		encodeResponse = EncodeReactivateResponse(encoder)
+		encodeError    = EncodeReactivateError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "reactivate")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "tenant")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountUpdateConfigurationHandler configures the mux to serve the "tenant"
+// service "update_configuration" endpoint.
+func MountUpdateConfigurationHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("PUT", "/api/v1/tenants/{id}/configuration", f)
+}
+
+// NewUpdateConfigurationHandler creates a HTTP handler which loads the HTTP
+// request and calls the "tenant" service "update_configuration" endpoint.
+func NewUpdateConfigurationHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeUpdateConfigurationRequest(mux, decoder)
+		encodeResponse = EncodeUpdateConfigurationResponse(encoder)
+		encodeError    = EncodeUpdateConfigurationError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "update_configuration")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "tenant")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		if err := encodeResponse(ctx, w, res); err != nil {
+			if errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+		}
+	})
+}
+
+// MountGetUsageAnalyticsHandler configures the mux to serve the "tenant"
+// service "get_usage_analytics" endpoint.
+func MountGetUsageAnalyticsHandler(mux goahttp.Muxer, h http.Handler) {
+	f, ok := h.(http.HandlerFunc)
+	if !ok {
+		f = func(w http.ResponseWriter, r *http.Request) {
+			h.ServeHTTP(w, r)
+		}
+	}
+	mux.Handle("GET", "/api/v1/tenants/{id}/analytics", f)
+}
+
+// NewGetUsageAnalyticsHandler creates a HTTP handler which loads the HTTP
+// request and calls the "tenant" service "get_usage_analytics" endpoint.
+func NewGetUsageAnalyticsHandler(
+	endpoint goa.Endpoint,
+	mux goahttp.Muxer,
+	decoder func(*http.Request) goahttp.Decoder,
+	encoder func(context.Context, http.ResponseWriter) goahttp.Encoder,
+	errhandler func(context.Context, http.ResponseWriter, error),
+	formatter func(ctx context.Context, err error) goahttp.Statuser,
+) http.Handler {
+	var (
+		decodeRequest  = DecodeGetUsageAnalyticsRequest(mux, decoder)
+		encodeResponse = EncodeGetUsageAnalyticsResponse(encoder)
+		encodeError    = EncodeGetUsageAnalyticsError(encoder, formatter)
+	)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.WithValue(r.Context(), goahttp.AcceptTypeKey, r.Header.Get("Accept"))
+		ctx = context.WithValue(ctx, goa.MethodKey, "get_usage_analytics")
+		ctx = context.WithValue(ctx, goa.ServiceKey, "tenant")
+		payload, err := decodeRequest(r)
+		if err != nil {
+			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
+				errhandler(ctx, w, err)
+			}
+			return
+		}
+		res, err := endpoint(ctx, payload)
 		if err != nil {
 			if err := encodeError(ctx, w, err); err != nil && errhandler != nil {
 				errhandler(ctx, w, err)

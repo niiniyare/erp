@@ -133,3 +133,10 @@ type UpdateTenantRequest struct {
 	LegalEntityType    *string        `json:"legal_entity_type,omitempty"`
 	Settings           map[string]any `json:"settings,omitempty"`
 }
+
+// TenantLimits represents tenant usage limits
+type TenantLimits struct {
+	MaxUsers           uint   `json:"max_users"`
+	MaxStorageMB       uint64 `json:"max_storage_mb"`
+	MaxAPICallsPerHour uint   `json:"max_api_calls_per_hour"`
+}

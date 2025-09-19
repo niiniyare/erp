@@ -82,14 +82,14 @@ type AccountsRepository interface {
 	// List and filtering operations for account groups
 	ListAccountGroups(ctx context.Context, filter *AccountGroupFilter) ([]*AccountGroup, error)
 	CountAccountGroups(ctx context.Context, filter *AccountGroupFilter) (int64, error)
-	
+
 	// Hierarchy operations for account groups
 	GetAccountGroupHierarchy(ctx context.Context, rootGroupID *uuid.UUID, entityID *uuid.UUID) ([]*AccountGroup, error)
-	
+
 	// Financial statement operations for account groups
 	GetGroupsByFinancialStatement(ctx context.Context, statementType string, entityID *uuid.UUID) ([]*AccountGroup, error)
 	GetGroupsByCashFlowCategory(ctx context.Context, category string, entityID *uuid.UUID) ([]*AccountGroup, error)
-	
+
 	// Validation helpers for account groups
 	ValidateAccountGroupCode(ctx context.Context, code string, excludeID *uuid.UUID, entityID *uuid.UUID) error
 

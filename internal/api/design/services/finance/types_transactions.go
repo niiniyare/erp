@@ -347,4 +347,3 @@ var GetTransactionWorkflowPayload = Type("GetTransactionWorkflowPayload", func()
 	})
 	Required("id")
 })
-

@@ -512,13 +512,13 @@ func (h *FinanceHandler) GetTransaction(ctx context.Context, payload *goaFinance
 
 	entries := []*goaFinance.TransactionEntryResult{
 		{
-			ID:           uuid.New().String(),
-			EntryNumber:  1,
-			AccountID:    uuid.New().String(),
-			AccountCode:  "1000",
-			AccountName:  "Cash",
-			DebitAmount:  stringPtr("1000.00"),
-			Description:  "Sample debit entry",
+			ID:          uuid.New().String(),
+			EntryNumber: 1,
+			AccountID:   uuid.New().String(),
+			AccountCode: "1000",
+			AccountName: "Cash",
+			DebitAmount: stringPtr("1000.00"),
+			Description: "Sample debit entry",
 		},
 		{
 			ID:           uuid.New().String(),
@@ -609,9 +609,9 @@ func (h *FinanceHandler) PostTransaction(ctx context.Context, payload *goaFinanc
 	h.metrics.Counter("finance.post_transaction.requests", "Finance post transaction requests").Add(1, nil)
 
 	logger.InfoContext(ctx, "Posting transaction", logger.Fields{
-		"id":                        payload.ID,
-		"validate_before_posting":   payload.ValidateBeforePosting,
-		"force_post":                payload.ForcePost,
+		"id":                      payload.ID,
+		"validate_before_posting": payload.ValidateBeforePosting,
+		"force_post":              payload.ForcePost,
 	})
 
 	// TODO: Implement posting logic with validation
@@ -663,11 +663,11 @@ func (h *FinanceHandler) ApproveTransaction(ctx context.Context, payload *goaFin
 
 	// TODO: Implement approval workflow
 	result := &goaFinance.TransactionResult{
-		ID:                payload.ID,
-		Status:            "APPROVED",
-		CurrentStage:      "APPROVED",
-		ApprovalStatus:    stringPtr("APPROVED"),
-		CreatedAt:         stringPtr(time.Now().Format(time.RFC3339)),
+		ID:             payload.ID,
+		Status:         "APPROVED",
+		CurrentStage:   "APPROVED",
+		ApprovalStatus: stringPtr("APPROVED"),
+		CreatedAt:      stringPtr(time.Now().Format(time.RFC3339)),
 	}
 
 	return result, nil
@@ -684,13 +684,13 @@ func (h *FinanceHandler) ValidateTransaction(ctx context.Context, payload *goaFi
 
 	// TODO: Implement validation
 	result := &goaFinance.ValidationResult{
-		IsValid:           true,
-		IsBalanced:        true,
-		TotalDebits:       "1000.00",
-		TotalCredits:      "1000.00",
-		ValidationLevel:   payload.ValidationLevel,
-		Errors:            []*goaFinance.ValidationError{},
-		Warnings:          []*goaFinance.ValidationWarningResult{},
+		IsValid:         true,
+		IsBalanced:      true,
+		TotalDebits:     "1000.00",
+		TotalCredits:    "1000.00",
+		ValidationLevel: payload.ValidationLevel,
+		Errors:          []*goaFinance.ValidationError{},
+		Warnings:        []*goaFinance.ValidationWarningResult{},
 	}
 
 	return result, nil
@@ -705,13 +705,13 @@ func (h *FinanceHandler) GetTransactionStatus(ctx context.Context, payload *goaF
 
 	// TODO: Implement status tracking
 	result := &goaFinance.TransactionStatusResult{
-		ID:                payload.ID,
-		TransactionNumber: "TXN-001",
-		Status:            "PENDING_APPROVAL",
-		CurrentStage:      "APPROVAL",
+		ID:                 payload.ID,
+		TransactionNumber:  "TXN-001",
+		Status:             "PENDING_APPROVAL",
+		CurrentStage:       "APPROVAL",
 		ProgressPercentage: 50,
-		WorkflowHistory:   []*goaFinance.WorkflowStageResult{},
-		AvailableActions:  []string{"approve", "reject", "request_changes"},
+		WorkflowHistory:    []*goaFinance.WorkflowStageResult{},
+		AvailableActions:   []string{"approve", "reject", "request_changes"},
 	}
 
 	return result, nil
@@ -797,8 +797,8 @@ func (h *FinanceHandler) GetTrialBalance(ctx context.Context, payload *goaFinanc
 	defer span.End()
 
 	logger.InfoContext(ctx, "Generating trial balance", logger.Fields{
-		"as_of_date":             payload.AsOfDate,
-		"include_zero_balances":  payload.IncludeZeroBalances,
+		"as_of_date":            payload.AsOfDate,
+		"include_zero_balances": payload.IncludeZeroBalances,
 	})
 
 	// TODO: Implement trial balance generation
@@ -833,13 +833,13 @@ func (h *FinanceHandler) GetTrialBalance(ctx context.Context, payload *goaFinanc
 	}
 
 	result := &goaFinance.TrialBalanceResult{
-		AsOfDate:          asOfDate,
-		Accounts:          accounts,
-		TotalDebits:       "10000.00",
-		TotalCredits:      "10000.00",
-		IsBalanced:        true,
-		Currency:          "USD",
-		GeneratedAt:       time.Now().Format(time.RFC3339),
+		AsOfDate:     asOfDate,
+		Accounts:     accounts,
+		TotalDebits:  "10000.00",
+		TotalCredits: "10000.00",
+		IsBalanced:   true,
+		Currency:     "USD",
+		GeneratedAt:  time.Now().Format(time.RFC3339),
 	}
 
 	return result, nil
@@ -863,4 +863,3 @@ func int32Ptr(i int32) *int32 {
 func boolPtr(b bool) *bool {
 	return &b
 }
-

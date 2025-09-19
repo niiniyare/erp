@@ -15,13 +15,13 @@ import (
 
 // Container manages all infrastructure components
 type Container struct {
-	config      *config.AppConfig
-	database    *database.PostgreSQLComponent
-	cache       *cache.RedisComponent
-	messaging   *messaging.TemporalComponent
+	config        *config.AppConfig
+	database      *database.PostgreSQLComponent
+	cache         *cache.RedisComponent
+	messaging     *messaging.TemporalComponent
 	observability *observability.ObservabilityComponent
-	started     bool
-	mu          sync.RWMutex
+	started       bool
+	mu            sync.RWMutex
 }
 
 // NewContainer creates a new infrastructure container
@@ -61,7 +61,7 @@ func (c *Container) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to start database: %w", err)
 	}
 
-	// Start cache connections  
+	// Start cache connections
 	if err := c.cache.Start(ctx); err != nil {
 		return fmt.Errorf("failed to start cache: %w", err)
 	}
@@ -74,7 +74,7 @@ func (c *Container) Start(ctx context.Context) error {
 	c.started = true
 
 	logger.Info("Infrastructure container started successfully", logger.Fields{
-		"status": "ready",
+		"status":                 "ready",
 		"components_initialized": 4,
 	})
 

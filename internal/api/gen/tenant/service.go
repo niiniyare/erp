@@ -37,6 +37,16 @@ type Service interface {
 	Delete(context.Context, *DeletePayload) (err error)
 	// Health check for tenant service
 	Health(context.Context) (res *HealthResult, err error)
+	// Provision a new tenant with complete setup
+	Provision(context.Context, *ProvisionPayload) (res *ProvisionResult, err error)
+	// Suspend a tenant
+	Suspend(context.Context, *SuspendPayload) (res *SuspendResult, err error)
+	// Reactivate a suspended tenant
+	Reactivate(context.Context, *ReactivatePayload) (res *ReactivateResult, err error)
+	// Update tenant configuration and limits
+	UpdateConfiguration(context.Context, *UpdateConfigurationPayload) (res *UpdateConfigurationResult, err error)
+	// Get tenant usage analytics
+	GetUsageAnalytics(context.Context, *GetUsageAnalyticsPayload) (res *GetUsageAnalyticsResult, err error)
 }
 
 // APIName is the name of the API as defined in the design.
@@ -53,7 +63,7 @@ const ServiceName = "tenant"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [6]string{"create", "get", "list", "update", "delete", "health"}
+var MethodNames = [11]string{"create", "get", "list", "update", "delete", "health", "provision", "suspend", "reactivate", "update_configuration", "get_usage_analytics"}
 
 // Contact information
 type ContactInfo struct {
@@ -93,6 +103,30 @@ type DeletePayload struct {
 type GetPayload struct {
 	// Tenant ID
 	ID string
+}
+
+// GetUsageAnalyticsPayload is the payload type of the tenant service
+// get_usage_analytics method.
+type GetUsageAnalyticsPayload struct {
+	// Tenant ID
+	ID string
+	// Time period for analytics
+	Period string
+}
+
+// GetUsageAnalyticsResult is the result type of the tenant service
+// get_usage_analytics method.
+type GetUsageAnalyticsResult struct {
+	// Tenant ID
+	TenantID string
+	// Analysis period
+	Period string
+	// Number of active users
+	UserCount *uint
+	// Storage used in MB
+	StorageUsedMb *uint64
+	// Total API calls
+	APICalls *uint64
 }
 
 // HealthResult is the result type of the tenant service health method.
@@ -145,6 +179,53 @@ type PaginationMeta struct {
 	HasPrev bool
 }
 
+// ProvisionPayload is the payload type of the tenant service provision method.
+type ProvisionPayload struct {
+	// Tenant name
+	Name string
+	// Subdomain for tenant access
+	Subdomain string
+	// Primary contact email
+	ContactEmail string
+	// Initial admin user email
+	AdminEmail string
+	// Admin first name
+	AdminFirstName string
+	// Admin last name
+	AdminLastName string
+}
+
+// ProvisionResult is the result type of the tenant service provision method.
+type ProvisionResult struct {
+	// Created tenant ID
+	TenantID string
+	// Provisioning status
+	Status string
+	// Status message
+	Message string
+}
+
+// ReactivatePayload is the payload type of the tenant service reactivate
+// method.
+type ReactivatePayload struct {
+	// Tenant ID
+	ID string
+	// Reason for reactivation
+	Reason string
+}
+
+// ReactivateResult is the result type of the tenant service reactivate method.
+type ReactivateResult struct {
+	// Tenant ID
+	TenantID string
+	// Action performed
+	Action string
+	// Action status
+	Status string
+	// Result message
+	Message string
+}
+
 // Tenant subscription information
 type SubscriptionInfo struct {
 	// Subscription plan
@@ -157,6 +238,26 @@ type SubscriptionInfo struct {
 	NextBillingDate *string
 	// Trial end date
 	TrialEndsAt *string
+}
+
+// SuspendPayload is the payload type of the tenant service suspend method.
+type SuspendPayload struct {
+	// Tenant ID
+	ID string
+	// Reason for suspension
+	Reason string
+}
+
+// SuspendResult is the result type of the tenant service suspend method.
+type SuspendResult struct {
+	// Tenant ID
+	TenantID string
+	// Action performed
+	Action string
+	// Action status
+	Status string
+	// Result message
+	Message string
 }
 
 // Tenant is the result type of the tenant service create method.
@@ -217,6 +318,32 @@ type TenantSettings struct {
 	Limits *TenantLimits
 }
 
+// UpdateConfigurationPayload is the payload type of the tenant service
+// update_configuration method.
+type UpdateConfigurationPayload struct {
+	// Tenant ID
+	ID string
+	// Maximum number of users
+	MaxUsers *uint
+	// Maximum storage in MB
+	MaxStorageMb *uint64
+	// Maximum API calls per hour
+	MaxAPICallsPerHour *uint
+	// Reason for configuration change
+	Reason string
+}
+
+// UpdateConfigurationResult is the result type of the tenant service
+// update_configuration method.
+type UpdateConfigurationResult struct {
+	// Tenant ID
+	TenantID string
+	// Update status
+	Status string
+	// Result message
+	Message string
+}
+
 // UpdateTenantPayload is the payload type of the tenant service update method.
 type UpdateTenantPayload struct {
 	// Tenant ID
@@ -233,6 +360,66 @@ type UpdateTenantPayload struct {
 	Contact *ContactInfo
 	// Tenant settings
 	Settings *TenantSettings
+}
+
+// Invalid request
+type BadRequest string
+
+// Internal server error
+type InternalError string
+
+// Tenant not found
+type NotFound string
+
+// Error returns an error description.
+func (e BadRequest) Error() string {
+	return "Invalid request"
+}
+
+// ErrorName returns "bad_request".
+//
+// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
+func (e BadRequest) ErrorName() string {
+	return e.GoaErrorName()
+}
+
+// GoaErrorName returns "bad_request".
+func (e BadRequest) GoaErrorName() string {
+	return "bad_request"
+}
+
+// Error returns an error description.
+func (e InternalError) Error() string {
+	return "Internal server error"
+}
+
+// ErrorName returns "internal_error".
+//
+// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
+func (e InternalError) ErrorName() string {
+	return e.GoaErrorName()
+}
+
+// GoaErrorName returns "internal_error".
+func (e InternalError) GoaErrorName() string {
+	return "internal_error"
+}
+
+// Error returns an error description.
+func (e NotFound) Error() string {
+	return "Tenant not found"
+}
+
+// ErrorName returns "not_found".
+//
+// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
+func (e NotFound) ErrorName() string {
+	return e.GoaErrorName()
+}
+
+// GoaErrorName returns "not_found".
+func (e NotFound) GoaErrorName() string {
+	return "not_found"
 }
 
 // MakeBadRequest builds a goa.ServiceError from an error.

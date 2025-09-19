@@ -352,4 +352,3 @@ var OverallActivitySummary = Type("OverallActivitySummary", func() {
 	Attribute("total_credits", String)
 	Attribute("most_active_account", AccountBasicInfo)
 })
-

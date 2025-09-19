@@ -3,16 +3,18 @@ package tenant
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/niiniyare/erp/internal/core/identity"
-	"github.com/niiniyare/erp/internal/platform/cache"
 	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // ProvisioningService extends the basic tenant service with comprehensive provisioning capabilities
@@ -444,11 +446,11 @@ func (s *provisioningService) ArchiveTenant(ctx context.Context, req ArchiveTena
 		ActorID:     req.ActorID,
 		Description: fmt.Sprintf("Tenant archived: %s", req.Reason),
 		Metadata: map[string]interface{}{
-			"reason":               req.Reason,
-			"immediate_deletion":   req.ImmediateDeletion,
-			"data_retention_days":  req.DataRetentionDays,
-			"scheduled_deletion":   scheduledDeletion,
-			"previous_status":      string(tenant.Status),
+			"reason":              req.Reason,
+			"immediate_deletion":  req.ImmediateDeletion,
+			"data_retention_days": req.DataRetentionDays,
+			"scheduled_deletion":  scheduledDeletion,
+			"previous_status":     string(tenant.Status),
 		},
 	})
 	if err != nil {
@@ -468,11 +470,11 @@ func (s *provisioningService) ArchiveTenant(ctx context.Context, req ArchiveTena
 	}
 
 	logger.InfoContext(ctx, "Tenant archived successfully", logger.Fields{
-		"tenant_id":            req.TenantID.String(),
-		"reason":               req.Reason,
-		"actor_id":             req.ActorID.String(),
-		"immediate_deletion":   req.ImmediateDeletion,
-		"data_retention_days":  req.DataRetentionDays,
+		"tenant_id":           req.TenantID.String(),
+		"reason":              req.Reason,
+		"actor_id":            req.ActorID.String(),
+		"immediate_deletion":  req.ImmediateDeletion,
+		"data_retention_days": req.DataRetentionDays,
 	})
 
 	return result, nil
@@ -484,21 +486,21 @@ func (s *provisioningService) createAdminUser(ctx context.Context, tenantID uuid
 	// Set tenant context for user creation
 	err := s.Service.WithTenantContext(ctx, tenantID, func(tenantCtx context.Context) error {
 		// Create user using identity service within tenant context
+		// Note: For now, we'll create a basic user record
 		createUserReq := identity.CreateUserRequest{
-			Email:     adminReq.Email,
-			FirstName: adminReq.FirstName,
-			LastName:  adminReq.LastName,
-			Phone:     adminReq.Phone,
-			Timezone:  adminReq.Timezone,
-			Language:  adminReq.Language,
-			TenantID:  tenantID,
-			Role:      "admin", // Default admin role
+			EntityID:              uuid.New(),     // This should come from entity service
+			Username:              adminReq.Email, // Use email as username for now
+			Email:                 adminReq.Email,
+			Password:              "temp_password", // This should be generated or provided
+			UserType:              "admin",
+			AccountStatus:         "ACTIVE",
+			SessionTimeoutMinutes: 480, // 8 hours
+			MfaEnabled:            false,
 		}
 
-		_, err := s.identityService.CreateUser(tenantCtx, createUserReq)
+		_, err := s.identityService.RegisterNewUser(tenantCtx, &createUserReq)
 		return err
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to create admin user: %w", err)
 	}
@@ -520,9 +522,9 @@ func (s *provisioningService) applyInitialConfiguration(ctx context.Context, ten
 	// This would integrate with your tenant configuration tables
 	return &TenantConfigurationResult{
 		Limits: TenantLimits{
-			MaxUsers:              req.InitialLimits.MaxUsers,
-			MaxStorageMB:          req.InitialLimits.MaxStorageMB,
-			MaxAPICallsPerHour:    req.InitialLimits.MaxAPICallsPerHour,
+			MaxUsers:           req.InitialLimits.MaxUsers,
+			MaxStorageMB:       req.InitialLimits.MaxStorageMB,
+			MaxAPICallsPerHour: req.InitialLimits.MaxAPICallsPerHour,
 		},
 		EnabledFeatures: req.EnabledModules,
 	}, nil
@@ -553,9 +555,9 @@ func (s *provisioningService) generateAccessInfo(subdomain string) TenantAccessI
 	}
 
 	return TenantAccessInfo{
-		TenantURL:       baseURL,
-		AdminPortalURL:  fmt.Sprintf("%s/admin", baseURL),
-		APIBaseURL:      fmt.Sprintf("%s/api/v1", baseURL),
+		TenantURL:        baseURL,
+		AdminPortalURL:   fmt.Sprintf("%s/admin", baseURL),
+		APIBaseURL:       fmt.Sprintf("%s/api/v1", baseURL),
 		DocumentationURL: "https://docs.yourdomain.com",
 	}
 }
@@ -580,16 +582,32 @@ func (s *provisioningService) getTracer() tracing.TracingService {
 // NoOpTracer is a fallback tracer implementation
 type noOpTracer struct{}
 
-func (n *noOpTracer) StartSpan(ctx context.Context, name string, opts ...interface{}) (context.Context, tracing.Span) {
+func (n *noOpTracer) StartSpan(ctx context.Context, name string, opts ...tracing.SpanOption) (context.Context, tracing.Span) {
 	return ctx, &noOpSpan{}
 }
 
+func (n *noOpTracer) AddEvent(ctx context.Context, name string, attrs ...attribute.KeyValue) {}
+func (n *noOpTracer) SpanFromContext(ctx context.Context) tracing.Span                       { return &noOpSpan{} }
+func (n *noOpTracer) InjectHTTPHeaders(ctx context.Context, headers http.Header)             {}
+func (n *noOpTracer) ExtractHTTPHeaders(ctx context.Context, headers http.Header) context.Context {
+	return ctx
+}
+func (n *noOpTracer) RecordError(ctx context.Context, err error, opts ...tracing.ErrorOption) {}
+func (n *noOpTracer) SetAttributes(ctx context.Context, attrs ...attribute.KeyValue)          {}
+func (n *noOpTracer) GetTraceID(ctx context.Context) string                                   { return "" }
+func (n *noOpTracer) GetSpanID(ctx context.Context) string                                    { return "" }
+func (n *noOpTracer) Shutdown(ctx context.Context) error                                      { return nil }
+
 type noOpSpan struct{}
 
-func (n *noOpSpan) End() {}
-func (n *noOpSpan) SetAttributes(attrs ...attribute.KeyValue) {}
-func (n *noOpSpan) RecordError(err error, opts ...interface{}) {}
-func (n *noOpSpan) SetStatus(code codes.Code, description string) {}
+func (n *noOpSpan) End(opts ...tracing.SpanEndOption)                 {}
+func (n *noOpSpan) SetAttributes(attrs ...attribute.KeyValue)         {}
+func (n *noOpSpan) RecordError(err error, opts ...trace.EventOption)  {}
+func (n *noOpSpan) SetStatus(code codes.Code, description string)     {}
+func (n *noOpSpan) AddEvent(name string, attrs ...attribute.KeyValue) {}
+func (n *noOpSpan) SetName(name string)                               {}
+func (n *noOpSpan) IsRecording() bool                                 { return false }
+func (n *noOpSpan) SpanContext() trace.SpanContext                    { return trace.SpanContext{} }
 
 // NotImplemented methods - will be implemented in follow-up
 
@@ -623,7 +641,7 @@ func (s *provisioningService) UpdateTenantConfiguration(ctx context.Context, req
 	// Update limits if provided
 	if req.Limits != nil {
 		configUpdate.Limits = *req.Limits
-		
+
 		// Validate limits are reasonable
 		if err := s.validateTenantLimits(*req.Limits); err != nil {
 			span.RecordError(err)
@@ -721,7 +739,7 @@ func (s *provisioningService) GetTenantConfiguration(ctx context.Context, tenant
 		logger.InfoContext(ctx, "No configuration found for tenant, returning defaults", logger.Fields{
 			"tenant_id": tenantID.String(),
 		})
-		
+
 		return &TenantConfigurationResult{
 			Limits:          s.getDefaultLimits(),
 			EnabledFeatures: []string{"finance"}, // Default enabled features
@@ -1032,11 +1050,11 @@ func (s *provisioningService) GetTenantAuditLog(ctx context.Context, req AuditLo
 	}
 
 	logger.InfoContext(ctx, "Retrieved tenant audit log", logger.Fields{
-		"tenant_id":    req.TenantID.String(),
-		"page":         req.Page,
-		"page_size":    req.PageSize,
-		"total_items":  totalCount,
-		"entry_count":  len(entries),
+		"tenant_id":   req.TenantID.String(),
+		"page":        req.Page,
+		"page_size":   req.PageSize,
+		"total_items": totalCount,
+		"entry_count": len(entries),
 	})
 
 	return result, nil
@@ -1147,7 +1165,7 @@ func (s *provisioningService) ListTenantsAdvanced(ctx context.Context, req Advan
 		"page_size":    req.PageSize,
 		"total_items":  totalCount,
 		"result_count": len(detailedResults),
-		"filters":      map[string]interface{}{
+		"filters": map[string]interface{}{
 			"status":   req.StatusFilter,
 			"plan":     req.PlanFilter,
 			"search":   req.Search,
@@ -1243,7 +1261,7 @@ func (s *provisioningService) getStorageMetrics(ctx context.Context, tenantID uu
 	return &StorageMetrics{
 		TotalUsedMB:    2048, // 2GB
 		DocumentsCount: 156,
-		MediaUsedMB:    512, // 512MB
+		MediaUsedMB:    512,  // 512MB
 		GrowthRate:     0.15, // 15% growth
 	}, nil
 }
@@ -1460,12 +1478,16 @@ func (s *provisioningService) executeBulkUpdateLimits(ctx context.Context, tenan
 func (s *provisioningService) getFilteredTenants(ctx context.Context, req AdvancedListRequest, offset, pageSize uint) ([]Tenant, uint, error) {
 	// In a real implementation, this would build and execute SQL queries with filters
 	// For now, return mock data
+	acmeSubdomain := "acme"
+	techSubdomain := "techstart"
+	globalSubdomain := "global"
+
 	mockTenants := []Tenant{
 		{
 			ID:        uuid.New(),
 			Name:      "Acme Corporation",
 			Slug:      "acme-corp",
-			Subdomain: "acme",
+			Subdomain: &acmeSubdomain,
 			Status:    StatusActive,
 			CreatedAt: time.Now().Add(-30 * 24 * time.Hour),
 			UpdatedAt: time.Now().Add(-1 * time.Hour),
@@ -1474,7 +1496,7 @@ func (s *provisioningService) getFilteredTenants(ctx context.Context, req Advanc
 			ID:        uuid.New(),
 			Name:      "Tech Startup Inc",
 			Slug:      "tech-startup",
-			Subdomain: "techstart",
+			Subdomain: &techSubdomain,
 			Status:    StatusActive,
 			CreatedAt: time.Now().Add(-15 * 24 * time.Hour),
 			UpdatedAt: time.Now().Add(-2 * time.Hour),
@@ -1483,7 +1505,7 @@ func (s *provisioningService) getFilteredTenants(ctx context.Context, req Advanc
 			ID:        uuid.New(),
 			Name:      "Global Services Ltd",
 			Slug:      "global-services",
-			Subdomain: "global",
+			Subdomain: &globalSubdomain,
 			Status:    StatusSuspended,
 			CreatedAt: time.Now().Add(-45 * 24 * time.Hour),
 			UpdatedAt: time.Now().Add(-5 * time.Hour),
@@ -1511,7 +1533,11 @@ func (s *provisioningService) getFilteredTenants(ctx context.Context, req Advanc
 	if req.Search != "" {
 		var filtered []Tenant
 		for _, tenant := range filteredTenants {
-			if contains(tenant.Name, req.Search) || contains(tenant.Subdomain, req.Search) {
+			subdomainStr := ""
+			if tenant.Subdomain != nil {
+				subdomainStr = *tenant.Subdomain
+			}
+			if contains(tenant.Name, req.Search) || contains(subdomainStr, req.Search) {
 				filtered = append(filtered, tenant)
 			}
 		}
@@ -1571,11 +1597,11 @@ func (s *provisioningService) getTenantUsageStats(ctx context.Context, tenantID 
 func (s *provisioningService) generateTenantSummaryStats(ctx context.Context) (*TenantSummaryStats, error) {
 	// In a real implementation, this would aggregate statistics from the database
 	return &TenantSummaryStats{
-		TotalTenants:      125,
-		ActiveTenants:     98,
-		SuspendedTenants:  15,
-		PendingTenants:    8,
-		ArchivedTenants:   4,
+		TotalTenants:     125,
+		ActiveTenants:    98,
+		SuspendedTenants: 15,
+		PendingTenants:   8,
+		ArchivedTenants:  4,
 		TotalRevenue: &Money{
 			Amount:   "1250000.00",
 			Currency: "USD",
@@ -1586,6 +1612,6 @@ func (s *provisioningService) generateTenantSummaryStats(ctx context.Context) (*
 
 // Utility function for string search
 func contains(str, substr string) bool {
-	return len(str) >= len(substr) && (str == substr || len(substr) == 0 || 
+	return len(str) >= len(substr) && (str == substr || len(substr) == 0 ||
 		strings.Contains(strings.ToLower(str), strings.ToLower(substr)))
 }

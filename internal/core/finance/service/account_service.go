@@ -1466,26 +1466,26 @@ func (s *accountService) CreateAccountGroup(ctx context.Context, req domain.Crea
 	group := &domain.AccountGroup{
 		ID:                        uuid.New(),
 		EntityID:                  req.EntityID,
-		GroupCode:                req.GroupCode,
-		GroupName:                req.GroupName,
-		Description:              req.Description,
-		GroupType:               req.GroupType,
-		ParentGroupID:           req.ParentGroupID,
+		GroupCode:                 req.GroupCode,
+		GroupName:                 req.GroupName,
+		Description:               req.Description,
+		GroupType:                 req.GroupType,
+		ParentGroupID:             req.ParentGroupID,
 		FinancialStatementSection: req.FinancialStatementSection,
-		ConsolidationMethod:     req.ConsolidationMethod,
-		CashFlowCategory:        req.CashFlowCategory,
-		DisplayOrder:            req.DisplayOrder,
-		IsSystemDefined:         false, // User-created groups are not system defined
-		IsActive:                true,
-		IsHeader:                req.IsHeader,
-		ShowTotals:              req.ShowTotals,
-		IndentLevel:             req.IndentLevel,
-		BoldDisplay:             req.BoldDisplay,
-		CreatedAt:               time.Now(),
-		UpdatedAt:               time.Now(),
-		CreatedBy:               userID,
-		UpdatedBy:               userID,
-		Version:                 1,
+		ConsolidationMethod:       req.ConsolidationMethod,
+		CashFlowCategory:          req.CashFlowCategory,
+		DisplayOrder:              req.DisplayOrder,
+		IsSystemDefined:           false, // User-created groups are not system defined
+		IsActive:                  true,
+		IsHeader:                  req.IsHeader,
+		ShowTotals:                req.ShowTotals,
+		IndentLevel:               req.IndentLevel,
+		BoldDisplay:               req.BoldDisplay,
+		CreatedAt:                 time.Now(),
+		UpdatedAt:                 time.Now(),
+		CreatedBy:                 userID,
+		UpdatedBy:                 userID,
+		Version:                   1,
 	}
 
 	// Validate business rules
@@ -2042,8 +2042,8 @@ func (s *accountService) GetAccountSubtree(ctx context.Context, accountID uuid.U
 
 	logger.InfoContext(ctx, "Successfully retrieved account subtree",
 		logger.Fields{
-			"account_id":  accountID,
-			"node_count":  len(result),
+			"account_id": accountID,
+			"node_count": len(result),
 		})
 
 	return result, nil
@@ -2255,12 +2255,12 @@ func (s *accountService) analyzeActivityPatterns(ctx context.Context, activities
 	// Log insights for monitoring and alerting
 	logger.InfoContext(ctx, "Account activity pattern analysis",
 		logger.Fields{
-			"total_accounts":      len(activities),
-			"inactive_accounts":   activityLevelCounts["Inactive"],
-			"low_activity":        activityLevelCounts["Low Activity"],
-			"medium_activity":     activityLevelCounts["Medium Activity"],
-			"high_activity":       activityLevelCounts["High Activity"],
-			"total_activity_30d":  totalActivity,
+			"total_accounts":     len(activities),
+			"inactive_accounts":  activityLevelCounts["Inactive"],
+			"low_activity":       activityLevelCounts["Low Activity"],
+			"medium_activity":    activityLevelCounts["Medium Activity"],
+			"high_activity":      activityLevelCounts["High Activity"],
+			"total_activity_30d": totalActivity,
 		})
 
 	// Set metrics for monitoring dashboards
@@ -2285,7 +2285,7 @@ func (s *accountService) checkAccountReadPermission(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to evaluate read permission: %w", err)
 		}
-		
+
 		if result.Decision != model.PolicyDecisionAllow {
 			logger.WarnContext(ctx, "Permission denied for account read", logger.Fields{
 				"user_id": userID.String(),

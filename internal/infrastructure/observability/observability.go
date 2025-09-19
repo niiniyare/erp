@@ -12,11 +12,11 @@ import (
 
 // ObservabilityComponent manages logging, metrics, and tracing
 type ObservabilityComponent struct {
-	loggerConfig  *config.LoggerSettings
-	appConfig     *config.AppSettings
+	loggerConfig   *config.LoggerSettings
+	appConfig      *config.AppSettings
 	tracingService tracing.TracingService
 	metricsService *metrics.MetricsService
-	logger        logger.Logger
+	logger         logger.Logger
 }
 
 // NewObservability creates a new observability component
@@ -36,8 +36,8 @@ func (o *ObservabilityComponent) Start(ctx context.Context) error {
 	o.logger = logger.WithFields(logger.Fields{"component": "observability"})
 
 	o.logger.Info("Starting observability systems", logger.Fields{
-		"service": o.appConfig.Name,
-		"version": o.appConfig.Version,
+		"service":     o.appConfig.Name,
+		"version":     o.appConfig.Version,
 		"environment": o.appConfig.Environment,
 	})
 

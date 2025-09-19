@@ -239,4 +239,3 @@ var SLAMetrics = Type("SLAMetrics", func() {
 	Attribute("remaining_hours", Int32, "Remaining time in hours")
 	Attribute("is_overdue", Boolean, "Whether workflow is overdue")
 })
-

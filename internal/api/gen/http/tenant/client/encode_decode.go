@@ -681,6 +681,554 @@ func DecodeHealthResponse(decoder func(*http.Response) goahttp.Decoder, restoreB
 	}
 }
 
+// BuildProvisionRequest instantiates a HTTP request object with method and
+// path set to call the "tenant" service "provision" endpoint
+func (c *Client) BuildProvisionRequest(ctx context.Context, v any) (*http.Request, error) {
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ProvisionTenantPath()}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("tenant", "provision", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeProvisionRequest returns an encoder for requests sent to the tenant
+// provision server.
+func EncodeProvisionRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*tenant.ProvisionPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("tenant", "provision", "*tenant.ProvisionPayload", v)
+		}
+		body := NewProvisionRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("tenant", "provision", err)
+		}
+		return nil
+	}
+}
+
+// DecodeProvisionResponse returns a decoder for responses returned by the
+// tenant provision endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+// DecodeProvisionResponse may return the following errors:
+//   - "bad_request" (type tenant.BadRequest): http.StatusBadRequest
+//   - "internal_error" (type tenant.InternalError): http.StatusInternalServerError
+//   - error: internal error
+func DecodeProvisionResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusCreated:
+			var (
+				body ProvisionResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "provision", err)
+			}
+			err = ValidateProvisionResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("tenant", "provision", err)
+			}
+			res := NewProvisionResultCreated(&body)
+			return res, nil
+		case http.StatusBadRequest:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "provision", err)
+			}
+			return nil, NewProvisionBadRequest(body)
+		case http.StatusInternalServerError:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "provision", err)
+			}
+			return nil, NewProvisionInternalError(body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("tenant", "provision", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildSuspendRequest instantiates a HTTP request object with method and path
+// set to call the "tenant" service "suspend" endpoint
+func (c *Client) BuildSuspendRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*tenant.SuspendPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("tenant", "suspend", "*tenant.SuspendPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: SuspendTenantPath(id)}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("tenant", "suspend", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeSuspendRequest returns an encoder for requests sent to the tenant
+// suspend server.
+func EncodeSuspendRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*tenant.SuspendPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("tenant", "suspend", "*tenant.SuspendPayload", v)
+		}
+		body := NewSuspendRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("tenant", "suspend", err)
+		}
+		return nil
+	}
+}
+
+// DecodeSuspendResponse returns a decoder for responses returned by the tenant
+// suspend endpoint. restoreBody controls whether the response body should be
+// restored after having been read.
+// DecodeSuspendResponse may return the following errors:
+//   - "bad_request" (type tenant.BadRequest): http.StatusBadRequest
+//   - "internal_error" (type tenant.InternalError): http.StatusInternalServerError
+//   - "not_found" (type tenant.NotFound): http.StatusNotFound
+//   - error: internal error
+func DecodeSuspendResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body SuspendResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "suspend", err)
+			}
+			err = ValidateSuspendResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("tenant", "suspend", err)
+			}
+			res := NewSuspendResultOK(&body)
+			return res, nil
+		case http.StatusBadRequest:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "suspend", err)
+			}
+			return nil, NewSuspendBadRequest(body)
+		case http.StatusInternalServerError:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "suspend", err)
+			}
+			return nil, NewSuspendInternalError(body)
+		case http.StatusNotFound:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "suspend", err)
+			}
+			return nil, NewSuspendNotFound(body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("tenant", "suspend", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildReactivateRequest instantiates a HTTP request object with method and
+// path set to call the "tenant" service "reactivate" endpoint
+func (c *Client) BuildReactivateRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*tenant.ReactivatePayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("tenant", "reactivate", "*tenant.ReactivatePayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: ReactivateTenantPath(id)}
+	req, err := http.NewRequest("POST", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("tenant", "reactivate", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeReactivateRequest returns an encoder for requests sent to the tenant
+// reactivate server.
+func EncodeReactivateRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*tenant.ReactivatePayload)
+		if !ok {
+			return goahttp.ErrInvalidType("tenant", "reactivate", "*tenant.ReactivatePayload", v)
+		}
+		body := NewReactivateRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("tenant", "reactivate", err)
+		}
+		return nil
+	}
+}
+
+// DecodeReactivateResponse returns a decoder for responses returned by the
+// tenant reactivate endpoint. restoreBody controls whether the response body
+// should be restored after having been read.
+// DecodeReactivateResponse may return the following errors:
+//   - "bad_request" (type tenant.BadRequest): http.StatusBadRequest
+//   - "internal_error" (type tenant.InternalError): http.StatusInternalServerError
+//   - "not_found" (type tenant.NotFound): http.StatusNotFound
+//   - error: internal error
+func DecodeReactivateResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body ReactivateResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "reactivate", err)
+			}
+			err = ValidateReactivateResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("tenant", "reactivate", err)
+			}
+			res := NewReactivateResultOK(&body)
+			return res, nil
+		case http.StatusBadRequest:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "reactivate", err)
+			}
+			return nil, NewReactivateBadRequest(body)
+		case http.StatusInternalServerError:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "reactivate", err)
+			}
+			return nil, NewReactivateInternalError(body)
+		case http.StatusNotFound:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "reactivate", err)
+			}
+			return nil, NewReactivateNotFound(body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("tenant", "reactivate", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildUpdateConfigurationRequest instantiates a HTTP request object with
+// method and path set to call the "tenant" service "update_configuration"
+// endpoint
+func (c *Client) BuildUpdateConfigurationRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*tenant.UpdateConfigurationPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("tenant", "update_configuration", "*tenant.UpdateConfigurationPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: UpdateConfigurationTenantPath(id)}
+	req, err := http.NewRequest("PUT", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("tenant", "update_configuration", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeUpdateConfigurationRequest returns an encoder for requests sent to the
+// tenant update_configuration server.
+func EncodeUpdateConfigurationRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*tenant.UpdateConfigurationPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("tenant", "update_configuration", "*tenant.UpdateConfigurationPayload", v)
+		}
+		body := NewUpdateConfigurationRequestBody(p)
+		if err := encoder(req).Encode(&body); err != nil {
+			return goahttp.ErrEncodingError("tenant", "update_configuration", err)
+		}
+		return nil
+	}
+}
+
+// DecodeUpdateConfigurationResponse returns a decoder for responses returned
+// by the tenant update_configuration endpoint. restoreBody controls whether
+// the response body should be restored after having been read.
+// DecodeUpdateConfigurationResponse may return the following errors:
+//   - "bad_request" (type tenant.BadRequest): http.StatusBadRequest
+//   - "internal_error" (type tenant.InternalError): http.StatusInternalServerError
+//   - "not_found" (type tenant.NotFound): http.StatusNotFound
+//   - error: internal error
+func DecodeUpdateConfigurationResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body UpdateConfigurationResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "update_configuration", err)
+			}
+			err = ValidateUpdateConfigurationResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("tenant", "update_configuration", err)
+			}
+			res := NewUpdateConfigurationResultOK(&body)
+			return res, nil
+		case http.StatusBadRequest:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "update_configuration", err)
+			}
+			return nil, NewUpdateConfigurationBadRequest(body)
+		case http.StatusInternalServerError:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "update_configuration", err)
+			}
+			return nil, NewUpdateConfigurationInternalError(body)
+		case http.StatusNotFound:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "update_configuration", err)
+			}
+			return nil, NewUpdateConfigurationNotFound(body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("tenant", "update_configuration", resp.StatusCode, string(body))
+		}
+	}
+}
+
+// BuildGetUsageAnalyticsRequest instantiates a HTTP request object with method
+// and path set to call the "tenant" service "get_usage_analytics" endpoint
+func (c *Client) BuildGetUsageAnalyticsRequest(ctx context.Context, v any) (*http.Request, error) {
+	var (
+		id string
+	)
+	{
+		p, ok := v.(*tenant.GetUsageAnalyticsPayload)
+		if !ok {
+			return nil, goahttp.ErrInvalidType("tenant", "get_usage_analytics", "*tenant.GetUsageAnalyticsPayload", v)
+		}
+		id = p.ID
+	}
+	u := &url.URL{Scheme: c.scheme, Host: c.host, Path: GetUsageAnalyticsTenantPath(id)}
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return nil, goahttp.ErrInvalidURL("tenant", "get_usage_analytics", u.String(), err)
+	}
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
+
+	return req, nil
+}
+
+// EncodeGetUsageAnalyticsRequest returns an encoder for requests sent to the
+// tenant get_usage_analytics server.
+func EncodeGetUsageAnalyticsRequest(encoder func(*http.Request) goahttp.Encoder) func(*http.Request, any) error {
+	return func(req *http.Request, v any) error {
+		p, ok := v.(*tenant.GetUsageAnalyticsPayload)
+		if !ok {
+			return goahttp.ErrInvalidType("tenant", "get_usage_analytics", "*tenant.GetUsageAnalyticsPayload", v)
+		}
+		values := req.URL.Query()
+		values.Add("period", p.Period)
+		req.URL.RawQuery = values.Encode()
+		return nil
+	}
+}
+
+// DecodeGetUsageAnalyticsResponse returns a decoder for responses returned by
+// the tenant get_usage_analytics endpoint. restoreBody controls whether the
+// response body should be restored after having been read.
+// DecodeGetUsageAnalyticsResponse may return the following errors:
+//   - "internal_error" (type tenant.InternalError): http.StatusInternalServerError
+//   - "not_found" (type tenant.NotFound): http.StatusNotFound
+//   - error: internal error
+func DecodeGetUsageAnalyticsResponse(decoder func(*http.Response) goahttp.Decoder, restoreBody bool) func(*http.Response) (any, error) {
+	return func(resp *http.Response) (any, error) {
+		if restoreBody {
+			b, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			defer func() {
+				resp.Body = io.NopCloser(bytes.NewBuffer(b))
+			}()
+		} else {
+			defer resp.Body.Close()
+		}
+		switch resp.StatusCode {
+		case http.StatusOK:
+			var (
+				body GetUsageAnalyticsResponseBody
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "get_usage_analytics", err)
+			}
+			err = ValidateGetUsageAnalyticsResponseBody(&body)
+			if err != nil {
+				return nil, goahttp.ErrValidationError("tenant", "get_usage_analytics", err)
+			}
+			res := NewGetUsageAnalyticsResultOK(&body)
+			return res, nil
+		case http.StatusInternalServerError:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "get_usage_analytics", err)
+			}
+			return nil, NewGetUsageAnalyticsInternalError(body)
+		case http.StatusNotFound:
+			var (
+				body string
+				err  error
+			)
+			err = decoder(resp).Decode(&body)
+			if err != nil {
+				return nil, goahttp.ErrDecodingError("tenant", "get_usage_analytics", err)
+			}
+			return nil, NewGetUsageAnalyticsNotFound(body)
+		default:
+			body, _ := io.ReadAll(resp.Body)
+			return nil, goahttp.ErrInvalidResponse("tenant", "get_usage_analytics", resp.StatusCode, string(body))
+		}
+	}
+}
+
 // marshalTenantContactInfoToContactInfoRequestBody builds a value of type
 // *ContactInfoRequestBody from a value of type *tenant.ContactInfo.
 func marshalTenantContactInfoToContactInfoRequestBody(v *tenant.ContactInfo) *ContactInfoRequestBody {

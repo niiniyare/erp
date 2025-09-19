@@ -303,4 +303,3 @@ var ExchangeRate = Type("ExchangeRate", func() {
 	})
 	Required("from_currency", "to_currency", "rate", "effective_date")
 })
-

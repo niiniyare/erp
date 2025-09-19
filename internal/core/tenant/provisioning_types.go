@@ -457,4 +457,3 @@ type NotificationSender interface {
 	SendWelcomeEmail(ctx context.Context, tenantID uuid.UUID, email, firstName string) error
 	NotifyTenantUsers(ctx context.Context, tenantID uuid.UUID, eventType string, data map[string]interface{}) error
 }
-

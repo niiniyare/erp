@@ -35,6 +35,26 @@ type Client struct {
 	// Health Doer is the HTTP client used to make requests to the health endpoint.
 	HealthDoer goahttp.Doer
 
+	// Provision Doer is the HTTP client used to make requests to the provision
+	// endpoint.
+	ProvisionDoer goahttp.Doer
+
+	// Suspend Doer is the HTTP client used to make requests to the suspend
+	// endpoint.
+	SuspendDoer goahttp.Doer
+
+	// Reactivate Doer is the HTTP client used to make requests to the reactivate
+	// endpoint.
+	ReactivateDoer goahttp.Doer
+
+	// UpdateConfiguration Doer is the HTTP client used to make requests to the
+	// update_configuration endpoint.
+	UpdateConfigurationDoer goahttp.Doer
+
+	// GetUsageAnalytics Doer is the HTTP client used to make requests to the
+	// get_usage_analytics endpoint.
+	GetUsageAnalyticsDoer goahttp.Doer
+
 	// RestoreResponseBody controls whether the response bodies are reset after
 	// decoding so they can be read again.
 	RestoreResponseBody bool
@@ -55,17 +75,22 @@ func NewClient(
 	restoreBody bool,
 ) *Client {
 	return &Client{
-		CreateDoer:          doer,
-		GetDoer:             doer,
-		ListDoer:            doer,
-		UpdateDoer:          doer,
-		DeleteDoer:          doer,
-		HealthDoer:          doer,
-		RestoreResponseBody: restoreBody,
-		scheme:              scheme,
-		host:                host,
-		decoder:             dec,
-		encoder:             enc,
+		CreateDoer:              doer,
+		GetDoer:                 doer,
+		ListDoer:                doer,
+		UpdateDoer:              doer,
+		DeleteDoer:              doer,
+		HealthDoer:              doer,
+		ProvisionDoer:           doer,
+		SuspendDoer:             doer,
+		ReactivateDoer:          doer,
+		UpdateConfigurationDoer: doer,
+		GetUsageAnalyticsDoer:   doer,
+		RestoreResponseBody:     restoreBody,
+		scheme:                  scheme,
+		host:                    host,
+		decoder:                 dec,
+		encoder:                 enc,
 	}
 }
 
@@ -193,6 +218,126 @@ func (c *Client) Health() goa.Endpoint {
 		resp, err := c.HealthDoer.Do(req)
 		if err != nil {
 			return nil, goahttp.ErrRequestError("tenant", "health", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Provision returns an endpoint that makes HTTP requests to the tenant service
+// provision server.
+func (c *Client) Provision() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeProvisionRequest(c.encoder)
+		decodeResponse = DecodeProvisionResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildProvisionRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.ProvisionDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("tenant", "provision", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Suspend returns an endpoint that makes HTTP requests to the tenant service
+// suspend server.
+func (c *Client) Suspend() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeSuspendRequest(c.encoder)
+		decodeResponse = DecodeSuspendResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildSuspendRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.SuspendDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("tenant", "suspend", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// Reactivate returns an endpoint that makes HTTP requests to the tenant
+// service reactivate server.
+func (c *Client) Reactivate() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeReactivateRequest(c.encoder)
+		decodeResponse = DecodeReactivateResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildReactivateRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.ReactivateDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("tenant", "reactivate", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// UpdateConfiguration returns an endpoint that makes HTTP requests to the
+// tenant service update_configuration server.
+func (c *Client) UpdateConfiguration() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeUpdateConfigurationRequest(c.encoder)
+		decodeResponse = DecodeUpdateConfigurationResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildUpdateConfigurationRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.UpdateConfigurationDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("tenant", "update_configuration", err)
+		}
+		return decodeResponse(resp)
+	}
+}
+
+// GetUsageAnalytics returns an endpoint that makes HTTP requests to the tenant
+// service get_usage_analytics server.
+func (c *Client) GetUsageAnalytics() goa.Endpoint {
+	var (
+		encodeRequest  = EncodeGetUsageAnalyticsRequest(c.encoder)
+		decodeResponse = DecodeGetUsageAnalyticsResponse(c.decoder, c.RestoreResponseBody)
+	)
+	return func(ctx context.Context, v any) (any, error) {
+		req, err := c.BuildGetUsageAnalyticsRequest(ctx, v)
+		if err != nil {
+			return nil, err
+		}
+		err = encodeRequest(req, v)
+		if err != nil {
+			return nil, err
+		}
+		resp, err := c.GetUsageAnalyticsDoer.Do(req)
+		if err != nil {
+			return nil, goahttp.ErrRequestError("tenant", "get_usage_analytics", err)
 		}
 		return decodeResponse(resp)
 	}

@@ -27,13 +27,14 @@ import (
 
 type Services struct {
 	// Core services
-	TenantService           tenant.Service
-	EntityService           entity.Service
-	IdentityService         identity.Service
-	ABACService             abac.Service
-	AuditService            audit.Service
-	FeatureFlagService      featureflag.Service
-	AdminFeatureFlagService featureflag.AdminService
+	TenantService             tenant.Service
+	TenantProvisioningService tenant.ProvisioningService
+	EntityService             entity.Service
+	IdentityService           identity.Service
+	ABACService               abac.Service
+	AuditService              audit.Service
+	FeatureFlagService        featureflag.Service
+	AdminFeatureFlagService   featureflag.AdminService
 
 	// Access services
 	AccessRequestService     request.AccessRequestService
@@ -140,21 +141,30 @@ func InitializeServices(store db.Store, redisClient cache.Service, logger logger
 	conditionalAccessService := conditional.NewConditionalAccessService(tracingService, metricsService, auditServiceAdapter)
 	analyticsService := analytics.NewUserAnalyticsService(tracingService, metricsService, auditService)
 
+	// Initialize tenant provisioning service (after other services are created)
+	tenantProvisioningService := tenant.NewProvisioningService(
+		tenantService,
+		identityService,
+		nil, // AuditLogger - can be nil for now
+		nil, // NotificationSender - can be nil for now
+	)
+
 	// Create services struct
 	services := &Services{
-		TenantService:            tenantService,
-		EntityService:            entityService,
-		IdentityService:          identityService,
-		ABACService:              abacService,
-		AuditService:             auditService,
-		FeatureFlagService:       featureFlagService,
-		AdminFeatureFlagService:  adminFeatureFlagService,
-		AccessRequestService:     accessRequestService,
-		ConditionalAccessService: conditionalAccessService,
-		AnalyticsService:         analyticsService,
-		NotificationService:      notificationService,
-		ApproverService:          approverService,
-		ExecutionService:         executionService,
+		TenantService:             tenantService,
+		TenantProvisioningService: tenantProvisioningService,
+		EntityService:             entityService,
+		IdentityService:           identityService,
+		ABACService:               abacService,
+		AuditService:              auditService,
+		FeatureFlagService:        featureFlagService,
+		AdminFeatureFlagService:   adminFeatureFlagService,
+		AccessRequestService:      accessRequestService,
+		ConditionalAccessService:  conditionalAccessService,
+		AnalyticsService:          analyticsService,
+		NotificationService:       notificationService,
+		ApproverService:           approverService,
+		ExecutionService:          executionService,
 	}
 
 	// Log all initialized services dynamically

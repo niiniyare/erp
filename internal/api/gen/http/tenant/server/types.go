@@ -49,6 +49,50 @@ type UpdateRequestBody struct {
 	Settings *TenantSettingsRequestBody `form:"settings,omitempty" json:"settings,omitempty" xml:"settings,omitempty"`
 }
 
+// ProvisionRequestBody is the type of the "tenant" service "provision"
+// endpoint HTTP request body.
+type ProvisionRequestBody struct {
+	// Tenant name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Subdomain for tenant access
+	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
+	// Primary contact email
+	ContactEmail *string `form:"contact_email,omitempty" json:"contact_email,omitempty" xml:"contact_email,omitempty"`
+	// Initial admin user email
+	AdminEmail *string `form:"admin_email,omitempty" json:"admin_email,omitempty" xml:"admin_email,omitempty"`
+	// Admin first name
+	AdminFirstName *string `form:"admin_first_name,omitempty" json:"admin_first_name,omitempty" xml:"admin_first_name,omitempty"`
+	// Admin last name
+	AdminLastName *string `form:"admin_last_name,omitempty" json:"admin_last_name,omitempty" xml:"admin_last_name,omitempty"`
+}
+
+// SuspendRequestBody is the type of the "tenant" service "suspend" endpoint
+// HTTP request body.
+type SuspendRequestBody struct {
+	// Reason for suspension
+	Reason *string `form:"reason,omitempty" json:"reason,omitempty" xml:"reason,omitempty"`
+}
+
+// ReactivateRequestBody is the type of the "tenant" service "reactivate"
+// endpoint HTTP request body.
+type ReactivateRequestBody struct {
+	// Reason for reactivation
+	Reason *string `form:"reason,omitempty" json:"reason,omitempty" xml:"reason,omitempty"`
+}
+
+// UpdateConfigurationRequestBody is the type of the "tenant" service
+// "update_configuration" endpoint HTTP request body.
+type UpdateConfigurationRequestBody struct {
+	// Maximum number of users
+	MaxUsers *uint `form:"max_users,omitempty" json:"max_users,omitempty" xml:"max_users,omitempty"`
+	// Maximum storage in MB
+	MaxStorageMb *uint64 `form:"max_storage_mb,omitempty" json:"max_storage_mb,omitempty" xml:"max_storage_mb,omitempty"`
+	// Maximum API calls per hour
+	MaxAPICallsPerHour *uint `form:"max_api_calls_per_hour,omitempty" json:"max_api_calls_per_hour,omitempty" xml:"max_api_calls_per_hour,omitempty"`
+	// Reason for configuration change
+	Reason *string `form:"reason,omitempty" json:"reason,omitempty" xml:"reason,omitempty"`
+}
+
 // CreateResponseBody is the type of the "tenant" service "create" endpoint
 // HTTP response body.
 type CreateResponseBody struct {
@@ -205,6 +249,69 @@ type HealthResponseBody struct {
 	Timestamp string `form:"timestamp" json:"timestamp" xml:"timestamp"`
 	// Service version
 	Version string `form:"version" json:"version" xml:"version"`
+}
+
+// ProvisionResponseBody is the type of the "tenant" service "provision"
+// endpoint HTTP response body.
+type ProvisionResponseBody struct {
+	// Created tenant ID
+	TenantID string `form:"tenant_id" json:"tenant_id" xml:"tenant_id"`
+	// Provisioning status
+	Status string `form:"status" json:"status" xml:"status"`
+	// Status message
+	Message string `form:"message" json:"message" xml:"message"`
+}
+
+// SuspendResponseBody is the type of the "tenant" service "suspend" endpoint
+// HTTP response body.
+type SuspendResponseBody struct {
+	// Tenant ID
+	TenantID string `form:"tenant_id" json:"tenant_id" xml:"tenant_id"`
+	// Action performed
+	Action string `form:"action" json:"action" xml:"action"`
+	// Action status
+	Status string `form:"status" json:"status" xml:"status"`
+	// Result message
+	Message string `form:"message" json:"message" xml:"message"`
+}
+
+// ReactivateResponseBody is the type of the "tenant" service "reactivate"
+// endpoint HTTP response body.
+type ReactivateResponseBody struct {
+	// Tenant ID
+	TenantID string `form:"tenant_id" json:"tenant_id" xml:"tenant_id"`
+	// Action performed
+	Action string `form:"action" json:"action" xml:"action"`
+	// Action status
+	Status string `form:"status" json:"status" xml:"status"`
+	// Result message
+	Message string `form:"message" json:"message" xml:"message"`
+}
+
+// UpdateConfigurationResponseBody is the type of the "tenant" service
+// "update_configuration" endpoint HTTP response body.
+type UpdateConfigurationResponseBody struct {
+	// Tenant ID
+	TenantID string `form:"tenant_id" json:"tenant_id" xml:"tenant_id"`
+	// Update status
+	Status string `form:"status" json:"status" xml:"status"`
+	// Result message
+	Message string `form:"message" json:"message" xml:"message"`
+}
+
+// GetUsageAnalyticsResponseBody is the type of the "tenant" service
+// "get_usage_analytics" endpoint HTTP response body.
+type GetUsageAnalyticsResponseBody struct {
+	// Tenant ID
+	TenantID string `form:"tenant_id" json:"tenant_id" xml:"tenant_id"`
+	// Analysis period
+	Period string `form:"period" json:"period" xml:"period"`
+	// Number of active users
+	UserCount *uint `form:"user_count,omitempty" json:"user_count,omitempty" xml:"user_count,omitempty"`
+	// Storage used in MB
+	StorageUsedMb *uint64 `form:"storage_used_mb,omitempty" json:"storage_used_mb,omitempty" xml:"storage_used_mb,omitempty"`
+	// Total API calls
+	APICalls *uint64 `form:"api_calls,omitempty" json:"api_calls,omitempty" xml:"api_calls,omitempty"`
 }
 
 // CreateBadRequestResponseBody is the type of the "tenant" service "create"
@@ -782,6 +889,65 @@ func NewHealthResponseBody(res *tenant.HealthResult) *HealthResponseBody {
 	return body
 }
 
+// NewProvisionResponseBody builds the HTTP response body from the result of
+// the "provision" endpoint of the "tenant" service.
+func NewProvisionResponseBody(res *tenant.ProvisionResult) *ProvisionResponseBody {
+	body := &ProvisionResponseBody{
+		TenantID: res.TenantID,
+		Status:   res.Status,
+		Message:  res.Message,
+	}
+	return body
+}
+
+// NewSuspendResponseBody builds the HTTP response body from the result of the
+// "suspend" endpoint of the "tenant" service.
+func NewSuspendResponseBody(res *tenant.SuspendResult) *SuspendResponseBody {
+	body := &SuspendResponseBody{
+		TenantID: res.TenantID,
+		Action:   res.Action,
+		Status:   res.Status,
+		Message:  res.Message,
+	}
+	return body
+}
+
+// NewReactivateResponseBody builds the HTTP response body from the result of
+// the "reactivate" endpoint of the "tenant" service.
+func NewReactivateResponseBody(res *tenant.ReactivateResult) *ReactivateResponseBody {
+	body := &ReactivateResponseBody{
+		TenantID: res.TenantID,
+		Action:   res.Action,
+		Status:   res.Status,
+		Message:  res.Message,
+	}
+	return body
+}
+
+// NewUpdateConfigurationResponseBody builds the HTTP response body from the
+// result of the "update_configuration" endpoint of the "tenant" service.
+func NewUpdateConfigurationResponseBody(res *tenant.UpdateConfigurationResult) *UpdateConfigurationResponseBody {
+	body := &UpdateConfigurationResponseBody{
+		TenantID: res.TenantID,
+		Status:   res.Status,
+		Message:  res.Message,
+	}
+	return body
+}
+
+// NewGetUsageAnalyticsResponseBody builds the HTTP response body from the
+// result of the "get_usage_analytics" endpoint of the "tenant" service.
+func NewGetUsageAnalyticsResponseBody(res *tenant.GetUsageAnalyticsResult) *GetUsageAnalyticsResponseBody {
+	body := &GetUsageAnalyticsResponseBody{
+		TenantID:      res.TenantID,
+		Period:        res.Period,
+		UserCount:     res.UserCount,
+		StorageUsedMb: res.StorageUsedMb,
+		APICalls:      res.APICalls,
+	}
+	return body
+}
+
 // NewCreateBadRequestResponseBody builds the HTTP response body from the
 // result of the "create" endpoint of the "tenant" service.
 func NewCreateBadRequestResponseBody(res *goa.ServiceError) *CreateBadRequestResponseBody {
@@ -1077,6 +1243,64 @@ func NewDeletePayload(id string) *tenant.DeletePayload {
 	return v
 }
 
+// NewProvisionPayload builds a tenant service provision endpoint payload.
+func NewProvisionPayload(body *ProvisionRequestBody) *tenant.ProvisionPayload {
+	v := &tenant.ProvisionPayload{
+		Name:           *body.Name,
+		Subdomain:      *body.Subdomain,
+		ContactEmail:   *body.ContactEmail,
+		AdminEmail:     *body.AdminEmail,
+		AdminFirstName: *body.AdminFirstName,
+		AdminLastName:  *body.AdminLastName,
+	}
+
+	return v
+}
+
+// NewSuspendPayload builds a tenant service suspend endpoint payload.
+func NewSuspendPayload(body *SuspendRequestBody, id string) *tenant.SuspendPayload {
+	v := &tenant.SuspendPayload{
+		Reason: *body.Reason,
+	}
+	v.ID = id
+
+	return v
+}
+
+// NewReactivatePayload builds a tenant service reactivate endpoint payload.
+func NewReactivatePayload(body *ReactivateRequestBody, id string) *tenant.ReactivatePayload {
+	v := &tenant.ReactivatePayload{
+		Reason: *body.Reason,
+	}
+	v.ID = id
+
+	return v
+}
+
+// NewUpdateConfigurationPayload builds a tenant service update_configuration
+// endpoint payload.
+func NewUpdateConfigurationPayload(body *UpdateConfigurationRequestBody, id string) *tenant.UpdateConfigurationPayload {
+	v := &tenant.UpdateConfigurationPayload{
+		MaxUsers:           body.MaxUsers,
+		MaxStorageMb:       body.MaxStorageMb,
+		MaxAPICallsPerHour: body.MaxAPICallsPerHour,
+		Reason:             *body.Reason,
+	}
+	v.ID = id
+
+	return v
+}
+
+// NewGetUsageAnalyticsPayload builds a tenant service get_usage_analytics
+// endpoint payload.
+func NewGetUsageAnalyticsPayload(id string, period string) *tenant.GetUsageAnalyticsPayload {
+	v := &tenant.GetUsageAnalyticsPayload{}
+	v.ID = id
+	v.Period = period
+
+	return v
+}
+
 // ValidateCreateRequestBody runs the validations defined on CreateRequestBody
 func ValidateCreateRequestBody(body *CreateRequestBody) (err error) {
 	if body.Name == nil {
@@ -1163,6 +1387,115 @@ func ValidateUpdateRequestBody(body *UpdateRequestBody) (err error) {
 	if body.Settings != nil {
 		if err2 := ValidateTenantSettingsRequestBody(body.Settings); err2 != nil {
 			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
+// ValidateProvisionRequestBody runs the validations defined on
+// ProvisionRequestBody
+func ValidateProvisionRequestBody(body *ProvisionRequestBody) (err error) {
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.Subdomain == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("subdomain", "body"))
+	}
+	if body.ContactEmail == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("contact_email", "body"))
+	}
+	if body.AdminEmail == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("admin_email", "body"))
+	}
+	if body.AdminFirstName == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("admin_first_name", "body"))
+	}
+	if body.AdminLastName == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("admin_last_name", "body"))
+	}
+	if body.Name != nil {
+		if utf8.RuneCountInString(*body.Name) < 2 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 2, true))
+		}
+	}
+	if body.Name != nil {
+		if utf8.RuneCountInString(*body.Name) > 255 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 255, false))
+		}
+	}
+	if body.Subdomain != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.subdomain", *body.Subdomain, "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"))
+	}
+	if body.Subdomain != nil {
+		if utf8.RuneCountInString(*body.Subdomain) < 2 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.subdomain", *body.Subdomain, utf8.RuneCountInString(*body.Subdomain), 2, true))
+		}
+	}
+	if body.Subdomain != nil {
+		if utf8.RuneCountInString(*body.Subdomain) > 63 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.subdomain", *body.Subdomain, utf8.RuneCountInString(*body.Subdomain), 63, false))
+		}
+	}
+	if body.ContactEmail != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.contact_email", *body.ContactEmail, goa.FormatEmail))
+	}
+	if body.AdminEmail != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.admin_email", *body.AdminEmail, goa.FormatEmail))
+	}
+	return
+}
+
+// ValidateSuspendRequestBody runs the validations defined on SuspendRequestBody
+func ValidateSuspendRequestBody(body *SuspendRequestBody) (err error) {
+	if body.Reason == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("reason", "body"))
+	}
+	if body.Reason != nil {
+		if utf8.RuneCountInString(*body.Reason) < 10 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", *body.Reason, utf8.RuneCountInString(*body.Reason), 10, true))
+		}
+	}
+	if body.Reason != nil {
+		if utf8.RuneCountInString(*body.Reason) > 500 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", *body.Reason, utf8.RuneCountInString(*body.Reason), 500, false))
+		}
+	}
+	return
+}
+
+// ValidateReactivateRequestBody runs the validations defined on
+// ReactivateRequestBody
+func ValidateReactivateRequestBody(body *ReactivateRequestBody) (err error) {
+	if body.Reason == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("reason", "body"))
+	}
+	if body.Reason != nil {
+		if utf8.RuneCountInString(*body.Reason) < 5 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", *body.Reason, utf8.RuneCountInString(*body.Reason), 5, true))
+		}
+	}
+	if body.Reason != nil {
+		if utf8.RuneCountInString(*body.Reason) > 500 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", *body.Reason, utf8.RuneCountInString(*body.Reason), 500, false))
+		}
+	}
+	return
+}
+
+// ValidateUpdateConfigurationRequestBody runs the validations defined on
+// update_configuration_request_body
+func ValidateUpdateConfigurationRequestBody(body *UpdateConfigurationRequestBody) (err error) {
+	if body.Reason == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("reason", "body"))
+	}
+	if body.Reason != nil {
+		if utf8.RuneCountInString(*body.Reason) < 5 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", *body.Reason, utf8.RuneCountInString(*body.Reason), 5, true))
+		}
+	}
+	if body.Reason != nil {
+		if utf8.RuneCountInString(*body.Reason) > 500 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", *body.Reason, utf8.RuneCountInString(*body.Reason), 500, false))
 		}
 	}
 	return

@@ -593,4 +593,3 @@ var SearchResultItem = Type("SearchResultItem", func() {
 
 	Required("id", "node_type", "code", "name", "path", "match_type", "relevance_score")
 })
-

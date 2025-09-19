@@ -97,10 +97,10 @@ type RedisSettings struct {
 }
 
 type TemporalSettings struct {
-	HostPort        string        `yaml:"host_port" mapstructure:"host_port"`
-	Namespace       string        `yaml:"namespace" mapstructure:"namespace"`
-	Workers         WorkerSettings `yaml:"workers" mapstructure:"workers"`
-	Client          ClientSettings `yaml:"client" mapstructure:"client"`
+	HostPort  string         `yaml:"host_port" mapstructure:"host_port"`
+	Namespace string         `yaml:"namespace" mapstructure:"namespace"`
+	Workers   WorkerSettings `yaml:"workers" mapstructure:"workers"`
+	Client    ClientSettings `yaml:"client" mapstructure:"client"`
 }
 
 type WorkerSettings struct {

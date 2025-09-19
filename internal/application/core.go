@@ -17,12 +17,12 @@ import (
 
 // Core represents the application core that orchestrates all components
 type Core struct {
-	config         *config.AppConfig
-	infrastructure *infrastructure.Container
-	services       *Services
+	config          *config.AppConfig
+	infrastructure  *infrastructure.Container
+	services        *Services
 	financeServices *FinanceServices
-	started        bool
-	mu             sync.RWMutex
+	started         bool
+	mu              sync.RWMutex
 }
 
 // Services represents the core business services
@@ -83,7 +83,7 @@ func (c *Core) Start(ctx context.Context) error {
 	c.started = true
 
 	logger.Info("Application core started successfully", logger.Fields{
-		"status": "ready",
+		"status":               "ready",
 		"services_initialized": true,
 	})
 

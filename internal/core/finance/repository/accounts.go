@@ -1180,7 +1180,7 @@ func (r *accountsRepository) GetAccountChildrenHierarchy(ctx context.Context, pa
 	}
 
 	cacheKey := fmt.Sprintf("account_children_hierarchy:%s:%s", tenantID.String(), parentAccountID.String())
-	
+
 	// Try to get from cache first
 	var result []*domain.AccountHierarchy
 	if err := r.cache.Get(ctx, cacheKey, &result); err == nil && result != nil {
@@ -1221,7 +1221,7 @@ func (r *accountsRepository) GetAccountSubtree(ctx context.Context, accountID uu
 	}
 
 	cacheKey := fmt.Sprintf("account_subtree:%s:%s", tenantID.String(), accountID.String())
-	
+
 	// Try to get from cache first
 	var result []*domain.AccountHierarchy
 	if err := r.cache.Get(ctx, cacheKey, &result); err == nil && result != nil {
@@ -1297,8 +1297,8 @@ func (r *accountsRepository) GetStaleAccountBalances(ctx context.Context, filter
 	var result []*domain.AccountActivity
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
 		params := db.GetStaleAccountBalancesParams{
-			EntityID:          filter.EntityID,
-			MinDaysInactive:   filter.MinDaysInactive,
+			EntityID:        filter.EntityID,
+			MinDaysInactive: filter.MinDaysInactive,
 		}
 
 		sqlcAccounts, err := s.GetStaleAccountBalances(ctx, params)

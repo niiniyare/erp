@@ -15,23 +15,33 @@ import (
 
 // Client is the "tenant" service client.
 type Client struct {
-	CreateEndpoint goa.Endpoint
-	GetEndpoint    goa.Endpoint
-	ListEndpoint   goa.Endpoint
-	UpdateEndpoint goa.Endpoint
-	DeleteEndpoint goa.Endpoint
-	HealthEndpoint goa.Endpoint
+	CreateEndpoint              goa.Endpoint
+	GetEndpoint                 goa.Endpoint
+	ListEndpoint                goa.Endpoint
+	UpdateEndpoint              goa.Endpoint
+	DeleteEndpoint              goa.Endpoint
+	HealthEndpoint              goa.Endpoint
+	ProvisionEndpoint           goa.Endpoint
+	SuspendEndpoint             goa.Endpoint
+	ReactivateEndpoint          goa.Endpoint
+	UpdateConfigurationEndpoint goa.Endpoint
+	GetUsageAnalyticsEndpoint   goa.Endpoint
 }
 
 // NewClient initializes a "tenant" service client given the endpoints.
-func NewClient(create, get, list, update, delete_, health goa.Endpoint) *Client {
+func NewClient(create, get, list, update, delete_, health, provision, suspend, reactivate, updateConfiguration, getUsageAnalytics goa.Endpoint) *Client {
 	return &Client{
-		CreateEndpoint: create,
-		GetEndpoint:    get,
-		ListEndpoint:   list,
-		UpdateEndpoint: update,
-		DeleteEndpoint: delete_,
-		HealthEndpoint: health,
+		CreateEndpoint:              create,
+		GetEndpoint:                 get,
+		ListEndpoint:                list,
+		UpdateEndpoint:              update,
+		DeleteEndpoint:              delete_,
+		HealthEndpoint:              health,
+		ProvisionEndpoint:           provision,
+		SuspendEndpoint:             suspend,
+		ReactivateEndpoint:          reactivate,
+		UpdateConfigurationEndpoint: updateConfiguration,
+		GetUsageAnalyticsEndpoint:   getUsageAnalytics,
 	}
 }
 
@@ -115,4 +125,79 @@ func (c *Client) Health(ctx context.Context) (res *HealthResult, err error) {
 		return
 	}
 	return ires.(*HealthResult), nil
+}
+
+// Provision calls the "provision" endpoint of the "tenant" service.
+// Provision may return the following errors:
+//   - "bad_request" (type BadRequest)
+//   - "internal_error" (type InternalError)
+//   - error: internal error
+func (c *Client) Provision(ctx context.Context, p *ProvisionPayload) (res *ProvisionResult, err error) {
+	var ires any
+	ires, err = c.ProvisionEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*ProvisionResult), nil
+}
+
+// Suspend calls the "suspend" endpoint of the "tenant" service.
+// Suspend may return the following errors:
+//   - "not_found" (type NotFound)
+//   - "bad_request" (type BadRequest)
+//   - "internal_error" (type InternalError)
+//   - error: internal error
+func (c *Client) Suspend(ctx context.Context, p *SuspendPayload) (res *SuspendResult, err error) {
+	var ires any
+	ires, err = c.SuspendEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*SuspendResult), nil
+}
+
+// Reactivate calls the "reactivate" endpoint of the "tenant" service.
+// Reactivate may return the following errors:
+//   - "not_found" (type NotFound)
+//   - "bad_request" (type BadRequest)
+//   - "internal_error" (type InternalError)
+//   - error: internal error
+func (c *Client) Reactivate(ctx context.Context, p *ReactivatePayload) (res *ReactivateResult, err error) {
+	var ires any
+	ires, err = c.ReactivateEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*ReactivateResult), nil
+}
+
+// UpdateConfiguration calls the "update_configuration" endpoint of the
+// "tenant" service.
+// UpdateConfiguration may return the following errors:
+//   - "not_found" (type NotFound)
+//   - "bad_request" (type BadRequest)
+//   - "internal_error" (type InternalError)
+//   - error: internal error
+func (c *Client) UpdateConfiguration(ctx context.Context, p *UpdateConfigurationPayload) (res *UpdateConfigurationResult, err error) {
+	var ires any
+	ires, err = c.UpdateConfigurationEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*UpdateConfigurationResult), nil
+}
+
+// GetUsageAnalytics calls the "get_usage_analytics" endpoint of the "tenant"
+// service.
+// GetUsageAnalytics may return the following errors:
+//   - "not_found" (type NotFound)
+//   - "internal_error" (type InternalError)
+//   - error: internal error
+func (c *Client) GetUsageAnalytics(ctx context.Context, p *GetUsageAnalyticsPayload) (res *GetUsageAnalyticsResult, err error) {
+	var ires any
+	ires, err = c.GetUsageAnalyticsEndpoint(ctx, p)
+	if err != nil {
+		return
+	}
+	return ires.(*GetUsageAnalyticsResult), nil
 }

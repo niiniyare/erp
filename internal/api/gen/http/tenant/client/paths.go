@@ -40,3 +40,28 @@ func DeleteTenantPath(id string) string {
 func HealthTenantPath() string {
 	return "/api/v1/tenants/health"
 }
+
+// ProvisionTenantPath returns the URL path to the tenant service provision HTTP endpoint.
+func ProvisionTenantPath() string {
+	return "/api/v1/tenants/provision"
+}
+
+// SuspendTenantPath returns the URL path to the tenant service suspend HTTP endpoint.
+func SuspendTenantPath(id string) string {
+	return fmt.Sprintf("/api/v1/tenants/%v/suspend", id)
+}
+
+// ReactivateTenantPath returns the URL path to the tenant service reactivate HTTP endpoint.
+func ReactivateTenantPath(id string) string {
+	return fmt.Sprintf("/api/v1/tenants/%v/reactivate", id)
+}
+
+// UpdateConfigurationTenantPath returns the URL path to the tenant service update_configuration HTTP endpoint.
+func UpdateConfigurationTenantPath(id string) string {
+	return fmt.Sprintf("/api/v1/tenants/%v/configuration", id)
+}
+
+// GetUsageAnalyticsTenantPath returns the URL path to the tenant service get_usage_analytics HTTP endpoint.
+func GetUsageAnalyticsTenantPath(id string) string {
+	return fmt.Sprintf("/api/v1/tenants/%v/analytics", id)
+}

@@ -1,2 +1,4 @@
 # Log files
 cmd/server/server.log
+.gemini/
+gha-creds-*.json

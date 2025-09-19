@@ -13,19 +13,19 @@ import (
 // mapSQLCAccountHierarchyToDomain converts SQLC account hierarchy to domain type
 func mapSQLCAccountHierarchyToDomain(sqlcAccount db.VFinanceAccountsHierarchy) *domain.AccountHierarchy {
 	return &domain.AccountHierarchy{
-		ID:               sqlcAccount.ID,
-		TenantID:         sqlcAccount.TenantID,
-		AccountCode:      sqlcAccount.AccountCode,
-		AccountName:      sqlcAccount.AccountName,
-		ParentAccountID:  sqlcAccount.ParentAccountID,
-		RootType:         sqlcAccount.RootType,
-		AccountType:      sqlcAccount.AccountType,
-		NormalBalance:    sqlcAccount.NormalBalance,
-		CurrentBalance:   convertNullableDecimal(sqlcAccount.CurrentBalance),
-		Level:            sqlcAccount.Level,
-		FullPath:         sqlcAccount.FullPath,
-		FullName:         sqlcAccount.FullName,
-		ChildCount:       sqlcAccount.ChildCount,
+		ID:              sqlcAccount.ID,
+		TenantID:        sqlcAccount.TenantID,
+		AccountCode:     sqlcAccount.AccountCode,
+		AccountName:     sqlcAccount.AccountName,
+		ParentAccountID: sqlcAccount.ParentAccountID,
+		RootType:        sqlcAccount.RootType,
+		AccountType:     sqlcAccount.AccountType,
+		NormalBalance:   sqlcAccount.NormalBalance,
+		CurrentBalance:  convertNullableDecimal(sqlcAccount.CurrentBalance),
+		Level:           sqlcAccount.Level,
+		FullPath:        sqlcAccount.FullPath,
+		FullName:        sqlcAccount.FullName,
+		ChildCount:      sqlcAccount.ChildCount,
 	}
 }
 
@@ -93,13 +93,13 @@ func convertNullableDecimal(pgNum pgtype.Numeric) decimal.Decimal {
 	if !pgNum.Valid {
 		return decimal.Zero
 	}
-	
+
 	// Convert pgtype.Numeric to decimal.Decimal
 	// Use the Float64Value method to get the value
 	val, err := pgNum.Float64Value()
 	if err != nil {
 		return decimal.Zero
 	}
-	
+
 	return decimal.NewFromFloat(val.Float64)
 }

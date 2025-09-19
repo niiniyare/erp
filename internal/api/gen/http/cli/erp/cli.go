@@ -23,7 +23,6 @@ import (
 	openapic "github.com/niiniyare/erp/internal/api/gen/http/openapi/client"
 	organizationc "github.com/niiniyare/erp/internal/api/gen/http/organization/client"
 	tenantc "github.com/niiniyare/erp/internal/api/gen/http/tenant/client"
-	tenantmanagementc "github.com/niiniyare/erp/internal/api/gen/http/tenant_management/client"
 	userc "github.com/niiniyare/erp/internal/api/gen/http/user/client"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
@@ -42,8 +41,7 @@ func UsageCommands() []string {
 		"featureflag (create|get|get-by-id|list|update|delete|evaluate|evaluate-multiple|get-stats|search|get-by-type|health)",
 		"finance (create-account-node|get-account-node|get-account-node-by-code|list-account-nodes|update-account-node|delete-account-node|search-account-nodes|get-account-node-balance|get-hierarchy-analysis|create-account|get-account|get-account-by-code|get-account-by-name|list-accounts|update-account|delete-account|get-account-hierarchy|get-account-balance|create-transaction|get-transaction|get-transaction-by-number|list-transactions|post-transaction|reverse-transaction|approve-transaction|validate-transaction|get-transaction-status|submit-approval-decision|request-transaction-changes|get-transaction-workflow|get-trial-balance)",
 		"organization (create|get|list|update|hierarchy|archive)",
-		"tenant-management (provision|suspend|reactivate|update-configuration|get-usage-analytics)",
-		"tenant (create|get|list|update|delete|health)",
+		"tenant (create|get|list|update|delete|health|provision|suspend|reactivate|update-configuration|get-usage-analytics)",
 		"user (get-attributes|set-attributes|bulk-update-attributes|check-permission|authorize-action|get-session-attributes|set-session-context|get-user-context|validate-attributes|refresh-attributes|create|get|list|update|deactivate|permissions|assign-role|remove-role)",
 		"openapi (spec|ui)",
 	}
@@ -56,7 +54,9 @@ func UsageExamples() string {
       "duration_hours": 24,
       "entity_id": "123e4567-e89b-12d3-a456-426614174000",
       "metadata": {
-         "Esse aliquid dicta ut dolorem aut.": "Quia in dolor autem perferendis."
+         "Aperiam ab ullam accusamus.": "Rerum atque voluptas.",
+         "Est maiores non ratione rerum iure.": "Consequatur totam.",
+         "Id totam est non nesciunt.": "Omnis numquam id impedit."
       },
       "reason": "Need access to review quarterly reports",
       "requester_id": "123e4567-e89b-12d3-a456-426614174000",
@@ -69,19 +69,20 @@ func UsageExamples() string {
    }'` + "\n" +
 		os.Args[0] + ` health health` + "\n" +
 		os.Args[0] + ` abac evaluate --body '{
-      "action": "Magni accusamus corporis.",
+      "action": "Et eaque animi repudiandae ut laudantium.",
       "cache_results": false,
       "context": {
-         "Quis voluptatem optio asperiores nihil necessitatibus.": "Et corrupti ut dolor deleniti."
+         "Fuga nostrum qui maiores.": "Non iste dolores aut nostrum.",
+         "Occaecati molestiae nihil laboriosam.": "Ratione iusto error ducimus aperiam amet possimus."
       },
       "explain_decision": false,
-      "include_advice": true,
-      "request_id": "Perspiciatis possimus quis quas facilis velit.",
-      "resource_id": "Delectus cupiditate provident ullam dolore et.",
-      "resource_type": "Consequatur sint et.",
-      "use_cache": false,
-      "user_id": "Dolore unde est."
-   }' --token "Adipisci optio mollitia praesentium distinctio."` + "\n" +
+      "include_advice": false,
+      "request_id": "Et quae molestiae magni est incidunt minima.",
+      "resource_id": "Consequatur et.",
+      "resource_type": "Unde dicta aliquam ab.",
+      "use_cache": true,
+      "user_id": "In accusamus odio incidunt animi modi eligendi."
+   }' --token "Expedita omnis voluptatem."` + "\n" +
 		os.Args[0] + ` admin-featureflag bulk-enable --body '{
       "flag_names": [
          "Corrupti dolorem.",
@@ -429,27 +430,6 @@ func ParseEndpoint(
 		organizationArchiveFlags  = flag.NewFlagSet("archive", flag.ExitOnError)
 		organizationArchiveIDFlag = organizationArchiveFlags.String("id", "REQUIRED", "Organization ID")
 
-		tenantManagementFlags = flag.NewFlagSet("tenant-management", flag.ContinueOnError)
-
-		tenantManagementProvisionFlags    = flag.NewFlagSet("provision", flag.ExitOnError)
-		tenantManagementProvisionBodyFlag = tenantManagementProvisionFlags.String("body", "REQUIRED", "")
-
-		tenantManagementSuspendFlags    = flag.NewFlagSet("suspend", flag.ExitOnError)
-		tenantManagementSuspendBodyFlag = tenantManagementSuspendFlags.String("body", "REQUIRED", "")
-		tenantManagementSuspendIDFlag   = tenantManagementSuspendFlags.String("id", "REQUIRED", "Tenant ID")
-
-		tenantManagementReactivateFlags    = flag.NewFlagSet("reactivate", flag.ExitOnError)
-		tenantManagementReactivateBodyFlag = tenantManagementReactivateFlags.String("body", "REQUIRED", "")
-		tenantManagementReactivateIDFlag   = tenantManagementReactivateFlags.String("id", "REQUIRED", "Tenant ID")
-
-		tenantManagementUpdateConfigurationFlags    = flag.NewFlagSet("update-configuration", flag.ExitOnError)
-		tenantManagementUpdateConfigurationBodyFlag = tenantManagementUpdateConfigurationFlags.String("body", "REQUIRED", "")
-		tenantManagementUpdateConfigurationIDFlag   = tenantManagementUpdateConfigurationFlags.String("id", "REQUIRED", "Tenant ID")
-
-		tenantManagementGetUsageAnalyticsFlags      = flag.NewFlagSet("get-usage-analytics", flag.ExitOnError)
-		tenantManagementGetUsageAnalyticsIDFlag     = tenantManagementGetUsageAnalyticsFlags.String("id", "REQUIRED", "Tenant ID")
-		tenantManagementGetUsageAnalyticsPeriodFlag = tenantManagementGetUsageAnalyticsFlags.String("period", "current_month", "")
-
 		tenantFlags = flag.NewFlagSet("tenant", flag.ContinueOnError)
 
 		tenantCreateFlags    = flag.NewFlagSet("create", flag.ExitOnError)
@@ -474,6 +454,25 @@ func ParseEndpoint(
 		tenantDeleteIDFlag = tenantDeleteFlags.String("id", "REQUIRED", "Tenant ID")
 
 		tenantHealthFlags = flag.NewFlagSet("health", flag.ExitOnError)
+
+		tenantProvisionFlags    = flag.NewFlagSet("provision", flag.ExitOnError)
+		tenantProvisionBodyFlag = tenantProvisionFlags.String("body", "REQUIRED", "")
+
+		tenantSuspendFlags    = flag.NewFlagSet("suspend", flag.ExitOnError)
+		tenantSuspendBodyFlag = tenantSuspendFlags.String("body", "REQUIRED", "")
+		tenantSuspendIDFlag   = tenantSuspendFlags.String("id", "REQUIRED", "Tenant ID")
+
+		tenantReactivateFlags    = flag.NewFlagSet("reactivate", flag.ExitOnError)
+		tenantReactivateBodyFlag = tenantReactivateFlags.String("body", "REQUIRED", "")
+		tenantReactivateIDFlag   = tenantReactivateFlags.String("id", "REQUIRED", "Tenant ID")
+
+		tenantUpdateConfigurationFlags    = flag.NewFlagSet("update-configuration", flag.ExitOnError)
+		tenantUpdateConfigurationBodyFlag = tenantUpdateConfigurationFlags.String("body", "REQUIRED", "")
+		tenantUpdateConfigurationIDFlag   = tenantUpdateConfigurationFlags.String("id", "REQUIRED", "Tenant ID")
+
+		tenantGetUsageAnalyticsFlags      = flag.NewFlagSet("get-usage-analytics", flag.ExitOnError)
+		tenantGetUsageAnalyticsIDFlag     = tenantGetUsageAnalyticsFlags.String("id", "REQUIRED", "Tenant ID")
+		tenantGetUsageAnalyticsPeriodFlag = tenantGetUsageAnalyticsFlags.String("period", "current_month", "")
 
 		userFlags = flag.NewFlagSet("user", flag.ContinueOnError)
 
@@ -659,13 +658,6 @@ func ParseEndpoint(
 	organizationHierarchyFlags.Usage = organizationHierarchyUsage
 	organizationArchiveFlags.Usage = organizationArchiveUsage
 
-	tenantManagementFlags.Usage = tenantManagementUsage
-	tenantManagementProvisionFlags.Usage = tenantManagementProvisionUsage
-	tenantManagementSuspendFlags.Usage = tenantManagementSuspendUsage
-	tenantManagementReactivateFlags.Usage = tenantManagementReactivateUsage
-	tenantManagementUpdateConfigurationFlags.Usage = tenantManagementUpdateConfigurationUsage
-	tenantManagementGetUsageAnalyticsFlags.Usage = tenantManagementGetUsageAnalyticsUsage
-
 	tenantFlags.Usage = tenantUsage
 	tenantCreateFlags.Usage = tenantCreateUsage
 	tenantGetFlags.Usage = tenantGetUsage
@@ -673,6 +665,11 @@ func ParseEndpoint(
 	tenantUpdateFlags.Usage = tenantUpdateUsage
 	tenantDeleteFlags.Usage = tenantDeleteUsage
 	tenantHealthFlags.Usage = tenantHealthUsage
+	tenantProvisionFlags.Usage = tenantProvisionUsage
+	tenantSuspendFlags.Usage = tenantSuspendUsage
+	tenantReactivateFlags.Usage = tenantReactivateUsage
+	tenantUpdateConfigurationFlags.Usage = tenantUpdateConfigurationUsage
+	tenantGetUsageAnalyticsFlags.Usage = tenantGetUsageAnalyticsUsage
 
 	userFlags.Usage = userUsage
 	userGetAttributesFlags.Usage = userGetAttributesUsage
@@ -729,8 +726,6 @@ func ParseEndpoint(
 			svcf = financeFlags
 		case "organization":
 			svcf = organizationFlags
-		case "tenant-management":
-			svcf = tenantManagementFlags
 		case "tenant":
 			svcf = tenantFlags
 		case "user":
@@ -1024,25 +1019,6 @@ func ParseEndpoint(
 
 			}
 
-		case "tenant-management":
-			switch epn {
-			case "provision":
-				epf = tenantManagementProvisionFlags
-
-			case "suspend":
-				epf = tenantManagementSuspendFlags
-
-			case "reactivate":
-				epf = tenantManagementReactivateFlags
-
-			case "update-configuration":
-				epf = tenantManagementUpdateConfigurationFlags
-
-			case "get-usage-analytics":
-				epf = tenantManagementGetUsageAnalyticsFlags
-
-			}
-
 		case "tenant":
 			switch epn {
 			case "create":
@@ -1062,6 +1038,21 @@ func ParseEndpoint(
 
 			case "health":
 				epf = tenantHealthFlags
+
+			case "provision":
+				epf = tenantProvisionFlags
+
+			case "suspend":
+				epf = tenantSuspendFlags
+
+			case "reactivate":
+				epf = tenantReactivateFlags
+
+			case "update-configuration":
+				epf = tenantUpdateConfigurationFlags
+
+			case "get-usage-analytics":
+				epf = tenantGetUsageAnalyticsFlags
 
 			}
 
@@ -1420,25 +1411,6 @@ func ParseEndpoint(
 				endpoint = c.Archive()
 				data, err = organizationc.BuildArchivePayload(*organizationArchiveIDFlag)
 			}
-		case "tenant-management":
-			c := tenantmanagementc.NewClient(scheme, host, doer, enc, dec, restore)
-			switch epn {
-			case "provision":
-				endpoint = c.Provision()
-				data, err = tenantmanagementc.BuildProvisionPayload(*tenantManagementProvisionBodyFlag)
-			case "suspend":
-				endpoint = c.Suspend()
-				data, err = tenantmanagementc.BuildSuspendPayload(*tenantManagementSuspendBodyFlag, *tenantManagementSuspendIDFlag)
-			case "reactivate":
-				endpoint = c.Reactivate()
-				data, err = tenantmanagementc.BuildReactivatePayload(*tenantManagementReactivateBodyFlag, *tenantManagementReactivateIDFlag)
-			case "update-configuration":
-				endpoint = c.UpdateConfiguration()
-				data, err = tenantmanagementc.BuildUpdateConfigurationPayload(*tenantManagementUpdateConfigurationBodyFlag, *tenantManagementUpdateConfigurationIDFlag)
-			case "get-usage-analytics":
-				endpoint = c.GetUsageAnalytics()
-				data, err = tenantmanagementc.BuildGetUsageAnalyticsPayload(*tenantManagementGetUsageAnalyticsIDFlag, *tenantManagementGetUsageAnalyticsPeriodFlag)
-			}
 		case "tenant":
 			c := tenantc.NewClient(scheme, host, doer, enc, dec, restore)
 			switch epn {
@@ -1459,6 +1431,21 @@ func ParseEndpoint(
 				data, err = tenantc.BuildDeletePayload(*tenantDeleteIDFlag)
 			case "health":
 				endpoint = c.Health()
+			case "provision":
+				endpoint = c.Provision()
+				data, err = tenantc.BuildProvisionPayload(*tenantProvisionBodyFlag)
+			case "suspend":
+				endpoint = c.Suspend()
+				data, err = tenantc.BuildSuspendPayload(*tenantSuspendBodyFlag, *tenantSuspendIDFlag)
+			case "reactivate":
+				endpoint = c.Reactivate()
+				data, err = tenantc.BuildReactivatePayload(*tenantReactivateBodyFlag, *tenantReactivateIDFlag)
+			case "update-configuration":
+				endpoint = c.UpdateConfiguration()
+				data, err = tenantc.BuildUpdateConfigurationPayload(*tenantUpdateConfigurationBodyFlag, *tenantUpdateConfigurationIDFlag)
+			case "get-usage-analytics":
+				endpoint = c.GetUsageAnalytics()
+				data, err = tenantc.BuildGetUsageAnalyticsPayload(*tenantGetUsageAnalyticsIDFlag, *tenantGetUsageAnalyticsPeriodFlag)
 			}
 		case "user":
 			c := userc.NewClient(scheme, host, doer, enc, dec, restore)
@@ -1572,7 +1559,9 @@ Example:
       "duration_hours": 24,
       "entity_id": "123e4567-e89b-12d3-a456-426614174000",
       "metadata": {
-         "Esse aliquid dicta ut dolorem aut.": "Quia in dolor autem perferendis."
+         "Aperiam ab ullam accusamus.": "Rerum atque voluptas.",
+         "Est maiores non ratione rerum iure.": "Consequatur totam.",
+         "Id totam est non nesciunt.": "Omnis numquam id impedit."
       },
       "reason": "Need access to review quarterly reports",
       "requester_id": "123e4567-e89b-12d3-a456-426614174000",
@@ -1867,19 +1856,20 @@ Evaluate a policy decision request.
 
 Example:
     %[1]s abac evaluate --body '{
-      "action": "Magni accusamus corporis.",
+      "action": "Et eaque animi repudiandae ut laudantium.",
       "cache_results": false,
       "context": {
-         "Quis voluptatem optio asperiores nihil necessitatibus.": "Et corrupti ut dolor deleniti."
+         "Fuga nostrum qui maiores.": "Non iste dolores aut nostrum.",
+         "Occaecati molestiae nihil laboriosam.": "Ratione iusto error ducimus aperiam amet possimus."
       },
       "explain_decision": false,
-      "include_advice": true,
-      "request_id": "Perspiciatis possimus quis quas facilis velit.",
-      "resource_id": "Delectus cupiditate provident ullam dolore et.",
-      "resource_type": "Consequatur sint et.",
-      "use_cache": false,
-      "user_id": "Dolore unde est."
-   }' --token "Adipisci optio mollitia praesentium distinctio."
+      "include_advice": false,
+      "request_id": "Et quae molestiae magni est incidunt minima.",
+      "resource_id": "Consequatur et.",
+      "resource_type": "Unde dicta aliquam ab.",
+      "use_cache": true,
+      "user_id": "In accusamus odio incidunt animi modi eligendi."
+   }' --token "Expedita omnis voluptatem."
 `, os.Args[0])
 }
 
@@ -1893,43 +1883,61 @@ Evaluate a bulk policy decision request.
 Example:
     %[1]s abac evaluate-bulk --body '{
       "cache_results": true,
-      "fail_fast": true,
-      "request_id": "Repellat aperiam ab ullam accusamus.",
+      "fail_fast": false,
+      "request_id": "Qui non illo repellat.",
       "requests": [
          {
-            "action": "Vero nisi nostrum et.",
+            "action": "Aut error.",
             "cache_results": false,
             "context": {
-               "Iusto doloremque est.": "Veniam consequatur laboriosam.",
-               "Sunt repellat tempora quasi nisi.": "Velit voluptate."
+               "Aperiam corporis qui.": "Quasi sed velit consequatur amet.",
+               "Eius omnis sit qui cum numquam.": "Asperiores velit cumque est.",
+               "Voluptatem et aut vel cupiditate sit.": "Sit nihil perferendis tempore sit nostrum."
             },
             "explain_decision": false,
             "include_advice": false,
-            "request_id": "Laudantium esse.",
-            "resource_id": "Ut consequuntur rerum et sapiente optio veritatis.",
-            "resource_type": "Ut ut molestiae.",
-            "use_cache": false,
-            "user_id": "Deleniti occaecati quo velit ea corporis aliquid."
+            "request_id": "Ullam facilis.",
+            "resource_id": "Velit ratione dicta et harum.",
+            "resource_type": "Quasi ducimus ipsa debitis.",
+            "use_cache": true,
+            "user_id": "Reiciendis earum voluptas ipsam odio minima."
          },
          {
-            "action": "Vero nisi nostrum et.",
+            "action": "Aut error.",
             "cache_results": false,
             "context": {
-               "Iusto doloremque est.": "Veniam consequatur laboriosam.",
-               "Sunt repellat tempora quasi nisi.": "Velit voluptate."
+               "Aperiam corporis qui.": "Quasi sed velit consequatur amet.",
+               "Eius omnis sit qui cum numquam.": "Asperiores velit cumque est.",
+               "Voluptatem et aut vel cupiditate sit.": "Sit nihil perferendis tempore sit nostrum."
             },
             "explain_decision": false,
             "include_advice": false,
-            "request_id": "Laudantium esse.",
-            "resource_id": "Ut consequuntur rerum et sapiente optio veritatis.",
-            "resource_type": "Ut ut molestiae.",
-            "use_cache": false,
-            "user_id": "Deleniti occaecati quo velit ea corporis aliquid."
+            "request_id": "Ullam facilis.",
+            "resource_id": "Velit ratione dicta et harum.",
+            "resource_type": "Quasi ducimus ipsa debitis.",
+            "use_cache": true,
+            "user_id": "Reiciendis earum voluptas ipsam odio minima."
+         },
+         {
+            "action": "Aut error.",
+            "cache_results": false,
+            "context": {
+               "Aperiam corporis qui.": "Quasi sed velit consequatur amet.",
+               "Eius omnis sit qui cum numquam.": "Asperiores velit cumque est.",
+               "Voluptatem et aut vel cupiditate sit.": "Sit nihil perferendis tempore sit nostrum."
+            },
+            "explain_decision": false,
+            "include_advice": false,
+            "request_id": "Ullam facilis.",
+            "resource_id": "Velit ratione dicta et harum.",
+            "resource_type": "Quasi ducimus ipsa debitis.",
+            "use_cache": true,
+            "user_id": "Reiciendis earum voluptas ipsam odio minima."
          }
       ],
-      "use_cache": false,
-      "user_id": "Voluptatibus rerum autem."
-   }' --token "Quibusdam id totam est."
+      "use_cache": true,
+      "user_id": "Autem aut."
+   }' --token "Eligendi ex porro ipsa quibusdam."
 `, os.Args[0])
 }
 
@@ -1942,14 +1950,16 @@ Simple authorization check.
 
 Example:
     %[1]s abac authorize --body '{
-      "action": "Eaque voluptatem dicta sequi neque.",
+      "action": "Quis temporibus blanditiis ut ipsa dolorem occaecati.",
       "context": {
-         "Ab quia.": "Asperiores rerum provident."
+         "Delectus pariatur.": "Ducimus voluptatem et odit perferendis accusantium.",
+         "Quos voluptatum aperiam omnis quia.": "Dolor accusamus.",
+         "Sed nesciunt quis.": "At nemo sapiente officia."
       },
-      "resource_id": "Qui vel eos atque.",
-      "resource_type": "Sit dolorem rerum non repellendus ut.",
-      "user_id": "Enim est veniam."
-   }' --token "Et repellendus quasi in accusamus odio incidunt."
+      "resource_id": "Enim perferendis dolorem soluta tempore quia.",
+      "resource_type": "Quo velit.",
+      "user_id": "Dolorum ullam."
+   }' --token "Quia voluptatum laudantium id provident id."
 `, os.Args[0])
 }
 
@@ -1962,17 +1972,16 @@ Explain a policy decision.
 
 Example:
     %[1]s abac explain --body '{
-      "action": "Amet possimus repudiandae fuga.",
+      "action": "Velit aut eos consequuntur ut.",
       "context": {
-         "Maiores laboriosam non iste dolores.": "Nostrum recusandae molestias in non aut et.",
-         "Molestiae magni est incidunt.": "Pariatur expedita.",
-         "Voluptatem veritatis sit.": "Vero aliquam."
+         "Molestiae sit.": "Et fuga quis tempora saepe voluptatem.",
+         "Repellendus consequatur iusto at eum laudantium quia.": "Nam unde quo."
       },
-      "detail_level": "Nesciunt est vero.",
-      "resource_id": "Error ducimus.",
-      "resource_type": "Molestiae nihil laboriosam magni ratione.",
-      "user_id": "Ut laudantium animi voluptas."
-   }' --token "Ipsa magni optio sint quia."
+      "detail_level": "Quidem eos.",
+      "resource_id": "Non vel ut natus.",
+      "resource_type": "Quos quidem.",
+      "user_id": "Iure ut veritatis voluptates."
+   }' --token "Explicabo nostrum aut consectetur repudiandae."
 `, os.Args[0])
 }
 
@@ -1985,13 +1994,15 @@ Discover applicable policies.
 
 Example:
     %[1]s abac discover-policies --body '{
-      "action": "Autem voluptas fuga.",
+      "action": "Sed consequuntur neque.",
       "context": {
-         "Adipisci fuga vero.": "Accusantium velit."
+         "Ab ipsam quia molestiae non.": "Et quam et ea veritatis.",
+         "Delectus vero quo itaque ullam beatae culpa.": "Aut praesentium odit temporibus harum assumenda asperiores.",
+         "Explicabo deserunt sunt facere nemo et qui.": "Rem magnam."
       },
-      "resource_type": "Sed suscipit incidunt voluptatem qui numquam sequi.",
-      "user_id": "Est libero laboriosam quis magnam aliquam omnis."
-   }' --token "Neque et odit et fuga rerum."
+      "resource_type": "Qui quia in a exercitationem beatae.",
+      "user_id": "Rerum nihil odit."
+   }' --token "Facere voluptatem dolorem."
 `, os.Args[0])
 }
 
@@ -2004,13 +2015,13 @@ Collect attributes for a given context.
 
 Example:
     %[1]s abac collect-attributes --body '{
-      "action": "Doloribus nesciunt.",
-      "entity_id": "Enim sed exercitationem.",
-      "include_expired": true,
-      "resource_id": "Quae voluptatem qui ducimus.",
-      "resource_type": "Fugiat omnis.",
-      "user_id": "Tempore sit."
-   }' --token "Sint qui voluptates."
+      "action": "Aperiam voluptas hic omnis quo esse autem.",
+      "entity_id": "Sed quae cum et iure.",
+      "include_expired": false,
+      "resource_id": "Error earum voluptatem repudiandae aliquid.",
+      "resource_type": "Ea quibusdam.",
+      "user_id": "Harum assumenda occaecati dolorem ipsam ad voluptates."
+   }' --token "Ut quasi earum itaque et."
 `, os.Args[0])
 }
 
@@ -2023,9 +2034,9 @@ Get a history of policy decisions.
 
 Example:
     %[1]s abac audit-decisions --body '{
-      "limit": 10442271467752120742,
-      "user_id": "Delectus tempore."
-   }' --token "Quas voluptas id omnis laudantium ea rerum."
+      "limit": 17707556094903717699,
+      "user_id": "Similique magnam animi."
+   }' --token "Eveniet error."
 `, os.Args[0])
 }
 
@@ -2038,10 +2049,10 @@ Invalidate the ABAC cache.
 
 Example:
     %[1]s abac invalidate-cache --body '{
-      "pattern": "Sapiente officia doloribus.",
-      "resource_type": "Sunt sed nesciunt quis dignissimos at.",
-      "user_id": "Quis temporibus blanditiis ut ipsa dolorem occaecati."
-   }' --token "Pariatur dolorum ducimus voluptatem et."
+      "pattern": "Vel quas nemo.",
+      "resource_type": "Voluptatem alias quo facere harum.",
+      "user_id": "Veniam porro animi ad sit expedita iste."
+   }' --token "Veniam ab voluptatem."
 `, os.Args[0])
 }
 
@@ -2052,7 +2063,7 @@ Health check for the ABAC service.
     -token STRING: 
 
 Example:
-    %[1]s abac health --token "Dicta quos voluptatum aperiam omnis."
+    %[1]s abac health --token "Saepe omnis ut dolor vel."
 `, os.Args[0])
 }
 
@@ -2063,7 +2074,7 @@ Get performance metrics for the ABAC service.
     -token STRING: 
 
 Example:
-    %[1]s abac metrics --token "Dolores officia doloribus accusantium omnis necessitatibus."
+    %[1]s abac metrics --token "In non."
 `, os.Args[0])
 }
 
@@ -3392,99 +3403,6 @@ Example:
 `, os.Args[0])
 }
 
-// tenantManagementUsage displays the usage of the tenant-management command
-// and its subcommands.
-func tenantManagementUsage() {
-	fmt.Fprintf(os.Stderr, `Comprehensive tenant management service for provisioning, configuration, and lifecycle operations
-Usage:
-    %[1]s [globalflags] tenant-management COMMAND [flags]
-
-COMMAND:
-    provision: Provision a new tenant with complete setup
-    suspend: Suspend a tenant
-    reactivate: Reactivate a suspended tenant
-    update-configuration: Update tenant configuration and limits
-    get-usage-analytics: Get tenant usage analytics
-
-Additional help:
-    %[1]s tenant-management COMMAND --help
-`, os.Args[0])
-}
-func tenantManagementProvisionUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant-management provision -body JSON
-
-Provision a new tenant with complete setup
-    -body JSON: 
-
-Example:
-    %[1]s tenant-management provision --body '{
-      "admin_email": "john.smith@acme.com",
-      "admin_first_name": "John",
-      "admin_last_name": "Smith",
-      "contact_email": "admin@acme.com",
-      "name": "Acme Corporation",
-      "subdomain": "acme-corp"
-   }'
-`, os.Args[0])
-}
-
-func tenantManagementSuspendUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant-management suspend -body JSON -id STRING
-
-Suspend a tenant
-    -body JSON: 
-    -id STRING: Tenant ID
-
-Example:
-    %[1]s tenant-management suspend --body '{
-      "reason": "Non-payment of subscription fees"
-   }' --id "1cd8fe71-b10e-4daa-b03b-6d9d23e98933"
-`, os.Args[0])
-}
-
-func tenantManagementReactivateUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant-management reactivate -body JSON -id STRING
-
-Reactivate a suspended tenant
-    -body JSON: 
-    -id STRING: Tenant ID
-
-Example:
-    %[1]s tenant-management reactivate --body '{
-      "reason": "Payment received"
-   }' --id "8482bce9-64c0-4309-81f2-94b3aa401e30"
-`, os.Args[0])
-}
-
-func tenantManagementUpdateConfigurationUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant-management update-configuration -body JSON -id STRING
-
-Update tenant configuration and limits
-    -body JSON: 
-    -id STRING: Tenant ID
-
-Example:
-    %[1]s tenant-management update-configuration --body '{
-      "max_api_calls_per_hour": 5000,
-      "max_storage_mb": 10240,
-      "max_users": 100,
-      "reason": "Upgrading to professional plan"
-   }' --id "1555e56d-f3e0-437f-bd01-4b241f0dc968"
-`, os.Args[0])
-}
-
-func tenantManagementGetUsageAnalyticsUsage() {
-	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant-management get-usage-analytics -id STRING -period STRING
-
-Get tenant usage analytics
-    -id STRING: Tenant ID
-    -period STRING: 
-
-Example:
-    %[1]s tenant-management get-usage-analytics --id "91df7f67-0f05-4044-8104-f17beeed3487" --period "current_month"
-`, os.Args[0])
-}
-
 // tenantUsage displays the usage of the tenant command and its subcommands.
 func tenantUsage() {
 	fmt.Fprintf(os.Stderr, `Tenant management service for multi-tenant ERP system
@@ -3498,6 +3416,11 @@ COMMAND:
     update: Update an existing tenant
     delete: Delete a tenant (soft delete)
     health: Health check for tenant service
+    provision: Provision a new tenant with complete setup
+    suspend: Suspend a tenant
+    reactivate: Reactivate a suspended tenant
+    update-configuration: Update tenant configuration and limits
+    get-usage-analytics: Get tenant usage analytics
 
 Additional help:
     %[1]s tenant COMMAND --help
@@ -3628,6 +3551,81 @@ Example:
 `, os.Args[0])
 }
 
+func tenantProvisionUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant provision -body JSON
+
+Provision a new tenant with complete setup
+    -body JSON: 
+
+Example:
+    %[1]s tenant provision --body '{
+      "admin_email": "john.smith@acme.com",
+      "admin_first_name": "John",
+      "admin_last_name": "Smith",
+      "contact_email": "admin@acme.com",
+      "name": "Acme Corporation",
+      "subdomain": "acme-corp"
+   }'
+`, os.Args[0])
+}
+
+func tenantSuspendUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant suspend -body JSON -id STRING
+
+Suspend a tenant
+    -body JSON: 
+    -id STRING: Tenant ID
+
+Example:
+    %[1]s tenant suspend --body '{
+      "reason": "Non-payment of subscription fees"
+   }' --id "eed759ef-c03a-46b2-9ff3-7e24a70eff93"
+`, os.Args[0])
+}
+
+func tenantReactivateUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant reactivate -body JSON -id STRING
+
+Reactivate a suspended tenant
+    -body JSON: 
+    -id STRING: Tenant ID
+
+Example:
+    %[1]s tenant reactivate --body '{
+      "reason": "Payment received"
+   }' --id "83be02d2-83db-4904-a794-ce0e09066d86"
+`, os.Args[0])
+}
+
+func tenantUpdateConfigurationUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant update-configuration -body JSON -id STRING
+
+Update tenant configuration and limits
+    -body JSON: 
+    -id STRING: Tenant ID
+
+Example:
+    %[1]s tenant update-configuration --body '{
+      "max_api_calls_per_hour": 5000,
+      "max_storage_mb": 10240,
+      "max_users": 100,
+      "reason": "Upgrading to professional plan"
+   }' --id "786ed725-52e1-4ecd-942f-5a20484bcdcb"
+`, os.Args[0])
+}
+
+func tenantGetUsageAnalyticsUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant get-usage-analytics -id STRING -period STRING
+
+Get tenant usage analytics
+    -id STRING: Tenant ID
+    -period STRING: 
+
+Example:
+    %[1]s tenant get-usage-analytics --id "d80e5c34-871a-4e2c-86ec-cf7f9691f1ea" --period "current_month"
+`, os.Args[0])
+}
+
 // userUsage displays the usage of the user command and its subcommands.
 func userUsage() {
 	fmt.Fprintf(os.Stderr, `User management service with RBAC and ABAC capabilities
@@ -3669,7 +3667,7 @@ Get user attributes for ABAC evaluation
     -attribute-filter STRING: 
 
 Example:
-    %[1]s user get-attributes --id "550e8400-e29b-41d4-a716-446655440000" --include-metadata false --include-derived true --fresh-only false --attribute-filter "user.security_level,user.department"
+    %[1]s user get-attributes --id "550e8400-e29b-41d4-a716-446655440000" --include-metadata false --include-derived false --fresh-only true --attribute-filter "user.security_level,user.department"
 `, os.Args[0])
 }
 
@@ -3696,10 +3694,10 @@ Example:
          "updated_by": "hr_sync_service"
       },
       "options": {
-         "create_audit_trail": false,
+         "create_audit_trail": true,
          "invalidate_cache": true,
          "merge_strategy": "overwrite",
-         "notify_subscribers": true,
+         "notify_subscribers": false,
          "validate_attributes": true
       }
    }' --id "550e8400-e29b-41d4-a716-446655440000"
@@ -3716,15 +3714,16 @@ Example:
     %[1]s user bulk-update-attributes --body '{
       "options": {
          "batch_size": 100,
-         "fail_on_error": true,
-         "invalidate_cache": true,
+         "fail_on_error": false,
+         "invalidate_cache": false,
          "parallel_processing": true,
          "validate_all": true
       },
       "updates": [
          {
             "attributes": {
-               "Quod accusantium sint animi reprehenderit.": "Molestiae corrupti suscipit consequatur."
+               "Enim molestiae et itaque fugiat totam sed.": "A cumque veniam dolore id et.",
+               "Sit et sed esse sed eaque qui.": "Aperiam enim ea sequi et autem."
             },
             "metadata": {
                "confidence_score": 1,
@@ -3738,35 +3737,8 @@ Example:
          },
          {
             "attributes": {
-               "Quod accusantium sint animi reprehenderit.": "Molestiae corrupti suscipit consequatur."
-            },
-            "metadata": {
-               "confidence_score": 1,
-               "data_classification": "internal",
-               "expires_at": "2025-01-16T14:30:00Z",
-               "last_verified": "2025-01-15T14:30:00Z",
-               "source": "hr_system",
-               "updated_by": "hr_sync_service"
-            },
-            "user_id": "550e8400-e29b-41d4-a716-446655440000"
-         },
-         {
-            "attributes": {
-               "Quod accusantium sint animi reprehenderit.": "Molestiae corrupti suscipit consequatur."
-            },
-            "metadata": {
-               "confidence_score": 1,
-               "data_classification": "internal",
-               "expires_at": "2025-01-16T14:30:00Z",
-               "last_verified": "2025-01-15T14:30:00Z",
-               "source": "hr_system",
-               "updated_by": "hr_sync_service"
-            },
-            "user_id": "550e8400-e29b-41d4-a716-446655440000"
-         },
-         {
-            "attributes": {
-               "Quod accusantium sint animi reprehenderit.": "Molestiae corrupti suscipit consequatur."
+               "Enim molestiae et itaque fugiat totam sed.": "A cumque veniam dolore id et.",
+               "Sit et sed esse sed eaque qui.": "Aperiam enim ea sequi et autem."
             },
             "metadata": {
                "confidence_score": 1,
@@ -3797,7 +3769,7 @@ Example:
          "business_reason": "quarterly_reporting",
          "urgency": "normal"
       },
-      "include_explanation": true,
+      "include_explanation": false,
       "resource_id": "550e8400-e29b-41d4-a716-446655440001",
       "resource_type": "financial_report"
    }' --user-id "550e8400-e29b-41d4-a716-446655440000"
@@ -3815,8 +3787,8 @@ Example:
     %[1]s user authorize-action --body '{
       "action": "read",
       "additional_context": {
-         "Est quam nulla impedit vero.": "Maiores incidunt a rerum quibusdam debitis perspiciatis.",
-         "Quis labore eos.": "Odit nihil."
+         "Placeat quia.": "Sit debitis mollitia reprehenderit.",
+         "Quas debitis in eaque.": "Eius natus voluptatem ut esse quas voluptatem."
       },
       "environment": {
          "location": {
@@ -3873,7 +3845,7 @@ Get user session attributes for ABAC
     -include-risk-assessment BOOL: 
 
 Example:
-    %[1]s user get-session-attributes --user-id "550e8400-e29b-41d4-a716-446655440000" --session-id "session_abc123" --include-analytics true --include-risk-assessment false
+    %[1]s user get-session-attributes --user-id "550e8400-e29b-41d4-a716-446655440000" --session-id "session_abc123" --include-analytics false --include-risk-assessment false
 `, os.Args[0])
 }
 
@@ -3888,7 +3860,9 @@ Set session context for user
 Example:
     %[1]s user set-session-context --body '{
       "computed_attributes": {
-         "Et tempore veritatis inventore.": "Totam optio voluptas provident est."
+         "Quia dolorum atque voluptatem doloribus aut et.": "Laudantium veniam explicabo quae.",
+         "Repudiandae quo ipsum autem.": "Ipsam repellat odio magnam distinctio.",
+         "Sed molestiae porro totam accusamus et asperiores.": "Praesentium asperiores voluptatem quis iusto ut nobis."
       },
       "session": {
          "device_type": "desktop",
@@ -3899,7 +3873,7 @@ Example:
          "security_score": 0.95,
          "user_agent": "Mozilla/5.0..."
       }
-   }' --user-id "0cd69817-0ac7-48f9-857c-a73100492d0c" --session-id "session_abc123"
+   }' --user-id "a7d3d6ce-6db3-46c0-b72f-c86fe0021743" --session-id "session_abc123"
 `, os.Args[0])
 }
 
@@ -3913,7 +3887,7 @@ Get user context for ABAC
     -include-access-patterns BOOL: 
 
 Example:
-    %[1]s user get-user-context --id "550e8400-e29b-41d4-a716-446655440000" --include-derived true --include-session false --include-access-patterns true
+    %[1]s user get-user-context --id "550e8400-e29b-41d4-a716-446655440000" --include-derived true --include-session true --include-access-patterns true
 `, os.Args[0])
 }
 
@@ -3927,9 +3901,8 @@ Validate user attributes for ABAC compliance
 Example:
     %[1]s user validate-attributes --body '{
       "attributes": {
-         "Asperiores omnis incidunt voluptas dolor accusantium similique.": "Laudantium quia repellat adipisci.",
-         "Et neque quasi inventore recusandae.": "Qui nostrum officiis voluptas mollitia voluptas quae.",
-         "Quisquam itaque numquam.": "Et voluptas consequuntur."
+         "Aut asperiores voluptatem rerum accusantium quis.": "Dolorum consequatur repellendus eum cumque.",
+         "Aut nihil deserunt.": "Officia incidunt."
       },
       "validation_rules": [
          "security_clearance",
@@ -3949,7 +3922,7 @@ Refresh user attributes from authoritative sources
 
 Example:
     %[1]s user refresh-attributes --body '{
-      "force_refresh": false,
+      "force_refresh": true,
       "sources": [
          "hr_system",
          "security_system",

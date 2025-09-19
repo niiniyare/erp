@@ -287,3 +287,186 @@ func BuildDeletePayload(tenantDeleteID string) (*tenant.DeletePayload, error) {
 
 	return v, nil
 }
+
+// BuildProvisionPayload builds the payload for the tenant provision endpoint
+// from CLI flags.
+func BuildProvisionPayload(tenantProvisionBody string) (*tenant.ProvisionPayload, error) {
+	var err error
+	var body ProvisionRequestBody
+	{
+		err = json.Unmarshal([]byte(tenantProvisionBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"admin_email\": \"john.smith@acme.com\",\n      \"admin_first_name\": \"John\",\n      \"admin_last_name\": \"Smith\",\n      \"contact_email\": \"admin@acme.com\",\n      \"name\": \"Acme Corporation\",\n      \"subdomain\": \"acme-corp\"\n   }'")
+		}
+		if utf8.RuneCountInString(body.Name) < 2 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", body.Name, utf8.RuneCountInString(body.Name), 2, true))
+		}
+		if utf8.RuneCountInString(body.Name) > 255 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", body.Name, utf8.RuneCountInString(body.Name), 255, false))
+		}
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.subdomain", body.Subdomain, "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"))
+		if utf8.RuneCountInString(body.Subdomain) < 2 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.subdomain", body.Subdomain, utf8.RuneCountInString(body.Subdomain), 2, true))
+		}
+		if utf8.RuneCountInString(body.Subdomain) > 63 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.subdomain", body.Subdomain, utf8.RuneCountInString(body.Subdomain), 63, false))
+		}
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.contact_email", body.ContactEmail, goa.FormatEmail))
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.admin_email", body.AdminEmail, goa.FormatEmail))
+		if err != nil {
+			return nil, err
+		}
+	}
+	v := &tenant.ProvisionPayload{
+		Name:           body.Name,
+		Subdomain:      body.Subdomain,
+		ContactEmail:   body.ContactEmail,
+		AdminEmail:     body.AdminEmail,
+		AdminFirstName: body.AdminFirstName,
+		AdminLastName:  body.AdminLastName,
+	}
+
+	return v, nil
+}
+
+// BuildSuspendPayload builds the payload for the tenant suspend endpoint from
+// CLI flags.
+func BuildSuspendPayload(tenantSuspendBody string, tenantSuspendID string) (*tenant.SuspendPayload, error) {
+	var err error
+	var body SuspendRequestBody
+	{
+		err = json.Unmarshal([]byte(tenantSuspendBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"reason\": \"Non-payment of subscription fees\"\n   }'")
+		}
+		if utf8.RuneCountInString(body.Reason) < 10 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", body.Reason, utf8.RuneCountInString(body.Reason), 10, true))
+		}
+		if utf8.RuneCountInString(body.Reason) > 500 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", body.Reason, utf8.RuneCountInString(body.Reason), 500, false))
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	var id string
+	{
+		id = tenantSuspendID
+		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
+		if err != nil {
+			return nil, err
+		}
+	}
+	v := &tenant.SuspendPayload{
+		Reason: body.Reason,
+	}
+	v.ID = id
+
+	return v, nil
+}
+
+// BuildReactivatePayload builds the payload for the tenant reactivate endpoint
+// from CLI flags.
+func BuildReactivatePayload(tenantReactivateBody string, tenantReactivateID string) (*tenant.ReactivatePayload, error) {
+	var err error
+	var body ReactivateRequestBody
+	{
+		err = json.Unmarshal([]byte(tenantReactivateBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"reason\": \"Payment received\"\n   }'")
+		}
+		if utf8.RuneCountInString(body.Reason) < 5 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", body.Reason, utf8.RuneCountInString(body.Reason), 5, true))
+		}
+		if utf8.RuneCountInString(body.Reason) > 500 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", body.Reason, utf8.RuneCountInString(body.Reason), 500, false))
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	var id string
+	{
+		id = tenantReactivateID
+		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
+		if err != nil {
+			return nil, err
+		}
+	}
+	v := &tenant.ReactivatePayload{
+		Reason: body.Reason,
+	}
+	v.ID = id
+
+	return v, nil
+}
+
+// BuildUpdateConfigurationPayload builds the payload for the tenant
+// update_configuration endpoint from CLI flags.
+func BuildUpdateConfigurationPayload(tenantUpdateConfigurationBody string, tenantUpdateConfigurationID string) (*tenant.UpdateConfigurationPayload, error) {
+	var err error
+	var body UpdateConfigurationRequestBody
+	{
+		err = json.Unmarshal([]byte(tenantUpdateConfigurationBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"max_api_calls_per_hour\": 5000,\n      \"max_storage_mb\": 10240,\n      \"max_users\": 100,\n      \"reason\": \"Upgrading to professional plan\"\n   }'")
+		}
+		if utf8.RuneCountInString(body.Reason) < 5 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", body.Reason, utf8.RuneCountInString(body.Reason), 5, true))
+		}
+		if utf8.RuneCountInString(body.Reason) > 500 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", body.Reason, utf8.RuneCountInString(body.Reason), 500, false))
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+	var id string
+	{
+		id = tenantUpdateConfigurationID
+		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
+		if err != nil {
+			return nil, err
+		}
+	}
+	v := &tenant.UpdateConfigurationPayload{
+		MaxUsers:           body.MaxUsers,
+		MaxStorageMb:       body.MaxStorageMb,
+		MaxAPICallsPerHour: body.MaxAPICallsPerHour,
+		Reason:             body.Reason,
+	}
+	v.ID = id
+
+	return v, nil
+}
+
+// BuildGetUsageAnalyticsPayload builds the payload for the tenant
+// get_usage_analytics endpoint from CLI flags.
+func BuildGetUsageAnalyticsPayload(tenantGetUsageAnalyticsID string, tenantGetUsageAnalyticsPeriod string) (*tenant.GetUsageAnalyticsPayload, error) {
+	var err error
+	var id string
+	{
+		id = tenantGetUsageAnalyticsID
+		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
+		if err != nil {
+			return nil, err
+		}
+	}
+	var period string
+	{
+		if tenantGetUsageAnalyticsPeriod != "" {
+			period = tenantGetUsageAnalyticsPeriod
+			if !(period == "current_month" || period == "last_month" || period == "last_3_months" || period == "last_year") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError("period", period, []any{"current_month", "last_month", "last_3_months", "last_year"}))
+			}
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	v := &tenant.GetUsageAnalyticsPayload{}
+	v.ID = id
+	v.Period = period
+
+	return v, nil
+}

@@ -20,9 +20,9 @@ type Services struct {
 
 // Dependencies contains the required dependencies to create finance services
 type Dependencies struct {
-	AccountRepo        domain.AccountsRepository
-	AccountGroupRepo   domain.AccountGroupRepository
-	TransactionRepo    domain.TransactionRepository
+	AccountRepo      domain.AccountsRepository
+	AccountGroupRepo domain.AccountGroupRepository
+	TransactionRepo  domain.TransactionRepository
 	// TransactionEntryRepo domain.TransactionRepository // TODO: Create separate entry repository
 	Tracing            tracing.TracingService
 	Metrics            metrics.MetricsProvider

@@ -86,7 +86,12 @@ func InitializeGOAServer(services *Services, financeServices *financeService.Ser
 	healthChecker := handlers.NewHealthChecker(nil, nil, logger.WithFields(logger.Fields{}), metricsService, tracingService)
 	healthSvc = handlers.NewHealthGoaHandler(healthChecker, tracingService, metricsService)
 	organizationSvc = handlers.NewOrganizationGoaHandler(services.EntityService, tracingService, metricsService)
-	tenantSvc = handlers.NewTenantGoaHandler(services.TenantService, tracingService, metricsService)
+	tenantSvc = handlers.NewUnifiedTenantHandler(
+		services.TenantService,
+		services.TenantProvisioningService,
+		tracingService,
+		metricsService,
+	)
 	userSvc = handlers.NewUserGoaHandler(services.IdentityService, services.AccessRequestService, services.ConditionalAccessService, services.AnalyticsService, tracingService, metricsService)
 	openapiSvc = handlers.NewOpenapiHandler()
 
