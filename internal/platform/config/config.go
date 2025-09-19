@@ -1,65 +1,14 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
-	"io"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/spf13/viper"
 )
-
-// AppStage represents application deployment stage
-type AppStage string
-
-const (
-	DevelopmentStage AppStage = "dev"
-	StagingStage     AppStage = "staging"
-	ProductionStage  AppStage = "production"
-	TestingStage     AppStage = "testing"
-)
-
-// String returns the string representation of AppStage
-func (a AppStage) String() string {
-	return string(a)
-}
-
-// IsProduction returns true if the stage is production
-func (a AppStage) IsProduction() bool {
-	return a == ProductionStage
-}
-
-// IsDevelopment returns true if the stage is development
-func (a AppStage) IsDevelopment() bool {
-	return a == DevelopmentStage
-}
-
-// IsStaging returns true if the stage is staging
-func (a AppStage) IsStaging() bool {
-	return a == StagingStage
-}
-
-// IsTesting returns true if the stage is testing
-func (a AppStage) IsTesting() bool {
-	return a == TestingStage
-}
-
-// AppConfig represents application-level configuration
-type AppConfig struct {
-	Name        string   `yaml:"name" mapstructure:"name"`               // Application name
-	Version     string   `yaml:"version" mapstructure:"version"`         // Application version
-	Stage       AppStage `yaml:"stage" mapstructure:"stage"`             // Application stage (development, staging, production, testing)
-	Debug       bool     `yaml:"debug" mapstructure:"debug"`             // Enable debug mode
-	Environment string   `yaml:"environment" mapstructure:"environment"` // Custom environment identifier
-	Namespace   string   `yaml:"namespace" mapstructure:"namespace"`     // Kubernetes namespace or deployment namespace
-}
-
-// IsProduction returns true if the application stage is production.
-func (a *AppConfig) IsProduction() bool {
-	return a.Stage.IsProduction()
-}
 
 // Config represents application configuration
 type Config struct {
@@ -72,95 +21,6 @@ type Config struct {
 	Auth      AuthConfig      `yaml:"auth" mapstructure:"auth"`
 	Features  FeatureConfig   `yaml:"features" mapstructure:"features"`
 	Logger    LoggerConfig    `yaml:"logger" mapstructure:"logger"`
-}
-
-// ServerConfig represents server configuration
-type ServerConfig struct {
-	Port         string        `yaml:"port" mapstructure:"port"`
-	ReadTimeout  time.Duration `yaml:"read_timeout" mapstructure:"read_timeout"`
-	WriteTimeout time.Duration `yaml:"write_timeout" mapstructure:"write_timeout"`
-	GRPCPort     string        `yaml:"grpc_port" mapstructure:"grpc_port"`
-}
-
-// DatabaseConfig represents database configuration
-type DatabaseConfig struct {
-	Host            string        `yaml:"host" mapstructure:"host"`
-	Port            int           `yaml:"port" mapstructure:"port"`
-	User            string        `yaml:"user" mapstructure:"user"`
-	Password        string        `yaml:"password" mapstructure:"password"`
-	Database        string        `yaml:"database" mapstructure:"database"`
-	SSLMode         string        `yaml:"ssl_mode" mapstructure:"ssl_mode"`
-	MaxOpenConns    int           `yaml:"max_open_conns" mapstructure:"max_open_conns"`
-	MaxIdleConns    int           `yaml:"max_idle_conns" mapstructure:"max_idle_conns"`
-	ConnMaxLifetime time.Duration `yaml:"conn_max_lifetime" mapstructure:"conn_max_lifetime"`
-}
-
-// GetDatabaseURL returns the PostgreSQL connection URL
-func (d *DatabaseConfig) GetDatabaseURL() string {
-	return fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
-		d.User, d.Password, d.Host, d.Port, d.Database, d.SSLMode,
-	)
-}
-
-// MigrationConfig represents database migration configuration
-type MigrationConfig struct {
-	URL         string        `yaml:"url" mapstructure:"url"`
-	Timeout     time.Duration `yaml:"timeout" mapstructure:"timeout"`
-	LockTimeout time.Duration `yaml:"lock_timeout" mapstructure:"lock_timeout"`
-	Verbose     bool          `yaml:"verbose" mapstructure:"verbose"`
-	NoVerify    bool          `yaml:"no_verify" mapstructure:"no_verify"`
-}
-
-// RedisConfig represents Redis configuration
-type RedisConfig struct {
-	Host     string `yaml:"host" mapstructure:"host"`
-	Port     int    `yaml:"port" mapstructure:"port"`
-	Password string `yaml:"password" mapstructure:"password"`
-	DB       int    `yaml:"db" mapstructure:"db"`
-}
-
-// TemporalConfig is now defined in temporal.go for system-wide use
-
-// AuthConfig represents auth configuration
-type AuthConfig struct {
-	JWTSecret string `yaml:"jwt_secret" mapstructure:"jwt_secret"`
-}
-
-// FeatureConfig represents feature flags
-type FeatureConfig struct {
-	EnableNewDashboard bool `yaml:"enable_new_dashboard" mapstructure:"enable_new_dashboard"`
-}
-
-// LoggerConfig represents logger configuration
-type LoggerConfig struct {
-	Type        string `yaml:"type" mapstructure:"type"`                 // "zap", "zerolog", "slog"
-	Level       string `yaml:"level" mapstructure:"level"`               // "debug", "info", "warn", "error", "fatal"
-	Format      string `yaml:"format" mapstructure:"format"`             // "json", "text", "console"
-	Development bool   `yaml:"development" mapstructure:"development"`   // Enable development mode
-	ServiceName string `yaml:"service_name" mapstructure:"service_name"` // Service name for structured logging
-	Version     string `yaml:"version" mapstructure:"version"`           // Service version
-	Output      string `yaml:"output" mapstructure:"output"`             // "stdout", "stderr", or file path
-}
-
-// LoggerPackageConfig represents the config structure expected by your logger package
-// This matches the structure in your logger package
-type LoggerPackageConfig struct {
-	Type        string
-	Level       int
-	Output      io.Writer
-	Format      string
-	Development bool
-	ServiceName string
-	Version     string
-}
-
-// MetricsConfig holds configuration for metrics
-type MetricsConfig struct {
-	Provider  string // "prometheus" or "otel"
-	Namespace string
-	Subsystem string
-	Enabled   bool
 }
 
 // Load loads configuration from environment variables and files using Viper
@@ -394,168 +254,8 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// Validate validates the app configuration
-func (a *AppConfig) Validate() error {
-	if a.Name == "" {
-		return fmt.Errorf("app name cannot be empty")
-	}
-
-	if a.Version == "" {
-		return fmt.Errorf("app version cannot be empty")
-	}
-
-	validStages := map[AppStage]bool{
-		DevelopmentStage: true,
-		StagingStage:     true,
-		ProductionStage:  true,
-		TestingStage:     true,
-	}
-
-	if !validStages[a.Stage] {
-		return fmt.Errorf("invalid app stage: %s, must be one of: development, staging, production, testing", a.Stage)
-	}
-
-	return nil
-}
-
-// GetLogLevel returns the appropriate log level based on app stage and debug settings
-func (a *AppConfig) GetLogLevel() string {
-	// If debug is explicitly enabled, use debug level
-	if a.Debug {
-		return "debug"
-	}
-
-	// Stage-based log level defaults
-	switch a.Stage {
-	case DevelopmentStage, TestingStage:
-		return "debug"
-	case StagingStage:
-		return "info"
-	case ProductionStage:
-		return "warn"
-	default:
-		return "info"
-	}
-}
-
-// ShouldEnableDevelopmentMode returns true if development features should be enabled
-func (a *AppConfig) ShouldEnableDevelopmentMode() bool {
-	return a.Debug || a.Stage == DevelopmentStage || a.Stage == TestingStage
-}
-
-// Validate validates the logger configuration
-func (l *LoggerConfig) Validate() error {
-	validTypes := map[string]bool{
-		"zap":     true,
-		"zerolog": true,
-		"slog":    true,
-	}
-	if !validTypes[l.Type] {
-		return fmt.Errorf("invalid logger type: %s, must be one of: zap, zerolog, slog", l.Type)
-	}
-
-	if l.Level != "" {
-		validLevels := map[string]bool{
-			"debug": true,
-			"info":  true,
-			"warn":  true,
-			"error": true,
-			"fatal": true,
-		}
-		if !validLevels[strings.ToLower(l.Level)] {
-			return fmt.Errorf("invalid log level: %s, must be one of: debug, info, warn, error, fatal", l.Level)
-		}
-	}
-
-	validFormats := map[string]bool{
-		"json":    true,
-		"text":    true,
-		"console": true,
-	}
-	if !validFormats[l.Format] {
-		return fmt.Errorf("invalid log format: %s, must be one of: json, text, console", l.Format)
-	}
-
-	return nil
-}
-
-// ToLoggerConfig converts LoggerConfig to logger package Config
-// This bridges the gap between your config and the logger package
-func (l *LoggerConfig) ToLoggerConfig(appConfig *AppConfig) LoggerPackageConfig {
-	config := LoggerPackageConfig{
-		ServiceName: l.ServiceName,
-		Version:     l.Version,
-		Development: l.Development,
-		Format:      l.Format,
-		Output:      os.Stdout, // Default to stdout
-	}
-
-	// Use app config values if logger config values are empty
-	if config.ServiceName == "" {
-		config.ServiceName = appConfig.Name
-	}
-	if config.Version == "" {
-		config.Version = appConfig.Version
-	}
-
-	// Override development mode based on app config
-	if appConfig.ShouldEnableDevelopmentMode() {
-		config.Development = true
-	}
-
-	// Convert logger type
-	switch strings.ToLower(l.Type) {
-	case "zap":
-		config.Type = "zap"
-	case "zerolog":
-		config.Type = "zerolog"
-	case "slog":
-		config.Type = "slog"
-	default:
-		config.Type = "zerolog" // Default fallback
-	}
-
-	// Convert log level - prioritize app config's intelligent level detection
-	logLevel := l.Level
-	if logLevel == "" || (appConfig.Debug && logLevel != "debug") {
-		logLevel = appConfig.GetLogLevel()
-	}
-
-	switch strings.ToLower(logLevel) {
-	case "debug":
-		config.Level = 0 // DebugLevel
-	case "info":
-		config.Level = 1 // InfoLevel
-	case "warn", "warning":
-		config.Level = 2 // WarnLevel
-	case "error":
-		config.Level = 3 // ErrorLevel
-	case "fatal":
-		config.Level = 4 // FatalLevel
-	default:
-		config.Level = 1 // Default to InfoLevel
-	}
-
-	// Handle output destination
-	switch strings.ToLower(l.Output) {
-	case "stderr":
-		config.Output = os.Stderr
-	case "stdout", "":
-		config.Output = os.Stdout
-	default:
-		// If it's not stdout/stderr, assume it's a file path
-		if file, err := os.OpenFile(l.Output, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666); err == nil {
-			config.Output = file
-		} else {
-			config.Output = os.Stdout // Fallback to stdout if file can't be opened
-		}
-	}
-
-	return config
-}
-
 // loadDotEnvFile loads .env file if it exists (for backward compatibility)
-func loadDotEnvFile(v *viper.Viper) {
+func loadDotEnvFile(_ *viper.Viper) {
 	envFile := ".env"
 	if _, err := os.Stat(envFile); err == nil {
 		file, err := os.Open(envFile)
@@ -577,16 +277,15 @@ func loadDotEnvFile(v *viper.Viper) {
 				break
 			}
 		}
-
 		// Parse .env content
-		lines := strings.Split(string(content), "\n")
-		for _, line := range lines {
-			line = strings.TrimSpace(line)
-			if line == "" || strings.HasPrefix(line, "#") {
+		lines := bytes.SplitSeq(content, []byte("\n"))
+		for line := range lines {
+			lineStr := strings.TrimSpace(string(line))
+			if lineStr == "" || strings.HasPrefix(lineStr, "#") {
 				continue
 			}
 
-			parts := strings.SplitN(line, "=", 2)
+			parts := strings.SplitN(lineStr, "=", 2)
 			if len(parts) == 2 {
 				key := strings.TrimSpace(parts[0])
 				value := strings.TrimSpace(parts[1])
@@ -602,27 +301,6 @@ func loadDotEnvFile(v *viper.Viper) {
 			}
 		}
 	}
-}
-
-// Legacy helper functions - kept for backward compatibility
-// These are deprecated but maintained to avoid breaking existing code
-
-// Deprecated: Use Load() instead. This function is kept for backward compatibility.
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
-}
-
-// Deprecated: Use Load() instead. This function is kept for backward compatibility.
-func getIntEnv(key string, defaultValue int) int {
-	if value := os.Getenv(key); value != "" {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
-		}
-	}
-	return defaultValue
 }
 
 // Deprecated: Use Load() instead. This function is kept for backward compatibility.
