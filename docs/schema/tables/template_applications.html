@@ -127,7 +127,7 @@
                                     <td>2147483647</td>
                                     <td title=''></td>
                                     <td title=''></td>
-                                    <td>uuid_generate_v4()</td>
+                                    <td>gen_random_uuid()</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
@@ -423,16 +423,16 @@
                                 </thead>
                                 <tbody>
                                 <tr>
+                                    <td>valid_conflict_count</td>
+                                    <td>(conflict_count &gt;&#61; 0)</td>
+                                </tr>
+                                <tr>
                                     <td>valid_skipped_configs</td>
                                     <td>(skipped_configs &gt;&#61; 0)</td>
                                 </tr>
                                 <tr>
                                     <td>template_applications_target_type_check</td>
                                     <td>((target_type)::text &#61; ANY ((ARRAY[&#39;TENANT&#39;::character varying, &#39;ENTITY&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
-                                    <td>valid_conflict_count</td>
-                                    <td>(conflict_count &gt;&#61; 0)</td>
                                 </tr>
                                 <tr>
                                     <td>valid_applied_configs</td>

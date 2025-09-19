@@ -78,7 +78,7 @@
                         <div class="col-md-12">
                             <div class="callout callout-info">
                                 <h4>SchemaSpy Analysis of ledger.public</h4>
-                                <p>Generated on Sun Sep 07 18:11 GMT 2025</p>
+                                <p>Generated on Fri Sep 19 15:58 GMT 2025</p>
                             </div>
                         </div>
                     </div>
@@ -233,15 +233,6 @@
                                         <td class="comment detail" style="display: table-cell;"><p>Granular permissions combining resources and actions with ABAC conditions, data filters, and field restrictions for fine-grained access control.</p></td>
                                     </tr>
                                     <tr class="tbl even" valign="top">
-                                        <td class="detail"><a href="tables/policy_evaluations.html">policy_evaluations</a></td>
-                                        <td class="detail" align="right">2</td>
-                                        <td class="detail" align="right">3</td>
-                                        <td class="detail" align="right">15</td>
-                                        <td class="detail" align="right">-1</td>
-                                        <td class="detail" align="right">Table</td>
-                                        <td class="comment detail" style="display: table-cell;"><p>Caches ABAC policy evaluation results with flexible resource types and detailed decision tracking for performance optimization.</p></td>
-                                    </tr>
-                                    <tr class="tbl even" valign="top">
                                         <td class="detail"><a href="tables/persons.html">persons</a></td>
                                         <td class="detail" align="right">2</td>
                                         <td class="detail" align="right">2</td>
@@ -249,6 +240,15 @@
                                         <td class="detail" align="right">-1</td>
                                         <td class="detail" align="right">Table</td>
                                         <td class="comment detail" style="display: table-cell;"><p>Stores person entities with ABAC security attributes. Supports multiple person types including employees, customers, vendors, and contractors. Implements soft delete and tenant isolation.</p></td>
+                                    </tr>
+                                    <tr class="tbl even" valign="top">
+                                        <td class="detail"><a href="tables/policy_evaluations.html">policy_evaluations</a></td>
+                                        <td class="detail" align="right">2</td>
+                                        <td class="detail" align="right">3</td>
+                                        <td class="detail" align="right">15</td>
+                                        <td class="detail" align="right">-1</td>
+                                        <td class="detail" align="right">Table</td>
+                                        <td class="comment detail" style="display: table-cell;"><p>Caches ABAC policy evaluation results with flexible resource types and detailed decision tracking for performance optimization.</p></td>
                                     </tr>
                                     <tr class="tbl even" valign="top">
                                         <td class="detail"><a href="tables/audit_log.html">audit_log</a></td>
@@ -440,15 +440,6 @@
                                         <td class="comment detail" style="display: table-cell;"><p>ABAC policies with advanced rule engine supporting multiple policy types, priorities, obligations, and compliance tracking.</p></td>
                                     </tr>
                                     <tr class="tbl even" valign="top">
-                                        <td class="detail"><a href="tables/tenant_usage_stats.html">tenant_usage_stats</a></td>
-                                        <td class="detail" align="right">0</td>
-                                        <td class="detail" align="right">1</td>
-                                        <td class="detail" align="right">12</td>
-                                        <td class="detail" align="right">-1</td>
-                                        <td class="detail" align="right">Table</td>
-                                        <td class="comment detail" style="display: table-cell;"><p>Tracks tenant resource usage and performance metrics over time</p></td>
-                                    </tr>
-                                    <tr class="tbl even" valign="top">
                                         <td class="detail"><a href="tables/user_roles.html">user_roles</a></td>
                                         <td class="detail" align="right">0</td>
                                         <td class="detail" align="right">5</td>
@@ -456,6 +447,15 @@
                                         <td class="detail" align="right">-1</td>
                                         <td class="detail" align="right">Table</td>
                                         <td class="comment detail" style="display: table-cell;"><p>Assigns roles to users with entity context, delegation support, and temporal controls for dynamic authorization.</p></td>
+                                    </tr>
+                                    <tr class="tbl even" valign="top">
+                                        <td class="detail"><a href="tables/tenant_usage_stats.html">tenant_usage_stats</a></td>
+                                        <td class="detail" align="right">0</td>
+                                        <td class="detail" align="right">1</td>
+                                        <td class="detail" align="right">12</td>
+                                        <td class="detail" align="right">-1</td>
+                                        <td class="detail" align="right">Table</td>
+                                        <td class="comment detail" style="display: table-cell;"><p>Tracks tenant resource usage and performance metrics over time</p></td>
                                     </tr>
                                     <tr class="tbl even" valign="top">
                                         <td class="detail"><a href="tables/attribute_definitions.html">attribute_definitions</a></td>
@@ -473,7 +473,7 @@
                                         <td class="detail" align="right">49</td>
                                         <td class="detail" align="right">-1</td>
                                         <td class="detail" align="right">Table</td>
-                                        <td class="comment detail" style="display: table-cell;"><p>Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and financial reporting requirements.</p></td>
+                                        <td class="comment detail" style="display: table-cell;"><p>Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and comprehensive financial reporting requirements.</p></td>
                                     </tr>
                                     <tr class="tbl even" valign="top">
                                         <td class="detail"><a href="tables/finance_transaction_entries.html">finance_transaction_entries</a></td>
@@ -521,15 +521,6 @@
                                         <td class="comment detail" style="display: table-cell;"><p>Employee records extending persons with employment-specific data, organizational hierarchy, and security levels for access control.</p></td>
                                     </tr>
                                     <tr class="tbl even" valign="top">
-                                        <td class="detail"><a href="tables/template_applications.html">template_applications</a></td>
-                                        <td class="detail" align="right">0</td>
-                                        <td class="detail" align="right">3</td>
-                                        <td class="detail" align="right">12</td>
-                                        <td class="detail" align="right">-1</td>
-                                        <td class="detail" align="right">Table</td>
-                                        <td class="comment detail" style="display: table-cell;"><p>History of template applications with detailed results and statistics</p></td>
-                                    </tr>
-                                    <tr class="tbl even" valign="top">
                                         <td class="detail"><a href="tables/roles.html">roles</a></td>
                                         <td class="detail" align="right">5</td>
                                         <td class="detail" align="right">4</td>
@@ -537,6 +528,15 @@
                                         <td class="detail" align="right">-1</td>
                                         <td class="detail" align="right">Table</td>
                                         <td class="comment detail" style="display: table-cell;"><p>Roles with module association, entity scoping, and hierarchical structure. Supports both RBAC and ABAC with conditional access rules.</p></td>
+                                    </tr>
+                                    <tr class="tbl even" valign="top">
+                                        <td class="detail"><a href="tables/template_applications.html">template_applications</a></td>
+                                        <td class="detail" align="right">0</td>
+                                        <td class="detail" align="right">3</td>
+                                        <td class="detail" align="right">12</td>
+                                        <td class="detail" align="right">-1</td>
+                                        <td class="detail" align="right">Table</td>
+                                        <td class="comment detail" style="display: table-cell;"><p>History of template applications with detailed results and statistics</p></td>
                                     </tr>
                                     <tr class="tbl even" valign="top">
                                         <td class="detail"><a href="tables/entitystate.html">entitystate</a></td>

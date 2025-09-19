@@ -127,7 +127,7 @@
                                     <td>2147483647</td>
                                     <td title=''></td>
                                     <td title=''></td>
-                                    <td>uuid_generate_v4()</td>
+                                    <td>gen_random_uuid()</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
@@ -901,16 +901,8 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>valid_failed_attempts</td>
-                                    <td>(failed_login_attempts &gt;&#61; 0)</td>
-                                </tr>
-                                <tr>
                                     <td>valid_lockout_time</td>
                                     <td>((lockout_until IS NULL) OR (lockout_until &gt; now()))</td>
-                                </tr>
-                                <tr>
-                                    <td>users_account_status_check</td>
-                                    <td>((account_status)::text &#61; ANY ((ARRAY[&#39;ACTIVE&#39;::character varying, &#39;INACTIVE&#39;::character varying, &#39;LOCKED&#39;::character varying, &#39;SUSPENDED&#39;::character varying, &#39;PENDING_VERIFICATION&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
                                     <td>valid_session_timeout</td>
@@ -919,6 +911,14 @@
                                 <tr>
                                     <td>users_user_type_check</td>
                                     <td>((user_type)::text &#61; ANY ((ARRAY[&#39;INTERNAL&#39;::character varying, &#39;CUSTOMER&#39;::character varying, &#39;VENDOR&#39;::character varying, &#39;PARTNER&#39;::character varying, &#39;API&#39;::character varying, &#39;SERVICE&#39;::character varying, &#39;ADMIN&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>users_account_status_check</td>
+                                    <td>((account_status)::text &#61; ANY ((ARRAY[&#39;ACTIVE&#39;::character varying, &#39;INACTIVE&#39;::character varying, &#39;LOCKED&#39;::character varying, &#39;SUSPENDED&#39;::character varying, &#39;PENDING_VERIFICATION&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>valid_failed_attempts</td>
+                                    <td>(failed_login_attempts &gt;&#61; 0)</td>
                                 </tr>
                                 </tbody>
                             </table>

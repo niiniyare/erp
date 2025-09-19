@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><database name="ledger" schema="public" type="PostgreSQL - 17.0">
    <tables>
       <table name="access_requests" remarks="Access request approval workflow with business justification, lifecycle management, and automatic revocation for governance and compliance." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="access_requests_tenant_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="tenants"/>
          </column>
@@ -45,7 +45,7 @@
          <checkConstraint constraint="((request_type)::text = ANY ((ARRAY['ROLE_ASSIGNMENT'::character varying, 'PERMISSION_GRANT'::character varying, 'RESOURCE_ACCESS'::character varying, 'ELEVATION'::character varying])::text[]))" name="access_requests_request_type_check"/>
       </table>
       <table name="actions" remarks="Defines actions that can be performed on resources with risk assessment and approval workflow requirements." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <child column="action_id" foreignKey="audit_log_action_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="audit_log"/>
             <child column="action_id" foreignKey="permissions_action_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="permissions"/>
          </column>
@@ -74,7 +74,7 @@
          <checkConstraint constraint="((risk_level)::text = ANY ((ARRAY['LOW'::character varying, 'MEDIUM'::character varying, 'HIGH'::character varying, 'CRITICAL'::character varying])::text[]))" name="actions_risk_level_check"/>
       </table>
       <table name="attribute_definitions" remarks="Defines attributes used in ABAC policies with data types, validation rules, and security controls for consistent attribute management." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <child column="definition_id" foreignKey="attribute_values_definition_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="attribute_values"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
@@ -105,7 +105,7 @@
          <checkConstraint constraint="((data_type)::text = ANY ((ARRAY['STRING'::character varying, 'NUMBER'::character varying, 'BOOLEAN'::character varying, 'DATE'::character varying, 'TIME'::character varying, 'JSON'::character varying, 'ARRAY'::character varying, 'ENUM'::character varying])::text[]))" name="attribute_definitions_data_type_check"/>
       </table>
       <table name="attribute_sources" remarks="Defines external sources for attribute collection with configuration, authentication, and caching controls." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="attribute_sources_tenant_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="tenants"/>
          </column>
@@ -131,7 +131,7 @@
          <checkConstraint constraint="((source_type)::text = ANY ((ARRAY['LDAP'::character varying, 'DATABASE'::character varying, 'REST_API'::character varying, 'GRAPHQL'::character varying, 'FILE'::character varying, 'MANUAL'::character varying])::text[]))" name="attribute_sources_source_type_check"/>
       </table>
       <table name="attribute_values" remarks="Stores actual attribute values for entities with versioning, encryption, and temporal support for ABAC policy evaluation." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="attribute_values_tenant_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="tenants"/>
          </column>
@@ -179,7 +179,7 @@
          </index>
       </table>
       <table name="audit_log" remarks="audit log with compliance tracking, risk scoring, and detailed context for security monitoring and regulatory compliance." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="audit_log_tenant_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="tenants"/>
          </column>
@@ -229,7 +229,7 @@
          <checkConstraint constraint="((severity)::text = ANY ((ARRAY['LOW'::character varying, 'INFO'::character varying, 'WARN'::character varying, 'HIGH'::character varying, 'CRITICAL'::character varying])::text[]))" name="audit_log_severity_check"/>
       </table>
       <table name="config_definitions" remarks="System-wide configuration metadata defining all possible configuration keys with validation rules and inheritance policies" schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the configuration definition" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the configuration definition" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="config_definitions_tenant_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="tenants"/>
          </column>
@@ -268,7 +268,7 @@
          <checkConstraint constraint="((data_type)::text = ANY ((ARRAY['STRING'::character varying, 'INTEGER'::character varying, 'BOOLEAN'::character varying, 'DECIMAL'::character varying, 'JSON'::character varying])::text[]))" name="config_definitions_data_type_check"/>
       </table>
       <table name="configuration_audit" remarks="Complete audit trail of all configuration changes for compliance and troubleshooting" schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the audit record" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the audit record" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="Foreign key to tenants table for multi-tenant isolation" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="configuration_audit_tenant_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="tenants"/>
          </column>
@@ -311,7 +311,7 @@
          <checkConstraint constraint="((source)::text = ANY ((ARRAY['SYSTEM'::character varying, 'TENANT'::character varying, 'ENTITY'::character varying, 'TEMPLATE'::character varying])::text[]))" name="configuration_audit_source_check"/>
       </table>
       <table name="configuration_templates" remarks="Reusable configuration templates for bulk deployment across tenants and entities" schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the configuration template" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the configuration template" size="2147483647" type="uuid" typeCode="1111">
             <child column="template_id" foreignKey="template_applications_template_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="template_applications"/>
             <child column="last_template_applied" foreignKey="tenant_configurations_last_template_applied_fkey" implied="false" onDeleteCascade="false" schema="public" table="tenant_configurations"/>
          </column>
@@ -357,7 +357,7 @@
          <checkConstraint constraint="((conflict_resolution)::text = ANY ((ARRAY['MERGE'::character varying, 'REPLACE'::character varying, 'PRESERVE'::character varying])::text[]))" name="configuration_templates_conflict_resolution_check"/>
       </table>
       <table name="employees" remarks="Employee records extending persons with employment-specific data, organizational hierarchy, and security levels for access control." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the employee record" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the employee record" size="2147483647" type="uuid" typeCode="1111">
             <child column="manager_id" foreignKey="employees_manager_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="employees"/>
             <child column="employee_id" foreignKey="users_employee_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="users"/>
          </column>
@@ -585,7 +585,7 @@
          <checkConstraint constraint="(sequence &gt; 0)" name="positive_sequence"/>
       </table>
       <table name="feature_flags" remarks="Master feature flags configuration table with tenant isolation" schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <child column="feature_flag_id" foreignKey="tenant_feature_overrides_feature_flag_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="tenant_feature_overrides"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
@@ -799,7 +799,7 @@
          </index>
          <checkConstraint constraint="((rule_severity)::text = ANY ((ARRAY['INFO'::character varying, 'WARNING'::character varying, 'ERROR'::character varying, 'BLOCKING'::character varying])::text[]))" name="finance_account_validation_rules_rule_severity_check"/>
       </table>
-      <table name="finance_accounts" remarks="Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and financial reporting requirements." schema="public" type="TABLE">
+      <table name="finance_accounts" remarks="Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and comprehensive financial reporting requirements." schema="public" type="TABLE">
          <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <child column="account_id" foreignKey="finance_account_balances_account_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="finance_account_balances"/>
             <child column="control_account_id" foreignKey="finance_accounts_control_account_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="finance_accounts"/>
@@ -1165,7 +1165,7 @@
          <checkConstraint constraint="((validation_status)::text = ANY ((ARRAY['PENDING'::character varying, 'VALID'::character varying, 'WARNING'::character varying, 'ERROR'::character varying])::text[]))" name="hierarchy_paths_validation_status_check"/>
       </table>
       <table name="modules" remarks="System modules for organizing permissions and features into logical groups. Enables modular permission management and feature toggles." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <child column="module_id" foreignKey="resources_module_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="resources"/>
             <child column="module_id" foreignKey="roles_module_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="roles"/>
          </column>
@@ -1216,7 +1216,7 @@
          <column autoUpdated="false" defaultValue="null" digits="0" id="6" name="direct_permission_ids" nullable="true" remarks="" size="2147483647" type="_uuid" typeCode="2003"/>
       </table>
       <table name="notification_preferences" remarks="Stores user notification preferences." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="notification_preferences_tenant_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="tenants"/>
          </column>
@@ -1241,7 +1241,7 @@
          </index>
       </table>
       <table name="permissions" remarks="Granular permissions combining resources and actions with ABAC conditions, data filters, and field restrictions for fine-grained access control." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <child column="permission_id" foreignKey="access_requests_permission_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="access_requests"/>
             <child column="permission_id" foreignKey="audit_log_permission_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="audit_log"/>
             <child column="permission_id" foreignKey="role_permissions_permission_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="role_permissions"/>
@@ -1278,7 +1278,7 @@
          <checkConstraint constraint="((effect)::text = ANY ((ARRAY['ALLOW'::character varying, 'DENY'::character varying])::text[]))" name="permissions_effect_check"/>
       </table>
       <table name="persons" remarks="Stores person entities with ABAC security attributes. Supports multiple person types including employees, customers, vendors, and contractors. Implements soft delete and tenant isolation." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the person record" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the person record" size="2147483647" type="uuid" typeCode="1111">
             <child column="person_id" foreignKey="employees_person_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="employees"/>
             <child column="person_id" foreignKey="users_person_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="users"/>
          </column>
@@ -1353,7 +1353,7 @@
          <checkConstraint constraint="((validation_status)::text = ANY ((ARRAY['PENDING'::character varying, 'VALID'::character varying, 'WARNING'::character varying, 'ERROR'::character varying])::text[]))" name="persons_validation_status_check"/>
       </table>
       <table name="policies" remarks="ABAC policies with advanced rule engine supporting multiple policy types, priorities, obligations, and compliance tracking." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <child column="policy_id" foreignKey="policy_decisions_policy_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="policy_decisions"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
@@ -1396,7 +1396,7 @@
          <checkConstraint constraint="((policy_type)::text = ANY ((ARRAY['ABAC'::character varying, 'RBAC'::character varying, 'HYBRID'::character varying, 'TIME_BASED'::character varying, 'LOCATION_BASED'::character varying])::text[]))" name="policies_policy_type_check"/>
       </table>
       <table name="policy_decisions" remarks="Stores individual policy decisions made during a policy evaluation." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="policy_evaluation_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="policy_decisions_policy_evaluation_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="policy_evaluations"/>
          </column>
@@ -1421,7 +1421,7 @@
          </index>
       </table>
       <table name="policy_evaluations" remarks="Caches ABAC policy evaluation results with flexible resource types and detailed decision tracking for performance optimization." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <child column="policy_evaluation_id" foreignKey="policy_decisions_policy_evaluation_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="policy_decisions"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
@@ -1480,7 +1480,7 @@
          <checkConstraint constraint="((decision)::text = ANY ((ARRAY['ALLOW'::character varying, 'DENY'::character varying, 'NOT_APPLICABLE'::character varying])::text[]))" name="policy_evaluations_decision_check"/>
       </table>
       <table name="resources" remarks="System resources that can be protected by permissions including APIs, UI components, data objects, files, reports, and workflows." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <child column="resource_id" foreignKey="access_requests_resource_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="access_requests"/>
             <child column="resource_id" foreignKey="audit_log_resource_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="audit_log"/>
             <child column="resource_id" foreignKey="permissions_resource_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="permissions"/>
@@ -1519,7 +1519,7 @@
          <checkConstraint constraint="((resource_type)::text = ANY ((ARRAY['API'::character varying, 'UI'::character varying, 'DATA'::character varying, 'FILE'::character varying, 'REPORT'::character varying, 'WORKFLOW'::character varying, 'FUNCTION'::character varying])::text[]))" name="resources_resource_type_check"/>
       </table>
       <table name="role_permissions" remarks="Maps permissions to roles with optional entity-specific scoping and additional conditions for flexible authorization." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="role_permissions_tenant_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="tenants"/>
          </column>
@@ -1550,7 +1550,7 @@
          </index>
       </table>
       <table name="roles" remarks="Roles with module association, entity scoping, and hierarchical structure. Supports both RBAC and ABAC with conditional access rules." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <child column="role_id" foreignKey="access_requests_role_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="access_requests"/>
             <child column="role_id" foreignKey="audit_log_role_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="audit_log"/>
             <child column="role_id" foreignKey="role_permissions_role_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="role_permissions"/>
@@ -1604,7 +1604,7 @@
          </index>
       </table>
       <table name="security_notifications" remarks="" schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="security_notifications_tenant_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="tenants"/>
          </column>
@@ -1625,7 +1625,7 @@
          <checkConstraint constraint="((notification_type)::text = ANY ((ARRAY['SUSPICIOUS_LOGIN'::character varying, 'PASSWORD_COMPROMISED'::character varying, 'ROLE_CHANGE'::character varying, 'PERMISSION_GRANT'::character varying])::text[]))" name="security_notifications_notification_type_check"/>
       </table>
       <table name="template_applications" remarks="History of template applications with detailed results and statistics" schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the template application record" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the template application record" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="template_id" nullable="false" remarks="Foreign key to configuration_templates table" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="template_applications_template_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="configuration_templates"/>
          </column>
@@ -1708,7 +1708,7 @@
          <checkConstraint constraint="(settings_version &gt; 0)" name="valid_settings_version"/>
       </table>
       <table name="tenant_feature_overrides" remarks="Tenant-specific feature flag overrides with audit trail" schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="tenant_feature_overrides_tenant_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="tenants"/>
          </column>
@@ -1794,7 +1794,7 @@
          </index>
       </table>
       <table name="tenants" remarks="Core tenant management table for multi-tenant SaaS architecture" schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="Universal unique identifier for external API references" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="Universal unique identifier for external API references" size="2147483647" type="uuid" typeCode="1111">
             <child column="tenant_id" foreignKey="access_requests_tenant_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="access_requests"/>
             <child column="tenant_id" foreignKey="actions_tenant_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="actions"/>
             <child column="tenant_id" foreignKey="attribute_definitions_tenant_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="attribute_definitions"/>
@@ -1877,7 +1877,7 @@
          <checkConstraint constraint="((status)::text = ANY ((ARRAY['active'::character varying, 'suspended'::character varying, 'pending'::character varying])::text[]))" name="tenants_status_check"/>
       </table>
       <table name="user_permissions" remarks="Direct permission grants to users bypassing roles. Used for exceptional access, denials, and temporary permissions." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="user_permissions_tenant_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="tenants"/>
          </column>
@@ -1912,7 +1912,7 @@
          <checkConstraint constraint="((effect)::text = ANY ((ARRAY['ALLOW'::character varying, 'DENY'::character varying])::text[]))" name="user_permissions_effect_check"/>
       </table>
       <table name="user_roles" remarks="Assigns roles to users with entity context, delegation support, and temporal controls for dynamic authorization." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="user_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111">
             <parent column="id" foreignKey="user_roles_user_id_fkey" implied="false" onDeleteCascade="true" schema="public" table="users"/>
          </column>
@@ -1945,7 +1945,7 @@
          <checkConstraint constraint="((assignment_type)::text = ANY ((ARRAY['DIRECT'::character varying, 'INHERITED'::character varying, 'DELEGATED'::character varying, 'TEMPORARY'::character varying])::text[]))" name="user_roles_assignment_type_check"/>
       </table>
       <table name="user_sessions" remarks="Active user sessions with security context including device, location, and access patterns for ABAC evaluation and security monitoring." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the session record" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the session record" size="2147483647" type="uuid" typeCode="1111">
             <child column="session_id" foreignKey="audit_log_session_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="audit_log"/>
          </column>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="tenant_id" nullable="false" remarks="Foreign key to tenants table for multi-tenant isolation" size="2147483647" type="uuid" typeCode="1111">
@@ -2009,7 +2009,7 @@
          <checkConstraint constraint="(expires_at &gt; created_at)" name="valid_expiration_time"/>
       </table>
       <table name="users" remarks="System user accounts with authentication, authorization, and session management. Can be linked to persons/employees or exist independently for service accounts." schema="public" type="TABLE">
-         <column autoUpdated="false" defaultValue="uuid_generate_v4()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the user record" size="2147483647" type="uuid" typeCode="1111">
+         <column autoUpdated="false" defaultValue="gen_random_uuid()" digits="0" id="0" name="id" nullable="false" remarks="UUID primary key for the user record" size="2147483647" type="uuid" typeCode="1111">
             <child column="approved_by" foreignKey="access_requests_approved_by_fkey" implied="false" onDeleteCascade="false" schema="public" table="access_requests"/>
             <child column="requester_id" foreignKey="access_requests_requester_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="access_requests"/>
             <child column="target_user_id" foreignKey="access_requests_target_user_id_fkey" implied="false" onDeleteCascade="false" schema="public" table="access_requests"/>

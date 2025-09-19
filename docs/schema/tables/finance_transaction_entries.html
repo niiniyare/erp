@@ -637,16 +637,16 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>finance_transaction_entries_check</td>
-                                    <td>((debit_amount &gt;&#61; (0)::numeric) AND (credit_amount &gt;&#61; (0)::numeric))</td>
+                                    <td>finance_transaction_entries_check1</td>
+                                    <td>(NOT ((debit_amount &gt; (0)::numeric) AND (credit_amount &gt; (0)::numeric)))</td>
                                 </tr>
                                 <tr>
                                     <td>finance_transaction_entries_check2</td>
                                     <td>((debit_amount &gt; (0)::numeric) OR (credit_amount &gt; (0)::numeric))</td>
                                 </tr>
                                 <tr>
-                                    <td>finance_transaction_entries_check1</td>
-                                    <td>(NOT ((debit_amount &gt; (0)::numeric) AND (credit_amount &gt; (0)::numeric)))</td>
+                                    <td>finance_transaction_entries_check</td>
+                                    <td>((debit_amount &gt;&#61; (0)::numeric) AND (credit_amount &gt;&#61; (0)::numeric))</td>
                                 </tr>
                                 </tbody>
                             </table>

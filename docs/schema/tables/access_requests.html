@@ -127,7 +127,7 @@
                                     <td>2147483647</td>
                                     <td title=''></td>
                                     <td title=''></td>
-                                    <td>uuid_generate_v4()</td>
+                                    <td>gen_random_uuid()</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
@@ -566,12 +566,12 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>access_requests_request_type_check</td>
-                                    <td>((request_type)::text &#61; ANY ((ARRAY[&#39;ROLE_ASSIGNMENT&#39;::character varying, &#39;PERMISSION_GRANT&#39;::character varying, &#39;RESOURCE_ACCESS&#39;::character varying, &#39;ELEVATION&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>access_requests_approval_status_check</td>
                                     <td>((approval_status)::text &#61; ANY ((ARRAY[&#39;PENDING&#39;::character varying, &#39;APPROVED&#39;::character varying, &#39;REJECTED&#39;::character varying, &#39;EXPIRED&#39;::character varying, &#39;REVOKED&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>access_requests_request_type_check</td>
+                                    <td>((request_type)::text &#61; ANY ((ARRAY[&#39;ROLE_ASSIGNMENT&#39;::character varying, &#39;PERMISSION_GRANT&#39;::character varying, &#39;RESOURCE_ACCESS&#39;::character varying, &#39;ELEVATION&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>

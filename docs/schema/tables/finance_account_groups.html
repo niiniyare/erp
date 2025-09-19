@@ -795,24 +795,24 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>finance_account_groups_cash_flow_category_check</td>
-                                    <td>((cash_flow_category IS NULL) OR ((cash_flow_category)::text &#61; ANY ((ARRAY[&#39;OPERATING&#39;::character varying, &#39;INVESTING&#39;::character varying, &#39;FINANCING&#39;::character varying])::text[])))</td>
+                                    <td>finance_account_groups_root_type_check</td>
+                                    <td>((root_type)::text &#61; ANY ((ARRAY[&#39;ASSET&#39;::character varying, &#39;LIABILITY&#39;::character varying, &#39;EQUITY&#39;::character varying, &#39;REVENUE&#39;::character varying, &#39;EXPENSE&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
                                     <td>chk_group_level_depth</td>
                                     <td>((group_level &gt;&#61; 1) AND (group_level &lt;&#61; 5))</td>
                                 </tr>
                                 <tr>
-                                    <td>chk_group_parent_not_self</td>
-                                    <td>(id &lt;&gt; parent_group_id)</td>
-                                </tr>
-                                <tr>
-                                    <td>finance_account_groups_root_type_check</td>
-                                    <td>((root_type)::text &#61; ANY ((ARRAY[&#39;ASSET&#39;::character varying, &#39;LIABILITY&#39;::character varying, &#39;EQUITY&#39;::character varying, &#39;REVENUE&#39;::character varying, &#39;EXPENSE&#39;::character varying])::text[]))</td>
+                                    <td>finance_account_groups_cash_flow_category_check</td>
+                                    <td>((cash_flow_category IS NULL) OR ((cash_flow_category)::text &#61; ANY ((ARRAY[&#39;OPERATING&#39;::character varying, &#39;INVESTING&#39;::character varying, &#39;FINANCING&#39;::character varying])::text[])))</td>
                                 </tr>
                                 <tr>
                                     <td>finance_account_groups_consolidation_method_check</td>
                                     <td>((consolidation_method)::text &#61; ANY ((ARRAY[&#39;SUM&#39;::character varying, &#39;AVERAGE&#39;::character varying, &#39;MAX&#39;::character varying, &#39;MIN&#39;::character varying, &#39;CUSTOM&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>chk_group_parent_not_self</td>
+                                    <td>(id &lt;&gt; parent_group_id)</td>
                                 </tr>
                                 </tbody>
                             </table>
