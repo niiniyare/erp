@@ -978,6 +978,44 @@ type Tenant struct {
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
+// Master table tracking bulk tenant management operations with progress monitoring and audit trail
+type TenantBulkOperation struct {
+	ID uuid.UUID `json:"id"`
+	// Type of bulk operation: SUSPEND, REACTIVATE, ARCHIVE, UPDATE_LIMITS, UPDATE_FEATURES
+	OperationType string `json:"operation_type"`
+	// UUID of administrator who initiated the bulk operation
+	ActorID         uuid.UUID    `json:"actor_id"`
+	ActorName       *string      `json:"actor_name"`
+	TotalTenants    int32        `json:"total_tenants"`
+	SuccessfulCount int32        `json:"successful_count"`
+	FailedCount     int32        `json:"failed_count"`
+	Status          string       `json:"status"`
+	StartedAt       time.Time    `json:"started_at"`
+	CompletedAt     sql.NullTime `json:"completed_at"`
+	// JSON parameters specific to operation type (reason, limits, features, retention policies, etc.)
+	Parameters []byte `json:"parameters"`
+	// High-level summary of errors if operation had failures
+	ErrorSummary *string   `json:"error_summary"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+// Individual operation results for each tenant within a bulk operation
+type TenantBulkOperationResult struct {
+	OperationID uuid.UUID `json:"operation_id"`
+	TenantID    uuid.UUID `json:"tenant_id"`
+	// Individual tenant operation status: PENDING, PROCESSING, COMPLETED, FAILED, SKIPPED
+	Status string `json:"status"`
+	// Success message or additional context for this tenant operation
+	Message *string `json:"message"`
+	// Detailed error information specific to this tenant if operation failed
+	ErrorDetails *string      `json:"error_details"`
+	StartedAt    sql.NullTime `json:"started_at"`
+	CompletedAt  sql.NullTime `json:"completed_at"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+}
+
 // Tenant-specific configuration settings, feature flags, and resource limits
 type TenantConfiguration struct {
 	TenantID                uuid.UUID `json:"tenant_id"`

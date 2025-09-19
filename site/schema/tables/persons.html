@@ -127,7 +127,7 @@
                                     <td>2147483647</td>
                                     <td title=''></td>
                                     <td title=''></td>
-                                    <td>uuid_generate_v4()</td>
+                                    <td>gen_random_uuid()</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
@@ -669,12 +669,12 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>persons_person_type_check</td>
-                                    <td>((person_type)::text &#61; ANY ((ARRAY[&#39;INDIVIDUAL&#39;::character varying, &#39;EMPLOYEE&#39;::character varying, &#39;CONTACT&#39;::character varying, &#39;CUSTOMER&#39;::character varying, &#39;VENDOR&#39;::character varying, &#39;CONTRACTOR&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>persons_validation_status_check</td>
                                     <td>((validation_status)::text &#61; ANY ((ARRAY[&#39;PENDING&#39;::character varying, &#39;VALID&#39;::character varying, &#39;WARNING&#39;::character varying, &#39;ERROR&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>persons_person_type_check</td>
+                                    <td>((person_type)::text &#61; ANY ((ARRAY[&#39;INDIVIDUAL&#39;::character varying, &#39;EMPLOYEE&#39;::character varying, &#39;CONTACT&#39;::character varying, &#39;CUSTOMER&#39;::character varying, &#39;VENDOR&#39;::character varying, &#39;CONTRACTOR&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>

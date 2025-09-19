@@ -127,7 +127,7 @@
                                     <td>2147483647</td>
                                     <td title=''></td>
                                     <td title=''></td>
-                                    <td>uuid_generate_v4()</td>
+                                    <td>gen_random_uuid()</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
@@ -611,16 +611,16 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>employees_employment_status_check</td>
-                                    <td>((employment_status)::text &#61; ANY ((ARRAY[&#39;ACTIVE&#39;::character varying, &#39;INACTIVE&#39;::character varying, &#39;TERMINATED&#39;::character varying, &#39;ON_LEAVE&#39;::character varying, &#39;SUSPENDED&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>valid_security_level</td>
                                     <td>(security_level &gt;&#61; 0)</td>
                                 </tr>
                                 <tr>
                                     <td>valid_termination_date</td>
                                     <td>((termination_date IS NULL) OR (termination_date &gt;&#61; hire_date))</td>
+                                </tr>
+                                <tr>
+                                    <td>employees_employment_status_check</td>
+                                    <td>((employment_status)::text &#61; ANY ((ARRAY[&#39;ACTIVE&#39;::character varying, &#39;INACTIVE&#39;::character varying, &#39;TERMINATED&#39;::character varying, &#39;ON_LEAVE&#39;::character varying, &#39;SUSPENDED&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>

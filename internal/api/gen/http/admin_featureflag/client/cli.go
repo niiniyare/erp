@@ -23,7 +23,7 @@ func BuildBulkEnablePayload(adminFeatureflagBulkEnableBody string, adminFeaturef
 	{
 		err = json.Unmarshal([]byte(adminFeatureflagBulkEnableBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"flag_names\": [\n         \"Molestiae nihil quia ut eum.\",\n         \"Eos ut.\"\n      ],\n      \"reason\": \"Qui earum delectus deserunt.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"flag_names\": [\n         \"Corrupti dolorem.\",\n         \"Nam libero laboriosam earum molestiae.\",\n         \"Aut doloribus ea corporis tempora.\",\n         \"Tempora sunt sapiente rerum quod ut itaque.\"\n      ],\n      \"reason\": \"Id totam quia cum.\"\n   }'")
 		}
 		if body.FlagNames == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("flag_names", "body"))
@@ -65,7 +65,7 @@ func BuildBulkDisablePayload(adminFeatureflagBulkDisableBody string, adminFeatur
 	{
 		err = json.Unmarshal([]byte(adminFeatureflagBulkDisableBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"flag_names\": [\n         \"Dolor et est atque aut ad vel.\",\n         \"Quaerat et sit maxime.\",\n         \"Exercitationem aut tempore.\",\n         \"Ullam quod omnis iure nihil vero.\"\n      ],\n      \"reason\": \"Eum qui.\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"flag_names\": [\n         \"Odit enim.\",\n         \"Autem veniam laudantium optio fugit porro sapiente.\",\n         \"Accusantium tempora.\"\n      ],\n      \"reason\": \"Nisi facere ea pariatur consectetur non.\"\n   }'")
 		}
 		if body.FlagNames == nil {
 			err = goa.MergeErrors(err, goa.MissingFieldError("flag_names", "body"))

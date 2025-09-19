@@ -3,13 +3,11 @@
 -- =====================================================
 -- Enable UUID generation for unique identifiers
 -- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
-CREATE SCHEMA IF NOT EXISTS ledger;
+-- CREATE SCHEMA IF NOT EXISTS ledger;
 
-SET search_path TO ledger;
+-- SET search_path TO ledger;
 
 -- Enable Row Level Security globally
 SET
@@ -91,7 +89,7 @@ CREATE TABLE tenants (
   email VARCHAR(255) NOT NULL,
   subdomain VARCHAR(63) UNIQUE,
   -- Status and operational settings
-  STATUS VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (STATUS IN ('active', 'suspended', 'pending')),
+  Status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK (Status IN ('ACTIVE', 'SUSPENDED', 'PENDING', 'ARCHIVED')),
   timezone VARCHAR(50) NOT NULL DEFAULT 'UTC',
   currency_code CHAR(3) NOT NULL DEFAULT 'USD',
   -- Flexible metadata storage
@@ -123,7 +121,7 @@ CREATE TABLE tenants (
 -- Create indexes for performance
 CREATE INDEX idx_tenants_slug ON tenants(slug);
 
-CREATE INDEX idx_tenants_status ON tenants(STATUS);
+CREATE INDEX idx_tenants_status ON tenants(Status);
 
 CREATE INDEX idx_tenants_subdomain ON tenants(subdomain)
 WHERE
@@ -153,39 +151,34 @@ COMMENT ON COLUMN tenants.deleted_at IS 'Soft delete timestamp - NULL means acti
 -- TENANT CONTEXT MANAGEMENT
 -- -----------------------------------------------------
 -- Function to set tenant context for the current session
-CREATE
-OR REPLACE FUNCTION set_tenant_context(tenant_id UUID) RETURNS VOID AS
-$$
+CREATE OR REPLACE FUNCTION set_tenant_context(tenant_id UUID, user_role TEXT DEFAULT 'application_role') 
+  RETURNS VOID AS $$
+DECLARE
+  tenant_status TEXT;
 BEGIN
--- Validate tenant exists and is active
-IF NOT EXISTS (
-  SELECT
-    1
-  FROM
-    tenants
-  WHERE
-    id = tenant_id
-    AND STATUS = 'active'
-    AND deleted_at IS NULL
-) THEN RAISE EXCEPTION 'Invalid or inactive tenant: %',
-tenant_id;
-
-END IF;
-
--- Set session variable for tenant context
-PERFORM set_config('app.current_tenant_id', tenant_id::text, TRUE);
-
--- Log tenant context change (optional)
-RAISE NOTICE 'Tenant context set to: %',
-tenant_id;
-
+  -- Get tenant status in one query
+  SELECT status INTO tenant_status 
+  FROM tenants 
+  WHERE id = tenant_id AND deleted_at IS NULL;
+  
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Tenant not found: %', tenant_id;
+  END IF;
+  
+  IF tenant_status != 'active' THEN
+    RAISE EXCEPTION 'Tenant is not active: % (status: %)', tenant_id, tenant_status;
+  END IF;
+  
+  -- Set multiple context variables
+  PERFORM set_config('app.current_tenant_id', tenant_id::text, true);
+  PERFORM set_config('app.tenant_status', tenant_status, true);
+  PERFORM set_config('app.context_set_at', NOW()::text, true);
+  
 END;
-
-$$
-LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Add function comment
-COMMENT ON FUNCTION set_tenant_context(UUID) IS 'Sets the current tenant context for the session with validation';
+COMMENT ON FUNCTION set_tenant_context(UUID,TEXT) IS 'Sets the current tenant context for the session with validation';
 
 -- -----------------------------------------------------
 -- GET CURRENT TENANT FUNCTION
@@ -217,6 +210,18 @@ LANGUAGE plpgsql;
 -- Add function comment
 COMMENT ON FUNCTION current_tenant_id() IS 'Retrieves the current tenant ID from session context';
 
+-- Function to clear tenant context (important for connection pooling)
+CREATE OR REPLACE FUNCTION clear_tenant_context() 
+  RETURNS VOID AS $$
+BEGIN
+  PERFORM set_config('app.current_tenant_id', NULL, true);
+  PERFORM set_config('app.tenant_status', NULL, true);
+  PERFORM set_config('app.context_set_at', NULL, true);
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION clear_tenant_context() IS 'clear tenant context (important for connection pooling)';
+
 -- =====================================================
 -- ROW LEVEL SECURITY (RLS)
 -- =====================================================
@@ -229,13 +234,14 @@ ALTER TABLE
 
 -- Create policy for tenant isolation
 -- Only allow access to tenant data based on current session context
-CREATE POLICY tenant_isolation_policy ON tenants FOR ALL TO application_role USING (
-  id = current_tenant_id()
-  OR current_tenant_id() IS NULL
-);
-
+-- FIXME: I am not sure if the tenants table can take this policy
+-- CREATE POLICY tenant_isolation_policy ON tenants FOR ALL TO application_role USING (
+--   id = current_tenant_id()
+--   OR current_tenant_id() IS NULL
+-- );
+--
 -- Add policy comment
-COMMENT ON POLICY tenant_isolation_policy ON tenants IS 'Ensures tenant data isolation based on session context';
+-- COMMENT ON POLICY tenant_isolation_policy ON tenants IS 'Ensures tenant data isolation based on session context';
 
 -- =====================================================
 -- PERMISSIONS AND GRANTS
@@ -251,7 +257,7 @@ UPDATE
   DELETE ON tenants TO application_role;
 
 -- Grant execute permissions on functions
-GRANT EXECUTE ON FUNCTION set_tenant_context(UUID) TO application_role;
+GRANT EXECUTE ON FUNCTION set_tenant_context(UUID,TEXT) TO application_role;
 
 GRANT EXECUTE ON FUNCTION current_tenant_id() TO application_role;
 
@@ -289,26 +295,62 @@ UPDATE
 -- -----------------------------------------------------
 -- SLUG GENERATION TRIGGER
 -- -----------------------------------------------------
-CREATE
-OR REPLACE FUNCTION generate_slug_from_name() RETURNS TRIGGER AS
-$$
+CREATE OR REPLACE FUNCTION generate_unique_slug_from_name() 
+  RETURNS TRIGGER AS $$
+DECLARE
+  base_slug TEXT;
+  final_slug TEXT;
+  counter INTEGER := 1;
 BEGIN
-IF NEW.slug IS NULL THEN NEW.slug := lower(
-  regexp_replace(NEW.name, '[^a-zA-Z0-9]+', '-', 'g')
-);
-
-END IF;
-
-RETURN NEW;
-
+  IF NEW.slug IS NULL THEN
+    -- Create base slug with better sanitization
+    base_slug := lower(trim(both '-' from 
+      regexp_replace(
+        regexp_replace(NEW.name, '[^\w\s-]', '', 'g'),
+        '\s+', '-', 'g'
+      )
+    ));
+    
+    -- Ensure slug is not empty
+    IF base_slug = '' THEN
+      base_slug := 'tenant';
+    END IF;
+    
+    final_slug := base_slug;
+    
+    -- Handle slug collisions
+    WHILE EXISTS(SELECT 1 FROM tenants WHERE slug = final_slug AND id != COALESCE(NEW.id, '00000000-0000-0000-0000-000000000000'::UUID)) LOOP
+      final_slug := base_slug || '-' || counter;
+      counter := counter + 1;
+    END LOOP;
+    
+    NEW.slug := final_slug;
+  END IF;
+  
+  RETURN NEW;
 END;
-
-$$
-LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER tenant_slug_trigger BEFORE
 INSERT
-  ON tenants FOR EACH ROW EXECUTE FUNCTION generate_slug_from_name();
+  ON tenants FOR EACH ROW EXECUTE FUNCTION generate_unique_slug_from_name();
+
+
+-- Better email validation
+ALTER TABLE tenants ADD CONSTRAINT valid_email 
+  CHECK (email ~* '^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
+
+-- Subdomain validation
+ALTER TABLE tenants ADD CONSTRAINT valid_subdomain 
+  CHECK (subdomain IS NULL OR subdomain ~* '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$');
+
+-- Slug validation
+ALTER TABLE tenants ADD CONSTRAINT valid_slug 
+  CHECK (slug ~* '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$');
+
+-- Currency code validation (ISO 4217)
+ALTER TABLE tenants ADD CONSTRAINT valid_currency 
+  CHECK (currency_code ~* '^[A-Z]{3}$');
 -- =====================================================
 -- TENANT CONFIGURATIONS TABLE
 -- =====================================================
@@ -697,7 +739,486 @@ LANGUAGE plpgsql;
 
 -- Update function comment
 COMMENT ON FUNCTION check_tenant_limits(UUID, VARCHAR, INT) IS 'Validates tenant resource limits before operations - now includes storage limit checking';
--- =====================================================================
+-- Tenant provisioning function
+CREATE
+OR REPLACE FUNCTION provision_tenant_complete(
+  p_name VARCHAR(255),
+  p_email VARCHAR(255),
+  p_subdomain VARCHAR(63) DEFAULT NULL,
+  p_industry VARCHAR(50) DEFAULT NULL,
+  p_company_size VARCHAR(20) DEFAULT 'small',
+  p_currency_code CHAR(3) DEFAULT 'USD',
+  p_timezone VARCHAR(50) DEFAULT 'UTC',
+  p_settings JSONB DEFAULT '{}'
+) RETURNS TABLE(id UUID) AS $body$
+DECLARE
+v_tenant_id UUID;
+
+v_slug VARCHAR(50);
+
+BEGIN
+-- Generate UUID and slug
+v_tenant_id := gen_random_uuid();
+
+v_slug := lower(
+  regexp_replace(p_name, '[^a-zA-Z0-9]+', '-', 'g')
+);
+
+-- Ensure slug uniqueness
+WHILE EXISTS (
+  SELECT
+    1
+  FROM
+    tenants
+  WHERE
+    slug = v_slug
+    AND deleted_at IS NULL
+) LOOP v_slug := v_slug || '-' || substring(v_tenant_id::text, 1, 8);
+
+END LOOP;
+
+-- Create tenant record
+INSERT INTO
+  tenants (
+    id,
+    slug,
+    name,
+    email,
+    subdomain,
+    STATUS,
+    industry,
+    company_size,
+    currency_code,
+    timezone,
+    settings
+  )
+VALUES
+  (
+    v_tenant_id,
+    v_slug,
+    p_name,
+    p_email,
+    p_subdomain,
+    'pending',
+    p_industry,
+    p_company_size,
+    p_currency_code,
+    p_timezone,
+    p_settings
+  );
+
+-- Return tenant information
+RETURN QUERY
+SELECT
+  v_tenant_id AS tenant_id;
+
+END;
+
+$body$ LANGUAGE plpgsql;
+-- =====================================================
+-- TENANT BULK OPERATIONS TRACKING MIGRATION
+-- =====================================================
+-- 
+-- PURPOSE:
+-- This migration creates tables and functions to track bulk tenant management 
+-- operations such as mass suspend, reactivate, archive, and configuration updates.
+-- 
+-- TABLES CREATED:
+-- 1. tenant_bulk_operations - Master table tracking bulk operations
+-- 2. tenant_bulk_operation_results - Individual results per tenant in each operation
+-- 
+-- FEATURES:
+-- - Complete audit trail for administrative bulk operations
+-- - Progress tracking with status updates
+-- - Error handling and detailed reporting
+-- - Automatic count updates via triggers
+-- - Row-level security for multi-tenant isolation
+-- - Utility functions for operation monitoring
+-- 
+-- SECURITY:
+-- - RLS enabled with policies for admin, application, and readonly roles
+-- - Proper permission grants for different access levels
+-- 
+-- AUTHOR: ERP System Migration
+-- VERSION: 1.0
+-- DATE: 2024
+-- =====================================================
+
+-- =====================================================
+-- MAIN TABLES
+-- =====================================================
+
+-- -----------------------------------------------------
+-- BULK OPERATIONS MASTER TABLE
+-- -----------------------------------------------------
+-- Tracks metadata and overall status of bulk tenant operations
+CREATE TABLE tenant_bulk_operations (
+  -- Primary identification
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  
+  -- Operation classification
+  operation_type VARCHAR(50) NOT NULL CHECK (operation_type IN (
+    'SUSPEND',           -- Mass suspend tenants
+    'REACTIVATE',        -- Mass reactivate suspended tenants  
+    'ARCHIVE',           -- Mass archive tenants with retention policies
+    'UPDATE_LIMITS',     -- Mass update tenant resource limits
+    'UPDATE_FEATURES'    -- Mass enable/disable tenant features
+  )),
+  
+  -- Actor information (who initiated the operation)
+  actor_id UUID NOT NULL,           -- User ID who started the operation
+  actor_name VARCHAR(255),          -- User name for audit display
+  
+  -- Operation metrics
+  total_tenants INT NOT NULL DEFAULT 0,      -- Total tenants in this operation
+  successful_count INT NOT NULL DEFAULT 0,   -- Successfully processed tenants
+  failed_count INT NOT NULL DEFAULT 0,       -- Failed tenant operations
+  
+  -- Operation lifecycle status
+  status VARCHAR(20) NOT NULL DEFAULT 'IN_PROGRESS' CHECK (status IN (
+    'IN_PROGRESS',       -- Operation is currently running
+    'COMPLETED',         -- All operations completed successfully
+    'FAILED',           -- All operations failed
+    'PARTIAL_SUCCESS',  -- Some succeeded, some failed
+    'CANCELLED'         -- Operation was cancelled by user
+  )),
+  
+  -- Timing information
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at TIMESTAMPTZ,        -- Set when operation finishes
+  
+  -- Operation context and parameters
+  parameters JSONB DEFAULT '{}'::jsonb,  -- Operation-specific data (reason, limits, etc.)
+  error_summary TEXT,                     -- High-level error description if applicable
+  
+  -- Standard audit fields
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- -----------------------------------------------------
+-- INDIVIDUAL OPERATION RESULTS TABLE
+-- -----------------------------------------------------
+-- Tracks the result of the bulk operation for each individual tenant
+CREATE TABLE tenant_bulk_operation_results (
+  -- Composite primary key linking to bulk operation and tenant
+  operation_id UUID NOT NULL REFERENCES tenant_bulk_operations(id) ON DELETE CASCADE,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  
+  -- Individual operation status
+  status VARCHAR(20) NOT NULL DEFAULT 'PENDING' CHECK (status IN (
+    'PENDING',          -- Waiting to be processed
+    'PROCESSING',       -- Currently being processed
+    'COMPLETED',        -- Successfully completed
+    'FAILED',          -- Operation failed for this tenant
+    'SKIPPED'          -- Skipped (e.g., tenant already in target state)
+  )),
+  
+  -- Result details
+  message TEXT,           -- Success or informational message
+  error_details TEXT,     -- Detailed error information if failed
+  
+  -- Individual timing (for performance analysis)
+  started_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  
+  -- Standard audit fields
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  
+  -- Composite primary key
+  PRIMARY KEY (operation_id, tenant_id)
+);
+
+-- =====================================================
+-- PERFORMANCE INDEXES
+-- =====================================================
+
+-- Indexes for bulk operations table
+CREATE INDEX idx_tenant_bulk_operations_actor ON tenant_bulk_operations(actor_id);
+CREATE INDEX idx_tenant_bulk_operations_status ON tenant_bulk_operations(status);
+CREATE INDEX idx_tenant_bulk_operations_type ON tenant_bulk_operations(operation_type);
+CREATE INDEX idx_tenant_bulk_operations_created_at ON tenant_bulk_operations(created_at);
+
+-- Indexes for operation results table
+CREATE INDEX idx_tenant_bulk_operation_results_tenant ON tenant_bulk_operation_results(tenant_id);
+CREATE INDEX idx_tenant_bulk_operation_results_status ON tenant_bulk_operation_results(status);
+
+-- =====================================================
+-- TABLE DOCUMENTATION
+-- =====================================================
+
+COMMENT ON TABLE tenant_bulk_operations IS 'Master table tracking bulk tenant management operations with progress monitoring and audit trail';
+COMMENT ON TABLE tenant_bulk_operation_results IS 'Individual operation results for each tenant within a bulk operation';
+
+-- Column documentation for bulk operations
+COMMENT ON COLUMN tenant_bulk_operations.operation_type IS 'Type of bulk operation: SUSPEND, REACTIVATE, ARCHIVE, UPDATE_LIMITS, UPDATE_FEATURES';
+COMMENT ON COLUMN tenant_bulk_operations.parameters IS 'JSON parameters specific to operation type (reason, limits, features, retention policies, etc.)';
+COMMENT ON COLUMN tenant_bulk_operations.actor_id IS 'UUID of administrator who initiated the bulk operation';
+COMMENT ON COLUMN tenant_bulk_operations.error_summary IS 'High-level summary of errors if operation had failures';
+
+-- Column documentation for operation results
+COMMENT ON COLUMN tenant_bulk_operation_results.status IS 'Individual tenant operation status: PENDING, PROCESSING, COMPLETED, FAILED, SKIPPED';
+COMMENT ON COLUMN tenant_bulk_operation_results.error_details IS 'Detailed error information specific to this tenant if operation failed';
+COMMENT ON COLUMN tenant_bulk_operation_results.message IS 'Success message or additional context for this tenant operation';
+
+-- =====================================================
+-- ROW LEVEL SECURITY (RLS)
+-- =====================================================
+
+-- Enable RLS on both tables for multi-tenant security
+ALTER TABLE tenant_bulk_operations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tenant_bulk_operation_results ENABLE ROW LEVEL SECURITY;
+
+-- -----------------------------------------------------
+-- RLS POLICIES
+-- -----------------------------------------------------
+
+-- Admin role: Full access to all bulk operations (for system administration)
+CREATE POLICY tenant_bulk_operations_admin_policy 
+  ON tenant_bulk_operations 
+  FOR ALL TO admin_role 
+  USING (true);
+
+CREATE POLICY tenant_bulk_operation_results_admin_policy 
+  ON tenant_bulk_operation_results 
+  FOR ALL TO admin_role 
+  USING (true);
+
+-- Application role: Full access (for API operations)
+CREATE POLICY tenant_bulk_operations_app_policy 
+  ON tenant_bulk_operations 
+  FOR ALL TO application_role 
+  USING (true);
+
+CREATE POLICY tenant_bulk_operation_results_app_policy 
+  ON tenant_bulk_operation_results 
+  FOR ALL TO application_role 
+  USING (true);
+
+-- Readonly role: Select access only (for monitoring and reporting)
+CREATE POLICY tenant_bulk_operations_readonly_policy 
+  ON tenant_bulk_operations 
+  FOR SELECT TO readonly_role 
+  USING (true);
+
+CREATE POLICY tenant_bulk_operation_results_readonly_policy 
+  ON tenant_bulk_operation_results 
+  FOR SELECT TO readonly_role 
+  USING (true);
+
+-- =====================================================
+-- ROLE PERMISSIONS
+-- =====================================================
+
+-- Admin role: Full CRUD permissions
+GRANT SELECT, INSERT, UPDATE, DELETE ON tenant_bulk_operations TO admin_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON tenant_bulk_operation_results TO admin_role;
+
+-- Application role: Full CRUD permissions (for API operations)
+GRANT SELECT, INSERT, UPDATE, DELETE ON tenant_bulk_operations TO application_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON tenant_bulk_operation_results TO application_role;
+
+-- Readonly role: Select permissions only (for monitoring dashboards)
+GRANT SELECT ON tenant_bulk_operations TO readonly_role;
+GRANT SELECT ON tenant_bulk_operation_results TO readonly_role;
+
+-- =====================================================
+-- AUTOMATIC TIMESTAMP TRIGGERS
+-- =====================================================
+
+-- Trigger to update 'updated_at' timestamp on bulk operations
+CREATE TRIGGER update_tenant_bulk_operations_updated_at 
+  BEFORE UPDATE ON tenant_bulk_operations 
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger to update 'updated_at' timestamp on operation results
+CREATE TRIGGER update_tenant_bulk_operation_results_updated_at 
+  BEFORE UPDATE ON tenant_bulk_operation_results 
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- =====================================================
+-- UTILITY FUNCTIONS
+-- =====================================================
+
+-- -----------------------------------------------------
+-- BULK OPERATION SUMMARY FUNCTION
+-- -----------------------------------------------------
+-- Returns comprehensive summary statistics for a bulk operation
+CREATE OR REPLACE FUNCTION get_bulk_operation_summary(p_operation_id UUID)
+RETURNS TABLE (
+  operation_id UUID,
+  operation_type VARCHAR(50),
+  status VARCHAR(20),
+  total_tenants INT,
+  successful_count INT,
+  failed_count INT,
+  in_progress_count INT,
+  duration_seconds INT
+) AS $$
+BEGIN
+  /*
+   * PURPOSE: Provides real-time summary of bulk operation progress
+   * 
+   * PARAMETERS:
+   *   p_operation_id - UUID of the bulk operation to summarize
+   * 
+   * RETURNS:
+   *   Complete summary including counts, status, and timing information
+   * 
+   * LOGIC:
+   *   1. Join bulk operation with individual results
+   *   2. Count results by status (successful, failed, in-progress)
+   *   3. Calculate operation duration (completed or current)
+   *   4. Return comprehensive summary for monitoring
+   */
+  
+  RETURN QUERY
+  SELECT 
+    bo.id,                              -- Operation UUID
+    bo.operation_type,                  -- Type of operation (SUSPEND, etc.)
+    bo.status,                          -- Overall operation status
+    bo.total_tenants,                   -- Total tenants targeted
+    bo.successful_count,                -- Successfully processed count
+    bo.failed_count,                    -- Failed operations count
+    -- Count in-progress items dynamically from results table
+    COUNT(CASE WHEN br.status IN ('PENDING', 'PROCESSING') THEN 1 END)::INT as in_progress_count,
+    -- Calculate duration: completed operations use actual duration, in-progress use current time
+    CASE 
+      WHEN bo.completed_at IS NOT NULL 
+      THEN EXTRACT(EPOCH FROM (bo.completed_at - bo.started_at))::INT
+      ELSE EXTRACT(EPOCH FROM (NOW() - bo.started_at))::INT
+    END as duration_seconds
+  FROM tenant_bulk_operations bo
+  LEFT JOIN tenant_bulk_operation_results br ON bo.id = br.operation_id
+  WHERE bo.id = p_operation_id
+  GROUP BY bo.id, bo.operation_type, bo.status, bo.total_tenants, 
+           bo.successful_count, bo.failed_count, bo.started_at, bo.completed_at;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION get_bulk_operation_summary(UUID) IS 'Returns comprehensive real-time summary statistics for a bulk operation including progress and timing';
+
+-- Grant execute permissions to all roles
+GRANT EXECUTE ON FUNCTION get_bulk_operation_summary(UUID) TO admin_role;
+GRANT EXECUTE ON FUNCTION get_bulk_operation_summary(UUID) TO application_role;
+GRANT EXECUTE ON FUNCTION get_bulk_operation_summary(UUID) TO readonly_role;
+
+-- -----------------------------------------------------
+-- BULK OPERATION COUNT UPDATE FUNCTION
+-- -----------------------------------------------------
+-- Automatically updates success/failure counts and overall status
+CREATE OR REPLACE FUNCTION update_bulk_operation_counts(p_operation_id UUID)
+RETURNS VOID AS $$
+DECLARE
+  v_successful INT;     -- Count of successful operations
+  v_failed INT;         -- Count of failed operations
+  v_total INT;          -- Total operations
+  v_in_progress INT;    -- Count of pending/processing operations
+BEGIN
+  /*
+   * PURPOSE: Maintains accurate counts and status for bulk operations
+   * 
+   * PARAMETERS:
+   *   p_operation_id - UUID of bulk operation to update
+   * 
+   * LOGIC:
+   *   1. Count individual results by status (completed, failed, in-progress)
+   *   2. Update the master record with current counts
+   *   3. Determine overall status based on individual results:
+   *      - IN_PROGRESS: if any items still pending/processing
+   *      - COMPLETED: if all succeeded and none in progress
+   *      - FAILED: if all failed and none in progress
+   *      - PARTIAL_SUCCESS: if mixed results and none in progress
+   *   4. Set completion timestamp when operation finishes
+   */
+  
+  -- Count results by status category
+  SELECT 
+    COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END),    -- Successful operations
+    COUNT(CASE WHEN status = 'FAILED' THEN 1 END),       -- Failed operations
+    COUNT(*),                                             -- Total operations
+    COUNT(CASE WHEN status IN ('PENDING', 'PROCESSING') THEN 1 END)  -- Still in progress
+  INTO v_successful, v_failed, v_total, v_in_progress
+  FROM tenant_bulk_operation_results 
+  WHERE operation_id = p_operation_id;
+  
+  -- Update the master bulk operation record with current counts and status
+  UPDATE tenant_bulk_operations SET
+    successful_count = v_successful,
+    failed_count = v_failed,
+    -- Determine overall status based on individual results
+    status = CASE 
+      WHEN v_in_progress > 0 THEN 'IN_PROGRESS'          -- Still processing
+      WHEN v_failed = 0 THEN 'COMPLETED'                 -- All succeeded
+      WHEN v_successful = 0 THEN 'FAILED'                -- All failed
+      ELSE 'PARTIAL_SUCCESS'                             -- Mixed results
+    END,
+    -- Set completion timestamp when operation finishes (no more in-progress items)
+    completed_at = CASE 
+      WHEN v_in_progress = 0 AND completed_at IS NULL THEN NOW()
+      ELSE completed_at
+    END
+  WHERE id = p_operation_id;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION update_bulk_operation_counts(UUID) IS 'Automatically updates bulk operation counts and status based on individual result statuses';
+
+-- Grant execute permissions to roles that can modify data
+GRANT EXECUTE ON FUNCTION update_bulk_operation_counts(UUID) TO admin_role;
+GRANT EXECUTE ON FUNCTION update_bulk_operation_counts(UUID) TO application_role;
+
+-- -----------------------------------------------------
+-- AUTOMATIC COUNT UPDATE TRIGGER
+-- -----------------------------------------------------
+-- Trigger function that calls the count update function
+CREATE OR REPLACE FUNCTION trigger_update_bulk_operation_counts()
+RETURNS TRIGGER AS $$
+BEGIN
+  /*
+   * PURPOSE: Trigger function to automatically update bulk operation counts
+   * 
+   * TRIGGER EVENTS: INSERT, UPDATE, DELETE on tenant_bulk_operation_results
+   * 
+   * LOGIC:
+   *   1. Determine which operation_id was affected (from NEW or OLD record)
+   *   2. Call update_bulk_operation_counts() to recalculate totals
+   *   3. Return appropriate record for trigger chain continuation
+   * 
+   * NOTE: This ensures counts are always accurate without manual intervention
+   */
+  
+  -- Update counts for the affected operation (handle all trigger events)
+  PERFORM update_bulk_operation_counts(COALESCE(NEW.operation_id, OLD.operation_id));
+  
+  -- Return appropriate record based on trigger event
+  RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the trigger on the results table
+CREATE TRIGGER tenant_bulk_operation_results_update_counts
+  AFTER INSERT OR UPDATE OR DELETE ON tenant_bulk_operation_results
+  FOR EACH ROW EXECUTE FUNCTION trigger_update_bulk_operation_counts();
+
+COMMENT ON TRIGGER tenant_bulk_operation_results_update_counts ON tenant_bulk_operation_results 
+IS 'Automatically updates bulk operation counts and status whenever individual results change';
+
+-- =====================================================
+-- MIGRATION COMPLETION
+-- =====================================================
+-- Log successful migration completion
+-- (This will appear in migration logs for debugging)
+
+DO $$
+BEGIN
+  RAISE NOTICE 'Tenant bulk operations tracking migration completed successfully';
+  RAISE NOTICE 'Created tables: tenant_bulk_operations, tenant_bulk_operation_results';
+  RAISE NOTICE 'Created functions: get_bulk_operation_summary(), update_bulk_operation_counts()';
+  RAISE NOTICE 'Configured RLS policies for admin_role, application_role, readonly_role';
+  RAISE NOTICE 'Set up automatic count updating via triggers';
+END $$;-- =====================================================================
 -- ENTITIES CORE TABLE - Business entity management foundation
 -- =====================================================================
 -- Root entity/company table with hierarchical structure and accounting preferences
@@ -1893,11 +2414,11 @@ ALTER TABLE
 -- Tenant isolation policy
 CREATE POLICY employees_tenant_isolation ON employees FOR ALL TO application_role USING (
   current_tenant_id() IS NOT NULL
-  AND deleted_at IS NOT NULL
+  AND deleted_at IS NULL
   AND tenant_id = current_tenant_id()
 ) WITH CHECK (
   current_tenant_id() IS NOT NULL
-  AND deleted_at IS NOT NULL
+  AND deleted_at IS NULL
   AND tenant_id = current_tenant_id()
 );
 
@@ -2145,7 +2666,7 @@ ALTER TABLE
 -- Tenant isolation policy
 CREATE POLICY users_tenant_isolation ON users FOR ALL TO application_role USING (
   current_tenant_id() IS NOT NULL
-  AND deleted_at IS NOT NULL
+  AND deleted_at IS NULL
   AND tenant_id = current_tenant_id()
 ) WITH CHECK (
   current_tenant_id() IS NOT NULL
@@ -2167,14 +2688,7 @@ UPDATE
 -- PERMISSIONS AND GRANTS
 -- =====================================================================
 -- Grant necessary permissions to application role
-GRANT
-SELECT
-,
-INSERT
-,
-UPDATE
-,
-  DELETE ON users TO application_role;
+GRANT SELECT,INSERT,UPDATE, DELETE ON users TO application_role;
 -- ================================================================================================
 -- USER SESSIONS TABLE - Tracks active user sessions with security context
 -- ================================================================================================
@@ -3637,82 +4151,298 @@ LANGUAGE plpgsql SECURITY DEFINER;
 --     BEFORE UPDATE ON projects
 --     FOR EACH ROW
 --     EXECUTE FUNCTION update_updated_at_column();
--- Tenant provisioning function
-CREATE
-OR REPLACE FUNCTION provision_tenant_complete(
-  p_name VARCHAR(255),
-  p_email VARCHAR(255),
-  p_subdomain VARCHAR(63) DEFAULT NULL,
-  p_industry VARCHAR(50) DEFAULT NULL,
-  p_company_size VARCHAR(20) DEFAULT 'small',
-  p_currency_code CHAR(3) DEFAULT 'USD',
-  p_timezone VARCHAR(50) DEFAULT 'UTC',
-  p_settings JSONB DEFAULT '{}'
-) RETURNS TABLE(id UUID) AS $body$
-DECLARE
-v_tenant_id UUID;
+-- ================================================================================================
+-- SETTINGS MODULE - Configuration management with 3-level inheritance (System → Tenant → Entity)
+-- ================================================================================================
+--
+-- Core tables for ERP Settings Module implementing configuration inheritance, templates,
+-- and audit trails for enterprise configuration management.
+--
+-- Prerequisites:
+-- - tenants table with UUID primary key
+-- - entities table with UUID primary key
+-- ================================================================================================
 
-v_slug VARCHAR(50);
-
-BEGIN
--- Generate UUID and slug
-v_tenant_id := gen_random_uuid();
-
-v_slug := lower(
-  regexp_replace(p_name, '[^a-zA-Z0-9]+', '-', 'g')
+-- =====================================================================
+-- CONFIG DEFINITIONS - System-wide metadata for all configurations
+-- =====================================================================
+CREATE TABLE config_definitions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  entity_id UUID REFERENCES entities(uuid) ON DELETE CASCADE,
+  module_name VARCHAR(50) NOT NULL,
+  config_key VARCHAR(100) NOT NULL,
+  data_type VARCHAR(20) NOT NULL CHECK (data_type IN ('STRING', 'INTEGER', 'BOOLEAN', 'DECIMAL', 'JSON')),
+  default_value JSONB,
+  validation_rules JSONB DEFAULT '{}'::jsonb,
+  description TEXT,
+  required_permission VARCHAR(100),
+  required_feature_flag VARCHAR(100),
+  is_overridable BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  -- Ensure unique configuration keys per module
+  CONSTRAINT config_definitions_module_key_unique UNIQUE (module_name, config_key)
 );
 
--- Ensure slug uniqueness
-WHILE EXISTS (
-  SELECT
-    1
-  FROM
-    tenants
-  WHERE
-    slug = v_slug
-    AND deleted_at IS NULL
-) LOOP v_slug := v_slug || '-' || substring(v_tenant_id::text, 1, 8);
+-- Add table and column comments
+COMMENT ON TABLE config_definitions IS 'System-wide configuration metadata defining all possible configuration keys with validation rules and inheritance policies';
 
-END LOOP;
+COMMENT ON COLUMN config_definitions.id IS 'UUID primary key for the configuration definition';
+COMMENT ON COLUMN config_definitions.module_name IS 'ERP module that owns this configuration (finance, hr, inventory, etc.)';
+COMMENT ON COLUMN config_definitions.config_key IS 'Unique configuration key within the module namespace';
+COMMENT ON COLUMN config_definitions.data_type IS 'Data type constraint for configuration values (string, integer, boolean, decimal, json)';
+COMMENT ON COLUMN config_definitions.default_value IS 'Default value for this configuration in JSONB format';
+COMMENT ON COLUMN config_definitions.validation_rules IS 'JSON schema or validation rules for the configuration value';
+COMMENT ON COLUMN config_definitions.description IS 'Human-readable description of the configuration purpose';
+COMMENT ON COLUMN config_definitions.required_permission IS 'Permission required to modify this configuration';
+COMMENT ON COLUMN config_definitions.required_feature_flag IS 'Feature flag that must be enabled for this configuration';
+COMMENT ON COLUMN config_definitions.is_overridable IS 'Whether this configuration can be overridden at tenant/entity levels';
 
--- Create tenant record
-INSERT INTO
-  tenants (
-    id,
-    slug,
-    name,
-    email,
-    subdomain,
-    STATUS,
-    industry,
-    company_size,
-    currency_code,
-    timezone,
-    settings
-  )
-VALUES
-  (
-    v_tenant_id,
-    v_slug,
-    p_name,
-    p_email,
-    p_subdomain,
-    'pending',
-    p_industry,
-    p_company_size,
-    p_currency_code,
-    p_timezone,
-    p_settings
+-- =====================================================================
+-- CONFIGURATION TEMPLATES - Bulk configuration deployment
+-- =====================================================================
+CREATE TABLE configuration_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  entity_id UUID REFERENCES entities(uuid) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  category VARCHAR(50) NOT NULL CHECK (category IN ('INDUSTRY', 'FUNCTIONAL', 'REGIONAL')),
+  description TEXT,
+  version VARCHAR(20) NOT NULL,
+  configurations JSONB NOT NULL,
+  applicable_tenant_types TEXT[],
+  required_feature_flags TEXT[],
+  conflict_resolution VARCHAR(20) DEFAULT 'MERGE' CHECK (conflict_resolution IN ('MERGE', 'REPLACE', 'PRESERVE')),
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by UUID NOT NULL,
+  -- Ensure unique template name+version combinations
+  CONSTRAINT configuration_templates_name_version_unique UNIQUE (name, version)
+);
+
+-- Add table and column comments
+COMMENT ON TABLE configuration_templates IS 'Reusable configuration templates for bulk deployment across tenants and entities';
+
+COMMENT ON COLUMN configuration_templates.id IS 'UUID primary key for the configuration template';
+COMMENT ON COLUMN configuration_templates.name IS 'Template display name';
+COMMENT ON COLUMN configuration_templates.category IS 'Template category: industry, functional, or regional';
+COMMENT ON COLUMN configuration_templates.version IS 'Semantic version string for template versioning';
+COMMENT ON COLUMN configuration_templates.configurations IS 'JSON object containing all configuration key-value pairs';
+COMMENT ON COLUMN configuration_templates.applicable_tenant_types IS 'Array of tenant types this template applies to';
+COMMENT ON COLUMN configuration_templates.required_feature_flags IS 'Array of feature flags required for this template';
+COMMENT ON COLUMN configuration_templates.conflict_resolution IS 'Strategy for handling configuration conflicts: merge, replace, or preserve';
+COMMENT ON COLUMN configuration_templates.is_active IS 'Whether this template is active and available for use';
+COMMENT ON COLUMN configuration_templates.created_by IS 'UUID of user who created this template';
+
+-- =====================================================================
+-- CONFIGURATION AUDIT - Complete audit trail for all changes
+-- =====================================================================
+CREATE TABLE configuration_audit (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  entity_id UUID REFERENCES entities(uuid) ON DELETE SET NULL,
+  config_key VARCHAR(150) NOT NULL,
+  old_value JSONB,
+  new_value JSONB,
+source VARCHAR(20) NOT NULL CHECK (source IN ('SYSTEM', 'TENANT', 'ENTITY', 'TEMPLATE')),
+operation VARCHAR(20) NOT NULL CHECK (operation IN ('CREATE', 'UPDATE', 'DELETE', 'RESET', 'TEMPLATE_APPLY')),
+  user_id UUID NOT NULL,
+  applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  session_id VARCHAR(100),
+  correlation_id VARCHAR(100)
+);
+
+-- Add table and column comments
+COMMENT ON TABLE configuration_audit IS 'Complete audit trail of all configuration changes for compliance and troubleshooting';
+
+COMMENT ON COLUMN configuration_audit.id IS 'UUID primary key for the audit record';
+COMMENT ON COLUMN configuration_audit.tenant_id IS 'Foreign key to tenants table for multi-tenant isolation';
+COMMENT ON COLUMN configuration_audit.entity_id IS 'Optional foreign key to entities table for entity-level changes';
+COMMENT ON COLUMN configuration_audit.config_key IS 'Full configuration key (module.key) that was modified';
+COMMENT ON COLUMN configuration_audit.old_value IS 'Previous configuration value in JSONB format';
+COMMENT ON COLUMN configuration_audit.new_value IS 'New configuration value in JSONB format';
+COMMENT ON COLUMN configuration_audit.source IS 'Source level where change occurred: system, tenant, entity, or template';
+COMMENT ON COLUMN configuration_audit.operation IS 'Type of operation: create, update, delete, reset, or template_apply';
+COMMENT ON COLUMN configuration_audit.user_id IS 'UUID of user who made the change';
+COMMENT ON COLUMN configuration_audit.session_id IS 'Session identifier for tracking related changes';
+COMMENT ON COLUMN configuration_audit.correlation_id IS 'Correlation ID for tracking bulk operations';
+
+-- =====================================================================
+-- TEMPLATE APPLICATIONS - History of template deployments
+-- =====================================================================
+CREATE TABLE template_applications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  template_id UUID NOT NULL REFERENCES configuration_templates(id) ON DELETE CASCADE,
+  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  entity_id UUID REFERENCES entities(uuid) ON DELETE SET NULL,
+  target_type VARCHAR(10) NOT NULL CHECK (target_type IN ('TENANT', 'ENTITY')),
+  applied_configs INTEGER NOT NULL DEFAULT 0,
+  skipped_configs INTEGER NOT NULL DEFAULT 0,
+  conflict_count INTEGER NOT NULL DEFAULT 0,
+  application_summary JSONB,
+  applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  applied_by UUID NOT NULL,
+  correlation_id VARCHAR(100)
+);
+
+-- Add table and column comments
+COMMENT ON TABLE template_applications IS 'History of template applications with detailed results and statistics';
+
+COMMENT ON COLUMN template_applications.id IS 'UUID primary key for the template application record';
+COMMENT ON COLUMN template_applications.template_id IS 'Foreign key to configuration_templates table';
+COMMENT ON COLUMN template_applications.tenant_id IS 'Foreign key to tenants table';
+COMMENT ON COLUMN template_applications.entity_id IS 'Optional foreign key to entities table for entity-level applications';
+COMMENT ON COLUMN template_applications.target_type IS 'Target type: tenant or entity';
+COMMENT ON COLUMN template_applications.applied_configs IS 'Number of configurations successfully applied';
+COMMENT ON COLUMN template_applications.skipped_configs IS 'Number of configurations skipped due to conflicts or policies';
+COMMENT ON COLUMN template_applications.conflict_count IS 'Number of configuration conflicts encountered';
+COMMENT ON COLUMN template_applications.application_summary IS 'Detailed JSON summary of the application results';
+COMMENT ON COLUMN template_applications.applied_by IS 'UUID of user who applied the template';
+COMMENT ON COLUMN template_applications.correlation_id IS 'Correlation ID for tracking related operations';
+
+-- =====================================================================
+-- ENHANCE EXISTING TABLES - Add settings integration columns
+-- =====================================================================
+-- Enhance tenant_configurations table for better settings integration
+ALTER TABLE tenant_configurations ADD COLUMN IF NOT EXISTS settings_version INTEGER DEFAULT 1;
+ALTER TABLE tenant_configurations ADD COLUMN IF NOT EXISTS last_template_applied UUID REFERENCES configuration_templates(id) ON DELETE SET NULL;
+ALTER TABLE tenant_configurations ADD COLUMN IF NOT EXISTS template_applied_at TIMESTAMPTZ;
+
+-- Add comments for new columns
+COMMENT ON COLUMN tenant_configurations.settings_version IS 'Version counter for optimistic locking of tenant settings';
+COMMENT ON COLUMN tenant_configurations.last_template_applied IS 'Reference to last template applied to this tenant';
+COMMENT ON COLUMN tenant_configurations.template_applied_at IS 'Timestamp when template was last applied';
+
+-- =====================================================================
+-- PERFORMANCE OPTIMIZATION INDEXES
+-- =====================================================================
+
+-- Config definitions indexes
+CREATE INDEX idx_config_definitions_module ON config_definitions(module_name);
+CREATE INDEX idx_config_definitions_module_key ON config_definitions(module_name, config_key);
+CREATE INDEX idx_config_definitions_overridable ON config_definitions(module_name) WHERE is_overridable = true;
+
+-- Configuration templates indexes
+CREATE INDEX idx_configuration_templates_category ON configuration_templates(category);
+CREATE INDEX idx_configuration_templates_active ON configuration_templates(is_active) WHERE is_active = true;
+CREATE INDEX idx_configuration_templates_created_by ON configuration_templates(created_by);
+
+-- Configuration audit indexes
+CREATE INDEX idx_configuration_audit_tenant ON configuration_audit(tenant_id);
+CREATE INDEX idx_configuration_audit_entity ON configuration_audit(tenant_id, entity_id) WHERE entity_id IS NOT NULL;
+CREATE INDEX idx_configuration_audit_config_key ON configuration_audit(tenant_id, config_key, applied_at);
+CREATE INDEX idx_configuration_audit_correlation ON configuration_audit(correlation_id) WHERE correlation_id IS NOT NULL;
+CREATE INDEX idx_configuration_audit_user_time ON configuration_audit(user_id, applied_at);
+
+-- Template applications indexes
+CREATE INDEX idx_template_applications_template ON template_applications(template_id, applied_at);
+CREATE INDEX idx_template_applications_tenant ON template_applications(tenant_id, applied_at);
+CREATE INDEX idx_template_applications_correlation ON template_applications(correlation_id) WHERE correlation_id IS NOT NULL;
+
+-- Enhanced tenant_configurations indexes
+CREATE INDEX idx_tenant_configurations_template ON tenant_configurations(tenant_id, last_template_applied) WHERE last_template_applied IS NOT NULL;
+CREATE INDEX idx_tenant_configurations_settings_version ON tenant_configurations(tenant_id, settings_version);
+
+-- Entity settings index (leverages existing entities.settings)
+CREATE INDEX idx_entities_settings_tenant ON entities(tenant_id) INCLUDE (settings) WHERE deleted_at IS NULL AND settings IS NOT NULL;
+
+-- JSONB GIN indexes for efficient configuration lookup
+CREATE INDEX idx_tenant_configurations_settings_gin ON tenant_configurations USING gin(settings);
+-- CREATE INDEX idx_entities_settings_gin ON entities USING gin(settings) WHERE settings IS NOT NULL;
+CREATE INDEX idx_configuration_templates_configs_gin ON configuration_templates USING gin(configurations);
+
+-- =====================================================================
+-- DATA INTEGRITY CONSTRAINTS
+-- =====================================================================
+
+-- Ensure applied configs counts are non-negative
+ALTER TABLE template_applications ADD CONSTRAINT valid_applied_configs CHECK (applied_configs >= 0);
+ALTER TABLE template_applications ADD CONSTRAINT valid_skipped_configs CHECK (skipped_configs >= 0);
+ALTER TABLE template_applications ADD CONSTRAINT valid_conflict_count CHECK (conflict_count >= 0);
+
+-- Ensure settings version is positive
+ALTER TABLE tenant_configurations ADD CONSTRAINT valid_settings_version CHECK (settings_version > 0);
+
+-- =====================================================================
+-- ROW LEVEL SECURITY (RLS)
+-- =====================================================================
+
+-- Enable RLS on all new tables
+ALTER TABLE config_definitions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE configuration_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE configuration_audit ENABLE ROW LEVEL SECURITY;
+ALTER TABLE template_applications ENABLE ROW LEVEL SECURITY;
+
+-- Config definitions are globally readable, only system admins can modify
+CREATE POLICY config_definitions_read ON config_definitions 
+  FOR SELECT TO application_role USING (true);
+
+CREATE POLICY config_definitions_modify ON config_definitions 
+  FOR ALL TO admin_role USING (true) WITH CHECK (true);
+
+-- Configuration templates are globally readable, only system admins can modify
+CREATE POLICY configuration_templates_read ON configuration_templates 
+  FOR SELECT TO application_role USING (true);
+
+CREATE POLICY configuration_templates_modify ON configuration_templates 
+  FOR ALL TO admin_role USING (true) WITH CHECK (true);
+
+-- Configuration audit is tenant-isolated
+CREATE POLICY configuration_audit_tenant_isolation ON configuration_audit 
+  FOR ALL TO application_role 
+  USING (
+    current_tenant_id() IS NOT NULL 
+    AND tenant_id = current_tenant_id()
+  ) 
+  WITH CHECK (
+    current_tenant_id() IS NOT NULL 
+    AND tenant_id = current_tenant_id()
   );
 
--- Return tenant information
-RETURN QUERY
-SELECT
-  v_tenant_id AS tenant_id;
+-- Admin bypass for configuration audit
+CREATE POLICY configuration_audit_admin_access ON configuration_audit 
+  FOR ALL TO admin_role USING (true) WITH CHECK (true);
 
-END;
+-- Template applications are tenant-isolated
+CREATE POLICY template_applications_tenant_isolation ON template_applications 
+  FOR ALL TO application_role 
+  USING (
+    current_tenant_id() IS NOT NULL 
+    AND tenant_id = current_tenant_id()
+  ) 
+  WITH CHECK (
+    current_tenant_id() IS NOT NULL 
+    AND tenant_id = current_tenant_id()
+  );
 
-$body$ LANGUAGE plpgsql;
+-- Admin bypass for template applications
+CREATE POLICY template_applications_admin_access ON template_applications 
+  FOR ALL TO admin_role USING (true) WITH CHECK (true);
+
+-- =====================================================================
+-- TRIGGERS FOR AUTOMATIC TIMESTAMP UPDATES
+-- =====================================================================
+
+-- Apply the existing update_updated_at_column trigger to new tables
+CREATE TRIGGER update_config_definitions_updated_at 
+  BEFORE UPDATE ON config_definitions 
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_configuration_templates_updated_at 
+  BEFORE UPDATE ON configuration_templates 
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- =====================================================================
+-- PERMISSIONS AND GRANTS
+-- =====================================================================
+
+-- Grant necessary permissions to application role
+GRANT SELECT, INSERT, UPDATE, DELETE ON config_definitions TO application_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON configuration_templates TO application_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON configuration_audit TO application_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON template_applications TO application_role;
 CREATE
 OR REPLACE FUNCTION enforce_tenant_isolation() RETURNS TRIGGER AS
 $$
@@ -7608,7 +8338,7 @@ WHERE
   AND is_active = TRUE;
 
 -- =====================================================================
--- ENHANCED VIEWS WITH GROUPING
+-- VIEWS WITH GROUPING
 -- =====================================================================
 -- =====================================================================
 -- RLS AND PERMISSIONS FOR NEW TABLES
@@ -7648,7 +8378,7 @@ UPDATE
 ,
   DELETE ON finance_account_groups TO admin_role;
 
--- Grant permissions on enhanced views
+-- Grant permissions on views
 -- =====================================================================
 -- EXAMPLE USAGE AND BENEFITS
 -- =====================================================================
@@ -7660,7 +8390,7 @@ BENEFITS OF ACCOUNT GROUPS/HEADERS:
  - Operating vs Administrative Expenses  
  - Proper Income Statement vs Balance Sheet classification
 
-2. ENHANCED REPORTING:
+2. REPORTING:
  - Group-level subtotals automatically calculated
  - Hierarchical financial statements
  - Variance analysis by account group
@@ -9498,11 +10228,8 @@ LANGUAGE plpgsql;
 
 COMMENT ON FUNCTION analyze_finance_tables_performance IS 'Analyzes performance metrics for finance module tables';
 
--- +migrate Up
-BEGIN
-;
 
--- ENHANCED VIEWS FOR COMMON QUERIES
+-- VIEWS FOR COMMON QUERIES
 -- Account hierarchy view with computed fields (Fixed type casting)
 CREATE VIEW v_finance_accounts_hierarchy AS WITH RECURSIVE account_tree AS (
   -- Root accounts
@@ -9681,7 +10408,6 @@ GROUP BY
 
 COMMENT ON VIEW v_finance_account_activity IS 'Account activity summary for monitoring and analysis';
 
-COMMIT;
 -- +migrate Up
 BEGIN
 ;
@@ -9748,295 +10474,3 @@ SELECT
   admin_role;
 
 COMMIT;
--- ================================================================================================
--- SETTINGS MODULE - Configuration management with 3-level inheritance (System → Tenant → Entity)
--- ================================================================================================
---
--- Core tables for ERP Settings Module implementing configuration inheritance, templates,
--- and audit trails for enterprise configuration management.
---
--- Prerequisites:
--- - tenants table with UUID primary key
--- - entities table with UUID primary key
--- ================================================================================================
-
--- =====================================================================
--- CONFIG DEFINITIONS - System-wide metadata for all configurations
--- =====================================================================
-CREATE TABLE config_definitions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  entity_id UUID REFERENCES entities(uuid) ON DELETE CASCADE,
-  module_name VARCHAR(50) NOT NULL,
-  config_key VARCHAR(100) NOT NULL,
-  data_type VARCHAR(20) NOT NULL CHECK (data_type IN ('STRING', 'INTEGER', 'BOOLEAN', 'DECIMAL', 'JSON')),
-  default_value JSONB,
-  validation_rules JSONB DEFAULT '{}'::jsonb,
-  description TEXT,
-  required_permission VARCHAR(100),
-  required_feature_flag VARCHAR(100),
-  is_overridable BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  -- Ensure unique configuration keys per module
-  CONSTRAINT config_definitions_module_key_unique UNIQUE (module_name, config_key)
-);
-
--- Add table and column comments
-COMMENT ON TABLE config_definitions IS 'System-wide configuration metadata defining all possible configuration keys with validation rules and inheritance policies';
-
-COMMENT ON COLUMN config_definitions.id IS 'UUID primary key for the configuration definition';
-COMMENT ON COLUMN config_definitions.module_name IS 'ERP module that owns this configuration (finance, hr, inventory, etc.)';
-COMMENT ON COLUMN config_definitions.config_key IS 'Unique configuration key within the module namespace';
-COMMENT ON COLUMN config_definitions.data_type IS 'Data type constraint for configuration values (string, integer, boolean, decimal, json)';
-COMMENT ON COLUMN config_definitions.default_value IS 'Default value for this configuration in JSONB format';
-COMMENT ON COLUMN config_definitions.validation_rules IS 'JSON schema or validation rules for the configuration value';
-COMMENT ON COLUMN config_definitions.description IS 'Human-readable description of the configuration purpose';
-COMMENT ON COLUMN config_definitions.required_permission IS 'Permission required to modify this configuration';
-COMMENT ON COLUMN config_definitions.required_feature_flag IS 'Feature flag that must be enabled for this configuration';
-COMMENT ON COLUMN config_definitions.is_overridable IS 'Whether this configuration can be overridden at tenant/entity levels';
-
--- =====================================================================
--- CONFIGURATION TEMPLATES - Bulk configuration deployment
--- =====================================================================
-CREATE TABLE configuration_templates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  entity_id UUID REFERENCES entities(uuid) ON DELETE CASCADE,
-  name VARCHAR(255) NOT NULL,
-  category VARCHAR(50) NOT NULL CHECK (category IN ('INDUSTRY', 'FUNCTIONAL', 'REGIONAL')),
-  description TEXT,
-  version VARCHAR(20) NOT NULL,
-  configurations JSONB NOT NULL,
-  applicable_tenant_types TEXT[],
-  required_feature_flags TEXT[],
-  conflict_resolution VARCHAR(20) DEFAULT 'MERGE' CHECK (conflict_resolution IN ('MERGE', 'REPLACE', 'PRESERVE')),
-  is_active BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  created_by UUID NOT NULL,
-  -- Ensure unique template name+version combinations
-  CONSTRAINT configuration_templates_name_version_unique UNIQUE (name, version)
-);
-
--- Add table and column comments
-COMMENT ON TABLE configuration_templates IS 'Reusable configuration templates for bulk deployment across tenants and entities';
-
-COMMENT ON COLUMN configuration_templates.id IS 'UUID primary key for the configuration template';
-COMMENT ON COLUMN configuration_templates.name IS 'Template display name';
-COMMENT ON COLUMN configuration_templates.category IS 'Template category: industry, functional, or regional';
-COMMENT ON COLUMN configuration_templates.version IS 'Semantic version string for template versioning';
-COMMENT ON COLUMN configuration_templates.configurations IS 'JSON object containing all configuration key-value pairs';
-COMMENT ON COLUMN configuration_templates.applicable_tenant_types IS 'Array of tenant types this template applies to';
-COMMENT ON COLUMN configuration_templates.required_feature_flags IS 'Array of feature flags required for this template';
-COMMENT ON COLUMN configuration_templates.conflict_resolution IS 'Strategy for handling configuration conflicts: merge, replace, or preserve';
-COMMENT ON COLUMN configuration_templates.is_active IS 'Whether this template is active and available for use';
-COMMENT ON COLUMN configuration_templates.created_by IS 'UUID of user who created this template';
-
--- =====================================================================
--- CONFIGURATION AUDIT - Complete audit trail for all changes
--- =====================================================================
-CREATE TABLE configuration_audit (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  entity_id UUID REFERENCES entities(uuid) ON DELETE SET NULL,
-  config_key VARCHAR(150) NOT NULL,
-  old_value JSONB,
-  new_value JSONB,
-source VARCHAR(20) NOT NULL CHECK (source IN ('SYSTEM', 'TENANT', 'ENTITY', 'TEMPLATE')),
-operation VARCHAR(20) NOT NULL CHECK (operation IN ('CREATE', 'UPDATE', 'DELETE', 'RESET', 'TEMPLATE_APPLY')),
-  user_id UUID NOT NULL,
-  applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  session_id VARCHAR(100),
-  correlation_id VARCHAR(100)
-);
-
--- Add table and column comments
-COMMENT ON TABLE configuration_audit IS 'Complete audit trail of all configuration changes for compliance and troubleshooting';
-
-COMMENT ON COLUMN configuration_audit.id IS 'UUID primary key for the audit record';
-COMMENT ON COLUMN configuration_audit.tenant_id IS 'Foreign key to tenants table for multi-tenant isolation';
-COMMENT ON COLUMN configuration_audit.entity_id IS 'Optional foreign key to entities table for entity-level changes';
-COMMENT ON COLUMN configuration_audit.config_key IS 'Full configuration key (module.key) that was modified';
-COMMENT ON COLUMN configuration_audit.old_value IS 'Previous configuration value in JSONB format';
-COMMENT ON COLUMN configuration_audit.new_value IS 'New configuration value in JSONB format';
-COMMENT ON COLUMN configuration_audit.source IS 'Source level where change occurred: system, tenant, entity, or template';
-COMMENT ON COLUMN configuration_audit.operation IS 'Type of operation: create, update, delete, reset, or template_apply';
-COMMENT ON COLUMN configuration_audit.user_id IS 'UUID of user who made the change';
-COMMENT ON COLUMN configuration_audit.session_id IS 'Session identifier for tracking related changes';
-COMMENT ON COLUMN configuration_audit.correlation_id IS 'Correlation ID for tracking bulk operations';
-
--- =====================================================================
--- TEMPLATE APPLICATIONS - History of template deployments
--- =====================================================================
-CREATE TABLE template_applications (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  template_id UUID NOT NULL REFERENCES configuration_templates(id) ON DELETE CASCADE,
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  entity_id UUID REFERENCES entities(uuid) ON DELETE SET NULL,
-  target_type VARCHAR(10) NOT NULL CHECK (target_type IN ('TENANT', 'ENTITY')),
-  applied_configs INTEGER NOT NULL DEFAULT 0,
-  skipped_configs INTEGER NOT NULL DEFAULT 0,
-  conflict_count INTEGER NOT NULL DEFAULT 0,
-  application_summary JSONB,
-  applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  applied_by UUID NOT NULL,
-  correlation_id VARCHAR(100)
-);
-
--- Add table and column comments
-COMMENT ON TABLE template_applications IS 'History of template applications with detailed results and statistics';
-
-COMMENT ON COLUMN template_applications.id IS 'UUID primary key for the template application record';
-COMMENT ON COLUMN template_applications.template_id IS 'Foreign key to configuration_templates table';
-COMMENT ON COLUMN template_applications.tenant_id IS 'Foreign key to tenants table';
-COMMENT ON COLUMN template_applications.entity_id IS 'Optional foreign key to entities table for entity-level applications';
-COMMENT ON COLUMN template_applications.target_type IS 'Target type: tenant or entity';
-COMMENT ON COLUMN template_applications.applied_configs IS 'Number of configurations successfully applied';
-COMMENT ON COLUMN template_applications.skipped_configs IS 'Number of configurations skipped due to conflicts or policies';
-COMMENT ON COLUMN template_applications.conflict_count IS 'Number of configuration conflicts encountered';
-COMMENT ON COLUMN template_applications.application_summary IS 'Detailed JSON summary of the application results';
-COMMENT ON COLUMN template_applications.applied_by IS 'UUID of user who applied the template';
-COMMENT ON COLUMN template_applications.correlation_id IS 'Correlation ID for tracking related operations';
-
--- =====================================================================
--- ENHANCE EXISTING TABLES - Add settings integration columns
--- =====================================================================
--- Enhance tenant_configurations table for better settings integration
-ALTER TABLE tenant_configurations ADD COLUMN IF NOT EXISTS settings_version INTEGER DEFAULT 1;
-ALTER TABLE tenant_configurations ADD COLUMN IF NOT EXISTS last_template_applied UUID REFERENCES configuration_templates(id) ON DELETE SET NULL;
-ALTER TABLE tenant_configurations ADD COLUMN IF NOT EXISTS template_applied_at TIMESTAMPTZ;
-
--- Add comments for new columns
-COMMENT ON COLUMN tenant_configurations.settings_version IS 'Version counter for optimistic locking of tenant settings';
-COMMENT ON COLUMN tenant_configurations.last_template_applied IS 'Reference to last template applied to this tenant';
-COMMENT ON COLUMN tenant_configurations.template_applied_at IS 'Timestamp when template was last applied';
-
--- =====================================================================
--- PERFORMANCE OPTIMIZATION INDEXES
--- =====================================================================
-
--- Config definitions indexes
-CREATE INDEX idx_config_definitions_module ON config_definitions(module_name);
-CREATE INDEX idx_config_definitions_module_key ON config_definitions(module_name, config_key);
-CREATE INDEX idx_config_definitions_overridable ON config_definitions(module_name) WHERE is_overridable = true;
-
--- Configuration templates indexes
-CREATE INDEX idx_configuration_templates_category ON configuration_templates(category);
-CREATE INDEX idx_configuration_templates_active ON configuration_templates(is_active) WHERE is_active = true;
-CREATE INDEX idx_configuration_templates_created_by ON configuration_templates(created_by);
-
--- Configuration audit indexes
-CREATE INDEX idx_configuration_audit_tenant ON configuration_audit(tenant_id);
-CREATE INDEX idx_configuration_audit_entity ON configuration_audit(tenant_id, entity_id) WHERE entity_id IS NOT NULL;
-CREATE INDEX idx_configuration_audit_config_key ON configuration_audit(tenant_id, config_key, applied_at);
-CREATE INDEX idx_configuration_audit_correlation ON configuration_audit(correlation_id) WHERE correlation_id IS NOT NULL;
-CREATE INDEX idx_configuration_audit_user_time ON configuration_audit(user_id, applied_at);
-
--- Template applications indexes
-CREATE INDEX idx_template_applications_template ON template_applications(template_id, applied_at);
-CREATE INDEX idx_template_applications_tenant ON template_applications(tenant_id, applied_at);
-CREATE INDEX idx_template_applications_correlation ON template_applications(correlation_id) WHERE correlation_id IS NOT NULL;
-
--- Enhanced tenant_configurations indexes
-CREATE INDEX idx_tenant_configurations_template ON tenant_configurations(tenant_id, last_template_applied) WHERE last_template_applied IS NOT NULL;
-CREATE INDEX idx_tenant_configurations_settings_version ON tenant_configurations(tenant_id, settings_version);
-
--- Entity settings index (leverages existing entities.settings)
-CREATE INDEX idx_entities_settings_tenant ON entities(tenant_id) INCLUDE (settings) WHERE deleted_at IS NULL AND settings IS NOT NULL;
-
--- JSONB GIN indexes for efficient configuration lookup
-CREATE INDEX idx_tenant_configurations_settings_gin ON tenant_configurations USING gin(settings);
--- CREATE INDEX idx_entities_settings_gin ON entities USING gin(settings) WHERE settings IS NOT NULL;
-CREATE INDEX idx_configuration_templates_configs_gin ON configuration_templates USING gin(configurations);
-
--- =====================================================================
--- DATA INTEGRITY CONSTRAINTS
--- =====================================================================
-
--- Ensure applied configs counts are non-negative
-ALTER TABLE template_applications ADD CONSTRAINT valid_applied_configs CHECK (applied_configs >= 0);
-ALTER TABLE template_applications ADD CONSTRAINT valid_skipped_configs CHECK (skipped_configs >= 0);
-ALTER TABLE template_applications ADD CONSTRAINT valid_conflict_count CHECK (conflict_count >= 0);
-
--- Ensure settings version is positive
-ALTER TABLE tenant_configurations ADD CONSTRAINT valid_settings_version CHECK (settings_version > 0);
-
--- =====================================================================
--- ROW LEVEL SECURITY (RLS)
--- =====================================================================
-
--- Enable RLS on all new tables
-ALTER TABLE config_definitions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE configuration_templates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE configuration_audit ENABLE ROW LEVEL SECURITY;
-ALTER TABLE template_applications ENABLE ROW LEVEL SECURITY;
-
--- Config definitions are globally readable, only system admins can modify
-CREATE POLICY config_definitions_read ON config_definitions 
-  FOR SELECT TO application_role USING (true);
-
-CREATE POLICY config_definitions_modify ON config_definitions 
-  FOR ALL TO admin_role USING (true) WITH CHECK (true);
-
--- Configuration templates are globally readable, only system admins can modify
-CREATE POLICY configuration_templates_read ON configuration_templates 
-  FOR SELECT TO application_role USING (true);
-
-CREATE POLICY configuration_templates_modify ON configuration_templates 
-  FOR ALL TO admin_role USING (true) WITH CHECK (true);
-
--- Configuration audit is tenant-isolated
-CREATE POLICY configuration_audit_tenant_isolation ON configuration_audit 
-  FOR ALL TO application_role 
-  USING (
-    current_tenant_id() IS NOT NULL 
-    AND tenant_id = current_tenant_id()
-  ) 
-  WITH CHECK (
-    current_tenant_id() IS NOT NULL 
-    AND tenant_id = current_tenant_id()
-  );
-
--- Admin bypass for configuration audit
-CREATE POLICY configuration_audit_admin_access ON configuration_audit 
-  FOR ALL TO admin_role USING (true) WITH CHECK (true);
-
--- Template applications are tenant-isolated
-CREATE POLICY template_applications_tenant_isolation ON template_applications 
-  FOR ALL TO application_role 
-  USING (
-    current_tenant_id() IS NOT NULL 
-    AND tenant_id = current_tenant_id()
-  ) 
-  WITH CHECK (
-    current_tenant_id() IS NOT NULL 
-    AND tenant_id = current_tenant_id()
-  );
-
--- Admin bypass for template applications
-CREATE POLICY template_applications_admin_access ON template_applications 
-  FOR ALL TO admin_role USING (true) WITH CHECK (true);
-
--- =====================================================================
--- TRIGGERS FOR AUTOMATIC TIMESTAMP UPDATES
--- =====================================================================
-
--- Apply the existing update_updated_at_column trigger to new tables
-CREATE TRIGGER update_config_definitions_updated_at 
-  BEFORE UPDATE ON config_definitions 
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_configuration_templates_updated_at 
-  BEFORE UPDATE ON configuration_templates 
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- =====================================================================
--- PERMISSIONS AND GRANTS
--- =====================================================================
-
--- Grant necessary permissions to application role
-GRANT SELECT, INSERT, UPDATE, DELETE ON config_definitions TO application_role;
-GRANT SELECT, INSERT, UPDATE, DELETE ON configuration_templates TO application_role;
-GRANT SELECT, INSERT, UPDATE, DELETE ON configuration_audit TO application_role;
-GRANT SELECT, INSERT, UPDATE, DELETE ON template_applications TO application_role;

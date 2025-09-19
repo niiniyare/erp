@@ -23,6 +23,7 @@ import (
 	openapic "github.com/niiniyare/erp/internal/api/gen/http/openapi/client"
 	organizationc "github.com/niiniyare/erp/internal/api/gen/http/organization/client"
 	tenantc "github.com/niiniyare/erp/internal/api/gen/http/tenant/client"
+	tenantmanagementc "github.com/niiniyare/erp/internal/api/gen/http/tenant_management/client"
 	userc "github.com/niiniyare/erp/internal/api/gen/http/user/client"
 	goahttp "goa.design/goa/v3/http"
 	goa "goa.design/goa/v3/pkg"
@@ -41,6 +42,7 @@ func UsageCommands() []string {
 		"featureflag (create|get|get-by-id|list|update|delete|evaluate|evaluate-multiple|get-stats|search|get-by-type|health)",
 		"finance (create-account-node|get-account-node|get-account-node-by-code|list-account-nodes|update-account-node|delete-account-node|search-account-nodes|get-account-node-balance|get-hierarchy-analysis|create-account|get-account|get-account-by-code|get-account-by-name|list-accounts|update-account|delete-account|get-account-hierarchy|get-account-balance|create-transaction|get-transaction|get-transaction-by-number|list-transactions|post-transaction|reverse-transaction|approve-transaction|validate-transaction|get-transaction-status|submit-approval-decision|request-transaction-changes|get-transaction-workflow|get-trial-balance)",
 		"organization (create|get|list|update|hierarchy|archive)",
+		"tenant-management (provision|suspend|reactivate|update-configuration|get-usage-analytics)",
 		"tenant (create|get|list|update|delete|health)",
 		"user (get-attributes|set-attributes|bulk-update-attributes|check-permission|authorize-action|get-session-attributes|set-session-context|get-user-context|validate-attributes|refresh-attributes|create|get|list|update|deactivate|permissions|assign-role|remove-role)",
 		"openapi (spec|ui)",
@@ -54,9 +56,7 @@ func UsageExamples() string {
       "duration_hours": 24,
       "entity_id": "123e4567-e89b-12d3-a456-426614174000",
       "metadata": {
-         "Officia libero eligendi sed sint quasi perspiciatis.": "Dicta hic ipsum qui et.",
-         "Placeat natus.": "Aliquid fuga est et corporis officiis aut.",
-         "Suscipit consequatur.": "Voluptatibus quibusdam suscipit."
+         "Esse aliquid dicta ut dolorem aut.": "Quia in dolor autem perferendis."
       },
       "reason": "Need access to review quarterly reports",
       "requester_id": "123e4567-e89b-12d3-a456-426614174000",
@@ -69,28 +69,28 @@ func UsageExamples() string {
    }'` + "\n" +
 		os.Args[0] + ` health health` + "\n" +
 		os.Args[0] + ` abac evaluate --body '{
-      "action": "Ut ea saepe perferendis quisquam aut.",
+      "action": "Magni accusamus corporis.",
       "cache_results": false,
       "context": {
-         "Autem ex.": "Similique eveniet beatae esse aliquid.",
-         "Perspiciatis et fugiat et voluptate.": "Omnis sunt earum voluptatem officiis.",
-         "Ut dolorem aut non quia.": "Dolor autem."
+         "Quis voluptatem optio asperiores nihil necessitatibus.": "Et corrupti ut dolor deleniti."
       },
-      "explain_decision": true,
-      "include_advice": false,
-      "request_id": "Eveniet enim tempora nihil ipsum unde.",
-      "resource_id": "Est qui.",
-      "resource_type": "Voluptas et.",
+      "explain_decision": false,
+      "include_advice": true,
+      "request_id": "Perspiciatis possimus quis quas facilis velit.",
+      "resource_id": "Delectus cupiditate provident ullam dolore et.",
+      "resource_type": "Consequatur sint et.",
       "use_cache": false,
-      "user_id": "Aliquid est similique ducimus recusandae porro."
-   }' --token "Nobis et rerum rem non."` + "\n" +
+      "user_id": "Dolore unde est."
+   }' --token "Adipisci optio mollitia praesentium distinctio."` + "\n" +
 		os.Args[0] + ` admin-featureflag bulk-enable --body '{
       "flag_names": [
-         "Molestiae nihil quia ut eum.",
-         "Eos ut."
+         "Corrupti dolorem.",
+         "Nam libero laboriosam earum molestiae.",
+         "Aut doloribus ea corporis tempora.",
+         "Tempora sunt sapiente rerum quod ut itaque."
       ],
-      "reason": "Qui earum delectus deserunt."
-   }' --tenant-id "Ipsa ut qui quisquam." --token "Sit nostrum tenetur tempore qui repellendus."` + "\n" +
+      "reason": "Id totam quia cum."
+   }' --tenant-id "Porro distinctio excepturi hic autem." --token "Porro qui velit at illum praesentium."` + "\n" +
 		""
 }
 
@@ -429,6 +429,27 @@ func ParseEndpoint(
 		organizationArchiveFlags  = flag.NewFlagSet("archive", flag.ExitOnError)
 		organizationArchiveIDFlag = organizationArchiveFlags.String("id", "REQUIRED", "Organization ID")
 
+		tenantManagementFlags = flag.NewFlagSet("tenant-management", flag.ContinueOnError)
+
+		tenantManagementProvisionFlags    = flag.NewFlagSet("provision", flag.ExitOnError)
+		tenantManagementProvisionBodyFlag = tenantManagementProvisionFlags.String("body", "REQUIRED", "")
+
+		tenantManagementSuspendFlags    = flag.NewFlagSet("suspend", flag.ExitOnError)
+		tenantManagementSuspendBodyFlag = tenantManagementSuspendFlags.String("body", "REQUIRED", "")
+		tenantManagementSuspendIDFlag   = tenantManagementSuspendFlags.String("id", "REQUIRED", "Tenant ID")
+
+		tenantManagementReactivateFlags    = flag.NewFlagSet("reactivate", flag.ExitOnError)
+		tenantManagementReactivateBodyFlag = tenantManagementReactivateFlags.String("body", "REQUIRED", "")
+		tenantManagementReactivateIDFlag   = tenantManagementReactivateFlags.String("id", "REQUIRED", "Tenant ID")
+
+		tenantManagementUpdateConfigurationFlags    = flag.NewFlagSet("update-configuration", flag.ExitOnError)
+		tenantManagementUpdateConfigurationBodyFlag = tenantManagementUpdateConfigurationFlags.String("body", "REQUIRED", "")
+		tenantManagementUpdateConfigurationIDFlag   = tenantManagementUpdateConfigurationFlags.String("id", "REQUIRED", "Tenant ID")
+
+		tenantManagementGetUsageAnalyticsFlags      = flag.NewFlagSet("get-usage-analytics", flag.ExitOnError)
+		tenantManagementGetUsageAnalyticsIDFlag     = tenantManagementGetUsageAnalyticsFlags.String("id", "REQUIRED", "Tenant ID")
+		tenantManagementGetUsageAnalyticsPeriodFlag = tenantManagementGetUsageAnalyticsFlags.String("period", "current_month", "")
+
 		tenantFlags = flag.NewFlagSet("tenant", flag.ContinueOnError)
 
 		tenantCreateFlags    = flag.NewFlagSet("create", flag.ExitOnError)
@@ -638,6 +659,13 @@ func ParseEndpoint(
 	organizationHierarchyFlags.Usage = organizationHierarchyUsage
 	organizationArchiveFlags.Usage = organizationArchiveUsage
 
+	tenantManagementFlags.Usage = tenantManagementUsage
+	tenantManagementProvisionFlags.Usage = tenantManagementProvisionUsage
+	tenantManagementSuspendFlags.Usage = tenantManagementSuspendUsage
+	tenantManagementReactivateFlags.Usage = tenantManagementReactivateUsage
+	tenantManagementUpdateConfigurationFlags.Usage = tenantManagementUpdateConfigurationUsage
+	tenantManagementGetUsageAnalyticsFlags.Usage = tenantManagementGetUsageAnalyticsUsage
+
 	tenantFlags.Usage = tenantUsage
 	tenantCreateFlags.Usage = tenantCreateUsage
 	tenantGetFlags.Usage = tenantGetUsage
@@ -701,6 +729,8 @@ func ParseEndpoint(
 			svcf = financeFlags
 		case "organization":
 			svcf = organizationFlags
+		case "tenant-management":
+			svcf = tenantManagementFlags
 		case "tenant":
 			svcf = tenantFlags
 		case "user":
@@ -991,6 +1021,25 @@ func ParseEndpoint(
 
 			case "archive":
 				epf = organizationArchiveFlags
+
+			}
+
+		case "tenant-management":
+			switch epn {
+			case "provision":
+				epf = tenantManagementProvisionFlags
+
+			case "suspend":
+				epf = tenantManagementSuspendFlags
+
+			case "reactivate":
+				epf = tenantManagementReactivateFlags
+
+			case "update-configuration":
+				epf = tenantManagementUpdateConfigurationFlags
+
+			case "get-usage-analytics":
+				epf = tenantManagementGetUsageAnalyticsFlags
 
 			}
 
@@ -1371,6 +1420,25 @@ func ParseEndpoint(
 				endpoint = c.Archive()
 				data, err = organizationc.BuildArchivePayload(*organizationArchiveIDFlag)
 			}
+		case "tenant-management":
+			c := tenantmanagementc.NewClient(scheme, host, doer, enc, dec, restore)
+			switch epn {
+			case "provision":
+				endpoint = c.Provision()
+				data, err = tenantmanagementc.BuildProvisionPayload(*tenantManagementProvisionBodyFlag)
+			case "suspend":
+				endpoint = c.Suspend()
+				data, err = tenantmanagementc.BuildSuspendPayload(*tenantManagementSuspendBodyFlag, *tenantManagementSuspendIDFlag)
+			case "reactivate":
+				endpoint = c.Reactivate()
+				data, err = tenantmanagementc.BuildReactivatePayload(*tenantManagementReactivateBodyFlag, *tenantManagementReactivateIDFlag)
+			case "update-configuration":
+				endpoint = c.UpdateConfiguration()
+				data, err = tenantmanagementc.BuildUpdateConfigurationPayload(*tenantManagementUpdateConfigurationBodyFlag, *tenantManagementUpdateConfigurationIDFlag)
+			case "get-usage-analytics":
+				endpoint = c.GetUsageAnalytics()
+				data, err = tenantmanagementc.BuildGetUsageAnalyticsPayload(*tenantManagementGetUsageAnalyticsIDFlag, *tenantManagementGetUsageAnalyticsPeriodFlag)
+			}
 		case "tenant":
 			c := tenantc.NewClient(scheme, host, doer, enc, dec, restore)
 			switch epn {
@@ -1504,9 +1572,7 @@ Example:
       "duration_hours": 24,
       "entity_id": "123e4567-e89b-12d3-a456-426614174000",
       "metadata": {
-         "Officia libero eligendi sed sint quasi perspiciatis.": "Dicta hic ipsum qui et.",
-         "Placeat natus.": "Aliquid fuga est et corporis officiis aut.",
-         "Suscipit consequatur.": "Voluptatibus quibusdam suscipit."
+         "Esse aliquid dicta ut dolorem aut.": "Quia in dolor autem perferendis."
       },
       "reason": "Need access to review quarterly reports",
       "requester_id": "123e4567-e89b-12d3-a456-426614174000",
@@ -1721,7 +1787,7 @@ Logout user and invalidate token
     -token STRING: 
 
 Example:
-    %[1]s auth logout --token "Voluptas animi."
+    %[1]s auth logout --token "Quidem nostrum reprehenderit qui enim."
 `, os.Args[0])
 }
 
@@ -1732,7 +1798,7 @@ Validate JWT token
     -token STRING: 
 
 Example:
-    %[1]s auth validate --token "Distinctio qui in sapiente rerum culpa."
+    %[1]s auth validate --token "Fugit eaque vel."
 `, os.Args[0])
 }
 
@@ -1801,21 +1867,19 @@ Evaluate a policy decision request.
 
 Example:
     %[1]s abac evaluate --body '{
-      "action": "Ut ea saepe perferendis quisquam aut.",
+      "action": "Magni accusamus corporis.",
       "cache_results": false,
       "context": {
-         "Autem ex.": "Similique eveniet beatae esse aliquid.",
-         "Perspiciatis et fugiat et voluptate.": "Omnis sunt earum voluptatem officiis.",
-         "Ut dolorem aut non quia.": "Dolor autem."
+         "Quis voluptatem optio asperiores nihil necessitatibus.": "Et corrupti ut dolor deleniti."
       },
-      "explain_decision": true,
-      "include_advice": false,
-      "request_id": "Eveniet enim tempora nihil ipsum unde.",
-      "resource_id": "Est qui.",
-      "resource_type": "Voluptas et.",
+      "explain_decision": false,
+      "include_advice": true,
+      "request_id": "Perspiciatis possimus quis quas facilis velit.",
+      "resource_id": "Delectus cupiditate provident ullam dolore et.",
+      "resource_type": "Consequatur sint et.",
       "use_cache": false,
-      "user_id": "Aliquid est similique ducimus recusandae porro."
-   }' --token "Nobis et rerum rem non."
+      "user_id": "Dolore unde est."
+   }' --token "Adipisci optio mollitia praesentium distinctio."
 `, os.Args[0])
 }
 
@@ -1830,60 +1894,42 @@ Example:
     %[1]s abac evaluate-bulk --body '{
       "cache_results": true,
       "fail_fast": true,
-      "request_id": "Laboriosam voluptas in ullam aut.",
+      "request_id": "Repellat aperiam ab ullam accusamus.",
       "requests": [
          {
-            "action": "Ut iure officia consequatur adipisci nihil.",
+            "action": "Vero nisi nostrum et.",
             "cache_results": false,
             "context": {
-               "Id ut dignissimos consectetur.": "Et iste consequatur qui voluptas reprehenderit.",
-               "Sed ipsa repellendus hic eveniet alias ut.": "Mollitia recusandae.",
-               "Voluptatem non in aut impedit.": "Rerum dolorum dolores."
+               "Iusto doloremque est.": "Veniam consequatur laboriosam.",
+               "Sunt repellat tempora quasi nisi.": "Velit voluptate."
             },
             "explain_decision": false,
             "include_advice": false,
-            "request_id": "Eaque placeat est deserunt blanditiis facilis beatae.",
-            "resource_id": "Enim sint tenetur quod omnis.",
-            "resource_type": "Unde dolorem esse iusto rerum nesciunt molestias.",
+            "request_id": "Laudantium esse.",
+            "resource_id": "Ut consequuntur rerum et sapiente optio veritatis.",
+            "resource_type": "Ut ut molestiae.",
             "use_cache": false,
-            "user_id": "Voluptatibus nisi accusantium."
+            "user_id": "Deleniti occaecati quo velit ea corporis aliquid."
          },
          {
-            "action": "Ut iure officia consequatur adipisci nihil.",
+            "action": "Vero nisi nostrum et.",
             "cache_results": false,
             "context": {
-               "Id ut dignissimos consectetur.": "Et iste consequatur qui voluptas reprehenderit.",
-               "Sed ipsa repellendus hic eveniet alias ut.": "Mollitia recusandae.",
-               "Voluptatem non in aut impedit.": "Rerum dolorum dolores."
+               "Iusto doloremque est.": "Veniam consequatur laboriosam.",
+               "Sunt repellat tempora quasi nisi.": "Velit voluptate."
             },
             "explain_decision": false,
             "include_advice": false,
-            "request_id": "Eaque placeat est deserunt blanditiis facilis beatae.",
-            "resource_id": "Enim sint tenetur quod omnis.",
-            "resource_type": "Unde dolorem esse iusto rerum nesciunt molestias.",
+            "request_id": "Laudantium esse.",
+            "resource_id": "Ut consequuntur rerum et sapiente optio veritatis.",
+            "resource_type": "Ut ut molestiae.",
             "use_cache": false,
-            "user_id": "Voluptatibus nisi accusantium."
-         },
-         {
-            "action": "Ut iure officia consequatur adipisci nihil.",
-            "cache_results": false,
-            "context": {
-               "Id ut dignissimos consectetur.": "Et iste consequatur qui voluptas reprehenderit.",
-               "Sed ipsa repellendus hic eveniet alias ut.": "Mollitia recusandae.",
-               "Voluptatem non in aut impedit.": "Rerum dolorum dolores."
-            },
-            "explain_decision": false,
-            "include_advice": false,
-            "request_id": "Eaque placeat est deserunt blanditiis facilis beatae.",
-            "resource_id": "Enim sint tenetur quod omnis.",
-            "resource_type": "Unde dolorem esse iusto rerum nesciunt molestias.",
-            "use_cache": false,
-            "user_id": "Voluptatibus nisi accusantium."
+            "user_id": "Deleniti occaecati quo velit ea corporis aliquid."
          }
       ],
       "use_cache": false,
-      "user_id": "Doloribus est qui aliquam sed labore."
-   }' --token "Magnam voluptatem aut qui ducimus."
+      "user_id": "Voluptatibus rerum autem."
+   }' --token "Quibusdam id totam est."
 `, os.Args[0])
 }
 
@@ -1896,14 +1942,14 @@ Simple authorization check.
 
 Example:
     %[1]s abac authorize --body '{
-      "action": "Id deserunt et et nobis.",
+      "action": "Eaque voluptatem dicta sequi neque.",
       "context": {
-         "Non est aliquam ad maxime.": "Numquam qui dolore quia magnam asperiores."
+         "Ab quia.": "Asperiores rerum provident."
       },
-      "resource_id": "Nulla vitae aut rerum sapiente cum.",
-      "resource_type": "Consequatur totam.",
-      "user_id": "Maiores non ratione rerum iure."
-   }' --token "Nihil dolore."
+      "resource_id": "Qui vel eos atque.",
+      "resource_type": "Sit dolorem rerum non repellendus ut.",
+      "user_id": "Enim est veniam."
+   }' --token "Et repellendus quasi in accusamus odio incidunt."
 `, os.Args[0])
 }
 
@@ -1916,16 +1962,17 @@ Explain a policy decision.
 
 Example:
     %[1]s abac explain --body '{
-      "action": "Hic est nesciunt aliquam et.",
+      "action": "Amet possimus repudiandae fuga.",
       "context": {
-         "Enim est veniam.": "Sit dolorem rerum non repellendus ut.",
-         "Qui vel eos atque.": "Eaque voluptatem dicta sequi neque."
+         "Maiores laboriosam non iste dolores.": "Nostrum recusandae molestias in non aut et.",
+         "Molestiae magni est incidunt.": "Pariatur expedita.",
+         "Voluptatem veritatis sit.": "Vero aliquam."
       },
-      "detail_level": "Rerum ab.",
-      "resource_id": "Aut et maiores dolores provident.",
-      "resource_type": "Voluptatibus ab in tempore.",
-      "user_id": "Eligendi laudantium totam ut."
-   }' --token "Expedita asperiores rerum provident deleniti et."
+      "detail_level": "Nesciunt est vero.",
+      "resource_id": "Error ducimus.",
+      "resource_type": "Molestiae nihil laboriosam magni ratione.",
+      "user_id": "Ut laudantium animi voluptas."
+   }' --token "Ipsa magni optio sint quia."
 `, os.Args[0])
 }
 
@@ -1938,13 +1985,13 @@ Discover applicable policies.
 
 Example:
     %[1]s abac discover-policies --body '{
-      "action": "Sint quia est magnam dolores consequatur corrupti.",
+      "action": "Autem voluptas fuga.",
       "context": {
-         "Non ducimus.": "Saepe inventore eaque eos eaque."
+         "Adipisci fuga vero.": "Accusantium velit."
       },
-      "resource_type": "Est vero id ipsa magni.",
-      "user_id": "Veritatis sit doloribus vero aliquam enim."
-   }' --token "Laboriosam eos dolorum."
+      "resource_type": "Sed suscipit incidunt voluptatem qui numquam sequi.",
+      "user_id": "Est libero laboriosam quis magnam aliquam omnis."
+   }' --token "Neque et odit et fuga rerum."
 `, os.Args[0])
 }
 
@@ -1957,13 +2004,13 @@ Collect attributes for a given context.
 
 Example:
     %[1]s abac collect-attributes --body '{
-      "action": "Et autem voluptas fuga assumenda voluptates adipisci.",
-      "entity_id": "Vero omnis accusantium velit aut neque et.",
+      "action": "Doloribus nesciunt.",
+      "entity_id": "Enim sed exercitationem.",
       "include_expired": true,
-      "resource_id": "Quisquam sed suscipit incidunt voluptatem qui numquam.",
-      "resource_type": "Voluptatem est libero laboriosam quis magnam aliquam.",
-      "user_id": "Et iure sunt tempora nam iure nihil."
-   }' --token "Fuga rerum est iusto molestiae."
+      "resource_id": "Quae voluptatem qui ducimus.",
+      "resource_type": "Fugiat omnis.",
+      "user_id": "Tempore sit."
+   }' --token "Sint qui voluptates."
 `, os.Args[0])
 }
 
@@ -1976,9 +2023,9 @@ Get a history of policy decisions.
 
 Example:
     %[1]s abac audit-decisions --body '{
-      "limit": 12699055151257515856,
-      "user_id": "Sequi ullam nostrum sunt adipisci labore."
-   }' --token "Velit voluptatum dignissimos molestias."
+      "limit": 10442271467752120742,
+      "user_id": "Delectus tempore."
+   }' --token "Quas voluptas id omnis laudantium ea rerum."
 `, os.Args[0])
 }
 
@@ -1991,10 +2038,10 @@ Invalidate the ABAC cache.
 
 Example:
     %[1]s abac invalidate-cache --body '{
-      "pattern": "Nulla architecto veniam adipisci et suscipit.",
-      "resource_type": "Incidunt quia ullam temporibus modi.",
-      "user_id": "Voluptatum et suscipit quis qui et."
-   }' --token "Quia ut dolorum ullam ratione."
+      "pattern": "Sapiente officia doloribus.",
+      "resource_type": "Sunt sed nesciunt quis dignissimos at.",
+      "user_id": "Quis temporibus blanditiis ut ipsa dolorem occaecati."
+   }' --token "Pariatur dolorum ducimus voluptatem et."
 `, os.Args[0])
 }
 
@@ -2005,7 +2052,7 @@ Health check for the ABAC service.
     -token STRING: 
 
 Example:
-    %[1]s abac health --token "Enim perferendis dolorem soluta tempore quia."
+    %[1]s abac health --token "Dicta quos voluptatum aperiam omnis."
 `, os.Args[0])
 }
 
@@ -2016,7 +2063,7 @@ Get performance metrics for the ABAC service.
     -token STRING: 
 
 Example:
-    %[1]s abac metrics --token "Nam unde quo."
+    %[1]s abac metrics --token "Dolores officia doloribus accusantium omnis necessitatibus."
 `, os.Args[0])
 }
 
@@ -2047,11 +2094,13 @@ Enable multiple feature flags in bulk
 Example:
     %[1]s admin-featureflag bulk-enable --body '{
       "flag_names": [
-         "Molestiae nihil quia ut eum.",
-         "Eos ut."
+         "Corrupti dolorem.",
+         "Nam libero laboriosam earum molestiae.",
+         "Aut doloribus ea corporis tempora.",
+         "Tempora sunt sapiente rerum quod ut itaque."
       ],
-      "reason": "Qui earum delectus deserunt."
-   }' --tenant-id "Ipsa ut qui quisquam." --token "Sit nostrum tenetur tempore qui repellendus."
+      "reason": "Id totam quia cum."
+   }' --tenant-id "Porro distinctio excepturi hic autem." --token "Porro qui velit at illum praesentium."
 `, os.Args[0])
 }
 
@@ -2066,13 +2115,12 @@ Disable multiple feature flags in bulk
 Example:
     %[1]s admin-featureflag bulk-disable --body '{
       "flag_names": [
-         "Dolor et est atque aut ad vel.",
-         "Quaerat et sit maxime.",
-         "Exercitationem aut tempore.",
-         "Ullam quod omnis iure nihil vero."
+         "Odit enim.",
+         "Autem veniam laudantium optio fugit porro sapiente.",
+         "Accusantium tempora."
       ],
-      "reason": "Eum qui."
-   }' --tenant-id "Enim voluptatem facilis." --token "Velit reiciendis nisi velit rem ullam."
+      "reason": "Nisi facere ea pariatur consectetur non."
+   }' --tenant-id "Est adipisci qui officia recusandae quis." --token "Eum optio eaque possimus."
 `, os.Args[0])
 }
 
@@ -2084,7 +2132,7 @@ Get system health status
     -token STRING: 
 
 Example:
-    %[1]s admin-featureflag system-health --tenant-id "Repellendus natus beatae non velit." --token "Hic harum beatae in doloribus accusamus."
+    %[1]s admin-featureflag system-health --tenant-id "Velit et tenetur totam alias et quisquam." --token "Amet mollitia aut deserunt nam id voluptas."
 `, os.Args[0])
 }
 
@@ -2389,25 +2437,25 @@ Create a new account or account group using unified endpoint
 Example:
     %[1]s finance create-account-node --body '{
       "account_type": "BANK",
-      "allows_manual_entries": true,
+      "allows_manual_entries": false,
       "cash_flow_category": "OPERATING",
       "code": "1100",
       "consolidation_method": "MIN",
       "currency_code": "USD",
-      "description": "gt6",
-      "display_order": 605222966,
-      "entity_id": "5a3f4c68-208d-48d0-a9f0-ba6f5b9dd2fb",
+      "description": "2xs",
+      "display_order": 685251926,
+      "entity_id": "12800d7d-7dfb-48ef-9252-d077a0c59845",
       "financial_statement_section": "BALANCE_SHEET_ASSETS",
       "indent_level": 1,
-      "is_active": true,
+      "is_active": false,
       "is_header": true,
       "name": "Cash - Operating Account",
       "node_type": "account",
       "normal_balance": "DEBIT",
-      "parent_id": "546fe2e9-64db-42f6-a29c-7c43a953290b",
+      "parent_id": "3708d5a4-9f45-4f5c-a283-ea6b457e2fa3",
       "requires_reconciliation": true,
       "root_type": "ASSET",
-      "show_totals": false
+      "show_totals": true
    }'
 `, os.Args[0])
 }
@@ -2419,7 +2467,7 @@ Get account or account group by ID
     -id STRING: Node ID
 
 Example:
-    %[1]s finance get-account-node --id "2f71db9a-2feb-4809-861a-004cf435afda"
+    %[1]s finance get-account-node --id "232a91bf-8140-4dd9-81db-020c39c3f767"
 `, os.Args[0])
 }
 
@@ -2464,7 +2512,7 @@ Example:
    }' --node-types '[
       "account",
       "group"
-   ]' --parent-id "136ad97f-014f-4900-9319-8cb02bba3f59" --max-level 1975039705 --include-children false --root-type "EXPENSE" --account-type "Quos voluptatem qui dolorem debitis exercitationem." --financial-statement-section "Enim fuga quia amet iste aut eos." --cash-flow-category "FINANCING" --is-active true --search-query "Corporis magni et corporis eligendi et." --include-balances true --sort-by "code" --sort-order "asc"
+   ]' --parent-id "68e46999-4625-419f-97d3-efc5fb86a8ac" --max-level 15718895 --include-children true --root-type "ASSET" --account-type "Minus voluptatem tempora." --financial-statement-section "Praesentium incidunt quidem." --cash-flow-category "INVESTING" --is-active false --search-query "Qui hic corporis vel dolorem sunt enim." --include-balances false --sort-by "created_at" --sort-order "asc"
 `, os.Args[0])
 }
 
@@ -2477,15 +2525,15 @@ Update an existing account or account group
 
 Example:
     %[1]s finance update-account-node --body '{
-      "allows_manual_entries": true,
-      "description": "Cum eligendi rerum repudiandae illum tempora.",
-      "display_order": 569260575,
-      "indent_level": 1,
+      "allows_manual_entries": false,
+      "description": "Fugit accusamus amet id laborum.",
+      "display_order": 521286502,
+      "indent_level": 6,
       "is_active": false,
-      "name": "l",
+      "name": "f",
       "requires_reconciliation": true,
-      "show_totals": true
-   }' --id "009a289e-03ab-4d8a-851e-9c9bd15e28f8"
+      "show_totals": false
+   }' --id "4c62309b-a74d-410f-91db-9d65f7561fe1"
 `, os.Args[0])
 }
 
@@ -2496,7 +2544,7 @@ Soft delete an account or account group
     -id STRING: Node ID
 
 Example:
-    %[1]s finance delete-account-node --id "d9f14ef4-9864-4df5-90a0-95894a3eb73e"
+    %[1]s finance delete-account-node --id "6e93770f-3eda-4b5c-af89-67235ffcc3b7"
 `, os.Args[0])
 }
 
@@ -2513,8 +2561,9 @@ Example:
     %[1]s finance search-account-nodes --query "cash" --node-types '[
       "group",
       "group",
-      "account"
-   ]' --limit 17 --include-inactive false
+      "account",
+      "group"
+   ]' --limit 65 --include-inactive true
 `, os.Args[0])
 }
 
@@ -2526,7 +2575,7 @@ Get current balance for an account node
     -as-of-date STRING: 
 
 Example:
-    %[1]s finance get-account-node-balance --account-id "8100b2b0-8f61-47c9-ad8a-967d0e366c1e" --as-of-date "2014-08-22"
+    %[1]s finance get-account-node-balance --account-id "833a3e6a-bb6d-40b6-9b01-a8ce4b7adba7" --as-of-date "2000-11-03"
 `, os.Args[0])
 }
 
@@ -2540,7 +2589,7 @@ Get hierarchy analysis for a parent node
     -as-of-date STRING: 
 
 Example:
-    %[1]s finance get-hierarchy-analysis --parent-id "0ce28dc9-a946-43b4-93cc-7b3cea31a60d" --include-balance-data true --max-depth 1717144653 --as-of-date "1973-09-23"
+    %[1]s finance get-hierarchy-analysis --parent-id "db1ecb1a-4f19-48cc-94d1-742dedafe546" --include-balance-data true --max-depth 724887441 --as-of-date "2003-05-24"
 `, os.Args[0])
 }
 
@@ -2553,16 +2602,16 @@ Create a new chart of accounts entry
 Example:
     %[1]s finance create-account --body '{
       "account_code": "1100",
-      "account_description": "byz",
+      "account_description": "2o9",
       "account_name": "Cash - Operating Account",
       "account_type": "BANK",
-      "allow_manual_entries": false,
+      "allow_manual_entries": true,
       "cash_flow_type": "INVESTING",
       "currency_code": "USD",
-      "entity_id": "14105608-4056-4455-989e-fd153e760ff6",
-      "is_active": false,
+      "entity_id": "682b5a70-bd46-4569-99e5-0024a05e3a38",
+      "is_active": true,
       "normal_balance": "DEBIT",
-      "parent_account_id": "8e4c1159-7702-4b03-8a82-eb18dc8f3a42",
+      "parent_account_id": "2d6baf1d-3536-4dfb-82c8-5f17bd4ba46f",
       "require_reference": true,
       "root_type": "ASSET"
    }'
@@ -2576,7 +2625,7 @@ Get account by ID
     -id STRING: Account ID
 
 Example:
-    %[1]s finance get-account --id "495f8b9e-ca63-4024-9aba-a86a66df4e16"
+    %[1]s finance get-account --id "056c7e25-9c70-4cac-8d34-7946da550ce0"
 `, os.Args[0])
 }
 
@@ -2621,7 +2670,7 @@ Example:
          "sort_by": "created_at",
          "sort_order": "desc"
       }
-   }' --root-type "REVENUE" --account-type "Sint vel dolor recusandae." --is-active false --parent-id "933a57d1-0f73-4389-9476-0b9edbacabc7" --search "Quia et asperiores et ratione rerum distinctio."
+   }' --root-type "ASSET" --account-type "Qui aliquam perspiciatis neque ut." --is-active false --parent-id "be2a5978-d778-44b0-8f9e-b9f94d24ca58" --search "Aperiam vel."
 `, os.Args[0])
 }
 
@@ -2634,15 +2683,15 @@ Update an existing account
 
 Example:
     %[1]s finance update-account --body '{
-      "account_description": "Qui non ea et voluptatem iure.",
-      "account_name": "6",
+      "account_description": "Delectus ad.",
+      "account_name": "d",
       "allow_manual_entries": true,
-      "cash_flow_type": "FINANCING",
-      "display_order": 340555540,
+      "cash_flow_type": "OPERATING",
+      "display_order": 1276719693,
       "is_active": true,
-      "require_reference": false,
+      "require_reference": true,
       "show_in_reports": false
-   }' --id "5250e646-5ce1-4c32-b80d-ad9c84da109d"
+   }' --id "aa2def65-adff-4a24-86e6-07537978cd53"
 `, os.Args[0])
 }
 
@@ -2653,7 +2702,7 @@ Soft delete an account
     -id STRING: Account ID
 
 Example:
-    %[1]s finance delete-account --id "ab869f10-6903-4910-867a-3c26b71737d0"
+    %[1]s finance delete-account --id "be707b47-a1f9-404c-9ec4-9b42edc66d72"
 `, os.Args[0])
 }
 
@@ -2664,7 +2713,7 @@ Get account hierarchy tree
     -root-id STRING: 
 
 Example:
-    %[1]s finance get-account-hierarchy --root-id "9adda640-be81-4a75-8e12-ff2268f7ff50"
+    %[1]s finance get-account-hierarchy --root-id "eb23a31e-9ae0-4ca9-a210-80c8b4ff9a1d"
 `, os.Args[0])
 }
 
@@ -2676,7 +2725,7 @@ Get current balance for an account
     -as-of-date STRING: 
 
 Example:
-    %[1]s finance get-account-balance --account-id "ef02592a-4ce7-48df-8a33-deb364d0a7b2" --as-of-date "1994-07-28"
+    %[1]s finance get-account-balance --account-id "94e98784-a5a9-4539-8377-f617ecc68da3" --as-of-date "1974-08-10"
 `, os.Args[0])
 }
 
@@ -2692,57 +2741,44 @@ Example:
          "receipt-uuid",
          "approval-form-uuid"
       ],
-      "auto_approve": true,
+      "auto_approve": false,
       "cost_center": "CC001",
-      "currency": "CND",
+      "currency": "FYW",
       "department": "administration",
       "description": "Office supplies purchase",
-      "entity_id": "a11f03ef-d2bb-4544-ba9b-acbda43ceaf3",
+      "entity_id": "cb1f0932-774f-4f54-81d2-828099ebe71f",
       "entries": [
          {
             "account_code": "1100",
-            "account_id": "d3beaa70-e1ac-4ba6-8fec-79a35d65c374",
-            "cost_center": "Eos quas molestiae.",
+            "account_id": "b4ef5cb4-c00f-4f81-a775-f9f8885fe7a0",
+            "cost_center": "Aliquam exercitationem inventore aut iure reprehenderit.",
             "credit_amount": "0.00",
             "debit_amount": "1500.00",
-            "department": "Aut eligendi.",
+            "department": "Impedit porro maxime aut.",
             "description": "Cash payment for supplies",
-            "project_id": "57b059b9-f88a-4dc9-b02a-c937a2c1a96c",
-            "reference": "Reiciendis nemo dolorem.",
-            "tax_code": "Aliquam ipsa voluptas rerum culpa deserunt.",
-            "tax_rate": "Rerum hic ex aspernatur velit alias."
+            "project_id": "9fa6b56a-0129-43b6-9d0b-bcba86c4f289",
+            "reference": "Ducimus eligendi.",
+            "tax_code": "Est odit minus sed eum reiciendis.",
+            "tax_rate": "Minus delectus enim nemo dolores enim est."
          },
          {
             "account_code": "1100",
-            "account_id": "d3beaa70-e1ac-4ba6-8fec-79a35d65c374",
-            "cost_center": "Eos quas molestiae.",
+            "account_id": "b4ef5cb4-c00f-4f81-a775-f9f8885fe7a0",
+            "cost_center": "Aliquam exercitationem inventore aut iure reprehenderit.",
             "credit_amount": "0.00",
             "debit_amount": "1500.00",
-            "department": "Aut eligendi.",
+            "department": "Impedit porro maxime aut.",
             "description": "Cash payment for supplies",
-            "project_id": "57b059b9-f88a-4dc9-b02a-c937a2c1a96c",
-            "reference": "Reiciendis nemo dolorem.",
-            "tax_code": "Aliquam ipsa voluptas rerum culpa deserunt.",
-            "tax_rate": "Rerum hic ex aspernatur velit alias."
-         },
-         {
-            "account_code": "1100",
-            "account_id": "d3beaa70-e1ac-4ba6-8fec-79a35d65c374",
-            "cost_center": "Eos quas molestiae.",
-            "credit_amount": "0.00",
-            "debit_amount": "1500.00",
-            "department": "Aut eligendi.",
-            "description": "Cash payment for supplies",
-            "project_id": "57b059b9-f88a-4dc9-b02a-c937a2c1a96c",
-            "reference": "Reiciendis nemo dolorem.",
-            "tax_code": "Aliquam ipsa voluptas rerum culpa deserunt.",
-            "tax_rate": "Rerum hic ex aspernatur velit alias."
+            "project_id": "9fa6b56a-0129-43b6-9d0b-bcba86c4f289",
+            "reference": "Ducimus eligendi.",
+            "tax_code": "Est odit minus sed eum reiciendis.",
+            "tax_rate": "Minus delectus enim nemo dolores enim est."
          }
       ],
-      "priority": "urgent",
+      "priority": "normal",
       "reference_number": "PO-2025-089",
       "transaction_date": "2025-09-13",
-      "transaction_number": "Aliquam minus ut eum.",
+      "transaction_number": "Modi sit.",
       "transaction_type": "EXPENSE_PAYMENT"
    }'
 `, os.Args[0])
@@ -2755,7 +2791,7 @@ Get transaction by ID with entries
     -id STRING: Transaction ID
 
 Example:
-    %[1]s finance get-transaction --id "eb39ecd3-adbb-4930-a7c9-02417ee64f48"
+    %[1]s finance get-transaction --id "c865e256-0242-4650-9efd-cb899fb47804"
 `, os.Args[0])
 }
 
@@ -2792,7 +2828,7 @@ Example:
          "sort_by": "created_at",
          "sort_order": "desc"
       }
-   }' --status "POSTED" --type "CLOSING_ENTRY" --account-id "a4c64d11-2f5d-4266-a901-38d078e743c9" --search "Et ut qui architecto minus esse quasi."
+   }' --status "CANCELLED" --type "ADJUSTMENT" --account-id "a8530dc1-65fe-4216-a541-7cfdc64fcb58" --search "Vitae ab officia corporis consequuntur dolorum."
 `, os.Args[0])
 }
 
@@ -2806,9 +2842,9 @@ Post a transaction (make it permanent)
 Example:
     %[1]s finance post-transaction --body '{
       "force_post": true,
-      "posting_date": "2011-06-27",
+      "posting_date": "1984-01-17",
       "validate_before_posting": true
-   }' --id "30c85bb4-0c5b-47f5-945e-07770eda8905"
+   }' --id "81cc4bcb-77a7-48a2-a290-fdc401012372"
 `, os.Args[0])
 }
 
@@ -2822,8 +2858,8 @@ Reverse a posted transaction
 Example:
     %[1]s finance reverse-transaction --body '{
       "reason": "Incorrect entry - duplicate payment",
-      "reversal_date": "1994-01-14"
-   }' --id "51f17519-e3c4-45dc-aead-b8f68acf6909"
+      "reversal_date": "2009-12-10"
+   }' --id "6101064b-ce85-4d4c-b462-3083be2b248a"
 `, os.Args[0])
 }
 
@@ -2836,8 +2872,8 @@ Approve a transaction for posting
 
 Example:
     %[1]s finance approve-transaction --body '{
-      "notes": "u5f"
-   }' --id "4dd37fd9-1b4d-45c8-9cb7-e2849830d3a5"
+      "notes": "z92"
+   }' --id "3c09e426-525e-4cf9-96ee-8b28385c40f4"
 `, os.Args[0])
 }
 
@@ -2854,60 +2890,60 @@ Example:
             "receipt-uuid",
             "approval-form-uuid"
          ],
-         "auto_approve": false,
+         "auto_approve": true,
          "cost_center": "CC001",
-         "currency": "YZQ",
+         "currency": "QPX",
          "department": "administration",
          "description": "Office supplies purchase",
-         "entity_id": "ce646e94-f8f2-42c9-a6db-fc18e7ea2bb0",
+         "entity_id": "03dfcc21-a264-4128-bf4a-0d692680a341",
          "entries": [
             {
                "account_code": "1100",
-               "account_id": "d3beaa70-e1ac-4ba6-8fec-79a35d65c374",
-               "cost_center": "Eos quas molestiae.",
+               "account_id": "b4ef5cb4-c00f-4f81-a775-f9f8885fe7a0",
+               "cost_center": "Aliquam exercitationem inventore aut iure reprehenderit.",
                "credit_amount": "0.00",
                "debit_amount": "1500.00",
-               "department": "Aut eligendi.",
+               "department": "Impedit porro maxime aut.",
                "description": "Cash payment for supplies",
-               "project_id": "57b059b9-f88a-4dc9-b02a-c937a2c1a96c",
-               "reference": "Reiciendis nemo dolorem.",
-               "tax_code": "Aliquam ipsa voluptas rerum culpa deserunt.",
-               "tax_rate": "Rerum hic ex aspernatur velit alias."
+               "project_id": "9fa6b56a-0129-43b6-9d0b-bcba86c4f289",
+               "reference": "Ducimus eligendi.",
+               "tax_code": "Est odit minus sed eum reiciendis.",
+               "tax_rate": "Minus delectus enim nemo dolores enim est."
             },
             {
                "account_code": "1100",
-               "account_id": "d3beaa70-e1ac-4ba6-8fec-79a35d65c374",
-               "cost_center": "Eos quas molestiae.",
+               "account_id": "b4ef5cb4-c00f-4f81-a775-f9f8885fe7a0",
+               "cost_center": "Aliquam exercitationem inventore aut iure reprehenderit.",
                "credit_amount": "0.00",
                "debit_amount": "1500.00",
-               "department": "Aut eligendi.",
+               "department": "Impedit porro maxime aut.",
                "description": "Cash payment for supplies",
-               "project_id": "57b059b9-f88a-4dc9-b02a-c937a2c1a96c",
-               "reference": "Reiciendis nemo dolorem.",
-               "tax_code": "Aliquam ipsa voluptas rerum culpa deserunt.",
-               "tax_rate": "Rerum hic ex aspernatur velit alias."
+               "project_id": "9fa6b56a-0129-43b6-9d0b-bcba86c4f289",
+               "reference": "Ducimus eligendi.",
+               "tax_code": "Est odit minus sed eum reiciendis.",
+               "tax_rate": "Minus delectus enim nemo dolores enim est."
             },
             {
                "account_code": "1100",
-               "account_id": "d3beaa70-e1ac-4ba6-8fec-79a35d65c374",
-               "cost_center": "Eos quas molestiae.",
+               "account_id": "b4ef5cb4-c00f-4f81-a775-f9f8885fe7a0",
+               "cost_center": "Aliquam exercitationem inventore aut iure reprehenderit.",
                "credit_amount": "0.00",
                "debit_amount": "1500.00",
-               "department": "Aut eligendi.",
+               "department": "Impedit porro maxime aut.",
                "description": "Cash payment for supplies",
-               "project_id": "57b059b9-f88a-4dc9-b02a-c937a2c1a96c",
-               "reference": "Reiciendis nemo dolorem.",
-               "tax_code": "Aliquam ipsa voluptas rerum culpa deserunt.",
-               "tax_rate": "Rerum hic ex aspernatur velit alias."
+               "project_id": "9fa6b56a-0129-43b6-9d0b-bcba86c4f289",
+               "reference": "Ducimus eligendi.",
+               "tax_code": "Est odit minus sed eum reiciendis.",
+               "tax_rate": "Minus delectus enim nemo dolores enim est."
             }
          ],
-         "priority": "urgent",
+         "priority": "normal",
          "reference_number": "PO-2025-089",
          "transaction_date": "2025-09-13",
-         "transaction_number": "Eos facere.",
+         "transaction_number": "Pariatur fugit.",
          "transaction_type": "EXPENSE_PAYMENT"
       },
-      "validation_level": "BASIC"
+      "validation_level": "COMPLETE"
    }'
 `, os.Args[0])
 }
@@ -2919,7 +2955,7 @@ Get detailed transaction status and workflow progress
     -id STRING: Transaction ID
 
 Example:
-    %[1]s finance get-transaction-status --id "ec506b0e-4cb3-40db-9e31-3fa49fcf9a39"
+    %[1]s finance get-transaction-status --id "556592b2-7b10-40a6-9c4b-ee14b4ed398e"
 `, os.Args[0])
 }
 
@@ -2933,11 +2969,11 @@ Submit approval decision (approve/reject/request changes)
 Example:
     %[1]s finance submit-approval-decision --body '{
       "approval_level": "cfo",
-      "approver_id": "8b1b3353-0afc-4ed9-ab2a-d7ca9da71e5d",
-      "comments": "vcd",
-      "decision": "approved",
-      "escalation_reason": "At commodi laboriosam."
-   }' --id "2ac979b3-061d-45e3-a6d1-cbd7850a127e"
+      "approver_id": "af8028d0-0e00-44c4-9150-d38335b48ebe",
+      "comments": "7yz",
+      "decision": "request_changes",
+      "escalation_reason": "Minima aut fuga velit autem ducimus."
+   }' --id "f172ba40-a834-4b60-9687-ca933d569c77"
 `, os.Args[0])
 }
 
@@ -2950,41 +2986,27 @@ Request modifications to a submitted transaction
 
 Example:
     %[1]s finance request-transaction-changes --body '{
-      "due_date": "1970-10-14T12:15:01Z",
-      "priority": "low",
-      "reason": "7c",
-      "requested_by": "9d8c49e3-4f12-4e9d-9977-64abbd04bb55",
+      "due_date": "2011-01-26T20:32:49Z",
+      "priority": "medium",
+      "reason": "82",
+      "requested_by": "8abcb1e0-788e-4918-b404-98ae9412a3bd",
       "required_changes": [
          {
-            "current_value": "Illo quia reiciendis.",
-            "field": "Corrupti consectetur quasi est.",
-            "is_mandatory": true,
-            "reason": "Quae maiores sit fuga.",
-            "suggested_value": "Saepe et blanditiis."
+            "current_value": "Vitae alias.",
+            "field": "Voluptatem corporis vel est repellendus voluptatum minus.",
+            "is_mandatory": false,
+            "reason": "Quam optio debitis ex.",
+            "suggested_value": "Debitis consequuntur tempore culpa dicta."
          },
          {
-            "current_value": "Illo quia reiciendis.",
-            "field": "Corrupti consectetur quasi est.",
-            "is_mandatory": true,
-            "reason": "Quae maiores sit fuga.",
-            "suggested_value": "Saepe et blanditiis."
-         },
-         {
-            "current_value": "Illo quia reiciendis.",
-            "field": "Corrupti consectetur quasi est.",
-            "is_mandatory": true,
-            "reason": "Quae maiores sit fuga.",
-            "suggested_value": "Saepe et blanditiis."
-         },
-         {
-            "current_value": "Illo quia reiciendis.",
-            "field": "Corrupti consectetur quasi est.",
-            "is_mandatory": true,
-            "reason": "Quae maiores sit fuga.",
-            "suggested_value": "Saepe et blanditiis."
+            "current_value": "Vitae alias.",
+            "field": "Voluptatem corporis vel est repellendus voluptatum minus.",
+            "is_mandatory": false,
+            "reason": "Quam optio debitis ex.",
+            "suggested_value": "Debitis consequuntur tempore culpa dicta."
          }
       ]
-   }' --id "47ed83dd-760b-44b2-8619-a5ecde994f65"
+   }' --id "226a986e-7b09-4443-8c49-930065f098c9"
 `, os.Args[0])
 }
 
@@ -2995,7 +3017,7 @@ Get complete workflow history and available actions for a transaction
     -id STRING: Transaction ID
 
 Example:
-    %[1]s finance get-transaction-workflow --id "0661775c-fc93-4c08-8117-044343f309c3"
+    %[1]s finance get-transaction-workflow --id "abfa6ba0-2220-4549-b331-e69ed84dff14"
 `, os.Args[0])
 }
 
@@ -3007,7 +3029,7 @@ Generate trial balance report
     -include-zero-balances BOOL: 
 
 Example:
-    %[1]s finance get-trial-balance --as-of-date "2012-10-14" --include-zero-balances false
+    %[1]s finance get-trial-balance --as-of-date "1990-04-07" --include-zero-balances true
 `, os.Args[0])
 }
 
@@ -3071,20 +3093,15 @@ Example:
             "street_address_1": "123 Main Street",
             "street_address_2": "Suite 456",
             "type": "HEADQUARTERS"
-         },
-         {
-            "city": "New York",
-            "country": "United States",
-            "country_code": "US",
-            "is_primary": true,
-            "postal_code": "10001",
-            "state_province": "NY",
-            "street_address_1": "123 Main Street",
-            "street_address_2": "Suite 456",
-            "type": "HEADQUARTERS"
          }
       ],
       "contacts": [
+         {
+            "email": "john.doe@acme.com",
+            "name": "John Doe",
+            "phone": "+1-555-123-4567",
+            "title": "Chief Technology Officer"
+         },
          {
             "email": "john.doe@acme.com",
             "name": "John Doe",
@@ -3171,10 +3188,13 @@ Example:
          "currency": "USD",
          "fiscal_year_start": "01-01",
          "integrations": {
-            "Alias quae soluta non ut.": "Ea necessitatibus ut perferendis qui voluptas."
+            "At odit earum ullam aut aut.": "Sit numquam perferendis et debitis earum.",
+            "Cupiditate veniam earum magnam.": "Minus quis ex voluptas.",
+            "Et voluptas porro.": "Dolorum voluptas ea."
          },
          "preferences": {
-            "Omnis quia voluptatem.": "Et dolorum necessitatibus quia."
+            "Aliquam qui perferendis est.": "Laborum totam consequuntur magni.",
+            "Nesciunt ipsa unde.": "Impedit eaque odio qui delectus voluptas."
          },
          "timezone": "America/New_York"
       },
@@ -3332,10 +3352,13 @@ Example:
          "currency": "USD",
          "fiscal_year_start": "01-01",
          "integrations": {
-            "Alias quae soluta non ut.": "Ea necessitatibus ut perferendis qui voluptas."
+            "At odit earum ullam aut aut.": "Sit numquam perferendis et debitis earum.",
+            "Cupiditate veniam earum magnam.": "Minus quis ex voluptas.",
+            "Et voluptas porro.": "Dolorum voluptas ea."
          },
          "preferences": {
-            "Omnis quia voluptatem.": "Et dolorum necessitatibus quia."
+            "Aliquam qui perferendis est.": "Laborum totam consequuntur magni.",
+            "Nesciunt ipsa unde.": "Impedit eaque odio qui delectus voluptas."
          },
          "timezone": "America/New_York"
       },
@@ -3366,6 +3389,99 @@ Archive an organization (soft delete)
 
 Example:
     %[1]s organization archive --id "550e8400-e29b-41d4-a716-446655440000"
+`, os.Args[0])
+}
+
+// tenantManagementUsage displays the usage of the tenant-management command
+// and its subcommands.
+func tenantManagementUsage() {
+	fmt.Fprintf(os.Stderr, `Comprehensive tenant management service for provisioning, configuration, and lifecycle operations
+Usage:
+    %[1]s [globalflags] tenant-management COMMAND [flags]
+
+COMMAND:
+    provision: Provision a new tenant with complete setup
+    suspend: Suspend a tenant
+    reactivate: Reactivate a suspended tenant
+    update-configuration: Update tenant configuration and limits
+    get-usage-analytics: Get tenant usage analytics
+
+Additional help:
+    %[1]s tenant-management COMMAND --help
+`, os.Args[0])
+}
+func tenantManagementProvisionUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant-management provision -body JSON
+
+Provision a new tenant with complete setup
+    -body JSON: 
+
+Example:
+    %[1]s tenant-management provision --body '{
+      "admin_email": "john.smith@acme.com",
+      "admin_first_name": "John",
+      "admin_last_name": "Smith",
+      "contact_email": "admin@acme.com",
+      "name": "Acme Corporation",
+      "subdomain": "acme-corp"
+   }'
+`, os.Args[0])
+}
+
+func tenantManagementSuspendUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant-management suspend -body JSON -id STRING
+
+Suspend a tenant
+    -body JSON: 
+    -id STRING: Tenant ID
+
+Example:
+    %[1]s tenant-management suspend --body '{
+      "reason": "Non-payment of subscription fees"
+   }' --id "1cd8fe71-b10e-4daa-b03b-6d9d23e98933"
+`, os.Args[0])
+}
+
+func tenantManagementReactivateUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant-management reactivate -body JSON -id STRING
+
+Reactivate a suspended tenant
+    -body JSON: 
+    -id STRING: Tenant ID
+
+Example:
+    %[1]s tenant-management reactivate --body '{
+      "reason": "Payment received"
+   }' --id "8482bce9-64c0-4309-81f2-94b3aa401e30"
+`, os.Args[0])
+}
+
+func tenantManagementUpdateConfigurationUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant-management update-configuration -body JSON -id STRING
+
+Update tenant configuration and limits
+    -body JSON: 
+    -id STRING: Tenant ID
+
+Example:
+    %[1]s tenant-management update-configuration --body '{
+      "max_api_calls_per_hour": 5000,
+      "max_storage_mb": 10240,
+      "max_users": 100,
+      "reason": "Upgrading to professional plan"
+   }' --id "1555e56d-f3e0-437f-bd01-4b241f0dc968"
+`, os.Args[0])
+}
+
+func tenantManagementGetUsageAnalyticsUsage() {
+	fmt.Fprintf(os.Stderr, `%[1]s [flags] tenant-management get-usage-analytics -id STRING -period STRING
+
+Get tenant usage analytics
+    -id STRING: Tenant ID
+    -period STRING: 
+
+Example:
+    %[1]s tenant-management get-usage-analytics --id "91df7f67-0f05-4044-8104-f17beeed3487" --period "current_month"
 `, os.Args[0])
 }
 
@@ -3553,7 +3669,7 @@ Get user attributes for ABAC evaluation
     -attribute-filter STRING: 
 
 Example:
-    %[1]s user get-attributes --id "550e8400-e29b-41d4-a716-446655440000" --include-metadata false --include-derived false --fresh-only true --attribute-filter "user.security_level,user.department"
+    %[1]s user get-attributes --id "550e8400-e29b-41d4-a716-446655440000" --include-metadata false --include-derived true --fresh-only false --attribute-filter "user.security_level,user.department"
 `, os.Args[0])
 }
 
@@ -3584,7 +3700,7 @@ Example:
          "invalidate_cache": true,
          "merge_strategy": "overwrite",
          "notify_subscribers": true,
-         "validate_attributes": false
+         "validate_attributes": true
       }
    }' --id "550e8400-e29b-41d4-a716-446655440000"
 `, os.Args[0])
@@ -3600,15 +3716,15 @@ Example:
     %[1]s user bulk-update-attributes --body '{
       "options": {
          "batch_size": 100,
-         "fail_on_error": false,
-         "invalidate_cache": false,
-         "parallel_processing": false,
-         "validate_all": false
+         "fail_on_error": true,
+         "invalidate_cache": true,
+         "parallel_processing": true,
+         "validate_all": true
       },
       "updates": [
          {
             "attributes": {
-               "Id ipsam culpa deleniti expedita.": "Culpa neque et dolores error illum incidunt."
+               "Quod accusantium sint animi reprehenderit.": "Molestiae corrupti suscipit consequatur."
             },
             "metadata": {
                "confidence_score": 1,
@@ -3622,7 +3738,35 @@ Example:
          },
          {
             "attributes": {
-               "Id ipsam culpa deleniti expedita.": "Culpa neque et dolores error illum incidunt."
+               "Quod accusantium sint animi reprehenderit.": "Molestiae corrupti suscipit consequatur."
+            },
+            "metadata": {
+               "confidence_score": 1,
+               "data_classification": "internal",
+               "expires_at": "2025-01-16T14:30:00Z",
+               "last_verified": "2025-01-15T14:30:00Z",
+               "source": "hr_system",
+               "updated_by": "hr_sync_service"
+            },
+            "user_id": "550e8400-e29b-41d4-a716-446655440000"
+         },
+         {
+            "attributes": {
+               "Quod accusantium sint animi reprehenderit.": "Molestiae corrupti suscipit consequatur."
+            },
+            "metadata": {
+               "confidence_score": 1,
+               "data_classification": "internal",
+               "expires_at": "2025-01-16T14:30:00Z",
+               "last_verified": "2025-01-15T14:30:00Z",
+               "source": "hr_system",
+               "updated_by": "hr_sync_service"
+            },
+            "user_id": "550e8400-e29b-41d4-a716-446655440000"
+         },
+         {
+            "attributes": {
+               "Quod accusantium sint animi reprehenderit.": "Molestiae corrupti suscipit consequatur."
             },
             "metadata": {
                "confidence_score": 1,
@@ -3671,9 +3815,8 @@ Example:
     %[1]s user authorize-action --body '{
       "action": "read",
       "additional_context": {
-         "Ad tempore.": "Et aperiam consequuntur voluptatem qui sunt voluptatibus.",
-         "Aspernatur cupiditate odio facilis praesentium itaque.": "Libero ut modi ipsam cumque est.",
-         "Veritatis amet.": "Porro consequatur et."
+         "Est quam nulla impedit vero.": "Maiores incidunt a rerum quibusdam debitis perspiciatis.",
+         "Quis labore eos.": "Odit nihil."
       },
       "environment": {
          "location": {
@@ -3730,7 +3873,7 @@ Get user session attributes for ABAC
     -include-risk-assessment BOOL: 
 
 Example:
-    %[1]s user get-session-attributes --user-id "550e8400-e29b-41d4-a716-446655440000" --session-id "session_abc123" --include-analytics false --include-risk-assessment false
+    %[1]s user get-session-attributes --user-id "550e8400-e29b-41d4-a716-446655440000" --session-id "session_abc123" --include-analytics true --include-risk-assessment false
 `, os.Args[0])
 }
 
@@ -3745,9 +3888,7 @@ Set session context for user
 Example:
     %[1]s user set-session-context --body '{
       "computed_attributes": {
-         "Animi facilis doloribus praesentium veniam voluptatem minima.": "Et qui unde modi.",
-         "Error numquam ut nihil omnis.": "Numquam ratione.",
-         "Illo mollitia at sint omnis.": "Est voluptas."
+         "Et tempore veritatis inventore.": "Totam optio voluptas provident est."
       },
       "session": {
          "device_type": "desktop",
@@ -3758,7 +3899,7 @@ Example:
          "security_score": 0.95,
          "user_agent": "Mozilla/5.0..."
       }
-   }' --user-id "808a0431-a801-4555-82aa-d637d3a16016" --session-id "session_abc123"
+   }' --user-id "0cd69817-0ac7-48f9-857c-a73100492d0c" --session-id "session_abc123"
 `, os.Args[0])
 }
 
@@ -3786,9 +3927,9 @@ Validate user attributes for ABAC compliance
 Example:
     %[1]s user validate-attributes --body '{
       "attributes": {
-         "Ad nostrum aut neque odit excepturi esse.": "Consectetur perspiciatis doloribus assumenda quis similique sit.",
-         "Eaque molestiae consectetur.": "Sit incidunt sapiente similique eos unde consequatur.",
-         "Voluptatum rerum quaerat soluta dignissimos rem cumque.": "Aut quia ipsa ut magnam et."
+         "Asperiores omnis incidunt voluptas dolor accusantium similique.": "Laudantium quia repellat adipisci.",
+         "Et neque quasi inventore recusandae.": "Qui nostrum officiis voluptas mollitia voluptas quae.",
+         "Quisquam itaque numquam.": "Et voluptas consequuntur."
       },
       "validation_rules": [
          "security_clearance",

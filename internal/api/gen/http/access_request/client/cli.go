@@ -25,7 +25,7 @@ func BuildCreatePayload(accessRequestCreateBody string) (*accessrequest.CreateAc
 	{
 		err = json.Unmarshal([]byte(accessRequestCreateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"access_level\": \"read\",\n      \"duration_hours\": 24,\n      \"entity_id\": \"123e4567-e89b-12d3-a456-426614174000\",\n      \"metadata\": {\n         \"Officia libero eligendi sed sint quasi perspiciatis.\": \"Dicta hic ipsum qui et.\",\n         \"Placeat natus.\": \"Aliquid fuga est et corporis officiis aut.\",\n         \"Suscipit consequatur.\": \"Voluptatibus quibusdam suscipit.\"\n      },\n      \"reason\": \"Need access to review quarterly reports\",\n      \"requester_id\": \"123e4567-e89b-12d3-a456-426614174000\",\n      \"resource_type\": \"document\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"access_level\": \"read\",\n      \"duration_hours\": 24,\n      \"entity_id\": \"123e4567-e89b-12d3-a456-426614174000\",\n      \"metadata\": {\n         \"Esse aliquid dicta ut dolorem aut.\": \"Quia in dolor autem perferendis.\"\n      },\n      \"reason\": \"Need access to review quarterly reports\",\n      \"requester_id\": \"123e4567-e89b-12d3-a456-426614174000\",\n      \"resource_type\": \"document\"\n   }'")
 		}
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.requester_id", body.RequesterID, goa.FormatUUID))
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.entity_id", body.EntityID, goa.FormatUUID))

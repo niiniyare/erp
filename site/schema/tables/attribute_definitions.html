@@ -127,7 +127,7 @@
                                     <td>2147483647</td>
                                     <td title=''></td>
                                     <td title=''></td>
-                                    <td>uuid_generate_v4()</td>
+                                    <td>gen_random_uuid()</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                             <tr>
@@ -457,12 +457,12 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>attribute_definitions_data_type_check</td>
-                                    <td>((data_type)::text &#61; ANY ((ARRAY[&#39;STRING&#39;::character varying, &#39;NUMBER&#39;::character varying, &#39;BOOLEAN&#39;::character varying, &#39;DATE&#39;::character varying, &#39;TIME&#39;::character varying, &#39;JSON&#39;::character varying, &#39;ARRAY&#39;::character varying, &#39;ENUM&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>attribute_definitions_category_check</td>
                                     <td>((category)::text &#61; ANY ((ARRAY[&#39;USER&#39;::character varying, &#39;RESOURCE&#39;::character varying, &#39;ENVIRONMENT&#39;::character varying, &#39;ACTION&#39;::character varying, &#39;ENTITY&#39;::character varying, &#39;SESSION&#39;::character varying])::text[]))</td>
+                                </tr>
+                                <tr>
+                                    <td>attribute_definitions_data_type_check</td>
+                                    <td>((data_type)::text &#61; ANY ((ARRAY[&#39;STRING&#39;::character varying, &#39;NUMBER&#39;::character varying, &#39;BOOLEAN&#39;::character varying, &#39;DATE&#39;::character varying, &#39;TIME&#39;::character varying, &#39;JSON&#39;::character varying, &#39;ARRAY&#39;::character varying, &#39;ENUM&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>

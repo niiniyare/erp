@@ -300,7 +300,7 @@ var TenantConfigurationResult = Type("TenantConfigurationResult", func() {
 	})
 	Attribute("security_policies", SecurityPolicies, "Security policies")
 	Attribute("integration_settings", IntegrationSettings, "Third-party integration settings")
-	Attribute("notification_preferences", NotificationPreferences, "Notification preferences")
+	Attribute("notification_preferences", TenantNotificationPreferences, "Notification preferences")
 	
 	Required("limits", "enabled_features")
 })
@@ -355,7 +355,7 @@ var UpdateTenantConfigurationPayload = Type("UpdateTenantConfigurationPayload", 
 		Example([]string{"finance", "inventory", "hr"})
 	})
 	Attribute("security_policies", SecurityPolicies, "Updated security policies")
-	Attribute("notification_preferences", NotificationPreferences, "Updated notification preferences")
+	Attribute("notification_preferences", TenantNotificationPreferences, "Updated notification preferences")
 	Attribute("reason", String, "Reason for configuration change", func() {
 		MinLength(10)
 		MaxLength(500)
@@ -554,7 +554,7 @@ var IntegrationSettings = Type("IntegrationSettings", func() {
 	})
 })
 
-var NotificationPreferences = Type("NotificationPreferences", func() {
+var TenantNotificationPreferences = Type("TenantNotificationPreferences", func() {
 	Description("Notification preferences")
 	Attribute("email_notifications", Boolean, "Enable email notifications", func() { Example(true) })
 	Attribute("webhook_notifications", Boolean, "Enable webhook notifications", func() { Example(false) })

@@ -3,9 +3,7 @@
 -- =====================================================
 -- Enable UUID generation for unique identifiers
 -- Enable required extensions
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- CREATE SCHEMA IF NOT EXISTS ledger;
 
@@ -91,7 +89,7 @@ CREATE TABLE tenants (
   email VARCHAR(255) NOT NULL,
   subdomain VARCHAR(63) UNIQUE,
   -- Status and operational settings
-  STATUS VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (STATUS IN ('active', 'suspended', 'pending')),
+  Status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' CHECK (Status IN ('ACTIVE', 'SUSPENDED', 'PENDING', 'ARCHIVED')),
   timezone VARCHAR(50) NOT NULL DEFAULT 'UTC',
   currency_code CHAR(3) NOT NULL DEFAULT 'USD',
   -- Flexible metadata storage
@@ -123,7 +121,7 @@ CREATE TABLE tenants (
 -- Create indexes for performance
 CREATE INDEX idx_tenants_slug ON tenants(slug);
 
-CREATE INDEX idx_tenants_status ON tenants(STATUS);
+CREATE INDEX idx_tenants_status ON tenants(Status);
 
 CREATE INDEX idx_tenants_subdomain ON tenants(subdomain)
 WHERE
@@ -153,39 +151,34 @@ COMMENT ON COLUMN tenants.deleted_at IS 'Soft delete timestamp - NULL means acti
 -- TENANT CONTEXT MANAGEMENT
 -- -----------------------------------------------------
 -- Function to set tenant context for the current session
-CREATE
-OR REPLACE FUNCTION set_tenant_context(tenant_id UUID) RETURNS VOID AS
-$$
+CREATE OR REPLACE FUNCTION set_tenant_context(tenant_id UUID, user_role TEXT DEFAULT 'application_role') 
+  RETURNS VOID AS $$
+DECLARE
+  tenant_status TEXT;
 BEGIN
--- Validate tenant exists and is active
-IF NOT EXISTS (
-  SELECT
-    1
-  FROM
-    tenants
-  WHERE
-    id = tenant_id
-    AND STATUS = 'active'
-    AND deleted_at IS NULL
-) THEN RAISE EXCEPTION 'Invalid or inactive tenant: %',
-tenant_id;
-
-END IF;
-
--- Set session variable for tenant context
-PERFORM set_config('app.current_tenant_id', tenant_id::text, TRUE);
-
--- Log tenant context change (optional)
-RAISE NOTICE 'Tenant context set to: %',
-tenant_id;
-
+  -- Get tenant status in one query
+  SELECT status INTO tenant_status 
+  FROM tenants 
+  WHERE id = tenant_id AND deleted_at IS NULL;
+  
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Tenant not found: %', tenant_id;
+  END IF;
+  
+  IF tenant_status != 'active' THEN
+    RAISE EXCEPTION 'Tenant is not active: % (status: %)', tenant_id, tenant_status;
+  END IF;
+  
+  -- Set multiple context variables
+  PERFORM set_config('app.current_tenant_id', tenant_id::text, true);
+  PERFORM set_config('app.tenant_status', tenant_status, true);
+  PERFORM set_config('app.context_set_at', NOW()::text, true);
+  
 END;
-
-$$
-LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Add function comment
-COMMENT ON FUNCTION set_tenant_context(UUID) IS 'Sets the current tenant context for the session with validation';
+COMMENT ON FUNCTION set_tenant_context(UUID,TEXT) IS 'Sets the current tenant context for the session with validation';
 
 -- -----------------------------------------------------
 -- GET CURRENT TENANT FUNCTION
@@ -217,6 +210,18 @@ LANGUAGE plpgsql;
 -- Add function comment
 COMMENT ON FUNCTION current_tenant_id() IS 'Retrieves the current tenant ID from session context';
 
+-- Function to clear tenant context (important for connection pooling)
+CREATE OR REPLACE FUNCTION clear_tenant_context() 
+  RETURNS VOID AS $$
+BEGIN
+  PERFORM set_config('app.current_tenant_id', NULL, true);
+  PERFORM set_config('app.tenant_status', NULL, true);
+  PERFORM set_config('app.context_set_at', NULL, true);
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION clear_tenant_context() IS 'clear tenant context (important for connection pooling)';
+
 -- =====================================================
 -- ROW LEVEL SECURITY (RLS)
 -- =====================================================
@@ -236,7 +241,7 @@ ALTER TABLE
 -- );
 --
 -- Add policy comment
-COMMENT ON POLICY tenant_isolation_policy ON tenants IS 'Ensures tenant data isolation based on session context';
+-- COMMENT ON POLICY tenant_isolation_policy ON tenants IS 'Ensures tenant data isolation based on session context';
 
 -- =====================================================
 -- PERMISSIONS AND GRANTS
@@ -252,7 +257,7 @@ UPDATE
   DELETE ON tenants TO application_role;
 
 -- Grant execute permissions on functions
-GRANT EXECUTE ON FUNCTION set_tenant_context(UUID) TO application_role;
+GRANT EXECUTE ON FUNCTION set_tenant_context(UUID,TEXT) TO application_role;
 
 GRANT EXECUTE ON FUNCTION current_tenant_id() TO application_role;
 
@@ -290,23 +295,59 @@ UPDATE
 -- -----------------------------------------------------
 -- SLUG GENERATION TRIGGER
 -- -----------------------------------------------------
-CREATE
-OR REPLACE FUNCTION generate_slug_from_name() RETURNS TRIGGER AS
-$$
+CREATE OR REPLACE FUNCTION generate_unique_slug_from_name() 
+  RETURNS TRIGGER AS $$
+DECLARE
+  base_slug TEXT;
+  final_slug TEXT;
+  counter INTEGER := 1;
 BEGIN
-IF NEW.slug IS NULL THEN NEW.slug := lower(
-  regexp_replace(NEW.name, '[^a-zA-Z0-9]+', '-', 'g')
-);
-
-END IF;
-
-RETURN NEW;
-
+  IF NEW.slug IS NULL THEN
+    -- Create base slug with better sanitization
+    base_slug := lower(trim(both '-' from 
+      regexp_replace(
+        regexp_replace(NEW.name, '[^\w\s-]', '', 'g'),
+        '\s+', '-', 'g'
+      )
+    ));
+    
+    -- Ensure slug is not empty
+    IF base_slug = '' THEN
+      base_slug := 'tenant';
+    END IF;
+    
+    final_slug := base_slug;
+    
+    -- Handle slug collisions
+    WHILE EXISTS(SELECT 1 FROM tenants WHERE slug = final_slug AND id != COALESCE(NEW.id, '00000000-0000-0000-0000-000000000000'::UUID)) LOOP
+      final_slug := base_slug || '-' || counter;
+      counter := counter + 1;
+    END LOOP;
+    
+    NEW.slug := final_slug;
+  END IF;
+  
+  RETURN NEW;
 END;
-
-$$
-LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER tenant_slug_trigger BEFORE
 INSERT
-  ON tenants FOR EACH ROW EXECUTE FUNCTION generate_slug_from_name();
+  ON tenants FOR EACH ROW EXECUTE FUNCTION generate_unique_slug_from_name();
+
+
+-- Better email validation
+ALTER TABLE tenants ADD CONSTRAINT valid_email 
+  CHECK (email ~* '^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
+
+-- Subdomain validation
+ALTER TABLE tenants ADD CONSTRAINT valid_subdomain 
+  CHECK (subdomain IS NULL OR subdomain ~* '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$');
+
+-- Slug validation
+ALTER TABLE tenants ADD CONSTRAINT valid_slug 
+  CHECK (slug ~* '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$');
+
+-- Currency code validation (ISO 4217)
+ALTER TABLE tenants ADD CONSTRAINT valid_currency 
+  CHECK (currency_code ~* '^[A-Z]{3}$');

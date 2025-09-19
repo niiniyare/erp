@@ -1,413 +1,259 @@
 package tenant
 
 import (
-	"github.com/niiniyare/erp/internal/api/design/types"
 	. "goa.design/goa/v3/dsl"
 )
 
-// TenantManagementService defines tenant lifecycle management
+// TenantManagement service provides comprehensive tenant lifecycle management
 var _ = Service("tenant_management", func() {
-	Description("tenant lifecycle management service for multi-tenant ERP system")
+	Description("Comprehensive tenant management service for provisioning, configuration, and lifecycle operations")
 
-	// Apply security for admin operations
-	Security("jwt", func() {
-		Scope("admin:tenants")
-	})
+	// =====================================================
+	// TENANT PROVISIONING
+	// =====================================================
 
-	HTTP(func() {
-		Path("/api/v1/admin/tenants")
-		types.CommonHeaders()
-	})
-
-	// Provision new tenant with complete setup
 	Method("provision", func() {
-		Description("Provision a new tenant with complete setup including admin user and default configuration")
-
-		Payload(ProvisionTenantPayload)
-		Result(ProvisionTenantResult)
-
-		Error("bad_request")
-		Error("conflict") // For subdomain/name conflicts
-		Error("unauthorized")
-		Error("forbidden")
-		Error("unprocessable_entity")
-		Error("internal_error")
-
+		Description("Provision a new tenant with complete setup")
+		Payload(func() {
+			Attribute("name", String, "Tenant name", func() {
+				MinLength(2)
+				MaxLength(255)
+				Example("Acme Corporation")
+			})
+			Attribute("subdomain", String, "Subdomain for tenant access", func() {
+				Pattern("^[a-z0-9]([a-z0-9-]*[a-z0-9])?$")
+				MinLength(2)
+				MaxLength(63)
+				Example("acme-corp")
+			})
+			Attribute("contact_email", String, "Primary contact email", func() {
+				Format("email")
+				Example("admin@acme.com")
+			})
+			Attribute("admin_email", String, "Initial admin user email", func() {
+				Format("email")
+				Example("john.smith@acme.com")
+			})
+			Attribute("admin_first_name", String, "Admin first name", func() {
+				Example("John")
+			})
+			Attribute("admin_last_name", String, "Admin last name", func() {
+				Example("Smith")
+			})
+			Required("name", "subdomain", "contact_email", "admin_email", "admin_first_name", "admin_last_name")
+		})
+		Result(func() {
+			Attribute("tenant_id", String, "Created tenant ID", func() {
+				Format(FormatUUID)
+				Example("123e4567-e89b-12d3-a456-426614174000")
+			})
+			Attribute("status", String, "Provisioning status", func() {
+				Enum("SUCCESS", "PARTIAL", "FAILED")
+				Example("SUCCESS")
+			})
+			Attribute("message", String, "Status message", func() {
+				Example("Tenant provisioned successfully")
+			})
+			Required("tenant_id", "status", "message")
+		})
+		Error("bad_request", String, "Invalid request")
+		Error("internal_error", String, "Internal server error")
 		HTTP(func() {
-			POST("/provision")
+			POST("/tenant-management/provision")
 			Response(StatusCreated)
 			Response("bad_request", StatusBadRequest)
-			Response("conflict", StatusConflict)
-			Response("unauthorized", StatusUnauthorized)
-			Response("forbidden", StatusForbidden)
-			Response("unprocessable_entity", StatusUnprocessableEntity)
 			Response("internal_error", StatusInternalServerError)
 		})
 	})
 
-	// Get tenant with full details including configuration
-	Method("get_detailed", func() {
-		Description("Get detailed tenant information including configuration and usage stats")
+	// =====================================================
+	// TENANT LIFECYCLE OPERATIONS
+	// =====================================================
 
-		Payload(func() {
-			Attribute("id", String, "Tenant ID", func() {
-				Format(FormatUUID)
-				Example("550e8400-e29b-41d4-a716-446655440000")
-			})
-			Attribute("include", ArrayOf(String), "Additional data to include", func() {
-				Enum("configuration", "usage_stats", "subscription", "audit_log")
-				Example([]string{"configuration", "usage_stats"})
-			})
-			Required("id")
-		})
-
-		Result(DetailedTenantResult)
-
-		Error("not_found")
-		Error("unauthorized")
-		Error("forbidden")
-
-		HTTP(func() {
-			GET("/{id}/detailed")
-			Param("include")
-			Response(StatusOK)
-			Response("not_found", StatusNotFound)
-			Response("unauthorized", StatusUnauthorized)
-			Response("forbidden", StatusForbidden)
-		})
-	})
-
-	// Update tenant configuration
-	Method("update_configuration", func() {
-		Description("Update tenant configuration including limits, features, and settings")
-
-		Payload(UpdateTenantConfigurationPayload)
-		Result(TenantConfigurationResult)
-
-		Error("bad_request")
-		Error("not_found")
-		Error("unauthorized")
-		Error("forbidden")
-		Error("unprocessable_entity")
-
-		HTTP(func() {
-			PATCH("/{id}/configuration")
-			Response(StatusOK)
-			Response("bad_request", StatusBadRequest)
-			Response("not_found", StatusNotFound)
-			Response("unauthorized", StatusUnauthorized)
-			Response("forbidden", StatusForbidden)
-			Response("unprocessable_entity", StatusUnprocessableEntity)
-		})
-	})
-
-	// Suspend tenant (deactivate with data preservation)
 	Method("suspend", func() {
-		Description("Suspend tenant access while preserving all data")
-
+		Description("Suspend a tenant")
 		Payload(func() {
 			Attribute("id", String, "Tenant ID", func() {
 				Format(FormatUUID)
-				Example("550e8400-e29b-41d4-a716-446655440000")
 			})
-			Attribute("reason", String, "Suspension reason", func() {
+			Attribute("reason", String, "Reason for suspension", func() {
 				MinLength(10)
 				MaxLength(500)
 				Example("Non-payment of subscription fees")
 			})
-			Attribute("notify_users", Boolean, "Whether to notify tenant users", func() {
-				Default(true)
-			})
 			Required("id", "reason")
 		})
-
-		Result(TenantActionResult)
-
-		Error("bad_request")
-		Error("not_found")
-		Error("unauthorized")
-		Error("forbidden")
-		Error("conflict") // If already suspended
-
-		HTTP(func() {
-			POST("/{id}/suspend")
-			Response(StatusOK)
-			Response("bad_request", StatusBadRequest)
-			Response("not_found", StatusNotFound)
-			Response("unauthorized", StatusUnauthorized)
-			Response("forbidden", StatusForbidden)
-			Response("conflict", StatusConflict)
-		})
-	})
-
-	// Reactivate suspended tenant
-	Method("reactivate", func() {
-		Description("Reactivate a suspended tenant")
-
-		Payload(func() {
-			Attribute("id", String, "Tenant ID", func() {
+		Result(func() {
+			Attribute("tenant_id", String, "Tenant ID", func() {
 				Format(FormatUUID)
-				Example("550e8400-e29b-41d4-a716-446655440000")
+				Example("123e4567-e89b-12d3-a456-426614174000")
 			})
-			Attribute("reason", String, "Reactivation reason", func() {
-				MinLength(10)
-				MaxLength(500)
-				Example("Payment received, subscription renewed")
-			})
-			Required("id", "reason")
-		})
-
-		Result(TenantActionResult)
-
-		Error("bad_request")
-		Error("not_found")
-		Error("unauthorized")
-		Error("forbidden")
-		Error("conflict") // If not suspended
-
-		HTTP(func() {
-			POST("/{id}/reactivate")
-			Response(StatusOK)
-			Response("bad_request", StatusBadRequest)
-			Response("not_found", StatusNotFound)
-			Response("unauthorized", StatusUnauthorized)
-			Response("forbidden", StatusForbidden)
-			Response("conflict", StatusConflict)
-		})
-	})
-
-	// Archive tenant (soft delete with data retention policy)
-	Method("archive", func() {
-		Description("Archive tenant with configurable data retention policy")
-
-		Payload(func() {
-			Attribute("id", String, "Tenant ID", func() {
-				Format(FormatUUID)
-				Example("550e8400-e29b-41d4-a716-446655440000")
-			})
-			Attribute("reason", String, "Archive reason", func() {
-				MinLength(10)
-				MaxLength(500)
-				Example("Tenant requested account deletion")
-			})
-			Attribute("data_retention_days", UInt, "Days to retain data before permanent deletion", func() {
-				Minimum(0)
-				Maximum(365)
-				Default(90)
-				Example(90)
-			})
-			Attribute("immediate_deletion", Boolean, "Whether to delete immediately", func() {
-				Default(false)
-			})
-			Required("id", "reason")
-		})
-
-		Result(TenantActionResult)
-
-		Error("bad_request")
-		Error("not_found")
-		Error("unauthorized")
-		Error("forbidden")
-		Error("conflict") // If already archived
-
-		HTTP(func() {
-			POST("/{id}/archive")
-			Response(StatusOK)
-			Response("bad_request", StatusBadRequest)
-			Response("not_found", StatusNotFound)
-			Response("unauthorized", StatusUnauthorized)
-			Response("forbidden", StatusForbidden)
-			Response("conflict", StatusConflict)
-		})
-	})
-
-	// Bulk operations for multiple tenants
-	Method("bulk_operation", func() {
-		Description("Perform bulk operations on multiple tenants")
-
-		Payload(func() {
-			Attribute("operation", String, "Operation to perform", func() {
-				Enum("suspend", "reactivate", "archive", "update_limits")
+			Attribute("action", String, "Action performed", func() {
 				Example("suspend")
 			})
-			Attribute("tenant_ids", ArrayOf(String), "Tenant IDs to operate on", func() {
-				MinLength(1)
-				MaxLength(100)
-				Example([]string{
-					"550e8400-e29b-41d4-a716-446655440000",
-					"550e8400-e29b-41d4-a716-446655440001",
-				})
+			Attribute("status", String, "Action status", func() {
+				Enum("COMPLETED", "FAILED")
+				Example("COMPLETED")
 			})
-			Attribute("parameters", MapOf(String, Any), "Operation-specific parameters", func() {
-				Example(map[string]any{
-					"reason": "Bulk suspension for non-payment",
-				})
+			Attribute("message", String, "Result message", func() {
+				Example("Tenant suspended successfully")
 			})
-			Required("operation", "tenant_ids")
+			Required("tenant_id", "action", "status", "message")
 		})
-
-		Result(types.BatchResult)
-
-		Error("bad_request")
-		Error("unauthorized")
-		Error("forbidden")
-		Error("unprocessable_entity")
-
+		Error("not_found", String, "Tenant not found")
+		Error("bad_request", String, "Invalid request")
+		Error("internal_error", String, "Internal server error")
 		HTTP(func() {
-			POST("/bulk")
-			Response(StatusAccepted) // Async operation
+			POST("/tenant-management/{id}/suspend")
+			Response(StatusOK)
+			Response("not_found", StatusNotFound)
 			Response("bad_request", StatusBadRequest)
-			Response("unauthorized", StatusUnauthorized)
-			Response("forbidden", StatusForbidden)
-			Response("unprocessable_entity", StatusUnprocessableEntity)
+			Response("internal_error", StatusInternalServerError)
 		})
 	})
 
-	// Get tenant usage analytics
-	Method("get_usage_analytics", func() {
-		Description("Get usage analytics for a tenant")
-
+	Method("reactivate", func() {
+		Description("Reactivate a suspended tenant")
 		Payload(func() {
 			Attribute("id", String, "Tenant ID", func() {
 				Format(FormatUUID)
-				Example("550e8400-e29b-41d4-a716-446655440000")
 			})
-			Attribute("period", String, "Analytics period", func() {
+			Attribute("reason", String, "Reason for reactivation", func() {
+				MinLength(5)
+				MaxLength(500)
+				Example("Payment received")
+			})
+			Required("id", "reason")
+		})
+		Result(func() {
+			Attribute("tenant_id", String, "Tenant ID", func() {
+				Format(FormatUUID)
+				Example("123e4567-e89b-12d3-a456-426614174000")
+			})
+			Attribute("action", String, "Action performed", func() {
+				Example("reactivate")
+			})
+			Attribute("status", String, "Action status", func() {
+				Enum("COMPLETED", "FAILED")
+				Example("COMPLETED")
+			})
+			Attribute("message", String, "Result message", func() {
+				Example("Tenant reactivated successfully")
+			})
+			Required("tenant_id", "action", "status", "message")
+		})
+		Error("not_found", String, "Tenant not found")
+		Error("bad_request", String, "Invalid request")
+		Error("internal_error", String, "Internal server error")
+		HTTP(func() {
+			POST("/tenant-management/{id}/reactivate")
+			Response(StatusOK)
+			Response("not_found", StatusNotFound)
+			Response("bad_request", StatusBadRequest)
+			Response("internal_error", StatusInternalServerError)
+		})
+	})
+
+	// =====================================================
+	// CONFIGURATION MANAGEMENT
+	// =====================================================
+
+	Method("update_configuration", func() {
+		Description("Update tenant configuration and limits")
+		Payload(func() {
+			Attribute("id", String, "Tenant ID", func() {
+				Format(FormatUUID)
+			})
+			Attribute("max_users", UInt, "Maximum number of users", func() {
+				Example(100)
+			})
+			Attribute("max_storage_mb", UInt64, "Maximum storage in MB", func() {
+				Example(10240)
+			})
+			Attribute("max_api_calls_per_hour", UInt, "Maximum API calls per hour", func() {
+				Example(5000)
+			})
+			Attribute("reason", String, "Reason for configuration change", func() {
+				MinLength(5)
+				MaxLength(500)
+				Example("Upgrading to professional plan")
+			})
+			Required("id", "reason")
+		})
+		Result(func() {
+			Attribute("tenant_id", String, "Tenant ID", func() {
+				Format(FormatUUID)
+				Example("123e4567-e89b-12d3-a456-426614174000")
+			})
+			Attribute("status", String, "Update status", func() {
+				Enum("SUCCESS", "FAILED")
+				Example("SUCCESS")
+			})
+			Attribute("message", String, "Result message", func() {
+				Example("Configuration updated successfully")
+			})
+			Required("tenant_id", "status", "message")
+		})
+		Error("not_found", String, "Tenant not found")
+		Error("bad_request", String, "Invalid request")
+		Error("internal_error", String, "Internal server error")
+		HTTP(func() {
+			PUT("/tenant-management/{id}/configuration")
+			Response(StatusOK)
+			Response("not_found", StatusNotFound)
+			Response("bad_request", StatusBadRequest)
+			Response("internal_error", StatusInternalServerError)
+		})
+	})
+
+	// =====================================================
+	// ANALYTICS
+	// =====================================================
+
+	Method("get_usage_analytics", func() {
+		Description("Get tenant usage analytics")
+		Payload(func() {
+			Attribute("id", String, "Tenant ID", func() {
+				Format(FormatUUID)
+			})
+			Attribute("period", String, "Time period for analytics", func() {
 				Enum("current_month", "last_month", "last_3_months", "last_year")
 				Default("current_month")
 				Example("current_month")
 			})
-			Attribute("metrics", ArrayOf(String), "Specific metrics to include", func() {
-				Enum("users", "storage", "api_calls", "transactions", "revenue")
-				Example([]string{"users", "storage", "api_calls"})
-			})
 			Required("id")
 		})
-
-		Result(TenantUsageAnalyticsResult)
-
-		Error("not_found")
-		Error("unauthorized")
-		Error("forbidden")
-
-		HTTP(func() {
-			GET("/{id}/analytics")
-			Param("period")
-			Param("metrics")
-			Response(StatusOK)
-			Response("not_found", StatusNotFound)
-			Response("unauthorized", StatusUnauthorized)
-			Response("forbidden", StatusForbidden)
-		})
-	})
-
-	// List tenants with advanced filtering and admin controls
-	Method("list_admin", func() {
-		Description("List tenants with advanced filtering for administrative purposes")
-
-		Payload(func() {
-			Extend(types.Pagination)
-			Attribute("status_filter", ArrayOf(String), "Filter by status", func() {
-				Enum("active", "suspended", "pending", "archived")
-				Example([]string{"active", "suspended"})
-			})
-			Attribute("plan_filter", ArrayOf(String), "Filter by subscription plan", func() {
-				Enum("starter", "professional", "enterprise")
-				Example([]string{"professional", "enterprise"})
-			})
-			Attribute("created_after", String, "Filter by creation date", func() {
-				Format(FormatDate)
-				Example("2023-01-01")
-			})
-			Attribute("created_before", String, "Filter by creation date", func() {
-				Format(FormatDate)
-				Example("2023-12-31")
-			})
-			Attribute("search", String, "Search in name, subdomain, or email", func() {
-				MaxLength(100)
-				Example("acme")
-			})
-			Attribute("include_archived", Boolean, "Include archived tenants", func() {
-				Default(false)
-			})
-		})
-
 		Result(func() {
-			Attribute("data", ArrayOf(DetailedTenantResult), "The tenant data")
-			Attribute("pagination", types.PaginationMeta, "Pagination metadata")
-			Attribute("summary", TenantSummaryStats, "Summary statistics")
-			Required("data", "pagination", "summary")
-		})
-
-		Error("bad_request")
-		Error("unauthorized")
-		Error("forbidden")
-
-		HTTP(func() {
-			GET("/")
-			Param("page")
-			Param("page_size")
-			Param("sort_by")
-			Param("sort_order")
-			Param("status_filter")
-			Param("plan_filter")
-			Param("created_after")
-			Param("created_before")
-			Param("search")
-			Param("include_archived")
-			Response(StatusOK)
-			Response("bad_request", StatusBadRequest)
-			Response("unauthorized", StatusUnauthorized)
-			Response("forbidden", StatusForbidden)
-		})
-	})
-
-	// Get tenant audit log
-	Method("get_audit_log", func() {
-		Description("Get audit log for tenant configuration changes")
-
-		Payload(func() {
-			Attribute("id", String, "Tenant ID", func() {
+			Attribute("tenant_id", String, "Tenant ID", func() {
 				Format(FormatUUID)
-				Example("550e8400-e29b-41d4-a716-446655440000")
+				Example("123e4567-e89b-12d3-a456-426614174000")
 			})
-			Extend(types.Pagination)
-			Attribute("action_filter", ArrayOf(String), "Filter by action type", func() {
-				Enum("created", "updated", "suspended", "reactivated", "archived", "config_updated")
-				Example([]string{"suspended", "reactivated"})
+			Attribute("period", String, "Analysis period", func() {
+				Example("current_month")
 			})
-			Attribute("date_from", String, "Start date for audit log", func() {
-				Format(FormatDate)
-				Example("2023-01-01")
+			Attribute("user_count", UInt, "Number of active users", func() {
+				Example(25)
 			})
-			Attribute("date_to", String, "End date for audit log", func() {
-				Format(FormatDate)
-				Example("2023-12-31")
+			Attribute("storage_used_mb", UInt64, "Storage used in MB", func() {
+				Example(2048)
 			})
-			Required("id")
+			Attribute("api_calls", UInt64, "Total API calls", func() {
+				Example(45000)
+			})
+			Required("tenant_id", "period")
 		})
-
-		Result(func() {
-			Attribute("data", ArrayOf(TenantAuditLogEntry), "Audit log entries")
-			Attribute("pagination", types.PaginationMeta, "Pagination metadata")
-			Required("data", "pagination")
-		})
-
-		Error("not_found")
-		Error("unauthorized")
-		Error("forbidden")
-
+		Error("not_found", String, "Tenant not found")
+		Error("internal_error", String, "Internal server error")
 		HTTP(func() {
-			GET("/{id}/audit-log")
-			Param("page")
-			Param("page_size")
-			Param("action_filter")
-			Param("date_from")
-			Param("date_to")
+			GET("/tenant-management/{id}/analytics")
+			Param("period", String, "Time period", func() {
+				Default("current_month")
+			})
 			Response(StatusOK)
 			Response("not_found", StatusNotFound)
-			Response("unauthorized", StatusUnauthorized)
-			Response("forbidden", StatusForbidden)
+			Response("internal_error", StatusInternalServerError)
 		})
 	})
+
+	// Security will be added in next iteration
 })

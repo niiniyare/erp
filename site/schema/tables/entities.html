@@ -775,6 +775,10 @@
                                 </thead>
                                 <tbody>
                                 <tr>
+                                    <td>valid_fy_start_month</td>
+                                    <td>((fy_start_month &gt;&#61; 1) AND (fy_start_month &lt;&#61; 12))</td>
+                                </tr>
+                                <tr>
                                     <td>entities_fy_start_month_check</td>
                                     <td>((fy_start_month &gt;&#61; 1) AND (fy_start_month &lt;&#61; 12))</td>
                                 </tr>
@@ -783,16 +787,12 @@
                                     <td>(uuid &lt;&gt; parent_id)</td>
                                 </tr>
                                 <tr>
-                                    <td>entities_type_check</td>
-                                    <td>((type)::text &#61; ANY ((ARRAY[&#39;COMPANY&#39;::character varying, &#39;SUBSIDIARY&#39;::character varying, &#39;REGION&#39;::character varying, &#39;BRANCH&#39;::character varying, &#39;LOCATION&#39;::character varying, &#39;DEPARTMENT&#39;::character varying, &#39;DIVISION&#39;::character varying, &#39;COST_CENTER&#39;::character varying, &#39;PROJECT&#39;::character varying, &#39;BUDGET_UNIT&#39;::character varying])::text[]))</td>
-                                </tr>
-                                <tr>
                                     <td>entities_validation_status_check</td>
                                     <td>((validation_status)::text &#61; ANY ((ARRAY[&#39;PENDING&#39;::character varying, &#39;VALID&#39;::character varying, &#39;WARNING&#39;::character varying, &#39;ERROR&#39;::character varying])::text[]))</td>
                                 </tr>
                                 <tr>
-                                    <td>valid_fy_start_month</td>
-                                    <td>((fy_start_month &gt;&#61; 1) AND (fy_start_month &lt;&#61; 12))</td>
+                                    <td>entities_type_check</td>
+                                    <td>((type)::text &#61; ANY ((ARRAY[&#39;COMPANY&#39;::character varying, &#39;SUBSIDIARY&#39;::character varying, &#39;REGION&#39;::character varying, &#39;BRANCH&#39;::character varying, &#39;LOCATION&#39;::character varying, &#39;DEPARTMENT&#39;::character varying, &#39;DIVISION&#39;::character varying, &#39;COST_CENTER&#39;::character varying, &#39;PROJECT&#39;::character varying, &#39;BUDGET_UNIT&#39;::character varying])::text[]))</td>
                                 </tr>
                                 </tbody>
                             </table>

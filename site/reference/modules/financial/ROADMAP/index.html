@@ -2364,6 +2364,52 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant API Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3420,52 +3466,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../api-source/core-apis/tenants/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Tenants
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Tenant Examples
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../api-source/core-apis/users/" class="md-nav__link">
         
   
@@ -3932,7 +3932,7 @@
 <hr />
 <h2 id="executive-summary">🎯 <strong>Executive Summary</strong></h2>
 <p>This roadmap provides the definitive, sequential implementation plan for transforming the Finance module from its current partial state to a fully operational, workflow-orchestrated system with business-focused APIs.</p>
-<p><strong>Current Reality</strong>: 55% complete (170/307 tasks)
+<p><strong>Current Reality</strong>: 63% complete (195/307 tasks)
 <strong>Architecture</strong>: Clean dependency injection with core-owned WorkflowOrchestrator interface
 <strong>Target</strong>: Production-ready finance system with reliable transaction processing</p>
 <hr />
@@ -4004,28 +4004,28 @@
 <p><strong>Step 20:</strong> <code>@internal/workflows/finance/registry.go</code>
 - Create workflow and activity registry
 - Register all workflows and activities with Temporal worker</p>
-<h3 id="phase-4-business-focused-api-layer-steps-21-27"><strong>Phase 4: Business-Focused API Layer (Steps 21-27)</strong></h3>
-<p><strong>Step 21:</strong> <code>@internal/api/design/services/finance.go</code>
-- Redesign Goa service specification for business-focused endpoints
-- Hide workflow mechanics, add unified accounts endpoint</p>
-<p><strong>Step 22:</strong> <code>@internal/api/gen/</code> (Generated)
-- Regenerate Goa code with new service design
-- Run <code>make goa</code> to generate updated handlers, types, OpenAPI specs</p>
-<p><strong>Step 23:</strong> <code>@internal/api/handlers/finance/handler.go</code>
-- Update main handler to use service with workflow orchestration
-- Update constructor to use new service interface, add error handling</p>
-<p><strong>Step 24:</strong> <code>@internal/api/handlers/finance/transaction.go</code>
-- Implement business-focused transaction endpoints
-- ProcessTransaction, ApproveTransaction, GetTransactionStatus (hide workflows)</p>
-<p><strong>Step 25:</strong> <code>@internal/api/handlers/finance/account.go</code>
-- Add unified accounts and groups endpoint
-- Implement GET /api/finance/accounts with hierarchical AccountNode response</p>
-<p><strong>Step 26:</strong> <code>@internal/api/handlers/finance/account_group.go</code>
-- Create account groups management endpoints
-- CRUD operations for account groups, hierarchy management</p>
-<p><strong>Step 27:</strong> <code>@docs/reference/modules/financial/api-reference.md</code>
-- Update API documentation for new business-focused endpoints
-- Document new endpoints, request/response formats, business capabilities</p>
+<h3 id="phase-4-business-focused-api-layer-steps-21-27-completed"><strong>Phase 4: Business-Focused API Layer (Steps 21-27) - ✅ COMPLETED</strong></h3>
+<p><strong>Step 21:</strong> ✅ <code>@internal/api/design/services/finance.go</code> - COMPLETED
+- Complete Goa service specification with 31 business-focused endpoints
+- Account Node methods, Account methods, Transaction methods, Reporting methods</p>
+<p><strong>Step 22:</strong> ✅ <code>@internal/api/gen/</code> (Generated) - COMPLETED
+- Successfully regenerated Goa code with complete service design
+- All handlers, types, OpenAPI specs generated and validated</p>
+<p><strong>Step 23:</strong> ✅ <code>@internal/api/handlers/finance/handler.go</code> - COMPLETED
+- <strong>Fresh complete rewrite</strong> from scratch as unified handler
+- All 31 GOA methods implemented systematically with proper architecture</p>
+<p><strong>Step 24:</strong> ✅ Transaction Methods Implementation - COMPLETED
+- <strong>12 transaction methods</strong> implemented with full lifecycle management
+- ProcessTransaction, ApproveTransaction, GetTransactionStatus, validation, workflows</p>
+<p><strong>Step 25:</strong> ✅ Account and Account Node Methods - COMPLETED
+- <strong>9 Account Node methods</strong> for unified accounts/groups management
+- <strong>8 Account methods</strong> for traditional chart of accounts operations</p>
+<p><strong>Step 26:</strong> ✅ Additional Methods Implementation - COMPLETED
+- <strong>1 Reporting method</strong> (GetTrialBalance) for financial reports
+- <strong>1 Hierarchy analysis method</strong> for advanced analytics</p>
+<p><strong>Step 27:</strong> ✅ Integration and Testing - COMPLETED
+- Complete wiring into main GOA server with dependency injection
+- API testing suite integrated with realistic test scenarios</p>
 <h3 id="phase-5-integration-wiring-steps-28-33"><strong>Phase 5: Integration &amp; Wiring (Steps 28-33)</strong></h3>
 <p><strong>Step 28:</strong> <code>@cmd/server/main.go</code> (dependency injection setup)
 - Wire WorkflowOrchestrator implementation into service layer
@@ -4088,15 +4088,15 @@
 <ol>
 <li>✅ Step 1 (Interface) - COMPLETED</li>
 <li>✅ Steps 3-5 (Account Groups Repository + Analytics) - COMPLETED</li>
+<li>✅ Steps 21-27 (Complete API Layer) - COMPLETED</li>
 <li>Step 9 (Service Integration)  </li>
 <li>Steps 14-15 (Orchestrator + Core Workflows)</li>
-<li>Step 24 (Transaction API)</li>
 <li>Steps 28-30 (Integration &amp; Wiring)</li>
 </ol>
 <p><strong>Full Production Ready</strong>: All 45 steps</p>
 <hr />
 <h2 id="implementation-priorities">📊 <strong>Implementation Priorities</strong></h2>
-<p><strong>🔴 Critical (Core Architecture)</strong>: Steps 1-15, 21-24, 28-30 (Steps 1, 3-5 completed)<br />
+<p><strong>🔴 Critical (Core Architecture)</strong>: Steps 1-15, 21-24, 28-30 (Steps 1, 3-5, 21-27 completed)<br />
 <strong>🟡 High (Features)</strong>: Steps 16-20, 25-27, 31-37<br />
 <strong>🟢 Medium (Polish)</strong>: Steps 38-45  </p>
 <hr />
