@@ -718,7 +718,7 @@ func NewCreateRequestBody(p *tenant.CreateTenantPayload) *CreateRequestBody {
 	{
 		var zero string
 		if body.Status == zero {
-			body.Status = "active"
+			body.Status = "ACTIVE"
 		}
 	}
 	{
@@ -1960,8 +1960,8 @@ func ValidateTenantResponseBody(body *TenantResponseBody) (err error) {
 		}
 	}
 	if body.Status != nil {
-		if !(*body.Status == "active" || *body.Status == "inactive" || *body.Status == "suspended" || *body.Status == "pending") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"active", "inactive", "suspended", "pending"}))
+		if !(*body.Status == "ACTIVE" || *body.Status == "SUSPENDED" || *body.Status == "PENDING" || *body.Status == "ARCHIVED") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED"}))
 		}
 	}
 	if body.PlanType != nil {

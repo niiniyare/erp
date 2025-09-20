@@ -31,8 +31,8 @@ var TenantResult = ResultType("application/vnd.tenant", func() {
 			Example("acme")
 		})
 		Attribute("status", String, "Tenant status", func() {
-			Enum("active", "inactive", "suspended", "pending")
-			Example("active")
+			Enum("ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED")
+			Example("ACTIVE")
 		})
 		Attribute("plan_type", String, "Subscription plan", func() {
 			Enum("starter", "professional", "enterprise")
@@ -98,9 +98,9 @@ var CreateTenantPayload = Type("CreateTenantPayload", func() {
 		Example("acme")
 	})
 	Attribute("status", String, "Tenant status", func() {
-		Enum("active", "inactive", "suspended")
-		Default("active")
-		Example("active")
+		Enum("ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED")
+		Default("ACTIVE")
+		Example("ACTIVE")
 	})
 	Attribute("plan_type", String, "Subscription plan type", func() {
 		Enum("starter", "professional", "enterprise")
@@ -111,8 +111,8 @@ var CreateTenantPayload = Type("CreateTenantPayload", func() {
 		Example("Technology")
 	})
 	Attribute("company_size", String, "Size of the company", func() {
-		Enum("1-10", "11-50", "51-200", "201-500", "500+")
-		Example("51-200")
+		Enum("Startup", "Small", "Medium", "Large", "Enterprise")
+		Example("Medium")
 	})
 	Attribute("tax_id", String, "Tax Identification Number", func() {
 		Example("123-45-6789")
@@ -155,8 +155,8 @@ var UpdateTenantPayload = Type("UpdateTenantPayload", func() {
 		Example("Updated description")
 	})
 	Attribute("status", String, "Tenant status", func() {
-		Enum("active", "inactive", "suspended")
-		Example("active")
+		Enum("ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED")
+		Example("ACTIVE")
 	})
 	Attribute("plan_type", String, "Subscription plan type", func() {
 		Enum("starter", "professional", "enterprise")

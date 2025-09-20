@@ -237,6 +237,10 @@ func (r *repository) Update(ctx context.Context, id uuid.UUID, updates UpdateTen
 		statusStr := string(*updates.Status)
 		status = &statusStr
 		span.SetAttributes(attribute.String("tenant.new_status", statusStr))
+		logger.DebugContext(ctx, "Status value being sent to database", logger.Fields{
+			"status_value": statusStr,
+			"status_type":  fmt.Sprintf("%T", *updates.Status),
+		})
 	}
 
 	// Use SQLC-generated UpdateTenant function (RLS will be applied)
@@ -710,7 +714,10 @@ func (r *repository) ProvisionTenant(ctx context.Context, req ProvisionTenantReq
 		}
 
 		logger.DebugContext(ctx, "Calling provision_tenant_complete DB function inside transaction", logger.Fields{
-			"name": req.Name,
+			"name":         req.Name,
+			"company_size": companySize,
+			"industry":     industry,
+			"subdomain":    subdomain,
 		})
 
 		// Call the SQLC-generated ProvisionTenant function using the transactional store

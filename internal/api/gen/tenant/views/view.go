@@ -288,8 +288,8 @@ func ValidateTenantView(result *TenantView) (err error) {
 		}
 	}
 	if result.Status != nil {
-		if !(*result.Status == "active" || *result.Status == "inactive" || *result.Status == "suspended" || *result.Status == "pending") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"active", "inactive", "suspended", "pending"}))
+		if !(*result.Status == "ACTIVE" || *result.Status == "SUSPENDED" || *result.Status == "PENDING" || *result.Status == "ARCHIVED") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED"}))
 		}
 	}
 	if result.PlanType != nil {
@@ -371,8 +371,8 @@ func ValidateTenantViewMinimal(result *TenantView) (err error) {
 		}
 	}
 	if result.Status != nil {
-		if !(*result.Status == "active" || *result.Status == "inactive" || *result.Status == "suspended" || *result.Status == "pending") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"active", "inactive", "suspended", "pending"}))
+		if !(*result.Status == "ACTIVE" || *result.Status == "SUSPENDED" || *result.Status == "PENDING" || *result.Status == "ARCHIVED") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED"}))
 		}
 	}
 	return

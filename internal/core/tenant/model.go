@@ -98,9 +98,9 @@ const (
 type Status string
 
 const (
-	StatusActive    Status = "active"
-	StatusSuspended Status = "suspended"
-	StatusTrial     Status = "trial"
+	StatusActive    Status = "ACTIVE"
+	StatusSuspended Status = "SUSPENDED"
+	StatusTrial     Status = "PENDING"
 )
 
 // CreateTenantRequest represents tenant creation request

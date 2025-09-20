@@ -5,7 +5,7 @@ OR REPLACE FUNCTION provision_tenant_complete(
   p_email VARCHAR(255),
   p_subdomain VARCHAR(63) DEFAULT NULL,
   p_industry VARCHAR(50) DEFAULT NULL,
-  p_company_size VARCHAR(20) DEFAULT 'small',
+  p_company_size VARCHAR(20) DEFAULT 'Small',
   p_currency_code CHAR(3) DEFAULT 'USD',
   p_timezone VARCHAR(50) DEFAULT 'UTC',
   p_settings JSONB DEFAULT '{}'
@@ -58,7 +58,7 @@ VALUES
     p_name,
     p_email,
     p_subdomain,
-    'pending',
+    'PENDING',
     p_industry,
     p_company_size,
     p_currency_code,

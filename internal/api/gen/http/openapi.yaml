@@ -2622,9 +2622,10 @@ paths:
                   required: false
                   type: string
                   enum:
-                    - active
-                    - inactive
-                    - suspended
+                    - ACTIVE
+                    - SUSPENDED
+                    - PENDING
+                    - ARCHIVED
             responses:
                 "200":
                     description: OK response.
@@ -10483,13 +10484,13 @@ definitions:
             company_size:
                 type: string
                 description: Size of the company
-                example: 51-200
+                example: Medium
                 enum:
-                    - 1-10
-                    - 11-50
-                    - 51-200
-                    - 201-500
-                    - 500+
+                    - Startup
+                    - Small
+                    - Medium
+                    - Large
+                    - Enterprise
             contact:
                 $ref: '#/definitions/ContactInfo'
             country_code:
@@ -10543,12 +10544,13 @@ definitions:
             status:
                 type: string
                 description: Tenant status
-                default: active
-                example: active
+                default: ACTIVE
+                example: ACTIVE
                 enum:
-                    - active
-                    - inactive
-                    - suspended
+                    - ACTIVE
+                    - SUSPENDED
+                    - PENDING
+                    - ARCHIVED
             subdomain:
                 type: string
                 description: Desired subdomain (optional)
@@ -10561,7 +10563,7 @@ definitions:
                 description: Tax Identification Number
                 example: 123-45-6789
         example:
-            company_size: 51-200
+            company_size: Medium
             contact:
                 email: john.doe@acme.com
                 name: John Doe
@@ -10589,7 +10591,7 @@ definitions:
                     max_users: 100
                 timezone: America/New_York
             slug: acme-corp
-            status: active
+            status: ACTIVE
             subdomain: acme
             tax_id: 123-45-6789
         required:
@@ -10644,7 +10646,7 @@ definitions:
                         max_users: 100
                     timezone: America/New_York
                 slug: acme-corp
-                status: active
+                status: ACTIVE
                 subdomain: acme
                 subscription:
                     billing_cycle: monthly
@@ -19007,12 +19009,12 @@ definitions:
             status:
                 type: string
                 description: Tenant status
-                example: active
+                example: ACTIVE
                 enum:
-                    - active
-                    - inactive
-                    - suspended
-                    - pending
+                    - ACTIVE
+                    - SUSPENDED
+                    - PENDING
+                    - ARCHIVED
             subdomain:
                 type: string
                 description: Subdomain for tenant
@@ -19059,7 +19061,7 @@ definitions:
                     max_users: 100
                 timezone: America/New_York
             slug: acme-corp
-            status: active
+            status: ACTIVE
             subdomain: acme
             subscription:
                 billing_cycle: monthly
@@ -19671,7 +19673,7 @@ definitions:
                             max_users: 100
                         timezone: America/New_York
                       slug: acme-corp
-                      status: active
+                      status: ACTIVE
                       subdomain: acme
                       subscription:
                         billing_cycle: monthly
@@ -19706,7 +19708,7 @@ definitions:
                             max_users: 100
                         timezone: America/New_York
                       slug: acme-corp
-                      status: active
+                      status: ACTIVE
                       subdomain: acme
                       subscription:
                         billing_cycle: monthly
@@ -19745,7 +19747,7 @@ definitions:
                         max_users: 100
                     timezone: America/New_York
                   slug: acme-corp
-                  status: active
+                  status: ACTIVE
                   subdomain: acme
                   subscription:
                     billing_cycle: monthly
@@ -19780,7 +19782,7 @@ definitions:
                         max_users: 100
                     timezone: America/New_York
                   slug: acme-corp
-                  status: active
+                  status: ACTIVE
                   subdomain: acme
                   subscription:
                     billing_cycle: monthly
@@ -19815,7 +19817,7 @@ definitions:
                         max_users: 100
                     timezone: America/New_York
                   slug: acme-corp
-                  status: active
+                  status: ACTIVE
                   subdomain: acme
                   subscription:
                     billing_cycle: monthly
@@ -20056,12 +20058,12 @@ definitions:
             status:
                 type: string
                 description: Tenant status
-                example: active
+                example: ACTIVE
                 enum:
-                    - active
-                    - inactive
-                    - suspended
-                    - pending
+                    - ACTIVE
+                    - SUSPENDED
+                    - PENDING
+                    - ARCHIVED
             subdomain:
                 type: string
                 description: Subdomain for tenant
@@ -20108,7 +20110,7 @@ definitions:
                     max_users: 100
                 timezone: America/New_York
             slug: acme-corp
-            status: active
+            status: ACTIVE
             subdomain: acme
             subscription:
                 billing_cycle: monthly
@@ -22569,11 +22571,12 @@ definitions:
             status:
                 type: string
                 description: Tenant status
-                example: active
+                example: ACTIVE
                 enum:
-                    - active
-                    - inactive
-                    - suspended
+                    - ACTIVE
+                    - SUSPENDED
+                    - PENDING
+                    - ARCHIVED
         example:
             contact:
                 email: john.doe@acme.com
@@ -22596,7 +22599,7 @@ definitions:
                     max_storage_mb: 10240
                     max_users: 100
                 timezone: America/New_York
-            status: active
+            status: ACTIVE
     UpdateUserPayload:
         title: UpdateUserPayload
         type: object

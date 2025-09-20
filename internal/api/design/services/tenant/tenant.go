@@ -71,8 +71,8 @@ var _ = Service("tenant", func() {
 				Example("acme")
 			})
 			Attribute("status_filter", String, "Filter by status", func() {
-				Enum("active", "inactive", "suspended")
-				Example("active")
+				Enum("ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED")
+				Example("ACTIVE")
 			})
 		})
 

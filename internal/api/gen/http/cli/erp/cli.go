@@ -3434,7 +3434,7 @@ Create a new tenant
 
 Example:
     %[1]s tenant create --body '{
-      "company_size": "51-200",
+      "company_size": "Medium",
       "contact": {
          "email": "john.doe@acme.com",
          "name": "John Doe",
@@ -3466,7 +3466,7 @@ Example:
          "timezone": "America/New_York"
       },
       "slug": "acme-corp",
-      "status": "active",
+      "status": "ACTIVE",
       "subdomain": "acme",
       "tax_id": "123-45-6789"
    }'
@@ -3496,7 +3496,7 @@ List tenants with pagination and filtering
     -status-filter STRING: 
 
 Example:
-    %[1]s tenant list --page 1 --page-size 20 --sort-by "created_at" --sort-order "desc" --name-filter "acme" --status-filter "active"
+    %[1]s tenant list --page 1 --page-size 20 --sort-by "created_at" --sort-order "desc" --name-filter "acme" --status-filter "ACTIVE"
 `, os.Args[0])
 }
 
@@ -3534,7 +3534,7 @@ Example:
          },
          "timezone": "America/New_York"
       },
-      "status": "active"
+      "status": "ACTIVE"
    }' --id "550e8400-e29b-41d4-a716-446655440000"
 `, os.Args[0])
 }

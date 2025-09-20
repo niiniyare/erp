@@ -1150,7 +1150,7 @@ func NewCreateTenantPayload(body *CreateRequestBody) *tenant.CreateTenantPayload
 		v.PlanType = *body.PlanType
 	}
 	if body.Status == nil {
-		v.Status = "active"
+		v.Status = "ACTIVE"
 	}
 	if body.PlanType == nil {
 		v.PlanType = "starter"
@@ -1312,8 +1312,8 @@ func ValidateCreateRequestBody(body *CreateRequestBody) (err error) {
 		}
 	}
 	if body.Status != nil {
-		if !(*body.Status == "active" || *body.Status == "inactive" || *body.Status == "suspended") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"active", "inactive", "suspended"}))
+		if !(*body.Status == "ACTIVE" || *body.Status == "SUSPENDED" || *body.Status == "PENDING" || *body.Status == "ARCHIVED") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED"}))
 		}
 	}
 	if body.PlanType != nil {
@@ -1322,8 +1322,8 @@ func ValidateCreateRequestBody(body *CreateRequestBody) (err error) {
 		}
 	}
 	if body.CompanySize != nil {
-		if !(*body.CompanySize == "1-10" || *body.CompanySize == "11-50" || *body.CompanySize == "51-200" || *body.CompanySize == "201-500" || *body.CompanySize == "500+") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.company_size", *body.CompanySize, []any{"1-10", "11-50", "51-200", "201-500", "500+"}))
+		if !(*body.CompanySize == "Startup" || *body.CompanySize == "Small" || *body.CompanySize == "Medium" || *body.CompanySize == "Large" || *body.CompanySize == "Enterprise") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.company_size", *body.CompanySize, []any{"Startup", "Small", "Medium", "Large", "Enterprise"}))
 		}
 	}
 	if body.Contact != nil {
@@ -1363,8 +1363,8 @@ func ValidateUpdateRequestBody(body *UpdateRequestBody) (err error) {
 		}
 	}
 	if body.Status != nil {
-		if !(*body.Status == "active" || *body.Status == "inactive" || *body.Status == "suspended") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"active", "inactive", "suspended"}))
+		if !(*body.Status == "ACTIVE" || *body.Status == "SUSPENDED" || *body.Status == "PENDING" || *body.Status == "ARCHIVED") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED"}))
 		}
 	}
 	if body.PlanType != nil {

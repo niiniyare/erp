@@ -292,8 +292,8 @@ func DecodeListRequest(mux goahttp.Muxer, decoder func(*http.Request) goahttp.De
 			statusFilter = &statusFilterRaw
 		}
 		if statusFilter != nil {
-			if !(*statusFilter == "active" || *statusFilter == "inactive" || *statusFilter == "suspended") {
-				err = goa.MergeErrors(err, goa.InvalidEnumValueError("status_filter", *statusFilter, []any{"active", "inactive", "suspended"}))
+			if !(*statusFilter == "ACTIVE" || *statusFilter == "SUSPENDED" || *statusFilter == "PENDING" || *statusFilter == "ARCHIVED") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError("status_filter", *statusFilter, []any{"ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED"}))
 			}
 		}
 		if err != nil {
