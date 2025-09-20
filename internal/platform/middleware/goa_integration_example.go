@@ -1,3 +1,6 @@
+// Package middleware
+// Without middleware: every service must know how to authenticate, log, and connect to databases directly.
+// With middleware: those tasks are handled in one central layer, so the services stay focused on business logic.
 package middleware
 
 import (
@@ -83,8 +86,8 @@ func (g *GOAMiddlewareSetup) ConfigureHTTPMuxer(mux goaHTTP.Muxer) http.Handler 
 // SecurityMiddleware returns GOA security middleware for different authentication schemes
 // Note: This is currently not used since GOA uses a different signature for security functions
 // Use JWTSecurityFunc() instead for actual GOA integration
-func (g *GOAMiddlewareSetup) SecurityMiddleware() map[string]interface{} {
-	return map[string]interface{}{
+func (g *GOAMiddlewareSetup) SecurityMiddleware() map[string]any {
+	return map[string]any{
 		"jwt": g.MiddlewareStack.JWTAuth.JWTAuth,
 		// Note: Basic auth and API key are not currently used in the GOA design
 		// Only JWT authentication is implemented in the current API design
@@ -244,7 +247,7 @@ func (g *GOAMiddlewareSetup) GetMiddlewareReport() MiddlewareReport {
 	}
 
 	// Add GOA-specific information
-	report.GOAIntegration = map[string]interface{}{
+	report.GOAIntegration = map[string]any{
 		"security_schemes":    []string{"jwt"}, // Only JWT is currently implemented
 		"authorization_types": []string{"permission", "role"},
 		"middleware_count":    len(g.MiddlewareStack.HTTPMiddlewareChain()),
@@ -257,6 +260,6 @@ func (g *GOAMiddlewareSetup) GetMiddlewareReport() MiddlewareReport {
 type MiddlewareReport struct {
 	Environment    string                 `json:"environment"`
 	Security       SecuritySummary        `json:"security"`
-	Health         map[string]interface{} `json:"health"`
-	GOAIntegration map[string]interface{} `json:"goa_integration"`
+	Health         map[string]any `json:"health"`
+	GOAIntegration map[string]any `json:"goa_integration"`
 }

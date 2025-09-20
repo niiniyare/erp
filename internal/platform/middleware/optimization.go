@@ -154,14 +154,14 @@ func (omc *OptimizedMiddlewareChain) OptimizedChain(handler http.Handler, stack 
 func (omc *OptimizedMiddlewareChain) initializePools() {
 	// Context pool for request contexts
 	omc.contextPool = sync.Pool{
-		New: func() interface{} {
-			return make(map[string]interface{})
+		New: func() any {
+			return make(map[string]any)
 		},
 	}
 
 	// Response writer pool
 	omc.responsePool = sync.Pool{
-		New: func() interface{} {
+		New: func() any {
 			return &optimizedResponseWriter{}
 		},
 	}
@@ -338,7 +338,7 @@ func (omc *OptimizedMiddlewareChain) optimizedLoggingMiddleware(next http.Handle
 		// Use context pool if enabled
 		var ctx context.Context
 		if omc.config.EnablePooling {
-			contextData := omc.contextPool.Get().(map[string]interface{})
+			contextData := omc.contextPool.Get().(map[string]any)
 			// Clear the map
 			for k := range contextData {
 				delete(contextData, k)
@@ -349,7 +349,7 @@ func (omc *OptimizedMiddlewareChain) optimizedLoggingMiddleware(next http.Handle
 			contextData["path"] = r.URL.Path
 			contextData["remote_ip"] = r.RemoteAddr
 
-			ctx = context.WithValue(r.Context(), "request_data", contextData)
+			ctx = context.WithValue(r.Context(), any("request_data"), contextData)
 
 			defer func() {
 				// Return to pool after use
@@ -480,11 +480,8 @@ func (omc *OptimizedMiddlewareChain) startPerformanceMonitoring() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			omc.recordSystemMetrics()
-		}
+	for range ticker.C {
+		omc.recordSystemMetrics()
 	}
 }
 
@@ -518,7 +515,7 @@ func getCurrentMemoryUsage() int64 {
 }
 
 // GetPerformanceStats returns current performance statistics
-func (omc *OptimizedMiddlewareChain) GetPerformanceStats() map[string]interface{} {
+func (omc *OptimizedMiddlewareChain) GetPerformanceStats() map[string]any {
 	omc.requestMutex.RLock()
 	concurrent := omc.concurrentRequests
 	omc.requestMutex.RUnlock()
@@ -529,16 +526,16 @@ func (omc *OptimizedMiddlewareChain) GetPerformanceStats() map[string]interface{
 	totalRequests := omc.totalRequests
 	omc.circuitMutex.RUnlock()
 
-	return map[string]interface{}{
+	return map[string]any{
 		"concurrent_requests": concurrent,
 		"max_concurrent":      omc.config.MaxConcurrentRequests,
-		"circuit_breaker": map[string]interface{}{
+		"circuit_breaker": map[string]any{
 			"open":           circuitOpen,
 			"error_count":    errorCount,
 			"total_requests": totalRequests,
 			"last_reset":     omc.lastReset,
 		},
-		"memory": map[string]interface{}{
+		"memory": map[string]any{
 			"current":   getCurrentMemoryUsage(),
 			"threshold": omc.config.MemoryThreshold,
 			"last_gc":   omc.lastGC,

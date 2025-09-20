@@ -16,7 +16,7 @@ type SecurityValidationResult struct {
 	Valid            bool                   `json:"valid"`
 	Errors           []string               `json:"errors,omitempty"`
 	Warnings         []string               `json:"warnings,omitempty"`
-	MiddlewareStatus map[string]interface{} `json:"middleware_status"`
+	MiddlewareStatus map[string]any `json:"middleware_status"`
 	GoaCompatibility bool                   `json:"goa_compatibility"`
 	SecurityScore    int                    `json:"security_score"` // 0-100
 }
@@ -50,7 +50,7 @@ func (sv *SecurityValidator) ValidateMiddlewareStack(stack *GoaMiddlewareStack) 
 		Valid:            true,
 		Errors:           make([]string, 0),
 		Warnings:         make([]string, 0),
-		MiddlewareStatus: make(map[string]interface{}),
+		MiddlewareStatus: make(map[string]any),
 		GoaCompatibility: true,
 		SecurityScore:    0,
 	}
@@ -97,7 +97,7 @@ func (sv *SecurityValidator) ValidateMiddlewareStack(stack *GoaMiddlewareStack) 
 
 // validateCORS validates CORS middleware configuration
 func (sv *SecurityValidator) validateCORS(config *CORSConfig, result *SecurityValidationResult) {
-	status := make(map[string]interface{})
+	status := make(map[string]any)
 
 	if config == nil {
 		result.Errors = append(result.Errors, "CORS configuration is missing")
@@ -156,7 +156,7 @@ func (sv *SecurityValidator) validateCORS(config *CORSConfig, result *SecurityVa
 
 // validateRateLimit validates rate limiting middleware configuration
 func (sv *SecurityValidator) validateRateLimit(config *RateLimitConfig, result *SecurityValidationResult) {
-	status := make(map[string]interface{})
+	status := make(map[string]any)
 
 	if config == nil {
 		result.Errors = append(result.Errors, "Rate limit configuration is missing")
@@ -213,7 +213,7 @@ func (sv *SecurityValidator) validateRateLimit(config *RateLimitConfig, result *
 
 // validateCompression validates compression middleware configuration
 func (sv *SecurityValidator) validateCompression(config *CompressionConfig, result *SecurityValidationResult) {
-	status := make(map[string]interface{})
+	status := make(map[string]any)
 
 	if config == nil {
 		result.Warnings = append(result.Warnings, "Compression configuration is missing - performance impact")
@@ -259,7 +259,7 @@ func (sv *SecurityValidator) validateCompression(config *CompressionConfig, resu
 
 // validateTimeout validates timeout middleware configuration
 func (sv *SecurityValidator) validateTimeout(config *TimeoutConfig, result *SecurityValidationResult) {
-	status := make(map[string]interface{})
+	status := make(map[string]any)
 
 	if config == nil {
 		result.Warnings = append(result.Warnings, "Timeout configuration is missing - DoS vulnerability")
@@ -294,7 +294,7 @@ func (sv *SecurityValidator) validateTimeout(config *TimeoutConfig, result *Secu
 
 // validateWhitelist validates endpoint whitelist configuration
 func (sv *SecurityValidator) validateWhitelist(whitelist *EndpointWhitelist, result *SecurityValidationResult) {
-	status := make(map[string]interface{})
+	status := make(map[string]any)
 
 	if whitelist == nil {
 		result.Errors = append(result.Errors, "Endpoint whitelist is missing - all endpoints may require authentication")
@@ -337,7 +337,7 @@ func (sv *SecurityValidator) calculateSecurityScore(result *SecurityValidationRe
 	componentCount := 0
 
 	for _, status := range result.MiddlewareStatus {
-		if statusMap, ok := status.(map[string]interface{}); ok {
+		if statusMap, ok := status.(map[string]any); ok {
 			if score, exists := statusMap["security_score"]; exists {
 				if scoreInt, ok := score.(int); ok {
 					totalScore += scoreInt
@@ -391,7 +391,7 @@ func (sv *SecurityValidator) GetSecurityRecommendations(result *SecurityValidati
 
 	// Add specific recommendations based on middleware status
 	if corsStatus, exists := result.MiddlewareStatus["cors"]; exists {
-		if statusMap, ok := corsStatus.(map[string]interface{}); ok {
+		if statusMap, ok := corsStatus.(map[string]any); ok {
 			if configured, exists := statusMap["configured"]; exists {
 				if !configured.(bool) {
 					recommendations = append(recommendations, "Implement CORS middleware for cross-origin security")
@@ -401,7 +401,7 @@ func (sv *SecurityValidator) GetSecurityRecommendations(result *SecurityValidati
 	}
 
 	if rateLimitStatus, exists := result.MiddlewareStatus["rate_limit"]; exists {
-		if statusMap, ok := rateLimitStatus.(map[string]interface{}); ok {
+		if statusMap, ok := rateLimitStatus.(map[string]any); ok {
 			if configured, exists := statusMap["configured"]; exists {
 				if !configured.(bool) {
 					recommendations = append(recommendations, "Implement rate limiting to prevent API abuse")

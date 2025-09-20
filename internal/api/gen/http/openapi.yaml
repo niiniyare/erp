@@ -10506,7 +10506,6 @@ definitions:
                 type: string
                 description: Primary email of the tenant
                 example: admin@acme.com
-                format: email
             industry:
                 type: string
                 description: Industry of the tenant

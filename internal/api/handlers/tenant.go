@@ -69,11 +69,20 @@ func (h *UnifiedTenantHandler) Create(ctx context.Context, p *goaTenant.CreateTe
 
 	// Convert GOA payload to service request
 	createReq := tenant.CreateTenantRequest{
-		Name:         p.Name,
-		Email:        "admin@" + p.Name + ".com", // Default email, should be provided in payload
-		Subdomain:    p.Subdomain,
-		CountryCode:  "US",  // Default country code, should be provided in payload
-		CurrencyCode: "USD", // Default currency, should be provided in payload
+		Name:               p.Name,
+		Email:              p.Email, // Default email, should be provided in payload
+		Subdomain:          p.Subdomain,
+		CountryCode:        p.CountryCode, // Default country code, should be provided in payload
+		CurrencyCode:       p.CurrencyCode, // Currency code from payload
+		Status:             tenant.Status(strings.ToUpper(p.Status)),
+		Industry:           p.Industry,
+		CompanySize:        p.CompanySize,
+		TaxID:              p.TaxID,
+		RegistrationNumber: p.RegistrationNumber,
+		LegalEntityType:    p.LegalEntityType,
+	}
+	if p.Slug != nil {
+		createReq.Slug = *p.Slug
 	}
 
 	// Set contact email if provided

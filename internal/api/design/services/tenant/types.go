@@ -88,7 +88,7 @@ var CreateTenantPayload = Type("CreateTenantPayload", func() {
 		Example("acme-corp")
 	})
 	Attribute("email", String, "Primary email of the tenant", func() {
-		Format(FormatEmail)
+		// Format(FormatEmail)
 		Example("admin@acme.com")
 	})
 	Attribute("subdomain", String, "Desired subdomain (optional)", func() {

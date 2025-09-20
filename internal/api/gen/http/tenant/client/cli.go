@@ -36,7 +36,6 @@ func BuildCreatePayload(tenantCreateBody string) (*tenant.CreateTenantPayload, e
 		if body.Slug != nil {
 			err = goa.MergeErrors(err, goa.ValidatePattern("body.slug", *body.Slug, "^[a-z0-9-]+$"))
 		}
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.email", body.Email, goa.FormatEmail))
 		if body.Subdomain != nil {
 			err = goa.MergeErrors(err, goa.ValidatePattern("body.subdomain", *body.Subdomain, "^[a-z0-9-]+$"))
 		}

@@ -228,39 +228,39 @@ func (stack *GoaMiddlewareStack) HealthCheckHandler() http.HandlerFunc {
 }
 
 // GetMiddlewareInfo returns information about the configured middleware stack
-func (stack *GoaMiddlewareStack) GetMiddlewareInfo() map[string]interface{} {
-	return map[string]interface{}{
+func (stack *GoaMiddlewareStack) GetMiddlewareInfo() map[string]any {
+	return map[string]any{
 		"framework":   "goa",
 		"version":     "1.0",
 		"environment": os.Getenv("ENVIRONMENT"),
-		"middlewares": map[string]interface{}{
-			"cors": map[string]interface{}{
+		"middlewares": map[string]any{
+			"cors": map[string]any{
 				"enabled":     true,
 				"max_age":     stack.corsConfig.MaxAge,
 				"credentials": stack.corsConfig.AllowCredentials,
 			},
-			"compression": map[string]interface{}{
+			"compression": map[string]any{
 				"enabled":       true,
 				"level":         stack.compressionConfig.Level,
 				"min_length":    stack.compressionConfig.MinLength,
 				"content_types": len(stack.compressionConfig.ContentTypes),
 			},
-			"timeout": map[string]interface{}{
+			"timeout": map[string]any{
 				"enabled":         true,
 				"request_timeout": stack.timeoutConfig.RequestTimeout.String(),
 				"custom_paths":    len(stack.timeoutConfig.EnableCustomPaths),
 			},
-			"rate_limit": map[string]interface{}{
+			"rate_limit": map[string]any{
 				"enabled":    true,
 				"global_rps": stack.rateLimitConfig.GlobalRPS,
 				"user_rps":   stack.rateLimitConfig.UserRPS,
 				"ip_rps":     stack.rateLimitConfig.IPRPS,
 			},
-			"tenant_isolation": map[string]interface{}{
+			"tenant_isolation": map[string]any{
 				"enabled": true,
 				"method":  "header_and_subdomain",
 			},
-			"validation": map[string]interface{}{
+			"validation": map[string]any{
 				"enabled":                  true,
 				"xss_protection":           true,
 				"sql_injection_protection": true,
@@ -272,7 +272,7 @@ func (stack *GoaMiddlewareStack) GetMiddlewareInfo() map[string]interface{} {
 // Wrapper functions for middleware compatibility
 
 // CreateValidationMiddleware creates a validation middleware wrapper
-func CreateValidationMiddleware(config interface{}, logger logger.Logger) func(http.Handler) http.Handler {
+func CreateValidationMiddleware(config any, logger logger.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Basic validation middleware - in a real implementation this would use the actual validation middleware

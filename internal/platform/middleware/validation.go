@@ -353,7 +353,7 @@ func (m *ValidationMiddleware) validateAndSanitizeBody(ctx context.Context, r *h
 	// Check if body is valid JSON for JSON content types
 	contentType := r.Header.Get("Content-Type")
 	if strings.Contains(strings.ToLower(contentType), "application/json") {
-		var jsonData interface{}
+		var jsonData any
 		if err := json.Unmarshal(body, &jsonData); err != nil {
 			return nil, fmt.Errorf("invalid JSON body: %w", err)
 		}
@@ -390,7 +390,7 @@ func (m *ValidationMiddleware) validateAndSanitizeBody(ctx context.Context, r *h
 }
 
 // validateJSONValue recursively validates JSON values
-func (m *ValidationMiddleware) validateJSONValue(value interface{}, depth int) error {
+func (m *ValidationMiddleware) validateJSONValue(value any, depth int) error {
 	const maxDepth = 10
 	if depth > maxDepth {
 		return fmt.Errorf("JSON nesting too deep (max: %d)", maxDepth)
@@ -405,7 +405,7 @@ func (m *ValidationMiddleware) validateJSONValue(value interface{}, depth int) e
 			return fmt.Errorf("suspicious content in string field")
 		}
 
-	case map[string]interface{}:
+	case map[string]any:
 		const maxFields = 100
 		if len(v) > maxFields {
 			return fmt.Errorf("too many object fields: %d (max: %d)", len(v), maxFields)
@@ -423,7 +423,7 @@ func (m *ValidationMiddleware) validateJSONValue(value interface{}, depth int) e
 			}
 		}
 
-	case []interface{}:
+	case []any:
 		const maxArrayLength = 1000
 		if len(v) > maxArrayLength {
 			return fmt.Errorf("array too long: %d items (max: %d)", len(v), maxArrayLength)
@@ -560,7 +560,7 @@ func (m *ValidationMiddleware) handleValidationError(ctx context.Context, w http
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusBadRequest)
 
-	response := map[string]interface{}{
+	response := map[string]any{
 		"error":   "validation_failed",
 		"message": err.Error(),
 		"type":    errorType,

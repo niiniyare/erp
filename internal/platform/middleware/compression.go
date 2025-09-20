@@ -54,7 +54,7 @@ type compressionWriter struct {
 }
 
 var gzipWriterPool = sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		gw, _ := gzip.NewWriterLevel(io.Discard, 6)
 		return gw
 	},

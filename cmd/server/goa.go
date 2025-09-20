@@ -81,7 +81,17 @@ func InitializeGOAServer(services *Services, financeServices *financeService.Ser
 	// TODO: Replace with proper IAM service when fully implemented
 	authSvc = handlers.NewAuthHandlerWithIdentity(services.IdentityService, services.TenantService, tracingService, metricsService)
 	featureFlagSvc = handlers.NewFeatureFlagService(services.FeatureFlagService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
-	financeSvc = financeHandler.NewFinanceHandler(*financeServices, tracingService, metricsService)
+	// Initialize finance service only if finance services are available
+	if financeServices != nil {
+		financeSvc = financeHandler.NewFinanceHandler(*financeServices, tracingService, metricsService)
+	} else {
+		// Set to nil for now - finance endpoints won't be available
+		financeSvc = nil
+		logger.Warn("Finance services not available, finance endpoints disabled", logger.Fields{
+			"service": "finance",
+			"status": "disabled",
+		})
+	}
 	// Create a simple health checker instance (nil store for now - needs proper initialization)
 	healthChecker := handlers.NewHealthChecker(nil, nil, logger.WithFields(logger.Fields{}), metricsService, tracingService)
 	healthSvc = handlers.NewHealthGoaHandler(healthChecker, tracingService, metricsService)
@@ -130,9 +140,12 @@ func InitializeGOAServer(services *Services, financeServices *financeService.Ser
 	featureFlagEndpoints.Use(debug.LogPayloads())
 	featureFlagEndpoints.Use(clueLog.Endpoint)
 
-	financeEndpoints = finance.NewEndpoints(financeSvc)
-	financeEndpoints.Use(debug.LogPayloads())
-	financeEndpoints.Use(clueLog.Endpoint)
+	// Only initialize finance endpoints if finance service is available
+	if financeSvc != nil {
+		financeEndpoints = finance.NewEndpoints(financeSvc)
+		financeEndpoints.Use(debug.LogPayloads())
+		financeEndpoints.Use(clueLog.Endpoint)
+	}
 
 	healthEndpoints = health.NewEndpoints(healthSvc)
 	healthEndpoints.Use(debug.LogPayloads())
@@ -177,7 +190,11 @@ func InitializeGOAServer(services *Services, financeServices *financeService.Ser
 	adminFeatureFlagServer := adminfeatureflagsvr.New(adminFeatureFlagEndpoints, mux, dec, enc, eh, nil)
 	authServer := authsvr.New(authEndpoints, mux, dec, enc, eh, nil)
 	featureFlagServer := featureflagsvr.New(featureFlagEndpoints, mux, dec, enc, eh, nil)
-	financeServer := financesvr.New(financeEndpoints, mux, dec, enc, eh, nil)
+	// Only create finance server if endpoints are available
+	var financeServer *financesvr.Server
+	if financeEndpoints != nil {
+		financeServer = financesvr.New(financeEndpoints, mux, dec, enc, eh, nil)
+	}
 	healthServer := healthsvr.New(healthEndpoints, mux, dec, enc, eh, nil)
 	organizationServer := organizationsvr.New(organizationEndpoints, mux, dec, enc, eh, nil)
 	tenantServer := tenantsvr.New(tenantEndpoints, mux, dec, enc, eh, nil)
@@ -190,7 +207,10 @@ func InitializeGOAServer(services *Services, financeServices *financeService.Ser
 	adminfeatureflagsvr.Mount(mux, adminFeatureFlagServer)
 	authsvr.Mount(mux, authServer)
 	featureflagsvr.Mount(mux, featureFlagServer)
-	financesvr.Mount(mux, financeServer)
+	// Only mount finance server if it exists
+	if financeServer != nil {
+		financesvr.Mount(mux, financeServer)
+	}
 	healthsvr.Mount(mux, healthServer)
 	organizationsvr.Mount(mux, organizationServer)
 	tenantsvr.Mount(mux, tenantServer)
@@ -237,7 +257,10 @@ func InitializeGOAServer(services *Services, financeServices *financeService.Ser
 	logMountedEndpoints(adminFeatureFlagServer.Mounts, "AdminFeatureFlag")
 	logMountedEndpoints(authServer.Mounts, "Auth")
 	logMountedEndpoints(featureFlagServer.Mounts, "FeatureFlag")
-	logMountedEndpoints(financeServer.Mounts, "Finance")
+	// Only log finance endpoints if server exists
+	if financeServer != nil {
+		logMountedEndpoints(financeServer.Mounts, "Finance")
+	}
 	logMountedEndpoints(organizationServer.Mounts, "Organization")
 	logMountedEndpoints(tenantServer.Mounts, "Tenant")
 	logMountedEndpoints(userServer.Mounts, "User")
@@ -398,7 +421,7 @@ func getErrorStatusCode(err error) int {
 func initializeMiddleware(iamAdapter *IAMServiceAdapter, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*MiddlewareSetup, error) {
 	// Use default whitelist for critical endpoints
 	whitelist, err := middleware.NewEndpointWhitelist(
-		[]string{"GET /health*", "GET /api/v1/health*", "GET /swagger-ui/*"},
+		[]string{"GET /health*", "GET /api/v1/health*", "GET /swagger-ui/*", "POST /api/v1/tenants"},
 		[]string{"POST /api/v1/auth/login", "GET /api/v1/version"},
 	)
 	if err != nil {

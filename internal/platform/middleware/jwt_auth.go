@@ -140,7 +140,7 @@ func (m *JWTAuthMiddleware) JWTAuth(ctx context.Context, token string, scheme *s
 // BasicAuth creates a basic authentication security middleware for GOA
 // Note: This is a placeholder implementation since BasicAuth is not currently
 // used in the GOA design, only JWT authentication is implemented
-func (m *JWTAuthMiddleware) BasicAuth(ctx context.Context, username, password string, scheme interface{}) (context.Context, error) {
+func (m *JWTAuthMiddleware) BasicAuth(ctx context.Context, username, password string, scheme any) (context.Context, error) {
 	ctx, span := m.tracer.StartSpan(ctx, "middleware.basic_auth",
 		tracing.WithAttributes(
 			attribute.String("auth.type", "basic"),
@@ -194,7 +194,7 @@ func (m *JWTAuthMiddleware) BasicAuth(ctx context.Context, username, password st
 // APIKeyAuth creates an API key authentication security middleware for GOA
 // Note: This is a placeholder implementation since APIKeyAuth is not currently
 // used in the GOA design, only JWT authentication is implemented
-func (m *JWTAuthMiddleware) APIKeyAuth(ctx context.Context, key string, scheme interface{}) (context.Context, error) {
+func (m *JWTAuthMiddleware) APIKeyAuth(ctx context.Context, key string, scheme any) (context.Context, error) {
 	ctx, span := m.tracer.StartSpan(ctx, "middleware.api_key_auth",
 		tracing.WithAttributes(
 			attribute.String("auth.type", "api_key"),

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -79,53 +80,42 @@ func main() {
 }
 
 // initializeHTTPServer creates the HTTP server using existing GOA setup
-// This is a temporary bridge function that will be refactored
 func initializeHTTPServer(app *application.Core) (http.Handler, error) {
-	// Extract services from application core
-	services := app.GetServices()
-	cfg := app.GetConfig()
-
-	// For now, we'll use a simple handler
-	// TODO: Integrate with existing GOA server setup
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Health check endpoint
-		if r.URL.Path == "/health" {
-			ctx := r.Context()
-			if err := app.Health(ctx); err != nil {
-				w.WriteHeader(http.StatusServiceUnavailable)
-				w.Write([]byte(`{"status":"unhealthy","error":"` + err.Error() + `"}`))
-				return
-			}
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`{"status":"healthy"}`))
-			return
-		}
-
-		// Placeholder response
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-
-		// Simple JSON response (avoiding external deps for now)
-		w.Write([]byte(`{
-			"app": "` + cfg.App.Name + `",
-			"version": "` + cfg.App.Version + `",
-			"status": "running",
-			"message": "New architecture working! (placeholder)"
-		}`))
-
-		// Log the request
-		logger.Info("HTTP request handled", logger.Fields{
-			"method": r.Method,
-			"path":   r.URL.Path,
-			"status": 200,
-		})
-
-		// Use services to show they're working
-		_ = services.Store       // Database connection
-		_ = services.RedisClient // Cache connection
-		// More integration will be added in next phase
-	}), nil
+	// Extract infrastructure services from application core
+	appServices := app.GetServices()
+	
+	// Initialize business services using the business services factory
+	businessServices, err := InitializeServices(
+		appServices.Store,
+		appServices.RedisClient,
+		appServices.Logger,
+		appServices.Metrics,
+		appServices.Tracing,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize business services: %w", err)
+	}
+	
+	// Initialize GOA server with all services
+	// Note: Finance services are not fully integrated yet, passing nil for now
+	goaServer, err := InitializeGOAServer(
+		businessServices,
+		nil, // financeServices placeholder
+		appServices.Store,
+		appServices.RedisClient,
+		appServices.Metrics,
+		appServices.Tracing,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize GOA server: %w", err)
+	}
+	
+	logger.Info("GOA server initialized successfully", logger.Fields{
+		"endpoints": "all services mounted",
+		"status": "ready",
+	})
+	
+	return goaServer.Handler, nil
 }
 
 // gracefulShutdown handles graceful shutdown of the application

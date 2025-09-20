@@ -470,7 +470,7 @@ func (m *RateLimitMiddleware) writeRateLimitResponse(w http.ResponseWriter, stat
 	w.Header().Set("Retry-After", strconv.Itoa(int(m.config.GlobalWindowSize.Seconds())))
 	w.WriteHeader(status)
 
-	response := map[string]interface{}{
+	response := map[string]any{
 		"error":   "rate_limit_exceeded",
 		"message": message,
 	}

@@ -31,6 +31,7 @@ public_endpoints:
     - "GET /api/v1/auth/validate"
     
     # Tenant management (bootstrap endpoints)
+    - "POST /api/v1/tenants"
     - "POST /api/v1/tenant/onboard"
     - "GET /api/v1/tenant/domains"
     

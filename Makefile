@@ -473,7 +473,7 @@ sql2dbml: ## 🔄 Convert SQL migration to DBML
 .PHONY: run
 run: ## 🚀 Run the application server
 	@echo "$(BLUE)Starting application server...$(NC)"
-	@go run ./cmd/server/
+	@go run ./cmd/server/ -http-port 8081
 
 .PHONY: build
 build: ## 🔨 Build the application

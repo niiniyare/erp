@@ -565,7 +565,7 @@ func (m *AuthorizationMiddleware) handleAuthzError(ctx context.Context, w http.R
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	response := map[string]interface{}{
+	response := map[string]any{
 		"error":   "authorization_failed",
 		"message": err.Error(),
 		"type":    errorType,
@@ -593,8 +593,8 @@ func (m *AuthorizationMiddleware) recordAuthzMetrics(ctx context.Context, resour
 }
 
 // GetAuthorizationInfo extracts authorization information from context
-func GetAuthorizationInfo(ctx context.Context) map[string]interface{} {
-	info := make(map[string]interface{})
+func GetAuthorizationInfo(ctx context.Context) map[string]any {
+	info := make(map[string]any)
 
 	if userID, ok := ctx.Value("authz_user_id").(uuid.UUID); ok {
 		info["user_id"] = userID.String()

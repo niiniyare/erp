@@ -60,7 +60,7 @@ func TimeoutMiddleware(config *TimeoutConfig, logger logger.Logger) func(http.Ha
 
 			// Create a channel to track handler completion
 			done := make(chan struct{})
-			var panicVal interface{}
+			var panicVal any
 
 			// Create new request with timeout context
 			r = r.WithContext(ctx)
@@ -183,7 +183,7 @@ func EnhancedTimeoutMiddleware(config *TimeoutConfig, logger logger.Logger) func
 
 			// Create a channel to track handler completion
 			done := make(chan struct{})
-			var panicVal interface{}
+			var panicVal any
 
 			// Create new request with timeout context
 			r = r.WithContext(ctx)

@@ -165,7 +165,7 @@ BEGIN
     RAISE EXCEPTION 'Tenant not found: %', tenant_id;
   END IF;
   
-  IF tenant_status != 'active' THEN
+  IF tenant_status != 'ACTIVE' THEN
     RAISE EXCEPTION 'Tenant is not active: % (status: %)', tenant_id, tenant_status;
   END IF;
   
@@ -235,13 +235,13 @@ ALTER TABLE
 -- Create policy for tenant isolation
 -- Only allow access to tenant data based on current session context
 -- FIXME: I am not sure if the tenants table can take this policy
--- CREATE POLICY tenant_isolation_policy ON tenants FOR ALL TO application_role USING (
---   id = current_tenant_id()
---   OR current_tenant_id() IS NULL
--- );
+CREATE POLICY tenant_isolation_policy ON tenants FOR ALL TO application_role USING (
+  id = current_tenant_id()
+  OR current_tenant_id() IS NULL
+);
 --
 -- Add policy comment
--- COMMENT ON POLICY tenant_isolation_policy ON tenants IS 'Ensures tenant data isolation based on session context';
+COMMENT ON POLICY tenant_isolation_policy ON tenants IS 'Ensures tenant data isolation based on session context';
 
 -- =====================================================
 -- PERMISSIONS AND GRANTS
@@ -255,6 +255,9 @@ INSERT
 UPDATE
 ,
   DELETE ON tenants TO application_role;
+
+-- Grant necessary permissions to admin_role
+GRANT  DELETE ON tenants TO admin_role;
 
 -- Grant execute permissions on functions
 GRANT EXECUTE ON FUNCTION set_tenant_context(UUID,TEXT) TO application_role;

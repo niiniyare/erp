@@ -35,8 +35,19 @@ func TenantMiddleware(
 				next.ServeHTTP(w, r)
 				return
 			}
+			
+			// 2. Special case: Tenant creation endpoints don't require existing tenant context
+			if (r.Method == "POST" && r.URL.Path == "/api/v1/tenants") ||
+			   (r.Method == "POST" && r.URL.Path == "/api/v1/tenant/onboard") {
+				logger.Debug("Tenant creation endpoint, bypassing tenant middleware", logger.Fields{
+					"method": r.Method,
+					"path":   r.URL.Path,
+				})
+				next.ServeHTTP(w, r)
+				return
+			}
 
-			// 2. Extract tenant ID from request (header priority, subdomain fallback)
+			// 3. Extract tenant ID from request (header priority, subdomain fallback)
 			tenantIDStr, err := extractTenantID(r)
 			if err != nil {
 				logger.Warn("Failed to extract tenant ID", logger.Fields{

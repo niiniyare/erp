@@ -244,7 +244,7 @@ func (m *MiddlewareStack) GetSecuritySummary() SecuritySummary {
 	summary := SecuritySummary{
 		Environment: m.Config.Environment,
 		Features:    make(map[string]bool),
-		Metrics:     make(map[string]interface{}),
+		Metrics:     make(map[string]any),
 	}
 
 	// Feature flags
@@ -277,7 +277,7 @@ func (m *MiddlewareStack) GetSecuritySummary() SecuritySummary {
 type SecuritySummary struct {
 	Environment string                 `json:"environment"`
 	Features    map[string]bool        `json:"features"`
-	Metrics     map[string]interface{} `json:"metrics"`
+	Metrics     map[string]any `json:"metrics"`
 }
 
 // ValidateConfiguration validates the middleware configuration
@@ -313,8 +313,8 @@ func ValidateConfiguration(config MiddlewareConfig) error {
 }
 
 // HealthCheck provides a health check for all middleware components
-func (m *MiddlewareStack) HealthCheck() map[string]interface{} {
-	health := make(map[string]interface{})
+func (m *MiddlewareStack) HealthCheck() map[string]any {
+	health := make(map[string]any)
 
 	health["middleware_stack"] = "healthy"
 	health["environment"] = m.Config.Environment
