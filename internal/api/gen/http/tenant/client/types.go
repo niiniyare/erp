@@ -114,34 +114,12 @@ type UpdateConfigurationRequestBody struct {
 // CreateResponseBody is the type of the "tenant" service "create" endpoint
 // HTTP response body.
 type CreateResponseBody struct {
-	// Unique tenant identifier
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Tenant display name
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// Tenant URL slug
-	Slug *string `form:"slug,omitempty" json:"slug,omitempty" xml:"slug,omitempty"`
-	// Subdomain for tenant
-	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
-	// Tenant status
+	// Created tenant information
+	Tenant *TenantResponseBody `form:"tenant,omitempty" json:"tenant,omitempty" xml:"tenant,omitempty"`
+	// Status of the creation operation
 	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Subscription plan
-	PlanType *string `form:"plan_type,omitempty" json:"plan_type,omitempty" xml:"plan_type,omitempty"`
-	// Tenant description
-	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
-	// Tenant-specific settings
-	Settings *TenantSettingsResponseBody `form:"settings,omitempty" json:"settings,omitempty" xml:"settings,omitempty"`
-	// Subscription information
-	Subscription *SubscriptionInfoResponseBody `form:"subscription,omitempty" json:"subscription,omitempty" xml:"subscription,omitempty"`
-	// Primary contact information
-	Contact *ContactInfoResponseBody `form:"contact,omitempty" json:"contact,omitempty" xml:"contact,omitempty"`
-	// Creation timestamp
-	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
-	// Last update timestamp
-	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
-	// ID of user who created the record
-	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
-	// ID of user who last updated the record
-	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
+	// Detailed message about the operation
+	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
 }
 
 // GetResponseBody is the type of the "tenant" service "get" endpoint HTTP
@@ -619,6 +597,38 @@ type TenantLimitsRequestBody struct {
 	MaxAPICallsPerHour *uint `form:"max_api_calls_per_hour,omitempty" json:"max_api_calls_per_hour,omitempty" xml:"max_api_calls_per_hour,omitempty"`
 }
 
+// TenantResponseBody is used to define fields on response body types.
+type TenantResponseBody struct {
+	// Unique tenant identifier
+	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
+	// Tenant display name
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Tenant URL slug
+	Slug *string `form:"slug,omitempty" json:"slug,omitempty" xml:"slug,omitempty"`
+	// Subdomain for tenant
+	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
+	// Tenant status
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// Subscription plan
+	PlanType *string `form:"plan_type,omitempty" json:"plan_type,omitempty" xml:"plan_type,omitempty"`
+	// Tenant description
+	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Tenant-specific settings
+	Settings *TenantSettingsResponseBody `form:"settings,omitempty" json:"settings,omitempty" xml:"settings,omitempty"`
+	// Subscription information
+	Subscription *SubscriptionInfoResponseBody `form:"subscription,omitempty" json:"subscription,omitempty" xml:"subscription,omitempty"`
+	// Primary contact information
+	Contact *ContactInfoResponseBody `form:"contact,omitempty" json:"contact,omitempty" xml:"contact,omitempty"`
+	// Creation timestamp
+	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	// Last update timestamp
+	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
+}
+
 // TenantSettingsResponseBody is used to define fields on response body types.
 type TenantSettingsResponseBody struct {
 	// Default timezone
@@ -669,38 +679,6 @@ type ContactInfoResponseBody struct {
 	Phone *string `form:"phone,omitempty" json:"phone,omitempty" xml:"phone,omitempty"`
 	// Job title
 	Title *string `form:"title,omitempty" json:"title,omitempty" xml:"title,omitempty"`
-}
-
-// TenantResponseBody is used to define fields on response body types.
-type TenantResponseBody struct {
-	// Unique tenant identifier
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Tenant display name
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// Tenant URL slug
-	Slug *string `form:"slug,omitempty" json:"slug,omitempty" xml:"slug,omitempty"`
-	// Subdomain for tenant
-	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
-	// Tenant status
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Subscription plan
-	PlanType *string `form:"plan_type,omitempty" json:"plan_type,omitempty" xml:"plan_type,omitempty"`
-	// Tenant description
-	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
-	// Tenant-specific settings
-	Settings *TenantSettingsResponseBody `form:"settings,omitempty" json:"settings,omitempty" xml:"settings,omitempty"`
-	// Subscription information
-	Subscription *SubscriptionInfoResponseBody `form:"subscription,omitempty" json:"subscription,omitempty" xml:"subscription,omitempty"`
-	// Primary contact information
-	Contact *ContactInfoResponseBody `form:"contact,omitempty" json:"contact,omitempty" xml:"contact,omitempty"`
-	// Creation timestamp
-	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
-	// Last update timestamp
-	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
-	// ID of user who created the record
-	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
-	// ID of user who last updated the record
-	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
 }
 
 // PaginationMetaResponseBody is used to define fields on response body types.
@@ -820,31 +798,14 @@ func NewUpdateConfigurationRequestBody(p *tenant.UpdateConfigurationPayload) *Up
 	return body
 }
 
-// NewCreateTenantCreated builds a "tenant" service "create" endpoint result
-// from a HTTP "Created" response.
-func NewCreateTenantCreated(body *CreateResponseBody) *tenantviews.TenantView {
-	v := &tenantviews.TenantView{
-		ID:          body.ID,
-		Name:        body.Name,
-		Slug:        body.Slug,
-		Subdomain:   body.Subdomain,
-		Status:      body.Status,
-		PlanType:    body.PlanType,
-		Description: body.Description,
-		CreatedAt:   body.CreatedAt,
-		UpdatedAt:   body.UpdatedAt,
-		CreatedBy:   body.CreatedBy,
-		UpdatedBy:   body.UpdatedBy,
+// NewCreateTenantResultViewCreated builds a "tenant" service "create" endpoint
+// result from a HTTP "Created" response.
+func NewCreateTenantResultViewCreated(body *CreateResponseBody) *tenantviews.CreateTenantResultView {
+	v := &tenantviews.CreateTenantResultView{
+		Status:  body.Status,
+		Message: body.Message,
 	}
-	if body.Settings != nil {
-		v.Settings = unmarshalTenantSettingsResponseBodyToTenantviewsTenantSettingsView(body.Settings)
-	}
-	if body.Subscription != nil {
-		v.Subscription = unmarshalSubscriptionInfoResponseBodyToTenantviewsSubscriptionInfoView(body.Subscription)
-	}
-	if body.Contact != nil {
-		v.Contact = unmarshalContactInfoResponseBodyToTenantviewsContactInfoView(body.Contact)
-	}
+	v.Tenant = unmarshalTenantResponseBodyToTenantviewsTenantView(body.Tenant)
 
 	return v
 }
@@ -1936,103 +1897,6 @@ func ValidateTenantLimitsRequestBody(body *TenantLimitsRequestBody) (err error) 
 	return
 }
 
-// ValidateTenantSettingsResponseBody runs the validations defined on
-// TenantSettingsResponseBody
-func ValidateTenantSettingsResponseBody(body *TenantSettingsResponseBody) (err error) {
-	if body.Currency != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("body.currency", *body.Currency, "^[A-Z]{3}$"))
-	}
-	if body.DateFormat != nil {
-		if !(*body.DateFormat == "MM/DD/YYYY" || *body.DateFormat == "DD/MM/YYYY" || *body.DateFormat == "YYYY-MM-DD") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.date_format", *body.DateFormat, []any{"MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"}))
-		}
-	}
-	if body.Language != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("body.language", *body.Language, "^[a-z]{2}$"))
-	}
-	if body.Limits != nil {
-		if err2 := ValidateTenantLimitsResponseBody(body.Limits); err2 != nil {
-			err = goa.MergeErrors(err, err2)
-		}
-	}
-	return
-}
-
-// ValidateTenantLimitsResponseBody runs the validations defined on
-// TenantLimitsResponseBody
-func ValidateTenantLimitsResponseBody(body *TenantLimitsResponseBody) (err error) {
-	if body.MaxUsers != nil {
-		if *body.MaxUsers < 1 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("body.max_users", *body.MaxUsers, 1, true))
-		}
-	}
-	if body.MaxStorageMb != nil {
-		if *body.MaxStorageMb < 100 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("body.max_storage_mb", *body.MaxStorageMb, 100, true))
-		}
-	}
-	if body.MaxAPICallsPerHour != nil {
-		if *body.MaxAPICallsPerHour < 100 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("body.max_api_calls_per_hour", *body.MaxAPICallsPerHour, 100, true))
-		}
-	}
-	return
-}
-
-// ValidateSubscriptionInfoResponseBody runs the validations defined on
-// SubscriptionInfoResponseBody
-func ValidateSubscriptionInfoResponseBody(body *SubscriptionInfoResponseBody) (err error) {
-	if body.Plan != nil {
-		if !(*body.Plan == "starter" || *body.Plan == "professional" || *body.Plan == "enterprise") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.plan", *body.Plan, []any{"starter", "professional", "enterprise"}))
-		}
-	}
-	if body.Status != nil {
-		if !(*body.Status == "active" || *body.Status == "past_due" || *body.Status == "canceled" || *body.Status == "trialing") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"active", "past_due", "canceled", "trialing"}))
-		}
-	}
-	if body.BillingCycle != nil {
-		if !(*body.BillingCycle == "monthly" || *body.BillingCycle == "yearly") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.billing_cycle", *body.BillingCycle, []any{"monthly", "yearly"}))
-		}
-	}
-	if body.NextBillingDate != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.next_billing_date", *body.NextBillingDate, goa.FormatDate))
-	}
-	if body.TrialEndsAt != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.trial_ends_at", *body.TrialEndsAt, goa.FormatDate))
-	}
-	return
-}
-
-// ValidateContactInfoResponseBody runs the validations defined on
-// ContactInfoResponseBody
-func ValidateContactInfoResponseBody(body *ContactInfoResponseBody) (err error) {
-	if body.Name != nil {
-		if utf8.RuneCountInString(*body.Name) < 1 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 1, true))
-		}
-	}
-	if body.Name != nil {
-		if utf8.RuneCountInString(*body.Name) > 100 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
-		}
-	}
-	if body.Email != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.email", *body.Email, goa.FormatEmail))
-	}
-	if body.Phone != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("body.phone", *body.Phone, "^\\+?[1-9]\\d{1,14}$"))
-	}
-	if body.Title != nil {
-		if utf8.RuneCountInString(*body.Title) > 100 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.title", *body.Title, utf8.RuneCountInString(*body.Title), 100, false))
-		}
-	}
-	return
-}
-
 // ValidateTenantResponseBody runs the validations defined on TenantResponseBody
 func ValidateTenantResponseBody(body *TenantResponseBody) (err error) {
 	if body.ID == nil {
@@ -2136,6 +2000,103 @@ func ValidateTenantResponseBody(body *TenantResponseBody) (err error) {
 	}
 	if body.UpdatedBy != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
+	}
+	return
+}
+
+// ValidateTenantSettingsResponseBody runs the validations defined on
+// TenantSettingsResponseBody
+func ValidateTenantSettingsResponseBody(body *TenantSettingsResponseBody) (err error) {
+	if body.Currency != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.currency", *body.Currency, "^[A-Z]{3}$"))
+	}
+	if body.DateFormat != nil {
+		if !(*body.DateFormat == "MM/DD/YYYY" || *body.DateFormat == "DD/MM/YYYY" || *body.DateFormat == "YYYY-MM-DD") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.date_format", *body.DateFormat, []any{"MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"}))
+		}
+	}
+	if body.Language != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.language", *body.Language, "^[a-z]{2}$"))
+	}
+	if body.Limits != nil {
+		if err2 := ValidateTenantLimitsResponseBody(body.Limits); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
+	}
+	return
+}
+
+// ValidateTenantLimitsResponseBody runs the validations defined on
+// TenantLimitsResponseBody
+func ValidateTenantLimitsResponseBody(body *TenantLimitsResponseBody) (err error) {
+	if body.MaxUsers != nil {
+		if *body.MaxUsers < 1 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.max_users", *body.MaxUsers, 1, true))
+		}
+	}
+	if body.MaxStorageMb != nil {
+		if *body.MaxStorageMb < 100 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.max_storage_mb", *body.MaxStorageMb, 100, true))
+		}
+	}
+	if body.MaxAPICallsPerHour != nil {
+		if *body.MaxAPICallsPerHour < 100 {
+			err = goa.MergeErrors(err, goa.InvalidRangeError("body.max_api_calls_per_hour", *body.MaxAPICallsPerHour, 100, true))
+		}
+	}
+	return
+}
+
+// ValidateSubscriptionInfoResponseBody runs the validations defined on
+// SubscriptionInfoResponseBody
+func ValidateSubscriptionInfoResponseBody(body *SubscriptionInfoResponseBody) (err error) {
+	if body.Plan != nil {
+		if !(*body.Plan == "starter" || *body.Plan == "professional" || *body.Plan == "enterprise") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.plan", *body.Plan, []any{"starter", "professional", "enterprise"}))
+		}
+	}
+	if body.Status != nil {
+		if !(*body.Status == "active" || *body.Status == "past_due" || *body.Status == "canceled" || *body.Status == "trialing") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"active", "past_due", "canceled", "trialing"}))
+		}
+	}
+	if body.BillingCycle != nil {
+		if !(*body.BillingCycle == "monthly" || *body.BillingCycle == "yearly") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.billing_cycle", *body.BillingCycle, []any{"monthly", "yearly"}))
+		}
+	}
+	if body.NextBillingDate != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.next_billing_date", *body.NextBillingDate, goa.FormatDate))
+	}
+	if body.TrialEndsAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.trial_ends_at", *body.TrialEndsAt, goa.FormatDate))
+	}
+	return
+}
+
+// ValidateContactInfoResponseBody runs the validations defined on
+// ContactInfoResponseBody
+func ValidateContactInfoResponseBody(body *ContactInfoResponseBody) (err error) {
+	if body.Name != nil {
+		if utf8.RuneCountInString(*body.Name) < 1 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 1, true))
+		}
+	}
+	if body.Name != nil {
+		if utf8.RuneCountInString(*body.Name) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
+		}
+	}
+	if body.Email != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.email", *body.Email, goa.FormatEmail))
+	}
+	if body.Phone != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.phone", *body.Phone, "^\\+?[1-9]\\d{1,14}$"))
+	}
+	if body.Title != nil {
+		if utf8.RuneCountInString(*body.Title) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.title", *body.Title, utf8.RuneCountInString(*body.Title), 100, false))
+		}
 	}
 	return
 }

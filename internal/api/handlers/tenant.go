@@ -12,12 +12,13 @@ import (
 	"github.com/niiniyare/erp/internal/shared"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/timeutil"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 )
 
-// UnifiedTenantHandler implements the unified tenant service interface
-type UnifiedTenantHandler struct {
+// TenantHandler implements the unified tenant service interface
+type TenantHandler struct {
 	tenantService       tenant.Service
 	provisioningService tenant.ProvisioningService
 	tracing             tracing.TracingService
@@ -32,7 +33,7 @@ func NewUnifiedTenantHandler(
 	tracingService tracing.TracingService,
 	metricsService *metrics.MetricsService,
 ) goaTenant.Service {
-	return &UnifiedTenantHandler{
+	return &TenantHandler{
 		tenantService:       tenantService,
 		provisioningService: provisioningService,
 		tracing:             tracingService,
@@ -46,7 +47,7 @@ func NewUnifiedTenantHandler(
 // ============================================================================
 
 // Create implements tenant creation
-func (h *UnifiedTenantHandler) Create(ctx context.Context, p *goaTenant.CreateTenantPayload) (*goaTenant.Tenant, string, error) {
+func (h *TenantHandler) Create(ctx context.Context, p *goaTenant.CreateTenantPayload) (*goaTenant.CreateTenantResult, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "tenant.handler.Create")
 	defer span.End()
 
@@ -61,18 +62,17 @@ func (h *UnifiedTenantHandler) Create(ctx context.Context, p *goaTenant.CreateTe
 	h.logger.InfoContext(ctx, "Creating tenant", logger.Fields{
 		"name":      p.Name,
 		"plan_type": p.PlanType,
-		"operation": "handler.Create",
 	})
 
 	// Extract user ID from context for audit logging
-	_, _ = shared.GetUserID(ctx)
+	// _, _ = shared.GetUserID(ctx)
 
 	// Convert GOA payload to service request
 	createReq := tenant.CreateTenantRequest{
 		Name:               p.Name,
 		Email:              p.Email, // Default email, should be provided in payload
 		Subdomain:          p.Subdomain,
-		CountryCode:        p.CountryCode, // Default country code, should be provided in payload
+		CountryCode:        p.CountryCode,  // Default country code, should be provided in payload
 		CurrencyCode:       p.CurrencyCode, // Currency code from payload
 		Status:             tenant.Status(strings.ToUpper(p.Status)),
 		Industry:           p.Industry,
@@ -124,11 +124,15 @@ func (h *UnifiedTenantHandler) Create(ctx context.Context, p *goaTenant.CreateTe
 			"error_type": classifyError(err),
 		})
 
-		return nil, "", convertServiceError(err)
+		return &goaTenant.CreateTenantResult{
+			Tenant:  nil,
+			Status:  "FAILED",
+			Message: fmt.Sprintf("Tenant creation failed: %s", err.Error()),
+		}, convertServiceError(err)
 	}
 
 	// Convert service result to GOA response
-	goaResult := convertTenantToGOA(result)
+	goaResultTenant := convertTenantToGOA(result)
 
 	h.logger.InfoContext(ctx, "Tenant created successfully", logger.Fields{
 		"tenant_id": result.ID.String(),
@@ -140,11 +144,15 @@ func (h *UnifiedTenantHandler) Create(ctx context.Context, p *goaTenant.CreateTe
 		"status": "success",
 	})
 
-	return goaResult, "default", nil
+	return &goaTenant.CreateTenantResult{
+		Tenant:  goaResultTenant,
+		Status:  "SUCCESS",
+		Message: "Tenant created successfully",
+	}, nil
 }
 
 // Get implements tenant retrieval by ID
-func (h *UnifiedTenantHandler) Get(ctx context.Context, p *goaTenant.GetPayload) (*goaTenant.Tenant, string, error) {
+func (h *TenantHandler) Get(ctx context.Context, p *goaTenant.GetPayload) (*goaTenant.Tenant, string, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "tenant.handler.Get")
 	defer span.End()
 
@@ -195,7 +203,7 @@ func (h *UnifiedTenantHandler) Get(ctx context.Context, p *goaTenant.GetPayload)
 }
 
 // List implements tenant listing with pagination
-func (h *UnifiedTenantHandler) List(ctx context.Context, p *goaTenant.ListPayload) (*goaTenant.ListResult, error) {
+func (h *TenantHandler) List(ctx context.Context, p *goaTenant.ListPayload) (*goaTenant.ListResult, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "tenant.handler.List")
 	defer span.End()
 
@@ -255,7 +263,7 @@ func (h *UnifiedTenantHandler) List(ctx context.Context, p *goaTenant.ListPayloa
 }
 
 // Update implements tenant updates
-func (h *UnifiedTenantHandler) Update(ctx context.Context, p *goaTenant.UpdateTenantPayload) (*goaTenant.Tenant, string, error) {
+func (h *TenantHandler) Update(ctx context.Context, p *goaTenant.UpdateTenantPayload) (*goaTenant.Tenant, string, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "tenant.handler.Update")
 	defer span.End()
 
@@ -342,7 +350,7 @@ func (h *UnifiedTenantHandler) Update(ctx context.Context, p *goaTenant.UpdateTe
 }
 
 // Delete implements tenant deletion (soft delete)
-func (h *UnifiedTenantHandler) Delete(ctx context.Context, p *goaTenant.DeletePayload) error {
+func (h *TenantHandler) Delete(ctx context.Context, p *goaTenant.DeletePayload) error {
 	ctx, span := h.tracing.StartSpan(ctx, "tenant.handler.Delete")
 	defer span.End()
 
@@ -392,7 +400,7 @@ func (h *UnifiedTenantHandler) Delete(ctx context.Context, p *goaTenant.DeletePa
 }
 
 // Health implements health check
-func (h *UnifiedTenantHandler) Health(ctx context.Context) (*goaTenant.HealthResult, error) {
+func (h *TenantHandler) Health(ctx context.Context) (*goaTenant.HealthResult, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "tenant.handler.Health")
 	defer span.End()
 
@@ -415,7 +423,7 @@ func (h *UnifiedTenantHandler) Health(ctx context.Context) (*goaTenant.HealthRes
 // ============================================================================
 
 // Provision implements tenant provisioning
-func (h *UnifiedTenantHandler) Provision(ctx context.Context, p *goaTenant.ProvisionPayload) (*goaTenant.ProvisionResult, error) {
+func (h *TenantHandler) Provision(ctx context.Context, p *goaTenant.ProvisionPayload) (*goaTenant.ProvisionResult, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "tenant.handler.Provision")
 	defer span.End()
 
@@ -510,7 +518,7 @@ func (h *UnifiedTenantHandler) Provision(ctx context.Context, p *goaTenant.Provi
 }
 
 // Suspend implements tenant suspension
-func (h *UnifiedTenantHandler) Suspend(ctx context.Context, p *goaTenant.SuspendPayload) (*goaTenant.SuspendResult, error) {
+func (h *TenantHandler) Suspend(ctx context.Context, p *goaTenant.SuspendPayload) (*goaTenant.SuspendResult, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "tenant.handler.Suspend")
 	defer span.End()
 
@@ -572,7 +580,7 @@ func (h *UnifiedTenantHandler) Suspend(ctx context.Context, p *goaTenant.Suspend
 }
 
 // Reactivate implements tenant reactivation
-func (h *UnifiedTenantHandler) Reactivate(ctx context.Context, p *goaTenant.ReactivatePayload) (*goaTenant.ReactivateResult, error) {
+func (h *TenantHandler) Reactivate(ctx context.Context, p *goaTenant.ReactivatePayload) (*goaTenant.ReactivateResult, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "tenant.handler.Reactivate")
 	defer span.End()
 
@@ -633,7 +641,7 @@ func (h *UnifiedTenantHandler) Reactivate(ctx context.Context, p *goaTenant.Reac
 }
 
 // UpdateConfiguration implements tenant configuration updates
-func (h *UnifiedTenantHandler) UpdateConfiguration(ctx context.Context, p *goaTenant.UpdateConfigurationPayload) (*goaTenant.UpdateConfigurationResult, error) {
+func (h *TenantHandler) UpdateConfiguration(ctx context.Context, p *goaTenant.UpdateConfigurationPayload) (*goaTenant.UpdateConfigurationResult, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "tenant.handler.UpdateConfiguration")
 	defer span.End()
 
@@ -710,7 +718,7 @@ func (h *UnifiedTenantHandler) UpdateConfiguration(ctx context.Context, p *goaTe
 }
 
 // GetUsageAnalytics implements usage analytics retrieval
-func (h *UnifiedTenantHandler) GetUsageAnalytics(ctx context.Context, p *goaTenant.GetUsageAnalyticsPayload) (*goaTenant.GetUsageAnalyticsResult, error) {
+func (h *TenantHandler) GetUsageAnalytics(ctx context.Context, p *goaTenant.GetUsageAnalyticsPayload) (*goaTenant.GetUsageAnalyticsResult, error) {
 	ctx, span := h.tracing.StartSpan(ctx, "tenant.handler.GetUsageAnalytics")
 	defer span.End()
 
@@ -818,11 +826,11 @@ func convertTenantToGOA(t *tenant.Tenant) *goaTenant.Tenant {
 	// Convert settings from map[string]any to structured format
 	if t.Settings != nil {
 		settings := &goaTenant.TenantSettings{
-			Timezone:   t.Timezone,     // Use direct fields from tenant
-			Currency:   t.CurrencyCode, // Use direct fields from tenant
-			DateFormat: "MM/DD/YYYY",   // Default
-			Language:   "en",           // Default
-			Features:   []string{},     // Default empty
+			Timezone:   t.Timezone,             // Use direct fields from tenant
+			Currency:   t.CurrencyCode,         // Use direct fields from tenant
+			DateFormat: timeutil.HumanDateTime, // Default
+			Language:   "en",                   // Default
+			Features:   []string{},             // Default empty
 		}
 
 		// Extract settings from the map if they exist
@@ -848,14 +856,6 @@ func convertTenantToGOA(t *tenant.Tenant) *goaTenant.Tenant {
 	return result
 }
 
-// Helper functions for pointer conversions
-func stringValue(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
-
 func uintValue(u *uint) uint {
 	if u == nil {
 		return 0
@@ -863,15 +863,8 @@ func uintValue(u *uint) uint {
 	return *u
 }
 
-func boolValue(b *bool) bool {
-	if b == nil {
-		return false
-	}
-	return *b
-}
-
 // getActorIDFromContext extracts the user ID from the request context
-func getActorIDFromContext(ctx context.Context) uuid.UUID {
+func getActorIDFromContext(_ context.Context) uuid.UUID {
 	// TODO: Extract from JWT claims when authentication is implemented
 	// For now, return a system actor ID
 	return uuid.MustParse("00000000-0000-0000-0000-000000000001")

@@ -13,12 +13,31 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
+// CreateTenantResult is the viewed result type that is projected based on a
+// view.
+type CreateTenantResult struct {
+	// Type to project
+	Projected *CreateTenantResultView
+	// View to render
+	View string
+}
+
 // Tenant is the viewed result type that is projected based on a view.
 type Tenant struct {
 	// Type to project
 	Projected *TenantView
 	// View to render
 	View string
+}
+
+// CreateTenantResultView is a type that runs validations on a projected type.
+type CreateTenantResultView struct {
+	// Created tenant information
+	Tenant *TenantView
+	// Status of the creation operation
+	Status *string
+	// Detailed message about the operation
+	Message *string
 }
 
 // TenantView is a type that runs validations on a projected type.
@@ -122,6 +141,15 @@ type PaginationMetaView struct {
 }
 
 var (
+	// CreateTenantResultMap is a map indexing the attribute names of
+	// CreateTenantResult by view name.
+	CreateTenantResultMap = map[string][]string{
+		"default": {
+			"tenant",
+			"status",
+			"message",
+		},
+	}
 	// TenantMap is a map indexing the attribute names of Tenant by view name.
 	TenantMap = map[string][]string{
 		"default": {
@@ -149,6 +177,18 @@ var (
 	}
 )
 
+// ValidateCreateTenantResult runs the validations defined on the viewed result
+// type CreateTenantResult.
+func ValidateCreateTenantResult(result *CreateTenantResult) (err error) {
+	switch result.View {
+	case "default", "":
+		err = ValidateCreateTenantResultView(result.Projected)
+	default:
+		err = goa.InvalidEnumValueError("view", result.View, []any{"default"})
+	}
+	return
+}
+
 // ValidateTenant runs the validations defined on the viewed result type Tenant.
 func ValidateTenant(result *Tenant) (err error) {
 	switch result.View {
@@ -158,6 +198,28 @@ func ValidateTenant(result *Tenant) (err error) {
 		err = ValidateTenantViewMinimal(result.Projected)
 	default:
 		err = goa.InvalidEnumValueError("view", result.View, []any{"default", "minimal"})
+	}
+	return
+}
+
+// ValidateCreateTenantResultView runs the validations defined on
+// CreateTenantResultView using the "default" view.
+func ValidateCreateTenantResultView(result *CreateTenantResultView) (err error) {
+	if result.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "result"))
+	}
+	if result.Message == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("message", "result"))
+	}
+	if result.Status != nil {
+		if !(*result.Status == "SUCCESS" || *result.Status == "FAILED") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"SUCCESS", "FAILED"}))
+		}
+	}
+	if result.Tenant != nil {
+		if err2 := ValidateTenantView(result.Tenant); err2 != nil {
+			err = goa.MergeErrors(err, err2)
+		}
 	}
 	return
 }

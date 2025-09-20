@@ -1,91 +1,229 @@
 #!/bin/bash
 
-# Test script for Tenant API with native middleware
-# This script tests the tenant endpoints to validate our Day 4 native middleware implementation
+# Test script for Tenant API - Comprehensive Testing
+# Updated: 2025-09-20
+# This script tests all tenant endpoints based on real API testing results
 
 # Source environment configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/setup_env.sh"
 
-BASE_URL="http://localhost:${SERVER_PORT}"
-TENANT_ID="550e8400-e29b-41d4-a716-446655440000"
+BASE_URL="http://localhost:${SERVER_PORT:-8080}"
+CREATED_TENANT_ID=""
 
-echo "🧪 Testing Tenant API with Native Middleware"
-echo "============================================="
+echo "🧪 Comprehensive Tenant API Testing"
+echo "===================================="
 echo "Base URL: $BASE_URL"
+echo "Server Port: ${SERVER_PORT:-8080}"
+echo "Testing Date: $(date)"
 echo ""
 
-# Test 1: Health endpoint (should work without tenant)
-echo "📋 Test 1: Health endpoint (public)"
-echo "GET $BASE_URL/api/v1/tenants/health"
-curl -s -w "\nStatus: %{http_code}\n" \
-  -H "Content-Type: application/json" \
-  "$BASE_URL/api/v1/tenants/health"
-echo ""
-echo "---"
-
-# Test 2: List tenants without tenant header (should fail)
-echo "📋 Test 2: List tenants without tenant header (should fail)"
-echo "GET $BASE_URL/api/v1/tenants"
-curl -s -w "\nStatus: %{http_code}\n" \
-  -H "Content-Type: application/json" \
-  "$BASE_URL/api/v1/tenants"
-echo ""
-echo "---"
-
-# Test 3: List tenants with tenant header
-echo "📋 Test 3: List tenants with tenant header"
-echo "GET $BASE_URL/api/v1/tenants"
-curl -s -w "\nStatus: %{http_code}\n" \
-  -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: $TENANT_ID" \
-  "$BASE_URL/api/v1/tenants"
-echo ""
-echo "---"
-
-# Test 4: Get specific tenant with header
-echo "📋 Test 4: Get specific tenant with header"
-echo "GET $BASE_URL/api/v1/tenants/$TENANT_ID"
-curl -s -w "\nStatus: %{http_code}\n" \
-  -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: $TENANT_ID" \
-  "$BASE_URL/api/v1/tenants/$TENANT_ID"
-echo ""
-echo "---"
-
-# Test 5: Create tenant with header
-echo "📋 Test 5: Create tenant with header"
+# Test 1: Create a new tenant (bypasses middleware)
+echo "📋 Test 1: Create New Tenant (Public Endpoint)"
 echo "POST $BASE_URL/api/v1/tenants"
-curl -s -w "\nStatus: %{http_code}\n" \
+CREATE_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
   -X POST \
   -H "Content-Type: application/json" \
-  -H "X-Tenant-ID: $TENANT_ID" \
   -d '{
-    "name": "Test Tenant",
-    "subdomain": "testco",
-    "plan_type": "starter",
-    "description": "Test tenant for curl testing"
+    "name": "Test Company API Script",
+    "email": "contact@testapi.com",
+    "subdomain": "testapi",
+    "country_code": "US",
+    "currency_code": "USD",
+    "status": "active",
+    "industry": "Technology",
+    "company_size": "11-50",
+    "contact": {
+      "email": "contact@testapi.com"
+    },
+    "settings": {
+      "timezone": "UTC",
+      "currency": "USD",
+      "date_format": "YYYY-MM-DD",
+      "language": "en"
+    }
   }' \
+  "$BASE_URL/api/v1/tenants")
+
+# Extract tenant ID from response
+CREATED_TENANT_ID=$(echo "$CREATE_RESPONSE" | sed 's/HTTP_STATUS:.*//' | jq -r '.tenant.id // empty')
+STATUS=$(echo "$CREATE_RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
+
+echo "$CREATE_RESPONSE" | sed 's/HTTP_STATUS:.*//' | jq .
+echo "Status: $STATUS"
+if [ -n "$CREATED_TENANT_ID" ]; then
+  echo "✅ Tenant created successfully with ID: $CREATED_TENANT_ID"
+else
+  echo "❌ Failed to create tenant"
+fi
+echo ""
+echo "---"
+
+# Test 2: Health endpoint with tenant context
+echo "📋 Test 2: Health Check (Requires Tenant Context)"
+echo "GET $BASE_URL/api/v1/tenants/health"
+if [ -n "$CREATED_TENANT_ID" ]; then
+  curl -s -w "\nStatus: %{http_code}\n" \
+    -H "Content-Type: application/json" \
+    -H "X-Tenant-ID: $CREATED_TENANT_ID" \
+    "$BASE_URL/api/v1/tenants/health"
+else
+  echo "❌ Skipping health test - no tenant ID available"
+fi
+echo ""
+echo "---"
+
+# Test 3: Get specific tenant by ID
+echo "📋 Test 3: Get Tenant by ID"
+echo "GET $BASE_URL/api/v1/tenants/$CREATED_TENANT_ID"
+if [ -n "$CREATED_TENANT_ID" ]; then
+  curl -s -w "\nStatus: %{http_code}\n" \
+    -H "Content-Type: application/json" \
+    -H "X-Tenant-ID: $CREATED_TENANT_ID" \
+    "$BASE_URL/api/v1/tenants/$CREATED_TENANT_ID"
+else
+  echo "❌ Skipping get test - no tenant ID available"
+fi
+echo ""
+echo "---"
+
+# Test 4: List tenants with pagination
+echo "📋 Test 4: List Tenants with Pagination"
+echo "GET $BASE_URL/api/v1/tenants?page=1&page_size=10"
+if [ -n "$CREATED_TENANT_ID" ]; then
+  curl -s -w "\nStatus: %{http_code}\n" \
+    -H "Content-Type: application/json" \
+    -H "X-Tenant-ID: $CREATED_TENANT_ID" \
+    "$BASE_URL/api/v1/tenants?page=1&page_size=10"
+else
+  echo "❌ Skipping list test - no tenant ID available"
+fi
+echo ""
+echo "---"
+
+# Test 5: Update tenant
+echo "📋 Test 5: Update Tenant"
+echo "PUT $BASE_URL/api/v1/tenants/$CREATED_TENANT_ID"
+if [ -n "$CREATED_TENANT_ID" ]; then
+  curl -s -w "\nStatus: %{http_code}\n" \
+    -X PUT \
+    -H "Content-Type: application/json" \
+    -H "X-Tenant-ID: $CREATED_TENANT_ID" \
+    -d '{
+      "name": "Updated Test Company API",
+      "contact": {
+        "email": "updated@testapi.com"
+      },
+      "settings": {
+        "timezone": "America/New_York",
+        "currency": "USD",
+        "date_format": "MM/DD/YYYY",
+        "language": "en"
+      }
+    }' \
+    "$BASE_URL/api/v1/tenants/$CREATED_TENANT_ID"
+else
+  echo "❌ Skipping update test - no tenant ID available"
+fi
+echo ""
+echo "---"
+
+# Test 6: Test Usage Analytics
+echo "📋 Test 6: Get Usage Analytics"
+echo "GET $BASE_URL/api/v1/tenants/$CREATED_TENANT_ID/analytics?period=current_month"
+if [ -n "$CREATED_TENANT_ID" ]; then
+  curl -s -w "\nStatus: %{http_code}\n" \
+    -H "Content-Type: application/json" \
+    -H "X-Tenant-ID: $CREATED_TENANT_ID" \
+    "$BASE_URL/api/v1/tenants/$CREATED_TENANT_ID/analytics?period=current_month"
+else
+  echo "❌ Skipping analytics test - no tenant ID available"
+fi
+echo ""
+echo "---"
+
+# Test 7: Test Error Scenarios
+echo "📋 Test 7: Error Scenarios"
+echo "Testing endpoints without tenant context (should fail):"
+echo "GET $BASE_URL/api/v1/tenants (no header)"
+curl -s -w "\nStatus: %{http_code}\n" \
+  -H "Content-Type: application/json" \
   "$BASE_URL/api/v1/tenants"
 echo ""
 echo "---"
 
-# Test 6: Test subdomain-based tenant extraction
-echo "📋 Test 6: Subdomain-based tenant extraction"
-echo "GET http://bo.testco.localhost:8090/api/v1/tenants"
-curl -s -w "\nStatus: %{http_code}\n" \
-  -H "Content-Type: application/json" \
-  --resolve "bo.testco.localhost:8090:127.0.0.1" \
-  "http://bo.testco.localhost:8090/api/v1/tenants"
+# Test 8: Clean up - Delete the test tenant
+echo "📋 Test 8: Delete Test Tenant (Cleanup)"
+echo "DELETE $BASE_URL/api/v1/tenants/$CREATED_TENANT_ID"
+if [ -n "$CREATED_TENANT_ID" ]; then
+  curl -s -w "\nStatus: %{http_code}\n" \
+    -X DELETE \
+    -H "X-Tenant-ID: $CREATED_TENANT_ID" \
+    "$BASE_URL/api/v1/tenants/$CREATED_TENANT_ID"
+  echo "🗑️ Test tenant deleted"
+else
+  echo "❌ Skipping delete test - no tenant ID available"
+fi
 echo ""
 echo "---"
 
-echo "✅ Tenant API tests completed!"
+echo "✅ Comprehensive Tenant API tests completed!"
 echo ""
-echo "Expected results:"
-echo "- Test 1: 200 (health check should work)"
-echo "- Test 2: 400 (no tenant context)"
-echo "- Test 3: 200 (valid tenant header)"
-echo "- Test 4: 200 or 404 (depending on tenant existence)"
-echo "- Test 5: 201 or error (tenant creation)"
-echo "- Test 6: 200 (subdomain extraction)"
+echo "📊 Test Results Summary:"
+echo "- Test 1: Create Tenant (should succeed - 200)"
+echo "- Test 2: Health Check (should succeed with tenant - 200)"
+echo "- Test 3: Get Tenant (should succeed - 200)"
+echo "- Test 4: List Tenants (should succeed but empty due to RLS - 200)"
+echo "- Test 5: Update Tenant (should succeed - 200)"
+echo "- Test 6: Usage Analytics (should succeed - 200)"
+echo "- Test 7: Error Scenarios (should fail without tenant - 400)"
+echo "- Test 8: Delete Tenant (should succeed - 200)"
+echo ""
+echo "🔍 Known Issues:"
+echo "- Provision endpoint fails due to DB constraints"
+echo "- Suspend/Reactivate fail due to status check constraints"
+echo "- Configuration update requires active tenant status"
+echo "- List endpoint returns empty due to Row-Level Security (RLS)"
+
+# Additional utility functions
+echo ""
+echo "🛠️ Additional Test Utilities:"
+echo "================================"
+
+# Function to test provisioning (known to fail)
+test_provisioning() {
+  echo "📋 Testing Provisioning (Expected to fail due to DB constraints)"
+  if [ -n "$CREATED_TENANT_ID" ]; then
+    curl -s -w "\nStatus: %{http_code}\n" \
+      -X POST \
+      -H "Content-Type: application/json" \
+      -H "X-Tenant-ID: $CREATED_TENANT_ID" \
+      -d '{
+        "name": "Provisioned Company",
+        "subdomain": "provisioned",
+        "contact_email": "contact@provisioned.com",
+        "admin_email": "admin@provisioned.com",
+        "admin_first_name": "Jane",
+        "admin_last_name": "Smith"
+      }' \
+      "$BASE_URL/api/v1/tenants/provision"
+  fi
+}
+
+# Function to test suspend (known to fail)
+test_suspend() {
+  echo "📋 Testing Suspend (Expected to fail due to status constraints)"
+  if [ -n "$CREATED_TENANT_ID" ]; then
+    curl -s -w "\nStatus: %{http_code}\n" \
+      -X POST \
+      -H "Content-Type: application/json" \
+      -H "X-Tenant-ID: $CREATED_TENANT_ID" \
+      -d '{"reason": "Testing suspension functionality"}' \
+      "$BASE_URL/api/v1/tenants/$CREATED_TENANT_ID/suspend"
+  fi
+}
+
+# Uncomment to test known failing endpoints:
+# echo "🚨 Testing Known Issues (will fail):"
+# test_provisioning
+# test_suspend

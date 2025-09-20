@@ -120,8 +120,8 @@ nav:
   - 'Tenant Module':
     - 'Management': 'reference/modules/tenant/tenant-management.md'
     - 'Testing': 'reference/modules/tenant/testing.md'
-    - 'API': 'reference/modules/tenant/README.md'
-    - 'Tenant API Examples': 'reference/modules/tenant/curl-examples.md'
+    - 'API': 'reference/api-source/core-apis/tenants/README.md'
+    - 'Tenant API Examples': 'reference/api-source/core-apis/tenants/curl-examples.md'
   - 'System Configuration':
     - 'Overview': 'reference/modules/settings/index.md'
     - 'Service Integration Guide': 'reference/modules/settings/service-integration.md'
@@ -162,6 +162,8 @@ nav:
       - 'Entity Examples': 'reference/api-source/core-apis/entities/curl-examples.md'
       - 'Organizations': 'reference/api-source/core-apis/organizations/README.md'
       - 'Org Examples': 'reference/api-source/core-apis/organizations/curl-examples.md'
+      - 'Tenants': 'reference/api-source/core-apis/tenants/README.md'
+      - 'Tenant Examples': 'reference/api-source/core-apis/tenants/curl-examples.md'
       - 'Users API': 'reference/api-source/core-apis/users/README.md'
       - 'Users Examples': 'reference/api-source/core-apis/users/curl-examples.md'
     - 'Workflows':

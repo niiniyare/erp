@@ -236,3 +236,24 @@ var SubscriptionInfo = Type("SubscriptionInfo", func() {
 		Example("2023-12-07")
 	})
 })
+
+// CreateTenantResult describes the result of a tenant creation operation
+var CreateTenantResult = ResultType("application/vnd.create.tenant.result", func() {
+	Description("Result of a tenant creation operation")
+	Attributes(func() {
+		Attribute("tenant", TenantResult, "Created tenant information")
+		Attribute("status", String, "Status of the creation operation", func() {
+			Enum("SUCCESS", "FAILED")
+			Example("SUCCESS")
+		})
+		Attribute("message", String, "Detailed message about the operation", func() {
+			Example("Tenant created successfully")
+		})
+		Required("tenant", "status", "message")
+	})
+	View("default", func() {
+		Attribute("tenant")
+		Attribute("status")
+		Attribute("message")
+	})
+})

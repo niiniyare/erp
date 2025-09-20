@@ -65,11 +65,11 @@ func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
 func NewCreateEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*CreateTenantPayload)
-		res, view, err := s.Create(ctx, p)
+		res, err := s.Create(ctx, p)
 		if err != nil {
 			return nil, err
 		}
-		vres := NewViewedTenant(res, view)
+		vres := NewViewedCreateTenantResult(res, "default")
 		return vres, nil
 	}
 }

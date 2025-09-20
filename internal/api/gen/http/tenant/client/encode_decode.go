@@ -84,13 +84,13 @@ func DecodeCreateResponse(decoder func(*http.Response) goahttp.Decoder, restoreB
 			if err != nil {
 				return nil, goahttp.ErrDecodingError("tenant", "create", err)
 			}
-			p := NewCreateTenantCreated(&body)
-			view := resp.Header.Get("goa-view")
-			vres := &tenantviews.Tenant{Projected: p, View: view}
-			if err = tenantviews.ValidateTenant(vres); err != nil {
+			p := NewCreateTenantResultViewCreated(&body)
+			view := "default"
+			vres := &tenantviews.CreateTenantResult{Projected: p, View: view}
+			if err = tenantviews.ValidateCreateTenantResult(vres); err != nil {
 				return nil, goahttp.ErrValidationError("tenant", "create", err)
 			}
-			res := tenant.NewTenant(vres)
+			res := tenant.NewCreateTenantResult(vres)
 			return res, nil
 		case http.StatusBadRequest:
 			var (
@@ -1384,6 +1384,35 @@ func marshalTenantLimitsRequestBodyToTenantTenantLimits(v *TenantLimitsRequestBo
 		MaxUsers:           v.MaxUsers,
 		MaxStorageMb:       v.MaxStorageMb,
 		MaxAPICallsPerHour: v.MaxAPICallsPerHour,
+	}
+
+	return res
+}
+
+// unmarshalTenantResponseBodyToTenantviewsTenantView builds a value of type
+// *tenantviews.TenantView from a value of type *TenantResponseBody.
+func unmarshalTenantResponseBodyToTenantviewsTenantView(v *TenantResponseBody) *tenantviews.TenantView {
+	res := &tenantviews.TenantView{
+		ID:          v.ID,
+		Name:        v.Name,
+		Slug:        v.Slug,
+		Subdomain:   v.Subdomain,
+		Status:      v.Status,
+		PlanType:    v.PlanType,
+		Description: v.Description,
+		CreatedAt:   v.CreatedAt,
+		UpdatedAt:   v.UpdatedAt,
+		CreatedBy:   v.CreatedBy,
+		UpdatedBy:   v.UpdatedBy,
+	}
+	if v.Settings != nil {
+		res.Settings = unmarshalTenantSettingsResponseBodyToTenantviewsTenantSettingsView(v.Settings)
+	}
+	if v.Subscription != nil {
+		res.Subscription = unmarshalSubscriptionInfoResponseBodyToTenantviewsSubscriptionInfoView(v.Subscription)
+	}
+	if v.Contact != nil {
+		res.Contact = unmarshalContactInfoResponseBodyToTenantviewsContactInfoView(v.Contact)
 	}
 
 	return res

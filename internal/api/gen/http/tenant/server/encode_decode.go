@@ -24,16 +24,9 @@ import (
 // create endpoint.
 func EncodeCreateResponse(encoder func(context.Context, http.ResponseWriter) goahttp.Encoder) func(context.Context, http.ResponseWriter, any) error {
 	return func(ctx context.Context, w http.ResponseWriter, v any) error {
-		res := v.(*tenantviews.Tenant)
-		w.Header().Set("goa-view", res.View)
+		res := v.(*tenantviews.CreateTenantResult)
 		enc := encoder(ctx, w)
-		var body any
-		switch res.View {
-		case "default", "":
-			body = NewCreateResponseBody(res.Projected)
-		case "minimal":
-			body = NewCreateResponseBodyMinimal(res.Projected)
-		}
+		body := NewCreateResponseBody(res.Projected)
 		w.WriteHeader(http.StatusCreated)
 		return enc.Encode(body)
 	}
@@ -1085,6 +1078,35 @@ func unmarshalTenantLimitsRequestBodyToTenantTenantLimits(v *TenantLimitsRequest
 		MaxUsers:           v.MaxUsers,
 		MaxStorageMb:       v.MaxStorageMb,
 		MaxAPICallsPerHour: v.MaxAPICallsPerHour,
+	}
+
+	return res
+}
+
+// marshalTenantviewsTenantViewToTenantResponseBody builds a value of type
+// *TenantResponseBody from a value of type *tenantviews.TenantView.
+func marshalTenantviewsTenantViewToTenantResponseBody(v *tenantviews.TenantView) *TenantResponseBody {
+	res := &TenantResponseBody{
+		ID:          *v.ID,
+		Name:        *v.Name,
+		Slug:        *v.Slug,
+		Subdomain:   v.Subdomain,
+		Status:      *v.Status,
+		PlanType:    *v.PlanType,
+		Description: v.Description,
+		CreatedAt:   *v.CreatedAt,
+		UpdatedAt:   *v.UpdatedAt,
+		CreatedBy:   v.CreatedBy,
+		UpdatedBy:   v.UpdatedBy,
+	}
+	if v.Settings != nil {
+		res.Settings = marshalTenantviewsTenantSettingsViewToTenantSettingsResponseBody(v.Settings)
+	}
+	if v.Subscription != nil {
+		res.Subscription = marshalTenantviewsSubscriptionInfoViewToSubscriptionInfoResponseBody(v.Subscription)
+	}
+	if v.Contact != nil {
+		res.Contact = marshalTenantviewsContactInfoViewToContactInfoResponseBody(v.Contact)
 	}
 
 	return res

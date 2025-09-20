@@ -6791,43 +6791,46 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/Tenant'
+                                $ref: '#/components/schemas/CreateTenantResult'
                             example:
-                                contact:
-                                    email: john.doe@acme.com
-                                    name: John Doe
-                                    phone: +1-555-123-4567
-                                    title: Chief Technology Officer
-                                created_at: "2023-12-07T10:30:00Z"
-                                created_by: 550e8400-e29b-41d4-a716-446655440000
-                                description: Leading provider of roadrunner traps and anvils
-                                id: 550e8400-e29b-41d4-a716-446655440000
-                                name: Acme Corporation
-                                plan_type: professional
-                                settings:
-                                    currency: USD
-                                    date_format: MM/DD/YYYY
-                                    features:
-                                        - inventory
-                                        - financial
-                                        - hr
-                                    language: en
-                                    limits:
-                                        max_api_calls_per_hour: 10000
-                                        max_storage_mb: 10240
-                                        max_users: 100
-                                    timezone: America/New_York
-                                slug: acme-corp
-                                status: active
-                                subdomain: acme
-                                subscription:
-                                    billing_cycle: monthly
-                                    next_billing_date: "2023-12-07"
-                                    plan: professional
+                                message: Tenant created successfully
+                                status: SUCCESS
+                                tenant:
+                                    contact:
+                                        email: john.doe@acme.com
+                                        name: John Doe
+                                        phone: +1-555-123-4567
+                                        title: Chief Technology Officer
+                                    created_at: "2023-12-07T10:30:00Z"
+                                    created_by: 550e8400-e29b-41d4-a716-446655440000
+                                    description: Leading provider of roadrunner traps and anvils
+                                    id: 550e8400-e29b-41d4-a716-446655440000
+                                    name: Acme Corporation
+                                    plan_type: professional
+                                    settings:
+                                        currency: USD
+                                        date_format: MM/DD/YYYY
+                                        features:
+                                            - inventory
+                                            - financial
+                                            - hr
+                                        language: en
+                                        limits:
+                                            max_api_calls_per_hour: 10000
+                                            max_storage_mb: 10240
+                                            max_users: 100
+                                        timezone: America/New_York
+                                    slug: acme-corp
                                     status: active
-                                    trial_ends_at: "2023-12-07"
-                                updated_at: "2023-12-07T15:45:00Z"
-                                updated_by: 550e8400-e29b-41d4-a716-446655440000
+                                    subdomain: acme
+                                    subscription:
+                                        billing_cycle: monthly
+                                        next_billing_date: "2023-12-07"
+                                        plan: professional
+                                        status: active
+                                        trial_ends_at: "2023-12-07"
+                                    updated_at: "2023-12-07T15:45:00Z"
+                                    updated_by: 550e8400-e29b-41d4-a716-446655440000
                 "400":
                     description: 'bad_request: Bad Request response.'
                     content:
@@ -17005,6 +17008,66 @@ components:
                 - email
                 - country_code
                 - currency_code
+        CreateTenantResult:
+            type: object
+            properties:
+                message:
+                    type: string
+                    description: Detailed message about the operation
+                    example: Tenant created successfully
+                status:
+                    type: string
+                    description: Status of the creation operation
+                    example: SUCCESS
+                    enum:
+                        - SUCCESS
+                        - FAILED
+                tenant:
+                    $ref: '#/components/schemas/Tenant'
+            description: Result of a tenant creation operation
+            example:
+                message: Tenant created successfully
+                status: SUCCESS
+                tenant:
+                    contact:
+                        email: john.doe@acme.com
+                        name: John Doe
+                        phone: +1-555-123-4567
+                        title: Chief Technology Officer
+                    created_at: "2023-12-07T10:30:00Z"
+                    created_by: 550e8400-e29b-41d4-a716-446655440000
+                    description: Leading provider of roadrunner traps and anvils
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    name: Acme Corporation
+                    plan_type: professional
+                    settings:
+                        currency: USD
+                        date_format: MM/DD/YYYY
+                        features:
+                            - inventory
+                            - financial
+                            - hr
+                        language: en
+                        limits:
+                            max_api_calls_per_hour: 10000
+                            max_storage_mb: 10240
+                            max_users: 100
+                        timezone: America/New_York
+                    slug: acme-corp
+                    status: active
+                    subdomain: acme
+                    subscription:
+                        billing_cycle: monthly
+                        next_billing_date: "2023-12-07"
+                        plan: professional
+                        status: active
+                        trial_ends_at: "2023-12-07"
+                    updated_at: "2023-12-07T15:45:00Z"
+                    updated_by: 550e8400-e29b-41d4-a716-446655440000
+            required:
+                - tenant
+                - status
+                - message
         CreateTransactionPayload:
             type: object
             properties:

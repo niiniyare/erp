@@ -9,10 +9,6 @@
       
       
       
-        <link rel="prev" href="testing/">
-      
-      
-        <link rel="next" href="curl-examples/">
       
       
       <link rel="icon" href="../../../assets/images/favicon.png">
@@ -20,7 +16,7 @@
     
     
       
-        <title>API - Awo ERP Documentation</title>
+        <title>Tenant Management API - Awo ERP Documentation</title>
       
     
     
@@ -106,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              API
+              Tenant Management API
             
           </span>
         </div>
@@ -344,12 +340,10 @@
   
   
   
-    
-  
   
     
     
-      <li class="md-tabs__item md-tabs__item--active">
+      <li class="md-tabs__item">
         <a href="tenant-management/" class="md-tabs__link">
           
   
@@ -2285,31 +2279,26 @@
       
   
   
-    
   
   
-  
     
     
     
     
-      
-        
-        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
             
   
   
@@ -2322,7 +2311,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             Tenant Module
@@ -2379,32 +2368,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    API
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../api-source/core-apis/tenants/" class="md-nav__link">
         
   
   
@@ -2415,356 +2382,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      📋 Overview
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#available-endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      🔗 Available Endpoints
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#data-models" class="md-nav__link">
-    <span class="md-ellipsis">
-      📊 Data Models
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="📊 Data Models">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#tenant-object" class="md-nav__link">
-    <span class="md-ellipsis">
-      Tenant Object
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#health-status-object" class="md-nav__link">
-    <span class="md-ellipsis">
-      Health Status Object
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pagination-object" class="md-nav__link">
-    <span class="md-ellipsis">
-      Pagination Object
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#quick-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      🚀 Quick Examples
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="🚀 Quick Examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#create-tenant" class="md-nav__link">
-    <span class="md-ellipsis">
-      Create Tenant
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#list-tenants" class="md-nav__link">
-    <span class="md-ellipsis">
-      List Tenants
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-tenant" class="md-nav__link">
-    <span class="md-ellipsis">
-      Get Tenant
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#update-tenant" class="md-nav__link">
-    <span class="md-ellipsis">
-      Update Tenant
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#delete-tenant" class="md-nav__link">
-    <span class="md-ellipsis">
-      Delete Tenant
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#health-check" class="md-nav__link">
-    <span class="md-ellipsis">
-      Health Check
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#advanced-usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      🔧 Advanced Usage
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="🔧 Advanced Usage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pagination-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      Pagination Parameters
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#filter-parameters" class="md-nav__link">
-    <span class="md-ellipsis">
-      Filter Parameters
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-with-filters" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example with Filters
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#error-handling" class="md-nav__link">
-    <span class="md-ellipsis">
-      🚨 Error Handling
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="🚨 Error Handling">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#common-error-responses" class="md-nav__link">
-    <span class="md-ellipsis">
-      Common Error Responses
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#error-response-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      Error Response Format
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#validation-rules" class="md-nav__link">
-    <span class="md-ellipsis">
-      ✅ Validation Rules
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="✅ Validation Rules">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#tenant-creation" class="md-nav__link">
-    <span class="md-ellipsis">
-      Tenant Creation
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#tenant-update" class="md-nav__link">
-    <span class="md-ellipsis">
-      Tenant Update
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#testing" class="md-nav__link">
-    <span class="md-ellipsis">
-      🔍 Testing
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="🔍 Testing">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#health-check-test" class="md-nav__link">
-    <span class="md-ellipsis">
-      Health Check Test
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#crud-operations-test" class="md-nav__link">
-    <span class="md-ellipsis">
-      CRUD Operations Test
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#performance-considerations" class="md-nav__link">
-    <span class="md-ellipsis">
-      📊 Performance Considerations
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="📊 Performance Considerations">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#caching-strategy" class="md-nav__link">
-    <span class="md-ellipsis">
-      Caching Strategy
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#rate-limiting" class="md-nav__link">
-    <span class="md-ellipsis">
-      Rate Limiting
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#optimization-tips" class="md-nav__link">
-    <span class="md-ellipsis">
-      Optimization Tips
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-apis" class="md-nav__link">
-    <span class="md-ellipsis">
-      🔗 Related APIs
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#additional-resources" class="md-nav__link">
-    <span class="md-ellipsis">
-      📚 Additional Resources
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -2777,7 +2394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="curl-examples/" class="md-nav__link">
+      <a href="../../api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
         
   
   
@@ -3832,6 +3449,52 @@
   
   <span class="md-ellipsis">
     Org Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/core-apis/tenants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant API Examples
     
   </span>
   

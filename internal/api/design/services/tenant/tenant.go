@@ -19,7 +19,7 @@ var _ = Service("tenant", func() {
 		Description("Create a new tenant")
 
 		Payload(CreateTenantPayload)
-		Result(TenantResult)
+		Result(CreateTenantResult)
 
 		Error("bad_request")
 		Error("conflict") // For subdomain conflicts

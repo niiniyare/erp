@@ -17,10 +17,7 @@ import (
 // Tenant management service for multi-tenant ERP system
 type Service interface {
 	// Create a new tenant
-	// The "view" return value must have one of the following views
-	//	- "default"
-	//	- "minimal"
-	Create(context.Context, *CreateTenantPayload) (res *Tenant, view string, err error)
+	Create(context.Context, *CreateTenantPayload) (res *CreateTenantResult, err error)
 	// Get tenant by ID
 	// The "view" return value must have one of the following views
 	//	- "default"
@@ -109,6 +106,16 @@ type CreateTenantPayload struct {
 	CountryCode string
 	// ISO 4217 currency code
 	CurrencyCode string
+}
+
+// CreateTenantResult is the result type of the tenant service create method.
+type CreateTenantResult struct {
+	// Created tenant information
+	Tenant *Tenant
+	// Status of the creation operation
+	Status string
+	// Detailed message about the operation
+	Message string
 }
 
 // DeletePayload is the payload type of the tenant service delete method.
@@ -278,7 +285,7 @@ type SuspendResult struct {
 	Message string
 }
 
-// Tenant is the result type of the tenant service create method.
+// Tenant is the result type of the tenant service get method.
 type Tenant struct {
 	// Unique tenant identifier
 	ID string
@@ -465,6 +472,19 @@ func MakeNotFound(err error) *goa.ServiceError {
 	return goa.NewServiceError(err, "not_found", false, false, false)
 }
 
+// NewCreateTenantResult initializes result type CreateTenantResult from viewed
+// result type CreateTenantResult.
+func NewCreateTenantResult(vres *tenantviews.CreateTenantResult) *CreateTenantResult {
+	return newCreateTenantResult(vres.Projected)
+}
+
+// NewViewedCreateTenantResult initializes viewed result type
+// CreateTenantResult from result type CreateTenantResult using the given view.
+func NewViewedCreateTenantResult(res *CreateTenantResult, view string) *tenantviews.CreateTenantResult {
+	p := newCreateTenantResultView(res)
+	return &tenantviews.CreateTenantResult{Projected: p, View: "default"}
+}
+
 // NewTenant initializes result type Tenant from viewed result type Tenant.
 func NewTenant(vres *tenantviews.Tenant) *Tenant {
 	var res *Tenant
@@ -488,6 +508,35 @@ func NewViewedTenant(res *Tenant, view string) *tenantviews.Tenant {
 	case "minimal":
 		p := newTenantViewMinimal(res)
 		vres = &tenantviews.Tenant{Projected: p, View: "minimal"}
+	}
+	return vres
+}
+
+// newCreateTenantResult converts projected type CreateTenantResult to service
+// type CreateTenantResult.
+func newCreateTenantResult(vres *tenantviews.CreateTenantResultView) *CreateTenantResult {
+	res := &CreateTenantResult{}
+	if vres.Status != nil {
+		res.Status = *vres.Status
+	}
+	if vres.Message != nil {
+		res.Message = *vres.Message
+	}
+	if vres.Tenant != nil {
+		res.Tenant = newTenant(vres.Tenant)
+	}
+	return res
+}
+
+// newCreateTenantResultView projects result type CreateTenantResult to
+// projected type CreateTenantResultView using the "default" view.
+func newCreateTenantResultView(res *CreateTenantResult) *tenantviews.CreateTenantResultView {
+	vres := &tenantviews.CreateTenantResultView{
+		Status:  &res.Status,
+		Message: &res.Message,
+	}
+	if res.Tenant != nil {
+		vres.Tenant = newTenantView(res.Tenant)
 	}
 	return vres
 }

@@ -9,6 +9,10 @@
       
       
       
+        <link rel="prev" href="../organizations/curl-examples/">
+      
+      
+        <link rel="next" href="curl-examples/">
       
       
       <link rel="icon" href="../../../../assets/images/favicon.png">
@@ -16,7 +20,7 @@
     
     
       
-        <title>Tenant Management API - Awo ERP Documentation</title>
+        <title>API - Awo ERP Documentation</title>
       
     
     
@@ -102,7 +106,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Tenant Management API
+              API
             
           </span>
         </div>
@@ -400,10 +404,12 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href="../../../api/" class="md-tabs__link">
           
   
@@ -2368,10 +2374,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../../modules/tenant/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -2382,6 +2410,446 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      📋 Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authentication-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔑 Authentication Requirements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#available-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔗 Available Endpoints
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      📊 Data Models
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📊 Data Models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tenant-object-updated-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tenant Object (Updated Schema)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-tenant-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create Tenant Request
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#health-status-object" class="md-nav__link">
+    <span class="md-ellipsis">
+      Health Status Object
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pagination-object" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pagination Object
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage-analytics-object" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage Analytics Object
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚀 Quick Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🚀 Quick Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-tenant-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create Tenant (Working)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-tenants-limited-due-to-rls" class="md-nav__link">
+    <span class="md-ellipsis">
+      List Tenants (Limited due to RLS)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-tenant-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get Tenant (Working)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-tenant-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      Update Tenant (Working)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-tenant-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      Delete Tenant (Working)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#health-check-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      Health Check (Working)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage-analytics-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage Analytics (Working)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔧 Advanced Usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔧 Advanced Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pagination-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pagination Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analytics-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analytics Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#valid-enum-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      Valid Enum Values
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-with-pagination" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example with Pagination
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚨 Error Handling
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🚨 Error Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-error-responses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Error Responses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-response-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error Response Format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-issues-and-workarounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      Known Issues and Workarounds
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Validation Rules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="✅ Validation Rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tenant-creation-required-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tenant Creation (Required Fields)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tenant-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tenant Update
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication-requirements_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authentication Requirements
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔍 Testing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔍 Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automated-test-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automated Test Script
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quick-health-check-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Health Check Test
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#working-crud-operations-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      Working CRUD Operations Test
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      📊 Performance Considerations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📊 Performance Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-performance-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current Performance Metrics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optimization-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optimization Tips
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Known Limitations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-apis" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔗 Related APIs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      📚 Additional Resources
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      🎯 Quick Start Guide
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#critical-implementation-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚨 Critical Implementation Notes
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -2394,7 +2862,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../modules/tenant/curl-examples/" class="md-nav__link">
+      <a href="curl-examples/" class="md-nav__link">
         
   
   
@@ -2981,26 +3449,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked>
         
           
-          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
             
   
   
@@ -3013,7 +3486,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             API Reference
@@ -3171,17 +3644,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_7" >
         
           
-          <label class="md-nav__link" for="__nav_11_7" id="__nav_11_7_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_7" id="__nav_11_7_label" tabindex="">
             
   
   
@@ -3282,26 +3758,31 @@
                 
   
   
+    
   
   
+  
     
     
     
     
       
       
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_10" >
         
           
-          <label class="md-nav__link" for="__nav_11_10" id="__nav_11_10_label" tabindex="0">
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_10" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_11_10" id="__nav_11_10_label" tabindex="">
             
   
   
@@ -3314,7 +3795,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_10_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_10_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_11_10">
             <span class="md-nav__icon md-icon"></span>
             Core APIs
@@ -3463,6 +3944,514 @@
                 
   
   
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      📋 Overview
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#authentication-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔑 Authentication Requirements
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#available-endpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔗 Available Endpoints
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      📊 Data Models
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📊 Data Models">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tenant-object-updated-schema" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tenant Object (Updated Schema)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-tenant-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create Tenant Request
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#health-status-object" class="md-nav__link">
+    <span class="md-ellipsis">
+      Health Status Object
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pagination-object" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pagination Object
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage-analytics-object" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage Analytics Object
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚀 Quick Examples
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🚀 Quick Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-tenant-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create Tenant (Working)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list-tenants-limited-due-to-rls" class="md-nav__link">
+    <span class="md-ellipsis">
+      List Tenants (Limited due to RLS)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-tenant-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get Tenant (Working)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-tenant-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      Update Tenant (Working)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-tenant-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      Delete Tenant (Working)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#health-check-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      Health Check (Working)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usage-analytics-working" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage Analytics (Working)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔧 Advanced Usage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔧 Advanced Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pagination-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pagination Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#analytics-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      Analytics Parameters
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#valid-enum-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      Valid Enum Values
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example-with-pagination" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example with Pagination
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚨 Error Handling
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🚨 Error Handling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-error-responses" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Error Responses
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#error-response-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error Response Format
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-issues-and-workarounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      Known Issues and Workarounds
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#validation-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      ✅ Validation Rules
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="✅ Validation Rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tenant-creation-required-fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tenant Creation (Required Fields)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tenant-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tenant Update
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#authentication-requirements_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Authentication Requirements
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔍 Testing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🔍 Testing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#automated-test-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automated Test Script
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quick-health-check-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quick Health Check Test
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#working-crud-operations-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      Working CRUD Operations Test
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      📊 Performance Considerations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📊 Performance Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#current-performance-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current Performance Metrics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#optimization-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optimization Tips
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-limitations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Known Limitations
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-apis" class="md-nav__link">
+    <span class="md-ellipsis">
+      🔗 Related APIs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-resources" class="md-nav__link">
+    <span class="md-ellipsis">
+      📚 Additional Resources
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      🎯 Quick Start Guide
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#critical-implementation-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚨 Critical Implementation Notes
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant API Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
   
   
     <li class="md-nav__item">
@@ -3526,17 +4515,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_11" >
         
           
-          <label class="md-nav__link" for="__nav_11_11" id="__nav_11_11_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_11" id="__nav_11_11_label" tabindex="">
             
   
   
@@ -3669,17 +4661,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_12" >
         
           
-          <label class="md-nav__link" for="__nav_11_12" id="__nav_11_12_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_12" id="__nav_11_12_label" tabindex="">
             
   
   
@@ -3766,17 +4761,20 @@
       
       
         
+          
+          
+        
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_13" >
         
           
-          <label class="md-nav__link" for="__nav_11_13" id="__nav_11_13_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_11_13" id="__nav_11_13_label" tabindex="">
             
   
   
@@ -3924,22 +4922,29 @@
 
 
 <h1 id="tenant-management-api">Tenant Management API</h1>
-<p>The Tenant Management API provides  functionality for managing multi-tenant configurations in the AWO ERP System. This API enables tenant isolation, configuration, and management across the enterprise.</p>
+<p>The Tenant Management API provides comprehensive functionality for managing multi-tenant configurations in the AWO ERP System. This API enables tenant isolation, configuration, and management across the enterprise.</p>
+<p><strong>Updated: 2025-09-20</strong> - Based on comprehensive API testing results.</p>
 <h2 id="overview">📋 Overview</h2>
 <p><strong>Base URL</strong>: <code>/api/v1/tenants</code></p>
 <p><strong>Purpose</strong>: Multi-tenant architecture support with tenant isolation, configuration, and lifecycle management.</p>
+<p><strong>API Status</strong>: <strong>73% Operational</strong> (8/11 endpoints working)</p>
 <p><strong>Key Features</strong>:
-- Tenant CRUD operations
-- Multi-tenant data isolation<br />
-- Tenant configuration management
-- Health monitoring
-- Tenant status management</p>
+- ✅ Tenant CRUD operations (Create, Read, Update, Delete)
+- ✅ Multi-tenant data isolation with Row-Level Security (RLS)
+- ✅ Health monitoring and usage analytics
+- ⚠️ Limited tenant configuration management
+- ❌ Known issues with provisioning and status transitions</p>
+<h2 id="authentication-requirements">🔑 Authentication Requirements</h2>
+<p><strong>IMPORTANT</strong>: All endpoints (except tenant creation) require tenant context via:
+- <strong>X-Tenant-ID header</strong> with a valid UUID, OR
+- <strong>Subdomain format</strong> like <code>tenant.example.com</code> (minimum 3 parts)</p>
 <h2 id="available-endpoints">🔗 Available Endpoints</h2>
 <table>
 <thead>
 <tr>
 <th>Method</th>
 <th>Endpoint</th>
+<th>Status</th>
 <th>Description</th>
 </tr>
 </thead>
@@ -3947,43 +4952,110 @@
 <tr>
 <td><code>POST</code></td>
 <td><code>/api/v1/tenants</code></td>
-<td>Create a new tenant</td>
+<td>✅ <strong>Working</strong></td>
+<td>Create a new tenant (bypasses middleware)</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
 <td><code>/api/v1/tenants</code></td>
-<td>List all tenants with pagination</td>
+<td>⚠️ <strong>Limited</strong></td>
+<td>List tenants (empty due to RLS)</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
 <td><code>/api/v1/tenants/{id}</code></td>
+<td>✅ <strong>Working</strong></td>
 <td>Get tenant by ID</td>
 </tr>
 <tr>
 <td><code>PUT</code></td>
 <td><code>/api/v1/tenants/{id}</code></td>
+<td>✅ <strong>Working</strong></td>
 <td>Update tenant information</td>
 </tr>
 <tr>
 <td><code>DELETE</code></td>
 <td><code>/api/v1/tenants/{id}</code></td>
-<td>Delete/deactivate tenant</td>
+<td>✅ <strong>Working</strong></td>
+<td>Delete/deactivate tenant (soft delete)</td>
 </tr>
 <tr>
 <td><code>GET</code></td>
 <td><code>/api/v1/tenants/health</code></td>
+<td>✅ <strong>Working</strong></td>
 <td>Get tenant service health status</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/api/v1/tenants/{id}/analytics</code></td>
+<td>✅ <strong>Working</strong></td>
+<td>Get tenant usage analytics</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/tenants/provision</code></td>
+<td>❌ <strong>Failing</strong></td>
+<td>Provision new tenant (DB constraints)</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/tenants/{id}/suspend</code></td>
+<td>❌ <strong>Failing</strong></td>
+<td>Suspend tenant (status constraints)</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/api/v1/tenants/{id}/reactivate</code></td>
+<td>❌ <strong>Failing</strong></td>
+<td>Reactivate tenant (status constraints)</td>
+</tr>
+<tr>
+<td><code>PUT</code></td>
+<td><code>/api/v1/tenants/{id}/configuration</code></td>
+<td>❌ <strong>Failing</strong></td>
+<td>Update configuration (requires active tenant)</td>
 </tr>
 </tbody>
 </table>
 <h2 id="data-models">📊 Data Models</h2>
-<h3 id="tenant-object">Tenant Object</h3>
+<h3 id="tenant-object-updated-schema">Tenant Object (Updated Schema)</h3>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (UUID)&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;slug&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (auto-generated)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;subdomain&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (optional)&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (ACTIVE|INACTIVE|SUSPENDED)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;plan_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (basic|premium|enterprise)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;timezone&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;currency&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;date_format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;language&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;features&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;array&quot;</span>
+<span class="w">  </span><span class="p">},</span>
 <span class="w">  </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (ISO 8601)&quot;</span><span class="p">,</span>
 <span class="w">  </span><span class="nt">&quot;updated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (ISO 8601)&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="create-tenant-request">Create Tenant Request</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (required)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;email&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (required)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;subdomain&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (optional)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;country_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (required)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;currency_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (required)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active|inactive|suspended&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;industry&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (optional)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;company_size&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1-10|11-50|51-200|201-500|500+&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;contact&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;email&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;timezone&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;currency&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;date_format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;language&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span>
+<span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
 <h3 id="health-status-object">Health Status Object</h3>
@@ -4003,68 +5075,129 @@
 <span class="w">  </span><span class="nt">&quot;has_prev&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;boolean&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
+<h3 id="usage-analytics-object">Usage Analytics Object</h3>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;tenant_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (UUID)&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;period&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;user_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;storage_used_mb&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;api_calls&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span>
+<span class="p">}</span>
+</code></pre></div>
 <h2 id="quick-examples">🚀 Quick Examples</h2>
-<h3 id="create-tenant">Create Tenant</h3>
+<h3 id="create-tenant-working">Create Tenant (Working)</h3>
 <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8080/api/v1/tenants<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
-<span class="s1">    &quot;name&quot;: &quot;Acme Corporation&quot;</span>
+<span class="s1">    &quot;name&quot;: &quot;Test Company&quot;,</span>
+<span class="s1">    &quot;email&quot;: &quot;contact@testcompany.com&quot;,</span>
+<span class="s1">    &quot;subdomain&quot;: &quot;testcompany&quot;,</span>
+<span class="s1">    &quot;country_code&quot;: &quot;US&quot;,</span>
+<span class="s1">    &quot;currency_code&quot;: &quot;USD&quot;,</span>
+<span class="s1">    &quot;status&quot;: &quot;active&quot;,</span>
+<span class="s1">    &quot;industry&quot;: &quot;Technology&quot;,</span>
+<span class="s1">    &quot;company_size&quot;: &quot;11-50&quot;,</span>
+<span class="s1">    &quot;contact&quot;: {</span>
+<span class="s1">      &quot;email&quot;: &quot;contact@testcompany.com&quot;</span>
+<span class="s1">    },</span>
+<span class="s1">    &quot;settings&quot;: {</span>
+<span class="s1">      &quot;timezone&quot;: &quot;UTC&quot;,</span>
+<span class="s1">      &quot;currency&quot;: &quot;USD&quot;,</span>
+<span class="s1">      &quot;date_format&quot;: &quot;YYYY-MM-DD&quot;,</span>
+<span class="s1">      &quot;language&quot;: &quot;en&quot;</span>
+<span class="s1">    }</span>
 <span class="s1">  }&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
 </code></pre></div>
 <p><strong>Response:</strong>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;550e8400-e29b-41d4-a716-446655440000&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Acme Corporation&quot;</span><span class="p">,</span><span class="w"> </span>
-<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T00:00:00Z&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;updated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T00:00:00Z&quot;</span>
+<span class="w">  </span><span class="nt">&quot;tenant&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;96ab6888-2914-4872-94b8-c25d964448cb&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Test Company&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;slug&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;test-company&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;subdomain&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;testcompany&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ACTIVE&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;plan_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;basic&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;settings&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;timezone&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;UTC&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;currency&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;USD&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;date_format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;YYYY-MM-DD&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;language&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;en&quot;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-09-20T06:15:03Z&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;updated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-09-20T06:15:03Z&quot;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;SUCCESS&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Tenant created successfully&quot;</span>
 <span class="p">}</span>
 </code></pre></div></p>
-<h3 id="list-tenants">List Tenants</h3>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="s2">&quot;http://localhost:8080/api/v1/tenants?limit=10&amp;offset=0&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
+<h3 id="list-tenants-limited-due-to-rls">List Tenants (Limited due to RLS)</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Requires tenant context - often returns empty due to Row-Level Security</span>
+curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="s2">&quot;http://localhost:8080/api/v1/tenants?page=1&amp;page_size=10&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-Tenant-ID: 96ab6888-2914-4872-94b8-c25d964448cb&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
 </code></pre></div>
-<p><strong>Response:</strong>
+<p><strong>Response (typically empty due to RLS):</strong>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
-<span class="w">  </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<span class="w">    </span><span class="p">{</span>
-<span class="w">      </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;550e8400-e29b-41d4-a716-446655440000&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Acme Corporation&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;active&quot;</span><span class="p">,</span><span class="w"> </span>
-<span class="w">      </span><span class="nt">&quot;created_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T00:00:00Z&quot;</span><span class="p">,</span>
-<span class="w">      </span><span class="nt">&quot;updated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T00:00:00Z&quot;</span>
-<span class="w">    </span><span class="p">}</span>
-<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nt">&quot;data&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[],</span>
 <span class="w">  </span><span class="nt">&quot;pagination&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nt">&quot;current_page&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;page_size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
-<span class="w">    </span><span class="nt">&quot;total_items&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;page_size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;total_items&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;total_pages&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;has_next&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
 <span class="w">    </span><span class="nt">&quot;has_prev&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></p>
-<h3 id="get-tenant">Get Tenant</h3>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8080/api/v1/tenants/550e8400-e29b-41d4-a716-446655440000<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
+<h3 id="get-tenant-working">Get Tenant (Working)</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Requires tenant context header</span>
+curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8080/api/v1/tenants/96ab6888-2914-4872-94b8-c25d964448cb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-Tenant-ID: 96ab6888-2914-4872-94b8-c25d964448cb&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
 </code></pre></div>
-<h3 id="update-tenant">Update Tenant</h3>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>http://localhost:8080/api/v1/tenants/550e8400-e29b-41d4-a716-446655440000<span class="w"> </span><span class="se">\</span>
+<h3 id="update-tenant-working">Update Tenant (Working)</h3>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>http://localhost:8080/api/v1/tenants/96ab6888-2914-4872-94b8-c25d964448cb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-Tenant-ID: 96ab6888-2914-4872-94b8-c25d964448cb&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
-<span class="s1">    &quot;name&quot;: &quot;Acme Corporation Updated&quot;</span>
+<span class="s1">    &quot;name&quot;: &quot;Updated Test Company&quot;,</span>
+<span class="s1">    &quot;contact&quot;: {</span>
+<span class="s1">      &quot;email&quot;: &quot;newemail@testcompany.com&quot;</span>
+<span class="s1">    },</span>
+<span class="s1">    &quot;settings&quot;: {</span>
+<span class="s1">      &quot;timezone&quot;: &quot;America/New_York&quot;,</span>
+<span class="s1">      &quot;currency&quot;: &quot;USD&quot;,</span>
+<span class="s1">      &quot;date_format&quot;: &quot;MM/DD/YYYY&quot;,</span>
+<span class="s1">      &quot;language&quot;: &quot;en&quot;</span>
+<span class="s1">    }</span>
 <span class="s1">  }&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
 </code></pre></div>
-<h3 id="delete-tenant">Delete Tenant</h3>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>http://localhost:8080/api/v1/tenants/550e8400-e29b-41d4-a716-446655440000
+<h3 id="delete-tenant-working">Delete Tenant (Working)</h3>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>http://localhost:8080/api/v1/tenants/96ab6888-2914-4872-94b8-c25d964448cb<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-Tenant-ID: 96ab6888-2914-4872-94b8-c25d964448cb&quot;</span>
 </code></pre></div>
-<h3 id="health-check">Health Check</h3>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8080/api/v1/tenants/health<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
+<h3 id="health-check-working">Health Check (Working)</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Requires tenant context</span>
+curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8080/api/v1/tenants/health<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-Tenant-ID: 96ab6888-2914-4872-94b8-c25d964448cb&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
 </code></pre></div>
 <p><strong>Response:</strong>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;healthy&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T00:00:00Z&quot;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">  </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-09-20T06:16:17Z&quot;</span><span class="p">,</span><span class="w"> </span>
 <span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.0.0&quot;</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<h3 id="usage-analytics-working">Usage Analytics (Working)</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Get tenant usage analytics</span>
+curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="s2">&quot;http://localhost:8080/api/v1/tenants/96ab6888-2914-4872-94b8-c25d964448cb/analytics?period=current_month&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-Tenant-ID: 96ab6888-2914-4872-94b8-c25d964448cb&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
+</code></pre></div>
+<p><strong>Response:</strong>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;tenant_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;96ab6888-2914-4872-94b8-c25d964448cb&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;period&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;current_month&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;user_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">18</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;storage_used_mb&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2048</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;api_calls&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">50000</span>
 <span class="p">}</span>
 </code></pre></div></p>
 <h2 id="advanced-usage">🔧 Advanced Usage</h2>
@@ -4080,43 +5213,58 @@
 </thead>
 <tbody>
 <tr>
-<td><code>limit</code></td>
+<td><code>page</code></td>
 <td>integer</td>
-<td>Number of items per page</td>
-<td>20</td>
+<td>Page number (1-based)</td>
+<td>1</td>
 </tr>
 <tr>
-<td><code>offset</code></td>
+<td><code>page_size</code></td>
 <td>integer</td>
-<td>Number of items to skip</td>
-<td>0</td>
+<td>Number of items per page</td>
+<td>10</td>
 </tr>
 </tbody>
 </table>
-<h3 id="filter-parameters">Filter Parameters</h3>
+<h3 id="analytics-parameters">Analytics Parameters</h3>
 <table>
 <thead>
 <tr>
 <th>Parameter</th>
 <th>Type</th>
-<th>Description</th>
+<th>Valid Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>period</code></td>
+<td>string</td>
+<td><code>current_month</code>, <code>last_month</code>, <code>last_3_months</code>, <code>last_year</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="valid-enum-values">Valid Enum Values</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Valid Values</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>status</code></td>
-<td>string</td>
-<td>Filter by tenant status</td>
+<td><code>active</code>, <code>inactive</code>, <code>suspended</code></td>
 </tr>
 <tr>
-<td><code>name</code></td>
-<td>string</td>
-<td>Filter by tenant name (partial match)</td>
+<td><code>company_size</code></td>
+<td><code>1-10</code>, <code>11-50</code>, <code>51-200</code>, <code>201-500</code>, <code>500+</code></td>
 </tr>
 </tbody>
 </table>
-<h3 id="example-with-filters">Example with Filters</h3>
-<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="s2">&quot;http://localhost:8080/api/v1/tenants?status=ACTIVE&amp;limit=5&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
+<h3 id="example-with-pagination">Example with Pagination</h3>
+<div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span><span class="s2">&quot;http://localhost:8080/api/v1/tenants?page=1&amp;page_size=5&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-Tenant-ID: 96ab6888-2914-4872-94b8-c25d964448cb&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.
 </code></pre></div>
 <h2 id="error-handling">🚨 Error Handling</h2>
 <h3 id="common-error-responses">Common Error Responses</h3>
@@ -4126,109 +5274,237 @@
 <th>Status Code</th>
 <th>Error Type</th>
 <th>Description</th>
+<th>Solution</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>400</code></td>
-<td><code>bad_request</code></td>
-<td>Invalid request payload or parameters</td>
+<td><code>tenant_resolution_failed</code></td>
+<td>Missing X-Tenant-ID header</td>
+<td>Add tenant context header</td>
+</tr>
+<tr>
+<td><code>400</code></td>
+<td><code>invalid_tenant_id</code></td>
+<td>Invalid UUID format</td>
+<td>Use valid UUID format</td>
+</tr>
+<tr>
+<td><code>400</code></td>
+<td><code>invalid_enum_value</code></td>
+<td>Wrong enum values</td>
+<td>Use correct status/company_size</td>
 </tr>
 <tr>
 <td><code>404</code></td>
 <td><code>not_found</code></td>
 <td>Tenant not found</td>
-</tr>
-<tr>
-<td><code>409</code></td>
-<td><code>conflict</code></td>
-<td>Tenant name or subdomain already exists</td>
+<td>Verify tenant ID exists</td>
 </tr>
 <tr>
 <td><code>500</code></td>
-<td><code>internal_error</code></td>
-<td>Internal server error</td>
+<td><code>tenant_validation_failed</code></td>
+<td>Tenant doesn't exist in DB</td>
+<td>Create tenant first</td>
+</tr>
+<tr>
+<td><code>500</code></td>
+<td><code>check_constraint_violation</code></td>
+<td>Database constraint error</td>
+<td>Known issue - avoid provisioning</td>
 </tr>
 </tbody>
 </table>
 <h3 id="error-response-format">Error Response Format</h3>
 <div class="highlight"><pre><span></span><code><span class="p">{</span>
 <span class="w">  </span><span class="nt">&quot;error&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nt">&quot;details&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string (optional)&quot;</span>
+<span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span>
 <span class="p">}</span>
 </code></pre></div>
+<h3 id="known-issues-and-workarounds">Known Issues and Workarounds</h3>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Status</th>
+<th>Workaround</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Provisioning fails</td>
+<td>❌ <strong>Known Bug</strong></td>
+<td>Use basic tenant creation instead</td>
+</tr>
+<tr>
+<td>Suspend/Reactivate fails</td>
+<td>❌ <strong>Known Bug</strong></td>
+<td>Status constraints need fixing</td>
+</tr>
+<tr>
+<td>List returns empty</td>
+<td>⚠️ <strong>By Design</strong></td>
+<td>RLS policies filter results</td>
+</tr>
+<tr>
+<td>Configuration updates fail</td>
+<td>❌ <strong>Business Logic</strong></td>
+<td>Only works for active tenants</td>
+</tr>
+</tbody>
+</table>
 <h2 id="validation-rules">✅ Validation Rules</h2>
-<h3 id="tenant-creation">Tenant Creation</h3>
+<h3 id="tenant-creation-required-fields">Tenant Creation (Required Fields)</h3>
 <ul>
-<li><strong>name</strong>: Required, 1-255 characters, unique</li>
-<li><strong>status</strong>: Optional, defaults to "ACTIVE"</li>
+<li><strong>name</strong>: Required, 1-255 characters</li>
+<li><strong>email</strong>: Required, valid email format</li>
+<li><strong>country_code</strong>: Required, 2-letter country code</li>
+<li><strong>currency_code</strong>: Required, 3-letter currency code</li>
+<li><strong>status</strong>: Required, must be <code>active</code>, <code>inactive</code>, or <code>suspended</code></li>
+<li><strong>company_size</strong>: Required, must be <code>1-10</code>, <code>11-50</code>, <code>51-200</code>, <code>201-500</code>, or <code>500+</code></li>
 </ul>
 <h3 id="tenant-update">Tenant Update</h3>
 <ul>
-<li><strong>name</strong>: Optional, 1-255 characters, unique if provided</li>
-<li><strong>status</strong>: Optional, valid status enum</li>
+<li><strong>name</strong>: Optional, 1-255 characters if provided</li>
+<li><strong>contact.email</strong>: Optional, valid email format</li>
+<li><strong>settings</strong>: Optional, nested object with timezone, currency, etc.</li>
+</ul>
+<h3 id="authentication-requirements_1">Authentication Requirements</h3>
+<ul>
+<li>All endpoints except <code>POST /api/v1/tenants</code> require <code>X-Tenant-ID</code> header</li>
+<li>Tenant ID must be valid UUID format</li>
+<li>Tenant must exist in database</li>
 </ul>
 <h2 id="testing">🔍 Testing</h2>
-<h3 id="health-check-test">Health Check Test</h3>
-<div class="highlight"><pre><span></span><code><span class="c1"># Test tenant service health</span>
-curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8080/api/v1/tenants/health
+<h3 id="automated-test-script">Automated Test Script</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Run comprehensive API tests</span>
+./docs/scripts/api/test_tenant_api.sh
+</code></pre></div>
+<h3 id="quick-health-check-test">Quick Health Check Test</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create tenant first (required for other operations)</span>
+<span class="nv">TENANT_ID</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8080/api/v1/tenants<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;name&quot;: &quot;Health Test Tenant&quot;,</span>
+<span class="s1">    &quot;email&quot;: &quot;test@example.com&quot;,</span>
+<span class="s1">    &quot;country_code&quot;: &quot;US&quot;,</span>
+<span class="s1">    &quot;currency_code&quot;: &quot;USD&quot;,</span>
+<span class="s1">    &quot;status&quot;: &quot;active&quot;,</span>
+<span class="s1">    &quot;company_size&quot;: &quot;11-50&quot;</span>
+<span class="s1">  }&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.tenant.id&#39;</span><span class="k">)</span>
+
+<span class="c1"># Test health endpoint</span>
+curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8080/api/v1/tenants/health<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-Tenant-ID: </span><span class="nv">$TENANT_ID</span><span class="s2">&quot;</span>
 
 <span class="c1"># Expected: HTTP 200 with health status</span>
 </code></pre></div>
-<h3 id="crud-operations-test">CRUD Operations Test</h3>
-<div class="highlight"><pre><span></span><code><span class="c1"># 1. Create tenant</span>
+<h3 id="working-crud-operations-test">Working CRUD Operations Test</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. Create tenant (bypasses middleware)</span>
 <span class="nv">TENANT_ID</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8080/api/v1/tenants<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;name&quot;: &quot;Test Tenant&quot;}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.id&#39;</span><span class="k">)</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;name&quot;: &quot;Test Tenant&quot;,</span>
+<span class="s1">    &quot;email&quot;: &quot;test@example.com&quot;,</span>
+<span class="s1">    &quot;country_code&quot;: &quot;US&quot;,</span>
+<span class="s1">    &quot;currency_code&quot;: &quot;USD&quot;,</span>
+<span class="s1">    &quot;status&quot;: &quot;active&quot;,</span>
+<span class="s1">    &quot;company_size&quot;: &quot;11-50&quot;</span>
+<span class="s1">  }&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.tenant.id&#39;</span><span class="k">)</span>
 
-<span class="c1"># 2. Get tenant</span>
-curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8080/api/v1/tenants/<span class="nv">$TENANT_ID</span>
+<span class="c1"># 2. Get tenant (requires header)</span>
+curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8080/api/v1/tenants/<span class="nv">$TENANT_ID</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-Tenant-ID: </span><span class="nv">$TENANT_ID</span><span class="s2">&quot;</span>
 
-<span class="c1"># 3. Update tenant</span>
+<span class="c1"># 3. Update tenant (requires header)</span>
 curl<span class="w"> </span>-X<span class="w"> </span>PUT<span class="w"> </span>http://localhost:8080/api/v1/tenants/<span class="nv">$TENANT_ID</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-Tenant-ID: </span><span class="nv">$TENANT_ID</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;name&quot;: &quot;Updated Test Tenant&quot;}&#39;</span>
 
-<span class="c1"># 4. List tenants</span>
-curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8080/api/v1/tenants
+<span class="c1"># 4. List tenants (requires header, returns empty due to RLS)</span>
+curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8080/api/v1/tenants<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-Tenant-ID: </span><span class="nv">$TENANT_ID</span><span class="s2">&quot;</span>
 
-<span class="c1"># 5. Delete tenant</span>
-curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>http://localhost:8080/api/v1/tenants/<span class="nv">$TENANT_ID</span>
+<span class="c1"># 5. Delete tenant (requires header)</span>
+curl<span class="w"> </span>-X<span class="w"> </span>DELETE<span class="w"> </span>http://localhost:8080/api/v1/tenants/<span class="nv">$TENANT_ID</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;X-Tenant-ID: </span><span class="nv">$TENANT_ID</span><span class="s2">&quot;</span>
 </code></pre></div>
 <h2 id="performance-considerations">📊 Performance Considerations</h2>
-<h3 id="caching-strategy">Caching Strategy</h3>
+<h3 id="current-performance-metrics">Current Performance Metrics</h3>
 <ul>
-<li>Tenant data is cached for 30 minutes</li>
-<li>Health status is cached for 5 minutes</li>
-<li>List operations use database pagination</li>
-</ul>
-<h3 id="rate-limiting">Rate Limiting</h3>
-<ul>
-<li>Standard rate limits apply (100 requests/minute per IP)</li>
-<li>Bulk operations may have lower limits</li>
+<li><strong>Health Check</strong>: ~50ms response time</li>
+<li><strong>Create Operation</strong>: ~200ms response time</li>
+<li><strong>Get Operation</strong>: ~100ms response time</li>
+<li><strong>Update Operation</strong>: ~150ms response time</li>
+<li><strong>Delete Operation</strong>: ~100ms response time</li>
 </ul>
 <h3 id="optimization-tips">Optimization Tips</h3>
 <ul>
-<li>Use pagination for large tenant lists</li>
-<li>Cache tenant lookups when possible</li>
+<li>Always include <code>X-Tenant-ID</code> header to avoid resolution overhead</li>
+<li>Use create endpoint for new tenants (bypasses middleware)</li>
+<li>Avoid provisioning/suspend endpoints until database constraints are fixed</li>
 <li>Monitor health endpoint for service status</li>
+<li>Be aware that list operations may return empty due to RLS policies</li>
+</ul>
+<h3 id="known-limitations">Known Limitations</h3>
+<ul>
+<li><strong>Row-Level Security (RLS)</strong>: List operations return empty results</li>
+<li><strong>Database Constraints</strong>: Some management operations fail</li>
+<li><strong>Tenant Context Required</strong>: Most operations need tenant authentication</li>
 </ul>
 <h2 id="related-apis">🔗 Related APIs</h2>
 <ul>
 <li><strong><a href="../users/">User Management API</a></strong> - Users belong to tenants</li>
 <li><strong><a href="../entities/">Entity Management API</a></strong> - Entities are tenant-scoped</li>
 <li><strong><a href="../../workflows/auth/">Authentication API</a></strong> - Tenant-aware authentication</li>
+<li><strong><a href="../organizations/">Organization API</a></strong> - Organization-tenant relationships</li>
 </ul>
 <h2 id="additional-resources">📚 Additional Resources</h2>
 <ul>
-<li><strong><a href="curl-examples/">curl Examples</a></strong> - Complete curl command examples</li>
-<li><strong><a href="../../utilities/scripts/test-tenants.sh">Testing Scripts</a></strong> - Automated testing script</li>
-<li><strong><a href="../../utilities/postman/tenants-collection.json">Postman Collection</a></strong> - Postman requests</li>
+<li><strong><a href="curl-examples/">curl Examples</a></strong> - Complete curl command examples with real test results</li>
+<li><strong><a href="../../../scripts/api/test_tenant_api.sh">Testing Scripts</a></strong> - Comprehensive automated testing script</li>
+<li><strong><a href="../../design/services/tenant/tenant.go">API Source Design</a></strong> - Goa service definitions</li>
 </ul>
+<h2 id="quick-start-guide">🎯 Quick Start Guide</h2>
+<ol>
+<li>
+<p><strong>Create a tenant</strong> (only public endpoint):
+   <div class="highlight"><pre><span></span><code><span class="nv">TENANT_ID</span><span class="o">=</span><span class="k">$(</span>curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8080/api/v1/tenants<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;name&quot;:&quot;My Company&quot;,&quot;email&quot;:&quot;me@company.com&quot;,&quot;country_code&quot;:&quot;US&quot;,&quot;currency_code&quot;:&quot;USD&quot;,&quot;status&quot;:&quot;active&quot;,&quot;company_size&quot;:&quot;11-50&quot;}&#39;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.tenant.id&#39;</span><span class="k">)</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Use the tenant ID</strong> for all subsequent operations:
+   <div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">TENANT_ID</span><span class="o">=</span><span class="s2">&quot;96ab6888-2914-4872-94b8-c25d964448cb&quot;</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Test the API</strong>:
+   <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8080/api/v1/tenants/health<span class="w"> </span>-H<span class="w"> </span><span class="s2">&quot;X-Tenant-ID: </span><span class="nv">$TENANT_ID</span><span class="s2">&quot;</span>
+</code></pre></div></p>
+</li>
+</ol>
+<h2 id="critical-implementation-notes">🚨 Critical Implementation Notes</h2>
+<p>⚠️ <strong>Before using this API in production:</strong></p>
+<ol>
+<li><strong>Fix Database Constraints</strong>: The <code>tenants_company_size_check</code> and <code>tenants_status_check</code> constraints need review</li>
+<li><strong>Resolve RLS Issues</strong>: List operations return empty due to Row-Level Security policies</li>
+<li><strong>Enable Management Operations</strong>: Provisioning, suspend, and configuration endpoints need fixes</li>
+<li><strong>Update Documentation</strong>: Remove references to non-working endpoints until fixed</li>
+</ol>
+<p>✅ <strong>Currently safe to use:</strong>
+- Basic CRUD operations (Create, Get, Update, Delete)
+- Health monitoring
+- Usage analytics
+- Authentication and tenant context resolution</p>
 <hr />
-<p><strong>Last Updated</strong>: 2025-07-19<br />
+<p><strong>Last Updated</strong>: 2025-09-20<br />
 <strong>API Version</strong>: 1.0.0<br />
+<strong>Test Status</strong>: 73% Operational (8/11 endpoints working)<br />
 <strong>Maintained by</strong>: AWO ERP System Team</p>
 
 

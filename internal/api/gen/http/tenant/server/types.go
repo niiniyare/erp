@@ -114,47 +114,12 @@ type UpdateConfigurationRequestBody struct {
 // CreateResponseBody is the type of the "tenant" service "create" endpoint
 // HTTP response body.
 type CreateResponseBody struct {
-	// Unique tenant identifier
-	ID string `form:"id" json:"id" xml:"id"`
-	// Tenant display name
-	Name string `form:"name" json:"name" xml:"name"`
-	// Tenant URL slug
-	Slug string `form:"slug" json:"slug" xml:"slug"`
-	// Subdomain for tenant
-	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
-	// Tenant status
+	// Created tenant information
+	Tenant *TenantResponseBody `form:"tenant" json:"tenant" xml:"tenant"`
+	// Status of the creation operation
 	Status string `form:"status" json:"status" xml:"status"`
-	// Subscription plan
-	PlanType string `form:"plan_type" json:"plan_type" xml:"plan_type"`
-	// Tenant description
-	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
-	// Tenant-specific settings
-	Settings *TenantSettingsResponseBody `form:"settings,omitempty" json:"settings,omitempty" xml:"settings,omitempty"`
-	// Subscription information
-	Subscription *SubscriptionInfoResponseBody `form:"subscription,omitempty" json:"subscription,omitempty" xml:"subscription,omitempty"`
-	// Primary contact information
-	Contact *ContactInfoResponseBody `form:"contact,omitempty" json:"contact,omitempty" xml:"contact,omitempty"`
-	// Creation timestamp
-	CreatedAt string `form:"created_at" json:"created_at" xml:"created_at"`
-	// Last update timestamp
-	UpdatedAt string `form:"updated_at" json:"updated_at" xml:"updated_at"`
-	// ID of user who created the record
-	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
-	// ID of user who last updated the record
-	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
-}
-
-// CreateResponseBodyMinimal is the type of the "tenant" service "create"
-// endpoint HTTP response body.
-type CreateResponseBodyMinimal struct {
-	// Unique tenant identifier
-	ID string `form:"id" json:"id" xml:"id"`
-	// Tenant display name
-	Name string `form:"name" json:"name" xml:"name"`
-	// Subdomain for tenant
-	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
-	// Tenant status
-	Status string `form:"status" json:"status" xml:"status"`
+	// Detailed message about the operation
+	Message string `form:"message" json:"message" xml:"message"`
 }
 
 // GetResponseBody is the type of the "tenant" service "get" endpoint HTTP
@@ -620,6 +585,38 @@ type DeleteConflictResponseBody struct {
 	Fault bool `form:"fault" json:"fault" xml:"fault"`
 }
 
+// TenantResponseBody is used to define fields on response body types.
+type TenantResponseBody struct {
+	// Unique tenant identifier
+	ID string `form:"id" json:"id" xml:"id"`
+	// Tenant display name
+	Name string `form:"name" json:"name" xml:"name"`
+	// Tenant URL slug
+	Slug string `form:"slug" json:"slug" xml:"slug"`
+	// Subdomain for tenant
+	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
+	// Tenant status
+	Status string `form:"status" json:"status" xml:"status"`
+	// Subscription plan
+	PlanType string `form:"plan_type" json:"plan_type" xml:"plan_type"`
+	// Tenant description
+	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Tenant-specific settings
+	Settings *TenantSettingsResponseBody `form:"settings,omitempty" json:"settings,omitempty" xml:"settings,omitempty"`
+	// Subscription information
+	Subscription *SubscriptionInfoResponseBody `form:"subscription,omitempty" json:"subscription,omitempty" xml:"subscription,omitempty"`
+	// Primary contact information
+	Contact *ContactInfoResponseBody `form:"contact,omitempty" json:"contact,omitempty" xml:"contact,omitempty"`
+	// Creation timestamp
+	CreatedAt string `form:"created_at" json:"created_at" xml:"created_at"`
+	// Last update timestamp
+	UpdatedAt string `form:"updated_at" json:"updated_at" xml:"updated_at"`
+	// ID of user who created the record
+	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
+}
+
 // TenantSettingsResponseBody is used to define fields on response body types.
 type TenantSettingsResponseBody struct {
 	// Default timezone
@@ -670,38 +667,6 @@ type ContactInfoResponseBody struct {
 	Phone *string `form:"phone,omitempty" json:"phone,omitempty" xml:"phone,omitempty"`
 	// Job title
 	Title *string `form:"title,omitempty" json:"title,omitempty" xml:"title,omitempty"`
-}
-
-// TenantResponseBody is used to define fields on response body types.
-type TenantResponseBody struct {
-	// Unique tenant identifier
-	ID string `form:"id" json:"id" xml:"id"`
-	// Tenant display name
-	Name string `form:"name" json:"name" xml:"name"`
-	// Tenant URL slug
-	Slug string `form:"slug" json:"slug" xml:"slug"`
-	// Subdomain for tenant
-	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
-	// Tenant status
-	Status string `form:"status" json:"status" xml:"status"`
-	// Subscription plan
-	PlanType string `form:"plan_type" json:"plan_type" xml:"plan_type"`
-	// Tenant description
-	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
-	// Tenant-specific settings
-	Settings *TenantSettingsResponseBody `form:"settings,omitempty" json:"settings,omitempty" xml:"settings,omitempty"`
-	// Subscription information
-	Subscription *SubscriptionInfoResponseBody `form:"subscription,omitempty" json:"subscription,omitempty" xml:"subscription,omitempty"`
-	// Primary contact information
-	Contact *ContactInfoResponseBody `form:"contact,omitempty" json:"contact,omitempty" xml:"contact,omitempty"`
-	// Creation timestamp
-	CreatedAt string `form:"created_at" json:"created_at" xml:"created_at"`
-	// Last update timestamp
-	UpdatedAt string `form:"updated_at" json:"updated_at" xml:"updated_at"`
-	// ID of user who created the record
-	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
-	// ID of user who last updated the record
-	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
 }
 
 // PaginationMetaResponseBody is used to define fields on response body types.
@@ -760,40 +725,13 @@ type TenantLimitsRequestBody struct {
 
 // NewCreateResponseBody builds the HTTP response body from the result of the
 // "create" endpoint of the "tenant" service.
-func NewCreateResponseBody(res *tenantviews.TenantView) *CreateResponseBody {
+func NewCreateResponseBody(res *tenantviews.CreateTenantResultView) *CreateResponseBody {
 	body := &CreateResponseBody{
-		ID:          *res.ID,
-		Name:        *res.Name,
-		Slug:        *res.Slug,
-		Subdomain:   res.Subdomain,
-		Status:      *res.Status,
-		PlanType:    *res.PlanType,
-		Description: res.Description,
-		CreatedAt:   *res.CreatedAt,
-		UpdatedAt:   *res.UpdatedAt,
-		CreatedBy:   res.CreatedBy,
-		UpdatedBy:   res.UpdatedBy,
+		Status:  *res.Status,
+		Message: *res.Message,
 	}
-	if res.Settings != nil {
-		body.Settings = marshalTenantviewsTenantSettingsViewToTenantSettingsResponseBody(res.Settings)
-	}
-	if res.Subscription != nil {
-		body.Subscription = marshalTenantviewsSubscriptionInfoViewToSubscriptionInfoResponseBody(res.Subscription)
-	}
-	if res.Contact != nil {
-		body.Contact = marshalTenantviewsContactInfoViewToContactInfoResponseBody(res.Contact)
-	}
-	return body
-}
-
-// NewCreateResponseBodyMinimal builds the HTTP response body from the result
-// of the "create" endpoint of the "tenant" service.
-func NewCreateResponseBodyMinimal(res *tenantviews.TenantView) *CreateResponseBodyMinimal {
-	body := &CreateResponseBodyMinimal{
-		ID:        *res.ID,
-		Name:      *res.Name,
-		Subdomain: res.Subdomain,
-		Status:    *res.Status,
+	if res.Tenant != nil {
+		body.Tenant = marshalTenantviewsTenantViewToTenantResponseBody(res.Tenant)
 	}
 	return body
 }

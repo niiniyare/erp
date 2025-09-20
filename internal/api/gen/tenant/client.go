@@ -52,13 +52,13 @@ func NewClient(create, get, list, update, delete_, health, provision, suspend, r
 //   - "unauthorized" (type *goa.ServiceError)
 //   - "unprocessable_entity" (type *goa.ServiceError)
 //   - error: internal error
-func (c *Client) Create(ctx context.Context, p *CreateTenantPayload) (res *Tenant, err error) {
+func (c *Client) Create(ctx context.Context, p *CreateTenantPayload) (res *CreateTenantResult, err error) {
 	var ires any
 	ires, err = c.CreateEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(*Tenant), nil
+	return ires.(*CreateTenantResult), nil
 }
 
 // Get calls the "get" endpoint of the "tenant" service.
