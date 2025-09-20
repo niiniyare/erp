@@ -6754,14 +6754,20 @@ paths:
                         schema:
                             $ref: '#/components/schemas/CreateTenantPayload'
                         example:
+                            company_size: 51-200
                             contact:
                                 email: john.doe@acme.com
                                 name: John Doe
                                 phone: +1-555-123-4567
                                 title: Chief Technology Officer
-                            description: Leading provider of roadrunner traps and anvils
+                            country_code: US
+                            currency_code: USD
+                            email: admin@acme.com
+                            industry: Technology
+                            legal_entity_type: LLC
                             name: Acme Corporation
                             plan_type: professional
+                            registration_number: REG-987654321
                             settings:
                                 currency: USD
                                 date_format: MM/DD/YYYY
@@ -6775,7 +6781,10 @@ paths:
                                     max_storage_mb: 10240
                                     max_users: 100
                                 timezone: America/New_York
+                            slug: acme-corp
+                            status: active
                             subdomain: acme
+                            tax_id: 123-45-6789
             responses:
                 "201":
                     description: Created response.
@@ -16878,30 +16887,76 @@ components:
         CreateTenantPayload:
             type: object
             properties:
+                company_size:
+                    type: string
+                    description: Size of the company
+                    example: 51-200
+                    enum:
+                        - 1-10
+                        - 11-50
+                        - 51-200
+                        - 201-500
+                        - 500+
                 contact:
                     $ref: '#/components/schemas/ContactInfo'
-                description:
+                country_code:
                     type: string
-                    description: Tenant description
-                    example: Leading provider of roadrunner traps and anvils
-                    maxLength: 500
+                    description: ISO 3166-1 alpha-2 country code
+                    example: US
+                    pattern: ^[A-Z]{2}$
+                currency_code:
+                    type: string
+                    description: ISO 4217 currency code
+                    example: USD
+                    pattern: ^[A-Z]{3}$
+                email:
+                    type: string
+                    description: Primary email of the tenant
+                    example: admin@acme.com
+                    format: email
+                industry:
+                    type: string
+                    description: Industry of the tenant
+                    example: Technology
+                legal_entity_type:
+                    type: string
+                    description: Legal entity type
+                    example: LLC
                 name:
                     type: string
                     description: Tenant display name
                     example: Acme Corporation
-                    minLength: 1
+                    minLength: 2
                     maxLength: 100
                 plan_type:
                     type: string
-                    description: Subscription plan
+                    description: Subscription plan type
                     default: starter
                     example: professional
                     enum:
                         - starter
                         - professional
                         - enterprise
+                registration_number:
+                    type: string
+                    description: Company registration number
+                    example: REG-987654321
                 settings:
                     $ref: '#/components/schemas/TenantSettings'
+                slug:
+                    type: string
+                    description: Tenant unique slug
+                    example: acme-corp
+                    pattern: ^[a-z0-9-]+$
+                status:
+                    type: string
+                    description: Tenant status
+                    default: active
+                    example: active
+                    enum:
+                        - active
+                        - inactive
+                        - suspended
                 subdomain:
                     type: string
                     description: Desired subdomain (optional)
@@ -16909,16 +16964,26 @@ components:
                     pattern: ^[a-z0-9-]+$
                     minLength: 3
                     maxLength: 50
+                tax_id:
+                    type: string
+                    description: Tax Identification Number
+                    example: 123-45-6789
             description: Payload for creating a new tenant
             example:
+                company_size: 51-200
                 contact:
                     email: john.doe@acme.com
                     name: John Doe
                     phone: +1-555-123-4567
                     title: Chief Technology Officer
-                description: Leading provider of roadrunner traps and anvils
+                country_code: US
+                currency_code: USD
+                email: admin@acme.com
+                industry: Technology
+                legal_entity_type: LLC
                 name: Acme Corporation
                 plan_type: professional
+                registration_number: REG-987654321
                 settings:
                     currency: USD
                     date_format: MM/DD/YYYY
@@ -16932,9 +16997,15 @@ components:
                         max_storage_mb: 10240
                         max_users: 100
                     timezone: America/New_York
+                slug: acme-corp
+                status: active
                 subdomain: acme
+                tax_id: 123-45-6789
             required:
                 - name
+                - email
+                - country_code
+                - currency_code
         CreateTransactionPayload:
             type: object
             properties:
@@ -25458,7 +25529,7 @@ components:
                     maxLength: 100
                 plan_type:
                     type: string
-                    description: Subscription plan type
+                    description: Subscription plan
                     example: professional
                     enum:
                         - starter

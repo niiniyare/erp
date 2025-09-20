@@ -809,6 +809,636 @@ func contains(s, substr string) bool {
 }
 ```
 
+## 3. Temporal Activities with SQLC Integration
+
+### **Temporal Activity Structure with SQLC**
+
+```go
+// internal/workflows/entity/activities.go
+package entity
+
+import (
+    "context"
+    "fmt"
+    "time"
+
+    "github.com/google/uuid"
+    "go.temporal.io/sdk/activity"
+    "go.temporal.io/sdk/temporal"
+
+    db "github.com/niiniyare/erp/db/sqlc"
+    "github.com/niiniyare/erp/internal/core/entity/domain"
+    "github.com/niiniyare/erp/internal/shared"
+)
+
+// TemporalEntityActivities wraps SQLC operations for Temporal workflows
+type TemporalEntityActivities struct {
+    store   db.Store
+    logger  shared.Logger
+}
+
+func NewTemporalEntityActivities(store db.Store, logger shared.Logger) *TemporalEntityActivities {
+    return &TemporalEntityActivities{
+        store:  store,
+        logger: logger,
+    }
+}
+
+// BulkImportEntitiesActivity - Uses SQLC bulk operations within Temporal
+func (a *TemporalEntityActivities) BulkImportEntitiesActivity(ctx context.Context, req BulkImportRequest) (*BulkImportResult, error) {
+    // Configure activity with timeout and retry policy
+    ctx = activity.WithTimeout(ctx, 30*time.Minute)
+    ctx = activity.WithRetryPolicy(ctx, temporal.RetryPolicy{
+        InitialInterval:    time.Second,
+        BackoffCoefficient: 2.0,
+        MaximumInterval:    time.Minute,
+        MaximumAttempts:    5,
+    })
+
+    logger := activity.GetLogger(ctx)
+    logger.Info("Starting bulk entity import", "tenant_id", req.TenantID, "batch_size", len(req.Entities))
+
+    // Set tenant context for SQLC operations
+    ctx = shared.WithTenantID(ctx, req.TenantID)
+
+    return a.store.WithTenant(ctx, req.TenantID, func(ctx context.Context, s db.Store) (*BulkImportResult, error) {
+        result := &BulkImportResult{
+            TenantID:      req.TenantID,
+            ProcessedAt:   time.Now(),
+            SuccessCount:  0,
+            ErrorCount:    0,
+            Errors:        make([]BulkImportError, 0),
+        }
+
+        // Process entities in smaller batches for better memory usage
+        batchSize := 100
+        for i := 0; i < len(req.Entities); i += batchSize {
+            end := i + batchSize
+            if end > len(req.Entities) {
+                end = len(req.Entities)
+            }
+            
+            batch := req.Entities[i:end]
+            
+            // Record activity progress
+            activity.RecordHeartbeat(ctx, map[string]interface{}{
+                "progress":       float64(i) / float64(len(req.Entities)),
+                "processed":      i,
+                "total":         len(req.Entities),
+                "current_batch": len(batch),
+            })
+
+            batchResult, err := a.processBatchWithSQLCTransactions(ctx, s, batch)
+            if err != nil {
+                logger.Error("Batch processing failed", "batch_start", i, "error", err)
+                result.ErrorCount += len(batch)
+                result.Errors = append(result.Errors, BulkImportError{
+                    BatchStart: i,
+                    BatchEnd:   end,
+                    Error:      err.Error(),
+                })
+                continue
+            }
+
+            result.SuccessCount += batchResult.SuccessCount
+            result.ErrorCount += batchResult.ErrorCount
+            result.Errors = append(result.Errors, batchResult.Errors...)
+        }
+
+        logger.Info("Bulk import completed", 
+            "success_count", result.SuccessCount,
+            "error_count", result.ErrorCount,
+            "total_processed", len(req.Entities))
+
+        return result, nil
+    })
+}
+
+// ProcessBatch using SQLC transactions for atomicity
+func (a *TemporalEntityActivities) processBatchWithSQLCTransactions(
+    ctx context.Context, 
+    store db.Store, 
+    batch []EntityImportData,
+) (*BatchResult, error) {
+    result := &BatchResult{
+        SuccessCount: 0,
+        ErrorCount:   0,
+        Errors:       make([]BulkImportError, 0),
+    }
+
+    // Use SQLC transaction for entire batch
+    tx, err := store.BeginTx(ctx, pgx.TxOptions{})
+    if err != nil {
+        return nil, fmt.Errorf("failed to begin transaction: %w", err)
+    }
+    defer tx.Rollback(ctx)
+
+    // Prepare bulk insert parameters for SQLC
+    bulkParams := make([]db.BulkCreateEntitiesParams, 0, len(batch))
+    hierarchyParams := make([]db.BulkCreateHierarchyPathsParams, 0)
+
+    for _, entityData := range batch {
+        // Validate entity data before SQLC operation
+        if err := a.validateEntityData(ctx, store, entityData); err != nil {
+            result.ErrorCount++
+            result.Errors = append(result.Errors, BulkImportError{
+                EntityName: entityData.Name,
+                Error:      fmt.Sprintf("validation failed: %v", err),
+            })
+            continue
+        }
+
+        entityID := uuid.New()
+        
+        // Build SQLC parameters
+        params := db.BulkCreateEntitiesParams{
+            Uuid:          entityID,
+            ParentID:      entityData.ParentID,
+            Name:          entityData.Name,
+            Code:          pgtype.Text{String: entityData.Code, Valid: entityData.Code != ""},
+            Type:          string(entityData.Type),
+            IsActive:      entityData.IsActive,
+            Hidden:        entityData.IsHidden,
+            AccrualMethod: entityData.AccrualMethod,
+            FyStartMonth:  int32(entityData.FYStartMonth),
+            Address:       marshalJSONField(entityData.Address),
+            Picture:       pgtype.Text{String: entityData.Picture, Valid: entityData.Picture != ""},
+            Settings:      marshalJSONField(entityData.Settings),
+            Metadata:      marshalJSONField(entityData.Metadata),
+            CreatedAt:     time.Now(),
+            UpdatedAt:     time.Now(),
+            CreatedBy:     entityData.CreatedBy,
+        }
+
+        bulkParams = append(bulkParams, params)
+
+        // Prepare hierarchy paths using SQLC queries
+        hierarchyPaths, err := a.generateHierarchyPaths(ctx, store, entityID, entityData.ParentID)
+        if err != nil {
+            result.ErrorCount++
+            result.Errors = append(result.Errors, BulkImportError{
+                EntityName: entityData.Name,
+                Error:      fmt.Sprintf("hierarchy path generation failed: %v", err),
+            })
+            continue
+        }
+        
+        hierarchyParams = append(hierarchyParams, hierarchyPaths...)
+        result.SuccessCount++
+    }
+
+    // Execute SQLC bulk operations within transaction
+    if len(bulkParams) > 0 {
+        insertedCount, err := store.BulkCreateEntities(ctx, bulkParams)
+        if err != nil {
+            return nil, fmt.Errorf("SQLC bulk entity creation failed: %w", err)
+        }
+
+        if insertedCount != int64(len(bulkParams)) {
+            return nil, fmt.Errorf("expected %d entities, created %d", len(bulkParams), insertedCount)
+        }
+
+        // Insert hierarchy paths using SQLC
+        if len(hierarchyParams) > 0 {
+            pathCount, err := store.BulkCreateHierarchyPaths(ctx, hierarchyParams)
+            if err != nil {
+                return nil, fmt.Errorf("SQLC bulk hierarchy path creation failed: %w", err)
+            }
+            
+            a.logger.Debug("Created hierarchy paths", "count", pathCount)
+        }
+    }
+
+    // Commit transaction
+    if err := tx.Commit(ctx); err != nil {
+        return nil, fmt.Errorf("failed to commit transaction: %w", err)
+    }
+
+    return result, nil
+}
+```
+
+## 4. Testing Strategy for SQLC Code
+
+### **Repository Testing with SQLC Mocks**
+
+```go
+// internal/core/entity/repository/repository_test.go
+package repository_test
+
+import (
+    "context"
+    "testing"
+    "time"
+
+    "github.com/google/uuid"
+    "github.com/jackc/pgx/v5"
+    "github.com/jackc/pgx/v5/pgtype"
+    "github.com/stretchr/testify/assert"
+    "github.com/stretchr/testify/mock"
+    "github.com/stretchr/testify/suite"
+
+    db "github.com/niiniyare/erp/db/sqlc"
+    "github.com/niiniyare/erp/internal/core/entity/domain"
+    "github.com/niiniyare/erp/internal/core/entity/repository"
+    "github.com/niiniyare/erp/internal/shared"
+    "github.com/niiniyare/erp/internal/shared/mocks"
+)
+
+// SQLCRepositoryTestSuite tests repository with mocked SQLC store
+type SQLCRepositoryTestSuite struct {
+    suite.Suite
+    mockStore   *mocks.MockStore
+    repository  domain.EntityRepository
+    tenantID    uuid.UUID
+    ctx         context.Context
+}
+
+func (suite *SQLCRepositoryTestSuite) SetupTest() {
+    suite.mockStore = mocks.NewMockStore(suite.T())
+    suite.repository = repository.NewSQLCEntityRepository(suite.mockStore, &mocks.MockTracingService{})
+    suite.tenantID = uuid.New()
+    suite.ctx = shared.WithTenantID(context.Background(), suite.tenantID)
+}
+
+func (suite *SQLCRepositoryTestSuite) TestCreate_Success() {
+    // Given
+    req := &domain.CreateEntityRequest{
+        Name:         "Test Entity",
+        Code:         "TEST001",
+        Type:         domain.EntityTypeDepartment,
+        IsActive:     true,
+        IsHidden:     false,
+        AccrualMethod: "cash",
+        FYStartMonth: 1,
+        CreatedBy:    "test-user",
+    }
+
+    expectedEntity := db.Entity{
+        Uuid:          uuid.New(),
+        TenantID:      suite.tenantID,
+        Name:          req.Name,
+        Code:          pgtype.Text{String: req.Code, Valid: true},
+        Type:          string(req.Type),
+        IsActive:      req.IsActive,
+        Hidden:        req.IsHidden,
+        AccrualMethod: req.AccrualMethod,
+        FyStartMonth:  int32(req.FYStartMonth),
+        CreatedAt:     time.Now(),
+        UpdatedAt:     time.Now(),
+        CreatedBy:     req.CreatedBy,
+    }
+
+    // Mock SQLC store tenant wrapper
+    suite.mockStore.EXPECT().
+        WithTenant(mock.Anything, suite.tenantID, mock.AnythingOfType("func(context.Context, db.Store) (*domain.Entity, error)")).
+        RunAndReturn(func(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, db.Store) (*domain.Entity, error)) (*domain.Entity, error) {
+            return fn(ctx, suite.mockStore)
+        })
+
+    // Mock SQLC CreateEntity call
+    suite.mockStore.EXPECT().
+        CreateEntity(mock.Anything, mock.MatchedBy(func(params db.CreateEntityParams) bool {
+            return params.Name == req.Name && 
+                   params.Type == string(req.Type) &&
+                   params.IsActive == req.IsActive
+        })).
+        Return(expectedEntity, nil)
+
+    // Mock hierarchy path creation
+    suite.mockStore.EXPECT().
+        BulkCreateHierarchyPaths(mock.Anything, mock.MatchedBy(func(params []db.BulkCreateHierarchyPathsParams) bool {
+            return len(params) == 1 && params[0].Depth == 0  // Self-reference only
+        })).
+        Return(int64(1), nil)
+
+    // When
+    result, err := suite.repository.Create(suite.ctx, req)
+
+    // Then
+    suite.NoError(err)
+    suite.NotNil(result)
+    suite.Equal(req.Name, result.Name)
+    suite.Equal(req.Type, result.Type)
+    suite.Equal(req.IsActive, result.IsActive)
+}
+```
+
+## 5. Performance Optimization with SQLC
+
+### **Query Optimization Patterns**
+
+```sql
+-- File: db/queries/optimized_hierarchy.sql
+-- Performance-optimized hierarchy queries using SQLC
+
+-- name: GetEntitySubtreeOptimized :many
+-- Fast subtree retrieval with minimal joins and proper indexing
+SELECT 
+    e.uuid,
+    e.name,
+    e.type,
+    e.parent_id,
+    e.is_active,
+    hp.depth,
+    hp.path_materialized
+FROM entities e
+INNER JOIN hierarchy_paths hp ON e.uuid = hp.descendant_id
+WHERE hp.tenant_id = current_tenant_id()
+  AND hp.ancestor_id = $1  -- root entity
+  AND ($2 = 0 OR hp.depth <= $2)  -- max depth filter
+  AND e.deleted_at IS NULL
+  AND ($3::boolean = true OR e.is_active = true)  -- active filter
+ORDER BY hp.depth, e.name
+LIMIT $4;  -- pagination limit
+
+-- name: GetHierarchyStatsBatch :many
+-- Batch statistics calculation for multiple entities
+WITH entity_stats AS (
+    SELECT 
+        hp.ancestor_id,
+        COUNT(DISTINCT hp.descendant_id) as total_descendants,
+        COUNT(DISTINCT CASE WHEN e.is_active THEN hp.descendant_id END) as active_descendants,
+        MAX(hp.depth) as max_depth,
+        COUNT(DISTINCT CASE WHEN hp.depth = 1 THEN hp.descendant_id END) as direct_children
+    FROM hierarchy_paths hp
+    INNER JOIN entities e ON e.uuid = hp.descendant_id
+    WHERE hp.tenant_id = current_tenant_id()
+      AND hp.ancestor_id = ANY($1::uuid[])  -- batch of entity IDs
+      AND hp.depth > 0  -- exclude self-reference
+      AND e.deleted_at IS NULL
+    GROUP BY hp.ancestor_id
+)
+SELECT 
+    ancestor_id as entity_id,
+    total_descendants,
+    active_descendants,
+    max_depth,
+    direct_children
+FROM entity_stats;
+
+-- name: BulkMoveEntitiesOptimized :exec
+-- Optimized bulk entity move with hierarchy recalculation
+WITH moved_entities AS (
+    UPDATE entities 
+    SET 
+        parent_id = moves.new_parent_id,
+        updated_at = NOW(),
+        updated_by = $3
+    FROM (
+        SELECT 
+            unnest($1::uuid[]) as entity_id,
+            unnest($2::uuid[]) as new_parent_id
+    ) moves
+    WHERE entities.uuid = moves.entity_id
+      AND entities.tenant_id = current_tenant_id()
+      AND entities.deleted_at IS NULL
+    RETURNING uuid, parent_id
+),
+deleted_paths AS (
+    DELETE FROM hierarchy_paths 
+    WHERE tenant_id = current_tenant_id()
+      AND (ancestor_id IN (SELECT uuid FROM moved_entities) 
+           OR descendant_id IN (SELECT uuid FROM moved_entities))
+)
+-- Trigger hierarchy rebuild for affected entities
+INSERT INTO hierarchy_rebuild_queue (tenant_id, entity_id, created_at)
+SELECT current_tenant_id(), uuid, NOW()
+FROM moved_entities;
+```
+
+### **Caching Strategy with SQLC**
+
+```go
+// internal/core/entity/repository/cached_repository.go
+package repository
+
+import (
+    "context"
+    "encoding/json"
+    "fmt"
+    "time"
+
+    "github.com/google/uuid"
+    "github.com/redis/go-redis/v9"
+
+    db "github.com/niiniyare/erp/db/sqlc"
+    "github.com/niiniyare/erp/internal/core/entity/domain"
+    "github.com/niiniyare/erp/internal/shared"
+)
+
+// CachedSQLCRepository wraps SQLC repository with Redis caching
+type CachedSQLCRepository struct {
+    base     domain.EntityRepository
+    store    db.Store
+    cache    redis.Client
+    ttl      time.Duration
+}
+
+func NewCachedSQLCRepository(base domain.EntityRepository, store db.Store, cache redis.Client) domain.EntityRepository {
+    return &CachedSQLCRepository{
+        base:  base,
+        store: store,
+        cache: cache,
+        ttl:   time.Hour, // Default TTL
+    }
+}
+
+// GetByID with caching layer over SQLC
+func (r *CachedSQLCRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Entity, error) {
+    tenantID, ok := shared.GetTenantID(ctx)
+    if !ok {
+        return nil, fmt.Errorf("tenant ID not found in context")
+    }
+
+    cacheKey := fmt.Sprintf("entity:%s:%s", tenantID, id)
+    
+    // Try cache first
+    cached, err := r.cache.Get(ctx, cacheKey).Result()
+    if err == nil {
+        var entity domain.Entity
+        if err := json.Unmarshal([]byte(cached), &entity); err == nil {
+            return &entity, nil
+        }
+    }
+
+    // Cache miss - use SQLC repository
+    entity, err := r.base.GetByID(ctx, id)
+    if err != nil {
+        return nil, err
+    }
+
+    // Cache the result
+    entityBytes, _ := json.Marshal(entity)
+    r.cache.Set(ctx, cacheKey, entityBytes, r.ttl)
+
+    return entity, nil
+}
+
+// GetSubtree with intelligent caching
+func (r *CachedSQLCRepository) GetSubtree(ctx context.Context, rootID uuid.UUID, maxDepth int) ([]*domain.EntityWithHierarchy, error) {
+    tenantID, ok := shared.GetTenantID(ctx)
+    if !ok {
+        return nil, fmt.Errorf("tenant ID not found in context")
+    }
+
+    cacheKey := fmt.Sprintf("subtree:%s:%s:%d", tenantID, rootID, maxDepth)
+    
+    // Check cache
+    cached, err := r.cache.Get(ctx, cacheKey).Result()
+    if err == nil {
+        var entities []*domain.EntityWithHierarchy
+        if err := json.Unmarshal([]byte(cached), &entities); err == nil {
+            return entities, nil
+        }
+    }
+
+    // Use optimized SQLC query
+    entities, err := r.getSubtreeOptimized(ctx, rootID, maxDepth)
+    if err != nil {
+        return nil, err
+    }
+
+    // Cache with shorter TTL for dynamic data
+    entitiesBytes, _ := json.Marshal(entities)
+    r.cache.Set(ctx, cacheKey, entitiesBytes, 15*time.Minute)
+
+    return entities, nil
+}
+
+// Optimized subtree query using SQLC
+func (r *CachedSQLCRepository) getSubtreeOptimized(ctx context.Context, rootID uuid.UUID, maxDepth int) ([]*domain.EntityWithHierarchy, error) {
+    tenantID, ok := shared.GetTenantID(ctx)
+    if !ok {
+        return nil, fmt.Errorf("tenant ID not found in context")
+    }
+
+    return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) ([]*domain.EntityWithHierarchy, error) {
+        // Use SQLC optimized query with pagination
+        rows, err := s.GetEntitySubtreeOptimized(ctx, db.GetEntitySubtreeOptimizedParams{
+            Uuid:    rootID,
+            Int4:    int32(maxDepth),
+            Boolean: true,  // include inactive
+            Int4_2:  1000,  // pagination limit
+        })
+        if err != nil {
+            return nil, fmt.Errorf("SQLC optimized subtree query failed: %w", err)
+        }
+
+        // Convert to domain objects
+        entities := make([]*domain.EntityWithHierarchy, len(rows))
+        for i, row := range rows {
+            entities[i] = &domain.EntityWithHierarchy{
+                Entity: domain.Entity{
+                    ID:       row.Uuid,
+                    Name:     row.Name,
+                    Type:     domain.EntityType(row.Type),
+                    ParentID: convertPgUUID(row.ParentID),
+                    IsActive: row.IsActive,
+                },
+                Level: int(row.Depth),
+                Path:  row.PathMaterialized,
+            }
+        }
+
+        return entities, nil
+    })
+}
+
+// Cache invalidation on updates
+func (r *CachedSQLCRepository) UpdateEntity(ctx context.Context, id uuid.UUID, req *domain.UpdateEntityRequest) (*domain.Entity, error) {
+    // Perform update using base repository
+    entity, err := r.base.UpdateEntity(ctx, id, req)
+    if err != nil {
+        return nil, err
+    }
+
+    // Invalidate caches
+    tenantID, _ := shared.GetTenantID(ctx)
+    r.invalidateEntityCaches(ctx, tenantID, id)
+
+    return entity, nil
+}
+
+// Smart cache invalidation using SQLC hierarchy queries
+func (r *CachedSQLCRepository) invalidateEntityCaches(ctx context.Context, tenantID, entityID uuid.UUID) {
+    // Invalidate entity cache
+    entityKey := fmt.Sprintf("entity:%s:%s", tenantID, entityID)
+    r.cache.Del(ctx, entityKey)
+
+    // Get affected ancestors and descendants using SQLC
+    r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) (interface{}, error) {
+        // Get ancestors to invalidate subtree caches
+        ancestors, err := s.GetEntityAncestorsOptimized(ctx, entityID)
+        if err == nil {
+            for _, ancestor := range ancestors {
+                pattern := fmt.Sprintf("subtree:%s:%s:*", tenantID, ancestor.Uuid)
+                r.invalidateCachePattern(ctx, pattern)
+            }
+        }
+
+        // Get descendants to invalidate their entity caches
+        descendants, err := s.GetEntitySubtreeOptimized(ctx, db.GetEntitySubtreeOptimizedParams{
+            Uuid:    entityID,
+            Int4:    0,      // unlimited depth
+            Boolean: true,   // include inactive
+            Int4_2:  10000,  // large limit
+        })
+        if err == nil {
+            for _, desc := range descendants {
+                descKey := fmt.Sprintf("entity:%s:%s", tenantID, desc.Uuid)
+                r.cache.Del(ctx, descKey)
+            }
+        }
+
+        return nil, nil
+    })
+}
+
+func (r *CachedSQLCRepository) invalidateCachePattern(ctx context.Context, pattern string) {
+    keys, err := r.cache.Keys(ctx, pattern).Result()
+    if err == nil && len(keys) > 0 {
+        r.cache.Del(ctx, keys...)
+    }
+}
+```
+
+## Production Readiness Checklist
+
+### **SQLC Implementation Standards**
+
+✅ **Query Definitions**
+- All database operations in `.sql` files
+- SQLC directives properly configured
+- Type-safe parameter binding
+- Proper error handling patterns
+
+✅ **Repository Layer**
+- Pure SQLC implementation
+- Transaction management
+- Bulk operation support
+- Error mapping and domain conversion
+
+✅ **Temporal Integration** 
+- SQLC operations in activities
+- Transaction boundaries in workflows
+- Progress tracking and heartbeats
+- Retry policies for database failures
+
+✅ **Testing Strategy**
+- Mocked SQLC store for unit tests
+- Integration tests with real database
+- Hierarchy operation validation
+- Performance testing for bulk operations
+
+✅ **Performance Optimization**
+- Query optimization patterns
+- Intelligent caching strategies
+- Bulk operation efficiency
+- Index-aware query design
+
+This guide provides production-ready patterns that maintain SQLC exclusivity while leveraging existing Clean Architecture patterns and Temporal integration capabilities.
+
 <function_calls>
 <invoke name="TodoWrite">
 <parameter name="todos">[{"content": "Create SQLC-centric implementation patterns guide", "status": "completed", "priority": "high", "id": "1"}, {"content": "Provide SQLC query design examples for hierarchy operations", "status": "completed", "priority": "high", "id": "2"}, {"content": "Demonstrate repository layer implementation with SQLC", "status": "completed", "priority": "high", "id": "3"}, {"content": "Show Temporal activities with SQLC integration", "status": "in_progress", "priority": "medium", "id": "4"}, {"content": "Provide testing strategy for SQLC code", "status": "pending", "priority": "medium", "id": "5"}, {"content": "Include performance optimization with SQLC", "status": "pending", "priority": "medium", "id": "6"}]

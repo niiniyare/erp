@@ -1,7 +1,7 @@
 package tenant
 
 import (
-	"github.com/niiniyare/erp/internal/api/design/types"
+	. "github.com/niiniyare/erp/internal/api/design/types"
 	. "goa.design/goa/v3/dsl"
 )
 
@@ -34,7 +34,7 @@ var TenantResult = ResultType("application/vnd.tenant", func() {
 			Enum("active", "inactive", "suspended", "pending")
 			Example("active")
 		})
-		Attribute("plan_type", String, "Subscription plan type", func() {
+		Attribute("plan_type", String, "Subscription plan", func() {
 			Enum("starter", "professional", "enterprise")
 			Example("professional")
 		})
@@ -44,8 +44,8 @@ var TenantResult = ResultType("application/vnd.tenant", func() {
 		})
 		Attribute("settings", TenantSettings, "Tenant-specific settings")
 		Attribute("subscription", SubscriptionInfo, "Subscription information")
-		Attribute("contact", types.ContactInfo, "Primary contact information")
-		types.AuditFields()
+		Attribute("contact", ContactInfo, "Primary contact information")
+		AuditFields()
 	})
 	Required("id", "name", "slug", "status", "plan_type", "created_at", "updated_at")
 
@@ -77,10 +77,19 @@ var TenantResult = ResultType("application/vnd.tenant", func() {
 // CreateTenantPayload describes the payload for creating a tenant
 var CreateTenantPayload = Type("CreateTenantPayload", func() {
 	Description("Payload for creating a new tenant")
+
 	Attribute("name", String, "Tenant display name", func() {
-		MinLength(1)
+		MinLength(2)
 		MaxLength(100)
 		Example("Acme Corporation")
+	})
+	Attribute("slug", String, "Tenant unique slug", func() {
+		Pattern("^[a-z0-9-]+$")
+		Example("acme-corp")
+	})
+	Attribute("email", String, "Primary email of the tenant", func() {
+		Format(FormatEmail)
+		Example("admin@acme.com")
 	})
 	Attribute("subdomain", String, "Desired subdomain (optional)", func() {
 		Pattern("^[a-z0-9-]+$")
@@ -88,18 +97,45 @@ var CreateTenantPayload = Type("CreateTenantPayload", func() {
 		MaxLength(50)
 		Example("acme")
 	})
-	Attribute("plan_type", String, "Subscription plan", func() {
+	Attribute("status", String, "Tenant status", func() {
+		Enum("active", "inactive", "suspended")
+		Default("active")
+		Example("active")
+	})
+	Attribute("plan_type", String, "Subscription plan type", func() {
 		Enum("starter", "professional", "enterprise")
 		Default("starter")
 		Example("professional")
 	})
-	Attribute("description", String, "Tenant description", func() {
-		MaxLength(500)
-		Example("Leading provider of roadrunner traps and anvils")
+	Attribute("industry", String, "Industry of the tenant", func() {
+		Example("Technology")
 	})
-	Attribute("contact", types.ContactInfo, "Primary contact information")
+	Attribute("company_size", String, "Size of the company", func() {
+		Enum("1-10", "11-50", "51-200", "201-500", "500+")
+		Example("51-200")
+	})
+	Attribute("tax_id", String, "Tax Identification Number", func() {
+		Example("123-45-6789")
+	})
+	Attribute("registration_number", String, "Company registration number", func() {
+		Example("REG-987654321")
+	})
+	Attribute("legal_entity_type", String, "Legal entity type", func() {
+		Example("LLC")
+	})
+	Attribute("contact", ContactInfo, "Primary contact information")
 	Attribute("settings", TenantSettings, "Initial tenant settings")
-	Required("name")
+	Attribute("country_code", String, "ISO 3166-1 alpha-2 country code", func() {
+		Pattern("^[A-Z]{2}$")
+		Example("US")
+	})
+	Attribute("currency_code", String, "ISO 4217 currency code", func() {
+		Pattern("^[A-Z]{3}$")
+		Example("USD")
+	})
+
+	// Required fields
+	Required("name", "email", "country_code", "currency_code")
 })
 
 // UpdateTenantPayload describes the payload for updating a tenant
@@ -126,7 +162,7 @@ var UpdateTenantPayload = Type("UpdateTenantPayload", func() {
 		Enum("starter", "professional", "enterprise")
 		Example("professional")
 	})
-	Attribute("contact", types.ContactInfo, "Primary contact information")
+	Attribute("contact", ContactInfo, "Primary contact information")
 	Attribute("settings", TenantSettings, "Tenant settings")
 	Required("id")
 })

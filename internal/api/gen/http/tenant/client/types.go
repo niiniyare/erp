@@ -20,16 +20,34 @@ import (
 type CreateRequestBody struct {
 	// Tenant display name
 	Name string `form:"name" json:"name" xml:"name"`
+	// Tenant unique slug
+	Slug *string `form:"slug,omitempty" json:"slug,omitempty" xml:"slug,omitempty"`
+	// Primary email of the tenant
+	Email string `form:"email" json:"email" xml:"email"`
 	// Desired subdomain (optional)
 	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
-	// Subscription plan
+	// Tenant status
+	Status string `form:"status" json:"status" xml:"status"`
+	// Subscription plan type
 	PlanType string `form:"plan_type" json:"plan_type" xml:"plan_type"`
-	// Tenant description
-	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Industry of the tenant
+	Industry *string `form:"industry,omitempty" json:"industry,omitempty" xml:"industry,omitempty"`
+	// Size of the company
+	CompanySize *string `form:"company_size,omitempty" json:"company_size,omitempty" xml:"company_size,omitempty"`
+	// Tax Identification Number
+	TaxID *string `form:"tax_id,omitempty" json:"tax_id,omitempty" xml:"tax_id,omitempty"`
+	// Company registration number
+	RegistrationNumber *string `form:"registration_number,omitempty" json:"registration_number,omitempty" xml:"registration_number,omitempty"`
+	// Legal entity type
+	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
 	// Primary contact information
 	Contact *ContactInfoRequestBody `form:"contact,omitempty" json:"contact,omitempty" xml:"contact,omitempty"`
 	// Initial tenant settings
 	Settings *TenantSettingsRequestBody `form:"settings,omitempty" json:"settings,omitempty" xml:"settings,omitempty"`
+	// ISO 3166-1 alpha-2 country code
+	CountryCode string `form:"country_code" json:"country_code" xml:"country_code"`
+	// ISO 4217 currency code
+	CurrencyCode string `form:"currency_code" json:"currency_code" xml:"currency_code"`
 }
 
 // UpdateRequestBody is the type of the "tenant" service "update" endpoint HTTP
@@ -106,7 +124,7 @@ type CreateResponseBody struct {
 	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
 	// Tenant status
 	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Subscription plan type
+	// Subscription plan
 	PlanType *string `form:"plan_type,omitempty" json:"plan_type,omitempty" xml:"plan_type,omitempty"`
 	// Tenant description
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
@@ -139,7 +157,7 @@ type GetResponseBody struct {
 	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
 	// Tenant status
 	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Subscription plan type
+	// Subscription plan
 	PlanType *string `form:"plan_type,omitempty" json:"plan_type,omitempty" xml:"plan_type,omitempty"`
 	// Tenant description
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
@@ -181,7 +199,7 @@ type UpdateResponseBody struct {
 	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
 	// Tenant status
 	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Subscription plan type
+	// Subscription plan
 	PlanType *string `form:"plan_type,omitempty" json:"plan_type,omitempty" xml:"plan_type,omitempty"`
 	// Tenant description
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
@@ -665,7 +683,7 @@ type TenantResponseBody struct {
 	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
 	// Tenant status
 	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Subscription plan type
+	// Subscription plan
 	PlanType *string `form:"plan_type,omitempty" json:"plan_type,omitempty" xml:"plan_type,omitempty"`
 	// Tenant description
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
@@ -705,10 +723,25 @@ type PaginationMetaResponseBody struct {
 // "create" endpoint of the "tenant" service.
 func NewCreateRequestBody(p *tenant.CreateTenantPayload) *CreateRequestBody {
 	body := &CreateRequestBody{
-		Name:        p.Name,
-		Subdomain:   p.Subdomain,
-		PlanType:    p.PlanType,
-		Description: p.Description,
+		Name:               p.Name,
+		Slug:               p.Slug,
+		Email:              p.Email,
+		Subdomain:          p.Subdomain,
+		Status:             p.Status,
+		PlanType:           p.PlanType,
+		Industry:           p.Industry,
+		CompanySize:        p.CompanySize,
+		TaxID:              p.TaxID,
+		RegistrationNumber: p.RegistrationNumber,
+		LegalEntityType:    p.LegalEntityType,
+		CountryCode:        p.CountryCode,
+		CurrencyCode:       p.CurrencyCode,
+	}
+	{
+		var zero string
+		if body.Status == zero {
+			body.Status = "active"
+		}
 	}
 	{
 		var zero string

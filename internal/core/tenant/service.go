@@ -126,12 +126,13 @@ func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*T
 
 	// Create tenant entity
 	tenant := &Tenant{
-		ID:                 uuid.New(),
-		Slug:               slug.Make(req.Name),
-		Name:               req.Name,
-		Email:              req.Email,
-		Subdomain:          req.Subdomain,
-		Status:             status,
+		ID:        uuid.New(),
+		Slug:      slug.Make(req.Name),
+		Name:      req.Name,
+		Email:     req.Email,
+		Subdomain: req.Subdomain,
+		Status:    status,
+		// FIXME: pass the real timezone aand CurrencyCode a if its not passed leave it empty  Db defaultwill used
 		Timezone:           "UTC", // Default timezone
 		CurrencyCode:       "USD", // Default currency
 		Industry:           req.Industry,

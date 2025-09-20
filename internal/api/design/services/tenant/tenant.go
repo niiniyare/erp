@@ -1,7 +1,7 @@
 package tenant
 
 import (
-	"github.com/niiniyare/erp/internal/api/design/types"
+	. "github.com/niiniyare/erp/internal/api/design/types"
 	. "goa.design/goa/v3/dsl"
 )
 
@@ -66,7 +66,7 @@ var _ = Service("tenant", func() {
 		Description("List tenants with pagination and filtering")
 
 		Payload(func() {
-			Extend(types.Pagination)
+			Extend(Pagination)
 			Attribute("name_filter", String, "Filter by tenant name", func() {
 				Example("acme")
 			})
@@ -78,7 +78,7 @@ var _ = Service("tenant", func() {
 
 		Result(func() {
 			Attribute("data", ArrayOf(TenantResult), "The data items")
-			Attribute("pagination", types.PaginationMeta, "Pagination metadata")
+			Attribute("pagination", PaginationMeta, "Pagination metadata")
 			Required("data", "pagination")
 		})
 

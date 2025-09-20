@@ -33,7 +33,7 @@ type TenantView struct {
 	Subdomain *string
 	// Tenant status
 	Status *string
-	// Subscription plan type
+	// Subscription plan
 	PlanType *string
 	// Tenant description
 	Description *string

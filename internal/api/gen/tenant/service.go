@@ -81,16 +81,34 @@ type ContactInfo struct {
 type CreateTenantPayload struct {
 	// Tenant display name
 	Name string
+	// Tenant unique slug
+	Slug *string
+	// Primary email of the tenant
+	Email string
 	// Desired subdomain (optional)
 	Subdomain *string
-	// Subscription plan
+	// Tenant status
+	Status string
+	// Subscription plan type
 	PlanType string
-	// Tenant description
-	Description *string
+	// Industry of the tenant
+	Industry *string
+	// Size of the company
+	CompanySize *string
+	// Tax Identification Number
+	TaxID *string
+	// Company registration number
+	RegistrationNumber *string
+	// Legal entity type
+	LegalEntityType *string
 	// Primary contact information
 	Contact *ContactInfo
 	// Initial tenant settings
 	Settings *TenantSettings
+	// ISO 3166-1 alpha-2 country code
+	CountryCode string
+	// ISO 4217 currency code
+	CurrencyCode string
 }
 
 // DeletePayload is the payload type of the tenant service delete method.
@@ -272,7 +290,7 @@ type Tenant struct {
 	Subdomain *string
 	// Tenant status
 	Status string
-	// Subscription plan type
+	// Subscription plan
 	PlanType string
 	// Tenant description
 	Description *string

@@ -25,14 +25,18 @@ func BuildCreatePayload(tenantCreateBody string) (*tenant.CreateTenantPayload, e
 	{
 		err = json.Unmarshal([]byte(tenantCreateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"contact\": {\n         \"email\": \"john.doe@acme.com\",\n         \"name\": \"John Doe\",\n         \"phone\": \"+1-555-123-4567\",\n         \"title\": \"Chief Technology Officer\"\n      },\n      \"description\": \"Leading provider of roadrunner traps and anvils\",\n      \"name\": \"Acme Corporation\",\n      \"plan_type\": \"professional\",\n      \"settings\": {\n         \"currency\": \"USD\",\n         \"date_format\": \"MM/DD/YYYY\",\n         \"features\": [\n            \"inventory\",\n            \"financial\",\n            \"hr\"\n         ],\n         \"language\": \"en\",\n         \"limits\": {\n            \"max_api_calls_per_hour\": 10000,\n            \"max_storage_mb\": 10240,\n            \"max_users\": 100\n         },\n         \"timezone\": \"America/New_York\"\n      },\n      \"subdomain\": \"acme\"\n   }'")
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"company_size\": \"51-200\",\n      \"contact\": {\n         \"email\": \"john.doe@acme.com\",\n         \"name\": \"John Doe\",\n         \"phone\": \"+1-555-123-4567\",\n         \"title\": \"Chief Technology Officer\"\n      },\n      \"country_code\": \"US\",\n      \"currency_code\": \"USD\",\n      \"email\": \"admin@acme.com\",\n      \"industry\": \"Technology\",\n      \"legal_entity_type\": \"LLC\",\n      \"name\": \"Acme Corporation\",\n      \"plan_type\": \"professional\",\n      \"registration_number\": \"REG-987654321\",\n      \"settings\": {\n         \"currency\": \"USD\",\n         \"date_format\": \"MM/DD/YYYY\",\n         \"features\": [\n            \"inventory\",\n            \"financial\",\n            \"hr\"\n         ],\n         \"language\": \"en\",\n         \"limits\": {\n            \"max_api_calls_per_hour\": 10000,\n            \"max_storage_mb\": 10240,\n            \"max_users\": 100\n         },\n         \"timezone\": \"America/New_York\"\n      },\n      \"slug\": \"acme-corp\",\n      \"status\": \"active\",\n      \"subdomain\": \"acme\",\n      \"tax_id\": \"123-45-6789\"\n   }'")
 		}
-		if utf8.RuneCountInString(body.Name) < 1 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", body.Name, utf8.RuneCountInString(body.Name), 1, true))
+		if utf8.RuneCountInString(body.Name) < 2 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", body.Name, utf8.RuneCountInString(body.Name), 2, true))
 		}
 		if utf8.RuneCountInString(body.Name) > 100 {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", body.Name, utf8.RuneCountInString(body.Name), 100, false))
 		}
+		if body.Slug != nil {
+			err = goa.MergeErrors(err, goa.ValidatePattern("body.slug", *body.Slug, "^[a-z0-9-]+$"))
+		}
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.email", body.Email, goa.FormatEmail))
 		if body.Subdomain != nil {
 			err = goa.MergeErrors(err, goa.ValidatePattern("body.subdomain", *body.Subdomain, "^[a-z0-9-]+$"))
 		}
@@ -46,12 +50,15 @@ func BuildCreatePayload(tenantCreateBody string) (*tenant.CreateTenantPayload, e
 				err = goa.MergeErrors(err, goa.InvalidLengthError("body.subdomain", *body.Subdomain, utf8.RuneCountInString(*body.Subdomain), 50, false))
 			}
 		}
+		if !(body.Status == "active" || body.Status == "inactive" || body.Status == "suspended") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", body.Status, []any{"active", "inactive", "suspended"}))
+		}
 		if !(body.PlanType == "starter" || body.PlanType == "professional" || body.PlanType == "enterprise") {
 			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.plan_type", body.PlanType, []any{"starter", "professional", "enterprise"}))
 		}
-		if body.Description != nil {
-			if utf8.RuneCountInString(*body.Description) > 500 {
-				err = goa.MergeErrors(err, goa.InvalidLengthError("body.description", *body.Description, utf8.RuneCountInString(*body.Description), 500, false))
+		if body.CompanySize != nil {
+			if !(*body.CompanySize == "1-10" || *body.CompanySize == "11-50" || *body.CompanySize == "51-200" || *body.CompanySize == "201-500" || *body.CompanySize == "500+") {
+				err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.company_size", *body.CompanySize, []any{"1-10", "11-50", "51-200", "201-500", "500+"}))
 			}
 		}
 		if body.Contact != nil {
@@ -64,15 +71,32 @@ func BuildCreatePayload(tenantCreateBody string) (*tenant.CreateTenantPayload, e
 				err = goa.MergeErrors(err, err2)
 			}
 		}
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.country_code", body.CountryCode, "^[A-Z]{2}$"))
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.currency_code", body.CurrencyCode, "^[A-Z]{3}$"))
 		if err != nil {
 			return nil, err
 		}
 	}
 	v := &tenant.CreateTenantPayload{
-		Name:        body.Name,
-		Subdomain:   body.Subdomain,
-		PlanType:    body.PlanType,
-		Description: body.Description,
+		Name:               body.Name,
+		Slug:               body.Slug,
+		Email:              body.Email,
+		Subdomain:          body.Subdomain,
+		Status:             body.Status,
+		PlanType:           body.PlanType,
+		Industry:           body.Industry,
+		CompanySize:        body.CompanySize,
+		TaxID:              body.TaxID,
+		RegistrationNumber: body.RegistrationNumber,
+		LegalEntityType:    body.LegalEntityType,
+		CountryCode:        body.CountryCode,
+		CurrencyCode:       body.CurrencyCode,
+	}
+	{
+		var zero string
+		if v.Status == zero {
+			v.Status = "active"
+		}
 	}
 	{
 		var zero string

@@ -3434,15 +3434,21 @@ Create a new tenant
 
 Example:
     %[1]s tenant create --body '{
+      "company_size": "51-200",
       "contact": {
          "email": "john.doe@acme.com",
          "name": "John Doe",
          "phone": "+1-555-123-4567",
          "title": "Chief Technology Officer"
       },
-      "description": "Leading provider of roadrunner traps and anvils",
+      "country_code": "US",
+      "currency_code": "USD",
+      "email": "admin@acme.com",
+      "industry": "Technology",
+      "legal_entity_type": "LLC",
       "name": "Acme Corporation",
       "plan_type": "professional",
+      "registration_number": "REG-987654321",
       "settings": {
          "currency": "USD",
          "date_format": "MM/DD/YYYY",
@@ -3459,7 +3465,10 @@ Example:
          },
          "timezone": "America/New_York"
       },
-      "subdomain": "acme"
+      "slug": "acme-corp",
+      "status": "active",
+      "subdomain": "acme",
+      "tax_id": "123-45-6789"
    }'
 `, os.Args[0])
 }

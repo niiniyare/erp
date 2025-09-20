@@ -20,16 +20,34 @@ import (
 type CreateRequestBody struct {
 	// Tenant display name
 	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Tenant unique slug
+	Slug *string `form:"slug,omitempty" json:"slug,omitempty" xml:"slug,omitempty"`
+	// Primary email of the tenant
+	Email *string `form:"email,omitempty" json:"email,omitempty" xml:"email,omitempty"`
 	// Desired subdomain (optional)
 	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
-	// Subscription plan
+	// Tenant status
+	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
+	// Subscription plan type
 	PlanType *string `form:"plan_type,omitempty" json:"plan_type,omitempty" xml:"plan_type,omitempty"`
-	// Tenant description
-	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
+	// Industry of the tenant
+	Industry *string `form:"industry,omitempty" json:"industry,omitempty" xml:"industry,omitempty"`
+	// Size of the company
+	CompanySize *string `form:"company_size,omitempty" json:"company_size,omitempty" xml:"company_size,omitempty"`
+	// Tax Identification Number
+	TaxID *string `form:"tax_id,omitempty" json:"tax_id,omitempty" xml:"tax_id,omitempty"`
+	// Company registration number
+	RegistrationNumber *string `form:"registration_number,omitempty" json:"registration_number,omitempty" xml:"registration_number,omitempty"`
+	// Legal entity type
+	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
 	// Primary contact information
 	Contact *ContactInfoRequestBody `form:"contact,omitempty" json:"contact,omitempty" xml:"contact,omitempty"`
 	// Initial tenant settings
 	Settings *TenantSettingsRequestBody `form:"settings,omitempty" json:"settings,omitempty" xml:"settings,omitempty"`
+	// ISO 3166-1 alpha-2 country code
+	CountryCode *string `form:"country_code,omitempty" json:"country_code,omitempty" xml:"country_code,omitempty"`
+	// ISO 4217 currency code
+	CurrencyCode *string `form:"currency_code,omitempty" json:"currency_code,omitempty" xml:"currency_code,omitempty"`
 }
 
 // UpdateRequestBody is the type of the "tenant" service "update" endpoint HTTP
@@ -106,7 +124,7 @@ type CreateResponseBody struct {
 	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
 	// Tenant status
 	Status string `form:"status" json:"status" xml:"status"`
-	// Subscription plan type
+	// Subscription plan
 	PlanType string `form:"plan_type" json:"plan_type" xml:"plan_type"`
 	// Tenant description
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
@@ -152,7 +170,7 @@ type GetResponseBody struct {
 	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
 	// Tenant status
 	Status string `form:"status" json:"status" xml:"status"`
-	// Subscription plan type
+	// Subscription plan
 	PlanType string `form:"plan_type" json:"plan_type" xml:"plan_type"`
 	// Tenant description
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
@@ -207,7 +225,7 @@ type UpdateResponseBody struct {
 	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
 	// Tenant status
 	Status string `form:"status" json:"status" xml:"status"`
-	// Subscription plan type
+	// Subscription plan
 	PlanType string `form:"plan_type" json:"plan_type" xml:"plan_type"`
 	// Tenant description
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
@@ -666,7 +684,7 @@ type TenantResponseBody struct {
 	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
 	// Tenant status
 	Status string `form:"status" json:"status" xml:"status"`
-	// Subscription plan type
+	// Subscription plan
 	PlanType string `form:"plan_type" json:"plan_type" xml:"plan_type"`
 	// Tenant description
 	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
@@ -1175,12 +1193,26 @@ func NewDeleteConflictResponseBody(res *goa.ServiceError) *DeleteConflictRespons
 // NewCreateTenantPayload builds a tenant service create endpoint payload.
 func NewCreateTenantPayload(body *CreateRequestBody) *tenant.CreateTenantPayload {
 	v := &tenant.CreateTenantPayload{
-		Name:        *body.Name,
-		Subdomain:   body.Subdomain,
-		Description: body.Description,
+		Name:               *body.Name,
+		Slug:               body.Slug,
+		Email:              *body.Email,
+		Subdomain:          body.Subdomain,
+		Industry:           body.Industry,
+		CompanySize:        body.CompanySize,
+		TaxID:              body.TaxID,
+		RegistrationNumber: body.RegistrationNumber,
+		LegalEntityType:    body.LegalEntityType,
+		CountryCode:        *body.CountryCode,
+		CurrencyCode:       *body.CurrencyCode,
+	}
+	if body.Status != nil {
+		v.Status = *body.Status
 	}
 	if body.PlanType != nil {
 		v.PlanType = *body.PlanType
+	}
+	if body.Status == nil {
+		v.Status = "active"
 	}
 	if body.PlanType == nil {
 		v.PlanType = "starter"
@@ -1306,15 +1338,30 @@ func ValidateCreateRequestBody(body *CreateRequestBody) (err error) {
 	if body.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
 	}
+	if body.Email == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("email", "body"))
+	}
+	if body.CountryCode == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("country_code", "body"))
+	}
+	if body.CurrencyCode == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("currency_code", "body"))
+	}
 	if body.Name != nil {
-		if utf8.RuneCountInString(*body.Name) < 1 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 1, true))
+		if utf8.RuneCountInString(*body.Name) < 2 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 2, true))
 		}
 	}
 	if body.Name != nil {
 		if utf8.RuneCountInString(*body.Name) > 100 {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
 		}
+	}
+	if body.Slug != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.slug", *body.Slug, "^[a-z0-9-]+$"))
+	}
+	if body.Email != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.email", *body.Email, goa.FormatEmail))
 	}
 	if body.Subdomain != nil {
 		err = goa.MergeErrors(err, goa.ValidatePattern("body.subdomain", *body.Subdomain, "^[a-z0-9-]+$"))
@@ -1329,14 +1376,19 @@ func ValidateCreateRequestBody(body *CreateRequestBody) (err error) {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("body.subdomain", *body.Subdomain, utf8.RuneCountInString(*body.Subdomain), 50, false))
 		}
 	}
+	if body.Status != nil {
+		if !(*body.Status == "active" || *body.Status == "inactive" || *body.Status == "suspended") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"active", "inactive", "suspended"}))
+		}
+	}
 	if body.PlanType != nil {
 		if !(*body.PlanType == "starter" || *body.PlanType == "professional" || *body.PlanType == "enterprise") {
 			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.plan_type", *body.PlanType, []any{"starter", "professional", "enterprise"}))
 		}
 	}
-	if body.Description != nil {
-		if utf8.RuneCountInString(*body.Description) > 500 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.description", *body.Description, utf8.RuneCountInString(*body.Description), 500, false))
+	if body.CompanySize != nil {
+		if !(*body.CompanySize == "1-10" || *body.CompanySize == "11-50" || *body.CompanySize == "51-200" || *body.CompanySize == "201-500" || *body.CompanySize == "500+") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.company_size", *body.CompanySize, []any{"1-10", "11-50", "51-200", "201-500", "500+"}))
 		}
 	}
 	if body.Contact != nil {
@@ -1348,6 +1400,12 @@ func ValidateCreateRequestBody(body *CreateRequestBody) (err error) {
 		if err2 := ValidateTenantSettingsRequestBody(body.Settings); err2 != nil {
 			err = goa.MergeErrors(err, err2)
 		}
+	}
+	if body.CountryCode != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.country_code", *body.CountryCode, "^[A-Z]{2}$"))
+	}
+	if body.CurrencyCode != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.currency_code", *body.CurrencyCode, "^[A-Z]{3}$"))
 	}
 	return
 }
