@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWO ERP Admin</title>
+    <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.1.1/css/all.min.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 2rem; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 2rem; overflow: hidden; }
+        .card-header { background: #f8f9fa; padding: 1rem 1.5rem; border-bottom: 1px solid #e9ecef; font-weight: 600; }
+        .card-body { padding: 1.5rem; }
+        .btn { display: inline-block; padding: 0.5rem 1rem; background: #667eea; color: white; text-decoration: none; border-radius: 4px; border: none; cursor: pointer; font-size: 0.9rem; }
+        .btn:hover { background: #5a6fd8; }
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e9ecef; }
+        .table th { background: #f8f9fa; font-weight: 600; }
+        .status { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: 500; }
+        .status.active { background: #d4edda; color: #155724; }
+        .status.inactive { background: #f8d7da; color: #721c24; }
+        .nav { display: flex; gap: 2rem; margin-bottom: 2rem; }
+        .nav a { color: #667eea; text-decoration: none; padding: 0.5rem 0; border-bottom: 2px solid transparent; }
+        .nav a.active, .nav a:hover { border-bottom-color: #667eea; }
+        .error { background: #f8d7da; color: #721c24; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .success { background: #d4edda; color: #155724; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; }
+        .loading { text-align: center; padding: 2rem; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><i class="fas fa-cogs"></i> AWO ERP Admin Dashboard</h1>
+    </div>
+    
+    <div class="container">
+        <nav class="nav">
+            <a href="#dashboard" class="nav-link active" data-tab="dashboard">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+            <a href="#tenants" class="nav-link" data-tab="tenants">
+                <i class="fas fa-building"></i> Tenants
+            </a>
+            <a href="#users" class="nav-link" data-tab="users">
+                <i class="fas fa-users"></i> Users
+            </a>
+        </nav>
+
+        <div id="content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content active">
+                <div class="card">
+                    <div class="card-header">System Overview</div>
+                    <div class="card-body">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                            <div style="text-align: center; padding: 1rem; background: #e3f2fd; border-radius: 4px;">
+                                <h3 style="color: #1976d2; margin-bottom: 0.5rem;" id="tenant-count">-</h3>
+                                <p style="color: #666;">Total Tenants</p>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: #f3e5f5; border-radius: 4px;">
+                                <h3 style="color: #7b1fa2; margin-bottom: 0.5rem;" id="user-count">-</h3>
+                                <p style="color: #666;">Total Users</p>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background: #e8f5e8; border-radius: 4px;">
+                                <h3 style="color: #388e3c; margin-bottom: 0.5rem;">Online</h3>
+                                <p style="color: #666;">System Status</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tenants Tab -->
+            <div id="tenants-tab" class="tab-content" style="display: none;">
+                <div class="card">
+                    <div class="card-header">
+                        Tenant Management
+                        <button class="btn" style="float: right;" onclick="showCreateTenant()">
+                            <i class="fas fa-plus"></i> Add Tenant
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="tenants-loading" class="loading">
+                            <i class="fas fa-spinner fa-spin"></i> Loading tenants...
+                        </div>
+                        <div id="tenants-error" class="error" style="display: none;"></div>
+                        <div id="tenants-table" style="display: none;">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Domain</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tenants-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="users-tab" class="tab-content" style="display: none;">
+                <div class="card">
+                    <div class="card-header">User Management</div>
+                    <div class="card-body">
+                        <p>User management coming soon...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple admin interface JavaScript
+        let currentTab = 'dashboard';
+        
+        // Tab switching
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tab = e.target.closest('a').dataset.tab;
+                switchTab(tab);
+            });
+        });
+        
+        function switchTab(tab) {
+            // Update nav
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+            document.getElementById(`${tab}-tab`).style.display = 'block';
+            
+            currentTab = tab;
+            
+            // Load data for this tab
+            if (tab === 'tenants') {
+                loadTenants();
+            } else if (tab === 'dashboard') {
+                loadDashboard();
+            }
+        }
+        
+        // API calls
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(`/api/v1${endpoint}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Tenant-ID': 'system', // System admin context
+                        ...options.headers
+                    },
+                    ...options
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API call failed:', error);
+                throw error;
+            }
+        }
+        
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                // Get tenant count
+                const tenants = await apiCall('/tenants');
+                document.getElementById('tenant-count').textContent = tenants.length || 0;
+                
+                // Get user count (if available)
+                try {
+                    const users = await apiCall('/users');
+                    document.getElementById('user-count').textContent = users.length || 0;
+                } catch (e) {
+                    document.getElementById('user-count').textContent = 'N/A';
+                }
+            } catch (error) {
+                console.error('Failed to load dashboard:', error);
+            }
+        }
+        
+        // Load tenants
+        async function loadTenants() {
+            const loadingEl = document.getElementById('tenants-loading');
+            const errorEl = document.getElementById('tenants-error');
+            const tableEl = document.getElementById('tenants-table');
+            const tbodyEl = document.getElementById('tenants-tbody');
+            
+            loadingEl.style.display = 'block';
+            errorEl.style.display = 'none';
+            tableEl.style.display = 'none';
+            
+            try {
+                const response = await apiCall('/tenants');
+                const tenants = response.data || response || [];
+                
+                tbodyEl.innerHTML = '';
+                
+                if (tenants.length === 0) {
+                    tbodyEl.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666;">No tenants found</td></tr>';
+                } else {
+                    tenants.forEach(tenant => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${tenant.id}</td>
+                            <td>${tenant.name || 'N/A'}</td>
+                            <td>${tenant.domain || 'N/A'}</td>
+                            <td><span class="status ${tenant.status === 'active' ? 'active' : 'inactive'}">${tenant.status || 'unknown'}</span></td>
+                            <td>${tenant.created_at ? new Date(tenant.created_at).toLocaleDateString() : 'N/A'}</td>
+                            <td>
+                                <button class="btn" onclick="editTenant('${tenant.id}')">Edit</button>
+                                <button class="btn btn-danger" onclick="deleteTenant('${tenant.id}')">Delete</button>
+                            </td>
+                        `;
+                        tbodyEl.appendChild(row);
+                    });
+                }
+                
+                loadingEl.style.display = 'none';
+                tableEl.style.display = 'block';
+            } catch (error) {
+                loadingEl.style.display = 'none';
+                errorEl.style.display = 'block';
+                errorEl.textContent = `Failed to load tenants: ${error.message}`;
+            }
+        }
+        
+        // Tenant actions
+        function showCreateTenant() {
+            alert('Create tenant functionality coming soon!');
+        }
+        
+        function editTenant(id) {
+            alert(`Edit tenant ${id} - coming soon!`);
+        }
+        
+        function deleteTenant(id) {
+            if (confirm(`Are you sure you want to delete tenant ${id}?`)) {
+                alert('Delete functionality coming soon!');
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboard();
+        });
+    </script>
+</body>
+</html>

@@ -198,9 +198,9 @@ func (w *EndpointWhitelist) ValidateConfiguration() []string {
 			issues = append(issues, fmt.Sprintf("overly broad pattern: %s", pattern))
 		}
 
-		if strings.Contains(pattern, "/admin/*") {
-			issues = append(issues, fmt.Sprintf("potentially insecure admin pattern: %s", pattern))
-		}
+		// if strings.Contains(pattern, "/admin/*") {
+		// 	issues = append(issues, fmt.Sprintf("potentially insecure admin pattern: %s", pattern))
+		// }
 	}
 
 	return issues

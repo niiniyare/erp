@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Awo ERP Admin Dashboard - Debug</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .debug-section {
+            background: #f0f0f0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .error { color: red; }
+        .success { color: green; }
+        .loading { color: orange; }
+    </style>
+</head>
+<body>
+    <h1>Debug Mode</h1>
+    
+    <div class="debug-section">
+        <h3>Loading Status:</h3>
+        <div id="status">Checking...</div>
+    </div>
+
+    <div class="debug-section">
+        <h3>Scripts Loading:</h3>
+        <div id="scripts-status">
+            <div>Amis: <span id="amis-status">Loading...</span></div>
+            <div>App Config: <span id="config-status">Loading...</span></div>
+            <div>Tenant Pages: <span id="tenants-status">Loading...</span></div>
+            <div>Main JS: <span id="main-status">Loading...</span></div>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <h3>Console Logs:</h3>
+        <div id="console-logs" style="background: black; color: green; padding: 10px; font-family: monospace; height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <!-- Load Amis -->
+    <script src="https://unpkg.com/amis@6.7.0/lib/index.js"></script>
+    <script>
+        // Capture console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const logsDiv = document.getElementById('console-logs');
+        
+        function addLog(message, type = 'log') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'warn' ? 'yellow' : 'green';
+            logsDiv.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            addLog(args.join(' '), 'log');
+            originalLog.apply(console, args);
+        };
+        
+        console.error = function(...args) {
+            addLog(args.join(' '), 'error');
+            originalError.apply(console, args);
+        };
+        
+        // Check Amis
+        if (typeof amis !== 'undefined') {
+            document.getElementById('amis-status').innerHTML = '<span class="success">✓ Loaded</span>';
+            console.log('Amis library loaded successfully');
+        } else {
+            document.getElementById('amis-status').innerHTML = '<span class="error">✗ Failed</span>';
+            console.error('Amis library failed to load');
+        }
+    </script>
+
+    <!-- Load your scripts with detailed error handling -->
+    <script>
+        // Load config
+        const configScript = document.createElement('script');
+        configScript.src = './config/app-config.js';
+        configScript.onload = function() {
+            if (typeof window.APP_CONFIG !== 'undefined') {
+                document.getElementById('config-status').innerHTML = '<span class="success">✓ Loaded</span>';
+                console.log('App config loaded:', window.APP_CONFIG.app.name);
+            } else {
+                document.getElementById('config-status').innerHTML = '<span class="error">✗ No APP_CONFIG</span>';
+                console.error('APP_CONFIG not found after loading script');
+            }
+        };
+        configScript.onerror = function() {
+            document.getElementById('config-status').innerHTML = '<span class="error">✗ Failed to load</span>';
+            console.error('Failed to load config/app-config.js');
+        };
+        document.head.appendChild(configScript);
+        
+        // Load tenants
+        const tenantsScript = document.createElement('script');
+        tenantsScript.src = './pages/tenants.js';
+        tenantsScript.onload = function() {
+            if (typeof window.TenantPages !== 'undefined') {
+                document.getElementById('tenants-status').innerHTML = '<span class="success">✓ Loaded</span>';
+                console.log('Tenant pages loaded');
+            } else {
+                document.getElementById('tenants-status').innerHTML = '<span class="error">✗ No TenantPages</span>';
+                console.error('TenantPages not found after loading script');
+            }
+        };
+        tenantsScript.onerror = function() {
+            document.getElementById('tenants-status').innerHTML = '<span class="error">✗ Failed to load</span>';
+            console.error('Failed to load pages/tenants.js');
+        };
+        document.head.appendChild(tenantsScript);
+        
+        // Load main
+        const mainScript = document.createElement('script');
+        mainScript.src = './js/main.js';
+        mainScript.onload = function() {
+            document.getElementById('main-status').innerHTML = '<span class="success">✓ Loaded</span>';
+            console.log('Main.js loaded');
+        };
+        mainScript.onerror = function() {
+            document.getElementById('main-status').innerHTML = '<span class="error">✗ Failed to load</span>';
+            console.error('Failed to load js/main.js - file might not exist');
+        };
+        document.head.appendChild(mainScript);
+        
+        // Overall status check after 3 seconds
+        setTimeout(function() {
+            const status = document.getElementById('status');
+            if (typeof amis !== 'undefined' && 
+                typeof window.APP_CONFIG !== 'undefined' && 
+                typeof window.TenantPages !== 'undefined') {
+                status.innerHTML = '<span class="success">✓ All dependencies loaded successfully!</span>';
+                
+                // Try to initialize
+                setTimeout(function() {
+                    console.log('Attempting to initialize admin interface...');
+                    status.innerHTML += '<br><span class="loading">Initializing admin interface...</span>';
+                    
+                    // Add your initialization code here
+                    initializeAdminApp();
+                }, 1000);
+            } else {
+                status.innerHTML = '<span class="error">✗ Some dependencies failed to load</span>';
+                console.error('Dependencies check failed');
+            }
+        }, 3000);
+        
+        function initializeAdminApp() {
+            try {
+                console.log('Creating app with Amis...');
+                // Simple test to see if we can create an Amis app
+                const testSchema = {
+                    type: "page",
+                    title: "Test Success!",
+                    body: [
+                        {
+                            type: "alert",
+                            body: "Admin interface initialized successfully!",
+                            level: "success"
+                        },
+                        {
+                            type: "button",
+                            label: "Go to Full App",
+                            actionType: "url",
+                            url: "/admin"
+                        }
+                    ]
+                };
+                
+                // Clear the body and render the app
+                document.body.innerHTML = '<div id="app"></div>';
+                amis.embed(document.getElementById('app'), testSchema, {
+                    theme: 'cxd'
+                });
+                
+                console.log('✓ Admin interface initialized successfully!');
+                
+            } catch (error) {
+                console.error('Error initializing admin app:', error);
+                document.body.innerHTML += `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

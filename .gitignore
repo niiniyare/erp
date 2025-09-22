@@ -1,4 +1,5 @@
 # Log files
 cmd/server/server.log
 .gemini/
+web/admin/node_modules/
 gha-creds-*.json

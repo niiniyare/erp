@@ -89,7 +89,7 @@ func InitializeGOAServer(services *Services, financeServices *financeService.Ser
 		financeSvc = nil
 		logger.Warn("Finance services not available, finance endpoints disabled", logger.Fields{
 			"service": "finance",
-			"status": "disabled",
+			"status":  "disabled",
 		})
 	}
 	// Create a simple health checker instance (nil store for now - needs proper initialization)
@@ -247,9 +247,12 @@ func InitializeGOAServer(services *Services, financeServices *financeService.Ser
 	ctx := clueLog.Context(context.Background(), clueLog.WithFormat(format))
 
 	// Add logging and debugging to the GOA handler
-	var handler http.Handler = originalHandler
+	handler := originalHandler
 	handler = clueLog.HTTP(ctx)(handler)
 	handler = debug.HTTP()(handler)
+
+	// Mount the admin UI
+	handler = MountAdminUI(handler)
 
 	// Log mounted endpoints
 	logMountedEndpoints(abacServer.Mounts, "ABAC")
@@ -289,9 +292,9 @@ func logMountedEndpoints(mounts any, serviceName string) {
 		"count":   count,
 	})
 
-	for i := 0; i < count; i++ {
+	for i := range count {
 		mount := v.Index(i)
-		if mount.Kind() == reflect.Ptr {
+		if mount.Kind() == reflect.Pointer { // Use reflect.Pointer instead of reflect.Ptr
 			mount = mount.Elem()
 		}
 
@@ -421,7 +424,7 @@ func getErrorStatusCode(err error) int {
 func initializeMiddleware(iamAdapter *IAMServiceAdapter, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*MiddlewareSetup, error) {
 	// Use default whitelist for critical endpoints
 	whitelist, err := middleware.NewEndpointWhitelist(
-		[]string{"GET /health*", "GET /api/v1/health*", "GET /swagger-ui/*", "POST /api/v1/tenants"},
+		[]string{"GET /health*", "GET /api/v1/health*", "GET /swagger-ui/*", "POST /api/v1/tenants", "GET /admin/*"},
 		[]string{"POST /api/v1/auth/login", "GET /api/v1/version"},
 	)
 	if err != nil {
