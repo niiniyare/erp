@@ -2,10 +2,13 @@ package admin
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"runtime"
+	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/platform/admin/templates"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -147,5 +150,361 @@ func (h *AdminHandlers) getAllTenants(ctx context.Context) ([]tenant.Tenant, err
 	}
 
 	return tenants, nil
+}
+
+// NewTenantHandler serves the create tenant form
+func (h *AdminHandlers) NewTenantHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	data := templates.TenantFormData{
+		Tenant: nil,
+		IsEdit: false,
+		Errors: make(map[string]string),
+	}
+
+	component := templates.TenantForm(data)
+	if err := component.Render(ctx, w); err != nil {
+		logger.Error("Failed to render new tenant form", logger.Fields{
+			"error": err.Error(),
+		})
+		http.Error(w, "Failed to render form", http.StatusInternalServerError)
+		return
+	}
+}
+
+// CreateTenantHandler handles POST requests to create a new tenant
+func (h *AdminHandlers) CreateTenantHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	// Extract form values
+	name := strings.TrimSpace(r.FormValue("name"))
+	slug := strings.TrimSpace(r.FormValue("slug"))
+	email := strings.TrimSpace(r.FormValue("email"))
+	subdomain := strings.TrimSpace(r.FormValue("subdomain"))
+	statusStr := r.FormValue("status")
+	timezone := r.FormValue("timezone")
+	currencyCode := r.FormValue("currency_code")
+
+	// Validation
+	errors := make(map[string]string)
+	if name == "" {
+		errors["name"] = "Name is required"
+	}
+	if slug == "" {
+		errors["slug"] = "Slug is required"
+	}
+	if email == "" {
+		errors["email"] = "Email is required"
+	}
+
+	// If validation failed, show form with errors
+	if len(errors) > 0 {
+		data := templates.TenantFormData{
+			Tenant: &tenant.Tenant{
+				Name:         name,
+				Slug:         slug,
+				Email:        email,
+				Subdomain:    &subdomain,
+				Status:       tenant.Status(statusStr),
+				Timezone:     timezone,
+				CurrencyCode: currencyCode,
+			},
+			IsEdit: false,
+			Errors: errors,
+		}
+
+		component := templates.TenantForm(data)
+		component.Render(ctx, w)
+		return
+	}
+
+	// Create tenant
+	systemCtx := context.Background()
+	
+	var subdomainPtr *string
+	if subdomain != "" {
+		subdomainPtr = &subdomain
+	}
+
+	newTenantReq := tenant.CreateTenantRequest{
+		Name:         name,
+		Slug:         slug,
+		Email:        email,
+		Subdomain:    subdomainPtr,
+		Status:       tenant.Status(statusStr),
+	}
+
+	createdTenant, err := h.tenantService.CreateTenant(systemCtx, newTenantReq)
+	if err != nil {
+		logger.Error("Failed to create tenant", logger.Fields{
+			"error": err.Error(),
+			"name":  name,
+			"slug":  slug,
+		})
+
+		errors["general"] = fmt.Sprintf("Failed to create tenant: %v", err)
+		data := templates.TenantFormData{
+			Tenant: &tenant.Tenant{
+				Name:         name,
+				Slug:         slug,
+				Email:        email,
+				Subdomain:    subdomainPtr,
+				Status:       tenant.Status(statusStr),
+			},
+			IsEdit: false,
+			Errors: errors,
+		}
+
+		component := templates.TenantForm(data)
+		component.Render(ctx, w)
+		return
+	}
+
+	logger.Info("Tenant created successfully", logger.Fields{
+		"id":   createdTenant.ID.String(),
+		"name": createdTenant.Name,
+		"slug": createdTenant.Slug,
+	})
+
+	// Redirect to tenants list
+	http.Redirect(w, r, "/admin/tenants", http.StatusSeeOther)
+}
+
+// ViewTenantHandler serves the tenant detail view
+func (h *AdminHandlers) ViewTenantHandler(w http.ResponseWriter, r *http.Request) {
+	// Remove unused ctx variable
+	_ = r.Context()
+	
+	// Extract tenant ID from URL path
+	tenantIDStr := strings.TrimPrefix(r.URL.Path, "/admin/tenants/")
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Get tenant
+	systemCtx := context.Background()
+	tenantPtr, err := h.tenantService.GetTenantByID(systemCtx, tenantID)
+	if err != nil {
+		logger.Error("Failed to get tenant", logger.Fields{
+			"error":     err.Error(),
+			"tenant_id": tenantID.String(),
+		})
+		http.NotFound(w, r)
+		return
+	}
+
+	// For now, just show tenant details as JSON (can be improved with a proper template)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(fmt.Sprintf(`{
+		"id": "%s",
+		"name": "%s",
+		"slug": "%s",
+		"email": "%s",
+		"status": "%s",
+		"created_at": "%s"
+	}`, tenantPtr.ID, tenantPtr.Name, tenantPtr.Slug, tenantPtr.Email, tenantPtr.Status, tenantPtr.CreatedAt)))
+}
+
+// EditTenantHandler serves the edit tenant form
+func (h *AdminHandlers) EditTenantHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Extract tenant ID from URL path
+	path := strings.TrimPrefix(r.URL.Path, "/admin/tenants/")
+	path = strings.TrimSuffix(path, "/edit")
+	tenantID, err := uuid.Parse(path)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Get tenant
+	systemCtx := context.Background()
+	tenantPtr, err := h.tenantService.GetTenantByID(systemCtx, tenantID)
+	if err != nil {
+		logger.Error("Failed to get tenant for edit", logger.Fields{
+			"error":     err.Error(),
+			"tenant_id": tenantID.String(),
+		})
+		http.NotFound(w, r)
+		return
+	}
+
+	data := templates.TenantFormData{
+		Tenant: tenantPtr,
+		IsEdit: true,
+		Errors: make(map[string]string),
+	}
+
+	component := templates.TenantForm(data)
+	if err := component.Render(ctx, w); err != nil {
+		logger.Error("Failed to render edit tenant form", logger.Fields{
+			"error": err.Error(),
+		})
+		http.Error(w, "Failed to render form", http.StatusInternalServerError)
+		return
+	}
+}
+
+// UpdateTenantHandler handles POST requests to update a tenant
+func (h *AdminHandlers) UpdateTenantHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Extract tenant ID from URL path
+	tenantIDStr := strings.TrimPrefix(r.URL.Path, "/admin/tenants/")
+	tenantID, err := uuid.Parse(tenantIDStr)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid form data", http.StatusBadRequest)
+		return
+	}
+
+	// Get existing tenant
+	systemCtx := context.Background()
+	existingTenant, err := h.tenantService.GetTenantByID(systemCtx, tenantID)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Extract form values
+	name := strings.TrimSpace(r.FormValue("name"))
+	slug := strings.TrimSpace(r.FormValue("slug"))
+	email := strings.TrimSpace(r.FormValue("email"))
+	subdomain := strings.TrimSpace(r.FormValue("subdomain"))
+	statusStr := r.FormValue("status")
+	timezone := r.FormValue("timezone")
+	currencyCode := r.FormValue("currency_code")
+
+	// Validation
+	errors := make(map[string]string)
+	if name == "" {
+		errors["name"] = "Name is required"
+	}
+	if slug == "" {
+		errors["slug"] = "Slug is required"
+	}
+	if email == "" {
+		errors["email"] = "Email is required"
+	}
+
+	// If validation failed, show form with errors
+	if len(errors) > 0 {
+		data := templates.TenantFormData{
+			Tenant: &tenant.Tenant{
+				ID:           tenantID,
+				Name:         name,
+				Slug:         slug,
+				Email:        email,
+				Subdomain:    &subdomain,
+				Status:       tenant.Status(statusStr),
+				Timezone:     timezone,
+				CurrencyCode: currencyCode,
+			},
+			IsEdit: true,
+			Errors: errors,
+		}
+
+		component := templates.TenantForm(data)
+		component.Render(ctx, w)
+		return
+	}
+
+	// Update tenant
+	var subdomainPtr *string
+	if subdomain != "" {
+		subdomainPtr = &subdomain
+	}
+
+	status := tenant.Status(statusStr)
+	updateReq := tenant.UpdateTenantRequest{
+		Name:      &name,
+		Email:     &email,
+		Subdomain: subdomainPtr,
+		Status:    &status,
+	}
+
+	_, err = h.tenantService.UpdateTenant(systemCtx, tenantID, updateReq)
+	if err != nil {
+		logger.Error("Failed to update tenant", logger.Fields{
+			"error":     err.Error(),
+			"tenant_id": tenantID.String(),
+		})
+
+		errors["general"] = fmt.Sprintf("Failed to update tenant: %v", err)
+		data := templates.TenantFormData{
+			Tenant: &tenant.Tenant{
+				ID:        tenantID,
+				Name:      name,
+				Slug:      slug,
+				Email:     email,
+				Subdomain: subdomainPtr,
+				Status:    tenant.Status(statusStr),
+				CreatedAt: existingTenant.CreatedAt,
+			},
+			IsEdit: true,
+			Errors: errors,
+		}
+
+		component := templates.TenantForm(data)
+		component.Render(ctx, w)
+		return
+	}
+
+	logger.Info("Tenant updated successfully", logger.Fields{
+		"tenant_id": tenantID.String(),
+		"name":      name,
+		"slug":      slug,
+	})
+
+	// Redirect to tenants list
+	http.Redirect(w, r, "/admin/tenants", http.StatusSeeOther)
+}
+
+// DeleteTenantHandler handles POST requests to delete a tenant
+func (h *AdminHandlers) DeleteTenantHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract tenant ID from URL path
+	path := strings.TrimPrefix(r.URL.Path, "/admin/tenants/")
+	path = strings.TrimSuffix(path, "/delete")
+	tenantID, err := uuid.Parse(path)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Delete tenant
+	systemCtx := context.Background()
+	err = h.tenantService.DeleteTenant(systemCtx, tenantID)
+	if err != nil {
+		logger.Error("Failed to delete tenant", logger.Fields{
+			"error":     err.Error(),
+			"tenant_id": tenantID.String(),
+		})
+		http.Error(w, fmt.Sprintf("Failed to delete tenant: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	logger.Info("Tenant deleted successfully", logger.Fields{
+		"tenant_id": tenantID.String(),
+	})
+
+	// Redirect to tenants list
+	http.Redirect(w, r, "/admin/tenants", http.StatusSeeOther)
 }
 

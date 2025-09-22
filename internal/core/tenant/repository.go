@@ -65,10 +65,15 @@ func (r *repository) Create(ctx context.Context, tenant *Tenant) error {
 	defer span.End()
 
 	// Add tracing attributes
+	subdomainValue := ""
+	if tenant.Subdomain != nil {
+		subdomainValue = *tenant.Subdomain
+	}
+	
 	span.SetAttributes(
 		attribute.String("tenant.id", tenant.ID.String()),
 		attribute.String("tenant.name", tenant.Name),
-		attribute.String("tenant.subdomain", *tenant.Subdomain),
+		attribute.String("tenant.subdomain", subdomainValue),
 	)
 
 	logger.DebugContext(ctx, "Creating tenant in database", logger.Fields{

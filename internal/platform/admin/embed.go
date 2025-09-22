@@ -51,14 +51,35 @@ func Mount(mux http.Handler, tenantService tenant.Service) http.Handler {
 			}
 
 			// Route admin pages
-			switch r.URL.Path {
-			case "/admin", "/admin/", "/admin/dashboard":
+			switch {
+			case r.URL.Path == "/admin" || r.URL.Path == "/admin/" || r.URL.Path == "/admin/dashboard":
 				adminHandlers.DashboardHandler(w, r)
 				return
-			case "/admin/tenants":
-				adminHandlers.TenantsHandler(w, r)
+			case r.URL.Path == "/admin/tenants":
+				if r.Method == "GET" {
+					adminHandlers.TenantsHandler(w, r)
+				} else if r.Method == "POST" {
+					adminHandlers.CreateTenantHandler(w, r)
+				}
 				return
-			case "/admin/users":
+			case r.URL.Path == "/admin/tenants/new":
+				adminHandlers.NewTenantHandler(w, r)
+				return
+			case strings.HasPrefix(r.URL.Path, "/admin/tenants/") && strings.HasSuffix(r.URL.Path, "/edit"):
+				adminHandlers.EditTenantHandler(w, r)
+				return
+			case strings.HasPrefix(r.URL.Path, "/admin/tenants/") && strings.HasSuffix(r.URL.Path, "/delete"):
+				adminHandlers.DeleteTenantHandler(w, r)
+				return
+			case strings.HasPrefix(r.URL.Path, "/admin/tenants/") && len(strings.Split(strings.TrimPrefix(r.URL.Path, "/admin/tenants/"), "/")) == 1:
+				// This handles both view (GET) and update (POST) for /admin/tenants/{id}
+				if r.Method == "GET" {
+					adminHandlers.ViewTenantHandler(w, r)
+				} else if r.Method == "POST" {
+					adminHandlers.UpdateTenantHandler(w, r)
+				}
+				return
+			case r.URL.Path == "/admin/users":
 				adminHandlers.UsersHandler(w, r)
 				return
 			default:
