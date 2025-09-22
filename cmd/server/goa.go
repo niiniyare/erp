@@ -252,7 +252,7 @@ func InitializeGOAServer(services *Services, financeServices *financeService.Ser
 	handler = debug.HTTP()(handler)
 
 	// Mount the admin UI
-	handler = MountAdminUI(handler)
+	handler = MountAdminUI(handler, services.TenantService)
 
 	// Log mounted endpoints
 	logMountedEndpoints(abacServer.Mounts, "ABAC")

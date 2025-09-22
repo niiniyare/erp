@@ -1,0 +1,151 @@
+package templates
+
+import "fmt"
+
+type DashboardData struct {
+	TenantCount int
+	UserCount   int
+	SystemInfo  SystemInfo
+}
+
+type SystemInfo struct {
+	Version   string
+	Uptime    string
+	GoVersion string
+}
+
+templ Dashboard(data DashboardData) {
+	@Layout("Dashboard", DashboardContent(data))
+}
+
+templ DashboardContent(data DashboardData) {
+	<div class="py-10">
+		<header>
+			<div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+				<h1 class="text-3xl font-bold leading-tight tracking-tight text-gray-900">Dashboard</h1>
+			</div>
+		</header>
+		<main>
+			<div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+				<!-- Stats cards -->
+				<div class="mt-8">
+					<div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+						<!-- Total Tenants -->
+						<div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+							<div class="flex items-center">
+								<div class="flex-shrink-0">
+									<i class="fas fa-building text-2xl text-indigo-600"></i>
+								</div>
+								<div class="ml-5 w-0 flex-1">
+									<dl>
+										<dt class="text-sm font-medium text-gray-500 truncate">Total Tenants</dt>
+										<dd class="text-lg font-medium text-gray-900">{ fmt.Sprintf("%d", data.TenantCount) }</dd>
+									</dl>
+								</div>
+							</div>
+						</div>
+
+						<!-- Total Users -->
+						<div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+							<div class="flex items-center">
+								<div class="flex-shrink-0">
+									<i class="fas fa-users text-2xl text-purple-600"></i>
+								</div>
+								<div class="ml-5 w-0 flex-1">
+									<dl>
+										<dt class="text-sm font-medium text-gray-500 truncate">Total Users</dt>
+										<dd class="text-lg font-medium text-gray-900">{ fmt.Sprintf("%d", data.UserCount) }</dd>
+									</dl>
+								</div>
+							</div>
+						</div>
+
+						<!-- System Status -->
+						<div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+							<div class="flex items-center">
+								<div class="flex-shrink-0">
+									<i class="fas fa-heartbeat text-2xl text-green-600"></i>
+								</div>
+								<div class="ml-5 w-0 flex-1">
+									<dl>
+										<dt class="text-sm font-medium text-gray-500 truncate">System Status</dt>
+										<dd class="text-lg font-medium text-green-600">Online</dd>
+									</dl>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- System Information -->
+				<div class="mt-8">
+					<div class="overflow-hidden bg-white shadow sm:rounded-lg">
+						<div class="px-4 py-5 sm:p-6">
+							<h3 class="text-base font-semibold leading-6 text-gray-900">System Information</h3>
+							<dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
+								<div>
+									<dt class="text-sm font-medium text-gray-500">Version</dt>
+									<dd class="mt-1 text-sm text-gray-900">{ data.SystemInfo.Version }</dd>
+								</div>
+								<div>
+									<dt class="text-sm font-medium text-gray-500">Uptime</dt>
+									<dd class="mt-1 text-sm text-gray-900">{ data.SystemInfo.Uptime }</dd>
+								</div>
+								<div>
+									<dt class="text-sm font-medium text-gray-500">Go Version</dt>
+									<dd class="mt-1 text-sm text-gray-900">{ data.SystemInfo.GoVersion }</dd>
+								</div>
+							</dl>
+						</div>
+					</div>
+				</div>
+
+				<!-- Recent Activity -->
+				<div class="mt-8">
+					<div class="overflow-hidden bg-white shadow sm:rounded-lg">
+						<div class="px-4 py-5 sm:p-6">
+							<h3 class="text-base font-semibold leading-6 text-gray-900">Recent Activity</h3>
+							<div class="mt-6 flow-root">
+								<ul role="list" class="-my-5 divide-y divide-gray-200">
+									<li class="py-4">
+										<div class="flex items-center space-x-4">
+											<div class="flex-shrink-0">
+												<i class="fas fa-plus-circle text-green-500"></i>
+											</div>
+											<div class="min-w-0 flex-1">
+												<p class="text-sm font-medium text-gray-900">New tenant created</p>
+												<p class="text-sm text-gray-500">2 hours ago</p>
+											</div>
+										</div>
+									</li>
+									<li class="py-4">
+										<div class="flex items-center space-x-4">
+											<div class="flex-shrink-0">
+												<i class="fas fa-user-plus text-blue-500"></i>
+											</div>
+											<div class="min-w-0 flex-1">
+												<p class="text-sm font-medium text-gray-900">User registered</p>
+												<p class="text-sm text-gray-500">4 hours ago</p>
+											</div>
+										</div>
+									</li>
+									<li class="py-4">
+										<div class="flex items-center space-x-4">
+											<div class="flex-shrink-0">
+												<i class="fas fa-sync text-orange-500"></i>
+											</div>
+											<div class="min-w-0 flex-1">
+												<p class="text-sm font-medium text-gray-900">System updated</p>
+												<p class="text-sm text-gray-500">1 day ago</p>
+											</div>
+										</div>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+	</div>
+}
