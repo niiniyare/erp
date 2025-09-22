@@ -51,7 +51,7 @@ func InitializeFinanceServices(
 	// Create finance services
 	financeServices := service.NewServices(financeServiceDeps)
 
-	logger.Info("✅ Finance services initialized successfully", loggerPkg.Fields{
+	logger.Info(" Finance services initialized successfully", loggerPkg.Fields{
 		"module":   "finance",
 		"services": []string{"account", "transaction", "transaction_entry"},
 		"status":   "ready",
@@ -107,7 +107,7 @@ func RegisterFinanceModule(
 		return err
 	}
 
-	logger.Info("✅ Finance module successfully registered with Temporal platform", loggerPkg.Fields{
+	logger.Info(" Finance module successfully registered with Temporal platform", loggerPkg.Fields{
 		"module":             "finance",
 		"status":             "registered",
 		"activities_count":   "40+",

@@ -239,30 +239,37 @@ CREATE POLICY tenant_isolation_policy ON tenants FOR ALL TO application_role USI
   id = current_tenant_id()
   OR current_tenant_id() IS NULL
 );
+
+CREATE POLICY admin_full_access_policy ON tenants FOR ALL TO admin_role USING (true);
+
+CREATE POLICY readonly_access_policy ON tenants FOR SELECT TO readonly_role USING (true);
+
 --
 -- Add policy comment
 COMMENT ON POLICY tenant_isolation_policy ON tenants IS 'Ensures tenant data isolation based on session context';
+COMMENT ON POLICY admin_full_access_policy ON tenants IS 'Allows admin_role full access to all tenant data';
 
 -- =====================================================
 -- PERMISSIONS AND GRANTS
 -- =====================================================
 -- Grant necessary permissions to application role
-GRANT
-SELECT
-,
-INSERT
-,
-UPDATE
-,
-  DELETE ON tenants TO application_role;
+GRANT SELECT , INSERT ,UPDATE , DELETE ON tenants TO application_role;
 
 -- Grant necessary permissions to admin_role
-GRANT  DELETE ON tenants TO admin_role;
+GRANT ALL PRIVILEGES ON tenants TO admin_role;
+
+
+-- Grant necessary permissions t readonly_role
+GRANT 
+  SELECT
+   ON tenants TO readonly_role;
+
 
 -- Grant execute permissions on functions
 GRANT EXECUTE ON FUNCTION set_tenant_context(UUID,TEXT) TO application_role;
 
 GRANT EXECUTE ON FUNCTION current_tenant_id() TO application_role;
+GRANT EXECUTE ON FUNCTION current_tenant_id() TO readonly_role;
 
 -- =====================================================
 -- TRIGGERS FOR AUTOMATIC TIMESTAMP UPDATES

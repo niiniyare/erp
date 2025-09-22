@@ -203,9 +203,10 @@ templ TenantFormContent(data TenantFormData) {
 										id="status"
 										class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
 									>
-										<option value="active" selected?={ isStatusSelected(data.Tenant, "active") }>Active</option>
-										<option value="inactive" selected?={ isStatusSelected(data.Tenant, "inactive") }>Inactive</option>
-										<option value="suspended" selected?={ isStatusSelected(data.Tenant, "suspended") }>Suspended</option>
+										<option value="ACTIVE" selected?={ isStatusSelected(data.Tenant, "ACTIVE") }>Active</option>
+										<option value="PENDING" selected?={ isStatusSelected(data.Tenant, "PENDING") }>Pending</option>
+										<option value="SUSPENDED" selected?={ isStatusSelected(data.Tenant, "SUSPENDED") }>Suspended</option>
+										<option value="ARCHIVED" selected?={ isStatusSelected(data.Tenant, "ARCHIVED") }>Archived</option>
 									</select>
 								</div>
 								if data.Errors["status"] != "" {

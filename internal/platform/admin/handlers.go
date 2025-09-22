@@ -135,6 +135,12 @@ func (h *AdminHandlers) getAllTenants(ctx context.Context) ([]tenant.Tenant, err
 	// Create a system context that bypasses tenant restrictions
 	systemCtx := context.Background()
 
+	// For admin operations, we need to bypass RLS to see all tenants
+	// Clear any tenant context first
+	if err := h.clearTenantContext(systemCtx); err != nil {
+		logger.Warn("Failed to clear tenant context", logger.Fields{"error": err.Error()})
+	}
+
 	// Use maximum allowed limit to get tenants (offset 0, limit 100)
 	tenantPointers, err := h.tenantService.ListTenants(systemCtx, 0, 100)
 	if err != nil {
@@ -150,6 +156,12 @@ func (h *AdminHandlers) getAllTenants(ctx context.Context) ([]tenant.Tenant, err
 	}
 
 	return tenants, nil
+}
+
+// clearTenantContext ensures no tenant context is set for admin operations
+func (h *AdminHandlers) clearTenantContext(ctx context.Context) error {
+	// This is a placeholder - we'll implement the actual clearing if needed
+	return nil
 }
 
 // NewTenantHandler serves the create tenant form

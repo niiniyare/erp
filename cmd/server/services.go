@@ -195,7 +195,7 @@ func logInitializedServices(services *Services, logger loggerPkg.Logger) {
 
 		serviceCount++
 		serviceName := formatServiceName(field.Name)
-		status := "✅ ready"
+		status := " ready"
 
 		// Categorize services based on name patterns
 		fieldName := strings.ToLower(field.Name)
