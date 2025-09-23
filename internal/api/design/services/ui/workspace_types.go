@@ -399,4 +399,3 @@ var WorkspaceUserFormData = Type("WorkspaceUserFormData", func() {
 	})
 	Required("form_fields", "is_edit")
 })
-

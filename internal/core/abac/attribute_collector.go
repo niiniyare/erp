@@ -1062,6 +1062,7 @@ type (
 		CollectionOptions  AttributeCollectionOptions `json:"collection_options"`
 	}
 )
+
 type (
 	AttributeCollectionPlan        struct{}
 	RegisterAttributeSourceRequest struct{}

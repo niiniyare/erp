@@ -13,12 +13,12 @@ import (
 
 // SecurityValidationResult represents the result of security middleware validation
 type SecurityValidationResult struct {
-	Valid            bool                   `json:"valid"`
-	Errors           []string               `json:"errors,omitempty"`
-	Warnings         []string               `json:"warnings,omitempty"`
+	Valid            bool           `json:"valid"`
+	Errors           []string       `json:"errors,omitempty"`
+	Warnings         []string       `json:"warnings,omitempty"`
 	MiddlewareStatus map[string]any `json:"middleware_status"`
-	GoaCompatibility bool                   `json:"goa_compatibility"`
-	SecurityScore    int                    `json:"security_score"` // 0-100
+	GoaCompatibility bool           `json:"goa_compatibility"`
+	SecurityScore    int            `json:"security_score"` // 0-100
 }
 
 // SecurityValidator validates security middleware compatibility with Goa framework

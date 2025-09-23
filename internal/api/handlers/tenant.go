@@ -38,7 +38,7 @@ func NewUnifiedTenantHandler(
 		provisioningService: provisioningService,
 		tracing:             tracingService,
 		metrics:             metricsService,
-		logger:              logger.WithFields(logger.Fields{"component": "unified_tenant_handler"}),
+		logger:              logger.WithFields(logger.Fields{"component": "tenant_handler"}),
 	}
 }
 

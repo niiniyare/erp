@@ -80,28 +80,7 @@ func InitializeServices(store db.Store, redisClient cache.Service, logger logger
 		tracingService,
 	)
 
-	// Initialize IAM service components
-	// For now, we'll use adapters that wrap existing services
-	authnService := NewAuthnServiceAdapter(identityService)
-	authzService := NewAuthzServiceAdapter(abacService)
-	policyService := NewPolicyServiceAdapter(abacService)
-
-	// Initialize unified IAM service
-	iamService := iam.NewService(
-		authnService,
-		authzService,
-		policyService,
-		tenantService,
-		auditService,
-		featureFlagService,
-		nil, // settings service - can be nil for now
-		redisClient,
-		logger.WithFields(loggerPkg.Fields{}),
-		metricsService,
-		tracingService,
-	)
-
-	// Initialize domain services
+	// Initialize domain services first
 	auditService := audit.NewService(auditRepo, redisClient, logger, tracingService, metricsService)
 
 	// Initialize feature flag service with audit logging
@@ -144,6 +123,27 @@ func InitializeServices(store db.Store, redisClient cache.Service, logger logger
 		"service": "admin_featureflag",
 		"status":  "ready",
 	})
+
+	// Initialize IAM service components after all dependencies are available
+	// For now, we'll use adapters that wrap existing services
+	authnService := NewAuthnServiceAdapter(identityService)
+	authzService := NewAuthzServiceAdapter(abacService)
+	policyService := NewPolicyServiceAdapter(abacService)
+
+	// Initialize unified IAM service
+	iamService := iam.NewService(
+		authnService,
+		authzService,
+		policyService,
+		tenantService,
+		auditService,
+		featureFlagService,
+		nil, // settings service - can be nil for now
+		redisClient,
+		logger.WithFields(loggerPkg.Fields{}),
+		metricsService,
+		tracingService,
+	)
 
 	approverService := approval.NewApproverService(identityService, tracingService, metricsService)
 	notificationService := notification.NewNotificationService(tracingService, metricsService, nil, nil, notificationRepo)
@@ -280,34 +280,24 @@ func formatServiceName(fieldName string) string {
 
 // NewAuthnServiceAdapter creates an authentication service adapter
 func NewAuthnServiceAdapter(identityService identity.Service) authn.Service {
-	// For now, return a simple adapter that wraps the identity service
-	// In a full implementation, this would be a proper adapter
-	return &authnServiceAdapter{identityService: identityService}
+	// TODO: For now, return nil until we implement proper adapters
+	// This needs to be implemented to support the unified IAM service
+	return nil
 }
 
-// NewAuthzServiceAdapter creates an authorization service adapter  
+// NewAuthzServiceAdapter creates an authorization service adapter
 func NewAuthzServiceAdapter(abacService abac.Service) authz.Service {
-	// For now, return a simple adapter that wraps the ABAC service
-	// In a full implementation, this would be a proper adapter
-	return &authzServiceAdapter{abacService: abacService}
+	// TODO: For now, return nil until we implement proper adapters
+	// This needs to be implemented to support the unified IAM service
+	return nil
 }
 
 // NewPolicyServiceAdapter creates a policy service adapter
 func NewPolicyServiceAdapter(abacService abac.Service) policy.Service {
-	// For now, return a simple adapter that wraps the ABAC service
-	// In a full implementation, this would be a proper adapter
-	return &policyServiceAdapter{abacService: abacService}
+	// TODO: For now, return nil until we implement proper adapters
+	// This needs to be implemented to support the unified IAM service
+	return nil
 }
 
-// Adapter implementations (simplified)
-type authnServiceAdapter struct {
-	identityService identity.Service
-}
-
-type authzServiceAdapter struct {
-	abacService abac.Service
-}
-
-type policyServiceAdapter struct {
-	abacService abac.Service
-}
+// TODO: Implement proper adapter structs and methods when IAM integration is needed
+// For now, we're using nil services until the unified IAM is fully implemented

@@ -8,8 +8,8 @@ package pages
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/project/erp/web/admin/templates/layout"
-import "github.com/project/erp/web/admin/templates/components"
+import "github.com/niiniyare/erp/web/admin/templates/layout"
+import "github.com/niiniyare/erp/web/admin/templates/components"
 
 type DashboardStats struct {
 	TotalTenants int

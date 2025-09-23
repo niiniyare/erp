@@ -70,7 +70,6 @@ func (tw *TransactionWorkflows) TransactionApprovalWorkflow(ctx workflow.Context
 		TransactionID:  input.TransactionID,
 		ValidationType: domain.ValidationTypeApproval,
 	}).Get(ctx, &validationResult)
-
 	if err != nil {
 		logger.Error("Transaction validation failed", "error", err)
 		result.Status = domain.ApprovalStatusRejected
@@ -92,7 +91,6 @@ func (tw *TransactionWorkflows) TransactionApprovalWorkflow(ctx workflow.Context
 		Amount:        input.Amount,
 		AccountType:   input.AccountType,
 	}).Get(ctx, &approvalRequirements)
-
 	if err != nil {
 		logger.Error("Failed to determine approval requirements", "error", err)
 		result.Status = domain.ApprovalStatusRejected
@@ -122,7 +120,6 @@ func (tw *TransactionWorkflows) TransactionApprovalWorkflow(ctx workflow.Context
 		Recipients:    append(approvalRequirements.RequiredApprovers, input.SubmittedBy),
 		Comments:      result.Comments,
 	}).Get(ctx, nil)
-
 	if err != nil {
 		logger.Warn("Failed to send approval notification", "error", err)
 		// Don't fail the workflow for notification errors
@@ -245,7 +242,6 @@ func (tw *TransactionWorkflows) TransactionProcessingWorkflow(ctx workflow.Conte
 	err = workflow.ExecuteActivity(ctx, "PostTransactionToLedger", domain.LedgerPostingInput{
 		TransactionID: input.TransactionID,
 	}).Get(ctx, &postingResult)
-
 	if err != nil {
 		logger.Error("Ledger posting failed", "error", err)
 		result.Status = domain.ProcessingStatusFailed
@@ -258,7 +254,6 @@ func (tw *TransactionWorkflows) TransactionProcessingWorkflow(ctx workflow.Conte
 		TransactionID: input.TransactionID,
 		Entries:       postingResult.ProcessedEntries,
 	}).Get(ctx, nil)
-
 	if err != nil {
 		logger.Error("Balance update failed", "error", err)
 		// Attempt to reverse the posting
@@ -325,7 +320,6 @@ func (tw *TransactionWorkflows) TransactionReversalWorkflow(ctx workflow.Context
 		ReversalReason:        input.ReversalReason,
 		InitiatedBy:           input.InitiatedBy,
 	}).Get(ctx, &reversalResult)
-
 	if err != nil {
 		logger.Error("Reversal creation failed", "error", err)
 		result.Status = domain.ReversalStatusFailed

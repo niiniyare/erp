@@ -401,4 +401,3 @@ var ConsoleTenantFormData = Type("ConsoleTenantFormData", func() {
 	})
 	Required("form_fields", "is_edit")
 })
-

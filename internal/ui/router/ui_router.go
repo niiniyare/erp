@@ -18,23 +18,24 @@ import (
 
 // UIRouter manages all UI services on a single port
 type UIRouter struct {
-	mux            *http.ServeMux
-	logger         logger.Logger
-	
+	mux    *http.ServeMux
+	logger logger.Logger
+
 	// Services
-	iamService     iam.Service
-	abacService    abac.Service
-	tenantService  tenant.Service
-	auditService   audit.Service
-	cacheService   cache.Service
-	
+	iamService    iam.Service
+	abacService   abac.Service
+	tenantService tenant.Service
+	auditService  audit.Service
+	cacheService  cache.Service
+
 	// Middleware
 	authMiddleware *middleware.UIAuthMiddleware
-	
+
 	// Handlers
 	consoleAuthHandler      *console.AuthHandler
 	consoleDashboardHandler *console.DashboardHandler
-	
+	consoleTenantHandler    *console.TenantHandler
+
 	// Configuration
 	config UIRouterConfig
 }
@@ -45,16 +46,16 @@ type UIRouterConfig struct {
 	ConsolePath   string
 	WorkspacePath string
 	PortalPath    string
-	
+
 	// Asset serving
 	StaticPath    string
 	AssetsEnabled bool
-	
+
 	// Security
-	CSRFEnabled    bool
-	SessionTTL     string
-	CookieSecure   bool
-	CookieDomain   string
+	CSRFEnabled  bool
+	SessionTTL   string
+	CookieSecure bool
+	CookieDomain string
 }
 
 // DefaultUIRouterConfig returns default configuration
@@ -107,6 +108,11 @@ func NewUIRouter(
 		logger,
 	)
 
+	consoleTenantHandler := console.NewTenantHandler(
+		tenantService,
+		logger,
+	)
+
 	router := &UIRouter{
 		mux:                     http.NewServeMux(),
 		logger:                  logger,
@@ -118,6 +124,7 @@ func NewUIRouter(
 		authMiddleware:          authMiddleware,
 		consoleAuthHandler:      consoleAuthHandler,
 		consoleDashboardHandler: consoleDashboardHandler,
+		consoleTenantHandler:    consoleTenantHandler,
 		config:                  config,
 	}
 
@@ -168,6 +175,10 @@ func (r *UIRouter) setupConsoleRoutes() {
 	r.mux.Handle("/console/dashboard", consoleAuth(http.HandlerFunc(r.consoleDashboardHandler.ShowDashboard)))
 	r.mux.Handle("/console/api/stats", consoleAuth(http.HandlerFunc(r.consoleDashboardHandler.GetSystemStats)))
 	r.mux.Handle("/console/api/activity", consoleAuth(http.HandlerFunc(r.consoleDashboardHandler.GetRecentActivity)))
+
+	// Console tenant management routes
+	r.mux.Handle("/console/tenants", consoleAuth(http.HandlerFunc(r.consoleTenantHandler.ListTenants)))
+	r.mux.Handle("/console/tenants/", consoleAuth(http.HandlerFunc(r.consoleTenantHandler.RouteTenantRequest)))
 
 	// Default console route
 	r.mux.Handle("/console/", consoleAuth(http.HandlerFunc(r.consoleDashboardHandler.ShowDashboard)))
@@ -327,7 +338,7 @@ func (r *UIRouter) handleStaticAssets(w http.ResponseWriter, req *http.Request) 
 	// Placeholder for static asset serving
 	// In production, this would serve from embedded filesystem
 	path := strings.TrimPrefix(req.URL.Path, "/static/")
-	
+
 	// Set appropriate content type based on file extension
 	ext := filepath.Ext(path)
 	switch ext {
@@ -377,7 +388,7 @@ func (r *UIRouter) addSecurityHeaders(w http.ResponseWriter) {
 	w.Header().Set("X-Frame-Options", "DENY")
 	w.Header().Set("X-XSS-Protection", "1; mode=block")
 	w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
-	
+
 	// Only add HSTS in production with HTTPS
 	if r.config.CookieSecure {
 		w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")

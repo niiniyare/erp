@@ -26,12 +26,11 @@ func NewUIIntegration(app *application.Core, services *Services, logger logger.L
 	// uiConfig.CookieDomain = app.Config.Domain
 
 	uiRouter := router.NewUIRouter(
-		services.IAMService,      // Using unified IAM service
-		services.ABACService,     // Using existing ABAC service
-		services.TenantService,   // Using existing tenant service
-		services.AuditService,    // Using existing audit service
-		appServices.RedisClient,  // Using existing cache service
-		nil,                      // Token service - would need to implement if required
+		services.IAMService,     // Using unified IAM service
+		services.ABACService,    // Using existing ABAC service
+		services.TenantService,  // Using existing tenant service
+		services.AuditService,   // Using existing audit service
+		appServices.RedisClient, // Using existing cache service
 		logger,
 		uiConfig,
 	)
@@ -46,17 +45,17 @@ func NewUIIntegration(app *application.Core, services *Services, logger logger.L
 func (ui *UIIntegration) MountUIRoutes(mux *http.ServeMux) {
 	// Mount the UI router on the main server mux
 	// This integrates UI routes with the existing GOA routes
-	
+
 	// Option 1: Mount UI on specific paths
 	mux.Handle("/console/", ui.uiRouter)
 	mux.Handle("/workspace/", ui.uiRouter)
 	mux.Handle("/portal/", ui.uiRouter)
 	mux.Handle("/static/", ui.uiRouter)
 	mux.Handle("/health", ui.uiRouter)
-	
+
 	// Option 2: Mount root handler with fallback to GOA
 	// This would require more sophisticated routing logic
-	
+
 	ui.logger.Info("UI routes mounted successfully", logger.Fields{
 		"console_path":   "/console/",
 		"workspace_path": "/workspace/",
@@ -90,7 +89,7 @@ func (ui *UIIntegration) CreateCombinedHandler(goaHandler http.Handler) http.Han
 func isUIPath(path string) bool {
 	uiPaths := []string{
 		"/console",
-		"/workspace", 
+		"/workspace",
 		"/portal",
 		"/static",
 		"/health", // UI health check

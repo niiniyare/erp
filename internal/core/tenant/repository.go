@@ -69,7 +69,7 @@ func (r *repository) Create(ctx context.Context, tenant *Tenant) error {
 	if tenant.Subdomain != nil {
 		subdomainValue = *tenant.Subdomain
 	}
-	
+
 	span.SetAttributes(
 		attribute.String("tenant.id", tenant.ID.String()),
 		attribute.String("tenant.name", tenant.Name),
@@ -757,7 +757,6 @@ func (r *repository) ProvisionTenant(ctx context.Context, req ProvisionTenantReq
 		}
 		return nil
 	})
-
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "Transaction failed for tenant provisioning")

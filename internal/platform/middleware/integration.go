@@ -275,9 +275,9 @@ func (m *MiddlewareStack) GetSecuritySummary() SecuritySummary {
 
 // SecuritySummary provides an overview of applied security measures
 type SecuritySummary struct {
-	Environment string                 `json:"environment"`
-	Features    map[string]bool        `json:"features"`
-	Metrics     map[string]any `json:"metrics"`
+	Environment string          `json:"environment"`
+	Features    map[string]bool `json:"features"`
+	Metrics     map[string]any  `json:"metrics"`
 }
 
 // ValidateConfiguration validates the middleware configuration

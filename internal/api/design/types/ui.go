@@ -112,6 +112,18 @@ var UITheme = Type("UITheme", func() {
 	Required("name", "primary_color", "secondary_color")
 })
 
+// UIWidgetPosition represents widget position in a grid
+var UIWidgetPosition = Type("UIWidgetPosition", func() {
+	Description("Widget position in dashboard grid")
+	Attribute("row", UInt, "Row position", func() {
+		Example(1)
+	})
+	Attribute("col", UInt, "Column position", func() {
+		Example(1)
+	})
+	Required("row", "col")
+})
+
 // UIWidget represents a dashboard widget
 var UIWidget = Type("UIWidget", func() {
 	Description("Dashboard widget configuration")
@@ -130,15 +142,7 @@ var UIWidget = Type("UIWidget", func() {
 		Default("medium")
 		Example("medium")
 	})
-	Attribute("position", MapOf(String, Any), "Widget position", func() {
-		Attribute("row", UInt, "Row position", func() {
-			Example(1)
-		})
-		Attribute("col", UInt, "Column position", func() {
-			Example(1)
-		})
-		Required("row", "col")
-	})
+	Attribute("position", "UIWidgetPosition", "Widget position")
 	Attribute("data_source", String, "Data source endpoint", func() {
 		Example("/api/v1/admin/stats/tenants")
 	})
@@ -276,6 +280,23 @@ var UITableColumn = Type("UITableColumn", func() {
 	Required("key", "label", "type")
 })
 
+// UIFieldValidation represents field validation rules
+var UIFieldValidation = Type("UIFieldValidation", func() {
+	Description("Field validation rules")
+	Attribute("min_length", UInt, "Minimum length")
+	Attribute("max_length", UInt, "Maximum length")
+	Attribute("pattern", String, "Regex pattern")
+	Attribute("custom_message", String, "Custom error message")
+})
+
+// UIFieldOption represents a field option for select fields
+var UIFieldOption = Type("UIFieldOption", func() {
+	Description("Field option for select fields")
+	Attribute("value", String, "Option value")
+	Attribute("label", String, "Option label")
+	Required("value", "label")
+})
+
 // UIFormField represents a form field configuration
 var UIFormField = Type("UIFormField", func() {
 	Description("Form field configuration")
@@ -299,19 +320,8 @@ var UIFormField = Type("UIFormField", func() {
 	Attribute("help_text", String, "Help text for field", func() {
 		Example("We'll never share your email")
 	})
-	Attribute("validation", MapOf(String, Any), "Field validation rules", func() {
-		Attribute("min_length", UInt, "Minimum length")
-		Attribute("max_length", UInt, "Maximum length")
-		Attribute("pattern", String, "Regex pattern")
-		Attribute("custom_message", String, "Custom error message")
-	})
-	Attribute("options", ArrayOf(MapOf(String, Any)), "Options for select fields", func() {
-		Elem(func() {
-			Attribute("value", String, "Option value")
-			Attribute("label", String, "Option label")
-			Required("value", "label")
-		})
-	})
+	Attribute("validation", "UIFieldValidation", "Field validation rules")
+	Attribute("options", ArrayOf("UIFieldOption"), "Options for select fields")
 	Required("name", "label", "type")
 })
 
@@ -369,6 +379,19 @@ var UITenantInfo = Type("UITenantInfo", func() {
 // UI RESPONSE WRAPPERS
 // ============================================================================
 
+// UIResponseMetadata represents response metadata
+var UIResponseMetadata = Type("UIResponseMetadata", func() {
+	Description("Response metadata information")
+	Attribute("timestamp", String, "Response timestamp", func() {
+		Format(FormatDateTime)
+		Example("2023-12-07T10:30:00Z")
+	})
+	Attribute("request_id", String, "Request correlation ID", func() {
+		Format(FormatUUID)
+		Example("req-123e4567-e89b-12d3-a456-426614174000")
+	})
+})
+
 // UIResponse wraps UI-specific responses
 var UIResponse = Type("UIResponse", func() {
 	Description("Standard UI response wrapper")
@@ -378,16 +401,7 @@ var UIResponse = Type("UIResponse", func() {
 	Attribute("data", Any, "Response data")
 	Attribute("ui_context", "UIContext", "Current UI context")
 	Attribute("notifications", ArrayOf("UINotification"), "New notifications")
-	Attribute("metadata", MapOf(String, Any), "Response metadata", func() {
-		Attribute("timestamp", String, "Response timestamp", func() {
-			Format(FormatDateTime)
-			Example("2023-12-07T10:30:00Z")
-		})
-		Attribute("request_id", String, "Request correlation ID", func() {
-			Format(FormatUUID)
-			Example("req-123e4567-e89b-12d3-a456-426614174000")
-		})
-	})
+	Attribute("metadata", "UIResponseMetadata", "Response metadata")
 	Required("success")
 })
 
@@ -410,4 +424,3 @@ var UIHeaders = func() {
 		Example("default")
 	})
 }
-

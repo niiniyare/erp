@@ -137,4 +137,3 @@ func (am *AssetManager) setAssetHeaders(w http.ResponseWriter, path string) {
 	// Security headers for assets
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 }
-

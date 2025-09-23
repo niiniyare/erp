@@ -1,4 +1,3 @@
-
 package config
 
 import (
@@ -137,9 +136,9 @@ type UISecurityConfig struct {
 // UIJWTConfig contains JWT-related configuration
 type UIJWTConfig struct {
 	// Signing Configuration
-	Algorithm      string `yaml:"algorithm" json:"algorithm" mapstructure:"algorithm"`
-	PublicKeyPath  string `yaml:"public_key_path" json:"public_key_path" mapstructure:"public_key_path"`
-	PrivateKeyPath string `yaml:"private_key_path" json:"private_key_path" mapstructure:"private_key_path"`
+	Algorithm      string          `yaml:"algorithm" json:"algorithm" mapstructure:"algorithm"`
+	PublicKeyPath  string          `yaml:"public_key_path" json:"public_key_path" mapstructure:"public_key_path"`
+	PrivateKeyPath string          `yaml:"private_key_path" json:"private_key_path" mapstructure:"private_key_path"`
 	PublicKey      *rsa.PublicKey  `yaml:"-" json:"-" mapstructure:"-"` // Loaded at runtime
 	PrivateKey     *rsa.PrivateKey `yaml:"-" json:"-" mapstructure:"-"` // Loaded at runtime
 
@@ -302,7 +301,7 @@ type UISessionCookieConfig struct {
 // UIAssetsConfig contains asset management configuration
 type UIAssetsConfig struct {
 	// Asset Serving
-	StaticURL        string `yaml:"static_url" json:"static_url" mapstructure:"static_url"`
+	StaticURL        string        `yaml:"static_url" json:"static_url" mapstructure:"static_url"`
 	CacheMaxAge      time.Duration `yaml:"cache_max_age" json:"cache_max_age" mapstructure:"cache_max_age"`
 	CompressionLevel int           `yaml:"compression_level" json:"compression_level" mapstructure:"compression_level"`
 
@@ -332,10 +331,10 @@ type UIAssetsBuildConfig struct {
 // UIDevelopmentConfig contains development-specific configuration
 type UIDevelopmentConfig struct {
 	// Development Features
-	Enabled      bool `yaml:"enabled" json:"enabled" mapstructure:"enabled"`
-	HotReload    bool `yaml:"hot_reload" json:"hot_reload" mapstructure:"hot_reload"`
-	MockData     bool `yaml:"mock_data" json:"mock_data" mapstructure:"mock_data"`
-	DebugMode    bool `yaml:"debug_mode" json:"debug_mode" mapstructure:"debug_mode"`
+	Enabled   bool `yaml:"enabled" json:"enabled" mapstructure:"enabled"`
+	HotReload bool `yaml:"hot_reload" json:"hot_reload" mapstructure:"hot_reload"`
+	MockData  bool `yaml:"mock_data" json:"mock_data" mapstructure:"mock_data"`
+	DebugMode bool `yaml:"debug_mode" json:"debug_mode" mapstructure:"debug_mode"`
 
 	// Logging
 	LogLevel     string `yaml:"log_level" json:"log_level" mapstructure:"log_level"`

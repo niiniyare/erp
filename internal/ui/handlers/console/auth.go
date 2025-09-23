@@ -42,7 +42,6 @@ func NewAuthHandler(
 	}
 }
 
-
 // ShowLoginPage displays the admin console login page
 func (h *AuthHandler) ShowLoginPage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -300,4 +299,3 @@ func (h *AuthHandler) SetupRoutes(mux *http.ServeMux) {
 	authMiddleware := h.authMiddleware.RequireAuthentication(middleware.UIRoleConsoleAdmin)
 	mux.Handle("/console/auth/", authMiddleware(authMux))
 }
-

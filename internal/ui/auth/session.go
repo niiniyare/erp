@@ -436,4 +436,3 @@ func getRedirectURL(uiService, role string) string {
 		return "/"
 	}
 }
-

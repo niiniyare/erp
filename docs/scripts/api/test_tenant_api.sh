@@ -30,9 +30,9 @@ CREATE_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
     "subdomain": "testapi",
     "country_code": "US",
     "currency_code": "USD",
-    "status": "active",
+    "status": "ACTIVE",
     "industry": "Technology",
-    "company_size": "11-50",
+    "company_size": "Startup",
     "contact": {
       "email": "contact@testapi.com"
     },

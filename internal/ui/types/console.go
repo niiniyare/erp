@@ -12,13 +12,13 @@ type LoginPageData struct {
 
 // DashboardData represents data for the dashboard page
 type DashboardData struct {
-	Title           string
-	User            UserInfo
-	SystemStats     SystemStats
-	RecentActivity  []ActivityItem
-	QuickActions    []QuickAction
-	Notifications   []Notification
-	CSRFToken       string
+	Title          string
+	User           UserInfo
+	SystemStats    SystemStats
+	RecentActivity []ActivityItem
+	QuickActions   []QuickAction
+	Notifications  []Notification
+	CSRFToken      string
 }
 
 // UserInfo represents current user information
@@ -68,4 +68,83 @@ type Notification struct {
 	Severity string
 	Created  time.Time
 	Read     bool
+}
+
+// Tenant management types
+
+// TenantItem represents a tenant in the list view
+type TenantItem struct {
+	ID          string
+	Name        string
+	Email       string
+	Subdomain   *string
+	Status      string
+	Industry    string
+	CompanySize string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+// TenantDetail represents detailed tenant information
+type TenantDetail struct {
+	ID          string
+	Name        string
+	Email       string
+	Subdomain   *string
+	Status      string
+	Industry    string
+	CompanySize string
+	Timezone    string
+	Currency    string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+// TenantsPageData represents data for the tenants list page
+type TenantsPageData struct {
+	Title      string
+	CSRFToken  string
+	Tenants    []TenantItem
+	Pagination Pagination
+}
+
+// TenantDetailPageData represents data for the tenant detail page
+type TenantDetailPageData struct {
+	Title     string
+	CSRFToken string
+	Tenant    TenantDetail
+}
+
+// CreateTenantPageData represents data for the create tenant page
+type CreateTenantPageData struct {
+	Title        string
+	CSRFToken    string
+	Form         TenantForm
+	Industries   []SelectOption
+	CompanySizes []SelectOption
+	Error        string
+}
+
+// TenantForm represents the tenant creation/edit form
+type TenantForm struct {
+	Name        string
+	Email       string
+	Subdomain   *string
+	Industry    string
+	CompanySize string
+}
+
+// SelectOption represents an option in a select field
+type SelectOption struct {
+	Value string
+	Label string
+}
+
+// Pagination represents pagination information
+type Pagination struct {
+	CurrentPage int
+	Limit       int
+	Total       int
+	HasNext     bool
+	HasPrev     bool
 }

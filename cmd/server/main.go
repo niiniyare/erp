@@ -83,7 +83,7 @@ func main() {
 func initializeHTTPServer(app *application.Core) (http.Handler, error) {
 	// Extract infrastructure services from application core
 	appServices := app.GetServices()
-	
+
 	// Initialize business services using the business services factory
 	businessServices, err := InitializeServices(
 		appServices.Store,
@@ -95,7 +95,7 @@ func initializeHTTPServer(app *application.Core) (http.Handler, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize business services: %w", err)
 	}
-	
+
 	// Initialize GOA server with all services
 	// Note: Finance services are not fully integrated yet, passing nil for now
 	goaServer, err := InitializeGOAServer(
@@ -109,27 +109,27 @@ func initializeHTTPServer(app *application.Core) (http.Handler, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize GOA server: %w", err)
 	}
-	
+
 	logger.Info("GOA server initialized successfully", logger.Fields{
 		"endpoints": "all services mounted",
-		"status": "ready",
+		"status":    "ready",
 	})
-	
+
 	// Initialize UI integration
 	uiIntegration, err := NewUIIntegration(app, businessServices, appServices.Logger)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize UI integration: %w", err)
 	}
-	
+
 	// Create combined handler that serves both API and UI routes
 	combinedHandler := uiIntegration.CreateCombinedHandler(goaServer.Handler)
-	
+
 	logger.Info("UI integration completed successfully", logger.Fields{
-		"ui_routes": "console, workspace, portal",
+		"ui_routes":   "console, workspace, portal",
 		"integration": "single-port",
-		"status": "ready",
+		"status":      "ready",
 	})
-	
+
 	return combinedHandler, nil
 }
 

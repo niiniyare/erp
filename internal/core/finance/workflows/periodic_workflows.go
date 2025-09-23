@@ -95,7 +95,6 @@ func (pw *PeriodicWorkflows) MonthEndClosingWorkflow(ctx workflow.Context, input
 		TenantID:      input.TenantID,
 		AccountFilter: input.AccountFilter,
 	}).Get(ctx, &reconciliationResult)
-
 	if err != nil {
 		logger.Error("Account reconciliation failed", "error", err)
 		result.Status = domain.ClosingStatusFailed
@@ -120,7 +119,6 @@ func (pw *PeriodicWorkflows) MonthEndClosingWorkflow(ctx workflow.Context, input
 		ReconciliationResults: reconciliationResult.Results,
 		AdjustmentRules:       input.AdjustmentRules,
 	}).Get(ctx, &adjustingEntries)
-
 	if err != nil {
 		logger.Error("Adjusting entries generation failed", "error", err)
 		result.Status = domain.ClosingStatusFailed
@@ -143,7 +141,6 @@ func (pw *PeriodicWorkflows) MonthEndClosingWorkflow(ctx workflow.Context, input
 		TenantID:      input.TenantID,
 		AssetFilter:   input.AssetFilter,
 	}).Get(ctx, &depreciationResult)
-
 	if err != nil {
 		logger.Error("Depreciation calculation failed", "error", err)
 		result.Status = domain.ClosingStatusFailed
@@ -167,7 +164,6 @@ func (pw *PeriodicWorkflows) MonthEndClosingWorkflow(ctx workflow.Context, input
 		AdjustingEntries:    adjustingEntries.GeneratedEntries,
 		DepreciationEntries: depreciationResult.DepreciationEntries,
 	}).Get(ctx, &closingEntries)
-
 	if err != nil {
 		logger.Error("Closing entries generation failed", "error", err)
 		result.Status = domain.ClosingStatusFailed
@@ -190,7 +186,6 @@ func (pw *PeriodicWorkflows) MonthEndClosingWorkflow(ctx workflow.Context, input
 		TenantID:       input.TenantID,
 		StatementTypes: input.StatementTypes,
 	}).Get(ctx, &financialStatements)
-
 	if err != nil {
 		logger.Error("Financial statements generation failed", "error", err)
 		result.Status = domain.ClosingStatusFailed
@@ -214,7 +209,6 @@ func (pw *PeriodicWorkflows) MonthEndClosingWorkflow(ctx workflow.Context, input
 		FinancialStatements: financialStatements.GeneratedStatements,
 		FinalizedBy:         input.InitiatedBy,
 	}).Get(ctx, nil)
-
 	if err != nil {
 		logger.Error("Closing finalization failed", "error", err)
 		result.Status = domain.ClosingStatusFailed
@@ -235,7 +229,6 @@ func (pw *PeriodicWorkflows) MonthEndClosingWorkflow(ctx workflow.Context, input
 		FinancialStatements: financialStatements.GeneratedStatements,
 		Recipients:          input.NotificationRecipients,
 	}).Get(ctx, nil)
-
 	if err != nil {
 		logger.Warn("Failed to send closing notifications", "error", err)
 		// Don't fail the workflow for notification errors
@@ -327,7 +320,6 @@ func (pw *PeriodicWorkflows) YearEndClosingWorkflow(ctx workflow.Context, input 
 		TenantID:    input.TenantID,
 		AssetFilter: input.AssetFilter,
 	}).Get(ctx, &annualDepreciation)
-
 	if err != nil {
 		logger.Error("Annual depreciation calculation failed", "error", err)
 		result.Status = domain.ClosingStatusFailed
@@ -350,7 +342,6 @@ func (pw *PeriodicWorkflows) YearEndClosingWorkflow(ctx workflow.Context, input 
 		TenantID:     input.TenantID,
 		AccrualRules: input.AccrualRules,
 	}).Get(ctx, &accrualResult)
-
 	if err != nil {
 		logger.Error("Year-end accruals processing failed", "error", err)
 		result.Status = domain.ClosingStatusFailed
@@ -374,7 +365,6 @@ func (pw *PeriodicWorkflows) YearEndClosingWorkflow(ctx workflow.Context, input 
 		DepreciationEntries: annualDepreciation.DepreciationEntries,
 		AccrualEntries:      accrualResult.AccrualEntries,
 	}).Get(ctx, &yearEndClosingEntries)
-
 	if err != nil {
 		logger.Error("Year-end closing entries generation failed", "error", err)
 		result.Status = domain.ClosingStatusFailed
@@ -398,7 +388,6 @@ func (pw *PeriodicWorkflows) YearEndClosingWorkflow(ctx workflow.Context, input 
 		StatementTypes:   input.StatementTypes,
 		IncludePriorYear: true,
 	}).Get(ctx, &annualStatements)
-
 	if err != nil {
 		logger.Error("Annual financial statements generation failed", "error", err)
 		result.Status = domain.ClosingStatusFailed
@@ -421,7 +410,6 @@ func (pw *PeriodicWorkflows) YearEndClosingWorkflow(ctx workflow.Context, input 
 		TenantID:        input.TenantID,
 		ArchiveSettings: input.ArchiveSettings,
 	}).Get(ctx, &archiveResult)
-
 	if err != nil {
 		logger.Error("Fiscal year data archival failed", "error", err)
 		result.Status = domain.ClosingStatusFailed
@@ -446,7 +434,6 @@ func (pw *PeriodicWorkflows) YearEndClosingWorkflow(ctx workflow.Context, input 
 		ArchiveReference:    archiveResult.ArchiveReference,
 		FinalizedBy:         input.InitiatedBy,
 	}).Get(ctx, nil)
-
 	if err != nil {
 		logger.Error("Year-end closing finalization failed", "error", err)
 		result.Status = domain.ClosingStatusFailed

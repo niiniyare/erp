@@ -73,7 +73,6 @@ func (cw *ComplianceWorkflows) ComplianceAuditWorkflow(ctx workflow.Context, inp
 		InitiatedBy:     input.InitiatedBy,
 		ComplianceRules: input.ComplianceRules,
 	}).Get(ctx, &auditInit)
-
 	if err != nil {
 		logger.Error("Audit initialization failed", "error", err)
 		result.Status = domain.AuditStatusFailed
@@ -92,7 +91,6 @@ func (cw *ComplianceWorkflows) ComplianceAuditWorkflow(ctx workflow.Context, inp
 		PeriodFrom: input.PeriodFrom,
 		PeriodTo:   input.PeriodTo,
 	}).Get(ctx, &dataCollection)
-
 	if err != nil {
 		logger.Error("Audit data collection failed", "error", err)
 		result.Status = domain.AuditStatusFailed
@@ -107,7 +105,6 @@ func (cw *ComplianceWorkflows) ComplianceAuditWorkflow(ctx workflow.Context, inp
 		ComplianceRules: input.ComplianceRules,
 		AuditData:       dataCollection.CollectedData,
 	}).Get(ctx, &complianceResults)
-
 	if err != nil {
 		logger.Error("Compliance checks failed", "error", err)
 		result.Status = domain.AuditStatusFailed
@@ -128,7 +125,6 @@ func (cw *ComplianceWorkflows) ComplianceAuditWorkflow(ctx workflow.Context, inp
 		Violations:      complianceResults.Violations,
 		Recommendations: complianceResults.Recommendations,
 	}).Get(ctx, &auditReport)
-
 	if err != nil {
 		logger.Error("Audit report generation failed", "error", err)
 		result.Status = domain.AuditStatusFailed
@@ -148,7 +144,6 @@ func (cw *ComplianceWorkflows) ComplianceAuditWorkflow(ctx workflow.Context, inp
 			Severity:   complianceResults.MaxSeverity,
 			Recipients: input.NotificationRecipients,
 		}).Get(ctx, nil)
-
 		if err != nil {
 			logger.Warn("Failed to send compliance alert", "error", err)
 		}
@@ -195,7 +190,6 @@ func (cw *ComplianceWorkflows) FraudDetectionWorkflow(ctx workflow.Context, inpu
 		MonitoringPeriod: input.MonitoringPeriod,
 		InitiatedBy:      input.InitiatedBy,
 	}).Get(ctx, &detection)
-
 	if err != nil {
 		logger.Error("Fraud detection initialization failed", "error", err)
 		result.Status = domain.FraudDetectionStatusFailed
@@ -213,7 +207,6 @@ func (cw *ComplianceWorkflows) FraudDetectionWorkflow(ctx workflow.Context, inpu
 		TransactionData: input.TransactionData,
 		HistoricalData:  input.HistoricalData,
 	}).Get(ctx, &patternAnalysis)
-
 	if err != nil {
 		logger.Error("Fraud pattern analysis failed", "error", err)
 		result.Status = domain.FraudDetectionStatusFailed
@@ -228,7 +221,6 @@ func (cw *ComplianceWorkflows) FraudDetectionWorkflow(ctx workflow.Context, inpu
 		Patterns:    patternAnalysis.DetectedPatterns,
 		RiskFactors: patternAnalysis.RiskFactors,
 	}).Get(ctx, &riskScoring)
-
 	if err != nil {
 		logger.Error("Fraud risk scoring failed", "error", err)
 		result.Status = domain.FraudDetectionStatusFailed
@@ -258,7 +250,6 @@ func (cw *ComplianceWorkflows) FraudDetectionWorkflow(ctx workflow.Context, inpu
 					Recipients:  input.AlertRecipients,
 					Priority:    domain.AlertPriorityHigh,
 				}).Get(ctx, nil)
-
 				if err != nil {
 					logger.Warn("Failed to send critical fraud alert", "error", err, "transaction_id", transaction.TransactionID)
 				}
@@ -276,7 +267,6 @@ func (cw *ComplianceWorkflows) FraudDetectionWorkflow(ctx workflow.Context, inpu
 		Alerts:               result.Alerts,
 		RiskFactors:          riskScoring.TopRiskFactors,
 	}).Get(ctx, &detectionReport)
-
 	if err != nil {
 		logger.Error("Fraud detection report generation failed", "error", err)
 		result.Status = domain.FraudDetectionStatusFailed

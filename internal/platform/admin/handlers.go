@@ -237,18 +237,18 @@ func (h *AdminHandlers) CreateTenantHandler(w http.ResponseWriter, r *http.Reque
 
 	// Create tenant
 	systemCtx := context.Background()
-	
+
 	var subdomainPtr *string
 	if subdomain != "" {
 		subdomainPtr = &subdomain
 	}
 
 	newTenantReq := tenant.CreateTenantRequest{
-		Name:         name,
-		Slug:         slug,
-		Email:        email,
-		Subdomain:    subdomainPtr,
-		Status:       tenant.Status(statusStr),
+		Name:      name,
+		Slug:      slug,
+		Email:     email,
+		Subdomain: subdomainPtr,
+		Status:    tenant.Status(statusStr),
 	}
 
 	createdTenant, err := h.tenantService.CreateTenant(systemCtx, newTenantReq)
@@ -262,11 +262,11 @@ func (h *AdminHandlers) CreateTenantHandler(w http.ResponseWriter, r *http.Reque
 		errors["general"] = fmt.Sprintf("Failed to create tenant: %v", err)
 		data := templates.TenantFormData{
 			Tenant: &tenant.Tenant{
-				Name:         name,
-				Slug:         slug,
-				Email:        email,
-				Subdomain:    subdomainPtr,
-				Status:       tenant.Status(statusStr),
+				Name:      name,
+				Slug:      slug,
+				Email:     email,
+				Subdomain: subdomainPtr,
+				Status:    tenant.Status(statusStr),
 			},
 			IsEdit: false,
 			Errors: errors,
@@ -291,7 +291,7 @@ func (h *AdminHandlers) CreateTenantHandler(w http.ResponseWriter, r *http.Reque
 func (h *AdminHandlers) ViewTenantHandler(w http.ResponseWriter, r *http.Request) {
 	// Remove unused ctx variable
 	_ = r.Context()
-	
+
 	// Extract tenant ID from URL path
 	tenantIDStr := strings.TrimPrefix(r.URL.Path, "/admin/tenants/")
 	tenantID, err := uuid.Parse(tenantIDStr)
@@ -519,4 +519,3 @@ func (h *AdminHandlers) DeleteTenantHandler(w http.ResponseWriter, r *http.Reque
 	// Redirect to tenants list
 	http.Redirect(w, r, "/admin/tenants", http.StatusSeeOther)
 }
-

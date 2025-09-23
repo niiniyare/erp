@@ -666,4 +666,3 @@ var _ = Service("portal", func() {
 		Description("Serve portal static assets")
 	})
 })
-

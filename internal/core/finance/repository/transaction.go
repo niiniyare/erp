@@ -113,7 +113,6 @@ func (r *transactionRepository) GetByID(ctx context.Context, id uuid.UUID) (*dom
 		transaction, err = r.mapSQLCTransactionToDomain(sqlcTransaction)
 		return err
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +143,6 @@ func (r *transactionRepository) GetByNumber(ctx context.Context, entityID *uuid.
 		transaction, err = r.mapSQLCTransactionToDomain(sqlcTransaction)
 		return err
 	})
-
 	if err != nil {
 		return nil, err
 	}

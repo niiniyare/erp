@@ -387,6 +387,6 @@ func TestValidateConfiguration(t *testing.T) {
 // Helper function to check if string contains substring
 func containsString(s, substr string) bool {
 	return len(s) >= len(substr) &&
-		s[0:len(substr)] == substr[:len(substr)] ||
+		s[0:len(substr)] == substr[:] ||
 		(len(s) > len(substr) && containsString(s[1:], substr))
 }

@@ -43,11 +43,10 @@ func NewDashboardHandler(
 	}
 }
 
-
 // ShowDashboard displays the admin console dashboard
 func (h *DashboardHandler) ShowDashboard(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	
+
 	// Get UI context (user should be authenticated by middleware)
 	uiCtx, ok := middleware.GetUIContext(ctx)
 	if !ok {
@@ -94,7 +93,7 @@ func (h *DashboardHandler) ShowDashboard(w http.ResponseWriter, r *http.Request)
 // GetSystemStats returns system statistics as JSON (for HTMX requests)
 func (h *DashboardHandler) GetSystemStats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	
+
 	// Get UI context
 	uiCtx, ok := middleware.GetUIContext(ctx)
 	if !ok {
@@ -127,7 +126,7 @@ func (h *DashboardHandler) GetSystemStats(w http.ResponseWriter, r *http.Request
 // GetRecentActivity returns recent activity as HTML (for HTMX requests)
 func (h *DashboardHandler) GetRecentActivity(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	
+
 	// Get UI context
 	uiCtx, ok := middleware.GetUIContext(ctx)
 	if !ok {

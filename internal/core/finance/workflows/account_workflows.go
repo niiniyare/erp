@@ -109,7 +109,6 @@ func (aw *AccountWorkflows) AccountCreationWorkflow(ctx workflow.Context, input 
 		AllowManualJournal: input.AllowManualJournal,
 		CreatedBy:          input.CreatedBy,
 	}).Get(ctx, &creationResult)
-
 	if err != nil {
 		logger.Error("Account creation failed", "error", err)
 		result.Status = domain.AccountCreationStatusFailed
@@ -127,7 +126,6 @@ func (aw *AccountWorkflows) AccountCreationWorkflow(ctx workflow.Context, input 
 		Action:      "created",
 		Recipients:  []string{input.CreatedBy},
 	}).Get(ctx, nil)
-
 	if err != nil {
 		logger.Warn("Failed to send account creation notification", "error", err)
 		// Don't fail workflow for notification errors
@@ -168,7 +166,6 @@ func (aw *AccountWorkflows) AccountClosureWorkflow(ctx workflow.Context, input d
 	err := workflow.ExecuteActivity(ctx, "CheckAccountBalance", domain.AccountBalanceCheckInput{
 		AccountID: input.AccountID,
 	}).Get(ctx, &balanceCheck)
-
 	if err != nil {
 		logger.Error("Balance check failed", "error", err)
 		result.Status = domain.AccountClosureStatusFailed
@@ -188,7 +185,6 @@ func (aw *AccountWorkflows) AccountClosureWorkflow(ctx workflow.Context, input d
 	err = workflow.ExecuteActivity(ctx, "CheckAccountDependencies", domain.AccountDependencyCheckInput{
 		AccountID: input.AccountID,
 	}).Get(ctx, &dependencyCheck)
-
 	if err != nil {
 		logger.Error("Dependency check failed", "error", err)
 		result.Status = domain.AccountClosureStatusFailed
@@ -211,7 +207,6 @@ func (aw *AccountWorkflows) AccountClosureWorkflow(ctx workflow.Context, input d
 		ClosedBy:      input.ClosedBy,
 		ClosureDate:   input.ClosureDate,
 	}).Get(ctx, nil)
-
 	if err != nil {
 		logger.Error("Account closure failed", "error", err)
 		result.Status = domain.AccountClosureStatusFailed
@@ -257,7 +252,6 @@ func (aw *AccountWorkflows) AccountReconciliationWorkflow(ctx workflow.Context, 
 		PeriodFrom: input.PeriodFrom,
 		PeriodTo:   input.PeriodTo,
 	}).Get(ctx, &transactionData)
-
 	if err != nil {
 		logger.Error("Failed to get transaction data", "error", err)
 		result.Status = domain.ReconciliationStatusFailed
@@ -272,7 +266,6 @@ func (aw *AccountWorkflows) AccountReconciliationWorkflow(ctx workflow.Context, 
 		Transactions:   transactionData.Transactions,
 		OpeningBalance: transactionData.OpeningBalance,
 	}).Get(ctx, &balanceCalculation)
-
 	if err != nil {
 		logger.Error("Balance calculation failed", "error", err)
 		result.Status = domain.ReconciliationStatusFailed
@@ -286,7 +279,6 @@ func (aw *AccountWorkflows) AccountReconciliationWorkflow(ctx workflow.Context, 
 		AccountID: input.AccountID,
 		AsOfDate:  input.PeriodTo,
 	}).Get(ctx, &actualBalance)
-
 	if err != nil {
 		logger.Error("Failed to get actual balance", "error", err)
 		result.Status = domain.ReconciliationStatusFailed

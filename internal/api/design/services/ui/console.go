@@ -571,4 +571,3 @@ var _ = Service("console", func() {
 		Description("Serve console static assets")
 	})
 })
-

@@ -357,4 +357,3 @@ var PortalTicketFormData = Type("PortalTicketFormData", func() {
 	})
 	Required("form_fields")
 })
-

@@ -644,4 +644,3 @@ var _ = Service("workspace", func() {
 		Description("Serve workspace static assets")
 	})
 })
-

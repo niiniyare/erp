@@ -1190,6 +1190,7 @@ type (
 		TotalCount   int64                 `json:"total_count"`
 	}
 )
+
 type (
 	EncryptAttributeValueRequest struct{}
 	EncryptedAttributeValue      struct{}

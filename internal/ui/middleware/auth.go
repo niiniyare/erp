@@ -28,29 +28,29 @@ const (
 
 // UIContext represents the current UI authentication context
 type UIContext struct {
-	UserID       uuid.UUID `json:"user_id"`
-	TenantID     uuid.UUID `json:"tenant_id"`
+	UserID       uuid.UUID  `json:"user_id"`
+	TenantID     uuid.UUID  `json:"tenant_id"`
 	EntityID     *uuid.UUID `json:"entity_id,omitempty"`
-	Role         UIRole    `json:"role"`
-	SessionID    string    `json:"session_id"`
-	CSRFToken    string    `json:"csrf_token"`
-	LoginTime    time.Time `json:"login_time"`
-	LastActivity time.Time `json:"last_activity"`
+	Role         UIRole     `json:"role"`
+	SessionID    string     `json:"session_id"`
+	CSRFToken    string     `json:"csrf_token"`
+	LoginTime    time.Time  `json:"login_time"`
+	LastActivity time.Time  `json:"last_activity"`
 }
 
 // UIAuthMiddleware provides authentication middleware for UI services
 type UIAuthMiddleware struct {
-	iamService     iam.Service
-	abacService    abac.Service
-	cacheService   cache.Service
-	logger         logger.Logger
-	
+	iamService   iam.Service
+	abacService  abac.Service
+	cacheService cache.Service
+	logger       logger.Logger
+
 	// Configuration
-	sessionTTL     time.Duration
-	cookieName     string
-	cookieDomain   string
-	cookieSecure   bool
-	csrfEnabled    bool
+	sessionTTL   time.Duration
+	cookieName   string
+	cookieDomain string
+	cookieSecure bool
+	csrfEnabled  bool
 }
 
 // NewUIAuthMiddleware creates a new UI authentication middleware
@@ -65,7 +65,7 @@ func NewUIAuthMiddleware(
 		abacService:  abacService,
 		cacheService: cacheService,
 		logger:       logger,
-		
+
 		// Default configuration
 		sessionTTL:   24 * time.Hour,
 		cookieName:   "ui_session",
@@ -144,7 +144,7 @@ func (m *UIAuthMiddleware) AuthenticateUser(ctx context.Context, username, passw
 	// Store session in cache with tenant context
 	cacheCtx := cache.SetTenantInContext(ctx, authResult.User.TenantID, "")
 	cacheCtx = cache.SetNamespaceInContext(cacheCtx, "ui_sessions")
-	
+
 	sessionKey := fmt.Sprintf("session:%s", sessionID)
 	if err := m.cacheService.Set(cacheCtx, sessionKey, uiCtx, m.sessionTTL); err != nil {
 		m.logger.ErrorContext(ctx, "Failed to store session", logger.Fields{
@@ -170,7 +170,7 @@ func (m *UIAuthMiddleware) RequireAuthentication(requiredRoles ...UIRole) func(h
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
-			
+
 			// Extract session from cookie
 			sessionCookie, err := r.Cookie(m.cookieName)
 			if err != nil {
@@ -232,7 +232,7 @@ func (m *UIAuthMiddleware) LogoutUser(ctx context.Context, sessionID string) err
 	// Delete session from cache
 	cacheCtx := cache.SetTenantInContext(ctx, uiCtx.TenantID, "")
 	cacheCtx = cache.SetNamespaceInContext(cacheCtx, "ui_sessions")
-	
+
 	sessionKey := fmt.Sprintf("session:%s", sessionID)
 	if err := m.cacheService.Delete(cacheCtx, sessionKey); err != nil {
 		m.logger.ErrorContext(ctx, "Failed to delete session", logger.Fields{
@@ -284,7 +284,7 @@ func (m *UIAuthMiddleware) DeleteSessionCookie() *http.Cookie {
 func (m *UIAuthMiddleware) validateRoleAuthorization(ctx context.Context, userID uuid.UUID, role UIRole) error {
 	// Define required permissions for each UI role
 	var resourceType, action string
-	
+
 	switch role {
 	case UIRoleConsoleAdmin:
 		resourceType = "system"
@@ -305,8 +305,8 @@ func (m *UIAuthMiddleware) validateRoleAuthorization(ctx context.Context, userID
 		ResourceType: resourceType,
 		Action:       action,
 		Context: map[string]any{
-			"ui_access":   true,
-			"ui_role":     string(role),
+			"ui_access":    true,
+			"ui_role":      string(role),
 			"request_time": time.Now(),
 		},
 	}
@@ -331,7 +331,7 @@ func (m *UIAuthMiddleware) validateSession(ctx context.Context, sessionID string
 
 	// Try to get session from cache (we'll iterate through tenant contexts if needed)
 	sessionKey := fmt.Sprintf("session:%s", sessionID)
-	
+
 	// First try global context
 	var uiCtx UIContext
 	err := m.cacheService.Get(ctx, sessionKey, &uiCtx)
@@ -355,11 +355,11 @@ func (m *UIAuthMiddleware) validateSession(ctx context.Context, sessionID string
 // updateSessionActivity updates the last activity time for a session
 func (m *UIAuthMiddleware) updateSessionActivity(ctx context.Context, uiCtx *UIContext) error {
 	uiCtx.LastActivity = time.Now()
-	
+
 	// Update session in cache with tenant context
 	cacheCtx := cache.SetTenantInContext(ctx, uiCtx.TenantID, "")
 	cacheCtx = cache.SetNamespaceInContext(cacheCtx, "ui_sessions")
-	
+
 	sessionKey := fmt.Sprintf("session:%s", uiCtx.SessionID)
 	return m.cacheService.Set(cacheCtx, sessionKey, uiCtx, m.sessionTTL)
 }
@@ -382,15 +382,15 @@ func (m *UIAuthMiddleware) validateCSRFToken(r *http.Request, expectedToken stri
 		// Check form value as fallback
 		token = r.FormValue("csrf_token")
 	}
-	
+
 	if token == "" {
 		return fmt.Errorf("CSRF token missing")
 	}
-	
+
 	if token != expectedToken {
 		return fmt.Errorf("CSRF token mismatch")
 	}
-	
+
 	return nil
 }
 
@@ -418,14 +418,14 @@ func (m *UIAuthMiddleware) redirectToLogin(w http.ResponseWriter, r *http.Reques
 		"reason": reason,
 		"path":   r.URL.Path,
 	})
-	
+
 	// If it's an HTMX request, return appropriate response
 	if r.Header.Get("HX-Request") == "true" {
 		w.Header().Set("HX-Redirect", "/login")
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	
+
 	// Regular redirect
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
@@ -436,14 +436,14 @@ func (m *UIAuthMiddleware) handleUnauthorized(w http.ResponseWriter, r *http.Req
 		"reason": reason,
 		"path":   r.URL.Path,
 	})
-	
+
 	// If it's an HTMX request, return appropriate response
 	if r.Header.Get("HX-Request") == "true" {
 		w.Header().Set("HX-Redirect", "/unauthorized")
 		w.WriteHeader(http.StatusForbidden)
 		return
 	}
-	
+
 	// Regular response
 	http.Error(w, "Forbidden", http.StatusForbidden)
 }
@@ -465,10 +465,10 @@ func RequireRole(ctx context.Context, requiredRole UIRole) error {
 	if !ok {
 		return fmt.Errorf("UI context not found")
 	}
-	
+
 	if uiCtx.Role != requiredRole {
 		return fmt.Errorf("insufficient role: required %s, have %s", requiredRole, uiCtx.Role)
 	}
-	
+
 	return nil
 }

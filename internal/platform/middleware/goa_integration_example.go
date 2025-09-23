@@ -258,8 +258,8 @@ func (g *GOAMiddlewareSetup) GetMiddlewareReport() MiddlewareReport {
 
 // MiddlewareReport provides middleware status
 type MiddlewareReport struct {
-	Environment    string                 `json:"environment"`
-	Security       SecuritySummary        `json:"security"`
-	Health         map[string]any `json:"health"`
-	GOAIntegration map[string]any `json:"goa_integration"`
+	Environment    string          `json:"environment"`
+	Security       SecuritySummary `json:"security"`
+	Health         map[string]any  `json:"health"`
+	GOAIntegration map[string]any  `json:"goa_integration"`
 }

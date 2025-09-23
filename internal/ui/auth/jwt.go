@@ -12,29 +12,29 @@ import (
 // JWTClaims represents the structure of JWT tokens for all UI services
 type JWTClaims struct {
 	jwt.RegisteredClaims
-	
+
 	// User Information
-	UserID    string   `json:"user_id"`
-	Email     string   `json:"email"`
-	FirstName string   `json:"first_name"`
-	LastName  string   `json:"last_name"`
-	
+	UserID    string `json:"user_id"`
+	Email     string `json:"email"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+
 	// Role and Permissions
-	Role        string   `json:"role"`          // "admin", "tenant_user", "client"
-	Scopes      []string `json:"scopes"`       // ["admin:read", "tenant:write", "client:read"]
-	Permissions []string `json:"permissions"`  // ABAC permissions
-	
+	Role        string   `json:"role"`        // "admin", "tenant_user", "client"
+	Scopes      []string `json:"scopes"`      // ["admin:read", "tenant:write", "client:read"]
+	Permissions []string `json:"permissions"` // ABAC permissions
+
 	// Context Information
-	TenantID    *string `json:"tenant_id,omitempty"`    // Nil for admin, set for tenant users
-	ClientID    *string `json:"client_id,omitempty"`    // Set for portal users
-	
+	TenantID *string `json:"tenant_id,omitempty"` // Nil for admin, set for tenant users
+	ClientID *string `json:"client_id,omitempty"` // Set for portal users
+
 	// UI-Specific Claims
-	UIAccess    []string `json:"ui_access"`              // ["console", "workspace", "portal"]
-	SessionType string   `json:"session_type"`           // "web", "api", "widget"
-	
+	UIAccess    []string `json:"ui_access"`    // ["console", "workspace", "portal"]
+	SessionType string   `json:"session_type"` // "web", "api", "widget"
+
 	// Security
-	TokenType   string `json:"token_type"`              // "access", "refresh"
-	DeviceID    string `json:"device_id,omitempty"`     // For device tracking
+	TokenType string `json:"token_type"`          // "access", "refresh"
+	DeviceID  string `json:"device_id,omitempty"` // For device tracking
 }
 
 // JWTValidator handles JWT token validation and claims extraction
@@ -65,7 +65,6 @@ func (v *JWTValidator) ValidateToken(tokenString string) (*JWTClaims, error) {
 		}
 		return v.publicKey, nil
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse token: %w", err)
 	}

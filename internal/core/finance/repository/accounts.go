@@ -1200,7 +1200,6 @@ func (r *accountsRepository) GetAccountChildrenHierarchy(ctx context.Context, pa
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -1241,7 +1240,6 @@ func (r *accountsRepository) GetAccountSubtree(ctx context.Context, accountID uu
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
