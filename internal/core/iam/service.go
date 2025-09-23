@@ -10,6 +10,7 @@ import (
 	"github.com/niiniyare/erp/internal/core/iam/authn"
 	"github.com/niiniyare/erp/internal/core/iam/authz"
 	"github.com/niiniyare/erp/internal/core/iam/policy"
+	"github.com/niiniyare/erp/internal/core/settings"
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -38,6 +39,7 @@ type service struct {
 	auditService       audit.Service
 	featureFlagService featureflag.Service
 	cache              cache.Service
+	setting            settings.SettingsService
 
 	// Shared infrastructure
 	logger  logger.Logger
@@ -53,6 +55,7 @@ func NewService(
 	tenantService tenant.Service,
 	auditService audit.Service,
 	featureFlagService featureflag.Service,
+	setting settings.SettingsService,
 	cache cache.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
@@ -65,6 +68,7 @@ func NewService(
 		tenantService:      tenantService,
 		auditService:       auditService,
 		featureFlagService: featureFlagService,
+		setting:            setting,
 		cache:              cache,
 		logger:             logger,
 		metrics:            metrics,

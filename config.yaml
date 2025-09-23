@@ -204,6 +204,192 @@ logger:
   version: "1.0.0"                 # Service version for logging
   output: "stdout"                  # Output destination: stdout, stderr, or file path
 
+# UI Configuration
+ui:
+  # UI Server settings
+  server:
+    port: "8080"
+    host: "0.0.0.0"
+    read_timeout: "30s"
+    write_timeout: "30s"
+    idle_timeout: "120s"
+    multi_port:
+      enabled: false
+      console_port: "8081"
+      workspace_port: "8082"
+      portal_port: "8083"
+    tls:
+      enabled: false
+      cert_file: ""
+      key_file: ""
+      min_version: "1.2"
+
+  # Admin Console UI settings
+  console:
+    name: "Admin Console"
+    description: "Administrative interface for system management"
+    version: "1.0.0"
+    enabled: true
+    features:
+      dark_mode: true
+      notifications: true
+      real_time_update: false
+      bulk_operations: true
+      export: true
+      search: true
+      multi_language: false
+
+  # Tenant Workspace UI settings
+  workspace:
+    name: "Tenant Workspace"
+    description: "Collaborative workspace for tenant users"
+    version: "1.0.0"
+    enabled: true
+    features:
+      dark_mode: true
+      notifications: true
+      real_time_update: true
+      bulk_operations: false
+      export: true
+      search: true
+      multi_language: false
+
+  # Client Portal UI settings
+  portal:
+    name: "Client Portal"
+    description: "Self-service portal for end customers"
+    version: "1.0.0"
+    enabled: true
+    features:
+      dark_mode: true
+      notifications: true
+      real_time_update: false
+      bulk_operations: false
+      export: false
+      search: true
+      multi_language: false
+
+  # Security settings for UI
+  security:
+    jwt:
+      algorithm: "RS256"
+      public_key_path: ""
+      private_key_path: ""
+      issuer: "awo-erp"
+      audience: "awo-erp-ui"
+      access_token_ttl: "15m"
+      refresh_token_ttl: "24h"
+      clock_skew: "5m"
+      validate_audience: true
+      validate_issuer: true
+    cors:
+      enabled: true
+      allowed_origins: []
+      allowed_methods: []
+      allowed_headers: []
+      exposed_headers: []
+      allow_credentials: true
+      max_age: 86400
+    csp:
+      enabled: true
+      default_src: "'self'"
+      script_src: "'self' 'unsafe-inline' https://cdn.tailwindcss.com"
+      style_src: "'self' 'unsafe-inline' https://cdn.tailwindcss.com"
+      img_src: "'self' data: https:"
+      font_src: "'self' https://fonts.gstatic.com"
+      connect_src: "'self'"
+      report_uri: ""
+      report_only: false
+    auth:
+      oauth:
+        enabled: false
+        providers: {}
+        redirect_url: ""
+      saml:
+        enabled: false
+        metadata_url: ""
+        entity_id: ""
+        acs_url: ""
+        cert_path: ""
+        key_path: ""
+      ldap:
+        enabled: false
+        host: ""
+        port: 389
+        use_tls: false
+        base_dn: ""
+        bind_dn: ""
+        bind_passwd: ""
+        user_filter: "(uid=%s)"
+      mfa:
+        enabled: false
+        required: false
+        methods: []
+        totp_issuer: "Awo ERP"
+        sms_provider: ""
+      password_policy:
+        min_length: 8
+        require_upper: true
+        require_lower: true
+        require_digit: true
+        require_special: true
+        max_age: 90
+        history_count: 5
+    encryption:
+      data_key: ""
+      key_derivation: "pbkdf2"
+      force_https: true
+      hsts_max_age: 31536000
+
+  # Session management for UI
+  session:
+    store: "redis"
+    redis_url: ""
+    redis_db: 0
+    key_prefix: "ui:session:"
+    cookie:
+      name: "awo_session"
+      domain: ""
+      path: "/"
+      secure: true
+      http_only: true
+      same_site: "Lax"
+    ttl: "8h"
+    refresh_ttl: "720h" # 30 days
+    inactivity_timeout: "2h"
+    max_concurrent: 3
+    regenerate: true
+    csrf_token: true
+
+  # Asset management for UI
+  assets:
+    static_url: "/static"
+    cache_max_age: "24h"
+    compression_level: 6
+    cdn:
+      enabled: false
+      base_url: ""
+      key_id: ""
+      secret_key: ""
+    build:
+      source_path: "./web/src"
+      build_path: "./internal/ui/assets"
+      minify: true
+      sourcemaps: false
+
+  # Development settings for UI
+  development:
+    enabled: false
+    hot_reload: false
+    mock_data: false
+    debug_mode: false
+    log_level: "info"
+    log_requests: true
+    log_responses: false
+    profiling: false
+    metrics: true
+    dev_tools_port: "9090"
+
 # Migration Configuration
 migration:
   url: "file://db/migration"

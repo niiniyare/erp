@@ -55,3 +55,4 @@ validation:
 # - Exact matches take priority over patterns
 # - All endpoints not listed here require tenant context
 # - Changes to this file should be reviewed by security team
+

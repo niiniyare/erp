@@ -16,6 +16,10 @@ import (
 	"github.com/niiniyare/erp/internal/core/audit"
 	"github.com/niiniyare/erp/internal/core/entity"
 	"github.com/niiniyare/erp/internal/core/featureflag"
+	"github.com/niiniyare/erp/internal/core/iam"
+	"github.com/niiniyare/erp/internal/core/iam/authn"
+	"github.com/niiniyare/erp/internal/core/iam/authz"
+	"github.com/niiniyare/erp/internal/core/iam/policy"
 	"github.com/niiniyare/erp/internal/core/identity"
 	"github.com/niiniyare/erp/internal/core/notification"
 	"github.com/niiniyare/erp/internal/core/tenant"
@@ -27,6 +31,7 @@ import (
 
 type Services struct {
 	// Core services
+	IAMService                iam.Service
 	TenantService             tenant.Service
 	TenantProvisioningService tenant.ProvisioningService
 	EntityService             entity.Service
@@ -70,6 +75,27 @@ func InitializeServices(store db.Store, redisClient cache.Service, logger logger
 		policyEvaluationRepo,
 		identityService,
 		tenantService,
+		logger.WithFields(loggerPkg.Fields{}),
+		metricsService,
+		tracingService,
+	)
+
+	// Initialize IAM service components
+	// For now, we'll use adapters that wrap existing services
+	authnService := NewAuthnServiceAdapter(identityService)
+	authzService := NewAuthzServiceAdapter(abacService)
+	policyService := NewPolicyServiceAdapter(abacService)
+
+	// Initialize unified IAM service
+	iamService := iam.NewService(
+		authnService,
+		authzService,
+		policyService,
+		tenantService,
+		auditService,
+		featureFlagService,
+		nil, // settings service - can be nil for now
+		redisClient,
 		logger.WithFields(loggerPkg.Fields{}),
 		metricsService,
 		tracingService,
@@ -151,6 +177,7 @@ func InitializeServices(store db.Store, redisClient cache.Service, logger logger
 
 	// Create services struct
 	services := &Services{
+		IAMService:                iamService,
 		TenantService:             tenantService,
 		TenantProvisioningService: tenantProvisioningService,
 		EntityService:             entityService,
@@ -246,4 +273,41 @@ func formatServiceName(fieldName string) string {
 	}
 
 	return strings.ToLower(result.String())
+}
+
+// IAM Service Adapters
+// These adapters wrap existing services to implement the IAM interfaces
+
+// NewAuthnServiceAdapter creates an authentication service adapter
+func NewAuthnServiceAdapter(identityService identity.Service) authn.Service {
+	// For now, return a simple adapter that wraps the identity service
+	// In a full implementation, this would be a proper adapter
+	return &authnServiceAdapter{identityService: identityService}
+}
+
+// NewAuthzServiceAdapter creates an authorization service adapter  
+func NewAuthzServiceAdapter(abacService abac.Service) authz.Service {
+	// For now, return a simple adapter that wraps the ABAC service
+	// In a full implementation, this would be a proper adapter
+	return &authzServiceAdapter{abacService: abacService}
+}
+
+// NewPolicyServiceAdapter creates a policy service adapter
+func NewPolicyServiceAdapter(abacService abac.Service) policy.Service {
+	// For now, return a simple adapter that wraps the ABAC service
+	// In a full implementation, this would be a proper adapter
+	return &policyServiceAdapter{abacService: abacService}
+}
+
+// Adapter implementations (simplified)
+type authnServiceAdapter struct {
+	identityService identity.Service
+}
+
+type authzServiceAdapter struct {
+	abacService abac.Service
+}
+
+type policyServiceAdapter struct {
+	abacService abac.Service
 }

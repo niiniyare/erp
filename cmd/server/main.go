@@ -79,7 +79,7 @@ func main() {
 	gracefulShutdown(ctx, cancel, srv, app)
 }
 
-// initializeHTTPServer creates the HTTP server using existing GOA setup
+// initializeHTTPServer creates the HTTP server using existing GOA setup and UI integration
 func initializeHTTPServer(app *application.Core) (http.Handler, error) {
 	// Extract infrastructure services from application core
 	appServices := app.GetServices()
@@ -115,7 +115,22 @@ func initializeHTTPServer(app *application.Core) (http.Handler, error) {
 		"status": "ready",
 	})
 	
-	return goaServer.Handler, nil
+	// Initialize UI integration
+	uiIntegration, err := NewUIIntegration(app, businessServices, appServices.Logger)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize UI integration: %w", err)
+	}
+	
+	// Create combined handler that serves both API and UI routes
+	combinedHandler := uiIntegration.CreateCombinedHandler(goaServer.Handler)
+	
+	logger.Info("UI integration completed successfully", logger.Fields{
+		"ui_routes": "console, workspace, portal",
+		"integration": "single-port",
+		"status": "ready",
+	})
+	
+	return combinedHandler, nil
 }
 
 // gracefulShutdown handles graceful shutdown of the application

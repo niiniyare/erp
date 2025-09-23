@@ -1,3 +1,4 @@
+
 package config
 
 import (
@@ -45,6 +46,7 @@ type AppConfig struct {
 	Auth     AuthSettings     `yaml:"auth" mapstructure:"auth"`
 	Features FeatureSettings  `yaml:"features" mapstructure:"features"`
 	Logger   LoggerSettings   `yaml:"logger" mapstructure:"logger"`
+	UI       UIConfig         `yaml:"ui" mapstructure:"ui"`
 }
 
 type AppSettings struct {
@@ -190,6 +192,10 @@ func (c *AppConfig) Validate() error {
 		return fmt.Errorf("database.host is required")
 	}
 
+	if err := c.UI.Validate(); err != nil {
+		return fmt.Errorf("ui config validation failed: %w", err)
+	}
+
 	return nil
 }
 
@@ -271,6 +277,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("logger.service_name", "AwoERP")
 	v.SetDefault("logger.version", "1.0.0")
 	v.SetDefault("logger.output", "stdout")
+
+	// UI Defaults
+	SetUIDefaults(v)
 }
 
 // bindEnvVars binds environment variables
@@ -324,6 +333,9 @@ func bindEnvVars(v *viper.Viper) {
 	v.BindEnv("logger.service_name", "SERVICE_NAME")
 	v.BindEnv("logger.version", "SERVICE_VERSION")
 	v.BindEnv("logger.output", "LOG_OUTPUT")
+
+	// UI
+	BindUIEnvVars(v)
 }
 
 // loadDotEnvFile loads .env file if it exists (for backward compatibility)
