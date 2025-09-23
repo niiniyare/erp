@@ -1,0 +1,364 @@
+package components
+
+import "github.com/niiniyare/erp/internal/ui/types"
+
+// DataTable provides a comprehensive table component with search, filter, and pagination
+templ DataTable(props types.DataTableProps) {
+	<div 
+		class="relative overflow-x-auto shadow-md sm:rounded-lg"
+		x-data="dataTable({ 
+			searchUrl: '{ props.SearchURL }',
+			filterUrl: '{ props.FilterURL }',
+			sortUrl: '{ props.SortURL }'
+		})"
+		x-init="initTable()">
+		
+		<!-- Table header with search and actions -->
+		<div class="flex flex-column sm:flex-row flex-wrap space-y-4 sm:space-y-0 items-center justify-between p-4 bg-white dark:bg-gray-900">
+			<div class="flex items-center space-x-4">
+				<!-- Bulk actions dropdown -->
+				if props.BulkActions != nil && len(props.BulkActions) > 0 {
+					<div class="relative" x-data="{ bulkOpen: false }">
+						<button 
+							@click="bulkOpen = !bulkOpen"
+							:disabled="selectedRows.length === 0"
+							class="inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+							<i class="fas fa-list mr-2"></i>
+							Actions
+							<i class="fas fa-chevron-down ml-2"></i>
+						</button>
+						
+						<!-- Bulk actions dropdown menu -->
+						<div 
+							x-show="bulkOpen && selectedRows.length > 0"
+							@click.away="bulkOpen = false"
+							x-transition:enter="transition ease-out duration-100"
+							x-transition:enter-start="transform opacity-0 scale-95"
+							x-transition:enter-end="transform opacity-100 scale-100"
+							x-transition:leave="transition ease-in duration-75"
+							x-transition:leave-start="transform opacity-100 scale-100"
+							x-transition:leave-end="transform opacity-0 scale-95"
+							class="absolute z-10 mt-2 w-48 bg-white divide-y divide-gray-100 rounded-lg shadow dark:bg-gray-700 dark:divide-gray-600"
+							style="display: none;">
+							<ul class="p-3 space-y-1 text-sm text-gray-700 dark:text-gray-200">
+								for _, action := range props.BulkActions {
+									<li>
+										<button 
+											@click="executeBulkAction('{ action.Action }'); bulkOpen = false"
+											class="flex items-center w-full p-2 text-left rounded hover:bg-gray-100 dark:hover:bg-gray-600">
+											if action.Icon != "" {
+												<i class="{ action.Icon } mr-2"></i>
+											}
+											{ action.Label }
+										</button>
+									</li>
+								}
+							</ul>
+						</div>
+					</div>
+				}
+				
+				<!-- Filter dropdown -->
+				if props.Filters != nil && len(props.Filters) > 0 {
+					<div class="relative" x-data="{ filterOpen: false }">
+						<button 
+							@click="filterOpen = !filterOpen"
+							class="inline-flex items-center text-gray-500 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-3 py-1.5 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700">
+							<i class="fas fa-filter mr-2"></i>
+							<span x-text="getActiveFilterLabel()"></span>
+							<i class="fas fa-chevron-down ml-2"></i>
+						</button>
+						
+						<!-- Filter dropdown menu -->
+						<div 
+							x-show="filterOpen"
+							@click.away="filterOpen = false"
+							x-transition:enter="transition ease-out duration-100"
+							x-transition:enter-start="transform opacity-0 scale-95"
+							x-transition:enter-end="transform opacity-100 scale-100"
+							x-transition:leave="transition ease-in duration-75"
+							x-transition:leave-start="transform opacity-100 scale-100"
+							x-transition:leave-end="transform opacity-0 scale-95"
+							class="absolute z-10 mt-2 w-48 bg-white divide-y divide-gray-100 rounded-lg shadow dark:bg-gray-700 dark:divide-gray-600"
+							style="display: none;">
+							<ul class="p-3 space-y-1 text-sm text-gray-700 dark:text-gray-200">
+								for _, filter := range props.Filters {
+									<li>
+										<div class="flex items-center p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-600">
+											<input 
+												:id="'filter-' + '{ filter.Value }'"
+												type="radio" 
+												value="{ filter.Value }"
+												name="filter-radio"
+												x-model="activeFilter"
+												@change="applyFilter(); filterOpen = false"
+												class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+											<label 
+												:for="'filter-' + '{ filter.Value }'"
+												class="w-full ml-2 text-sm font-medium text-gray-900 rounded dark:text-gray-300 cursor-pointer">
+												{ filter.Label }
+											</label>
+										</div>
+									</li>
+								}
+							</ul>
+						</div>
+					</div>
+				}
+				
+				<!-- Add new button -->
+				if props.AddURL != "" {
+					<a 
+						href={ templ.URL(props.AddURL) }
+						class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-blue-600 dark:hover:bg-blue-700">
+						<i class="fas fa-plus mr-2"></i>
+						{ props.AddButtonText }
+					</a>
+				}
+			</div>
+			
+			<!-- Search -->
+			if props.Searchable {
+				<label for="table-search" class="sr-only">Search</label>
+				<div class="relative">
+					<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+						<i class="fas fa-search w-4 h-4 text-gray-500 dark:text-gray-400"></i>
+					</div>
+					<input 
+						type="text" 
+						id="table-search"
+						x-model="searchTerm"
+						@input.debounce.300ms="performSearch()"
+						class="block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+						placeholder="{ props.SearchPlaceholder }">
+				</div>
+			}
+		</div>
+		
+		<!-- Table -->
+		<div class="overflow-x-auto">
+			<table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+				<thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+					<tr>
+						<!-- Select all checkbox -->
+						if props.Selectable {
+							<th scope="col" class="p-4">
+								<div class="flex items-center">
+									<input 
+										id="checkbox-all"
+										type="checkbox"
+										x-model="allSelected"
+										@change="toggleAll()"
+										class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+									<label for="checkbox-all" class="sr-only">Select all</label>
+								</div>
+							</th>
+						}
+						
+						<!-- Column headers -->
+						for _, column := range props.Columns {
+							<th scope="col" class="px-6 py-3">
+								if column.Sortable {
+									<button 
+										@click="toggleSort('{ column.Key }')"
+										class="flex items-center group">
+										<span>{ column.Label }</span>
+										<span class="ml-2">
+											<i 
+												:class="{
+													'fas fa-sort': sortColumn !== '{ column.Key }',
+													'fas fa-sort-up': sortColumn === '{ column.Key }' && sortDirection === 'asc',
+													'fas fa-sort-down': sortColumn === '{ column.Key }' && sortDirection === 'desc'
+												}"
+												class="w-3 h-3 text-gray-400 group-hover:text-gray-500">
+											</i>
+										</span>
+									</button>
+								} else {
+									{ column.Label }
+								}
+							</th>
+						}
+						
+						<!-- Actions column -->
+						if props.Actions != nil && len(props.Actions) > 0 {
+							<th scope="col" class="px-6 py-3">
+								Actions
+							</th>
+						}
+					</tr>
+				</thead>
+				<tbody id="table-body">
+					for i, row := range props.Rows {
+						@DataTableRow(types.DataTableRowProps{
+							Row: row,
+							Columns: props.Columns,
+							Actions: props.Actions,
+							Selectable: props.Selectable,
+							Index: i,
+						})
+					}
+				</tbody>
+			</table>
+		</div>
+		
+		<!-- Loading indicator -->
+		<div 
+			x-show="loading" 
+			class="flex items-center justify-center p-8"
+			style="display: none;">
+			<div class="flex items-center space-x-2">
+				<i class="fas fa-spinner fa-spin text-gray-400"></i>
+				<span class="text-gray-500">Loading...</span>
+			</div>
+		</div>
+		
+		<!-- Empty state -->
+		<div 
+			x-show="!loading && rows.length === 0" 
+			class="flex flex-col items-center justify-center p-8 text-center"
+			style="display: none;">
+			<i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+			<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No data found</h3>
+			<p class="text-gray-500 dark:text-gray-400">
+				{ props.EmptyMessage }
+			</p>
+			if props.AddURL != "" {
+				<a 
+					href={ templ.URL(props.AddURL) }
+					class="inline-flex items-center px-4 py-2 mt-4 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+					<i class="fas fa-plus mr-2"></i>
+					{ props.AddButtonText }
+				</a>
+			}
+		</div>
+		
+		<!-- Pagination -->
+		if props.Pagination.Total > 0 {
+			<div class="flex flex-col items-center p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+				<!-- Results info -->
+				<span class="text-sm text-gray-700 dark:text-gray-400">
+					Showing 
+					<span class="font-semibold text-gray-900 dark:text-white">
+						{ templ.JSONString((props.Pagination.CurrentPage - 1) * props.Pagination.Limit + 1) }
+					</span> 
+					to 
+					<span class="font-semibold text-gray-900 dark:text-white">
+						{ templ.JSONString(minInt(props.Pagination.CurrentPage * props.Pagination.Limit, props.Pagination.Total)) }
+					</span> 
+					of 
+					<span class="font-semibold text-gray-900 dark:text-white">{ templ.JSONString(props.Pagination.Total) }</span> 
+					entries
+				</span>
+				
+				<!-- Pagination buttons -->
+				<div class="inline-flex mt-2 xs:mt-0">
+					<button 
+						@click="goToPage({ templ.JSONString(props.Pagination.CurrentPage - 1) })"
+						:disabled="!{ templ.JSONString(props.Pagination.HasPrev) }"
+						class="flex items-center justify-center px-3 h-8 text-sm font-medium text-white bg-gray-800 rounded-l hover:bg-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed">
+						<i class="fas fa-chevron-left w-3 h-3 mr-2"></i>
+						Prev
+					</button>
+					<button 
+						@click="goToPage({ templ.JSONString(props.Pagination.CurrentPage + 1) })"
+						:disabled="!{ templ.JSONString(props.Pagination.HasNext) }"
+						class="flex items-center justify-center px-3 h-8 text-sm font-medium text-white bg-gray-800 border-0 border-l border-gray-700 rounded-r hover:bg-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed">
+						Next
+						<i class="fas fa-chevron-right w-3 h-3 ml-2"></i>
+					</button>
+				</div>
+			</div>
+		}
+	</div>
+}
+
+// DataTableRow renders individual table rows
+templ DataTableRow(props types.DataTableRowProps) {
+	<tr 
+		class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+		x-data="{ rowSelected: false }"
+		:class="{ 'bg-blue-50 dark:bg-blue-900': rowSelected }">
+		
+		<!-- Select checkbox -->
+		if props.Selectable {
+			<td class="w-4 p-4">
+				<div class="flex items-center">
+					<input 
+						:id="'checkbox-table-' + { templ.JSONString(props.Index) }"
+						type="checkbox"
+						x-model="rowSelected"
+						@change="updateSelectedRows('{ props.Row.ID }', rowSelected)"
+						class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 dark:focus:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+					<label :for="'checkbox-table-' + { templ.JSONString(props.Index) }" class="sr-only">checkbox</label>
+				</div>
+			</td>
+		}
+		
+		<!-- Data cells -->
+		for _, column := range props.Columns {
+			<td class="px-6 py-4">
+				if column.Key == props.Columns[0].Key {
+					<!-- First column is typically the primary field -->
+					<div class="font-medium text-gray-900 whitespace-nowrap dark:text-white">
+						{ props.Row.Data[column.Key] }
+					</div>
+				} else {
+					{ props.Row.Data[column.Key] }
+				}
+			</td>
+		}
+		
+		<!-- Actions -->
+		if props.Actions != nil && len(props.Actions) > 0 {
+			<td class="px-6 py-4">
+				<div class="flex items-center space-x-2">
+					for _, action := range props.Actions {
+						if action.Type == "link" {
+							<a 
+								href={ templ.URL(action.URL + "?id=" + props.Row.ID) }
+								class="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+								title={ action.Label }>
+								if action.Icon != "" {
+									<i class="{ action.Icon }"></i>
+								} else {
+									{ action.Label }
+								}
+							</a>
+						} else if action.Type == "button" {
+							<button 
+								@click="executeRowAction('{ action.Action }', '{ props.Row.ID }')"
+								class="font-medium text-red-600 dark:text-red-500 hover:underline"
+								title={ action.Label }>
+								if action.Icon != "" {
+									<i class="{ action.Icon }"></i>
+								} else {
+									{ action.Label }
+								}
+							</button>
+						} else if action.Type == "modal" {
+							<button 
+								@click="openActionModal('{ action.ModalID }', '{ props.Row.ID }')"
+								class="font-medium text-green-600 dark:text-green-500 hover:underline"
+								title={ action.Label }>
+								if action.Icon != "" {
+									<i class="{ action.Icon }"></i>
+								} else {
+									{ action.Label }
+								}
+							</button>
+						}
+					}
+				</div>
+			</td>
+		}
+	</tr>
+}
+
+// Helper function to calculate minimum of two integers
+func minInt(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}

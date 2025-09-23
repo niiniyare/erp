@@ -42,6 +42,13 @@ var (
 					WithSuggestion("Choose a different subdomain").
 					WithSuggestion("Try adding numbers or variations to make it unique")
 
+	// ErrSubdomainSoftDeleted indicates a subdomain is taken by a soft-deleted tenant
+	ErrSubdomainSoftDeleted = NewBusinessError("SUBDOMAIN_SOFT_DELETED", "Subdomain is unavailable").
+				WithHTTPStatus(http.StatusConflict).
+				WithCategory(CategoryTenant).
+				WithSuggestion("This subdomain was recently used. Please choose a different one or try again later.").
+				WithSuggestion("If you own this subdomain and want to reactivate it, please contact support.")
+
 	// ErrFeatureNotEnabled indicates a feature is not available for the tenant
 	ErrFeatureNotEnabled = NewBusinessError("FEATURE_NOT_ENABLED", "Feature not enabled for this tenant").
 				WithHTTPStatus(http.StatusForbidden).

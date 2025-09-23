@@ -100,23 +100,35 @@ func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*T
 	// Validate subdomain uniqueness if provided
 	if req.Subdomain != nil && *req.Subdomain != "" {
 		// Try to get tenant by subdomain - if found, subdomain exists
-		_, err := s.repo.GetBySubdomain(ctx, *req.Subdomain)
-		if err == nil {
-			// Tenant found, subdomain exists
-			logger.WarnContext(ctx, "Subdomain already exists", logger.Fields{
-				"subdomain": *req.Subdomain,
-			})
-			return nil, sharedErrors.ErrSubdomainAlreadyExists
-		}
-		// If error is not "tenant not found", it's a real error
-		if !sharedErrors.IsTenantNotFound(err) {
+		existingTenant, err := s.repo.GetBySubdomain(ctx, *req.Subdomain)
+		if err != nil && !sharedErrors.IsTenantNotFound(err) {
+			// A real error occurred, not just "not found"
 			logger.ErrorContext(ctx, "Failed to check subdomain existence", logger.Fields{
 				"subdomain": *req.Subdomain,
 				"error":     err.Error(),
 			})
 			return nil, fmt.Errorf("failed to check subdomain existence: %w", err)
 		}
-		// If tenant not found error, subdomain is available (good)
+
+		if existingTenant != nil {
+			// A tenant with this subdomain exists, check if it's active or soft-deleted
+			if existingTenant.DeletedAt == nil {
+				// Tenant is soft-deleted. For now, we'll prevent creation.
+				// A future implementation could allow for re-activation.
+				logger.WarnContext(ctx, "Attempted to create a tenant with a soft-deleted subdomain", logger.Fields{
+					"subdomain": *req.Subdomain,
+					"tenant_id": existingTenant.ID,
+				})
+				return nil, sharedErrors.ErrSubdomainSoftDeleted
+			}
+			// Tenant is active
+			logger.WarnContext(ctx, "Subdomain already exists", logger.Fields{
+				"subdomain": *req.Subdomain,
+			})
+			return nil, sharedErrors.ErrSubdomainAlreadyExists
+		}
+		// If we are here, err is either nil and existingTenant is nil, or err is TenantNotFound.
+		// In both cases, the subdomain is available.
 	}
 
 	// Set default status if not provided

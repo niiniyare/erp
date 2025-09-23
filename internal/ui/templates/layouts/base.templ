@@ -1,0 +1,335 @@
+package layouts
+
+import (
+	"github.com/niiniyare/erp/internal/ui/types"
+	"github.com/niiniyare/erp/internal/ui/templates/components"
+)
+
+// BaseLayout provides the main application layout with sidebar and navigation
+templ BaseLayout(title string, user *types.UserInfo, sidebarItems []types.NavItem) {
+	<!DOCTYPE html>
+	<html lang="en" x-data="{ sidebarOpen: false }" x-init="initializeApp()">
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<title>{ title } - ERP System</title>
+		
+		<!-- HTMX for partial page updates -->
+		<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+		
+		<!-- Alpine.js for client-side reactivity -->
+		<script src="https://unpkg.com/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
+		
+		<!-- Flowbite CSS -->
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.css" rel="stylesheet"/>
+		
+		<!-- Font Awesome for icons -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+		
+		<!-- Meta tags for HTMX -->
+		<meta name="htmx-config" content='{"globalViewTransitions": true, "scrollBehavior": "smooth"}'/>
+		
+		<!-- CSRF Token -->
+		<meta name="csrf-token" content={ getCsrfToken() }/>
+	</head>
+	<body class="bg-gray-50" 
+		  hx-headers='{"X-CSRF-Token": document.querySelector("meta[name=csrf-token]").content}'>
+		
+		<!-- Global Alpine.js stores initialization -->
+		<script>
+			document.addEventListener('alpine:init', () => {
+				// Application state store
+				Alpine.store('app', {
+					sidebarOpen: false,
+					theme: localStorage.getItem('theme') || 'light',
+					notifications: [],
+					user: @if user != nil { {
+						id: '{ user.ID }',
+						name: '{ user.Name }',
+						email: '{ user.Email }',
+						role: '{ user.Role }',
+						tenantId: '{ user.TenantID }'
+					} } else { null },
+					permissions: [],
+					features: {},
+					config: {
+						dateFormat: 'YYYY-MM-DD',
+						currency: 'USD',
+						timezone: 'UTC'
+					},
+					
+					// Methods
+					toggleSidebar() {
+						this.sidebarOpen = !this.sidebarOpen;
+					},
+					
+					addNotification(type, message, duration = 5000) {
+						const id = Date.now();
+						this.notifications.push({ id, type, message });
+						setTimeout(() => this.removeNotification(id), duration);
+					},
+					
+					removeNotification(id) {
+						this.notifications = this.notifications.filter(n => n.id !== id);
+					},
+					
+					setTheme(theme) {
+						this.theme = theme;
+						localStorage.setItem('theme', theme);
+						document.documentElement.setAttribute('data-theme', theme);
+					},
+					
+					hasPermission(permission) {
+						return this.permissions.includes(permission) || this.permissions.includes('*');
+					},
+					
+					hasFeature(feature) {
+						return this.features[feature] === true;
+					}
+				});
+				
+				// Form state management store
+				Alpine.store('forms', {
+					drafts: {},
+					validation: {},
+					validating: {},
+					
+					saveDraft(formId, data) {
+						this.drafts[formId] = {
+							data,
+							timestamp: Date.now()
+						};
+						localStorage.setItem(`draft_${formId}`, JSON.stringify(this.drafts[formId]));
+					},
+					
+					loadDraft(formId) {
+						const stored = localStorage.getItem(`draft_${formId}`);
+						if (stored) {
+							this.drafts[formId] = JSON.parse(stored);
+							return this.drafts[formId].data;
+						}
+						return null;
+					},
+					
+					clearDraft(formId) {
+						delete this.drafts[formId];
+						localStorage.removeItem(`draft_${formId}`);
+					},
+					
+					setFieldValidation(form, field, isValid, message = '') {
+						if (!this.validation[form]) {
+							this.validation[form] = {};
+						}
+						this.validation[form][field] = { isValid, message };
+					},
+					
+					setValidating(field, validating) {
+						this.validating[field] = validating;
+					}
+				});
+				
+				// Cache store for performance
+				Alpine.store('cache', {
+					data: {},
+					timestamps: {},
+					ttl: 5 * 60 * 1000, // 5 minutes
+					
+					set(key, value) {
+						this.data[key] = value;
+						this.timestamps[key] = Date.now();
+					},
+					
+					get(key) {
+						const timestamp = this.timestamps[key];
+						if (!timestamp || (Date.now() - timestamp) > this.ttl) {
+							delete this.data[key];
+							delete this.timestamps[key];
+							return null;
+						}
+						return this.data[key];
+					},
+					
+					clear(pattern = null) {
+						if (pattern) {
+							Object.keys(this.data).forEach(key => {
+								if (key.includes(pattern)) {
+									delete this.data[key];
+									delete this.timestamps[key];
+								}
+							});
+						} else {
+							this.data = {};
+							this.timestamps = {};
+						}
+					}
+				});
+			});
+			
+			// Global utility functions
+			function initializeApp() {
+				// Sync state with server
+				syncAppState();
+				
+				// Set up HTMX event listeners
+				setupHTMXEvents();
+				
+				// Initialize theme
+				const theme = localStorage.getItem('theme') || 'light';
+				document.documentElement.setAttribute('data-theme', theme);
+			}
+			
+			function syncAppState() {
+				fetch('/api/app-state', {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-CSRF-Token': document.querySelector('meta[name=csrf-token]').content
+					}
+				})
+				.then(response => response.json())
+				.then(data => {
+					if (data.permissions) Alpine.store('app').permissions = data.permissions;
+					if (data.features) Alpine.store('app').features = data.features;
+					if (data.config) Alpine.store('app').config = { ...Alpine.store('app').config, ...data.config };
+				})
+				.catch(error => console.error('Failed to sync app state:', error));
+			}
+			
+			function setupHTMXEvents() {
+				// Handle HTMX success/error responses
+				document.body.addEventListener('htmx:afterSwap', function(evt) {
+					// Re-initialize Alpine components in swapped content
+					if (evt.detail.target && typeof Alpine !== 'undefined') {
+						Alpine.initTree(evt.detail.target);
+					}
+				});
+				
+				// Handle custom triggers for notifications
+				document.body.addEventListener('htmx:afterRequest', function(evt) {
+					const triggerHeader = evt.detail.xhr.getResponseHeader('HX-Trigger');
+					if (triggerHeader) {
+						try {
+							const triggers = JSON.parse(triggerHeader);
+							if (triggers.showNotification) {
+								Alpine.store('app').addNotification(
+									triggers.showNotification.type,
+									triggers.showNotification.message
+								);
+							}
+						} catch (e) {
+							console.error('Error parsing HX-Trigger header:', e);
+						}
+					}
+				});
+				
+				// Loading indicators
+				document.body.addEventListener('htmx:beforeRequest', function() {
+					document.body.style.cursor = 'progress';
+				});
+				
+				document.body.addEventListener('htmx:afterRequest', function() {
+					document.body.style.cursor = 'default';
+				});
+			}
+			
+			// Global modal functions
+			function closeModal() {
+				document.getElementById('modal-container').innerHTML = '';
+			}
+			
+			function showNotification(type, message) {
+				Alpine.store('app').addNotification(type, message);
+			}
+		</script>
+		
+		<!-- Sidebar -->
+		@components.Sidebar(sidebarItems, user)
+		
+		<!-- Main Content Area -->
+		<div class="p-4 sm:ml-64">
+			<div class="p-4 border-2 border-gray-200 border-dashed rounded-lg" id="main-content">
+				{ children... }
+			</div>
+		</div>
+		
+		<!-- Toast Notification Container -->
+		<div id="toast-container" class="fixed top-5 right-5 z-50" x-data>
+			<template x-for="notification in $store.app.notifications" :key="notification.id">
+				<div 
+					x-show="true"
+					x-transition:enter="transform ease-out duration-300 transition"
+					x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+					x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+					x-transition:leave="transition ease-in duration-100"
+					x-transition:leave-start="opacity-100"
+					x-transition:leave-end="opacity-0"
+					:class="{
+						'bg-green-500': notification.type === 'success',
+						'bg-red-500': notification.type === 'error',
+						'bg-yellow-500': notification.type === 'warning',
+						'bg-blue-500': notification.type === 'info'
+					}"
+					class="mb-4 max-w-sm w-full text-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden">
+					<div class="p-4">
+						<div class="flex items-start">
+							<div class="flex-shrink-0">
+								<i :class="{
+									'fas fa-check-circle': notification.type === 'success',
+									'fas fa-exclamation-triangle': notification.type === 'error',
+									'fas fa-exclamation-circle': notification.type === 'warning',
+									'fas fa-info-circle': notification.type === 'info'
+								}" class="h-5 w-5"></i>
+							</div>
+							<div class="ml-3 w-0 flex-1 pt-0.5">
+								<p class="text-sm font-medium" x-text="notification.message"></p>
+							</div>
+							<div class="ml-4 flex-shrink-0 flex">
+								<button 
+									@click="$store.app.removeNotification(notification.id)"
+									class="text-white hover:text-gray-200 focus:outline-none">
+									<i class="fas fa-times h-4 w-4"></i>
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</template>
+		</div>
+		
+		<!-- Modal Container -->
+		<div id="modal-container" class="relative z-50"></div>
+		
+		<!-- Global Loading Indicator -->
+		<div id="global-loading" 
+			 class="fixed inset-0 bg-gray-600 bg-opacity-50 z-50 hidden"
+			 x-show="$store.app.loading"
+			 x-transition:enter="ease-out duration-300"
+			 x-transition:enter-start="opacity-0"
+			 x-transition:enter-end="opacity-100"
+			 x-transition:leave="ease-in duration-200"
+			 x-transition:leave-start="opacity-100"
+			 x-transition:leave-end="opacity-0">
+			<div class="flex items-center justify-center min-h-screen">
+				<div class="bg-white p-4 rounded-lg shadow-lg">
+					<div class="flex items-center space-x-3">
+						<svg class="animate-spin h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24">
+							<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+							<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+						</svg>
+						<span class="text-gray-700">Loading...</span>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<!-- Flowbite JS -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
+	</body>
+	</html>
+}
+
+// Helper function to get CSRF token (to be implemented in context)
+func getCsrfToken() string {
+	// This will be implemented to get CSRF token from context
+	return ""
+}

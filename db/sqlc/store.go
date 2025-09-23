@@ -72,10 +72,19 @@ func NewStore(connPool *pgxpool.Pool) Store {
 
 // NewStoreWithLogger creates a new store with custom logger
 func NewStoreWithLogger(connPool *pgxpool.Pool, log logger.Logger) Store {
+	// Handle nil logger case - create a default logger
+	var storeLogger logger.Logger
+	if log == nil {
+		// Create a default logger if none is provided
+		storeLogger = logger.WithFields(logger.Fields{"component": "db"})
+	} else {
+		storeLogger = log.WithFields(logger.Fields{"component": "db"})
+	}
+
 	return &SQLStore{
 		connPool: connPool,
 		Queries:  New(connPool),
-		logger:   log.WithFields(logger.Fields{"component": "db"}),
+		logger:   storeLogger,
 	}
 }
 
@@ -106,6 +115,7 @@ func DefaultDBConfig() *DBConfig {
 		RetryDelay:     5 * time.Second,
 		ConnectTimeout: 10 * time.Second,
 		HealthTimeout:  5 * time.Second,
+		Logger:         nil, // Will be handled by NewStoreWithLogger
 	}
 }
 
@@ -118,39 +128,42 @@ func NewDBWithConfig(databaseURL string, cfg *DBConfig) (Store, error) {
 	var pool *pgxpool.Pool
 	var lastErr error
 
+	// Create a default logger if none is provided in config
+	var configLogger logger.Logger
+	if cfg.Logger == nil {
+		// Use a basic logger if none provided - you might want to adjust this based on your logger implementation
+		configLogger = logger.WithFields(logger.Fields{"component": "db-config"})
+	} else {
+		configLogger = cfg.Logger
+	}
+
 	// Retry loop for database connection
 	for attempt := 1; attempt <= cfg.MaxRetries; attempt++ {
-		if cfg.Logger != nil {
-			cfg.Logger.InfoContext(context.Background(), "Attempting database connection",
-				logger.Fields{
-					"attempt":     attempt,
-					"max_retries": cfg.MaxRetries,
-				},
-			)
-		}
+		configLogger.InfoContext(context.Background(), "Attempting database connection",
+			logger.Fields{
+				"attempt":     attempt,
+				"max_retries": cfg.MaxRetries,
+			},
+		)
 
 		var err error
 		pool, err = createConnectionPool(databaseURL, cfg)
 		if err != nil {
 			lastErr = err
-			if cfg.Logger != nil {
-				cfg.Logger.ErrorContext(context.Background(), "Database connection attempt failed",
-					logger.Fields{
-						"attempt": attempt,
-						"error":   err.Error(),
-					},
-				)
-			}
+			configLogger.ErrorContext(context.Background(), "Database connection attempt failed",
+				logger.Fields{
+					"attempt": attempt,
+					"error":   err.Error(),
+				},
+			)
 
 			// If this is not the last attempt, wait before retrying
 			if attempt < cfg.MaxRetries {
-				if cfg.Logger != nil {
-					cfg.Logger.InfoContext(context.Background(), "Retrying database connection",
-						logger.Fields{
-							"retry_delay": cfg.RetryDelay.String(),
-						},
-					)
-				}
+				configLogger.InfoContext(context.Background(), "Retrying database connection",
+					logger.Fields{
+						"retry_delay": cfg.RetryDelay.String(),
+					},
+				)
 				time.Sleep(cfg.RetryDelay)
 				continue
 			}
@@ -165,14 +178,12 @@ func NewDBWithConfig(databaseURL string, cfg *DBConfig) (Store, error) {
 		if err != nil {
 			lastErr = err
 			pool.Close()
-			if cfg.Logger != nil {
-				cfg.Logger.ErrorContext(context.Background(), "Database ping failed",
-					logger.Fields{
-						"attempt": attempt,
-						"error":   err.Error(),
-					},
-				)
-			}
+			configLogger.ErrorContext(context.Background(), "Database ping failed",
+				logger.Fields{
+					"attempt": attempt,
+					"error":   err.Error(),
+				},
+			)
 
 			if attempt < cfg.MaxRetries {
 				time.Sleep(cfg.RetryDelay)
@@ -182,16 +193,15 @@ func NewDBWithConfig(databaseURL string, cfg *DBConfig) (Store, error) {
 		}
 
 		// Connection successful
-		if cfg.Logger != nil {
-			cfg.Logger.InfoContext(context.Background(), "Database connection established successfully",
-				logger.Fields{
-					"attempt":   attempt,
-					"max_conns": cfg.MaxConns,
-					"min_conns": cfg.MinConns,
-				},
-			)
-		}
+		configLogger.InfoContext(context.Background(), "Database connection established successfully",
+			logger.Fields{
+				"attempt":   attempt,
+				"max_conns": cfg.MaxConns,
+				"min_conns": cfg.MinConns,
+			},
+		)
 
+		// Pass the logger to NewStoreWithLogger, which will handle nil case
 		return NewStoreWithLogger(pool, cfg.Logger), nil
 	}
 
@@ -284,7 +294,7 @@ func (s *SQLStore) resetTenantContext(ctx context.Context) error {
 // setTenantContext is a helper method to set tenant context
 func (s *SQLStore) setTenantContext(ctx context.Context, exec DBTX, tenantID uuid.UUID, isTransaction bool) error {
 	query := "SELECT set_config('app.current_tenant_id', $1, $2)"
-	_, err := s.db.Exec(ctx, query, tenantID.String(), isTransaction)
+	_, err := exec.Exec(ctx, query, tenantID.String(), isTransaction)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "Failed to set tenant context",
 			logger.Fields{
@@ -578,13 +588,13 @@ func (ts *SQLTxStore) Rollback(ctx context.Context) error {
 	return nil
 }
 
-//Usage patterns:
+// Example usage patterns:
 /*
 // Initialize database with custom configuration
 dbConfig := &DBConfig{
 	MaxConns:       50,
 	MinConns:       10,
-	Logger:         myLogger,
+	Logger:         myLogger, // Can be nil, will be handled gracefully
 	MaxRetries:     5,
 	RetryDelay:     3 * time.Second,
 	ConnectTimeout: 15 * time.Second,

@@ -10,6 +10,7 @@ import (
 	goaTenant "github.com/niiniyare/erp/internal/api/gen/tenant"
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/shared"
+	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/timeutil"
@@ -124,11 +125,16 @@ func (h *TenantHandler) Create(ctx context.Context, p *goaTenant.CreateTenantPay
 			"error_type": classifyError(err),
 		})
 
-		return &goaTenant.CreateTenantResult{
-			Tenant:  nil,
-			Status:  "FAILED",
-			Message: fmt.Sprintf("Tenant creation failed: %s", err.Error()),
-		}, convertServiceError(err)
+		// Convert service error to Goa error
+		switch {
+		case sharedErrors.IsBusinessErrorCode(err, sharedErrors.ErrSubdomainAlreadyExists.Code),
+			sharedErrors.IsBusinessErrorCode(err, sharedErrors.ErrSubdomainSoftDeleted.Code):
+			return nil, goaTenant.MakeConflict(err)
+		case sharedErrors.IsValidationError(err):
+			return nil, goaTenant.MakeBadRequest(err)
+		default:
+			return nil, goaTenant.MakeUnprocessableEntity(err)
+		}
 	}
 
 	// Convert service result to GOA response

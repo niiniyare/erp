@@ -87,7 +87,7 @@ func (h *TenantHandler) ListTenants(w http.ResponseWriter, r *http.Request) {
 		if t.CompanySize != nil {
 			companySize = *t.CompanySize
 		}
-		
+
 		uiTenants[i] = types.TenantItem{
 			ID:          t.ID.String(),
 			Name:        t.Name,
@@ -225,9 +225,9 @@ func (h *TenantHandler) CreateTenant(w http.ResponseWriter, r *http.Request) {
 
 	// Prepare tenant creation request
 	req := tenant.CreateTenantRequest{
-		Name:        name,
-		Email:       email,
-		Status:      tenant.StatusActive,
+		Name:   name,
+		Email:  email,
+		Status: tenant.StatusActive,
 	}
 
 	// Set optional fields
