@@ -1,9 +1,15 @@
 package components
 
-import "github.com/niiniyare/erp/internal/ui/types"
+import (
+	"context"
+	"strings"
+	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/ui/types"
+	"github.com/niiniyare/erp/internal/ui/templates/helpers"
+)
 
 // Sidebar provides responsive navigation with user context and permissions
-templ Sidebar(items []types.NavItem, user *types.UserInfo) {
+templ Sidebar(ctx context.Context, items []types.NavItem, user *types.UserInfo) {
 	<!-- Sidebar backdrop for mobile -->
 	<div 
 		x-show="$store.app.sidebarOpen"
@@ -114,7 +120,7 @@ templ Sidebar(items []types.NavItem, user *types.UserInfo) {
 		<!-- Navigation menu -->
 		<nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
 			for _, item := range items {
-				@NavItem(item)
+				@NavItemWithPermissions(ctx, item)
 			}
 		</nav>
 
@@ -140,6 +146,14 @@ templ Sidebar(items []types.NavItem, user *types.UserInfo) {
 }
 
 // NavItem renders individual navigation items with permissions and state
+// NavItemWithPermissions renders a navigation item with server-side permission checks
+templ NavItemWithPermissions(ctx context.Context, item types.NavItem) {
+	// Check permissions if required
+	if item.Permission == "" || hasNavPermission(ctx, item.Permission) {
+		@NavItem(item)
+	}
+}
+
 templ NavItem(item types.NavItem) {
 	if item.Children != nil && len(item.Children) > 0 {
 		<!-- Expandable menu item -->
@@ -217,6 +231,47 @@ templ NavItem(item types.NavItem) {
 				</a>
 			}
 		</div>
+	}
+}
+
+// Helper function for navigation permission checks
+func hasNavPermission(ctx context.Context, permission string) bool {
+	if permission == "" {
+		return true
+	}
+	
+	// Parse permission string (format: "resource:action" or just "action")
+	parts := strings.Split(permission, ":")
+	if len(parts) == 1 {
+		// Simple action check (e.g., "admin", "manage")
+		return hasPermissionCheck(ctx, "navigation", parts[0], nil)
+	} else if len(parts) == 2 {
+		// Resource:action format (e.g., "users:read", "reports:create")
+		return hasPermissionCheck(ctx, parts[0], parts[1], nil)
+	}
+	
+	return false
+}
+
+// Local permission check helper
+func hasPermissionCheck(ctx context.Context, resourceType, action string, resourceID *uuid.UUID) bool {
+	status := helpers.GetPermissionStatus(ctx, resourceType, action, resourceID)
+	
+	// Map common actions to permission status keys
+	switch action {
+	case "read":
+		return status["canRead"]
+	case "write", "update":
+		return status["canWrite"]
+	case "create":
+		return status["canCreate"]
+	case "delete":
+		return status["canDelete"]
+	case "manage", "admin":
+		return status["canManage"]
+	default:
+		// For custom actions, check if user has manage permission
+		return status["canManage"]
 	}
 }
 

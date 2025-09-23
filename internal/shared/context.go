@@ -10,9 +10,9 @@ import (
 type contextKey string
 
 const (
-	TenantIDKey     contextKey = "tenant_id"
-	UserIDKey       contextKey = "user_id"
-	RequestCtxKey   contextKey = "request_context"
+	TenantIDKey   contextKey = "tenant_id"
+	UserIDKey     contextKey = "user_id"
+	RequestCtxKey contextKey = "request_context"
 )
 
 // WithTenantID adds tenant ID to context

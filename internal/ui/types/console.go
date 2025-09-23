@@ -128,7 +128,7 @@ type CreateTenantPageData struct {
 
 // UserFormData represents data for the user form page
 type UserFormData struct {
-	Title               string
+	Title              string
 	CSRFToken          string
 	User               UserProfile
 	Roles              []SelectOption
@@ -139,14 +139,14 @@ type UserFormData struct {
 
 // UserProfile represents detailed user information
 type UserProfile struct {
-	ID        string
-	FirstName string
-	LastName  string
-	Email     string
-	Username  string
-	Phone     string
-	JobTitle  string
-	Role      string
+	ID         string
+	FirstName  string
+	LastName   string
+	Email      string
+	Username   string
+	Phone      string
+	JobTitle   string
+	Role       string
 	Department string
 }
 

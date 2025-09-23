@@ -1,0 +1,251 @@
+package helpers
+
+import (
+	"context"
+	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/ui/helpers"
+)
+
+// Global permission helper instance (to be injected)
+var permissionHelper *helpers.PermissionHelper
+
+// SetPermissionHelper sets the global permission helper instance
+func SetPermissionHelper(helper *helpers.PermissionHelper) {
+	permissionHelper = helper
+}
+
+// Template helper functions for permission checks
+
+// HasPermission checks if the current user has a specific permission
+templ HasPermission(ctx context.Context, resourceType, action string, resourceID *uuid.UUID) {
+	if hasPermissionCheck(ctx, resourceType, action, resourceID) {
+		{ children... }
+	}
+}
+
+// HasAnyRole checks if the current user has any of the specified roles
+templ HasAnyRole(ctx context.Context, roles []string) {
+	if hasAnyRoleCheck(ctx, roles) {
+		{ children... }
+	}
+}
+
+// CanRead wraps content that should only be visible to users who can read the resource
+templ CanRead(ctx context.Context, resourceType string, resourceID *uuid.UUID) {
+	if canReadCheck(ctx, resourceType, resourceID) {
+		{ children... }
+	}
+}
+
+// CanWrite wraps content that should only be visible to users who can write the resource
+templ CanWrite(ctx context.Context, resourceType string, resourceID *uuid.UUID) {
+	if canWriteCheck(ctx, resourceType, resourceID) {
+		{ children... }
+	}
+}
+
+// CanDelete wraps content that should only be visible to users who can delete the resource
+templ CanDelete(ctx context.Context, resourceType string, resourceID *uuid.UUID) {
+	if canDeleteCheck(ctx, resourceType, resourceID) {
+		{ children... }
+	}
+}
+
+// CanCreate wraps content that should only be visible to users who can create the resource
+templ CanCreate(ctx context.Context, resourceType string) {
+	if canCreateCheck(ctx, resourceType) {
+		{ children... }
+	}
+}
+
+// CanManage wraps content that should only be visible to users who can manage the resource
+templ CanManage(ctx context.Context, resourceType string, resourceID *uuid.UUID) {
+	if canManageCheck(ctx, resourceType, resourceID) {
+		{ children... }
+	}
+}
+
+// IsSystemAdmin wraps content that should only be visible to system administrators
+templ IsSystemAdmin(ctx context.Context) {
+	if isSystemAdminCheck(ctx) {
+		{ children... }
+	}
+}
+
+// IsTenantAdmin wraps content that should only be visible to tenant administrators
+templ IsTenantAdmin(ctx context.Context) {
+	if isTenantAdminCheck(ctx) {
+		{ children... }
+	}
+}
+
+// ConditionalRender renders content based on a permission check result
+templ ConditionalRender(show bool) {
+	if show {
+		{ children... }
+	}
+}
+
+// Helper functions for permission evaluation
+
+func hasPermissionCheck(ctx context.Context, resourceType, action string, resourceID *uuid.UUID) bool {
+	if permissionHelper == nil {
+		return false
+	}
+
+	userID, entityID, err := permissionHelper.GetUserFromContext(ctx)
+	if err != nil {
+		return false
+	}
+
+	return permissionHelper.HasPermission(ctx, &helpers.PermissionContext{
+		UserID:       userID,
+		ResourceType: resourceType,
+		ResourceID:   resourceID,
+		Action:       action,
+		EntityID:     entityID,
+	})
+}
+
+func hasAnyRoleCheck(ctx context.Context, roles []string) bool {
+	if permissionHelper == nil {
+		return false
+	}
+
+	userID, entityID, err := permissionHelper.GetUserFromContext(ctx)
+	if err != nil {
+		return false
+	}
+
+	// Check if user has any of the specified roles by checking role-based permissions
+	for _, role := range roles {
+		if permissionHelper.HasPermission(ctx, &helpers.PermissionContext{
+			UserID:       userID,
+			ResourceType: "role",
+			Action:       role,
+			EntityID:     entityID,
+		}) {
+			return true
+		}
+	}
+	return false
+}
+
+func canReadCheck(ctx context.Context, resourceType string, resourceID *uuid.UUID) bool {
+	if permissionHelper == nil {
+		return false
+	}
+
+	userID, entityID, err := permissionHelper.GetUserFromContext(ctx)
+	if err != nil {
+		return false
+	}
+
+	return permissionHelper.CanRead(ctx, userID, resourceType, resourceID, entityID)
+}
+
+func canWriteCheck(ctx context.Context, resourceType string, resourceID *uuid.UUID) bool {
+	if permissionHelper == nil {
+		return false
+	}
+
+	userID, entityID, err := permissionHelper.GetUserFromContext(ctx)
+	if err != nil {
+		return false
+	}
+
+	return permissionHelper.CanWrite(ctx, userID, resourceType, resourceID, entityID)
+}
+
+func canDeleteCheck(ctx context.Context, resourceType string, resourceID *uuid.UUID) bool {
+	if permissionHelper == nil {
+		return false
+	}
+
+	userID, entityID, err := permissionHelper.GetUserFromContext(ctx)
+	if err != nil {
+		return false
+	}
+
+	return permissionHelper.CanDelete(ctx, userID, resourceType, resourceID, entityID)
+}
+
+func canCreateCheck(ctx context.Context, resourceType string) bool {
+	if permissionHelper == nil {
+		return false
+	}
+
+	userID, entityID, err := permissionHelper.GetUserFromContext(ctx)
+	if err != nil {
+		return false
+	}
+
+	return permissionHelper.CanCreate(ctx, userID, resourceType, entityID)
+}
+
+func canManageCheck(ctx context.Context, resourceType string, resourceID *uuid.UUID) bool {
+	if permissionHelper == nil {
+		return false
+	}
+
+	userID, entityID, err := permissionHelper.GetUserFromContext(ctx)
+	if err != nil {
+		return false
+	}
+
+	return permissionHelper.CanManage(ctx, userID, resourceType, resourceID, entityID)
+}
+
+func isSystemAdminCheck(ctx context.Context) bool {
+	if permissionHelper == nil {
+		return false
+	}
+
+	userID, _, err := permissionHelper.GetUserFromContext(ctx)
+	if err != nil {
+		return false
+	}
+
+	return permissionHelper.IsSystemAdmin(ctx, userID)
+}
+
+func isTenantAdminCheck(ctx context.Context) bool {
+	if permissionHelper == nil {
+		return false
+	}
+
+	userID, entityID, err := permissionHelper.GetUserFromContext(ctx)
+	if err != nil || entityID == nil {
+		return false
+	}
+
+	return permissionHelper.IsTenantAdmin(ctx, userID, *entityID)
+}
+
+// Utility functions for getting permission status without templating
+
+// GetPermissionStatus returns permission check results for JavaScript/Alpine.js
+func GetPermissionStatus(ctx context.Context, resourceType, action string, resourceID *uuid.UUID) map[string]bool {
+	result := make(map[string]bool)
+	
+	if permissionHelper == nil {
+		return result
+	}
+
+	userID, entityID, err := permissionHelper.GetUserFromContext(ctx)
+	if err != nil {
+		return result
+	}
+
+	result["canRead"] = permissionHelper.CanRead(ctx, userID, resourceType, resourceID, entityID)
+	result["canWrite"] = permissionHelper.CanWrite(ctx, userID, resourceType, resourceID, entityID)
+	result["canDelete"] = permissionHelper.CanDelete(ctx, userID, resourceType, resourceID, entityID)
+	result["canCreate"] = permissionHelper.CanCreate(ctx, userID, resourceType, entityID)
+	result["canManage"] = permissionHelper.CanManage(ctx, userID, resourceType, resourceID, entityID)
+	result["isSystemAdmin"] = permissionHelper.IsSystemAdmin(ctx, userID)
+	if entityID != nil {
+		result["isTenantAdmin"] = permissionHelper.IsTenantAdmin(ctx, userID, *entityID)
+	}
+
+	return result
+}

@@ -1,12 +1,13 @@
 package layouts
 
 import (
+	"context"
 	"github.com/niiniyare/erp/internal/ui/types"
 	"github.com/niiniyare/erp/internal/ui/templates/components"
 )
 
 // BaseLayout provides the main application layout with sidebar and navigation
-templ BaseLayout(title string, user *types.UserInfo, sidebarItems []types.NavItem) {
+templ BaseLayout(ctx context.Context, title string, user *types.UserInfo, sidebarItems []types.NavItem) {
 	<!DOCTYPE html>
 	<html lang="en" x-data="{ sidebarOpen: false }" x-init="initializeApp()">
 	<head>
@@ -243,7 +244,7 @@ templ BaseLayout(title string, user *types.UserInfo, sidebarItems []types.NavIte
 		</script>
 		
 		<!-- Sidebar -->
-		@components.Sidebar(sidebarItems, user)
+		@components.Sidebar(ctx, sidebarItems, user)
 		
 		<!-- Main Content Area -->
 		<div class="p-4 sm:ml-64">
