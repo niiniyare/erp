@@ -51,8 +51,8 @@ templ BaseLayout(ctx context.Context, title string, user *types.UserInfo, sideba
 						role: '{ user.Role }',
 						tenantId: '{ user.TenantID }'
 					} } else { null },
-					permissions: [],
-					features: {},
+					permissions: [], // Will be populated by server-side data
+					features: {}, // Will be populated by server-side feature flags
 					config: {
 						dateFormat: 'YYYY-MM-DD',
 						currency: 'USD',

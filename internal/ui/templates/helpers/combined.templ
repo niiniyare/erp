@@ -1,0 +1,117 @@
+package helpers
+
+import (
+	"context"
+	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/ui/helpers"
+)
+
+// Global combined helper instance (to be injected)
+var combinedHelper *helpers.CombinedHelper
+
+// SetCombinedHelper sets the global combined helper instance
+func SetCombinedHelper(helper *helpers.CombinedHelper) {
+	combinedHelper = helper
+}
+
+// Template helper functions for combined permission and feature flag checks
+
+// HasAccessWithFeature wraps content that requires both permission and feature flag
+templ HasAccessWithFeature(ctx context.Context, resourceType, action, featureFlag string, resourceID *uuid.UUID) {
+	if canAccessFeatureCheck(ctx, resourceType, action, resourceID, featureFlag) {
+		{ children... }
+	}
+}
+
+// ModuleWithPermission wraps content for module access with specific permission
+templ ModuleWithPermission(ctx context.Context, moduleName, action string) {
+	if canAccessModuleWithPermissionCheck(ctx, moduleName, action) {
+		{ children... }
+	}
+}
+
+// UIFeatureWithPermission wraps UI features that require both feature flag and permission
+templ UIFeatureWithPermission(ctx context.Context, featureName, resourceType, action string) {
+	if canAccessUIFeatureWithPermissionCheck(ctx, featureName, resourceType, action) {
+		{ children... }
+	}
+}
+
+// BetaFeatureWithPermission wraps beta features that require permission
+templ BetaFeatureWithPermission(ctx context.Context, resourceType, action string, resourceID *uuid.UUID) {
+	if isBetaFeatureEnabledCheck(ctx) && hasPermissionCheck(ctx, resourceType, action, resourceID) {
+		{ children... }
+	}
+}
+
+// ExperimentalFeatureWithPermission wraps experimental features that require permission
+templ ExperimentalFeatureWithPermission(ctx context.Context, experimentName, resourceType, action string, resourceID *uuid.UUID) {
+	if isExperimentalFeatureEnabledCheck(ctx, experimentName) && hasPermissionCheck(ctx, resourceType, action, resourceID) {
+		{ children... }
+	}
+}
+
+// AdminFeatureWithFlag wraps admin-only features that are behind feature flags
+templ AdminFeatureWithFlag(ctx context.Context, featureFlag string) {
+	if isSystemAdminCheck(ctx) && isFeatureEnabledCheck(ctx, featureFlag) {
+		{ children... }
+	}
+}
+
+// TenantAdminFeatureWithFlag wraps tenant admin features behind feature flags
+templ TenantAdminFeatureWithFlag(ctx context.Context, featureFlag string) {
+	if isTenantAdminCheck(ctx) && isFeatureEnabledCheck(ctx, featureFlag) {
+		{ children... }
+	}
+}
+
+// ConditionalAccess renders content based on combined access check result
+templ ConditionalAccess(show bool) {
+	if show {
+		{ children... }
+	}
+}
+
+// AccessToggle conditionally renders different content based on access level
+templ AccessToggle(ctx context.Context, resourceType, action, featureFlag string, resourceID *uuid.UUID, authorizedContent, unauthorizedContent templ.Component) {
+	if canAccessFeatureCheck(ctx, resourceType, action, resourceID, featureFlag) {
+		@authorizedContent
+	} else {
+		@unauthorizedContent
+	}
+}
+
+// Helper functions for combined access evaluation
+
+func canAccessFeatureCheck(ctx context.Context, resourceType, action string, resourceID *uuid.UUID, featureFlag string) bool {
+	if combinedHelper == nil {
+		return false
+	}
+	return combinedHelper.CanAccessFeature(ctx, resourceType, action, resourceID, featureFlag)
+}
+
+func canAccessModuleWithPermissionCheck(ctx context.Context, moduleName, action string) bool {
+	if combinedHelper == nil {
+		return false
+	}
+	return combinedHelper.CanAccessModuleWithPermission(ctx, moduleName, action)
+}
+
+func canAccessUIFeatureWithPermissionCheck(ctx context.Context, featureName, resourceType, action string) bool {
+	if combinedHelper == nil {
+		return false
+	}
+	return combinedHelper.CanAccessUIFeatureWithPermission(ctx, featureName, resourceType, action)
+}
+
+// Access status functions for templates
+
+// GetCombinedAccessStatus returns comprehensive access information
+func GetCombinedAccessStatus(ctx context.Context, resourceType string, resourceID *uuid.UUID) *helpers.AccessStatus {
+	if combinedHelper == nil {
+		return &helpers.AccessStatus{}
+	}
+	return combinedHelper.GetAccessStatus(ctx, resourceType, resourceID)
+}
+
+// Helper functions use the functions from permissions.templ to avoid duplication
