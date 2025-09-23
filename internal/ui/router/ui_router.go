@@ -12,7 +12,6 @@ import (
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/token"
 	"github.com/niiniyare/erp/internal/ui/handlers/console"
 	"github.com/niiniyare/erp/internal/ui/middleware"
 )
@@ -28,7 +27,6 @@ type UIRouter struct {
 	tenantService  tenant.Service
 	auditService   audit.Service
 	cacheService   cache.Service
-	tokenService   token.Service
 	
 	// Middleware
 	authMiddleware *middleware.UIAuthMiddleware
@@ -81,7 +79,6 @@ func NewUIRouter(
 	tenantService tenant.Service,
 	auditService audit.Service,
 	cacheService cache.Service,
-	tokenService token.Service,
 	logger logger.Logger,
 	config UIRouterConfig,
 ) *UIRouter {
@@ -118,7 +115,6 @@ func NewUIRouter(
 		tenantService:           tenantService,
 		auditService:            auditService,
 		cacheService:            cacheService,
-		tokenService:            tokenService,
 		authMiddleware:          authMiddleware,
 		consoleAuthHandler:      consoleAuthHandler,
 		consoleDashboardHandler: consoleDashboardHandler,
