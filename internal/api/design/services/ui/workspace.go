@@ -87,8 +87,8 @@ var _ = Service("workspace", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
-			types.SearchFilter()
+			Reference(types.Pagination)
+			Reference(types.SearchFilter)
 			Attribute("role_filter", String, "Filter by user role", func() {
 				Enum("admin", "manager", "user", "viewer", "all")
 				Default("all")
@@ -131,8 +131,8 @@ var _ = Service("workspace", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
-			types.SearchFilter()
+			Reference(types.Pagination)
+			Reference(types.SearchFilter)
 			Attribute("role_filter", String, "Filter by user role", func() {
 				Enum("admin", "manager", "user", "viewer", "all")
 				Default("all")
@@ -311,8 +311,8 @@ var _ = Service("workspace", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
-			types.SearchFilter()
+			Reference(types.Pagination)
+			Reference(types.SearchFilter)
 			Attribute("status_filter", String, "Filter by project status", func() {
 				Enum("planning", "active", "on_hold", "completed", "cancelled", "all")
 				Default("all")
@@ -351,8 +351,8 @@ var _ = Service("workspace", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
-			types.SearchFilter()
+			Reference(types.Pagination)
+			Reference(types.SearchFilter)
 			Attribute("status_filter", String, "Filter by project status", func() {
 				Enum("planning", "active", "on_hold", "completed", "cancelled", "all")
 				Default("all")
@@ -424,8 +424,8 @@ var _ = Service("workspace", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
-			types.SearchFilter()
+			Reference(types.Pagination)
+			Reference(types.SearchFilter)
 			Attribute("status_filter", String, "Filter by invoice status", func() {
 				Enum("draft", "sent", "viewed", "paid", "overdue", "cancelled", "all")
 				Default("all")
@@ -458,8 +458,8 @@ var _ = Service("workspace", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
-			types.SearchFilter()
+			Reference(types.Pagination)
+			Reference(types.SearchFilter)
 			Attribute("status_filter", String, "Filter by invoice status", func() {
 				Enum("draft", "sent", "viewed", "paid", "overdue", "cancelled", "all")
 				Default("all")

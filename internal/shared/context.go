@@ -2,6 +2,7 @@ package shared
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/google/uuid"
 )
@@ -9,8 +10,9 @@ import (
 type contextKey string
 
 const (
-	TenantIDKey contextKey = "tenant_id"
-	UserIDKey   contextKey = "user_id"
+	TenantIDKey     contextKey = "tenant_id"
+	UserIDKey       contextKey = "user_id"
+	RequestCtxKey   contextKey = "request_context"
 )
 
 // WithTenantID adds tenant ID to context
@@ -39,4 +41,24 @@ func GetUserID(ctx context.Context) (uuid.UUID, bool) {
 func GetUserIDPtr(ctx context.Context) *uuid.UUID {
 	userID, _ := ctx.Value(UserIDKey).(uuid.UUID)
 	return &userID
+}
+
+// RequestContext holds request-specific information
+type RequestContext struct {
+	Request   *http.Request
+	UserAgent string
+	IPAddress string
+	SessionID string
+	TraceID   string
+}
+
+// WithRequestContext adds request context to context
+func WithRequestContext(ctx context.Context, reqCtx *RequestContext) context.Context {
+	return context.WithValue(ctx, RequestCtxKey, reqCtx)
+}
+
+// GetRequestContext retrieves request context from context
+func GetRequestContext(ctx context.Context) (*RequestContext, bool) {
+	reqCtx, ok := ctx.Value(RequestCtxKey).(*RequestContext)
+	return reqCtx, ok
 }

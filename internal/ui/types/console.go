@@ -119,10 +119,35 @@ type TenantDetailPageData struct {
 type CreateTenantPageData struct {
 	Title        string
 	CSRFToken    string
+	Tenant       TenantDetail
 	Form         TenantForm
 	Industries   []SelectOption
 	CompanySizes []SelectOption
 	Error        string
+}
+
+// UserFormData represents data for the user form page
+type UserFormData struct {
+	Title               string
+	CSRFToken          string
+	User               UserProfile
+	Roles              []SelectOption
+	Departments        []SelectOption
+	ShowPasswordFields bool
+	Error              string
+}
+
+// UserProfile represents detailed user information
+type UserProfile struct {
+	ID        string
+	FirstName string
+	LastName  string
+	Email     string
+	Username  string
+	Phone     string
+	JobTitle  string
+	Role      string
+	Department string
 }
 
 // TenantForm represents the tenant creation/edit form

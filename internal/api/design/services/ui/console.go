@@ -96,8 +96,8 @@ var _ = Service("console", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
-			types.SearchFilter()
+			Reference(types.Pagination)
+			Reference(types.SearchFilter)
 			Attribute("status_filter", String, "Filter by tenant status", func() {
 				Enum("active", "inactive", "suspended", "pending", "archived", "all")
 				Default("all")
@@ -136,8 +136,8 @@ var _ = Service("console", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
-			types.SearchFilter()
+			Reference(types.Pagination)
+			Reference(types.SearchFilter)
 			Attribute("status_filter", String, "Filter by tenant status", func() {
 				Enum("active", "inactive", "suspended", "pending", "archived", "all")
 				Default("all")
@@ -400,7 +400,7 @@ var _ = Service("console", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
+			Reference(types.Pagination)
 			Attribute("log_type", String, "Filter by log type", func() {
 				Enum("user_action", "system_event", "security_event", "data_change", "all")
 				Default("all")
@@ -531,7 +531,7 @@ var _ = Service("console", func() {
 		})
 
 		Result(func() {
-			Attribute("suggestions", ArrayOf(Object), "Search suggestions", func() {
+			Attribute("suggestions", ArrayOf(Any), "Search suggestions", func() {
 				Elem(func() {
 					Attribute("type", String, "Suggestion type", func() {
 						Example("tenant")

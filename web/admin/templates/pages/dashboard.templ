@@ -2,6 +2,7 @@ package pages
 
 import "github.com/niiniyare/erp/web/admin/templates/layout"
 import "github.com/niiniyare/erp/web/admin/templates/components"
+import "strconv"
 
 type DashboardStats struct {
 	TotalTenants  int
@@ -35,8 +36,8 @@ templ DashboardContent(stats DashboardStats, activities []ActivityItem) {
 
 		<!-- Stats Grid -->
 		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-			@components.StatCard("Total Tenants", "Active tenant accounts", templ.SafeHTML(fmt.Sprintf("%d", stats.TotalTenants)), "fas fa-building", "blue")
-			@components.StatCard("Active Users", "Currently logged in", stats.SystemUptime, "fas fa-users", "green")
+			@components.StatCard("Total Tenants", "Active tenant accounts", strconv.Itoa(stats.TotalTenants), "fas fa-building", "blue")
+			@components.StatCard("Active Users", "Currently logged in", strconv.Itoa(stats.ActiveUsers), "fas fa-users", "green")
 			@components.StatCard("System Uptime", "Current system status", stats.SystemUptime, "fas fa-server", "indigo")
 			@components.StatCard("Storage Used", "Total disk usage", stats.StorageUsed, "fas fa-hdd", "yellow")
 		</div>

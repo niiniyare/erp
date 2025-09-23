@@ -140,7 +140,7 @@ var _ = Service("portal", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
+			Reference(types.Pagination)
 			Attribute("status_filter", String, "Filter by invoice status", func() {
 				Enum("sent", "viewed", "paid", "overdue", "partial", "all")
 				Default("all")
@@ -177,7 +177,7 @@ var _ = Service("portal", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
+			Reference(types.Pagination)
 			Attribute("status_filter", String, "Filter by invoice status", func() {
 				Enum("sent", "viewed", "paid", "overdue", "partial", "all")
 				Default("all")
@@ -270,7 +270,7 @@ var _ = Service("portal", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
+			Reference(types.Pagination)
 			Attribute("status_filter", String, "Filter by order status", func() {
 				Enum("pending", "confirmed", "processing", "shipped", "delivered", "cancelled", "all")
 				Default("all")
@@ -303,7 +303,7 @@ var _ = Service("portal", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
+			Reference(types.Pagination)
 			Attribute("status_filter", String, "Filter by order status", func() {
 				Enum("pending", "confirmed", "processing", "shipped", "delivered", "cancelled", "all")
 				Default("all")
@@ -368,7 +368,7 @@ var _ = Service("portal", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
+			Reference(types.Pagination)
 			Attribute("status_filter", String, "Filter by ticket status", func() {
 				Enum("open", "in_progress", "waiting", "resolved", "closed", "all")
 				Default("all")
@@ -399,7 +399,7 @@ var _ = Service("portal", func() {
 
 		Payload(func() {
 			types.UIHeaders()
-			types.Pagination()
+			Reference(types.Pagination)
 			Attribute("status_filter", String, "Filter by ticket status", func() {
 				Enum("open", "in_progress", "waiting", "resolved", "closed", "all")
 				Default("all")

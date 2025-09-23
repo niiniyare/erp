@@ -1,10 +1,6 @@
 package iam
 
 import (
-	"context"
-
-	"github.com/google/uuid"
-
 	"github.com/niiniyare/erp/internal/core/audit"
 	"github.com/niiniyare/erp/internal/core/featureflag"
 	"github.com/niiniyare/erp/internal/core/iam/authn"
@@ -74,25 +70,6 @@ func NewService(
 		metrics:            metrics,
 		tracer:             tracer,
 	}
-}
-
-// Helper methods for getting tenant context
-func (s *service) getCurrentTenantID(ctx context.Context) uuid.UUID {
-	tenant, err := s.tenantService.GetCurrentTenant(ctx)
-	if err != nil {
-		s.logger.WarnContext(ctx, "Failed to get current tenant", logger.Fields{"error": err})
-		return uuid.Nil
-	}
-	return tenant.ID
-}
-
-func (s *service) getCurrentTenantSlug(ctx context.Context) string {
-	tenant, err := s.tenantService.GetCurrentTenant(ctx)
-	if err != nil {
-		s.logger.WarnContext(ctx, "Failed to get current tenant", logger.Fields{"error": err})
-		return ""
-	}
-	return tenant.Slug
 }
 
 // Service access methods
