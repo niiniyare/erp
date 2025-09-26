@@ -4,15 +4,15 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	
-	"github.com/niiniyare/erp/internal/core/iam"
+
 	"github.com/niiniyare/erp/internal/core/featureflag"
+	"github.com/niiniyare/erp/internal/core/iam"
 )
 
 // CombinedHelper provides unified access to both permissions and feature flags
 type CombinedHelper struct {
-	permissionHelper   *PermissionHelper
-	featureFlagHelper  *FeatureFlagHelper
+	permissionHelper  *PermissionHelper
+	featureFlagHelper *FeatureFlagHelper
 }
 
 // NewCombinedHelper creates a new combined helper instance
@@ -152,30 +152,30 @@ func (h *CombinedHelper) GetAccessStatus(ctx context.Context, resourceType strin
 		FeatureFlagAdvancedReports,
 		FeatureFlagBulkOperations,
 	}
-	
+
 	featureStatus := make(map[string]bool)
 	for _, flag := range commonFlags {
 		featureStatus[flag] = h.featureFlagHelper.IsFeatureEnabled(ctx, flag)
 	}
 
 	return &AccessStatus{
-		UserID:           userID,
-		EntityID:         entityID,
-		Permissions:      permissionStatus,
-		FeatureFlags:     featureStatus,
-		IsSystemAdmin:    h.permissionHelper.IsSystemAdmin(ctx, userID),
-		IsTenantAdmin:    entityID != nil && h.permissionHelper.IsTenantAdmin(ctx, userID, *entityID),
-		IsBetaUser:       h.featureFlagHelper.IsBetaFeatureEnabled(ctx),
+		UserID:        userID,
+		EntityID:      entityID,
+		Permissions:   permissionStatus,
+		FeatureFlags:  featureStatus,
+		IsSystemAdmin: h.permissionHelper.IsSystemAdmin(ctx, userID),
+		IsTenantAdmin: entityID != nil && h.permissionHelper.IsTenantAdmin(ctx, userID, *entityID),
+		IsBetaUser:    h.featureFlagHelper.IsBetaFeatureEnabled(ctx),
 	}
 }
 
 // AccessStatus provides comprehensive access information for templates
 type AccessStatus struct {
-	UserID           uuid.UUID         `json:"user_id"`
-	EntityID         *uuid.UUID        `json:"entity_id,omitempty"`
-	Permissions      map[string]bool   `json:"permissions"`
-	FeatureFlags     map[string]bool   `json:"feature_flags"`
-	IsSystemAdmin    bool              `json:"is_system_admin"`
-	IsTenantAdmin    bool              `json:"is_tenant_admin"`
-	IsBetaUser       bool              `json:"is_beta_user"`
+	UserID        uuid.UUID       `json:"user_id"`
+	EntityID      *uuid.UUID      `json:"entity_id,omitempty"`
+	Permissions   map[string]bool `json:"permissions"`
+	FeatureFlags  map[string]bool `json:"feature_flags"`
+	IsSystemAdmin bool            `json:"is_system_admin"`
+	IsTenantAdmin bool            `json:"is_tenant_admin"`
+	IsBetaUser    bool            `json:"is_beta_user"`
 }

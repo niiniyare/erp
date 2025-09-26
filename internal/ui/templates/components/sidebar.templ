@@ -118,7 +118,7 @@ templ Sidebar(ctx context.Context, items []types.NavItem, user *types.UserInfo) 
 		}
 
 		<!-- Navigation menu -->
-		<nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
+		<nav id="sidebar-nav" class="flex-1 px-2 py-4 space-y-1 overflow-y-auto" role="navigation" aria-label="Main navigation">
 			for _, item := range items {
 				@NavItemWithPermissions(ctx, item)
 			}

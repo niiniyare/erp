@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	
+
 	"github.com/niiniyare/erp/internal/core/featureflag"
 	"github.com/niiniyare/erp/internal/shared"
 )
@@ -47,7 +47,7 @@ func (h *FeatureFlagHelper) IsFeatureEnabled(ctx context.Context, flagName strin
 	// Get request context for additional attributes
 	reqCtx, _ := shared.GetRequestContext(ctx)
 	attributes := make(map[string]string)
-	
+
 	if reqCtx != nil {
 		attributes["user_agent"] = reqCtx.UserAgent
 		attributes["ip_address"] = reqCtx.IPAddress
@@ -56,10 +56,10 @@ func (h *FeatureFlagHelper) IsFeatureEnabled(ctx context.Context, flagName strin
 
 	// Create evaluation context
 	evalCtx := &featureflag.EvaluationContext{
-		TenantID:   tenantID,
-		UserID:     &userID,
+		TenantID:    tenantID,
+		UserID:      &userID,
 		Environment: "production", // TODO: Make this configurable
-		Attributes: attributes,
+		Attributes:  attributes,
 	}
 
 	if reqCtx != nil {
@@ -90,10 +90,10 @@ func (h *FeatureFlagHelper) IsFeatureEnabledForUser(ctx context.Context, flagNam
 	}
 
 	evalCtx := &featureflag.EvaluationContext{
-		TenantID:   tid,
-		UserID:     &userID,
+		TenantID:    tid,
+		UserID:      &userID,
 		Environment: "production",
-		Attributes: make(map[string]string),
+		Attributes:  make(map[string]string),
 	}
 
 	enabled, err := h.featureFlagService.IsEnabled(ctx, flagName, evalCtx)
@@ -118,10 +118,10 @@ func (h *FeatureFlagHelper) GetFeatureFlagValue(ctx context.Context, flagName st
 	tenantID, _ := shared.GetTenantID(ctx)
 
 	evalCtx := &featureflag.EvaluationContext{
-		TenantID:   tenantID,
-		UserID:     &userID,
+		TenantID:    tenantID,
+		UserID:      &userID,
 		Environment: "production",
-		Attributes: make(map[string]string),
+		Attributes:  make(map[string]string),
 	}
 
 	result, err := h.featureFlagService.EvaluateFlag(ctx, flagName, evalCtx)
@@ -211,18 +211,18 @@ var (
 // Common feature flag constants
 const (
 	// UI Features
-	FeatureFlagNewDashboard     = "ui_new_dashboard"
-	FeatureFlagAdvancedReports  = "ui_advanced_reports"
-	FeatureFlagBulkOperations   = "ui_bulk_operations"
-	FeatureFlagDarkMode         = "ui_dark_mode"
-	FeatureFlagMobileLayout     = "ui_mobile_layout"
+	FeatureFlagNewDashboard    = "ui_new_dashboard"
+	FeatureFlagAdvancedReports = "ui_advanced_reports"
+	FeatureFlagBulkOperations  = "ui_bulk_operations"
+	FeatureFlagDarkMode        = "ui_dark_mode"
+	FeatureFlagMobileLayout    = "ui_mobile_layout"
 
 	// Module Features
-	FeatureFlagFinanceModule    = "module_finance"
-	FeatureFlagInventoryModule  = "module_inventory"
-	FeatureFlagHRModule         = "module_hr"
-	FeatureFlagCRMModule        = "module_crm"
-	FeatureFlagProjectModule    = "module_project"
+	FeatureFlagFinanceModule   = "module_finance"
+	FeatureFlagInventoryModule = "module_inventory"
+	FeatureFlagHRModule        = "module_hr"
+	FeatureFlagCRMModule       = "module_crm"
+	FeatureFlagProjectModule   = "module_project"
 
 	// Integration Features
 	FeatureFlagSlackIntegration = "integration_slack"
@@ -231,12 +231,12 @@ const (
 	FeatureFlagAPIv2            = "integration_api_v2"
 
 	// Experimental Features
-	FeatureFlagAIAssistant      = "experimental_ai_assistant"
+	FeatureFlagAIAssistant       = "experimental_ai_assistant"
 	FeatureFlagAdvancedAnalytics = "experimental_advanced_analytics"
-	FeatureFlagVoiceCommands    = "experimental_voice_commands"
+	FeatureFlagVoiceCommands     = "experimental_voice_commands"
 
 	// Beta Features
-	FeatureFlagBetaFeatures     = "beta_features"
-	FeatureFlagEarlyAccess      = "early_access"
-	FeatureFlagDeveloperMode    = "developer_mode"
+	FeatureFlagBetaFeatures  = "beta_features"
+	FeatureFlagEarlyAccess   = "early_access"
+	FeatureFlagDeveloperMode = "developer_mode"
 )

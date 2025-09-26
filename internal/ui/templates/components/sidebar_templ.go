@@ -87,7 +87,7 @@ func Sidebar(ctx context.Context, items []types.NavItem, user *types.UserInfo) t
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<!-- Navigation menu --><nav class=\"flex-1 px-2 py-4 space-y-1 overflow-y-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<!-- Navigation menu --><nav id=\"sidebar-nav\" class=\"flex-1 px-2 py-4 space-y-1 overflow-y-auto\" role=\"navigation\" aria-label=\"Main navigation\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
