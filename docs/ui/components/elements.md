@@ -4,7 +4,7 @@
 **FILE PURPOSE**: Comprehensive reference for foundational UI elements (buttons, inputs, cards, etc.)
 **DEPENDENCIES**: Templ + Flowbite + TailwindCSS, optional Alpine.js
 **TARGET AUDIENCE**: Developers building atomic UI components
-**RELATED FILES**: `templ-llms.md` (advanced features), `flowbite-llms-full.txt` (styling reference)
+<!-- **RELATED FILES**: `templ-llms.md` (advanced features), `flowbite-llms-full.txt` (styling reference) -->
 <!-- LLM-CONTEXT-END -->
 
 ## Overview
