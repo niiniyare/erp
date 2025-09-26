@@ -1,0 +1,154 @@
+package elements
+
+import "strings"
+import "strconv"
+
+// TextareaProps defines the properties for the Textarea component
+type TextareaProps struct {
+	Value       string `json:"value"`
+	Placeholder string `json:"placeholder"`
+	Name        string `json:"name" validate:"required"`
+	Label       string `json:"label"`
+	Rows        int    `json:"rows"`
+	Resize      string `json:"resize" validate:"oneof=none both horizontal vertical"`
+	MaxLength   int    `json:"max_length"`
+	Validation  string `json:"validation" validate:"oneof=none success error"`
+	HelperText  string `json:"helper_text"`
+	Disabled    bool   `json:"disabled"`
+	ReadOnly    bool   `json:"readonly"`
+	Required    bool   `json:"required"`
+	ID          string `json:"id"`
+	Class       string `json:"class"`
+}
+
+// Textarea renders a Flowbite-styled textarea component
+templ Textarea(props TextareaProps) {
+	<div class="w-full">
+		if props.Label != "" {
+			<label 
+				for={ getTextareaID(props.ID, props.Name) }
+				class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+			>
+				{ props.Label }
+				if props.Required {
+					<span class="text-red-500 ml-1">*</span>
+				}
+			</label>
+		}
+		<textarea
+			id={ getTextareaID(props.ID, props.Name) }
+			name={ props.Name }
+			if props.Value != "" {
+				value={ props.Value }
+			}
+			if props.Placeholder != "" {
+				placeholder={ props.Placeholder }
+			}
+			class={ getTextareaClasses(props.Validation, props.Resize) + " " + props.Class }
+			rows={ strconv.Itoa(getTextareaRows(props.Rows)) }
+			if props.Required {
+				required
+			}
+			if props.Disabled {
+				disabled
+			}
+			if props.ReadOnly {
+				readonly
+			}
+			if props.MaxLength > 0 {
+				maxlength={ strconv.Itoa(props.MaxLength) }
+			}
+			if props.Validation == "error" {
+				aria-invalid="true"
+			}
+		>{ props.Value }</textarea>
+		if props.HelperText != "" {
+			<div class={ getTextareaHelperTextClasses(props.Validation) }>
+				{ props.HelperText }
+			</div>
+		}
+		if props.MaxLength > 0 {
+			<div class="flex justify-end mt-1">
+				<span class="text-xs text-gray-500 dark:text-gray-400">
+					<span id={ getTextareaID(props.ID, props.Name) + "-count" }>0</span>/{ strconv.Itoa(props.MaxLength) }
+				</span>
+			</div>
+			<script>
+				(function() {
+					const textarea = document.getElementById({ getTextareaID(props.ID, props.Name) });
+					const counter = document.getElementById({ getTextareaID(props.ID, props.Name) + "-count" });
+					if (textarea && counter) {
+						function updateCount() {
+							counter.textContent = textarea.value.length;
+						}
+						textarea.addEventListener('input', updateCount);
+						updateCount(); // Initialize count
+					}
+				})();
+			</script>
+		}
+	</div>
+}
+
+// Helper functions for textarea styling
+func getTextareaClasses(validation, resize string) string {
+	base := "block w-full rounded-lg border text-gray-900 focus:outline-none focus:ring-1 p-2.5 text-sm"
+	
+	// Resize classes
+	var resizeClass string
+	switch resize {
+	case "none":
+		resizeClass = "resize-none"
+	case "both":
+		resizeClass = "resize"
+	case "horizontal":
+		resizeClass = "resize-x"
+	case "vertical":
+		resizeClass = "resize-y"
+	default:
+		resizeClass = "resize-y" // Default to vertical resize
+	}
+	
+	// Validation state classes
+	var validationClass string
+	switch validation {
+	case "success":
+		validationClass = "border-green-500 bg-green-50 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:border-green-500"
+	case "error":
+		validationClass = "border-red-500 bg-red-50 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:border-red-500"
+	default: // none
+		validationClass = "border-gray-300 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+	}
+	
+	return strings.Join([]string{base, resizeClass, validationClass}, " ")
+}
+
+func getTextareaHelperTextClasses(validation string) string {
+	base := "mt-2 text-sm"
+	
+	switch validation {
+	case "success":
+		return base + " text-green-600 dark:text-green-500"
+	case "error":
+		return base + " text-red-600 dark:text-red-500"
+	default:
+		return base + " text-gray-500 dark:text-gray-400"
+	}
+}
+
+func getTextareaID(id, name string) string {
+	if id != "" {
+		return id
+	}
+	if name != "" {
+		return name + "-textarea"
+	}
+	return ""
+}
+
+func getTextareaRows(rows int) int {
+	if rows <= 0 {
+		return 4 // Default rows
+	}
+	return rows
+}

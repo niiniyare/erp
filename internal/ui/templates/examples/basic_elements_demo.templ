@@ -1,0 +1,300 @@
+package examples
+
+import "github.com/niiniyare/erp/internal/ui/templates/elements"
+
+// BasicElementsDemo demonstrates all the basic UI elements
+templ BasicElementsDemo() {
+	@elements.Container(elements.ContainerProps{
+		MaxWidth: "4xl",
+		Center:   true,
+		Content: basicElementsContent(),
+	})
+}
+
+// basicElementsContent contains the main content for the demo
+templ basicElementsContent() {
+	<div class="space-y-8">
+		<!-- Page Header -->
+		<div class="text-center">
+			<h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+				Basic UI Elements Demo
+			</h1>
+			<p class="text-lg text-gray-600 dark:text-gray-400">
+				Comprehensive showcase of all foundational UI components
+			</p>
+		</div>
+
+		<!-- Buttons Section -->
+		<div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+			<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Buttons</h2>
+			<div class="space-y-4">
+				<!-- Button Variants -->
+				<div>
+					<h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Variants</h3>
+					<div class="flex flex-wrap gap-2">
+						@elements.Button(elements.ButtonProps{Text: "Primary", Variant: "primary"})
+						@elements.Button(elements.ButtonProps{Text: "Secondary", Variant: "secondary"})
+						@elements.Button(elements.ButtonProps{Text: "Success", Variant: "success"})
+						@elements.Button(elements.ButtonProps{Text: "Danger", Variant: "danger"})
+						@elements.Button(elements.ButtonProps{Text: "Warning", Variant: "warning"})
+						@elements.Button(elements.ButtonProps{Text: "Info", Variant: "info"})
+					</div>
+				</div>
+				
+				<!-- Button Sizes -->
+				<div>
+					<h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Sizes</h3>
+					<div class="flex flex-wrap items-center gap-2">
+						@elements.Button(elements.ButtonProps{Text: "Extra Small", Variant: "primary", Size: "xs"})
+						@elements.Button(elements.ButtonProps{Text: "Small", Variant: "primary", Size: "sm"})
+						@elements.Button(elements.ButtonProps{Text: "Base", Variant: "primary", Size: "base"})
+						@elements.Button(elements.ButtonProps{Text: "Large", Variant: "primary", Size: "lg"})
+						@elements.Button(elements.ButtonProps{Text: "Extra Large", Variant: "primary", Size: "xl"})
+					</div>
+				</div>
+				
+				<!-- Button States -->
+				<div>
+					<h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">States</h3>
+					<div class="flex flex-wrap gap-2">
+						@elements.Button(elements.ButtonProps{Text: "Loading", Variant: "primary", Loading: true})
+						@elements.Button(elements.ButtonProps{Text: "Disabled", Variant: "primary", Disabled: true})
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Input Fields Section -->
+		<div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+			<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Input Fields</h2>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				@elements.Input(elements.InputProps{
+					Label:       "Text Input",
+					Type:        "text",
+					Name:        "text_input",
+					Placeholder: "Enter your text here",
+					Required:    true,
+				})
+				
+				@elements.Input(elements.InputProps{
+					Label:       "Email Input",
+					Type:        "email",
+					Name:        "email_input",
+					Placeholder: "user@example.com",
+					Required:    true,
+				})
+				
+				@elements.Input(elements.InputProps{
+					Label:      "Password Input",
+					Type:       "password",
+					Name:       "password_input",
+					Required:   true,
+					HelperText: "Must be at least 8 characters",
+				})
+				
+				@elements.Input(elements.InputProps{
+					Label:      "Success State",
+					Type:       "text",
+					Name:       "success_input",
+					Value:      "Valid input",
+					Validation: "success",
+					HelperText: "This input is valid",
+				})
+				
+				@elements.Input(elements.InputProps{
+					Label:      "Error State",
+					Type:       "text",
+					Name:       "error_input",
+					Value:      "Invalid input",
+					Validation: "error",
+					HelperText: "This input has an error",
+				})
+				
+				@elements.Input(elements.InputProps{
+					Label:    "Disabled Input",
+					Type:     "text",
+					Name:     "disabled_input",
+					Value:    "Cannot edit this",
+					Disabled: true,
+				})
+			</div>
+		</div>
+
+		<!-- Select and Textarea Section -->
+		<div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+			<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Select & Textarea</h2>
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				@elements.Select(elements.SelectProps{
+					Label:       "Country",
+					Name:        "country",
+					Placeholder: "Select your country",
+					Required:    true,
+					Options: []elements.SelectOption{
+						{Value: "us", Label: "United States"},
+						{Value: "ca", Label: "Canada"},
+						{Value: "uk", Label: "United Kingdom"},
+						{Value: "de", Label: "Germany"},
+						{Value: "fr", Label: "France"},
+					},
+				})
+				
+				@elements.Textarea(elements.TextareaProps{
+					Label:       "Message",
+					Name:        "message",
+					Placeholder: "Enter your message here...",
+					Rows:        4,
+					MaxLength:   500,
+					Required:    true,
+					HelperText:  "Tell us about your project",
+				})
+			</div>
+		</div>
+
+		<!-- Badges Section -->
+		<div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+			<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Badges</h2>
+			<div class="space-y-4">
+				<!-- Badge Variants -->
+				<div>
+					<h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Variants</h3>
+					<div class="flex flex-wrap gap-2">
+						@elements.Badge(elements.BadgeProps{Text: "Default", Variant: "default"})
+						@elements.Badge(elements.BadgeProps{Text: "Dark", Variant: "dark"})
+						@elements.Badge(elements.BadgeProps{Text: "Red", Variant: "red"})
+						@elements.Badge(elements.BadgeProps{Text: "Green", Variant: "green"})
+						@elements.Badge(elements.BadgeProps{Text: "Yellow", Variant: "yellow"})
+						@elements.Badge(elements.BadgeProps{Text: "Indigo", Variant: "indigo"})
+						@elements.Badge(elements.BadgeProps{Text: "Purple", Variant: "purple"})
+						@elements.Badge(elements.BadgeProps{Text: "Pink", Variant: "pink"})
+					</div>
+				</div>
+				
+				<!-- Badge Styles -->
+				<div>
+					<h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Styles</h3>
+					<div class="flex flex-wrap gap-2">
+						@elements.Badge(elements.BadgeProps{Text: "Default", Variant: "blue"})
+						@elements.Badge(elements.BadgeProps{Text: "Outlined", Variant: "blue", Outlined: true})
+						@elements.Badge(elements.BadgeProps{Text: "Pill", Variant: "blue", Pill: true})
+						@elements.Badge(elements.BadgeProps{Text: "Large", Variant: "blue", Size: "lg"})
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Alerts Section -->
+		<div class="space-y-4">
+			@elements.Alert(elements.AlertProps{
+				Title:       "Info Alert",
+				Message:     "This is an informational alert with an icon and dismiss button.",
+				Variant:     "info",
+				Icon:        true,
+				Dismissible: true,
+			})
+			
+			@elements.Alert(elements.AlertProps{
+				Title:   "Success Alert",
+				Message: "Your action was completed successfully!",
+				Variant: "success",
+				Icon:    true,
+				Border:  true,
+			})
+			
+			@elements.Alert(elements.AlertProps{
+				Title:   "Warning Alert",
+				Message: "Please review your input before proceeding.",
+				Variant: "warning",
+				Icon:    true,
+			})
+			
+			@elements.Alert(elements.AlertProps{
+				Title:       "Error Alert",
+				Message:     "An error occurred while processing your request.",
+				Variant:     "error",
+				Icon:        true,
+				Dismissible: true,
+			})
+		</div>
+
+		<!-- Cards Section -->
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+			@elements.Card(elements.CardProps{
+				Title:    "Simple Card",
+				Shadow:   "md",
+				Bordered: true,
+				Content:  simpleCardContent(),
+			})
+			
+			@elements.Card(elements.CardProps{
+				Title:     "Card with Image",
+				Subtitle:  "$299.99",
+				Image:     "https://via.placeholder.com/400x200/3B82F6/FFFFFF?text=Product+Image",
+				ImageAlt:  "Product placeholder image",
+				Shadow:    "lg",
+				Clickable: true,
+				Content:   productCardContent(),
+				Footer:    productCardFooter(),
+			})
+			
+			@elements.Card(elements.CardProps{
+				Title:   "Minimal Card",
+				Shadow:  "sm",
+				Padding: "lg",
+				Content: minimalCardContent(),
+			})
+		</div>
+
+		<!-- Links Section -->
+		<div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+			<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Links</h2>
+			<div class="space-y-4">
+				<div>
+					<h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Colors</h3>
+					<div class="flex flex-wrap gap-4">
+						@elements.Link(elements.LinkProps{Href: "#", Text: "Blue Link", Color: "blue"})
+						@elements.Link(elements.LinkProps{Href: "#", Text: "Red Link", Color: "red"})
+						@elements.Link(elements.LinkProps{Href: "#", Text: "Green Link", Color: "green"})
+						@elements.Link(elements.LinkProps{Href: "#", Text: "Purple Link", Color: "purple"})
+					</div>
+				</div>
+				
+				<div>
+					<h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Styles</h3>
+					<div class="flex flex-wrap gap-4">
+						@elements.Link(elements.LinkProps{Href: "#", Text: "Underlined Link", Underline: true})
+						@elements.Link(elements.LinkProps{Href: "https://example.com", Text: "External Link", External: true, Target: "_blank"})
+						@elements.Link(elements.LinkProps{Href: "#", Text: "Disabled Link", Disabled: true})
+						@elements.Link(elements.LinkProps{Href: "#", Text: "Large Link", Size: "lg"})
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// Card content templates
+templ simpleCardContent() {
+	<p class="text-gray-500 dark:text-gray-400">
+		This is a simple card with basic content. It demonstrates the default styling and layout.
+	</p>
+}
+
+templ productCardContent() {
+	<p class="text-gray-500 dark:text-gray-400">
+		High-quality wireless headphones with noise cancellation and premium sound quality.
+	</p>
+}
+
+templ productCardFooter() {
+	<div class="flex justify-between items-center">
+		@elements.Button(elements.ButtonProps{Text: "Add to Cart", Variant: "primary", Size: "sm"})
+		@elements.Link(elements.LinkProps{Href: "#", Text: "View Details", Color: "blue"})
+	</div>
+}
+
+templ minimalCardContent() {
+	<div class="text-center">
+		<div class="text-3xl font-bold text-blue-600 mb-2">42</div>
+		<p class="text-gray-500 dark:text-gray-400">Active Users</p>
+	</div>
+}

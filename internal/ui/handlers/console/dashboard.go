@@ -14,6 +14,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/ui/middleware"
 	"github.com/niiniyare/erp/internal/ui/templates/console"
+	"github.com/niiniyare/erp/internal/ui/templates/examples"
 	"github.com/niiniyare/erp/internal/ui/types"
 )
 
@@ -154,6 +155,56 @@ func (h *DashboardHandler) GetRecentActivity(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
+}
+
+// ShowBasicElementsDemo displays a showcase of all basic UI elements
+func (h *DashboardHandler) ShowBasicElementsDemo(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	// Get UI context (user should be authenticated by middleware)
+	uiCtx, ok := middleware.GetUIContext(ctx)
+	if !ok {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Ensure user has console admin role
+	if err := middleware.RequireRole(ctx, middleware.UIRoleConsoleAdmin); err != nil {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Get user information for the layout
+	userInfo, err := h.getUserInfo(ctx, uiCtx.UserID)
+	if err != nil {
+		h.logger.ErrorContext(ctx, "Failed to get user info for elements demo", logger.Fields{
+			"error":   err.Error(),
+			"user_id": uiCtx.UserID,
+		})
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Prepare data for the demo page
+	demoPageData := examples.ElementsDemoPageData{
+		Title:     "Basic UI Elements Demo",
+		User:      *userInfo,
+		CSRFToken: uiCtx.CSRFToken,
+	}
+
+	if err := examples.ElementsDemoPage(demoPageData).Render(ctx, w); err != nil {
+		h.logger.ErrorContext(ctx, "Failed to render basic elements demo", logger.Fields{
+			"error":   err.Error(),
+			"user_id": uiCtx.UserID,
+		})
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Log demo page access
+	h.logger.InfoContext(ctx, "Basic elements demo accessed", logger.Fields{
+		"user_id": uiCtx.UserID,
+	})
 }
 
 // Private helper methods
@@ -351,5 +402,6 @@ func (h *DashboardHandler) SetupRoutes(mux *http.ServeMux, authMiddleware func(h
 	mux.Handle("/console/dashboard", authMiddleware(http.HandlerFunc(h.ShowDashboard)))
 	mux.Handle("/console/api/stats", authMiddleware(http.HandlerFunc(h.GetSystemStats)))
 	mux.Handle("/console/api/activity", authMiddleware(http.HandlerFunc(h.GetRecentActivity)))
+	mux.Handle("/console/demo/elements", authMiddleware(http.HandlerFunc(h.ShowBasicElementsDemo)))
 	mux.Handle("/console/", authMiddleware(http.HandlerFunc(h.ShowDashboard))) // Default route
 }

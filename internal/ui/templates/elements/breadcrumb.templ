@@ -1,0 +1,196 @@
+package elements
+
+// BreadcrumbItem represents a single breadcrumb item
+type BreadcrumbItem struct {
+	Text     string `json:"text" validate:"required"`
+	Href     string `json:"href"`
+	Current  bool   `json:"current"`
+	Icon     string `json:"icon"`
+	Disabled bool   `json:"disabled"`
+}
+
+// BreadcrumbProps defines the properties for the Breadcrumb component
+type BreadcrumbProps struct {
+	Items       []BreadcrumbItem `json:"items" validate:"required,min=1"`
+	Separator   string           `json:"separator" validate:"oneof=slash arrow dots"`
+	ShowHome    bool             `json:"show_home"`
+	HomeHref    string           `json:"home_href"`
+	ID          string           `json:"id"`
+	Class       string           `json:"class"`
+	AriaLabel   string           `json:"aria_label"`
+}
+
+// Breadcrumb renders a Flowbite-styled breadcrumb component
+templ Breadcrumb(props BreadcrumbProps) {
+	<nav
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ getBreadcrumbClasses() + " " + props.Class }
+		if props.AriaLabel != "" {
+			aria-label={ props.AriaLabel }
+		} else {
+			aria-label="Breadcrumb"
+		}
+	>
+		<ol class={ getBreadcrumbListClasses() }>
+			<!-- Home Icon -->
+			if props.ShowHome {
+				<li class={ getBreadcrumbItemClasses() }>
+					<div class={ getBreadcrumbLinkClasses(false, false) }>
+						<a 
+							href={ getHomeHref(props.HomeHref) }
+							class={ getBreadcrumbHomeClasses() }
+							aria-label="Home"
+						>
+							@BreadcrumbHomeIcon()
+						</a>
+					</div>
+				</li>
+				if len(props.Items) > 0 {
+					<li>
+						@BreadcrumbSeparator(props.Separator)
+					</li>
+				}
+			}
+			
+			<!-- Breadcrumb Items -->
+			for i, item := range props.Items {
+				<li class={ getBreadcrumbItemClasses() }>
+					<div class={ getBreadcrumbLinkClasses(item.Current, item.Disabled) }>
+						if item.Icon != "" {
+							<span class={ getBreadcrumbIconClasses() }>
+								{ item.Icon }
+							</span>
+						}
+						
+						if item.Current || item.Disabled || item.Href == "" {
+							<span 
+								class={ getBreadcrumbTextClasses(item.Current, item.Disabled) }
+								if item.Current {
+									aria-current="page"
+								}
+							>
+								{ item.Text }
+							</span>
+						} else {
+							<a 
+								href={ item.Href }
+								class={ getBreadcrumbLinkTextClasses() }
+							>
+								{ item.Text }
+							</a>
+						}
+					</div>
+				</li>
+				
+				<!-- Separator -->
+				if i < len(props.Items)-1 {
+					<li>
+						@BreadcrumbSeparator(props.Separator)
+					</li>
+				}
+			}
+		</ol>
+	</nav>
+}
+
+// BreadcrumbSeparator renders different separator types
+templ BreadcrumbSeparator(separatorType string) {
+	<div class={ getBreadcrumbSeparatorClasses() }>
+		if separatorType == "arrow" {
+			@BreadcrumbArrowSeparator()
+		} else if separatorType == "dots" {
+			@BreadcrumbDotsSeparator()
+		} else {
+			@BreadcrumbSlashSeparator()
+		}
+	</div>
+}
+
+// Breadcrumb separator icons
+templ BreadcrumbHomeIcon() {
+	<svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+		<path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
+	</svg>
+}
+
+templ BreadcrumbSlashSeparator() {
+	<svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+		<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+	</svg>
+}
+
+templ BreadcrumbArrowSeparator() {
+	<svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 8 14">
+		<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 13 5.7-5.326a.909.909 0 0 0 0-1.348L1 1"/>
+	</svg>
+}
+
+templ BreadcrumbDotsSeparator() {
+	<svg class="w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 3">
+		<path d="M2 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Zm6.041 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM14 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3Z"/>
+	</svg>
+}
+
+// Helper functions for breadcrumb styling
+func getBreadcrumbClasses() string {
+	return "flex"
+}
+
+func getBreadcrumbListClasses() string {
+	return "inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse"
+}
+
+func getBreadcrumbItemClasses() string {
+	return "inline-flex items-center"
+}
+
+func getBreadcrumbLinkClasses(current, disabled bool) string {
+	base := "inline-flex items-center"
+	
+	if current {
+		return base + " text-sm font-medium text-gray-500 dark:text-gray-400"
+	}
+	
+	if disabled {
+		return base + " text-sm font-medium text-gray-400 cursor-not-allowed dark:text-gray-600"
+	}
+	
+	return base + " text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white"
+}
+
+func getBreadcrumbHomeClasses() string {
+	return "inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white"
+}
+
+func getBreadcrumbIconClasses() string {
+	return "w-3 h-3 me-2.5"
+}
+
+func getBreadcrumbTextClasses(current, disabled bool) string {
+	if current {
+		return "ms-1 text-sm font-medium text-gray-500 md:ms-2 dark:text-gray-400"
+	}
+	
+	if disabled {
+		return "ms-1 text-sm font-medium text-gray-400 cursor-not-allowed md:ms-2 dark:text-gray-600"
+	}
+	
+	return "ms-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2 dark:text-gray-400 dark:hover:text-white"
+}
+
+func getBreadcrumbLinkTextClasses() string {
+	return "ms-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2 dark:text-gray-400 dark:hover:text-white"
+}
+
+func getBreadcrumbSeparatorClasses() string {
+	return "flex items-center"
+}
+
+func getHomeHref(homeHref string) string {
+	if homeHref != "" {
+		return homeHref
+	}
+	return "/"
+}

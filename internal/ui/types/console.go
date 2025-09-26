@@ -1,6 +1,18 @@
 package types
 
-import "time"
+import (
+	"time"
+
+	"github.com/a-h/templ"
+)
+
+// BaseLayoutData represents data for the base layout template
+type BaseLayoutData struct {
+	Title     string
+	User      UserInfo
+	CSRFToken string
+	Content   templ.Component
+}
 
 // LoginPageData represents data for the login page
 type LoginPageData struct {

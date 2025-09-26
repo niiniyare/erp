@@ -1,0 +1,129 @@
+package elements
+
+import "strings"
+
+// InputProps defines the properties for the Input component
+type InputProps struct {
+	Type         string `json:"type" validate:"oneof=text email password number tel url search date time datetime-local"`
+	Value        string `json:"value"`
+	Placeholder  string `json:"placeholder"`
+	Name         string `json:"name" validate:"required"`
+	Label        string `json:"label"`
+	HelperText   string `json:"helper_text"`
+	Size         string `json:"size" validate:"oneof=sm base lg"`
+	Validation   string `json:"validation" validate:"oneof=none success error"`
+	Required     bool   `json:"required"`
+	Disabled     bool   `json:"disabled"`
+	ReadOnly     bool   `json:"readonly"`
+	MaxLength    int    `json:"max_length"`
+	ID           string `json:"id"`
+	Class        string `json:"class"`
+}
+
+// Input renders a Flowbite-styled input component
+templ Input(props InputProps) {
+	<div class="w-full">
+		if props.Label != "" {
+			<label 
+				for={ getInputID(props.ID, props.Name) }
+				class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+			>
+				{ props.Label }
+				if props.Required {
+					<span class="text-red-500 ml-1">*</span>
+				}
+			</label>
+		}
+		<input
+			type={ getInputType(props.Type) }
+			id={ getInputID(props.ID, props.Name) }
+			name={ props.Name }
+			if props.Value != "" {
+				value={ props.Value }
+			}
+			if props.Placeholder != "" {
+				placeholder={ props.Placeholder }
+			}
+			class={ getInputClasses(props.Size, props.Validation) + " " + props.Class }
+			if props.Required {
+				required
+			}
+			if props.Disabled {
+				disabled
+			}
+			if props.ReadOnly {
+				readonly
+			}
+			if props.MaxLength > 0 {
+				maxlength={ string(rune(props.MaxLength)) }
+			}
+			if props.Validation == "error" {
+				aria-invalid="true"
+			}
+		/>
+		if props.HelperText != "" {
+			<div class={ getHelperTextClasses(props.Validation) }>
+				{ props.HelperText }
+			</div>
+		}
+	</div>
+}
+
+// Helper functions for input styling
+func getInputClasses(size, validation string) string {
+	base := "block w-full rounded-lg border text-gray-900 focus:outline-none focus:ring-1"
+	
+	// Size classes
+	var sizeClass string
+	switch size {
+	case "sm":
+		sizeClass = "p-2 text-sm"
+	case "lg":
+		sizeClass = "p-4 text-base"
+	default: // base
+		sizeClass = "p-2.5 text-sm"
+	}
+	
+	// Validation state classes
+	var validationClass string
+	switch validation {
+	case "success":
+		validationClass = "border-green-500 bg-green-50 focus:ring-green-500 focus:border-green-500 dark:bg-gray-700 dark:border-green-500"
+	case "error":
+		validationClass = "border-red-500 bg-red-50 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:border-red-500"
+	default: // none
+		validationClass = "border-gray-300 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+	}
+	
+	return strings.Join([]string{base, sizeClass, validationClass}, " ")
+}
+
+func getHelperTextClasses(validation string) string {
+	base := "mt-2 text-sm"
+	
+	switch validation {
+	case "success":
+		return base + " text-green-600 dark:text-green-500"
+	case "error":
+		return base + " text-red-600 dark:text-red-500"
+	default:
+		return base + " text-gray-500 dark:text-gray-400"
+	}
+}
+
+func getInputType(inputType string) string {
+	if inputType == "" {
+		return "text"
+	}
+	return inputType
+}
+
+func getInputID(id, name string) string {
+	if id != "" {
+		return id
+	}
+	if name != "" {
+		return name + "-input"
+	}
+	return ""
+}

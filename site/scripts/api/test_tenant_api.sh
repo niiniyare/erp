@@ -10,7 +10,7 @@ source "$SCRIPT_DIR/setup_env.sh"
 
 BASE_URL="http://localhost:${SERVER_PORT:-8080}"
 CREATED_TENANT_ID=""
-
+random="$(cat /dev/urandom | tr -dc 'A-Z' | fold -w 6 | head -n 1)"
 echo "🧪 Comprehensive Tenant API Testing"
 echo "===================================="
 echo "Base URL: $BASE_URL"
@@ -27,12 +27,12 @@ CREATE_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
   -d '{
     "name": "Test Company API Script",
     "email": "contact@testapi.com",
-    "subdomain": "testapi",
+    "subdomain": $random,
     "country_code": "US",
     "currency_code": "USD",
-    "status": "active",
+    "status": "ACTIVE",
     "industry": "Technology",
-    "company_size": "11-50",
+    "company_size": "Startup",
     "contact": {
       "email": "contact@testapi.com"
     },

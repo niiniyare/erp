@@ -1,0 +1,209 @@
+package elements
+
+import "strings"
+
+// BannerProps defines the properties for the Banner component
+type BannerProps struct {
+	Message     string `json:"message" validate:"required"`                               // Banner message text
+	Variant     string `json:"variant" validate:"oneof=info success warning error"`      // Banner type
+	Position    string `json:"position" validate:"oneof=top bottom sticky relative"`     // Position variant
+	Dismissible bool   `json:"dismissible"`                                               // Can be dismissed
+	Icon        bool   `json:"icon"`                                                      // Show icon
+	Actions     []BannerAction `json:"actions"`                                           // Action buttons
+	ID          string `json:"id"`
+	Class       string `json:"class"`
+	AriaLabel   string `json:"aria_label"`
+}
+
+// BannerAction defines action buttons in banners
+type BannerAction struct {
+	Text    string `json:"text" validate:"required"`
+	Href    string `json:"href"`
+	Variant string `json:"variant" validate:"oneof=primary secondary"`
+}
+
+// Banner renders a Flowbite-styled banner component
+templ Banner(props BannerProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ getBannerClasses(props.Variant, props.Position) + " " + props.Class }
+		role="banner"
+		if props.AriaLabel != "" {
+			aria-label={ props.AriaLabel }
+		}
+		if props.Dismissible {
+			x-data="{ show: true }"
+			x-show="show"
+			x-transition
+		}
+	>
+		<div class={ getBannerContentClasses() }>
+			<!-- Icon -->
+			if props.Icon {
+				<div class={ getBannerIconClasses() }>
+					if props.Variant == "success" {
+						@BannerSuccessIcon()
+					} else if props.Variant == "warning" {
+						@BannerWarningIcon()
+					} else if props.Variant == "error" {
+						@BannerErrorIcon()
+					} else {
+						@BannerInfoIcon()
+					}
+				</div>
+			}
+			
+			<!-- Message -->
+			<div class={ getBannerMessageClasses() }>
+				{ props.Message }
+			</div>
+			
+			<!-- Actions -->
+			if len(props.Actions) > 0 {
+				<div class={ getBannerActionsClasses() }>
+					for _, action := range props.Actions {
+						if action.Href != "" {
+							<a 
+								href={ action.Href }
+								class={ getBannerActionClasses(action.Variant, props.Variant) }
+							>
+								{ action.Text }
+							</a>
+						} else {
+							<button 
+								type="button"
+								class={ getBannerActionClasses(action.Variant, props.Variant) }
+							>
+								{ action.Text }
+							</button>
+						}
+					}
+				</div>
+			}
+			
+			<!-- Dismiss Button -->
+			if props.Dismissible {
+				<button
+					type="button"
+					class={ getBannerDismissClasses() }
+					@click="show = false"
+					aria-label="Close banner"
+				>
+					<svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+						<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+					</svg>
+					<span class="sr-only">Close banner</span>
+				</button>
+			}
+		</div>
+	</div>
+}
+
+// Banner icon templates
+templ BannerInfoIcon() {
+	<svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+		<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+	</svg>
+}
+
+templ BannerSuccessIcon() {
+	<svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+		<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+	</svg>
+}
+
+templ BannerWarningIcon() {
+	<svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+		<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM10 15a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm0-4a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v4a1 1 0 0 1-1 1Z"/>
+	</svg>
+}
+
+templ BannerErrorIcon() {
+	<svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+		<path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 11.793a1 1 0 1 1-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L8.586 10 6.293 7.707a1 1 0 0 1 1.414-1.414L10 8.586l2.293-2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z"/>
+	</svg>
+}
+
+// Helper functions for banner styling
+func getBannerClasses(variant, position string) string {
+	base := "flex p-4"
+	
+	// Variant classes
+	var variantClass string
+	switch variant {
+	case "success":
+		variantClass = "text-green-800 border border-green-300 bg-green-50 dark:bg-gray-800 dark:text-green-400 dark:border-green-800"
+	case "warning":
+		variantClass = "text-yellow-800 border border-yellow-300 bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300 dark:border-yellow-800"
+	case "error":
+		variantClass = "text-red-800 border border-red-300 bg-red-50 dark:bg-gray-800 dark:text-red-400 dark:border-red-800"
+	default: // info
+		variantClass = "text-blue-800 border border-blue-300 bg-blue-50 dark:bg-gray-800 dark:text-blue-400 dark:border-blue-800"
+	}
+	
+	// Position classes
+	var positionClass string
+	switch position {
+	case "top":
+		positionClass = "fixed top-0 left-0 right-0 z-50"
+	case "bottom":
+		positionClass = "fixed bottom-0 left-0 right-0 z-50"
+	case "sticky":
+		positionClass = "sticky top-0 z-50"
+	default: // relative
+		positionClass = "relative"
+	}
+	
+	return strings.Join([]string{base, variantClass, positionClass}, " ")
+}
+
+func getBannerContentClasses() string {
+	return "flex items-center w-full"
+}
+
+func getBannerIconClasses() string {
+	return "flex items-center justify-center flex-shrink-0 w-8 h-8 mr-3"
+}
+
+func getBannerMessageClasses() string {
+	return "flex-1 text-sm font-medium"
+}
+
+func getBannerActionsClasses() string {
+	return "flex items-center ml-auto space-x-2"
+}
+
+func getBannerActionClasses(actionVariant, bannerVariant string) string {
+	base := "text-sm font-medium px-3 py-1.5 rounded-lg transition-colors duration-200"
+	
+	if actionVariant == "primary" {
+		switch bannerVariant {
+		case "success":
+			return base + " text-white bg-green-800 hover:bg-green-900 dark:bg-green-600 dark:hover:bg-green-700"
+		case "warning":
+			return base + " text-white bg-yellow-800 hover:bg-yellow-900 dark:bg-yellow-600 dark:hover:bg-yellow-700"
+		case "error":
+			return base + " text-white bg-red-800 hover:bg-red-900 dark:bg-red-600 dark:hover:bg-red-700"
+		default: // info
+			return base + " text-white bg-blue-800 hover:bg-blue-900 dark:bg-blue-600 dark:hover:bg-blue-700"
+		}
+	}
+	
+	// Secondary variant
+	switch bannerVariant {
+	case "success":
+		return base + " text-green-800 bg-transparent border border-green-800 hover:bg-green-800 hover:text-white dark:text-green-400 dark:border-green-400 dark:hover:bg-green-400 dark:hover:text-gray-800"
+	case "warning":
+		return base + " text-yellow-800 bg-transparent border border-yellow-800 hover:bg-yellow-800 hover:text-white dark:text-yellow-300 dark:border-yellow-300 dark:hover:bg-yellow-300 dark:hover:text-gray-800"
+	case "error":
+		return base + " text-red-800 bg-transparent border border-red-800 hover:bg-red-800 hover:text-white dark:text-red-400 dark:border-red-400 dark:hover:bg-red-400 dark:hover:text-gray-800"
+	default: // info
+		return base + " text-blue-800 bg-transparent border border-blue-800 hover:bg-blue-800 hover:text-white dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-400 dark:hover:text-gray-800"
+	}
+}
+
+func getBannerDismissClasses() string {
+	return "flex items-center justify-center ml-auto -mx-1.5 -my-1.5 text-current rounded-lg p-1.5 hover:bg-current hover:bg-opacity-20 inline-flex h-8 w-8 dark:hover:bg-gray-600"
+}

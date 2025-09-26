@@ -1,0 +1,90 @@
+package examples
+
+import "github.com/niiniyare/erp/internal/ui/types"
+
+// ElementsDemoPageData represents data for the elements demo page
+type ElementsDemoPageData struct {
+	Title     string
+	User      types.UserInfo
+	CSRFToken string
+}
+
+// ElementsDemoPage renders a complete standalone page showcasing basic UI elements
+templ ElementsDemoPage(data ElementsDemoPageData) {
+	<!DOCTYPE html>
+	<html lang="en" class="h-full bg-gray-50">
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<title>{ data.Title } - ERP System</title>
+		
+		<!-- Flowbite CSS -->
+		<link href="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.css" rel="stylesheet"/>
+		
+		<!-- HTMX -->
+		<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+		
+		<!-- Alpine.js -->
+		<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+		
+		<!-- CSRF Token -->
+		<meta name="csrf-token" content={ data.CSRFToken }/>
+		
+		<!-- Custom Styles -->
+		<style>
+			/* HTMX loading states */
+			.htmx-request { opacity: 0.5; }
+			.htmx-swapping { opacity: 0; }
+			.htmx-settling { opacity: 1; }
+			.htmx-indicator { display: none; }
+			.htmx-request .htmx-indicator { display: inline; }
+			
+			/* Alpine.js transitions */
+			[x-cloak] { display: none !important; }
+		</style>
+	</head>
+	<body class="h-full bg-gray-50">
+		<div class="min-h-full">
+			<!-- Navigation Header -->
+			<nav class="bg-white shadow-sm border-b border-gray-200">
+				<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+					<div class="flex justify-between h-16">
+						<div class="flex items-center">
+							<div class="flex-shrink-0">
+								<h1 class="text-xl font-semibold text-gray-900">ERP System</h1>
+							</div>
+							<div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+								<a href="/console/dashboard" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
+									Dashboard
+								</a>
+								<a href="/console/demo/elements" class="text-blue-600 border-b-2 border-blue-600 px-3 py-2 text-sm font-medium">
+									UI Elements Demo
+								</a>
+								<a href="/console/tenants" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
+									Tenants
+								</a>
+							</div>
+						</div>
+						<div class="flex items-center">
+							<div class="flex items-center space-x-4">
+								<span class="text-sm text-gray-700">{ data.User.Name }</span>
+								<a href="/console/auth/logout" class="text-gray-500 hover:text-gray-700 text-sm">
+									Logout
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</nav>
+
+			<!-- Main Content -->
+			<main class="py-8">
+				@BasicElementsDemo()
+			</main>
+		</div>
+
+		<!-- Scripts -->
+		<script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
+	</body>
+	</html>
+}

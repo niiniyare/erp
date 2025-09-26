@@ -1,0 +1,284 @@
+package elements
+
+import (
+	"strings"
+	"strconv"
+)
+
+// AvatarProps defines the properties for the Avatar component
+type AvatarProps struct {
+	Src           string `json:"src"`                                                          // Image URL
+	Alt           string `json:"alt"`                                                          // Alt text for image
+	Initials      string `json:"initials"`                                                     // Fallback initials
+	Size          string `json:"size" validate:"oneof=xs sm base lg xl"`                      // Size variant
+	Shape         string `json:"shape" validate:"oneof=rounded square"`                       // Shape variant
+	Border        bool   `json:"border"`                                                       // Show border
+	Status        string `json:"status" validate:"oneof=none online offline away busy"`       // Status indicator
+	StatusColor   string `json:"status_color" validate:"oneof=green red yellow gray"`         // Custom status color
+	Placeholder   bool   `json:"placeholder"`                                                  // Show placeholder icon
+	ID            string `json:"id"`
+	Class         string `json:"class"`
+	AriaLabel     string `json:"aria_label"`
+}
+
+// AvatarGroupProps defines properties for avatar groups
+type AvatarGroupProps struct {
+	Avatars   []AvatarProps `json:"avatars" validate:"required,min=1"`
+	Max       int           `json:"max"`       // Maximum avatars to show before +N
+	Size      string        `json:"size" validate:"oneof=xs sm base lg xl"`
+	ID        string        `json:"id"`
+	Class     string        `json:"class"`
+	AriaLabel string        `json:"aria_label"`
+}
+
+// Avatar renders a Flowbite-styled avatar component
+templ Avatar(props AvatarProps) {
+	<div 
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ "relative " + props.Class }
+		if props.AriaLabel != "" {
+			aria-label={ props.AriaLabel }
+		}
+	>
+		<div class={ getAvatarClasses(props.Size, props.Shape, props.Border) }>
+			if props.Src != "" {
+				<img 
+					class={ getAvatarImageClasses(props.Shape) }
+					src={ props.Src } 
+					alt={ props.Alt }
+				/>
+			} else if props.Initials != "" {
+				<div class={ getAvatarInitialsClasses(props.Size) }>
+					{ props.Initials }
+				</div>
+			} else if props.Placeholder {
+				<div class={ getAvatarPlaceholderClasses() }>
+					<svg class="w-full h-full text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+						<path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+					</svg>
+				</div>
+			}
+		</div>
+		
+		<!-- Status Indicator -->
+		if props.Status != "none" && props.Status != "" {
+			<span class={ getAvatarStatusClasses(props.Size, props.Status, props.StatusColor) }></span>
+		}
+	</div>
+}
+
+// AvatarGroup renders a group of avatars with overflow indicator
+templ AvatarGroup(props AvatarGroupProps) {
+	<div 
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ "flex -space-x-4 rtl:space-x-reverse " + props.Class }
+		if props.AriaLabel != "" {
+			aria-label={ props.AriaLabel }
+		}
+	>
+		for i, avatar := range props.Avatars {
+			if props.Max == 0 || i < props.Max {
+				<!-- Override size to match group -->
+				@Avatar(AvatarProps{
+					Src:         avatar.Src,
+					Alt:         avatar.Alt,
+					Initials:    avatar.Initials,
+					Size:        getGroupSize(props.Size, avatar.Size),
+					Shape:       avatar.Shape,
+					Border:      true, // Always show border in groups
+					Status:      avatar.Status,
+					StatusColor: avatar.StatusColor,
+					Placeholder: avatar.Placeholder,
+					AriaLabel:   avatar.AriaLabel,
+				})
+			}
+		}
+		
+		<!-- Overflow indicator -->
+		if props.Max > 0 && len(props.Avatars) > props.Max {
+			<div class={ getAvatarOverflowClasses(props.Size) }>
+				<span class={ getAvatarOverflowTextClasses(props.Size) }>
+					+{ getOverflowCount(len(props.Avatars), props.Max) }
+				</span>
+			</div>
+		}
+	</div>
+}
+
+// Helper functions for avatar styling
+func getAvatarClasses(size, shape string, border bool) string {
+	base := "flex items-center justify-center overflow-hidden bg-gray-100 dark:bg-gray-600"
+	
+	// Size classes
+	var sizeClass string
+	switch size {
+	case "xs":
+		sizeClass = "w-6 h-6"
+	case "sm":
+		sizeClass = "w-8 h-8"
+	case "lg":
+		sizeClass = "w-10 h-10"
+	case "xl":
+		sizeClass = "w-20 h-20"
+	default: // base
+		sizeClass = "w-10 h-10"
+	}
+	
+	// Shape classes
+	var shapeClass string
+	switch shape {
+	case "square":
+		shapeClass = "rounded"
+	default: // rounded
+		shapeClass = "rounded-full"
+	}
+	
+	// Border class
+	var borderClass string
+	if border {
+		borderClass = "ring-2 ring-gray-300 dark:ring-gray-500"
+	}
+	
+	classes := []string{base, sizeClass, shapeClass}
+	if borderClass != "" {
+		classes = append(classes, borderClass)
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getAvatarImageClasses(shape string) string {
+	base := "w-full h-full object-cover"
+	
+	switch shape {
+	case "square":
+		return base + " rounded"
+	default: // rounded
+		return base + " rounded-full"
+	}
+}
+
+func getAvatarInitialsClasses(size string) string {
+	base := "font-medium text-gray-600 dark:text-gray-300"
+	
+	switch size {
+	case "xs":
+		return base + " text-xs"
+	case "sm":
+		return base + " text-sm"
+	case "lg":
+		return base + " text-lg"
+	case "xl":
+		return base + " text-2xl"
+	default: // base
+		return base + " text-sm"
+	}
+}
+
+func getAvatarPlaceholderClasses() string {
+	return "flex items-center justify-center w-full h-full bg-gray-100 dark:bg-gray-600"
+}
+
+func getAvatarStatusClasses(size, status, customColor string) string {
+	base := "absolute border-2 border-white rounded-full dark:border-gray-800"
+	
+	// Position based on size
+	var positionClass string
+	switch size {
+	case "xs":
+		positionClass = "bottom-0 left-4 w-2 h-2"
+	case "sm":
+		positionClass = "bottom-0 left-5 w-2.5 h-2.5"
+	case "lg":
+		positionClass = "bottom-0 left-7 w-3 h-3"
+	case "xl":
+		positionClass = "bottom-0 left-14 w-4 h-4"
+	default: // base
+		positionClass = "bottom-0 left-7 w-3 h-3"
+	}
+	
+	// Color based on status or custom color
+	var colorClass string
+	if customColor != "" {
+		switch customColor {
+		case "green":
+			colorClass = "bg-green-400"
+		case "red":
+			colorClass = "bg-red-400"
+		case "yellow":
+			colorClass = "bg-yellow-400"
+		case "gray":
+			colorClass = "bg-gray-400"
+		default:
+			colorClass = "bg-green-400"
+		}
+	} else {
+		switch status {
+		case "online":
+			colorClass = "bg-green-400"
+		case "offline":
+			colorClass = "bg-gray-400"
+		case "away":
+			colorClass = "bg-yellow-400"
+		case "busy":
+			colorClass = "bg-red-400"
+		default:
+			colorClass = "bg-green-400"
+		}
+	}
+	
+	return strings.Join([]string{base, positionClass, colorClass}, " ")
+}
+
+func getAvatarOverflowClasses(size string) string {
+	base := "flex items-center justify-center bg-gray-700 border-2 border-white rounded-full dark:border-gray-800"
+	
+	switch size {
+	case "xs":
+		return base + " w-6 h-6"
+	case "sm":
+		return base + " w-8 h-8"
+	case "lg":
+		return base + " w-10 h-10"
+	case "xl":
+		return base + " w-20 h-20"
+	default: // base
+		return base + " w-10 h-10"
+	}
+}
+
+func getAvatarOverflowTextClasses(size string) string {
+	base := "font-medium text-white"
+	
+	switch size {
+	case "xs":
+		return base + " text-xs"
+	case "sm":
+		return base + " text-xs"
+	case "lg":
+		return base + " text-sm"
+	case "xl":
+		return base + " text-lg"
+	default: // base
+		return base + " text-xs"
+	}
+}
+
+func getGroupSize(groupSize, individualSize string) string {
+	if groupSize != "" {
+		return groupSize
+	}
+	return individualSize
+}
+
+func getOverflowCount(total, max int) string {
+	overflow := total - max
+	if overflow < 0 {
+		return "0"
+	}
+	return strconv.Itoa(overflow)
+}

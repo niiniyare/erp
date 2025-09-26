@@ -175,6 +175,7 @@ func (r *UIRouter) setupConsoleRoutes() {
 	r.mux.Handle("/console/dashboard", consoleAuth(http.HandlerFunc(r.consoleDashboardHandler.ShowDashboard)))
 	r.mux.Handle("/console/api/stats", consoleAuth(http.HandlerFunc(r.consoleDashboardHandler.GetSystemStats)))
 	r.mux.Handle("/console/api/activity", consoleAuth(http.HandlerFunc(r.consoleDashboardHandler.GetRecentActivity)))
+	r.mux.Handle("/console/demo/elements", consoleAuth(http.HandlerFunc(r.consoleDashboardHandler.ShowBasicElementsDemo)))
 
 	// Console tenant management routes
 	r.mux.Handle("/console/tenants", consoleAuth(http.HandlerFunc(r.consoleTenantHandler.ListTenants)))
