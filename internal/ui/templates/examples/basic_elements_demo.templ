@@ -10,9 +10,16 @@ templ BasicElementsDemo() {
 		Content: basicElementsContent(),
 	})
 	
-	<!-- Modal Store Script -->
+	<!-- Store Scripts -->
 	@elements.ModalStore()
 	@elements.NavbarStore()
+	@elements.ToastStore()
+
+	<!-- Toast Container -->
+	@elements.ToastContainer(elements.ToastContainerProps{
+		Position: "top-right",
+		MaxToasts: 5,
+	})
 	
 	<!-- Demo Modals -->
 	@elements.Modal(elements.ModalProps{
@@ -533,6 +540,111 @@ templ basicElementsContent() {
 						},
 					})
 				</div>
+			</div>
+		</div>
+
+		<!-- Toast/Notification Section -->
+		<div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+			<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Toast Notifications</h2>
+			<div class="space-y-4">
+				<div class="flex flex-wrap gap-2">
+					<button 
+						class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+						@click="$store.toast.info('This is an info notification')"
+					>
+						Show Info
+					</button>
+					<button 
+						class="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700"
+						@click="$store.toast.success('Operation completed successfully!')"
+					>
+						Show Success
+					</button>
+					<button 
+						class="px-4 py-2 text-sm font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700"
+						@click="$store.toast.warning('Please check your input')"
+					>
+						Show Warning
+					</button>
+					<button 
+						class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700"
+						@click="$store.toast.error('An error occurred')"
+					>
+						Show Error
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Tooltip Section -->
+		<div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+			<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Tooltips & Popovers</h2>
+			<div class="space-y-4">
+				<div>
+					<h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Tooltips</h3>
+					<div class="flex flex-wrap gap-4">
+						@elements.Tooltip(elements.Button(elements.ButtonProps{Text: "Hover me", Variant: "secondary"}), elements.TooltipProps{
+							Content: "This is a tooltip",
+							Position: "top",
+							Trigger: "hover",
+						})
+						@elements.Tooltip(elements.Button(elements.ButtonProps{Text: "Click me", Variant: "secondary"}), elements.TooltipProps{
+							Content: "This tooltip appears on click",
+							Position: "bottom",
+							Trigger: "click",
+						})
+					</div>
+				</div>
+				<div>
+					<h3 class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Popovers</h3>
+					<div class="flex flex-wrap gap-4">
+						@elements.Popover(elements.Button(elements.ButtonProps{Text: "Info Popover", Variant: "secondary"}), elements.PopoverProps{
+							Title: "Information",
+							Content: "This is a popover with detailed information about the feature.",
+							Position: "top",
+							Trigger: "click",
+							Dismissible: true,
+							Arrow: true,
+						})
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Carousel Section -->
+		<div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+			<h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-4">Carousel</h2>
+			<div class="max-w-2xl">
+				@elements.Carousel(elements.CarouselProps{
+					Items: []elements.CarouselItem{
+						{
+							ID: "slide-1",
+							Title: "First Slide",
+							Caption: "This is the first slide in the carousel",
+							Content: "<div class='flex items-center justify-center h-64 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xl font-bold'>Slide 1</div>",
+							Active: true,
+						},
+						{
+							ID: "slide-2",
+							Title: "Second Slide",
+							Caption: "This is the second slide",
+							Content: "<div class='flex items-center justify-center h-64 bg-gradient-to-r from-green-500 to-blue-600 text-white text-xl font-bold'>Slide 2</div>",
+						},
+						{
+							ID: "slide-3",
+							Title: "Third Slide",
+							Caption: "This is the third slide",
+							Content: "<div class='flex items-center justify-center h-64 bg-gradient-to-r from-purple-500 to-pink-600 text-white text-xl font-bold'>Slide 3</div>",
+						},
+					},
+					AutoPlay: true,
+					Interval: 4000,
+					Loop: true,
+					ShowDots: true,
+					ShowArrows: true,
+					ShowCaptions: true,
+					Height: "base",
+				})
 			</div>
 		</div>
 	</div>

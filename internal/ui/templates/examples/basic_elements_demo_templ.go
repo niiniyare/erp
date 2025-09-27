@@ -40,7 +40,7 @@ func BasicElementsDemo() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Modal Store Script -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Store Scripts -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -52,7 +52,22 @@ func BasicElementsDemo() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<!-- Demo Modals -->")
+		templ_7745c5c3_Err = elements.ToastStore().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<!-- Toast Container -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.ToastContainer(elements.ToastContainerProps{
+			Position:  "top-right",
+			MaxToasts: 5,
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Demo Modals -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -109,7 +124,7 @@ func basicElementsContent() templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"space-y-8\"><!-- Page Header --><div class=\"text-center\"><h1 class=\"text-4xl font-bold text-gray-900 dark:text-white mb-4\">Complete UI Components Library</h1><p class=\"text-lg text-gray-600 dark:text-gray-400\">Comprehensive showcase of all foundational and advanced UI components including modals, navigation, and interactive elements</p></div><!-- Buttons Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Buttons</h2><div class=\"space-y-4\"><!-- Button Variants --><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Variants</h3><div class=\"flex flex-wrap gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"space-y-8\"><!-- Page Header --><div class=\"text-center\"><h1 class=\"text-4xl font-bold text-gray-900 dark:text-white mb-4\">Complete UI Components Library</h1><p class=\"text-lg text-gray-600 dark:text-gray-400\">Comprehensive showcase of all foundational and advanced UI components including modals, navigation, and interactive elements</p></div><!-- Buttons Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Buttons</h2><div class=\"space-y-4\"><!-- Button Variants --><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Variants</h3><div class=\"flex flex-wrap gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -137,7 +152,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div></div><!-- Button Sizes --><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Sizes</h3><div class=\"flex flex-wrap items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></div><!-- Button Sizes --><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Sizes</h3><div class=\"flex flex-wrap items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -161,7 +176,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></div><!-- Button States --><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">States</h3><div class=\"flex flex-wrap gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></div><!-- Button States --><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">States</h3><div class=\"flex flex-wrap gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -173,7 +188,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></div></div></div><!-- Banner Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Banners</h2><div class=\"space-y-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div></div></div><!-- Banner Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Banners</h2><div class=\"space-y-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -198,7 +213,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div><!-- Breadcrumb Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Breadcrumbs</h2><div class=\"space-y-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div><!-- Breadcrumb Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Breadcrumbs</h2><div class=\"space-y-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -224,7 +239,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div><!-- Button Group Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Button Groups</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Horizontal</h3>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div></div><!-- Button Group Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Button Groups</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Horizontal</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -238,7 +253,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Outline Variant</h3>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Outline Variant</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -254,7 +269,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div></div></div><!-- Accordion Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Accordion</h2>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div></div></div><!-- Accordion Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Accordion</h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -281,7 +296,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><!-- Avatar Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Avatars</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Sizes</h3><div class=\"flex items-center space-x-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div><!-- Avatar Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Avatars</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Sizes</h3><div class=\"flex items-center space-x-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -305,7 +320,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">With Status</h3><div class=\"flex items-center space-x-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">With Status</h3><div class=\"flex items-center space-x-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -325,7 +340,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Avatar Group</h3>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Avatar Group</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -342,7 +357,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div></div><!-- Spinner Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Spinners</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Types</h3><div class=\"flex items-center space-x-6\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></div></div><!-- Spinner Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Spinners</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Types</h3><div class=\"flex items-center space-x-6\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -358,7 +373,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Sizes & Colors</h3><div class=\"flex items-center space-x-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Sizes & Colors</h3><div class=\"flex items-center space-x-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -382,7 +397,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div></div></div></div><!-- Progress Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Progress</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Basic Progress</h3>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div></div></div></div><!-- Progress Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Progress</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Basic Progress</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -394,7 +409,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Multiple Bars</h3>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Multiple Bars</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -408,7 +423,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Circular Progress</h3><div class=\"flex items-center space-x-6\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Circular Progress</h3><div class=\"flex items-center space-x-6\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -424,7 +439,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div></div></div></div><!-- Bottom Navigation Section (Demo) --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Bottom Navigation</h2><p class=\"text-gray-600 dark:text-gray-400 mb-4\">Preview of bottom navigation component (typically fixed at bottom):</p><div class=\"border rounded-lg p-4 bg-gray-50 dark:bg-gray-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div></div></div></div><!-- Bottom Navigation Section (Demo) --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Bottom Navigation</h2><p class=\"text-gray-600 dark:text-gray-400 mb-4\">Preview of bottom navigation component (typically fixed at bottom):</p><div class=\"border rounded-lg p-4 bg-gray-50 dark:bg-gray-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -440,7 +455,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div></div><!-- Input Fields Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Input Fields</h2><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div></div><!-- Input Fields Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Input Fields</h2><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -506,7 +521,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div></div><!-- Alerts Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Alerts</h2><div class=\"space-y-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div></div><!-- Alerts Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Alerts</h2><div class=\"space-y-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -549,7 +564,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div></div><!-- Badges Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Badges</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Variants</h3><div class=\"flex flex-wrap gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div></div><!-- Badges Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Badges</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Variants</h3><div class=\"flex flex-wrap gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -585,7 +600,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Styles</h3><div class=\"flex flex-wrap gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Styles</h3><div class=\"flex flex-wrap gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -605,7 +620,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></div></div></div><!-- Modal Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Modals</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Basic Modal</h3><button class=\"px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700\" @click=\"$store.modal.open('demo-modal')\">Open Modal</button></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Confirmation Dialog</h3><button class=\"px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700\" @click=\"$store.modal.open('confirm-modal')\">Delete Item</button></div></div></div><!-- Dropdown Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Dropdowns</h2><div class=\"flex flex-wrap gap-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div></div></div></div><!-- Modal Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Modals</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Basic Modal</h3><button class=\"px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700\" @click=\"$store.modal.open('demo-modal')\">Open Modal</button></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Confirmation Dialog</h3><button class=\"px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700\" @click=\"$store.modal.open('confirm-modal')\">Delete Item</button></div></div></div><!-- Dropdown Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Dropdowns</h2><div class=\"flex flex-wrap gap-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -631,7 +646,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div></div><!-- Navbar Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Navigation Bar</h2><p class=\"text-gray-600 dark:text-gray-400 mb-4\">Preview of navbar component:</p><div class=\"border rounded-lg bg-gray-50 dark:bg-gray-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div></div><!-- Navbar Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Navigation Bar</h2><p class=\"text-gray-600 dark:text-gray-400 mb-4\">Preview of navbar component:</p><div class=\"border rounded-lg bg-gray-50 dark:bg-gray-900\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -658,7 +673,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div></div><!-- Tabs Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Tabs</h2><div class=\"space-y-6\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Default Style</h3>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div></div><!-- Tabs Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Tabs</h2><div class=\"space-y-6\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Default Style</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -674,7 +689,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Pills Style</h3>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Pills Style</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -689,7 +704,79 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div></div></div><!-- Toast/Notification Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Toast Notifications</h2><div class=\"space-y-4\"><div class=\"flex flex-wrap gap-2\"><button class=\"px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700\" @click=\"$store.toast.info('This is an info notification')\">Show Info</button> <button class=\"px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700\" @click=\"$store.toast.success('Operation completed successfully!')\">Show Success</button> <button class=\"px-4 py-2 text-sm font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700\" @click=\"$store.toast.warning('Please check your input')\">Show Warning</button> <button class=\"px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700\" @click=\"$store.toast.error('An error occurred')\">Show Error</button></div></div></div><!-- Tooltip Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Tooltips & Popovers</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Tooltips</h3><div class=\"flex flex-wrap gap-4\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Tooltip(elements.Button(elements.ButtonProps{Text: "Hover me", Variant: "secondary"}), elements.TooltipProps{
+			Content:  "This is a tooltip",
+			Position: "top",
+			Trigger:  "hover",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Tooltip(elements.Button(elements.ButtonProps{Text: "Click me", Variant: "secondary"}), elements.TooltipProps{
+			Content:  "This tooltip appears on click",
+			Position: "bottom",
+			Trigger:  "click",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Popovers</h3><div class=\"flex flex-wrap gap-4\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Popover(elements.Button(elements.ButtonProps{Text: "Info Popover", Variant: "secondary"}), elements.PopoverProps{
+			Title:       "Information",
+			Content:     "This is a popover with detailed information about the feature.",
+			Position:    "top",
+			Trigger:     "click",
+			Dismissible: true,
+			Arrow:       true,
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div></div></div></div><!-- Carousel Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Carousel</h2><div class=\"max-w-2xl\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Carousel(elements.CarouselProps{
+			Items: []elements.CarouselItem{
+				{
+					ID:      "slide-1",
+					Title:   "First Slide",
+					Caption: "This is the first slide in the carousel",
+					Content: "<div class='flex items-center justify-center h-64 bg-gradient-to-r from-blue-500 to-purple-600 text-white text-xl font-bold'>Slide 1</div>",
+					Active:  true,
+				},
+				{
+					ID:      "slide-2",
+					Title:   "Second Slide",
+					Caption: "This is the second slide",
+					Content: "<div class='flex items-center justify-center h-64 bg-gradient-to-r from-green-500 to-blue-600 text-white text-xl font-bold'>Slide 2</div>",
+				},
+				{
+					ID:      "slide-3",
+					Title:   "Third Slide",
+					Caption: "This is the third slide",
+					Content: "<div class='flex items-center justify-center h-64 bg-gradient-to-r from-purple-500 to-pink-600 text-white text-xl font-bold'>Slide 3</div>",
+				},
+			},
+			AutoPlay:     true,
+			Interval:     4000,
+			Loop:         true,
+			ShowDots:     true,
+			ShowArrows:   true,
+			ShowCaptions: true,
+			Height:       "base",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
