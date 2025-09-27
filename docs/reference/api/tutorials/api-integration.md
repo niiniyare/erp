@@ -702,7 +702,7 @@ health_thread.start()
 
 ## Additional Resources
 
-- **[ABAC Integration Guide](../../../modules/user/abac/policy_evaluation.md)**: Deep dive into authorization patterns
-- **[API Testing Scripts](../../api-source/utilities/scripts/)**: Ready-to-use testing utilities
-- **[Postman Collections](../../api-source/utilities/postman/)**: Interactive API exploration
-- **[Contributing Guide](../../../contributing/01-best-practices.md)**: Best practices for API integration
+- **[ABAC Integration Guide](../../modules/user/abac/policy_evaluation.md)**: Deep dive into authorization patterns
+- **API Testing Scripts**: Ready-to-use testing utilities
+- **Postman Collections**: Interactive API exploration
+- **[Contributing Guide](../../contributing/01-best-practices.md)**: Best practices for API integration

@@ -119,13 +119,12 @@ In-depth explanation for advanced users.
 
 ## Related Resources
 
-- [Related Guide 1](../path/to/guide.md)
-- [Related Guide 2](../path/to/other-guide.md)
-- [External Resource](https://example.com)
+- Link to related internal guides
+- Link to external resources
 
 ---
 
-**Next**: [Next Topic](next-topic.md) | **Up**: [Parent Topic](../index.md)
+**Next**: Link to the next logical topic | **Up**: Link to the parent topic
 ```
 
 ### Step 3: Add Navigation to mkdocs.yml

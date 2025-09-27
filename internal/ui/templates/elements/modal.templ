@@ -1,0 +1,302 @@
+package elements
+
+import "strings"
+
+// ModalProps defines the properties for the Modal component
+type ModalProps struct {
+	Title       string `json:"title"`
+	Size        string `json:"size" validate:"oneof=xs sm base lg xl 2xl"`
+	Position    string `json:"position" validate:"oneof=center top"`
+	Backdrop    string `json:"backdrop" validate:"oneof=static dynamic none"`
+	Closable    bool   `json:"closable"`
+	ShowHeader  bool   `json:"show_header"`
+	ShowFooter  bool   `json:"show_footer"`
+	Content     string `json:"content"`
+	FooterActions []ModalAction `json:"footer_actions"`
+	ID          string `json:"id"`
+	Class       string `json:"class"`
+	AriaLabel   string `json:"aria_label"`
+}
+
+// ModalAction defines action buttons in modal footer
+type ModalAction struct {
+	Text     string `json:"text" validate:"required"`
+	Variant  string `json:"variant" validate:"oneof=primary secondary danger"`
+	Size     string `json:"size" validate:"oneof=xs sm base lg xl"`
+	Disabled bool   `json:"disabled"`
+	Action   string `json:"action"` // close, submit, custom
+}
+
+// Modal renders a Flowbite-styled modal component
+templ Modal(props ModalProps) {
+	<!-- Modal backdrop -->
+	<div
+		if props.ID != "" {
+			id={ props.ID + "-backdrop" }
+		}
+		class={ getModalBackdropClasses(props.Backdrop) }
+		x-show="$store.modal.isOpen"
+		x-transition.opacity
+		if props.Backdrop == "dynamic" {
+			@click="$store.modal.close()"
+		}
+	></div>
+
+	<!-- Modal dialog -->
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ getModalClasses(props.Position) + " " + props.Class }
+		x-show="$store.modal.isOpen"
+		x-transition
+		role="dialog"
+		aria-modal="true"
+		if props.AriaLabel != "" {
+			aria-label={ props.AriaLabel }
+		} else if props.Title != "" {
+			aria-labelledby={ props.ID + "-title" }
+		}
+		@keydown.escape={ getEscapeAction(props.Closable) }
+	>
+		<div class={ getModalDialogClasses(props.Size) }>
+			<div class={ getModalContentClasses() }>
+				<!-- Modal header -->
+				if props.ShowHeader {
+					<div class={ getModalHeaderClasses() }>
+						if props.Title != "" {
+							<h3 
+								if props.ID != "" {
+									id={ props.ID + "-title" }
+								}
+								class={ getModalTitleClasses() }
+							>
+								{ props.Title }
+							</h3>
+						}
+						
+						if props.Closable {
+							<button
+								type="button"
+								class={ getModalCloseClasses() }
+								@click="$store.modal.close()"
+								aria-label="Close modal"
+							>
+								<svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+									<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+								</svg>
+								<span class="sr-only">Close modal</span>
+							</button>
+						}
+					</div>
+				}
+
+				<!-- Modal body -->
+				<div class={ getModalBodyClasses() }>
+					if props.Content != "" {
+						{ props.Content }
+					} else {
+						<!-- Slot for custom content -->
+						<div id={ props.ID + "-content" }></div>
+					}
+				</div>
+
+				<!-- Modal footer -->
+				if props.ShowFooter && len(props.FooterActions) > 0 {
+					<div class={ getModalFooterClasses() }>
+						for _, action := range props.FooterActions {
+							<button
+								type="button"
+								class={ getModalActionClasses(action.Variant, action.Size) }
+								if action.Disabled {
+									disabled
+									aria-disabled="true"
+								}
+								if action.Action == "close" {
+									@click="$store.modal.close()"
+								} else if action.Action == "submit" {
+									@click="$store.modal.submit()"
+								}
+							>
+								{ action.Text }
+							</button>
+						}
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// ConfirmationModal renders a simple confirmation dialog
+templ ConfirmationModal(props ConfirmationModalProps) {
+	@Modal(ModalProps{
+		Title:      props.Title,
+		Size:       "base",
+		Position:   "center",
+		Backdrop:   "static",
+		Closable:   true,
+		ShowHeader: true,
+		ShowFooter: true,
+		Content:    props.Message,
+		FooterActions: []ModalAction{
+			{Text: props.CancelText, Variant: "secondary", Action: "close"},
+			{Text: props.ConfirmText, Variant: props.ConfirmVariant, Action: "submit"},
+		},
+		ID:        props.ID,
+		AriaLabel: props.AriaLabel,
+	})
+}
+
+// ConfirmationModalProps defines properties for confirmation dialogs
+type ConfirmationModalProps struct {
+	Title           string `json:"title" validate:"required"`
+	Message         string `json:"message" validate:"required"`
+	ConfirmText     string `json:"confirm_text"`
+	CancelText      string `json:"cancel_text"`
+	ConfirmVariant  string `json:"confirm_variant" validate:"oneof=primary danger"`
+	ID              string `json:"id"`
+	AriaLabel       string `json:"aria_label"`
+}
+
+// Helper functions for modal styling
+func getModalBackdropClasses(backdrop string) string {
+	base := "fixed inset-0 z-40"
+	
+	switch backdrop {
+	case "none":
+		return "hidden"
+	default:
+		return base + " bg-gray-900 bg-opacity-50 dark:bg-opacity-80"
+	}
+}
+
+func getModalClasses(position string) string {
+	base := "fixed inset-0 z-50 flex p-4 overflow-x-hidden overflow-y-auto md:inset-0"
+	
+	switch position {
+	case "top":
+		return base + " items-start justify-center pt-16"
+	default: // center
+		return base + " items-center justify-center"
+	}
+}
+
+func getModalDialogClasses(size string) string {
+	base := "relative w-full h-full max-h-full"
+	
+	switch size {
+	case "xs":
+		return base + " max-w-xs"
+	case "sm":
+		return base + " max-w-sm"
+	case "lg":
+		return base + " max-w-lg"
+	case "xl":
+		return base + " max-w-xl"
+	case "2xl":
+		return base + " max-w-2xl"
+	default: // base
+		return base + " max-w-md"
+	}
+}
+
+func getModalContentClasses() string {
+	return "relative bg-white rounded-lg shadow dark:bg-gray-700"
+}
+
+func getModalHeaderClasses() string {
+	return "flex items-start justify-between p-4 border-b rounded-t dark:border-gray-600"
+}
+
+func getModalTitleClasses() string {
+	return "text-xl font-semibold text-gray-900 dark:text-white"
+}
+
+func getModalCloseClasses() string {
+	return "text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+}
+
+func getModalBodyClasses() string {
+	return "p-6 space-y-6"
+}
+
+func getModalFooterClasses() string {
+	return "flex items-center p-6 space-x-2 border-t border-gray-200 rounded-b dark:border-gray-600"
+}
+
+func getModalActionClasses(variant, size string) string {
+	baseClasses := "font-medium rounded-lg text-sm px-5 py-2.5 text-center transition-colors duration-200"
+	
+	// Size classes
+	var sizeClass string
+	switch size {
+	case "xs":
+		sizeClass = "px-2 py-1 text-xs"
+	case "sm":
+		sizeClass = "px-3 py-1.5 text-sm"
+	case "lg":
+		sizeClass = "px-6 py-3 text-base"
+	case "xl":
+		sizeClass = "px-8 py-4 text-lg"
+	default: // base
+		sizeClass = "px-5 py-2.5 text-sm"
+	}
+	
+	// Variant classes
+	var variantClass string
+	switch variant {
+	case "primary":
+		variantClass = "text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+	case "danger":
+		variantClass = "text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800"
+	default: // secondary
+		variantClass = "text-gray-500 bg-white hover:bg-gray-100 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg border border-gray-200 hover:text-gray-900 focus:z-10 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-500 dark:hover:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-600"
+	}
+	
+	return strings.Join([]string{baseClasses, sizeClass, variantClass}, " ")
+}
+
+func getEscapeAction(closable bool) string {
+	if closable {
+		return "$store.modal.close()"
+	}
+	return ""
+}
+
+// Modal store initialization script for Alpine.js
+templ ModalStore() {
+	<script>
+		document.addEventListener('alpine:init', () => {
+			Alpine.store('modal', {
+				isOpen: false,
+				currentModal: null,
+				
+				open(modalId = null) {
+					this.isOpen = true;
+					this.currentModal = modalId;
+					document.body.style.overflow = 'hidden';
+				},
+				
+				close() {
+					this.isOpen = false;
+					this.currentModal = null;
+					document.body.style.overflow = '';
+				},
+				
+				submit() {
+					// Override this method for custom submit behavior
+					this.close();
+				},
+				
+				toggle(modalId = null) {
+					if (this.isOpen && this.currentModal === modalId) {
+						this.close();
+					} else {
+						this.open(modalId);
+					}
+				}
+			});
+		});
+	</script>
+}

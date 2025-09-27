@@ -72,11 +72,11 @@ curl -X POST http://localhost:8080/api/v1/analytics/users/00000000-0000-0000-000
 
 ## 📚 Documentation Files
 
-- **[curl-examples.md](curl-examples.md)** -  curl command examples
-- **[API Reference](api-reference.md)** - Detailed API specification
-- **[Schema Reference](schema-reference.md)** - Request/response schemas
-- **[Analytics Guide](analytics-guide.md)** - Understanding analytics data
-- **[Integration Guide](integration-guide.md)** - Integration with security systems
+- **curl-examples.md** -  curl command examples
+- **API Reference** - Detailed API specification
+- **Schema Reference** - Request/response schemas
+- **Analytics Guide** - Understanding analytics data
+- **Integration Guide** - Integration with security systems
 
 ## 🧪 Testing
 

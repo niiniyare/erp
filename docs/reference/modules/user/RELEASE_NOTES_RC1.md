@@ -191,10 +191,10 @@ If rollback is needed:
 
 ## 🔗 Related Documentation
 
-- [IAM Architecture Overview](./internal/core/iam/README.md)
-- [Authorization Service API](./internal/core/iam/authz/service.go)
-- [Testing Documentation](./internal/core/iam/authz/*_test.go)
-- [Performance Benchmarks](./internal/core/iam/authz/adapter_benchmark_test.go)
+- IAM Architecture Overview
+- Authorization Service API
+- Testing Documentation
+- Performance Benchmarks
 
 ---
 

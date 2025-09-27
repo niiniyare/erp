@@ -503,4 +503,4 @@ def generate_user_analytics_dashboard(api_client, user_ids):
 
 ---
 
-**Next**: [Organizations API](../organizations/) | **Up**: [API Reference](../index.md)
+**Next**: [Organizations API](../organizations/index.md) | **Up**: [API Reference](../index.md)

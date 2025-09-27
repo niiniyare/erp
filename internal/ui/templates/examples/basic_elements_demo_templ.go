@@ -40,6 +40,49 @@ func BasicElementsDemo() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Modal Store Script -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.ModalStore().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.NavbarStore().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<!-- Demo Modals -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Modal(elements.ModalProps{
+			ID:         "demo-modal",
+			Title:      "Demo Modal",
+			Size:       "lg",
+			Closable:   true,
+			ShowHeader: true,
+			ShowFooter: true,
+			Content:    "This is a demo modal with some sample content. You can add forms, information, or any other content here.",
+			FooterActions: []elements.ModalAction{
+				{Text: "Cancel", Variant: "secondary", Action: "close"},
+				{Text: "Save Changes", Variant: "primary", Action: "submit"},
+			},
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.ConfirmationModal(elements.ConfirmationModalProps{
+			ID:             "confirm-modal",
+			Title:          "Confirm Deletion",
+			Message:        "Are you sure you want to delete this item? This action cannot be undone.",
+			ConfirmText:    "Delete",
+			CancelText:     "Cancel",
+			ConfirmVariant: "danger",
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		return nil
 	})
 }
@@ -66,7 +109,7 @@ func basicElementsContent() templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"space-y-8\"><!-- Page Header --><div class=\"text-center\"><h1 class=\"text-4xl font-bold text-gray-900 dark:text-white mb-4\">Basic UI Elements Demo</h1><p class=\"text-lg text-gray-600 dark:text-gray-400\">Comprehensive showcase of all foundational UI components</p></div><!-- Buttons Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Buttons</h2><div class=\"space-y-4\"><!-- Button Variants --><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Variants</h3><div class=\"flex flex-wrap gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"space-y-8\"><!-- Page Header --><div class=\"text-center\"><h1 class=\"text-4xl font-bold text-gray-900 dark:text-white mb-4\">Complete UI Components Library</h1><p class=\"text-lg text-gray-600 dark:text-gray-400\">Comprehensive showcase of all foundational and advanced UI components including modals, navigation, and interactive elements</p></div><!-- Buttons Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Buttons</h2><div class=\"space-y-4\"><!-- Button Variants --><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Variants</h3><div class=\"flex flex-wrap gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -94,7 +137,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div></div><!-- Button Sizes --><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Sizes</h3><div class=\"flex flex-wrap items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div></div><!-- Button Sizes --><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Sizes</h3><div class=\"flex flex-wrap items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -118,7 +161,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div></div><!-- Button States --><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">States</h3><div class=\"flex flex-wrap gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></div><!-- Button States --><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">States</h3><div class=\"flex flex-wrap gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -130,7 +173,274 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div></div></div></div><!-- Input Fields Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Input Fields</h2><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></div></div></div><!-- Banner Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Banners</h2><div class=\"space-y-4\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Banner(elements.BannerProps{
+			Message:     "This is an info banner with actions",
+			Variant:     "info",
+			Icon:        true,
+			Dismissible: true,
+			Actions: []elements.BannerAction{
+				{Text: "Action", Variant: "primary"},
+				{Text: "Dismiss", Variant: "secondary"},
+			},
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Banner(elements.BannerProps{
+			Message: "Success banner without actions",
+			Variant: "success",
+			Icon:    true,
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div><!-- Breadcrumb Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Breadcrumbs</h2><div class=\"space-y-4\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Breadcrumb(elements.BreadcrumbProps{
+			ShowHome: true,
+			Items: []elements.BreadcrumbItem{
+				{Text: "Dashboard", Href: "/dashboard"},
+				{Text: "Users", Href: "/users"},
+				{Text: "Profile", Current: true},
+			},
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Breadcrumb(elements.BreadcrumbProps{
+			Separator: "arrow",
+			Items: []elements.BreadcrumbItem{
+				{Text: "Home", Href: "/"},
+				{Text: "Library", Href: "/library"},
+				{Text: "Data", Current: true},
+			},
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div><!-- Button Group Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Button Groups</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Horizontal</h3>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.ButtonGroup(elements.ButtonGroupProps{
+			Items: []elements.ButtonGroupItem{
+				{Text: "Left", Active: true},
+				{Text: "Center"},
+				{Text: "Right"},
+			},
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Outline Variant</h3>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.ButtonGroup(elements.ButtonGroupProps{
+			Variant: "outline",
+			Color:   "blue",
+			Items: []elements.ButtonGroupItem{
+				{Text: "Profile"},
+				{Text: "Settings", Active: true},
+				{Text: "Messages", Badge: "2"},
+			},
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div></div></div><!-- Accordion Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Accordion</h2>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Accordion(elements.AccordionProps{
+			Items: []elements.AccordionItem{
+				{
+					ID:          "panel-1",
+					Title:       "What is Flowbite?",
+					Content:     "Flowbite is an open-source library of interactive components built on top of Tailwind CSS including buttons, dropdowns, modals, navbars, and more.",
+					DefaultOpen: true,
+				},
+				{
+					ID:      "panel-2",
+					Title:   "Is there a Figma file available?",
+					Content: "Yes! Flowbite comes with a complete Figma design system including all of the components that are available in the library.",
+				},
+				{
+					ID:      "panel-3",
+					Title:   "What are the differences between Flowbite and Tailwind UI?",
+					Content: "The main difference is that the core components from Flowbite are open source under the MIT license, whereas Tailwind UI is a paid product.",
+				},
+			},
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><!-- Avatar Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Avatars</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Sizes</h3><div class=\"flex items-center space-x-4\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Avatar(elements.AvatarProps{Initials: "JD", Size: "xs"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Avatar(elements.AvatarProps{Initials: "JD", Size: "sm"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Avatar(elements.AvatarProps{Initials: "JD", Size: "base"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Avatar(elements.AvatarProps{Initials: "JD", Size: "lg"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Avatar(elements.AvatarProps{Initials: "JD", Size: "xl"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">With Status</h3><div class=\"flex items-center space-x-4\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Avatar(elements.AvatarProps{Initials: "JS", Status: "online", Border: true}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Avatar(elements.AvatarProps{Initials: "AB", Status: "offline", Border: true}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Avatar(elements.AvatarProps{Initials: "CD", Status: "away", Border: true}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Avatar(elements.AvatarProps{Initials: "EF", Status: "busy", Border: true}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Avatar Group</h3>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.AvatarGroup(elements.AvatarGroupProps{
+			Max: 3,
+			Avatars: []elements.AvatarProps{
+				{Initials: "AB"},
+				{Initials: "CD"},
+				{Initials: "EF"},
+				{Initials: "GH"},
+				{Initials: "IJ"},
+			},
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div></div><!-- Spinner Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Spinners</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Types</h3><div class=\"flex items-center space-x-6\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Spinner(elements.SpinnerProps{Type: "border", Text: "Loading..."}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Spinner(elements.SpinnerProps{Type: "dots", Text: "Processing..."}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Spinner(elements.SpinnerProps{Type: "pulse", Text: "Please wait..."}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Sizes & Colors</h3><div class=\"flex items-center space-x-4\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Spinner(elements.SpinnerProps{Size: "xs", Color: "blue"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Spinner(elements.SpinnerProps{Size: "sm", Color: "green"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Spinner(elements.SpinnerProps{Size: "base", Color: "red"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Spinner(elements.SpinnerProps{Size: "lg", Color: "purple"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Spinner(elements.SpinnerProps{Size: "xl", Color: "yellow"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div></div></div></div><!-- Progress Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Progress</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Basic Progress</h3>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Progress(elements.ProgressProps{
+			Value:       45,
+			Label:       "Progress",
+			ShowPercent: true,
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Multiple Bars</h3>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Progress(elements.ProgressProps{
+			Bars: []elements.ProgressBarProps{
+				{Value: 30, Color: "blue", Label: "Task 1"},
+				{Value: 25, Color: "green", Label: "Task 2"},
+				{Value: 15, Color: "yellow", Label: "Task 3"},
+			},
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Circular Progress</h3><div class=\"flex items-center space-x-6\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.ProgressCircular(elements.ProgressProps{Value: 25, Size: "sm", ShowPercent: true}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.ProgressCircular(elements.ProgressProps{Value: 50, Size: "base", ShowPercent: true, Color: "green"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.ProgressCircular(elements.ProgressProps{Value: 75, Size: "lg", ShowPercent: true, Color: "blue"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div></div></div></div><!-- Bottom Navigation Section (Demo) --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Bottom Navigation</h2><p class=\"text-gray-600 dark:text-gray-400 mb-4\">Preview of bottom navigation component (typically fixed at bottom):</p><div class=\"border rounded-lg p-4 bg-gray-50 dark:bg-gray-900\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.BottomNavigation(elements.BottomNavigationProps{
+			ShowLabels: true,
+			Items: []elements.BottomNavItem{
+				{Text: "Home", Icon: "🏠", Active: true},
+				{Text: "Search", Icon: "🔍"},
+				{Text: "Notifications", Icon: "🔔", Badge: "3", BadgeType: "count"},
+				{Text: "Profile", Icon: "👤"},
+			},
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div></div><!-- Input Fields Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Input Fields</h2><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -196,95 +506,7 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></div><!-- Select and Textarea Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Select & Textarea</h2><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Select(elements.SelectProps{
-			Label:       "Country",
-			Name:        "country",
-			Placeholder: "Select your country",
-			Required:    true,
-			Options: []elements.SelectOption{
-				{Value: "us", Label: "United States"},
-				{Value: "ca", Label: "Canada"},
-				{Value: "uk", Label: "United Kingdom"},
-				{Value: "de", Label: "Germany"},
-				{Value: "fr", Label: "France"},
-			},
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Textarea(elements.TextareaProps{
-			Label:       "Message",
-			Name:        "message",
-			Placeholder: "Enter your message here...",
-			Rows:        4,
-			MaxLength:   500,
-			Required:    true,
-			HelperText:  "Tell us about your project",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></div><!-- Badges Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Badges</h2><div class=\"space-y-4\"><!-- Badge Variants --><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Variants</h3><div class=\"flex flex-wrap gap-2\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Default", Variant: "default"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Dark", Variant: "dark"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Red", Variant: "red"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Green", Variant: "green"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Yellow", Variant: "yellow"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Indigo", Variant: "indigo"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Purple", Variant: "purple"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Pink", Variant: "pink"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div><!-- Badge Styles --><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Styles</h3><div class=\"flex flex-wrap gap-2\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Default", Variant: "blue"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Outlined", Variant: "blue", Outlined: true}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Pill", Variant: "blue", Pill: true}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Large", Variant: "blue", Size: "lg"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div></div></div><!-- Alerts Section --><div class=\"space-y-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div></div><!-- Alerts Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Alerts</h2><div class=\"space-y-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -327,211 +549,147 @@ func basicElementsContent() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><!-- Cards Section --><div class=\"grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div></div><!-- Badges Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Badges</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Variants</h3><div class=\"flex flex-wrap gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = elements.Card(elements.CardProps{
-			Title:    "Simple Card",
-			Shadow:   "md",
-			Bordered: true,
-			Content:  simpleCardContent(),
+		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Default", Variant: "default"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Dark", Variant: "dark"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Red", Variant: "red"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Green", Variant: "green"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Yellow", Variant: "yellow"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Indigo", Variant: "indigo"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Purple", Variant: "purple"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Pink", Variant: "pink"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Styles</h3><div class=\"flex flex-wrap gap-2\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Default", Variant: "blue"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Outlined", Variant: "blue", Outlined: true}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Pill", Variant: "blue", Pill: true}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Badge(elements.BadgeProps{Text: "Large", Variant: "blue", Size: "lg"}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></div></div></div><!-- Modal Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Modals</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Basic Modal</h3><button class=\"px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700\" @click=\"$store.modal.open('demo-modal')\">Open Modal</button></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Confirmation Dialog</h3><button class=\"px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700\" @click=\"$store.modal.open('confirm-modal')\">Delete Item</button></div></div></div><!-- Dropdown Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Dropdowns</h2><div class=\"flex flex-wrap gap-4\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Dropdown(elements.DropdownProps{
+			ButtonText:    "Actions",
+			ButtonVariant: "secondary",
+			Items: []elements.DropdownItem{
+				{Text: "Edit", Icon: "✏️"},
+				{Text: "Duplicate", Icon: "📋"},
+				{Divider: true},
+				{Text: "Archive", Icon: "📦"},
+				{Text: "Delete", Icon: "🗑️", Variant: "danger"},
+			},
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = elements.Card(elements.CardProps{
-			Title:     "Card with Image",
-			Subtitle:  "$299.99",
-			Image:     "https://via.placeholder.com/400x200/3B82F6/FFFFFF?text=Product+Image",
-			ImageAlt:  "Product placeholder image",
-			Shadow:    "lg",
-			Clickable: true,
-			Content:   productCardContent(),
-			Footer:    productCardFooter(),
+		templ_7745c5c3_Err = elements.UserDropdown(elements.UserDropdownProps{
+			UserName:  "John Doe",
+			UserEmail: "john@example.com",
+			Avatar:    "👤",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = elements.Card(elements.CardProps{
-			Title:   "Minimal Card",
-			Shadow:  "sm",
-			Padding: "lg",
-			Content: minimalCardContent(),
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div></div><!-- Navbar Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Navigation Bar</h2><p class=\"text-gray-600 dark:text-gray-400 mb-4\">Preview of navbar component:</p><div class=\"border rounded-lg bg-gray-50 dark:bg-gray-900\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = elements.Navbar(elements.NavbarProps{
+			Brand: elements.NavbarBrand{
+				Text: "ERP System",
+				Href: "/",
+			},
+			Items: []elements.NavItem{
+				{Text: "Dashboard", Href: "/dashboard", Active: true},
+				{Text: "Customers", Href: "/customers"},
+				{Text: "Invoices", Href: "/invoices", Badge: "5"},
+				{Text: "Reports", Children: []elements.NavItem{
+					{Text: "Sales Report", Href: "/reports/sales"},
+					{Text: "Financial Report", Href: "/reports/financial"},
+				}},
+			},
+			Actions: []elements.NavbarAction{
+				{Icon: "🔔", Badge: "3", Variant: "ghost"},
+				{Text: "Profile", Variant: "secondary", Size: "sm"},
+			},
+			Border: true,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div><!-- Links Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Links</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Colors</h3><div class=\"flex flex-wrap gap-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div></div><!-- Tabs Section --><div class=\"bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700\"><h2 class=\"text-2xl font-semibold text-gray-900 dark:text-white mb-4\">Tabs</h2><div class=\"space-y-6\"><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Default Style</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = elements.Link(elements.LinkProps{Href: "#", Text: "Blue Link", Color: "blue"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = elements.Tabs(elements.TabsProps{
+			Style: "default",
+			Items: []elements.TabItem{
+				{ID: "overview", Title: "Overview", Content: "Overview content with general information about the system.", Active: true},
+				{ID: "analytics", Title: "Analytics", Content: "Analytics dashboard with charts and metrics.", Icon: "📊"},
+				{ID: "settings", Title: "Settings", Content: "System settings and configuration options.", Icon: "⚙️"},
+				{ID: "disabled", Title: "Disabled", Content: "", Disabled: true},
+			},
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = elements.Link(elements.LinkProps{Href: "#", Text: "Red Link", Color: "red"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Pills Style</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = elements.Link(elements.LinkProps{Href: "#", Text: "Green Link", Color: "green"}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = elements.Tabs(elements.TabsProps{
+			Style: "pills",
+			Items: []elements.TabItem{
+				{ID: "profile", Title: "Profile", Content: "User profile information and personal details.", Active: true},
+				{ID: "orders", Title: "Orders", Content: "Order history and current orders.", Badge: "12"},
+				{ID: "billing", Title: "Billing", Content: "Billing information and payment methods."},
+			},
+		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = elements.Link(elements.LinkProps{Href: "#", Text: "Purple Link", Color: "purple"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div></div><div><h3 class=\"text-lg font-medium text-gray-700 dark:text-gray-300 mb-2\">Styles</h3><div class=\"flex flex-wrap gap-4\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Link(elements.LinkProps{Href: "#", Text: "Underlined Link", Underline: true}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Link(elements.LinkProps{Href: "https://example.com", Text: "External Link", External: true, Target: "_blank"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Link(elements.LinkProps{Href: "#", Text: "Disabled Link", Disabled: true}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Link(elements.LinkProps{Href: "#", Text: "Large Link", Size: "lg"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div></div></div></div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-// Card content templates
-func simpleCardContent() templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var3 == nil {
-			templ_7745c5c3_Var3 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<p class=\"text-gray-500 dark:text-gray-400\">This is a simple card with basic content. It demonstrates the default styling and layout.</p>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func productCardContent() templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<p class=\"text-gray-500 dark:text-gray-400\">High-quality wireless headphones with noise cancellation and premium sound quality.</p>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func productCardFooter() templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var5 == nil {
-			templ_7745c5c3_Var5 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<div class=\"flex justify-between items-center\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Button(elements.ButtonProps{Text: "Add to Cart", Variant: "primary", Size: "sm"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = elements.Link(elements.LinkProps{Href: "#", Text: "View Details", Color: "blue"}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func minimalCardContent() templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div class=\"text-center\"><div class=\"text-3xl font-bold text-blue-600 mb-2\">42</div><p class=\"text-gray-500 dark:text-gray-400\">Active Users</p></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

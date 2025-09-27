@@ -1,0 +1,274 @@
+package elements
+
+import "strings"
+
+// DropdownItem represents a single dropdown menu item
+type DropdownItem struct {
+	Text      string `json:"text" validate:"required"`
+	Href      string `json:"href"`
+	Icon      string `json:"icon"`
+	Disabled  bool   `json:"disabled"`
+	Divider   bool   `json:"divider"`
+	Header    bool   `json:"header"`
+	Variant   string `json:"variant" validate:"oneof=default danger"`
+	ID        string `json:"id"`
+	AriaLabel string `json:"aria_label"`
+}
+
+// DropdownProps defines the properties for the Dropdown component
+type DropdownProps struct {
+	Items       []DropdownItem `json:"items" validate:"required,min=1"`
+	Trigger     string         `json:"trigger" validate:"oneof=click hover"`
+	Position    string         `json:"position" validate:"oneof=bottom-start bottom-end top-start top-end"`
+	ButtonText  string         `json:"button_text"`
+	ButtonIcon  string         `json:"button_icon"`
+	ButtonVariant string       `json:"button_variant" validate:"oneof=primary secondary ghost"`
+	ButtonSize  string         `json:"button_size" validate:"oneof=xs sm base lg xl"`
+	Inline      bool           `json:"inline"`
+	ID          string         `json:"id"`
+	Class       string         `json:"class"`
+	AriaLabel   string         `json:"aria_label"`
+}
+
+// Dropdown renders a Flowbite-styled dropdown component
+templ Dropdown(props DropdownProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ getDropdownContainerClasses(props.Inline) + " " + props.Class }
+		x-data="{ open: false }"
+		@click.away="open = false"
+		if props.Trigger == "hover" {
+			@mouseenter="open = true"
+			@mouseleave="open = false"
+		}
+	>
+		<!-- Dropdown trigger button -->
+		<button
+			type="button"
+			class={ getDropdownButtonClasses(props.ButtonVariant, props.ButtonSize) }
+			if props.Trigger == "click" {
+				@click="open = !open"
+			}
+			aria-expanded="false"
+			:aria-expanded="open"
+			if props.AriaLabel != "" {
+				aria-label={ props.AriaLabel }
+			} else {
+				aria-label="Open dropdown menu"
+			}
+		>
+			if props.ButtonIcon != "" && props.ButtonText != "" {
+				<span class="mr-2">{ props.ButtonIcon }</span>
+			} else if props.ButtonIcon != "" {
+				<span>{ props.ButtonIcon }</span>
+			}
+			
+			if props.ButtonText != "" {
+				{ props.ButtonText }
+			}
+			
+			<!-- Dropdown arrow -->
+			<svg class="w-2.5 h-2.5 ml-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+				<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
+			</svg>
+		</button>
+
+		<!-- Dropdown menu -->
+		<div
+			class={ getDropdownMenuClasses(props.Position) }
+			x-show="open"
+			x-transition:enter="transition ease-out duration-100"
+			x-transition:enter-start="transform opacity-0 scale-95"
+			x-transition:enter-end="transform opacity-100 scale-100"
+			x-transition:leave="transition ease-in duration-75"
+			x-transition:leave-start="transform opacity-100 scale-100"
+			x-transition:leave-end="transform opacity-0 scale-95"
+			role="menu"
+			aria-orientation="vertical"
+		>
+			<ul class={ getDropdownListClasses() } role="none">
+				for _, item := range props.Items {
+					if item.Divider {
+						<li><hr class={ getDropdownDividerClasses() } role="separator"/></li>
+					} else if item.Header {
+						<li>
+							<div class={ getDropdownHeaderClasses() } role="presentation">
+								{ item.Text }
+							</div>
+						</li>
+					} else {
+						<li role="none">
+							if item.Href != "" {
+								<a
+									if item.ID != "" {
+										id={ item.ID }
+									}
+									href={ item.Href }
+									class={ getDropdownItemClasses(item.Variant, item.Disabled) }
+									role="menuitem"
+									if item.AriaLabel != "" {
+										aria-label={ item.AriaLabel }
+									}
+									if item.Disabled {
+										aria-disabled="true"
+										tabindex="-1"
+									}
+								>
+									@DropdownItemContent(item)
+								</a>
+							} else {
+								<button
+									if item.ID != "" {
+										id={ item.ID }
+									}
+									type="button"
+									class={ getDropdownItemClasses(item.Variant, item.Disabled) }
+									role="menuitem"
+									if item.AriaLabel != "" {
+										aria-label={ item.AriaLabel }
+									}
+									if item.Disabled {
+										disabled
+										aria-disabled="true"
+									}
+								>
+									@DropdownItemContent(item)
+								</button>
+							}
+						</li>
+					}
+				}
+			</ul>
+		</div>
+	</div>
+}
+
+// DropdownItemContent renders the content of a dropdown item
+templ DropdownItemContent(item DropdownItem) {
+	<div class="flex items-center">
+		if item.Icon != "" {
+			<span class={ getDropdownItemIconClasses() }>
+				{ item.Icon }
+			</span>
+		}
+		<span>{ item.Text }</span>
+	</div>
+}
+
+// UserDropdown renders a specialized user account dropdown
+templ UserDropdown(props UserDropdownProps) {
+	@Dropdown(DropdownProps{
+		ButtonIcon:    props.Avatar,
+		ButtonVariant: "ghost",
+		Trigger:      "click",
+		Position:     "bottom-end",
+		Items: []DropdownItem{
+			{Text: props.UserName, Header: true},
+			{Text: props.UserEmail, Header: true},
+			{Divider: true},
+			{Text: "Profile", Href: "/profile", Icon: "👤"},
+			{Text: "Settings", Href: "/settings", Icon: "⚙️"},
+			{Text: "Help", Href: "/help", Icon: "❓"},
+			{Divider: true},
+			{Text: "Sign out", Variant: "danger", Icon: "🚪"},
+		},
+		ID:        props.ID,
+		AriaLabel: "User account menu",
+	})
+}
+
+// UserDropdownProps defines properties for user account dropdown
+type UserDropdownProps struct {
+	UserName  string `json:"user_name" validate:"required"`
+	UserEmail string `json:"user_email"`
+	Avatar    string `json:"avatar"`
+	ID        string `json:"id"`
+}
+
+// Helper functions for dropdown styling
+func getDropdownContainerClasses(inline bool) string {
+	if inline {
+		return "relative inline-block text-left"
+	}
+	return "relative"
+}
+
+func getDropdownButtonClasses(variant, size string) string {
+	base := "inline-flex items-center justify-center font-medium rounded-lg text-sm focus:ring-4 focus:outline-none transition-colors duration-200"
+	
+	// Size classes
+	var sizeClass string
+	switch size {
+	case "xs":
+		sizeClass = "px-2 py-1 text-xs"
+	case "sm":
+		sizeClass = "px-3 py-1.5 text-sm"
+	case "lg":
+		sizeClass = "px-4 py-2.5 text-sm"
+	case "xl":
+		sizeClass = "px-5 py-3 text-base"
+	default: // base
+		sizeClass = "px-4 py-2 text-sm"
+	}
+	
+	// Variant classes
+	var variantClass string
+	switch variant {
+	case "primary":
+		variantClass = "text-white bg-blue-700 hover:bg-blue-800 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+	case "ghost":
+		variantClass = "text-gray-500 hover:text-gray-900 hover:bg-gray-100 focus:ring-gray-300 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+	default: // secondary
+		variantClass = "text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 focus:ring-blue-300 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:focus:ring-blue-600"
+	}
+	
+	return strings.Join([]string{base, sizeClass, variantClass}, " ")
+}
+
+func getDropdownMenuClasses(position string) string {
+	base := "absolute z-10 w-44 bg-white divide-y divide-gray-100 rounded-lg shadow dark:bg-gray-700 dark:divide-gray-600"
+	
+	switch position {
+	case "bottom-end":
+		return base + " right-0 top-full mt-2"
+	case "top-start":
+		return base + " left-0 bottom-full mb-2"
+	case "top-end":
+		return base + " right-0 bottom-full mb-2"
+	default: // bottom-start
+		return base + " left-0 top-full mt-2"
+	}
+}
+
+func getDropdownListClasses() string {
+	return "py-2 text-sm text-gray-700 dark:text-gray-200"
+}
+
+func getDropdownItemClasses(variant string, disabled bool) string {
+	base := "block w-full text-left px-4 py-2 transition-colors duration-200"
+	
+	if disabled {
+		return base + " text-gray-400 cursor-not-allowed dark:text-gray-600"
+	}
+	
+	switch variant {
+	case "danger":
+		return base + " text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white"
+	default:
+		return base + " hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white"
+	}
+}
+
+func getDropdownItemIconClasses() string {
+	return "w-4 h-4 mr-3"
+}
+
+func getDropdownHeaderClasses() string {
+	return "px-4 py-3 text-sm text-gray-900 dark:text-white font-medium"
+}
+
+func getDropdownDividerClasses() string {
+	return "my-1 border-gray-100 dark:border-gray-600"
+}

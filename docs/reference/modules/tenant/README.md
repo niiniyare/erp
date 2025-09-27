@@ -244,15 +244,15 @@ curl -X DELETE http://localhost:8080/api/v1/tenants/$TENANT_ID
 
 ## 🔗 Related APIs
 
-- **[User Management API](../users/README.md)** - Users belong to tenants
-- **[Entity Management API](../entities/README.md)** - Entities are tenant-scoped
-- **[Authentication API](../../workflows/auth/README.md)** - Tenant-aware authentication
+- **[User Management API](../user/README.md)** - Users belong to tenants
+- **Entity Management API** - Entities are tenant-scoped
+- **[Authentication API](../../api-source/workflows/auth/README.md)** - Tenant-aware authentication
 
 ## 📚 Additional Resources
 
 - **[curl Examples](curl-examples.md)** - Complete curl command examples
-- **[Testing Scripts](../../utilities/scripts/test-tenants.sh)** - Automated testing script
-- **[Postman Collection](../../utilities/postman/tenants-collection.json)** - Postman requests
+- **Testing Scripts** - Automated testing script
+- **Postman Collection** - Postman requests
 
 ---
 

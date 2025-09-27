@@ -291,8 +291,8 @@ curl -X GET "http://localhost:8080/abac/metrics" \
 }
 ```
 
-For detailed implementation guidance, see the [ABAC Integration Guide](../../../modules/user/abac/policy_evaluation.md).
+For detailed implementation guidance, see the [ABAC Integration Guide](../../modules/user/abac/policy_evaluation.md).
 
 ---
 
-**Next**: [Authentication API](../auth/) | **Up**: [API Reference](../index.md)
+**Next**: [Authentication API](../auth/index.md) | **Up**: [API Reference](../index.md)

@@ -479,4 +479,4 @@ Diagrams automatically adapt to the documentation theme:
 
 ---
 
-**Related**: [Documentation Guide](documentation-guide.md) | **Up**: [Contributing](../contributing/)
+**Related**: [Documentation Guide](documentation-guide.md)

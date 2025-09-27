@@ -352,4 +352,4 @@ class AuthClient:
 
 ---
 
-**Next**: [Users API](../users/) | **Up**: [API Reference](../index.md)
+**Next**: [Users API](../users/index.md) | **Up**: [API Reference](../index.md)

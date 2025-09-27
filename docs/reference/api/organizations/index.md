@@ -530,4 +530,4 @@ def sync_organizations_from_hr(api_client, hr_org_data):
 
 ---
 
-**Next**: [Tenants API](../tenants/) | **Up**: [API Reference](../index.md)
+**Next**: [Tenants API](../../api-source/core-apis/tenants/README.md) | **Up**: [API Reference](../index.md)

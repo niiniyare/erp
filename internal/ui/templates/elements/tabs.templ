@@ -1,0 +1,276 @@
+package elements
+
+import "strings"
+
+// TabItem represents a single tab
+type TabItem struct {
+	ID       string `json:"id" validate:"required"`
+	Title    string `json:"title" validate:"required"`
+	Content  string `json:"content"`
+	Icon     string `json:"icon"`
+	Badge    string `json:"badge"`
+	Disabled bool   `json:"disabled"`
+	Active   bool   `json:"active"`
+}
+
+// TabsProps defines the properties for the Tabs component
+type TabsProps struct {
+	Items       []TabItem `json:"items" validate:"required,min=1"`
+	Style       string    `json:"style" validate:"oneof=default underline pills"`
+	Position    string    `json:"position" validate:"oneof=top bottom left right"`
+	Justified   bool      `json:"justified"`
+	FullWidth   bool      `json:"full_width"`
+	ID          string    `json:"id"`
+	Class       string    `json:"class"`
+	AriaLabel   string    `json:"aria_label"`
+}
+
+// Tabs renders a Flowbite-styled tabs component
+templ Tabs(props TabsProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ getTabsContainerClasses(props.Position) + " " + props.Class }
+		x-data={ getTabsData(props.Items) }
+		if props.AriaLabel != "" {
+			aria-label={ props.AriaLabel }
+		}
+	>
+		<!-- Tab navigation -->
+		<div 
+			class={ getTabsNavClasses(props.Style, props.Position, props.Justified, props.FullWidth) }
+			role="tablist"
+			if props.Position == "left" || props.Position == "right" {
+				aria-orientation="vertical"
+			} else {
+				aria-orientation="horizontal"
+			}
+		>
+			for _, item := range props.Items {
+				<button
+					type="button"
+					class={ getTabButtonClasses(props.Style, props.Position, item.Active, item.Disabled) }
+					role="tab"
+					aria-selected={ getAriaSelected(item.Active) }
+					aria-controls={ "tab-content-" + item.ID }
+					id={ "tab-" + item.ID }
+					@click={ getTabClickAction(item.ID, item.Disabled) }
+					:class={ "{ '" + getActiveTabClasses(props.Style) + "': activeTab === '" + item.ID + "' }" }
+					if item.Disabled {
+						disabled
+						aria-disabled="true"
+						tabindex="-1"
+					}
+				>
+					@TabButtonContent(item)
+				</button>
+			}
+		</div>
+
+		<!-- Tab content -->
+		<div class={ getTabsContentContainerClasses(props.Position) }>
+			for _, item := range props.Items {
+				<div
+					id={ "tab-content-" + item.ID }
+					class={ getTabContentClasses() }
+					role="tabpanel"
+					aria-labelledby={ "tab-" + item.ID }
+					x-show={ "activeTab === '" + item.ID + "'" }
+					x-transition:enter="transition ease-out duration-200"
+					x-transition:enter-start="opacity-0 transform translate-y-1"
+					x-transition:enter-end="opacity-100 transform translate-y-0"
+					x-transition:leave="transition ease-in duration-150"
+					x-transition:leave-start="opacity-100 transform translate-y-0"
+					x-transition:leave-end="opacity-0 transform translate-y-1"
+					if !item.Active {
+						tabindex="-1"
+					}
+				>
+					if item.Content != "" {
+						{ item.Content }
+					} else {
+						<!-- Slot for custom content -->
+						<div id={ "tab-slot-" + item.ID }></div>
+					}
+				</div>
+			}
+		</div>
+	</div>
+}
+
+// TabButtonContent renders the content of a tab button
+templ TabButtonContent(item TabItem) {
+	<div class="flex items-center">
+		if item.Icon != "" {
+			<span class={ getTabIconClasses() }>
+				{ item.Icon }
+			</span>
+		}
+		<span>{ item.Title }</span>
+		if item.Badge != "" {
+			<span class={ getTabBadgeClasses() }>
+				{ item.Badge }
+			</span>
+		}
+	</div>
+}
+
+// Helper functions for tabs styling
+func getTabsContainerClasses(position string) string {
+	switch position {
+	case "left", "right":
+		return "flex"
+	default:
+		return ""
+	}
+}
+
+func getTabsNavClasses(style, position string, justified, fullWidth bool) string {
+	base := "flex"
+	
+	var classes []string
+	classes = append(classes, base)
+	
+	// Position classes
+	switch position {
+	case "bottom":
+		classes = append(classes, "order-2")
+	case "left":
+		classes = append(classes, "flex-col mr-4")
+	case "right":
+		classes = append(classes, "flex-col order-2 ml-4")
+	}
+	
+	// Style classes
+	switch style {
+	case "underline":
+		classes = append(classes, "text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700")
+	case "pills":
+		classes = append(classes, "text-sm font-medium text-center text-gray-500 dark:text-gray-400")
+	default: // default
+		classes = append(classes, "text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:text-gray-400 dark:border-gray-700")
+	}
+	
+	// Layout classes
+	if justified || fullWidth {
+		classes = append(classes, "w-full")
+	}
+	
+	if position == "left" || position == "right" {
+		classes = append(classes, "w-48") // Fixed width for vertical tabs
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getTabButtonClasses(style, position string, active, disabled bool) string {
+	base := "inline-block p-4 transition-colors duration-200 focus:outline-none"
+	
+	var classes []string
+	classes = append(classes, base)
+	
+	if disabled {
+		classes = append(classes, "cursor-not-allowed opacity-50")
+		return strings.Join(classes, " ")
+	}
+	
+	// Style-specific classes
+	switch style {
+	case "underline":
+		if active {
+			classes = append(classes, "text-blue-600 border-b-2 border-blue-600 dark:text-blue-500 dark:border-blue-500")
+		} else {
+			classes = append(classes, "border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300")
+		}
+	case "pills":
+		classes = append(classes, "rounded-lg")
+		if active {
+			classes = append(classes, "text-white bg-blue-600 dark:bg-blue-500")
+		} else {
+			classes = append(classes, "hover:text-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-white")
+		}
+	default: // default
+		if active {
+			classes = append(classes, "text-blue-600 bg-gray-100 border-b-2 border-blue-600 dark:text-blue-500 dark:bg-gray-800")
+		} else {
+			classes = append(classes, "border-b-2 border-transparent hover:text-gray-600 hover:bg-gray-50 hover:border-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-300")
+		}
+	}
+	
+	// Position-specific classes
+	if position == "left" || position == "right" {
+		classes = append(classes, "w-full text-left")
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getActiveTabClasses(style string) string {
+	switch style {
+	case "underline":
+		return "text-blue-600 border-b-2 border-blue-600 dark:text-blue-500 dark:border-blue-500"
+	case "pills":
+		return "text-white bg-blue-600 dark:bg-blue-500"
+	default: // default
+		return "text-blue-600 bg-gray-100 border-b-2 border-blue-600 dark:text-blue-500 dark:bg-gray-800"
+	}
+}
+
+func getTabsContentContainerClasses(position string) string {
+	base := "p-4"
+	
+	switch position {
+	case "bottom":
+		return base + " order-1"
+	case "right":
+		return base + " order-1 flex-1"
+	case "left":
+		return base + " flex-1"
+	default:
+		return base
+	}
+}
+
+func getTabContentClasses() string {
+	return "text-sm text-gray-500 dark:text-gray-400"
+}
+
+func getTabIconClasses() string {
+	return "w-4 h-4 mr-2"
+}
+
+func getTabBadgeClasses() string {
+	return "inline-flex items-center justify-center w-4 h-4 ml-2 text-xs font-semibold text-blue-800 bg-blue-200 rounded-full"
+}
+
+func getAriaSelected(active bool) string {
+	if active {
+		return "true"
+	}
+	return "false"
+}
+
+func getTabClickAction(tabID string, disabled bool) string {
+	if disabled {
+		return ""
+	}
+	return "activeTab = '" + tabID + "'"
+}
+
+func getTabsData(items []TabItem) string {
+	// Find the active tab or default to the first one
+	activeTab := ""
+	for _, item := range items {
+		if item.Active {
+			activeTab = item.ID
+			break
+		}
+	}
+	
+	if activeTab == "" && len(items) > 0 {
+		activeTab = items[0].ID
+	}
+	
+	return "{ activeTab: '" + activeTab + "' }"
+}

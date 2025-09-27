@@ -378,10 +378,10 @@ FINANCE_QUERY_TIMEOUT=30s
 - 💱 [Currency Management](currency-management.md)
 
 ### Development Resources
-- [Contributing Guidelines](../../contributing/01-best-practices.md)
+- [Contributing Guidelines](../../../contributing/01-best-practices.md)
 - [API Reference](api-reference.md)
-- [Code Examples](examples/)
-- [Database Schema](../../../db/migration/)
+- Code Examples
+- Database Schema
 
 ### Business Resources
 - [Financial Workflows](integration-guide.md#financial-workflows)

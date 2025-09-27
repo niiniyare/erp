@@ -429,8 +429,8 @@ curl -X DELETE http://localhost:8080/api/v1/tenants/$TENANT_ID \
 ## 📚 Additional Resources
 
 - **[curl Examples](curl-examples.md)** - Complete curl command examples with real test results
-- **[Testing Scripts](../../../scripts/api/test_tenant_api.sh)** - Comprehensive automated testing script
-- **[API Source Design](../../design/services/tenant/tenant.go)** - Goa service definitions
+- **Testing Scripts**: Comprehensive automated testing script (available in the source code)
+- **API Source Design**: Goa service definitions (available in the source code)
 
 ## 🎯 Quick Start Guide
 

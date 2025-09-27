@@ -21,7 +21,7 @@ The Settings Module API provides  configuration management capabilities within t
 ### Quick Links
 - [Interactive API Explorer](../../../reference/api/swagger-ui.md) - Test endpoints directly
 - [Authentication Guide](../../../reference/api/auth/index.md) - Get started with API authentication
-- [SDK Examples](examples/) - Code examples in multiple languages
+- SDK Examples - Code examples in multiple languages
 
 ---
 
@@ -1119,7 +1119,7 @@ A  Postman collection is available with:
 - Configuration templates and examples
 - Bulk operation workflows
 
-**Download**: [Postman Collection](postman/settings-api-collection.json)
+**Download**: Postman Collection
 
 ### API Testing Checklist
 - [ ] Authentication works correctly
@@ -1152,7 +1152,7 @@ A  Postman collection is available with:
 - **Version**: 1.0
 - **Last Updated**: September 2, 2025
 - **API Status**: Development
-- **OpenAPI Spec**: [swagger.yaml](openapi/swagger.yaml)
+- **OpenAPI Spec**: swagger.yaml
 
 **Related Documents**
 - [Architecture Guide](architecture-guide.md)

@@ -372,4 +372,4 @@ WHERE entity_id = $1 AND status = $2 AND created_at >= $3
 
 ---
 
-📚 **Next Steps**: [Migration Patterns](./migrations.md) | [Testing Guide](./testing.md) | [Performance Optimization](./performance.md)
+📚 **Next Steps**: Migration Patterns | [Testing Guide](./general-testing.md) | Performance Optimization

@@ -21,7 +21,7 @@ The Financial Module API enables double-entry bookkeeping, transaction processin
 ### Quick Links
 <!-- - [Interactive API Explorer](../../../reference/api/swagger-ui.md) - Test endpoints directly -->
 - [Authentication Guide](../../../reference/api/auth/index.md) - Get started with API authentication
-- [SDK Examples](examples/) - Code examples in multiple languages
+- SDK Examples - Code examples in multiple languages
 
 ---
 
@@ -2998,10 +2998,10 @@ The code follows Go standards and integrates perfectly with AMIS's data structur
 - **AMIS compatibility**: Optimized response structures for frontend integration
 
 ##### **Related Documents**
-- [Business Process Documentation](./business-processes.md)
-- [Compliance Guide](./compliance.md) 
-- [ABAC Policy Reference](./abac-policies.md)
-- [Integration Guide](./integration.md)
+- Business Process Documentation
+- Compliance Guide
+- ABAC Policy Reference
+- Integration Guide
 - [Product Requirements Document](./PRD.md)
 - [Testing Strategy](./testing.md)
 - [Architecture Guide](./architecture-guide.md)

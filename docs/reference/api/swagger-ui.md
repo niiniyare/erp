@@ -7,10 +7,7 @@ The AWO ERP system provides a  REST API with 50+ endpoints across multiple domai
 ### Access the API Documentation
 
 <div style="text-align: center; margin: 2rem 0;">
-  <a href="../../../internal/api/swagger/index.html" target="_blank" class="md-button md-button--primary">
-    📖 Browse Static API Documentation
-  </a>
-  <br><br>
+  <p><strong>Static API Documentation:</strong> Available in the source code at <code>internal/api/swagger/index.html</code></p>
   <small>
     <strong>Live Interactive Explorer:</strong> 
     <a href="http://localhost:8080/swagger-ui/" target="_blank">http://localhost:8080/swagger-ui/</a> 
@@ -102,8 +99,8 @@ Authorization: Bearer <your-jwt-token>
 
 Direct access to machine-readable API specifications:
 
-- **OpenAPI 3.0**: [`openapi3.json`](../../../internal/api/swagger/openapi3.json) (484KB with 50+ endpoints)
-- **OpenAPI 2.0**: [`openapi.json`](../../../internal/api/swagger/openapi.json) (legacy format)
+- **OpenAPI 3.0**: `openapi3.json` (484KB with 50+ endpoints, available in source code at `internal/api/swagger/`)
+- **OpenAPI 2.0**: `openapi.json` (legacy format, available in source code at `internal/api/swagger/`)
 
 **Live Endpoints (when server running):**
 - **OpenAPI 3.0**: [http://localhost:8080/swagger-ui/openapi3.json](http://localhost:8080/swagger-ui/openapi3.json)
@@ -151,13 +148,13 @@ API rate limits are enforced per user/tenant:
 ### SDK and Integration
 
 - **Go SDK**: Auto-generated from OpenAPI specs
-- **Postman Collection**: [Download Collection](../../api-source/utilities/postman/)
-- **Test Scripts**: [API Testing Scripts](../../api-source/utilities/scripts/)
+- **Postman Collection**: Available in the source code
+- **Test Scripts**: Available in the source code
 
 ## Getting Started
 
 1. **Obtain JWT Token**: Use the `/api/v1/auth/login` endpoint
-2. **Browse Static Docs**: Open the [Static API Documentation](../../../internal/api/swagger/index.html)
+2. **Browse Static Docs**: Open the Static API Documentation
 3. **Explore Live APIs**: Visit [Interactive Explorer](http://localhost:8080/swagger-ui/) (when server running)
 4. **Review Examples**: Check the practical examples in each API section
 

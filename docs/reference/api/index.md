@@ -32,10 +32,10 @@ Visit the [Swagger UI](swagger-ui.md) for hands-on API exploration and testing.
 
 | Category | Base Path | Endpoints | Description |
 |----------|-----------|-----------|-------------|
-| **[ABAC Security](abac/)** | `/abac/*` | 10 | Advanced authorization and policy evaluation |
-| **[Authentication](auth/)** | `/api/v1/auth/*` | 4 | User login, token management, sessions |
-| **[Users](users/)** | `/api/v1/users/*` | 8 | User management and profiles |
-| **[Organizations](organizations/)** | `/api/v1/organizations/*` | 6 | Organization hierarchy management |  
+| **[ABAC Security](abac/index.md)** | `/abac/*` | 10 | Advanced authorization and policy evaluation |
+| **[Authentication](auth/index.md)** | `/api/v1/auth/*` | 4 | User login, token management, sessions |
+| **[Users](users/index.md)** | `/api/v1/users/*` | 8 | User management and profiles |
+| **[Organizations](organizations/index.md)** | `/api/v1/organizations/*` | 6 | Organization hierarchy management |  
 | **Tenants** | `/api/v1/tenants/*` | 6 | Multi-tenant administration |
 | **Access Requests** | `/api/v1/access-requests/*` | 6 | Workflow and approval management |
 | **Analytics** | `/api/v1/analytics/*` | 8 | User behavior and insights |
@@ -150,8 +150,8 @@ API usage is tracked and limited per user/tenant:
 Use the [Swagger UI](swagger-ui.md) for interactive API testing with live data.
 
 ### Automated Testing
-- **Test Scripts**: [Shell scripts](../api-source/utilities/scripts/) for automated testing
-- **Postman Collections**: [JSON collections](../api-source/utilities/postman/) for API exploration
+- **Test Scripts**: Shell scripts for automated testing
+- **Postman Collections**: JSON collections for API exploration
 - **SDK Examples**: Code samples for common integration patterns
 
 ### Development Environment
