@@ -116,13 +116,13 @@ func initializeHTTPServer(app *application.Core) (http.Handler, error) {
 	})
 
 	// Initialize UI integration
-	uiIntegration, err := NewUIIntegration(app, businessServices, appServices.Logger)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize UI integration: %w", err)
-	}
+	// uiIntegration, err := NewUIIntegration(app, businessServices, appServices.Logger)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to initialize UI integration: %w", err)
+	// }
 
 	// Create combined handler that serves both API and UI routes
-	combinedHandler := uiIntegration.CreateCombinedHandler(goaServer.Handler)
+	// combinedHandler := uiIntegration.CreateCombinedHandler(goaServer.Handler)
 
 	logger.Info("UI integration completed successfully", logger.Fields{
 		"ui_routes":   "console, workspace, portal",
@@ -130,11 +130,11 @@ func initializeHTTPServer(app *application.Core) (http.Handler, error) {
 		"status":      "ready",
 	})
 
-	return combinedHandler, nil
+	return goaServer.Handler, nil
 }
 
 // gracefulShutdown handles graceful shutdown of the application
-func gracefulShutdown(ctx context.Context, cancel context.CancelFunc, srv *http.Server, app *application.Core) {
+func gracefulShutdown(_ context.Context, cancel context.CancelFunc, srv *http.Server, app *application.Core) {
 	// Create a channel to receive OS signals
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
