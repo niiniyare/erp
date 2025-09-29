@@ -8,7 +8,11 @@ package examples
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/niiniyare/erp/internal/ui/templates/elements"
+import (
+	"github.com/niiniyare/erp/internal/ui/templates/atoms"
+	"github.com/niiniyare/erp/internal/ui/templates/molecules"
+	"github.com/niiniyare/erp/internal/ui/templates/organisms"
+)
 
 // BasicElementsDemo demonstrates all the basic UI elements
 func BasicElementsDemo() templ.Component {
@@ -32,7 +36,7 @@ func BasicElementsDemo() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = elements.Container(elements.ContainerProps{
+		templ_7745c5c3_Err = atoms.Container(atoms.ContainerProps{
 			MaxWidth: "4xl",
 			Center:   true,
 			Content:  basicElementsContent(),
@@ -44,15 +48,15 @@ func BasicElementsDemo() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = elements.ModalStore().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = organisms.ModalStore().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = elements.NavbarStore().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = organisms.NavbarStore().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = elements.ToastStore().Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = molecules.ToastStore().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -60,7 +64,7 @@ func BasicElementsDemo() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = elements.ToastContainer(elements.ToastContainerProps{
+		templ_7745c5c3_Err = molecules.ToastContainer(molecules.ToastContainerProps{
 			Position:  "top-right",
 			MaxToasts: 5,
 		}).Render(ctx, templ_7745c5c3_Buffer)

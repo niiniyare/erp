@@ -9,7 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/niiniyare/erp/internal/ui/templates/components"
+	"github.com/niiniyare/erp/internal/ui/templates/organisms"
 	"github.com/niiniyare/erp/internal/ui/types"
 )
 
@@ -54,7 +54,7 @@ func TenantForm(data types.CreateTenantPageData) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(data.CSRFToken)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/templates/console/forms/tenant_form.templ`, Line: 27, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/templates/console/forms/tenant_form.templ`, Line: 32, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -72,7 +72,7 @@ func TenantForm(data types.CreateTenantPageData) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(data.Tenant.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/templates/console/forms/tenant_form.templ`, Line: 29, Col: 64}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/templates/console/forms/tenant_form.templ`, Line: 34, Col: 64}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -281,7 +281,7 @@ func TenantForm(data types.CreateTenantPageData) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(data.Error)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/templates/console/forms/tenant_form.templ`, Line: 256, Col: 20}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/ui/templates/console/forms/tenant_form.templ`, Line: 261, Col: 20}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -298,7 +298,7 @@ func TenantForm(data types.CreateTenantPageData) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = components.FormModal(types.FormModalProps{
+		templ_7745c5c3_Err = organisms.Modal(organisms.ModalProps{
 			ID: "tenant-form-modal",
 			Title: func() string {
 				if data.Tenant.ID == "" {
@@ -307,25 +307,24 @@ func TenantForm(data types.CreateTenantPageData) templ.Component {
 					return "Edit Tenant"
 				}
 			}(),
-			Subtitle: "Configure tenant settings and access permissions",
-			Size:     "lg",
-			FormID:   "tenant-form",
-			SubmitText: func() string {
-				if data.Tenant.ID == "" {
-					return "Create Tenant"
-				} else {
-					return "Update Tenant"
-				}
-			}(),
-			ActionURL: func() string {
-				if data.Tenant.ID == "" {
-					return "/console/tenants"
-				} else {
-					return "/console/tenants/" + data.Tenant.ID
-				}
-			}(),
-			Target: "#main-content",
-			Swap:   "innerHTML",
+			Size:       "lg",
+			Position:   "center",
+			Backdrop:   "static",
+			Closable:   true,
+			ShowHeader: true,
+			ShowFooter: true,
+			Content:    "",
+			FooterActions: []organisms.ModalAction{
+				{Text: "Cancel", Variant: "secondary", Action: "close"},
+				{Text: func() string {
+					if data.Tenant.ID == "" {
+						return "Create Tenant"
+					} else {
+						return "Update Tenant"
+					}
+				}(), Variant: "primary", Action: "submit"},
+			},
+			AriaLabel: "Tenant form dialog",
 		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err

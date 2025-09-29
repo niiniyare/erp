@@ -1,22 +1,26 @@
 package examples
 
-import "github.com/niiniyare/erp/internal/ui/templates/elements"
+import (
+	"github.com/niiniyare/erp/internal/ui/templates/atoms"
+	"github.com/niiniyare/erp/internal/ui/templates/molecules"
+	"github.com/niiniyare/erp/internal/ui/templates/organisms"
+)
 
 // BasicElementsDemo demonstrates all the basic UI elements
 templ BasicElementsDemo() {
-	@elements.Container(elements.ContainerProps{
+	@atoms.Container(atoms.ContainerProps{
 		MaxWidth: "4xl",
 		Center:   true,
 		Content: basicElementsContent(),
 	})
 	
 	<!-- Store Scripts -->
-	@elements.ModalStore()
-	@elements.NavbarStore()
-	@elements.ToastStore()
+	@organisms.ModalStore()
+	@organisms.NavbarStore()
+	@molecules.ToastStore()
 
 	<!-- Toast Container -->
-	@elements.ToastContainer(elements.ToastContainerProps{
+	@molecules.ToastContainer(molecules.ToastContainerProps{
 		Position: "top-right",
 		MaxToasts: 5,
 	})

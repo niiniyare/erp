@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"context"
-	"github.com/niiniyare/erp/internal/ui/templates/components"
+	"github.com/niiniyare/erp/internal/ui/templates/organisms"
 	"github.com/niiniyare/erp/internal/ui/types"
 )
 
@@ -66,7 +66,7 @@ func BaseLayout(ctx context.Context, title string, user *types.UserInfo, sidebar
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.Sidebar(ctx, sidebarItems, user).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = organisms.Sidebar(ctx, sidebarItems, user).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

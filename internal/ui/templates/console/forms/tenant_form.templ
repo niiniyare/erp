@@ -2,21 +2,26 @@ package forms
 
 import (
 	"github.com/niiniyare/erp/internal/ui/types"
-	"github.com/niiniyare/erp/internal/ui/templates/components"
+	"github.com/niiniyare/erp/internal/ui/templates/organisms"
 )
 
 // TenantForm renders the tenant creation/edit form with real-time validation
 templ TenantForm(data types.CreateTenantPageData) {
-	@components.FormModal(types.FormModalProps{
+	@organisms.Modal(organisms.ModalProps{
 		ID:         "tenant-form-modal",
 		Title:      func() string { if data.Tenant.ID == "" { return "Create New Tenant" } else { return "Edit Tenant" } }(),
-		Subtitle:   "Configure tenant settings and access permissions",
 		Size:       "lg",
-		FormID:     "tenant-form",
-		SubmitText: func() string { if data.Tenant.ID == "" { return "Create Tenant" } else { return "Update Tenant" } }(),
-		ActionURL:  func() string { if data.Tenant.ID == "" { return "/console/tenants" } else { return "/console/tenants/" + data.Tenant.ID } }(),
-		Target:     "#main-content",
-		Swap:       "innerHTML",
+		Position:   "center",
+		Backdrop:   "static",
+		Closable:   true,
+		ShowHeader: true,
+		ShowFooter: true,
+		Content:    "",
+		FooterActions: []organisms.ModalAction{
+			{Text: "Cancel", Variant: "secondary", Action: "close"},
+			{Text: func() string { if data.Tenant.ID == "" { return "Create Tenant" } else { return "Update Tenant" } }(), Variant: "primary", Action: "submit"},
+		},
+		AriaLabel:  "Tenant form dialog",
 	}) {
 		<div 
 			class="space-y-6"
