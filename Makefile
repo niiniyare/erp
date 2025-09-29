@@ -124,6 +124,17 @@ sqlc: ## 🗄️ Generate SQLC store code
 sqlc-lint: ## 🔍 Lint SQL queries
 	@./db/queries/lint.sh
 
+
+.PHONY: templ
+templ: 
+	@echo "$(BLUE)Generating Templ code...$(NC)"
+	@templ generate ./internal/ui/...
+	@echo "$(GREEN)Templ code generation complete$(NC)"
+
+.PHONY: templ-fmt 
+templ-fmt:
+	@echo "$(BLUE)Formatting Templ code...$(NC)"
+	@find . -type f -name "*.templ" -exec templ fmt {} +
 .PHONY: mock
 mock: ## 🎭 Generate mocks for interfaces
 	@echo "$(BLUE)Generating mocks...$(NC)"
@@ -370,7 +381,7 @@ security: ## 🔒 Run security checks (gosec)
 	@echo "$(GREEN)✅ Security check complete$(NC)"
 
 .PHONY: quality
-quality: fmt vet lint ## 🏆 Run all code quality checks
+quality: fmt vet lint sqlc-lint templ-fmt vet  ## 🏆 Run all code quality checks
 
 # ============================================================================
 # 🗄️ Database Operations
@@ -481,11 +492,6 @@ build: ## 🔨 Build the application
 	@go build -o bin/server ./cmd/server/
 	@echo "$(GREEN)✅ Application built: bin/server$(NC)"
 
-.PHONY: evans
-evans: ## 🔌 Start Evans gRPC REPL
-	@echo "$(BLUE)Starting Evans gRPC REPL...$(NC)"
-	@evans --host localhost --port $(GRPC_PORT) -r repl
-
 .PHONY: temporal-server
 temporal-server: ## ⏰ Start Temporal server
 	@echo "$(BLUE)Starting Temporal server...$(NC)"
@@ -505,7 +511,7 @@ dev-test: test-unit-fast build ## 👨‍💻 Quick development test cycle
 dev-reset: clean db-reset generate ## 🔄 Reset development environment
 
 .PHONY: ci
-ci: quality test-ci build ## 🚀 Run CI pipeline
+ci: quality test-ci build templ-fmt  ## 🚀 Run CI pipeline
 
 .PHONY: ci-full
 ci-full: quality test-all build ## 🚀 Run full CI pipeline

@@ -1,0 +1,234 @@
+package organisms
+
+import (
+"context"
+"strings"
+"github.com/google/uuid"
+"github.com/niiniyare/erp/internal/ui/types"
+"github.com/niiniyare/erp/internal/ui/templates/helpers"
+)
+
+// Sidebar provides responsive navigation with user context and permissions
+templ Sidebar(ctx context.Context, items []types.NavItem, user *types.UserInfo) {
+<!-- Sidebar backdrop for mobile -->
+<div x-show="$store.app.sidebarOpen" x-transition:enter="transition-opacity ease-linear duration-300"
+  x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+  x-transition:leave="transition-opacity ease-linear duration-300" x-transition:leave-start="opacity-100"
+  x-transition:leave-end="opacity-0" @click="$store.app.toggleSidebar()"
+  class="fixed inset-0 z-50 bg-gray-600 bg-opacity-75 lg:hidden" style="display: none;">
+</div>
+
+<!-- Sidebar -->
+<aside
+  class="fixed inset-y-0 left-0 z-50 w-64 bg-gray-800 transform transition-transform duration-300 ease-in-out lg:translate-x-0"
+  :class="{ '-translate-x-full': !$store.app.sidebarOpen, 'translate-x-0': $store.app.sidebarOpen }"
+  x-data="sidebarState()">
+
+  <!-- Sidebar header with logo and close button -->
+  <div class="flex items-center justify-between h-16 px-4 bg-gray-900">
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <img class="h-8 w-8" src="/static/images/logo.svg" alt="ERP Logo" />
+      </div>
+      <div class="ml-3">
+        <h1 class="text-white text-lg font-semibold">ERP System</h1>
+      </div>
+    </div>
+
+    <!-- Close button for mobile -->
+    <button @click="$store.app.toggleSidebar()"
+      class="lg:hidden p-1 rounded-md text-gray-300 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-white">
+      <i class="fas fa-times h-5 w-5"></i>
+      <span class="sr-only">Close sidebar</span>
+    </button>
+  </div>
+
+  <!-- User profile section -->
+  if user != nil {
+  <div class="px-4 py-3 border-b border-gray-700">
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <div class="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center">
+          <span class="text-sm font-medium text-white">
+            { string(user.Name[0]) }
+          </span>
+        </div>
+      </div>
+      <div class="ml-3 flex-1 min-w-0">
+        <p class="text-sm font-medium text-white truncate">{ user.Name }</p>
+        <p class="text-xs text-gray-300 truncate">{ user.Email }</p>
+      </div>
+
+      <!-- User menu dropdown -->
+      <div class="relative ml-2" x-data="{ userMenuOpen: false }">
+        <button @click="userMenuOpen = !userMenuOpen"
+          class="p-1 rounded-md text-gray-300 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-white"
+          aria-expanded="false" aria-haspopup="true">
+          <i class="fas fa-ellipsis-v h-4 w-4"></i>
+          <span class="sr-only">User menu</span>
+        </button>
+
+        <!-- User dropdown menu -->
+        <div x-show="userMenuOpen" @click.away="userMenuOpen = false"
+          x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95"
+          x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75"
+          x-transition:leave-start="transform opacity-100 scale-100"
+          x-transition:leave-end="transform opacity-0 scale-95"
+          class="absolute right-0 bottom-full mb-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+          style="display: none;">
+          <div class="py-1" role="menu">
+            <a href="/console/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+              <i class="fas fa-user mr-2"></i>Profile
+            </a>
+            <a href="/console/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+              <i class="fas fa-cog mr-2"></i>Settings
+            </a>
+            <div class="border-t border-gray-100"></div>
+            <button hx-post="/console/auth/logout" hx-trigger="click" hx-target="body" hx-swap="innerHTML"
+              class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+              <i class="fas fa-sign-out-alt mr-2"></i>Sign out
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Navigation menu -->
+  <nav id="sidebar-nav" class="flex-1 px-2 py-4 space-y-1 overflow-y-auto" role="navigation"
+    aria-label="Main navigation">
+    for _, item := range items {
+    @NavItemWithPermissions(ctx, item)
+    }
+  </nav>
+
+  <!-- Sidebar footer with system info -->
+  <div class="px-4 py-3 border-t border-gray-700">
+    <div class="text-xs text-gray-400">
+      <div>Version 1.0.0</div>
+      <div>© 2024 ERP System</div>
+    </div>
+  </div>
+</aside>
+
+<!-- Mobile sidebar toggle button -->
+<div class="lg:hidden">
+  <button @click="$store.app.toggleSidebar()"
+    class="fixed top-4 left-4 z-40 p-2 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500"
+    :class="{ 'hidden': $store.app.sidebarOpen }">
+    <i class="fas fa-bars h-5 w-5"></i>
+    <span class="sr-only">Open sidebar</span>
+  </button>
+</div>
+}
+
+// NavItem renders individual navigation items with permissions and state
+// NavItemWithPermissions renders a navigation item with server-side permission checks
+templ NavItemWithPermissions(ctx context.Context, item types.NavItem) {
+// Check permissions if required
+if item.Permission == "" || hasNavPermission(ctx, item.Permission) {
+@NavItem(item)
+}
+}
+
+templ NavItem(item types.NavItem) {
+if item.Children != nil && len(item.Children) > 0 {
+<!-- Expandable menu item -->
+<div x-data="{ expanded: false }" x-show="!item.Permission || $store.app.hasPermission(item.Permission)">
+  <button @click="expanded = !expanded"
+    class="group w-full flex items-center px-2 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white"
+    :class="{ 'bg-gray-700 text-white': expanded }">
+
+    if item.Icon != "" {
+    <i class={ "mr-3 h-5 w-5 " + item.Icon } aria-hidden="true"></i>
+    }
+    <span class="flex-1 text-left">{ item.Label }</span>
+    <i class="ml-2 h-4 w-4 fas fa-chevron-down transition-transform duration-200"
+      :class="{ 'transform rotate-180': expanded }">
+    </i>
+  </button>
+
+  <!-- Submenu -->
+  <div x-show="expanded" x-transition:enter="transition ease-out duration-100"
+    x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100"
+    x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100"
+    x-transition:leave-end="transform opacity-0 scale-95" class="ml-6 mt-1 space-y-1" style="display: none;">
+    for _, child := range item.Children {
+    @NavItem(child)
+    }
+  </div>
+</div>
+} else {
+<!-- Simple menu item -->
+<div x-show="!item.Permission || $store.app.hasPermission(item.Permission)">
+  if item.Badge != "" {
+  <!-- Item with badge (notifications, etc.) -->
+  <a href={ templ.URL(item.URL) } hx-get={ item.URL } hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
+    class="group flex items-center px-2 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white transition-colors duration-150"
+    :class="{ 'bg-gray-900 text-white': window.location.pathname === item.URL }">
+
+    if item.Icon != "" {
+    <i class={ "mr-3 h-5 w-5 " + item.Icon } aria-hidden="true"></i>
+    }
+    <span class="flex-1">{ item.Label }</span>
+    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-500 text-white">
+      { item.Badge }
+    </span>
+  </a>
+  } else {
+  <!-- Standard menu item -->
+  <a href={ templ.URL(item.URL) } hx-get={ item.URL } hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true"
+    class="group flex items-center px-2 py-2 text-sm font-medium text-gray-300 rounded-md hover:bg-gray-700 hover:text-white transition-colors duration-150"
+    :class="{ 'bg-gray-900 text-white': window.location.pathname === item.URL }">
+
+    if item.Icon != "" {
+    <i class={ "mr-3 h-5 w-5 " + item.Icon } aria-hidden="true"></i>
+    }
+    { item.Label }
+  </a>
+  }
+</div>
+}
+}
+
+// Helper function for navigation permission checks
+func hasNavPermission(ctx context.Context, permission string) bool {
+if permission == "" {
+return true
+}
+
+// Parse permission string (format: "resource:action" or just "action")
+parts := strings.Split(permission, ":")
+if len(parts) == 1 {
+// Simple action check (e.g., "admin", "manage")
+return hasPermissionCheck(ctx, "navigation", parts[0], nil)
+} else if len(parts) == 2 {
+// Resource:action format (e.g., "users:read", "reports:create")
+return hasPermissionCheck(ctx, parts[0], parts[1], nil)
+}
+
+return false
+}
+
+// Local permission check helper
+func hasPermissionCheck(ctx context.Context, resourceType, action string, resourceID *uuid.UUID) bool {
+status := helpers.GetPermissionStatus(ctx, resourceType, action, resourceID)
+
+// Map common actions to permission status keys
+switch action {
+case "read":
+return status["canRead"]
+case "write", "update":
+return status["canWrite"]
+case "create":
+return status["canCreate"]
+case "delete":
+return status["canDelete"]
+case "manage", "admin":
+return status["canManage"]
+default:
+// For custom actions, check if user has manage permission
+return status["canManage"]
+}
+}

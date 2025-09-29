@@ -1,0 +1,772 @@
+package widgets
+
+import (
+	"fmt"
+	"strings"
+)
+
+// MetricCardProps defines properties for metric display cards
+type MetricCardProps struct {
+	Title       string  `json:"title" validate:"required"`
+	Value       string  `json:"value" validate:"required"`
+	SubValue    string  `json:"sub_value"`
+	Change      float64 `json:"change"`
+	ChangeType  string  `json:"change_type" validate:"oneof=increase decrease neutral"`
+	Icon        string  `json:"icon"`
+	Color       string  `json:"color" validate:"oneof=blue green red yellow purple indigo pink"`
+	Period      string  `json:"period"`
+	Loading     bool    `json:"loading"`
+	Href        string  `json:"href"`
+	ID          string  `json:"id"`
+	Class       string  `json:"class"`
+}
+
+// ChartDataPoint represents a single data point for charts
+type ChartDataPoint struct {
+	Label string  `json:"label" validate:"required"`
+	Value float64 `json:"value" validate:"required"`
+	Color string  `json:"color"`
+}
+
+// LineChartProps defines properties for line charts
+type LineChartProps struct {
+	Title       string            `json:"title" validate:"required"`
+	Data        []ChartDataPoint  `json:"data" validate:"required,min=1"`
+	XAxisLabel  string            `json:"x_axis_label"`
+	YAxisLabel  string            `json:"y_axis_label"`
+	Height      string            `json:"height" validate:"oneof=sm base lg xl"`
+	ShowGrid    bool              `json:"show_grid"`
+	ShowLegend  bool              `json:"show_legend"`
+	Animated    bool              `json:"animated"`
+	ID          string            `json:"id"`
+	Class       string            `json:"class"`
+}
+
+// RecentActivityItem represents a single activity item
+type RecentActivityItem struct {
+	ID          string `json:"id" validate:"required"`
+	Title       string `json:"title" validate:"required"`
+	Description string `json:"description"`
+	User        string `json:"user"`
+	Avatar      string `json:"avatar"`
+	Timestamp   string `json:"timestamp" validate:"required"`
+	Type        string `json:"type" validate:"oneof=create update delete approve reject"`
+	Icon        string `json:"icon"`
+	Href        string `json:"href"`
+}
+
+// RecentActivityProps defines properties for activity feeds
+type RecentActivityProps struct {
+	Title       string               `json:"title"`
+	Items       []RecentActivityItem `json:"items" validate:"required"`
+	ShowMore    bool                 `json:"show_more"`
+	MoreHref    string               `json:"more_href"`
+	MaxItems    int                  `json:"max_items"`
+	ID          string               `json:"id"`
+	Class       string               `json:"class"`
+}
+
+// TaskItem represents a single task or todo item
+type TaskItem struct {
+	ID          string `json:"id" validate:"required"`
+	Title       string `json:"title" validate:"required"`
+	Description string `json:"description"`
+	Priority    string `json:"priority" validate:"oneof=low medium high urgent"`
+	Status      string `json:"status" validate:"oneof=pending in_progress completed overdue"`
+	DueDate     string `json:"due_date"`
+	Assignee    string `json:"assignee"`
+	Avatar      string `json:"avatar"`
+	Completed   bool   `json:"completed"`
+	Href        string `json:"href"`
+}
+
+// TaskListProps defines properties for task lists
+type TaskListProps struct {
+	Title       string     `json:"title"`
+	Items       []TaskItem `json:"items" validate:"required"`
+	ShowFilters bool       `json:"show_filters"`
+	ShowMore    bool       `json:"show_more"`
+	MoreHref    string     `json:"more_href"`
+	ID          string     `json:"id"`
+	Class       string     `json:"class"`
+}
+
+// MetricCard renders a dashboard metric card
+templ MetricCard(props MetricCardProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ getMetricCardClasses(props.Color) + " " + props.Class }
+	>
+		if props.Loading {
+			@MetricCardSkeleton()
+		} else {
+			if props.Href != "" {
+				<a href={ props.Href } class="block h-full">
+					@MetricCardContent(props)
+				</a>
+			} else {
+				@MetricCardContent(props)
+			}
+		}
+	</div>
+}
+
+// MetricCardContent renders the content of a metric card
+templ MetricCardContent(props MetricCardProps) {
+	<div class={ getMetricCardContentClasses() }>
+		<!-- Header -->
+		<div class={ getMetricCardHeaderClasses() }>
+			if props.Icon != "" {
+				<div class={ getMetricCardIconClasses(props.Color) }>
+					{ props.Icon }
+				</div>
+			}
+			<div class="flex-1">
+				<p class={ getMetricCardTitleClasses() }>
+					{ props.Title }
+				</p>
+				if props.Period != "" {
+					<p class={ getMetricCardPeriodClasses() }>
+						{ props.Period }
+					</p>
+				}
+			</div>
+		</div>
+
+		<!-- Value -->
+		<div class={ getMetricCardValueClasses() }>
+			<span class={ getMetricCardMainValueClasses() }>
+				{ props.Value }
+			</span>
+			if props.SubValue != "" {
+				<span class={ getMetricCardSubValueClasses() }>
+					{ props.SubValue }
+				</span>
+			}
+		</div>
+
+		<!-- Change indicator -->
+		if props.Change != 0 {
+			<div class={ getMetricCardChangeClasses() }>
+				<span class={ getMetricCardChangeValueClasses(props.ChangeType) }>
+					if props.ChangeType == "increase" {
+						<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+							<path fill-rule="evenodd" d="M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+						</svg>
+					} else if props.ChangeType == "decrease" {
+						<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+							<path fill-rule="evenodd" d="M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+						</svg>
+					}
+					{ formatChange(props.Change) }%
+				</span>
+				<span class="text-sm text-gray-500 dark:text-gray-400">vs last period</span>
+			</div>
+		}
+	</div>
+}
+
+// MetricCardSkeleton renders loading skeleton for metric cards
+templ MetricCardSkeleton() {
+	<div class="animate-pulse p-6">
+		<div class="flex items-center space-x-3 mb-4">
+			<div class="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-lg"></div>
+			<div class="flex-1">
+				<div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mb-2"></div>
+				<div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
+			</div>
+		</div>
+		<div class="h-8 bg-gray-300 dark:bg-gray-600 rounded w-1/3 mb-2"></div>
+		<div class="h-4 bg-gray-300 dark:bg-gray-600 rounded w-1/4"></div>
+	</div>
+}
+
+// SimpleLineChart renders a basic line chart for dashboard metrics
+templ SimpleLineChart(props LineChartProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ getChartContainerClasses(props.Height) + " " + props.Class }
+	>
+		<!-- Chart Header -->
+		<div class={ getChartHeaderClasses() }>
+			<h3 class={ getChartTitleClasses() }>
+				{ props.Title }
+			</h3>
+		</div>
+
+		<!-- Chart Content -->
+		<div class={ getChartContentClasses() }>
+			<canvas
+				class="w-full h-full"
+				x-data={ getChartData(props) }
+				x-init="initChart()"
+			></canvas>
+		</div>
+
+		if props.ShowLegend {
+			<div class={ getChartLegendClasses() }>
+				for _, point := range props.Data {
+					<div class="flex items-center space-x-2">
+						<div class={ "w-3 h-3 rounded-full bg-" + getDataPointColor(point.Color) }></div>
+						<span class="text-sm text-gray-600 dark:text-gray-400">{ point.Label }</span>
+					</div>
+				}
+			</div>
+		}
+	</div>
+}
+
+// RecentActivity renders an activity feed widget
+templ RecentActivity(props RecentActivityProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ getActivityWidgetClasses() + " " + props.Class }
+	>
+		<!-- Header -->
+		<div class={ getWidgetHeaderClasses() }>
+			<h3 class={ getWidgetTitleClasses() }>
+				if props.Title != "" {
+					{ props.Title }
+				} else {
+					Recent Activity
+				}
+			</h3>
+			if props.ShowMore && props.MoreHref != "" {
+				<a href={ props.MoreHref } class={ getWidgetMoreLinkClasses() }>
+					View all
+				</a>
+			}
+		</div>
+
+		<!-- Activity List -->
+		<div class={ getActivityListClasses() }>
+			for i, item := range getVisibleItems(props.Items, props.MaxItems) {
+				<div class={ getActivityItemClasses(i, len(getVisibleItems(props.Items, props.MaxItems))) }>
+					<!-- Avatar/Icon -->
+					<div class={ getActivityAvatarClasses() }>
+						if item.Avatar != "" {
+							<img src={ item.Avatar } alt={ item.User } class={ getActivityAvatarImageClasses() }/>
+						} else if item.Icon != "" {
+							<div class={ getActivityIconClasses(item.Type) }>
+								{ item.Icon }
+							</div>
+						} else {
+							<div class={ getActivityDefaultIconClasses() }>
+								{ getDefaultActivityIcon(item.Type) }
+							</div>
+						}
+					</div>
+
+					<!-- Content -->
+					<div class={ getActivityContentClasses() }>
+						if item.Href != "" {
+							<a href={ item.Href } class={ getActivityLinkClasses() }>
+								@ActivityItemContent(item)
+							</a>
+						} else {
+							@ActivityItemContent(item)
+						}
+					</div>
+
+					<!-- Timestamp -->
+					<div class={ getActivityTimestampClasses() }>
+						<span class="text-xs text-gray-500 dark:text-gray-400">
+							{ item.Timestamp }
+						</span>
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+// ActivityItemContent renders the content of an activity item
+templ ActivityItemContent(item RecentActivityItem) {
+	<div>
+		<p class={ getActivityTitleClasses() }>
+			{ item.Title }
+		</p>
+		if item.Description != "" {
+			<p class={ getActivityDescriptionClasses() }>
+				{ item.Description }
+			</p>
+		}
+		if item.User != "" {
+			<p class={ getActivityUserClasses() }>
+				by { item.User }
+			</p>
+		}
+	</div>
+}
+
+// TaskList renders a task list widget
+templ TaskList(props TaskListProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ getTaskWidgetClasses() + " " + props.Class }
+		x-data="{ filter: 'all' }"
+	>
+		<!-- Header -->
+		<div class={ getWidgetHeaderClasses() }>
+			<h3 class={ getWidgetTitleClasses() }>
+				if props.Title != "" {
+					{ props.Title }
+				} else {
+					Tasks
+				}
+			</h3>
+			if props.ShowMore && props.MoreHref != "" {
+				<a href={ props.MoreHref } class={ getWidgetMoreLinkClasses() }>
+					View all
+				</a>
+			}
+		</div>
+
+		<!-- Filters -->
+		if props.ShowFilters {
+			<div class={ getTaskFiltersClasses() }>
+				<button @click="filter = 'all'" :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300': filter === 'all' }" class={ getTaskFilterButtonClasses() }>
+					All
+				</button>
+				<button @click="filter = 'pending'" :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300': filter === 'pending' }" class={ getTaskFilterButtonClasses() }>
+					Pending
+				</button>
+				<button @click="filter = 'in_progress'" :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300': filter === 'in_progress' }" class={ getTaskFilterButtonClasses() }>
+					In Progress
+				</button>
+				<button @click="filter = 'completed'" :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300': filter === 'completed' }" class={ getTaskFilterButtonClasses() }>
+					Completed
+				</button>
+			</div>
+		}
+
+		<!-- Task List -->
+		<div class={ getTaskListClasses() }>
+			for _, task := range props.Items {
+				<div 
+					class={ getTaskItemClasses() }
+					if props.ShowFilters {
+						x-show={ getTaskFilterExpression(task.Status) }
+					}
+				>
+					<!-- Checkbox -->
+					<div class={ getTaskCheckboxClasses() }>
+						<input
+							type="checkbox"
+							class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+							if task.Completed {
+								checked
+							}
+						/>
+					</div>
+
+					<!-- Content -->
+					<div class={ getTaskContentClasses() }>
+						if task.Href != "" {
+							<a href={ task.Href } class={ getTaskLinkClasses() }>
+								@TaskItemContent(task)
+							</a>
+						} else {
+							@TaskItemContent(task)
+						}
+					</div>
+
+					<!-- Priority & Status -->
+					<div class={ getTaskMetaClasses() }>
+						<span class={ getTaskPriorityClasses(task.Priority) }>
+							{ strings.Title(task.Priority) }
+						</span>
+						<span class={ getTaskStatusClasses(task.Status) }>
+							{ strings.Title(strings.ReplaceAll(task.Status, "_", " ")) }
+						</span>
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+// TaskItemContent renders the content of a task item
+templ TaskItemContent(task TaskItem) {
+	<div>
+		<p class={ getTaskTitleClasses(task.Completed) }>
+			{ task.Title }
+		</p>
+		if task.Description != "" {
+			<p class={ getTaskDescriptionClasses() }>
+				{ task.Description }
+			</p>
+		}
+		<div class="flex items-center space-x-4 mt-1">
+			if task.DueDate != "" {
+				<span class={ getTaskDueDateClasses() }>
+					📅 { task.DueDate }
+				</span>
+			}
+			if task.Assignee != "" {
+				<span class={ getTaskAssigneeClasses() }>
+					👤 { task.Assignee }
+				</span>
+			}
+		</div>
+	</div>
+}
+
+// Helper functions for dashboard widget styling
+func getMetricCardClasses(color string) string {
+	base := "bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow duration-200"
+	
+	switch color {
+	case "blue":
+		return base + " border-l-4 border-l-blue-500"
+	case "green":
+		return base + " border-l-4 border-l-green-500"
+	case "red":
+		return base + " border-l-4 border-l-red-500"
+	case "yellow":
+		return base + " border-l-4 border-l-yellow-500"
+	case "purple":
+		return base + " border-l-4 border-l-purple-500"
+	case "indigo":
+		return base + " border-l-4 border-l-indigo-500"
+	case "pink":
+		return base + " border-l-4 border-l-pink-500"
+	default:
+		return base
+	}
+}
+
+func getMetricCardContentClasses() string {
+	return "h-full"
+}
+
+func getMetricCardHeaderClasses() string {
+	return "flex items-center space-x-3 mb-4"
+}
+
+func getMetricCardIconClasses(color string) string {
+	base := "p-2 rounded-lg"
+	
+	switch color {
+	case "blue":
+		return base + " bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300"
+	case "green":
+		return base + " bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300"
+	case "red":
+		return base + " bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-300"
+	case "yellow":
+		return base + " bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300"
+	case "purple":
+		return base + " bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300"
+	case "indigo":
+		return base + " bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300"
+	case "pink":
+		return base + " bg-pink-100 text-pink-600 dark:bg-pink-900 dark:text-pink-300"
+	default:
+		return base + " bg-gray-100 text-gray-600 dark:bg-gray-900 dark:text-gray-300"
+	}
+}
+
+func getMetricCardTitleClasses() string {
+	return "text-sm font-medium text-gray-600 dark:text-gray-400"
+}
+
+func getMetricCardPeriodClasses() string {
+	return "text-xs text-gray-500 dark:text-gray-500"
+}
+
+func getMetricCardValueClasses() string {
+	return "mb-3"
+}
+
+func getMetricCardMainValueClasses() string {
+	return "text-3xl font-bold text-gray-900 dark:text-white"
+}
+
+func getMetricCardSubValueClasses() string {
+	return "text-lg text-gray-600 dark:text-gray-400 ml-2"
+}
+
+func getMetricCardChangeClasses() string {
+	return "flex items-center space-x-2"
+}
+
+func getMetricCardChangeValueClasses(changeType string) string {
+	base := "inline-flex items-center text-sm font-medium"
+	
+	switch changeType {
+	case "increase":
+		return base + " text-green-600 dark:text-green-400"
+	case "decrease":
+		return base + " text-red-600 dark:text-red-400"
+	default:
+		return base + " text-gray-600 dark:text-gray-400"
+	}
+}
+
+func getChartContainerClasses(height string) string {
+	base := "bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+	
+	switch height {
+	case "sm":
+		return base + " h-64"
+	case "lg":
+		return base + " h-96"
+	case "xl":
+		return base + " h-[32rem]"
+	default: // base
+		return base + " h-80"
+	}
+}
+
+func getChartHeaderClasses() string {
+	return "mb-4"
+}
+
+func getChartTitleClasses() string {
+	return "text-lg font-semibold text-gray-900 dark:text-white"
+}
+
+func getChartContentClasses() string {
+	return "relative flex-1"
+}
+
+func getChartLegendClasses() string {
+	return "flex flex-wrap gap-4 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
+}
+
+func getActivityWidgetClasses() string {
+	return "bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700"
+}
+
+func getWidgetHeaderClasses() string {
+	return "flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700"
+}
+
+func getWidgetTitleClasses() string {
+	return "text-lg font-semibold text-gray-900 dark:text-white"
+}
+
+func getWidgetMoreLinkClasses() string {
+	return "text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+}
+
+func getActivityListClasses() string {
+	return "divide-y divide-gray-200 dark:divide-gray-700"
+}
+
+func getActivityItemClasses(index, total int) string {
+	base := "flex items-start space-x-3 p-4"
+	if index == total-1 {
+		return base // No bottom border for last item
+	}
+	return base
+}
+
+func getActivityAvatarClasses() string {
+	return "flex-shrink-0"
+}
+
+func getActivityAvatarImageClasses() string {
+	return "w-8 h-8 rounded-full"
+}
+
+func getActivityIconClasses(activityType string) string {
+	base := "w-8 h-8 rounded-full flex items-center justify-center text-white text-sm"
+	
+	switch activityType {
+	case "create":
+		return base + " bg-green-500"
+	case "update":
+		return base + " bg-blue-500"
+	case "delete":
+		return base + " bg-red-500"
+	case "approve":
+		return base + " bg-green-600"
+	case "reject":
+		return base + " bg-red-600"
+	default:
+		return base + " bg-gray-500"
+	}
+}
+
+func getActivityDefaultIconClasses() string {
+	return "w-8 h-8 rounded-full bg-gray-500 flex items-center justify-center text-white text-sm"
+}
+
+func getActivityContentClasses() string {
+	return "flex-1 min-w-0"
+}
+
+func getActivityLinkClasses() string {
+	return "block hover:bg-gray-50 dark:hover:bg-gray-700 -m-2 p-2 rounded"
+}
+
+func getActivityTitleClasses() string {
+	return "text-sm font-medium text-gray-900 dark:text-white"
+}
+
+func getActivityDescriptionClasses() string {
+	return "text-sm text-gray-600 dark:text-gray-400 mt-1"
+}
+
+func getActivityUserClasses() string {
+	return "text-xs text-gray-500 dark:text-gray-500 mt-1"
+}
+
+func getActivityTimestampClasses() string {
+	return "flex-shrink-0"
+}
+
+func getTaskWidgetClasses() string {
+	return "bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700"
+}
+
+func getTaskFiltersClasses() string {
+	return "flex space-x-1 p-4 border-b border-gray-200 dark:border-gray-700"
+}
+
+func getTaskFilterButtonClasses() string {
+	return "px-3 py-1 text-sm font-medium rounded-md text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors duration-200"
+}
+
+func getTaskListClasses() string {
+	return "divide-y divide-gray-200 dark:divide-gray-700"
+}
+
+func getTaskItemClasses() string {
+	return "flex items-start space-x-3 p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+}
+
+func getTaskCheckboxClasses() string {
+	return "flex-shrink-0 mt-1"
+}
+
+func getTaskContentClasses() string {
+	return "flex-1 min-w-0"
+}
+
+func getTaskLinkClasses() string {
+	return "block"
+}
+
+func getTaskMetaClasses() string {
+	return "flex flex-col space-y-1 flex-shrink-0"
+}
+
+func getTaskTitleClasses(completed bool) string {
+	base := "text-sm font-medium"
+	if completed {
+		return base + " text-gray-500 dark:text-gray-400 line-through"
+	}
+	return base + " text-gray-900 dark:text-white"
+}
+
+func getTaskDescriptionClasses() string {
+	return "text-sm text-gray-600 dark:text-gray-400 mt-1"
+}
+
+func getTaskDueDateClasses() string {
+	return "text-xs text-gray-500 dark:text-gray-500"
+}
+
+func getTaskAssigneeClasses() string {
+	return "text-xs text-gray-500 dark:text-gray-500"
+}
+
+func getTaskPriorityClasses(priority string) string {
+	base := "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+	
+	switch priority {
+	case "urgent":
+		return base + " bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+	case "high":
+		return base + " bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+	case "medium":
+		return base + " bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+	default: // low
+		return base + " bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+	}
+}
+
+func getTaskStatusClasses(status string) string {
+	base := "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+	
+	switch status {
+	case "completed":
+		return base + " bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+	case "in_progress":
+		return base + " bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+	case "overdue":
+		return base + " bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+	default: // pending
+		return base + " bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+	}
+}
+
+// Helper functions for data processing
+func formatChange(change float64) string {
+	if change >= 0 {
+		return fmt.Sprintf("+%.1f", change)
+	}
+	return fmt.Sprintf("%.1f", change)
+}
+
+func getDataPointColor(color string) string {
+	if color != "" {
+		return color + "-500"
+	}
+	return "blue-500"
+}
+
+func getVisibleItems(items []RecentActivityItem, maxItems int) []RecentActivityItem {
+	if maxItems <= 0 || maxItems >= len(items) {
+		return items
+	}
+	return items[:maxItems]
+}
+
+func getDefaultActivityIcon(activityType string) string {
+	switch activityType {
+	case "create":
+		return "+"
+	case "update":
+		return "✏"
+	case "delete":
+		return "×"
+	case "approve":
+		return "✓"
+	case "reject":
+		return "×"
+	default:
+		return "•"
+	}
+}
+
+func getTaskFilterExpression(status string) string {
+	return "filter === 'all' || filter === '" + status + "'"
+}
+
+func getChartData(props LineChartProps) string {
+	// This would typically integrate with a charting library like Chart.js
+	return `{
+		data: ` + generateChartDataJSON(props.Data) + `,
+		initChart() {
+			// Chart initialization would go here
+			console.log('Chart initialized with data:', this.data);
+		}
+	}`
+}
+
+func generateChartDataJSON(data []ChartDataPoint) string {
+	// Simple JSON generation - in practice you'd use proper JSON marshaling
+	return "[]" // Placeholder
+}

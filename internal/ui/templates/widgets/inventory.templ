@@ -1,0 +1,906 @@
+package widgets
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
+// InventoryOverviewProps defines properties for inventory overview widgets
+type InventoryOverviewProps struct {
+	Title           string                `json:"title" validate:"required"`
+	TotalItems      int                   `json:"total_items"`
+	LowStockItems   int                   `json:"low_stock_items"`
+	OutOfStockItems int                   `json:"out_of_stock_items"`
+	TotalValue      float64               `json:"total_value"`
+	Currency        string                `json:"currency"`
+	TopProducts     []InventoryProduct    `json:"top_products"`
+	LowStockAlerts  []InventoryAlert      `json:"low_stock_alerts"`
+	RecentMovements []InventoryMovement   `json:"recent_movements"`
+	ShowAlerts      bool                  `json:"show_alerts"`
+	ShowMovements   bool                  `json:"show_movements"`
+	ID              string                `json:"id"`
+	Class           string                `json:"class"`
+}
+
+// InventoryProduct represents a product in inventory
+type InventoryProduct struct {
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	SKU         string  `json:"sku"`
+	Quantity    int     `json:"quantity"`
+	MinStock    int     `json:"min_stock"`
+	MaxStock    int     `json:"max_stock"`
+	Value       float64 `json:"value"`
+	Category    string  `json:"category"`
+	Status      string  `json:"status" validate:"oneof=in_stock low_stock out_of_stock"`
+	LastUpdated string  `json:"last_updated"`
+}
+
+// InventoryAlert represents a stock alert
+type InventoryAlert struct {
+	ID          string `json:"id"`
+	ProductName string `json:"product_name"`
+	SKU         string `json:"sku"`
+	CurrentStock int   `json:"current_stock"`
+	MinStock     int   `json:"min_stock"`
+	Severity     string `json:"severity" validate:"oneof=critical warning"`
+	CreatedAt    string `json:"created_at"`
+}
+
+// InventoryMovement represents stock movement
+type InventoryMovement struct {
+	ID          string `json:"id"`
+	ProductName string `json:"product_name"`
+	SKU         string `json:"sku"`
+	Type        string `json:"type" validate:"oneof=in out adjustment"`
+	Quantity    int    `json:"quantity"`
+	Reason      string `json:"reason"`
+	User        string `json:"user"`
+	Timestamp   string `json:"timestamp"`
+}
+
+// StockLevelProps defines properties for stock level widgets
+type StockLevelProps struct {
+	Title         string              `json:"title"`
+	Categories    []StockCategory     `json:"categories"`
+	AlertItems    []InventoryAlert    `json:"alert_items"`
+	TotalProducts int                 `json:"total_products"`
+	ViewType      string              `json:"view_type" validate:"oneof=category status"`
+	ShowChart     bool                `json:"show_chart"`
+	ID            string              `json:"id"`
+	Class         string              `json:"class"`
+}
+
+// StockCategory represents stock by category
+type StockCategory struct {
+	Name         string  `json:"name"`
+	TotalItems   int     `json:"total_items"`
+	InStock      int     `json:"in_stock"`
+	LowStock     int     `json:"low_stock"`
+	OutOfStock   int     `json:"out_of_stock"`
+	TotalValue   float64 `json:"total_value"`
+	Percentage   float64 `json:"percentage"`
+	Color        string  `json:"color"`
+}
+
+// ProductPerformanceProps defines properties for product performance widgets
+type ProductPerformanceProps struct {
+	Title           string                `json:"title"`
+	TopSellers      []ProductPerformance  `json:"top_sellers"`
+	SlowMovers      []ProductPerformance  `json:"slow_movers"`
+	NewArrivals     []ProductPerformance  `json:"new_arrivals"`
+	Period          string                `json:"period"`
+	Currency        string                `json:"currency"`
+	ShowTrends      bool                  `json:"show_trends"`
+	ViewMode        string                `json:"view_mode" validate:"oneof=sales volume profit"`
+	ID              string                `json:"id"`
+	Class           string                `json:"class"`
+}
+
+// ProductPerformance represents product performance metrics
+type ProductPerformance struct {
+	ID            string  `json:"id"`
+	Name          string  `json:"name"`
+	SKU           string  `json:"sku"`
+	SalesQuantity int     `json:"sales_quantity"`
+	Revenue       float64 `json:"revenue"`
+	Profit        float64 `json:"profit"`
+	ProfitMargin  float64 `json:"profit_margin"`
+	Trend         string  `json:"trend" validate:"oneof=up down stable"`
+	TrendPercent  float64 `json:"trend_percent"`
+	Category      string  `json:"category"`
+}
+
+// InventoryOverview renders a comprehensive inventory overview widget
+templ InventoryOverview(props InventoryOverviewProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ getInventoryOverviewClasses() + " " + props.Class }
+	>
+		<!-- Header -->
+		<div class={ getWidgetHeaderClasses() }>
+			<h3 class={ getWidgetTitleClasses() }>
+				{ props.Title }
+			</h3>
+			<a href="/inventory" class={ getWidgetMoreLinkClasses() }>
+				View All
+			</a>
+		</div>
+
+		<!-- Summary Stats -->
+		<div class={ getInventorySummaryClasses() }>
+			<!-- Total Items -->
+			<div class={ getInventoryStatClasses() }>
+				<div class={ getInventoryStatIconClasses("blue") }>
+					📦
+				</div>
+				<div>
+					<p class="text-sm text-gray-600 dark:text-gray-400">Total Items</p>
+					<p class="text-xl font-bold text-gray-900 dark:text-white">
+						{ formatNumber(props.TotalItems) }
+					</p>
+				</div>
+			</div>
+
+			<!-- Low Stock -->
+			<div class={ getInventoryStatClasses() }>
+				<div class={ getInventoryStatIconClasses("yellow") }>
+					⚠️
+				</div>
+				<div>
+					<p class="text-sm text-gray-600 dark:text-gray-400">Low Stock</p>
+					<p class="text-xl font-bold text-yellow-600">
+						{ formatNumber(props.LowStockItems) }
+					</p>
+				</div>
+			</div>
+
+			<!-- Out of Stock -->
+			<div class={ getInventoryStatClasses() }>
+				<div class={ getInventoryStatIconClasses("red") }>
+					🚫
+				</div>
+				<div>
+					<p class="text-sm text-gray-600 dark:text-gray-400">Out of Stock</p>
+					<p class="text-xl font-bold text-red-600">
+						{ formatNumber(props.OutOfStockItems) }
+					</p>
+				</div>
+			</div>
+
+			<!-- Total Value -->
+			<div class={ getInventoryStatClasses() }>
+				<div class={ getInventoryStatIconClasses("green") }>
+					💰
+				</div>
+				<div>
+					<p class="text-sm text-gray-600 dark:text-gray-400">Total Value</p>
+					<p class="text-xl font-bold text-green-600">
+						{ formatCurrency(props.TotalValue, props.Currency) }
+					</p>
+				</div>
+			</div>
+		</div>
+
+		<!-- Top Products -->
+		if len(props.TopProducts) > 0 {
+			<div class={ getInventoryTopProductsClasses() }>
+				<h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Top Products by Value</h4>
+				<div class="space-y-2">
+					for _, product := range props.TopProducts {
+						<div class={ getInventoryProductItemClasses() }>
+							<div class="flex items-center justify-between">
+								<div class="flex-1 min-w-0">
+									<p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+										{ product.Name }
+									</p>
+									<p class="text-xs text-gray-500">
+										SKU: { product.SKU } • { product.Category }
+									</p>
+								</div>
+								<div class="text-right">
+									<p class="text-sm font-semibold text-gray-900 dark:text-white">
+										{ formatCurrency(product.Value, props.Currency) }
+									</p>
+									<span class={ getInventoryStatusBadgeClasses(product.Status) }>
+										{ formatInventoryStatus(product.Status) }
+									</span>
+								</div>
+							</div>
+							<div class="mt-2">
+								<div class="flex justify-between text-xs text-gray-500">
+									<span>Qty: { formatNumber(product.Quantity) }</span>
+									<span>Min: { formatNumber(product.MinStock) }</span>
+								</div>
+								<div class={ getInventoryProgressBarClasses() }>
+									<div 
+										class={ getInventoryProgressFillClasses(product.Status) }
+										style={ getInventoryProgressWidth(product.Quantity, product.MaxStock) }
+									></div>
+								</div>
+							</div>
+						</div>
+					}
+				</div>
+			</div>
+		}
+
+		<!-- Low Stock Alerts -->
+		if props.ShowAlerts && len(props.LowStockAlerts) > 0 {
+			<div class={ getInventoryAlertsClasses() }>
+				<h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Stock Alerts</h4>
+				<div class="space-y-2">
+					for _, alert := range props.LowStockAlerts {
+						<div class={ getInventoryAlertItemClasses(alert.Severity) }>
+							<div class="flex items-center">
+								<div class={ getInventoryAlertIconClasses(alert.Severity) }>
+									if alert.Severity == "critical" {
+										🚨
+									} else {
+										⚠️
+									}
+								</div>
+								<div class="flex-1 min-w-0">
+									<p class="text-sm font-medium text-gray-900 dark:text-white">
+										{ alert.ProductName }
+									</p>
+									<p class="text-xs text-gray-500">
+										Current: { formatNumber(alert.CurrentStock) } • Min: { formatNumber(alert.MinStock) }
+									</p>
+								</div>
+								<span class={ getInventoryAlertBadgeClasses(alert.Severity) }>
+									{ strings.Title(alert.Severity) }
+								</span>
+							</div>
+						</div>
+					}
+				</div>
+			</div>
+		}
+
+		<!-- Recent Movements -->
+		if props.ShowMovements && len(props.RecentMovements) > 0 {
+			<div class={ getInventoryMovementsClasses() }>
+				<h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Recent Movements</h4>
+				<div class="space-y-2">
+					for _, movement := range props.RecentMovements {
+						<div class={ getInventoryMovementItemClasses() }>
+							<div class="flex items-center">
+								<div class={ getInventoryMovementIconClasses(movement.Type) }>
+									if movement.Type == "in" {
+										⬆️
+									} else if movement.Type == "out" {
+										⬇️
+									} else {
+										🔄
+									}
+								</div>
+								<div class="flex-1 min-w-0">
+									<p class="text-sm font-medium text-gray-900 dark:text-white">
+										{ movement.ProductName }
+									</p>
+									<p class="text-xs text-gray-500">
+										{ movement.Reason } • { movement.User } • { movement.Timestamp }
+									</p>
+								</div>
+								<div class="text-right">
+									<span class={ getInventoryMovementQuantityClasses(movement.Type) }>
+										if movement.Type == "in" {
+											+{ formatNumber(movement.Quantity) }
+										} else if movement.Type == "out" {
+											-{ formatNumber(movement.Quantity) }
+										} else {
+											{ formatNumber(movement.Quantity) }
+										}
+									</span>
+								</div>
+							</div>
+						</div>
+					}
+				</div>
+			</div>
+		}
+	</div>
+}
+
+// StockLevelWidget renders a stock level monitoring widget
+templ StockLevelWidget(props StockLevelProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ getStockLevelWidgetClasses() + " " + props.Class }
+	>
+		<!-- Header -->
+		<div class={ getWidgetHeaderClasses() }>
+			<h3 class={ getWidgetTitleClasses() }>
+				{ props.Title }
+			</h3>
+			<div class="flex items-center space-x-2">
+				<span class="text-sm text-gray-500">{ formatNumber(props.TotalProducts) } products</span>
+			</div>
+		</div>
+
+		if props.ViewType == "category" {
+			<!-- Category View -->
+			<div class={ getStockCategoryClasses() }>
+				for _, category := range props.Categories {
+					<div class={ getStockCategoryItemClasses() }>
+						<div class="flex items-center justify-between mb-2">
+							<h4 class="text-sm font-medium text-gray-700 dark:text-gray-300">
+								{ category.Name }
+							</h4>
+							<span class="text-sm text-gray-500">
+								{ formatNumber(category.TotalItems) } items
+							</span>
+						</div>
+						
+						<!-- Category Stats -->
+						<div class={ getStockCategoryStatsClasses() }>
+							<div class={ getStockCategoryStatClasses() }>
+								<span class="text-xs text-gray-500">In Stock</span>
+								<span class="text-sm font-medium text-green-600">{ formatNumber(category.InStock) }</span>
+							</div>
+							<div class={ getStockCategoryStatClasses() }>
+								<span class="text-xs text-gray-500">Low Stock</span>
+								<span class="text-sm font-medium text-yellow-600">{ formatNumber(category.LowStock) }</span>
+							</div>
+							<div class={ getStockCategoryStatClasses() }>
+								<span class="text-xs text-gray-500">Out of Stock</span>
+								<span class="text-sm font-medium text-red-600">{ formatNumber(category.OutOfStock) }</span>
+							</div>
+						</div>
+
+						<!-- Progress Bar -->
+						<div class={ getStockCategoryProgressClasses() }>
+							<div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+								<div class="h-full flex">
+									if category.TotalItems > 0 {
+										<div 
+											class="bg-green-500"
+											style={ getStockPercentageWidth(category.InStock, category.TotalItems) }
+										></div>
+										<div 
+											class="bg-yellow-500"
+											style={ getStockPercentageWidth(category.LowStock, category.TotalItems) }
+										></div>
+										<div 
+											class="bg-red-500"
+											style={ getStockPercentageWidth(category.OutOfStock, category.TotalItems) }
+										></div>
+									}
+								</div>
+							</div>
+						</div>
+
+						<!-- Category Value -->
+						<div class="flex justify-between items-center mt-2">
+							<span class="text-xs text-gray-500">Total Value</span>
+							<span class="text-sm font-medium text-gray-900 dark:text-white">
+								{ formatCurrency(category.TotalValue, "USD") }
+							</span>
+						</div>
+					</div>
+				}
+			</div>
+		} else {
+			<!-- Status View -->
+			<div class={ getStockStatusClasses() }>
+				<!-- Stock Status Summary -->
+				<div class={ getStockStatusSummaryClasses() }>
+					<div class={ getStockStatusItemClasses("in_stock") }>
+						<div class="text-center">
+							<p class="text-2xl font-bold text-green-600">
+								{ formatNumber(getTotalInStock(props.Categories)) }
+							</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">In Stock</p>
+						</div>
+					</div>
+					<div class={ getStockStatusItemClasses("low_stock") }>
+						<div class="text-center">
+							<p class="text-2xl font-bold text-yellow-600">
+								{ formatNumber(getTotalLowStock(props.Categories)) }
+							</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">Low Stock</p>
+						</div>
+					</div>
+					<div class={ getStockStatusItemClasses("out_of_stock") }>
+						<div class="text-center">
+							<p class="text-2xl font-bold text-red-600">
+								{ formatNumber(getTotalOutOfStock(props.Categories)) }
+							</p>
+							<p class="text-sm text-gray-600 dark:text-gray-400">Out of Stock</p>
+						</div>
+					</div>
+				</div>
+
+				<!-- Critical Alerts -->
+				if len(props.AlertItems) > 0 {
+					<div class={ getStockAlertsClasses() }>
+						<h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Critical Alerts</h4>
+						<div class="space-y-2">
+							for _, alert := range props.AlertItems {
+								<div class={ getStockAlertItemClasses() }>
+									<div class="flex items-center justify-between">
+										<div class="flex-1 min-w-0">
+											<p class="text-sm font-medium text-gray-900 dark:text-white">
+												{ alert.ProductName }
+											</p>
+											<p class="text-xs text-gray-500">
+												SKU: { alert.SKU }
+											</p>
+										</div>
+										<div class="text-right">
+											<p class="text-sm font-medium text-red-600">
+												{ formatNumber(alert.CurrentStock) } left
+											</p>
+											<p class="text-xs text-gray-500">
+												Min: { formatNumber(alert.MinStock) }
+											</p>
+										</div>
+									</div>
+								</div>
+							}
+						</div>
+					</div>
+				}
+			</div>
+		}
+	</div>
+}
+
+// ProductPerformanceWidget renders a product performance analysis widget
+templ ProductPerformanceWidget(props ProductPerformanceProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ getProductPerformanceWidgetClasses() + " " + props.Class }
+		x-data="{ activeTab: 'top-sellers' }"
+	>
+		<!-- Header -->
+		<div class={ getWidgetHeaderClasses() }>
+			<h3 class={ getWidgetTitleClasses() }>
+				{ props.Title }
+			</h3>
+			if props.Period != "" {
+				<span class="text-sm text-gray-500">{ props.Period }</span>
+			}
+		</div>
+
+		<!-- Tab Navigation -->
+		<div class={ getProductPerformanceTabsClasses() }>
+			<button 
+				@click="activeTab = 'top-sellers'"
+				:class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300': activeTab === 'top-sellers' }"
+				class={ getProductPerformanceTabClasses() }
+			>
+				Top Sellers
+			</button>
+			<button 
+				@click="activeTab = 'slow-movers'"
+				:class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300': activeTab === 'slow-movers' }"
+				class={ getProductPerformanceTabClasses() }
+			>
+				Slow Movers
+			</button>
+			<button 
+				@click="activeTab = 'new-arrivals'"
+				:class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300': activeTab === 'new-arrivals' }"
+				class={ getProductPerformanceTabClasses() }
+			>
+				New Arrivals
+			</button>
+		</div>
+
+		<!-- Top Sellers Tab -->
+		<div x-show="activeTab === 'top-sellers'" class={ getProductPerformanceContentClasses() }>
+			if len(props.TopSellers) > 0 {
+				<div class="space-y-3">
+					for i, product := range props.TopSellers {
+						<div class={ getProductPerformanceItemClasses() }>
+							<div class="flex items-center">
+								<div class={ getProductPerformanceRankClasses() }>
+									{ strconv.Itoa(i + 1) }
+								</div>
+								<div class="flex-1 min-w-0 ml-3">
+									<p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+										{ product.Name }
+									</p>
+									<p class="text-xs text-gray-500">
+										{ product.Category } • SKU: { product.SKU }
+									</p>
+								</div>
+								<div class="text-right">
+									<p class="text-sm font-semibold text-gray-900 dark:text-white">
+										{ formatCurrency(product.Revenue, props.Currency) }
+									</p>
+									<div class="flex items-center text-xs">
+										<span class="text-gray-500">{ formatNumber(product.SalesQuantity) } sold</span>
+										if props.ShowTrends && product.Trend != "" {
+											<span class={ getProductTrendClasses(product.Trend) }>
+												if product.Trend == "up" {
+													📈 +{ formatPercentage(product.TrendPercent) }%
+												} else if product.Trend == "down" {
+													📉 -{ formatPercentage(product.TrendPercent) }%
+												} else {
+													➡️ { formatPercentage(product.TrendPercent) }%
+												}
+											</span>
+										}
+									</div>
+								</div>
+							</div>
+						</div>
+					}
+				</div>
+			} else {
+				@EmptyState("No top sellers data available")
+			}
+		</div>
+
+		<!-- Slow Movers Tab -->
+		<div x-show="activeTab === 'slow-movers'" class={ getProductPerformanceContentClasses() }>
+			if len(props.SlowMovers) > 0 {
+				<div class="space-y-3">
+					for _, product := range props.SlowMovers {
+						<div class={ getProductPerformanceItemClasses() }>
+							<div class="flex items-center">
+								<div class={ getProductSlowMoverIconClasses() }>
+									🐌
+								</div>
+								<div class="flex-1 min-w-0 ml-3">
+									<p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+										{ product.Name }
+									</p>
+									<p class="text-xs text-gray-500">
+										{ product.Category } • Last sold: 30+ days ago
+									</p>
+								</div>
+								<div class="text-right">
+									<p class="text-sm font-medium text-red-600">
+										{ formatNumber(product.SalesQuantity) } sold
+									</p>
+									<span class="text-xs text-gray-500">
+										{ formatCurrency(product.Revenue, props.Currency) }
+									</span>
+								</div>
+							</div>
+						</div>
+					}
+				</div>
+			} else {
+				@EmptyState("No slow movers identified")
+			}
+		</div>
+
+		<!-- New Arrivals Tab -->
+		<div x-show="activeTab === 'new-arrivals'" class={ getProductPerformanceContentClasses() }>
+			if len(props.NewArrivals) > 0 {
+				<div class="space-y-3">
+					for _, product := range props.NewArrivals {
+						<div class={ getProductPerformanceItemClasses() }>
+							<div class="flex items-center">
+								<div class={ getProductNewArrivalIconClasses() }>
+									✨
+								</div>
+								<div class="flex-1 min-w-0 ml-3">
+									<p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+										{ product.Name }
+									</p>
+									<p class="text-xs text-gray-500">
+										{ product.Category } • Added recently
+									</p>
+								</div>
+								<div class="text-right">
+									<p class="text-sm font-medium text-green-600">
+										{ formatNumber(product.SalesQuantity) } sold
+									</p>
+									<span class="text-xs text-gray-500">
+										{ formatCurrency(product.Revenue, props.Currency) }
+									</span>
+								</div>
+							</div>
+						</div>
+					}
+				</div>
+			} else {
+				@EmptyState("No new arrivals")
+			}
+		</div>
+	</div>
+}
+
+// EmptyState renders an empty state message
+templ EmptyState(message string) {
+	<div class="text-center py-8">
+		<p class="text-gray-500 dark:text-gray-400 text-sm">{ message }</p>
+	</div>
+}
+
+// Helper functions for inventory widgets
+func formatNumber(num int) string {
+	return strconv.Itoa(num)
+}
+
+func formatInventoryStatus(status string) string {
+	switch status {
+	case "in_stock":
+		return "In Stock"
+	case "low_stock":
+		return "Low Stock"
+	case "out_of_stock":
+		return "Out of Stock"
+	default:
+		return strings.Title(strings.ReplaceAll(status, "_", " "))
+	}
+}
+
+func getInventoryProgressWidth(current, max int) string {
+	if max == 0 {
+		return "width: 0%"
+	}
+	percentage := (float64(current) / float64(max)) * 100
+	return fmt.Sprintf("width: %.1f%%", percentage)
+}
+
+func getStockPercentageWidth(value, total int) string {
+	if total == 0 {
+		return "width: 0%"
+	}
+	percentage := (float64(value) / float64(total)) * 100
+	return fmt.Sprintf("width: %.1f%%", percentage)
+}
+
+func getTotalInStock(categories []StockCategory) int {
+	total := 0
+	for _, cat := range categories {
+		total += cat.InStock
+	}
+	return total
+}
+
+func getTotalLowStock(categories []StockCategory) int {
+	total := 0
+	for _, cat := range categories {
+		total += cat.LowStock
+	}
+	return total
+}
+
+func getTotalOutOfStock(categories []StockCategory) int {
+	total := 0
+	for _, cat := range categories {
+		total += cat.OutOfStock
+	}
+	return total
+}
+
+// Styling helper functions for inventory widgets
+func getInventoryOverviewClasses() string {
+	return "bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+}
+
+func getInventorySummaryClasses() string {
+	return "grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+}
+
+func getInventoryStatClasses() string {
+	return "flex items-center space-x-3"
+}
+
+func getInventoryStatIconClasses(color string) string {
+	base := "p-2 rounded-lg text-lg"
+	switch color {
+	case "blue":
+		return base + " bg-blue-100 dark:bg-blue-900"
+	case "yellow":
+		return base + " bg-yellow-100 dark:bg-yellow-900"
+	case "red":
+		return base + " bg-red-100 dark:bg-red-900"
+	case "green":
+		return base + " bg-green-100 dark:bg-green-900"
+	default:
+		return base + " bg-gray-100 dark:bg-gray-900"
+	}
+}
+
+func getInventoryTopProductsClasses() string {
+	return "mb-6"
+}
+
+func getInventoryProductItemClasses() string {
+	return "p-3 border border-gray-200 dark:border-gray-600 rounded-lg"
+}
+
+func getInventoryStatusBadgeClasses(status string) string {
+	base := "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+	switch status {
+	case "in_stock":
+		return base + " bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+	case "low_stock":
+		return base + " bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+	case "out_of_stock":
+		return base + " bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+	default:
+		return base + " bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+	}
+}
+
+func getInventoryProgressBarClasses() string {
+	return "w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700"
+}
+
+func getInventoryProgressFillClasses(status string) string {
+	switch status {
+	case "in_stock":
+		return "h-1.5 bg-green-600 rounded-full"
+	case "low_stock":
+		return "h-1.5 bg-yellow-600 rounded-full"
+	case "out_of_stock":
+		return "h-1.5 bg-red-600 rounded-full"
+	default:
+		return "h-1.5 bg-gray-600 rounded-full"
+	}
+}
+
+func getInventoryAlertsClasses() string {
+	return "mb-6"
+}
+
+func getInventoryAlertItemClasses(severity string) string {
+	base := "p-3 rounded-lg border"
+	if severity == "critical" {
+		return base + " border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20"
+	}
+	return base + " border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20"
+}
+
+func getInventoryAlertIconClasses(severity string) string {
+	base := "p-1 rounded mr-3"
+	if severity == "critical" {
+		return base + " bg-red-100 dark:bg-red-900"
+	}
+	return base + " bg-yellow-100 dark:bg-yellow-900"
+}
+
+func getInventoryAlertBadgeClasses(severity string) string {
+	base := "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+	if severity == "critical" {
+		return base + " bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+	}
+	return base + " bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+}
+
+func getInventoryMovementsClasses() string {
+	return ""
+}
+
+func getInventoryMovementItemClasses() string {
+	return "p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
+}
+
+func getInventoryMovementIconClasses(movementType string) string {
+	base := "p-1 rounded mr-3"
+	switch movementType {
+	case "in":
+		return base + " bg-green-100 dark:bg-green-900"
+	case "out":
+		return base + " bg-red-100 dark:bg-red-900"
+	default:
+		return base + " bg-blue-100 dark:bg-blue-900"
+	}
+}
+
+func getInventoryMovementQuantityClasses(movementType string) string {
+	base := "text-sm font-medium"
+	switch movementType {
+	case "in":
+		return base + " text-green-600"
+	case "out":
+		return base + " text-red-600"
+	default:
+		return base + " text-blue-600"
+	}
+}
+
+func getStockLevelWidgetClasses() string {
+	return "bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+}
+
+func getStockCategoryClasses() string {
+	return "space-y-4"
+}
+
+func getStockCategoryItemClasses() string {
+	return "p-4 border border-gray-200 dark:border-gray-600 rounded-lg"
+}
+
+func getStockCategoryStatsClasses() string {
+	return "grid grid-cols-3 gap-2 mb-3"
+}
+
+func getStockCategoryStatClasses() string {
+	return "text-center"
+}
+
+func getStockCategoryProgressClasses() string {
+	return "mb-2"
+}
+
+func getStockStatusClasses() string {
+	return "space-y-6"
+}
+
+func getStockStatusSummaryClasses() string {
+	return "grid grid-cols-3 gap-4"
+}
+
+func getStockStatusItemClasses(status string) string {
+	base := "p-4 rounded-lg border"
+	switch status {
+	case "in_stock":
+		return base + " border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
+	case "low_stock":
+		return base + " border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20"
+	case "out_of_stock":
+		return base + " border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20"
+	default:
+		return base + " border-gray-200 bg-gray-50 dark:border-gray-600 dark:bg-gray-700"
+	}
+}
+
+func getStockAlertsClasses() string {
+	return ""
+}
+
+func getStockAlertItemClasses() string {
+	return "p-3 border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 rounded-lg"
+}
+
+func getProductPerformanceWidgetClasses() string {
+	return "bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+}
+
+func getProductPerformanceTabsClasses() string {
+	return "flex space-x-1 mb-4 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg"
+}
+
+func getProductPerformanceTabClasses() string {
+	return "flex-1 px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors duration-200"
+}
+
+func getProductPerformanceContentClasses() string {
+	return ""
+}
+
+func getProductPerformanceItemClasses() string {
+	return "p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+}
+
+func getProductPerformanceRankClasses() string {
+	return "w-6 h-6 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full flex items-center justify-center text-xs font-bold"
+}
+
+func getProductTrendClasses(trend string) string {
+	base := "ml-2"
+	switch trend {
+	case "up":
+		return base + " text-green-600"
+	case "down":
+		return base + " text-red-600"
+	default:
+		return base + " text-gray-600"
+	}
+}
+
+func getProductSlowMoverIconClasses() string {
+	return "p-1 bg-orange-100 dark:bg-orange-900 rounded"
+}
+
+func getProductNewArrivalIconClasses() string {
+	return "p-1 bg-purple-100 dark:bg-purple-900 rounded"
+}
