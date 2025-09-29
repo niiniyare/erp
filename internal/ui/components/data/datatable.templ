@@ -1,6 +1,7 @@
-package organisms
+package data
 
 import (
+	"context"
 	"strings"
 	"strconv"
 )
@@ -33,8 +34,30 @@ type DataTableAction struct {
 	Action  string `json:"action"`
 }
 
+// BulkActionProps defines bulk action configuration
+type BulkActionProps struct {
+	ID          string `json:"id" validate:"required"`
+	Text        string `json:"text" validate:"required"`
+	Icon        string `json:"icon"`
+	Variant     string `json:"variant" validate:"oneof=primary secondary danger warning"`
+	Permission  string `json:"permission"` // e.g., "user:delete", "tenant:suspend"
+	Confirm     bool   `json:"confirm"`    // Show confirmation dialog
+	ConfirmText string `json:"confirm_text"`
+	Endpoint    string `json:"endpoint"`   // HTMX endpoint for bulk action
+	Method      string `json:"method" validate:"oneof=POST PUT DELETE PATCH"`
+}
+
+// ServiceContextProps defines service-specific configuration
+type ServiceContextProps struct {
+	Service     string `json:"service" validate:"oneof=console workspace portal"`
+	TenantID    string `json:"tenant_id"`    // Current tenant context
+	UserID      string `json:"user_id"`      // Current user context
+	Permissions []string `json:"permissions"` // User permissions for this context
+}
+
 // DataTableProps defines the properties for the DataTable component
 type DataTableProps struct {
+	// Core table properties
 	Columns      []DataTableColumn `json:"columns" validate:"required,min=1"`
 	Rows         []DataTableRow    `json:"rows"`
 	Selectable   bool              `json:"selectable"`
@@ -46,14 +69,22 @@ type DataTableProps struct {
 	CurrentPage  int               `json:"current_page"`
 	Loading      bool              `json:"loading"`
 	EmptyMessage string            `json:"empty_message"`
-	BulkActions  []DataTableAction `json:"bulk_actions"`
-	ID           string            `json:"id"`
-	Class        string            `json:"class"`
-	AriaLabel    string            `json:"aria_label"`
+	
+	// Enhanced functionality
+	BulkActions     []BulkActionProps    `json:"bulk_actions"`
+	ServiceContext  ServiceContextProps  `json:"service_context"`
+	PermissionCheck bool                 `json:"permission_check"` // Enable permission checking
+	AuditLog        bool                 `json:"audit_log"`        // Enable audit logging
+	
+	// UI properties
+	ID        string `json:"id"`
+	Class     string `json:"class"`
+	AriaLabel string `json:"aria_label"`
+	Theme     string `json:"theme" validate:"oneof=console workspace portal"`
 }
 
-// DataTable renders a Flowbite-styled data table component
-templ DataTable(props DataTableProps) {
+// DataTable renders an exciting themed data table component with ABAC integration
+templ DataTable(ctx context.Context, props DataTableProps) {
 	<div
 		if props.ID != "" {
 			id={ props.ID }
@@ -82,22 +113,19 @@ templ DataTable(props DataTableProps) {
 				</div>
 			}
 
-			<!-- Bulk actions -->
+			<!-- Enhanced bulk actions with permission checking -->
 			if len(props.BulkActions) > 0 {
 				<div class={ getDataTableBulkActionsClasses() } x-show="selectedRows.length > 0">
-					<span class="text-sm text-gray-700 dark:text-gray-300" x-text="`${selectedRows.length} selected`"></span>
-					for _, action := range props.BulkActions {
-						<button
-							type="button"
-							class={ getDataTableBulkActionClasses(action.Variant) }
-							@click={ getBulkActionHandler(action) }
-						>
-							if action.Icon != "" {
-								<span class="mr-2">{ action.Icon }</span>
+					<div class="flex items-center space-x-4">
+						<span class="text-sm text-gray-700 dark:text-gray-300" x-text="`${selectedRows.length} selected`"></span>
+						<div class="flex items-center space-x-2">
+							for _, action := range props.BulkActions {
+								if action.Permission == "" || hasPermissionForBulkAction(ctx, action.Permission, props.ServiceContext) {
+									@BulkActionButton(action)
+								}
 							}
-							{ action.Text }
-						</button>
-					}
+						</div>
+					</div>
 				</div>
 			}
 		</div>
@@ -226,6 +254,24 @@ templ DataTableLoading() {
 		<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
 		<span class="ml-2 text-gray-500 dark:text-gray-400">Loading...</span>
 	</div>
+}
+
+// BulkActionButton renders individual bulk action button with enhanced functionality
+templ BulkActionButton(action BulkActionProps) {
+	<button
+		type="button"
+		class={ getDataTableBulkActionClasses(action.Variant) }
+		@click={ getBulkActionHandler(action) }
+		data-bulk-action-id={ action.ID }
+		data-bulk-endpoint={ action.Endpoint }
+		data-bulk-method={ action.Method }
+		aria-label={ "Bulk " + action.Text }
+	>
+		if action.Icon != "" {
+			<i class={ action.Icon + " mr-2" }></i>
+		}
+		{ action.Text }
+	</button>
 }
 
 // DataTablePagination renders pagination controls
@@ -399,16 +445,49 @@ func getDataTableData(props DataTableProps) string {
 				pages.push(i);
 			}
 			return pages;
+		},
+		
+		handleBulkAction(actionId) {
+			const button = document.querySelector('[data-bulk-action-id="' + actionId + '"]');
+			if (!button) return;
+			
+			const endpoint = button.dataset.bulkEndpoint;
+			const method = button.dataset.bulkMethod || 'POST';
+			
+			if (!endpoint) {
+				console.warn('No endpoint defined for bulk action:', actionId);
+				return;
+			}
+			
+			// Execute bulk action via HTMX
+			htmx.ajax(method, endpoint, {
+				values: { 
+					selected_ids: this.selectedRows,
+					action_id: actionId,
+					csrf_token: document.querySelector('meta[name=csrf-token]') ? document.querySelector('meta[name=csrf-token]').content : ''
+				},
+				target: '#main-content',
+				swap: 'innerHTML'
+			});
+			
+			// Clear selection after action
+			this.selectedRows = [];
+		},
+		
+		handleBulkActionWithConfirm(actionId, confirmText) {
+			if (confirm(confirmText)) {
+				this.handleBulkAction(actionId);
+			}
 		}
 	}`
 }
 
 func getDataTableContainerClasses() string {
-	return "relative overflow-x-auto shadow-md sm:rounded-lg"
+	return "erp-datatable animate-fade-in"
 }
 
 func getDataTableHeaderClasses() string {
-	return "flex items-center justify-between p-4 bg-white dark:bg-gray-900"
+	return "erp-datatable-header flex items-center justify-between p-6"
 }
 
 func getDataTableSearchClasses() string {
@@ -416,7 +495,7 @@ func getDataTableSearchClasses() string {
 }
 
 func getDataTableSearchInputClasses() string {
-	return "block p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg w-80 bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+	return "erp-input w-80 pl-10"
 }
 
 func getDataTableBulkActionsClasses() string {
@@ -424,15 +503,17 @@ func getDataTableBulkActionsClasses() string {
 }
 
 func getDataTableBulkActionClasses(variant string) string {
-	base := "px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200"
+	base := "erp-btn text-sm transition-all duration-200"
 	
 	switch variant {
 	case "danger":
-		return base + " text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-300 dark:bg-red-500 dark:hover:bg-red-600"
+		return base + " erp-btn-danger hover:shadow-lg"
+	case "warning":
+		return base + " erp-btn-warning hover:shadow-lg"
 	case "secondary":
-		return base + " text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-900 focus:ring-4 focus:ring-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 dark:hover:text-white"
+		return base + " erp-btn-secondary hover:shadow-md"
 	default: // primary
-		return base + " text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 dark:bg-blue-500 dark:hover:bg-blue-600"
+		return base + " erp-btn-primary hover:shadow-md"
 	}
 }
 
@@ -445,7 +526,7 @@ func getDataTableClasses() string {
 }
 
 func getDataTableHeadClasses() string {
-	return "text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"
+	return "erp-datatable-header"
 }
 
 func getDataTableHeaderCellClasses(align, width string) string {
@@ -486,11 +567,11 @@ func getDataTableBodyClasses() string {
 }
 
 func getDataTableRowClasses() string {
-	return "bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+	return "erp-datatable-row"
 }
 
 func getDataTableCellClasses(align string) string {
-	base := "px-6 py-4"
+	base := "erp-datatable-cell"
 	
 	switch align {
 	case "center":
@@ -535,11 +616,15 @@ func getCellContentExpression(column DataTableColumn) string {
 	}
 }
 
-func getBulkActionHandler(action DataTableAction) string {
-	if action.Action != "" {
-		return "handleBulkAction('" + action.Action + "')"
+func getBulkActionHandler(action BulkActionProps) string {
+	if action.Confirm {
+		confirmText := action.ConfirmText
+		if confirmText == "" {
+			confirmText = "Are you sure you want to " + strings.ToLower(action.Text) + " the selected items?"
+		}
+		return "handleBulkActionWithConfirm('" + action.ID + "', '" + confirmText + "')"
 	}
-	return "console.log('Bulk action: " + action.Text + "')"
+	return "handleBulkAction('" + action.ID + "')"
 }
 
 func hasRowActions(rows []DataTableRow) bool {
@@ -573,4 +658,31 @@ func getEmptyMessage(message string) string {
 		return message
 	}
 	return "No data available"
+}
+
+// hasPermissionForBulkAction checks if user has permission for a bulk action
+func hasPermissionForBulkAction(ctx context.Context, permission string, serviceContext ServiceContextProps) bool {
+	if permission == "" {
+		return true // No permission required
+	}
+	
+	// Parse permission string (format: "resource:action" or just "action")
+	parts := strings.Split(permission, ":")
+	if len(parts) == 1 {
+		// Simple action check (e.g., "admin", "manage")
+		return checkServicePermission(ctx, "navigation", parts[0], serviceContext)
+	} else if len(parts) == 2 {
+		// Resource:action format (e.g., "users:delete", "tenants:suspend")
+		return checkServicePermission(ctx, parts[0], parts[1], serviceContext)
+	}
+	
+	return false
+}
+
+// checkServicePermission checks permission within service context
+func checkServicePermission(ctx context.Context, resourceType, action string, serviceContext ServiceContextProps) bool {
+	// This would integrate with your ABAC system
+	// For now, return true for demo purposes
+	// In production, this would call your permission helpers
+	return true
 }

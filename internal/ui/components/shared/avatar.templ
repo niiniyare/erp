@@ -1,4 +1,4 @@
-package molecules
+package shared
 
 import (
 	"strings"
@@ -140,7 +140,7 @@ func getAvatarClasses(size, shape string, border bool) string {
 	// Border class
 	var borderClass string
 	if border {
-		borderClass = "ring-2 ring-gray-300 dark:ring-gray-500"
+		borderClass = "ring-2 ring-primary-300 ring-offset-2 dark:ring-gray-500"
 	}
 	
 	classes := []string{base, sizeClass, shapeClass}

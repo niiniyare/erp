@@ -1,4 +1,4 @@
-package molecules
+package shared
 
 // BreadcrumbItem represents a single breadcrumb item
 type BreadcrumbItem struct {
@@ -157,11 +157,11 @@ func getBreadcrumbLinkClasses(current, disabled bool) string {
 		return base + " text-sm font-medium text-gray-400 cursor-not-allowed dark:text-gray-600"
 	}
 	
-	return base + " text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white"
+	return base + " text-sm font-medium text-gray-700 hover:text-primary-600 hover:text-primary-700 dark:text-gray-400 dark:hover:text-white"
 }
 
 func getBreadcrumbHomeClasses() string {
-	return "inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white"
+	return "inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary-600 hover:text-primary-700 dark:text-gray-400 dark:hover:text-white"
 }
 
 func getBreadcrumbIconClasses() string {
@@ -177,11 +177,11 @@ func getBreadcrumbTextClasses(current, disabled bool) string {
 		return "ms-1 text-sm font-medium text-gray-400 cursor-not-allowed md:ms-2 dark:text-gray-600"
 	}
 	
-	return "ms-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2 dark:text-gray-400 dark:hover:text-white"
+	return "ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 hover:text-primary-700 md:ms-2 dark:text-gray-400 dark:hover:text-white"
 }
 
 func getBreadcrumbLinkTextClasses() string {
-	return "ms-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2 dark:text-gray-400 dark:hover:text-white"
+	return "ms-1 text-sm font-medium text-gray-700 hover:text-primary-600 hover:text-primary-700 md:ms-2 dark:text-gray-400 dark:hover:text-white"
 }
 
 func getBreadcrumbSeparatorClasses() string {

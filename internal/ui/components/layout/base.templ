@@ -1,9 +1,8 @@
-package layouts
+package layout
 
 import (
 	"context"
 	"github.com/niiniyare/erp/internal/ui/types"
-	"github.com/niiniyare/erp/internal/ui/templates/organisms"
 )
 
 // BaseLayout provides the main application layout with sidebar and navigation
@@ -33,6 +32,9 @@ templ BaseLayout(ctx context.Context, title string, user *types.UserInfo, sideba
 		
 		<!-- Font Awesome for icons -->
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+		
+		<!-- Exciting Theme CSS -->
+		<link rel="stylesheet" href="/static/styles/themes.css"/>
 		
 		<!-- Accessibility CSS -->
 		<style>
@@ -326,7 +328,7 @@ templ BaseLayout(ctx context.Context, title string, user *types.UserInfo, sideba
 		</script>
 		
 		<!-- Sidebar -->
-		@organisms.Sidebar(ctx, sidebarItems, user)
+		@Sidebar(ctx, sidebarItems, user)
 		
 		<!-- Main Content Area -->
 		<div class="p-4 sm:ml-64">

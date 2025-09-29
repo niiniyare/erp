@@ -1,4 +1,4 @@
-package atoms
+package core
 
 import "strings"
 import "strconv"
@@ -23,15 +23,15 @@ type TextareaProps struct {
 
 // Textarea renders a Flowbite-styled textarea component
 templ Textarea(props TextareaProps) {
-	<div class="w-full">
+	<div class="erp-input h-32 resize-y">
 		if props.Label != "" {
 			<label 
 				for={ getTextareaID(props.ID, props.Name) }
-				class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+				class="erp-input h-32 resize-y"
 			>
 				{ props.Label }
 				if props.Required {
-					<span class="text-red-500 ml-1">*</span>
+					<span class="erp-input h-32 resize-y">*</span>
 				}
 			</label>
 		}
@@ -68,8 +68,8 @@ templ Textarea(props TextareaProps) {
 			</div>
 		}
 		if props.MaxLength > 0 {
-			<div class="flex justify-end mt-1">
-				<span class="text-xs text-gray-500 dark:text-gray-400">
+			<div class="erp-input h-32 resize-y">
+				<span class="erp-input h-32 resize-y">
 					<span id={ getTextareaID(props.ID, props.Name) + "-count" }>0</span>/{ strconv.Itoa(props.MaxLength) }
 				</span>
 			</div>

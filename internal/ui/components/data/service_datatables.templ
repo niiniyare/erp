@@ -1,0 +1,205 @@
+package data
+
+import (
+	"context"
+)
+
+// ConsoleDataTable renders DataTable with Console service context and admin capabilities
+templ ConsoleDataTable(ctx context.Context, props DataTableProps) {
+	@DataTable(ctx, enhanceForConsole(props))
+}
+
+// WorkspaceDataTable renders DataTable with Workspace service context and tenant isolation
+templ WorkspaceDataTable(ctx context.Context, props DataTableProps) {
+	@DataTable(ctx, enhanceForWorkspace(props))
+}
+
+// PortalDataTable renders DataTable with Portal service context and limited actions
+templ PortalDataTable(ctx context.Context, props DataTableProps) {
+	@DataTable(ctx, enhanceForPortal(props))
+}
+
+// Standard bulk action configurations for different services
+func getStandardConsoleBulkActions() []BulkActionProps {
+	return []BulkActionProps{
+		{
+			ID:          "bulk_suspend",
+			Text:        "Suspend Selected",
+			Icon:        "fas fa-user-lock",
+			Variant:     "warning",
+			Permission:  "user:suspend",
+			Confirm:     true,
+			ConfirmText: "Are you sure you want to suspend the selected users?",
+			Endpoint:    "/console/api/bulk/users/suspend",
+			Method:      "POST",
+		},
+		{
+			ID:          "bulk_activate",
+			Text:        "Activate Selected",
+			Icon:        "fas fa-user-check",
+			Variant:     "primary",
+			Permission:  "user:activate",
+			Confirm:     true,
+			ConfirmText: "Are you sure you want to activate the selected users?",
+			Endpoint:    "/console/api/bulk/users/activate",
+			Method:      "POST",
+		},
+		{
+			ID:          "bulk_delete",
+			Text:        "Delete Selected",
+			Icon:        "fas fa-trash",
+			Variant:     "danger",
+			Permission:  "user:delete",
+			Confirm:     true,
+			ConfirmText: "Are you sure you want to permanently delete the selected users? This action cannot be undone.",
+			Endpoint:    "/console/api/bulk/users/delete",
+			Method:      "DELETE",
+		},
+		{
+			ID:       "bulk_export",
+			Text:     "Export Selected",
+			Icon:     "fas fa-download",
+			Variant:  "secondary",
+			Endpoint: "/console/api/bulk/users/export",
+			Method:   "POST",
+		},
+	}
+}
+
+func getStandardTenantBulkActions() []BulkActionProps {
+	return []BulkActionProps{
+		{
+			ID:          "bulk_suspend_tenant",
+			Text:        "Suspend Tenants",
+			Icon:        "fas fa-building-slash",
+			Variant:     "warning",
+			Permission:  "tenant:suspend",
+			Confirm:     true,
+			ConfirmText: "Are you sure you want to suspend the selected tenants? This will disable their access.",
+			Endpoint:    "/console/api/bulk/tenants/suspend",
+			Method:      "POST",
+		},
+		{
+			ID:          "bulk_activate_tenant",
+			Text:        "Activate Tenants",
+			Icon:        "fas fa-building-check",
+			Variant:     "primary",
+			Permission:  "tenant:activate",
+			Confirm:     true,
+			ConfirmText: "Are you sure you want to activate the selected tenants?",
+			Endpoint:    "/console/api/bulk/tenants/activate",
+			Method:      "POST",
+		},
+		{
+			ID:          "bulk_change_plan",
+			Text:        "Change Plan",
+			Icon:        "fas fa-exchange-alt",
+			Variant:     "secondary",
+			Permission:  "tenant:manage",
+			Confirm:     false,
+			Endpoint:    "/console/api/bulk/tenants/change-plan",
+			Method:      "POST",
+		},
+	}
+}
+
+func getStandardWorkspaceBulkActions() []BulkActionProps {
+	return []BulkActionProps{
+		{
+			ID:       "bulk_archive",
+			Text:     "Archive Selected",
+			Icon:     "fas fa-archive",
+			Variant:  "secondary",
+			Confirm:  true,
+			Endpoint: "/workspace/api/bulk/archive",
+			Method:   "POST",
+		},
+		{
+			ID:       "bulk_export",
+			Text:     "Export Selected",
+			Icon:     "fas fa-download",
+			Variant:  "primary",
+			Endpoint: "/workspace/api/bulk/export",
+			Method:   "POST",
+		},
+		{
+			ID:          "bulk_delete",
+			Text:        "Delete Selected",
+			Icon:        "fas fa-trash",
+			Variant:     "danger",
+			Permission:  "delete",
+			Confirm:     true,
+			ConfirmText: "Are you sure you want to delete the selected items?",
+			Endpoint:    "/workspace/api/bulk/delete",
+			Method:      "DELETE",
+		},
+	}
+}
+
+func getStandardPortalBulkActions() []BulkActionProps {
+	return []BulkActionProps{
+		{
+			ID:       "bulk_export",
+			Text:     "Export Selected",
+			Icon:     "fas fa-download",
+			Variant:  "primary",
+			Endpoint: "/portal/api/bulk/export",
+			Method:   "POST",
+		},
+		{
+			ID:       "bulk_request_change",
+			Text:     "Request Changes",
+			Icon:     "fas fa-edit",
+			Variant:  "secondary",
+			Endpoint: "/portal/api/bulk/request-change",
+			Method:   "POST",
+		},
+	}
+}
+
+// Service enhancement functions
+func enhanceForConsole(props DataTableProps) DataTableProps {
+	props.ServiceContext = ServiceContextProps{
+		Service: "console",
+	}
+	props.Theme = "console"
+	props.PermissionCheck = true
+	props.AuditLog = true
+	
+	// Add standard console bulk actions if none provided
+	if len(props.BulkActions) == 0 {
+		props.BulkActions = getStandardConsoleBulkActions()
+	}
+	
+	return props
+}
+
+func enhanceForWorkspace(props DataTableProps) DataTableProps {
+	props.ServiceContext = ServiceContextProps{
+		Service: "workspace",
+	}
+	props.Theme = "workspace"
+	props.PermissionCheck = true
+	
+	// Add standard workspace bulk actions if none provided
+	if len(props.BulkActions) == 0 {
+		props.BulkActions = getStandardWorkspaceBulkActions()
+	}
+	
+	return props
+}
+
+func enhanceForPortal(props DataTableProps) DataTableProps {
+	props.ServiceContext = ServiceContextProps{
+		Service: "portal",
+	}
+	props.Theme = "portal"
+	props.PermissionCheck = false // Portal users have limited permissions
+	
+	// Add standard portal bulk actions if none provided
+	if len(props.BulkActions) == 0 {
+		props.BulkActions = getStandardPortalBulkActions()
+	}
+	
+	return props
+}

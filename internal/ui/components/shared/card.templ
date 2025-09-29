@@ -1,4 +1,4 @@
-package molecules
+package shared
 
 import "strings"
 
@@ -19,7 +19,7 @@ type CardProps struct {
 	Class     string          `json:"class"`
 }
 
-// Card renders a Flowbite-styled card component
+// Card renders an exciting themed card component
 templ Card(props CardProps) {
 	<div
 		if props.ID != "" {
@@ -70,9 +70,9 @@ templ Card(props CardProps) {
 	</div>
 }
 
-// Helper functions for card styling
+// Helper functions for exciting card styling
 func getCardClasses(shadow string, bordered, clickable bool, maxWidth string) string {
-	base := "bg-white rounded-lg dark:bg-gray-800"
+	base := "erp-card animate-fade-in"
 	
 	// Shadow classes
 	var shadowClass string
@@ -97,10 +97,10 @@ func getCardClasses(shadow string, bordered, clickable bool, maxWidth string) st
 		borderClass = "border border-gray-200 dark:border-gray-700"
 	}
 	
-	// Clickable class
+	// Clickable class with exciting hover effects
 	var clickableClass string
 	if clickable {
-		clickableClass = "cursor-pointer hover:shadow-lg transition-shadow duration-200"
+		clickableClass = "cursor-pointer glow-hover scale-hover"
 	}
 	
 	// Max width class

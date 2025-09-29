@@ -1,4 +1,4 @@
-package atoms
+package core
 
 import (
 	"strings"
@@ -180,7 +180,7 @@ func getProgressBarClasses(color string, striped, animated bool) string {
 	var colorClass string
 	switch color {
 	case "blue":
-		colorClass = "bg-blue-600 dark:bg-blue-500"
+		colorClass = "bg-gradient-to-r from-primary-400 to-primary-600 dark:bg-blue-500"
 	case "gray":
 		colorClass = "bg-gray-600 dark:bg-gray-400"
 	case "red":
@@ -196,7 +196,7 @@ func getProgressBarClasses(color string, striped, animated bool) string {
 	case "pink":
 		colorClass = "bg-pink-600 dark:bg-pink-500"
 	default: // blue
-		colorClass = "bg-blue-600 dark:bg-blue-500"
+		colorClass = "bg-gradient-to-r from-primary-400 to-primary-600 dark:bg-blue-500"
 	}
 	
 	var patternClass string

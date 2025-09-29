@@ -753,3 +753,12 @@ func getInvoiceStatusBadgeClasses(status string) string {
 		return base + " bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
 	}
 }
+
+// Common widget styling functions
+func getWidgetHeaderClasses() string {
+	return "flex items-center justify-between mb-4"
+}
+
+func getWidgetTitleClasses() string {
+	return "text-lg font-semibold text-gray-900 dark:text-white"
+}

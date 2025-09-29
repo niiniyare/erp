@@ -12,8 +12,8 @@ import (
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/ui/handlers/console"
 	"github.com/niiniyare/erp/internal/ui/middleware"
+	"github.com/niiniyare/erp/internal/ui/services/console/handlers"
 )
 
 // UIRouter manages all UI services on a single port

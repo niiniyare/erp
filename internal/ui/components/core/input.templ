@@ -1,4 +1,4 @@
-package atoms
+package core
 
 import "strings"
 
@@ -22,15 +22,15 @@ type InputProps struct {
 
 // Input renders a Flowbite-styled input component
 templ Input(props InputProps) {
-	<div class="w-full">
+	<div class="erp-input">
 		if props.Label != "" {
 			<label 
 				for={ getInputID(props.ID, props.Name) }
-				class="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+				class="erp-input"
 			>
 				{ props.Label }
 				if props.Required {
-					<span class="text-red-500 ml-1">*</span>
+					<span class="erp-input">*</span>
 				}
 			</label>
 		}

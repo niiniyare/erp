@@ -1,4 +1,4 @@
-package molecules
+package shared
 
 import (
 	"strings"
@@ -236,7 +236,7 @@ func getTooltipClasses(position, style string) string {
 	case "light":
 		styleClass = "text-gray-500 bg-white border border-gray-200 dark:text-gray-400 dark:bg-gray-800 dark:border-gray-600"
 	default: // dark
-		styleClass = "text-white bg-gray-900 dark:bg-gray-700"
+		styleClass = "text-white bg-gradient-to-r from-gray-800 to-gray-900 dark:bg-gray-700"
 	}
 	
 	// Position classes
@@ -266,7 +266,7 @@ func getTooltipArrowClasses(position, style string) string {
 	case "light":
 		styleClass = "bg-white border border-gray-200 dark:bg-gray-800 dark:border-gray-600"
 	default: // dark
-		styleClass = "bg-gray-900 dark:bg-gray-700"
+		styleClass = "bg-gradient-to-r from-gray-800 to-gray-900 dark:bg-gray-700"
 	}
 	
 	// Position classes

@@ -1,4 +1,4 @@
-package atoms
+package core
 
 // This file provides easy imports for all atomic components
 // Atoms are the smallest building blocks - buttons, inputs, labels, etc.

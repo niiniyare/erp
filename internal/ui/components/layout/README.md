@@ -1,4 +1,4 @@
-package organisms
+package layout
 
 // This file provides easy imports for all organism components
 // Organisms are complex components made from atoms and molecules

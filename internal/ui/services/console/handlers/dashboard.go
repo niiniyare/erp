@@ -13,9 +13,9 @@ import (
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/ui/middleware"
-	"github.com/niiniyare/erp/internal/ui/templates/console"
-	"github.com/niiniyare/erp/internal/ui/templates/examples"
+	"github.com/niiniyare/erp/internal/ui/services/console/templates"
 	"github.com/niiniyare/erp/internal/ui/types"
+	"github.com/niiniyare/erp/internal/ui/widgets"
 )
 
 // DashboardHandler handles admin console dashboard operations
@@ -186,13 +186,13 @@ func (h *DashboardHandler) ShowBasicElementsDemo(w http.ResponseWriter, r *http.
 	}
 
 	// Prepare data for the demo page
-	demoPageData := examples.ElementsDemoPageData{
+	demoPageData := widgets.ElementsDemoPageData{
 		Title:     "Basic UI Elements Demo",
 		User:      *userInfo,
 		CSRFToken: uiCtx.CSRFToken,
 	}
 
-	if err := examples.ElementsDemoPage(demoPageData).Render(ctx, w); err != nil {
+	if err := widgets.ElementsDemoPage(demoPageData).Render(ctx, w); err != nil {
 		h.logger.ErrorContext(ctx, "Failed to render basic elements demo", logger.Fields{
 			"error":   err.Error(),
 			"user_id": uiCtx.UserID,

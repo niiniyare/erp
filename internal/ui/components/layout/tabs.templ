@@ -1,4 +1,4 @@
-package organisms
+package layout
 
 import "strings"
 
@@ -179,7 +179,7 @@ func getTabButtonClasses(style, position string, active, disabled bool) string {
 	switch style {
 	case "underline":
 		if active {
-			classes = append(classes, "text-blue-600 border-b-2 border-blue-600 dark:text-blue-500 dark:border-blue-500")
+			classes = append(classes, "text-blue-600 border-b-2 border-primary-600 dark:text-blue-500 dark:border-blue-500")
 		} else {
 			classes = append(classes, "border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300")
 		}
@@ -192,7 +192,7 @@ func getTabButtonClasses(style, position string, active, disabled bool) string {
 		}
 	default: // default
 		if active {
-			classes = append(classes, "text-blue-600 bg-gray-100 border-b-2 border-blue-600 dark:text-blue-500 dark:bg-gray-800")
+			classes = append(classes, "text-blue-600 bg-gray-100 border-b-2 border-primary-600 dark:text-blue-500 dark:bg-gray-800")
 		} else {
 			classes = append(classes, "border-b-2 border-transparent hover:text-gray-600 hover:bg-gray-50 hover:border-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-300")
 		}
@@ -209,11 +209,11 @@ func getTabButtonClasses(style, position string, active, disabled bool) string {
 func getActiveTabClasses(style string) string {
 	switch style {
 	case "underline":
-		return "text-blue-600 border-b-2 border-blue-600 dark:text-blue-500 dark:border-blue-500"
+		return "text-blue-600 border-b-2 border-primary-600 dark:text-blue-500 dark:border-blue-500"
 	case "pills":
 		return "text-white bg-blue-600 dark:bg-blue-500"
 	default: // default
-		return "text-blue-600 bg-gray-100 border-b-2 border-blue-600 dark:text-blue-500 dark:bg-gray-800"
+		return "text-blue-600 bg-gray-100 border-b-2 border-primary-600 dark:text-blue-500 dark:bg-gray-800"
 	}
 }
 

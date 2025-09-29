@@ -9,7 +9,7 @@ import (
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/ui/middleware"
-	"github.com/niiniyare/erp/internal/ui/templates/console"
+	"github.com/niiniyare/erp/internal/ui/services/console/templates"
 	"github.com/niiniyare/erp/internal/ui/types"
 )
 

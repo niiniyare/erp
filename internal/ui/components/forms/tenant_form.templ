@@ -2,12 +2,13 @@ package forms
 
 import (
 	"github.com/niiniyare/erp/internal/ui/types"
-	"github.com/niiniyare/erp/internal/ui/templates/organisms"
+	"github.com/niiniyare/erp/internal/ui/components/layout"
+	components "github.com/niiniyare/erp/internal/ui/components/core"
 )
 
 // TenantForm renders the tenant creation/edit form with real-time validation
 templ TenantForm(data types.CreateTenantPageData) {
-	@organisms.Modal(organisms.ModalProps{
+	@layout.Modal(layout.ModalProps{
 		ID:         "tenant-form-modal",
 		Title:      func() string { if data.Tenant.ID == "" { return "Create New Tenant" } else { return "Edit Tenant" } }(),
 		Size:       "lg",
@@ -17,7 +18,7 @@ templ TenantForm(data types.CreateTenantPageData) {
 		ShowHeader: true,
 		ShowFooter: true,
 		Content:    "",
-		FooterActions: []organisms.ModalAction{
+		FooterActions: []layout.ModalAction{
 			{Text: "Cancel", Variant: "secondary", Action: "close"},
 			{Text: func() string { if data.Tenant.ID == "" { return "Create Tenant" } else { return "Update Tenant" } }(), Variant: "primary", Action: "submit"},
 		},
