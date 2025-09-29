@@ -1,0 +1,370 @@
+/*
+package forms
+
+import (
+	"github.com/niiniyare/erp/internal/ui/types"
+	"github.com/niiniyare/erp/internal/ui/services/console/templates"
+)
+
+// UserForm renders the user creation/edit form with comprehensive validation
+templ UserForm(data types.UserFormData) {
+	<div 
+		class="max-w-2xl mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6"
+		x-data="userForm()"
+		x-init="initForm()">
+		
+		<div class="mb-6">
+			<h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+				{ func() string { if data.User.ID == "" { return "Create New User" } else { return "Edit User Profile" } }() }
+			</h2>
+			<p class="text-gray-600 dark:text-gray-400 mt-2">
+				Configure user account settings and permissions
+			</p>
+		</div>
+		
+		<form 
+			id="user-form"
+			hx-post={ func() string { if data.User.ID == "" { return "/console/users" } else { return "/console/users/" + data.User.ID } }() }
+			hx-target="#main-content"
+			hx-swap="innerHTML"
+			hx-indicator="#form-loading"
+			@submit="handleSubmit"
+			class="space-y-6">
+			
+			<!-- Hidden fields -->
+			<input type="hidden" name="csrf_token" value={ data.CSRFToken }/>
+			if data.User.ID != "" {
+				<input type="hidden" name="user_id" value={ data.User.ID }/>
+				<input type="hidden" name="_method" value="PUT"/>
+			}
+			
+			<!-- Personal Information -->
+			<div>
+				<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+					Personal Information
+				</h3>
+				<div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+					<!-- First Name -->
+					@components.BaseInput(types.InputProps{
+						ID:              "user-first-name",
+						Name:            "first_name",
+						Type:            "text",
+						Label:           "First Name",
+						Value:           data.User.FirstName,
+						Placeholder:     "Enter first name",
+						Required:        true,
+						ValidateOnInput: true,
+						ValidationURL:   "/validate/required?field=first_name",
+						FormID:          "user-form",
+						MaxLength:       50,
+					})
+					
+					<!-- Last Name -->
+					@components.BaseInput(types.InputProps{
+						ID:              "user-last-name",
+						Name:            "last_name",
+						Type:            "text",
+						Label:           "Last Name",
+						Value:           data.User.LastName,
+						Placeholder:     "Enter last name",
+						Required:        true,
+						ValidateOnInput: true,
+						ValidationURL:   "/validate/required?field=last_name",
+						FormID:          "user-form",
+						MaxLength:       50,
+					})
+				</div>
+			</div>
+			
+			<!-- Account Information -->
+			<div>
+				<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+					Account Information
+				</h3>
+				<div class="space-y-6">
+					<!-- Email -->
+					@components.BaseInput(types.InputProps{
+						ID:              "user-email",
+						Name:            "email",
+						Type:            "email",
+						Label:           "Email Address",
+						Value:           data.User.Email,
+						Placeholder:     "user@company.com",
+						Required:        true,
+						ValidateOnInput: true,
+						ValidationURL:   "/validate/email",
+						FormID:          "user-form",
+						HelpText:        "This will be used for login and notifications",
+						Tooltip:         "Email must be unique across the system",
+					})
+					
+					<!-- Username -->
+					@components.BaseInput(types.InputProps{
+						ID:              "user-username",
+						Name:            "username",
+						Type:            "text",
+						Label:           "Username",
+						Value:           data.User.Username,
+						Placeholder:     "username",
+						Required:        true,
+						ValidateOnInput: true,
+						ValidationURL:   "/validate/username",
+						FormID:          "user-form",
+						HelpText:        "3-50 characters, letters, numbers, underscore, and hyphen only",
+						MaxLength:       50,
+					})
+				</div>
+			</div>
+			
+			<!-- Password Section (only for new users or password change) -->
+			if data.User.ID == "" || data.ShowPasswordFields {
+				<div>
+					<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+						Password
+					</h3>
+					<div class="space-y-6">
+						<!-- Password -->
+						<div x-data="passwordStrength()">
+							@components.BaseInput(types.InputProps{
+								ID:              "user-password",
+								Name:            "password",
+								Type:            "password",
+								Label:           "Password",
+								Placeholder:     "Enter secure password",
+								Required:        data.User.ID == "",
+								ValidateOnInput: true,
+								ValidationURL:   "/validate/password",
+								FormID:          "user-form",
+								HelpText:        "Minimum 8 characters with uppercase, lowercase, number, and special character",
+							})
+							
+							<!-- Password Strength Indicator -->
+							<div class="mt-2" x-show="password.length > 0">
+								<div class="flex items-center space-x-2">
+									<div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+										<div 
+											class="h-2 rounded-full transition-all duration-300"
+											:class="{
+												'bg-red-500': strength === 'weak',
+												'bg-yellow-500': strength === 'medium',
+												'bg-green-500': strength === 'strong'
+											}"
+											:style="`width: ${strengthPercent}%`">
+										</div>
+									</div>
+									<span 
+										class="text-sm font-medium"
+										:class="{
+											'text-red-500': strength === 'weak',
+											'text-yellow-500': strength === 'medium',
+											'text-green-500': strength === 'strong'
+										}"
+										x-text="strength.toUpperCase()">
+									</span>
+								</div>
+								
+								<!-- Password Requirements Checklist -->
+								<div class="mt-3 space-y-1">
+									<div class="flex items-center space-x-2">
+										<i 
+											class="fas fa-check text-green-500"
+											x-show="hasMinLength"
+											style="display: none;">
+										</i>
+										<i 
+											class="fas fa-times text-red-500"
+											x-show="!hasMinLength">
+										</i>
+										<span class="text-sm text-gray-600 dark:text-gray-400">
+											At least 8 characters
+										</span>
+									</div>
+									<div class="flex items-center space-x-2">
+										<i 
+											class="fas fa-check text-green-500"
+											x-show="hasUppercase"
+											style="display: none;">
+										</i>
+										<i 
+											class="fas fa-times text-red-500"
+											x-show="!hasUppercase">
+										</i>
+										<span class="text-sm text-gray-600 dark:text-gray-400">
+											Uppercase letter
+										</span>
+									</div>
+									<div class="flex items-center space-x-2">
+										<i 
+											class="fas fa-check text-green-500"
+											x-show="hasLowercase"
+											style="display: none;">
+										</i>
+										<i 
+											class="fas fa-times text-red-500"
+											x-show="!hasLowercase">
+										</i>
+										<span class="text-sm text-gray-600 dark:text-gray-400">
+											Lowercase letter
+										</span>
+									</div>
+									<div class="flex items-center space-x-2">
+										<i 
+											class="fas fa-check text-green-500"
+											x-show="hasNumber"
+											style="display: none;">
+										</i>
+										<i 
+											class="fas fa-times text-red-500"
+											x-show="!hasNumber">
+										</i>
+										<span class="text-sm text-gray-600 dark:text-gray-400">
+											Number
+										</span>
+									</div>
+									<div class="flex items-center space-x-2">
+										<i 
+											class="fas fa-check text-green-500"
+											x-show="hasSpecial"
+											style="display: none;">
+										</i>
+										<i 
+											class="fas fa-times text-red-500"
+											x-show="!hasSpecial">
+										</i>
+										<span class="text-sm text-gray-600 dark:text-gray-400">
+											Special character
+										</span>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+						<!-- Confirm Password -->
+						@components.BaseInput(types.InputProps{
+							ID:              "user-password-confirm",
+							Name:            "password_confirm",
+							Type:            "password",
+							Label:           "Confirm Password",
+							Placeholder:     "Confirm password",
+							Required:        data.User.ID == "",
+							ValidateOnInput: true,
+							ValidationURL:   "/validate/password-confirm",
+							FormID:          "user-form",
+							HelpText:        "Must match the password above",
+						})
+					</div>
+				</div>
+			}
+			
+			<!-- Role and Permissions -->
+			<div>
+				<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+					Role and Permissions
+				</h3>
+				<div class="space-y-6">
+					<!-- Role Selection -->
+					@components.SelectInput(types.SelectProps{
+						ID:          "user-role",
+						Name:        "role",
+						Label:       "Role",
+						Required:    true,
+						Placeholder: "Select user role",
+						Options:     data.Roles,
+						HelpText:    "Determines the user's access level and capabilities",
+					})
+					
+					<!-- Department -->
+					@components.SelectInput(types.SelectProps{
+						ID:          "user-department",
+						Name:        "department",
+						Label:       "Department",
+						Placeholder: "Select department",
+						Options:     data.Departments,
+						HelpText:    "Optional: Associate user with a specific department",
+					})
+				</div>
+			</div>
+			
+			<!-- Contact Information -->
+			<div x-data="{ showContact: false }">
+				<button 
+					type="button"
+					@click="showContact = !showContact"
+					class="flex items-center space-x-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+					<i 
+						class="fas fa-chevron-right transition-transform duration-200"
+						:class="{ 'rotate-90': showContact }">
+					</i>
+					<span>Contact Information</span>
+				</button>
+				
+				<div 
+					x-show="showContact"
+					x-transition:enter="transition ease-out duration-200"
+					x-transition:enter-start="opacity-0 max-h-0"
+					x-transition:enter-end="opacity-100 max-h-96"
+					x-transition:leave="transition ease-in duration-200"
+					x-transition:leave-start="opacity-100 max-h-96"
+					x-transition:leave-end="opacity-0 max-h-0"
+					class="mt-4 space-y-6 overflow-hidden"
+					style="display: none;">
+					
+					<div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+						<!-- Phone -->
+						@components.BaseInput(types.InputProps{
+							ID:           "user-phone",
+							Name:         "phone",
+							Type:         "tel",
+							Label:        "Phone Number",
+							Value:        data.User.Phone,
+							Placeholder:  "+1 (555) 123-4567",
+							HelpText:     "Include country code for international numbers",
+						})
+						
+						<!-- Job Title -->
+						@components.BaseInput(types.InputProps{
+							ID:          "user-job-title",
+							Name:        "job_title",
+							Type:        "text",
+							Label:       "Job Title",
+							Value:       data.User.JobTitle,
+							Placeholder: "Software Engineer",
+							MaxLength:   100,
+						})
+					</div>
+				</div>
+			</div>
+			
+			<!-- Form Actions -->
+			<div class="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+				<button 
+					type="button"
+					@click="history.back()"
+					class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
+					<i class="fas fa-arrow-left mr-2"></i>
+					Cancel
+				</button>
+				
+				<div class="flex items-center space-x-3">
+					<!-- Form Loading Indicator -->
+					<div 
+						id="form-loading"
+						class="htmx-indicator flex items-center space-x-2 text-blue-600">
+						<i class="fas fa-spinner fa-spin"></i>
+						<span class="text-sm">Saving...</span>
+					</div>
+					
+					<!-- Submit Button -->
+					<button 
+						type="submit"
+						:disabled="!formValid"
+						class="inline-flex items-center px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+						<i class="fas fa-save mr-2"></i>
+						{ func() string { if data.User.ID == "" { return "Create User" } else { return "Update User" } }() }
+					</button>
+				</div>
+			</div>
+		</form>
+	</div>
+}
+

@@ -1,0 +1,68 @@
+/*
+package console
+
+import (
+	"github.com/niiniyare/erp/internal/ui/types"
+)
+
+templ DashboardPage(data types.DashboardData) {
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<title>{ data.Title }</title>
+		<script src="https://unpkg.com/htmx.org@1.9.6"></script>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<meta name="csrf-token" content={ data.CSRFToken }/>
+	</head>
+	<body class="bg-gray-50">
+		@DashboardLayout(data) {
+			<div class="space-y-6">
+				<!-- Welcome Section -->
+				<div class="bg-white shadow rounded-lg p-6">
+					<h1 class="text-2xl font-bold text-gray-900">
+						Welcome back, { data.User.Name }
+					</h1>
+					<p class="mt-1 text-sm text-gray-600">
+						Last login: { data.User.Role } • Tenant: { data.User.TenantID }
+					</p>
+				</div>
+
+				<!-- System Stats -->
+				<div id="system-stats" hx-get="/console/api/stats" hx-trigger="load, every 30s">
+					@SystemStatsComponent(data.SystemStats)
+				</div>
+
+				<!-- Quick Actions -->
+				<div class="bg-white shadow rounded-lg p-6">
+					<h2 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h2>
+					<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+						for _, action := range data.QuickActions {
+							@QuickActionCard(action)
+						}
+					</div>
+				</div>
+
+				<!-- Recent Activity -->
+				<div class="bg-white shadow rounded-lg p-6">
+					<div class="flex items-center justify-between mb-4">
+						<h2 class="text-lg font-medium text-gray-900">Recent Activity</h2>
+						<button 
+							hx-get="/console/api/activity" 
+							hx-target="#recent-activity"
+							class="text-sm text-indigo-600 hover:text-indigo-500"
+						>
+							Refresh
+						</button>
+					</div>
+					<div id="recent-activity">
+						@RecentActivityComponent(data.RecentActivity)
+					</div>
+				</div>
+			</div>
+		}
+	</body>
+	</html>
+}
+

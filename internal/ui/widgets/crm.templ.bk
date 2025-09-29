@@ -1,0 +1,1003 @@
+/*
+package widgets
+/*
+import (
+"fmt"
+"strconv"
+"strings"
+)
+
+// CustomerOverviewProps defines properties for customer overview widgets
+type CustomerOverviewProps struct {
+Title string `json:"title" validate:"required"`
+TotalCustomers int `json:"total_customers"`
+ActiveCustomers int `json:"active_customers"`
+NewCustomers int `json:"new_customers"`
+ChurnRate float64 `json:"churn_rate"`
+AverageOrderValue float64 `json:"average_order_value"`
+CustomerLifetimeValue float64 `json:"customer_lifetime_value"`
+TopCustomers []Customer `json:"top_customers"`
+RecentCustomers []Customer `json:"recent_customers"`
+CustomerSegments []CustomerSegment `json:"customer_segments"`
+Period string `json:"period"`
+Currency string `json:"currency"`
+ShowSegments bool `json:"show_segments"`
+ID string `json:"id"`
+Class string `json:"class"`
+}
+
+// Customer represents a customer in the system
+type Customer struct {
+ID string `json:"id"`
+Name string `json:"name"`
+Email string `json:"email"`
+Company string `json:"company"`
+TotalOrders int `json:"total_orders"`
+TotalSpent float64 `json:"total_spent"`
+LastOrderDate string `json:"last_order_date"`
+Status string `json:"status" validate:"oneof=active inactive prospect"`
+Segment string `json:"segment"`
+RegistrationDate string `json:"registration_date"`
+Avatar string `json:"avatar"`
+}
+
+// CustomerSegment represents customer segmentation data
+type CustomerSegment struct {
+Name string `json:"name"`
+Count int `json:"count"`
+Percentage float64 `json:"percentage"`
+Revenue float64 `json:"revenue"`
+AverageValue float64 `json:"average_value"`
+Color string `json:"color"`
+Description string `json:"description"`
+}
+
+// SalesLeadsProps defines properties for sales leads widgets
+type SalesLeadsProps struct {
+Title string `json:"title"`
+TotalLeads int `json:"total_leads"`
+QualifiedLeads int `json:"qualified_leads"`
+ConvertedLeads int `json:"converted_leads"`
+ConversionRate float64 `json:"conversion_rate"`
+LeadsByStage []LeadStage `json:"leads_by_stage"`
+RecentLeads []Lead `json:"recent_leads"`
+TopSources []LeadSource `json:"top_sources"`
+ShowPipeline bool `json:"show_pipeline"`
+ShowSources bool `json:"show_sources"`
+Period string `json:"period"`
+ID string `json:"id"`
+Class string `json:"class"`
+}
+
+// Lead represents a sales lead
+type Lead struct {
+ID string `json:"id"`
+Name string `json:"name"`
+Email string `json:"email"`
+Company string `json:"company"`
+Source string `json:"source"`
+Stage string `json:"stage"`
+Value float64 `json:"value"`
+Probability float64 `json:"probability"`
+Owner string `json:"owner"`
+CreatedAt string `json:"created_at"`
+LastContact string `json:"last_contact"`
+Status string `json:"status" validate:"oneof=new contacted qualified proposal negotiation closed_won closed_lost"`
+}
+
+// LeadStage represents a stage in the sales pipeline
+type LeadStage struct {
+Name string `json:"name"`
+Count int `json:"count"`
+Value float64 `json:"value"`
+Probability float64 `json:"probability"`
+Color string `json:"color"`
+}
+
+// LeadSource represents a lead source
+type LeadSource struct {
+Name string `json:"name"`
+Count int `json:"count"`
+Conversion float64 `json:"conversion"`
+Quality string `json:"quality" validate:"oneof=high medium low"`
+}
+
+// SupportTicketsProps defines properties for support ticket widgets
+type SupportTicketsProps struct {
+Title string `json:"title"`
+TotalTickets int `json:"total_tickets"`
+OpenTickets int `json:"open_tickets"`
+PendingTickets int `json:"pending_tickets"`
+ResolvedTickets int `json:"resolved_tickets"`
+AvgResponseTime string `json:"avg_response_time"`
+AvgResolution string `json:"avg_resolution"`
+TicketsByPriority []TicketPriority `json:"tickets_by_priority"`
+RecentTickets []SupportTicket `json:"recent_tickets"`
+SatisfactionRate float64 `json:"satisfaction_rate"`
+ShowMetrics bool `json:"show_metrics"`
+Period string `json:"period"`
+ID string `json:"id"`
+Class string `json:"class"`
+}
+
+// SupportTicket represents a customer support ticket
+type SupportTicket struct {
+ID string `json:"id"`
+Subject string `json:"subject"`
+Customer string `json:"customer"`
+Priority string `json:"priority" validate:"oneof=low medium high critical"`
+Status string `json:"status" validate:"oneof=open in_progress pending resolved closed"`
+Category string `json:"category"`
+Assignee string `json:"assignee"`
+CreatedAt string `json:"created_at"`
+UpdatedAt string `json:"updated_at"`
+ResponseDue string `json:"response_due"`
+}
+
+// TicketPriority represents ticket counts by priority
+type TicketPriority struct {
+Priority string `json:"priority"`
+Count int `json:"count"`
+Color string `json:"color"`
+}
+
+// CustomerOverview renders a comprehensive customer overview widget
+templ CustomerOverview(props CustomerOverviewProps) {
+<div if props.ID !="" { id={ props.ID } } class={ getCustomerOverviewClasses() + " " + props.Class }>
+  <!-- Header -->
+  <div class={ getWidgetHeaderClasses() }>
+    <h3 class={ getWidgetTitleClasses() }>
+      { props.Title }
+    </h3>
+    if props.Period != "" {
+    <span class="text-sm text-gray-500">{ props.Period }</span>
+    }
+  </div>
+
+  <!-- Key Metrics -->
+  <div class={ getCustomerMetricsClasses() }>
+    <!-- Total Customers -->
+    <div class={ getCustomerMetricClasses() }>
+      <div class={ getCustomerMetricIconClasses("blue") }>
+        👥
+      </div>
+      <div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Total Customers</p>
+        <p class="text-xl font-bold text-gray-900 dark:text-white">
+          { formatNumber(props.TotalCustomers) }
+        </p>
+      </div>
+    </div>
+
+    <!-- Active Customers -->
+    <div class={ getCustomerMetricClasses() }>
+      <div class={ getCustomerMetricIconClasses("green") }>
+        ✅
+      </div>
+      <div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Active</p>
+        <p class="text-xl font-bold text-green-600">
+          { formatNumber(props.ActiveCustomers) }
+        </p>
+      </div>
+    </div>
+
+    <!-- New Customers -->
+    <div class={ getCustomerMetricClasses() }>
+      <div class={ getCustomerMetricIconClasses("purple") }>
+        ✨
+      </div>
+      <div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">New</p>
+        <p class="text-xl font-bold text-purple-600">
+          { formatNumber(props.NewCustomers) }
+        </p>
+      </div>
+    </div>
+
+    <!-- Churn Rate -->
+    <div class={ getCustomerMetricClasses() }>
+      <div class={ getCustomerMetricIconClasses(getChurnColor(props.ChurnRate)) }>
+        📉
+      </div>
+      <div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Churn Rate</p>
+        <p class={ getChurnRateClasses(props.ChurnRate) }>
+          { formatPercentage(props.ChurnRate) }%
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Business Metrics -->
+  <div class={ getCustomerBusinessMetricsClasses() }>
+    <div class={ getCustomerBusinessMetricClasses() }>
+      <span class="text-sm text-gray-600 dark:text-gray-400">Avg Order Value</span>
+      <span class="text-lg font-semibold text-gray-900 dark:text-white">
+        { formatCurrency(props.AverageOrderValue, props.Currency) }
+      </span>
+    </div>
+    <div class={ getCustomerBusinessMetricClasses() }>
+      <span class="text-sm text-gray-600 dark:text-gray-400">Customer LTV</span>
+      <span class="text-lg font-semibold text-gray-900 dark:text-white">
+        { formatCurrency(props.CustomerLifetimeValue, props.Currency) }
+      </span>
+    </div>
+  </div>
+
+  <!-- Customer Segments -->
+  if props.ShowSegments && len(props.CustomerSegments) > 0 {
+  <div class={ getCustomerSegmentsClasses() }>
+    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Customer Segments</h4>
+    <div class="space-y-3">
+      for _, segment := range props.CustomerSegments {
+      <div class={ getCustomerSegmentItemClasses() }>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class={ "w-3 h-3 rounded-full mr-3 bg-" + segment.Color + "-500" }></div>
+            <div>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">
+                { segment.Name }
+              </p>
+              if segment.Description != "" {
+              <p class="text-xs text-gray-500">{ segment.Description }</p>
+              }
+            </div>
+          </div>
+          <div class="text-right">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+              { formatNumber(segment.Count) } ({ formatPercentage(segment.Percentage) }%)
+            </p>
+            <p class="text-xs text-gray-500">
+              { formatCurrency(segment.Revenue, props.Currency) }
+            </p>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  <!-- Top Customers -->
+  if len(props.TopCustomers) > 0 {
+  <div class={ getCustomerTopCustomersClasses() }>
+    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Top Customers</h4>
+    <div class="space-y-2">
+      for i, customer := range props.TopCustomers {
+      <div class={ getCustomerItemClasses() }>
+        <div class="flex items-center">
+          <div class={ getCustomerRankClasses() }>
+            { strconv.Itoa(i + 1) }
+          </div>
+          <div class="flex-1 min-w-0 ml-3">
+            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+              { customer.Name }
+            </p>
+            <p class="text-xs text-gray-500">
+              { customer.Email }
+              if customer.Company != "" {
+              • { customer.Company }
+              }
+            </p>
+          </div>
+          <div class="text-right">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+              { formatCurrency(customer.TotalSpent, props.Currency) }
+            </p>
+            <p class="text-xs text-gray-500">
+              { formatNumber(customer.TotalOrders) } orders
+            </p>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  <!-- Recent Customers -->
+  if len(props.RecentCustomers) > 0 {
+  <div class={ getCustomerRecentCustomersClasses() }>
+    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Recent Customers</h4>
+    <div class="space-y-2">
+      for _, customer := range props.RecentCustomers {
+      <div class={ getCustomerItemClasses() }>
+        <div class="flex items-center">
+          <div class={ getCustomerAvatarClasses() }>
+            if customer.Avatar != "" {
+            <img src={ customer.Avatar } alt={ customer.Name } class="w-8 h-8 rounded-full" />
+            } else {
+            <div class="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                { getInitials(customer.Name) }
+              </span>
+            </div>
+            }
+          </div>
+          <div class="flex-1 min-w-0 ml-3">
+            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+              { customer.Name }
+            </p>
+            <p class="text-xs text-gray-500">
+              Joined { customer.RegistrationDate }
+            </p>
+          </div>
+          <span class={ getCustomerStatusBadgeClasses(customer.Status) }>
+            { strings.Title(customer.Status) }
+          </span>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+</div>
+}
+
+// SalesLeadsWidget renders a sales leads and pipeline widget
+templ SalesLeadsWidget(props SalesLeadsProps) {
+<div if props.ID !="" { id={ props.ID } } class={ getSalesLeadsWidgetClasses() + " " + props.Class }>
+  <!-- Header -->
+  <div class={ getWidgetHeaderClasses() }>
+    <h3 class={ getWidgetTitleClasses() }>
+      { props.Title }
+    </h3>
+    if props.Period != "" {
+    <span class="text-sm text-gray-500">{ props.Period }</span>
+    }
+  </div>
+
+  <!-- Summary Stats -->
+  <div class={ getLeadsSummaryClasses() }>
+    <!-- Total Leads -->
+    <div class={ getLeadsStatClasses() }>
+      <div class={ getLeadsStatIconClasses("blue") }>
+        🎯
+      </div>
+      <div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Total Leads</p>
+        <p class="text-xl font-bold text-gray-900 dark:text-white">
+          { formatNumber(props.TotalLeads) }
+        </p>
+      </div>
+    </div>
+
+    <!-- Qualified Leads -->
+    <div class={ getLeadsStatClasses() }>
+      <div class={ getLeadsStatIconClasses("green") }>
+        ✅
+      </div>
+      <div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Qualified</p>
+        <p class="text-xl font-bold text-green-600">
+          { formatNumber(props.QualifiedLeads) }
+        </p>
+      </div>
+    </div>
+
+    <!-- Converted Leads -->
+    <div class={ getLeadsStatClasses() }>
+      <div class={ getLeadsStatIconClasses("purple") }>
+        🏆
+      </div>
+      <div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Converted</p>
+        <p class="text-xl font-bold text-purple-600">
+          { formatNumber(props.ConvertedLeads) }
+        </p>
+      </div>
+    </div>
+
+    <!-- Conversion Rate -->
+    <div class={ getLeadsStatClasses() }>
+      <div class={ getLeadsStatIconClasses("orange") }>
+        📈
+      </div>
+      <div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Conversion</p>
+        <p class="text-xl font-bold text-orange-600">
+          { formatPercentage(props.ConversionRate) }%
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sales Pipeline -->
+  if props.ShowPipeline && len(props.LeadsByStage) > 0 {
+  <div class={ getLeadsPipelineClasses() }>
+    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Sales Pipeline</h4>
+    <div class="space-y-3">
+      for _, stage := range props.LeadsByStage {
+      <div class={ getLeadsPipelineStageClasses() }>
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center">
+            <div class={ "w-3 h-3 rounded-full mr-2 bg-" + stage.Color + "-500" }></div>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              { stage.Name }
+            </span>
+          </div>
+          <div class="text-right">
+            <span class="text-sm font-semibold text-gray-900 dark:text-white">
+              { formatNumber(stage.Count) } leads
+            </span>
+            <p class="text-xs text-gray-500">
+              { formatCurrency(stage.Value, "USD") }
+            </p>
+          </div>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+          <div class={ "h-2 rounded-full bg-" + stage.Color + "-500" } style={ getStageProgressWidth(stage.Probability)
+            }></div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  <!-- Lead Sources -->
+  if props.ShowSources && len(props.TopSources) > 0 {
+  <div class={ getLeadsSourcesClasses() }>
+    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Top Sources</h4>
+    <div class="space-y-2">
+      for _, source := range props.TopSources {
+      <div class={ getLeadsSourceItemClasses() }>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class={ getLeadsSourceIconClasses(source.Quality) }>
+              if source.Quality == "high" {
+              🌟
+              } else if source.Quality == "medium" {
+              ⭐
+              } else {
+              💫
+              }
+            </div>
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300 ml-2">
+              { source.Name }
+            </span>
+          </div>
+          <div class="text-right">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+              { formatNumber(source.Count) }
+            </p>
+            <p class="text-xs text-gray-500">
+              { formatPercentage(source.Conversion) }% conversion
+            </p>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  <!-- Recent Leads -->
+  if len(props.RecentLeads) > 0 {
+  <div class={ getLeadsRecentClasses() }>
+    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Recent Leads</h4>
+    <div class="space-y-2">
+      for _, lead := range props.RecentLeads {
+      <div class={ getLeadsRecentItemClasses() }>
+        <div class="flex items-center justify-between">
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+              { lead.Name }
+            </p>
+            <p class="text-xs text-gray-500">
+              { lead.Company } • { lead.Source } • { lead.CreatedAt }
+            </p>
+          </div>
+          <div class="text-right">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+              { formatCurrency(lead.Value, "USD") }
+            </p>
+            <span class={ getLeadStatusBadgeClasses(lead.Status) }>
+              { formatLeadStatus(lead.Status) }
+            </span>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+</div>
+}
+
+// SupportTicketsWidget renders a customer support tickets widget
+templ SupportTicketsWidget(props SupportTicketsProps) {
+<div if props.ID !="" { id={ props.ID } } class={ getSupportTicketsWidgetClasses() + " " + props.Class }>
+  <!-- Header -->
+  <div class={ getWidgetHeaderClasses() }>
+    <h3 class={ getWidgetTitleClasses() }>
+      { props.Title }
+    </h3>
+    if props.Period != "" {
+    <span class="text-sm text-gray-500">{ props.Period }</span>
+    }
+  </div>
+
+  <!-- Summary Stats -->
+  <div class={ getTicketsSummaryClasses() }>
+    <!-- Total Tickets -->
+    <div class={ getTicketsStatClasses() }>
+      <div class={ getTicketsStatIconClasses("blue") }>
+        🎫
+      </div>
+      <div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Total</p>
+        <p class="text-xl font-bold text-gray-900 dark:text-white">
+          { formatNumber(props.TotalTickets) }
+        </p>
+      </div>
+    </div>
+
+    <!-- Open Tickets -->
+    <div class={ getTicketsStatClasses() }>
+      <div class={ getTicketsStatIconClasses("red") }>
+        🔓
+      </div>
+      <div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Open</p>
+        <p class="text-xl font-bold text-red-600">
+          { formatNumber(props.OpenTickets) }
+        </p>
+      </div>
+    </div>
+
+    <!-- Pending Tickets -->
+    <div class={ getTicketsStatClasses() }>
+      <div class={ getTicketsStatIconClasses("yellow") }>
+        ⏳
+      </div>
+      <div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Pending</p>
+        <p class="text-xl font-bold text-yellow-600">
+          { formatNumber(props.PendingTickets) }
+        </p>
+      </div>
+    </div>
+
+    <!-- Resolved Tickets -->
+    <div class={ getTicketsStatClasses() }>
+      <div class={ getTicketsStatIconClasses("green") }>
+        ✅
+      </div>
+      <div>
+        <p class="text-sm text-gray-600 dark:text-gray-400">Resolved</p>
+        <p class="text-xl font-bold text-green-600">
+          { formatNumber(props.ResolvedTickets) }
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance Metrics -->
+  if props.ShowMetrics {
+  <div class={ getTicketsMetricsClasses() }>
+    <div class={ getTicketsMetricItemClasses() }>
+      <span class="text-sm text-gray-600 dark:text-gray-400">Avg Response Time</span>
+      <span class="text-lg font-semibold text-gray-900 dark:text-white">
+        { props.AvgResponseTime }
+      </span>
+    </div>
+    <div class={ getTicketsMetricItemClasses() }>
+      <span class="text-sm text-gray-600 dark:text-gray-400">Avg Resolution Time</span>
+      <span class="text-lg font-semibold text-gray-900 dark:text-white">
+        { props.AvgResolution }
+      </span>
+    </div>
+    <div class={ getTicketsMetricItemClasses() }>
+      <span class="text-sm text-gray-600 dark:text-gray-400">Satisfaction Rate</span>
+      <span class="text-lg font-semibold text-green-600">
+        { formatPercentage(props.SatisfactionRate) }%
+      </span>
+    </div>
+  </div>
+  }
+
+  <!-- Tickets by Priority -->
+  if len(props.TicketsByPriority) > 0 {
+  <div class={ getTicketsPriorityClasses() }>
+    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">By Priority</h4>
+    <div class="grid grid-cols-2 gap-3">
+      for _, priority := range props.TicketsByPriority {
+      <div class={ getTicketsPriorityItemClasses(priority.Priority) }>
+        <div class="text-center">
+          <p class={ getTicketsPriorityCountClasses(priority.Priority) }>
+            { formatNumber(priority.Count) }
+          </p>
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            { strings.Title(priority.Priority) }
+          </p>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  <!-- Recent Tickets -->
+  if len(props.RecentTickets) > 0 {
+  <div class={ getTicketsRecentClasses() }>
+    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Recent Tickets</h4>
+    <div class="space-y-2">
+      for _, ticket := range props.RecentTickets {
+      <div class={ getTicketsRecentItemClasses() }>
+        <div class="flex items-start justify-between">
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+              { ticket.Subject }
+            </p>
+            <p class="text-xs text-gray-500">
+              { ticket.Customer } • { ticket.Category } • { ticket.CreatedAt }
+            </p>
+            if ticket.Assignee != "" {
+            <p class="text-xs text-gray-500">
+              Assigned to { ticket.Assignee }
+            </p>
+            }
+          </div>
+          <div class="text-right ml-4">
+            <span class={ getTicketPriorityBadgeClasses(ticket.Priority) }>
+              { strings.Title(ticket.Priority) }
+            </span>
+            <p class="text-xs text-gray-500 mt-1">
+              <span class={ getTicketStatusBadgeClasses(ticket.Status) }>
+                { formatTicketStatus(ticket.Status) }
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+  }
+</div>
+}
+
+// Helper functions for CRM widgets
+func getChurnColor(churnRate float64) string {
+if churnRate > 10 {
+return "red"
+} else if churnRate > 5 {
+return "yellow"
+}
+return "green"
+}
+
+func getChurnRateClasses(churnRate float64) string {
+base := "text-xl font-bold"
+if churnRate > 10 {
+return base + " text-red-600"
+} else if churnRate > 5 {
+return base + " text-yellow-600"
+}
+return base + " text-green-600"
+}
+
+func getInitials(name string) string {
+parts := strings.Fields(name)
+if len(parts) == 0 {
+return "?"
+}
+if len(parts) == 1 {
+return strings.ToUpper(string(parts[0][0]))
+}
+return strings.ToUpper(string(parts[0][0]) + string(parts[1][0]))
+}
+
+func formatLeadStatus(status string) string {
+switch status {
+case "new":
+return "New"
+case "contacted":
+return "Contacted"
+case "qualified":
+return "Qualified"
+case "proposal":
+return "Proposal"
+case "negotiation":
+return "Negotiation"
+case "closed_won":
+return "Won"
+case "closed_lost":
+return "Lost"
+default:
+return strings.Title(strings.ReplaceAll(status, "_", " "))
+}
+}
+
+func formatTicketStatus(status string) string {
+switch status {
+case "in_progress":
+return "In Progress"
+default:
+return strings.Title(strings.ReplaceAll(status, "_", " "))
+}
+}
+
+func getStageProgressWidth(probability float64) string {
+return fmt.Sprintf("width: %.1f%%", probability)
+}
+
+// Styling helper functions for CRM widgets
+func getCustomerOverviewClasses() string {
+return "bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+}
+
+func getCustomerMetricsClasses() string {
+return "grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+}
+
+func getCustomerMetricClasses() string {
+return "flex items-center space-x-3"
+}
+
+func getCustomerMetricIconClasses(color string) string {
+base := "p-2 rounded-lg text-lg"
+switch color {
+case "blue":
+return base + " bg-blue-100 dark:bg-blue-900"
+case "green":
+return base + " bg-green-100 dark:bg-green-900"
+case "purple":
+return base + " bg-purple-100 dark:bg-purple-900"
+case "red":
+return base + " bg-red-100 dark:bg-red-900"
+case "yellow":
+return base + " bg-yellow-100 dark:bg-yellow-900"
+default:
+return base + " bg-gray-100 dark:bg-gray-900"
+}
+}
+
+func getCustomerBusinessMetricsClasses() string {
+return "grid grid-cols-2 gap-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mb-6"
+}
+
+func getCustomerBusinessMetricClasses() string {
+return "flex justify-between items-center"
+}
+
+func getCustomerSegmentsClasses() string {
+return "mb-6"
+}
+
+func getCustomerSegmentItemClasses() string {
+return "p-3 border border-gray-200 dark:border-gray-600 rounded-lg"
+}
+
+func getCustomerTopCustomersClasses() string {
+return "mb-6"
+}
+
+func getCustomerItemClasses() string {
+return "p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
+}
+
+func getCustomerRankClasses() string {
+return "w-6 h-6 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full flex items-center
+justify-center text-xs font-bold"
+}
+
+func getCustomerRecentCustomersClasses() string {
+return ""
+}
+
+func getCustomerAvatarClasses() string {
+return "flex-shrink-0"
+}
+
+func getCustomerStatusBadgeClasses(status string) string {
+base := "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+switch status {
+case "active":
+return base + " bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+case "inactive":
+return base + " bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+case "prospect":
+return base + " bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+default:
+return base + " bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+}
+}
+
+func getSalesLeadsWidgetClasses() string {
+return "bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+}
+
+func getLeadsSummaryClasses() string {
+return "grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+}
+
+func getLeadsStatClasses() string {
+return "flex items-center space-x-3"
+}
+
+func getLeadsStatIconClasses(color string) string {
+base := "p-2 rounded-lg text-lg"
+switch color {
+case "blue":
+return base + " bg-blue-100 dark:bg-blue-900"
+case "green":
+return base + " bg-green-100 dark:bg-green-900"
+case "purple":
+return base + " bg-purple-100 dark:bg-purple-900"
+case "orange":
+return base + " bg-orange-100 dark:bg-orange-900"
+default:
+return base + " bg-gray-100 dark:bg-gray-900"
+}
+}
+
+func getLeadsPipelineClasses() string {
+return "mb-6"
+}
+
+func getLeadsPipelineStageClasses() string {
+return "p-3 border border-gray-200 dark:border-gray-600 rounded-lg"
+}
+
+func getLeadsSourcesClasses() string {
+return "mb-6"
+}
+
+func getLeadsSourceItemClasses() string {
+return "p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
+}
+
+func getLeadsSourceIconClasses(quality string) string {
+base := "p-1 rounded"
+switch quality {
+case "high":
+return base + " bg-green-100 dark:bg-green-900"
+case "medium":
+return base + " bg-yellow-100 dark:bg-yellow-900"
+default:
+return base + " bg-gray-100 dark:bg-gray-900"
+}
+}
+
+func getLeadsRecentClasses() string {
+return ""
+}
+
+func getLeadsRecentItemClasses() string {
+return "p-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded"
+}
+
+func getLeadStatusBadgeClasses(status string) string {
+base := "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+switch status {
+case "new":
+return base + " bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+case "contacted":
+return base + " bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+case "qualified":
+return base + " bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+case "proposal":
+return base + " bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
+case "negotiation":
+return base + " bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+case "closed_won":
+return base + " bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+case "closed_lost":
+return base + " bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+default:
+return base + " bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+}
+}
+
+func getSupportTicketsWidgetClasses() string {
+return "bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+}
+
+func getTicketsSummaryClasses() string {
+return "grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+}
+
+func getTicketsStatClasses() string {
+return "flex items-center space-x-3"
+}
+
+func getTicketsStatIconClasses(color string) string {
+base := "p-2 rounded-lg text-lg"
+switch color {
+case "blue":
+return base + " bg-blue-100 dark:bg-blue-900"
+case "red":
+return base + " bg-red-100 dark:bg-red-900"
+case "yellow":
+return base + " bg-yellow-100 dark:bg-yellow-900"
+case "green":
+return base + " bg-green-100 dark:bg-green-900"
+default:
+return base + " bg-gray-100 dark:bg-gray-900"
+}
+}
+
+func getTicketsMetricsClasses() string {
+return "grid grid-cols-3 gap-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mb-6"
+}
+
+func getTicketsMetricItemClasses() string {
+return "text-center"
+}
+
+func getTicketsPriorityClasses() string {
+return "mb-6"
+}
+
+func getTicketsPriorityItemClasses(priority string) string {
+base := "p-3 rounded-lg border"
+switch priority {
+case "critical":
+return base + " border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20"
+case "high":
+return base + " border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20"
+case "medium":
+return base + " border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900/20"
+default:
+return base + " border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900/20"
+}
+}
+
+func getTicketsPriorityCountClasses(priority string) string {
+base := "text-xl font-bold"
+switch priority {
+case "critical":
+return base + " text-red-600"
+case "high":
+return base + " text-orange-600"
+case "medium":
+return base + " text-yellow-600"
+default:
+return base + " text-green-600"
+}
+}
+
+func getTicketsRecentClasses() string {
+return ""
+}
+
+func getTicketsRecentItemClasses() string {
+return "p-3 border border-gray-200 dark:border-gray-600 rounded-lg"
+}
+
+func getTicketPriorityBadgeClasses(priority string) string {
+base := "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+switch priority {
+case "critical":
+return base + " bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+case "high":
+return base + " bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+case "medium":
+return base + " bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+default:
+return base + " bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+}
+}
+
+func getTicketStatusBadgeClasses(status string) string {
+base := "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+switch status {
+case "open":
+return base + " bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+case "in_progress":
+return base + " bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+case "pending":
+return base + " bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+case "resolved":
+return base + " bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+case "closed":
+return base + " bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+default:
+return base + " bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+}
+}
+
+*/

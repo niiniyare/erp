@@ -1,0 +1,489 @@
+package widgets
+/*
+import (
+"context"
+"github.com/niiniyare/erp/internal/ui/components/shared"
+"github.com/niiniyare/erp/internal/ui/components/core"
+"github.com/niiniyare/erp/internal/ui/helpers"
+)
+
+// Initialize accessibility helper with default config
+var accessibilityHelper = helpers.NewAccessibilityHelper(helpers.DefaultAccessibilityConfig())
+
+// AccessibilityDemoPage demonstrates accessibility features and progressive enhancement
+templ AccessibilityDemoPage(ctx context.Context) {
+<div class="space-y-8 respect-motion-preference">
+  <!-- Page Header with proper heading hierarchy -->
+  <div class="bg-white p-6 rounded-lg shadow">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">
+      Accessibility & Progressive Enhancement Demo
+    </h1>
+    <p class="text-gray-600 text-lg">
+      Demonstrating WCAG 2.1 AA compliance and progressive enhancement patterns
+    </p>
+  </div>
+
+  <!-- Skip Links Demo -->
+  <section class="bg-white p-6 rounded-lg shadow" aria-labelledby="skip-links-heading">
+    <h2 id="skip-links-heading" class="text-xl font-semibold text-gray-900 mb-4">
+      Skip Navigation Links
+    </h2>
+    <p class="text-gray-600 mb-4">
+      Press Tab to see skip links that help keyboard users navigate quickly.
+    </p>
+    <div class="bg-blue-50 p-4 rounded-lg">
+      <p class="text-blue-800 text-sm">
+        <i class="fas fa-info-circle mr-2" aria-hidden="true"></i>
+        <strong>Try it:</strong> Press Tab when this page loads to see skip links appear.
+      </p>
+    </div>
+  </section>
+
+  <!-- Accessible Forms Demo -->
+  <section class="bg-white p-6 rounded-lg shadow" aria-labelledby="forms-heading">
+    <h2 id="forms-heading" class="text-xl font-semibold text-gray-900 mb-4">
+      Accessible Forms
+    </h2>
+
+    <form id="demo-form" action="/api/demo" method="POST" class="space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        @core.Input(core.InputProps{
+        ID: "full-name",
+        Name: "full_name",
+        Type: "text",
+        Label: "Full Name",
+        Placeholder: "Enter your full name",
+        Required: true,
+        HelperText: "Enter your first and last name",
+        })
+
+        @core.Input(core.InputProps{
+        ID: "email",
+        Name: "email",
+        Type: "email",
+        Label: "Email Address",
+        Placeholder: "user@example.com",
+        Required: true,
+        HelperText: "We'll use this to send you important updates",
+        })
+
+        @core.Select(core.SelectProps{
+        ID: "department",
+        Name: "department",
+        Label: "Department",
+        Placeholder: "Select your department",
+        Required: true,
+        Options: []core.SelectOption{
+        {Value: "finance", Label: "Finance", Selected: false, Disabled: false},
+        {Value: "hr", Label: "Human Resources", Selected: false, Disabled: false},
+        {Value: "it", Label: "Information Technology", Selected: true, Disabled: false},
+        {Value: "sales", Label: "Sales", Selected: false, Disabled: false},
+        },
+        HelperText: "Select your department",
+        })
+
+        @core.Input(core.InputProps{
+        ID: "phone",
+        Name: "phone",
+        Type: "tel",
+        Label: "Phone Number",
+        Placeholder: "(555) 123-4567",
+        Required: false,
+        HelperText: "Optional: 10-digit phone number",
+        })
+      </div>
+
+      <!-- Error State Demo -->
+      <div class="mt-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Error State Example</h3>
+        @core.Input(core.InputProps{
+        ID: "invalid-email",
+        Name: "invalid_email",
+        Type: "email",
+        Label: "Email with Error",
+        Value: "invalid-email",
+        Required: true,
+        Validation: "error",
+        HelperText: "This field shows how errors are announced to screen readers",
+        })
+      </div>
+
+      <div class="mt-6">
+        <button type="submit"
+          class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+          <i class="fas fa-paper-plane mr-2" aria-hidden="true"></i>
+          Submit Form
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Accessible Data Table Demo -->
+  <section class="bg-white p-6 rounded-lg shadow" aria-labelledby="table-heading">
+    <h2 id="table-heading" class="text-xl font-semibold text-gray-900 mb-4">
+      Accessible Data Table
+    </h2>
+
+    <table class="min-w-full divide-y divide-gray-200" role="table"
+      aria-label="Employee Information with sortable columns">
+      <caption class="sr-only">Employee Information with sortable columns</caption>
+      <thead class="bg-gray-50">
+        <tr>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+            aria-sort="ascending">
+            <button class="group inline-flex">
+              Name
+              <span class="ml-2 flex-none rounded text-gray-400 group-hover:visible group-focus:visible">
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd"
+                    d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                    clip-rule="evenodd" />
+                </svg>
+              </span>
+            </button>
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Department</th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status
+          </th>
+          <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200">
+        <tr class="hover:bg-gray-50">
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            John Doe
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            Engineering
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            Senior Developer
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              Active
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <button class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="Edit John Doe">
+              <i class="fas fa-edit" aria-hidden="true"></i>
+            </button>
+          </td>
+        </tr>
+        <tr class="hover:bg-gray-50">
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            Jane Smith
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            Marketing
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            Marketing Manager
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+              Away
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+            <button class="text-blue-600 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="Edit Jane Smith">
+              <i class="fas fa-edit" aria-hidden="true"></i>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Notifications Demo -->
+  <section class="bg-white p-6 rounded-lg shadow" aria-labelledby="notifications-heading">
+    <h2 id="notifications-heading" class="text-xl font-semibold text-gray-900 mb-4">
+      Accessible Notifications
+    </h2>
+
+    <div class="space-y-4">
+      <!-- Success Notification -->
+      <div class="bg-green-50 border border-green-200 rounded-lg p-4" role="alert" aria-live="polite">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L7.53 10.53a.75.75 0 00-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-green-800">Success</h3>
+            <div class="mt-2 text-sm text-green-700">
+              Your changes have been saved successfully.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Warning Notification -->
+      <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4" role="alert" aria-live="polite">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd"
+                d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-yellow-800">Warning</h3>
+            <div class="mt-2 text-sm text-yellow-700">
+              This action cannot be undone. Please proceed with caution.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Notification -->
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4" role="alert" aria-live="assertive">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800">Error</h3>
+            <div class="mt-2 text-sm text-red-700">
+              There was an error processing your request. Please try again.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info Notification -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-4" role="alert" aria-live="polite">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z"
+                clip-rule="evenodd" />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-blue-800">Information</h3>
+            <div class="mt-2 text-sm text-blue-700">
+              New features are available. Check out the latest updates.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal Demo -->
+  <section class="bg-white p-6 rounded-lg shadow" aria-labelledby="modal-heading">
+    <h2 id="modal-heading" class="text-xl font-semibold text-gray-900 mb-4">
+      Accessible Modal Dialog
+    </h2>
+
+    <p class="text-gray-600 mb-4">
+      Modal dialogs with proper focus management and keyboard navigation.
+    </p>
+
+    <button onclick="showModal()"
+      class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+      <i class="fas fa-window-restore mr-2" aria-hidden="true"></i>
+      Open Modal
+    </button>
+
+    <!-- Hidden modal that would be shown via JavaScript -->
+    <div id="demo-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+      aria-modal="true">
+      <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div
+          class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                  Demo Modal
+                </h3>
+                <div class="mt-2">
+                  <div class="space-y-4">
+                    <p class="text-gray-600">
+                      This modal demonstrates:
+                    </p>
+                    <ul class="list-disc list-inside space-y-2 text-gray-600">
+                      <li>Proper ARIA roles and properties</li>
+                      <li>Focus trap within modal</li>
+                      <li>Keyboard navigation (Tab, Shift+Tab, Escape)</li>
+                      <li>Screen reader announcements</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+            <button onclick="closeModal()" type="button"
+              class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+              Confirm
+            </button>
+            <button onclick="closeModal()" type="button"
+              class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Progressive Enhancement Demo -->
+  <section class="bg-white p-6 rounded-lg shadow" aria-labelledby="progressive-heading">
+    <h2 id="progressive-heading" class="text-xl font-semibold text-gray-900 mb-4">
+      Progressive Enhancement
+    </h2>
+
+    <div class="space-y-4">
+      <!-- JavaScript-enhanced content -->
+      <div class="js-only bg-green-50 border border-green-200 p-4 rounded-lg">
+        <h3 class="text-green-800 font-medium mb-2">
+          <i class="fas fa-check-circle mr-2" aria-hidden="true"></i>
+          JavaScript Enhanced
+        </h3>
+        <p class="text-green-700">
+          This content is only visible when JavaScript is enabled, demonstrating progressive enhancement.
+        </p>
+      </div>
+
+      <!-- No-JavaScript fallback -->
+      <div class="no-js-only bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+        <h3 class="text-yellow-800 font-medium mb-2">
+          <i class="fas fa-exclamation-triangle mr-2" aria-hidden="true"></i>
+          Fallback Mode
+        </h3>
+        <p class="text-yellow-700">
+          JavaScript is disabled. The site works but with reduced functionality.
+        </p>
+      </div>
+
+      <!-- Always visible content -->
+      <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+        <h3 class="text-blue-800 font-medium mb-2">
+          <i class="fas fa-info-circle mr-2" aria-hidden="true"></i>
+          Core Functionality
+        </h3>
+        <p class="text-blue-700">
+          This content is always visible and functional regardless of JavaScript availability.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Keyboard Navigation Demo -->
+  <section class="bg-white p-6 rounded-lg shadow" aria-labelledby="keyboard-heading">
+    <h2 id="keyboard-heading" class="text-xl font-semibold text-gray-900 mb-4">
+      Keyboard Navigation
+    </h2>
+
+    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+      <h3 class="font-medium text-gray-900 mb-2">Keyboard Shortcuts</h3>
+      <dl class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+        <div class="flex justify-between">
+          <dt class="text-gray-600">Navigate links/buttons:</dt>
+          <dd class="font-mono bg-white px-2 py-1 rounded">Tab / Shift+Tab</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-gray-600">Activate element:</dt>
+          <dd class="font-mono bg-white px-2 py-1 rounded">Enter / Space</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-gray-600">Close modal:</dt>
+          <dd class="font-mono bg-white px-2 py-1 rounded">Escape</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-gray-600">Skip to content:</dt>
+          <dd class="font-mono bg-white px-2 py-1 rounded">Tab (on page load)</dd>
+        </div>
+      </dl>
+    </div>
+
+    <p class="text-gray-600">
+      All interactive elements are keyboard accessible and provide visible focus indicators.
+    </p>
+  </section>
+
+  <!-- Screen Reader Information -->
+  <section class="bg-white p-6 rounded-lg shadow" aria-labelledby="screen-reader-heading">
+    <h2 id="screen-reader-heading" class="text-xl font-semibold text-gray-900 mb-4">
+      Screen Reader Support
+    </h2>
+
+    <div class="space-y-4">
+      <p class="text-gray-600">
+        This application includes comprehensive screen reader support:
+      </p>
+
+      <ul class="list-disc list-inside space-y-2 text-gray-600">
+        <li>Semantic HTML structure with proper heading hierarchy</li>
+        <li>ARIA labels and descriptions for complex interactions</li>
+        <li>Live regions for dynamic content updates</li>
+        <li>Alternative text for images and icons</li>
+        <li>Form labels and error announcements</li>
+        <li>Table headers and captions</li>
+      </ul>
+
+      <div class="bg-purple-50 border border-purple-200 p-4 rounded-lg">
+        <h3 class="text-purple-800 font-medium mb-2">
+          <i class="fas fa-universal-access mr-2" aria-hidden="true"></i>
+          Accessibility Standards
+        </h3>
+        <p class="text-purple-700 text-sm">
+          This application follows WCAG 2.1 AA guidelines and is tested with popular screen readers including NVDA,
+          JAWS, and VoiceOver.
+        </p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- JavaScript for modal demo -->
+<script>
+  function showModal() {
+    const modal = document.getElementById('demo-modal');
+    modal.classList.remove('hidden');
+    // Focus the first focusable element in modal
+    const firstFocusable = modal.querySelector('button');
+    if (firstFocusable) {
+      firstFocusable.focus();
+    }
+  }
+
+  function closeModal() {
+    const modal = document.getElementById('demo-modal');
+    modal.classList.add('hidden');
+  }
+
+  // Escape key to close modal
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('demo-modal');
+      if (!modal.classList.contains('hidden')) {
+        closeModal();
+      }
+    }
+  });
+</script>
+}
+*/

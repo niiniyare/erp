@@ -1,0 +1,255 @@
+/*
+package widgets
+/*
+import (
+"context"
+"github.com/niiniyare/erp/internal/ui/components/shared"
+webComponents "github.com/niiniyare/erp/web/admin/templates/components"
+)
+
+// FeatureFlagDemoPage demonstrates combined permission and feature flag integration
+templ FeatureFlagDemoPage(ctx context.Context) {
+<div class="space-y-8">
+  <div class="flex justify-between items-center">
+    <h1 class="text-3xl font-bold text-gray-900">Feature Flags & Permissions Demo</h1>
+
+    <!-- Developer mode panel - only for system admins with developer features enabled -->
+    @helpers.AdminFeatureWithFlag(ctx, "developer_mode") {
+    <div class="bg-yellow-100 border border-yellow-400 px-4 py-2 rounded-lg">
+      <span class="text-yellow-800 text-sm font-medium">
+        <i class="fas fa-code mr-2"></i>
+        Developer Mode Active
+      </span>
+    </div>
+    }
+  </div>
+
+  <!-- Module Access Demo -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+    <!-- Finance Module -->
+    @helpers.ModuleWithPermission(ctx, "finance", "read") {
+    <div class="bg-white p-6 rounded-lg shadow border-l-4 border-green-500">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900">Finance Module</h3>
+          <p class="text-sm text-gray-600">Financial data and reporting</p>
+        </div>
+        <i class="fas fa-chart-line text-green-500 text-2xl"></i>
+      </div>
+
+      <!-- Advanced reports only with feature flag -->
+      @helpers.UIFeatureWithPermission(ctx, "advanced_reports", "reports", "create") {
+      <div class="mt-4 p-3 bg-blue-50 rounded border">
+        <div class="flex items-center">
+          <i class="fas fa-sparkles text-blue-500 mr-2"></i>
+          <span class="text-blue-700 text-sm font-medium">Advanced Analytics Available</span>
+        </div>
+      </div>
+      }
+    </div>
+    }
+
+    <!-- HR Module -->
+    @helpers.ModuleWithPermission(ctx, "hr", "read") {
+    <div class="bg-white p-6 rounded-lg shadow border-l-4 border-purple-500">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900">HR Module</h3>
+          <p class="text-sm text-gray-600">Human resources management</p>
+        </div>
+        <i class="fas fa-users text-purple-500 text-2xl"></i>
+      </div>
+    </div>
+    }
+
+    <!-- CRM Module -->
+    @helpers.ModuleWithPermission(ctx, "crm", "read") {
+    <div class="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900">CRM Module</h3>
+          <p class="text-sm text-gray-600">Customer relationship management</p>
+        </div>
+        <i class="fas fa-handshake text-blue-500 text-2xl"></i>
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- UI Feature Demos -->
+  <div class="bg-white p-6 rounded-lg shadow">
+    <h2 class="text-xl font-semibold text-gray-900 mb-6">UI Features</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- New Dashboard Feature -->
+      @helpers.UIFeature(ctx, "new_dashboard") {
+      <div class="border border-green-200 bg-green-50 p-4 rounded-lg">
+        <div class="flex items-center mb-2">
+          <i class="fas fa-tachometer-alt text-green-600 mr-2"></i>
+          <h3 class="font-semibold text-green-800">New Dashboard</h3>
+          <span class="ml-2 px-2 py-1 text-xs bg-green-200 text-green-800 rounded-full">NEW</span>
+        </div>
+        <p class="text-green-700 text-sm">Enhanced dashboard with real-time analytics</p>
+
+        <!-- Bulk operations within new dashboard -->
+        @helpers.UIFeatureWithPermission(ctx, "bulk_operations", "system", "manage") {
+        <div class="mt-3 p-2 bg-green-100 rounded">
+          <span class="text-green-800 text-xs font-medium">
+            <i class="fas fa-layer-group mr-1"></i>
+            Bulk Operations Enabled
+          </span>
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Dark Mode Feature -->
+      @helpers.UIFeature(ctx, "dark_mode") {
+      <div class="border border-gray-200 bg-gray-50 p-4 rounded-lg">
+        <div class="flex items-center mb-2">
+          <i class="fas fa-moon text-gray-600 mr-2"></i>
+          <h3 class="font-semibold text-gray-800">Dark Mode</h3>
+        </div>
+        <p class="text-gray-700 text-sm">Toggle between light and dark themes</p>
+        <button class="mt-2 px-3 py-1 bg-gray-800 text-white text-xs rounded hover:bg-gray-700">
+          Toggle Theme
+        </button>
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- Beta Features Section -->
+  @helpers.BetaFeature(ctx) {
+  <div class="bg-orange-50 border border-orange-200 p-6 rounded-lg">
+    <div class="flex items-center mb-4">
+      <i class="fas fa-flask text-orange-600 mr-2"></i>
+      <h2 class="text-xl font-semibold text-orange-800">Beta Features</h2>
+      <span class="ml-2 px-2 py-1 text-xs bg-orange-200 text-orange-800 rounded-full">BETA</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- AI Assistant for users with admin permissions -->
+      @helpers.ExperimentalFeatureWithPermission(ctx, "ai_assistant", "system", "admin", nil) {
+      <div class="bg-white p-4 rounded border border-orange-200">
+        <div class="flex items-center mb-2">
+          <i class="fas fa-robot text-purple-600 mr-2"></i>
+          <h3 class="font-semibold">AI Assistant</h3>
+          <span class="ml-2 px-2 py-1 text-xs bg-purple-200 text-purple-800 rounded-full">AI</span>
+        </div>
+        <p class="text-sm text-gray-600 mb-3">Intelligent assistant for data analysis</p>
+        <button class="px-3 py-1 bg-purple-600 text-white text-xs rounded hover:bg-purple-700">
+          Ask AI
+        </button>
+      </div>
+      }
+
+      <!-- Voice Commands for beta users with appropriate permissions -->
+      @helpers.ExperimentalFeatureWithPermission(ctx, "voice_commands", "ui", "access", nil) {
+      <div class="bg-white p-4 rounded border border-orange-200">
+        <div class="flex items-center mb-2">
+          <i class="fas fa-microphone text-blue-600 mr-2"></i>
+          <h3 class="font-semibold">Voice Commands</h3>
+          <span class="ml-2 px-2 py-1 text-xs bg-blue-200 text-blue-800 rounded-full">VOICE</span>
+        </div>
+        <p class="text-sm text-gray-600 mb-3">Control the interface with voice</p>
+        <button class="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700">
+          Start Listening
+        </button>
+      </div>
+      }
+    </div>
+  </div>
+  }
+
+  <!-- Integration Features -->
+  <div class="bg-white p-6 rounded-lg shadow">
+    <h2 class="text-xl font-semibold text-gray-900 mb-6">Integrations</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Slack Integration -->
+      @helpers.IntegrationFeature(ctx, "slack") {
+      <div class="flex items-center p-4 border border-gray-200 rounded-lg">
+        <i class="fab fa-slack text-purple-600 text-2xl mr-3"></i>
+        <div>
+          <h3 class="font-semibold text-gray-900">Slack</h3>
+          <p class="text-sm text-gray-600">Team notifications</p>
+        </div>
+        @webComponents.StatusBadge("Active")
+      </div>
+      }
+
+      <!-- Email Integration -->
+      @helpers.IntegrationFeature(ctx, "email") {
+      <div class="flex items-center p-4 border border-gray-200 rounded-lg">
+        <i class="fas fa-envelope text-blue-600 text-2xl mr-3"></i>
+        <div>
+          <h3 class="font-semibold text-gray-900">Email</h3>
+          <p class="text-sm text-gray-600">Automated emails</p>
+        </div>
+        @webComponents.StatusBadge("Active")
+      </div>
+      }
+
+      <!-- SSO Integration -->
+      @helpers.IntegrationFeature(ctx, "sso") {
+      <div class="flex items-center p-4 border border-gray-200 rounded-lg">
+        <i class="fas fa-key text-green-600 text-2xl mr-3"></i>
+        <div>
+          <h3 class="font-semibold text-gray-900">SSO</h3>
+          <p class="text-sm text-gray-600">Single sign-on</p>
+        </div>
+        @webComponents.StatusBadge("Active")
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- System Information for Developers -->
+  @helpers.FeatureEnabled(ctx, "developer_mode") {
+  <div class="bg-gray-900 text-gray-100 p-6 rounded-lg">
+    <div class="flex items-center mb-4">
+      <i class="fas fa-terminal text-green-400 mr-2"></i>
+      <h2 class="text-xl font-semibold">Developer Information</h2>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-mono">
+      <div>
+        <h3 class="text-green-400 mb-2">Feature Flags Status</h3>
+        <div class="space-y-1">
+          <div>• New Dashboard: <span class="text-green-400">ENABLED</span></div>
+          <div>• Advanced Reports: <span class="text-yellow-400">CONDITIONAL</span></div>
+          <div>• Beta Features: <span class="text-blue-400">USER_DEPENDENT</span></div>
+        </div>
+      </div>
+      <div>
+        <h3 class="text-green-400 mb-2">Permission Context</h3>
+        <div class="space-y-1">
+          <div>• User Role: <span class="text-blue-400">DYNAMIC</span></div>
+          <div>• Tenant Context: <span class="text-green-400">ACTIVE</span></div>
+          <div>• Module Access: <span class="text-yellow-400">RBAC_CONTROLLED</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- Feature Request for Disabled Features -->
+  @helpers.FeatureDisabled(ctx, "beta_features") {
+  <div class="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+    <div class="flex items-center mb-4">
+      <i class="fas fa-lightbulb text-blue-600 mr-2"></i>
+      <h2 class="text-xl font-semibold text-blue-800">Want Access to Beta Features?</h2>
+    </div>
+    <p class="text-blue-700 mb-4">
+      Unlock experimental features and help shape the future of our platform.
+    </p>
+    <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+      Request Beta Access
+    </button>
+  </div>
+  }
+</div>
+}
+*/
