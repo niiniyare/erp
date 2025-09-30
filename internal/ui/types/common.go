@@ -81,3 +81,18 @@ type UserInfo struct {
 	Role     string `json:"role"`
 	TenantID string `json:"tenant_id"`
 }
+
+// ContactInfo represents contact information
+type ContactInfo struct {
+	Email       string `json:"email"`
+	Phone       string `json:"phone"`
+	CompanyName string `json:"companyName"`
+}
+
+// TenantStats represents tenant usage statistics (shared across services)
+type TenantStats struct {
+	UserCount    int       `json:"userCount"`
+	ActiveUsers  int       `json:"activeUsers"`
+	StorageUsed  float64   `json:"storageUsed"`  // bytes
+	LastActivity time.Time `json:"lastActivity"`
+}

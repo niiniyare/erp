@@ -21,6 +21,7 @@ type Config struct {
 	Auth      AuthConfig      `yaml:"auth" mapstructure:"auth"`
 	Features  FeatureConfig   `yaml:"features" mapstructure:"features"`
 	Logger    LoggerConfig    `yaml:"logger" mapstructure:"logger"`
+	UI        UIConfig        `yaml:"ui" mapstructure:"ui"`
 }
 
 // Load loads configuration from environment variables and files using Viper
@@ -160,6 +161,9 @@ func setDefaults(v *viper.Viper) {
 	// Temporal defaults - system-wide configuration
 	SetTemporalDefaults(v)
 
+	// UI defaults
+	SetUIDefaults(v)
+
 	// Auth defaults
 	v.SetDefault("auth.jwt_secret", "")
 
@@ -212,6 +216,9 @@ func bindEnvVars(v *viper.Viper) {
 	// Temporal - system-wide environment bindings
 	BindTemporalEnvVars(v)
 
+	// UI environment bindings
+	BindUIEnvVars(v)
+
 	// Auth
 	v.BindEnv("auth.jwt_secret", "JWT_SECRET")
 
@@ -249,6 +256,11 @@ func (c *Config) Validate() error {
 	// Validate logger configuration
 	if err := c.Logger.Validate(); err != nil {
 		return fmt.Errorf("logger config validation failed: %w", err)
+	}
+
+	// Validate UI configuration
+	if err := c.UI.Validate(); err != nil {
+		return fmt.Errorf("ui config validation failed: %w", err)
 	}
 
 	return nil

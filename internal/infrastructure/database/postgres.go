@@ -6,19 +6,19 @@ import (
 	"os"
 
 	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/config"
+	"github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/shared/logger"
 )
 
 // PostgreSQLComponent manages PostgreSQL database connections and lifecycle
 type PostgreSQLComponent struct {
 	store    db.Store
-	config   *config.DatabaseSettings
+	config   *config.DatabaseConfig
 	migrator *Migrator
 }
 
 // NewPostgreSQL creates a new PostgreSQL component
-func NewPostgreSQL(cfg *config.DatabaseSettings) *PostgreSQLComponent {
+func NewPostgreSQL(cfg *config.DatabaseConfig) *PostgreSQLComponent {
 	return &PostgreSQLComponent{
 		config: cfg,
 		migrator: &Migrator{

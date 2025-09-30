@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/niiniyare/erp/internal/config"
-	platformConfig "github.com/niiniyare/erp/internal/platform/config"
+	"github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/platform/temporal"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"go.temporal.io/api/workflowservice/v1"
@@ -14,12 +13,12 @@ import (
 // TemporalComponent manages Temporal workflow engine connections and lifecycle
 type TemporalComponent struct {
 	platform *temporal.Platform
-	config   *config.TemporalSettings
+	config   *config.TemporalConfig
 	logger   logger.Logger
 }
 
 // NewTemporal creates a new Temporal component
-func NewTemporal(cfg *config.TemporalSettings, logger logger.Logger) *TemporalComponent {
+func NewTemporal(cfg *config.TemporalConfig, logger logger.Logger) *TemporalComponent {
 	return &TemporalComponent{
 		config: cfg,
 		logger: logger,
@@ -34,15 +33,15 @@ func (t *TemporalComponent) Start(ctx context.Context) error {
 	})
 
 	// Convert new config format to platform temporal config format
-	platformTemporalConfig := &platformConfig.TemporalConfig{
+	platformTemporalConfig := &config.TemporalConfig{
 		HostPort:  t.config.HostPort,
 		Namespace: t.config.Namespace,
-		Workers: platformConfig.TemporalWorkersConfig{
+		Workers: config.TemporalWorkersConfig{
 			MaxConcurrentActivities: t.config.Workers.MaxConcurrentActivities,
 			MaxConcurrentWorkflows:  t.config.Workers.MaxConcurrentWorkflows,
 			WorkerStopTimeout:       t.config.Workers.WorkerStopTimeout,
 		},
-		Client: platformConfig.TemporalClientConfig{
+		Client: config.TemporalClientConfig{
 			Identity:          t.config.Client.Identity,
 			ConnectionTimeout: t.config.Client.ConnectionTimeout,
 		},

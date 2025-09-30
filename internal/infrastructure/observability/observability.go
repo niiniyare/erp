@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/niiniyare/erp/internal/config"
+	"github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -12,15 +12,15 @@ import (
 
 // ObservabilityComponent manages logging, metrics, and tracing
 type ObservabilityComponent struct {
-	loggerConfig   *config.LoggerSettings
-	appConfig      *config.AppSettings
+	loggerConfig   *config.LoggerConfig
+	appConfig      *config.AppConfig
 	tracingService tracing.TracingService
 	metricsService *metrics.MetricsService
 	logger         logger.Logger
 }
 
 // NewObservability creates a new observability component
-func NewObservability(loggerConfig *config.LoggerSettings, appConfig *config.AppSettings) *ObservabilityComponent {
+func NewObservability(loggerConfig *config.LoggerConfig, appConfig *config.AppConfig) *ObservabilityComponent {
 	return &ObservabilityComponent{
 		loggerConfig: loggerConfig,
 		appConfig:    appConfig,

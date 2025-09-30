@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/niiniyare/erp/internal/config"
 	"github.com/niiniyare/erp/internal/infrastructure/cache"
 	"github.com/niiniyare/erp/internal/infrastructure/database"
 	"github.com/niiniyare/erp/internal/infrastructure/messaging"
 	"github.com/niiniyare/erp/internal/infrastructure/observability"
+	"github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/shared/logger"
 )
 
 // Container manages all infrastructure components
 type Container struct {
-	config        *config.AppConfig
+	config        *config.Config
 	database      *database.PostgreSQLComponent
 	cache         *cache.RedisComponent
 	messaging     *messaging.TemporalComponent
@@ -25,7 +25,7 @@ type Container struct {
 }
 
 // NewContainer creates a new infrastructure container
-func NewContainer(cfg *config.AppConfig) *Container {
+func NewContainer(cfg *config.Config) *Container {
 	return &Container{
 		config:        cfg,
 		database:      database.NewPostgreSQL(&cfg.Database),

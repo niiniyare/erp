@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/niiniyare/erp/internal/config"
 	"github.com/niiniyare/erp/internal/platform/cache"
+	"github.com/niiniyare/erp/internal/platform/config"
 	platformConfig "github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/shared/logger"
 )
@@ -13,11 +13,11 @@ import (
 // RedisComponent manages Redis cache connections and lifecycle
 type RedisComponent struct {
 	client cache.Service
-	config *config.RedisSettings
+	config *config.RedisConfig
 }
 
 // NewRedis creates a new Redis component
-func NewRedis(cfg *config.RedisSettings) *RedisComponent {
+func NewRedis(cfg *config.RedisConfig) *RedisComponent {
 	return &RedisComponent{
 		config: cfg,
 	}

@@ -6,9 +6,9 @@ import (
 	"sync"
 
 	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/config"
 	"github.com/niiniyare/erp/internal/infrastructure"
 	"github.com/niiniyare/erp/internal/platform/cache"
+	"github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/platform/temporal"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -17,7 +17,7 @@ import (
 
 // Core represents the application core that orchestrates all components
 type Core struct {
-	config          *config.AppConfig
+	config          *config.Config
 	infrastructure  *infrastructure.Container
 	services        *Services
 	financeServices *FinanceServices
@@ -43,7 +43,7 @@ type FinanceServices struct {
 }
 
 // NewCore creates a new application core
-func NewCore(cfg *config.AppConfig) *Core {
+func NewCore(cfg *config.Config) *Core {
 	return &Core{
 		config:         cfg,
 		infrastructure: infrastructure.NewContainer(cfg),
@@ -133,7 +133,7 @@ func (c *Core) Health(ctx context.Context) error {
 
 // GetConfig returns the application configuration
 func (c *Core) GetConfig() *config.AppConfig {
-	return c.config
+	return &c.config.App
 }
 
 // GetInfrastructure returns the infrastructure container

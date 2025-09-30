@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/niiniyare/erp/internal/application"
-	"github.com/niiniyare/erp/internal/config"
+	"github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/shared/logger"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -19,7 +19,8 @@ import (
 
 func main() {
 	// Load configuration
-	cfg, err := config.Load()
+	cfg, _ := config.LoadWithViper()
+	err := cfg.Validate()
 	if err != nil {
 		panic("Failed to load configuration: " + err.Error())
 	}

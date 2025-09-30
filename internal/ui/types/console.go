@@ -45,7 +45,77 @@ type SystemStats struct {
 
 // Tenant management types
 
-// TenantItem represents a tenant in the list view
+// ConsoleTenant represents a tenant in the Console service with enhanced data
+type ConsoleTenant struct {
+	ID          string      `json:"id"`
+	Name        string      `json:"name"`
+	Slug        string      `json:"slug"`
+	Status      string      `json:"status"`
+	Industry    string      `json:"industry"`
+	ContactInfo ContactInfo `json:"contactInfo"`
+	Stats       TenantStats `json:"stats"`
+	CreatedAt   time.Time   `json:"createdAt"`
+	UpdatedAt   time.Time   `json:"updatedAt"`
+}
+
+
+// ConsoleTenantFilters represents filtering options for tenant list
+type ConsoleTenantFilters struct {
+	Page     int    `json:"page"`
+	PageSize int    `json:"pageSize"`
+	Search   string `json:"search"`
+	Status   string `json:"status"`
+	Industry string `json:"industry"`
+}
+
+// ConsoleTenantListResult represents the result of tenant listing
+type ConsoleTenantListResult struct {
+	Tenants    []ConsoleTenant `json:"tenants"`
+	TotalCount int            `json:"totalCount"`
+	Page       int            `json:"page"`
+	PageSize   int            `json:"pageSize"`
+	HasNext    bool           `json:"hasNext"`
+	HasPrev    bool           `json:"hasPrev"`
+}
+
+// ConsoleTenantCreateRequest represents tenant creation request
+type ConsoleTenantCreateRequest struct {
+	Name         string `json:"name"`
+	Slug         string `json:"slug"`
+	Industry     string `json:"industry"`
+	ContactEmail string `json:"contactEmail"`
+	ContactPhone string `json:"contactPhone"`
+	CompanyName  string `json:"companyName"`
+}
+
+// ConsoleTenantCreateResult represents tenant creation result
+type ConsoleTenantCreateResult struct {
+	TenantID   string `json:"tenantId"`
+	WorkflowID string `json:"workflowId"`
+	Status     string `json:"status"`
+	Message    string `json:"message"`
+}
+
+// ConsoleTenantsPageData represents data for the console tenants page
+type ConsoleTenantsPageData struct {
+	Title      string                `json:"title"`
+	Tenants    []ConsoleTenant      `json:"tenants"`
+	Pagination *PaginationMeta      `json:"pagination"`
+	Filters    *ConsoleTenantFilters `json:"filters"`
+	CSRFToken  string               `json:"csrfToken"`
+}
+
+// ConsoleTenantFormData represents tenant form data
+type ConsoleTenantFormData struct {
+	Title     string `json:"title"`
+	Action    string `json:"action"`
+	Method    string `json:"method"`
+	CSRFToken string `json:"csrfToken"`
+}
+
+// Legacy types for backward compatibility
+
+// TenantItem represents a tenant in the list view (legacy)
 type TenantItem struct {
 	ID          string
 	Name        string

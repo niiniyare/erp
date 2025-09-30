@@ -9,7 +9,7 @@ type WorkspaceDashboardData struct {
 	Title          string         `json:"title"`
 	User           UserInfo       `json:"user"`
 	TenantInfo     TenantInfo     `json:"tenant_info"`
-	TenantStats    TenantStats    `json:"tenant_stats"`
+	TenantStats    WorkspaceTenantStats    `json:"tenant_stats"`
 	RecentActivity []ActivityItem `json:"recent_activity"`
 	QuickActions   []QuickAction  `json:"quick_actions"`
 	Notifications  []Notification `json:"notifications"`
@@ -27,8 +27,8 @@ type TenantInfo struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// TenantStats represents tenant-specific statistics
-type TenantStats struct {
+// WorkspaceTenantStats represents tenant-specific statistics for workspace dashboard
+type WorkspaceTenantStats struct {
 	ActiveUsers    int                    `json:"active_users"`
 	ActiveProjects int                    `json:"active_projects"`
 	OpenInvoices   int                    `json:"open_invoices"`

@@ -182,3 +182,6 @@ npm run preview         # Preview production build
 - **Integration Tests**: Test database interactions and external services
 - **E2E Tests**: Full workflow testing with Docker compose
 - **Coverage**: Maintain coverage reports for code quality tracking
+
+## Code Guidelines
+- Always use descriptive variable names
