@@ -31,16 +31,18 @@ docs/ui/
 ## Key Technologies
 
 ### Core Stack
-- **[Templ](https://templ.guide)** - Type-safe Go templating language that compiles to Go code
+- **[Templ](https://templ.guide)** - Type-safe Go templating language that compiles to Go code (PRIMARY FRAMEWORK)
 - **[HTMX](https://htmx.org)** - Server-driven UI interactions without complex JavaScript
-- **[Alpine.js](https://alpinejs.dev)** - Lightweight reactive JavaScript framework
+- **[Alpine.js](https://alpinejs.dev)** - Lightweight reactive JavaScript framework for client state
 - **[Flowbite](https://flowbite.com)** - UI component library built on TailwindCSS
+- **[TailwindCSS](https://tailwindcss.com)** - Utility-first CSS framework
 
 ### Architecture Pattern
-- **Server-First** - Business logic and validation on the server
-- **Progressive Enhancement** - Works without JavaScript, enhanced with it
+- **Server-First** - Business logic and validation on the Go server
+- **Progressive Enhancement** - Works without JavaScript, enhanced with Alpine.js
 - **Component-Based** - Atomic design with reusable Templ components
 - **Type-Safe** - Leverages Go's type system for templates and props
+- **Multi-Tenant** - Built-in tenant isolation and context management
 
 ## Navigation Guide for AI Assistants
 

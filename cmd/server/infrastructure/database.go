@@ -1,9 +1,10 @@
-package main
+package infrastructure
 
 import (
 	"context"
 	"os"
 
+	"github.com/niiniyare/erp/cmd/server/migrations"
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/platform/config"
@@ -70,7 +71,7 @@ func InitializeDatabase(cfg *config.Config) (*Database, error) {
 		"db_name":       cfg.Database.Database,
 	})
 
-	runDBMigration(migrationURL, databaseURL)
+	migrations.RunDBMigration(migrationURL, databaseURL)
 	logger.Info("Database migrations completed successfully")
 
 	// Initialize database store

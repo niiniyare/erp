@@ -2,15 +2,15 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/niiniyare/erp/internal/application"
-	"github.com/niiniyare/erp/internal/platform/config"
+	"github.com/niiniyare/erp/cmd/server/bootstrap"
+	"github.com/niiniyare/erp/cmd/server/server"
+	"github.com/niiniyare/erp/cmd/server/services"
 	"github.com/niiniyare/erp/internal/shared/logger"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -18,23 +18,11 @@ import (
 )
 
 func main() {
-	// Load configuration
-	cfg, _ := config.LoadWithViper()
-	err := cfg.Validate()
+	// Initialize application
+	app, err := bootstrap.NewApplication()
 	if err != nil {
-		panic("Failed to load configuration: " + err.Error())
+		logger.Fatal("Failed to initialize application", logger.Fields{"error": err.Error()})
 	}
-
-	// Log successful configuration load
-	logger.Info("Configuration loaded successfully", logger.Fields{
-		"app_name": cfg.App.Name,
-		"version":  cfg.App.Version,
-		"stage":    cfg.App.Stage,
-		"port":     cfg.Server.Port,
-	})
-
-	// Create application core
-	app := application.NewCore(cfg)
 
 	// Create context for graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
@@ -45,33 +33,65 @@ func main() {
 		logger.Fatal("Failed to start application", logger.Fields{"error": err.Error()})
 	}
 
-	// Initialize HTTP server with existing GOA setup
-	// TODO: This will be refactored to use the new architecture in the next step
-	goaServer, err := initializeHTTPServer(app)
+	// Initialize dependencies
+	deps, err := bootstrap.InitializeDependencies(app)
 	if err != nil {
-		logger.Fatal("Failed to initialize HTTP server", logger.Fields{"error": err.Error()})
+		logger.Fatal("Failed to initialize dependencies", logger.Fields{"error": err.Error()})
+	}
+
+	// Initialize core business services
+	coreServices, err := services.InitializeCoreServices(
+		deps.Store,
+		deps.RedisClient,
+		deps.Logger,
+		deps.Metrics,
+		deps.Tracing,
+	)
+	if err != nil {
+		logger.Fatal("Failed to initialize core services", logger.Fields{"error": err.Error()})
+	}
+
+	// Initialize finance services (optional)
+	financeServices, err := services.InitializeFinanceServices(
+		deps.Store,
+		deps.RedisClient,
+		deps.Logger,
+		deps.Metrics,
+		deps.Tracing,
+		coreServices,
+	)
+	if err != nil {
+		logger.Warn("Finance services initialization failed, continuing without them", logger.Fields{"error": err.Error()})
+		financeServices = nil
+	}
+
+	// Initialize GOA server
+	goaServer, err := server.InitializeGOAServer(
+		coreServices,
+		financeServices,
+		deps.Store,
+		deps.RedisClient,
+		deps.Metrics,
+		deps.Tracing,
+	)
+	if err != nil {
+		logger.Fatal("Failed to initialize GOA server", logger.Fields{"error": err.Error()})
 	}
 
 	// Create HTTP server
-	srv := &http.Server{
-		Addr:              ":" + cfg.Server.Port,
-		Handler:           goaServer,
-		ReadHeaderTimeout: time.Second * 60,
-		ReadTimeout:       cfg.Server.ReadTimeout,
-		WriteTimeout:      cfg.Server.WriteTimeout,
-	}
+	srv := app.CreateHTTPServer(goaServer.Handler)
 
 	// Start server in a goroutine
 	go func() {
 		logger.Info("Starting HTTP server", logger.Fields{
-			"port":    cfg.Server.Port,
-			"address": ":" + cfg.Server.Port,
+			"port":    app.Config.Server.Port,
+			"address": ":" + app.Config.Server.Port,
 		})
 
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Fatal("Server failed to start", logger.Fields{
 				"error": err.Error(),
-				"port":  cfg.Server.Port,
+				"port":  app.Config.Server.Port,
 			})
 		}
 	}()
@@ -80,62 +100,8 @@ func main() {
 	gracefulShutdown(ctx, cancel, srv, app)
 }
 
-// initializeHTTPServer creates the HTTP server using existing GOA setup and UI integration
-func initializeHTTPServer(app *application.Core) (http.Handler, error) {
-	// Extract infrastructure services from application core
-	appServices := app.GetServices()
-
-	// Initialize business services using the business services factory
-	businessServices, err := InitializeServices(
-		appServices.Store,
-		appServices.RedisClient,
-		appServices.Logger,
-		appServices.Metrics,
-		appServices.Tracing,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize business services: %w", err)
-	}
-
-	// Initialize GOA server with all services
-	// Note: Finance services are not fully integrated yet, passing nil for now
-	goaServer, err := InitializeGOAServer(
-		businessServices,
-		nil, // financeServices placeholder
-		appServices.Store,
-		appServices.RedisClient,
-		appServices.Metrics,
-		appServices.Tracing,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize GOA server: %w", err)
-	}
-
-	logger.Info("GOA server initialized successfully", logger.Fields{
-		"endpoints": "all services mounted",
-		"status":    "ready",
-	})
-
-	// Initialize UI integration
-	// uiIntegration, err := NewUIIntegration(app, businessServices, appServices.Logger)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to initialize UI integration: %w", err)
-	// }
-
-	// Create combined handler that serves both API and UI routes
-	// combinedHandler := uiIntegration.CreateCombinedHandler(goaServer.Handler)
-
-	logger.Info("UI integration completed successfully", logger.Fields{
-		"ui_routes":   "console, workspace, portal",
-		"integration": "single-port",
-		"status":      "ready",
-	})
-
-	return goaServer.Handler, nil
-}
-
 // gracefulShutdown handles graceful shutdown of the application
-func gracefulShutdown(_ context.Context, cancel context.CancelFunc, srv *http.Server, app *application.Core) {
+func gracefulShutdown(_ context.Context, cancel context.CancelFunc, srv *http.Server, app *bootstrap.Application) {
 	// Create a channel to receive OS signals
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

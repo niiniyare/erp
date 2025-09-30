@@ -12,6 +12,7 @@
 - 📖 [Reference](reference/) - Complete API docs and examples
 
 **TECH STACK:** `Templ + HTMX + Alpine.js + Flowbite + TailwindCSS`
+**ARCHITECTURE:** Server-side rendered Go templates with progressive enhancement
 **USE CASE:** Building modern ERP admin interfaces
 **EXTERNAL REFS:** `templ-llms.md` (streaming), `flowbite-llms-full.txt` (components)
 <!-- LLM-NAVIGATION-END -->
@@ -20,10 +21,11 @@
 
 This documentation provides a complete UI component system for building ERP applications using:
 
-- **[Templ](https://templ.guide)** - Type-safe Go templating that compiles to Go code
+- **[Templ](https://templ.guide)** - Type-safe Go templating that compiles to Go code (PRIMARY)
 - **[HTMX](https://htmx.org)** - Hypermedia-driven interactions without complex JavaScript
-- **[Alpine.js](https://alpinejs.dev)** - Lightweight reactive framework for UI state
+- **[Alpine.js](https://alpinejs.dev)** - Lightweight reactive framework for client-side state
 - **[Flowbite](https://flowbite.com)** - Production-ready components built on TailwindCSS
+- **[TailwindCSS](https://tailwindcss.com)** - Utility-first CSS framework for styling
 
 ## Quick Start Paths
 
@@ -80,21 +82,22 @@ docs/ui/
 
 <!-- LLM-FEATURES-START -->
 **COMPONENT CAPABILITIES:**
-- ✅ Type-safe Go templating with hot reload
-- ✅ Server-side rendering with progressive enhancement
-- ✅ Real-time form validation (client + server)
-- ✅ Responsive design with mobile support
+- ✅ Type-safe Go templating with hot reload (Templ)
+- ✅ Server-side rendering with progressive enhancement (Go + HTMX)
+- ✅ Real-time form validation (Alpine.js + server validation)
+- ✅ Responsive design with mobile support (TailwindCSS)
 - ✅ Accessibility compliance (WCAG 2.1 AA)
-- ✅ Multi-tenant state management
-- ✅ Feature flag integration
+- ✅ Multi-tenant state management (Alpine.js stores)
+- ✅ Feature flag integration (Go backend + Alpine.js)
 - ✅ ABAC (Attribute-Based Access Control) UI components
 
 **DEVELOPER EXPERIENCE:**
 - Hot reload: `templ generate --watch`
-- Component composition patterns
+- Server-first architecture with client enhancement
+- Component composition patterns (atomic design)
 - Progressive complexity (basic → advanced)
 - Production deployment strategies
-- Comprehensive testing approaches
+- Type safety across Go templates and data
 <!-- LLM-FEATURES-END -->
 
 ## Architecture Overview
@@ -158,18 +161,22 @@ graph TB
 <!-- LLM-WORKFLOW-START -->
 **TYPICAL DEVELOPMENT FLOW:**
 1. **Design Phase**: Plan component structure using [patterns](patterns/)
-2. **Build Phase**: Create components using [elements](components/) as building blocks
-3. **Validate Phase**: Implement validation using [forms guide](components/forms.md)
-4. **Test Phase**: Follow [testing strategies](guides/testing.md)
-5. **Deploy Phase**: Use [deployment guide](guides/deployment.md)
+2. **Build Phase**: Create Templ components using [elements](components/) as building blocks
+3. **Enhance Phase**: Add HTMX interactions and Alpine.js state management
+4. **Validate Phase**: Implement validation using [forms guide](components/forms.md)
+5. **Test Phase**: Follow [testing strategies](guides/testing.md)
+6. **Deploy Phase**: Use [deployment guide](guides/deployment.md)
 
 **KEY COMMANDS:**
 ```bash
-# Hot reload during development
+# Hot reload during development (Templ)
 templ generate --watch
 
 # Generate components after changes
 templ generate
+
+# Run ERP server with UI
+make run
 
 # Run tests
 go test ./...
@@ -203,9 +210,10 @@ go build -o server ./cmd/server
 
 If you're migrating from other UI frameworks:
 
-- **From React/Vue**: See [migration guide](reference/migration.md#from-spa-frameworks)
-- **From traditional server-side**: See [migration guide](reference/migration.md#from-traditional-ssr)
-- **From existing Templ**: See [migration guide](reference/migration.md#from-basic-templ)
+- **From React/Vue SPA**: See [migration guide](reference/migration.md#from-spa-frameworks) - Learn server-first approach
+- **From traditional server-side**: See [migration guide](reference/migration.md#from-traditional-ssr) - Add progressive enhancement
+- **From basic Templ**: See [migration guide](reference/migration.md#from-basic-templ) - Add HTMX and Alpine.js
+- **From PHP/Django templates**: See [migration guide](reference/migration.md#from-template-engines) - Adopt Go type safety
 
 ## Contributing & Maintenance
 

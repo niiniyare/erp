@@ -1,4 +1,4 @@
-package main
+package migrations
 
 import (
 	"time"
@@ -8,7 +8,7 @@ import (
 	"github.com/niiniyare/erp/internal/shared/logger"
 )
 
-func runDBMigration(migrationURL string, dbSource string) {
+func RunDBMigration(migrationURL string, dbSource string) {
 	startTime := time.Now()
 	log := logger.WithFields(logger.Fields{
 		"operation": "database_migration",

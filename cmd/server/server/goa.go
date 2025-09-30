@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/niiniyare/erp/cmd/server/services"
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/api/handlers"
 	financeHandler "github.com/niiniyare/erp/internal/api/handlers/finance"
@@ -58,7 +59,7 @@ type GOAServer struct {
 	Mux     goahttp.Muxer
 }
 
-func InitializeGOAServer(services *Services, financeServices *financeService.Services, store db.Store, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*GOAServer, error) {
+func InitializeGOAServer(coreServices *services.CoreServices, financeServices *financeService.Services, store db.Store, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*GOAServer, error) {
 	// Initialize GOA services
 	var (
 		abacSvc             abacGen.Service
@@ -74,35 +75,33 @@ func InitializeGOAServer(services *Services, financeServices *financeService.Ser
 		openapiSvc          openapi.Service
 	)
 
-	abacSvc = handlers.NewABACGoaHandler(services.ABACService, metricsService, tracingService, logger.WithFields(logger.Fields{}))
-	accessRequestSvc = handlers.NewAccessRequestGoaHandler(services.AccessRequestService, services.ConditionalAccessService, services.AnalyticsService, tracingService, metricsService)
-	adminFeatureFlagSvc = handlers.NewAdminFeatureFlagService(services.AdminFeatureFlagService, services.ABACService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
-	// For now, create a simple adapter for IAM service
-	// TODO: Replace with proper IAM service when fully implemented
-	authSvc = handlers.NewAuthHandlerWithIdentity(services.IdentityService, services.TenantService, tracingService, metricsService)
-	featureFlagSvc = handlers.NewFeatureFlagService(services.FeatureFlagService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
+	abacSvc = handlers.NewABACGoaHandler(coreServices.ABACService, metricsService, tracingService, logger.WithFields(logger.Fields{}))
+	accessRequestSvc = handlers.NewAccessRequestGoaHandler(coreServices.AccessRequestService, coreServices.ConditionalAccessService, coreServices.AnalyticsService, tracingService, metricsService)
+	adminFeatureFlagSvc = handlers.NewAdminFeatureFlagService(coreServices.AdminFeatureFlagService, coreServices.ABACService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
+	authSvc = handlers.NewAuthHandlerWithIdentity(coreServices.IdentityService, coreServices.TenantService, tracingService, metricsService)
+	featureFlagSvc = handlers.NewFeatureFlagService(coreServices.FeatureFlagService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
+
 	// Initialize finance service only if finance services are available
 	if financeServices != nil {
 		financeSvc = financeHandler.NewFinanceHandler(*financeServices, tracingService, metricsService)
 	} else {
-		// Set to nil for now - finance endpoints won't be available
 		financeSvc = nil
 		logger.Warn("Finance services not available, finance endpoints disabled", logger.Fields{
 			"service": "finance",
 			"status":  "disabled",
 		})
 	}
-	// Create a simple health checker instance (nil store for now - needs proper initialization)
+
 	healthChecker := handlers.NewHealthChecker(nil, nil, logger.WithFields(logger.Fields{}), metricsService, tracingService)
 	healthSvc = handlers.NewHealthGoaHandler(healthChecker, tracingService, metricsService)
-	organizationSvc = handlers.NewOrganizationGoaHandler(services.EntityService, tracingService, metricsService)
+	organizationSvc = handlers.NewOrganizationGoaHandler(coreServices.EntityService, tracingService, metricsService)
 	tenantSvc = handlers.NewUnifiedTenantHandler(
-		services.TenantService,
-		services.TenantProvisioningService,
+		coreServices.TenantService,
+		coreServices.TenantProvisioningService,
 		tracingService,
 		metricsService,
 	)
-	userSvc = handlers.NewUserGoaHandler(services.IdentityService, services.AccessRequestService, services.ConditionalAccessService, services.AnalyticsService, tracingService, metricsService)
+	userSvc = handlers.NewUserGoaHandler(coreServices.IdentityService, coreServices.AccessRequestService, coreServices.ConditionalAccessService, coreServices.AnalyticsService, tracingService, metricsService)
 	openapiSvc = handlers.NewOpenapiHandler()
 
 	// Create GOA endpoints
@@ -190,11 +189,13 @@ func InitializeGOAServer(services *Services, financeServices *financeService.Ser
 	adminFeatureFlagServer := adminfeatureflagsvr.New(adminFeatureFlagEndpoints, mux, dec, enc, eh, nil)
 	authServer := authsvr.New(authEndpoints, mux, dec, enc, eh, nil)
 	featureFlagServer := featureflagsvr.New(featureFlagEndpoints, mux, dec, enc, eh, nil)
+
 	// Only create finance server if endpoints are available
 	var financeServer *financesvr.Server
 	if financeEndpoints != nil {
 		financeServer = financesvr.New(financeEndpoints, mux, dec, enc, eh, nil)
 	}
+
 	healthServer := healthsvr.New(healthEndpoints, mux, dec, enc, eh, nil)
 	organizationServer := organizationsvr.New(organizationEndpoints, mux, dec, enc, eh, nil)
 	tenantServer := tenantsvr.New(tenantEndpoints, mux, dec, enc, eh, nil)
@@ -207,10 +208,12 @@ func InitializeGOAServer(services *Services, financeServices *financeService.Ser
 	adminfeatureflagsvr.Mount(mux, adminFeatureFlagServer)
 	authsvr.Mount(mux, authServer)
 	featureflagsvr.Mount(mux, featureFlagServer)
+
 	// Only mount finance server if it exists
 	if financeServer != nil {
 		financesvr.Mount(mux, financeServer)
 	}
+
 	healthsvr.Mount(mux, healthServer)
 	organizationsvr.Mount(mux, organizationServer)
 	tenantsvr.Mount(mux, tenantServer)
@@ -221,7 +224,7 @@ func InitializeGOAServer(services *Services, financeServices *financeService.Ser
 	var finalHandler http.Handler = mux
 
 	// Create IAM service adapter for middleware integration
-	iamAdapter := NewIAMServiceAdapter(services, store, cacheService, metricsService, tracingService)
+	iamAdapter := NewIAMServiceAdapter(coreServices, store, cacheService, metricsService, tracingService)
 	middlewareSetup, err := initializeMiddleware(iamAdapter, cacheService, metricsService, tracingService)
 	if err != nil {
 		logger.Warn("Failed to initialize middleware, continuing without it", logger.Fields{
@@ -251,20 +254,18 @@ func InitializeGOAServer(services *Services, financeServices *financeService.Ser
 	handler = clueLog.HTTP(ctx)(handler)
 	handler = debug.HTTP()(handler)
 
-	// Mount the admin UI
-	// FIXME:
-	// handler = MountAdminUI(handler, services.TenantService)
-
 	// Log mounted endpoints
 	logMountedEndpoints(abacServer.Mounts, "ABAC")
 	logMountedEndpoints(accessRequestServer.Mounts, "AccessRequest")
 	logMountedEndpoints(adminFeatureFlagServer.Mounts, "AdminFeatureFlag")
 	logMountedEndpoints(authServer.Mounts, "Auth")
 	logMountedEndpoints(featureFlagServer.Mounts, "FeatureFlag")
+
 	// Only log finance endpoints if server exists
 	if financeServer != nil {
 		logMountedEndpoints(financeServer.Mounts, "Finance")
 	}
+
 	logMountedEndpoints(organizationServer.Mounts, "Organization")
 	logMountedEndpoints(tenantServer.Mounts, "Tenant")
 	logMountedEndpoints(userServer.Mounts, "User")
@@ -295,7 +296,7 @@ func logMountedEndpoints(mounts any, serviceName string) {
 
 	for i := range count {
 		mount := v.Index(i)
-		if mount.Kind() == reflect.Pointer { // Use reflect.Pointer instead of reflect.Ptr
+		if mount.Kind() == reflect.Pointer {
 			mount = mount.Elem()
 		}
 
@@ -318,40 +319,6 @@ func getFieldValue(v reflect.Value, fieldName string) string {
 		return ""
 	}
 	return field.String()
-}
-
-// InitializeGinRouter is deprecated - use GOA-only mode instead
-func InitializeGinRouter(services *Services, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (http.Handler, error) {
-	logger.Warn("InitializeGinRouter is deprecated - migration mode no longer supported", logger.Fields{
-		"service":        "gin-router",
-		"status":         "deprecated",
-		"recommendation": "Use GOA-only mode (SERVER_MODE=goa-only)",
-	})
-
-	// Return a simple handler that redirects to GOA endpoints
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusGone)
-		w.Write([]byte(`{"error": "Migration mode deprecated. Use GOA-only mode.", "migration_guide": "/api/openapi.json"}`))
-	}), nil
-}
-
-// CombinedHandler is deprecated - use GOA-only mode instead
-type CombinedHandler struct {
-	goaHandler http.Handler
-	ginHandler http.Handler // Deprecated: no longer used
-}
-
-// ServeHTTP implements the http.Handler interface (deprecated)
-func (c *CombinedHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Always route to GOA handler since migration mode is deprecated
-	logger.Warn("CombinedHandler is deprecated - use GOA-only mode", logger.Fields{
-		"path":           r.URL.Path,
-		"method":         r.Method,
-		"recommendation": "Set SERVER_MODE=goa-only",
-	})
-
-	c.goaHandler.ServeHTTP(w, r)
 }
 
 // isDevelopmentMode checks if we're running in development mode
@@ -453,7 +420,7 @@ type MiddlewareSetup struct {
 	tracing   tracing.TracingService
 	whitelist *middleware.EndpointWhitelist
 	config    *config.Config
-	services  *Services
+	services  *services.CoreServices
 	store     db.Store
 }
 
@@ -515,23 +482,23 @@ type IAMServiceAdapter struct {
 	logger          logger.Logger
 	metrics         *metrics.MetricsService
 	tracing         tracing.TracingService
-	services        *Services // Reference to all services
-	store           db.Store  // Database store for RLS operations
+	services        *services.CoreServices // Reference to all services
+	store           db.Store               // Database store for RLS operations
 }
 
 // NewIAMServiceAdapter creates a new IAM service adapter
-func NewIAMServiceAdapter(services *Services, store db.Store, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) *IAMServiceAdapter {
+func NewIAMServiceAdapter(coreServices *services.CoreServices, store db.Store, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) *IAMServiceAdapter {
 	return &IAMServiceAdapter{
-		identityService: services.IdentityService,
-		abacService:     services.ABACService,
-		auditService:    services.AuditService,
-		tenantService:   services.TenantService,
-		entityService:   services.EntityService,
+		identityService: coreServices.IdentityService,
+		abacService:     coreServices.ABACService,
+		auditService:    coreServices.AuditService,
+		tenantService:   coreServices.TenantService,
+		entityService:   coreServices.EntityService,
 		cache:           cacheService,
 		logger:          logger.WithFields(logger.Fields{"component": "iam_adapter"}),
 		metrics:         metricsService,
 		tracing:         tracingService,
-		services:        services,
+		services:        coreServices,
 		store:           store,
 	}
 }

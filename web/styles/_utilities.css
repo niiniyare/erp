@@ -1,5 +1,5 @@
 /* =============================================================================
-   ANIMATION ENHANCEMENTS
+   ANIMATION 
    ==========================================================================*/
 
 /* Fade In Animation */
@@ -109,7 +109,7 @@
 .animate-stagger > *:nth-child(8) { animation-delay: 350ms; }
 
 /* =============================================================================
-   ACCESSIBILITY ENHANCEMENTS
+   ACCESSIBILITY 
    ==========================================================================*/
 
 /* Reduced Motion Support */
@@ -510,3 +510,233 @@
 /* Cursor Utilities */
 .cursor-pointer { cursor: pointer; }
 .cursor-not-allowed { cursor: not-allowed; }
+
+/* =============================================================================
+   HTMX 
+   ==========================================================================*/
+
+/* HTMX indicators */
+.htmx-indicator {
+  opacity: 0;
+  transition: opacity var(--duration-fast) ease-in-out;
+}
+
+.htmx-request .htmx-indicator {
+  opacity: 1;
+}
+
+.htmx-request.htmx-indicator {
+  opacity: 1;
+}
+
+/* HTMX loading states for buttons */
+.htmx-request button {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* HTMX error states */
+.htmx-error {
+  border-color: var(--danger-500) !important;
+  background-color: rgba(239, 68, 68, 0.05) !important;
+}
+
+.htmx-settling {
+  opacity: 0.8;
+  transition: opacity var(--duration-normal) ease-in-out;
+}
+
+/* =============================================================================
+   ENHANCED ERROR HANDLING UTILITIES
+   ==========================================================================*/
+
+/* Error states */
+.error-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.error-highlight {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+  border-color: var(--danger-500);
+}
+
+.form-error {
+  color: var(--danger-600);
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-xs);
+}
+
+.form-error::before {
+  content: "⚠ ";
+  margin-right: var(--space-xs);
+}
+
+/* Success states */
+.success-pulse {
+  animation: successPulse 0.6s ease-in-out;
+}
+
+@keyframes successPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.success-highlight {
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+  border-color: var(--success-500);
+}
+
+/* Loading skeleton improvements */
+.skeleton {
+  background: linear-gradient(90deg, 
+    var(--neutral-200) 25%, 
+    var(--neutral-100) 50%, 
+    var(--neutral-200) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--border-radius-sm);
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-text {
+  height: 1rem;
+  margin-bottom: var(--space-sm);
+}
+
+.skeleton-title {
+  height: 1.5rem;
+  margin-bottom: var(--space-md);
+  width: 60%;
+}
+
+.skeleton-paragraph {
+  height: 1rem;
+  margin-bottom: var(--space-xs);
+}
+
+.skeleton-paragraph:last-child {
+  width: 80%;
+}
+
+/* =============================================================================
+   ACCESSIBILITY IMPROVEMENTS
+   ==========================================================================*/
+
+/* Focus trap for modals */
+.focus-trap {
+  position: relative;
+}
+
+.focus-trap:focus-within {
+  outline: none;
+}
+
+/* Skip link improvements */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--primary-600);
+  color: white;
+  padding: var(--space-sm) var(--space-md);
+  text-decoration: none;
+  border-radius: var(--border-radius-sm);
+  z-index: var(--z-tooltip);
+  transition: var(--transition-fast);
+  font-weight: var(--font-weight-medium);
+}
+
+.skip-link:focus {
+  top: 6px;
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+/* High contrast improvements */
+@media (prefers-contrast: high) {
+  .high-contrast-border {
+    border: 2px solid currentColor !important;
+  }
+  
+  .high-contrast-bg {
+    background: Canvas !important;
+    color: CanvasText !important;
+  }
+  
+  .htmx-indicator {
+    border: 2px solid currentColor;
+  }
+}
+
+/* =============================================================================
+   PERFORMANCE UTILITIES
+   ==========================================================================*/
+
+/* GPU acceleration for smooth animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+/* Optimized rendering */
+.optimized-rendering {
+  contain: layout style paint;
+}
+
+/* Smooth scrolling */
+.smooth-scroll {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar for webkit browsers */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--neutral-100);
+  border-radius: var(--border-radius-sm);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--neutral-300);
+  border-radius: var(--border-radius-sm);
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--neutral-400);
+}
+
+/* =============================================================================
+   RESPONSIVE IMPROVEMENTS
+   ==========================================================================*/
+
+/* Touch-friendly targets */
+.touch-target {
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+}
+
+/* Mobile-first breakpoint utilities */
+@media (max-width: 640px) {
+  .mobile-hidden { display: none !important; }
+  .mobile-full-width { width: 100% !important; }
+  .mobile-stack { flex-direction: column !important; }
+}
+
+@media (min-width: 641px) {
+  .desktop-hidden { display: none !important; }
+}

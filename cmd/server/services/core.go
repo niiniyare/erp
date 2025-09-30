@@ -1,11 +1,13 @@
-package main
+package services
 
 import (
+	"context"
+	"encoding/json"
 	"reflect"
 	"strings"
 
+	"github.com/google/uuid"
 	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/adapters"
 	"github.com/niiniyare/erp/internal/core/abac"
 	"github.com/niiniyare/erp/internal/core/abac/repository"
 	"github.com/niiniyare/erp/internal/core/access/approval"
@@ -16,10 +18,6 @@ import (
 	"github.com/niiniyare/erp/internal/core/audit"
 	"github.com/niiniyare/erp/internal/core/entity"
 	"github.com/niiniyare/erp/internal/core/featureflag"
-	"github.com/niiniyare/erp/internal/core/iam"
-	"github.com/niiniyare/erp/internal/core/iam/authn"
-	"github.com/niiniyare/erp/internal/core/iam/authz"
-	"github.com/niiniyare/erp/internal/core/iam/policy"
 	"github.com/niiniyare/erp/internal/core/identity"
 	"github.com/niiniyare/erp/internal/core/notification"
 	"github.com/niiniyare/erp/internal/core/tenant"
@@ -29,9 +27,57 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-type Services struct {
-	// Core services
-	IAMService                iam.Service
+// Simple bridge structures to eliminate adapters
+type userServiceBridge struct {
+	identityService identity.Service
+}
+
+func (u *userServiceBridge) GetUserByID(ctx context.Context, id uuid.UUID) (*request.User, error) {
+	identityUser, err := u.identityService.GetUserByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &request.User{
+		ID:       identityUser.ID,
+		Username: identityUser.Username,
+		Email:    identityUser.Email,
+	}, nil
+}
+
+type auditServiceBridge struct {
+	auditService audit.Service
+}
+
+func (a *auditServiceBridge) LogPermissionEvaluation(ctx context.Context, evaluation *conditional.PermissionEvaluationAudit) error {
+	contextData, _ := json.Marshal(map[string]any{
+		"resource_name":      evaluation.ResourceName,
+		"action_name":        evaluation.ActionName,
+		"policy_decisions":   evaluation.PolicyDecisions,
+		"evaluation_time_ms": evaluation.EvaluationTimeMS,
+		"context":            evaluation.Context,
+		"risk_factors":       evaluation.RiskFactors,
+	})
+
+	auditEvent := audit.CreateAuditEventRequest{
+		UserID:        &evaluation.UserID,
+		EventType:     "permission_evaluation",
+		EventCategory: "access_control",
+		Severity:      "info",
+		Decision:      &evaluation.Decision,
+		Reason:        stringPtr("Permission evaluation completed"),
+		Context:       contextData,
+	}
+
+	_, err := a.auditService.CreateAuditEvent(ctx, auditEvent)
+	return err
+}
+
+func stringPtr(s string) *string {
+	return &s
+}
+
+type CoreServices struct {
+	// Core services  
 	TenantService             tenant.Service
 	TenantProvisioningService tenant.ProvisioningService
 	EntityService             entity.Service
@@ -50,7 +96,7 @@ type Services struct {
 	ExecutionService         execution.AccessExecutionService
 }
 
-func InitializeServices(store db.Store, redisClient cache.Service, logger loggerPkg.Logger, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*Services, error) {
+func InitializeCoreServices(store db.Store, redisClient cache.Service, logger loggerPkg.Logger, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*CoreServices, error) {
 	// Initialize repositories
 	tenantRepo := tenant.NewRepository(store, tracingService)
 	entityRepo := entity.NewRepository(store, tracingService, metricsService)
@@ -124,47 +170,26 @@ func InitializeServices(store db.Store, redisClient cache.Service, logger logger
 		"status":  "ready",
 	})
 
-	// Initialize IAM service components after all dependencies are available
-	// For now, we'll use adapters that wrap existing services
-	authnService := NewAuthnServiceAdapter(identityService)
-	authzService := NewAuthzServiceAdapter(abacService)
-	policyService := NewPolicyServiceAdapter(abacService)
-
-	// Initialize unified IAM service
-	iamService := iam.NewService(
-		authnService,
-		authzService,
-		policyService,
-		tenantService,
-		auditService,
-		featureFlagService,
-		nil, // settings service - can be nil for now
-		redisClient,
-		logger.WithFields(loggerPkg.Fields{}),
-		metricsService,
-		tracingService,
-	)
+	// Create bridge instances
+	userBridge := &userServiceBridge{identityService: identityService}
+	auditBridge := &auditServiceBridge{auditService: auditService}
 
 	approverService := approval.NewApproverService(identityService, tracingService, metricsService)
 	notificationService := notification.NewNotificationService(tracingService, metricsService, nil, nil, notificationRepo)
 	executionService := execution.NewAccessExecutionService(identityRepo, identityService, tracingService, metricsService)
-
-	// Create adapters for interface compatibility
-	userServiceAdapter := adapters.NewUserServiceAdapter(identityService)
-	auditServiceAdapter := adapters.NewAuditServiceAdapter(auditService)
 
 	accessRequestService := request.NewAccessRequestService(
 		nil, // TODO: Implement AccessRequestRepository
 		redisClient,
 		tracingService,
 		metricsService,
-		userServiceAdapter,
+		userBridge, // Use bridge instead of direct service
 		notificationService,
 		approverService,
 		executionService,
 		auditService,
 	)
-	conditionalAccessService := conditional.NewConditionalAccessService(tracingService, metricsService, auditServiceAdapter)
+	conditionalAccessService := conditional.NewConditionalAccessService(tracingService, metricsService, auditBridge) // Use bridge
 	analyticsService := analytics.NewUserAnalyticsService(tracingService, metricsService, auditService)
 
 	// Initialize tenant provisioning service (after other services are created)
@@ -176,8 +201,7 @@ func InitializeServices(store db.Store, redisClient cache.Service, logger logger
 	)
 
 	// Create services struct
-	services := &Services{
-		IAMService:                iamService,
+	services := &CoreServices{
 		TenantService:             tenantService,
 		TenantProvisioningService: tenantProvisioningService,
 		EntityService:             entityService,
@@ -201,7 +225,7 @@ func InitializeServices(store db.Store, redisClient cache.Service, logger logger
 }
 
 // logInitializedServices dynamically logs all services using reflection
-func logInitializedServices(services *Services, logger loggerPkg.Logger) {
+func logInitializedServices(services *CoreServices, logger loggerPkg.Logger) {
 	serviceCount := 0
 	coreServices := make(map[string]any)
 	accessServices := make(map[string]any)
@@ -222,7 +246,7 @@ func logInitializedServices(services *Services, logger loggerPkg.Logger) {
 
 		serviceCount++
 		serviceName := formatServiceName(field.Name)
-		status := " ready"
+		status := "ready"
 
 		// Categorize services based on name patterns
 		fieldName := strings.ToLower(field.Name)
@@ -237,7 +261,7 @@ func logInitializedServices(services *Services, logger loggerPkg.Logger) {
 	}
 
 	// Log summary
-	logger.Info("🚀 Business Services Initialized", loggerPkg.Fields{
+	logger.Info("🚀 Core Services Initialized", loggerPkg.Fields{
 		"total_services": serviceCount,
 		"status":         "ready",
 	})
@@ -274,30 +298,3 @@ func formatServiceName(fieldName string) string {
 
 	return strings.ToLower(result.String())
 }
-
-// IAM Service Adapters
-// These adapters wrap existing services to implement the IAM interfaces
-
-// NewAuthnServiceAdapter creates an authentication service adapter
-func NewAuthnServiceAdapter(identityService identity.Service) authn.Service {
-	// TODO: For now, return nil until we implement proper adapters
-	// This needs to be implemented to support the unified IAM service
-	return nil
-}
-
-// NewAuthzServiceAdapter creates an authorization service adapter
-func NewAuthzServiceAdapter(abacService abac.Service) authz.Service {
-	// TODO: For now, return nil until we implement proper adapters
-	// This needs to be implemented to support the unified IAM service
-	return nil
-}
-
-// NewPolicyServiceAdapter creates a policy service adapter
-func NewPolicyServiceAdapter(abacService abac.Service) policy.Service {
-	// TODO: For now, return nil until we implement proper adapters
-	// This needs to be implemented to support the unified IAM service
-	return nil
-}
-
-// TODO: Implement proper adapter structs and methods when IAM integration is needed
-// For now, we're using nil services until the unified IAM is fully implemented

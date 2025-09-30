@@ -1,4 +1,4 @@
-package main
+package services
 
 import (
 	db "github.com/niiniyare/erp/db/sqlc"
@@ -19,7 +19,7 @@ func InitializeFinanceServices(
 	logger loggerPkg.Logger,
 	metricsService *metrics.MetricsService,
 	tracingService tracing.TracingService,
-	services *Services,
+	services *CoreServices,
 ) (*service.Services, error) {
 	logger.Info("Initializing Finance services", loggerPkg.Fields{
 		"module": "finance",
@@ -51,7 +51,7 @@ func InitializeFinanceServices(
 	// Create finance services
 	financeServices := service.NewServices(financeServiceDeps)
 
-	logger.Info(" Finance services initialized successfully", loggerPkg.Fields{
+	logger.Info("✅ Finance services initialized successfully", loggerPkg.Fields{
 		"module":   "finance",
 		"services": []string{"account", "transaction", "transaction_entry"},
 		"status":   "ready",
@@ -63,7 +63,7 @@ func InitializeFinanceServices(
 // RegisterFinanceModule registers the finance module with the Temporal platform
 func RegisterFinanceModule(
 	temporalPlatform *temporal.Platform,
-	services *Services,
+	services *CoreServices,
 	financeServices *service.Services,
 	cacheService cache.Service,
 	logger loggerPkg.Logger,
@@ -107,7 +107,7 @@ func RegisterFinanceModule(
 		return err
 	}
 
-	logger.Info(" Finance module successfully registered with Temporal platform", loggerPkg.Fields{
+	logger.Info("✅ Finance module successfully registered with Temporal platform", loggerPkg.Fields{
 		"module":             "finance",
 		"status":             "registered",
 		"activities_count":   "40+",
