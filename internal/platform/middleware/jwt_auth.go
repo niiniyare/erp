@@ -138,7 +138,7 @@ func (m *JWTAuthMiddleware) JWTAuth(ctx context.Context, token string, scheme *s
 }
 
 // BasicAuth creates a basic authentication security middleware for GOA
-// Note: This is a placeholder implementation since BasicAuth is not currently
+// NOTE: This is a placeholder implementation since BasicAuth is not currently
 // used in the GOA design, only JWT authentication is implemented
 func (m *JWTAuthMiddleware) BasicAuth(ctx context.Context, username, password string, scheme any) (context.Context, error) {
 	ctx, span := m.tracer.StartSpan(ctx, "middleware.basic_auth",
@@ -192,7 +192,7 @@ func (m *JWTAuthMiddleware) BasicAuth(ctx context.Context, username, password st
 }
 
 // APIKeyAuth creates an API key authentication security middleware for GOA
-// Note: This is a placeholder implementation since APIKeyAuth is not currently
+// NOTE: This is a placeholder implementation since APIKeyAuth is not currently
 // used in the GOA design, only JWT authentication is implemented
 func (m *JWTAuthMiddleware) APIKeyAuth(ctx context.Context, key string, scheme any) (context.Context, error) {
 	ctx, span := m.tracer.StartSpan(ctx, "middleware.api_key_auth",
@@ -225,27 +225,90 @@ func (m *JWTAuthMiddleware) APIKeyAuth(ctx context.Context, key string, scheme a
 
 // Helper methods
 
+// Define custom types for context keys
+type contextKey string
+
+const (
+	authenticatedKey contextKey = "authenticated"
+	userIDKey        contextKey = "user_id"
+	userKey          contextKey = "user"
+	userEmailKey     contextKey = "user_email"
+	authClaimsKey    contextKey = "auth_claims"
+	authTokenKey     contextKey = "auth_token"
+	authTimeKey      contextKey = "auth_time"
+)
+
 // enrichContextWithAuth adds authentication information to the request context
 func (m *JWTAuthMiddleware) enrichContextWithAuth(ctx context.Context, user *model.User, claims map[string]any, token string) context.Context {
 	// Add standard authentication context
-	ctx = context.WithValue(ctx, "authenticated", true)
-	ctx = context.WithValue(ctx, "user_id", user.ID)
-	ctx = context.WithValue(ctx, "user", user)
-	ctx = context.WithValue(ctx, "user_email", user.Email)
-	ctx = context.WithValue(ctx, "auth_claims", claims)
+	ctx = context.WithValue(ctx, authenticatedKey, true)
+	ctx = context.WithValue(ctx, userIDKey, user.ID)
+	ctx = context.WithValue(ctx, userKey, user)
+	ctx = context.WithValue(ctx, userEmailKey, user.Email)
+	ctx = context.WithValue(ctx, authClaimsKey, claims)
 
 	if token != "" {
-		ctx = context.WithValue(ctx, "auth_token", token)
+		ctx = context.WithValue(ctx, authTokenKey, token)
 	}
 
 	// Add authentication timestamp
-	ctx = context.WithValue(ctx, "auth_time", time.Now())
+	ctx = context.WithValue(ctx, authTimeKey, time.Now())
 
 	return ctx
 }
 
+// IsAuthenticated  is helper functions to retrieve values from context
+func IsAuthenticated(ctx context.Context) bool {
+	if val := ctx.Value(authenticatedKey); val != nil {
+		return val.(bool)
+	}
+	return false
+}
+
+func GetUserID(ctx context.Context) string {
+	if val := ctx.Value(userIDKey); val != nil {
+		return val.(string)
+	}
+	return ""
+}
+
+func GetUser(ctx context.Context) *model.User {
+	if val := ctx.Value(userKey); val != nil {
+		return val.(*model.User)
+	}
+	return nil
+}
+
+func GetUserEmail(ctx context.Context) string {
+	if val := ctx.Value(userEmailKey); val != nil {
+		return val.(string)
+	}
+	return ""
+}
+
+func GetAuthClaims(ctx context.Context) map[string]any {
+	if val := ctx.Value(authClaimsKey); val != nil {
+		return val.(map[string]any)
+	}
+	return nil
+}
+
+func GetAuthToken(ctx context.Context) string {
+	if val := ctx.Value(authTokenKey); val != nil {
+		return val.(string)
+	}
+	return ""
+}
+
+func GetAuthTime(ctx context.Context) time.Time {
+	if val := ctx.Value(authTimeKey); val != nil {
+		return val.(time.Time)
+	}
+	return time.Time{}
+}
+
 // recordAuthMetrics records authentication metrics
-func (m *JWTAuthMiddleware) recordAuthMetrics(ctx context.Context, method string, duration time.Duration) {
+func (m *JWTAuthMiddleware) recordAuthMetrics(_ context.Context, method string, duration time.Duration) {
 	labels := metrics.Fields{
 		"method": method,
 	}
@@ -255,7 +318,7 @@ func (m *JWTAuthMiddleware) recordAuthMetrics(ctx context.Context, method string
 }
 
 // recordAuthSuccess records successful authentication metrics
-func (m *JWTAuthMiddleware) recordAuthSuccess(ctx context.Context, method string) {
+func (m *JWTAuthMiddleware) recordAuthSuccess(_ context.Context, method string) {
 	labels := metrics.Fields{
 		"method": method,
 		"result": "success",
@@ -265,7 +328,7 @@ func (m *JWTAuthMiddleware) recordAuthSuccess(ctx context.Context, method string
 }
 
 // recordAuthFailure records failed authentication metrics
-func (m *JWTAuthMiddleware) recordAuthFailure(ctx context.Context, method, reason string) {
+func (m *JWTAuthMiddleware) recordAuthFailure(_ context.Context, method, reason string) {
 	labels := metrics.Fields{
 		"method": method,
 		"result": "failure",
@@ -343,7 +406,7 @@ func (m *JWTAuthMiddleware) HTTPJWTMiddleware() func(http.Handler) http.Handler 
 
 			if token != authHeader {
 				// Token was prefixed with Bearer, add it to context for GOA
-				ctx := context.WithValue(r.Context(), "jwt_token", token)
+				ctx := context.WithValue(r.Context(), authTokenKey, token)
 				r = r.WithContext(ctx)
 			}
 

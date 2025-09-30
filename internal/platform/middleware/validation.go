@@ -329,6 +329,7 @@ func (m *ValidationMiddleware) validateQueryParams(r *http.Request) error {
 
 	// Check for suspicious content in query parameters
 	for param, values := range r.URL.Query() {
+
 		if m.containsSuspiciousContent(param) {
 			return fmt.Errorf("suspicious parameter name: %s", param)
 		}

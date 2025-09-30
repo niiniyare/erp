@@ -1,0 +1,180 @@
+package helpers
+
+import (
+	"context"
+	"github.com/niiniyare/erp/web/helpers"
+)
+
+// Global feature flag helper instance (to be injected)
+var featureFlagHelper *helpers.FeatureFlagHelper
+
+// SetFeatureFlagHelper sets the global feature flag helper instance
+func SetFeatureFlagHelper(helper *helpers.FeatureFlagHelper) {
+	featureFlagHelper = helper
+}
+
+// Template helper functions for feature flag checks
+
+// FeatureEnabled wraps content that should only be visible when a feature flag is enabled
+templ FeatureEnabled(ctx context.Context, flagName string) {
+	if isFeatureEnabledCheck(ctx, flagName) {
+		{ children... }
+	}
+}
+
+// FeatureDisabled wraps content that should only be visible when a feature flag is disabled
+templ FeatureDisabled(ctx context.Context, flagName string) {
+	if !isFeatureEnabledCheck(ctx, flagName) {
+		{ children... }
+	}
+}
+
+// BetaFeature wraps content that should only be visible for beta users
+templ BetaFeature(ctx context.Context) {
+	if isBetaFeatureEnabledCheck(ctx) {
+		{ children... }
+	}
+}
+
+// ExperimentalFeature wraps content for experimental features
+templ ExperimentalFeature(ctx context.Context, experimentName string) {
+	if isExperimentalFeatureEnabledCheck(ctx, experimentName) {
+		{ children... }
+	}
+}
+
+// UIFeature wraps UI-specific features
+templ UIFeature(ctx context.Context, featureName string) {
+	if isUIFeatureEnabledCheck(ctx, featureName) {
+		{ children... }
+	}
+}
+
+// ModuleFeature wraps module-specific features
+templ ModuleFeature(ctx context.Context, moduleName string) {
+	if isModuleEnabledCheck(ctx, moduleName) {
+		{ children... }
+	}
+}
+
+// IntegrationFeature wraps integration-specific features
+templ IntegrationFeature(ctx context.Context, integrationName string) {
+	if isIntegrationEnabledCheck(ctx, integrationName) {
+		{ children... }
+	}
+}
+
+// FeatureToggle conditionally renders different content based on feature flag
+templ FeatureToggle(ctx context.Context, flagName string, enabledContent, disabledContent templ.Component) {
+	if isFeatureEnabledCheck(ctx, flagName) {
+		@enabledContent
+	} else {
+		@disabledContent
+	}
+}
+
+// ConditionalFeature renders content based on feature flag evaluation result
+templ ConditionalFeature(show bool) {
+	if show {
+		{ children... }
+	}
+}
+
+// Helper functions for feature flag evaluation
+
+func isFeatureEnabledCheck(ctx context.Context, flagName string) bool {
+	if featureFlagHelper == nil {
+		return false
+	}
+	return featureFlagHelper.IsFeatureEnabled(ctx, flagName)
+}
+
+func isBetaFeatureEnabledCheck(ctx context.Context) bool {
+	if featureFlagHelper == nil {
+		return false
+	}
+	return featureFlagHelper.IsBetaFeatureEnabled(ctx)
+}
+
+func isExperimentalFeatureEnabledCheck(ctx context.Context, experimentName string) bool {
+	if featureFlagHelper == nil {
+		return false
+	}
+	return featureFlagHelper.IsExperimentalFeatureEnabled(ctx, experimentName)
+}
+
+func isUIFeatureEnabledCheck(ctx context.Context, featureName string) bool {
+	if featureFlagHelper == nil {
+		return false
+	}
+	return featureFlagHelper.IsUIFeatureEnabled(ctx, featureName)
+}
+
+func isModuleEnabledCheck(ctx context.Context, moduleName string) bool {
+	if featureFlagHelper == nil {
+		return false
+	}
+	return featureFlagHelper.IsModuleEnabled(ctx, moduleName)
+}
+
+func isIntegrationEnabledCheck(ctx context.Context, integrationName string) bool {
+	if featureFlagHelper == nil {
+		return false
+	}
+	return featureFlagHelper.IsIntegrationEnabled(ctx, integrationName)
+}
+
+// Utility functions for getting feature flag status without templating
+
+// GetFeatureFlagStatus returns feature flag check results for JavaScript/Alpine.js
+func GetFeatureFlagStatus(ctx context.Context, flagNames []string) map[string]bool {
+	result := make(map[string]bool)
+	
+	if featureFlagHelper == nil {
+		// Return all false if helper is not available
+		for _, flagName := range flagNames {
+			result[flagName] = false
+		}
+		return result
+	}
+
+	for _, flagName := range flagNames {
+		result[flagName] = featureFlagHelper.IsFeatureEnabled(ctx, flagName)
+	}
+
+	return result
+}
+
+// GetAllUIFeatureFlags returns status of all UI-related feature flags
+func GetAllUIFeatureFlags(ctx context.Context) map[string]bool {
+	uiFlags := []string{
+		helpers.FeatureFlagNewDashboard,
+		helpers.FeatureFlagAdvancedReports,
+		helpers.FeatureFlagBulkOperations,
+		helpers.FeatureFlagDarkMode,
+		helpers.FeatureFlagMobileLayout,
+	}
+	
+	return GetFeatureFlagStatus(ctx, uiFlags)
+}
+
+// GetAllModuleFlags returns status of all module feature flags
+func GetAllModuleFlags(ctx context.Context) map[string]bool {
+	moduleFlags := []string{
+		helpers.FeatureFlagFinanceModule,
+		helpers.FeatureFlagInventoryModule,
+		helpers.FeatureFlagHRModule,
+		helpers.FeatureFlagCRMModule,
+		helpers.FeatureFlagProjectModule,
+	}
+	
+	return GetFeatureFlagStatus(ctx, moduleFlags)
+}
+
+// GetFeatureFlagValue retrieves a feature flag value for use in templates
+func GetFeatureFlagValue(ctx context.Context, flagName string, defaultValue any) any {
+	if featureFlagHelper == nil {
+		return defaultValue
+	}
+	return featureFlagHelper.GetFeatureFlagValueWithDefault(ctx, flagName, defaultValue)
+}

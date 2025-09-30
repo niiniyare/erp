@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -373,13 +374,14 @@ func ValidateSecurityConfig(config SecurityHeadersConfig) error {
 	// Validate Frame Options
 	if config.FrameOptions != "" {
 		validFrameOptions := []string{"DENY", "SAMEORIGIN"}
-		valid := false
-		for _, option := range validFrameOptions {
-			if config.FrameOptions == option {
-				valid = true
-				break
-			}
-		}
+		// valid := false
+		valid := slices.Contains(validFrameOptions, config.FrameOptions)
+		// for _, option := range validFrameOptions {
+		// 	if config.FrameOptions == option {
+		// 		valid = true
+		// 		break
+		// 	}
+		// }
 		if !valid && !strings.HasPrefix(config.FrameOptions, "ALLOW-FROM ") {
 			return fmt.Errorf("invalid frame options: %s", config.FrameOptions)
 		}
