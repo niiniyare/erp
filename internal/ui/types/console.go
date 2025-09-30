@@ -33,14 +33,6 @@ type DashboardData struct {
 	CSRFToken      string
 }
 
-// UserInfo represents current user information
-type UserInfo struct {
-	ID       string
-	Name     string
-	Email    string
-	Role     string
-	TenantID string
-}
 
 // SystemStats represents system-wide statistics
 type SystemStats struct {
@@ -49,37 +41,6 @@ type SystemStats struct {
 	TotalTransactions int64
 	SystemHealth      string
 	LastBackup        time.Time
-}
-
-// ActivityItem represents a recent activity item
-type ActivityItem struct {
-	ID          string
-	Type        string
-	Description string
-	UserID      string
-	UserName    string
-	Timestamp   time.Time
-	Severity    string
-}
-
-// QuickAction represents a quick action button
-type QuickAction struct {
-	Title       string
-	Description string
-	URL         string
-	Icon        string
-	Permission  string
-}
-
-// Notification represents a system notification
-type Notification struct {
-	ID       string
-	Type     string
-	Title    string
-	Message  string
-	Severity string
-	Created  time.Time
-	Read     bool
 }
 
 // Tenant management types
@@ -176,15 +137,6 @@ type SelectOption struct {
 	Value    string
 	Label    string
 	Selected bool
-}
-
-// Pagination represents pagination information
-type Pagination struct {
-	CurrentPage int
-	Limit       int
-	Total       int
-	HasNext     bool
-	HasPrev     bool
 }
 
 // Navigation and UI component types

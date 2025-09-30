@@ -31,6 +31,7 @@ type UIContext struct {
 	UserID       uuid.UUID  `json:"user_id"`
 	TenantID     uuid.UUID  `json:"tenant_id"`
 	EntityID     *uuid.UUID `json:"entity_id,omitempty"`
+	ClientID     uuid.UUID  `json:"client_id,omitempty"` // For portal users
 	Role         UIRole     `json:"role"`
 	SessionID    string     `json:"session_id"`
 	CSRFToken    string     `json:"csrf_token"`
@@ -77,7 +78,7 @@ func NewUIAuthMiddleware(
 
 // AuthenticateUser authenticates a user and creates a UI session
 func (m *UIAuthMiddleware) AuthenticateUser(ctx context.Context, username, password string, role UIRole) (*UIContext, error) {
-	// Simple logging instead of tracing for now
+	// TODO:Simple logging instead of tracing for now
 	m.logger.InfoContext(ctx, "Starting user authentication", logger.Fields{
 		"username": username,
 		"role":     string(role),

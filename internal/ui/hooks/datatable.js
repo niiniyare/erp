@@ -476,7 +476,7 @@ function useDataTable(config = {}) {
         },
         
         hasPermission(permission) {
-            // Integration with global permission system
+            //TODO: Integration with global permission system
             return window.Alpine?.store?.('app')?.hasPermission?.(permission) ?? true;
         },
         
@@ -647,7 +647,7 @@ const DataTableConfigs = {
                 icon: 'fas fa-envelope',
                 variant: 'primary',
                 permission: 'user:invite',
-                endpoint: '/workspace/bulk/invite',
+                endpoint: '/workspace/users/bulk',
                 method: 'POST'
             },
             {
@@ -657,7 +657,8 @@ const DataTableConfigs = {
                 variant: 'warning',
                 permission: 'user:deactivate',
                 confirm: true,
-                endpoint: '/workspace/bulk/deactivate',
+                confirmText: 'Deactivate selected users?',
+                endpoint: '/workspace/users/bulk',
                 method: 'POST'
             },
             {
@@ -667,44 +668,55 @@ const DataTableConfigs = {
                 variant: 'secondary',
                 permission: 'user:manage',
                 confirm: true,
-                endpoint: '/workspace/bulk/change-role',
+                confirmText: 'Change role for selected users?',
+                endpoint: '/workspace/users/bulk',
                 method: 'POST'
+            },
+            {
+                id: 'export',
+                text: 'Export Data',
+                icon: 'fas fa-download',
+                variant: 'secondary',
+                permission: 'user:export',
+                endpoint: '/workspace/users/export',
+                method: 'GET'
             }
         ]
     },
     
     portal: {
-        searchColumns: ['invoice_number', 'amount', 'status', 'due_date'],
+        searchColumns: ['number', 'amount', 'status', 'due_date', 'description'],
         enableExport: true,
         bulkActions: [
             {
                 id: 'download',
-                text: 'Download PDF',
+                text: 'Download PDFs',
                 icon: 'fas fa-download',
                 variant: 'secondary',
-                permission: 'invoice:download',
-                endpoint: '/portal/bulk/download',
+                permission: 'client:read',
+                endpoint: '/portal/invoices/bulk',
                 method: 'POST'
             },
             {
                 id: 'pay',
-                text: 'Mark as Paid',
+                text: 'Pay Selected',
                 icon: 'fas fa-credit-card',
                 variant: 'success',
-                permission: 'invoice:pay',
+                permission: 'client:read',
                 confirm: true,
-                endpoint: '/portal/bulk/pay',
+                confirmText: 'Proceed with payment for selected invoices?',
+                endpoint: '/portal/invoices/bulk',
                 method: 'POST'
             },
             {
                 id: 'email',
-                text: 'Send Reminder',
+                text: 'Email Support',
                 icon: 'fas fa-envelope',
                 variant: 'primary',
-                permission: 'invoice:notify',
+                permission: 'client:read',
                 confirm: true,
-                confirmText: 'Send payment reminder emails?',
-                endpoint: '/portal/bulk/remind',
+                confirmText: 'Contact support about selected invoices?',
+                endpoint: '/portal/invoices/bulk',
                 method: 'POST'
             }
         ]
