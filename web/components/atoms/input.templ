@@ -1,0 +1,511 @@
+package atoms
+
+import "strings"
+
+// InputType defines the type of input element
+type InputType string
+
+const (
+InputText InputType = "text"
+InputEmail InputType = "email"
+InputPassword InputType = "password"
+InputNumber InputType = "number"
+InputTel InputType = "tel"
+InputURL InputType = "url"
+InputSearch InputType = "search"
+InputDate InputType = "date"
+InputTime InputType = "time"
+InputDateTime InputType = "datetime-local"
+)
+
+// InputSize defines the size of the input
+type InputSize string
+
+const (
+InputSizeSM InputSize = "sm"
+InputSizeMD InputSize = "md"
+InputSizeLG InputSize = "lg"
+)
+
+// InputVariant defines the visual style of the input
+type InputVariant string
+
+const (
+InputDefault InputVariant = "default"
+InputFloating InputVariant = "floating"
+InputOutlined InputVariant = "outlined"
+)
+
+// InputState defines the validation state
+type InputState string
+
+const (
+InputStateDefault InputState = "default"
+InputStateSuccess InputState = "success"
+InputStateError InputState = "error"
+)
+
+// InputProps defines the properties for the Input component
+type InputProps struct {
+// Content
+Label string `json:"label,omitempty"`
+Value string `json:"value,omitempty"`
+Placeholder string `json:"placeholder,omitempty"`
+HelpText string `json:"helpText,omitempty"`
+ErrorText string `json:"errorText,omitempty"`
+
+// Input attributes
+Type InputType `json:"type"`
+Name string `json:"name,omitempty"`
+Required bool `json:"required,omitempty"`
+Disabled bool `json:"disabled,omitempty"`
+ReadOnly bool `json:"readonly,omitempty"`
+AutoFocus bool `json:"autofocus,omitempty"`
+AutoComplete string `json:"autocomplete,omitempty"`
+Pattern string `json:"pattern,omitempty"`
+MinLength int `json:"minlength,omitempty"`
+MaxLength int `json:"maxlength,omitempty"`
+Min string `json:"min,omitempty"`
+Max string `json:"max,omitempty"`
+Step string `json:"step,omitempty"`
+
+// Styling
+Variant InputVariant `json:"variant"`
+Size InputSize `json:"size"`
+State InputState `json:"state"`
+
+// Behavior
+OnChange string `json:"onchange,omitempty"` // Alpine.js change handler
+OnInput string `json:"oninput,omitempty"` // Alpine.js input handler
+OnFocus string `json:"onfocus,omitempty"` // Alpine.js focus handler
+OnBlur string `json:"onblur,omitempty"` // Alpine.js blur handler
+
+// HTML attributes
+ID string `json:"id,omitempty"`
+Class string `json:"class,omitempty"`
+AriaLabel string `json:"ariaLabel,omitempty"`
+AriaDescribedBy string `json:"ariaDescribedBy,omitempty"`
+DataTestID string `json:"dataTestId,omitempty"`
+
+// Icons
+LeftIcon string `json:"leftIcon,omitempty"`
+RightIcon string `json:"rightIcon,omitempty"`
+
+// Validation
+ShowValidation bool `json:"showValidation,omitempty"`
+}
+
+// Input renders a Flowbite-styled input with various variants and states
+templ Input(props InputProps) {
+<div class={ getInputWrapperClasses(props) }>
+  if props.Variant == InputFloating {
+  @FloatingInput(props)
+  } else {
+  @StandardInput(props)
+  }
+</div>
+}
+
+// StandardInput renders a standard input with label above
+templ StandardInput(props InputProps) {
+if props.Label != "" {
+<label if props.ID !="" { for={ props.ID } } class={ getLabelClasses(props) }>
+  { props.Label }
+  if props.Required {
+  <span class="text-red-500 ml-1">*</span>
+  }
+</label>
+}
+<div class="relative">
+  if props.LeftIcon != "" {
+  <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+    @Icon(IconProps{Name: props.LeftIcon, Size: getIconSizeForInput(props.Size), Class: "text-gray-500
+    dark:text-gray-400"})
+  </div>
+  }
+  <input type={ string(props.Type) } if props.ID !="" { id={ props.ID } } if props.Name !="" { name={ props.Name } } if
+    props.Value !="" { value={ props.Value } } if props.Placeholder !="" { placeholder={ props.Placeholder } } class={
+    getInputClasses(props) } if props.Required { required } if props.Disabled { disabled } if props.ReadOnly { readonly
+    } if props.AutoFocus { autofocus } if props.AutoComplete !="" { autocomplete={ props.AutoComplete } } if
+    props.Pattern !="" { pattern={ props.Pattern } } if props.MinLength> 0 {
+  minlength={ string(rune(props.MinLength)) }
+  }
+  if props.MaxLength > 0 {
+  maxlength={ string(rune(props.MaxLength)) }
+  }
+  if props.Min != "" {
+  min={ props.Min }
+  }
+  if props.Max != "" {
+  max={ props.Max }
+  }
+  if props.Step != "" {
+  step={ props.Step }
+  }
+  if props.AriaLabel != "" {
+  aria-label={ props.AriaLabel }
+  }
+  if props.AriaDescribedBy != "" {
+  aria-describedby={ props.AriaDescribedBy }
+  }
+  if props.DataTestID != "" {
+  data-testid={ props.DataTestID }
+  }
+  if props.OnChange != "" {
+  @change={ props.OnChange }
+  }
+  if props.OnInput != "" {
+  @input={ props.OnInput }
+  }
+  if props.OnFocus != "" {
+  @focus={ props.OnFocus }
+  }
+  if props.OnBlur != "" {
+  @blur={ props.OnBlur }
+  }
+  />
+  if props.RightIcon != "" {
+  <div class="absolute inset-y-0 end-0 flex items-center pe-3 pointer-events-none">
+    @Icon(IconProps{Name: props.RightIcon, Size: getIconSizeForInput(props.Size), Class: "text-gray-500
+    dark:text-gray-400"})
+  </div>
+  }
+</div>
+if props.ShowValidation && (props.HelpText != "" || props.ErrorText != "") {
+@InputFeedback(props)
+}
+}
+
+// FloatingInput renders a floating label input (Material Design style)
+templ FloatingInput(props InputProps) {
+<div class="relative z-0 w-full group">
+  <input type={ string(props.Type) } if props.ID !="" { id={ props.ID } } if props.Name !="" { name={ props.Name } } if
+    props.Value !="" { value={ props.Value } } class={ getFloatingInputClasses(props) } placeholder=" " if
+    props.Required { required } if props.Disabled { disabled } if props.ReadOnly { readonly } if props.AutoFocus {
+    autofocus } if props.AutoComplete !="" { autocomplete={ props.AutoComplete } } if props.Pattern !="" { pattern={
+    props.Pattern } } if props.MinLength> 0 {
+  minlength={ string(rune(props.MinLength)) }
+  }
+  if props.MaxLength > 0 {
+  maxlength={ string(rune(props.MaxLength)) }
+  }
+  if props.Min != "" {
+  min={ props.Min }
+  }
+  if props.Max != "" {
+  max={ props.Max }
+  }
+  if props.Step != "" {
+  step={ props.Step }
+  }
+  if props.AriaLabel != "" {
+  aria-label={ props.AriaLabel }
+  }
+  if props.AriaDescribedBy != "" {
+  aria-describedby={ props.AriaDescribedBy }
+  }
+  if props.DataTestID != "" {
+  data-testid={ props.DataTestID }
+  }
+  if props.OnChange != "" {
+  @change={ props.OnChange }
+  }
+  if props.OnInput != "" {
+  @input={ props.OnInput }
+  }
+  if props.OnFocus != "" {
+  @focus={ props.OnFocus }
+  }
+  if props.OnBlur != "" {
+  @blur={ props.OnBlur }
+  }
+  />
+  if props.Label != "" {
+  <label if props.ID !="" { for={ props.ID } } class={ getFloatingLabelClasses(props) }>
+    { props.Label }
+    if props.Required {
+    <span class="text-red-500 ml-1">*</span>
+    }
+  </label>
+  }
+</div>
+if props.ShowValidation && (props.HelpText != "" || props.ErrorText != "") {
+@InputFeedback(props)
+}
+}
+
+// InputFeedback renders help text or error messages
+templ InputFeedback(props InputProps) {
+if props.State == InputStateError && props.ErrorText != "" {
+<p class="mt-2 text-sm text-red-600 dark:text-red-500">
+  <span class="font-medium">Error:</span> { props.ErrorText }
+</p>
+} else if props.State == InputStateSuccess && props.HelpText != "" {
+<p class="mt-2 text-sm text-green-600 dark:text-green-500">
+  <span class="font-medium">Success:</span> { props.HelpText }
+</p>
+} else if props.HelpText != "" {
+<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+  { props.HelpText }
+</p>
+}
+}
+
+// Helper functions
+func getInputWrapperClasses(props InputProps) string {
+classes := []string{"mb-5"}
+
+if props.Class != "" {
+classes = append(classes, props.Class)
+}
+
+return strings.Join(classes, " ")
+}
+
+func getLabelClasses(props InputProps) string {
+classes := []string{
+"block",
+"mb-2",
+"font-medium",
+}
+
+// Add size-specific text classes
+switch props.Size {
+case InputSizeSM:
+classes = append(classes, "text-xs")
+case InputSizeLG:
+classes = append(classes, "text-base")
+default:
+classes = append(classes, "text-sm")
+}
+
+// Add state-specific colors
+switch props.State {
+case InputStateError:
+classes = append(classes, "text-red-900", "dark:text-red-400")
+case InputStateSuccess:
+classes = append(classes, "text-green-900", "dark:text-green-400")
+default:
+classes = append(classes, "text-gray-900", "dark:text-white")
+}
+
+return strings.Join(classes, " ")
+}
+
+func getInputClasses(props InputProps) string {
+classes := []string{
+"block",
+"w-full",
+"border",
+"rounded-lg",
+"focus:outline-none",
+"transition-colors",
+"duration-200",
+}
+
+// Add size classes
+classes = append(classes, getInputSizeClasses(props.Size)...)
+
+// Add state-specific classes
+classes = append(classes, getInputStateClasses(props.State)...)
+
+// Add icon padding
+if props.LeftIcon != "" {
+switch props.Size {
+case InputSizeSM:
+classes = append(classes, "ps-8")
+case InputSizeLG:
+classes = append(classes, "ps-12")
+default:
+classes = append(classes, "ps-10")
+}
+}
+
+if props.RightIcon != "" {
+switch props.Size {
+case InputSizeSM:
+classes = append(classes, "pe-8")
+case InputSizeLG:
+classes = append(classes, "pe-12")
+default:
+classes = append(classes, "pe-10")
+}
+}
+
+// Add disabled classes
+if props.Disabled {
+classes = append(classes, "opacity-50", "cursor-not-allowed")
+}
+
+return strings.Join(classes, " ")
+}
+
+func getFloatingInputClasses(props InputProps) string {
+classes := []string{
+"block",
+"py-2.5",
+"px-0",
+"w-full",
+"text-sm",
+"bg-transparent",
+"border-0",
+"border-b-2",
+"appearance-none",
+"focus:outline-none",
+"focus:ring-0",
+"peer",
+}
+
+// Add state-specific classes for floating inputs
+switch props.State {
+case InputStateError:
+classes = append(classes,
+"text-gray-900",
+"border-red-300",
+"focus:border-red-600",
+"dark:text-white",
+"dark:border-red-600",
+"dark:focus:border-red-500",
+)
+case InputStateSuccess:
+classes = append(classes,
+"text-gray-900",
+"border-green-300",
+"focus:border-green-600",
+"dark:text-white",
+"dark:border-green-600",
+"dark:focus:border-green-500",
+)
+default:
+classes = append(classes,
+"text-gray-900",
+"border-gray-300",
+"focus:border-blue-600",
+"dark:text-white",
+"dark:border-gray-600",
+"dark:focus:border-blue-500",
+)
+}
+
+return strings.Join(classes, " ")
+}
+
+func getFloatingLabelClasses(props InputProps) string {
+classes := []string{
+"peer-focus:font-medium",
+"absolute",
+"text-sm",
+"duration-300",
+"transform",
+"-translate-y-6",
+"scale-75",
+"top-3",
+"-z-10",
+"origin-[0]",
+"peer-focus:start-0",
+"rtl:peer-focus:translate-x-1/4",
+"rtl:peer-focus:left-auto",
+"peer-placeholder-shown:scale-100",
+"peer-placeholder-shown:translate-y-0",
+"peer-focus:scale-75",
+"peer-focus:-translate-y-6",
+}
+
+// Add state-specific colors for floating labels
+switch props.State {
+case InputStateError:
+classes = append(classes,
+"text-red-500",
+"peer-focus:text-red-600",
+"dark:text-red-400",
+"peer-focus:dark:text-red-500",
+)
+case InputStateSuccess:
+classes = append(classes,
+"text-green-500",
+"peer-focus:text-green-600",
+"dark:text-green-400",
+"peer-focus:dark:text-green-500",
+)
+default:
+classes = append(classes,
+"text-gray-500",
+"peer-focus:text-blue-600",
+"dark:text-gray-400",
+"peer-focus:dark:text-blue-500",
+)
+}
+
+return strings.Join(classes, " ")
+}
+
+func getInputSizeClasses(size InputSize) []string {
+switch size {
+case InputSizeSM:
+return []string{"p-2", "text-xs"}
+case InputSizeLG:
+return []string{"p-4", "text-base"}
+default: // MD
+return []string{"p-2.5", "text-sm"}
+}
+}
+
+func getInputStateClasses(state InputState) []string {
+switch state {
+case InputStateError:
+return []string{
+"bg-red-50",
+"border-red-500",
+"text-red-900",
+"placeholder-red-700",
+"focus:ring-red-500",
+"focus:border-red-500",
+"dark:bg-gray-700",
+"dark:border-red-500",
+"dark:placeholder-red-500",
+"dark:text-red-500",
+"dark:focus:ring-red-500",
+"dark:focus:border-red-500",
+}
+case InputStateSuccess:
+return []string{
+"bg-green-50",
+"border-green-500",
+"text-green-900",
+"placeholder-green-700",
+"focus:ring-green-500",
+"focus:border-green-500",
+"dark:bg-gray-700",
+"dark:border-green-500",
+"dark:placeholder-green-500",
+"dark:text-green-400",
+"dark:focus:ring-green-500",
+"dark:focus:border-green-500",
+}
+default:
+return []string{
+"bg-gray-50",
+"border-gray-300",
+"text-gray-900",
+"focus:ring-blue-500",
+"focus:border-blue-500",
+"dark:bg-gray-700",
+"dark:border-gray-600",
+"dark:placeholder-gray-400",
+"dark:text-white",
+"dark:focus:ring-blue-500",
+"dark:focus:border-blue-500",
+}
+}
+}
+
+func getIconSizeForInput(inputSize InputSize) string {
+switch inputSize {
+case InputSizeSM:
+return "sm"
+case InputSizeLG:
+return "lg"
+default:
+return "sm"
+}
+}

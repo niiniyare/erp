@@ -1,0 +1,135 @@
+/* ERP Design System - Shadow Foundations */
+
+:root {
+  /* Shadow Scale */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+  --shadow-none: 0 0 #0000;
+
+  /* Colored Shadows */
+  --shadow-primary: 0 4px 6px -1px rgba(59, 130, 246, 0.1), 0 2px 4px -1px rgba(59, 130, 246, 0.06);
+  --shadow-secondary: 0 4px 6px -1px rgba(100, 116, 139, 0.1), 0 2px 4px -1px rgba(100, 116, 139, 0.06);
+  --shadow-success: 0 4px 6px -1px rgba(34, 197, 94, 0.1), 0 2px 4px -1px rgba(34, 197, 94, 0.06);
+  --shadow-warning: 0 4px 6px -1px rgba(245, 158, 11, 0.1), 0 2px 4px -1px rgba(245, 158, 11, 0.06);
+  --shadow-error: 0 4px 6px -1px rgba(239, 68, 68, 0.1), 0 2px 4px -1px rgba(239, 68, 68, 0.06);
+  --shadow-info: 0 4px 6px -1px rgba(14, 165, 233, 0.1), 0 2px 4px -1px rgba(14, 165, 233, 0.06);
+
+  /* Focus Shadows */
+  --shadow-focus: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  --shadow-focus-error: 0 0 0 3px rgba(239, 68, 68, 0.1);
+  --shadow-focus-success: 0 0 0 3px rgba(34, 197, 94, 0.1);
+  --shadow-focus-warning: 0 0 0 3px rgba(245, 158, 11, 0.1);
+
+  /* Component-specific shadows */
+  --shadow-card: var(--shadow-sm);
+  --shadow-card-hover: var(--shadow-md);
+  --shadow-modal: var(--shadow-2xl);
+  --shadow-dropdown: var(--shadow-lg);
+  --shadow-tooltip: var(--shadow-md);
+  --shadow-button: var(--shadow-xs);
+  --shadow-button-hover: var(--shadow-sm);
+}
+
+/* Shadow Utility Classes */
+.shadow-xs { box-shadow: var(--shadow-xs); }
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }
+.shadow-2xl { box-shadow: var(--shadow-2xl); }
+.shadow-inner { box-shadow: var(--shadow-inner); }
+.shadow-none { box-shadow: var(--shadow-none); }
+
+/* Colored Shadow Utilities */
+.shadow-primary { box-shadow: var(--shadow-primary); }
+.shadow-secondary { box-shadow: var(--shadow-secondary); }
+.shadow-success { box-shadow: var(--shadow-success); }
+.shadow-warning { box-shadow: var(--shadow-warning); }
+.shadow-error { box-shadow: var(--shadow-error); }
+.shadow-info { box-shadow: var(--shadow-info); }
+
+/* Focus Shadow Utilities */
+.shadow-focus { box-shadow: var(--shadow-focus); }
+.shadow-focus-error { box-shadow: var(--shadow-focus-error); }
+.shadow-focus-success { box-shadow: var(--shadow-focus-success); }
+.shadow-focus-warning { box-shadow: var(--shadow-focus-warning); }
+
+/* Component Shadow Utilities */
+.shadow-card { box-shadow: var(--shadow-card); }
+.shadow-card-hover { box-shadow: var(--shadow-card-hover); }
+.shadow-modal { box-shadow: var(--shadow-modal); }
+.shadow-dropdown { box-shadow: var(--shadow-dropdown); }
+.shadow-tooltip { box-shadow: var(--shadow-tooltip); }
+.shadow-button { box-shadow: var(--shadow-button); }
+.shadow-button-hover { box-shadow: var(--shadow-button-hover); }
+
+/* Hover Shadow Effects */
+.hover\\:shadow-xs:hover { box-shadow: var(--shadow-xs); }
+.hover\\:shadow-sm:hover { box-shadow: var(--shadow-sm); }
+.hover\\:shadow-md:hover { box-shadow: var(--shadow-md); }
+.hover\\:shadow-lg:hover { box-shadow: var(--shadow-lg); }
+.hover\\:shadow-xl:hover { box-shadow: var(--shadow-xl); }
+.hover\\:shadow-2xl:hover { box-shadow: var(--shadow-2xl); }
+.hover\\:shadow-none:hover { box-shadow: var(--shadow-none); }
+
+/* Focus Shadow Effects */
+.focus\\:shadow-focus:focus { box-shadow: var(--shadow-focus); }
+.focus\\:shadow-focus-error:focus { box-shadow: var(--shadow-focus-error); }
+.focus\\:shadow-focus-success:focus { box-shadow: var(--shadow-focus-success); }
+.focus\\:shadow-focus-warning:focus { box-shadow: var(--shadow-focus-warning); }
+
+/* Dark Theme Adjustments */
+[data-theme="dark"] {
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.15);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* High Contrast Theme */
+[data-theme="high-contrast"] {
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.8);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.8), 0 1px 2px 0 rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.8), 0 2px 4px -1px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.8), 0 4px 6px -2px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.8), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.9);
+}
+
+/* Print Styles */
+@media print {
+  .shadow-xs,
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl,
+  .shadow-2xl,
+  .shadow-primary,
+  .shadow-secondary,
+  .shadow-success,
+  .shadow-warning,
+  .shadow-error,
+  .shadow-info {
+    box-shadow: none !important;
+  }
+}
+
+/* Reduce Motion */
+@media (prefers-reduced-motion: reduce) {
+  .hover\\:shadow-xs:hover,
+  .hover\\:shadow-sm:hover,
+  .hover\\:shadow-md:hover,
+  .hover\\:shadow-lg:hover,
+  .hover\\:shadow-xl:hover,
+  .hover\\:shadow-2xl:hover {
+    transition: none;
+  }
+}

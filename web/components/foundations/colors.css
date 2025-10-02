@@ -1,0 +1,174 @@
+/* ERP Design System - Color Foundations */
+
+:root {
+  /* Primary Brand Colors */
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-950: #172554;
+
+  /* Secondary Colors */
+  --color-secondary-50: #f8fafc;
+  --color-secondary-100: #f1f5f9;
+  --color-secondary-200: #e2e8f0;
+  --color-secondary-300: #cbd5e1;
+  --color-secondary-400: #94a3b8;
+  --color-secondary-500: #64748b;
+  --color-secondary-600: #475569;
+  --color-secondary-700: #334155;
+  --color-secondary-800: #1e293b;
+  --color-secondary-900: #0f172a;
+  --color-secondary-950: #020617;
+
+  /* Success Colors */
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-400: #4ade80;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+  --color-success-900: #14532d;
+  --color-success-950: #052e16;
+
+  /* Warning Colors */
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
+  --color-warning-950: #451a03;
+
+  /* Error Colors */
+  --color-error-50: #fef2f2;
+  --color-error-100: #fee2e2;
+  --color-error-200: #fecaca;
+  --color-error-300: #fca5a5;
+  --color-error-400: #f87171;
+  --color-error-500: #ef4444;
+  --color-error-600: #dc2626;
+  --color-error-700: #b91c1c;
+  --color-error-800: #991b1b;
+  --color-error-900: #7f1d1d;
+  --color-error-950: #450a0a;
+
+  /* Info Colors */
+  --color-info-50: #f0f9ff;
+  --color-info-100: #e0f2fe;
+  --color-info-200: #bae6fd;
+  --color-info-300: #7dd3fc;
+  --color-info-400: #38bdf8;
+  --color-info-500: #0ea5e9;
+  --color-info-600: #0284c7;
+  --color-info-700: #0369a1;
+  --color-info-800: #075985;
+  --color-info-900: #0c4a6e;
+  --color-info-950: #082f49;
+
+  /* Neutral Colors */
+  --color-neutral-50: #fafafa;
+  --color-neutral-100: #f5f5f5;
+  --color-neutral-200: #e5e5e5;
+  --color-neutral-300: #d4d4d4;
+  --color-neutral-400: #a3a3a3;
+  --color-neutral-500: #737373;
+  --color-neutral-600: #525252;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #262626;
+  --color-neutral-900: #171717;
+  --color-neutral-950: #0a0a0a;
+
+  /* Semantic Color Aliases */
+  --color-background: var(--color-neutral-50);
+  --color-background-alt: var(--color-neutral-100);
+  --color-surface: #ffffff;
+  --color-surface-alt: var(--color-neutral-50);
+  
+  --color-text-primary: var(--color-neutral-900);
+  --color-text-secondary: var(--color-neutral-600);
+  --color-text-tertiary: var(--color-neutral-400);
+  --color-text-inverse: #ffffff;
+  
+  --color-border: var(--color-neutral-200);
+  --color-border-focus: var(--color-primary-500);
+  --color-border-error: var(--color-error-500);
+  
+  --color-shadow: rgba(0, 0, 0, 0.1);
+  --color-shadow-dark: rgba(0, 0, 0, 0.25);
+
+  /* Interactive Colors */
+  --color-interactive-primary: var(--color-primary-600);
+  --color-interactive-primary-hover: var(--color-primary-700);
+  --color-interactive-primary-active: var(--color-primary-800);
+  --color-interactive-primary-disabled: var(--color-neutral-300);
+  
+  --color-interactive-secondary: var(--color-neutral-100);
+  --color-interactive-secondary-hover: var(--color-neutral-200);
+  --color-interactive-secondary-active: var(--color-neutral-300);
+}
+
+/* Dark Theme Override */
+[data-theme="dark"] {
+  --color-background: var(--color-neutral-900);
+  --color-background-alt: var(--color-neutral-800);
+  --color-surface: var(--color-neutral-800);
+  --color-surface-alt: var(--color-neutral-700);
+  
+  --color-text-primary: var(--color-neutral-50);
+  --color-text-secondary: var(--color-neutral-300);
+  --color-text-tertiary: var(--color-neutral-500);
+  
+  --color-border: var(--color-neutral-700);
+  --color-shadow: rgba(0, 0, 0, 0.5);
+}
+
+/* High Contrast Theme */
+[data-theme="high-contrast"] {
+  --color-background: #ffffff;
+  --color-surface: #ffffff;
+  --color-text-primary: #000000;
+  --color-text-secondary: #000000;
+  --color-border: #000000;
+  --color-interactive-primary: #000000;
+  --color-interactive-primary-hover: #333333;
+}
+
+/* Color Utility Classes */
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-tertiary { color: var(--color-text-tertiary); }
+.text-inverse { color: var(--color-text-inverse); }
+
+.bg-surface { background-color: var(--color-surface); }
+.bg-surface-alt { background-color: var(--color-surface-alt); }
+.bg-background { background-color: var(--color-background); }
+.bg-background-alt { background-color: var(--color-background-alt); }
+
+.border-default { border-color: var(--color-border); }
+.border-focus { border-color: var(--color-border-focus); }
+.border-error { border-color: var(--color-border-error); }
+
+/* Status Color Classes */
+.text-success { color: var(--color-success-600); }
+.text-warning { color: var(--color-warning-600); }
+.text-error { color: var(--color-error-600); }
+.text-info { color: var(--color-info-600); }
+
+.bg-success { background-color: var(--color-success-500); }
+.bg-warning { background-color: var(--color-warning-500); }
+.bg-error { background-color: var(--color-error-500); }
+.bg-info { background-color: var(--color-info-500); }

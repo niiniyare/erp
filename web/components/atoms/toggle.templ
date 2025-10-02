@@ -1,0 +1,353 @@
+package atoms
+
+import "strings"
+
+// ToggleSize defines the size of the toggle switch
+type ToggleSize string
+
+const (
+	ToggleSizeSM ToggleSize = "sm"
+	ToggleSizeMD ToggleSize = "md"
+	ToggleSizeLG ToggleSize = "lg"
+)
+
+// ToggleState defines the validation state
+type ToggleState string
+
+const (
+	ToggleStateDefault ToggleState = "default"
+	ToggleStateSuccess ToggleState = "success"
+	ToggleStateError   ToggleState = "error"
+)
+
+// ToggleProps defines the properties for the Toggle component
+type ToggleProps struct {
+	// Content
+	Label       string `json:"label,omitempty"`
+	Value       string `json:"value,omitempty"`
+	HelpText    string `json:"helpText,omitempty"`
+	ErrorText   string `json:"errorText,omitempty"`
+	
+	// Toggle attributes
+	Name        string `json:"name,omitempty"`
+	Checked     bool   `json:"checked,omitempty"`
+	Required    bool   `json:"required,omitempty"`
+	Disabled    bool   `json:"disabled,omitempty"`
+	
+	// Styling
+	Size        ToggleSize  `json:"size"`
+	State       ToggleState `json:"state"`
+	
+	// Behavior
+	OnChange    string `json:"onchange,omitempty"`    // Alpine.js change handler
+	OnFocus     string `json:"onfocus,omitempty"`     // Alpine.js focus handler
+	OnBlur      string `json:"onblur,omitempty"`      // Alpine.js blur handler
+	
+	// HTML attributes
+	ID          string `json:"id,omitempty"`
+	Class       string `json:"class,omitempty"`
+	AriaLabel   string `json:"ariaLabel,omitempty"`
+	AriaDescribedBy string `json:"ariaDescribedBy,omitempty"`
+	DataTestID  string `json:"dataTestId,omitempty"`
+	
+	// Layout
+	LabelPosition string `json:"labelPosition,omitempty"` // "right" (default), "left"
+	
+	// Validation
+	ShowValidation bool `json:"showValidation,omitempty"`
+}
+
+// Toggle renders a Flowbite-styled toggle switch
+templ Toggle(props ToggleProps) {
+	<div class={ getToggleWrapperClasses(props) }>
+		<div class="flex items-center">
+			if props.LabelPosition == "left" && props.Label != "" {
+				<label 
+					if props.ID != "" {
+						for={ props.ID }
+					}
+					class={ getToggleLabelClasses(props, "left") }
+				>
+					{ props.Label }
+					if props.Required {
+						<span class="text-red-500 ml-1">*</span>
+					}
+				</label>
+			}
+			
+			<label class={ getToggleSwitchLabelClasses(props) }>
+				<input
+					type="checkbox"
+					if props.ID != "" {
+						id={ props.ID }
+					}
+					if props.Name != "" {
+						name={ props.Name }
+					}
+					if props.Value != "" {
+						value={ props.Value }
+					}
+					class="sr-only peer"
+					if props.Checked {
+						checked
+					}
+					if props.Required {
+						required
+					}
+					if props.Disabled {
+						disabled
+					}
+					if props.AriaLabel != "" {
+						aria-label={ props.AriaLabel }
+					}
+					if props.AriaDescribedBy != "" {
+						aria-describedby={ props.AriaDescribedBy }
+					}
+					if props.DataTestID != "" {
+						data-testid={ props.DataTestID }
+					}
+					if props.OnChange != "" {
+						@change={ props.OnChange }
+					}
+					if props.OnFocus != "" {
+						@focus={ props.OnFocus }
+					}
+					if props.OnBlur != "" {
+						@blur={ props.OnBlur }
+					}
+				/>
+				<div class={ getToggleTrackClasses(props) }></div>
+			</label>
+			
+			if props.LabelPosition != "left" && props.Label != "" {
+				<label 
+					if props.ID != "" {
+						for={ props.ID }
+					}
+					class={ getToggleLabelClasses(props, "right") }
+				>
+					{ props.Label }
+					if props.Required {
+						<span class="text-red-500 ml-1">*</span>
+					}
+				</label>
+			}
+		</div>
+		
+		if props.ShowValidation && (props.HelpText != "" || props.ErrorText != "") {
+			@ToggleFeedback(props)
+		}
+	</div>
+}
+
+// ToggleFeedback renders help text or error messages
+templ ToggleFeedback(props ToggleProps) {
+	if props.State == ToggleStateError && props.ErrorText != "" {
+		<p class="mt-2 text-sm text-red-600 dark:text-red-500">
+			<span class="font-medium">Error:</span> { props.ErrorText }
+		</p>
+	} else if props.State == ToggleStateSuccess && props.HelpText != "" {
+		<p class="mt-2 text-sm text-green-600 dark:text-green-500">
+			<span class="font-medium">Success:</span> { props.HelpText }
+		</p>
+	} else if props.HelpText != "" {
+		<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+			{ props.HelpText }
+		</p>
+	}
+}
+
+// Helper functions
+func getToggleWrapperClasses(props ToggleProps) string {
+	classes := []string{"mb-4"}
+	
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getToggleSwitchLabelClasses(props ToggleProps) string {
+	classes := []string{
+		"relative",
+		"inline-flex",
+		"items-center",
+	}
+	
+	if props.Disabled {
+		classes = append(classes, "cursor-not-allowed")
+	} else {
+		classes = append(classes, "cursor-pointer")
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getToggleLabelClasses(props ToggleProps, position string) string {
+	classes := []string{
+		"font-medium",
+		"select-none",
+	}
+	
+	// Add size-specific text classes
+	switch props.Size {
+	case ToggleSizeSM:
+		classes = append(classes, "text-xs")
+	case ToggleSizeLG:
+		classes = append(classes, "text-base")
+	default:
+		classes = append(classes, "text-sm")
+	}
+	
+	// Add position-specific spacing
+	if position == "left" {
+		classes = append(classes, "me-3")
+	} else {
+		classes = append(classes, "ms-3")
+	}
+	
+	// Add state-specific colors
+	switch props.State {
+	case ToggleStateError:
+		classes = append(classes, "text-red-900", "dark:text-red-400")
+	case ToggleStateSuccess:
+		classes = append(classes, "text-green-900", "dark:text-green-400")
+	default:
+		classes = append(classes, "text-gray-900", "dark:text-gray-300")
+	}
+	
+	// Add disabled styling
+	if props.Disabled {
+		classes = append(classes, "opacity-50", "cursor-not-allowed")
+	} else {
+		classes = append(classes, "cursor-pointer")
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getToggleTrackClasses(props ToggleProps) string {
+	baseClasses := []string{
+		"relative",
+		"rounded-full",
+		"transition-colors",
+		"duration-200",
+		"ease-in-out",
+		"focus:outline-none",
+		"focus:ring-4",
+		"focus:ring-offset-2",
+		"focus:ring-offset-white",
+		"dark:focus:ring-offset-gray-800",
+	}
+	
+	// Add size-specific classes
+	sizeClasses := getToggleSizeClasses(props.Size)
+	baseClasses = append(baseClasses, sizeClasses...)
+	
+	// Add state-specific classes
+	stateClasses := getToggleStateClasses(props.State)
+	baseClasses = append(baseClasses, stateClasses...)
+	
+	// Add disabled classes
+	if props.Disabled {
+		baseClasses = append(baseClasses, "opacity-50", "cursor-not-allowed")
+	}
+	
+	return strings.Join(baseClasses, " ")
+}
+
+func getToggleSizeClasses(size ToggleSize) []string {
+	switch size {
+	case ToggleSizeSM:
+		return []string{
+			"w-9", "h-5",
+			"after:content-['']",
+			"after:absolute",
+			"after:top-[2px]",
+			"after:start-[2px]",
+			"after:bg-white",
+			"after:border-gray-300",
+			"after:border",
+			"after:rounded-full",
+			"after:h-4",
+			"after:w-4",
+			"after:transition-all",
+			"after:duration-200",
+			"after:ease-in-out",
+			"peer-checked:after:translate-x-full",
+			"rtl:peer-checked:after:-translate-x-full",
+			"peer-checked:after:border-white",
+		}
+	case ToggleSizeLG:
+		return []string{
+			"w-14", "h-7",
+			"after:content-['']",
+			"after:absolute",
+			"after:top-0.5",
+			"after:start-[4px]",
+			"after:bg-white",
+			"after:border-gray-300",
+			"after:border",
+			"after:rounded-full",
+			"after:h-6",
+			"after:w-6",
+			"after:transition-all",
+			"after:duration-200",
+			"after:ease-in-out",
+			"peer-checked:after:translate-x-full",
+			"rtl:peer-checked:after:-translate-x-full",
+			"peer-checked:after:border-white",
+		}
+	default: // MD
+		return []string{
+			"w-11", "h-6",
+			"after:content-['']",
+			"after:absolute",
+			"after:top-[2px]",
+			"after:start-[2px]",
+			"after:bg-white",
+			"after:border-gray-300",
+			"after:border",
+			"after:rounded-full",
+			"after:h-5",
+			"after:w-5",
+			"after:transition-all",
+			"after:duration-200",
+			"after:ease-in-out",
+			"peer-checked:after:translate-x-full",
+			"rtl:peer-checked:after:-translate-x-full",
+			"peer-checked:after:border-white",
+		}
+	}
+}
+
+func getToggleStateClasses(state ToggleState) []string {
+	switch state {
+	case ToggleStateError:
+		return []string{
+			"bg-red-200",
+			"peer-focus:ring-red-300",
+			"dark:bg-red-700",
+			"peer-checked:bg-red-600",
+			"peer-checked:peer-focus:ring-red-300",
+		}
+	case ToggleStateSuccess:
+		return []string{
+			"bg-green-200",
+			"peer-focus:ring-green-300",
+			"dark:bg-green-700",
+			"peer-checked:bg-green-600",
+			"peer-checked:peer-focus:ring-green-300",
+		}
+	default:
+		return []string{
+			"bg-gray-200",
+			"peer-focus:ring-blue-300",
+			"dark:bg-gray-700",
+			"peer-checked:bg-blue-600",
+			"peer-checked:peer-focus:ring-blue-300",
+			"dark:peer-focus:ring-blue-800",
+		}
+	}
+}

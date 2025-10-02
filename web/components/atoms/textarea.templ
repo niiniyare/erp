@@ -1,0 +1,298 @@
+package atoms
+
+import "strings"
+
+// TextareaSize defines the size of the textarea
+type TextareaSize string
+
+const (
+	TextareaSizeSM TextareaSize = "sm"
+	TextareaSizeMD TextareaSize = "md"
+	TextareaSizeLG TextareaSize = "lg"
+)
+
+// TextareaState defines the validation state
+type TextareaState string
+
+const (
+	TextareaStateDefault TextareaState = "default"
+	TextareaStateSuccess TextareaState = "success"
+	TextareaStateError   TextareaState = "error"
+)
+
+// TextareaProps defines the properties for the Textarea component
+type TextareaProps struct {
+	// Content
+	Label       string `json:"label,omitempty"`
+	Value       string `json:"value,omitempty"`
+	Placeholder string `json:"placeholder,omitempty"`
+	HelpText    string `json:"helpText,omitempty"`
+	ErrorText   string `json:"errorText,omitempty"`
+	
+	// Textarea attributes
+	Name        string `json:"name,omitempty"`
+	Rows        int    `json:"rows,omitempty"`
+	Cols        int    `json:"cols,omitempty"`
+	Required    bool   `json:"required,omitempty"`
+	Disabled    bool   `json:"disabled,omitempty"`
+	ReadOnly    bool   `json:"readonly,omitempty"`
+	AutoFocus   bool   `json:"autofocus,omitempty"`
+	MinLength   int    `json:"minlength,omitempty"`
+	MaxLength   int    `json:"maxlength,omitempty"`
+	Wrap        string `json:"wrap,omitempty"` // "soft", "hard", "off"
+	
+	// Styling
+	Size        TextareaSize  `json:"size"`
+	State       TextareaState `json:"state"`
+	Resizable   bool          `json:"resizable,omitempty"`
+	
+	// Behavior
+	OnChange    string `json:"onchange,omitempty"`    // Alpine.js change handler
+	OnInput     string `json:"oninput,omitempty"`     // Alpine.js input handler
+	OnFocus     string `json:"onfocus,omitempty"`     // Alpine.js focus handler
+	OnBlur      string `json:"onblur,omitempty"`      // Alpine.js blur handler
+	
+	// HTML attributes
+	ID          string `json:"id,omitempty"`
+	Class       string `json:"class,omitempty"`
+	AriaLabel   string `json:"ariaLabel,omitempty"`
+	AriaDescribedBy string `json:"ariaDescribedBy,omitempty"`
+	DataTestID  string `json:"dataTestId,omitempty"`
+	
+	// Validation
+	ShowValidation bool `json:"showValidation,omitempty"`
+}
+
+// Textarea renders a Flowbite-styled textarea with various sizes and states
+templ Textarea(props TextareaProps) {
+	<div class={ getTextareaWrapperClasses(props) }>
+		if props.Label != "" {
+			<label 
+				if props.ID != "" {
+					for={ props.ID }
+				}
+				class={ getTextareaLabelClasses(props) }
+			>
+				{ props.Label }
+				if props.Required {
+					<span class="text-red-500 ml-1">*</span>
+				}
+			</label>
+		}
+		<textarea
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			if props.Name != "" {
+				name={ props.Name }
+			}
+			if props.Placeholder != "" {
+				placeholder={ props.Placeholder }
+			}
+			if props.Rows > 0 {
+				rows={ string(rune(props.Rows)) }
+			} else {
+				rows="4"
+			}
+			if props.Cols > 0 {
+				cols={ string(rune(props.Cols)) }
+			}
+			class={ getTextareaClasses(props) }
+			if props.Required {
+				required
+			}
+			if props.Disabled {
+				disabled
+			}
+			if props.ReadOnly {
+				readonly
+			}
+			if props.AutoFocus {
+				autofocus
+			}
+			if props.MinLength > 0 {
+				minlength={ string(rune(props.MinLength)) }
+			}
+			if props.MaxLength > 0 {
+				maxlength={ string(rune(props.MaxLength)) }
+			}
+			if props.Wrap != "" {
+				wrap={ props.Wrap }
+			}
+			if props.AriaLabel != "" {
+				aria-label={ props.AriaLabel }
+			}
+			if props.AriaDescribedBy != "" {
+				aria-describedby={ props.AriaDescribedBy }
+			}
+			if props.DataTestID != "" {
+				data-testid={ props.DataTestID }
+			}
+			if props.OnChange != "" {
+				@change={ props.OnChange }
+			}
+			if props.OnInput != "" {
+				@input={ props.OnInput }
+			}
+			if props.OnFocus != "" {
+				@focus={ props.OnFocus }
+			}
+			if props.OnBlur != "" {
+				@blur={ props.OnBlur }
+			}
+		>{ props.Value }</textarea>
+		if props.ShowValidation && (props.HelpText != "" || props.ErrorText != "") {
+			@TextareaFeedback(props)
+		}
+	</div>
+}
+
+// TextareaFeedback renders help text or error messages
+templ TextareaFeedback(props TextareaProps) {
+	if props.State == TextareaStateError && props.ErrorText != "" {
+		<p class="mt-2 text-sm text-red-600 dark:text-red-500">
+			<span class="font-medium">Error:</span> { props.ErrorText }
+		</p>
+	} else if props.State == TextareaStateSuccess && props.HelpText != "" {
+		<p class="mt-2 text-sm text-green-600 dark:text-green-500">
+			<span class="font-medium">Success:</span> { props.HelpText }
+		</p>
+	} else if props.HelpText != "" {
+		<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+			{ props.HelpText }
+		</p>
+	}
+}
+
+// Helper functions
+func getTextareaWrapperClasses(props TextareaProps) string {
+	classes := []string{"mb-5"}
+	
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getTextareaLabelClasses(props TextareaProps) string {
+	classes := []string{
+		"block",
+		"mb-2",
+		"font-medium",
+	}
+	
+	// Add size-specific text classes
+	switch props.Size {
+	case TextareaSizeSM:
+		classes = append(classes, "text-xs")
+	case TextareaSizeLG:
+		classes = append(classes, "text-base")
+	default:
+		classes = append(classes, "text-sm")
+	}
+	
+	// Add state-specific colors
+	switch props.State {
+	case TextareaStateError:
+		classes = append(classes, "text-red-900", "dark:text-red-400")
+	case TextareaStateSuccess:
+		classes = append(classes, "text-green-900", "dark:text-green-400")
+	default:
+		classes = append(classes, "text-gray-900", "dark:text-white")
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getTextareaClasses(props TextareaProps) string {
+	classes := []string{
+		"block",
+		"w-full",
+		"border",
+		"rounded-lg",
+		"focus:outline-none",
+		"transition-colors",
+		"duration-200",
+	}
+	
+	// Add size classes
+	classes = append(classes, getTextareaSizeClasses(props.Size)...)
+	
+	// Add state-specific classes
+	classes = append(classes, getTextareaStateClasses(props.State)...)
+	
+	// Add resize classes
+	if !props.Resizable {
+		classes = append(classes, "resize-none")
+	} else {
+		classes = append(classes, "resize-y")
+	}
+	
+	// Add disabled classes
+	if props.Disabled {
+		classes = append(classes, "opacity-50", "cursor-not-allowed")
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getTextareaSizeClasses(size TextareaSize) []string {
+	switch size {
+	case TextareaSizeSM:
+		return []string{"p-2", "text-xs"}
+	case TextareaSizeLG:
+		return []string{"p-4", "text-base"}
+	default: // MD
+		return []string{"p-2.5", "text-sm"}
+	}
+}
+
+func getTextareaStateClasses(state TextareaState) []string {
+	switch state {
+	case TextareaStateError:
+		return []string{
+			"bg-red-50",
+			"border-red-500",
+			"text-red-900",
+			"placeholder-red-700",
+			"focus:ring-red-500",
+			"focus:border-red-500",
+			"dark:bg-gray-700",
+			"dark:border-red-500",
+			"dark:placeholder-red-500",
+			"dark:text-red-500",
+			"dark:focus:ring-red-500",
+			"dark:focus:border-red-500",
+		}
+	case TextareaStateSuccess:
+		return []string{
+			"bg-green-50",
+			"border-green-500",
+			"text-green-900",
+			"placeholder-green-700",
+			"focus:ring-green-500",
+			"focus:border-green-500",
+			"dark:bg-gray-700",
+			"dark:border-green-500",
+			"dark:placeholder-green-500",
+			"dark:text-green-400",
+			"dark:focus:ring-green-500",
+			"dark:focus:border-green-500",
+		}
+	default:
+		return []string{
+			"bg-gray-50",
+			"border-gray-300",
+			"text-gray-900",
+			"focus:ring-blue-500",
+			"focus:border-blue-500",
+			"dark:bg-gray-700",
+			"dark:border-gray-600",
+			"dark:placeholder-gray-400",
+			"dark:text-white",
+			"dark:focus:ring-blue-500",
+			"dark:focus:border-blue-500",
+		}
+	}
+}

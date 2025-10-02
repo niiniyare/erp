@@ -1,0 +1,163 @@
+package atoms
+
+import "strings"
+
+// SpinnerSize defines the size of the spinner
+type SpinnerSize string
+
+const (
+	SpinnerSizeXS SpinnerSize = "xs"
+	SpinnerSizeSM SpinnerSize = "sm"
+	SpinnerSizeMD SpinnerSize = "md"
+	SpinnerSizeLG SpinnerSize = "lg"
+	SpinnerSizeXL SpinnerSize = "xl"
+)
+
+// SpinnerProps defines the properties for the Spinner component
+type SpinnerProps struct {
+	// Styling
+	Size        SpinnerSize `json:"size"`
+	Color       string      `json:"color,omitempty"`     // "blue", "gray", "green", "red", "yellow", "pink", "purple"
+	Class       string      `json:"class,omitempty"`
+	
+	// Content
+	Label       string      `json:"label,omitempty"`     // Screen reader label
+	
+	// HTML attributes
+	ID          string      `json:"id,omitempty"`
+	AriaLabel   string      `json:"ariaLabel,omitempty"`
+	DataTestID  string      `json:"dataTestId,omitempty"`
+}
+
+// Spinner renders a Flowbite-styled loading spinner
+templ Spinner(props SpinnerProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ getSpinnerClasses(props) }
+		role="status"
+		if props.AriaLabel != "" {
+			aria-label={ props.AriaLabel }
+		}
+		if props.DataTestID != "" {
+			data-testid={ props.DataTestID }
+		}
+	>
+		<svg class="animate-spin" fill="none" viewBox="0 0 24 24">
+			<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+			<path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+		</svg>
+		if props.Label != "" {
+			<span class="sr-only">{ props.Label }</span>
+		} else {
+			<span class="sr-only">Loading...</span>
+		}
+	</div>
+}
+
+// SpinnerOverlay renders a full-screen loading overlay with spinner
+templ SpinnerOverlay(props SpinnerProps) {
+	<div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-50">
+		<div class="bg-white rounded-lg p-6 shadow-lg dark:bg-gray-800">
+			@Spinner(SpinnerProps{
+				Size:      props.Size,
+				Color:     props.Color,
+				Label:     props.Label,
+				AriaLabel: props.AriaLabel,
+				Class:     "mb-4",
+			})
+			if props.Label != "" {
+				<p class="text-gray-700 dark:text-gray-300 text-center">{ props.Label }</p>
+			}
+		</div>
+	</div>
+}
+
+// SpinnerButton renders a spinner specifically sized for buttons
+templ SpinnerButton(size ButtonSize) {
+	@Spinner(SpinnerProps{
+		Size:  getSpinnerSizeForButton(size),
+		Color: "white",
+		Label: "Loading...",
+	})
+}
+
+// Helper functions
+func getSpinnerClasses(props SpinnerProps) string {
+	classes := []string{
+		"inline",
+		"text-gray-200",
+		"animate-spin",
+		"dark:text-gray-600",
+		"fill-blue-600",
+	}
+	
+	// Add size classes
+	classes = append(classes, getSpinnerSizeClasses(props.Size)...)
+	
+	// Add color classes
+	if props.Color != "" {
+		classes = append(classes, getSpinnerColorClasses(props.Color)...)
+	}
+	
+	// Add custom classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getSpinnerSizeClasses(size SpinnerSize) []string {
+	switch size {
+	case SpinnerSizeXS:
+		return []string{"w-3", "h-3"}
+	case SpinnerSizeSM:
+		return []string{"w-4", "h-4"}
+	case SpinnerSizeLG:
+		return []string{"w-8", "h-8"}
+	case SpinnerSizeXL:
+		return []string{"w-10", "h-10"}
+	default: // MD
+		return []string{"w-6", "h-6"}
+	}
+}
+
+func getSpinnerColorClasses(color string) []string {
+	switch color {
+	case "blue":
+		return []string{"text-blue-200", "fill-blue-600", "dark:text-blue-600"}
+	case "gray":
+		return []string{"text-gray-200", "fill-gray-600", "dark:text-gray-600"}
+	case "green":
+		return []string{"text-green-200", "fill-green-600", "dark:text-green-600"}
+	case "red":
+		return []string{"text-red-200", "fill-red-600", "dark:text-red-600"}
+	case "yellow":
+		return []string{"text-yellow-200", "fill-yellow-600", "dark:text-yellow-600"}
+	case "pink":
+		return []string{"text-pink-200", "fill-pink-600", "dark:text-pink-600"}
+	case "purple":
+		return []string{"text-purple-200", "fill-purple-600", "dark:text-purple-600"}
+	case "white":
+		return []string{"text-gray-300", "fill-white"}
+	default:
+		return []string{"text-gray-200", "fill-blue-600", "dark:text-gray-600"}
+	}
+}
+
+func getSpinnerSizeForButton(buttonSize ButtonSize) SpinnerSize {
+	switch buttonSize {
+	case ButtonSizeXS:
+		return SpinnerSizeXS
+	case ButtonSizeSM:
+		return SpinnerSizeSM
+	case ButtonSizeLG:
+		return SpinnerSizeLG
+	case ButtonSizeXL:
+		return SpinnerSizeXL
+	default:
+		return SpinnerSizeSM
+	}
+}

@@ -456,7 +456,7 @@ func (ch *CacheHierarchy) Get(key string) (interface{}, error) {
 **COMPONENT HIERARCHY:**
 ```
 Application Layer (Pages)
-├── Templates (Page layouts)
+├── Module (Module/Service Page layouts)
 ├── Organisms (Complex sections)
 │   ├── Data tables with filters
 │   ├── Multi-step forms

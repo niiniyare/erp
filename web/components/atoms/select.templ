@@ -1,0 +1,305 @@
+package atoms
+
+import "strings"
+
+// SelectSize defines the size of the select
+type SelectSize string
+
+const (
+	SelectSizeSM SelectSize = "sm"
+	SelectSizeMD SelectSize = "md"
+	SelectSizeLG SelectSize = "lg"
+)
+
+// SelectState defines the validation state
+type SelectState string
+
+const (
+	SelectStateDefault SelectState = "default"
+	SelectStateSuccess SelectState = "success"
+	SelectStateError   SelectState = "error"
+)
+
+// SelectOption represents a single option in the select
+type SelectOption struct {
+	Value    string `json:"value"`
+	Label    string `json:"label"`
+	Disabled bool   `json:"disabled,omitempty"`
+	Selected bool   `json:"selected,omitempty"`
+}
+
+// SelectOptGroup represents an option group
+type SelectOptGroup struct {
+	Label   string         `json:"label"`
+	Options []SelectOption `json:"options"`
+}
+
+// SelectProps defines the properties for the Select component
+type SelectProps struct {
+	// Content
+	Label       string           `json:"label,omitempty"`
+	Value       string           `json:"value,omitempty"`
+	Placeholder string           `json:"placeholder,omitempty"`
+	HelpText    string           `json:"helpText,omitempty"`
+	ErrorText   string           `json:"errorText,omitempty"`
+	Options     []SelectOption   `json:"options,omitempty"`
+	OptGroups   []SelectOptGroup `json:"optGroups,omitempty"`
+	
+	// Select attributes
+	Name        string `json:"name,omitempty"`
+	Required    bool   `json:"required,omitempty"`
+	Disabled    bool   `json:"disabled,omitempty"`
+	Multiple    bool   `json:"multiple,omitempty"`
+	Size        int    `json:"size,omitempty"` // HTML size attribute for multiple
+	
+	// Styling
+	SelectSize  SelectSize  `json:"selectSize"`
+	State       SelectState `json:"state"`
+	
+	// Behavior
+	OnChange    string `json:"onchange,omitempty"`    // Alpine.js change handler
+	OnFocus     string `json:"onfocus,omitempty"`     // Alpine.js focus handler
+	OnBlur      string `json:"onblur,omitempty"`      // Alpine.js blur handler
+	
+	// HTML attributes
+	ID          string `json:"id,omitempty"`
+	Class       string `json:"class,omitempty"`
+	AriaLabel   string `json:"ariaLabel,omitempty"`
+	AriaDescribedBy string `json:"ariaDescribedBy,omitempty"`
+	DataTestID  string `json:"dataTestId,omitempty"`
+	
+	// Validation
+	ShowValidation bool `json:"showValidation,omitempty"`
+}
+
+// Select renders a Flowbite-styled select with various sizes and states
+templ Select(props SelectProps) {
+	<div class={ getSelectWrapperClasses(props) }>
+		if props.Label != "" {
+			<label 
+				if props.ID != "" {
+					for={ props.ID }
+				}
+				class={ getSelectLabelClasses(props) }
+			>
+				{ props.Label }
+				if props.Required {
+					<span class="text-red-500 ml-1">*</span>
+				}
+			</label>
+		}
+		<select
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			if props.Name != "" {
+				name={ props.Name }
+			}
+			class={ getSelectClasses(props) }
+			if props.Required {
+				required
+			}
+			if props.Disabled {
+				disabled
+			}
+			if props.Multiple {
+				multiple
+			}
+			if props.Size > 0 && props.Multiple {
+				size={ string(rune(props.Size)) }
+			}
+			if props.AriaLabel != "" {
+				aria-label={ props.AriaLabel }
+			}
+			if props.AriaDescribedBy != "" {
+				aria-describedby={ props.AriaDescribedBy }
+			}
+			if props.DataTestID != "" {
+				data-testid={ props.DataTestID }
+			}
+			if props.OnChange != "" {
+				@change={ props.OnChange }
+			}
+			if props.OnFocus != "" {
+				@focus={ props.OnFocus }
+			}
+			if props.OnBlur != "" {
+				@blur={ props.OnBlur }
+			}
+		>
+			if props.Placeholder != "" && !props.Multiple {
+				<option value="" disabled selected>{ props.Placeholder }</option>
+			}
+			
+			if len(props.OptGroups) > 0 {
+				for _, group := range props.OptGroups {
+					<optgroup label={ group.Label }>
+						for _, option := range group.Options {
+							@SelectOptionElement(option, props.Value)
+						}
+					</optgroup>
+				}
+			} else {
+				for _, option := range props.Options {
+					@SelectOptionElement(option, props.Value)
+				}
+			}
+		</select>
+		if props.ShowValidation && (props.HelpText != "" || props.ErrorText != "") {
+			@SelectFeedback(props)
+		}
+	</div>
+}
+
+// SelectOptionElement renders a single option element
+templ SelectOptionElement(option SelectOption, selectedValue string) {
+	<option 
+		value={ option.Value }
+		if option.Disabled {
+			disabled
+		}
+		if option.Selected || option.Value == selectedValue {
+			selected
+		}
+	>
+		{ option.Label }
+	</option>
+}
+
+// SelectFeedback renders help text or error messages
+templ SelectFeedback(props SelectProps) {
+	if props.State == SelectStateError && props.ErrorText != "" {
+		<p class="mt-2 text-sm text-red-600 dark:text-red-500">
+			<span class="font-medium">Error:</span> { props.ErrorText }
+		</p>
+	} else if props.State == SelectStateSuccess && props.HelpText != "" {
+		<p class="mt-2 text-sm text-green-600 dark:text-green-500">
+			<span class="font-medium">Success:</span> { props.HelpText }
+		</p>
+	} else if props.HelpText != "" {
+		<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+			{ props.HelpText }
+		</p>
+	}
+}
+
+// Helper functions
+func getSelectWrapperClasses(props SelectProps) string {
+	classes := []string{"mb-5"}
+	
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getSelectLabelClasses(props SelectProps) string {
+	classes := []string{
+		"block",
+		"mb-2",
+		"font-medium",
+	}
+	
+	// Add size-specific text classes
+	switch props.SelectSize {
+	case SelectSizeSM:
+		classes = append(classes, "text-xs")
+	case SelectSizeLG:
+		classes = append(classes, "text-base")
+	default:
+		classes = append(classes, "text-sm")
+	}
+	
+	// Add state-specific colors
+	switch props.State {
+	case SelectStateError:
+		classes = append(classes, "text-red-900", "dark:text-red-400")
+	case SelectStateSuccess:
+		classes = append(classes, "text-green-900", "dark:text-green-400")
+	default:
+		classes = append(classes, "text-gray-900", "dark:text-white")
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getSelectClasses(props SelectProps) string {
+	classes := []string{
+		"block",
+		"w-full",
+		"border",
+		"rounded-lg",
+		"focus:outline-none",
+		"transition-colors",
+		"duration-200",
+	}
+	
+	// Add size classes
+	classes = append(classes, getSelectSizeClasses(props.SelectSize)...)
+	
+	// Add state-specific classes
+	classes = append(classes, getSelectStateClasses(props.State)...)
+	
+	// Add disabled classes
+	if props.Disabled {
+		classes = append(classes, "opacity-50", "cursor-not-allowed")
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getSelectSizeClasses(size SelectSize) []string {
+	switch size {
+	case SelectSizeSM:
+		return []string{"p-2", "text-xs"}
+	case SelectSizeLG:
+		return []string{"p-4", "text-base"}
+	default: // MD
+		return []string{"p-2.5", "text-sm"}
+	}
+}
+
+func getSelectStateClasses(state SelectState) []string {
+	switch state {
+	case SelectStateError:
+		return []string{
+			"bg-red-50",
+			"border-red-500",
+			"text-red-900",
+			"focus:ring-red-500",
+			"focus:border-red-500",
+			"dark:bg-gray-700",
+			"dark:border-red-500",
+			"dark:text-red-500",
+			"dark:focus:ring-red-500",
+			"dark:focus:border-red-500",
+		}
+	case SelectStateSuccess:
+		return []string{
+			"bg-green-50",
+			"border-green-500",
+			"text-green-900",
+			"focus:ring-green-500",
+			"focus:border-green-500",
+			"dark:bg-gray-700",
+			"dark:border-green-500",
+			"dark:text-green-400",
+			"dark:focus:ring-green-500",
+			"dark:focus:border-green-500",
+		}
+	default:
+		return []string{
+			"bg-gray-50",
+			"border-gray-300",
+			"text-gray-900",
+			"focus:ring-blue-500",
+			"focus:border-blue-500",
+			"dark:bg-gray-700",
+			"dark:border-gray-600",
+			"dark:text-white",
+			"dark:focus:ring-blue-500",
+			"dark:focus:border-blue-500",
+		}
+	}
+}
