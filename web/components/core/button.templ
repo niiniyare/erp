@@ -1,6 +1,9 @@
 package core
 
-import "strings"
+import (
+	"strings"
+	"github.com/a-h/templ"
+)
 
 // ButtonProps defines the properties for the Button component
 type ButtonProps struct {
@@ -14,7 +17,7 @@ type ButtonProps struct {
 	ID          string `json:"id"`
 	Class       string `json:"class"`
 	AriaLabel   string `json:"aria_label"`
-	OnClick     string `json:"onclick"`
+	OnClick     templ.ComponentScript `json:"onclick"`
 	HXPost      string `json:"hx_post"`
 	HXTarget    string `json:"hx_target"`
 	HXSwap      string `json:"hx_swap"`
@@ -34,7 +37,7 @@ templ Button(props ButtonProps) {
 		if props.AriaLabel != "" {
 			aria-label={ props.AriaLabel }
 		}
-		if props.OnClick != "" {
+		if props.OnClick.Call != "" {
 			onclick={ props.OnClick }
 		}
 		if props.HXPost != "" {

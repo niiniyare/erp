@@ -128,8 +128,13 @@ sqlc-lint: ## 🔍 Lint SQL queries
 .PHONY: templ
 templ: 
 	@echo "$(BLUE)Generating Templ code...$(NC)"
-	@templ generate ./internal/ui/...
+	@templ generate ./web/...
 	@echo "$(GREEN)Templ code generation complete$(NC)"
+	@echo "$(BLUE)compilig TypeScript...$(NC)"
+	@tsc --noEmit
+	@echo "$(GREEN)TypeScript compilation successful!$(NC)"
+
+
 
 .PHONY: templ-fmt 
 templ-fmt:

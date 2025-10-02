@@ -185,3 +185,9 @@ npm run preview         # Preview production build
 
 ## Code Guidelines
 - Always use descriptive variable names
+
+## Commit Message Guidelines
+- When writing commit messages, aim to sound human and concise
+- Avoid mentioning "claude" in the commit message
+- Focus on describing the change briefly and clearly
+- Leave git command handling to the user
