@@ -191,3 +191,4 @@ npm run preview         # Preview production build
 - Avoid mentioning "claude" in the commit message
 - Focus on describing the change briefly and clearly
 - Leave git command handling to the user
+- Always ensure commit messages are human-written and authentic
