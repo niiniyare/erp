@@ -102,7 +102,7 @@ templ Button(props ButtonProps) {
 	>
 		if props.Loading {
 			<div class="flex items-center">
-				@Spinner(SpinnerProps{Size: "sm", Class: "me-2"})
+				@Spinner(SpinnerProps{Size: getButtonSpinnerSize(props.Size), Class: "me-2"})
 				<span>Loading...</span>
 			</div>
 		} else {
@@ -153,7 +153,7 @@ templ IconButton(props ButtonProps) {
 		}
 	>
 		if props.Loading {
-			@Spinner(SpinnerProps{Size: getIconSizeForButton(props.Size)})
+			@Spinner(SpinnerProps{Size: getButtonSpinnerSize(props.Size)})
 		} else {
 			@Icon(IconProps{Name: props.Icon, Size: getIconSizeForButton(props.Size)})
 		}
@@ -479,17 +479,32 @@ func getIconButtonSizeClasses(size ButtonSize) []string {
 	}
 }
 
-func getIconSizeForButton(buttonSize ButtonSize) string {
+func getIconSizeForButton(buttonSize ButtonSize) IconSize {
 	switch buttonSize {
 	case ButtonSizeXS:
-		return "xs"
+		return IconSizeXS
 	case ButtonSizeSM:
-		return "sm"
+		return IconSizeSM
 	case ButtonSizeLG:
-		return "lg"
+		return IconSizeLG
 	case ButtonSizeXL:
-		return "xl"
+		return IconSizeXL
 	default:
-		return "sm"
+		return IconSizeSM
+	}
+}
+
+func getButtonSpinnerSize(buttonSize ButtonSize) SpinnerSize {
+	switch buttonSize {
+	case ButtonSizeXS:
+		return SpinnerSizeXS
+	case ButtonSizeSM:
+		return SpinnerSizeSM
+	case ButtonSizeLG:
+		return SpinnerSizeLG
+	case ButtonSizeXL:
+		return SpinnerSizeXL
+	default:
+		return SpinnerSizeSM
 	}
 }

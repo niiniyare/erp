@@ -192,3 +192,4 @@ npm run preview         # Preview production build
 - Focus on describing the change briefly and clearly
 - Leave git command handling to the user
 - Always ensure commit messages are human-written and authentic
+- Always when you are writing commit message don't mention claude also make it sound human and short at last just write commit msg and leave the user for the git cmds handling

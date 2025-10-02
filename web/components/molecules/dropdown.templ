@@ -1,0 +1,482 @@
+package molecules
+
+import (
+	"strings"
+	"github.com/niiniyare/erp/web/components/atoms"
+)
+
+// DropdownPlacement defines where the dropdown appears relative to trigger
+type DropdownPlacement string
+
+const (
+	DropdownPlacementBottom      DropdownPlacement = "bottom"
+	DropdownPlacementBottomStart DropdownPlacement = "bottom-start"
+	DropdownPlacementBottomEnd   DropdownPlacement = "bottom-end"
+	DropdownPlacementTop         DropdownPlacement = "top"
+	DropdownPlacementTopStart    DropdownPlacement = "top-start"
+	DropdownPlacementTopEnd      DropdownPlacement = "top-end"
+	DropdownPlacementLeft        DropdownPlacement = "left"
+	DropdownPlacementRight       DropdownPlacement = "right"
+)
+
+// DropdownItem represents a single item in the dropdown
+type DropdownItem struct {
+	ID          string `json:"id,omitempty"`
+	Text        string `json:"text"`
+	Description string `json:"description,omitempty"`
+	Icon        string `json:"icon,omitempty"`
+	Badge       string `json:"badge,omitempty"`
+	Separator   bool   `json:"separator,omitempty"`
+	Disabled    bool   `json:"disabled,omitempty"`
+	Href        string `json:"href,omitempty"`
+	OnClick     string `json:"onclick,omitempty"`
+	HxPost      string `json:"hxPost,omitempty"`
+	HxGet       string `json:"hxGet,omitempty"`
+	HxTarget    string `json:"hxTarget,omitempty"`
+	HxSwap      string `json:"hxSwap,omitempty"`
+	Class       string `json:"class,omitempty"`
+}
+
+// DropdownProps defines properties for the Dropdown molecule
+type DropdownProps struct {
+	// Trigger configuration
+	TriggerText    string               `json:"triggerText,omitempty"`
+	TriggerIcon    string               `json:"triggerIcon,omitempty"`
+	TriggerVariant atoms.ButtonVariant  `json:"triggerVariant"`
+	TriggerSize    atoms.ButtonSize     `json:"triggerSize"`
+	
+	// Dropdown configuration
+	Items         []DropdownItem     `json:"items"`
+	Placement     DropdownPlacement  `json:"placement"`
+	Width         string             `json:"width,omitempty"` // "auto", "trigger", "sm", "md", "lg", "xl"
+	MaxHeight     string             `json:"maxHeight,omitempty"`
+	
+	// Behavior
+	CloseOnClick  bool   `json:"closeOnClick,omitempty"`
+	SearchEnabled bool   `json:"searchEnabled,omitempty"`
+	SearchPlaceholder string `json:"searchPlaceholder,omitempty"`
+	
+	// HTML attributes
+	ID         string `json:"id,omitempty"`
+	Class      string `json:"class,omitempty"`
+	DataTestID string `json:"dataTestId,omitempty"`
+	
+	// Accessibility
+	AriaLabel  string `json:"ariaLabel,omitempty"`
+	
+	// Behavior
+	OnToggle   string `json:"onToggle,omitempty"`   // Alpine.js toggle handler
+	OnSelect   string `json:"onSelect,omitempty"`   // Alpine.js selection handler
+}
+
+// Dropdown renders a Flowbite-styled dropdown menu
+templ Dropdown(props DropdownProps) {
+	<div 
+		class="relative inline-block text-left"
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		if props.DataTestID != "" {
+			data-testid={ props.DataTestID }
+		}
+		x-data={ getDropdownAlpineData(props) }
+		@click.away="close()"
+		@keydown.escape="close()"
+	>
+		<!-- Trigger Button -->
+		<button
+			type="button"
+			class={ getDropdownTriggerClasses(props) }
+			@click="toggle()"
+			if props.OnToggle != "" {
+				@click={ props.OnToggle }
+			}
+			aria-expanded="false"
+			x-bind:aria-expanded="open"
+			if props.AriaLabel != "" {
+				aria-label={ props.AriaLabel }
+			} else {
+				aria-label="Open dropdown menu"
+			}
+			aria-haspopup="true"
+		>
+			<div class="flex items-center">
+				if props.TriggerIcon != "" {
+					@atoms.Icon(atoms.IconProps{
+						Name: props.TriggerIcon,
+						Size: getTriggerIconSize(props.TriggerSize),
+						Class: "mr-2",
+					})
+				}
+				
+				if props.TriggerText != "" {
+					<span>{ props.TriggerText }</span>
+				}
+				
+				<div class="ml-2">
+					@atoms.Icon(atoms.IconProps{
+						Name: "arrow-down",
+						Size: atoms.IconSizeXS,
+						Class: "transform transition-transform duration-200",
+					})
+				</div>
+			</div>
+		</button>
+		
+		<!-- Dropdown Menu -->
+		<div
+			class={ getDropdownMenuClasses(props) }
+			x-show="open"
+			x-transition:enter="transition ease-out duration-100"
+			x-transition:enter-start="transform opacity-0 scale-95"
+			x-transition:enter-end="transform opacity-100 scale-100"
+			x-transition:leave="transition ease-in duration-75"
+			x-transition:leave-start="transform opacity-100 scale-100"
+			x-transition:leave-end="transform opacity-0 scale-95"
+			role="menu"
+			aria-orientation="vertical"
+			style="display: none;"
+		>
+			<div class="py-1">
+				if props.SearchEnabled {
+					@DropdownSearch(props)
+				}
+				
+				for i, item := range props.Items {
+					if item.Separator {
+						<div class="border-t border-gray-100 dark:border-gray-600 my-1"></div>
+					} else {
+						@DropdownMenuItem(item, i, props)
+					}
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// DropdownSearch renders a search input within the dropdown
+templ DropdownSearch(props DropdownProps) {
+	<div class="px-3 pb-2">
+		<div class="relative">
+			<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+				@atoms.Icon(atoms.IconProps{
+					Name: "search",
+					Size: atoms.IconSizeXS,
+					Class: "text-gray-400",
+				})
+			</div>
+			<input
+				type="text"
+				class="block w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-500"
+				if props.SearchPlaceholder != "" {
+					placeholder={ props.SearchPlaceholder }
+				} else {
+					placeholder="Search..."
+				}
+				x-model="searchTerm"
+				@input="filterItems()"
+			/>
+		</div>
+	</div>
+}
+
+// DropdownMenuItem renders a single dropdown menu item
+templ DropdownMenuItem(item DropdownItem, index int, props DropdownProps) {
+	if item.Href != "" {
+		<a
+			href={ item.Href }
+			class={ getDropdownItemClasses(item) }
+			role="menuitem"
+			if item.OnClick != "" {
+				@click={ item.OnClick }
+			}
+			if props.CloseOnClick {
+				@click="close()"
+			}
+			if props.OnSelect != "" {
+				@click={ props.OnSelect }
+			}
+			if item.Disabled {
+				tabindex="-1"
+				aria-disabled="true"
+			}
+		>
+			@DropdownItemContent(item)
+		</a>
+	} else {
+		<button
+			type="button"
+			class={ getDropdownItemClasses(item) }
+			role="menuitem"
+			if item.OnClick != "" {
+				@click={ item.OnClick }
+			}
+			if props.CloseOnClick {
+				@click="close()"
+			}
+			if props.OnSelect != "" {
+				@click={ props.OnSelect }
+			}
+			if item.HxPost != "" {
+				hx-post={ item.HxPost }
+			}
+			if item.HxGet != "" {
+				hx-get={ item.HxGet }
+			}
+			if item.HxTarget != "" {
+				hx-target={ item.HxTarget }
+			}
+			if item.HxSwap != "" {
+				hx-swap={ item.HxSwap }
+			}
+			if item.Disabled {
+				disabled
+				aria-disabled="true"
+			}
+		>
+			@DropdownItemContent(item)
+		</button>
+	}
+}
+
+// DropdownItemContent renders the content of a dropdown item
+templ DropdownItemContent(item DropdownItem) {
+	<div class="flex items-center justify-between w-full">
+		<div class="flex items-center min-w-0 flex-1">
+			if item.Icon != "" {
+				<div class="flex-shrink-0 mr-3">
+					@atoms.Icon(atoms.IconProps{
+						Name: item.Icon,
+						Size: atoms.IconSizeSM,
+						Class: "text-gray-400",
+					})
+				</div>
+			}
+			
+			<div class="min-w-0 flex-1">
+				<div class="text-sm font-medium text-gray-900 dark:text-white truncate">
+					{ item.Text }
+				</div>
+				if item.Description != "" {
+					<div class="text-xs text-gray-500 dark:text-gray-400 truncate">
+						{ item.Description }
+					</div>
+				}
+			</div>
+		</div>
+		
+		if item.Badge != "" {
+			<div class="ml-2 flex-shrink-0">
+				<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+					{ item.Badge }
+				</span>
+			</div>
+		}
+	</div>
+}
+
+// Helper functions
+func getDropdownTriggerClasses(props DropdownProps) string {
+	// Use button atom classes with dropdown-specific modifications
+	classes := []string{
+		"inline-flex",
+		"items-center",
+		"justify-center",
+		"font-medium",
+		"focus:ring-4",
+		"focus:outline-none",
+		"text-center",
+		"transition-colors",
+		"duration-200",
+		"rounded-lg",
+	}
+	
+	// Add variant-specific classes (similar to button atom)
+	switch props.TriggerVariant {
+	case atoms.ButtonSecondary:
+		classes = append(classes,
+			"text-gray-900", "bg-white", "border", "border-gray-200",
+			"hover:bg-gray-100", "hover:text-blue-700",
+			"focus:ring-gray-100", "dark:focus:ring-gray-700",
+			"dark:bg-gray-800", "dark:text-gray-400", "dark:border-gray-600",
+			"dark:hover:text-white", "dark:hover:bg-gray-700",
+		)
+	default: // Primary
+		classes = append(classes,
+			"text-white", "bg-blue-700", "hover:bg-blue-800",
+			"focus:ring-blue-300", "dark:bg-blue-600",
+			"dark:hover:bg-blue-700", "dark:focus:ring-blue-800",
+		)
+	}
+	
+	// Add size-specific classes
+	switch props.TriggerSize {
+	case atoms.ButtonSizeXS:
+		classes = append(classes, "px-3", "py-2", "text-xs")
+	case atoms.ButtonSizeSM:
+		classes = append(classes, "px-3", "py-2", "text-sm")
+	case atoms.ButtonSizeLG:
+		classes = append(classes, "px-5", "py-3", "text-base")
+	case atoms.ButtonSizeXL:
+		classes = append(classes, "px-6", "py-3.5", "text-base")
+	default: // MD
+		classes = append(classes, "px-5", "py-2.5", "text-sm")
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getDropdownMenuClasses(props DropdownProps) string {
+	classes := []string{
+		"absolute",
+		"z-50",
+		"bg-white",
+		"dark:bg-gray-700",
+		"divide-y",
+		"divide-gray-100",
+		"dark:divide-gray-600",
+		"rounded-lg",
+		"shadow",
+		"border",
+		"border-gray-200",
+		"dark:border-gray-600",
+	}
+	
+	// Add placement-specific classes
+	switch props.Placement {
+	case DropdownPlacementTop:
+		classes = append(classes, "bottom-full", "left-1/2", "-translate-x-1/2", "mb-2")
+	case DropdownPlacementTopStart:
+		classes = append(classes, "bottom-full", "left-0", "mb-2")
+	case DropdownPlacementTopEnd:
+		classes = append(classes, "bottom-full", "right-0", "mb-2")
+	case DropdownPlacementLeft:
+		classes = append(classes, "right-full", "top-0", "mr-2")
+	case DropdownPlacementRight:
+		classes = append(classes, "left-full", "top-0", "ml-2")
+	case DropdownPlacementBottomStart:
+		classes = append(classes, "top-full", "left-0", "mt-2")
+	case DropdownPlacementBottomEnd:
+		classes = append(classes, "top-full", "right-0", "mt-2")
+	default: // DropdownPlacementBottom
+		classes = append(classes, "top-full", "left-1/2", "-translate-x-1/2", "mt-2")
+	}
+	
+	// Add width classes
+	switch props.Width {
+	case "trigger":
+		classes = append(classes, "w-full")
+	case "sm":
+		classes = append(classes, "w-48")
+	case "md":
+		classes = append(classes, "w-56")
+	case "lg":
+		classes = append(classes, "w-64")
+	case "xl":
+		classes = append(classes, "w-72")
+	default: // auto
+		classes = append(classes, "min-w-48")
+	}
+	
+	// Add max height
+	if props.MaxHeight != "" {
+		classes = append(classes, "overflow-y-auto")
+	} else {
+		classes = append(classes, "max-h-64", "overflow-y-auto")
+	}
+	
+	// Add custom classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getDropdownItemClasses(item DropdownItem) string {
+	classes := []string{
+		"block",
+		"w-full",
+		"px-4",
+		"py-2",
+		"text-left",
+		"text-sm",
+		"transition-colors",
+		"duration-150",
+	}
+	
+	if item.Disabled {
+		classes = append(classes,
+			"text-gray-400",
+			"cursor-not-allowed",
+			"dark:text-gray-500",
+		)
+	} else {
+		classes = append(classes,
+			"text-gray-700",
+			"hover:bg-gray-100",
+			"hover:text-gray-900",
+			"focus:bg-gray-100",
+			"focus:text-gray-900",
+			"focus:outline-none",
+			"dark:text-gray-200",
+			"dark:hover:bg-gray-600",
+			"dark:hover:text-white",
+			"dark:focus:bg-gray-600",
+			"dark:focus:text-white",
+		)
+	}
+	
+	// Add custom classes
+	if item.Class != "" {
+		classes = append(classes, item.Class)
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getTriggerIconSize(buttonSize atoms.ButtonSize) atoms.IconSize {
+	switch buttonSize {
+	case atoms.ButtonSizeXS:
+		return atoms.IconSizeXS
+	case atoms.ButtonSizeSM:
+		return atoms.IconSizeSM
+	case atoms.ButtonSizeLG:
+		return atoms.IconSizeMD
+	case atoms.ButtonSizeXL:
+		return atoms.IconSizeLG
+	default:
+		return atoms.IconSizeSM
+	}
+}
+
+func getDropdownAlpineData(props DropdownProps) string {
+	data := "{ open: false, searchTerm: ''"
+	
+	if props.SearchEnabled {
+		data += ", filteredItems: []"
+		data += ", init() { this.filteredItems = this.getAllItems(); }"
+		data += ", getAllItems() { return " + getItemsJSON(props.Items) + "; }"
+		data += ", filterItems() { this.filteredItems = this.getAllItems().filter(item => item.text.toLowerCase().includes(this.searchTerm.toLowerCase())); }"
+	}
+	
+	data += ", toggle() { this.open = !this.open; }"
+	data += ", close() { this.open = false; this.searchTerm = ''; }"
+	data += " }"
+	
+	return data
+}
+
+func getItemsJSON(items []DropdownItem) string {
+	// Simplified JSON representation for Alpine.js
+	// In a real implementation, you might want to use proper JSON marshaling
+	result := "["
+	for i, item := range items {
+		if i > 0 {
+			result += ","
+		}
+		result += "{text:'" + item.Text + "',id:'" + item.ID + "'}"
+	}
+	result += "]"
+	return result
+}

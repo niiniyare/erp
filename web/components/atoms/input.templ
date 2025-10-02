@@ -119,55 +119,82 @@ if props.Label != "" {
 <div class="relative">
   if props.LeftIcon != "" {
   <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-    @Icon(IconProps{Name: props.LeftIcon, Size: getIconSizeForInput(props.Size), Class: "text-gray-500
-    dark:text-gray-400"})
+    @Icon(IconProps{Name: props.LeftIcon, Size: getIconSizeForInput(props.Size), Class: "text-gray-500 dark:text-gray-400"})
   </div>
   }
-  <input type={ string(props.Type) } if props.ID !="" { id={ props.ID } } if props.Name !="" { name={ props.Name } } if
-    props.Value !="" { value={ props.Value } } if props.Placeholder !="" { placeholder={ props.Placeholder } } class={
-    getInputClasses(props) } if props.Required { required } if props.Disabled { disabled } if props.ReadOnly { readonly
-    } if props.AutoFocus { autofocus } if props.AutoComplete !="" { autocomplete={ props.AutoComplete } } if
-    props.Pattern !="" { pattern={ props.Pattern } } if props.MinLength> 0 {
-  minlength={ string(rune(props.MinLength)) }
-  }
-  if props.MaxLength > 0 {
-  maxlength={ string(rune(props.MaxLength)) }
-  }
-  if props.Min != "" {
-  min={ props.Min }
-  }
-  if props.Max != "" {
-  max={ props.Max }
-  }
-  if props.Step != "" {
-  step={ props.Step }
-  }
-  if props.AriaLabel != "" {
-  aria-label={ props.AriaLabel }
-  }
-  if props.AriaDescribedBy != "" {
-  aria-describedby={ props.AriaDescribedBy }
-  }
-  if props.DataTestID != "" {
-  data-testid={ props.DataTestID }
-  }
-  if props.OnChange != "" {
-  @change={ props.OnChange }
-  }
-  if props.OnInput != "" {
-  @input={ props.OnInput }
-  }
-  if props.OnFocus != "" {
-  @focus={ props.OnFocus }
-  }
-  if props.OnBlur != "" {
-  @blur={ props.OnBlur }
-  }
+  <input
+    type={ string(props.Type) }
+    if props.ID != "" {
+      id={ props.ID }
+    }
+    if props.Name != "" {
+      name={ props.Name }
+    }
+    if props.Value != "" {
+      value={ props.Value }
+    }
+    if props.Placeholder != "" {
+      placeholder={ props.Placeholder }
+    }
+    class={ getInputClasses(props) }
+    if props.Required {
+      required
+    }
+    if props.Disabled {
+      disabled
+    }
+    if props.ReadOnly {
+      readonly
+    }
+    if props.AutoFocus {
+      autofocus
+    }
+    if props.AutoComplete != "" {
+      autocomplete={ props.AutoComplete }
+    }
+    if props.Pattern != "" {
+      pattern={ props.Pattern }
+    }
+    if props.MinLength > 0 {
+      minlength={ string(rune(props.MinLength)) }
+    }
+    if props.MaxLength > 0 {
+      maxlength={ string(rune(props.MaxLength)) }
+    }
+    if props.Min != "" {
+      min={ props.Min }
+    }
+    if props.Max != "" {
+      max={ props.Max }
+    }
+    if props.Step != "" {
+      step={ props.Step }
+    }
+    if props.AriaLabel != "" {
+      aria-label={ props.AriaLabel }
+    }
+    if props.AriaDescribedBy != "" {
+      aria-describedby={ props.AriaDescribedBy }
+    }
+    if props.DataTestID != "" {
+      data-testid={ props.DataTestID }
+    }
+    if props.OnChange != "" {
+      @change={ props.OnChange }
+    }
+    if props.OnInput != "" {
+      @input={ props.OnInput }
+    }
+    if props.OnFocus != "" {
+      @focus={ props.OnFocus }
+    }
+    if props.OnBlur != "" {
+      @blur={ props.OnBlur }
+    }
   />
   if props.RightIcon != "" {
   <div class="absolute inset-y-0 end-0 flex items-center pe-3 pointer-events-none">
-    @Icon(IconProps{Name: props.RightIcon, Size: getIconSizeForInput(props.Size), Class: "text-gray-500
-    dark:text-gray-400"})
+    @Icon(IconProps{Name: props.RightIcon, Size: getIconSizeForInput(props.Size), Class: "text-gray-500 dark:text-gray-400"})
   </div>
   }
 </div>
@@ -179,46 +206,73 @@ if props.ShowValidation && (props.HelpText != "" || props.ErrorText != "") {
 // FloatingInput renders a floating label input (Material Design style)
 templ FloatingInput(props InputProps) {
 <div class="relative z-0 w-full group">
-  <input type={ string(props.Type) } if props.ID !="" { id={ props.ID } } if props.Name !="" { name={ props.Name } } if
-    props.Value !="" { value={ props.Value } } class={ getFloatingInputClasses(props) } placeholder=" " if
-    props.Required { required } if props.Disabled { disabled } if props.ReadOnly { readonly } if props.AutoFocus {
-    autofocus } if props.AutoComplete !="" { autocomplete={ props.AutoComplete } } if props.Pattern !="" { pattern={
-    props.Pattern } } if props.MinLength> 0 {
-  minlength={ string(rune(props.MinLength)) }
-  }
-  if props.MaxLength > 0 {
-  maxlength={ string(rune(props.MaxLength)) }
-  }
-  if props.Min != "" {
-  min={ props.Min }
-  }
-  if props.Max != "" {
-  max={ props.Max }
-  }
-  if props.Step != "" {
-  step={ props.Step }
-  }
-  if props.AriaLabel != "" {
-  aria-label={ props.AriaLabel }
-  }
-  if props.AriaDescribedBy != "" {
-  aria-describedby={ props.AriaDescribedBy }
-  }
-  if props.DataTestID != "" {
-  data-testid={ props.DataTestID }
-  }
-  if props.OnChange != "" {
-  @change={ props.OnChange }
-  }
-  if props.OnInput != "" {
-  @input={ props.OnInput }
-  }
-  if props.OnFocus != "" {
-  @focus={ props.OnFocus }
-  }
-  if props.OnBlur != "" {
-  @blur={ props.OnBlur }
-  }
+  <input
+    type={ string(props.Type) }
+    if props.ID != "" {
+      id={ props.ID }
+    }
+    if props.Name != "" {
+      name={ props.Name }
+    }
+    if props.Value != "" {
+      value={ props.Value }
+    }
+    class={ getFloatingInputClasses(props) }
+    placeholder=" "
+    if props.Required {
+      required
+    }
+    if props.Disabled {
+      disabled
+    }
+    if props.ReadOnly {
+      readonly
+    }
+    if props.AutoFocus {
+      autofocus
+    }
+    if props.AutoComplete != "" {
+      autocomplete={ props.AutoComplete }
+    }
+    if props.Pattern != "" {
+      pattern={ props.Pattern }
+    }
+    if props.MinLength > 0 {
+      minlength={ string(rune(props.MinLength)) }
+    }
+    if props.MaxLength > 0 {
+      maxlength={ string(rune(props.MaxLength)) }
+    }
+    if props.Min != "" {
+      min={ props.Min }
+    }
+    if props.Max != "" {
+      max={ props.Max }
+    }
+    if props.Step != "" {
+      step={ props.Step }
+    }
+    if props.AriaLabel != "" {
+      aria-label={ props.AriaLabel }
+    }
+    if props.AriaDescribedBy != "" {
+      aria-describedby={ props.AriaDescribedBy }
+    }
+    if props.DataTestID != "" {
+      data-testid={ props.DataTestID }
+    }
+    if props.OnChange != "" {
+      @change={ props.OnChange }
+    }
+    if props.OnInput != "" {
+      @input={ props.OnInput }
+    }
+    if props.OnFocus != "" {
+      @focus={ props.OnFocus }
+    }
+    if props.OnBlur != "" {
+      @blur={ props.OnBlur }
+    }
   />
   if props.Label != "" {
   <label if props.ID !="" { for={ props.ID } } class={ getFloatingLabelClasses(props) }>
@@ -499,13 +553,13 @@ return []string{
 }
 }
 
-func getIconSizeForInput(inputSize InputSize) string {
+func getIconSizeForInput(inputSize InputSize) IconSize {
 switch inputSize {
 case InputSizeSM:
-return "sm"
+return IconSizeSM
 case InputSizeLG:
-return "lg"
+return IconSizeLG
 default:
-return "sm"
+return IconSizeSM
 }
 }

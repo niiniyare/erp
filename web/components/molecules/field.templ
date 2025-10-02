@@ -1,0 +1,479 @@
+package molecules
+
+import (
+	"strings"
+	"github.com/niiniyare/erp/web/components/atoms"
+)
+
+// FieldType determines which atomic component to use
+type FieldType string
+
+const (
+	FieldTypeInput    FieldType = "input"
+	FieldTypeTextarea FieldType = "textarea"
+	FieldTypeSelect   FieldType = "select"
+	FieldTypeCheckbox FieldType = "checkbox"
+	FieldTypeRadio    FieldType = "radio"
+	FieldTypeToggle   FieldType = "toggle"
+)
+
+// FieldProps defines the properties for the Field molecule
+type FieldProps struct {
+	// Field configuration
+	Type        FieldType `json:"type"`
+	Label       string    `json:"label,omitempty"`
+	Name        string    `json:"name"`
+	Value       string    `json:"value,omitempty"`
+	Placeholder string    `json:"placeholder,omitempty"`
+	HelpText    string    `json:"helpText,omitempty"`
+	ErrorText   string    `json:"errorText,omitempty"`
+	
+	// Input-specific properties
+	InputType   atoms.InputType    `json:"inputType,omitempty"`
+	InputSize   atoms.InputSize    `json:"inputSize,omitempty"`
+	InputState   atoms.InputState   `json:"inputState,omitempty"`
+	
+	// Select-specific properties
+	Options     []atoms.SelectOption   `json:"options,omitempty"`
+	OptGroups   []atoms.SelectOptGroup `json:"optGroups,omitempty"`
+	Multiple    bool                   `json:"multiple,omitempty"`
+	
+	// Textarea-specific properties
+	Rows        int  `json:"rows,omitempty"`
+	Resizable   bool `json:"resizable,omitempty"`
+	
+	// Validation and state
+	Required    bool   `json:"required,omitempty"`
+	Disabled    bool   `json:"disabled,omitempty"`
+	ReadOnly    bool   `json:"readonly,omitempty"`
+	HasError    bool   `json:"hasError,omitempty"`
+	HasSuccess  bool   `json:"hasSuccess,omitempty"`
+	
+	// HTML attributes
+	ID          string `json:"id,omitempty"`
+	Class       string `json:"class,omitempty"`
+	AriaDescribedBy string `json:"ariaDescribedBy,omitempty"`
+	DataTestID  string `json:"dataTestId,omitempty"`
+	
+	// Behavior
+	OnChange    string `json:"onchange,omitempty"`
+	OnInput     string `json:"oninput,omitempty"`
+	OnFocus     string `json:"onfocus,omitempty"`
+	OnBlur      string `json:"onblur,omitempty"`
+	
+	// HTMX attributes
+	HxPost      string `json:"hxPost,omitempty"`
+	HxGet       string `json:"hxGet,omitempty"`
+	HxTarget    string `json:"hxTarget,omitempty"`
+	HxSwap      string `json:"hxSwap,omitempty"`
+	HxTrigger   string `json:"hxTrigger,omitempty"`
+	
+	// Layout
+	FieldLayout string `json:"fieldLayout,omitempty"` // "vertical" (default), "horizontal"
+}
+
+// Field renders a complete form field with label, input, and feedback
+templ Field(props FieldProps) {
+	<div class={ getFieldWrapperClasses(props) }>
+		if props.FieldLayout == "horizontal" {
+			@HorizontalField(props)
+		} else {
+			@VerticalField(props)
+		}
+	</div>
+}
+
+// VerticalField renders a field with vertical label/input layout
+templ VerticalField(props FieldProps) {
+	if props.Label != "" && props.Type != FieldTypeCheckbox && props.Type != FieldTypeRadio && props.Type != FieldTypeToggle {
+		<label 
+			if props.ID != "" {
+				for={ props.ID }
+			}
+			class={ getFieldLabelClasses(props) }
+		>
+			{ props.Label }
+			if props.Required {
+				<span class="text-red-500 ml-1" aria-label="required">*</span>
+			}
+		</label>
+	}
+	
+	<div class="field-input">
+		@renderFieldInput(props)
+	</div>
+	
+	if shouldShowFeedback(props) {
+		@FieldFeedback(props)
+	}
+}
+
+// HorizontalField renders a field with horizontal label/input layout
+templ HorizontalField(props FieldProps) {
+	<div class="grid md:grid-cols-3 md:gap-6 md:items-start">
+		if props.Label != "" && props.Type != FieldTypeCheckbox && props.Type != FieldTypeRadio && props.Type != FieldTypeToggle {
+			<div class="md:col-span-1 md:pt-2">
+				<label 
+					if props.ID != "" {
+						for={ props.ID }
+					}
+					class={ getFieldLabelClasses(props) }
+				>
+					{ props.Label }
+					if props.Required {
+						<span class="text-red-500 ml-1" aria-label="required">*</span>
+					}
+				</label>
+			</div>
+		}
+		
+		<div class={ getHorizontalInputColClasses(props) }>
+			@renderFieldInput(props)
+			if shouldShowFeedback(props) {
+				@FieldFeedback(props)
+			}
+		</div>
+	</div>
+}
+
+// renderFieldInput renders the appropriate atomic input component
+templ renderFieldInput(props FieldProps) {
+	switch props.Type {
+	case FieldTypeInput:
+		@atoms.Input(atoms.InputProps{
+			Type:        props.InputType,
+			ID:          props.ID,
+			Name:        props.Name,
+			Value:       props.Value,
+			Placeholder: props.Placeholder,
+			Size:        props.InputSize,
+			State:       getInputState(props),
+			Required:    props.Required,
+			Disabled:    props.Disabled,
+		})
+	case FieldTypeTextarea:
+		@atoms.Textarea(atoms.TextareaProps{
+			ID:          props.ID,
+			Name:        props.Name,
+			Value:       props.Value,
+			Placeholder: props.Placeholder,
+			Rows:        props.Rows,
+			Size:        getTextareaSize(props.InputSize),
+			State:       getTextareaState(props),
+			Required:    props.Required,
+			Disabled:    props.Disabled,
+			ReadOnly:    props.ReadOnly,
+			Resizable:   props.Resizable,
+			OnChange:    props.OnChange,
+			OnInput:     props.OnInput,
+			OnFocus:     props.OnFocus,
+			OnBlur:      props.OnBlur,
+			AriaDescribedBy: getAriaDescribedBy(props),
+			DataTestID:  props.DataTestID,
+			ShowValidation: false, // Handled at field level
+		})
+	case FieldTypeSelect:
+		@atoms.Select(atoms.SelectProps{
+			ID:          props.ID,
+			Name:        props.Name,
+			Value:       props.Value,
+			Placeholder: props.Placeholder,
+			Options:     props.Options,
+			OptGroups:   props.OptGroups,
+			Multiple:    props.Multiple,
+			SelectSize:  getSelectSize(props.InputSize),
+			State:       getSelectState(props),
+			Required:    props.Required,
+			Disabled:    props.Disabled,
+			OnChange:    props.OnChange,
+			OnFocus:     props.OnFocus,
+			OnBlur:      props.OnBlur,
+			AriaDescribedBy: getAriaDescribedBy(props),
+			DataTestID:  props.DataTestID,
+			ShowValidation: false, // Handled at field level
+		})
+	case FieldTypeCheckbox:
+		@atoms.Checkbox(atoms.CheckboxProps{
+			ID:          props.ID,
+			Name:        props.Name,
+			Value:       props.Value,
+			Label:       props.Label,
+			Size:        getCheckboxSize(props.InputSize),
+			State:       getCheckboxState(props),
+			Required:    props.Required,
+			Disabled:    props.Disabled,
+			OnChange:    props.OnChange,
+			OnFocus:     props.OnFocus,
+			OnBlur:      props.OnBlur,
+			AriaDescribedBy: getAriaDescribedBy(props),
+			DataTestID:  props.DataTestID,
+			ShowValidation: false, // Handled at field level
+		})
+	case FieldTypeRadio:
+		// Note: Radio buttons typically need group handling at molecule level
+		@atoms.Radio(atoms.RadioProps{
+			ID:          props.ID,
+			Name:        props.Name,
+			Value:       props.Value,
+			Label:       props.Label,
+			Size:        getRadioSize(props.InputSize),
+			State:       getRadioState(props),
+			Required:    props.Required,
+			Disabled:    props.Disabled,
+			OnChange:    props.OnChange,
+			OnFocus:     props.OnFocus,
+			OnBlur:      props.OnBlur,
+			AriaDescribedBy: getAriaDescribedBy(props),
+			DataTestID:  props.DataTestID,
+			ShowValidation: false, // Handled at field level
+		})
+	case FieldTypeToggle:
+		@atoms.Toggle(atoms.ToggleProps{
+			ID:          props.ID,
+			Name:        props.Name,
+			Value:       props.Value,
+			Label:       props.Label,
+			Size:        getToggleSize(props.InputSize),
+			State:       getToggleState(props),
+			Required:    props.Required,
+			Disabled:    props.Disabled,
+			OnChange:    props.OnChange,
+			OnFocus:     props.OnFocus,
+			OnBlur:      props.OnBlur,
+			AriaDescribedBy: getAriaDescribedBy(props),
+			DataTestID:  props.DataTestID,
+			ShowValidation: false, // Handled at field level
+		})
+	}
+}
+
+// FieldFeedback renders help text and error messages
+templ FieldFeedback(props FieldProps) {
+	if props.HasError && props.ErrorText != "" {
+		<p 
+			id={ getFeedbackID(props, "error") }
+			class="mt-2 text-sm text-red-600 dark:text-red-500"
+			role="alert"
+			aria-live="polite"
+		>
+			@atoms.Icon(atoms.IconProps{Name: "error", Size: atoms.IconSizeXS, Class: "inline mr-1"})
+			<span class="font-medium">Error:</span> { props.ErrorText }
+		</p>
+	} else if props.HasSuccess && props.HelpText != "" {
+		<p 
+			id={ getFeedbackID(props, "success") }
+			class="mt-2 text-sm text-green-600 dark:text-green-500"
+			aria-live="polite"
+		>
+			@atoms.Icon(atoms.IconProps{Name: "check", Size: atoms.IconSizeXS, Class: "inline mr-1"})
+			<span class="font-medium">Success:</span> { props.HelpText }
+		</p>
+	} else if props.HelpText != "" {
+		<p 
+			id={ getFeedbackID(props, "help") }
+			class="mt-2 text-sm text-gray-500 dark:text-gray-400"
+		>
+			{ props.HelpText }
+		</p>
+	}
+}
+
+// Helper functions
+func getFieldWrapperClasses(props FieldProps) string {
+	classes := []string{"field"}
+	
+	// Add layout-specific classes
+	if props.FieldLayout == "horizontal" {
+		classes = append(classes, "field-horizontal")
+	} else {
+		classes = append(classes, "field-vertical", "mb-5")
+	}
+	
+	// Add state classes
+	if props.HasError {
+		classes = append(classes, "field-error")
+	} else if props.HasSuccess {
+		classes = append(classes, "field-success")
+	}
+	
+	// Add custom classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getFieldLabelClasses(props FieldProps) string {
+	classes := []string{
+		"block",
+		"text-sm",
+		"font-medium",
+		"mb-2",
+	}
+	
+	// Add state-specific colors
+	if props.HasError {
+		classes = append(classes, "text-red-900", "dark:text-red-400")
+	} else if props.HasSuccess {
+		classes = append(classes, "text-green-900", "dark:text-green-400")
+	} else {
+		classes = append(classes, "text-gray-900", "dark:text-white")
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getHorizontalInputColClasses(props FieldProps) string {
+	if props.Label != "" && props.Type != FieldTypeCheckbox && props.Type != FieldTypeRadio && props.Type != FieldTypeToggle {
+		return "md:col-span-2"
+	}
+	return "md:col-span-3"
+}
+
+func shouldShowFeedback(props FieldProps) bool {
+	return (props.HasError && props.ErrorText != "") ||
+		   (props.HasSuccess && props.HelpText != "") ||
+		   (props.HelpText != "")
+}
+
+func getAriaDescribedBy(props FieldProps) string {
+	describedBy := []string{}
+	
+	if props.AriaDescribedBy != "" {
+		describedBy = append(describedBy, props.AriaDescribedBy)
+	}
+	
+	if shouldShowFeedback(props) {
+		if props.HasError && props.ErrorText != "" {
+			describedBy = append(describedBy, getFeedbackID(props, "error"))
+		} else if props.HasSuccess && props.HelpText != "" {
+			describedBy = append(describedBy, getFeedbackID(props, "success"))
+		} else if props.HelpText != "" {
+			describedBy = append(describedBy, getFeedbackID(props, "help"))
+		}
+	}
+	
+	return strings.Join(describedBy, " ")
+}
+
+func getFeedbackID(props FieldProps, feedbackType string) string {
+	if props.ID != "" {
+		return props.ID + "-" + feedbackType
+	}
+	if props.Name != "" {
+		return props.Name + "-" + feedbackType
+	}
+	return "field-" + feedbackType
+}
+
+// State conversion functions
+func getInputState(props FieldProps) atoms.InputState {
+	if props.HasError {
+		return atoms.InputStateError
+	} else if props.HasSuccess {
+		return atoms.InputStateSuccess
+	}
+	return atoms.InputStateDefault
+}
+
+func getTextareaState(props FieldProps) atoms.TextareaState {
+	if props.HasError {
+		return atoms.TextareaStateError
+	} else if props.HasSuccess {
+		return atoms.TextareaStateSuccess
+	}
+	return atoms.TextareaStateDefault
+}
+
+func getSelectState(props FieldProps) atoms.SelectState {
+	if props.HasError {
+		return atoms.SelectStateError
+	} else if props.HasSuccess {
+		return atoms.SelectStateSuccess
+	}
+	return atoms.SelectStateDefault
+}
+
+func getCheckboxState(props FieldProps) atoms.CheckboxState {
+	if props.HasError {
+		return atoms.CheckboxStateError
+	} else if props.HasSuccess {
+		return atoms.CheckboxStateSuccess
+	}
+	return atoms.CheckboxStateDefault
+}
+
+func getRadioState(props FieldProps) atoms.RadioState {
+	if props.HasError {
+		return atoms.RadioStateError
+	} else if props.HasSuccess {
+		return atoms.RadioStateSuccess
+	}
+	return atoms.RadioStateDefault
+}
+
+func getToggleState(props FieldProps) atoms.ToggleState {
+	if props.HasError {
+		return atoms.ToggleStateError
+	} else if props.HasSuccess {
+		return atoms.ToggleStateSuccess
+	}
+	return atoms.ToggleStateDefault
+}
+
+// Size conversion functions
+func getTextareaSize(inputSize atoms.InputSize) atoms.TextareaSize {
+	switch inputSize {
+	case atoms.InputSizeSM:
+		return atoms.TextareaSizeSM
+	case atoms.InputSizeLG:
+		return atoms.TextareaSizeLG
+	default:
+		return atoms.TextareaSizeMD
+	}
+}
+
+func getSelectSize(inputSize atoms.InputSize) atoms.SelectSize {
+	switch inputSize {
+	case atoms.InputSizeSM:
+		return atoms.SelectSizeSM
+	case atoms.InputSizeLG:
+		return atoms.SelectSizeLG
+	default:
+		return atoms.SelectSizeMD
+	}
+}
+
+func getCheckboxSize(inputSize atoms.InputSize) atoms.CheckboxSize {
+	switch inputSize {
+	case atoms.InputSizeSM:
+		return atoms.CheckboxSizeSM
+	case atoms.InputSizeLG:
+		return atoms.CheckboxSizeLG
+	default:
+		return atoms.CheckboxSizeMD
+	}
+}
+
+func getRadioSize(inputSize atoms.InputSize) atoms.RadioSize {
+	switch inputSize {
+	case atoms.InputSizeSM:
+		return atoms.RadioSizeSM
+	case atoms.InputSizeLG:
+		return atoms.RadioSizeLG
+	default:
+		return atoms.RadioSizeMD
+	}
+}
+
+func getToggleSize(inputSize atoms.InputSize) atoms.ToggleSize {
+	switch inputSize {
+	case atoms.InputSizeSM:
+		return atoms.ToggleSizeSM
+	case atoms.InputSizeLG:
+		return atoms.ToggleSizeLG
+	default:
+		return atoms.ToggleSizeMD
+	}
+}
