@@ -1,0 +1,436 @@
+package usermanagement
+
+import (
+	"strings"
+	"github.com/niiniyare/erp/web/components/organisms/table"
+	"github.com/niiniyare/erp/web/components/organisms/filterpanel"
+	"github.com/niiniyare/erp/web/components/atoms"
+)
+
+// UserTableProps defines properties for the user management table
+type UserTableProps struct {
+	Users       []User             `json:"users"`
+	TotalCount  int                `json:"totalCount"`
+	CurrentPage int                `json:"currentPage"`
+	PerPage     int                `json:"perPage"`
+	Filters     map[string]string  `json:"filters"`
+	CanEdit     bool               `json:"canEdit"`
+	CanDelete   bool               `json:"canDelete"`
+	CanCreate   bool               `json:"canCreate"`
+}
+
+// User represents a user in the system
+type User struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Email       string `json:"email"`
+	Role        string `json:"role"`
+	Status      string `json:"status"`
+	LastLogin   string `json:"lastLogin"`
+	CreatedAt   string `json:"createdAt"`
+	Avatar      string `json:"avatar"`
+	Department  string `json:"department"`
+	Phone       string `json:"phone"`
+}
+
+// UserTable renders a comprehensive user management table
+templ UserTable(props UserTableProps) {
+	<div class="space-y-6">
+		<!-- Filter Panel -->
+		@UserFilters()
+		
+		<!-- User Table -->
+		<div id="user-table-container">
+			@UserDataTable(props)
+		</div>
+	</div>
+}
+
+// UserFilters renders the user filtering interface
+templ UserFilters() {
+	@filterpanel.FilterPanel(filterpanel.FilterPanelProps{
+		ID:          "user-filters",
+		Title:       "Filter Users",
+		Collapsible: true,
+		ShowApply:   true,
+		ShowReset:   true,
+		ShowCount:   true,
+		ShowPresets: true,
+		AutoApply:   false,
+		HxPost:      "/admin/users/filter",
+		HxTarget:    "#user-table-container",
+		HxSwap:      "innerHTML",
+		Groups: []filterpanel.FilterGroup{
+			{
+				Title:       "Basic Information",
+				Collapsible: true,
+				Columns:     3,
+				Fields: []filterpanel.FilterField{
+					{
+						Name:        "search",
+						Label:       "Search",
+						Type:        filterpanel.FilterTypeSearch,
+						Placeholder: "Search by name or email",
+						HxGet:       "/admin/users/search",
+						HxTrigger:   "keyup changed delay:300ms",
+						HxTarget:    "#search-suggestions",
+					},
+					{
+						Name:     "status",
+						Label:    "Status",
+						Type:     filterpanel.FilterTypeSelect,
+						Multiple: true,
+						Options: []filterpanel.FilterOption{
+							{Value: "", Label: "All Statuses", Selected: true},
+							{Value: "active", Label: "Active"},
+							{Value: "inactive", Label: "Inactive"},
+							{Value: "pending", Label: "Pending Verification"},
+							{Value: "suspended", Label: "Suspended"},
+						},
+					},
+					{
+						Name:     "role",
+						Label:    "Role",
+						Type:     filterpanel.FilterTypeCheckbox,
+						Multiple: true,
+						Options: []filterpanel.FilterOption{
+							{Value: "admin", Label: "Administrator"},
+							{Value: "manager", Label: "Manager"},
+							{Value: "user", Label: "User"},
+							{Value: "viewer", Label: "Viewer"},
+						},
+					},
+				},
+			},
+			{
+				Title:       "Advanced Filters",
+				Collapsible: true,
+				Collapsed:   true,
+				Columns:     2,
+				Fields: []filterpanel.FilterField{
+					{
+						Name:  "created_date",
+						Label: "Registration Date",
+						Type:  filterpanel.FilterTypeDateRange,
+					},
+					{
+						Name:  "last_login",
+						Label: "Last Login",
+						Type:  filterpanel.FilterTypeDateRange,
+					},
+					{
+						Name:        "department",
+						Label:       "Department",
+						Type:        filterpanel.FilterTypeSelect,
+						Multiple:    true,
+						HxGet:       "/admin/departments/options",
+						HxTrigger:   "load",
+						Placeholder: "Select departments",
+					},
+				},
+			},
+		},
+	})
+}
+
+// UserDataTable renders the actual data table
+templ UserDataTable(props UserTableProps) {
+	@table.DataTable(table.DataTableProps{
+		ID: "users-table",
+		Columns: []table.DataTableColumn{
+			{
+				Key:      "avatar",
+				Label:    "",
+				Type:     "custom",
+				Width:    "60px",
+				Sortable: false,
+			},
+			{
+				Key:      "name",
+				Label:    "Name",
+				Type:     "text",
+				Sortable: true,
+				Width:    "200px",
+			},
+			{
+				Key:      "email",
+				Label:    "Email",
+				Type:     "text",
+				Sortable: true,
+				Width:    "250px",
+			},
+			{
+				Key:      "role",
+				Label:    "Role",
+				Type:     "badge",
+				Sortable: true,
+				Width:    "120px",
+			},
+			{
+				Key:      "status",
+				Label:    "Status",
+				Type:     "status",
+				Sortable: true,
+				Width:    "100px",
+			},
+			{
+				Key:      "department",
+				Label:    "Department",
+				Type:     "text",
+				Sortable: true,
+				Width:    "150px",
+			},
+			{
+				Key:      "last_login",
+				Label:    "Last Login",
+				Type:     "date",
+				Sortable: true,
+				Width:    "150px",
+			},
+			{
+				Key:      "created_at",
+				Label:    "Created",
+				Type:     "date",
+				Sortable: true,
+				Width:    "150px",
+			},
+		},
+		Data: convertUsersToTableData(props.Users),
+		Config: table.DataTableConfig{
+			Sortable:     true,
+			Searchable:   true,
+			Pagination:   true,
+			PageLength:   props.PerPage,
+			LengthChange: true,
+			ServerSide:   true,
+		},
+		Actions: []table.DataTableAction{
+			{
+				Text:      "View",
+				Icon:      "eye",
+				Variant:   atoms.ButtonLight,
+				HxGet:     "/admin/users/{id}",
+				HxTarget:  "#user-modal",
+				HxSwap:    "innerHTML",
+				Single:    true,
+			},
+			{
+				Text:      "Edit",
+				Icon:      "pencil",
+				Variant:   atoms.ButtonPrimary,
+				HxGet:     "/admin/users/{id}/edit",
+				HxTarget:  "#user-modal",
+				HxSwap:    "innerHTML",
+				Single:    true,
+				ShowWhen:  props.CanEdit,
+			},
+			{
+				Text:      "Delete",
+				Icon:      "trash",
+				Variant:   atoms.ButtonDanger,
+				HxDelete:  "/admin/users/{id}",
+				HxConfirm: "Are you sure you want to delete this user?",
+				HxTarget:  "#users-table",
+				HxSwap:    "outerHTML",
+				Single:    true,
+				ShowWhen:  props.CanDelete,
+			},
+		},
+		BulkActions: []table.DataTableAction{
+			{
+				Text:     "Export Selected",
+				Icon:     "download",
+				Variant:  atoms.ButtonSecondary,
+				HxPost:   "/admin/users/export",
+				HxTarget: "#download-link",
+			},
+			{
+				Text:      "Deactivate Selected",
+				Icon:      "user-x",
+				Variant:   atoms.ButtonWarning,
+				HxPost:    "/admin/users/bulk-deactivate",
+				HxConfirm: "Are you sure you want to deactivate the selected users?",
+				HxTarget:  "#users-table",
+				HxSwap:    "outerHTML",
+				ShowWhen:  props.CanEdit,
+			},
+			{
+				Text:      "Delete Selected",
+				Icon:      "trash",
+				Variant:   atoms.ButtonDanger,
+				HxPost:    "/admin/users/bulk-delete",
+				HxConfirm: "Are you sure you want to delete the selected users? This action cannot be undone.",
+				HxTarget:  "#users-table",
+				HxSwap:    "outerHTML",
+				ShowWhen:  props.CanDelete,
+			},
+		},
+		HxGet:    "/admin/users/table",
+		HxTarget: "#users-table",
+		HxSwap:   "outerHTML",
+	})
+}
+
+// convertUsersToTableData converts users to table data format
+func convertUsersToTableData(users []User) []map[string]interface{} {
+	data := make([]map[string]interface{}, len(users))
+	for i, user := range users {
+		data[i] = map[string]interface{}{
+			"id":         user.ID,
+			"avatar":     user.Avatar,
+			"name":       user.Name,
+			"email":      user.Email,
+			"role":       user.Role,
+			"status":     user.Status,
+			"department": user.Department,
+			"last_login": user.LastLogin,
+			"created_at": user.CreatedAt,
+			"phone":      user.Phone,
+		}
+	}
+	return data
+}
+
+// getInitials returns initials from a name
+func getInitials(name string) string {
+	if name == "" {
+		return "?"
+	}
+	parts := strings.Fields(name)
+	if len(parts) == 0 {
+		return "?"
+	}
+	if len(parts) == 1 {
+		return strings.ToUpper(string(parts[0][0]))
+	}
+	return strings.ToUpper(string(parts[0][0]) + string(parts[1][0]))
+}
+
+// UserTableHeader renders the table header with actions
+templ UserTableHeader(props UserTableProps) {
+	<div class="flex items-center justify-between mb-6">
+		<div>
+			<h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+				User Management
+			</h1>
+			<p class="text-gray-600 dark:text-gray-400 mt-1">
+				Manage user accounts, roles, and permissions
+			</p>
+		</div>
+		
+		<div class="flex items-center space-x-3">
+			<!-- Export Button -->
+			@atoms.Button(atoms.ButtonProps{
+				Text:     "Export All",
+				Icon:     "download",
+				Variant:  atoms.ButtonSecondary,
+				HxPost:   "/admin/users/export-all",
+				HxTarget: "#download-link",
+			})
+			
+			<!-- Create User Button -->
+			if props.CanCreate {
+				@atoms.Button(atoms.ButtonProps{
+					Text:     "Add User",
+					Icon:     "plus",
+					Variant:  atoms.ButtonPrimary,
+					HxGet:    "/admin/users/create",
+					HxTarget: "#user-modal",
+					HxSwap:   "innerHTML",
+				})
+			}
+		</div>
+	</div>
+}
+
+// UserAvatar renders a user avatar cell
+templ UserAvatar(user User) {
+	<div class="flex items-center">
+		if user.Avatar != "" {
+			<img 
+				class="h-8 w-8 rounded-full" 
+				src={ user.Avatar } 
+				alt={ user.Name + " avatar" }
+			/>
+		} else {
+			<div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center">
+				<span class="text-sm font-medium text-white">
+					{ getInitials(user.Name) }
+				</span>
+			</div>
+		}
+	</div>
+}
+
+// UserNameCell renders the user name with avatar
+templ UserNameCell(user User) {
+	<div class="flex items-center">
+		@UserAvatar(user)
+		<div class="ml-3">
+			<div class="text-sm font-medium text-gray-900 dark:text-white">
+				{ user.Name }
+			</div>
+			if user.Phone != "" {
+				<div class="text-sm text-gray-500 dark:text-gray-400">
+					{ user.Phone }
+				</div>
+			}
+		</div>
+	</div>
+}
+
+// UserStatusBadge renders a status badge
+templ UserStatusBadge(status string) {
+	switch status {
+	case "active":
+		<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+			<div class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></div>
+			Active
+		</span>
+	case "inactive":
+		<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+			<div class="w-1.5 h-1.5 bg-gray-500 rounded-full mr-1.5"></div>
+			Inactive
+		</span>
+	case "pending":
+		<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+			<div class="w-1.5 h-1.5 bg-yellow-500 rounded-full mr-1.5"></div>
+			Pending
+		</span>
+	case "suspended":
+		<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+			<div class="w-1.5 h-1.5 bg-red-500 rounded-full mr-1.5"></div>
+			Suspended
+		</span>
+	default:
+		<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+			{ status }
+		</span>
+	}
+}
+
+// UserRoleBadge renders a role badge
+templ UserRoleBadge(role string) {
+	switch role {
+	case "admin":
+		<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+			Admin
+		</span>
+	case "manager":
+		<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+			Manager
+		</span>
+	case "user":
+		<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+			User
+		</span>
+	case "viewer":
+		<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+			Viewer
+		</span>
+	default:
+		<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+			{ role }
+		</span>
+	}
+}

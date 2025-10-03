@@ -1,0 +1,405 @@
+package usermanagement
+
+import (
+	"github.com/niiniyare/erp/web/components/atoms"
+	"github.com/niiniyare/erp/web/components/molecules"
+	"github.com/niiniyare/erp/web/components/organisms/modal"
+)
+
+// UserFormProps defines properties for user create/edit forms
+type UserFormProps struct {
+	User        *User                  `json:"user,omitempty"`        // Existing user for edit mode
+	IsEdit      bool                   `json:"isEdit"`                // Edit mode vs create mode
+	Departments []atoms.SelectOption   `json:"departments"`           // Available departments
+	Roles       []atoms.SelectOption   `json:"roles"`                 // Available roles
+	Action      string                 `json:"action"`                // Form action URL
+	HxPost      string                 `json:"hxPost,omitempty"`      // HTMX submission URL
+	HxTarget    string                 `json:"hxTarget,omitempty"`    // HTMX target
+	Errors      map[string]string      `json:"errors,omitempty"`      // Validation errors
+	CanEdit     bool                   `json:"canEdit"`               // User has edit permissions
+	CanDelete   bool                   `json:"canDelete"`             // User has delete permissions
+}
+
+// UserForm renders a comprehensive user create/edit form
+templ UserForm(props UserFormProps) {
+	@modal.Modal(modal.ModalProps{
+		ID:       "user-form-modal",
+		Type:     modal.ModalTypeForm,
+		Size:     modal.ModalSizeLG,
+		Title:    getFormTitle(props.IsEdit),
+		HxPost:   props.HxPost,
+		HxTarget: props.HxTarget,
+		HxSwap:   "innerHTML",
+		Actions: []modal.ModalAction{
+			{
+				Text:     "Cancel",
+				Variant:  atoms.ButtonLight,
+				OnClick:  "closeModal()",
+				Type:     "button",
+			},
+			{
+				Text:     getSubmitButtonText(props.IsEdit),
+				Variant:  atoms.ButtonPrimary,
+				Type:     "submit",
+				Icon:     "save",
+				Loading:  false,
+			},
+		},
+		Body: UserFormBody(props),
+	})
+}
+
+// UserFormBody renders the form body content
+templ UserFormBody(props UserFormProps) {
+	<form 
+		if props.Action != "" && props.HxPost == "" {
+			action={ props.Action }
+			method="POST"
+		}
+		if props.HxPost != "" {
+			hx-post={ props.HxPost }
+		}
+		if props.HxTarget != "" {
+			hx-target={ props.HxTarget }
+		}
+		hx-swap="innerHTML"
+		@submit="loading = true"
+		@htmx:after-request="loading = false; if($event.detail.xhr.status === 200) closeModal()"
+		class="space-y-6"
+	>
+		<!-- Hidden ID field for edit mode -->
+		if props.IsEdit && props.User != nil {
+			<input type="hidden" name="id" value={ props.User.ID } />
+		}
+
+		<!-- Personal Information Section -->
+		<div class="space-y-4">
+			<h3 class="text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+				Personal Information
+			</h3>
+			
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<!-- Full Name -->
+				@molecules.Field(molecules.FieldProps{
+					Label:    "Full Name",
+					Required: true,
+					Help:     "Enter the user's full name",
+					InputProps: atoms.InputProps{
+						ID:          "name",
+						Name:        "name",
+						Type:        atoms.InputTypeText,
+						Placeholder: "John Doe",
+						Required:    true,
+						Value:       getFieldValue(props.User, "name"),
+					},
+					Error: getFieldError(props.Errors, "name"),
+				})
+
+				<!-- Email Address -->
+				@molecules.Field(molecules.FieldProps{
+					Label:    "Email Address",
+					Required: true,
+					Help:     "Primary email for login and notifications",
+					InputProps: atoms.InputProps{
+						ID:          "email",
+						Name:        "email",
+						Type:        atoms.InputTypeEmail,
+						Placeholder: "john.doe@company.com",
+						Required:    true,
+						Value:       getFieldValue(props.User, "email"),
+					},
+					Error: getFieldError(props.Errors, "email"),
+				})
+
+				<!-- Phone Number -->
+				@molecules.Field(molecules.FieldProps{
+					Label: "Phone Number",
+					Help:  "Optional contact number",
+					InputProps: atoms.InputProps{
+						ID:          "phone",
+						Name:        "phone",
+						Type:        atoms.InputTypeTel,
+						Placeholder: "+1 (555) 123-4567",
+						Value:       getFieldValue(props.User, "phone"),
+					},
+					Error: getFieldError(props.Errors, "phone"),
+				})
+
+				<!-- Department -->
+				@molecules.Field(molecules.FieldProps{
+					Label:    "Department",
+					Required: true,
+					Help:     "User's department or team",
+					SelectProps: &atoms.SelectProps{
+						ID:       "department",
+						Name:     "department",
+						Required: true,
+						Options:  props.Departments,
+						Value:    getFieldValue(props.User, "department"),
+					},
+					Error: getFieldError(props.Errors, "department"),
+				})
+			</div>
+		</div>
+
+		<!-- Role and Permissions Section -->
+		<div class="space-y-4">
+			<h3 class="text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+				Role & Permissions
+			</h3>
+			
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<!-- Role -->
+				@molecules.Field(molecules.FieldProps{
+					Label:    "Role",
+					Required: true,
+					Help:     "User's primary role in the system",
+					SelectProps: &atoms.SelectProps{
+						ID:       "role",
+						Name:     "role",
+						Required: true,
+						Options:  props.Roles,
+						Value:    getFieldValue(props.User, "role"),
+					},
+					Error: getFieldError(props.Errors, "role"),
+				})
+
+				<!-- Status -->
+				@molecules.Field(molecules.FieldProps{
+					Label:    "Status",
+					Required: true,
+					Help:     "User account status",
+					SelectProps: &atoms.SelectProps{
+						ID:       "status",
+						Name:     "status",
+						Required: true,
+						Options: []atoms.SelectOption{
+							{Value: "active", Label: "Active", Selected: getFieldValue(props.User, "status") == "active"},
+							{Value: "inactive", Label: "Inactive", Selected: getFieldValue(props.User, "status") == "inactive"},
+							{Value: "pending", Label: "Pending Verification", Selected: getFieldValue(props.User, "status") == "pending"},
+							{Value: "suspended", Label: "Suspended", Selected: getFieldValue(props.User, "status") == "suspended"},
+						},
+						Value: getFieldValue(props.User, "status"),
+					},
+					Error: getFieldError(props.Errors, "status"),
+				})
+			</div>
+		</div>
+
+		<!-- Password Section (Create mode only) -->
+		if !props.IsEdit {
+			<div class="space-y-4">
+				<h3 class="text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+					Account Security
+				</h3>
+				
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<!-- Password -->
+					@molecules.Field(molecules.FieldProps{
+						Label:    "Password",
+						Required: true,
+						Help:     "Minimum 8 characters with mixed case and numbers",
+						InputProps: atoms.InputProps{
+							ID:          "password",
+							Name:        "password",
+							Type:        atoms.InputTypePassword,
+							Placeholder: "Enter secure password",
+							Required:    true,
+							MinLength:   8,
+						},
+						Error: getFieldError(props.Errors, "password"),
+					})
+
+					<!-- Confirm Password -->
+					@molecules.Field(molecules.FieldProps{
+						Label:    "Confirm Password",
+						Required: true,
+						Help:     "Re-enter password to confirm",
+						InputProps: atoms.InputProps{
+							ID:          "password_confirm",
+							Name:        "password_confirm",
+							Type:        atoms.InputTypePassword,
+							Placeholder: "Confirm password",
+							Required:    true,
+							MinLength:   8,
+						},
+						Error: getFieldError(props.Errors, "password_confirm"),
+					})
+				</div>
+
+				<!-- Send Welcome Email -->
+				<div class="pt-4">
+					@atoms.Checkbox(atoms.CheckboxProps{
+						ID:       "send_welcome_email",
+						Name:     "send_welcome_email",
+						Label:    "Send welcome email with login instructions",
+						Value:    "true",
+						Checked:  true,
+					})
+				</div>
+			</div>
+		}
+
+		<!-- Additional Actions for Edit Mode -->
+		if props.IsEdit && props.User != nil {
+			<div class="space-y-4">
+				<h3 class="text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+					Account Actions
+				</h3>
+				
+				<div class="flex flex-wrap gap-3">
+					<!-- Reset Password -->
+					@atoms.Button(atoms.ButtonProps{
+						Text:     "Reset Password",
+						Icon:     "key",
+						Variant:  atoms.ButtonSecondary,
+						Size:     atoms.ButtonSizeSM,
+						HxPost:   "/admin/users/" + props.User.ID + "/reset-password",
+						HxTarget: "#notification-area",
+						HxSwap:   "beforeend",
+						OnClick:  "confirm('Send password reset email to user?')",
+					})
+
+					<!-- Resend Welcome Email -->
+					@atoms.Button(atoms.ButtonProps{
+						Text:     "Resend Welcome Email",
+						Icon:     "mail",
+						Variant:  atoms.ButtonSecondary,
+						Size:     atoms.ButtonSizeSM,
+						HxPost:   "/admin/users/" + props.User.ID + "/resend-welcome",
+						HxTarget: "#notification-area",
+						HxSwap:   "beforeend",
+					})
+
+					<!-- View Login History -->
+					@atoms.Button(atoms.ButtonProps{
+						Text:     "Login History",
+						Icon:     "clock",
+						Variant:  atoms.ButtonLight,
+						Size:     atoms.ButtonSizeSM,
+						HxGet:    "/admin/users/" + props.User.ID + "/login-history",
+						HxTarget: "#secondary-modal",
+						HxSwap:   "innerHTML",
+					})
+
+					<!-- Delete User -->
+					if props.CanDelete {
+						@atoms.Button(atoms.ButtonProps{
+							Text:      "Delete User",
+							Icon:      "trash",
+							Variant:   atoms.ButtonDanger,
+							Size:      atoms.ButtonSizeSM,
+							HxDelete:  "/admin/users/" + props.User.ID,
+							HxTarget:  "#user-table-container",
+							HxSwap:    "innerHTML",
+							HxConfirm: "Are you sure you want to delete this user? This action cannot be undone.",
+							OnClick:   "closeModal()",
+						})
+					}
+				</div>
+			</div>
+		}
+	</form>
+}
+
+// UserFormCompact renders a simplified inline user form
+templ UserFormCompact(props UserFormProps) {
+	<form 
+		if props.HxPost != "" {
+			hx-post={ props.HxPost }
+		}
+		if props.HxTarget != "" {
+			hx-target={ props.HxTarget }
+		}
+		hx-swap="innerHTML"
+		class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end"
+	>
+		<!-- Name -->
+		@molecules.Field(molecules.FieldProps{
+			Label: "Name",
+			InputProps: atoms.InputProps{
+				Name:        "name",
+				Type:        atoms.InputTypeText,
+				Placeholder: "Enter name",
+				Required:    true,
+				Value:       getFieldValue(props.User, "name"),
+			},
+		})
+
+		<!-- Email -->
+		@molecules.Field(molecules.FieldProps{
+			Label: "Email",
+			InputProps: atoms.InputProps{
+				Name:        "email",
+				Type:        atoms.InputTypeEmail,
+				Placeholder: "Enter email",
+				Required:    true,
+				Value:       getFieldValue(props.User, "email"),
+			},
+		})
+
+		<!-- Role -->
+		@molecules.Field(molecules.FieldProps{
+			Label: "Role",
+			SelectProps: &atoms.SelectProps{
+				Name:    "role",
+				Options: props.Roles,
+				Value:   getFieldValue(props.User, "role"),
+			},
+		})
+
+		<!-- Submit Button -->
+		<div>
+			@atoms.Button(atoms.ButtonProps{
+				Text:    getSubmitButtonText(props.IsEdit),
+				Icon:    "save",
+				Variant: atoms.ButtonPrimary,
+				Type:    "submit",
+			})
+		</div>
+	</form>
+}
+
+// Helper functions
+func getFormTitle(isEdit bool) string {
+	if isEdit {
+		return "Edit User"
+	}
+	return "Create New User"
+}
+
+func getSubmitButtonText(isEdit bool) string {
+	if isEdit {
+		return "Update User"
+	}
+	return "Create User"
+}
+
+func getFieldValue(user *User, field string) string {
+	if user == nil {
+		return ""
+	}
+	switch field {
+	case "name":
+		return user.Name
+	case "email":
+		return user.Email
+	case "phone":
+		return user.Phone
+	case "department":
+		return user.Department
+	case "role":
+		return user.Role
+	case "status":
+		return user.Status
+	default:
+		return ""
+	}
+}
+
+func getFieldError(errors map[string]string, field string) string {
+	if errors == nil {
+		return ""
+	}
+	return errors[field]
+}

@@ -1,0 +1,468 @@
+package layouts
+
+import (
+	"github.com/niiniyare/erp/web/components/atoms"
+)
+
+// BaseLayoutProps defines the core layout properties
+type BaseLayoutProps struct {
+	// Page metadata
+	Title       string            `json:"title"`
+	Description string            `json:"description,omitempty"`
+	Keywords    string            `json:"keywords,omitempty"`
+	Author      string            `json:"author,omitempty"`
+	Viewport    string            `json:"viewport,omitempty"`
+	
+	// SEO and social
+	OGTitle       string          `json:"ogTitle,omitempty"`
+	OGDescription string          `json:"ogDescription,omitempty"`
+	OGImage       string          `json:"ogImage,omitempty"`
+	OGUrl         string          `json:"ogUrl,omitempty"`
+	CanonicalUrl  string          `json:"canonicalUrl,omitempty"`
+	
+	// Styles and scripts
+	CustomCSS     []string        `json:"customCss,omitempty"`
+	CustomJS      []string        `json:"customJs,omitempty"`
+	InlineCSS     string          `json:"inlineCss,omitempty"`
+	InlineJS      string          `json:"inlineJs,omitempty"`
+	
+	// Application state
+	ThemeMode     string          `json:"themeMode,omitempty"`    // light, dark, system
+	Language      string          `json:"language,omitempty"`
+	Direction     string          `json:"direction,omitempty"`   // ltr, rtl
+	
+	// Security headers
+	CSPNonce      string          `json:"cspNonce,omitempty"`
+	CSRFToken     string          `json:"csrfToken,omitempty"`
+	
+	// Body attributes
+	BodyClass     string          `json:"bodyClass,omitempty"`
+	BodyAttrs     map[string]string `json:"bodyAttrs,omitempty"`
+	
+	// Debug mode
+	Debug         bool            `json:"debug"`
+}
+
+// BaseLayout provides the fundamental HTML structure
+templ BaseLayout(props BaseLayoutProps, content templ.Component) {
+	<!DOCTYPE html>
+	<html 
+		lang={ getLanguage(props.Language) }
+		dir={ getDirection(props.Direction) }
+		class={ getHtmlClasses(props.ThemeMode) }
+		if props.CSPNonce != "" {
+			nonce={ props.CSPNonce }
+		}
+	>
+		<head>
+			@BaseHead(props)
+		</head>
+		<body 
+			class={ getBodyClasses(props.BodyClass, props.ThemeMode) }
+			if props.BodyAttrs != nil {
+				for attr, value := range props.BodyAttrs {
+					{ attr }={ value }
+				}
+			}
+			if props.CSRFToken != "" {
+				data-csrf-token={ props.CSRFToken }
+			}
+		>
+			<!-- Skip to main content for accessibility -->
+			<a 
+				href="#main-content" 
+				class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-50 bg-blue-600 text-white px-4 py-2 rounded-md"
+			>
+				Skip to main content
+			</a>
+			
+			<!-- Main content -->
+			<div id="main-content">
+				@content
+			</div>
+			
+			<!-- HTMX and Alpine.js -->
+			@BaseScripts(props)
+			
+			<!-- Custom inline scripts -->
+			if props.InlineJS != "" {
+				<script 
+					if props.CSPNonce != "" {
+						nonce={ props.CSPNonce }
+					}
+				>
+					{ props.InlineJS }
+				</script>
+			}
+			
+			<!-- Debug panel -->
+			if props.Debug {
+				@DebugPanel(props)
+			}
+		</body>
+	</html>
+}
+
+// BaseHead renders the document head section
+templ BaseHead(props BaseLayoutProps) {
+	<!-- Essential meta tags -->
+	<meta charset="UTF-8" />
+	<meta 
+		name="viewport" 
+		content={ getViewport(props.Viewport) }
+	/>
+	<meta name="generator" content="ERP System" />
+	
+	<!-- Primary meta tags -->
+	<title>{ getPageTitle(props.Title) }</title>
+	if props.Description != "" {
+		<meta name="description" content={ props.Description } />
+	}
+	if props.Keywords != "" {
+		<meta name="keywords" content={ props.Keywords } />
+	}
+	if props.Author != "" {
+		<meta name="author" content={ props.Author } />
+	}
+	
+	<!-- Canonical URL -->
+	if props.CanonicalUrl != "" {
+		<link rel="canonical" href={ props.CanonicalUrl } />
+	}
+	
+	<!-- Open Graph / Facebook -->
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content={ getOGTitle(props.Title, props.OGTitle) } />
+	if props.OGDescription != "" || props.Description != "" {
+		<meta property="og:description" content={ getOGDescription(props.OGDescription, props.Description) } />
+	}
+	if props.OGImage != "" {
+		<meta property="og:image" content={ props.OGImage } />
+	}
+	if props.OGUrl != "" {
+		<meta property="og:url" content={ props.OGUrl } />
+	}
+	
+	<!-- Twitter -->
+	<meta property="twitter:card" content="summary_large_image" />
+	<meta property="twitter:title" content={ getOGTitle(props.Title, props.OGTitle) } />
+	if props.OGDescription != "" || props.Description != "" {
+		<meta property="twitter:description" content={ getOGDescription(props.OGDescription, props.Description) } />
+	}
+	if props.OGImage != "" {
+		<meta property="twitter:image" content={ props.OGImage } />
+	}
+	
+	<!-- Security headers -->
+	<meta name="referrer" content="strict-origin-when-cross-origin" />
+	<meta http-equiv="X-Content-Type-Options" content="nosniff" />
+	<meta http-equiv="X-Frame-Options" content="DENY" />
+	<meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+	
+	<!-- Theme and color scheme -->
+	<meta name="theme-color" content="#1f2937" />
+	<meta name="color-scheme" content="light dark" />
+	
+	<!-- Favicons -->
+	<link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+	<link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png" />
+	<link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png" />
+	<link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png" />
+	<link rel="manifest" href="/static/site.webmanifest" />
+	
+	<!-- Preload critical resources -->
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	
+	<!-- Core CSS -->
+	<link rel="stylesheet" href="/static/css/tailwind.css" />
+	<link rel="stylesheet" href="/static/css/flowbite.css" />
+	<link rel="stylesheet" href="/static/css/app.css" />
+	
+	<!-- Custom CSS files -->
+	for _, cssFile := range props.CustomCSS {
+		<link rel="stylesheet" href={ cssFile } />
+	}
+	
+	<!-- Inline CSS -->
+	if props.InlineCSS != "" {
+		<style 
+			if props.CSPNonce != "" {
+				nonce={ props.CSPNonce }
+			}
+		>
+			{ props.InlineCSS }
+		</style>
+	}
+	
+	<!-- CSRF token for forms -->
+	if props.CSRFToken != "" {
+		<meta name="csrf-token" content={ props.CSRFToken } />
+	}
+}
+
+// BaseScripts renders essential JavaScript libraries
+templ BaseScripts(props BaseLayoutProps) {
+	<!-- HTMX -->
+	<script 
+		src="/static/js/htmx.min.js"
+		if props.CSPNonce != "" {
+			nonce={ props.CSPNonce }
+		}
+	></script>
+	
+	<!-- Alpine.js -->
+	<script 
+		defer 
+		src="/static/js/alpinejs.min.js"
+		if props.CSPNonce != "" {
+			nonce={ props.CSPNonce }
+		}
+	></script>
+	
+	<!-- Flowbite -->
+	<script 
+		src="/static/js/flowbite.min.js"
+		if props.CSPNonce != "" {
+			nonce={ props.CSPNonce }
+		}
+	></script>
+	
+	<!-- Application core JavaScript -->
+	<script 
+		src="/static/js/app.js"
+		if props.CSPNonce != "" {
+			nonce={ props.CSPNonce }
+		}
+	></script>
+	
+	<!-- Custom JavaScript files -->
+	for _, jsFile := range props.CustomJS {
+		<script 
+			src={ jsFile }
+			if props.CSPNonce != "" {
+				nonce={ props.CSPNonce }
+			}
+		></script>
+	}
+	
+	<!-- HTMX Configuration -->
+	<script 
+		if props.CSPNonce != "" {
+			nonce={ props.CSPNonce }
+		}
+	>
+		// HTMX configuration
+		htmx.config.globalViewTransitions = true;
+		htmx.config.refreshOnHistoryMiss = true;
+		htmx.config.defaultSwapStyle = 'innerHTML';
+		htmx.config.scrollBehavior = 'smooth';
+		
+		// Add CSRF token to all HTMX requests
+		document.body.addEventListener('htmx:configRequest', function(evt) {
+			const token = document.querySelector('meta[name="csrf-token"]');
+			if (token) {
+				evt.detail.headers['X-CSRF-Token'] = token.getAttribute('content');
+			}
+		});
+		
+		// Loading states
+		document.body.addEventListener('htmx:beforeRequest', function(evt) {
+			const target = evt.target;
+			if (target.hasAttribute('data-loading')) {
+				target.setAttribute('aria-busy', 'true');
+				target.classList.add('loading');
+			}
+		});
+		
+		document.body.addEventListener('htmx:afterRequest', function(evt) {
+			const target = evt.target;
+			if (target.hasAttribute('data-loading')) {
+				target.setAttribute('aria-busy', 'false');
+				target.classList.remove('loading');
+			}
+		});
+		
+		// Error handling
+		document.body.addEventListener('htmx:responseError', function(evt) {
+			console.error('HTMX Error:', evt.detail);
+			// Show user-friendly error message
+			const errorToast = document.createElement('div');
+			errorToast.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+			errorToast.textContent = 'An error occurred. Please try again.';
+			document.body.appendChild(errorToast);
+			
+			setTimeout(() => {
+				errorToast.remove();
+			}, 5000);
+		});
+	</script>
+	
+	<!-- Theme management -->
+	<script 
+		if props.CSPNonce != "" {
+			nonce={ props.CSPNonce }
+		}
+	>
+		// Theme management
+		(function() {
+			const themeMode = '{ props.ThemeMode }' || 'system';
+			
+			function applyTheme(theme) {
+				const root = document.documentElement;
+				if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+					root.classList.add('dark');
+				} else {
+					root.classList.remove('dark');
+				}
+			}
+			
+			// Apply initial theme
+			applyTheme(themeMode);
+			
+			// Listen for system theme changes
+			if (themeMode === 'system') {
+				window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+					applyTheme('system');
+				});
+			}
+			
+			// Expose theme toggle function globally
+			window.toggleTheme = function() {
+				const root = document.documentElement;
+				const isDark = root.classList.contains('dark');
+				
+				if (isDark) {
+					root.classList.remove('dark');
+					localStorage.setItem('theme', 'light');
+				} else {
+					root.classList.add('dark');
+					localStorage.setItem('theme', 'dark');
+				}
+			};
+		})();
+	</script>
+}
+
+// DebugPanel renders development debug information
+templ DebugPanel(props BaseLayoutProps) {
+	<div 
+		id="debug-panel"
+		class="fixed bottom-4 right-4 bg-gray-900 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm"
+		x-data="{ open: false }"
+	>
+		<button 
+			@click="open = !open"
+			class="flex items-center space-x-2 text-sm font-medium"
+		>
+			@atoms.Icon(atoms.IconProps{
+				Name:  "bug",
+				Size:  atoms.IconSizeXS,
+				Class: "text-yellow-400",
+			})
+			<span>Debug</span>
+		</button>
+		
+		<div x-show="open" x-transition class="mt-3 space-y-2 text-xs">
+			<div class="border-t border-gray-700 pt-2">
+				<div class="font-medium text-yellow-400">Page Info</div>
+				<div>Title: { props.Title }</div>
+				<div>Theme: { props.ThemeMode }</div>
+				<div>Language: { props.Language }</div>
+			</div>
+			
+			<div class="border-t border-gray-700 pt-2">
+				<div class="font-medium text-yellow-400">Performance</div>
+				<div>DOM Ready: <span id="dom-ready-time">-</span>ms</div>
+				<div>Page Load: <span id="page-load-time">-</span>ms</div>
+			</div>
+			
+			<div class="border-t border-gray-700 pt-2">
+				<div class="font-medium text-yellow-400">HTMX</div>
+				<div>Version: <span id="htmx-version">-</span></div>
+				<div>Requests: <span id="htmx-requests">0</span></div>
+			</div>
+		</div>
+	</div>
+	
+	<script nonce={ props.CSPNonce }>
+		// Debug timing
+		document.addEventListener('DOMContentLoaded', function() {
+			document.getElementById('dom-ready-time').textContent = performance.now().toFixed(2);
+		});
+		
+		window.addEventListener('load', function() {
+			document.getElementById('page-load-time').textContent = performance.now().toFixed(2);
+			document.getElementById('htmx-version').textContent = htmx.version || 'Unknown';
+		});
+		
+		// Track HTMX requests
+		let requestCount = 0;
+		document.body.addEventListener('htmx:beforeRequest', function() {
+			requestCount++;
+			document.getElementById('htmx-requests').textContent = requestCount;
+		});
+	</script>
+}
+
+// Helper functions
+func getLanguage(lang string) string {
+	if lang == "" {
+		return "en"
+	}
+	return lang
+}
+
+func getDirection(dir string) string {
+	if dir == "" {
+		return "ltr"
+	}
+	return dir
+}
+
+func getViewport(viewport string) string {
+	if viewport == "" {
+		return "width=device-width, initial-scale=1.0"
+	}
+	return viewport
+}
+
+func getPageTitle(title string) string {
+	if title == "" {
+		return "ERP System"
+	}
+	return title + " | ERP System"
+}
+
+func getOGTitle(title, ogTitle string) string {
+	if ogTitle != "" {
+		return ogTitle
+	}
+	return getPageTitle(title)
+}
+
+func getOGDescription(ogDesc, desc string) string {
+	if ogDesc != "" {
+		return ogDesc
+	}
+	if desc != "" {
+		return desc
+	}
+	return "Enterprise Resource Planning System"
+}
+
+func getHtmlClasses(theme string) string {
+	classes := "h-full"
+	if theme == "dark" {
+		classes += " dark"
+	}
+	return classes
+}
+
+func getBodyClasses(customClass, theme string) string {
+	classes := "h-full bg-gray-50 dark:bg-gray-900 font-sans antialiased"
+	if customClass != "" {
+		classes += " " + customClass
+	}
+	return classes
+}

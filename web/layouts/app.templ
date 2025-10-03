@@ -1,0 +1,564 @@
+package layouts
+
+import (
+	"github.com/niiniyare/erp/web/components/organisms/siteheader"
+	"github.com/niiniyare/erp/web/components/organisms/sidebar"
+	"github.com/niiniyare/erp/web/components/atoms"
+)
+
+// AppLayoutProps defines properties for the main application layout
+type AppLayoutProps struct {
+	// Base layout props
+	Base BaseLayoutProps `json:"base"`
+	
+	// User context
+	User          *AppUser        `json:"user,omitempty"`
+	Organization  *Organization   `json:"organization,omitempty"`
+	
+	// Navigation
+	SidebarProps  sidebar.SidebarProps      `json:"sidebarProps"`
+	HeaderProps   siteheader.SiteHeaderProps `json:"headerProps"`
+	
+	// Layout configuration
+	SidebarOpen      bool            `json:"sidebarOpen"`
+	SidebarCollapsed bool            `json:"sidebarCollapsed"`
+	ShowBreadcrumbs  bool            `json:"showBreadcrumbs"`
+	Breadcrumbs      []Breadcrumb    `json:"breadcrumbs,omitempty"`
+	
+	// Page context
+	PageTitle    string          `json:"pageTitle"`
+	PageSubtitle string          `json:"pageSubtitle,omitempty"`
+	PageActions  []PageAction    `json:"pageActions,omitempty"`
+	
+	// Notifications and alerts
+	Notifications []Notification  `json:"notifications,omitempty"`
+	GlobalAlerts  []GlobalAlert   `json:"globalAlerts,omitempty"`
+	
+	// Footer
+	ShowFooter   bool            `json:"showFooter"`
+	FooterProps  *FooterProps    `json:"footerProps,omitempty"`
+	
+	// Loading states
+	IsLoading    bool            `json:"isLoading"`
+	LoadingText  string          `json:"loadingText,omitempty"`
+}
+
+// AppUser represents the current user
+type AppUser struct {
+	ID          string          `json:"id"`
+	Name        string          `json:"name"`
+	Email       string          `json:"email"`
+	Avatar      string          `json:"avatar,omitempty"`
+	Role        string          `json:"role"`
+	Department  string          `json:"department,omitempty"`
+	Permissions []string        `json:"permissions"`
+	Preferences UserPreferences `json:"preferences"`
+}
+
+// Organization represents the user's organization
+type Organization struct {
+	ID     string `json:"id"`
+	Name   string `json:"name"`
+	Logo   string `json:"logo,omitempty"`
+	Domain string `json:"domain,omitempty"`
+}
+
+// UserPreferences contains user-specific settings
+type UserPreferences struct {
+	Theme          string `json:"theme"`          // light, dark, system
+	Language       string `json:"language"`
+	Timezone       string `json:"timezone"`
+	SidebarState   string `json:"sidebarState"`   // open, collapsed, auto
+	NotificationsEnabled bool `json:"notificationsEnabled"`
+}
+
+// Breadcrumb represents a navigation breadcrumb
+type Breadcrumb struct {
+	Text string `json:"text"`
+	Href string `json:"href,omitempty"`
+	Icon string `json:"icon,omitempty"`
+}
+
+// PageAction represents an action button in the page header
+type PageAction struct {
+	Text     string             `json:"text"`
+	Icon     string             `json:"icon,omitempty"`
+	Variant  atoms.ButtonVariant `json:"variant"`
+	Size     atoms.ButtonSize    `json:"size"`
+	Href     string             `json:"href,omitempty"`
+	OnClick  string             `json:"onClick,omitempty"`
+	HxGet    string             `json:"hxGet,omitempty"`
+	HxPost   string             `json:"hxPost,omitempty"`
+	HxTarget string             `json:"hxTarget,omitempty"`
+	Primary  bool               `json:"primary"`
+	Disabled bool               `json:"disabled"`
+}
+
+// Notification represents a user notification
+type Notification struct {
+	ID      string `json:"id"`
+	Type    string `json:"type"`    // info, success, warning, error
+	Title   string `json:"title"`
+	Message string `json:"message"`
+	Time    string `json:"time"`
+	Read    bool   `json:"read"`
+	Actions []NotificationAction `json:"actions,omitempty"`
+}
+
+// NotificationAction represents an action for a notification
+type NotificationAction struct {
+	Text    string `json:"text"`
+	Action  string `json:"action"`
+	Primary bool   `json:"primary"`
+}
+
+// GlobalAlert represents a system-wide alert
+type GlobalAlert struct {
+	ID       string `json:"id"`
+	Type     string `json:"type"`     // info, success, warning, error, maintenance
+	Title    string `json:"title"`
+	Message  string `json:"message"`
+	Closable bool   `json:"closable"`
+	Actions  []GlobalAlertAction `json:"actions,omitempty"`
+}
+
+// GlobalAlertAction represents an action for a global alert
+type GlobalAlertAction struct {
+	Text    string `json:"text"`
+	Href    string `json:"href,omitempty"`
+	OnClick string `json:"onClick,omitempty"`
+	Primary bool   `json:"primary"`
+}
+
+// FooterProps defines footer properties
+type FooterProps struct {
+	ShowVersion     bool     `json:"showVersion"`
+	ShowSupport     bool     `json:"showSupport"`
+	ShowPrivacy     bool     `json:"showPrivacy"`
+	CustomLinks     []FooterLink `json:"customLinks,omitempty"`
+	CompanyName     string   `json:"companyName,omitempty"`
+	SupportEmail    string   `json:"supportEmail,omitempty"`
+	SupportPhone    string   `json:"supportPhone,omitempty"`
+}
+
+// FooterLink represents a footer link
+type FooterLink struct {
+	Text string `json:"text"`
+	Href string `json:"href"`
+	Icon string `json:"icon,omitempty"`
+}
+
+// AppLayout provides the main application layout with sidebar and header
+templ AppLayout(props AppLayoutProps, content templ.Component) {
+	@BaseLayout(props.Base, AppLayoutContent(props, content))
+}
+
+// AppLayoutContent renders the application layout content
+templ AppLayoutContent(props AppLayoutProps, content templ.Component) {
+	<div 
+		class="min-h-screen bg-gray-50 dark:bg-gray-900"
+		x-data="appLayout()"
+		x-init="init()"
+		:class="{ 'sidebar-open': sidebarOpen, 'sidebar-collapsed': sidebarCollapsed }"
+	>
+		<!-- Global Alerts -->
+		if len(props.GlobalAlerts) > 0 {
+			@GlobalAlertsContainer(props.GlobalAlerts)
+		}
+		
+		<!-- Sidebar -->
+		<aside 
+			class="fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0"
+			:class="{ '-translate-x-full': !sidebarOpen, 'translate-x-0': sidebarOpen }"
+			x-show="true"
+		>
+			@sidebar.Sidebar(props.SidebarProps)
+		</aside>
+		
+		<!-- Sidebar Overlay (Mobile) -->
+		<div 
+			class="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
+			x-show="sidebarOpen"
+			x-transition:enter="transition-opacity ease-linear duration-300"
+			x-transition:enter-start="opacity-0"
+			x-transition:enter-end="opacity-100"
+			x-transition:leave="transition-opacity ease-linear duration-300"
+			x-transition:leave-start="opacity-100"
+			x-transition:leave-end="opacity-0"
+			@click="closeSidebar()"
+		></div>
+		
+		<!-- Main Content Area -->
+		<div class="lg:pl-64 flex flex-col min-h-screen">
+			<!-- Site Header -->
+			<header class="sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+				@siteheader.SiteHeader(props.HeaderProps)
+			</header>
+			
+			<!-- Page Header with Breadcrumbs -->
+			if props.ShowBreadcrumbs || props.PageTitle != "" || len(props.PageActions) > 0 {
+				@PageHeader(props)
+			}
+			
+			<!-- Main Content -->
+			<main class="flex-1 overflow-auto">
+				<!-- Loading Overlay -->
+				if props.IsLoading {
+					@LoadingOverlay(props.LoadingText)
+				}
+				
+				<!-- Page Content -->
+				<div class="p-4 sm:p-6 lg:p-8">
+					@content
+				</div>
+			</main>
+			
+			<!-- Footer -->
+			if props.ShowFooter && props.FooterProps != nil {
+				@AppFooter(*props.FooterProps)
+			}
+		</div>
+		
+		<!-- Notification Container -->
+		<div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+		
+		<!-- Modal Container -->
+		<div id="modal-container"></div>
+		
+		<!-- Loading States -->
+		<div id="loading-states" class="hidden"></div>
+	</div>
+}
+
+// PageHeader renders the page header with breadcrumbs and actions
+templ PageHeader(props AppLayoutProps) {
+	<div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+		<div class="px-4 sm:px-6 lg:px-8 py-4">
+			<!-- Breadcrumbs -->
+			if props.ShowBreadcrumbs && len(props.Breadcrumbs) > 0 {
+				<nav class="flex mb-4" aria-label="Breadcrumb">
+					<ol class="inline-flex items-center space-x-1 md:space-x-3">
+						for i, crumb := range props.Breadcrumbs {
+							<li class="inline-flex items-center">
+								if i > 0 {
+									@atoms.Icon(atoms.IconProps{
+										Name:  "chevron-right",
+										Size:  atoms.IconSizeXS,
+										Class: "text-gray-400 mx-2",
+									})
+								}
+								if crumb.Href != "" {
+									<a 
+										href={ crumb.Href }
+										class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-400 dark:hover:text-white"
+									>
+										if crumb.Icon != "" {
+											@atoms.Icon(atoms.IconProps{
+												Name:  crumb.Icon,
+												Size:  atoms.IconSizeXS,
+												Class: "mr-2",
+											})
+										}
+										{ crumb.Text }
+									</a>
+								} else {
+									<span class="ml-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+										{ crumb.Text }
+									</span>
+								}
+							</li>
+						}
+					</ol>
+				</nav>
+			}
+			
+			<!-- Page Title and Actions -->
+			if props.PageTitle != "" || len(props.PageActions) > 0 {
+				<div class="flex items-center justify-between">
+					<div>
+						if props.PageTitle != "" {
+							<h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+								{ props.PageTitle }
+							</h1>
+						}
+						if props.PageSubtitle != "" {
+							<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+								{ props.PageSubtitle }
+							</p>
+						}
+					</div>
+					
+					<!-- Page Actions -->
+					if len(props.PageActions) > 0 {
+						<div class="flex items-center space-x-3">
+							for _, action := range props.PageActions {
+								@PageActionButton(action)
+							}
+						</div>
+					}
+				</div>
+			}
+		</div>
+	</div>
+}
+
+// PageActionButton renders a page action button
+templ PageActionButton(action PageAction) {
+	@atoms.Button(atoms.ButtonProps{
+		Text:     action.Text,
+		Icon:     action.Icon,
+		Variant:  action.Variant,
+		Size:     action.Size,
+		Href:     action.Href,
+		OnClick:  action.OnClick,
+		HxGet:    action.HxGet,
+		HxPost:   action.HxPost,
+		HxTarget: action.HxTarget,
+		Disabled: action.Disabled,
+		Class:    getActionButtonClass(action.Primary),
+	})
+}
+
+// GlobalAlertsContainer renders system-wide alerts
+templ GlobalAlertsContainer(alerts []GlobalAlert) {
+	<div class="relative z-50">
+		for _, alert := range alerts {
+			@GlobalAlertBanner(alert)
+		}
+	</div>
+}
+
+// GlobalAlertBanner renders a single global alert
+templ GlobalAlertBanner(alert GlobalAlert) {
+	<div 
+		class={ "border-l-4 p-4", getGlobalAlertClasses(alert.Type) }
+		x-data="{ show: true }"
+		x-show="show"
+		x-transition:enter="transition ease-out duration-300"
+		x-transition:enter-start="opacity-0 transform -translate-y-2"
+		x-transition:enter-end="opacity-100 transform translate-y-0"
+	>
+		<div class="flex items-start">
+			<div class="flex-shrink-0">
+				@atoms.Icon(atoms.IconProps{
+					Name:  getGlobalAlertIcon(alert.Type),
+					Size:  atoms.IconSizeSM,
+					Class: getGlobalAlertIconClass(alert.Type),
+				})
+			</div>
+			<div class="ml-3 flex-1">
+				<h3 class="text-sm font-medium">
+					{ alert.Title }
+				</h3>
+				if alert.Message != "" {
+					<p class="mt-1 text-sm">
+						{ alert.Message }
+					</p>
+				}
+				if len(alert.Actions) > 0 {
+					<div class="mt-3 flex space-x-3">
+						for _, action := range alert.Actions {
+							@GlobalAlertActionButton(action)
+						}
+					</div>
+				}
+			</div>
+			if alert.Closable {
+				<div class="ml-auto pl-3">
+					<button
+						@click="show = false"
+						class="inline-flex rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+					>
+						@atoms.Icon(atoms.IconProps{
+							Name: "x",
+							Size: atoms.IconSizeSM,
+						})
+					</button>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+// GlobalAlertActionButton renders an action button for global alerts
+templ GlobalAlertActionButton(action GlobalAlertAction) {
+	if action.Href != "" {
+		<a 
+			href={ action.Href }
+			class={ "text-sm font-medium underline", getGlobalAlertActionClass(action.Primary) }
+		>
+			{ action.Text }
+		</a>
+	} else {
+		<button
+			type="button"
+			@click={ action.OnClick }
+			class={ "text-sm font-medium underline", getGlobalAlertActionClass(action.Primary) }
+		>
+			{ action.Text }
+		</button>
+	}
+}
+
+// LoadingOverlay renders a full-page loading overlay
+templ LoadingOverlay(loadingText string) {
+	<div class="fixed inset-0 z-50 bg-white bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 flex items-center justify-center">
+		<div class="text-center">
+			@atoms.Spinner(atoms.SpinnerProps{
+				Size:  atoms.SpinnerSizeLG,
+				Color: "text-blue-600",
+			})
+			if loadingText != "" {
+				<p class="mt-4 text-sm text-gray-600 dark:text-gray-400">
+					{ loadingText }
+				</p>
+			}
+		</div>
+	</div>
+}
+
+// AppFooter renders the application footer
+templ AppFooter(props FooterProps) {
+	<footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+		<div class="px-4 sm:px-6 lg:px-8 py-4">
+			<div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+				<div class="flex items-center space-x-6">
+					if props.CompanyName != "" {
+						<span>© 2024 { props.CompanyName }</span>
+					}
+					
+					for _, link := range props.CustomLinks {
+						<a 
+							href={ link.Href }
+							class="hover:text-gray-700 dark:hover:text-gray-300"
+						>
+							if link.Icon != "" {
+								@atoms.Icon(atoms.IconProps{
+									Name:  link.Icon,
+									Size:  atoms.IconSizeXS,
+									Class: "inline mr-1",
+								})
+							}
+							{ link.Text }
+						</a>
+					}
+					
+					if props.ShowPrivacy {
+						<a href="/privacy" class="hover:text-gray-700 dark:hover:text-gray-300">Privacy</a>
+					}
+				</div>
+				
+				<div class="flex items-center space-x-6">
+					if props.ShowSupport && props.SupportEmail != "" {
+						<a 
+							href={ "mailto:" + props.SupportEmail }
+							class="hover:text-gray-700 dark:hover:text-gray-300"
+						>
+							Support
+						</a>
+					}
+					
+					if props.ShowVersion {
+						<span>v1.0.0</span>
+					}
+				</div>
+			</div>
+		</div>
+	</footer>
+}
+
+// JavaScript for app layout functionality
+script appLayout() {
+	return {
+		sidebarOpen: false,
+		sidebarCollapsed: false,
+		
+		init() {
+			// Initialize from localStorage or props
+			this.sidebarOpen = window.innerWidth >= 1024; // lg breakpoint
+			this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+			
+			// Listen for window resize
+			window.addEventListener('resize', () => {
+				if (window.innerWidth >= 1024) {
+					this.sidebarOpen = true;
+				} else {
+					this.sidebarOpen = false;
+				}
+			});
+		},
+		
+		toggleSidebar() {
+			this.sidebarOpen = !this.sidebarOpen;
+		},
+		
+		closeSidebar() {
+			this.sidebarOpen = false;
+		},
+		
+		toggleSidebarCollapse() {
+			this.sidebarCollapsed = !this.sidebarCollapsed;
+			localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed);
+		}
+	}
+}
+
+// Helper functions
+func getActionButtonClass(primary bool) string {
+	if primary {
+		return "order-last"
+	}
+	return ""
+}
+
+func getGlobalAlertClasses(alertType string) string {
+	switch alertType {
+	case "error":
+		return "bg-red-50 border-red-400 text-red-700 dark:bg-red-900/20 dark:border-red-700 dark:text-red-300"
+	case "warning":
+		return "bg-yellow-50 border-yellow-400 text-yellow-700 dark:bg-yellow-900/20 dark:border-yellow-700 dark:text-yellow-300"
+	case "success":
+		return "bg-green-50 border-green-400 text-green-700 dark:bg-green-900/20 dark:border-green-700 dark:text-green-300"
+	case "maintenance":
+		return "bg-purple-50 border-purple-400 text-purple-700 dark:bg-purple-900/20 dark:border-purple-700 dark:text-purple-300"
+	default: // info
+		return "bg-blue-50 border-blue-400 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-300"
+	}
+}
+
+func getGlobalAlertIcon(alertType string) string {
+	switch alertType {
+	case "error":
+		return "x-circle"
+	case "warning":
+		return "exclamation-triangle"
+	case "success":
+		return "check-circle"
+	case "maintenance":
+		return "wrench"
+	default: // info
+		return "information-circle"
+	}
+}
+
+func getGlobalAlertIconClass(alertType string) string {
+	switch alertType {
+	case "error":
+		return "text-red-400"
+	case "warning":
+		return "text-yellow-400"
+	case "success":
+		return "text-green-400"
+	case "maintenance":
+		return "text-purple-400"
+	default: // info
+		return "text-blue-400"
+	}
+}
+
+func getGlobalAlertActionClass(primary bool) string {
+	if primary {
+		return "font-semibold"
+	}
+	return ""
+}

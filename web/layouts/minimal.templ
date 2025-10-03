@@ -1,0 +1,482 @@
+package layouts
+
+import (
+	"github.com/niiniyare/erp/web/components/atoms"
+)
+
+// MinimalLayoutProps defines properties for minimal layout pages
+type MinimalLayoutProps struct {
+	// Base layout props
+	Base BaseLayoutProps `json:"base"`
+	
+	// Page context
+	Title       string `json:"title,omitempty"`
+	Subtitle    string `json:"subtitle,omitempty"`
+	Description string `json:"description,omitempty"`
+	
+	// Layout configuration
+	MaxWidth    string `json:"maxWidth,omitempty"`    // sm, md, lg, xl, 2xl, full
+	Padding     string `json:"padding,omitempty"`     // sm, md, lg, xl, none
+	Centered    bool   `json:"centered"`              // Center content horizontally
+	VerticalCenter bool `json:"verticalCenter"`       // Center content vertically
+	
+	// Background and styling
+	Background  string `json:"background,omitempty"`  // white, gray, transparent, custom
+	Border      bool   `json:"border"`                // Add border around content
+	Shadow      bool   `json:"shadow"`                // Add shadow to content
+	Rounded     bool   `json:"rounded"`               // Add rounded corners
+	
+	// Header options
+	ShowHeader  bool   `json:"showHeader"`            // Show page header
+	HeaderTitle string `json:"headerTitle,omitempty"`
+	BackUrl     string `json:"backUrl,omitempty"`     // Show back button
+	BackText    string `json:"backText,omitempty"`
+	
+	// Footer options
+	ShowFooter  bool         `json:"showFooter"`
+	FooterLinks []FooterLink `json:"footerLinks,omitempty"`
+	FooterText  string       `json:"footerText,omitempty"`
+	
+	// Actions
+	Actions     []MinimalAction `json:"actions,omitempty"`      // Header actions
+	
+	// Loading state
+	IsLoading   bool   `json:"isLoading"`
+	LoadingText string `json:"loadingText,omitempty"`
+	
+	// Error state
+	Error       string `json:"error,omitempty"`
+	ErrorType   string `json:"errorType,omitempty"`   // 404, 500, 403, etc.
+}
+
+// MinimalAction represents an action in the minimal layout
+type MinimalAction struct {
+	Text     string             `json:"text"`
+	Icon     string             `json:"icon,omitempty"`
+	Variant  atoms.ButtonVariant `json:"variant"`
+	Size     atoms.ButtonSize    `json:"size"`
+	Href     string             `json:"href,omitempty"`
+	OnClick  string             `json:"onClick,omitempty"`
+	HxGet    string             `json:"hxGet,omitempty"`
+	HxPost   string             `json:"hxPost,omitempty"`
+	HxTarget string             `json:"hxTarget,omitempty"`
+	Primary  bool               `json:"primary"`
+	Disabled bool               `json:"disabled"`
+}
+
+// MinimalLayout provides a clean, minimal layout for simple pages
+templ MinimalLayout(props MinimalLayoutProps, content templ.Component) {
+	@BaseLayout(props.Base, MinimalLayoutContent(props, content))
+}
+
+// MinimalLayoutContent renders the minimal layout content
+templ MinimalLayoutContent(props MinimalLayoutProps, content templ.Component) {
+	<div class={ "min-h-screen", getMinimalLayoutClasses(props) }>
+		<!-- Loading Overlay -->
+		if props.IsLoading {
+			@MinimalLoadingOverlay(props.LoadingText)
+		}
+		
+		<!-- Main Container -->
+		<div class={ "w-full", getContainerClasses(props) }>
+			<!-- Header -->
+			if props.ShowHeader {
+				@MinimalHeader(props)
+			}
+			
+			<!-- Main Content -->
+			<main class={ getMainClasses(props) }>
+				<div class={ getContentWrapperClasses(props) }>
+					<!-- Error State -->
+					if props.Error != "" {
+						@MinimalErrorState(props)
+					} else {
+						<!-- Page Title and Description -->
+						if props.Title != "" || props.Subtitle != "" || props.Description != "" {
+							@MinimalPageHeader(props)
+						}
+						
+						<!-- Content -->
+						@content
+					}
+				</div>
+			</main>
+			
+			<!-- Footer -->
+			if props.ShowFooter {
+				@MinimalFooter(props)
+			}
+		</div>
+	</div>
+}
+
+// MinimalHeader renders a simple header with back button and actions
+templ MinimalHeader(props MinimalLayoutProps) {
+	<header class="sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+		<div class={ "px-4 sm:px-6 lg:px-8 py-4", getHeaderMaxWidthClass(props.MaxWidth) }>
+			<div class="flex items-center justify-between">
+				<!-- Left side - Back button and title -->
+				<div class="flex items-center space-x-4">
+					if props.BackUrl != "" {
+						<a 
+							href={ props.BackUrl }
+							class="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+						>
+							@atoms.Icon(atoms.IconProps{
+								Name:  "arrow-left",
+								Size:  atoms.IconSizeSM,
+								Class: "mr-2",
+							})
+							{ getBackText(props.BackText) }
+						</a>
+					}
+					
+					if props.HeaderTitle != "" {
+						<h1 class="text-lg font-semibold text-gray-900 dark:text-white">
+							{ props.HeaderTitle }
+						</h1>
+					}
+				</div>
+				
+				<!-- Right side - Actions -->
+				if len(props.Actions) > 0 {
+					<div class="flex items-center space-x-3">
+						for _, action := range props.Actions {
+							@MinimalActionButton(action)
+						}
+					</div>
+				}
+			</div>
+		</div>
+	</header>
+}
+
+// MinimalPageHeader renders the page title section
+templ MinimalPageHeader(props MinimalLayoutProps) {
+	<div class="text-center mb-8">
+		if props.Title != "" {
+			<h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+				{ props.Title }
+			</h1>
+		}
+		
+		if props.Subtitle != "" {
+			<h2 class="mt-2 text-xl text-gray-600 dark:text-gray-400">
+				{ props.Subtitle }
+			</h2>
+		}
+		
+		if props.Description != "" {
+			<p class="mt-4 text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+				{ props.Description }
+			</p>
+		}
+	</div>
+}
+
+// MinimalActionButton renders an action button
+templ MinimalActionButton(action MinimalAction) {
+	@atoms.Button(atoms.ButtonProps{
+		Text:     action.Text,
+		Icon:     action.Icon,
+		Variant:  action.Variant,
+		Size:     action.Size,
+		Href:     action.Href,
+		OnClick:  action.OnClick,
+		HxGet:    action.HxGet,
+		HxPost:   action.HxPost,
+		HxTarget: action.HxTarget,
+		Disabled: action.Disabled,
+		Class:    getMinimalActionClass(action.Primary),
+	})
+}
+
+// MinimalErrorState renders error states (404, 500, etc.)
+templ MinimalErrorState(props MinimalLayoutProps) {
+	<div class="text-center py-12">
+		<!-- Error Icon -->
+		<div class="mx-auto h-24 w-24 text-gray-400 mb-6">
+			@atoms.Icon(atoms.IconProps{
+				Name:  getErrorIcon(props.ErrorType),
+				Size:  "96",
+				Class: "mx-auto",
+			})
+		</div>
+		
+		<!-- Error Title -->
+		<h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+			{ getErrorTitle(props.ErrorType) }
+		</h1>
+		
+		<!-- Error Message -->
+		<p class="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+			{ props.Error }
+		</p>
+		
+		<!-- Error Actions -->
+		<div class="flex justify-center space-x-4">
+			if props.BackUrl != "" {
+				@atoms.Button(atoms.ButtonProps{
+					Text:    "Go Back",
+					Icon:    "arrow-left",
+					Variant: atoms.ButtonSecondary,
+					Href:    props.BackUrl,
+				})
+			}
+			
+			@atoms.Button(atoms.ButtonProps{
+				Text:    "Go Home",
+				Icon:    "home",
+				Variant: atoms.ButtonPrimary,
+				Href:    "/",
+			})
+		</div>
+	</div>
+}
+
+// MinimalLoadingOverlay renders a loading state
+templ MinimalLoadingOverlay(loadingText string) {
+	<div class="fixed inset-0 z-50 bg-white bg-opacity-90 dark:bg-gray-900 dark:bg-opacity-90 flex items-center justify-center">
+		<div class="text-center">
+			@atoms.Spinner(atoms.SpinnerProps{
+				Size:  atoms.SpinnerSizeLG,
+				Color: "text-blue-600",
+			})
+			if loadingText != "" {
+				<p class="mt-4 text-sm text-gray-600 dark:text-gray-400">
+					{ loadingText }
+				</p>
+			}
+		</div>
+	</div>
+}
+
+// MinimalFooter renders a simple footer
+templ MinimalFooter(props MinimalLayoutProps) {
+	<footer class="mt-auto border-t border-gray-200 dark:border-gray-700">
+		<div class={ "px-4 sm:px-6 lg:px-8 py-6", getHeaderMaxWidthClass(props.MaxWidth) }>
+			if len(props.FooterLinks) > 0 {
+				<div class="flex justify-center space-x-6 mb-4">
+					for _, link := range props.FooterLinks {
+						<a 
+							href={ link.Href }
+							class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+						>
+							if link.Icon != "" {
+								@atoms.Icon(atoms.IconProps{
+									Name:  link.Icon,
+									Size:  atoms.IconSizeXS,
+									Class: "inline mr-1",
+								})
+							}
+							{ link.Text }
+						</a>
+					}
+				</div>
+			}
+			
+			if props.FooterText != "" {
+				<div class="text-center text-xs text-gray-400 dark:text-gray-500">
+					{ props.FooterText }
+				</div>
+			}
+		</div>
+	</footer>
+}
+
+// EmptyState renders an empty state with optional action
+templ EmptyState(title, description, actionText, actionHref string) {
+	<div class="text-center py-12">
+		<!-- Empty State Icon -->
+		<div class="mx-auto h-24 w-24 text-gray-400 mb-6">
+			@atoms.Icon(atoms.IconProps{
+				Name:  "document-empty",
+				Size:  "96",
+				Class: "mx-auto",
+			})
+		</div>
+		
+		<!-- Empty State Content -->
+		<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+			{ title }
+		</h3>
+		
+		if description != "" {
+			<p class="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
+				{ description }
+			</p>
+		}
+		
+		<!-- Empty State Action -->
+		if actionText != "" && actionHref != "" {
+			@atoms.Button(atoms.ButtonProps{
+				Text:    actionText,
+				Icon:    "plus",
+				Variant: atoms.ButtonPrimary,
+				Href:    actionHref,
+			})
+		}
+	</div>
+}
+
+// Helper functions
+func getMinimalLayoutClasses(props MinimalLayoutProps) string {
+	classes := "flex flex-col"
+	
+	switch props.Background {
+	case "white":
+		classes += " bg-white"
+	case "gray":
+		classes += " bg-gray-50 dark:bg-gray-900"
+	case "transparent":
+		classes += " bg-transparent"
+	default:
+		classes += " bg-gray-50 dark:bg-gray-900"
+	}
+	
+	if props.VerticalCenter {
+		classes += " justify-center"
+	}
+	
+	return classes
+}
+
+func getContainerClasses(props MinimalLayoutProps) string {
+	classes := "mx-auto"
+	
+	if props.VerticalCenter {
+		classes += " flex flex-col min-h-screen"
+	} else {
+		classes += " min-h-screen flex flex-col"
+	}
+	
+	return classes
+}
+
+func getMainClasses(props MinimalLayoutProps) string {
+	classes := "flex-1"
+	
+	if props.VerticalCenter {
+		classes += " flex items-center justify-center"
+	}
+	
+	return classes
+}
+
+func getContentWrapperClasses(props MinimalLayoutProps) string {
+	classes := ""
+	
+	// Max width
+	switch props.MaxWidth {
+	case "sm":
+		classes += "max-w-sm mx-auto"
+	case "md":
+		classes += "max-w-md mx-auto"
+	case "lg":
+		classes += "max-w-lg mx-auto"
+	case "xl":
+		classes += "max-w-xl mx-auto"
+	case "2xl":
+		classes += "max-w-2xl mx-auto"
+	case "full":
+		classes += "w-full"
+	default:
+		classes += "max-w-4xl mx-auto"
+	}
+	
+	// Padding
+	switch props.Padding {
+	case "sm":
+		classes += " p-4"
+	case "md":
+		classes += " p-6"
+	case "lg":
+		classes += " p-8"
+	case "xl":
+		classes += " p-12"
+	case "none":
+		// No padding
+	default:
+		classes += " px-4 py-8 sm:px-6 lg:px-8"
+	}
+	
+	// Background styling
+	if props.Background == "white" || props.Border || props.Shadow || props.Rounded {
+		if props.Background != "transparent" {
+			classes += " bg-white dark:bg-gray-800"
+		}
+		
+		if props.Border {
+			classes += " border border-gray-200 dark:border-gray-700"
+		}
+		
+		if props.Shadow {
+			classes += " shadow-lg"
+		}
+		
+		if props.Rounded {
+			classes += " rounded-lg"
+		}
+	}
+	
+	return classes
+}
+
+func getHeaderMaxWidthClass(maxWidth string) string {
+	switch maxWidth {
+	case "sm":
+		return "max-w-sm mx-auto"
+	case "md":
+		return "max-w-md mx-auto"
+	case "lg":
+		return "max-w-lg mx-auto"
+	case "xl":
+		return "max-w-xl mx-auto"
+	case "2xl":
+		return "max-w-2xl mx-auto"
+	case "full":
+		return "w-full"
+	default:
+		return "max-w-4xl mx-auto"
+	}
+}
+
+func getBackText(backText string) string {
+	if backText == "" {
+		return "Back"
+	}
+	return backText
+}
+
+func getMinimalActionClass(primary bool) string {
+	if primary {
+		return "order-last"
+	}
+	return ""
+}
+
+func getErrorIcon(errorType string) string {
+	switch errorType {
+	case "404":
+		return "document-missing"
+	case "403":
+		return "lock-closed"
+	case "500":
+		return "exclamation-triangle"
+	default:
+		return "exclamation-circle"
+	}
+}
+
+func getErrorTitle(errorType string) string {
+	switch errorType {
+	case "404":
+		return "Page Not Found"
+	case "403":
+		return "Access Denied"
+	case "500":
+		return "Server Error"
+	default:
+		return "Error"
+	}
+}

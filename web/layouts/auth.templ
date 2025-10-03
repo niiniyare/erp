@@ -1,0 +1,453 @@
+package layouts
+
+import (
+	"github.com/niiniyare/erp/web/components/atoms"
+)
+
+// AuthLayoutProps defines properties for authentication pages
+type AuthLayoutProps struct {
+	// Base layout props
+	Base BaseLayoutProps `json:"base"`
+	
+	// Branding
+	AppName        string `json:"appName"`
+	AppLogo        string `json:"appLogo,omitempty"`
+	AppTagline     string `json:"appTagline,omitempty"`
+	
+	// Page context
+	FormTitle      string `json:"formTitle"`
+	FormSubtitle   string `json:"formSubtitle,omitempty"`
+	FormType       string `json:"formType"`       // login, register, forgot-password, reset-password, verify-email
+	
+	// Features and options
+	ShowRememberMe bool   `json:"showRememberMe"`
+	ShowSocialAuth bool   `json:"showSocialAuth"`
+	ShowSignupLink bool   `json:"showSignupLink"`
+	ShowLoginLink  bool   `json:"showLoginLink"`
+	ShowForgotLink bool   `json:"showForgotLink"`
+	
+	// Social authentication providers
+	SocialProviders []SocialProvider `json:"socialProviders,omitempty"`
+	
+	// Links and URLs
+	SignupUrl      string `json:"signupUrl,omitempty"`
+	LoginUrl       string `json:"loginUrl,omitempty"`
+	ForgotUrl      string `json:"forgotUrl,omitempty"`
+	TermsUrl       string `json:"termsUrl,omitempty"`
+	PrivacyUrl     string `json:"privacyUrl,omitempty"`
+	SupportUrl     string `json:"supportUrl,omitempty"`
+	
+	// Security features
+	ShowCaptcha    bool   `json:"showCaptcha"`
+	CaptchaSiteKey string `json:"captchaSiteKey,omitempty"`
+	
+	// Layout options
+	ShowBackground bool   `json:"showBackground"`
+	BackgroundImage string `json:"backgroundImage,omitempty"`
+	CenterCard     bool   `json:"centerCard"`
+	CardWidth      string `json:"cardWidth,omitempty"` // sm, md, lg, xl
+	
+	// Footer
+	ShowFooter     bool         `json:"showFooter"`
+	FooterLinks    []FooterLink `json:"footerLinks,omitempty"`
+	CompanyName    string       `json:"companyName,omitempty"`
+	
+	// Error and success states
+	Error          string `json:"error,omitempty"`
+	Success        string `json:"success,omitempty"`
+	Info           string `json:"info,omitempty"`
+}
+
+// SocialProvider represents a social authentication provider
+type SocialProvider struct {
+	Name     string `json:"name"`     // google, github, microsoft, apple
+	Label    string `json:"label"`    // Display name
+	Icon     string `json:"icon"`     // Icon name
+	AuthUrl  string `json:"authUrl"`  // Authentication URL
+	Enabled  bool   `json:"enabled"`
+	Color    string `json:"color,omitempty"` // Brand color
+}
+
+// AuthLayout provides the layout for authentication pages
+templ AuthLayout(props AuthLayoutProps, content templ.Component) {
+	@BaseLayout(props.Base, AuthLayoutContent(props, content))
+}
+
+// AuthLayoutContent renders the authentication layout content
+templ AuthLayoutContent(props AuthLayoutProps, content templ.Component) {
+	<div class={ "min-h-screen flex", getAuthLayoutClasses(props) }>
+		<!-- Background Image/Pattern -->
+		if props.ShowBackground {
+			@AuthBackground(props.BackgroundImage)
+		}
+		
+		<!-- Main Content -->
+		<div class={ "flex-1 flex flex-col justify-center", getContentClasses(props.CenterCard) }>
+			<div class="sm:mx-auto sm:w-full sm:max-w-md">
+				<!-- App Branding -->
+				@AuthBranding(props)
+				
+				<!-- Auth Card -->
+				<div class="bg-white dark:bg-gray-800 py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 border border-gray-200 dark:border-gray-700">
+					<!-- Form Header -->
+					@AuthFormHeader(props)
+					
+					<!-- Alert Messages -->
+					@AuthAlerts(props)
+					
+					<!-- Main Form Content -->
+					<div class="mt-6">
+						@content
+					</div>
+					
+					<!-- Social Authentication -->
+					if props.ShowSocialAuth && len(props.SocialProviders) > 0 {
+						@SocialAuthSection(props.SocialProviders)
+					}
+					
+					<!-- Auth Links -->
+					@AuthLinks(props)
+				</div>
+				
+				<!-- Footer Links -->
+				if props.ShowFooter && len(props.FooterLinks) > 0 {
+					@AuthFooter(props)
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// AuthBackground renders the background image or pattern
+templ AuthBackground(backgroundImage string) {
+	<div class="hidden lg:block relative w-0 flex-1">
+		if backgroundImage != "" {
+			<img 
+				class="absolute inset-0 h-full w-full object-cover" 
+				src={ backgroundImage }
+				alt="Authentication background"
+			/>
+		} else {
+			<!-- Default gradient background -->
+			<div class="absolute inset-0 h-full w-full bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800"></div>
+		}
+		
+		<!-- Overlay -->
+		<div class="absolute inset-0 h-full w-full bg-black bg-opacity-20"></div>
+		
+		<!-- Optional decorative elements -->
+		<div class="absolute inset-0 h-full w-full">
+			<div class="absolute top-10 left-10 w-20 h-20 bg-white bg-opacity-10 rounded-full"></div>
+			<div class="absolute top-32 right-20 w-32 h-32 bg-white bg-opacity-5 rounded-full"></div>
+			<div class="absolute bottom-20 left-20 w-16 h-16 bg-white bg-opacity-10 rounded-full"></div>
+		</div>
+	</div>
+}
+
+// AuthBranding renders the application branding
+templ AuthBranding(props AuthLayoutProps) {
+	<div class="sm:mx-auto sm:w-full sm:max-w-md">
+		<div class="text-center">
+			<!-- App Logo -->
+			if props.AppLogo != "" {
+				<img 
+					class="mx-auto h-12 w-auto"
+					src={ props.AppLogo }
+					alt={ props.AppName + " logo" }
+				/>
+			} else {
+				<!-- Default logo placeholder -->
+				<div class="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
+					<span class="text-white font-bold text-xl">
+						{ getAppInitials(props.AppName) }
+					</span>
+				</div>
+			}
+			
+			<!-- App Name -->
+			<h1 class="mt-4 text-2xl font-bold text-gray-900 dark:text-white">
+				{ props.AppName }
+			</h1>
+			
+			<!-- App Tagline -->
+			if props.AppTagline != "" {
+				<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+					{ props.AppTagline }
+				</p>
+			}
+		</div>
+	</div>
+}
+
+// AuthFormHeader renders the form title and description
+templ AuthFormHeader(props AuthLayoutProps) {
+	<div class="text-center">
+		<h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+			{ props.FormTitle }
+		</h2>
+		if props.FormSubtitle != "" {
+			<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+				{ props.FormSubtitle }
+			</p>
+		}
+	</div>
+}
+
+// AuthAlerts renders error, success, and info messages
+templ AuthAlerts(props AuthLayoutProps) {
+	if props.Error != "" || props.Success != "" || props.Info != "" {
+		<div class="mt-4 space-y-2">
+			<!-- Error Alert -->
+			if props.Error != "" {
+				<div class="rounded-md bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800">
+					<div class="flex">
+						<div class="flex-shrink-0">
+							@atoms.Icon(atoms.IconProps{
+								Name:  "x-circle",
+								Size:  atoms.IconSizeSM,
+								Class: "text-red-400",
+							})
+						</div>
+						<div class="ml-3">
+							<p class="text-sm text-red-800 dark:text-red-300">
+								{ props.Error }
+							</p>
+						</div>
+					</div>
+				</div>
+			}
+			
+			<!-- Success Alert -->
+			if props.Success != "" {
+				<div class="rounded-md bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-800">
+					<div class="flex">
+						<div class="flex-shrink-0">
+							@atoms.Icon(atoms.IconProps{
+								Name:  "check-circle",
+								Size:  atoms.IconSizeSM,
+								Class: "text-green-400",
+							})
+						</div>
+						<div class="ml-3">
+							<p class="text-sm text-green-800 dark:text-green-300">
+								{ props.Success }
+							</p>
+						</div>
+					</div>
+				</div>
+			}
+			
+			<!-- Info Alert -->
+			if props.Info != "" {
+				<div class="rounded-md bg-blue-50 dark:bg-blue-900/20 p-4 border border-blue-200 dark:border-blue-800">
+					<div class="flex">
+						<div class="flex-shrink-0">
+							@atoms.Icon(atoms.IconProps{
+								Name:  "information-circle",
+								Size:  atoms.IconSizeSM,
+								Class: "text-blue-400",
+							})
+						</div>
+						<div class="ml-3">
+							<p class="text-sm text-blue-800 dark:text-blue-300">
+								{ props.Info }
+							</p>
+						</div>
+					</div>
+				</div>
+			}
+		</div>
+	}
+}
+
+// SocialAuthSection renders social authentication options
+templ SocialAuthSection(providers []SocialProvider) {
+	<div class="mt-6">
+		<div class="relative">
+			<div class="absolute inset-0 flex items-center">
+				<div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+			</div>
+			<div class="relative flex justify-center text-sm">
+				<span class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+					Or continue with
+				</span>
+			</div>
+		</div>
+		
+		<div class="mt-6 space-y-3">
+			for _, provider := range providers {
+				if provider.Enabled {
+					@SocialAuthButton(provider)
+				}
+			}
+		</div>
+	</div>
+}
+
+// SocialAuthButton renders a social authentication button
+templ SocialAuthButton(provider SocialProvider) {
+	<a
+		href={ provider.AuthUrl }
+		class={ "w-full inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-200", getSocialButtonClasses(provider.Name) }
+	>
+		<div class="flex items-center">
+			@atoms.Icon(atoms.IconProps{
+				Name:  provider.Icon,
+				Size:  atoms.IconSizeSM,
+				Class: "mr-2 " + getSocialIconClasses(provider.Name),
+			})
+			<span>{ provider.Label }</span>
+		</div>
+	</a>
+}
+
+// AuthLinks renders authentication-related links
+templ AuthLinks(props AuthLayoutProps) {
+	<div class="mt-6 space-y-4">
+		<!-- Primary Links -->
+		<div class="flex items-center justify-between text-sm">
+			<!-- Left side links -->
+			<div class="flex space-x-4">
+				if props.ShowLoginLink && props.LoginUrl != "" {
+					<a 
+						href={ props.LoginUrl }
+						class="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+					>
+						Sign in to your account
+					</a>
+				}
+				
+				if props.ShowSignupLink && props.SignupUrl != "" {
+					<a 
+						href={ props.SignupUrl }
+						class="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+					>
+						Create an account
+					</a>
+				}
+			</div>
+			
+			<!-- Right side links -->
+			<div>
+				if props.ShowForgotLink && props.ForgotUrl != "" {
+					<a 
+						href={ props.ForgotUrl }
+						class="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+					>
+						Forgot password?
+					</a>
+				}
+			</div>
+		</div>
+		
+		<!-- Terms and Privacy -->
+		if props.TermsUrl != "" || props.PrivacyUrl != "" {
+			<div class="text-center text-xs text-gray-500 dark:text-gray-400">
+				<span>By continuing, you agree to our </span>
+				if props.TermsUrl != "" {
+					<a 
+						href={ props.TermsUrl }
+						class="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+					>
+						Terms of Service
+					</a>
+				}
+				if props.TermsUrl != "" && props.PrivacyUrl != "" {
+					<span> and </span>
+				}
+				if props.PrivacyUrl != "" {
+					<a 
+						href={ props.PrivacyUrl }
+						class="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+					>
+						Privacy Policy
+					</a>
+				}
+			</div>
+		}
+	</div>
+}
+
+// AuthFooter renders footer links for auth pages
+templ AuthFooter(props AuthLayoutProps) {
+	<div class="mt-8 text-center">
+		<div class="flex justify-center space-x-6 text-sm">
+			for _, link := range props.FooterLinks {
+				<a 
+					href={ link.Href }
+					class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+				>
+					if link.Icon != "" {
+						@atoms.Icon(atoms.IconProps{
+							Name:  link.Icon,
+							Size:  atoms.IconSizeXS,
+							Class: "inline mr-1",
+						})
+					}
+					{ link.Text }
+				</a>
+			}
+		</div>
+		
+		if props.CompanyName != "" {
+			<p class="mt-4 text-xs text-gray-400 dark:text-gray-500">
+				© 2024 { props.CompanyName }. All rights reserved.
+			</p>
+		}
+	</div>
+}
+
+// Helper functions
+func getAuthLayoutClasses(props AuthLayoutProps) string {
+	if props.ShowBackground {
+		return ""
+	}
+	return "bg-gray-50 dark:bg-gray-900"
+}
+
+func getContentClasses(centerCard bool) string {
+	if centerCard {
+		return "py-12 sm:px-6 lg:px-8"
+	}
+	return "py-12 sm:px-6 lg:px-8"
+}
+
+func getAppInitials(appName string) string {
+	if len(appName) == 0 {
+		return "A"
+	}
+	if len(appName) == 1 {
+		return string(appName[0])
+	}
+	return string(appName[0]) + string(appName[1])
+}
+
+func getSocialButtonClasses(provider string) string {
+	switch provider {
+	case "google":
+		return "hover:border-red-300"
+	case "github":
+		return "hover:border-gray-400"
+	case "microsoft":
+		return "hover:border-blue-300"
+	case "apple":
+		return "hover:border-gray-400"
+	default:
+		return ""
+	}
+}
+
+func getSocialIconClasses(provider string) string {
+	switch provider {
+	case "google":
+		return "text-red-500"
+	case "github":
+		return "text-gray-900 dark:text-white"
+	case "microsoft":
+		return "text-blue-500"
+	case "apple":
+		return "text-gray-900 dark:text-white"
+	default:
+		return "text-gray-500"
+	}
+}

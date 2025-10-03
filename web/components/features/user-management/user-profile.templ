@@ -1,0 +1,496 @@
+package usermanagement
+
+import (
+	"fmt"
+	"github.com/niiniyare/erp/web/components/atoms"
+	"github.com/niiniyare/erp/web/components/molecules"
+)
+
+// UserProfileProps defines properties for user profile display
+type UserProfileProps struct {
+	User              User                  `json:"user"`
+	CanEdit           bool                  `json:"canEdit"`
+	CanViewSecurity   bool                  `json:"canViewSecurity"`
+	ShowActivity      bool                  `json:"showActivity"`
+	ActivityCount     int                   `json:"activityCount"`
+	LastLoginDetails  *LoginDetails         `json:"lastLoginDetails,omitempty"`
+	SecuritySettings  *SecuritySettings     `json:"securitySettings,omitempty"`
+	HxEditUrl         string                `json:"hxEditUrl,omitempty"`
+}
+
+// LoginDetails contains last login information
+type LoginDetails struct {
+	IP        string `json:"ip"`
+	UserAgent string `json:"userAgent"`
+	Location  string `json:"location"`
+	Date      string `json:"date"`
+}
+
+// SecuritySettings contains user security preferences
+type SecuritySettings struct {
+	TwoFactorEnabled  bool   `json:"twoFactorEnabled"`
+	LastPasswordChange string `json:"lastPasswordChange"`
+	LoginNotifications bool   `json:"loginNotifications"`
+	SessionTimeout     int    `json:"sessionTimeout"`
+}
+
+// UserProfile renders a comprehensive user profile view
+templ UserProfile(props UserProfileProps) {
+	<div class="max-w-4xl mx-auto space-y-6">
+		<!-- Profile Header -->
+		@UserProfileHeader(props)
+		
+		<!-- Profile Content Tabs -->
+		<div x-data="{ activeTab: 'overview' }" class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+			<!-- Tab Navigation -->
+			<div class="border-b border-gray-200 dark:border-gray-700">
+				<nav class="flex space-x-8 px-6" aria-label="Profile sections">
+					<button 
+						@click="activeTab = 'overview'"
+						:class="{ 'border-blue-500 text-blue-600': activeTab === 'overview', 'border-transparent text-gray-500': activeTab !== 'overview' }"
+						class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm hover:text-gray-700 dark:hover:text-gray-300"
+					>
+						Overview
+					</button>
+					<button 
+						@click="activeTab = 'activity'"
+						:class="{ 'border-blue-500 text-blue-600': activeTab === 'activity', 'border-transparent text-gray-500': activeTab !== 'activity' }"
+						class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm hover:text-gray-700 dark:hover:text-gray-300"
+					>
+						Activity
+					</button>
+					if props.CanViewSecurity {
+						<button 
+							@click="activeTab = 'security'"
+							:class="{ 'border-blue-500 text-blue-600': activeTab === 'security', 'border-transparent text-gray-500': activeTab !== 'security' }"
+							class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm hover:text-gray-700 dark:hover:text-gray-300"
+						>
+							Security
+						</button>
+					}
+				</nav>
+			</div>
+
+			<!-- Tab Content -->
+			<div class="p-6">
+				<!-- Overview Tab -->
+				<div x-show="activeTab === 'overview'" class="space-y-6">
+					@UserProfileOverview(props)
+				</div>
+
+				<!-- Activity Tab -->
+				<div x-show="activeTab === 'activity'" class="space-y-6">
+					@UserProfileActivity(props)
+				</div>
+
+				<!-- Security Tab -->
+				if props.CanViewSecurity {
+					<div x-show="activeTab === 'security'" class="space-y-6">
+						@UserProfileSecurity(props)
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// UserProfileHeader renders the profile header with avatar and basic info
+templ UserProfileHeader(props UserProfileProps) {
+	<div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+		<div class="flex items-center justify-between">
+			<div class="flex items-center space-x-6">
+				<!-- User Avatar -->
+				<div class="relative">
+					if props.User.Avatar != "" {
+						<img 
+							class="h-20 w-20 rounded-full object-cover" 
+							src={ props.User.Avatar } 
+							alt={ props.User.Name + " avatar" }
+						/>
+					} else {
+						<div class="h-20 w-20 rounded-full bg-blue-600 flex items-center justify-center">
+							<span class="text-2xl font-bold text-white">
+								{ getInitials(props.User.Name) }
+							</span>
+						</div>
+					}
+					
+					<!-- Status Indicator -->
+					<div class="absolute -bottom-1 -right-1">
+						@UserStatusIndicator(props.User.Status)
+					</div>
+				</div>
+
+				<!-- User Info -->
+				<div class="space-y-1">
+					<h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+						{ props.User.Name }
+					</h1>
+					<p class="text-gray-600 dark:text-gray-400">
+						{ props.User.Email }
+					</p>
+					<div class="flex items-center space-x-4">
+						@UserRoleBadge(props.User.Role)
+						if props.User.Department != "" {
+							<span class="text-sm text-gray-500 dark:text-gray-400">
+								{ props.User.Department }
+							</span>
+						}
+					</div>
+				</div>
+			</div>
+
+			<!-- Action Buttons -->
+			<div class="flex items-center space-x-3">
+				<!-- Edit Profile -->
+				if props.CanEdit {
+					@atoms.Button(atoms.ButtonProps{
+						Text:     "Edit Profile",
+						Icon:     "pencil",
+						Variant:  atoms.ButtonPrimary,
+						Size:     atoms.ButtonSizeSM,
+						HxGet:    props.HxEditUrl,
+						HxTarget: "#user-modal",
+						HxSwap:   "innerHTML",
+					})
+				}
+
+				<!-- Message User -->
+				@atoms.Button(atoms.ButtonProps{
+					Text:    "Message",
+					Icon:    "mail",
+					Variant: atoms.ButtonSecondary,
+					Size:    atoms.ButtonSizeSM,
+					HxGet:   "/messages/compose?to=" + props.User.ID,
+					HxTarget: "#message-modal",
+					HxSwap:  "innerHTML",
+				})
+
+				<!-- More Actions -->
+				<div class="relative" x-data="{ open: false }">
+					<button
+						@click="open = !open"
+						class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+					>
+						@atoms.Icon(atoms.IconProps{
+							Name: "dots-vertical",
+							Size: atoms.IconSizeSM,
+						})
+					</button>
+
+					<div 
+						x-show="open"
+						@click.away="open = false"
+						class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10"
+					>
+						<div class="py-1">
+							<a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+								View Login History
+							</a>
+							<a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">
+								Reset Password
+							</a>
+							<a href="#" class="block px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600">
+								Deactivate Account
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// UserProfileOverview renders the overview tab content
+templ UserProfileOverview(props UserProfileProps) {
+	<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+		<!-- Contact Information -->
+		<div class="space-y-4">
+			<h3 class="text-lg font-medium text-gray-900 dark:text-white">Contact Information</h3>
+			<div class="space-y-3">
+				<div class="flex items-center justify-between">
+					<span class="text-sm font-medium text-gray-500 dark:text-gray-400">Email</span>
+					<span class="text-sm text-gray-900 dark:text-white">{ props.User.Email }</span>
+				</div>
+				
+				if props.User.Phone != "" {
+					<div class="flex items-center justify-between">
+						<span class="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</span>
+						<span class="text-sm text-gray-900 dark:text-white">{ props.User.Phone }</span>
+					</div>
+				}
+
+				if props.User.Department != "" {
+					<div class="flex items-center justify-between">
+						<span class="text-sm font-medium text-gray-500 dark:text-gray-400">Department</span>
+						<span class="text-sm text-gray-900 dark:text-white">{ props.User.Department }</span>
+					</div>
+				}
+			</div>
+		</div>
+
+		<!-- Account Information -->
+		<div class="space-y-4">
+			<h3 class="text-lg font-medium text-gray-900 dark:text-white">Account Information</h3>
+			<div class="space-y-3">
+				<div class="flex items-center justify-between">
+					<span class="text-sm font-medium text-gray-500 dark:text-gray-400">Role</span>
+					@UserRoleBadge(props.User.Role)
+				</div>
+				
+				<div class="flex items-center justify-between">
+					<span class="text-sm font-medium text-gray-500 dark:text-gray-400">Status</span>
+					@UserStatusBadge(props.User.Status)
+				</div>
+
+				<div class="flex items-center justify-between">
+					<span class="text-sm font-medium text-gray-500 dark:text-gray-400">Member Since</span>
+					<span class="text-sm text-gray-900 dark:text-white">{ formatDate(props.User.CreatedAt) }</span>
+				</div>
+
+				if props.User.LastLogin != "" {
+					<div class="flex items-center justify-between">
+						<span class="text-sm font-medium text-gray-500 dark:text-gray-400">Last Login</span>
+						<span class="text-sm text-gray-900 dark:text-white">{ formatDate(props.User.LastLogin) }</span>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+
+	<!-- Last Login Details -->
+	if props.LastLoginDetails != nil {
+		<div class="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+			<h4 class="font-medium text-gray-900 dark:text-white mb-3">Last Login Details</h4>
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+				<div>
+					<span class="font-medium text-gray-500 dark:text-gray-400">IP Address:</span>
+					<span class="ml-2 text-gray-900 dark:text-white">{ props.LastLoginDetails.IP }</span>
+				</div>
+				if props.LastLoginDetails.Location != "" {
+					<div>
+						<span class="font-medium text-gray-500 dark:text-gray-400">Location:</span>
+						<span class="ml-2 text-gray-900 dark:text-white">{ props.LastLoginDetails.Location }</span>
+					</div>
+				}
+				if props.LastLoginDetails.UserAgent != "" {
+					<div>
+						<span class="font-medium text-gray-500 dark:text-gray-400">Device:</span>
+						<span class="ml-2 text-gray-900 dark:text-white">{ formatUserAgent(props.LastLoginDetails.UserAgent) }</span>
+					</div>
+				}
+			</div>
+		</div>
+	}
+}
+
+// UserProfileActivity renders the activity tab content
+templ UserProfileActivity(props UserProfileProps) {
+	<div class="space-y-6">
+		<!-- Activity Summary -->
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+			<div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+				<div class="flex items-center">
+					@atoms.Icon(atoms.IconProps{
+						Name:  "login",
+						Size:  atoms.IconSizeSM,
+						Class: "text-blue-600 dark:text-blue-400 mr-3",
+					})
+					<div>
+						<p class="text-sm font-medium text-blue-900 dark:text-blue-300">Total Logins</p>
+						<p class="text-2xl font-bold text-blue-900 dark:text-blue-300">127</p>
+					</div>
+				</div>
+			</div>
+
+			<div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+				<div class="flex items-center">
+					@atoms.Icon(atoms.IconProps{
+						Name:  "activity",
+						Size:  atoms.IconSizeSM,
+						Class: "text-green-600 dark:text-green-400 mr-3",
+					})
+					<div>
+						<p class="text-sm font-medium text-green-900 dark:text-green-300">Activities</p>
+						<p class="text-2xl font-bold text-green-900 dark:text-green-300">{ props.ActivityCount }</p>
+					</div>
+				</div>
+			</div>
+
+			<div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+				<div class="flex items-center">
+					@atoms.Icon(atoms.IconProps{
+						Name:  "clock",
+						Size:  atoms.IconSizeSM,
+						Class: "text-yellow-600 dark:text-yellow-400 mr-3",
+					})
+					<div>
+						<p class="text-sm font-medium text-yellow-900 dark:text-yellow-300">Avg Session</p>
+						<p class="text-2xl font-bold text-yellow-900 dark:text-yellow-300">2.4h</p>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Recent Activity Timeline -->
+		<div class="space-y-4">
+			<h3 class="text-lg font-medium text-gray-900 dark:text-white">Recent Activity</h3>
+			<div 
+				hx-get={ "/admin/users/" + props.User.ID + "/activity" }
+				hx-trigger="load"
+				hx-target="this"
+				class="space-y-4"
+			>
+				<div class="flex items-center justify-center py-8">
+					@atoms.Spinner(atoms.SpinnerProps{
+						Size: atoms.SpinnerSizeMD,
+						Color: "text-blue-600",
+					})
+					<span class="ml-2 text-gray-500 dark:text-gray-400">Loading activity...</span>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+// UserProfileSecurity renders the security tab content
+templ UserProfileSecurity(props UserProfileProps) {
+	<div class="space-y-6">
+		if props.SecuritySettings != nil {
+			<!-- Security Overview -->
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+				<div class="space-y-4">
+					<h3 class="text-lg font-medium text-gray-900 dark:text-white">Authentication</h3>
+					<div class="space-y-3">
+						<div class="flex items-center justify-between">
+							<span class="text-sm font-medium text-gray-500 dark:text-gray-400">Two-Factor Authentication</span>
+							if props.SecuritySettings.TwoFactorEnabled {
+								<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+									Enabled
+								</span>
+							} else {
+								<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+									Disabled
+								</span>
+							}
+						</div>
+						
+						<div class="flex items-center justify-between">
+							<span class="text-sm font-medium text-gray-500 dark:text-gray-400">Last Password Change</span>
+							<span class="text-sm text-gray-900 dark:text-white">{ formatDate(props.SecuritySettings.LastPasswordChange) }</span>
+						</div>
+					</div>
+				</div>
+
+				<div class="space-y-4">
+					<h3 class="text-lg font-medium text-gray-900 dark:text-white">Preferences</h3>
+					<div class="space-y-3">
+						<div class="flex items-center justify-between">
+							<span class="text-sm font-medium text-gray-500 dark:text-gray-400">Login Notifications</span>
+							if props.SecuritySettings.LoginNotifications {
+								<span class="text-sm text-green-600 dark:text-green-400">Enabled</span>
+							} else {
+								<span class="text-sm text-gray-500 dark:text-gray-400">Disabled</span>
+							}
+						</div>
+						
+						<div class="flex items-center justify-between">
+							<span class="text-sm font-medium text-gray-500 dark:text-gray-400">Session Timeout</span>
+							<span class="text-sm text-gray-900 dark:text-white">{ formatSessionTimeout(props.SecuritySettings.SessionTimeout) }</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Security Actions -->
+			<div class="space-y-4">
+				<h3 class="text-lg font-medium text-gray-900 dark:text-white">Security Actions</h3>
+				<div class="flex flex-wrap gap-3">
+					@atoms.Button(atoms.ButtonProps{
+						Text:    "Reset Password",
+						Icon:    "key",
+						Variant: atoms.ButtonSecondary,
+						Size:    atoms.ButtonSizeSM,
+						HxPost:  "/admin/users/" + props.User.ID + "/reset-password",
+						HxTarget: "#notification-area",
+						HxSwap:  "beforeend",
+					})
+
+					if !props.SecuritySettings.TwoFactorEnabled {
+						@atoms.Button(atoms.ButtonProps{
+							Text:    "Enable 2FA",
+							Icon:    "shield",
+							Variant: atoms.ButtonSecondary,
+							Size:    atoms.ButtonSizeSM,
+							HxGet:   "/admin/users/" + props.User.ID + "/setup-2fa",
+							HxTarget: "#security-modal",
+							HxSwap:  "innerHTML",
+						})
+					}
+
+					@atoms.Button(atoms.ButtonProps{
+						Text:    "View Login History",
+						Icon:    "clock",
+						Variant: atoms.ButtonLight,
+						Size:    atoms.ButtonSizeSM,
+						HxGet:   "/admin/users/" + props.User.ID + "/login-history",
+						HxTarget: "#security-modal",
+						HxSwap:  "innerHTML",
+					})
+
+					@atoms.Button(atoms.ButtonProps{
+						Text:      "Revoke All Sessions",
+						Icon:      "x-circle",
+						Variant:   atoms.ButtonDanger,
+						Size:      atoms.ButtonSizeSM,
+						HxPost:    "/admin/users/" + props.User.ID + "/revoke-sessions",
+						HxConfirm: "Are you sure you want to revoke all active sessions for this user?",
+						HxTarget:  "#notification-area",
+						HxSwap:    "beforeend",
+					})
+				</div>
+			</div>
+		}
+	</div>
+}
+
+// UserStatusIndicator renders a small status indicator dot
+templ UserStatusIndicator(status string) {
+	switch status {
+	case "active":
+		<div class="h-4 w-4 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
+	case "inactive":
+		<div class="h-4 w-4 bg-gray-400 rounded-full border-2 border-white dark:border-gray-800"></div>
+	case "pending":
+		<div class="h-4 w-4 bg-yellow-500 rounded-full border-2 border-white dark:border-gray-800"></div>
+	case "suspended":
+		<div class="h-4 w-4 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></div>
+	default:
+		<div class="h-4 w-4 bg-gray-400 rounded-full border-2 border-white dark:border-gray-800"></div>
+	}
+}
+
+// Helper functions
+func formatDate(dateStr string) string {
+	if dateStr == "" {
+		return "Never"
+	}
+	// In a real implementation, you would parse and format the date
+	return dateStr
+}
+
+func formatUserAgent(userAgent string) string {
+	// Simplified user agent parsing - in real implementation use a proper parser
+	if len(userAgent) > 50 {
+		return userAgent[:50] + "..."
+	}
+	return userAgent
+}
+
+func formatSessionTimeout(minutes int) string {
+	if minutes < 60 {
+		return fmt.Sprintf("%d minutes", minutes)
+	}
+	hours := minutes / 60
+	return fmt.Sprintf("%d hours", hours)
+}

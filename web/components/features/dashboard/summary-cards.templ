@@ -1,0 +1,515 @@
+package dashboard
+
+import (
+	"fmt"
+	"github.com/niiniyare/erp/web/components/atoms"
+)
+
+// SummaryCardsProps defines properties for dashboard summary cards
+type SummaryCardsProps struct {
+	Cards       []SummaryCard `json:"cards"`
+	GridCols    int           `json:"gridCols,omitempty"`    // 1, 2, 3, 4
+	Responsive  bool          `json:"responsive"`            // Responsive grid
+	ShowTrends  bool          `json:"showTrends"`            // Show trend indicators
+	RefreshUrl  string        `json:"refreshUrl,omitempty"`  // Auto-refresh endpoint
+	RefreshInterval int       `json:"refreshInterval,omitempty"` // Refresh interval in seconds
+}
+
+// SummaryCard represents a single summary metric card
+type SummaryCard struct {
+	ID          string        `json:"id"`
+	Title       string        `json:"title"`
+	Value       string        `json:"value"`
+	Subtitle    string        `json:"subtitle,omitempty"`
+	Icon        string        `json:"icon,omitempty"`
+	Color       string        `json:"color,omitempty"`       // blue, green, yellow, red, purple, gray
+	Trend       *TrendData    `json:"trend,omitempty"`
+	Actions     []CardAction  `json:"actions,omitempty"`
+	Link        string        `json:"link,omitempty"`        // Make entire card clickable
+	Loading     bool          `json:"loading"`
+	Error       string        `json:"error,omitempty"`
+	LastUpdated string        `json:"lastUpdated,omitempty"`
+	
+	// HTMX attributes for dynamic updates
+	HxGet       string        `json:"hxGet,omitempty"`
+	HxTrigger   string        `json:"hxTrigger,omitempty"`
+	HxTarget    string        `json:"hxTarget,omitempty"`
+	HxSwap      string        `json:"hxSwap,omitempty"`
+	
+	// Styling
+	Size        string        `json:"size,omitempty"`        // sm, md, lg
+	Highlight   bool          `json:"highlight"`             // Emphasize this card
+	CustomClass string        `json:"customClass,omitempty"`
+}
+
+// TrendData represents trend information for a metric
+type TrendData struct {
+	Value       float64 `json:"value"`        // Percentage change
+	Direction   string  `json:"direction"`    // up, down, neutral
+	Period      string  `json:"period"`       // "vs last month", "vs last week"
+	Label       string  `json:"label,omitempty"` // Custom trend label
+	Positive    bool    `json:"positive"`     // Whether trend is positive (green) or negative (red)
+}
+
+// CardAction represents an action button on a card
+type CardAction struct {
+	Text      string `json:"text"`
+	Icon      string `json:"icon,omitempty"`
+	Href      string `json:"href,omitempty"`
+	OnClick   string `json:"onClick,omitempty"`
+	HxGet     string `json:"hxGet,omitempty"`
+	HxPost    string `json:"hxPost,omitempty"`
+	HxTarget  string `json:"hxTarget,omitempty"`
+	Primary   bool   `json:"primary"`
+	Disabled  bool   `json:"disabled"`
+}
+
+// SummaryCards renders a grid of summary metric cards
+templ SummaryCards(props SummaryCardsProps) {
+	<div 
+		class="space-y-4"
+		if props.RefreshUrl != "" && props.RefreshInterval > 0 {
+			hx-get={ props.RefreshUrl }
+			hx-trigger={ fmt.Sprintf("every %ds", props.RefreshInterval) }
+			hx-target="this"
+			hx-swap="outerHTML"
+		}
+	>
+		<!-- Section Header -->
+		<div class="flex items-center justify-between">
+			<h2 class="text-lg font-medium text-gray-900 dark:text-white">
+				Key Metrics
+			</h2>
+			
+			<!-- Refresh Button -->
+			if props.RefreshUrl != "" {
+				<button
+					type="button"
+					hx-get={ props.RefreshUrl }
+					hx-target="this"
+					hx-swap="outerHTML"
+					class="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 shadow-sm text-xs font-medium rounded text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+				>
+					@atoms.Icon(atoms.IconProps{
+						Name:  "refresh",
+						Size:  atoms.IconSizeXS,
+						Class: "mr-1",
+					})
+					Refresh
+				</button>
+			}
+		</div>
+		
+		<!-- Cards Grid -->
+		<div class={ getSummaryGridClasses(props.GridCols, props.Responsive) }>
+			for _, card := range props.Cards {
+				@SummaryCard(card, props.ShowTrends)
+			}
+		</div>
+	</div>
+}
+
+// SummaryCard renders a single summary metric card
+templ SummaryCard(card SummaryCard, showTrends bool) {
+	<div 
+		class={ getSummaryCardClasses(card) }
+		if card.HxGet != "" {
+			hx-get={ card.HxGet }
+		}
+		if card.HxTrigger != "" {
+			hx-trigger={ card.HxTrigger }
+		}
+		if card.HxTarget != "" {
+			hx-target={ card.HxTarget }
+		}
+		if card.HxSwap != "" {
+			hx-swap={ card.HxSwap }
+		}
+		if card.ID != "" {
+			id={ card.ID }
+		}
+	>
+		<!-- Card Content -->
+		<div class={ getCardContentClasses(card.Link != "") }>
+			<!-- Card Header -->
+			<div class="flex items-center justify-between">
+				<div class="flex items-center">
+					<!-- Icon -->
+					if card.Icon != "" {
+						<div class={ "flex-shrink-0 mr-3", getIconWrapperClasses(card.Color) }>
+							@atoms.Icon(atoms.IconProps{
+								Name:  card.Icon,
+								Size:  atoms.IconSizeSM,
+								Class: getIconClasses(card.Color),
+							})
+						</div>
+					}
+					
+					<!-- Title -->
+					<div>
+						<h3 class="text-sm font-medium text-gray-900 dark:text-white truncate">
+							{ card.Title }
+						</h3>
+						if card.Subtitle != "" {
+							<p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+								{ card.Subtitle }
+							</p>
+						}
+					</div>
+				</div>
+				
+				<!-- Actions Dropdown -->
+				if len(card.Actions) > 0 {
+					@CardActionsDropdown(card.Actions)
+				}
+			</div>
+			
+			<!-- Card Body -->
+			<div class="mt-4">
+				<!-- Loading State -->
+				if card.Loading {
+					<div class="flex items-center justify-center py-4">
+						@atoms.Spinner(atoms.SpinnerProps{
+							Size:  atoms.SpinnerSizeSM,
+							Color: "text-gray-400",
+						})
+					</div>
+				} else if card.Error != "" {
+					<!-- Error State -->
+					<div class="text-center py-4">
+						@atoms.Icon(atoms.IconProps{
+							Name:  "exclamation-triangle",
+							Size:  atoms.IconSizeSM,
+							Class: "text-red-400 mx-auto mb-2",
+						})
+						<p class="text-xs text-red-600 dark:text-red-400">
+							{ card.Error }
+						</p>
+					</div>
+				} else {
+					<!-- Value -->
+					<div class="flex items-baseline">
+						<p class={ getValueClasses(card.Size) }>
+							{ card.Value }
+						</p>
+						
+						<!-- Trend Indicator -->
+						if showTrends && card.Trend != nil {
+							@TrendIndicator(*card.Trend)
+						}
+					</div>
+					
+					<!-- Last Updated -->
+					if card.LastUpdated != "" {
+						<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+							Updated { card.LastUpdated }
+						</p>
+					}
+				}
+			</div>
+		</div>
+		
+		<!-- Click overlay for entire card linking -->
+		if card.Link != "" {
+			<a 
+				href={ card.Link }
+				class="absolute inset-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+				aria-label={ "View " + card.Title + " details" }
+			></a>
+		}
+	</div>
+}
+
+// TrendIndicator renders a trend arrow and percentage
+templ TrendIndicator(trend TrendData) {
+	<div class="ml-2 flex items-center">
+		<!-- Trend Arrow -->
+		<div class={ getTrendClasses(trend) }>
+			@atoms.Icon(atoms.IconProps{
+				Name:  getTrendIcon(trend.Direction),
+				Size:  atoms.IconSizeXS,
+				Class: "mr-1",
+			})
+			<span class="text-xs font-medium">
+				{ formatTrendValue(trend.Value) }%
+			</span>
+		</div>
+		
+		<!-- Trend Period -->
+		if trend.Period != "" {
+			<span class="ml-1 text-xs text-gray-500 dark:text-gray-400">
+				{ trend.Period }
+			</span>
+		}
+	</div>
+}
+
+// CardActionsDropdown renders a dropdown menu with card actions
+templ CardActionsDropdown(actions []CardAction) {
+	<div class="relative" x-data="{ open: false }">
+		<button
+			@click="open = !open"
+			class="p-1 rounded-full text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+		>
+			@atoms.Icon(atoms.IconProps{
+				Name: "dots-vertical",
+				Size: atoms.IconSizeXS,
+			})
+		</button>
+		
+		<div 
+			x-show="open"
+			@click.away="open = false"
+			x-transition:enter="transition ease-out duration-100"
+			x-transition:enter-start="transform opacity-0 scale-95"
+			x-transition:enter-end="transform opacity-100 scale-100"
+			x-transition:leave="transition ease-in duration-75"
+			x-transition:leave-start="transform opacity-100 scale-100"
+			x-transition:leave-end="transform opacity-0 scale-95"
+			class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10"
+		>
+			<div class="py-1">
+				for _, action := range actions {
+					@CardActionItem(action)
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// CardActionItem renders a single action item in the dropdown
+templ CardActionItem(action CardAction) {
+	if action.Href != "" {
+		<a
+			href={ action.Href }
+			class={ "block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600", getActionItemClasses(action.Disabled) }
+		>
+			<div class="flex items-center">
+				if action.Icon != "" {
+					@atoms.Icon(atoms.IconProps{
+						Name:  action.Icon,
+						Size:  atoms.IconSizeXS,
+						Class: "mr-2",
+					})
+				}
+				{ action.Text }
+			</div>
+		</a>
+	} else {
+		<button
+			type="button"
+			@click={ getActionClickHandler(action) }
+			if action.HxGet != "" {
+				hx-get={ action.HxGet }
+			}
+			if action.HxPost != "" {
+				hx-post={ action.HxPost }
+			}
+			if action.HxTarget != "" {
+				hx-target={ action.HxTarget }
+			}
+			disabled={ action.Disabled }
+			class={ "w-full text-left block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-600", getActionItemClasses(action.Disabled) }
+		>
+			<div class="flex items-center">
+				if action.Icon != "" {
+					@atoms.Icon(atoms.IconProps{
+						Name:  action.Icon,
+						Size:  atoms.IconSizeXS,
+						Class: "mr-2",
+					})
+				}
+				{ action.Text }
+			</div>
+		</button>
+	}
+}
+
+// QuickStats renders a compact horizontal stats layout
+templ QuickStats(cards []SummaryCard) {
+	<div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+		<div class="grid grid-cols-2 md:grid-cols-4 gap-4 divide-x divide-gray-200 dark:divide-gray-700">
+			for _, card := range cards {
+				@QuickStatItem(card)
+			}
+		</div>
+	</div>
+}
+
+// QuickStatItem renders a compact stat item
+templ QuickStatItem(card SummaryCard) {
+	<div class="px-4 first:pl-0 last:pr-0">
+		<div class="flex items-center">
+			if card.Icon != "" {
+				<div class={ "flex-shrink-0 mr-2", getIconWrapperClasses(card.Color) }>
+					@atoms.Icon(atoms.IconProps{
+						Name:  card.Icon,
+						Size:  atoms.IconSizeXS,
+						Class: getIconClasses(card.Color),
+					})
+				</div>
+			}
+			<div class="min-w-0 flex-1">
+				<p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+					{ card.Value }
+				</p>
+				<p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+					{ card.Title }
+				</p>
+			</div>
+		</div>
+	</div>
+}
+
+// Helper functions
+func getSummaryGridClasses(gridCols int, responsive bool) string {
+	if responsive {
+		switch gridCols {
+		case 1:
+			return "grid grid-cols-1 gap-4"
+		case 2:
+			return "grid grid-cols-1 md:grid-cols-2 gap-4"
+		case 3:
+			return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+		case 4:
+			return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+		default:
+			return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+		}
+	}
+	
+	switch gridCols {
+	case 1:
+		return "grid grid-cols-1 gap-4"
+	case 2:
+		return "grid grid-cols-2 gap-4"
+	case 3:
+		return "grid grid-cols-3 gap-4"
+	case 4:
+		return "grid grid-cols-4 gap-4"
+	default:
+		return "grid grid-cols-3 gap-4"
+	}
+}
+
+func getSummaryCardClasses(card SummaryCard) string {
+	baseClasses := "relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200"
+	
+	if card.Highlight {
+		baseClasses += " ring-2 ring-blue-500 ring-opacity-50"
+	}
+	
+	if card.Link != "" {
+		baseClasses += " hover:border-blue-300 dark:hover:border-blue-600 cursor-pointer"
+	}
+	
+	if card.CustomClass != "" {
+		baseClasses += " " + card.CustomClass
+	}
+	
+	return baseClasses
+}
+
+func getCardContentClasses(hasLink bool) string {
+	if hasLink {
+		return "relative z-10 pointer-events-none"
+	}
+	return ""
+}
+
+func getIconWrapperClasses(color string) string {
+	switch color {
+	case "blue":
+		return "bg-blue-100 dark:bg-blue-900/20 rounded-md p-2"
+	case "green":
+		return "bg-green-100 dark:bg-green-900/20 rounded-md p-2"
+	case "yellow":
+		return "bg-yellow-100 dark:bg-yellow-900/20 rounded-md p-2"
+	case "red":
+		return "bg-red-100 dark:bg-red-900/20 rounded-md p-2"
+	case "purple":
+		return "bg-purple-100 dark:bg-purple-900/20 rounded-md p-2"
+	default:
+		return "bg-gray-100 dark:bg-gray-700 rounded-md p-2"
+	}
+}
+
+func getIconClasses(color string) string {
+	switch color {
+	case "blue":
+		return "text-blue-600 dark:text-blue-400"
+	case "green":
+		return "text-green-600 dark:text-green-400"
+	case "yellow":
+		return "text-yellow-600 dark:text-yellow-400"
+	case "red":
+		return "text-red-600 dark:text-red-400"
+	case "purple":
+		return "text-purple-600 dark:text-purple-400"
+	default:
+		return "text-gray-600 dark:text-gray-400"
+	}
+}
+
+func getValueClasses(size string) string {
+	switch size {
+	case "sm":
+		return "text-lg font-semibold text-gray-900 dark:text-white"
+	case "lg":
+		return "text-3xl font-bold text-gray-900 dark:text-white"
+	default: // md
+		return "text-2xl font-semibold text-gray-900 dark:text-white"
+	}
+}
+
+func getTrendClasses(trend TrendData) string {
+	baseClasses := "inline-flex items-center"
+	
+	if trend.Direction == "up" {
+		if trend.Positive {
+			return baseClasses + " text-green-600 dark:text-green-400"
+		} else {
+			return baseClasses + " text-red-600 dark:text-red-400"
+		}
+	} else if trend.Direction == "down" {
+		if trend.Positive {
+			return baseClasses + " text-green-600 dark:text-green-400"
+		} else {
+			return baseClasses + " text-red-600 dark:text-red-400"
+		}
+	}
+	
+	return baseClasses + " text-gray-500 dark:text-gray-400"
+}
+
+func getTrendIcon(direction string) string {
+	switch direction {
+	case "up":
+		return "arrow-up"
+	case "down":
+		return "arrow-down"
+	default:
+		return "minus"
+	}
+}
+
+func formatTrendValue(value float64) string {
+	if value >= 0 {
+		return fmt.Sprintf("+%.1f", value)
+	}
+	return fmt.Sprintf("%.1f", value)
+}
+
+func getActionItemClasses(disabled bool) string {
+	if disabled {
+		return "text-gray-400 dark:text-gray-500 cursor-not-allowed"
+	}
+	return "text-gray-700 dark:text-gray-300"
+}
+
+func getActionClickHandler(action CardAction) string {
+	if action.OnClick != "" {
+		return action.OnClick
+	}
+	return "open = false"
+}

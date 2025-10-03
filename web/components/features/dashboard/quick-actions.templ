@@ -1,0 +1,519 @@
+package dashboard
+
+import (
+	"github.com/niiniyare/erp/web/components/atoms"
+)
+
+// QuickActionsProps defines properties for the quick actions widget
+type QuickActionsProps struct {
+	Title       string        `json:"title,omitempty"`
+	Actions     []QuickAction `json:"actions"`
+	Layout      string        `json:"layout,omitempty"`     // grid, list, compact
+	GridCols    int           `json:"gridCols,omitempty"`   // 2, 3, 4, 6
+	ShowIcons   bool          `json:"showIcons"`            // Show action icons
+	ShowLabels  bool          `json:"showLabels"`           // Show action labels
+	Compact     bool          `json:"compact"`              // Compact styling
+	Categories  []ActionCategory `json:"categories,omitempty"` // Grouped actions
+}
+
+// QuickAction represents a single quick action
+type QuickAction struct {
+	ID          string `json:"id"`
+	Text        string `json:"text"`
+	Description string `json:"description,omitempty"`
+	Icon        string `json:"icon,omitempty"`
+	Color       string `json:"color,omitempty"`      // blue, green, yellow, red, purple, gray
+	Badge       string `json:"badge,omitempty"`      // Notification badge
+	
+	// Action behavior
+	Href        string `json:"href,omitempty"`
+	OnClick     string `json:"onClick,omitempty"`
+	HxGet       string `json:"hxGet,omitempty"`
+	HxPost      string `json:"hxPost,omitempty"`
+	HxTarget    string `json:"hxTarget,omitempty"`
+	HxSwap      string `json:"hxSwap,omitempty"`
+	
+	// State and permissions
+	Disabled    bool   `json:"disabled"`
+	Hidden      bool   `json:"hidden"`
+	RequiredRole string `json:"requiredRole,omitempty"`
+	RequiredPermission string `json:"requiredPermission,omitempty"`
+	
+	// Visual styling
+	Size        string `json:"size,omitempty"`       // sm, md, lg
+	Variant     string `json:"variant,omitempty"`    // default, primary, secondary, outline
+	Category    string `json:"category,omitempty"`   // For grouping
+	Priority    int    `json:"priority"`             // Display order
+	
+	// Analytics
+	TrackEvent  string `json:"trackEvent,omitempty"`
+}
+
+// ActionCategory represents a group of related actions
+type ActionCategory struct {
+	ID          string        `json:"id"`
+	Name        string        `json:"name"`
+	Description string        `json:"description,omitempty"`
+	Icon        string        `json:"icon,omitempty"`
+	Actions     []QuickAction `json:"actions"`
+	Collapsed   bool          `json:"collapsed"`
+}
+
+// QuickActions renders a quick actions widget
+templ QuickActions(props QuickActionsProps) {
+	<div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+		<!-- Header -->
+		if props.Title != "" || len(props.Categories) > 0 {
+			<div class="p-4 border-b border-gray-200 dark:border-gray-700">
+				<h3 class="text-lg font-medium text-gray-900 dark:text-white">
+					{ getQuickActionsTitle(props.Title) }
+				</h3>
+			</div>
+		}
+		
+		<!-- Actions Content -->
+		<div class={ getQuickActionsContentClasses(props.Compact) }>
+			if len(props.Categories) > 0 {
+				@CategorizedActions(props)
+			} else {
+				@SimpleActions(props)
+			}
+		</div>
+	</div>
+}
+
+// SimpleActions renders actions in a simple layout
+templ SimpleActions(props QuickActionsProps) {
+	switch props.Layout {
+	case "list":
+		@ActionsList(props.Actions, props)
+	case "compact":
+		@ActionsCompact(props.Actions, props)
+	default: // grid
+		@ActionsGrid(props.Actions, props)
+	}
+}
+
+// CategorizedActions renders actions grouped by categories
+templ CategorizedActions(props QuickActionsProps) {
+	<div class="space-y-4">
+		for _, category := range props.Categories {
+			@ActionCategory(category, props)
+		}
+	</div>
+}
+
+// ActionCategory renders a single category of actions
+templ ActionCategory(category ActionCategory, props QuickActionsProps) {
+	<div class="space-y-3">
+		<!-- Category Header -->
+		<div 
+			class="flex items-center justify-between cursor-pointer"
+			@click={ "toggleCategory('" + category.ID + "')" }
+		>
+			<div class="flex items-center space-x-2">
+				if category.Icon != "" {
+					@atoms.Icon(atoms.IconProps{
+						Name:  category.Icon,
+						Size:  atoms.IconSizeSM,
+						Class: "text-gray-600 dark:text-gray-400",
+					})
+				}
+				<h4 class="font-medium text-gray-900 dark:text-white">
+					{ category.Name }
+				</h4>
+				if category.Description != "" {
+					<span class="text-sm text-gray-500 dark:text-gray-400">
+						({ category.Description })
+					</span>
+				}
+			</div>
+			
+			<div class="transform transition-transform duration-200" :class="{ 'rotate-180': !collapsed }">
+				@atoms.Icon(atoms.IconProps{
+					Name: "chevron-down",
+					Size: atoms.IconSizeXS,
+					Class: "text-gray-400",
+				})
+			</div>
+		</div>
+		
+		<!-- Category Actions -->
+		<div 
+			x-show={ "!categories." + category.ID + "?.collapsed" }
+			x-transition
+		>
+			@ActionsGrid(category.Actions, props)
+		</div>
+	</div>
+}
+
+// ActionsGrid renders actions in a grid layout
+templ ActionsGrid(actions []QuickAction, props QuickActionsProps) {
+	<div class={ getActionsGridClasses(props.GridCols) }>
+		for _, action := range actions {
+			if !action.Hidden {
+				@QuickActionButton(action, props)
+			}
+		}
+	</div>
+}
+
+// ActionsList renders actions in a vertical list
+templ ActionsList(actions []QuickAction, props QuickActionsProps) {
+	<div class="space-y-2">
+		for _, action := range actions {
+			if !action.Hidden {
+				@QuickActionListItem(action, props)
+			}
+		}
+	</div>
+}
+
+// ActionsCompact renders actions in a compact horizontal layout
+templ ActionsCompact(actions []QuickAction, props QuickActionsProps) {
+	<div class="flex flex-wrap gap-2">
+		for _, action := range actions {
+			if !action.Hidden {
+				@QuickActionCompact(action, props)
+			}
+		}
+	</div>
+}
+
+// QuickActionButton renders a single action as a button
+templ QuickActionButton(action QuickAction, props QuickActionsProps) {
+	<div class={ getActionButtonWrapperClasses(action, props) }>
+		if action.Href != "" {
+			<a
+				href={ action.Href }
+				class={ getActionButtonClasses(action, props) }
+				if action.TrackEvent != "" {
+					@click={ "trackEvent('" + action.TrackEvent + "')" }
+				}
+			>
+				@ActionButtonContent(action, props)
+			</a>
+		} else {
+			<button
+				type="button"
+				@click={ getActionClickHandler(action) }
+				if action.HxGet != "" {
+					hx-get={ action.HxGet }
+				}
+				if action.HxPost != "" {
+					hx-post={ action.HxPost }
+				}
+				if action.HxTarget != "" {
+					hx-target={ action.HxTarget }
+				}
+				if action.HxSwap != "" {
+					hx-swap={ action.HxSwap }
+				}
+				disabled={ action.Disabled }
+				class={ getActionButtonClasses(action, props) }
+				if action.TrackEvent != "" {
+					@click={ "trackEvent('" + action.TrackEvent + "')" }
+				}
+			>
+				@ActionButtonContent(action, props)
+			</button>
+		}
+	</div>
+}
+
+// ActionButtonContent renders the content inside an action button
+templ ActionButtonContent(action QuickAction, props QuickActionsProps) {
+	<div class="flex flex-col items-center justify-center text-center p-4 min-h-[80px]">
+		<!-- Icon -->
+		if props.ShowIcons && action.Icon != "" {
+			<div class="mb-2 relative">
+				@atoms.Icon(atoms.IconProps{
+					Name:  action.Icon,
+					Size:  getActionIconSize(action.Size),
+					Class: getActionIconClasses(action.Color),
+				})
+				
+				<!-- Badge -->
+				if action.Badge != "" {
+					<div class="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+						{ action.Badge }
+					</div>
+				}
+			</div>
+		}
+		
+		<!-- Text -->
+		if props.ShowLabels {
+			<div>
+				<p class={ getActionTextClasses(action.Size) }>
+					{ action.Text }
+				</p>
+				if action.Description != "" {
+					<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+						{ action.Description }
+					</p>
+				}
+			</div>
+		}
+	</div>
+}
+
+// QuickActionListItem renders a single action as a list item
+templ QuickActionListItem(action QuickAction, props QuickActionsProps) {
+	<div class="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-lg transition-colors duration-150">
+		<div class="flex items-center space-x-3">
+			<!-- Icon -->
+			if props.ShowIcons && action.Icon != "" {
+				<div class={ "flex-shrink-0 p-2 rounded-md", getActionIconWrapperClasses(action.Color) }>
+					@atoms.Icon(atoms.IconProps{
+						Name:  action.Icon,
+						Size:  atoms.IconSizeSM,
+						Class: getActionIconClasses(action.Color),
+					})
+				</div>
+			}
+			
+			<!-- Content -->
+			<div class="flex-1">
+				<p class="text-sm font-medium text-gray-900 dark:text-white">
+					{ action.Text }
+				</p>
+				if action.Description != "" {
+					<p class="text-xs text-gray-500 dark:text-gray-400">
+						{ action.Description }
+					</p>
+				}
+			</div>
+		</div>
+		
+		<!-- Action Button -->
+		<div class="flex-shrink-0">
+			if action.Href != "" {
+				<a
+					href={ action.Href }
+					class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 shadow-sm text-xs font-medium rounded text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+				>
+					Go
+					@atoms.Icon(atoms.IconProps{
+						Name:  "arrow-right",
+						Size:  atoms.IconSizeXS,
+						Class: "ml-1",
+					})
+				</a>
+			} else {
+				<button
+					type="button"
+					@click={ getActionClickHandler(action) }
+					if action.HxGet != "" {
+						hx-get={ action.HxGet }
+					}
+					if action.HxPost != "" {
+						hx-post={ action.HxPost }
+					}
+					if action.HxTarget != "" {
+						hx-target={ action.HxTarget }
+					}
+					disabled={ action.Disabled }
+					class="inline-flex items-center px-2.5 py-1.5 border border-gray-300 dark:border-gray-600 shadow-sm text-xs font-medium rounded text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+				>
+					Go
+					@atoms.Icon(atoms.IconProps{
+						Name:  "arrow-right",
+						Size:  atoms.IconSizeXS,
+						Class: "ml-1",
+					})
+				</button>
+			}
+		</div>
+	</div>
+}
+
+// QuickActionCompact renders a compact action button
+templ QuickActionCompact(action QuickAction, props QuickActionsProps) {
+	if action.Href != "" {
+		<a
+			href={ action.Href }
+			class={ getCompactActionClasses(action) }
+			title={ action.Description }
+		>
+			@CompactActionContent(action, props)
+		</a>
+	} else {
+		<button
+			type="button"
+			@click={ getActionClickHandler(action) }
+			if action.HxGet != "" {
+				hx-get={ action.HxGet }
+			}
+			if action.HxPost != "" {
+				hx-post={ action.HxPost }
+			}
+			if action.HxTarget != "" {
+				hx-target={ action.HxTarget }
+			}
+			disabled={ action.Disabled }
+			class={ getCompactActionClasses(action) }
+			title={ action.Description }
+		>
+			@CompactActionContent(action, props)
+		</button>
+	}
+}
+
+// CompactActionContent renders content for compact actions
+templ CompactActionContent(action QuickAction, props QuickActionsProps) {
+	<div class="flex items-center space-x-2">
+		if props.ShowIcons && action.Icon != "" {
+			@atoms.Icon(atoms.IconProps{
+				Name:  action.Icon,
+				Size:  atoms.IconSizeXS,
+				Class: getActionIconClasses(action.Color),
+			})
+		}
+		
+		if props.ShowLabels {
+			<span class="text-sm font-medium">{ action.Text }</span>
+		}
+		
+		if action.Badge != "" {
+			<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+				{ action.Badge }
+			</span>
+		}
+	</div>
+}
+
+// Helper functions
+func getQuickActionsTitle(title string) string {
+	if title == "" {
+		return "Quick Actions"
+	}
+	return title
+}
+
+func getQuickActionsContentClasses(compact bool) string {
+	if compact {
+		return "p-3"
+	}
+	return "p-4"
+}
+
+func getActionsGridClasses(gridCols int) string {
+	switch gridCols {
+	case 2:
+		return "grid grid-cols-2 gap-3"
+	case 3:
+		return "grid grid-cols-3 gap-3"
+	case 4:
+		return "grid grid-cols-2 lg:grid-cols-4 gap-3"
+	case 6:
+		return "grid grid-cols-3 lg:grid-cols-6 gap-3"
+	default:
+		return "grid grid-cols-2 md:grid-cols-3 gap-3"
+	}
+}
+
+func getActionButtonWrapperClasses(action QuickAction, props QuickActionsProps) string {
+	if action.Disabled {
+		return "opacity-50 cursor-not-allowed"
+	}
+	return ""
+}
+
+func getActionButtonClasses(action QuickAction, props QuickActionsProps) string {
+	baseClasses := "w-full rounded-lg border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+	
+	if action.Disabled {
+		return baseClasses + " border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
+	}
+	
+	switch action.Variant {
+	case "primary":
+		return baseClasses + " border-blue-600 bg-blue-600 text-white hover:bg-blue-700 hover:border-blue-700"
+	case "secondary":
+		return baseClasses + " border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
+	case "outline":
+		return baseClasses + " border-gray-300 dark:border-gray-600 bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+	default:
+		return baseClasses + " border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+	}
+}
+
+func getActionIconSize(size string) string {
+	switch size {
+	case "sm":
+		return atoms.IconSizeSM
+	case "lg":
+		return atoms.IconSizeLG
+	default:
+		return atoms.IconSizeMD
+	}
+}
+
+func getActionIconClasses(color string) string {
+	switch color {
+	case "blue":
+		return "text-blue-600 dark:text-blue-400"
+	case "green":
+		return "text-green-600 dark:text-green-400"
+	case "yellow":
+		return "text-yellow-600 dark:text-yellow-400"
+	case "red":
+		return "text-red-600 dark:text-red-400"
+	case "purple":
+		return "text-purple-600 dark:text-purple-400"
+	default:
+		return "text-gray-600 dark:text-gray-400"
+	}
+}
+
+func getActionIconWrapperClasses(color string) string {
+	switch color {
+	case "blue":
+		return "bg-blue-100 dark:bg-blue-900/20"
+	case "green":
+		return "bg-green-100 dark:bg-green-900/20"
+	case "yellow":
+		return "bg-yellow-100 dark:bg-yellow-900/20"
+	case "red":
+		return "bg-red-100 dark:bg-red-900/20"
+	case "purple":
+		return "bg-purple-100 dark:bg-purple-900/20"
+	default:
+		return "bg-gray-100 dark:bg-gray-700"
+	}
+}
+
+func getActionTextClasses(size string) string {
+	switch size {
+	case "sm":
+		return "text-xs font-medium text-gray-900 dark:text-white"
+	case "lg":
+		return "text-base font-medium text-gray-900 dark:text-white"
+	default:
+		return "text-sm font-medium text-gray-900 dark:text-white"
+	}
+}
+
+func getCompactActionClasses(action QuickAction) string {
+	baseClasses := "inline-flex items-center px-3 py-2 rounded-md border transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500"
+	
+	if action.Disabled {
+		return baseClasses + " border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+	}
+	
+	return baseClasses + " border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
+}
+
+func getActionClickHandler(action QuickAction) string {
+	if action.OnClick != "" {
+		return action.OnClick
+	}
+	
+	if action.TrackEvent != "" {
+		return "trackEvent('" + action.TrackEvent + "')"
+	}
+	
+	return ""
+}
