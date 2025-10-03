@@ -11,9 +11,9 @@ import (
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/shared"
 	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
+	"github.com/niiniyare/erp/internal/shared/format"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/timeutil"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -832,11 +832,11 @@ func convertTenantToGOA(t *tenant.Tenant) *goaTenant.Tenant {
 	// Convert settings from map[string]any to structured format
 	if t.Settings != nil {
 		settings := &goaTenant.TenantSettings{
-			Timezone:   t.Timezone,             // Use direct fields from tenant
-			Currency:   t.CurrencyCode,         // Use direct fields from tenant
-			DateFormat: timeutil.HumanDateTime, // Default
-			Language:   "en",                   // Default
-			Features:   []string{},             // Default empty
+			Timezone:   t.Timezone,           // Use direct fields from tenant
+			Currency:   t.CurrencyCode,       // Use direct fields from tenant
+			DateFormat: format.HumanDateTime, // Default
+			Language:   "en",                 // Default
+			Features:   []string{},           // Default empty
 		}
 
 		// Extract settings from the map if they exist

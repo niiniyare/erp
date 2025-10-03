@@ -1,0 +1,184 @@
+package siteheader
+
+import (
+	"github.com/niiniyare/erp/web/components/atoms"
+	"github.com/niiniyare/erp/web/components/molecules"
+)
+
+// SiteHeader renders the main site header organism with navigation, search, and user menu
+templ SiteHeader(props SiteHeaderProps) {
+	<header
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ getSiteHeaderClasses(props) }
+		if props.DataTestID != "" {
+			data-testid={ props.DataTestID }
+		}
+		x-data={ getSiteHeaderAlpineData() }
+	>
+		<div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
+			<!-- Brand Section -->
+			@HeaderBrandSection(props.Brand)
+			
+			<!-- Mobile Menu Button -->
+			@HeaderMobileMenuButton()
+			
+			<!-- Desktop Navigation and Actions -->
+			<div class="hidden w-full md:block md:w-auto" id="navbar-default">
+				<div class="flex items-center space-x-4">
+					<!-- Main Navigation -->
+					if len(props.Navigation) > 0 {
+						@HeaderNavigation(props.Navigation)
+					}
+					
+					<!-- Search -->
+					if props.Search != nil && props.Search.Enabled {
+						@HeaderSearchSection(*props.Search)
+					}
+					
+					<!-- Actions -->
+					if len(props.Actions) > 0 {
+						@HeaderActions(props.Actions)
+					}
+					
+					<!-- Notifications -->
+					if props.Notifications != nil && props.Notifications.Enabled {
+						@HeaderNotificationsBell(*props.Notifications)
+					}
+					
+					<!-- User Menu -->
+					if props.UserMenu != nil {
+						@HeaderUserMenuSection(*props.UserMenu)
+					}
+				</div>
+			</div>
+		</div>
+		
+		<!-- Mobile Navigation Menu -->
+		@HeaderMobileMenu(props)
+	</header>
+}
+
+// HeaderBrandSection renders the brand/logo area
+templ HeaderBrandSection(brand HeaderBrand) {
+	<a 
+		href={ getBrandHref(brand.Href) }
+		class="flex items-center space-x-3 rtl:space-x-reverse"
+		if brand.ID != "" {
+			id={ brand.ID }
+		}
+	>
+		if brand.Logo != "" || brand.LogoDark != "" {
+			@HeaderLogo(brand)
+		}
+		
+		if brand.ShowText && brand.Text != "" {
+			<span class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">
+				{ brand.Text }
+			</span>
+		}
+	</a>
+}
+
+// HeaderLogo renders the logo with light/dark mode support
+templ HeaderLogo(brand HeaderBrand) {
+	if brand.LogoDark != "" {
+		<!-- Light mode logo -->
+		<img 
+			src={ brand.Logo } 
+			class="h-8 dark:hidden"
+			alt={ brand.LogoAlt }
+		/>
+		<!-- Dark mode logo -->
+		<img 
+			src={ brand.LogoDark } 
+			class="h-8 hidden dark:block"
+			alt={ brand.LogoAlt }
+		/>
+	} else {
+		<img 
+			src={ brand.Logo } 
+			class="h-8"
+			alt={ brand.LogoAlt }
+		/>
+	}
+}
+
+// HeaderMobileMenuButton renders the hamburger menu button for mobile
+templ HeaderMobileMenuButton() {
+	<button
+		type="button"
+		class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
+		@click="mobileMenuOpen = !mobileMenuOpen"
+		aria-controls="navbar-default"
+		:aria-expanded="mobileMenuOpen"
+	>
+		<span class="sr-only">Open main menu</span>
+		<div class="relative w-5 h-5">
+			<!-- Hamburger icon -->
+			<div 
+				class="absolute inset-0 transition-opacity duration-200"
+				:class="{ 'opacity-100': !mobileMenuOpen, 'opacity-0': mobileMenuOpen }"
+			>
+				@atoms.Icon(atoms.IconProps{
+					Name: "menu",
+					Size: atoms.IconSizeSM,
+				})
+			</div>
+			<!-- Close icon -->
+			<div 
+				class="absolute inset-0 transition-opacity duration-200"
+				:class="{ 'opacity-100': mobileMenuOpen, 'opacity-0': !mobileMenuOpen }"
+			>
+				@atoms.Icon(atoms.IconProps{
+					Name: "close",
+					Size: atoms.IconSizeSM,
+				})
+			</div>
+		</div>
+	</button>
+}
+
+// HeaderSearchSection renders the search component
+templ HeaderSearchSection(search HeaderSearch) {
+	<div 
+		class="relative"
+		if search.MobileHidden {
+			class="hidden md:block relative"
+		}
+	>
+		if search.SearchProps != nil {
+			@molecules.Search(*search.SearchProps)
+		} else {
+			<!-- Default search implementation -->
+			@HeaderDefaultSearch(search)
+		}
+		
+		if search.Shortcut != "" {
+			<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+				<kbd class="inline-flex items-center px-2 py-1 text-xs font-semibold text-gray-500 bg-gray-100 border border-gray-200 rounded dark:bg-gray-600 dark:text-gray-400 dark:border-gray-500">
+					{ search.Shortcut }
+				</kbd>
+			</div>
+		}
+	</div>
+}
+
+// HeaderDefaultSearch renders a default search input
+templ HeaderDefaultSearch(search HeaderSearch) {
+	<div class="relative">
+		<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+			@atoms.Icon(atoms.IconProps{
+				Name:  "search",
+				Size:  atoms.IconSizeSM,
+				Class: "text-gray-500 dark:text-gray-400",
+			})
+		</div>
+		<input
+			type="search"
+			class="block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+			placeholder={ getSearchPlaceholder(search.Placeholder) }
+		/>
+	</div>
+}

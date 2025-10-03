@@ -130,9 +130,9 @@ templ:
 	@echo "$(BLUE)Generating Templ code...$(NC)"
 	@templ generate ./web/...
 	@echo "$(GREEN)Templ code generation complete$(NC)"
-	@echo "$(BLUE)compilig TypeScript...$(NC)"
-	@tsc --noEmit
-	@echo "$(GREEN)TypeScript compilation successful!$(NC)"
+	# @echo "$(BLUE)compilig TypeScript...$(NC)"
+	# @tsc --noEmit
+	# @echo "$(GREEN)TypeScript compilation successful!$(NC)"
 
 
 

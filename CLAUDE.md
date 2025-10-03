@@ -193,3 +193,11 @@ npm run preview         # Preview production build
 - Leave git command handling to the user
 - Always ensure commit messages are human-written and authentic
 - Always when you are writing commit message don't mention claude also make it sound human and short at last just write commit msg and leave the user for the git cmds handling
+
+## Code Formatting and Implementation Notes
+- If you need any formatting use @internal/shared/format/ 
+- If any functions cannot be implemented at this time, comment with:
+  - NOTE: for informational notes
+  - TODO: for pending tasks
+  - FIXME: for critical issues requiring immediate attention
+- Provide detailed func expectations or fixes when using these comment types

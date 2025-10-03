@@ -1,0 +1,160 @@
+package table
+
+import (
+	"strconv"
+	"github.com/niiniyare/erp/web/components/atoms"
+)
+
+// DataTableBody renders the table body
+templ DataTableBody(data []map[string]interface{}, columns []DataTableColumn, actions []DataTableAction) {
+	<tbody>
+		if len(data) == 0 {
+			@DataTableEmptyState(len(columns))
+		} else {
+			for i, row := range data {
+				@DataTableRow(row, columns, actions, i)
+			}
+		}
+	</tbody>
+}
+
+// DataTableRow renders a single table row
+templ DataTableRow(row map[string]interface{}, columns []DataTableColumn, actions []DataTableAction, index int) {
+	<tr 
+		class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150"
+		:class={ "{ 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700': selectedRows.includes(" + strconv.Itoa(index) + ") }" }
+	>
+		<!-- Selection checkbox -->
+		@DataTableRowCheckbox(index)
+		
+		<!-- Data columns -->
+		for _, column := range columns {
+			if !column.Hidden {
+				@DataTableCell(row, column)
+			}
+		}
+		
+		<!-- Actions column -->
+		@DataTableRowActions(actions, index)
+	</tr>
+}
+
+// DataTableRowCheckbox renders the row selection checkbox
+templ DataTableRowCheckbox(index int) {
+	<td class="w-4 p-4">
+		<div class="flex items-center">
+			@atoms.Checkbox(atoms.CheckboxProps{
+				ID:      "checkbox-table-" + strconv.Itoa(index),
+				OnChange: "toggleRow(" + strconv.Itoa(index) + ")",
+				Class:   "text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600",
+			})
+			<label for={ "checkbox-table-" + strconv.Itoa(index) } class="sr-only">Select row { strconv.Itoa(index + 1) }</label>
+		</div>
+	</td>
+}
+
+// DataTableCell renders a single data cell
+templ DataTableCell(row map[string]interface{}, column DataTableColumn) {
+	<td class={ getTableCellClasses(column) }>
+		if value, exists := row[column.Key]; exists {
+			<!-- TODO: Implement formatters using @internal/shared/format/ -->
+			<!-- FIXME: Add type-specific formatting for dates, numbers, etc. -->
+			@DataTableCellContent(value, column)
+		} else {
+			<span class="text-gray-400 dark:text-gray-500">—</span>
+		}
+	</td>
+}
+
+// DataTableCellContent renders the content of a cell based on its type
+templ DataTableCellContent(value interface{}, column DataTableColumn) {
+	switch column.Type {
+	case "html":
+		<!-- FIXME: Implement safe HTML rendering -->
+		<div class="prose prose-sm dark:prose-invert">
+			{ formatCellValue(value, column.Type, column.Formatter) }
+		</div>
+	case "number":
+		<span class="font-mono">
+			{ formatCellValue(value, column.Type, column.Formatter) }
+		</span>
+	case "date":
+		<time class="whitespace-nowrap" datetime={ formatCellValue(value, "datetime", "") }>
+			{ formatCellValue(value, column.Type, column.Formatter) }
+		</time>
+	case "badge":
+		@DataTableCellBadge(value)
+	case "status":
+		@DataTableCellStatus(value)
+	default:
+		<span class="font-medium text-gray-900 dark:text-white">
+			{ formatCellValue(value, column.Type, column.Formatter) }
+		</span>
+	}
+}
+
+// DataTableCellBadge renders a badge-style cell
+templ DataTableCellBadge(value interface{}) {
+	<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+		{ formatCellValue(value, "text", "") }
+	</span>
+}
+
+// DataTableCellStatus renders a status indicator
+templ DataTableCellStatus(value interface{}) {
+	<div class="flex items-center">
+		<!-- TODO: Implement status color mapping -->
+		<div class="flex-shrink-0 w-2.5 h-2.5 bg-green-500 rounded-full mr-1.5"></div>
+		<span class="text-sm font-medium text-gray-900 dark:text-white">
+			{ formatCellValue(value, "text", "") }
+		</span>
+	</div>
+}
+
+// DataTableRowActions renders the actions column for a row
+templ DataTableRowActions(actions []DataTableAction, index int) {
+	<td class="px-6 py-4 text-right">
+		<div class="flex items-center justify-end space-x-2">
+			for _, action := range actions {
+				if action.Single {
+					@atoms.IconButton(atoms.ButtonProps{
+						Icon:      action.Icon,
+						Variant:   atoms.ButtonLight,
+						Size:      atoms.ButtonSizeSM,
+						OnClick:   action.OnClick,
+						HxPost:    action.HxPost,
+						HxGet:     action.HxGet,
+						HxTarget:  action.HxTarget,
+						HxConfirm: action.HxConfirm,
+						AriaLabel: action.Text + " for row " + strconv.Itoa(index + 1),
+					})
+				}
+			}
+		</div>
+	</td>
+}
+
+// DataTableEmptyState renders when no data is available
+templ DataTableEmptyState(colCount int) {
+	<tr>
+		<td colspan={ strconv.Itoa(colCount + 2) } class="px-6 py-12 text-center">
+			<div class="flex flex-col items-center justify-center">
+				@atoms.Icon(atoms.IconProps{
+					Name:  "table",
+					Size:  atoms.IconSize2XL,
+					Class: "text-gray-400 mb-4",
+				})
+				<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+					No data available
+				</h3>
+				<p class="text-gray-500 dark:text-gray-400 mb-4">
+					Get started by adding some data to this table.
+				</p>
+				<!-- TODO: Add call-to-action button -->
+				<div class="text-sm text-gray-400">
+					<!-- FIXME: Connect with data loading actions -->
+				</div>
+			</div>
+		</td>
+	</tr>
+}

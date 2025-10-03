@@ -1,7 +1,7 @@
-// Package timeutil package provides comprehensive tools for parsing and formatting time, including support for multiple parsing strategies (Unix timestamps, float timestamps, common formats) and robust error handling. It also offers powerful time calculation features such as age calculation from birthdate, determining days and business days between dates, and quarter start/end calculations. Business logic functions enable weekend/business day detection, adding or subtracting business days, and finding the next or previous business day.
+// Package format package provides comprehensive tools for parsing and formatting time, including support for multiple parsing strategies (Unix timestamps, float timestamps, common formats) and robust error handling. It also offers powerful time calculation features such as age calculation from birthdate, determining days and business days between dates, and quarter start/end calculations. Business logic functions enable weekend/business day detection, adding or subtracting business days, and finding the next or previous business day.
 //
 // Additionally, timeutil excels in timezone operations with enhanced conversion capabilities and functions to get the current time, today, tomorrow, or yesterday in any timezone. The package includes utilities for human-readable duration formatting and parsing, as well as calendar functions to determine the start or end of a week, month, quarter, or year, detect leap years, and calculate days in a month. With convenience features like the TimeRange struct, truncate and round functions, and Unix timestamp conversions, timeutil is designed to handle a wide range of time-related tasks in business applications.
-package timeutil
+package format
 
 import (
 	"errors"

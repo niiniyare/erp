@@ -1,0 +1,325 @@
+package sidebar
+
+import (
+	"github.com/niiniyare/erp/web/components/atoms"
+)
+
+// SidebarFooterSection renders the footer area of the sidebar
+templ SidebarFooterSection(footer SidebarFooter) {
+	<div class="border-t border-gray-200 dark:border-gray-700 p-4">
+		<!-- User Information -->
+		if footer.User != nil {
+			@SidebarUserInfo(*footer.User, footer.Compact)
+		}
+		
+		<!-- Footer Items -->
+		if len(footer.Items) > 0 {
+			@SidebarFooterItems(footer.Items, footer.Compact)
+		}
+		
+		<!-- Footer Actions -->
+		if len(footer.Actions) > 0 {
+			@SidebarFooterActions(footer.Actions, footer.Compact)
+		}
+		
+		<!-- Footer Text -->
+		if footer.Text != "" || footer.Copyright != "" {
+			@SidebarFooterText(footer.Text, footer.Copyright, footer.Compact)
+		}
+	</div>
+}
+
+// SidebarUserInfo renders user information in the footer
+templ SidebarUserInfo(user SidebarUser, compact bool) {
+	<div class="mb-4">
+		if user.Href != "" {
+			<a
+				href={ user.Href }
+				class={ getSidebarUserClasses(compact) }
+				if user.OnClick != "" {
+					@click={ user.OnClick }
+				}
+			>
+				@SidebarUserContent(user, compact)
+			</a>
+		} else {
+			<div
+				class={ getSidebarUserClasses(compact) }
+				if user.OnClick != "" {
+					@click={ user.OnClick }
+					role="button"
+					tabindex="0"
+				}
+			>
+				@SidebarUserContent(user, compact)
+			</div>
+		}
+	</div>
+}
+
+// SidebarUserContent renders the content of the user info
+templ SidebarUserContent(user SidebarUser, compact bool) {
+	<div class="flex items-center">
+		<!-- User Avatar -->
+		<div class="flex-shrink-0">
+			@SidebarUserAvatar(user)
+		</div>
+		
+		<!-- User Details -->
+		<div 
+			class="ml-3 flex-1 min-w-0 transition-opacity duration-200"
+			:class="{ 'opacity-0 w-0 overflow-hidden': collapsed, 'opacity-100': !collapsed }"
+		>
+			<div class="flex items-center justify-between">
+				<p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+					{ user.Name }
+				</p>
+				
+				if user.Status != "" {
+					@SidebarUserStatusBadge(user.Status)
+				}
+			</div>
+			
+			if !compact {
+				if user.Email != "" {
+					<p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+						{ user.Email }
+					</p>
+				}
+				
+				if user.Role != "" {
+					<p class="text-xs text-blue-600 dark:text-blue-400 font-medium">
+						{ user.Role }
+					</p>
+				}
+			}
+		</div>
+	</div>
+}
+
+// SidebarUserAvatar renders the user avatar
+templ SidebarUserAvatar(user SidebarUser) {
+	if user.Avatar != "" {
+		<img 
+			class="w-8 h-8 rounded-full"
+			src={ user.Avatar }
+			alt={ user.Name + " avatar" }
+		/>
+	} else {
+		<div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+			<span class="text-sm font-medium text-white">
+				{ getUserInitials(user) }
+			</span>
+		</div>
+	}
+}
+
+// SidebarUserStatusBadge renders a status indicator
+templ SidebarUserStatusBadge(status string) {
+	<div class="flex items-center">
+		<div class={ "w-2 h-2 rounded-full mr-1 " + getUserStatusColor(status) }></div>
+		<span class="text-xs text-gray-500 dark:text-gray-400 capitalize">
+			{ status }
+		</span>
+	</div>
+}
+
+// SidebarFooterItems renders footer navigation items
+templ SidebarFooterItems(items []SidebarItem, compact bool) {
+	<div class="mb-4">
+		<nav class="space-y-1">
+			for _, item := range items {
+				@SidebarFooterItem(item, compact)
+			}
+		</nav>
+	</div>
+}
+
+// SidebarFooterItem renders a single footer item
+templ SidebarFooterItem(item SidebarItem, compact bool) {
+	if item.Href != "" {
+		<a
+			href={ item.Href }
+			class={ getSidebarFooterItemClasses(item) }
+			if item.Target != "" {
+				target={ item.Target }
+			}
+		>
+			@SidebarFooterItemContent(item, compact)
+		</a>
+	} else {
+		<button
+			type="button"
+			class={ getSidebarFooterItemClasses(item) + " w-full text-left" }
+			if item.OnClick != "" {
+				@click={ item.OnClick }
+			}
+		>
+			@SidebarFooterItemContent(item, compact)
+		</button>
+	}
+}
+
+// SidebarFooterItemContent renders the content of a footer item
+templ SidebarFooterItemContent(item SidebarItem, compact bool) {
+	<div class="flex items-center">
+		if item.Icon != "" {
+			<div class="flex-shrink-0">
+				@atoms.Icon(atoms.IconProps{
+					Name: item.Icon,
+					Size: atoms.IconSizeSM,
+					Class: "text-gray-400 dark:text-gray-500",
+				})
+			</div>
+		}
+		
+		<span 
+			class="ml-3 text-sm text-gray-600 dark:text-gray-400 transition-opacity duration-200"
+			:class="{ 'opacity-0 w-0 overflow-hidden': collapsed, 'opacity-100': !collapsed }"
+		>
+			{ item.Text }
+		</span>
+		
+		if item.Badge != "" {
+			<span 
+				class="ml-auto transition-opacity duration-200"
+				:class="{ 'opacity-0 w-0 overflow-hidden': collapsed, 'opacity-100': !collapsed }"
+			>
+				@SidebarItemBadge(item.Badge, item.BadgeColor)
+			</span>
+		}
+	</div>
+}
+
+// SidebarFooterActions renders action buttons in the footer
+templ SidebarFooterActions(actions []SidebarAction, compact bool) {
+	<div class="mb-4">
+		if compact {
+			@SidebarFooterActionsCompact(actions)
+		} else {
+			@SidebarFooterActionsFull(actions)
+		}
+	</div>
+}
+
+// SidebarFooterActionsFull renders full action buttons
+templ SidebarFooterActionsFull(actions []SidebarAction) {
+	<div 
+		class="space-y-2 transition-opacity duration-200"
+		:class="{ 'opacity-0 w-0 overflow-hidden': collapsed, 'opacity-100': !collapsed }"
+	>
+		for _, action := range actions {
+			@atoms.Button(atoms.ButtonProps{
+				Text:     action.Text,
+				Icon:     action.Icon,
+				Variant:  action.Variant,
+				Size:     action.Size,
+				OnClick:  action.OnClick,
+				HxPost:   action.HxPost,
+				HxGet:    action.HxGet,
+				HxTarget: action.HxTarget,
+				ID:       action.ID,
+				Class:    "w-full justify-start",
+			})
+		}
+	</div>
+}
+
+// SidebarFooterActionsCompact renders compact action buttons
+templ SidebarFooterActionsCompact(actions []SidebarAction) {
+	<div class="flex justify-center space-x-1">
+		for _, action := range actions {
+			@atoms.IconButton(atoms.ButtonProps{
+				Icon:      action.Icon,
+				Variant:   action.Variant,
+				Size:      action.Size,
+				OnClick:   action.OnClick,
+				HxPost:    action.HxPost,
+				HxGet:     action.HxGet,
+				HxTarget:  action.HxTarget,
+				AriaLabel: action.Tooltip,
+				ID:        action.ID,
+			})
+		}
+	</div>
+}
+
+// SidebarFooterText renders footer text and copyright
+templ SidebarFooterText(text string, copyright string, compact bool) {
+	<div 
+		class="text-xs text-gray-500 dark:text-gray-400 transition-opacity duration-200"
+		:class="{ 'opacity-0 w-0 overflow-hidden': collapsed, 'opacity-100': !collapsed }"
+	>
+		if text != "" {
+			<p class="mb-1">{ text }</p>
+		}
+		
+		if copyright != "" {
+			<p class="text-center">{ copyright }</p>
+		}
+	</div>
+}
+
+// SidebarThemeToggle renders a theme toggle in the footer
+templ SidebarThemeToggle(compact bool) {
+	<div class="mb-4">
+		if compact {
+			<div class="flex justify-center">
+				@atoms.IconButton(atoms.ButtonProps{
+					Icon:      "palette",
+					Variant:   atoms.ButtonLight,
+					Size:      atoms.ButtonSizeSM,
+					OnClick:   "$store.theme.toggle()",
+					AriaLabel: "Toggle theme",
+				})
+			</div>
+		} else {
+			<button
+				type="button"
+				class="w-full flex items-center px-2 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 rounded-lg transition-colors duration-150"
+				@click="$store.theme.toggle()"
+			>
+				<div class="flex-shrink-0">
+					@atoms.Icon(atoms.IconProps{
+						Name: "palette",
+						Size: atoms.IconSizeSM,
+						Class: "text-gray-400 dark:text-gray-500",
+					})
+				</div>
+				<span 
+					class="ml-3 transition-opacity duration-200"
+					:class="{ 'opacity-0 w-0 overflow-hidden': collapsed, 'opacity-100': !collapsed }"
+				>
+					Toggle Theme
+				</span>
+				<div 
+					class="ml-auto transition-opacity duration-200"
+					:class="{ 'opacity-0 w-0 overflow-hidden': collapsed, 'opacity-100': !collapsed }"
+				>
+					<div class="w-5 h-5 relative">
+						<!-- Sun icon -->
+						<div 
+							class="absolute inset-0 transition-opacity duration-200"
+							:class="{ 'opacity-100': $store.theme.current === 'light', 'opacity-0': $store.theme.current === 'dark' }"
+						>
+							@atoms.Icon(atoms.IconProps{
+								Name: "sun",
+								Size: atoms.IconSizeXS,
+							})
+						</div>
+						<!-- Moon icon -->
+						<div 
+							class="absolute inset-0 transition-opacity duration-200"
+							:class="{ 'opacity-100': $store.theme.current === 'dark', 'opacity-0': $store.theme.current === 'light' }"
+						>
+							@atoms.Icon(atoms.IconProps{
+								Name: "moon",
+								Size: atoms.IconSizeXS,
+							})
+						</div>
+					</div>
+				</div>
+			</button>
+		}
+	</div>
+}

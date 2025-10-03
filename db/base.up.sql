@@ -1,3 +1,4 @@
+-- BEGIN FILE: db/migration/000001_tenants_core.up.sql
 -- =====================================================
 -- EXTENSIONS
 -- =====================================================
@@ -165,7 +166,7 @@ BEGIN
     RAISE EXCEPTION 'Tenant not found: %', tenant_id;
   END IF;
   
-  IF tenant_status != 'active' THEN
+  IF tenant_status != 'ACTIVE' THEN
     RAISE EXCEPTION 'Tenant is not active: % (status: %)', tenant_id, tenant_status;
   END IF;
   
@@ -235,31 +236,41 @@ ALTER TABLE
 -- Create policy for tenant isolation
 -- Only allow access to tenant data based on current session context
 -- FIXME: I am not sure if the tenants table can take this policy
--- CREATE POLICY tenant_isolation_policy ON tenants FOR ALL TO application_role USING (
---   id = current_tenant_id()
---   OR current_tenant_id() IS NULL
--- );
+CREATE POLICY tenant_isolation_policy ON tenants FOR ALL TO application_role USING (
+  id = current_tenant_id()
+  OR current_tenant_id() IS NULL
+);
+
+CREATE POLICY admin_full_access_policy ON tenants FOR ALL TO admin_role USING (true);
+
+CREATE POLICY readonly_access_policy ON tenants FOR SELECT TO readonly_role USING (true);
+
 --
 -- Add policy comment
--- COMMENT ON POLICY tenant_isolation_policy ON tenants IS 'Ensures tenant data isolation based on session context';
+COMMENT ON POLICY tenant_isolation_policy ON tenants IS 'Ensures tenant data isolation based on session context';
+COMMENT ON POLICY admin_full_access_policy ON tenants IS 'Allows admin_role full access to all tenant data';
 
 -- =====================================================
 -- PERMISSIONS AND GRANTS
 -- =====================================================
 -- Grant necessary permissions to application role
-GRANT
-SELECT
-,
-INSERT
-,
-UPDATE
-,
-  DELETE ON tenants TO application_role;
+GRANT SELECT , INSERT ,UPDATE , DELETE ON tenants TO application_role;
+
+-- Grant necessary permissions to admin_role
+GRANT ALL PRIVILEGES ON tenants TO admin_role;
+
+
+-- Grant necessary permissions t readonly_role
+GRANT 
+  SELECT
+   ON tenants TO readonly_role;
+
 
 -- Grant execute permissions on functions
 GRANT EXECUTE ON FUNCTION set_tenant_context(UUID,TEXT) TO application_role;
 
 GRANT EXECUTE ON FUNCTION current_tenant_id() TO application_role;
+GRANT EXECUTE ON FUNCTION current_tenant_id() TO readonly_role;
 
 -- =====================================================
 -- TRIGGERS FOR AUTOMATIC TIMESTAMP UPDATES
@@ -351,6 +362,10 @@ ALTER TABLE tenants ADD CONSTRAINT valid_slug
 -- Currency code validation (ISO 4217)
 ALTER TABLE tenants ADD CONSTRAINT valid_currency 
   CHECK (currency_code ~* '^[A-Z]{3}$');
+
+-- END FILE: db/migration/000001_tenants_core.up.sql
+
+-- BEGIN FILE: db/migration/000002_tenant_configurations.up.sql
 -- =====================================================
 -- TENANT CONFIGURATIONS TABLE
 -- =====================================================
@@ -589,6 +604,10 @@ INSERT
 
 -- Add trigger comment
 COMMENT ON TRIGGER create_tenant_configuration_trigger ON tenants IS 'Automatically creates default configuration for new tenants';
+
+-- END FILE: db/migration/000002_tenant_configurations.up.sql
+
+-- BEGIN FILE: db/migration/000003_tenant_usage_stats.up.sql
 -- =====================================================
 -- TENANT USAGE STATISTICS TABLE
 -- =====================================================
@@ -739,6 +758,10 @@ LANGUAGE plpgsql;
 
 -- Update function comment
 COMMENT ON FUNCTION check_tenant_limits(UUID, VARCHAR, INT) IS 'Validates tenant resource limits before operations - now includes storage limit checking';
+
+-- END FILE: db/migration/000003_tenant_usage_stats.up.sql
+
+-- BEGIN FILE: db/migration/000004_provision_tenant_complete.up.sql
 -- Tenant provisioning function
 CREATE
 OR REPLACE FUNCTION provision_tenant_complete(
@@ -746,7 +769,7 @@ OR REPLACE FUNCTION provision_tenant_complete(
   p_email VARCHAR(255),
   p_subdomain VARCHAR(63) DEFAULT NULL,
   p_industry VARCHAR(50) DEFAULT NULL,
-  p_company_size VARCHAR(20) DEFAULT 'small',
+  p_company_size VARCHAR(20) DEFAULT 'Small',
   p_currency_code CHAR(3) DEFAULT 'USD',
   p_timezone VARCHAR(50) DEFAULT 'UTC',
   p_settings JSONB DEFAULT '{}'
@@ -799,7 +822,7 @@ VALUES
     p_name,
     p_email,
     p_subdomain,
-    'pending',
+    'PENDING',
     p_industry,
     p_company_size,
     p_currency_code,
@@ -815,6 +838,10 @@ SELECT
 END;
 
 $body$ LANGUAGE plpgsql;
+
+-- END FILE: db/migration/000004_provision_tenant_complete.up.sql
+
+-- BEGIN FILE: db/migration/000005_tenant_bulk_operations_tracking.up.sql
 -- =====================================================
 -- TENANT BULK OPERATIONS TRACKING MIGRATION
 -- =====================================================
@@ -1218,7 +1245,11 @@ BEGIN
   RAISE NOTICE 'Created functions: get_bulk_operation_summary(), update_bulk_operation_counts()';
   RAISE NOTICE 'Configured RLS policies for admin_role, application_role, readonly_role';
   RAISE NOTICE 'Set up automatic count updating via triggers';
-END $$;-- =====================================================================
+END $$;
+-- END FILE: db/migration/000005_tenant_bulk_operations_tracking.up.sql
+
+-- BEGIN FILE: db/migration/000006_entities_core.up.sql
+-- =====================================================================
 -- ENTITIES CORE TABLE - Business entity management foundation
 -- =====================================================================
 -- Root entity/company table with hierarchical structure and accounting preferences
@@ -1388,6 +1419,10 @@ INSERT
 UPDATE
 ,
   DELETE ON entities TO application_role;
+
+-- END FILE: db/migration/000006_entities_core.up.sql
+
+-- BEGIN FILE: db/migration/000007_entities_hierarchy.up.sql
 -- =====================================================================
 -- ENTITIES HIERARCHY TABLE - Closure table for entity relationships
 -- =====================================================================
@@ -1498,6 +1533,10 @@ CREATE POLICY tenant_isolation_policy ON hierarchy_paths FOR ALL TO application_
 
 -- Admin bypass policy
 CREATE POLICY admin_full_access_policy ON hierarchy_paths FOR ALL TO admin_role USING (TRUE);
+
+-- END FILE: db/migration/000007_entities_hierarchy.up.sql
+
+-- BEGIN FILE: db/migration/000008_entities_state.up.sql
 -- =====================================================================
 -- ENTITY STATE MANAGEMENT TABLE - Document sequence tracking
 -- =====================================================================
@@ -1583,6 +1622,10 @@ CREATE POLICY tenant_isolation_policy ON entitystate FOR ALL TO application_role
 
 -- Admin bypass policy
 CREATE POLICY admin_full_access_policy ON entitystate FOR ALL TO admin_role USING (TRUE);
+
+-- END FILE: db/migration/000008_entities_state.up.sql
+
+-- BEGIN FILE: db/migration/000009_entities_views.up.sql
 -- =====================================================================
 -- ENTITIES VIEWS - Reporting and analytical views for entity management
 -- =====================================================================
@@ -2071,6 +2114,10 @@ GROUP BY
   t.id,
   t.name,
   t.status;
+
+-- END FILE: db/migration/000009_entities_views.up.sql
+
+-- BEGIN FILE: db/migration/000010_persons.up.sql
 -- ================================================================================================
 -- PERSONS TABLE - Generic person entities for flexible identity management
 -- ================================================================================================
@@ -2251,6 +2298,10 @@ UPDATE
 
 -- Grant read-only access to specific roles if needed
 -- GRANT SELECT ON persons TO readonly_role;
+
+-- END FILE: db/migration/000010_persons.up.sql
+
+-- BEGIN FILE: db/migration/000011_employees.up.sql
 -- ================================================================================================
 -- EMPLOYEES TABLE - Employment-specific data extending persons
 -- ================================================================================================
@@ -2445,6 +2496,10 @@ INSERT
 UPDATE
 ,
   DELETE ON employees TO application_role;
+
+-- END FILE: db/migration/000011_employees.up.sql
+
+-- BEGIN FILE: db/migration/000012_users.up.sql
 -- ================================================================================================
 -- USERS TABLE - System access accounts with authentication and RBAC integration
 -- ================================================================================================
@@ -2689,6 +2744,10 @@ UPDATE
 -- =====================================================================
 -- Grant necessary permissions to application role
 GRANT SELECT,INSERT,UPDATE, DELETE ON users TO application_role;
+
+-- END FILE: db/migration/000012_users.up.sql
+
+-- BEGIN FILE: db/migration/000013_user_sessions.up.sql
 -- ================================================================================================
 -- USER SESSIONS TABLE - Tracks active user sessions with security context
 -- ================================================================================================
@@ -2827,6 +2886,10 @@ INSERT
 UPDATE
 ,
   DELETE ON user_sessions TO application_role;
+
+-- END FILE: db/migration/000013_user_sessions.up.sql
+
+-- BEGIN FILE: db/migration/000014_modules.up.sql
 -- ------------------------------------------------------------------------------------------------
 -- MODULES TABLE
 -- ------------------------------------------------------------------------------------------------
@@ -2872,6 +2935,10 @@ CREATE POLICY modules_tenant_isolation ON modules FOR ALL TO application_role US
 );
 
 CREATE POLICY modules_admin_access ON modules FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+-- END FILE: db/migration/000014_modules.up.sql
+
+-- BEGIN FILE: db/migration/000015_resources.up.sql
 -- ------------------------------------------------------------------------------------------------
 -- RESOURCES TABLE
 -- ------------------------------------------------------------------------------------------------
@@ -2928,6 +2995,10 @@ CREATE POLICY resources_tenant_isolation ON resources FOR ALL TO application_rol
 );
 
 CREATE POLICY resources_admin_access ON resources FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+-- END FILE: db/migration/000015_resources.up.sql
+
+-- BEGIN FILE: db/migration/000016_actions.up.sql
 -- ------------------------------------------------------------------------------------------------
 -- ACTIONS TABLE
 -- ------------------------------------------------------------------------------------------------
@@ -2993,6 +3064,10 @@ CREATE POLICY actions_tenant_isolation ON actions FOR ALL TO application_role US
 );
 
 CREATE POLICY actions_admin_access ON actions FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+-- END FILE: db/migration/000016_actions.up.sql
+
+-- BEGIN FILE: db/migration/000017_permissions.up.sql
 -- ------------------------------------------------------------------------------------------------
 -- PERMISSIONS TABLE
 -- ------------------------------------------------------------------------------------------------
@@ -3038,6 +3113,10 @@ CREATE POLICY permissions_tenant_isolation ON permissions FOR ALL TO application
 );
 
 CREATE POLICY permissions_admin_access ON permissions FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+-- END FILE: db/migration/000017_permissions.up.sql
+
+-- BEGIN FILE: db/migration/000018_roles.up.sql
 -- ------------------------------------------------------------------------------------------------
 -- ROLES TABLE
 -- ------------------------------------------------------------------------------------------------
@@ -3107,6 +3186,10 @@ CREATE POLICY roles_tenant_isolation ON roles FOR ALL TO application_role USING 
 );
 
 CREATE POLICY roles_admin_access ON roles FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+-- END FILE: db/migration/000018_roles.up.sql
+
+-- BEGIN FILE: db/migration/000019_role_permissions.up.sql
 -- ------------------------------------------------------------------------------------------------
 -- ROLE PERMISSIONS MAPPING
 -- ------------------------------------------------------------------------------------------------
@@ -3146,6 +3229,10 @@ CREATE POLICY role_permissions_tenant_isolation ON role_permissions FOR ALL TO a
 );
 
 CREATE POLICY role_permissions_admin_access ON role_permissions FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+-- END FILE: db/migration/000019_role_permissions.up.sql
+
+-- BEGIN FILE: db/migration/000020_user_roles.up.sql
 -- ------------------------------------------------------------------------------------------------
 -- USER ROLE ASSIGNMENTS
 -- ------------------------------------------------------------------------------------------------
@@ -3207,6 +3294,10 @@ CREATE POLICY user_roles_tenant_isolation ON user_roles FOR ALL TO application_r
 );
 
 CREATE POLICY user_roles_admin_access ON user_roles FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+-- END FILE: db/migration/000020_user_roles.up.sql
+
+-- BEGIN FILE: db/migration/000021_policies.up.sql
 -- =====================================================================
 -- POLICIES UP MIGRATION
 -- =====================================================================
@@ -3306,7 +3397,15 @@ END;
 
 $$
 ;
+
+-- END FILE: db/migration/000021_policies.up.sql
+
+-- BEGIN FILE: db/migration/000022_user_entity_access.up.sql
 -- User entity access is handled by the entity_id in the user_roles table.
+
+-- END FILE: db/migration/000022_user_entity_access.up.sql
+
+-- BEGIN FILE: db/migration/000023_access_requests.up.sql
 -- =====================================================================
 -- ACCESS REQUESTS UP MIGRATION
 -- =====================================================================
@@ -3393,6 +3492,10 @@ END;
 
 $$
 ;
+
+-- END FILE: db/migration/000023_access_requests.up.sql
+
+-- BEGIN FILE: db/migration/000024_audit_log.up.sql
 -- ------------------------------------------------------------------------------------------------
 -- AUDIT LOG
 -- ------------------------------------------------------------------------------------------------
@@ -3452,6 +3555,10 @@ ALTER TABLE
 CREATE POLICY audit_log_tenant_isolation ON audit_log FOR ALL TO public USING (
   tenant_id = current_setting('app.current_tenant_id')::UUID
 );
+
+-- END FILE: db/migration/000024_audit_log.up.sql
+
+-- BEGIN FILE: db/migration/000025_user_management_views.up.sql
 -- ------------------------------------------------------------------------------------------------
 --  user view with all related data
 -- ------------------------------------------------------------------------------------------------
@@ -3639,6 +3746,10 @@ ORDER BY
   event_count DESC;
 
 COMMENT ON VIEW v_audit_summary_view IS 'Hourly audit event summary for the last 7 days with risk metrics and access decision counts for security monitoring dashboards.';
+
+-- END FILE: db/migration/000025_user_management_views.up.sql
+
+-- BEGIN FILE: db/migration/000026_user_functions_triggers.up.sql
 -- =====================================================================
 -- USER FUNCTIONS AND TRIGGERS UP MIGRATION
 -- =====================================================================
@@ -4036,6 +4147,10 @@ END;
 
 $$
 ;
+
+-- END FILE: db/migration/000026_user_functions_triggers.up.sql
+
+-- BEGIN FILE: db/migration/000027_validate_and_set_tenant_context.up.sql
 -- Tenant context validation
 CREATE
 OR REPLACE FUNCTION validate_and_set_tenant_context(p_tenant_id UUID) RETURNS TABLE(tenant_name TEXT, tenant_status TEXT) AS
@@ -4151,6 +4266,10 @@ LANGUAGE plpgsql SECURITY DEFINER;
 --     BEFORE UPDATE ON projects
 --     FOR EACH ROW
 --     EXECUTE FUNCTION update_updated_at_column();
+
+-- END FILE: db/migration/000027_validate_and_set_tenant_context.up.sql
+
+-- BEGIN FILE: db/migration/000028_settings_core_tables.up.sql
 -- ================================================================================================
 -- SETTINGS MODULE - Configuration management with 3-level inheritance (System → Tenant → Entity)
 -- ================================================================================================
@@ -4443,6 +4562,10 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON config_definitions TO application_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON configuration_templates TO application_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON configuration_audit TO application_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON template_applications TO application_role;
+
+-- END FILE: db/migration/000028_settings_core_tables.up.sql
+
+-- BEGIN FILE: db/migration/000032_enforce_tenant_isolation.up.sql
 CREATE
 OR REPLACE FUNCTION enforce_tenant_isolation() RETURNS TRIGGER AS
 $$
@@ -4477,6 +4600,10 @@ END;
 
 $$
 LANGUAGE plpgsql;
+
+-- END FILE: db/migration/000032_enforce_tenant_isolation.up.sql
+
+-- BEGIN FILE: db/migration/000042_notification.up.sql
 CREATE TABLE IF NOT EXISTS notification_preferences (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
@@ -4508,6 +4635,10 @@ CREATE POLICY notification_preferences_tenant_isolation ON notification_preferen
 CREATE TRIGGER update_notification_preferences_updated_at BEFORE
 UPDATE
   ON notification_preferences FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- END FILE: db/migration/000042_notification.up.sql
+
+-- BEGIN FILE: db/migration/000043_user_permission.up.sql
 -- ------------------------------------------------------------------------------------------------
 -- DIRECT USER PERMISSIONS
 -- ------------------------------------------------------------------------------------------------
@@ -4550,6 +4681,10 @@ CREATE POLICY user_permissions_tenant_isolation ON user_permissions FOR ALL TO a
 );
 
 CREATE POLICY user_permissions_admin_access ON user_permissions FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+-- END FILE: db/migration/000043_user_permission.up.sql
+
+-- BEGIN FILE: db/migration/000044_user_add_on.up.sql
 --- 1. Security Hardening Enhancements:
 --- 2. Performance Optimizations:
 -- Optimized materialized view for permission evaluations
@@ -5022,6 +5157,10 @@ INSERT
 --    - Batch processing for large datasets
 --
 -- These enhancements maintain your existing schema structure while adding critical security and operational capabilities. They address common enterprise requirements for audit compliance, threat detection, and large-scale performance without requiring architectural changes to your well-designed RBAC/ABAC implementation.
+
+-- END FILE: db/migration/000044_user_add_on.up.sql
+
+-- BEGIN FILE: db/migration/000045_attribute_definitions.up.sql
 -- ------------------------------------------------------------------------------------------------
 -- ATTRIBUTE DEFINITIONS
 -- ------------------------------------------------------------------------------------------------
@@ -5087,6 +5226,10 @@ ALTER TABLE
 CREATE POLICY attribute_definitions_tenant_isolation ON attribute_definitions FOR ALL TO public USING (
   tenant_id = current_setting('app.current_tenant_id')::UUID
 );
+
+-- END FILE: db/migration/000045_attribute_definitions.up.sql
+
+-- BEGIN FILE: db/migration/000046_attribute_values.up.sql
 -- ------------------------------------------------------------------------------------------------
 -- ATTRIBUTE VALUES
 -- ------------------------------------------------------------------------------------------------
@@ -5194,6 +5337,10 @@ ALTER TABLE
 CREATE POLICY attribute_sources_tenant_isolation ON attribute_sources FOR ALL TO public USING (
   tenant_id = current_setting('app.current_tenant_id')::UUID
 );
+
+-- END FILE: db/migration/000046_attribute_values.up.sql
+
+-- BEGIN FILE: db/migration/000047_policy_evaluation.up.sql
 -- ------------------------------------------------------------------------------------------------
 -- POLICY EVALUATIONS CACHE
 -- ------------------------------------------------------------------------------------------------
@@ -5228,6 +5375,10 @@ ALTER TABLE
 CREATE POLICY policy_evaluations_tenant_isolation ON policy_evaluations FOR ALL TO public USING (
   tenant_id = current_setting('app.current_tenant_id')::UUID
 );
+
+-- END FILE: db/migration/000047_policy_evaluation.up.sql
+
+-- BEGIN FILE: db/migration/000048_update_policy_evaluations.up.sql
 -- ------------------------------------------------------------------------------------------------
 -- UPDATE POLICY EVALUATIONS FOR ABAC
 -- ------------------------------------------------------------------------------------------------
@@ -5302,6 +5453,10 @@ CREATE INDEX idx_policy_evaluations_user_resource ON policy_evaluations(tenant_i
 CREATE INDEX idx_policy_evaluations_expires_at ON policy_evaluations(expires_at);
 
 CREATE INDEX idx_policy_evaluations_resource_action ON policy_evaluations(tenant_id, resource_type, ACTION);
+
+-- END FILE: db/migration/000048_update_policy_evaluations.up.sql
+
+-- BEGIN FILE: db/migration/000049_policy_decision.up.sql
 CREATE TABLE policy_decisions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   policy_evaluation_id UUID NOT NULL REFERENCES policy_evaluations(id) ON DELETE CASCADE,
@@ -5321,6 +5476,10 @@ CREATE INDEX idx_policy_decisions_evaluation_id ON policy_decisions(policy_evalu
 CREATE INDEX idx_policy_decisions_policy_id ON policy_decisions(policy_id);
 
 COMMENT ON TABLE policy_decisions IS 'Stores individual policy decisions made during a policy evaluation.';
+
+-- END FILE: db/migration/000049_policy_decision.up.sql
+
+-- BEGIN FILE: db/migration/000050_user_roles_functions.up.sql
 CREATE
 OR REPLACE FUNCTION assign_user_role(
   p_user_id UUID,
@@ -5359,6 +5518,10 @@ END;
 
 $$
 LANGUAGE plpgsql SECURITY INVOKER;
+
+-- END FILE: db/migration/000050_user_roles_functions.up.sql
+
+-- BEGIN FILE: db/migration/000051_user_activities.up.sql
 -- =====================================================
 -- USER ACTIVITIES TABLE FOR ABAC BEHAVIORAL ANALYTICS
 -- =====================================================
@@ -5636,6 +5799,10 @@ GRANT EXECUTE ON FUNCTION drop_old_user_activities_partitions(INTEGER) TO applic
 GRANT EXECUTE ON FUNCTION create_monthly_user_activities_partition(DATE) TO admin_role;
 
 GRANT EXECUTE ON FUNCTION drop_old_user_activities_partitions(INTEGER) TO admin_role;
+
+-- END FILE: db/migration/000051_user_activities.up.sql
+
+-- BEGIN FILE: db/migration/000052_feature_flag.up.sql
 -- Creates the core feature_flags table with proper indexing and RLS
 -- =====================================================
 -- FEATURE FLAGS TABLE
@@ -5764,6 +5931,10 @@ SELECT
 CREATE TRIGGER update_feature_flags_updated_at BEFORE
 UPDATE
   ON feature_flags FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- END FILE: db/migration/000052_feature_flag.up.sql
+
+-- BEGIN FILE: db/migration/000053_feature_flag_override.up.sql
 -- Creates the tenant_feature_overrides table with proper indexing and RLS
 -- =====================================================
 -- TENANT FEATURE OVERRIDES TABLE
@@ -5908,6 +6079,10 @@ UPDATE
 COMMENT ON TRIGGER sync_tenant_overrides_feature_name ON tenant_feature_overrides IS 'Maintains denormalized feature_flag_name for performance';
 
 COMMENT ON FUNCTION sync_feature_flag_name() IS 'Syncs feature flag name in overrides table';
+
+-- END FILE: db/migration/000053_feature_flag_override.up.sql
+
+-- BEGIN FILE: db/migration/000054_feature_flag_audit.up.sql
 -- Creates audit logging functions and triggers for feature flag changes
 -- =====================================================
 -- AUDIT TRIGGER FUNCTIONS
@@ -6293,6 +6468,10 @@ COMMENT ON FUNCTION audit_tenant_feature_override_changes() IS 'Creates audit en
 COMMENT ON TRIGGER feature_flags_audit_trigger ON feature_flags IS 'Logs all feature flag changes to audit_log table';
 
 COMMENT ON TRIGGER tenant_feature_overrides_audit_trigger ON tenant_feature_overrides IS 'Logs all tenant override changes to audit_log table';
+
+-- END FILE: db/migration/000054_feature_flag_audit.up.sql
+
+-- BEGIN FILE: db/migration/000055_feature_flag_funcs.up.sql
 -- =====================================================
 -- PERMISSIONS AND GRANTS
 -- =====================================================
@@ -6571,6 +6750,10 @@ COMMENT ON TRIGGER tenant_feature_overrides_audit_trigger ON tenant_feature_over
 -- $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- =====================================================
 --
+
+-- END FILE: db/migration/000055_feature_flag_funcs.up.sql
+
+-- BEGIN FILE: db/migration/000056_feature_flag_cache.up.sql
 -- Creates materialized view for fast feature flag lookups and cache management
 -- =====================================================
 -- MATERIALIZED VIEW FOR FEATURE FLAG CACHE
@@ -7005,6 +7188,10 @@ COMMENT ON FUNCTION evaluate_feature_flag_cached(VARCHAR) IS 'Fast feature flag 
 COMMENT ON FUNCTION evaluate_all_feature_flags_cached() IS 'Fast bulk feature flag evaluation using materialized view cache';
 
 COMMENT ON FUNCTION trigger_cache_refresh() IS 'Triggers cache refresh notification when data changes';
+
+-- END FILE: db/migration/000056_feature_flag_cache.up.sql
+
+-- BEGIN FILE: db/migration/000057_feature_flag_cleanup.up.sql
 -- Creates maintenance functions for cleanup and system health
 -- =====================================================
 -- AUDIT LOG CLEANUP FUNCTIONS
@@ -7934,6 +8121,10 @@ COMMENT ON FUNCTION bulk_update_rollout_percentage(TEXT [], INTEGER, UUID) IS 'U
 COMMENT ON FUNCTION bulk_create_feature_flags(JSONB, UUID) IS 'Creates multiple feature flags from JSON definitions';
 
 COMMENT ON FUNCTION export_tenant_feature_flags(UUID) IS 'Exports complete feature flag configuration for a tenant in JSON format';
+
+-- END FILE: db/migration/000057_feature_flag_cleanup.up.sql
+
+-- BEGIN FILE: db/migration/000058_feature_flag_usage.up.sql
 -- Provides examples and documentation for using the feature flag system
 -- =====================================================
 -- EXAMPLE: BASIC FEATURE FLAG SETUP
@@ -8237,6 +8428,10 @@ FEATURE FLAG BEST PRACTICES:
  - Verify rollout percentages work as expected
  - Test override functionality
 */
+
+-- END FILE: db/migration/000058_feature_flag_usage.up.sql
+
+-- BEGIN FILE: db/migration/000059_finance_account_groups.up.sql
 -- =====================================================================
 -- FINANCE ACCOUNT GROUPS AND HEADERS
 -- Enhances chart of accounts with grouping and classification structure
@@ -8429,6 +8624,10 @@ SELECT a.* FROM v_finance_accounts_with_groups a
 WHERE a.group_category = 'OPERATING_EXPENSES'
 AND a.is_active = true;
 */
+
+-- END FILE: db/migration/000059_finance_account_groups.up.sql
+
+-- BEGIN FILE: db/migration/000060_finance_chart_of_accounts.up.sql
 -- =====================================================================
 -- FINANCE MODULE - CHART OF ACCOUNTS TABLE
 -- Core Finance Module Foundation - Phase One Implementation
@@ -8573,6 +8772,10 @@ INSERT
 UPDATE
 ,
   DELETE ON finance_accounts TO admin_role;
+
+-- END FILE: db/migration/000060_finance_chart_of_accounts.up.sql
+
+-- BEGIN FILE: db/migration/000061_finance_chart_of_accounts_indexes.up.sql
 -- =====================================================================
 -- FINANCE CHART OF ACCOUNTS - PERFORMANCE INDEXES
 -- =====================================================================
@@ -8643,6 +8846,10 @@ CREATE INDEX idx_accounts_cash_flow_type ON finance_accounts(tenant_id, cash_flo
 WHERE
   cash_flow_type IS NOT NULL
   AND deleted_at IS NULL;
+
+-- END FILE: db/migration/000061_finance_chart_of_accounts_indexes.up.sql
+
+-- BEGIN FILE: db/migration/000062_finance_transactions.up.sql
 -- =====================================================================
 -- FINANCE MODULE - TRANSACTIONS TABLE
 -- Core transaction header table for all financial transactions
@@ -9017,6 +9224,10 @@ UPDATE
 CREATE INDEX idx_accounts_group_relationship ON finance_accounts(tenant_id, account_group_id, display_order)
 WHERE
   deleted_at IS NULL;
+
+-- END FILE: db/migration/000062_finance_transactions.up.sql
+
+-- BEGIN FILE: db/migration/000063_finance_transaction_entries.up.sql
 -- =====================================================================
 -- FINANCE MODULE - TRANSACTION ENTRIES TABLE
 -- Individual journal entries for double-entry bookkeeping
@@ -9121,6 +9332,10 @@ INSERT
 UPDATE
 ,
   DELETE ON finance_transaction_entries TO admin_role;
+
+-- END FILE: db/migration/000063_finance_transaction_entries.up.sql
+
+-- BEGIN FILE: db/migration/000064_finance_mod.up.sql
 -- =====================================================================
 -- FINANCE CHART OF ACCOUNTS - VIEWS, FUNCTIONS & TRIGGERS
 -- =====================================================================
@@ -9558,6 +9773,10 @@ GRANT SELECT ON v_financial_statement_structure TO application_role, admin_role;
 -- =====================================================================
 -- END OF SCRIPT
 -- =====================================================================
+
+-- END FILE: db/migration/000064_finance_mod.up.sql
+
+-- BEGIN FILE: db/migration/000065_finance_add_supporting_tables.up.sql
 -- Account balance history for audit trail
 CREATE TABLE finance_account_balances (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -9628,6 +9847,14 @@ ADD
   COLUMN IF NOT EXISTS is_leaf_account BOOLEAN DEFAULT TRUE;
 
 
+-- END FILE: db/migration/000065_finance_add_supporting_tables.up.sql
+
+-- BEGIN FILE: db/migration/000066_finance_add_constraints_and_indexes.up.sql
+
+
+-- END FILE: db/migration/000066_finance_add_constraints_and_indexes.up.sql
+
+-- BEGIN FILE: db/migration/000067_finance_add_functions_and_triggers.up.sql
 -- Function to update account balances after transaction posting
 CREATE
 OR REPLACE FUNCTION update_account_balances_after_posting() RETURNS TRIGGER AS
@@ -10229,6 +10456,10 @@ LANGUAGE plpgsql;
 COMMENT ON FUNCTION analyze_finance_tables_performance IS 'Analyzes performance metrics for finance module tables';
 
 
+-- END FILE: db/migration/000067_finance_add_functions_and_triggers.up.sql
+
+-- BEGIN FILE: db/migration/000068_finance_add_views.up.sql
+
 -- VIEWS FOR COMMON QUERIES
 -- Account hierarchy view with computed fields (Fixed type casting)
 CREATE VIEW v_finance_accounts_hierarchy AS WITH RECURSIVE account_tree AS (
@@ -10408,6 +10639,10 @@ GROUP BY
 
 COMMENT ON VIEW v_finance_account_activity IS 'Account activity summary for monitoring and analysis';
 
+
+-- END FILE: db/migration/000068_finance_add_views.up.sql
+
+-- BEGIN FILE: db/migration/000069_finance_add_rls_policies.up.sql
 -- +migrate Up
 BEGIN
 ;
@@ -10474,3 +10709,6 @@ SELECT
   admin_role;
 
 COMMIT;
+
+-- END FILE: db/migration/000069_finance_add_rls_policies.up.sql
+

@@ -1,0 +1,308 @@
+package siteheader
+
+import (
+	"strconv"
+	"github.com/niiniyare/erp/web/components/atoms"
+)
+
+// HeaderActions renders action buttons in the header
+templ HeaderActions(actions []HeaderAction) {
+	<div class="flex items-center space-x-2">
+		for _, action := range actions {
+			if !action.DesktopHidden {
+				@HeaderActionItem(action)
+			}
+		}
+	</div>
+}
+
+// HeaderActionItem renders a single action button
+templ HeaderActionItem(action HeaderAction) {
+	<div class="relative">
+		if action.Text != "" {
+			@HeaderActionButton(action)
+		} else {
+			@HeaderActionIconButton(action)
+		}
+		
+		if action.Badge != "" {
+			@HeaderActionBadge(action.Badge, action.BadgeColor)
+		}
+	</div>
+}
+
+// HeaderActionButton renders an action button with text
+templ HeaderActionButton(action HeaderAction) {
+	@atoms.Button(atoms.ButtonProps{
+		Text:     action.Text,
+		Icon:     action.Icon,
+		Variant:  action.Variant,
+		Size:     action.Size,
+		OnClick:  action.OnClick,
+		HxPost:   action.HxPost,
+		HxGet:    action.HxGet,
+		HxTarget: action.HxTarget,
+		ID:       action.ID,
+	})
+}
+
+// HeaderActionIconButton renders an icon-only action button
+templ HeaderActionIconButton(action HeaderAction) {
+	@atoms.IconButton(atoms.ButtonProps{
+		Icon:      action.Icon,
+		Variant:   action.Variant,
+		Size:      action.Size,
+		OnClick:   action.OnClick,
+		HxPost:    action.HxPost,
+		HxGet:     action.HxGet,
+		HxTarget:  action.HxTarget,
+		AriaLabel: action.Tooltip,
+		ID:        action.ID,
+	})
+}
+
+// HeaderActionBadge renders a badge on an action button
+templ HeaderActionBadge(badge string, color string) {
+	<span class={ getActionBadgeClasses(color) }>
+		{ badge }
+	</span>
+}
+
+// HeaderNotificationsBell renders the notifications bell
+templ HeaderNotificationsBell(notifications HeaderNotifications) {
+	<div class="relative">
+		if notifications.Href != "" {
+			<a
+				href={ notifications.Href }
+				class="relative p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors duration-150"
+			>
+				@HeaderNotificationIcon()
+				@HeaderNotificationBadge(notifications.Count, notifications.MaxCount)
+			</a>
+		} else {
+			<button
+				type="button"
+				class="relative p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors duration-150"
+				if notifications.OnClick != "" {
+					@click={ notifications.OnClick }
+				}
+				if notifications.HxGet != "" {
+					hx-get={ notifications.HxGet }
+				}
+				if notifications.HxTarget != "" {
+					hx-target={ notifications.HxTarget }
+				}
+				if notifications.HxTrigger != "" {
+					hx-trigger={ notifications.HxTrigger }
+				}
+				aria-label="View notifications"
+			>
+				@HeaderNotificationIcon()
+				@HeaderNotificationBadge(notifications.Count, notifications.MaxCount)
+			</button>
+		}
+	</div>
+}
+
+// HeaderNotificationIcon renders the notification bell icon
+templ HeaderNotificationIcon() {
+	@atoms.Icon(atoms.IconProps{
+		Name: "bell",
+		Size: atoms.IconSizeMD,
+	})
+}
+
+// HeaderNotificationBadge renders the notification count badge
+templ HeaderNotificationBadge(count int, maxCount int) {
+	if count > 0 {
+		<div class="absolute inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 border-2 border-white rounded-full -top-2 -right-2 dark:border-gray-900">
+			{ getNotificationCountText(count, maxCount) }
+		</div>
+	}
+}
+
+// HeaderQuickActions renders a group of quick action buttons
+templ HeaderQuickActions(actions []HeaderAction) {
+	<div class="flex items-center space-x-1 bg-gray-50 dark:bg-gray-800 rounded-lg p-1">
+		for _, action := range actions {
+			if !action.DesktopHidden {
+				@HeaderQuickAction(action)
+			}
+		}
+	</div>
+}
+
+// HeaderQuickAction renders a quick action button (more compact)
+templ HeaderQuickAction(action HeaderAction) {
+	<button
+		type="button"
+		class="p-2 text-gray-500 rounded-md hover:text-gray-900 hover:bg-white dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors duration-150"
+		if action.OnClick != "" {
+			@click={ action.OnClick }
+		}
+		if action.HxPost != "" {
+			hx-post={ action.HxPost }
+		}
+		if action.HxGet != "" {
+			hx-get={ action.HxGet }
+		}
+		if action.HxTarget != "" {
+			hx-target={ action.HxTarget }
+		}
+		if action.Tooltip != "" {
+			title={ action.Tooltip }
+		}
+		if action.ID != "" {
+			id={ action.ID }
+		}
+	>
+		@atoms.Icon(atoms.IconProps{
+			Name: action.Icon,
+			Size: atoms.IconSizeSM,
+		})
+		
+		if action.Badge != "" {
+			<span class="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+		}
+	</button>
+}
+
+// HeaderThemeToggle renders a theme toggle button
+templ HeaderThemeToggle() {
+	<button
+		type="button"
+		class="p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors duration-150"
+		@click="$store.theme.toggle()"
+		aria-label="Toggle theme"
+	>
+		<div class="relative w-5 h-5">
+			<!-- Sun icon for light mode -->
+			<div 
+				class="absolute inset-0 transition-opacity duration-200"
+				:class="{ 'opacity-100': $store.theme.current === 'light', 'opacity-0': $store.theme.current === 'dark' }"
+			>
+				@atoms.Icon(atoms.IconProps{
+					Name: "sun",
+					Size: atoms.IconSizeSM,
+				})
+			</div>
+			<!-- Moon icon for dark mode -->
+			<div 
+				class="absolute inset-0 transition-opacity duration-200"
+				:class="{ 'opacity-100': $store.theme.current === 'dark', 'opacity-0': $store.theme.current === 'light' }"
+			>
+				@atoms.Icon(atoms.IconProps{
+					Name: "moon",
+					Size: atoms.IconSizeSM,
+				})
+			</div>
+		</div>
+	</button>
+}
+
+// HeaderLanguageSelector renders a language selector dropdown
+templ HeaderLanguageSelector(currentLang string, languages []LanguageOption) {
+	<div class="relative" x-data="{ open: false }">
+		<button
+			type="button"
+			class="flex items-center p-2 text-gray-500 rounded-lg hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors duration-150"
+			@click="open = !open"
+			@keydown.escape="open = false"
+			:aria-expanded="open"
+		>
+			@atoms.Icon(atoms.IconProps{
+				Name: "globe",
+				Size: atoms.IconSizeSM,
+			})
+			<span class="ml-1 text-xs font-medium uppercase">{ currentLang }</span>
+			@atoms.Icon(atoms.IconProps{
+				Name: "chevron-down",
+				Size: atoms.IconSizeXS,
+				Class: "ml-1",
+			})
+		</button>
+		
+		<div
+			x-show="open"
+			@click.away="open = false"
+			x-transition:enter="transition ease-out duration-100"
+			x-transition:enter-start="transform opacity-0 scale-95"
+			x-transition:enter-end="transform opacity-100 scale-100"
+			x-transition:leave="transition ease-in duration-75"
+			x-transition:leave-start="transform opacity-100 scale-100"
+			x-transition:leave-end="transform opacity-0 scale-95"
+			class="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-700 dark:ring-gray-600"
+		>
+			<div class="py-1">
+				for _, lang := range languages {
+					@HeaderLanguageOption(lang, currentLang)
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// LanguageOption represents a language option
+type LanguageOption struct {
+	Code string `json:"code"`
+	Name string `json:"name"`
+	Flag string `json:"flag,omitempty"`
+}
+
+// HeaderLanguageOption renders a single language option
+templ HeaderLanguageOption(lang LanguageOption, currentLang string) {
+	<button
+		type="button"
+		class={ getLanguageOptionClasses(lang.Code == currentLang) }
+		@click={ "$store.app.setLanguage('" + lang.Code + "'); open = false" }
+	>
+		if lang.Flag != "" {
+			<span class="mr-2">{ lang.Flag }</span>
+		}
+		<span>{ lang.Name }</span>
+		if lang.Code == currentLang {
+			<span class="ml-auto">
+				@atoms.Icon(atoms.IconProps{
+					Name: "check",
+					Size: atoms.IconSizeXS,
+					Class: "text-blue-600",
+				})
+			</span>
+		}
+	</button>
+}
+
+// Helper functions for badges and styles
+func getActionBadgeClasses(color string) string {
+	baseClasses := "absolute inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white border-2 border-white rounded-full -top-2 -right-2 dark:border-gray-900"
+	
+	switch color {
+	case "red":
+		return baseClasses + " bg-red-500"
+	case "blue":
+		return baseClasses + " bg-blue-500"
+	case "green":
+		return baseClasses + " bg-green-500"
+	case "yellow":
+		return baseClasses + " bg-yellow-500"
+	default:
+		return baseClasses + " bg-red-500"
+	}
+}
+
+func getNotificationCountText(count int, maxCount int) string {
+	if maxCount > 0 && count > maxCount {
+		return strconv.Itoa(maxCount) + "+"
+	}
+	return strconv.Itoa(count)
+}
+
+func getLanguageOptionClasses(isActive bool) string {
+	baseClasses := "flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors duration-150"
+	
+	if isActive {
+		return baseClasses + " bg-gray-100 dark:bg-gray-600"
+	}
+	
+	return baseClasses
+}
