@@ -1,0 +1,403 @@
+{
+  "id": "user-management-crud",
+  "version": "1.0.0",
+  "layout": "app",
+  "title": "User Management",
+  "description": "Manage system users and their permissions",
+  "components": [
+    {
+      "id": "page-header",
+      "type": "molecules.base-card",
+      "props": {
+        "title": "Users",
+        "subtitle": "Manage system users and their access permissions",
+        "variant": "header",
+        "headerActions": [
+          {
+            "text": "Add User",
+            "icon": "plus",
+            "variant": "primary",
+            "action": "show-user-form"
+          },
+          {
+            "text": "Export",
+            "icon": "download",
+            "variant": "secondary",
+            "action": "export-users"
+          }
+        ]
+      },
+      "layout": {
+        "container": "block",
+        "spacing": {
+          "marginBottom": "1.5rem"
+        }
+      }
+    },
+    {
+      "id": "filter-panel",
+      "type": "organisms.filter-panel",
+      "props": {
+        "title": "Filter Users",
+        "filters": [
+          {
+            "name": "status",
+            "label": "Status",
+            "type": "select",
+            "options": [
+              {"value": "all", "label": "All Users"},
+              {"value": "active", "label": "Active"},
+              {"value": "inactive", "label": "Inactive"},
+              {"value": "pending", "label": "Pending Activation"}
+            ],
+            "default": "all"
+          },
+          {
+            "name": "role",
+            "label": "Role",
+            "type": "select",
+            "options": [
+              {"value": "all", "label": "All Roles"},
+              {"value": "admin", "label": "Administrator"},
+              {"value": "manager", "label": "Manager"},
+              {"value": "user", "label": "User"},
+              {"value": "viewer", "label": "Viewer"}
+            ],
+            "default": "all"
+          },
+          {
+            "name": "department",
+            "label": "Department",
+            "type": "select",
+            "dataSource": "departments",
+            "default": "all"
+          },
+          {
+            "name": "dateRange",
+            "label": "Created Date",
+            "type": "date-range",
+            "default": {
+              "from": null,
+              "to": null
+            }
+          }
+        ],
+        "searchable": true,
+        "searchPlaceholder": "Search users by name or email...",
+        "collapsible": true,
+        "collapsed": false
+      },
+      "layout": {
+        "container": "block",
+        "spacing": {
+          "marginBottom": "1.5rem"
+        }
+      }
+    },
+    {
+      "id": "users-table",
+      "type": "organisms.table",
+      "props": {
+        "title": "System Users",
+        "dataSource": "users",
+        "columns": [
+          {
+            "key": "avatar",
+            "label": "",
+            "type": "avatar",
+            "width": "60px",
+            "sortable": false
+          },
+          {
+            "key": "name",
+            "label": "Name",
+            "type": "text",
+            "sortable": true,
+            "searchable": true,
+            "primary": true
+          },
+          {
+            "key": "email",
+            "label": "Email",
+            "type": "email",
+            "sortable": true,
+            "searchable": true
+          },
+          {
+            "key": "role",
+            "label": "Role",
+            "type": "badge",
+            "sortable": true,
+            "filterable": true
+          },
+          {
+            "key": "department",
+            "label": "Department",
+            "type": "text",
+            "sortable": true,
+            "filterable": true
+          },
+          {
+            "key": "status",
+            "label": "Status",
+            "type": "status",
+            "sortable": true,
+            "filterable": true,
+            "statusConfig": {
+              "active": {
+                "label": "Active",
+                "color": "green"
+              },
+              "inactive": {
+                "label": "Inactive",
+                "color": "gray"
+              },
+              "pending": {
+                "label": "Pending",
+                "color": "yellow"
+              }
+            }
+          },
+          {
+            "key": "lastLogin",
+            "label": "Last Login",
+            "type": "datetime",
+            "sortable": true,
+            "format": "relative"
+          },
+          {
+            "key": "actions",
+            "label": "Actions",
+            "type": "actions",
+            "width": "120px",
+            "sortable": false
+          }
+        ],
+        "config": {
+          "selectable": true,
+          "sortable": true,
+          "filterable": true,
+          "searchable": true,
+          "paginated": true,
+          "pageSize": 25,
+          "serverSide": true,
+          "responsive": true,
+          "striped": true,
+          "bordered": false
+        },
+        "actions": [
+          {
+            "id": "edit",
+            "label": "Edit",
+            "icon": "pencil",
+            "variant": "ghost",
+            "size": "sm",
+            "action": "edit-user",
+            "permissions": ["users.edit"]
+          },
+          {
+            "id": "view",
+            "label": "View",
+            "icon": "eye",
+            "variant": "ghost",
+            "size": "sm",
+            "action": "view-user"
+          },
+          {
+            "id": "delete",
+            "label": "Delete",
+            "icon": "trash",
+            "variant": "ghost",
+            "size": "sm",
+            "color": "red",
+            "action": "delete-user",
+            "permissions": ["users.delete"],
+            "confirm": {
+              "title": "Delete User",
+              "message": "Are you sure you want to delete this user? This action cannot be undone.",
+              "confirm": "Delete",
+              "cancel": "Cancel"
+            }
+          }
+        ],
+        "bulkActions": [
+          {
+            "id": "activate",
+            "label": "Activate",
+            "icon": "check",
+            "variant": "primary",
+            "action": "bulk-activate-users",
+            "permissions": ["users.edit"]
+          },
+          {
+            "id": "deactivate",
+            "label": "Deactivate",
+            "icon": "x",
+            "variant": "secondary",
+            "action": "bulk-deactivate-users",
+            "permissions": ["users.edit"]
+          },
+          {
+            "id": "export-selected",
+            "label": "Export Selected",
+            "icon": "download",
+            "variant": "secondary",
+            "action": "export-selected-users"
+          },
+          {
+            "id": "delete-selected",
+            "label": "Delete Selected",
+            "icon": "trash",
+            "variant": "danger",
+            "action": "bulk-delete-users",
+            "permissions": ["users.delete"],
+            "confirm": {
+              "title": "Delete Users",
+              "message": "Are you sure you want to delete the selected users? This action cannot be undone.",
+              "confirm": "Delete All",
+              "cancel": "Cancel"
+            }
+          }
+        ],
+        "emptyState": {
+          "title": "No users found",
+          "description": "There are no users matching your current filters.",
+          "icon": "users",
+          "action": {
+            "text": "Add First User",
+            "action": "show-user-form"
+          }
+        },
+        "loading": false
+      },
+      "dataSource": "users"
+    }
+  ],
+  "dataSources": [
+    {
+      "id": "users",
+      "type": "api",
+      "endpoint": "/api/users",
+      "method": "GET",
+      "parameters": {
+        "page": "1",
+        "limit": "25",
+        "sort": "name",
+        "order": "asc"
+      },
+      "transform": "data.users",
+      "cache": {
+        "ttl": "5m",
+        "key": "users-list",
+        "invalidate": ["user-created", "user-updated", "user-deleted"]
+      },
+      "refresh": {
+        "trigger": "focus",
+        "interval": "30s"
+      }
+    },
+    {
+      "id": "departments",
+      "type": "api",
+      "endpoint": "/api/departments",
+      "method": "GET",
+      "cache": {
+        "ttl": "1h",
+        "key": "departments-list"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "show-user-form",
+      "type": "api",
+      "label": "Add User",
+      "target": "/users/new",
+      "method": "GET",
+      "success": {
+        "type": "update",
+        "target": "#main-modal",
+        "message": "User form loaded"
+      },
+      "permissions": ["users.create"]
+    },
+    {
+      "id": "edit-user",
+      "type": "api",
+      "label": "Edit User",
+      "target": "/users/{id}/edit",
+      "method": "GET",
+      "success": {
+        "type": "update",
+        "target": "#main-modal"
+      },
+      "permissions": ["users.edit"]
+    },
+    {
+      "id": "view-user",
+      "type": "api",
+      "label": "View User",
+      "target": "/users/{id}",
+      "method": "GET",
+      "success": {
+        "type": "update",
+        "target": "#main-modal"
+      }
+    },
+    {
+      "id": "delete-user",
+      "type": "api",
+      "label": "Delete User",
+      "target": "/api/users/{id}",
+      "method": "DELETE",
+      "confirm": {
+        "title": "Confirm Deletion",
+        "message": "Are you sure you want to delete this user?",
+        "confirm": "Delete",
+        "cancel": "Cancel"
+      },
+      "success": {
+        "type": "refresh",
+        "target": "#users-table",
+        "message": "User deleted successfully"
+      },
+      "error": {
+        "type": "toast",
+        "message": "Failed to delete user"
+      },
+      "permissions": ["users.delete"]
+    },
+    {
+      "id": "export-users",
+      "type": "api",
+      "label": "Export Users",
+      "target": "/api/users/export",
+      "method": "GET",
+      "success": {
+        "type": "download",
+        "message": "Export started"
+      }
+    }
+  ],
+  "permissions": {
+    "requiredPermissions": ["users.view"],
+    "fallback": {
+      "type": "molecules.alert",
+      "props": {
+        "type": "error",
+        "title": "Access Denied",
+        "message": "You don't have permission to view users."
+      }
+    }
+  },
+  "meta": {
+    "breadcrumbs": [
+      {"label": "Dashboard", "href": "/dashboard"},
+      {"label": "Administration", "href": "/admin"},
+      {"label": "Users", "href": "/admin/users"}
+    ],
+    "helpUrl": "/help/user-management",
+    "category": "administration",
+    "tags": ["users", "management", "crud"]
+  }
+}

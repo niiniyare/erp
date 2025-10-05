@@ -1,0 +1,510 @@
+{
+  "id": "user-profile-form",
+  "version": "1.0.0",
+  "layout": "app",
+  "title": "User Profile",
+  "description": "Edit user profile and account settings",
+  "components": [
+    {
+      "id": "profile-header",
+      "type": "molecules.base-card",
+      "props": {
+        "variant": "header",
+        "padding": "large"
+      },
+      "children": [
+        {
+          "id": "avatar-section",
+          "type": "atoms.avatar",
+          "props": {
+            "src": "{user.avatar}",
+            "name": "{user.name}",
+            "size": "xl",
+            "editable": true
+          },
+          "layout": {
+            "container": "flex",
+            "flex": {
+              "direction": "column",
+              "align": "center",
+              "gap": "1rem"
+            },
+            "spacing": {
+              "marginBottom": "2rem"
+            }
+          }
+        },
+        {
+          "id": "user-info",
+          "type": "text",
+          "props": {
+            "content": "<h2 class='text-2xl font-bold text-gray-900 dark:text-white'>{user.name}</h2><p class='text-gray-600 dark:text-gray-400'>{user.email}</p><p class='text-sm text-gray-500 dark:text-gray-500'>{user.role} • {user.department}</p>"
+          },
+          "layout": {
+            "container": "flex",
+            "flex": {
+              "direction": "column",
+              "align": "center",
+              "gap": "0.5rem"
+            }
+          }
+        }
+      ],
+      "layout": {
+        "container": "block",
+        "spacing": {
+          "marginBottom": "2rem"
+        }
+      }
+    },
+    {
+      "id": "profile-tabs",
+      "type": "molecules.tabs",
+      "props": {
+        "defaultTab": "personal",
+        "tabs": [
+          {
+            "id": "personal",
+            "label": "Personal Information",
+            "icon": "user"
+          },
+          {
+            "id": "security",
+            "label": "Security",
+            "icon": "shield"
+          },
+          {
+            "id": "preferences",
+            "label": "Preferences",
+            "icon": "cog"
+          },
+          {
+            "id": "notifications",
+            "label": "Notifications",
+            "icon": "bell"
+          }
+        ]
+      },
+      "children": [
+        {
+          "id": "personal-tab",
+          "type": "molecules.field-group",
+          "props": {
+            "title": "Personal Information",
+            "description": "Update your personal details and contact information",
+            "layout": "grid",
+            "columns": 2,
+            "fields": [
+              {
+                "type": "input",
+                "label": "First Name",
+                "name": "firstName",
+                "value": "{user.firstName}",
+                "required": true,
+                "placeholder": "Enter your first name"
+              },
+              {
+                "type": "input",
+                "label": "Last Name",
+                "name": "lastName",
+                "value": "{user.lastName}",
+                "required": true,
+                "placeholder": "Enter your last name"
+              },
+              {
+                "type": "input",
+                "label": "Email Address",
+                "name": "email",
+                "inputType": "email",
+                "value": "{user.email}",
+                "required": true,
+                "placeholder": "Enter your email address"
+              },
+              {
+                "type": "input",
+                "label": "Phone Number",
+                "name": "phone",
+                "inputType": "tel",
+                "value": "{user.phone}",
+                "placeholder": "Enter your phone number"
+              },
+              {
+                "type": "select",
+                "label": "Department",
+                "name": "department",
+                "value": "{user.department}",
+                "dataSource": "departments",
+                "required": true
+              },
+              {
+                "type": "input",
+                "label": "Job Title",
+                "name": "jobTitle",
+                "value": "{user.jobTitle}",
+                "placeholder": "Enter your job title"
+              },
+              {
+                "type": "textarea",
+                "label": "Bio",
+                "name": "bio",
+                "value": "{user.bio}",
+                "placeholder": "Tell us about yourself",
+                "rows": 4,
+                "columnSpan": 2
+              }
+            ]
+          },
+          "conditions": [
+            {
+              "field": "activeTab",
+              "operator": "eq",
+              "value": "personal",
+              "source": "context"
+            }
+          ]
+        },
+        {
+          "id": "security-tab",
+          "type": "molecules.field-group",
+          "props": {
+            "title": "Security Settings",
+            "description": "Manage your password and security preferences",
+            "layout": "vertical",
+            "fields": [
+              {
+                "type": "input",
+                "label": "Current Password",
+                "name": "currentPassword",
+                "inputType": "password",
+                "required": true,
+                "placeholder": "Enter your current password"
+              },
+              {
+                "type": "input",
+                "label": "New Password",
+                "name": "newPassword",
+                "inputType": "password",
+                "placeholder": "Enter a new password",
+                "helpText": "Password must be at least 8 characters long"
+              },
+              {
+                "type": "input",
+                "label": "Confirm New Password",
+                "name": "confirmPassword",
+                "inputType": "password",
+                "placeholder": "Confirm your new password"
+              }
+            ]
+          },
+          "children": [
+            {
+              "id": "two-factor-section",
+              "type": "molecules.base-card",
+              "props": {
+                "title": "Two-Factor Authentication",
+                "subtitle": "Add an extra layer of security to your account",
+                "variant": "outlined"
+              },
+              "children": [
+                {
+                  "id": "2fa-toggle",
+                  "type": "atoms.toggle",
+                  "props": {
+                    "name": "twoFactorEnabled",
+                    "label": "Enable Two-Factor Authentication",
+                    "checked": "{user.twoFactorEnabled}"
+                  }
+                },
+                {
+                  "id": "2fa-setup",
+                  "type": "atoms.button",
+                  "props": {
+                    "text": "Setup Two-Factor Authentication",
+                    "variant": "secondary",
+                    "action": "setup-2fa"
+                  },
+                  "conditions": [
+                    {
+                      "field": "twoFactorEnabled",
+                      "operator": "eq",
+                      "value": false,
+                      "source": "props"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "field": "activeTab",
+              "operator": "eq",
+              "value": "security",
+              "source": "context"
+            }
+          ]
+        },
+        {
+          "id": "preferences-tab",
+          "type": "molecules.field-group",
+          "props": {
+            "title": "Preferences",
+            "description": "Customize your experience",
+            "layout": "vertical",
+            "fields": [
+              {
+                "type": "select",
+                "label": "Language",
+                "name": "language",
+                "value": "{user.preferences.language}",
+                "options": [
+                  {"value": "en", "label": "English"},
+                  {"value": "es", "label": "Spanish"},
+                  {"value": "fr", "label": "French"},
+                  {"value": "de", "label": "German"}
+                ]
+              },
+              {
+                "type": "select",
+                "label": "Timezone",
+                "name": "timezone",
+                "value": "{user.preferences.timezone}",
+                "dataSource": "timezones"
+              },
+              {
+                "type": "select",
+                "label": "Date Format",
+                "name": "dateFormat",
+                "value": "{user.preferences.dateFormat}",
+                "options": [
+                  {"value": "MM/DD/YYYY", "label": "MM/DD/YYYY (US)"},
+                  {"value": "DD/MM/YYYY", "label": "DD/MM/YYYY (EU)"},
+                  {"value": "YYYY-MM-DD", "label": "YYYY-MM-DD (ISO)"}
+                ]
+              },
+              {
+                "type": "select",
+                "label": "Theme",
+                "name": "theme",
+                "value": "{user.preferences.theme}",
+                "options": [
+                  {"value": "light", "label": "Light"},
+                  {"value": "dark", "label": "Dark"},
+                  {"value": "system", "label": "System Default"}
+                ]
+              }
+            ]
+          },
+          "conditions": [
+            {
+              "field": "activeTab",
+              "operator": "eq",
+              "value": "preferences",
+              "source": "context"
+            }
+          ]
+        },
+        {
+          "id": "notifications-tab",
+          "type": "molecules.field-group",
+          "props": {
+            "title": "Notification Settings",
+            "description": "Choose how you want to be notified",
+            "layout": "vertical"
+          },
+          "children": [
+            {
+              "id": "email-notifications",
+              "type": "molecules.base-card",
+              "props": {
+                "title": "Email Notifications",
+                "variant": "outlined"
+              },
+              "children": [
+                {
+                  "type": "atoms.checkbox",
+                  "props": {
+                    "name": "emailNewMessages",
+                    "label": "New Messages",
+                    "checked": "{user.notifications.emailNewMessages}"
+                  }
+                },
+                {
+                  "type": "atoms.checkbox",
+                  "props": {
+                    "name": "emailTaskAssignments",
+                    "label": "Task Assignments",
+                    "checked": "{user.notifications.emailTaskAssignments}"
+                  }
+                },
+                {
+                  "type": "atoms.checkbox",
+                  "props": {
+                    "name": "emailSystemUpdates",
+                    "label": "System Updates",
+                    "checked": "{user.notifications.emailSystemUpdates}"
+                  }
+                },
+                {
+                  "type": "atoms.checkbox",
+                  "props": {
+                    "name": "emailWeeklyDigest",
+                    "label": "Weekly Digest",
+                    "checked": "{user.notifications.emailWeeklyDigest}"
+                  }
+                }
+              ]
+            },
+            {
+              "id": "push-notifications",
+              "type": "molecules.base-card",
+              "props": {
+                "title": "Push Notifications",
+                "variant": "outlined"
+              },
+              "children": [
+                {
+                  "type": "atoms.checkbox",
+                  "props": {
+                    "name": "pushNewMessages",
+                    "label": "New Messages",
+                    "checked": "{user.notifications.pushNewMessages}"
+                  }
+                },
+                {
+                  "type": "atoms.checkbox",
+                  "props": {
+                    "name": "pushTaskDeadlines",
+                    "label": "Task Deadlines",
+                    "checked": "{user.notifications.pushTaskDeadlines}"
+                  }
+                },
+                {
+                  "type": "atoms.checkbox",
+                  "props": {
+                    "name": "pushSystemAlerts",
+                    "label": "System Alerts",
+                    "checked": "{user.notifications.pushSystemAlerts}"
+                  }
+                }
+              ]
+            }
+          ],
+          "conditions": [
+            {
+              "field": "activeTab",
+              "operator": "eq",
+              "value": "notifications",
+              "source": "context"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "form-actions",
+      "type": "molecules.base-card",
+      "props": {
+        "variant": "footer",
+        "footerActions": [
+          {
+            "text": "Cancel",
+            "variant": "secondary",
+            "action": "cancel-edit"
+          },
+          {
+            "text": "Save Changes",
+            "variant": "primary",
+            "action": "save-profile",
+            "loading": false
+          }
+        ]
+      },
+      "layout": {
+        "container": "block",
+        "spacing": {
+          "marginTop": "2rem"
+        }
+      }
+    }
+  ],
+  "dataSources": [
+    {
+      "id": "user",
+      "type": "api",
+      "endpoint": "/api/user/profile",
+      "method": "GET",
+      "cache": {
+        "ttl": "10m",
+        "key": "user-profile"
+      }
+    },
+    {
+      "id": "departments",
+      "type": "api",
+      "endpoint": "/api/departments",
+      "method": "GET",
+      "cache": {
+        "ttl": "1h",
+        "key": "departments-list"
+      }
+    },
+    {
+      "id": "timezones",
+      "type": "api",
+      "endpoint": "/api/timezones",
+      "method": "GET",
+      "cache": {
+        "ttl": "24h",
+        "key": "timezones-list"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "save-profile",
+      "type": "api",
+      "label": "Save Profile",
+      "target": "/api/user/profile",
+      "method": "PUT",
+      "data": {
+        "form": "#profile-form"
+      },
+      "success": {
+        "type": "toast",
+        "message": "Profile updated successfully",
+        "duration": "3s"
+      },
+      "error": {
+        "type": "toast",
+        "message": "Failed to update profile"
+      }
+    },
+    {
+      "id": "cancel-edit",
+      "type": "navigate",
+      "target": "/dashboard"
+    },
+    {
+      "id": "setup-2fa",
+      "type": "api",
+      "target": "/user/security/2fa/setup",
+      "method": "GET",
+      "success": {
+        "type": "update",
+        "target": "#main-modal"
+      }
+    }
+  ],
+  "permissions": {
+    "requiredPermissions": ["profile.edit"]
+  },
+  "meta": {
+    "breadcrumbs": [
+      {"label": "Dashboard", "href": "/dashboard"},
+      {"label": "Profile", "href": "/profile"}
+    ],
+    "category": "user",
+    "tags": ["profile", "settings", "form"]
+  }
+}

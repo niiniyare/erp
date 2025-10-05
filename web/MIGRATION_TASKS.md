@@ -156,95 +156,164 @@
   - **Validation**: Page updates work smoothly with HTMX
   - **Commit point**: "feat: implement HTMX partial page updates"
 
-## Phase 4: Performance Optimization
+## Phase 4: JSON-Driven UI Implementation
 
-### 4.1 JavaScript Bundle Optimization
-- [ ] **Task 4.1.1**: Remove all TypeScript hook files
+### 4.1 Schema Registry Foundation
+- [ ] **Task 4.1.1**: Create component registry system
+  - **Files to create**: 
+    - `web/engine/registry.go` (Component resolution system)
+    - `web/engine/types.go` (Schema type definitions)
+    - `web/engine/resolver.go` (Component path resolution)
+  - **Validation**: Registry can resolve all atomic → feature components
+  - **Commit point**: "feat: implement component registry system"
+
+- [ ] **Task 4.1.2**: Build JSON → Templ rendering engine
+  - **Files to create**:
+    - `web/engine/renderer.go` (Schema to template conversion)
+    - `web/engine/validator.go` (Schema validation)
+    - `web/engine/errors.go` (Error handling and debugging)
+  - **Validation**: Basic JSON schema renders to valid Templ components
+  - **Commit point**: "feat: implement JSON to Templ rendering engine"
+
+### 4.2 Standard Page Patterns
+- [ ] **Task 4.2.1**: Create CRUD table pattern
+  - **Files to create**:
+    - `web/schemas/patterns/crud-table.json` (Standard CRUD layout)
+    - `web/builders/crud-builder.go` (CRUD schema generation)
+    - `web/patterns/crud.go` (CRUD pattern implementation)
+  - **Validation**: Generate functional user management page from schema
+  - **Commit point**: "feat: implement CRUD table pattern"
+
+- [ ] **Task 4.2.2**: Create hierarchical tree pattern
+  - **Files to create**:
+    - `web/schemas/patterns/hierarchical-tree.json` (Tree view layout)
+    - `web/builders/tree-builder.go` (Tree schema generation)
+    - `web/patterns/tree.go` (Tree pattern implementation)
+  - **Validation**: Generate chart of accounts tree view from schema
+  - **Commit point**: "feat: implement hierarchical tree pattern"
+
+### 4.3 Auto-Generation System
+- [ ] **Task 4.3.1**: Go model → schema generation
+  - **Files to create**:
+    - `web/codegen/schema-gen.go` (Model analysis and schema generation)
+    - `web/codegen/annotations.go` (Schema annotation system)
+    - `web/cmd/schema-gen/main.go` (CLI tool for schema generation)
+  - **Validation**: Generate schemas from existing User, Transaction models
+  - **Commit point**: "feat: implement model to schema auto-generation"
+
+- [ ] **Task 4.3.2**: Schema validation framework
+  - **Files to create**:
+    - `web/validation/schema-validator.go` (Runtime schema validation)
+    - `web/validation/rules.go` (Validation rule definitions)
+    - `web/validation/errors.go` (Validation error handling)
+  - **Validation**: Comprehensive error reporting for invalid schemas
+  - **Commit point**: "feat: implement schema validation framework"
+
+### 4.4 Visual Schema Builder MVP
+- [ ] **Task 4.4.1**: Schema builder interface
+  - **Files to create**:
+    - `web/admin/schema-builder.templ` (Visual schema editing interface)
+    - `web/admin/components/` (Schema builder components)
+    - `web/api/schema-builder.go` (API endpoints for schema editing)
+  - **Validation**: Create and edit page schemas through web interface
+  - **Commit point**: "feat: implement visual schema builder MVP"
+
+- [ ] **Task 4.4.2**: Real-time preview system
+  - **Files to create**:
+    - `web/admin/preview.templ` (Live schema preview)
+    - `web/api/preview.go` (Preview generation endpoints)
+  - **Validation**: Real-time preview of schema changes
+  - **Commit point**: "feat: implement real-time schema preview"
+
+## Phase 5: Build Optimization
+
+### 5.1 JavaScript Bundle Optimization
+- [ ] **Task 5.1.1**: Remove all TypeScript hook files
   - **Files to delete**: All files in `web/hooks/`
   - **Validation**: No TypeScript compilation dependencies
   - **Commit point**: "refactor: remove TypeScript hooks"
 
-- [ ] **Task 4.1.2**: Optimize JavaScript bundle
+- [ ] **Task 5.1.2**: Optimize JavaScript bundle
   - **Target**: <50KB total JavaScript
   - **Validation**: Bundle size verification in CI
   - **Commit point**: "perf: optimize JavaScript bundle to <50KB"
 
-### 4.2 Performance Testing
-- [ ] **Task 4.2.1**: Implement performance benchmarks
+### 5.2 Performance Testing
+- [ ] **Task 5.2.1**: Implement performance benchmarks
   - **Metrics**: Time to interactive, bundle size, server response time
   - **Validation**: All metrics within architecture targets
   - **Commit point**: "test: implement performance benchmarks"
 
-## Phase 5: Advanced Design Patterns Implementation
+## Phase 6: Advanced Design Patterns Implementation
 
-### 5.1 Testing Strategy Implementation
-- [ ] **Task 5.1.1**: Implement component unit testing
+### 6.1 Testing Strategy Implementation
+- [ ] **Task 6.1.1**: Implement component unit testing
   - **Files to create**: Test files for all atomic components
   - **Framework**: Go testing with testify for component logic
   - **Validation**: 90% test coverage for component functions
   - **Status**: Documented in Design Pattern Guide but not implemented
   - **Commit point**: "test: implement component unit testing"
 
-- [ ] **Task 5.1.2**: Implement integration testing
+- [ ] **Task 6.1.2**: Implement integration testing
   - **Files to create**: Integration tests for organism components
   - **Validation**: End-to-end component interaction testing
   - **Status**: Documented in Design Pattern Guide but not implemented
   - **Commit point**: "test: implement integration testing"
 
-### 5.2 Performance Monitoring Implementation
-- [ ] **Task 5.2.1**: Implement performance budgets
+### 6.2 Performance Monitoring Implementation
+- [ ] **Task 6.2.1**: Implement performance budgets
   - **Files to create**: Performance monitoring utilities
   - **Validation**: Performance budget enforcement in CI
   - **Status**: Documented in Design Pattern Guide but not implemented
   - **Commit point**: "perf: implement performance monitoring"
 
-- [ ] **Task 5.2.2**: Implement component caching
+- [ ] **Task 6.2.2**: Implement component caching
   - **Files to create**: Server-side component caching layer
   - **Validation**: Improved component render times
   - **Status**: Documented in Design Pattern Guide but not implemented
   - **Commit point**: "perf: implement component caching"
 
-### 5.3 Advanced Security Patterns
-- [ ] **Task 5.3.1**: Implement comprehensive rate limiting
+### 6.3 Advanced Security Patterns
+- [ ] **Task 6.3.1**: Implement comprehensive rate limiting
   - **Files to create**: Rate limiting middleware for component endpoints
   - **Validation**: Rate limiting on all HTMX endpoints
   - **Status**: Basic patterns documented, advanced implementation needed
   - **Commit point**: "security: implement comprehensive rate limiting"
 
-- [ ] **Task 5.3.2**: Implement content security policy
+- [ ] **Task 6.3.2**: Implement content security policy
   - **Files to modify**: Base layout templates
   - **Validation**: CSP headers for all component responses
   - **Status**: Documented in Design Pattern Guide but not implemented
   - **Commit point**: "security: implement content security policy"
 
-### 5.4 Internationalization Patterns
-- [ ] **Task 5.4.1**: Implement i18n framework
+### 6.4 Internationalization Patterns
+- [ ] **Task 6.4.1**: Implement i18n framework
   - **Files to create**: Internationalization utilities for components
   - **Validation**: Multi-language support for all text content
   - **Status**: Documented in Design Pattern Guide but not implemented
   - **Commit point**: "feat: implement internationalization framework"
 
-### 5.5 Advanced Component Patterns
-- [ ] **Task 5.5.1**: Implement optimistic UI patterns
+### 6.5 Advanced Component Patterns
+- [ ] **Task 6.5.1**: Implement optimistic UI patterns
   - **Files to create**: Optimistic update utilities for forms
   - **Validation**: Improved perceived performance for user actions
   - **Status**: Documented in Design Pattern Guide but not implemented
   - **Commit point**: "feat: implement optimistic UI patterns"
 
-- [ ] **Task 5.5.2**: Implement server-sent events integration
+- [ ] **Task 6.5.2**: Implement server-sent events integration
   - **Files to create**: SSE integration for real-time components
   - **Validation**: Real-time updates without polling
   - **Status**: Documented in Design Pattern Guide but not implemented
   - **Commit point**: "feat: implement server-sent events"
 
-### 5.6 Component Governance
-- [ ] **Task 5.6.1**: Implement component versioning
+### 6.6 Component Governance
+- [ ] **Task 6.6.1**: Implement component versioning
   - **Files to create**: Component versioning system
   - **Validation**: Backward compatibility tracking
   - **Status**: Documented in Design Pattern Guide but not implemented
   - **Commit point**: "feat: implement component versioning"
 
-- [ ] **Task 5.6.2**: Implement component review flow
+- [ ] **Task 6.6.2**: Implement component review flow
   - **Files to create**: Component review automation
   - **Validation**: Automated component quality checks
   - **Status**: Documented in Design Pattern Guide but not implemented
@@ -273,13 +342,21 @@
 - ✅ HTMX enhancement layer complete
 - ✅ Progressive enhancement verified
 
-### Phase 4 Completion Criteria
+### Phase 4 Completion Criteria (JSON-Driven UI)
+- [ ] Schema registry system operational
+- [ ] JSON → Templ rendering engine functional
+- [ ] Standard page patterns implemented (CRUD, tree)
+- [ ] Schema validation framework complete
+- [ ] Auto-generation from Go models working
+- [ ] Visual schema builder MVP ready
+
+### Phase 5 Completion Criteria (Build Optimization)
 - [ ] JavaScript bundle <50KB
 - [ ] Performance targets met
 - [ ] TypeScript hooks removed
 - [ ] Architecture compliance verified
 
-### Phase 5 Completion Criteria (Advanced Patterns)
+### Phase 6 Completion Criteria (Advanced Patterns)
 - [ ] Component testing framework implemented
 - [ ] Performance monitoring active
 - [ ] Advanced security patterns implemented
@@ -355,29 +432,23 @@
   - **Commit point**: "feat: complete Phase 2.5 final integration"
 
 ### Current Status Tracking
-- **Phase**: Phase 2.5 (Final Integration) - 100% Complete ✅
-- **Last Completed Task**: Task 2.5.4 - Final architecture validation
-- **Current Task**: Phase 2.5 completion documentation
-- **Next Phase**: Phase 3 (Progressive Enhancement) - Ready for Implementation
+- **Phase**: Phase 3 (Progressive Enhancement) - 100% Complete ✅
+- **Last Completed Task**: Phase 2.5 final integration and validation
+- **Current Phase**: Ready for Phase 4 (JSON-Driven UI Implementation)
+- **Next Phase**: Phase 4 - JSON-Driven UI Implementation
 - **Blockers**: None
 - **Notes**: 
-  - Foundation layer and atomic components fully implemented (9 atoms)
-  - Molecule layer completed (6 components with full composition patterns)
-  - Organism layer completed (5 complex organisms: table, filter-panel, siteheader, sidebar, modal)
-  - Feature modules implemented (7 total modules):
+  - **Foundation Complete**: 9 atomic components with full Flowbite integration
+  - **Molecule Layer Complete**: 6 components with composition patterns
+  - **Organism Layer Complete**: 5 complex organisms (table, filter-panel, siteheader, sidebar, modal)
+  - **Feature Modules Complete**: 7 total modules (35 total components):
     - user-management with 5 components
     - dashboard with 3 components
     - settings with 2 components (profile + security)
     - notifications with 1 component
     - data-management with 1 component
-  - Page templates implemented (5 total):
-    - Authentication pages: login, register, forgot-password
-    - Dashboard: index page
-    - Layout integration: auth and app layouts
-  - Layout system complete (4 comprehensive layouts)
-  - All components follow server-first architecture with progressive enhancement
-  - Flowbite design system integration complete throughout
-  - HTMX and Alpine.js integration patterns established
-  - Architecture naming conflicts resolved (template functions vs Go types)
-  - Template compilation and type checking verified
-  - Ready for Phase 3: Build pipeline updates and TypeScript removal
+  - **Page Templates Complete**: 5 total (authentication + dashboard)
+  - **Layout System Complete**: 4 comprehensive layouts (base, app, auth, minimal)
+  - **Architecture Compliance**: Server-first, progressive enhancement, HTMX integration
+  - **Template Architecture**: 100% compilation success, type safety verified
+  - **Ready for JSON-Driven UI**: Component vocabulary complete for schema-driven rendering
