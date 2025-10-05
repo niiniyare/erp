@@ -103,63 +103,131 @@ web/
 templ ButtonPrimary(label string, href string, variant string, disabled bool)
 
 // ✅ NEW WAY (Struct-based - use this)
+// Real implementation from web/components/atoms/button.templ
 type ButtonProps struct {
-    Label    string
-    Href     string
-    Variant  string  // "primary" | "secondary" | "danger"
-    Disabled bool
-    Icon     string  // Optional icon class
-    HxAttrs  HTMXAttrs // Optional HTMX attributes
+    // Content
+    Text        string        `json:"text"`
+    Icon        string        `json:"icon,omitempty"`
+    IconPosition string       `json:"iconPosition,omitempty"` // "left" or "right"
+    
+    // Styling
+    Variant     ButtonVariant `json:"variant"`
+    Size        ButtonSize    `json:"size"`
+    Pill        bool          `json:"pill,omitempty"`         // Rounded full
+    Loading     bool          `json:"loading,omitempty"`
+    
+    // Behavior
+    Type        string        `json:"type,omitempty"`         // "button", "submit", "reset"
+    Disabled    bool          `json:"disabled,omitempty"`
+    OnClick     string        `json:"onclick,omitempty"`      // Alpine.js click handler
+    
+    // HTMX attributes
+    HxPost      string        `json:"hxPost,omitempty"`
+    HxGet       string        `json:"hxGet,omitempty"`
+    HxDelete    string        `json:"hxDelete,omitempty"`
+    HxTarget    string        `json:"hxTarget,omitempty"`
+    HxSwap      string        `json:"hxSwap,omitempty"`
+    HxConfirm   string        `json:"hxConfirm,omitempty"`
+    
+    // HTML attributes
+    ID          string        `json:"id,omitempty"`
+    Class       string        `json:"class,omitempty"`
+    AriaLabel   string        `json:"ariaLabel,omitempty"`
+    DataTestID  string        `json:"dataTestId,omitempty"`
 }
 
-templ ButtonPrimary(props ButtonProps) {
-    <a 
-        href={templ.SafeURL(props.Href)}
-        class={buttonClasses(props)}
-        if props.Disabled {
-            aria-disabled="true"
+// Real button variants from implementation
+type ButtonVariant string
+const (
+    ButtonPrimary   ButtonVariant = "primary"
+    ButtonSecondary ButtonVariant = "secondary" 
+    ButtonDark      ButtonVariant = "dark"
+    ButtonLight     ButtonVariant = "light"
+    ButtonGreen     ButtonVariant = "green"
+    ButtonRed       ButtonVariant = "red"
+    ButtonYellow    ButtonVariant = "yellow"
+    ButtonPurple    ButtonVariant = "purple"
+    ButtonOutline   ButtonVariant = "outline"
+)
+
+// Real implementation from web/components/atoms/button.templ
+templ Button(props ButtonProps) {
+    <button
+        if props.ID != "" {
+            id={ props.ID }
         }
-        if props.HxAttrs.Get != "" {
-            hx-get={props.HxAttrs.Get}
-            hx-target={props.HxAttrs.Target}
-            hx-swap={props.HxAttrs.Swap}
+        type={ getButtonType(props.Type) }
+        class={ getButtonClasses(props) }
+        if props.Disabled {
+            disabled
+        }
+        if props.OnClick != "" {
+            @click={ props.OnClick }
+        }
+        if props.HxPost != "" {
+            hx-post={ props.HxPost }
+        }
+        if props.HxGet != "" {
+            hx-get={ props.HxGet }
+        }
+        if props.HxTarget != "" {
+            hx-target={ props.HxTarget }
+        }
+        if props.HxSwap != "" {
+            hx-swap={ props.HxSwap }
+        }
+        if props.Loading {
+            x-data="{ loading: true }"
+            :disabled="loading"
         }
     >
-        if props.Icon != "" {
-            <i class={props.Icon}></i>
+        if props.Loading {
+            <div class="flex items-center">
+                @Spinner(SpinnerProps{Size: getButtonSpinnerSize(props.Size), Class: "me-2"})
+                <span>Loading...</span>
+            </div>
+        } else {
+            if props.Icon != "" && props.IconPosition != "right" {
+                @Icon(IconProps{Name: props.Icon, Size: getIconSizeForButton(props.Size), Class: "me-2"})
+            }
+            if props.Text != "" {
+                <span>{ props.Text }</span>
+            }
+            if props.Icon != "" && props.IconPosition == "right" {
+                @Icon(IconProps{Name: props.Icon, Size: getIconSizeForButton(props.Size), Class: "ms-2"})
+            }
         }
-        {props.Label}
-    </a>
-}
-
-// Helper function for conditional classes
-func buttonClasses(props ButtonProps) string {
-    base := "btn transition-colors duration-200"
-    variant := map[string]string{
-        "primary":   "btn-primary bg-blue-600 hover:bg-blue-700",
-        "secondary": "btn-secondary bg-gray-600 hover:bg-gray-700",
-        "danger":    "btn-danger bg-red-600 hover:bg-red-700",
-    }[props.Variant]
-    
-    if props.Disabled {
-        return base + " " + variant + " opacity-50 cursor-not-allowed"
-    }
-    return base + " " + variant
+    </button>
 }
 ```
 
 **Usage:**
 ```go
-// In parent component or page
-templ DashboardPage(vm DashboardViewModel) {
-    @ButtonPrimary(ButtonProps{
-        Label:   "Save Changes",
-        Variant: "primary",
-        HxAttrs: HTMXAttrs{
-            Post:   "/api/save",
-            Target: "#result",
-            Swap:   "innerHTML",
-        },
+// Real usage from web/layouts/app.templ
+templ PageActionButton(action PageAction) {
+    @atoms.Button(atoms.ButtonProps{
+        Text:     action.Text,
+        Icon:     action.Icon,
+        Variant:  action.Variant,
+        Size:     action.Size,
+        OnClick:  action.OnClick,
+        HxGet:    action.HxGet,
+        HxPost:   action.HxPost,
+        HxTarget: action.HxTarget,
+        Disabled: action.Disabled,
+    })
+}
+
+// Example from real implementation
+templ SaveButton() {
+    @Button(ButtonProps{
+        Text:     "Save Changes",
+        Variant:  ButtonPrimary,
+        Size:     ButtonSizeMD,
+        HxPost:   "/api/save",
+        HxTarget: "#result",
+        HxSwap:   "innerHTML",
+        Loading:  false,
     })
 }
 ```
@@ -169,64 +237,86 @@ templ DashboardPage(vm DashboardViewModel) {
 ### 2.3 Common Struct Patterns
 
 ```go
-// Reusable HTMX attributes struct
-type HTMXAttrs struct {
-    Get       string
-    Post      string
-    Put       string
-    Delete    string
-    Target    string
-    Swap      string
-    Trigger   string
-    Indicator string
-    Headers   map[string]string
+// Real Field props from web/components/molecules/field.templ
+type FieldProps struct {
+    // Field configuration
+    Type        FieldType `json:"type"`
+    Label       string    `json:"label,omitempty"`
+    Name        string    `json:"name"`
+    Value       string    `json:"value,omitempty"`
+    Placeholder string    `json:"placeholder,omitempty"`
+    HelpText    string    `json:"helpText,omitempty"`
+    ErrorText   string    `json:"errorText,omitempty"`
+    
+    // Input-specific properties
+    InputType   atoms.InputType    `json:"inputType,omitempty"`
+    InputSize   atoms.InputSize    `json:"inputSize,omitempty"`
+    InputState  atoms.InputState   `json:"inputState,omitempty"`
+    
+    // Select-specific properties
+    Options     []atoms.SelectOption   `json:"options,omitempty"`
+    OptGroups   []atoms.SelectOptGroup `json:"optGroups,omitempty"`
+    Multiple    bool                   `json:"multiple,omitempty"`
+    
+    // Validation and state
+    Required    bool   `json:"required,omitempty"`
+    Disabled    bool   `json:"disabled,omitempty"`
+    HasError    bool   `json:"hasError,omitempty"`
+    HasSuccess  bool   `json:"hasSuccess,omitempty"`
+    
+    // HTMX attributes
+    HxPost      string `json:"hxPost,omitempty"`
+    HxGet       string `json:"hxGet,omitempty"`
+    HxTarget    string `json:"hxTarget,omitempty"`
+    HxSwap      string `json:"hxSwap,omitempty"`
+    HxTrigger   string `json:"hxTrigger,omitempty"`
+    
+    // HTML attributes
+    ID          string `json:"id,omitempty"`
+    Class       string `json:"class,omitempty"`
+    DataTestID  string `json:"dataTestId,omitempty"`
 }
 
-// Form field props
-type FormFieldProps struct {
-    Name        string
-    Label       string
-    Type        string // "text" | "email" | "password" | "number"
-    Value       string
-    Placeholder string
-    Required    bool
-    Disabled    bool
-    Error       string
-    HelpText    string
-    Icon        string
+// Real DataTable props from web/components/organisms/table/types.go
+type DataTableProps struct {
+    // Table identification
+    ID          string `json:"id"`
+    Caption     string `json:"caption,omitempty"`
+    AriaLabel   string `json:"ariaLabel,omitempty"`
+    DataTestID  string `json:"dataTestId,omitempty"`
+    
+    // Data and structure
+    Columns     []DataTableColumn `json:"columns"`
+    Data        []map[string]interface{} `json:"data,omitempty"`
+    DataUrl     string `json:"dataUrl,omitempty"` // For server-side data
+    
+    // Configuration
+    Config      DataTableConfig `json:"config"`
+    
+    // Actions
+    Actions     []RowAction  `json:"actions,omitempty"`
+    BulkActions []BulkAction `json:"bulkActions,omitempty"`
+    
+    // Filtering
+    ShowFilters bool              `json:"showFilters"`
+    Filters     []DataTableFilter `json:"filters,omitempty"`
+    
+    // Styling
+    Class       string `json:"class,omitempty"`
+    Striped     bool   `json:"striped"`
+    Hover       bool   `json:"hover"`
+    Bordered    bool   `json:"bordered"`
 }
 
-// Card component props
-type CardProps struct {
-    Title       string
-    Description string
-    Content     templ.Component
-    Footer      templ.Component
-    Variant     string // "default" | "bordered" | "elevated"
-    Padding     string // "none" | "sm" | "md" | "lg"
-}
-
-// Table props
-type TableProps struct {
-    Columns     []TableColumn
-    Rows        []TableRow
-    Sortable    bool
-    Filterable  bool
-    Paginated   bool
-    HxAttrs     HTMXAttrs
-}
-
-type TableColumn struct {
-    Key      string
-    Label    string
-    Sortable bool
-    Width    string
-}
-
-type TableRow struct {
-    ID     string
-    Cells  []TableCell
-    Actions []ActionButton
+type DataTableConfig struct {
+    Paging     bool `json:"paging"`
+    PageLength int  `json:"pageLength"`
+    Searching  bool `json:"searching"`
+    Ordering   bool `json:"ordering"`
+    Info       bool `json:"info"`
+    ServerSide bool `json:"serverSide"`
+    Responsive bool `json:"responsive"`
+    Sortable   bool `json:"sortable"`
 }
 ```
 
@@ -239,28 +329,59 @@ type TableRow struct {
 **Pattern:** Define UI in `.templ` components using Go structs for typed data. Keep logic outside templates.
 
 ```go
-// Atom: components/atoms/buttons/primary.templ
-type ButtonPrimaryProps struct {
-    Label    string
-    OnClick  string
-    Variant  string
-    Loading  bool
+// Real implementation: web/components/atoms/input.templ
+type InputProps struct {
+    // Content
+    Type        InputType     `json:"type"`
+    ID          string        `json:"id,omitempty"`
+    Name        string        `json:"name"`
+    Value       string        `json:"value,omitempty"`
+    Placeholder string        `json:"placeholder,omitempty"`
+    
+    // Styling
+    Size        InputSize     `json:"size"`
+    State       InputState    `json:"state"`
+    Variant     InputVariant  `json:"variant"`
+    
+    // Validation
+    Required    bool          `json:"required,omitempty"`
+    Disabled    bool          `json:"disabled,omitempty"`
+    ReadOnly    bool          `json:"readonly,omitempty"`
+    
+    // HTML attributes
+    Class       string        `json:"class,omitempty"`
+    AriaLabel   string        `json:"ariaLabel,omitempty"`
+    DataTestID  string        `json:"dataTestId,omitempty"`
 }
 
-templ ButtonPrimary(props ButtonPrimaryProps) {
-    <button 
-        type="button"
-        class={buttonPrimaryClasses(props.Variant)}
-        onclick={templ.SafeScript(props.OnClick)}
-        if props.Loading {
+templ Input(props InputProps) {
+    <input
+        if props.ID != "" {
+            id={ props.ID }
+        }
+        name={ props.Name }
+        type={ string(props.Type) }
+        value={ props.Value }
+        if props.Placeholder != "" {
+            placeholder={ props.Placeholder }
+        }
+        class={ getInputClasses(props) }
+        if props.Required {
+            required
+        }
+        if props.Disabled {
             disabled
         }
-    >
-        if props.Loading {
-            @Spinner(SpinnerProps{Size: "sm"})
+        if props.ReadOnly {
+            readonly
         }
-        {props.Label}
-    </button>
+        if props.AriaLabel != "" {
+            aria-label={ props.AriaLabel }
+        }
+        if props.DataTestID != "" {
+            data-testid={ props.DataTestID }
+        }
+    />
 }
 ```
 
@@ -271,62 +392,94 @@ templ ButtonPrimary(props ButtonPrimaryProps) {
 **Pattern:** Layouts define structure, pages inject content via slots using `templ.Component`.
 
 ```go
-// layouts/app.templ
+// Real implementation: web/layouts/app.templ
 type AppLayoutProps struct {
-    Title      string
-    Content    templ.Component
-    Sidebar    templ.Component
-    Header     templ.Component
-    ShowFooter bool
+    // Base layout props
+    Base BaseLayoutProps `json:"base"`
+    
+    // User context
+    User          *AppUser        `json:"user,omitempty"`
+    Organization  *Organization   `json:"organization,omitempty"`
+    
+    // Navigation
+    SidebarProps  sidebar.SidebarProps      `json:"sidebarProps"`
+    HeaderProps   siteheader.SiteHeaderProps `json:"headerProps"`
+    
+    // Layout configuration
+    SidebarOpen      bool            `json:"sidebarOpen"`
+    SidebarCollapsed bool            `json:"sidebarCollapsed"`
+    ShowBreadcrumbs  bool            `json:"showBreadcrumbs"`
+    Breadcrumbs      []Breadcrumb    `json:"breadcrumbs,omitempty"`
+    
+    // Page context
+    PageTitle    string          `json:"pageTitle"`
+    PageSubtitle string          `json:"pageSubtitle,omitempty"`
+    PageActions  []PageAction    `json:"pageActions,omitempty"`
+    
+    // Loading states
+    IsLoading    bool            `json:"isLoading"`
+    LoadingText  string          `json:"loadingText,omitempty"`
 }
 
-templ AppLayout(props AppLayoutProps) {
-    <!DOCTYPE html>
-    <html lang="en">
-        <head>
-            @Head(props.Title)
-        </head>
-        <body class="antialiased">
-            if props.Header != nil {
-                @props.Header
-            } else {
-                @DefaultHeader()
-            }
+// Real AppLayout implementation
+templ AppLayout(props AppLayoutProps, content templ.Component) {
+    @BaseLayout(props.Base, AppLayoutContent(props, content))
+}
+
+templ AppLayoutContent(props AppLayoutProps, content templ.Component) {
+    <div 
+        class="min-h-screen bg-gray-50 dark:bg-gray-900"
+        x-data="appLayout()"
+        x-init="init()"
+        :class="{ 'sidebar-open': sidebarOpen, 'sidebar-collapsed': sidebarCollapsed }"
+    >
+        <!-- Sidebar -->
+        <aside 
+            class="fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0"
+            :class="{ '-translate-x-full': !sidebarOpen, 'translate-x-0': sidebarOpen }"
+        >
+            @sidebar.Sidebar(props.SidebarProps)
+        </aside>
+        
+        <!-- Main Content Area -->
+        <div class="lg:pl-64 flex flex-col min-h-screen">
+            <!-- Site Header -->
+            <header class="sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                @siteheader.SiteHeader(props.HeaderProps)
+            </header>
             
-            <div class="flex">
-                if props.Sidebar != nil {
-                    <aside class="w-64">
-                        @props.Sidebar
-                    </aside>
-                }
-                <main class="flex-1">
-                    @props.Content
-                </main>
-            </div>
-            
-            if props.ShowFooter {
-                @Footer()
-            }
-            @Scripts()
-        </body>
-    </html>
+            <!-- Main Content -->
+            <main class="flex-1 overflow-auto">
+                <!-- Page Content -->
+                <div class="p-4 sm:p-6 lg:p-8">
+                    @content
+                </div>
+            </main>
+        </div>
+    </div>
 }
 
-// pages/dashboard/index.templ
-templ DashboardPage(vm DashboardViewModel) {
-    @AppLayout(AppLayoutProps{
-        Title:   "Dashboard",
-        Content: dashboardContent(vm),
-        Sidebar: dashboardSidebar(vm),
-        ShowFooter: true,
-    })
+// Real usage from web/pages/dashboard/index.templ
+templ DashboardIndex(props DashboardIndexProps) {
+    @layouts.AppLayout(layouts.AppLayoutProps{
+        Base: layouts.BaseLayoutProps{
+            Title:       "Dashboard",
+            Description: "ERP Dashboard",
+        },
+        User:         props.User,
+        Organization: props.Organization,
+        SidebarProps: props.SidebarProps,
+        HeaderProps:  props.HeaderProps,
+        PageTitle:    "Dashboard",
+        PageSubtitle: "Welcome to your ERP system",
+    }, dashboardContent(props))
 }
 
-templ dashboardContent(vm DashboardViewModel) {
-    <div class="p-6">
-        <h1 class="text-2xl font-bold">{vm.Title}</h1>
-        @StatCards(vm.Stats)
-        @RecentActivity(vm.Recent)
+templ dashboardContent(props DashboardIndexProps) {
+    <div class="space-y-6">
+        @features.SummaryCards(props.SummaryCardsProps)
+        @features.RecentActivity(props.RecentActivityProps)
+        @features.QuickActions(props.QuickActionsProps)
     </div>
 }
 ```
@@ -342,45 +495,73 @@ templ dashboardContent(vm DashboardViewModel) {
 **Pattern:** Use HTMX to update fragments dynamically with server-rendered HTML.
 
 ```go
-// Template with struct-based HTMX props
-type UserListProps struct {
-    InitialMessage string
-    HxAttrs        HTMXAttrs
-}
-
-templ UserList(props UserListProps) {
+// Real implementation: web/components/organisms/table/table.templ
+templ DataTable(props DataTableProps) {
     <div 
-        id="user-list"
-        hx-get={props.HxAttrs.Get}
-        hx-trigger={props.HxAttrs.Trigger}
-        hx-swap={props.HxAttrs.Swap}
-        hx-indicator="#loading-spinner"
+        class={ getDataTableWrapperClasses(props) }
+        if props.ID != "" {
+            id={ props.ID + "-wrapper" }
+        }
+        x-data={ getDataTableAlpineData(props) }
     >
-        {props.InitialMessage}
+        <!-- Table Header with Search and Actions -->
+        @DataTableHeader(props)
+        
+        <!-- Table Container -->
+        <div class="relative overflow-hidden bg-white shadow-md dark:bg-gray-800 sm:rounded-lg">
+            <!-- Loading Indicator -->
+            <div 
+                class="htmx-indicator absolute inset-0 bg-white/75 dark:bg-gray-800/75 z-10 flex items-center justify-center"
+                if props.ID != "" {
+                    id={ props.ID + "-loading" }
+                }
+            >
+                @atoms.Spinner(atoms.SpinnerProps{
+                    Size: atoms.SpinnerSizeLG,
+                    Class: "text-blue-600",
+                })
+            </div>
+            
+            <!-- Table Element -->
+            <div class="overflow-x-auto">
+                <table
+                    if props.ID != "" {
+                        id={ props.ID }
+                    }
+                    class={ getDataTableClasses(props) }
+                    if props.Config.ServerSide && props.DataUrl != "" {
+                        hx-get={ props.DataUrl }
+                        hx-trigger="load, refreshTable from:body"
+                        hx-target={ "closest .overflow-x-auto" }
+                        hx-swap="innerHTML"
+                        hx-indicator={ "#" + props.ID + "-loading" }
+                    }
+                >
+                    @DataTableHead(props.Columns, props.Config.Sortable)
+                    @DataTableBody(props.Data, props.Columns, props.Actions)
+                </table>
+            </div>
+        </div>
     </div>
 }
 
-// Go Handler
-func (h *Handler) UsersList(w http.ResponseWriter, r *http.Request) {
-    users := h.service.GetUsers(r.Context())
-    
-    tableProps := UserTableProps{
-        Users:   users,
-        Columns: []string{"Name", "Email", "Status"},
-    }
-    
-    components.UserTable(tableProps).Render(r.Context(), w)
-}
-
-// Usage in page
-templ UsersPage() {
-    @UserList(UserListProps{
-        InitialMessage: "Loading users...",
-        HxAttrs: HTMXAttrs{
-            Get:     "/api/users",
-            Trigger: "load",
-            Swap:    "outerHTML",
+// Real usage from web/components/features/user-management/user-table.templ
+templ UserTable(props UserTableProps) {
+    @organisms.DataTable(organisms.DataTableProps{
+        ID:       "user-table",
+        Caption:  "User Management Table",
+        Columns:  getUserTableColumns(),
+        DataUrl:  "/api/users/table",
+        Config: organisms.DataTableConfig{
+            Paging:     true,
+            PageLength: 25,
+            Searching:  true,
+            Ordering:   true,
+            ServerSide: true,
+            Responsive: true,
         },
+        Actions: getUserTableActions(),
+        ShowFilters: true,
     })
 }
 ```
@@ -396,46 +577,81 @@ templ UsersPage() {
 **Pattern:** Use Alpine for ephemeral visual state only (toggles, dropdowns, modals).
 
 ```go
+// Real implementation: web/components/molecules/dropdown.templ
 type DropdownProps struct {
-    TriggerLabel string
-    Items        []DropdownItem
-    Position     string // "bottom" | "top"
+    // Trigger configuration
+    TriggerText     string             `json:"triggerText"`
+    TriggerIcon     string             `json:"triggerIcon,omitempty"`
+    TriggerVariant  atoms.ButtonVariant `json:"triggerVariant"`
+    TriggerSize     atoms.ButtonSize    `json:"triggerSize"`
+    
+    // Dropdown configuration
+    Items           []DropdownItem      `json:"items"`
+    Placement       DropdownPlacement   `json:"placement"`
+    
+    // Search functionality
+    Searchable      bool                `json:"searchable"`
+    SearchPlaceholder string            `json:"searchPlaceholder,omitempty"`
+    
+    // Styling
+    ID              string              `json:"id,omitempty"`
+    Class           string              `json:"class,omitempty"`
+    Width           DropdownWidth       `json:"width"`
 }
 
 type DropdownItem struct {
-    Label  string
-    Icon   string
-    Action string
+    ID          string `json:"id"`
+    Label       string `json:"label"`
+    Icon        string `json:"icon,omitempty"`
+    Description string `json:"description,omitempty"`
+    Href        string `json:"href,omitempty"`
+    OnClick     string `json:"onClick,omitempty"`
+    Disabled    bool   `json:"disabled,omitempty"`
+    Separator   bool   `json:"separator,omitempty"`
 }
 
 templ Dropdown(props DropdownProps) {
-    <div x-data="{ open: false }" class="relative">
-        <button 
-            @click="open = !open"
-            @click.away="open = false"
-            class="btn btn-secondary"
-        >
-            {props.TriggerLabel}
-            <i class="ml-2" :class="open ? 'rotate-180' : ''">▼</i>
-        </button>
+    <div 
+        x-data="dropdown()"
+        x-init="init()"
+        class="relative inline-block text-left"
+        if props.ID != "" {
+            id={ props.ID }
+        }
+    >
+        <!-- Trigger Button -->
+        <div>
+            @atoms.Button(atoms.ButtonProps{
+                Text:     props.TriggerText,
+                Icon:     props.TriggerIcon,
+                Variant:  props.TriggerVariant,
+                Size:     props.TriggerSize,
+                OnClick:  "toggle()",
+                Class:    "dropdown-trigger",
+            })
+        </div>
         
+        <!-- Dropdown Menu -->
         <div 
             x-show="open"
-            x-transition
-            class={dropdownClasses(props.Position)}
+            x-transition:enter="transition ease-out duration-100"
+            x-transition:enter-start="transform opacity-0 scale-95"
+            x-transition:enter-end="transform opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-75"
+            x-transition:leave-start="transform opacity-100 scale-100"
+            x-transition:leave-end="transform opacity-0 scale-95"
+            class={ getDropdownMenuClasses(props) }
+            @click.away="close()"
         >
-            for _, item := range props.Items {
-                <a 
-                    href="#"
-                    @click={templ.SafeScript(item.Action + "; open = false")}
-                    class="dropdown-item"
-                >
-                    if item.Icon != "" {
-                        <i class={item.Icon}></i>
-                    }
-                    {item.Label}
-                </a>
+            if props.Searchable {
+                @DropdownSearch(props.SearchPlaceholder)
             }
+            
+            <div class="py-1" role="menu">
+                for _, item := range props.Items {
+                    @DropdownItem(item)
+                }
+            </div>
         </div>
     </div>
 }
