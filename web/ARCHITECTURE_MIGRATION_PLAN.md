@@ -593,11 +593,10 @@ stages:
 
 ## Timeline
 
-| Phase | Duration | Key Deliverables |
-|-------|----------|------------------|
-| 1 | Week 1-2 | File structure, Alpine stores, build pipeline |
-| 2 | Week 3-4 | Component migration, HTMX integration |
-| 3 | Week 5 | Progressive enhancement, validation |
-| 4 | Week 6 | Performance optimization, testing |
+| Phase | Key Deliverables |
+|-------|------------------|
+| 1 | File structure, Alpine stores, build pipeline |
+| 2 | Component migration, HTMX integration |
+| 3 Progressive enhancement, validation |
+| 4 Performance optimization, testing |
 
-Total Duration: 6 weeks
