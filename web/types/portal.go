@@ -263,7 +263,6 @@ type Money struct {
 	Currency string  `json:"currency"`
 }
 
-
 // UINotification represents a UI notification (from shared types)
 type UINotification struct {
 	ID       string    `json:"id"`
@@ -280,7 +279,5 @@ type SearchFilter struct {
 	Query string `json:"q,omitempty"`
 }
 
-
 // PhonePattern represents regex pattern for phone validation
 const PhonePattern = `^\+?[1-9]\d{1,14}$`
-

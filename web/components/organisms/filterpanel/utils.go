@@ -2,6 +2,7 @@ package filterpanel
 
 import (
 	"fmt"
+
 	"github.com/niiniyare/erp/web/components/atoms"
 )
 
@@ -9,13 +10,13 @@ import (
 func getInputTypeForFilter(filterType FilterType) atoms.InputType {
 	switch filterType {
 	case FilterTypeNumber:
-		return atoms.InputTypeNumber
+		return atoms.InputNumber
 	case FilterTypeDate:
-		return atoms.InputTypeDate
+		return atoms.InputDate
 	case FilterTypeSearch:
-		return atoms.InputTypeSearch
+		return atoms.InputSearch
 	default:
-		return atoms.InputTypeText
+		return atoms.InputText
 	}
 }
 
@@ -28,7 +29,6 @@ func convertToSelectOptions(options []FilterOption) []atoms.SelectOption {
 			Label:    option.Label,
 			Selected: option.Selected,
 			Disabled: option.Disabled,
-			Group:    option.Group,
 		}
 	}
 	return selectOptions
@@ -219,18 +219,18 @@ func getProjectFilters() FilterPanelProps {
 // getFinancialFilters creates financial data filters
 func getFinancialFilters() FilterPanelProps {
 	return FilterPanelProps{
-		ID:           "financial-filters",
-		Title:        "Financial Filters",
-		Collapsible:  true,
-		ShowApply:    true,
-		ShowReset:    true,
-		ShowSave:     true,
-		ShowPresets:  true,
-		ShowCount:    true,
-		AutoApply:    false,
-		SaveState:    true,
-		HxPost:       "/api/finance/transactions/filter",
-		HxTarget:     "#transaction-table",
+		ID:          "financial-filters",
+		Title:       "Financial Filters",
+		Collapsible: true,
+		ShowApply:   true,
+		ShowReset:   true,
+		ShowSave:    true,
+		ShowPresets: true,
+		ShowCount:   true,
+		AutoApply:   false,
+		SaveState:   true,
+		HxPost:      "/api/finance/transactions/filter",
+		HxTarget:    "#transaction-table",
 		Groups: []FilterGroup{
 			{
 				Title:       "Transaction Details",
@@ -285,8 +285,8 @@ func createQuickSearchFilter(hxTarget, hxPost string) QuickFilterProps {
 				Width:       "flex-1",
 			},
 			{
-				Name:    "status",
-				Type:    FilterTypeSelect,
+				Name: "status",
+				Type: FilterTypeSelect,
 				Options: []FilterOption{
 					{Value: "", Label: "All Status", Selected: true},
 					{Value: "active", Label: "Active"},
@@ -303,17 +303,17 @@ func validateFilterField(field FilterField) error {
 	if field.Name == "" {
 		return fmt.Errorf("filter field name is required")
 	}
-	
+
 	if field.Label == "" {
 		return fmt.Errorf("filter field label is required")
 	}
-	
+
 	if field.Type == FilterTypeSelect || field.Type == FilterTypeRadio || field.Type == FilterTypeCheckbox {
 		if len(field.Options) == 0 {
 			return fmt.Errorf("filter field %s requires options for type %s", field.Name, field.Type)
 		}
 	}
-	
+
 	return nil
 }
 

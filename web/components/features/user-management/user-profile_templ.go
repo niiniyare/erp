@@ -11,7 +11,6 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"fmt"
 	"github.com/niiniyare/erp/web/components/atoms"
-	"github.com/niiniyare/erp/web/components/molecules"
 )
 
 // UserProfileProps defines properties for user profile display
@@ -158,7 +157,7 @@ func UserProfileHeader(props UserProfileProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.Avatar)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 107, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 106, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -171,7 +170,7 @@ func UserProfileHeader(props UserProfileProps) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.Name + " avatar")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 108, Col: 40}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 107, Col: 40}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -189,7 +188,7 @@ func UserProfileHeader(props UserProfileProps) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(getInitials(props.User.Name))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 113, Col: 38}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 112, Col: 38}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -215,7 +214,7 @@ func UserProfileHeader(props UserProfileProps) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 127, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 126, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -228,7 +227,7 @@ func UserProfileHeader(props UserProfileProps) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.Email)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 130, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 129, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -250,7 +249,7 @@ func UserProfileHeader(props UserProfileProps) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.Department)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 136, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 135, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -343,7 +342,7 @@ func UserProfileOverview(props UserProfileProps) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.Email)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 213, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 212, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -361,7 +360,7 @@ func UserProfileOverview(props UserProfileProps) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.Phone)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 219, Col: 76}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 218, Col: 76}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -380,7 +379,7 @@ func UserProfileOverview(props UserProfileProps) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.Department)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 226, Col: 81}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 225, Col: 81}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -414,7 +413,7 @@ func UserProfileOverview(props UserProfileProps) templ.Component {
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(formatDate(props.User.CreatedAt))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 248, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 247, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -432,7 +431,7 @@ func UserProfileOverview(props UserProfileProps) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(formatDate(props.User.LastLogin))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 254, Col: 92}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 253, Col: 92}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -455,7 +454,7 @@ func UserProfileOverview(props UserProfileProps) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(props.LastLoginDetails.IP)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 268, Col: 81}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 267, Col: 81}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -473,7 +472,7 @@ func UserProfileOverview(props UserProfileProps) templ.Component {
 				var templ_7745c5c3_Var16 string
 				templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(props.LastLoginDetails.Location)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 273, Col: 88}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 272, Col: 88}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 				if templ_7745c5c3_Err != nil {
@@ -492,7 +491,7 @@ func UserProfileOverview(props UserProfileProps) templ.Component {
 				var templ_7745c5c3_Var17 string
 				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(formatUserAgent(props.LastLoginDetails.UserAgent))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 279, Col: 106}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 278, Col: 106}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 				if templ_7745c5c3_Err != nil {
@@ -565,7 +564,7 @@ func UserProfileActivity(props UserProfileProps) templ.Component {
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(props.ActivityCount)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 315, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 314, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -590,7 +589,7 @@ func UserProfileActivity(props UserProfileProps) templ.Component {
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs("/admin/users/" + props.User.ID + "/activity")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 339, Col: 58}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 338, Col: 58}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -664,7 +663,7 @@ func UserProfileSecurity(props UserProfileProps) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(formatDate(props.SecuritySettings.LastPasswordChange))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 380, Col: 114}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 379, Col: 114}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -692,7 +691,7 @@ func UserProfileSecurity(props UserProfileProps) templ.Component {
 			var templ_7745c5c3_Var23 string
 			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(formatSessionTimeout(props.SecuritySettings.SessionTimeout))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 399, Col: 120}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-profile.templ`, Line: 398, Col: 120}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 			if templ_7745c5c3_Err != nil {

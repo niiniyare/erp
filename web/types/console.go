@@ -33,7 +33,6 @@ type DashboardData struct {
 	CSRFToken      string
 }
 
-
 // SystemStats represents system-wide statistics
 type SystemStats struct {
 	TotalTenants      int
@@ -58,7 +57,6 @@ type ConsoleTenant struct {
 	UpdatedAt   time.Time   `json:"updatedAt"`
 }
 
-
 // ConsoleTenantFilters represents filtering options for tenant list
 type ConsoleTenantFilters struct {
 	Page     int    `json:"page"`
@@ -71,11 +69,11 @@ type ConsoleTenantFilters struct {
 // ConsoleTenantListResult represents the result of tenant listing
 type ConsoleTenantListResult struct {
 	Tenants    []ConsoleTenant `json:"tenants"`
-	TotalCount int            `json:"totalCount"`
-	Page       int            `json:"page"`
-	PageSize   int            `json:"pageSize"`
-	HasNext    bool           `json:"hasNext"`
-	HasPrev    bool           `json:"hasPrev"`
+	TotalCount int             `json:"totalCount"`
+	Page       int             `json:"page"`
+	PageSize   int             `json:"pageSize"`
+	HasNext    bool            `json:"hasNext"`
+	HasPrev    bool            `json:"hasPrev"`
 }
 
 // ConsoleTenantCreateRequest represents tenant creation request
@@ -99,10 +97,10 @@ type ConsoleTenantCreateResult struct {
 // ConsoleTenantsPageData represents data for the console tenants page
 type ConsoleTenantsPageData struct {
 	Title      string                `json:"title"`
-	Tenants    []ConsoleTenant      `json:"tenants"`
-	Pagination *PaginationMeta      `json:"pagination"`
+	Tenants    []ConsoleTenant       `json:"tenants"`
+	Pagination *PaginationMeta       `json:"pagination"`
 	Filters    *ConsoleTenantFilters `json:"filters"`
-	CSRFToken  string               `json:"csrfToken"`
+	CSRFToken  string                `json:"csrfToken"`
 }
 
 // ConsoleTenantFormData represents tenant form data

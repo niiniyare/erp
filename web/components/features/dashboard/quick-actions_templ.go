@@ -231,7 +231,7 @@ func CategorizedActions(props QuickActionsProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		for _, category := range props.Categories {
-			templ_7745c5c3_Err = ActionCategory(category, props).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = ActionCategorySection(category, props).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -245,7 +245,7 @@ func CategorizedActions(props QuickActionsProps) templ.Component {
 }
 
 // ActionCategory renders a single category of actions
-func ActionCategory(category ActionCategory, props QuickActionsProps) templ.Component {
+func ActionCategorySection(category ActionCategory, props QuickActionsProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -636,9 +636,9 @@ func QuickActionButton(action QuickAction, props QuickActionsProps) templ.Compon
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var25 string
-			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(getActionClickHandler(action))
+			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(getQuickActionClickHandler(action))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/dashboard/quick-actions.templ`, Line: 200, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/dashboard/quick-actions.templ`, Line: 200, Col: 47}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -1075,9 +1075,9 @@ func QuickActionListItem(action QuickAction, props QuickActionsProps) templ.Comp
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var45 string
-			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(getActionClickHandler(action))
+			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(getQuickActionClickHandler(action))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/dashboard/quick-actions.templ`, Line: 307, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/dashboard/quick-actions.templ`, Line: 307, Col: 48}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 			if templ_7745c5c3_Err != nil {
@@ -1272,9 +1272,9 @@ func QuickActionCompact(action QuickAction, props QuickActionsProps) templ.Compo
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var56 string
-			templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinStringErrs(getActionClickHandler(action))
+			templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinStringErrs(getQuickActionClickHandler(action))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/dashboard/quick-actions.templ`, Line: 345, Col: 41}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/dashboard/quick-actions.templ`, Line: 345, Col: 46}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var56))
 			if templ_7745c5c3_Err != nil {
@@ -1535,7 +1535,7 @@ func getActionButtonClasses(action QuickAction, props QuickActionsProps) string 
 	}
 }
 
-func getActionIconSize(size string) string {
+func getActionIconSize(size string) atoms.IconSize {
 	switch size {
 	case "sm":
 		return atoms.IconSizeSM
@@ -1601,7 +1601,7 @@ func getCompactActionClasses(action QuickAction) string {
 	return baseClasses + " border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
 }
 
-func getActionClickHandler(action QuickAction) string {
+func getQuickActionClickHandler(action QuickAction) string {
 	if action.OnClick != "" {
 		return action.OnClick
 	}

@@ -9,6 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"fmt"
 	"github.com/niiniyare/erp/web/components/atoms"
 	"github.com/niiniyare/erp/web/components/molecules"
 )
@@ -60,7 +61,7 @@ func FilterPanel(props FilterPanelProps) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(generateFilterPanelAlpineData(props))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 12, Col: 47}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 13, Col: 47}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -78,7 +79,7 @@ func FilterPanel(props FilterPanelProps) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 14, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 15, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -97,7 +98,7 @@ func FilterPanel(props FilterPanelProps) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 17, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 18, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -116,7 +117,7 @@ func FilterPanel(props FilterPanelProps) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 20, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 21, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -167,7 +168,7 @@ func FilterPanel(props FilterPanelProps) templ.Component {
 			var templ_7745c5c3_Var8 templ.SafeURL
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(props.FormAction)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 50, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 51, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -186,7 +187,7 @@ func FilterPanel(props FilterPanelProps) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.FormMethod)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 53, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 54, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -205,7 +206,7 @@ func FilterPanel(props FilterPanelProps) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxPost)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 56, Col: 27}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 57, Col: 27}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -224,7 +225,7 @@ func FilterPanel(props FilterPanelProps) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxGet)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 59, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 60, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -243,7 +244,7 @@ func FilterPanel(props FilterPanelProps) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxTarget)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 62, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 63, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -262,7 +263,7 @@ func FilterPanel(props FilterPanelProps) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxSwap)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 65, Col: 27}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 66, Col: 27}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -281,7 +282,7 @@ func FilterPanel(props FilterPanelProps) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxTrigger)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 68, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 69, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -298,7 +299,7 @@ func FilterPanel(props FilterPanelProps) templ.Component {
 		}
 		if len(props.Groups) > 0 {
 			for _, group := range props.Groups {
-				templ_7745c5c3_Err = FilterGroup(group).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = FilterGroupComponent(group).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -336,7 +337,7 @@ func FilterPanel(props FilterPanelProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			for _, field := range props.Fields {
-				templ_7745c5c3_Err = FilterField(field, 1).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = FilterFieldComponent(field, 1).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -406,7 +407,7 @@ func FilterPanelHeader(props FilterPanelProps) templ.Component {
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 109, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 110, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -484,7 +485,7 @@ func FilterPanelHeader(props FilterPanelProps) templ.Component {
 }
 
 // FilterGroup renders a collapsible group of filter fields
-func FilterGroup(group FilterGroup) templ.Component {
+func FilterGroupComponent(group FilterGroup) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -535,7 +536,7 @@ func FilterGroup(group FilterGroup) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(group.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 167, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 168, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -572,7 +573,7 @@ func FilterGroup(group FilterGroup) templ.Component {
 			var templ_7745c5c3_Var23 string
 			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(group.Title)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 183, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 184, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 			if templ_7745c5c3_Err != nil {
@@ -590,7 +591,7 @@ func FilterGroup(group FilterGroup) templ.Component {
 				var templ_7745c5c3_Var24 string
 				templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(group.Description)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 187, Col: 26}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 188, Col: 26}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 				if templ_7745c5c3_Err != nil {
@@ -676,7 +677,7 @@ func FilterGroup(group FilterGroup) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		for _, field := range group.Fields {
-			templ_7745c5c3_Err = FilterField(field, group.Columns).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = FilterFieldComponent(field, group.Columns).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -690,7 +691,7 @@ func FilterGroup(group FilterGroup) templ.Component {
 }
 
 // FilterField renders a single filter field with appropriate input type
-func FilterField(field FilterField, columns int) templ.Component {
+func FilterFieldComponent(field FilterField, columns int) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -741,7 +742,7 @@ func FilterField(field FilterField, columns int) templ.Component {
 			var templ_7745c5c3_Var32 string
 			templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(field.ID + "-container")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 224, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 225, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 			if templ_7745c5c3_Err != nil {
@@ -824,25 +825,21 @@ func FilterInputField(field FilterField) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = molecules.Field(molecules.FieldProps{
+			Type:        molecules.FieldTypeInput,
 			Label:       field.Label,
+			Name:        field.Name,
+			Value:       formatFieldValue(field.Value, field.Type),
+			Placeholder: field.Placeholder,
+			HelpText:    field.Help,
 			Required:    field.Required,
-			Help:        field.Help,
-			Description: field.Description,
-			Class:       field.Class,
-			InputProps: atoms.InputProps{
-				ID:          field.Name,
-				Name:        field.Name,
-				Type:        getInputTypeForFilter(field.Type),
-				Placeholder: field.Placeholder,
-				Required:    field.Required,
-				Value:       formatFieldValue(field.Value, field.Type),
-				OnChange:    "onFieldChange('" + field.Name + "', $event.target.value)",
-				HxGet:       field.HxGet,
-				HxPost:      field.HxPost,
-				HxTarget:    field.HxTarget,
-				HxTrigger:   field.HxTrigger,
-				Class:       "w-full",
-			},
+			InputType:   getInputTypeForFilter(field.Type),
+			ID:          field.Name,
+			Class:       field.Class + " w-full",
+			OnChange:    "onFieldChange('" + field.Name + "', $event.target.value)",
+			HxGet:       field.HxGet,
+			HxPost:      field.HxPost,
+			HxTarget:    field.HxTarget,
+			HxTrigger:   field.HxTrigger,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -874,13 +871,13 @@ func FilterSearchField(field FilterField) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = molecules.Search(molecules.SearchProps{
+			Name:        field.Name,
 			Placeholder: field.Placeholder,
 			Value:       fmt.Sprintf("%v", field.Value),
-			OnChange:    "onFieldChange('" + field.Name + "', $event.target.value)",
+			OnSearch:    "onFieldChange('" + field.Name + "', $event.target.value)",
 			HxGet:       field.HxGet,
 			HxTarget:    field.HxTarget,
 			HxTrigger:   field.HxTrigger,
-			ShowButton:  false,
 			Class:       field.Class,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -913,19 +910,16 @@ func FilterSelectField(field FilterField) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = molecules.Field(molecules.FieldProps{
-			Label:       field.Label,
-			Required:    field.Required,
-			Help:        field.Help,
-			Description: field.Description,
-			SelectProps: &atoms.SelectProps{
-				ID:       field.Name,
-				Name:     field.Name,
-				Required: field.Required,
-				Multiple: field.Multiple,
-				OnChange: "onFieldChange('" + field.Name + "', $event.target.value)",
-				Options:  convertToSelectOptions(field.Options),
-				Class:    "w-full",
-			},
+			Type:     molecules.FieldTypeSelect,
+			Label:    field.Label,
+			Name:     field.Name,
+			Required: field.Required,
+			HelpText: field.Help,
+			ID:       field.Name,
+			Class:    field.Class + " w-full",
+			Multiple: field.Multiple,
+			Options:  convertToSelectOptions(field.Options),
+			OnChange: "onFieldChange('" + field.Name + "', $event.target.value)",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -968,7 +962,7 @@ func FilterCheckboxField(field FilterField) templ.Component {
 			var templ_7745c5c3_Var37 string
 			templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(field.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 310, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 304, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 			if templ_7745c5c3_Err != nil {
@@ -1019,7 +1013,7 @@ func FilterCheckboxField(field FilterField) templ.Component {
 			var templ_7745c5c3_Var38 string
 			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(field.Help)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 330, Col: 67}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 324, Col: 67}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 			if templ_7745c5c3_Err != nil {
@@ -1072,7 +1066,7 @@ func FilterRadioField(field FilterField) templ.Component {
 			var templ_7745c5c3_Var40 string
 			templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(field.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 340, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 334, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 			if templ_7745c5c3_Err != nil {
@@ -1123,7 +1117,7 @@ func FilterRadioField(field FilterField) templ.Component {
 			var templ_7745c5c3_Var41 string
 			templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(field.Help)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 360, Col: 67}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 354, Col: 67}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 			if templ_7745c5c3_Err != nil {
@@ -1165,28 +1159,25 @@ func FilterDateRangeField(field FilterField) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = molecules.FieldGroup(molecules.FieldGroupProps{
-			Title:       field.Label,
-			Description: field.Description,
+			Title: field.Label,
 			Fields: []molecules.FieldProps{
 				{
-					Label: "Start Date",
-					InputProps: atoms.InputProps{
-						ID:          field.Name + "_start",
-						Name:        field.Name + "[start]",
-						Type:        atoms.InputTypeDate,
-						Placeholder: "Start date",
-						OnChange:    "onFieldChange('" + field.Name + "_start', $event.target.value)",
-					},
+					Type:        molecules.FieldTypeInput,
+					Label:       "Start Date",
+					Name:        field.Name + "[start]",
+					ID:          field.Name + "_start",
+					InputType:   atoms.InputDate,
+					Placeholder: "Start date",
+					OnChange:    "onFieldChange('" + field.Name + "_start', $event.target.value)",
 				},
 				{
-					Label: "End Date",
-					InputProps: atoms.InputProps{
-						ID:          field.Name + "_end",
-						Name:        field.Name + "[end]",
-						Type:        atoms.InputTypeDate,
-						Placeholder: "End date",
-						OnChange:    "onFieldChange('" + field.Name + "_end', $event.target.value)",
-					},
+					Type:        molecules.FieldTypeInput,
+					Label:       "End Date",
+					Name:        field.Name + "[end]",
+					ID:          field.Name + "_end",
+					InputType:   atoms.InputDate,
+					Placeholder: "End date",
+					OnChange:    "onFieldChange('" + field.Name + "_end', $event.target.value)",
 				},
 			},
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -1405,7 +1396,7 @@ func FilterPresetSelector(presets []FilterPreset) templ.Component {
 			var templ_7745c5c3_Var46 string
 			templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs("loadPreset(" + preset.ID + "); open = false")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 508, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 499, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 			if templ_7745c5c3_Err != nil {
@@ -1418,7 +1409,7 @@ func FilterPresetSelector(presets []FilterPreset) templ.Component {
 			var templ_7745c5c3_Var47 string
 			templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(preset.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 510, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 501, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 			if templ_7745c5c3_Err != nil {
@@ -1436,7 +1427,7 @@ func FilterPresetSelector(presets []FilterPreset) templ.Component {
 				var templ_7745c5c3_Var48 string
 				templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(preset.Description)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 512, Col: 81}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 503, Col: 81}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
 				if templ_7745c5c3_Err != nil {
@@ -1494,7 +1485,7 @@ func FilterResultCount(customText string) templ.Component {
 			var templ_7745c5c3_Var50 string
 			templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs("`" + customText + " ${resultCount}`")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 527, Col: 57}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 518, Col: 57}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
 			if templ_7745c5c3_Err != nil {
@@ -1581,7 +1572,7 @@ func QuickFilter(props QuickFilterProps) templ.Component {
 			var templ_7745c5c3_Var54 string
 			templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxPost)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 551, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 542, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var54))
 			if templ_7745c5c3_Err != nil {
@@ -1600,7 +1591,7 @@ func QuickFilter(props QuickFilterProps) templ.Component {
 			var templ_7745c5c3_Var55 string
 			templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxTarget)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 554, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/filterpanel/filter-panel.templ`, Line: 545, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var55))
 			if templ_7745c5c3_Err != nil {
@@ -1616,7 +1607,7 @@ func QuickFilter(props QuickFilterProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		for _, field := range props.Fields {
-			templ_7745c5c3_Err = FilterField(field, 1).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = FilterFieldComponent(field, 1).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

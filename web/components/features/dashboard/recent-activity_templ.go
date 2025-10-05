@@ -917,7 +917,7 @@ func ActivityActionButton(action ActivityAction) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		if action.Href != "" {
-			var templ_7745c5c3_Var34 = []any{"inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-transparent hover:bg-gray-100 dark:hover:bg-gray-600", getActionButtonClasses(action.Primary)}
+			var templ_7745c5c3_Var34 = []any{"inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-transparent hover:bg-gray-100 dark:hover:bg-gray-600", getActivityActionButtonClasses(action.Primary)}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var34...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -976,7 +976,7 @@ func ActivityActionButton(action ActivityAction) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			var templ_7745c5c3_Var38 = []any{"inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-transparent hover:bg-gray-100 dark:hover:bg-gray-600", getActionButtonClasses(action.Primary)}
+			var templ_7745c5c3_Var38 = []any{"inline-flex items-center px-2 py-1 text-xs font-medium rounded border border-transparent hover:bg-gray-100 dark:hover:bg-gray-600", getActivityActionButtonClasses(action.Primary)}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var38...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -1333,7 +1333,7 @@ func getUserInitials(name string) string {
 	return string(name[0])
 }
 
-func getActionButtonClasses(primary bool) string {
+func getActivityActionButtonClasses(primary bool) string {
 	if primary {
 		return "text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300"
 	}

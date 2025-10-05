@@ -12,27 +12,27 @@ func getSiteHeaderClasses(props SiteHeaderProps) string {
 		"dark:bg-gray-900",
 		"dark:border-gray-700",
 	}
-	
+
 	if props.Sticky {
 		classes = append(classes, "sticky", "top-0", "z-50")
 	}
-	
+
 	if props.Border {
 		classes = append(classes, "border-b")
 	}
-	
+
 	if props.Shadow {
 		classes = append(classes, "shadow-sm")
 	}
-	
+
 	if props.Transparent {
 		classes = append(classes, "bg-transparent", "dark:bg-transparent")
 	}
-	
+
 	if props.Class != "" {
 		classes = append(classes, props.Class)
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
@@ -57,27 +57,27 @@ func getUserInitials(user HeaderUser) string {
 	if user.Initials != "" {
 		return user.Initials
 	}
-	
+
 	if user.Name == "" {
 		return "U"
 	}
-	
+
 	parts := strings.Fields(user.Name)
 	if len(parts) == 0 {
 		return "U"
 	}
-	
+
 	if len(parts) == 1 {
 		return strings.ToUpper(string(parts[0][0]))
 	}
-	
+
 	return strings.ToUpper(string(parts[0][0]) + string(parts[len(parts)-1][0]))
 }
 
 // getUserStatusClasses returns CSS classes for user status indicator
 func getUserStatusClasses(status string) string {
 	baseClasses := "w-full h-full rounded-full"
-	
+
 	switch status {
 	case "online":
 		return baseClasses + " bg-green-500"
@@ -111,11 +111,11 @@ func getUserStatusColor(status string) string {
 // getUserDropdownClasses returns CSS classes for user dropdown
 func getUserDropdownClasses(position string) string {
 	baseClasses := "absolute z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-gray-700 dark:ring-gray-600"
-	
+
 	if position == "left" {
 		return baseClasses + " left-0 origin-top-left"
 	}
-	
+
 	return baseClasses + " right-0 origin-top-right"
 }
 
@@ -145,25 +145,25 @@ func getNavItemClasses(item NavItem) string {
 		"transition-colors",
 		"duration-150",
 	}
-	
+
 	if item.Active {
-		baseClasses = append(baseClasses, 
-			"text-blue-700", 
-			"bg-blue-100", 
-			"md:bg-transparent", 
-			"md:text-blue-700", 
+		baseClasses = append(baseClasses,
+			"text-blue-700",
+			"bg-blue-100",
+			"md:bg-transparent",
+			"md:text-blue-700",
 			"dark:text-blue-500",
 		)
 	}
-	
+
 	if item.Disabled {
-		baseClasses = append(baseClasses, 
-			"opacity-50", 
-			"cursor-not-allowed", 
+		baseClasses = append(baseClasses,
+			"opacity-50",
+			"cursor-not-allowed",
 			"pointer-events-none",
 		)
 	}
-	
+
 	return strings.Join(baseClasses, " ")
 }
 
@@ -183,19 +183,19 @@ func getDropdownItemClasses(item NavItem) string {
 		"transition-colors",
 		"duration-150",
 	}
-	
+
 	if item.Active {
 		baseClasses = append(baseClasses, "bg-gray-100", "dark:bg-gray-600")
 	}
-	
+
 	if item.Disabled {
-		baseClasses = append(baseClasses, 
-			"opacity-50", 
-			"cursor-not-allowed", 
+		baseClasses = append(baseClasses,
+			"opacity-50",
+			"cursor-not-allowed",
 			"pointer-events-none",
 		)
 	}
-	
+
 	return strings.Join(baseClasses, " ")
 }
 
@@ -213,31 +213,31 @@ func getMobileNavItemClasses(item NavItem) string {
 		"transition-colors",
 		"duration-150",
 	}
-	
+
 	if item.Active {
-		baseClasses = append(baseClasses, 
-			"text-blue-700", 
-			"bg-blue-100", 
-			"dark:text-blue-500", 
+		baseClasses = append(baseClasses,
+			"text-blue-700",
+			"bg-blue-100",
+			"dark:text-blue-500",
 			"dark:bg-blue-900/20",
 		)
 	}
-	
+
 	if item.Disabled {
-		baseClasses = append(baseClasses, 
-			"opacity-50", 
-			"cursor-not-allowed", 
+		baseClasses = append(baseClasses,
+			"opacity-50",
+			"cursor-not-allowed",
 			"pointer-events-none",
 		)
 	}
-	
+
 	return strings.Join(baseClasses, " ")
 }
 
 // getNavBadgeClasses returns CSS classes for navigation badges
 func getNavBadgeClasses(color string) string {
 	baseClasses := "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ml-2"
-	
+
 	switch color {
 	case "red":
 		return baseClasses + " bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"

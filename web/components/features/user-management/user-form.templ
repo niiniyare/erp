@@ -3,7 +3,6 @@ package usermanagement
 import (
 	"github.com/niiniyare/erp/web/components/atoms"
 	"github.com/niiniyare/erp/web/components/molecules"
-	"github.com/niiniyare/erp/web/components/organisms/modal"
 )
 
 // UserFormProps defines properties for user create/edit forms
@@ -20,33 +19,19 @@ type UserFormProps struct {
 	CanDelete   bool                   `json:"canDelete"`             // User has delete permissions
 }
 
-// UserForm renders a comprehensive user create/edit form
+// UserForm renders a comprehensive user create/edit form in a card
 templ UserForm(props UserFormProps) {
-	@modal.Modal(modal.ModalProps{
-		ID:       "user-form-modal",
-		Type:     modal.ModalTypeForm,
-		Size:     modal.ModalSizeLG,
-		Title:    getFormTitle(props.IsEdit),
-		HxPost:   props.HxPost,
-		HxTarget: props.HxTarget,
-		HxSwap:   "innerHTML",
-		Actions: []modal.ModalAction{
-			{
-				Text:     "Cancel",
-				Variant:  atoms.ButtonLight,
-				OnClick:  "closeModal()",
-				Type:     "button",
-			},
-			{
-				Text:     getSubmitButtonText(props.IsEdit),
-				Variant:  atoms.ButtonPrimary,
-				Type:     "submit",
-				Icon:     "save",
-				Loading:  false,
-			},
-		},
-		Body: UserFormBody(props),
-	})
+	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-4xl mx-auto">
+		<!-- Header -->
+		<div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+			<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+				{ getFormTitle(props.IsEdit) }
+			</h2>
+		</div>
+
+		<!-- Form Content -->
+		@UserFormBody(props)
+	</div>
 }
 
 // UserFormBody renders the form body content
@@ -81,63 +66,56 @@ templ UserFormBody(props UserFormProps) {
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<!-- Full Name -->
 				@molecules.Field(molecules.FieldProps{
-					Label:    "Full Name",
-					Required: true,
-					Help:     "Enter the user's full name",
-					InputProps: atoms.InputProps{
-						ID:          "name",
-						Name:        "name",
-						Type:        atoms.InputTypeText,
-						Placeholder: "John Doe",
-						Required:    true,
-						Value:       getFieldValue(props.User, "name"),
-					},
-					Error: getFieldError(props.Errors, "name"),
+					Type:        molecules.FieldTypeInput,
+					Label:       "Full Name",
+					Name:        "name",
+					Value:       getFieldValue(props.User, "name"),
+					Placeholder: "John Doe",
+					HelpText:    "Enter the user's full name",
+					Required:    true,
+					InputType:   atoms.InputText,
+					ID:          "name",
+					ErrorText:   getFieldError(props.Errors, "name"),
 				})
 
 				<!-- Email Address -->
 				@molecules.Field(molecules.FieldProps{
-					Label:    "Email Address",
-					Required: true,
-					Help:     "Primary email for login and notifications",
-					InputProps: atoms.InputProps{
-						ID:          "email",
-						Name:        "email",
-						Type:        atoms.InputTypeEmail,
-						Placeholder: "john.doe@company.com",
-						Required:    true,
-						Value:       getFieldValue(props.User, "email"),
-					},
-					Error: getFieldError(props.Errors, "email"),
+					Type:        molecules.FieldTypeInput,
+					Label:       "Email Address",
+					Name:        "email",
+					Value:       getFieldValue(props.User, "email"),
+					Placeholder: "john.doe@company.com",
+					HelpText:    "Primary email for login and notifications",
+					Required:    true,
+					InputType:   atoms.InputEmail,
+					ID:          "email",
+					ErrorText:   getFieldError(props.Errors, "email"),
 				})
 
 				<!-- Phone Number -->
 				@molecules.Field(molecules.FieldProps{
-					Label: "Phone Number",
-					Help:  "Optional contact number",
-					InputProps: atoms.InputProps{
-						ID:          "phone",
-						Name:        "phone",
-						Type:        atoms.InputTypeTel,
-						Placeholder: "+1 (555) 123-4567",
-						Value:       getFieldValue(props.User, "phone"),
-					},
-					Error: getFieldError(props.Errors, "phone"),
+					Type:        molecules.FieldTypeInput,
+					Label:       "Phone Number",
+					Name:        "phone",
+					Value:       getFieldValue(props.User, "phone"),
+					Placeholder: "+1 (555) 123-4567",
+					HelpText:    "Optional contact number",
+					InputType:   atoms.InputTel,
+					ID:          "phone",
+					ErrorText:   getFieldError(props.Errors, "phone"),
 				})
 
 				<!-- Department -->
 				@molecules.Field(molecules.FieldProps{
-					Label:    "Department",
-					Required: true,
-					Help:     "User's department or team",
-					SelectProps: &atoms.SelectProps{
-						ID:       "department",
-						Name:     "department",
-						Required: true,
-						Options:  props.Departments,
-						Value:    getFieldValue(props.User, "department"),
-					},
-					Error: getFieldError(props.Errors, "department"),
+					Type:        molecules.FieldTypeSelect,
+					Label:       "Department",
+					Name:        "department",
+					Value:       getFieldValue(props.User, "department"),
+					HelpText:    "User's department or team",
+					Required:    true,
+					Options:     props.Departments,
+					ID:          "department",
+					ErrorText:   getFieldError(props.Errors, "department"),
 				})
 			</div>
 		</div>
@@ -151,37 +129,33 @@ templ UserFormBody(props UserFormProps) {
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<!-- Role -->
 				@molecules.Field(molecules.FieldProps{
-					Label:    "Role",
-					Required: true,
-					Help:     "User's primary role in the system",
-					SelectProps: &atoms.SelectProps{
-						ID:       "role",
-						Name:     "role",
-						Required: true,
-						Options:  props.Roles,
-						Value:    getFieldValue(props.User, "role"),
-					},
-					Error: getFieldError(props.Errors, "role"),
+					Type:        molecules.FieldTypeSelect,
+					Label:       "Role",
+					Name:        "role",
+					Value:       getFieldValue(props.User, "role"),
+					HelpText:    "User's primary role in the system",
+					Required:    true,
+					Options:     props.Roles,
+					ID:          "role",
+					ErrorText:   getFieldError(props.Errors, "role"),
 				})
 
 				<!-- Status -->
 				@molecules.Field(molecules.FieldProps{
-					Label:    "Status",
-					Required: true,
-					Help:     "User account status",
-					SelectProps: &atoms.SelectProps{
-						ID:       "status",
-						Name:     "status",
-						Required: true,
-						Options: []atoms.SelectOption{
-							{Value: "active", Label: "Active", Selected: getFieldValue(props.User, "status") == "active"},
-							{Value: "inactive", Label: "Inactive", Selected: getFieldValue(props.User, "status") == "inactive"},
-							{Value: "pending", Label: "Pending Verification", Selected: getFieldValue(props.User, "status") == "pending"},
-							{Value: "suspended", Label: "Suspended", Selected: getFieldValue(props.User, "status") == "suspended"},
-						},
-						Value: getFieldValue(props.User, "status"),
+					Type:        molecules.FieldTypeSelect,
+					Label:       "Status",
+					Name:        "status",
+					Value:       getFieldValue(props.User, "status"),
+					HelpText:    "User account status",
+					Required:    true,
+					Options: []atoms.SelectOption{
+						{Value: "active", Label: "Active", Selected: getFieldValue(props.User, "status") == "active"},
+						{Value: "inactive", Label: "Inactive", Selected: getFieldValue(props.User, "status") == "inactive"},
+						{Value: "pending", Label: "Pending Verification", Selected: getFieldValue(props.User, "status") == "pending"},
+						{Value: "suspended", Label: "Suspended", Selected: getFieldValue(props.User, "status") == "suspended"},
 					},
-					Error: getFieldError(props.Errors, "status"),
+					ID:          "status",
+					ErrorText:   getFieldError(props.Errors, "status"),
 				})
 			</div>
 		</div>
@@ -196,34 +170,28 @@ templ UserFormBody(props UserFormProps) {
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<!-- Password -->
 					@molecules.Field(molecules.FieldProps{
-						Label:    "Password",
-						Required: true,
-						Help:     "Minimum 8 characters with mixed case and numbers",
-						InputProps: atoms.InputProps{
-							ID:          "password",
-							Name:        "password",
-							Type:        atoms.InputTypePassword,
-							Placeholder: "Enter secure password",
-							Required:    true,
-							MinLength:   8,
-						},
-						Error: getFieldError(props.Errors, "password"),
+						Type:        molecules.FieldTypeInput,
+						Label:       "Password",
+						Name:        "password",
+						Placeholder: "Enter secure password",
+						HelpText:    "Minimum 8 characters with mixed case and numbers",
+						Required:    true,
+						InputType:   atoms.InputPassword,
+						ID:          "password",
+						ErrorText:   getFieldError(props.Errors, "password"),
 					})
 
 					<!-- Confirm Password -->
 					@molecules.Field(molecules.FieldProps{
-						Label:    "Confirm Password",
-						Required: true,
-						Help:     "Re-enter password to confirm",
-						InputProps: atoms.InputProps{
-							ID:          "password_confirm",
-							Name:        "password_confirm",
-							Type:        atoms.InputTypePassword,
-							Placeholder: "Confirm password",
-							Required:    true,
-							MinLength:   8,
-						},
-						Error: getFieldError(props.Errors, "password_confirm"),
+						Type:        molecules.FieldTypeInput,
+						Label:       "Confirm Password",
+						Name:        "password_confirm",
+						Placeholder: "Confirm password",
+						HelpText:    "Re-enter password to confirm",
+						Required:    true,
+						InputType:   atoms.InputPassword,
+						ID:          "password_confirm",
+						ErrorText:   getFieldError(props.Errors, "password_confirm"),
 					})
 				</div>
 
@@ -316,36 +284,33 @@ templ UserFormCompact(props UserFormProps) {
 	>
 		<!-- Name -->
 		@molecules.Field(molecules.FieldProps{
-			Label: "Name",
-			InputProps: atoms.InputProps{
-				Name:        "name",
-				Type:        atoms.InputTypeText,
-				Placeholder: "Enter name",
-				Required:    true,
-				Value:       getFieldValue(props.User, "name"),
-			},
+			Type:        molecules.FieldTypeInput,
+			Label:       "Name",
+			Name:        "name",
+			Value:       getFieldValue(props.User, "name"),
+			Placeholder: "Enter name",
+			Required:    true,
+			InputType:   atoms.InputText,
 		})
 
 		<!-- Email -->
 		@molecules.Field(molecules.FieldProps{
-			Label: "Email",
-			InputProps: atoms.InputProps{
-				Name:        "email",
-				Type:        atoms.InputTypeEmail,
-				Placeholder: "Enter email",
-				Required:    true,
-				Value:       getFieldValue(props.User, "email"),
-			},
+			Type:        molecules.FieldTypeInput,
+			Label:       "Email",
+			Name:        "email",
+			Value:       getFieldValue(props.User, "email"),
+			Placeholder: "Enter email",
+			Required:    true,
+			InputType:   atoms.InputEmail,
 		})
 
 		<!-- Role -->
 		@molecules.Field(molecules.FieldProps{
-			Label: "Role",
-			SelectProps: &atoms.SelectProps{
-				Name:    "role",
-				Options: props.Roles,
-				Value:   getFieldValue(props.User, "role"),
-			},
+			Type:        molecules.FieldTypeSelect,
+			Label:       "Role",
+			Name:        "role",
+			Value:       getFieldValue(props.User, "role"),
+			Options:     props.Roles,
 		})
 
 		<!-- Submit Button -->

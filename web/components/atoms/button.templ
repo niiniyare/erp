@@ -15,6 +15,11 @@ const (
 	ButtonYellow    ButtonVariant = "yellow"
 	ButtonPurple    ButtonVariant = "purple"
 	ButtonOutline   ButtonVariant = "outline"
+	ButtonSuccess   ButtonVariant = "green"    // Alias for green
+	ButtonDanger    ButtonVariant = "red"      // Alias for red 
+	ButtonWarning   ButtonVariant = "yellow"   // Alias for yellow
+	ButtonInfo      ButtonVariant = "purple"   // Alias for purple
+	ButtonGhost     ButtonVariant = "outline"  // Alias for outline
 )
 
 // ButtonSize defines the size of the button
@@ -49,9 +54,14 @@ type ButtonProps struct {
 	// HTMX attributes
 	HxPost      string        `json:"hxPost,omitempty"`
 	HxGet       string        `json:"hxGet,omitempty"`
+	HxDelete    string        `json:"hxDelete,omitempty"`
 	HxTarget    string        `json:"hxTarget,omitempty"`
 	HxSwap      string        `json:"hxSwap,omitempty"`
 	HxConfirm   string        `json:"hxConfirm,omitempty"`
+	
+	// Form attributes
+	Form        string        `json:"form,omitempty"`
+	AutoFocus   bool          `json:"autoFocus,omitempty"`
 	
 	// HTML attributes
 	ID          string        `json:"id,omitempty"`
@@ -80,6 +90,9 @@ templ Button(props ButtonProps) {
 		if props.HxGet != "" {
 			hx-get={ props.HxGet }
 		}
+		if props.HxDelete != "" {
+			hx-delete={ props.HxDelete }
+		}
 		if props.HxTarget != "" {
 			hx-target={ props.HxTarget }
 		}
@@ -88,6 +101,12 @@ templ Button(props ButtonProps) {
 		}
 		if props.HxConfirm != "" {
 			hx-confirm={ props.HxConfirm }
+		}
+		if props.Form != "" {
+			form={ props.Form }
+		}
+		if props.AutoFocus {
+			autofocus
 		}
 		if props.AriaLabel != "" {
 			aria-label={ props.AriaLabel }

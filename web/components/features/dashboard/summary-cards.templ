@@ -103,14 +103,14 @@ templ SummaryCards(props SummaryCardsProps) {
 		<!-- Cards Grid -->
 		<div class={ getSummaryGridClasses(props.GridCols, props.Responsive) }>
 			for _, card := range props.Cards {
-				@SummaryCard(card, props.ShowTrends)
+				@SummaryCardComponent(card, props.ShowTrends)
 			}
 		</div>
 	</div>
 }
 
 // SummaryCard renders a single summary metric card
-templ SummaryCard(card SummaryCard, showTrends bool) {
+templ SummaryCardComponent(card SummaryCard, showTrends bool) {
 	<div 
 		class={ getSummaryCardClasses(card) }
 		if card.HxGet != "" {
@@ -298,7 +298,7 @@ templ CardActionItem(action CardAction) {
 	} else {
 		<button
 			type="button"
-			@click={ getActionClickHandler(action) }
+			@click={ getCardActionClickHandler(action) }
 			if action.HxGet != "" {
 				hx-get={ action.HxGet }
 			}
@@ -507,7 +507,7 @@ func getActionItemClasses(disabled bool) string {
 	return "text-gray-700 dark:text-gray-300"
 }
 
-func getActionClickHandler(action CardAction) string {
+func getCardActionClickHandler(action CardAction) string {
 	if action.OnClick != "" {
 		return action.OnClick
 	}

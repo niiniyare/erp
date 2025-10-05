@@ -120,7 +120,6 @@ func UserFilters() templ.Component {
 			AutoApply:   false,
 			HxPost:      "/admin/users/filter",
 			HxTarget:    "#user-table-container",
-			HxSwap:      "innerHTML",
 			Groups: []filterpanel.FilterGroup{
 				{
 					Title:       "Basic Information",
@@ -285,7 +284,7 @@ func UserDataTable(props UserTableProps) templ.Component {
 			Config: table.DataTableConfig{
 				Sortable:     true,
 				Searchable:   true,
-				Pagination:   true,
+				Paging:       true,
 				PageLength:   props.PerPage,
 				LengthChange: true,
 				ServerSide:   true,
@@ -297,7 +296,6 @@ func UserDataTable(props UserTableProps) templ.Component {
 					Variant:  atoms.ButtonLight,
 					HxGet:    "/admin/users/{id}",
 					HxTarget: "#user-modal",
-					HxSwap:   "innerHTML",
 					Single:   true,
 				},
 				{
@@ -329,6 +327,7 @@ func UserDataTable(props UserTableProps) templ.Component {
 					Variant:  atoms.ButtonSecondary,
 					HxPost:   "/admin/users/export",
 					HxTarget: "#download-link",
+					HxSwap:   "innerHTML",
 				},
 				{
 					Text:      "Deactivate Selected",
@@ -444,7 +443,6 @@ func UserTableHeader(props UserTableProps) templ.Component {
 				Variant:  atoms.ButtonPrimary,
 				HxGet:    "/admin/users/create",
 				HxTarget: "#user-modal",
-				HxSwap:   "innerHTML",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -492,7 +490,7 @@ func UserAvatar(user User) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(user.Avatar)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-table.templ`, Line: 352, Col: 21}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-table.templ`, Line: 350, Col: 21}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -505,7 +503,7 @@ func UserAvatar(user User) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(user.Name + " avatar")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-table.templ`, Line: 353, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-table.templ`, Line: 351, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -523,7 +521,7 @@ func UserAvatar(user User) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(getInitials(user.Name))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-table.templ`, Line: 358, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-table.templ`, Line: 356, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -579,7 +577,7 @@ func UserNameCell(user User) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(user.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-table.templ`, Line: 371, Col: 15}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-table.templ`, Line: 369, Col: 15}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -597,7 +595,7 @@ func UserNameCell(user User) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(user.Phone)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-table.templ`, Line: 375, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-table.templ`, Line: 373, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -667,7 +665,7 @@ func UserStatusBadge(status string) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(status)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-table.templ`, Line: 407, Col: 11}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-table.templ`, Line: 405, Col: 11}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -733,7 +731,7 @@ func UserRoleBadge(role string) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(role)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-table.templ`, Line: 433, Col: 9}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-table.templ`, Line: 431, Col: 9}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {

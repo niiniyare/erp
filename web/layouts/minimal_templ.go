@@ -528,7 +528,6 @@ func MinimalActionButton(action MinimalAction) templ.Component {
 			Icon:     action.Icon,
 			Variant:  action.Variant,
 			Size:     action.Size,
-			Href:     action.Href,
 			OnClick:  action.OnClick,
 			HxGet:    action.HxGet,
 			HxPost:   action.HxPost,
@@ -584,7 +583,7 @@ func MinimalErrorState(props MinimalLayoutProps) templ.Component {
 		var templ_7745c5c3_Var23 string
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(getErrorTitle(props.ErrorType))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 208, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 207, Col: 35}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -597,7 +596,7 @@ func MinimalErrorState(props MinimalLayoutProps) templ.Component {
 		var templ_7745c5c3_Var24 string
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(props.Error)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 213, Col: 16}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 212, Col: 16}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -612,7 +611,6 @@ func MinimalErrorState(props MinimalLayoutProps) templ.Component {
 				Text:    "Go Back",
 				Icon:    "arrow-left",
 				Variant: atoms.ButtonSecondary,
-				Href:    props.BackUrl,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -622,7 +620,6 @@ func MinimalErrorState(props MinimalLayoutProps) templ.Component {
 			Text:    "Go Home",
 			Icon:    "home",
 			Variant: atoms.ButtonPrimary,
-			Href:    "/",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -676,7 +673,7 @@ func MinimalLoadingOverlay(loadingText string) templ.Component {
 			var templ_7745c5c3_Var26 string
 			templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(loadingText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 247, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 244, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 			if templ_7745c5c3_Err != nil {
@@ -756,7 +753,7 @@ func MinimalFooter(props MinimalLayoutProps) templ.Component {
 				var templ_7745c5c3_Var30 templ.SafeURL
 				templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinURLErrs(link.Href)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 262, Col: 23}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 259, Col: 23}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 				if templ_7745c5c3_Err != nil {
@@ -779,7 +776,7 @@ func MinimalFooter(props MinimalLayoutProps) templ.Component {
 				var templ_7745c5c3_Var31 string
 				templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(link.Text)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 272, Col: 18}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 269, Col: 18}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 				if templ_7745c5c3_Err != nil {
@@ -803,7 +800,7 @@ func MinimalFooter(props MinimalLayoutProps) templ.Component {
 			var templ_7745c5c3_Var32 string
 			templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(props.FooterText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 280, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 277, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 			if templ_7745c5c3_Err != nil {
@@ -863,7 +860,7 @@ func EmptyState(title, description, actionText, actionHref string) templ.Compone
 		var templ_7745c5c3_Var34 string
 		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 301, Col: 10}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 298, Col: 10}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {
@@ -881,7 +878,7 @@ func EmptyState(title, description, actionText, actionHref string) templ.Compone
 			var templ_7745c5c3_Var35 string
 			templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(description)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 306, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/minimal.templ`, Line: 303, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 			if templ_7745c5c3_Err != nil {
@@ -901,7 +898,6 @@ func EmptyState(title, description, actionText, actionHref string) templ.Compone
 				Text:    actionText,
 				Icon:    "plus",
 				Variant: atoms.ButtonPrimary,
-				Href:    actionHref,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

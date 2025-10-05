@@ -503,7 +503,6 @@ func PageActionButton(action PageAction) templ.Component {
 			Icon:     action.Icon,
 			Variant:  action.Variant,
 			Size:     action.Size,
-			Href:     action.Href,
 			OnClick:  action.OnClick,
 			HxGet:    action.HxGet,
 			HxPost:   action.HxPost,
@@ -617,7 +616,7 @@ func GlobalAlertBanner(alert GlobalAlert) templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(alert.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 351, Col: 18}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 350, Col: 18}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -635,7 +634,7 @@ func GlobalAlertBanner(alert GlobalAlert) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(alert.Message)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 355, Col: 21}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 354, Col: 21}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -726,7 +725,7 @@ func GlobalAlertActionButton(action GlobalAlertAction) templ.Component {
 			var templ_7745c5c3_Var18 templ.SafeURL
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinURLErrs(action.Href)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 387, Col: 21}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 386, Col: 21}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -752,7 +751,7 @@ func GlobalAlertActionButton(action GlobalAlertAction) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(action.Text)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 390, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 389, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -775,7 +774,7 @@ func GlobalAlertActionButton(action GlobalAlertAction) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(action.OnClick)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 395, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 394, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -801,7 +800,7 @@ func GlobalAlertActionButton(action GlobalAlertAction) templ.Component {
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(action.Text)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 398, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 397, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -857,7 +856,7 @@ func LoadingOverlay(loadingText string) templ.Component {
 			var templ_7745c5c3_Var26 string
 			templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(loadingText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 413, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 412, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 			if templ_7745c5c3_Err != nil {
@@ -910,7 +909,7 @@ func AppFooter(props FooterProps) templ.Component {
 			var templ_7745c5c3_Var28 string
 			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(props.CompanyName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 427, Col: 39}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 426, Col: 39}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 			if templ_7745c5c3_Err != nil {
@@ -929,7 +928,7 @@ func AppFooter(props FooterProps) templ.Component {
 			var templ_7745c5c3_Var29 templ.SafeURL
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinURLErrs(link.Href)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 432, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 431, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 			if templ_7745c5c3_Err != nil {
@@ -952,7 +951,7 @@ func AppFooter(props FooterProps) templ.Component {
 			var templ_7745c5c3_Var30 string
 			templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(link.Text)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 442, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 441, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 			if templ_7745c5c3_Err != nil {
@@ -981,7 +980,7 @@ func AppFooter(props FooterProps) templ.Component {
 			var templ_7745c5c3_Var31 templ.SafeURL
 			templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinURLErrs("mailto:" + props.SupportEmail)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 454, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/app.templ`, Line: 453, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 			if templ_7745c5c3_Err != nil {

@@ -3,16 +3,17 @@ package filterpanel
 import (
 	"fmt"
 	"strings"
+
 	"github.com/niiniyare/erp/web/components/atoms"
 )
 
 // getFilterPanelClasses returns CSS classes for the filter panel
 func getFilterPanelClasses(props FilterPanelProps) string {
 	baseClasses := "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
-	
+
 	var classes []string
 	classes = append(classes, baseClasses)
-	
+
 	// Variant styling
 	switch props.Variant {
 	case "minimal":
@@ -22,7 +23,7 @@ func getFilterPanelClasses(props FilterPanelProps) string {
 	default:
 		classes = append(classes, "shadow-sm")
 	}
-	
+
 	// Sticky positioning
 	if props.Sticky {
 		switch props.Position {
@@ -36,35 +37,35 @@ func getFilterPanelClasses(props FilterPanelProps) string {
 			classes = append(classes, "sticky top-0 z-30")
 		}
 	}
-	
+
 	// Width
 	if props.Width != "" {
 		classes = append(classes, props.Width)
 	}
-	
+
 	// Custom classes
 	if props.Class != "" {
 		classes = append(classes, props.Class)
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
 // getFilterGroupClasses returns CSS classes for filter groups
 func getFilterGroupClasses(group FilterGroup) string {
 	classes := []string{"border-b border-gray-200 dark:border-gray-700 last:border-b-0"}
-	
+
 	if group.Class != "" {
 		classes = append(classes, group.Class)
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
 // getFilterFieldClasses returns CSS classes for filter fields
 func getFilterFieldClasses(field FilterField, columns int) string {
 	var classes []string
-	
+
 	// Width based on field-specific setting or group columns
 	if field.Width != "" {
 		classes = append(classes, field.Width)
@@ -82,19 +83,19 @@ func getFilterFieldClasses(field FilterField, columns int) string {
 	} else {
 		classes = append(classes, "w-full")
 	}
-	
+
 	// Custom classes
 	if field.Class != "" {
 		classes = append(classes, field.Class)
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
 // getFilterLayoutClasses returns grid classes for field layout
 func getFilterLayoutClasses(columns int, spacing string) string {
 	var classes []string
-	
+
 	if columns > 1 {
 		classes = append(classes, "grid")
 		switch columns {
@@ -108,14 +109,14 @@ func getFilterLayoutClasses(columns int, spacing string) string {
 			classes = append(classes, fmt.Sprintf("grid-cols-%d", columns))
 		}
 	}
-	
+
 	// Spacing
 	if spacing != "" {
 		classes = append(classes, spacing)
 	} else {
 		classes = append(classes, "gap-4")
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
@@ -307,7 +308,7 @@ func generateFilterPanelAlpineData(props FilterPanelProps) string {
 // getQuickFilterClasses returns classes for quick filter layout
 func getQuickFilterClasses(props QuickFilterProps) string {
 	var classes []string
-	
+
 	if props.Horizontal {
 		classes = append(classes, "flex flex-wrap items-end")
 		if props.Compact {
@@ -318,7 +319,7 @@ func getQuickFilterClasses(props QuickFilterProps) string {
 	} else {
 		classes = append(classes, "space-y-4")
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
@@ -335,7 +336,7 @@ func formatFieldValue(value interface{}, fieldType FilterType) string {
 	if value == nil {
 		return ""
 	}
-	
+
 	switch fieldType {
 	case FilterTypeDate:
 		// Format date value
@@ -354,12 +355,12 @@ func formatFieldValue(value interface{}, fieldType FilterType) string {
 // getFilterTypeInputProps returns input props for different filter types
 func getFilterTypeInputProps(field FilterField) map[string]interface{} {
 	props := make(map[string]interface{})
-	
+
 	props["id"] = field.ID
 	props["name"] = field.Name
 	props["placeholder"] = field.Placeholder
 	props["required"] = field.Required
-	
+
 	switch field.Type {
 	case FilterTypeNumber:
 		props["type"] = "number"
@@ -382,11 +383,11 @@ func getFilterTypeInputProps(field FilterField) map[string]interface{} {
 	default:
 		props["type"] = "text"
 	}
-	
+
 	if field.Pattern != "" {
 		props["pattern"] = field.Pattern
 	}
-	
+
 	return props
 }
 

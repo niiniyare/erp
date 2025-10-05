@@ -8,11 +8,11 @@ import (
 // getDataTableWrapperClasses returns CSS classes for the table wrapper
 func getDataTableWrapperClasses(props DataTableProps) string {
 	classes := []string{"data-table-wrapper", "w-full"}
-	
+
 	if props.Class != "" {
 		classes = append(classes, props.Class)
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
@@ -25,52 +25,52 @@ func getDataTableClasses(props DataTableProps) string {
 		"text-gray-500",
 		"dark:text-gray-400",
 	}
-	
+
 	if props.Striped {
 		classes = append(classes, "stripe")
 	}
-	
+
 	if props.Bordered {
 		classes = append(classes, "border", "border-gray-200", "dark:border-gray-700")
 	}
-	
+
 	if props.Hover {
 		classes = append(classes, "hover")
 	}
-	
+
 	if props.Compact {
 		classes = append(classes, "compact")
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
 // getTableHeaderClasses returns CSS classes for table header cells
 func getTableHeaderClasses(column DataTableColumn, sortable bool) string {
 	classes := []string{"px-6", "py-3", "text-left", "text-xs", "font-medium", "text-gray-500", "uppercase", "tracking-wider"}
-	
+
 	if sortable && column.Sortable {
-		classes = append(classes, 
-			"cursor-pointer", 
+		classes = append(classes,
+			"cursor-pointer",
 			"select-none",
-			"hover:bg-gray-100", 
+			"hover:bg-gray-100",
 			"dark:hover:bg-gray-600",
 			"transition-colors",
 			"duration-150",
 		)
 	}
-	
+
 	if column.Class != "" {
 		classes = append(classes, column.Class)
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
 // getTableCellClasses returns CSS classes for table data cells
 func getTableCellClasses(column DataTableColumn) string {
 	classes := []string{"px-6", "py-4", "whitespace-nowrap"}
-	
+
 	switch column.Type {
 	case "number":
 		classes = append(classes, "text-right", "font-mono")
@@ -83,11 +83,11 @@ func getTableCellClasses(column DataTableColumn) string {
 	default:
 		classes = append(classes, "font-medium", "text-gray-900", "dark:text-white")
 	}
-	
+
 	if column.Class != "" {
 		classes = append(classes, column.Class)
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
@@ -243,11 +243,11 @@ func formatCellValue(value interface{}, valueType string, formatter string) stri
 	if value == nil {
 		return ""
 	}
-	
+
 	// Convert to string for basic processing
 	strValue := fmt.Sprintf("%v", value)
 	strValue = strings.TrimSpace(strValue)
-	
+
 	// TODO: Implement proper formatting using @internal/shared/format/
 	// FIXME: Add support for custom formatters and type-specific formatting
 	switch valueType {
@@ -258,7 +258,7 @@ func formatCellValue(value interface{}, valueType string, formatter string) stri
 		// TODO: Use @internal/shared/format/ for date formatting
 		return strValue
 	case "datetime":
-		// TODO: Use @internal/shared/format/ for datetime formatting  
+		// TODO: Use @internal/shared/format/ for datetime formatting
 		return strValue
 	case "currency":
 		// TODO: Use @internal/shared/format/ for currency formatting
@@ -277,7 +277,7 @@ func buildDataTableConfig(config DataTableConfig) DataTableConfig {
 	if config.PageLength == 0 {
 		config.PageLength = 25
 	}
-	
+
 	return config
 }
 
@@ -286,23 +286,23 @@ func buildDataTableConfig(config DataTableConfig) DataTableConfig {
 // FIXME: Map our config to simple-datatables options format
 func buildSimpleDatatablesOptions(props DataTableProps) map[string]interface{} {
 	options := map[string]interface{}{
-		"searchable":     props.Config.Searchable,
-		"sortable":       props.Config.Sortable,
-		"paging":         props.Config.Paging,
-		"perPage":        props.Config.PageLength,
-		"info":           props.Config.Info,
-		"perPageSelect":  props.Config.LengthChange,
-		"fixedHeight":    props.Config.FixedHeader,
+		"searchable":    props.Config.Searchable,
+		"sortable":      props.Config.Sortable,
+		"paging":        props.Config.Paging,
+		"perPage":       props.Config.PageLength,
+		"info":          props.Config.Info,
+		"perPageSelect": props.Config.LengthChange,
+		"fixedHeight":   props.Config.FixedHeader,
 	}
-	
+
 	if props.Config.ScrollY != "" {
 		options["scrollY"] = props.Config.ScrollY
 	}
-	
+
 	// TODO: Add server-side processing options
 	if props.Config.ServerSide {
 		// FIXME: Implement server-side processing configuration
 	}
-	
+
 	return options
 }

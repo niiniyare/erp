@@ -33,7 +33,7 @@ type UIConfig struct {
 type UIServerConfig struct {
 	// Multi-port strategy for UI services
 	MultiPort UIMultiPortConfig `yaml:"multi_port" json:"multi_port" mapstructure:"multi_port"`
-	
+
 	// UI-specific timeouts (inherits base timeouts from main ServerConfig)
 	IdleTimeout time.Duration `yaml:"idle_timeout" json:"idle_timeout" mapstructure:"idle_timeout"`
 }

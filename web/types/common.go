@@ -93,6 +93,6 @@ type ContactInfo struct {
 type TenantStats struct {
 	UserCount    int       `json:"userCount"`
 	ActiveUsers  int       `json:"activeUsers"`
-	StorageUsed  float64   `json:"storageUsed"`  // bytes
+	StorageUsed  float64   `json:"storageUsed"` // bytes
 	LastActivity time.Time `json:"lastActivity"`
 }

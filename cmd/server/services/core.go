@@ -77,7 +77,7 @@ func stringPtr(s string) *string {
 }
 
 type CoreServices struct {
-	// Core services  
+	// Core services
 	TenantService             tenant.Service
 	TenantProvisioningService tenant.ProvisioningService
 	EntityService             entity.Service

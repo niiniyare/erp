@@ -956,4 +956,12 @@ func getBodyClasses(customClass, theme string) string {
 	return classes
 }
 
+func bodyAttrs(attrs map[string]string) templ.Attributes {
+	result := make(templ.Attributes)
+	for key, value := range attrs {
+		result[key] = value
+	}
+	return result
+}
+
 var _ = templruntime.GeneratedTemplate

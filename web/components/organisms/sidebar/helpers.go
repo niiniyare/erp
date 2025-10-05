@@ -3,6 +3,7 @@ package sidebar
 import (
 	"strconv"
 	"strings"
+
 	"github.com/niiniyare/erp/web/components/atoms"
 )
 
@@ -21,19 +22,19 @@ func getSidebarClasses(props SidebarProps) string {
 		"duration-300",
 		"ease-in-out",
 	}
-	
+
 	// Width classes
 	width := props.Width
 	if width == "" {
 		width = "w-64" // Default width
 	}
 	classes = append(classes, width)
-	
+
 	// Position classes
 	if props.Position == "right" {
 		classes = append(classes, "border-l", "border-r-0")
 	}
-	
+
 	// Variant classes
 	switch props.Variant {
 	case "minimal":
@@ -43,29 +44,29 @@ func getSidebarClasses(props SidebarProps) string {
 	default:
 		classes = append(classes, "shadow-sm")
 	}
-	
+
 	// Overlay classes for mobile
 	if props.Overlay {
-		classes = append(classes, 
-			"fixed", 
-			"inset-y-0", 
-			"left-0", 
-			"z-50", 
-			"lg:relative", 
+		classes = append(classes,
+			"fixed",
+			"inset-y-0",
+			"left-0",
+			"z-50",
+			"lg:relative",
 			"lg:translate-x-0",
 		)
 	}
-	
+
 	// Theme classes
 	switch props.Theme {
 	case "dark":
 		classes = append(classes, "dark")
 	}
-	
+
 	if props.Class != "" {
 		classes = append(classes, props.Class)
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
@@ -83,13 +84,13 @@ func getSidebarItemClasses(item SidebarItem, level int) string {
 		"transition-colors",
 		"duration-150",
 	}
-	
+
 	// Indentation for nested items
 	if level > 0 {
 		indentClass := "ml-" + strconv.Itoa(level*4)
 		baseClasses = append(baseClasses, indentClass)
 	}
-	
+
 	// State classes
 	if item.Active {
 		baseClasses = append(baseClasses,
@@ -115,7 +116,7 @@ func getSidebarItemClasses(item SidebarItem, level int) string {
 			"dark:hover:text-white",
 		)
 	}
-	
+
 	// Disabled state
 	if item.Disabled {
 		baseClasses = append(baseClasses,
@@ -124,11 +125,11 @@ func getSidebarItemClasses(item SidebarItem, level int) string {
 			"pointer-events-none",
 		)
 	}
-	
+
 	if item.Class != "" {
 		baseClasses = append(baseClasses, item.Class)
 	}
-	
+
 	return strings.Join(baseClasses, " ")
 }
 
@@ -138,18 +139,18 @@ func getSidebarHeaderClasses(level int) string {
 		"px-2",
 		"py-3",
 	}
-	
+
 	if level > 0 {
 		classes = append(classes, "mt-4")
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
 // getSidebarBadgeClasses returns CSS classes for badges
 func getSidebarBadgeClasses(color string) string {
 	baseClasses := "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-	
+
 	switch color {
 	case "red":
 		return baseClasses + " bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
@@ -199,11 +200,11 @@ func getSidebarUserClasses(compact bool) string {
 		"duration-150",
 		"cursor-pointer",
 	}
-	
+
 	if compact {
 		baseClasses = append(baseClasses, "justify-center")
 	}
-	
+
 	return strings.Join(baseClasses, " ")
 }
 
@@ -222,14 +223,14 @@ func getSidebarFooterItemClasses(item SidebarItem) string {
 		"transition-colors",
 		"duration-150",
 	}
-	
+
 	if item.Active {
 		baseClasses = append(baseClasses,
 			"bg-gray-100",
 			"dark:bg-gray-700",
 		)
 	}
-	
+
 	return strings.Join(baseClasses, " ")
 }
 
@@ -254,20 +255,20 @@ func getUserInitials(user SidebarUser) string {
 	if user.Initials != "" {
 		return user.Initials
 	}
-	
+
 	if user.Name == "" {
 		return "U"
 	}
-	
+
 	parts := strings.Fields(user.Name)
 	if len(parts) == 0 {
 		return "U"
 	}
-	
+
 	if len(parts) == 1 {
 		return strings.ToUpper(string(parts[0][0]))
 	}
-	
+
 	return strings.ToUpper(string(parts[0][0]) + string(parts[len(parts)-1][0]))
 }
 

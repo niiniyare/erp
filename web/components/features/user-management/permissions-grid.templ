@@ -2,7 +2,6 @@ package usermanagement
 
 import (
 	"github.com/niiniyare/erp/web/components/atoms"
-	"github.com/niiniyare/erp/web/components/molecules"
 )
 
 // PermissionsGridProps defines properties for the permissions management interface
@@ -140,17 +139,18 @@ templ PermissionsGrid(props PermissionsGridProps) {
 							<span x-show="!hasChanges">No changes</span>
 						</div>
 
-						@atoms.Button(atoms.ButtonProps{
-							Text:     "Save Changes",
-							Icon:     "save",
-							Variant:  atoms.ButtonPrimary,
-							Size:     atoms.ButtonSizeSM,
-							XShow:    "hasChanges",
-							HxPost:   props.HxPost,
-							HxTarget: props.HxTarget,
-							OnClick:  "savePermissions()",
-							Loading:  false,
-						})
+						<div x-show="hasChanges">
+							@atoms.Button(atoms.ButtonProps{
+								Text:     "Save Changes",
+								Icon:     "save",
+								Variant:  atoms.ButtonPrimary,
+								Size:     atoms.ButtonSizeSM,
+								HxPost:   props.HxPost,
+								HxTarget: props.HxTarget,
+								OnClick:  "savePermissions()",
+								Loading:  false,
+							})
+						</div>
 					</div>
 				</div>
 			</div>
@@ -256,12 +256,11 @@ templ PermissionRow(permission Permission, props PermissionsGridProps, categoryI
 				</div>
 				
 				<!-- Override Indicator -->
-				<div x-show={ "hasOverride('" + permission.ID + "')" }>
+				<div x-show={ "hasOverride('" + permission.ID + "')" } title="User override">
 					@atoms.Icon(atoms.IconProps{
 						Name:  "star",
 						Size:  atoms.IconSizeXS,
 						Class: "text-yellow-500",
-						Title: "User override",
 					})
 				</div>
 			</div>

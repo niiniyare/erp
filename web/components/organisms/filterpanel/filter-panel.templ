@@ -1,6 +1,7 @@
 package filterpanel
 
 import (
+	"fmt"
 	"github.com/niiniyare/erp/web/components/atoms"
 	"github.com/niiniyare/erp/web/components/molecules"
 )
@@ -73,7 +74,7 @@ templ FilterPanel(props FilterPanelProps) {
 				<!-- Filter Groups -->
 				if len(props.Groups) > 0 {
 					for _, group := range props.Groups {
-						@FilterGroup(group)
+						@FilterGroupComponent(group)
 					}
 				}
 
@@ -82,7 +83,7 @@ templ FilterPanel(props FilterPanelProps) {
 					<div class="p-4">
 						<div class={ getFilterLayoutClasses(1, "") }>
 							for _, field := range props.Fields {
-								@FilterField(field, 1)
+								@FilterFieldComponent(field, 1)
 							}
 						</div>
 					</div>
@@ -160,7 +161,7 @@ templ FilterPanelHeader(props FilterPanelProps) {
 }
 
 // FilterGroup renders a collapsible group of filter fields
-templ FilterGroup(group FilterGroup) {
+templ FilterGroupComponent(group FilterGroup) {
 	<div 
 		class={ getFilterGroupClasses(group) }
 		if group.ID != "" {
@@ -208,7 +209,7 @@ templ FilterGroup(group FilterGroup) {
 			<div class="p-4 pt-0">
 				<div class={ getFilterLayoutClasses(group.Columns, group.Spacing) }>
 					for _, field := range group.Fields {
-						@FilterField(field, group.Columns)
+						@FilterFieldComponent(field, group.Columns)
 					}
 				</div>
 			</div>
@@ -217,7 +218,7 @@ templ FilterGroup(group FilterGroup) {
 }
 
 // FilterField renders a single filter field with appropriate input type
-templ FilterField(field FilterField, columns int) {
+templ FilterFieldComponent(field FilterField, columns int) {
 	<div 
 		class={ getFilterFieldClasses(field, columns) }
 		if field.ID != "" {
@@ -247,38 +248,34 @@ templ FilterField(field FilterField, columns int) {
 // FilterInputField renders basic input fields
 templ FilterInputField(field FilterField) {
 	@molecules.Field(molecules.FieldProps{
+		Type:        molecules.FieldTypeInput,
 		Label:       field.Label,
+		Name:        field.Name,
+		Value:       formatFieldValue(field.Value, field.Type),
+		Placeholder: field.Placeholder,
+		HelpText:    field.Help,
 		Required:    field.Required,
-		Help:        field.Help,
-		Description: field.Description,
-		Class:       field.Class,
-		InputProps: atoms.InputProps{
-			ID:          field.Name,
-			Name:        field.Name,
-			Type:        getInputTypeForFilter(field.Type),
-			Placeholder: field.Placeholder,
-			Required:    field.Required,
-			Value:       formatFieldValue(field.Value, field.Type),
-			OnChange:    "onFieldChange('" + field.Name + "', $event.target.value)",
-			HxGet:       field.HxGet,
-			HxPost:      field.HxPost,
-			HxTarget:    field.HxTarget,
-			HxTrigger:   field.HxTrigger,
-			Class:       "w-full",
-		},
+		InputType:   getInputTypeForFilter(field.Type),
+		ID:          field.Name,
+		Class:       field.Class + " w-full",
+		OnChange:    "onFieldChange('" + field.Name + "', $event.target.value)",
+		HxGet:       field.HxGet,
+		HxPost:      field.HxPost,
+		HxTarget:    field.HxTarget,
+		HxTrigger:   field.HxTrigger,
 	})
 }
 
 // FilterSearchField renders search input with suggestions
 templ FilterSearchField(field FilterField) {
 	@molecules.Search(molecules.SearchProps{
+		Name:        field.Name,
 		Placeholder: field.Placeholder,
 		Value:       fmt.Sprintf("%v", field.Value),
-		OnChange:    "onFieldChange('" + field.Name + "', $event.target.value)",
+		OnSearch:    "onFieldChange('" + field.Name + "', $event.target.value)",
 		HxGet:       field.HxGet,
 		HxTarget:    field.HxTarget,
 		HxTrigger:   field.HxTrigger,
-		ShowButton:  false,
 		Class:       field.Class,
 	})
 }
@@ -286,19 +283,16 @@ templ FilterSearchField(field FilterField) {
 // FilterSelectField renders select dropdown
 templ FilterSelectField(field FilterField) {
 	@molecules.Field(molecules.FieldProps{
+		Type:        molecules.FieldTypeSelect,
 		Label:       field.Label,
+		Name:        field.Name,
 		Required:    field.Required,
-		Help:        field.Help,
-		Description: field.Description,
-		SelectProps: &atoms.SelectProps{
-			ID:       field.Name,
-			Name:     field.Name,
-			Required: field.Required,
-			Multiple: field.Multiple,
-			OnChange: "onFieldChange('" + field.Name + "', $event.target.value)",
-			Options:  convertToSelectOptions(field.Options),
-			Class:    "w-full",
-		},
+		HelpText:    field.Help,
+		ID:          field.Name,
+		Class:       field.Class + " w-full",
+		Multiple:    field.Multiple,
+		Options:     convertToSelectOptions(field.Options),
+		OnChange:    "onFieldChange('" + field.Name + "', $event.target.value)",
 	})
 }
 
@@ -366,27 +360,24 @@ templ FilterRadioField(field FilterField) {
 templ FilterDateRangeField(field FilterField) {
 	@molecules.FieldGroup(molecules.FieldGroupProps{
 		Title:       field.Label,
-		Description: field.Description,
 		Fields: []molecules.FieldProps{
 			{
-				Label: "Start Date",
-				InputProps: atoms.InputProps{
-					ID:          field.Name + "_start",
-					Name:        field.Name + "[start]",
-					Type:        atoms.InputTypeDate,
-					Placeholder: "Start date",
-					OnChange:    "onFieldChange('" + field.Name + "_start', $event.target.value)",
-				},
+				Type:        molecules.FieldTypeInput,
+				Label:       "Start Date",
+				Name:        field.Name + "[start]",
+				ID:          field.Name + "_start",
+				InputType:   atoms.InputDate,
+				Placeholder: "Start date",
+				OnChange:    "onFieldChange('" + field.Name + "_start', $event.target.value)",
 			},
 			{
-				Label: "End Date",
-				InputProps: atoms.InputProps{
-					ID:          field.Name + "_end",
-					Name:        field.Name + "[end]",
-					Type:        atoms.InputTypeDate,
-					Placeholder: "End date",
-					OnChange:    "onFieldChange('" + field.Name + "_end', $event.target.value)",
-				},
+				Type:        molecules.FieldTypeInput,
+				Label:       "End Date",
+				Name:        field.Name + "[end]",
+				ID:          field.Name + "_end",
+				InputType:   atoms.InputDate,
+				Placeholder: "End date",
+				OnChange:    "onFieldChange('" + field.Name + "_end', $event.target.value)",
 			},
 		},
 	})
@@ -556,7 +547,7 @@ templ QuickFilter(props QuickFilterProps) {
 			hx-trigger="submit, change delay:500ms"
 		>
 			for _, field := range props.Fields {
-				@FilterField(field, 1)
+				@FilterFieldComponent(field, 1)
 			}
 			
 			if !props.Compact {

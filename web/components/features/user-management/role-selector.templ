@@ -2,7 +2,6 @@ package usermanagement
 
 import (
 	"github.com/niiniyare/erp/web/components/atoms"
-	"github.com/niiniyare/erp/web/components/molecules"
 )
 
 // RoleSelectorProps defines properties for role assignment interface
@@ -165,15 +164,16 @@ templ RoleSelector(props RoleSelectorProps) {
 							OnClick:  "resetSelection()",
 						})
 
-						@atoms.Button(atoms.ButtonProps{
-							Text:     "Apply Role Change",
-							Icon:     "check",
-							Variant:  atoms.ButtonPrimary,
-							Size:     atoms.ButtonSizeSM,
-							Type:     "submit",
-							XShow:    "selectedRole && selectedRole !== currentRole",
-							Loading:  false,
-						})
+						<div x-show="selectedRole && selectedRole !== currentRole">
+							@atoms.Button(atoms.ButtonProps{
+								Text:     "Apply Role Change",
+								Icon:     "check",
+								Variant:  atoms.ButtonPrimary,
+								Size:     atoms.ButtonSizeSM,
+								Type:     "submit",
+								Loading:  false,
+							})
+						</div>
 					</div>
 				</div>
 			</form>

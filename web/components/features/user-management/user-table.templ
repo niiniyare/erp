@@ -59,7 +59,6 @@ templ UserFilters() {
 		AutoApply:   false,
 		HxPost:      "/admin/users/filter",
 		HxTarget:    "#user-table-container",
-		HxSwap:      "innerHTML",
 		Groups: []filterpanel.FilterGroup{
 			{
 				Title:       "Basic Information",
@@ -199,7 +198,7 @@ templ UserDataTable(props UserTableProps) {
 		Config: table.DataTableConfig{
 			Sortable:     true,
 			Searchable:   true,
-			Pagination:   true,
+			Paging:       true,
 			PageLength:   props.PerPage,
 			LengthChange: true,
 			ServerSide:   true,
@@ -211,7 +210,6 @@ templ UserDataTable(props UserTableProps) {
 				Variant:   atoms.ButtonLight,
 				HxGet:     "/admin/users/{id}",
 				HxTarget:  "#user-modal",
-				HxSwap:    "innerHTML",
 				Single:    true,
 			},
 			{
@@ -243,6 +241,7 @@ templ UserDataTable(props UserTableProps) {
 				Variant:  atoms.ButtonSecondary,
 				HxPost:   "/admin/users/export",
 				HxTarget: "#download-link",
+				HxSwap:   "innerHTML",
 			},
 			{
 				Text:      "Deactivate Selected",
@@ -336,7 +335,6 @@ templ UserTableHeader(props UserTableProps) {
 					Variant:  atoms.ButtonPrimary,
 					HxGet:    "/admin/users/create",
 					HxTarget: "#user-modal",
-					HxSwap:   "innerHTML",
 				})
 			}
 		</div>

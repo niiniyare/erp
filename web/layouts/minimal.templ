@@ -181,7 +181,6 @@ templ MinimalActionButton(action MinimalAction) {
 		Icon:     action.Icon,
 		Variant:  action.Variant,
 		Size:     action.Size,
-		Href:     action.Href,
 		OnClick:  action.OnClick,
 		HxGet:    action.HxGet,
 		HxPost:   action.HxPost,
@@ -220,7 +219,6 @@ templ MinimalErrorState(props MinimalLayoutProps) {
 					Text:    "Go Back",
 					Icon:    "arrow-left",
 					Variant: atoms.ButtonSecondary,
-					Href:    props.BackUrl,
 				})
 			}
 			
@@ -228,7 +226,6 @@ templ MinimalErrorState(props MinimalLayoutProps) {
 				Text:    "Go Home",
 				Icon:    "home",
 				Variant: atoms.ButtonPrimary,
-				Href:    "/",
 			})
 		</div>
 	</div>
@@ -313,7 +310,6 @@ templ EmptyState(title, description, actionText, actionHref string) {
 				Text:    actionText,
 				Icon:    "plus",
 				Variant: atoms.ButtonPrimary,
-				Href:    actionHref,
 			})
 		}
 	</div>

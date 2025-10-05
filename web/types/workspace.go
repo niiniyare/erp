@@ -6,14 +6,14 @@ import (
 
 // WorkspaceDashboardData represents data for the workspace dashboard
 type WorkspaceDashboardData struct {
-	Title          string         `json:"title"`
-	User           UserInfo       `json:"user"`
-	TenantInfo     TenantInfo     `json:"tenant_info"`
-	TenantStats    WorkspaceTenantStats    `json:"tenant_stats"`
-	RecentActivity []ActivityItem `json:"recent_activity"`
-	QuickActions   []QuickAction  `json:"quick_actions"`
-	Notifications  []Notification `json:"notifications"`
-	CSRFToken      string         `json:"csrf_token"`
+	Title          string               `json:"title"`
+	User           UserInfo             `json:"user"`
+	TenantInfo     TenantInfo           `json:"tenant_info"`
+	TenantStats    WorkspaceTenantStats `json:"tenant_stats"`
+	RecentActivity []ActivityItem       `json:"recent_activity"`
+	QuickActions   []QuickAction        `json:"quick_actions"`
+	Notifications  []Notification       `json:"notifications"`
+	CSRFToken      string               `json:"csrf_token"`
 }
 
 // TenantInfo represents information about a tenant
@@ -155,5 +155,3 @@ type WorkspaceTenantInfo struct {
 	Name     string            `json:"name"`
 	Settings map[string]string `json:"settings"`
 }
-
-

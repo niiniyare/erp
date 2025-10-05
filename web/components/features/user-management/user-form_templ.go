@@ -11,7 +11,6 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"github.com/niiniyare/erp/web/components/atoms"
 	"github.com/niiniyare/erp/web/components/molecules"
-	"github.com/niiniyare/erp/web/components/organisms/modal"
 )
 
 // UserFormProps defines properties for user create/edit forms
@@ -28,7 +27,7 @@ type UserFormProps struct {
 	CanDelete   bool                 `json:"canDelete"`          // User has delete permissions
 }
 
-// UserForm renders a comprehensive user create/edit form
+// UserForm renders a comprehensive user create/edit form in a card
 func UserForm(props UserFormProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -50,31 +49,28 @@ func UserForm(props UserFormProps) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = modal.Modal(modal.ModalProps{
-			ID:       "user-form-modal",
-			Type:     modal.ModalTypeForm,
-			Size:     modal.ModalSizeLG,
-			Title:    getFormTitle(props.IsEdit),
-			HxPost:   props.HxPost,
-			HxTarget: props.HxTarget,
-			HxSwap:   "innerHTML",
-			Actions: []modal.ModalAction{
-				{
-					Text:    "Cancel",
-					Variant: atoms.ButtonLight,
-					OnClick: "closeModal()",
-					Type:    "button",
-				},
-				{
-					Text:    getSubmitButtonText(props.IsEdit),
-					Variant: atoms.ButtonPrimary,
-					Type:    "submit",
-					Icon:    "save",
-					Loading: false,
-				},
-			},
-			Body: UserFormBody(props),
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-4xl mx-auto\"><!-- Header --><div class=\"flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-700\"><h2 class=\"text-xl font-semibold text-gray-900 dark:text-white\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var2 string
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(getFormTitle(props.IsEdit))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-form.templ`, Line: 28, Col: 32}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h2></div><!-- Form Content -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = UserFormBody(props).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -99,269 +95,252 @@ func UserFormBody(props UserFormProps) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var2 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var2 == nil {
-			templ_7745c5c3_Var2 = templ.NopComponent
+		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var3 == nil {
+			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<form")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<form")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if props.Action != "" && props.HxPost == "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " action=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, " action=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var3 templ.SafeURL
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(props.Action)
+			var templ_7745c5c3_Var4 templ.SafeURL
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(props.Action)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-form.templ`, Line: 56, Col: 24}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" method=\"POST\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		if props.HxPost != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, " hx-post=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxPost)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-form.templ`, Line: 60, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-form.templ`, Line: 41, Col: 24}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" method=\"POST\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.HxTarget != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " hx-target=\"")
+		if props.HxPost != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, " hx-post=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxTarget)
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxPost)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-form.templ`, Line: 63, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-form.templ`, Line: 45, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " hx-swap=\"innerHTML\" @submit=\"loading = true\" @htmx:after-request=\"loading = false; if($event.detail.xhr.status === 200) closeModal()\" class=\"space-y-6\"><!-- Hidden ID field for edit mode -->")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if props.IsEdit && props.User != nil {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<input type=\"hidden\" name=\"id\" value=\"")
+		if props.HxTarget != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, " hx-target=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.ID)
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxTarget)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-form.templ`, Line: 72, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-form.templ`, Line: 48, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<!-- Personal Information Section --><div class=\"space-y-4\"><h3 class=\"text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2\">Personal Information</h3><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\"><!-- Full Name -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, " hx-swap=\"innerHTML\" @submit=\"loading = true\" @htmx:after-request=\"loading = false; if($event.detail.xhr.status === 200) closeModal()\" class=\"space-y-6\"><!-- Hidden ID field for edit mode -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if props.IsEdit && props.User != nil {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<input type=\"hidden\" name=\"id\" value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var7 string
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.ID)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-form.templ`, Line: 57, Col: 55}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<!-- Personal Information Section --><div class=\"space-y-4\"><h3 class=\"text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2\">Personal Information</h3><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\"><!-- Full Name -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = molecules.Field(molecules.FieldProps{
-			Label:    "Full Name",
-			Required: true,
-			Help:     "Enter the user's full name",
-			InputProps: atoms.InputProps{
-				ID:          "name",
-				Name:        "name",
-				Type:        atoms.InputTypeText,
-				Placeholder: "John Doe",
-				Required:    true,
-				Value:       getFieldValue(props.User, "name"),
-			},
-			Error: getFieldError(props.Errors, "name"),
+			Type:        molecules.FieldTypeInput,
+			Label:       "Full Name",
+			Name:        "name",
+			Value:       getFieldValue(props.User, "name"),
+			Placeholder: "John Doe",
+			HelpText:    "Enter the user's full name",
+			Required:    true,
+			InputType:   atoms.InputText,
+			ID:          "name",
+			ErrorText:   getFieldError(props.Errors, "name"),
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<!-- Email Address -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<!-- Email Address -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = molecules.Field(molecules.FieldProps{
-			Label:    "Email Address",
-			Required: true,
-			Help:     "Primary email for login and notifications",
-			InputProps: atoms.InputProps{
-				ID:          "email",
-				Name:        "email",
-				Type:        atoms.InputTypeEmail,
-				Placeholder: "john.doe@company.com",
-				Required:    true,
-				Value:       getFieldValue(props.User, "email"),
-			},
-			Error: getFieldError(props.Errors, "email"),
+			Type:        molecules.FieldTypeInput,
+			Label:       "Email Address",
+			Name:        "email",
+			Value:       getFieldValue(props.User, "email"),
+			Placeholder: "john.doe@company.com",
+			HelpText:    "Primary email for login and notifications",
+			Required:    true,
+			InputType:   atoms.InputEmail,
+			ID:          "email",
+			ErrorText:   getFieldError(props.Errors, "email"),
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<!-- Phone Number -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<!-- Phone Number -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = molecules.Field(molecules.FieldProps{
-			Label: "Phone Number",
-			Help:  "Optional contact number",
-			InputProps: atoms.InputProps{
-				ID:          "phone",
-				Name:        "phone",
-				Type:        atoms.InputTypeTel,
-				Placeholder: "+1 (555) 123-4567",
-				Value:       getFieldValue(props.User, "phone"),
-			},
-			Error: getFieldError(props.Errors, "phone"),
+			Type:        molecules.FieldTypeInput,
+			Label:       "Phone Number",
+			Name:        "phone",
+			Value:       getFieldValue(props.User, "phone"),
+			Placeholder: "+1 (555) 123-4567",
+			HelpText:    "Optional contact number",
+			InputType:   atoms.InputTel,
+			ID:          "phone",
+			ErrorText:   getFieldError(props.Errors, "phone"),
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<!-- Department -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<!-- Department -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = molecules.Field(molecules.FieldProps{
-			Label:    "Department",
-			Required: true,
-			Help:     "User's department or team",
-			SelectProps: &atoms.SelectProps{
-				ID:       "department",
-				Name:     "department",
-				Required: true,
-				Options:  props.Departments,
-				Value:    getFieldValue(props.User, "department"),
-			},
-			Error: getFieldError(props.Errors, "department"),
+			Type:      molecules.FieldTypeSelect,
+			Label:     "Department",
+			Name:      "department",
+			Value:     getFieldValue(props.User, "department"),
+			HelpText:  "User's department or team",
+			Required:  true,
+			Options:   props.Departments,
+			ID:        "department",
+			ErrorText: getFieldError(props.Errors, "department"),
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</div></div><!-- Role and Permissions Section --><div class=\"space-y-4\"><h3 class=\"text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2\">Role & Permissions</h3><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\"><!-- Role -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div></div><!-- Role and Permissions Section --><div class=\"space-y-4\"><h3 class=\"text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2\">Role & Permissions</h3><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\"><!-- Role -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = molecules.Field(molecules.FieldProps{
-			Label:    "Role",
-			Required: true,
-			Help:     "User's primary role in the system",
-			SelectProps: &atoms.SelectProps{
-				ID:       "role",
-				Name:     "role",
-				Required: true,
-				Options:  props.Roles,
-				Value:    getFieldValue(props.User, "role"),
-			},
-			Error: getFieldError(props.Errors, "role"),
+			Type:      molecules.FieldTypeSelect,
+			Label:     "Role",
+			Name:      "role",
+			Value:     getFieldValue(props.User, "role"),
+			HelpText:  "User's primary role in the system",
+			Required:  true,
+			Options:   props.Roles,
+			ID:        "role",
+			ErrorText: getFieldError(props.Errors, "role"),
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<!-- Status -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<!-- Status -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = molecules.Field(molecules.FieldProps{
+			Type:     molecules.FieldTypeSelect,
 			Label:    "Status",
+			Name:     "status",
+			Value:    getFieldValue(props.User, "status"),
+			HelpText: "User account status",
 			Required: true,
-			Help:     "User account status",
-			SelectProps: &atoms.SelectProps{
-				ID:       "status",
-				Name:     "status",
-				Required: true,
-				Options: []atoms.SelectOption{
-					{Value: "active", Label: "Active", Selected: getFieldValue(props.User, "status") == "active"},
-					{Value: "inactive", Label: "Inactive", Selected: getFieldValue(props.User, "status") == "inactive"},
-					{Value: "pending", Label: "Pending Verification", Selected: getFieldValue(props.User, "status") == "pending"},
-					{Value: "suspended", Label: "Suspended", Selected: getFieldValue(props.User, "status") == "suspended"},
-				},
-				Value: getFieldValue(props.User, "status"),
+			Options: []atoms.SelectOption{
+				{Value: "active", Label: "Active", Selected: getFieldValue(props.User, "status") == "active"},
+				{Value: "inactive", Label: "Inactive", Selected: getFieldValue(props.User, "status") == "inactive"},
+				{Value: "pending", Label: "Pending Verification", Selected: getFieldValue(props.User, "status") == "pending"},
+				{Value: "suspended", Label: "Suspended", Selected: getFieldValue(props.User, "status") == "suspended"},
 			},
-			Error: getFieldError(props.Errors, "status"),
+			ID:        "status",
+			ErrorText: getFieldError(props.Errors, "status"),
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div></div><!-- Password Section (Create mode only) -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div></div><!-- Password Section (Create mode only) -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if !props.IsEdit {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div class=\"space-y-4\"><h3 class=\"text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2\">Account Security</h3><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\"><!-- Password -->")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<div class=\"space-y-4\"><h3 class=\"text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2\">Account Security</h3><div class=\"grid grid-cols-1 md:grid-cols-2 gap-4\"><!-- Password -->")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = molecules.Field(molecules.FieldProps{
-				Label:    "Password",
-				Required: true,
-				Help:     "Minimum 8 characters with mixed case and numbers",
-				InputProps: atoms.InputProps{
-					ID:          "password",
-					Name:        "password",
-					Type:        atoms.InputTypePassword,
-					Placeholder: "Enter secure password",
-					Required:    true,
-					MinLength:   8,
-				},
-				Error: getFieldError(props.Errors, "password"),
+				Type:        molecules.FieldTypeInput,
+				Label:       "Password",
+				Name:        "password",
+				Placeholder: "Enter secure password",
+				HelpText:    "Minimum 8 characters with mixed case and numbers",
+				Required:    true,
+				InputType:   atoms.InputPassword,
+				ID:          "password",
+				ErrorText:   getFieldError(props.Errors, "password"),
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<!-- Confirm Password -->")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<!-- Confirm Password -->")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = molecules.Field(molecules.FieldProps{
-				Label:    "Confirm Password",
-				Required: true,
-				Help:     "Re-enter password to confirm",
-				InputProps: atoms.InputProps{
-					ID:          "password_confirm",
-					Name:        "password_confirm",
-					Type:        atoms.InputTypePassword,
-					Placeholder: "Confirm password",
-					Required:    true,
-					MinLength:   8,
-				},
-				Error: getFieldError(props.Errors, "password_confirm"),
+				Type:        molecules.FieldTypeInput,
+				Label:       "Confirm Password",
+				Name:        "password_confirm",
+				Placeholder: "Confirm password",
+				HelpText:    "Re-enter password to confirm",
+				Required:    true,
+				InputType:   atoms.InputPassword,
+				ID:          "password_confirm",
+				ErrorText:   getFieldError(props.Errors, "password_confirm"),
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><!-- Send Welcome Email --><div class=\"pt-4\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div><!-- Send Welcome Email --><div class=\"pt-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -375,17 +354,17 @@ func UserFormBody(props UserFormProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<!-- Additional Actions for Edit Mode -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<!-- Additional Actions for Edit Mode -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if props.IsEdit && props.User != nil {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<div class=\"space-y-4\"><h3 class=\"text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2\">Account Actions</h3><div class=\"flex flex-wrap gap-3\"><!-- Reset Password -->")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<div class=\"space-y-4\"><h3 class=\"text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2\">Account Actions</h3><div class=\"flex flex-wrap gap-3\"><!-- Reset Password -->")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -402,7 +381,7 @@ func UserFormBody(props UserFormProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<!-- Resend Welcome Email -->")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<!-- Resend Welcome Email -->")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -418,7 +397,7 @@ func UserFormBody(props UserFormProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<!-- View Login History -->")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<!-- View Login History -->")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -434,7 +413,7 @@ func UserFormBody(props UserFormProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<!-- Delete User -->")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<!-- Delete User -->")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -454,12 +433,12 @@ func UserFormBody(props UserFormProps) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -484,103 +463,100 @@ func UserFormCompact(props UserFormProps) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var7 == nil {
-			templ_7745c5c3_Var7 = templ.NopComponent
+		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var8 == nil {
+			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<form")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<form")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if props.HxPost != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, " hx-post=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var8 string
-			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxPost)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-form.templ`, Line: 309, Col: 25}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		if props.HxTarget != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, " hx-target=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, " hx-post=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxTarget)
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxPost)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-form.templ`, Line: 312, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-form.templ`, Line: 277, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, " hx-swap=\"innerHTML\" class=\"grid grid-cols-1 md:grid-cols-4 gap-4 items-end\"><!-- Name -->")
+		if props.HxTarget != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, " hx-target=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var10 string
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxTarget)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/user-form.templ`, Line: 280, Col: 29}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, " hx-swap=\"innerHTML\" class=\"grid grid-cols-1 md:grid-cols-4 gap-4 items-end\"><!-- Name -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = molecules.Field(molecules.FieldProps{
-			Label: "Name",
-			InputProps: atoms.InputProps{
-				Name:        "name",
-				Type:        atoms.InputTypeText,
-				Placeholder: "Enter name",
-				Required:    true,
-				Value:       getFieldValue(props.User, "name"),
-			},
+			Type:        molecules.FieldTypeInput,
+			Label:       "Name",
+			Name:        "name",
+			Value:       getFieldValue(props.User, "name"),
+			Placeholder: "Enter name",
+			Required:    true,
+			InputType:   atoms.InputText,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<!-- Email -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<!-- Email -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = molecules.Field(molecules.FieldProps{
-			Label: "Email",
-			InputProps: atoms.InputProps{
-				Name:        "email",
-				Type:        atoms.InputTypeEmail,
-				Placeholder: "Enter email",
-				Required:    true,
-				Value:       getFieldValue(props.User, "email"),
-			},
+			Type:        molecules.FieldTypeInput,
+			Label:       "Email",
+			Name:        "email",
+			Value:       getFieldValue(props.User, "email"),
+			Placeholder: "Enter email",
+			Required:    true,
+			InputType:   atoms.InputEmail,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<!-- Role -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<!-- Role -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = molecules.Field(molecules.FieldProps{
-			Label: "Role",
-			SelectProps: &atoms.SelectProps{
-				Name:    "role",
-				Options: props.Roles,
-				Value:   getFieldValue(props.User, "role"),
-			},
+			Type:    molecules.FieldTypeSelect,
+			Label:   "Role",
+			Name:    "role",
+			Value:   getFieldValue(props.User, "role"),
+			Options: props.Roles,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<!-- Submit Button --><div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<!-- Submit Button --><div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -593,7 +569,7 @@ func UserFormCompact(props UserFormProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div></form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

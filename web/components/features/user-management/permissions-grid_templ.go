@@ -10,7 +10,6 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"github.com/niiniyare/erp/web/components/atoms"
-	"github.com/niiniyare/erp/web/components/molecules"
 )
 
 // PermissionsGridProps defines properties for the permissions management interface
@@ -137,7 +136,7 @@ func PermissionsGrid(props PermissionsGridProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></div><!-- Save Changes --><div class=\"flex items-center space-x-3\"><div class=\"text-sm text-gray-500 dark:text-gray-400\"><span x-show=\"hasChanges\" x-text=\"`${changeCount} changes`\"></span> <span x-show=\"!hasChanges\">No changes</span></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></div><!-- Save Changes --><div class=\"flex items-center space-x-3\"><div class=\"text-sm text-gray-500 dark:text-gray-400\"><span x-show=\"hasChanges\" x-text=\"`${changeCount} changes`\"></span> <span x-show=\"!hasChanges\">No changes</span></div><div x-show=\"hasChanges\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -146,7 +145,6 @@ func PermissionsGrid(props PermissionsGridProps) templ.Component {
 				Icon:     "save",
 				Variant:  atoms.ButtonPrimary,
 				Size:     atoms.ButtonSizeSM,
-				XShow:    "hasChanges",
 				HxPost:   props.HxPost,
 				HxTarget: props.HxTarget,
 				OnClick:  "savePermissions()",
@@ -155,7 +153,7 @@ func PermissionsGrid(props PermissionsGridProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -401,7 +399,7 @@ func PermissionRow(permission Permission, props PermissionsGridProps, categoryID
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" title=\"User override\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -409,7 +407,6 @@ func PermissionRow(permission Permission, props PermissionsGridProps, categoryID
 			Name:  "star",
 			Size:  atoms.IconSizeXS,
 			Class: "text-yellow-500",
-			Title: "User override",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -483,7 +480,7 @@ func PermissionToggle(permissionID, action string, props PermissionsGridProps) t
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs("{ state: getPermissionState('" + permissionID + "', '" + action + "') }")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/permissions-grid.templ`, Line: 290, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/permissions-grid.templ`, Line: 289, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -496,7 +493,7 @@ func PermissionToggle(permissionID, action string, props PermissionsGridProps) t
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs("togglePermission('" + permissionID + "', '" + action + "')")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/permissions-grid.templ`, Line: 294, Col: 72}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/permissions-grid.templ`, Line: 293, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
@@ -509,7 +506,7 @@ func PermissionToggle(permissionID, action string, props PermissionsGridProps) t
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs("!" + getBoolString(props.CanEditUsers || props.CanEditRoles))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/permissions-grid.templ`, Line: 295, Col: 76}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/permissions-grid.templ`, Line: 294, Col: 76}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -589,7 +586,7 @@ func PermissionCategoryToggle(category PermissionCategory, props PermissionsGrid
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs("grantCategoryPermissions('" + category.ID + "')")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/permissions-grid.templ`, Line: 332, Col: 62}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/permissions-grid.templ`, Line: 331, Col: 62}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -613,7 +610,7 @@ func PermissionCategoryToggle(category PermissionCategory, props PermissionsGrid
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs("revokeCategoryPermissions('" + category.ID + "')")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/permissions-grid.templ`, Line: 343, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/user-management/permissions-grid.templ`, Line: 342, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {

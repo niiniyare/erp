@@ -2,6 +2,7 @@ package modal
 
 import (
 	"fmt"
+
 	"github.com/niiniyare/erp/web/components/atoms"
 )
 
@@ -197,10 +198,10 @@ func generateModalAlpineData(props ModalProps) string {
 		setLoading(loading) {
 			this.loading = loading;
 		}
-	}`, 
+	}`,
 		openState,
 		props.OnOpen,
-		props.OnClose, 
+		props.OnClose,
 		props.CloseOnBackdrop,
 		props.CloseOnEscape,
 		props.FocusTrap,

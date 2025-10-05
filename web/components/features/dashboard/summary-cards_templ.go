@@ -192,7 +192,7 @@ func SummaryCards(props SummaryCardsProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		for _, card := range props.Cards {
-			templ_7745c5c3_Err = SummaryCard(card, props.ShowTrends).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = SummaryCardComponent(card, props.ShowTrends).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -206,7 +206,7 @@ func SummaryCards(props SummaryCardsProps) templ.Component {
 }
 
 // SummaryCard renders a single summary metric card
-func SummaryCard(card SummaryCard, showTrends bool) templ.Component {
+func SummaryCardComponent(card SummaryCard, showTrends bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -859,9 +859,9 @@ func CardActionItem(action CardAction) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var40 string
-			templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(getActionClickHandler(action))
+			templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(getCardActionClickHandler(action))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/dashboard/summary-cards.templ`, Line: 301, Col: 41}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/features/dashboard/summary-cards.templ`, Line: 301, Col: 45}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 			if templ_7745c5c3_Err != nil {
@@ -1268,7 +1268,7 @@ func getActionItemClasses(disabled bool) string {
 	return "text-gray-700 dark:text-gray-300"
 }
 
-func getActionClickHandler(action CardAction) string {
+func getCardActionClickHandler(action CardAction) string {
 	if action.OnClick != "" {
 		return action.OnClick
 	}

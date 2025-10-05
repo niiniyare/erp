@@ -98,13 +98,13 @@ templ SimpleActions(props QuickActionsProps) {
 templ CategorizedActions(props QuickActionsProps) {
 	<div class="space-y-4">
 		for _, category := range props.Categories {
-			@ActionCategory(category, props)
+			@ActionCategorySection(category, props)
 		}
 	</div>
 }
 
 // ActionCategory renders a single category of actions
-templ ActionCategory(category ActionCategory, props QuickActionsProps) {
+templ ActionCategorySection(category ActionCategory, props QuickActionsProps) {
 	<div class="space-y-3">
 		<!-- Category Header -->
 		<div 
@@ -197,7 +197,7 @@ templ QuickActionButton(action QuickAction, props QuickActionsProps) {
 		} else {
 			<button
 				type="button"
-				@click={ getActionClickHandler(action) }
+				@click={ getQuickActionClickHandler(action) }
 				if action.HxGet != "" {
 					hx-get={ action.HxGet }
 				}
@@ -304,7 +304,7 @@ templ QuickActionListItem(action QuickAction, props QuickActionsProps) {
 			} else {
 				<button
 					type="button"
-					@click={ getActionClickHandler(action) }
+					@click={ getQuickActionClickHandler(action) }
 					if action.HxGet != "" {
 						hx-get={ action.HxGet }
 					}
@@ -342,7 +342,7 @@ templ QuickActionCompact(action QuickAction, props QuickActionsProps) {
 	} else {
 		<button
 			type="button"
-			@click={ getActionClickHandler(action) }
+			@click={ getQuickActionClickHandler(action) }
 			if action.HxGet != "" {
 				hx-get={ action.HxGet }
 			}
@@ -440,7 +440,7 @@ func getActionButtonClasses(action QuickAction, props QuickActionsProps) string 
 	}
 }
 
-func getActionIconSize(size string) string {
+func getActionIconSize(size string) atoms.IconSize {
 	switch size {
 	case "sm":
 		return atoms.IconSizeSM
@@ -506,7 +506,7 @@ func getCompactActionClasses(action QuickAction) string {
 	return baseClasses + " border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600"
 }
 
-func getActionClickHandler(action QuickAction) string {
+func getQuickActionClickHandler(action QuickAction) string {
 	if action.OnClick != "" {
 		return action.OnClick
 	}

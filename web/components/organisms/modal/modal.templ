@@ -2,7 +2,6 @@ package modal
 
 import (
 	"github.com/niiniyare/erp/web/components/atoms"
-	"github.com/niiniyare/erp/web/components/molecules"
 )
 
 // Modal renders a dialog modal with backdrop and focus management
@@ -80,15 +79,15 @@ templ Modal(props ModalProps) {
 				} else {
 					<!-- Header Section -->
 					if props.Header != nil {
-						@ModalHeader(*props.Header, props.Closable)
+						@ModalHeaderSection(*props.Header, props.Closable)
 					}
 
 					<!-- Body Section -->
-					@ModalBody(props.Body)
+					@ModalBodySection(props.Body)
 
 					<!-- Footer Section -->
 					if props.Footer != nil {
-						@ModalFooter(*props.Footer)
+						@ModalFooterSection(*props.Footer)
 					}
 				}
 			</div>
@@ -96,8 +95,8 @@ templ Modal(props ModalProps) {
 	</div>
 }
 
-// ModalHeader renders the modal header with title and close button
-templ ModalHeader(header ModalHeader, closable bool) {
+// ModalHeaderSection renders the modal header with title and close button
+templ ModalHeaderSection(header ModalHeader, closable bool) {
 	<div class="flex items-center justify-between p-4 md:p-5 border-b border-gray-200 dark:border-gray-600 rounded-t">
 		<div class="flex items-center space-x-3">
 			if header.Icon != "" {
@@ -154,8 +153,8 @@ templ ModalHeader(header ModalHeader, closable bool) {
 	</div>
 }
 
-// ModalBody renders the modal body content
-templ ModalBody(body ModalBody) {
+// ModalBodySection renders the modal body content
+templ ModalBodySection(body ModalBody) {
 	<div 
 		class={ 
 			"p-4 md:p-5",
@@ -180,8 +179,8 @@ templ ModalBody(body ModalBody) {
 	</div>
 }
 
-// ModalFooter renders the modal footer with action buttons
-templ ModalFooter(footer ModalFooter) {
+// ModalFooterSection renders the modal footer with action buttons
+templ ModalFooterSection(footer ModalFooter) {
 	<div class={ 
 		"flex items-center p-4 md:p-5 border-t border-gray-200 dark:border-gray-600 rounded-b",
 		getFooterAlignmentClasses(footer.Alignment),
@@ -192,14 +191,14 @@ templ ModalFooter(footer ModalFooter) {
 			@templ.Raw(footer.CustomContent)
 		} else {
 			for _, action := range footer.Actions {
-				@ModalAction(action)
+				@ModalActionButton(action)
 			}
 		}
 	</div>
 }
 
-// ModalAction renders a single action button
-templ ModalAction(action ModalAction) {
+// ModalActionButton renders a single action button
+templ ModalActionButton(action ModalAction) {
 	@atoms.Button(atoms.ButtonProps{
 		Text:      action.Text,
 		Icon:      action.Icon,

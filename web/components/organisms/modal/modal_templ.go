@@ -10,7 +10,6 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"github.com/niiniyare/erp/web/components/atoms"
-	"github.com/niiniyare/erp/web/components/molecules"
 )
 
 // Modal renders a dialog modal with backdrop and focus management
@@ -60,7 +59,7 @@ func Modal(props ModalProps) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(generateModalAlpineData(props))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 13, Col: 41}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 12, Col: 41}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -78,7 +77,7 @@ func Modal(props ModalProps) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 22, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 21, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -97,7 +96,7 @@ func Modal(props ModalProps) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 25, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 24, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -116,7 +115,7 @@ func Modal(props ModalProps) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaDescribedBy)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 28, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 27, Col: 43}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -134,7 +133,7 @@ func Modal(props ModalProps) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(getModalRole(props.Type))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 30, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 29, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -152,7 +151,7 @@ func Modal(props ModalProps) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 34, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 33, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -246,7 +245,7 @@ func Modal(props ModalProps) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxGet)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 66, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 65, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -264,7 +263,7 @@ func Modal(props ModalProps) templ.Component {
 				var templ_7745c5c3_Var17 string
 				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxTarget)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 68, Col: 33}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 67, Col: 33}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 				if templ_7745c5c3_Err != nil {
@@ -283,7 +282,7 @@ func Modal(props ModalProps) templ.Component {
 				var templ_7745c5c3_Var18 string
 				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxSwap)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 71, Col: 29}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 70, Col: 29}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 				if templ_7745c5c3_Err != nil {
@@ -302,7 +301,7 @@ func Modal(props ModalProps) templ.Component {
 				var templ_7745c5c3_Var19 string
 				templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxTrigger)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 74, Col: 35}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 73, Col: 35}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 				if templ_7745c5c3_Err != nil {
@@ -331,7 +330,7 @@ func Modal(props ModalProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if props.Header != nil {
-				templ_7745c5c3_Err = ModalHeader(*props.Header, props.Closable).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = ModalHeaderSection(*props.Header, props.Closable).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -340,7 +339,7 @@ func Modal(props ModalProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = ModalBody(props.Body).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = ModalBodySection(props.Body).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -349,7 +348,7 @@ func Modal(props ModalProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if props.Footer != nil {
-				templ_7745c5c3_Err = ModalFooter(*props.Footer).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = ModalFooterSection(*props.Footer).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -363,8 +362,8 @@ func Modal(props ModalProps) templ.Component {
 	})
 }
 
-// ModalHeader renders the modal header with title and close button
-func ModalHeader(header ModalHeader, closable bool) templ.Component {
+// ModalHeaderSection renders the modal header with title and close button
+func ModalHeaderSection(header ModalHeader, closable bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -421,7 +420,7 @@ func ModalHeader(header ModalHeader, closable bool) templ.Component {
 				var templ_7745c5c3_Var21 string
 				templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(header.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 117, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 116, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 				if templ_7745c5c3_Err != nil {
@@ -439,7 +438,7 @@ func ModalHeader(header ModalHeader, closable bool) templ.Component {
 				var templ_7745c5c3_Var22 string
 				templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(header.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 121, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 120, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 				if templ_7745c5c3_Err != nil {
@@ -457,7 +456,7 @@ func ModalHeader(header ModalHeader, closable bool) templ.Component {
 				var templ_7745c5c3_Var23 string
 				templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(header.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 125, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 124, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 				if templ_7745c5c3_Err != nil {
@@ -475,7 +474,7 @@ func ModalHeader(header ModalHeader, closable bool) templ.Component {
 				var templ_7745c5c3_Var24 string
 				templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(header.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 129, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 128, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 				if templ_7745c5c3_Err != nil {
@@ -495,7 +494,7 @@ func ModalHeader(header ModalHeader, closable bool) templ.Component {
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(header.Subtitle)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 135, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 134, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -535,8 +534,8 @@ func ModalHeader(header ModalHeader, closable bool) templ.Component {
 	})
 }
 
-// ModalBody renders the modal body content
-func ModalBody(body ModalBody) templ.Component {
+// ModalBodySection renders the modal body content
+func ModalBodySection(body ModalBody) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -590,7 +589,7 @@ func ModalBody(body ModalBody) templ.Component {
 			var templ_7745c5c3_Var29 string
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(body.FormID + "-body")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 166, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 165, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 			if templ_7745c5c3_Err != nil {
@@ -624,7 +623,7 @@ func ModalBody(body ModalBody) templ.Component {
 				var templ_7745c5c3_Var30 string
 				templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(body.Content)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 176, Col: 19}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 175, Col: 19}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 				if templ_7745c5c3_Err != nil {
@@ -644,8 +643,8 @@ func ModalBody(body ModalBody) templ.Component {
 	})
 }
 
-// ModalFooter renders the modal footer with action buttons
-func ModalFooter(footer ModalFooter) templ.Component {
+// ModalFooterSection renders the modal footer with action buttons
+func ModalFooterSection(footer ModalFooter) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -699,7 +698,7 @@ func ModalFooter(footer ModalFooter) templ.Component {
 			}
 		} else {
 			for _, action := range footer.Actions {
-				templ_7745c5c3_Err = ModalAction(action).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = ModalActionButton(action).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -713,8 +712,8 @@ func ModalFooter(footer ModalFooter) templ.Component {
 	})
 }
 
-// ModalAction renders a single action button
-func ModalAction(action ModalAction) templ.Component {
+// ModalActionButton renders a single action button
+func ModalActionButton(action ModalAction) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -884,7 +883,7 @@ func ConfirmModal(props ConfirmModalProps) templ.Component {
 		var templ_7745c5c3_Var37 string
 		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 303, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 302, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 		if templ_7745c5c3_Err != nil {
@@ -902,7 +901,7 @@ func ConfirmModal(props ConfirmModalProps) templ.Component {
 			var templ_7745c5c3_Var38 string
 			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(props.Message)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 308, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 307, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 			if templ_7745c5c3_Err != nil {
@@ -972,7 +971,7 @@ func FormModal(props FormModalProps) templ.Component {
 		var templ_7745c5c3_Var40 string
 		templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(generateFormAlpineData(props))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 337, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 336, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 		if templ_7745c5c3_Err != nil {
@@ -1007,7 +1006,7 @@ func FormModal(props FormModalProps) templ.Component {
 		var templ_7745c5c3_Var43 string
 		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 368, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 367, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 		if templ_7745c5c3_Err != nil {
@@ -1036,7 +1035,7 @@ func FormModal(props FormModalProps) templ.Component {
 			var templ_7745c5c3_Var44 string
 			templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(props.FormID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 385, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 384, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 			if templ_7745c5c3_Err != nil {
@@ -1055,7 +1054,7 @@ func FormModal(props FormModalProps) templ.Component {
 			var templ_7745c5c3_Var45 templ.SafeURL
 			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinURLErrs(props.FormAction)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 388, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 387, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 			if templ_7745c5c3_Err != nil {
@@ -1074,7 +1073,7 @@ func FormModal(props FormModalProps) templ.Component {
 			var templ_7745c5c3_Var46 string
 			templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(props.FormMethod)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 391, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 390, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 			if templ_7745c5c3_Err != nil {
@@ -1093,7 +1092,7 @@ func FormModal(props FormModalProps) templ.Component {
 			var templ_7745c5c3_Var47 string
 			templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxPost)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 394, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 393, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 			if templ_7745c5c3_Err != nil {
@@ -1112,7 +1111,7 @@ func FormModal(props FormModalProps) templ.Component {
 			var templ_7745c5c3_Var48 string
 			templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxTarget)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 397, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 396, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
 			if templ_7745c5c3_Err != nil {
@@ -1131,7 +1130,7 @@ func FormModal(props FormModalProps) templ.Component {
 			var templ_7745c5c3_Var49 string
 			templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxSwap)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 400, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 399, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
 			if templ_7745c5c3_Err != nil {
