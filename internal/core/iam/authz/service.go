@@ -52,7 +52,7 @@ type Service interface {
 	GetCacheStatistics(ctx context.Context) (*CacheStatistics, error)
 }
 
-// Request/Response types for Permission Evaluation
+// PermissionEvaluationRequest is a Request/Response types for Permission Evaluation
 type PermissionEvaluationRequest struct {
 	UserID       uuid.UUID      `json:"user_id" validate:"required"`
 	ResourceType string         `json:"resource_type" validate:"required"`
@@ -88,7 +88,7 @@ type BulkPermissionEvaluationResult struct {
 	Timestamp       time.Time                     `json:"timestamp"`
 }
 
-// User Permissions types
+// UserEffectivePermissions is User Permissions types
 type UserEffectivePermissions struct {
 	UserID      uuid.UUID           `json:"user_id"`
 	EntityID    *uuid.UUID          `json:"entity_id,omitempty"`
@@ -105,7 +105,7 @@ type RoleHierarchy struct {
 	Timestamp time.Time           `json:"timestamp"`
 }
 
-// Access Request types
+// CreateAccessRequestRequest is a  Access Request types
 type CreateAccessRequestRequest struct {
 	UserID        uuid.UUID      `json:"user_id" validate:"required"`
 	ResourceType  string         `json:"resource_type" validate:"required"`
@@ -141,7 +141,7 @@ type ListAccessRequestsResult struct {
 	HasMore  bool                   `json:"has_more"`
 }
 
-// Approval Workflow types
+// CreateApprovalWorkflowRequest Approval Workflow types
 type CreateApprovalWorkflowRequest struct {
 	Name        string                `json:"name" validate:"required"`
 	Description string                `json:"description"`
@@ -157,7 +157,7 @@ type UpdateApprovalWorkflowRequest struct {
 	Metadata    map[string]any        `json:"metadata,omitempty"`
 }
 
-// Conditional Access types
+// ConditionalAccessRequest Conditional Access types
 type ConditionalAccessRequest struct {
 	UserID       uuid.UUID            `json:"user_id" validate:"required"`
 	ResourceType string               `json:"resource_type" validate:"required"`
@@ -194,7 +194,7 @@ type UpdateConditionalAccessPolicyRequest struct {
 	Metadata    map[string]any           `json:"metadata,omitempty"`
 }
 
-// Permission Management types
+// GrantPermissionRequest Permission Management types
 type GrantPermissionRequest struct {
 	UserID       uuid.UUID  `json:"user_id" validate:"required"`
 	ResourceType string     `json:"resource_type" validate:"required"`
@@ -213,7 +213,7 @@ type RevokePermissionRequest struct {
 	EntityID     *uuid.UUID `json:"entity_id,omitempty"`
 }
 
-// Decision History types
+// DecisionHistoryEntry  History types
 type DecisionHistoryEntry struct {
 	ID             uuid.UUID                `json:"id"`
 	UserID         uuid.UUID                `json:"user_id"`
@@ -229,7 +229,7 @@ type DecisionHistoryEntry struct {
 	RequestID      string                   `json:"request_id"`
 }
 
-// Cache Statistics types
+// CacheStatistics  Statistics types
 type CacheStatistics struct {
 	HitRate        float64 `json:"hit_rate"`
 	MissRate       float64 `json:"miss_rate"`
