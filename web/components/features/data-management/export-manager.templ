@@ -1,0 +1,312 @@
+package datamanagement
+
+import (
+	"github.com/niiniyare/erp/web/components/atoms"
+)
+
+// ExportManagerProps defines properties for the export manager component
+type ExportManagerProps struct {
+	Title        string       `json:"title"`
+	Subtitle     string       `json:"subtitle,omitempty"`
+	ExportTypes  []ExportType `json:"exportTypes"`
+	RecentExports []ExportJob `json:"recentExports,omitempty"`
+	
+	// Form handling
+	HxPost   string `json:"hxPost,omitempty"`
+	HxTarget string `json:"hxTarget,omitempty"`
+}
+
+// ExportType represents an available export type
+type ExportType struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Icon        string   `json:"icon,omitempty"`
+	Formats     []string `json:"formats"`     // csv, xlsx, pdf, json
+	Category    string   `json:"category"`    // financial, user, system, etc.
+	Available   bool     `json:"available"`
+	RequiredRole string  `json:"requiredRole,omitempty"`
+}
+
+// ExportJob represents an export job status
+type ExportJob struct {
+	ID          string `json:"id"`
+	Type        string `json:"type"`
+	Format      string `json:"format"`
+	Status      string `json:"status"`      // pending, processing, completed, failed
+	CreatedAt   string `json:"createdAt"`
+	CompletedAt string `json:"completedAt,omitempty"`
+	DownloadURL string `json:"downloadUrl,omitempty"`
+	ErrorMessage string `json:"errorMessage,omitempty"`
+	FileSize    string `json:"fileSize,omitempty"`
+}
+
+// ExportManager renders a comprehensive data export interface
+templ ExportManager(props ExportManagerProps) {
+	<div class="space-y-6">
+		<!-- Header -->
+		<div>
+			<h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+				{ getExportTitle(props.Title) }
+			</h2>
+			if props.Subtitle != "" {
+				<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+					{ props.Subtitle }
+				</p>
+			}
+		</div>
+		
+		<!-- Export Types Grid -->
+		<div>
+			<h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+				Available Exports
+			</h3>
+			
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+				for _, exportType := range props.ExportTypes {
+					if exportType.Available {
+						@ExportTypeCard(exportType)
+					}
+				}
+			</div>
+		</div>
+		
+		<!-- Recent Exports -->
+		if len(props.RecentExports) > 0 {
+			<div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+				<div class="p-6 border-b border-gray-200 dark:border-gray-700">
+					<div class="flex items-center justify-between">
+						<h3 class="text-lg font-medium text-gray-900 dark:text-white">
+							Recent Exports
+						</h3>
+						<button 
+							type="button"
+							class="text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400"
+							hx-get="/data-management/exports/history"
+							hx-target="#main-modal"
+						>
+							View all
+						</button>
+					</div>
+				</div>
+				
+				<div class="divide-y divide-gray-200 dark:divide-gray-700">
+					for _, job := range props.RecentExports {
+						@ExportJobItem(job)
+					}
+				</div>
+			</div>
+		}
+	</div>
+}
+
+// ExportTypeCard renders a card for a single export type
+templ ExportTypeCard(exportType ExportType) {
+	<div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:shadow-md transition-shadow duration-150">
+		<!-- Header -->
+		<div class="flex items-start justify-between mb-4">
+			<div class="flex items-center space-x-3">
+				if exportType.Icon != "" {
+					<div class="flex-shrink-0 p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+						@atoms.Icon(atoms.IconProps{
+							Name:  exportType.Icon,
+							Size:  atoms.IconSizeMD,
+							Class: "text-blue-600 dark:text-blue-400",
+						})
+					</div>
+				}
+				
+				<div>
+					<h4 class="text-base font-medium text-gray-900 dark:text-white">
+						{ exportType.Name }
+					</h4>
+					if exportType.Category != "" {
+						<span class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+							{ exportType.Category }
+						</span>
+					}
+				</div>
+			</div>
+		</div>
+		
+		<!-- Description -->
+		if exportType.Description != "" {
+			<p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+				{ exportType.Description }
+			</p>
+		}
+		
+		<!-- Formats -->
+		<div class="flex flex-wrap gap-2 mb-4">
+			for _, format := range exportType.Formats {
+				<span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+					{ format }
+				</span>
+			}
+		</div>
+		
+		<!-- Export Button -->
+		<div class="flex justify-end">
+			@atoms.Button(atoms.ButtonProps{
+				Text:     "Export",
+				Variant:  atoms.ButtonPrimary,
+				Size:     atoms.ButtonSizeSM,
+				HxGet:    "/data-management/export/" + exportType.ID,
+				HxTarget: "#main-modal",
+			})
+		</div>
+	</div>
+}
+
+// ExportJobItem renders a single export job in the recent exports list
+templ ExportJobItem(job ExportJob) {
+	<div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
+		<div class="flex items-center justify-between">
+			<div class="flex items-center space-x-3">
+				<!-- Status Icon -->
+				<div class={ getJobStatusIconWrapper(job.Status) }>
+					@atoms.Icon(atoms.IconProps{
+						Name:  getJobStatusIcon(job.Status),
+						Size:  atoms.IconSizeXS,
+						Class: getJobStatusIconColor(job.Status),
+					})
+				</div>
+				
+				<!-- Job Info -->
+				<div>
+					<div class="flex items-center space-x-2">
+						<p class="text-sm font-medium text-gray-900 dark:text-white">
+							{ job.Type }
+						</p>
+						<span class="text-xs text-gray-500 dark:text-gray-400">•</span>
+						<span class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase">
+							{ job.Format }
+						</span>
+					</div>
+					
+					<div class="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+						<span>{ job.CreatedAt }</span>
+						if job.FileSize != "" {
+							<span>•</span>
+							<span>{ job.FileSize }</span>
+						}
+					</div>
+				</div>
+			</div>
+			
+			<!-- Actions -->
+			<div class="flex items-center space-x-2">
+				@JobStatusBadge(job.Status)
+				
+				if job.Status == "completed" && job.DownloadURL != "" {
+					<a 
+						href={ job.DownloadURL }
+						class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
+						download
+					>
+						<span>Download</span>
+						@atoms.Icon(atoms.IconProps{
+							Name:  "arrow-down-tray",
+							Size:  atoms.IconSizeXS,
+							Class: "ml-1",
+						})
+					</a>
+				}
+				
+				if job.Status == "failed" && job.ErrorMessage != "" {
+					<button 
+						type="button"
+						class="text-xs text-red-600 hover:text-red-500 dark:text-red-400"
+						title={ job.ErrorMessage }
+					>
+						View error
+					</button>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// JobStatusBadge renders a status badge for export jobs
+templ JobStatusBadge(status string) {
+	<span class={ getJobStatusBadgeClasses(status) }>
+		{ getJobStatusText(status) }
+	</span>
+}
+
+// Helper functions
+func getExportTitle(title string) string {
+	if title == "" {
+		return "Data Export Manager"
+	}
+	return title
+}
+
+func getJobStatusIcon(status string) string {
+	switch status {
+	case "completed":
+		return "check-circle"
+	case "processing":
+		return "arrow-path"
+	case "failed":
+		return "x-circle"
+	default: // pending
+		return "clock"
+	}
+}
+
+func getJobStatusIconColor(status string) string {
+	switch status {
+	case "completed":
+		return "text-green-600 dark:text-green-400"
+	case "processing":
+		return "text-blue-600 dark:text-blue-400"
+	case "failed":
+		return "text-red-600 dark:text-red-400"
+	default: // pending
+		return "text-yellow-600 dark:text-yellow-400"
+	}
+}
+
+func getJobStatusIconWrapper(status string) string {
+	baseClasses := "flex items-center justify-center w-6 h-6 rounded-full"
+	
+	switch status {
+	case "completed":
+		return baseClasses + " bg-green-100 dark:bg-green-900/20"
+	case "processing":
+		return baseClasses + " bg-blue-100 dark:bg-blue-900/20"
+	case "failed":
+		return baseClasses + " bg-red-100 dark:bg-red-900/20"
+	default: // pending
+		return baseClasses + " bg-yellow-100 dark:bg-yellow-900/20"
+	}
+}
+
+func getJobStatusText(status string) string {
+	switch status {
+	case "completed":
+		return "Completed"
+	case "processing":
+		return "Processing"
+	case "failed":
+		return "Failed"
+	default: // pending
+		return "Pending"
+	}
+}
+
+func getJobStatusBadgeClasses(status string) string {
+	baseClasses := "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium"
+	
+	switch status {
+	case "completed":
+		return baseClasses + " bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+	case "processing":
+		return baseClasses + " bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+	case "failed":
+		return baseClasses + " bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+	default: // pending
+		return baseClasses + " bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+	}
+}

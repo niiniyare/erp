@@ -1,0 +1,230 @@
+package auth
+
+import (
+	"github.com/niiniyare/erp/web/components/atoms"
+	"github.com/niiniyare/erp/web/components/molecules"
+	"github.com/niiniyare/erp/web/layouts"
+)
+
+// RegisterPageProps defines properties for the registration page
+type RegisterPageProps struct {
+	Title            string            `json:"title"`
+	Subtitle         string            `json:"subtitle,omitempty"`
+	Errors           map[string]string `json:"errors,omitempty"`
+	ShowTermsLink    bool              `json:"showTermsLink"`
+	ShowLoginLink    bool              `json:"showLoginLink"`
+	OrganizationName string            `json:"organizationName,omitempty"`
+	LogoURL          string            `json:"logoUrl,omitempty"`
+	HxPost           string            `json:"hxPost,omitempty"`
+	HxTarget         string            `json:"hxTarget,omitempty"`
+	InviteCode       string            `json:"inviteCode,omitempty"`
+}
+
+// RegisterPage renders the complete registration page with auth layout
+templ RegisterPage(props RegisterPageProps) {
+	@layouts.AuthLayout(layouts.AuthLayoutProps{
+		Base: layouts.BaseLayoutProps{
+			Title:       getRegisterPageTitle(props.Title),
+			Description: "Create your ERP account and get started",
+			ThemeMode:   "system",
+		},
+		FormTitle:   props.Title,
+		AppName:     props.OrganizationName,
+		AppLogo:     props.LogoURL,
+	}, RegisterForm(props))
+}
+
+// RegisterForm renders the registration form component
+templ RegisterForm(props RegisterPageProps) {
+	<div class="w-full max-w-md space-y-6">
+		<!-- Header -->
+		<div class="text-center">
+			<h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+				{ props.Title }
+			</h2>
+			if props.Subtitle != "" {
+				<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+					{ props.Subtitle }
+				</p>
+			}
+		</div>
+
+		<!-- Registration Form -->
+		<form 
+			class="space-y-6" 
+			action="/auth/register" 
+			method="POST"
+			if props.HxPost != "" {
+				hx-post={ props.HxPost }
+			}
+			if props.HxTarget != "" {
+				hx-target={ props.HxTarget }
+			}
+			hx-swap="innerHTML"
+			hx-indicator="#register-loading"
+		>
+			<!-- CSRF Token -->
+			<input type="hidden" name="csrf_token" value="__CSRF_TOKEN__" />
+			
+			if props.InviteCode != "" {
+				<input type="hidden" name="invite_code" value={ props.InviteCode } />
+			}
+
+			<!-- Full Name Field -->
+			<div>
+				@molecules.Field(molecules.FieldProps{
+					Type:        molecules.FieldTypeInput,
+					Label:       "Full Name",
+					Name:        "full_name",
+					Placeholder: "Enter your full name",
+					Required:    true,
+					InputType:   atoms.InputText,
+					ID:          "full_name",
+					ErrorText:   getFieldError(props.Errors, "full_name"),
+					Class:       "w-full",
+				})
+			</div>
+
+			<!-- Email Field -->
+			<div>
+				@molecules.Field(molecules.FieldProps{
+					Type:        molecules.FieldTypeInput,
+					Label:       "Email Address",
+					Name:        "email",
+					Placeholder: "Enter your email",
+					Required:    true,
+					InputType:   atoms.InputEmail,
+					ID:          "email",
+					ErrorText:   getFieldError(props.Errors, "email"),
+					Class:       "w-full",
+				})
+			</div>
+
+			<!-- Password Field -->
+			<div>
+				@molecules.Field(molecules.FieldProps{
+					Type:        molecules.FieldTypeInput,
+					Label:       "Password",
+					Name:        "password",
+					Placeholder: "Create a secure password",
+					Required:    true,
+					InputType:   atoms.InputPassword,
+					ID:          "password",
+					ErrorText:   getFieldError(props.Errors, "password"),
+					HelpText:    "Minimum 8 characters with mixed case and numbers",
+					Class:       "w-full",
+				})
+			</div>
+
+			<!-- Confirm Password Field -->
+			<div>
+				@molecules.Field(molecules.FieldProps{
+					Type:        molecules.FieldTypeInput,
+					Label:       "Confirm Password",
+					Name:        "password_confirm",
+					Placeholder: "Confirm your password",
+					Required:    true,
+					InputType:   atoms.InputPassword,
+					ID:          "password_confirm",
+					ErrorText:   getFieldError(props.Errors, "password_confirm"),
+					Class:       "w-full",
+				})
+			</div>
+
+			<!-- Terms and Conditions -->
+			if props.ShowTermsLink {
+				<div class="flex items-start">
+					@atoms.Checkbox(atoms.CheckboxProps{
+						ID:       "accept_terms",
+						Name:     "accept_terms",
+						Value:    "true",
+						Required: true,
+						Label:    "",
+					})
+					<div class="ml-3 text-sm">
+						<label for="accept_terms" class="text-gray-700 dark:text-gray-300">
+							I agree to the 
+							<a 
+								href="/legal/terms" 
+								target="_blank"
+								class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+							>
+								Terms of Service
+							</a>
+							and 
+							<a 
+								href="/legal/privacy" 
+								target="_blank"
+								class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+							>
+								Privacy Policy
+							</a>
+						</label>
+						if getFieldError(props.Errors, "accept_terms") != "" {
+							<p class="mt-1 text-sm text-red-600 dark:text-red-400">
+								{ getFieldError(props.Errors, "accept_terms") }
+							</p>
+						}
+					</div>
+				</div>
+			}
+
+			<!-- General Error Display -->
+			if getFieldError(props.Errors, "general") != "" {
+				<div class="rounded-md bg-red-50 dark:bg-red-900/50 p-4">
+					<div class="text-sm text-red-700 dark:text-red-200">
+						{ getFieldError(props.Errors, "general") }
+					</div>
+				</div>
+			}
+
+			<!-- Submit Button -->
+			<div>
+				@atoms.Button(atoms.ButtonProps{
+					Text:     "Create Account",
+					Type:     "submit",
+					Variant:  atoms.ButtonPrimary,
+					Size:     atoms.ButtonSizeLG,
+					Class:    "w-full",
+					Loading:  false,
+				})
+			</div>
+
+			<!-- Loading Indicator -->
+			<div id="register-loading" class="htmx-indicator">
+				<div class="flex items-center justify-center">
+					@atoms.Spinner(atoms.SpinnerProps{
+						Size:  atoms.SpinnerSizeSM,
+						Color: "blue",
+					})
+					<span class="ml-2 text-sm text-gray-600 dark:text-gray-400">
+						Creating your account...
+					</span>
+				</div>
+			</div>
+		</form>
+
+		<!-- Login Link -->
+		if props.ShowLoginLink {
+			<div class="text-center">
+				<p class="text-sm text-gray-600 dark:text-gray-400">
+					Already have an account?
+					<a 
+						href="/auth/login" 
+						class="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+					>
+						Sign in
+					</a>
+				</p>
+			</div>
+		}
+	</div>
+}
+
+// Helper function
+func getRegisterPageTitle(title string) string {
+	if title == "" {
+		return "Create Account - ERP System"
+	}
+	return title + " - ERP System"
+}
