@@ -24,7 +24,7 @@ type UserGoaHandler struct {
 	accessRequestService     request.AccessRequestService
 	conditionalAccessService conditional.ConditionalAccessService
 	analyticsService         analytics.UserAnalyticsService
-	iamService               interface{} // TODO: Replace with proper IAM service when available
+	iamService               any // TODO: Replace with proper IAM service when available
 	tracing                  tracing.TracingService
 	metrics                  *metrics.MetricsService
 }

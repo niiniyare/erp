@@ -124,7 +124,7 @@ package handlers
 // 	}
 //
 // 	// Return JSON response for DataTable
-// 	response := map[string]interface{}{
+// 	response := map[string]any{
 // 		"tenants":    result.Tenants,
 // 		"pagination": result,
 // 		"success":    true,
@@ -303,7 +303,7 @@ package handlers
 //
 // 	// Return JSON response
 // 	w.Header().Set("Content-Type", "application/json")
-// 	json.NewEncoder(w).Encode(map[string]interface{}{
+// 	json.NewEncoder(w).Encode(map[string]any{
 // 		"success": true,
 // 		"message": fmt.Sprintf("Bulk action completed: %d successful, %d failed", results.SuccessCount, results.ErrorCount),
 // 		"results": results,

@@ -53,7 +53,7 @@ type DataTableConfig struct {
 type DataTableProps struct {
 	// Table structure
 	Columns []DataTableColumn        `json:"columns"`
-	Data    []map[string]interface{} `json:"data,omitempty"`
+	Data    []map[string]any `json:"data,omitempty"`
 
 	// Configuration
 	Config DataTableConfig `json:"config"`

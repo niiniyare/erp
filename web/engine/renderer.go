@@ -47,7 +47,7 @@ func (r *SchemaRenderer) RenderPage(schema *schemas.PageSchema, ctx context.Cont
 	}
 
 	// Fetch data sources
-	data := make(map[string]interface{})
+	data := make(map[string]any)
 	for _, ds := range schema.DataSources {
 		if r.dataProvider != nil {
 			value, err := r.dataProvider.GetData(&ds, ctx)
@@ -116,7 +116,7 @@ func (r *SchemaRenderer) RenderComponent(def *schemas.ComponentDefinition, ctx c
 		data := r.getContextData(ctx, def.DataSource)
 		if data != nil {
 			if def.Props == nil {
-				def.Props = make(map[string]interface{})
+				def.Props = make(map[string]any)
 			}
 			def.Props["data"] = data
 		}
@@ -171,7 +171,7 @@ func (r *SchemaRenderer) RenderLayout(layoutType string, content templ.Component
 		// Try to resolve layout as a component
 		layoutDef := &schemas.ComponentDefinition{
 			Type: "layouts." + layoutType,
-			Props: map[string]interface{}{
+			Props: map[string]any{
 				"content": content,
 			},
 		}
@@ -229,7 +229,7 @@ func (r *SchemaRenderer) evaluateConditions(conditions []schemas.RenderCondition
 }
 
 func (r *SchemaRenderer) evaluateCondition(condition schemas.RenderCondition, ctx context.Context) (bool, error) {
-	var value interface{}
+	var value any
 
 	switch condition.Source {
 	case "props":
@@ -252,7 +252,7 @@ func (r *SchemaRenderer) evaluateCondition(condition schemas.RenderCondition, ct
 	return r.compareValues(value, condition.Operator, condition.Value), nil
 }
 
-func (r *SchemaRenderer) compareValues(actual interface{}, operator string, expected interface{}) bool {
+func (r *SchemaRenderer) compareValues(actual any, operator string, expected any) bool {
 	switch operator {
 	case "eq", "==":
 		return actual == expected
@@ -277,7 +277,7 @@ func (r *SchemaRenderer) compareValues(actual interface{}, operator string, expe
 	}
 }
 
-func (r *SchemaRenderer) compareNumeric(a, b interface{}, op string) bool {
+func (r *SchemaRenderer) compareNumeric(a, b any, op string) bool {
 	// Simple numeric comparison - would need more robust implementation
 	af, aok := a.(float64)
 	bf, bok := b.(float64)
@@ -299,9 +299,9 @@ func (r *SchemaRenderer) compareNumeric(a, b interface{}, op string) bool {
 	}
 }
 
-func (r *SchemaRenderer) valueInSlice(value, slice interface{}) bool {
+func (r *SchemaRenderer) valueInSlice(value, slice any) bool {
 	// Check if value is in slice - simplified implementation
-	if s, ok := slice.([]interface{}); ok {
+	if s, ok := slice.([]any); ok {
 		for _, item := range s {
 			if item == value {
 				return true
@@ -311,7 +311,7 @@ func (r *SchemaRenderer) valueInSlice(value, slice interface{}) bool {
 	return false
 }
 
-func (r *SchemaRenderer) stringContains(haystack, needle interface{}) bool {
+func (r *SchemaRenderer) stringContains(haystack, needle any) bool {
 	h, hok := haystack.(string)
 	n, nok := needle.(string)
 	if !hok || !nok {
@@ -320,16 +320,16 @@ func (r *SchemaRenderer) stringContains(haystack, needle interface{}) bool {
 	return strings.Contains(h, n)
 }
 
-func (r *SchemaRenderer) getContextData(ctx context.Context, key string) interface{} {
+func (r *SchemaRenderer) getContextData(ctx context.Context, key string) any {
 	if data := ctx.Value("schemaData"); data != nil {
-		if dataMap, ok := data.(map[string]interface{}); ok {
+		if dataMap, ok := data.(map[string]any); ok {
 			return dataMap[key]
 		}
 	}
 	return nil
 }
 
-func (r *SchemaRenderer) getContextValue(ctx context.Context, key string) interface{} {
+func (r *SchemaRenderer) getContextValue(ctx context.Context, key string) any {
 	// This would need to be implemented based on how context values are structured
 	// For now, return nil
 	return nil

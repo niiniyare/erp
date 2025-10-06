@@ -14,7 +14,7 @@ import (
 )
 
 // DataTableBody renders the table body
-func DataTableBody(data []map[string]interface{}, columns []DataTableColumn, actions []DataTableAction) templ.Component {
+func DataTableBody(data []map[string]any, columns []DataTableColumn, actions []DataTableAction) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -61,7 +61,7 @@ func DataTableBody(data []map[string]interface{}, columns []DataTableColumn, act
 }
 
 // DataTableRow renders a single table row
-func DataTableRow(row map[string]interface{}, columns []DataTableColumn, actions []DataTableAction, index int) templ.Component {
+func DataTableRow(row map[string]any, columns []DataTableColumn, actions []DataTableAction, index int) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -200,7 +200,7 @@ func DataTableRowCheckbox(index int) templ.Component {
 }
 
 // DataTableCell renders a single data cell
-func DataTableCell(row map[string]interface{}, column DataTableColumn) templ.Component {
+func DataTableCell(row map[string]any, column DataTableColumn) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -267,7 +267,7 @@ func DataTableCell(row map[string]interface{}, column DataTableColumn) templ.Com
 }
 
 // DataTableCellContent renders the content of a cell based on its type
-func DataTableCellContent(value interface{}, column DataTableColumn) templ.Component {
+func DataTableCellContent(value any, column DataTableColumn) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -390,7 +390,7 @@ func DataTableCellContent(value interface{}, column DataTableColumn) templ.Compo
 }
 
 // DataTableCellBadge renders a badge-style cell
-func DataTableCellBadge(value interface{}) templ.Component {
+func DataTableCellBadge(value any) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -433,7 +433,7 @@ func DataTableCellBadge(value interface{}) templ.Component {
 }
 
 // DataTableCellStatus renders a status indicator
-func DataTableCellStatus(value interface{}) templ.Component {
+func DataTableCellStatus(value any) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {

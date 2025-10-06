@@ -26,7 +26,7 @@ type CacheManagerProps struct {
 	CleanupInterval int                    `json:"cleanup_interval"` // Cleanup interval in seconds
 	Compression     bool                   `json:"compression"`      // Enable data compression
 	Encryption      bool                   `json:"encryption"`       // Enable data encryption
-	Strategies      map[string]interface{} `json:"strategies"`       // Cache strategies by key pattern
+	Strategies      map[string]any `json:"strategies"`       // Cache strategies by key pattern
 }
 
 // CachedApiCallProps defines properties for cached API calls
@@ -267,7 +267,7 @@ func getNamespacesJSON(namespaces []string) string {
 	return "['" + strings.Join(namespaces, "','") + "']"
 }
 
-func getStrategiesJSON(strategies map[string]interface{}) string {
+func getStrategiesJSON(strategies map[string]any) string {
 	if len(strategies) == 0 {
 		return "{}"
 	}

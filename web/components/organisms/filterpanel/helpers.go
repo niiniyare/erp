@@ -332,7 +332,7 @@ func getPresetButtonVariant(isSelected bool) atoms.ButtonVariant {
 }
 
 // formatFieldValue formats a filter field value for display
-func formatFieldValue(value interface{}, fieldType FilterType) string {
+func formatFieldValue(value any, fieldType FilterType) string {
 	if value == nil {
 		return ""
 	}
@@ -353,8 +353,8 @@ func formatFieldValue(value interface{}, fieldType FilterType) string {
 }
 
 // getFilterTypeInputProps returns input props for different filter types
-func getFilterTypeInputProps(field FilterField) map[string]interface{} {
-	props := make(map[string]interface{})
+func getFilterTypeInputProps(field FilterField) map[string]any {
+	props := make(map[string]any)
 
 	props["id"] = field.ID
 	props["name"] = field.Name
@@ -398,12 +398,12 @@ func shouldShowOperatorSelect(field FilterField) bool {
 }
 
 // getDefaultFilterState returns default filter panel state
-func getDefaultFilterState() map[string]interface{} {
-	return map[string]interface{}{
+func getDefaultFilterState() map[string]any {
+	return map[string]any{
 		"collapsed":      false,
 		"loading":        false,
 		"resultCount":    0,
 		"selectedPreset": nil,
-		"filters":        map[string]interface{}{},
+		"filters":        map[string]any{},
 	}
 }

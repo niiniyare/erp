@@ -1,0 +1,655 @@
+{
+  "id": "dashboard-patterns",
+  "version": "1.0.0",
+  "title": "Dashboard & Metrics Patterns",
+  "description": "Comprehensive patterns for business intelligence and metric displays",
+  "patterns": {
+    "summary-metrics": {
+      "id": "summary-metrics",
+      "title": "Summary Metrics Display",
+      "description": "Large number displays with comparison indicators and trends",
+      "schema": {
+        "type": "organisms.metrics-grid",
+        "props": {
+          "layout": "grid",
+          "columns": {
+            "default": 1,
+            "sm": 2,
+            "lg": 4
+          },
+          "gap": "1.5rem",
+          "metrics": [
+            {
+              "id": "total-revenue",
+              "title": "Total Revenue",
+              "value": "{metrics.totalRevenue}",
+              "format": "currency",
+              "size": "large",
+              "comparison": {
+                "value": "{metrics.revenueChange}",
+                "format": "percentage",
+                "period": "Last month",
+                "trend": "{metrics.revenueTrend}",
+                "showIcon": true
+              },
+              "chart": {
+                "type": "sparkline",
+                "data": "{metrics.revenueHistory}",
+                "color": "green",
+                "height": "40px"
+              },
+              "icon": "dollar-sign",
+              "color": "green"
+            },
+            {
+              "id": "active-users",
+              "title": "Active Users",
+              "value": "{metrics.activeUsers}",
+              "format": "number",
+              "size": "large",
+              "comparison": {
+                "value": "{metrics.usersChange}",
+                "format": "percentage", 
+                "period": "Last week",
+                "trend": "{metrics.usersTrend}",
+                "showIcon": true
+              },
+              "chart": {
+                "type": "sparkline",
+                "data": "{metrics.usersHistory}",
+                "color": "blue",
+                "height": "40px"
+              },
+              "icon": "users",
+              "color": "blue"
+            },
+            {
+              "id": "conversion-rate",
+              "title": "Conversion Rate",
+              "value": "{metrics.conversionRate}",
+              "format": "percentage",
+              "size": "large",
+              "comparison": {
+                "value": "{metrics.conversionChange}",
+                "format": "percentage",
+                "period": "Last month",
+                "trend": "{metrics.conversionTrend}",
+                "showIcon": true
+              },
+              "target": {
+                "value": 15.5,
+                "label": "Target",
+                "showProgress": true
+              },
+              "icon": "trending-up",
+              "color": "purple"
+            },
+            {
+              "id": "satisfaction-score",
+              "title": "Customer Satisfaction",
+              "value": "{metrics.satisfactionScore}",
+              "format": "decimal",
+              "precision": 1,
+              "suffix": "/5.0",
+              "size": "large",
+              "comparison": {
+                "value": "{metrics.satisfactionChange}",
+                "format": "decimal",
+                "period": "Last quarter",
+                "trend": "{metrics.satisfactionTrend}",
+                "showIcon": true
+              },
+              "rating": {
+                "type": "stars",
+                "max": 5,
+                "showNumeric": true
+              },
+              "icon": "heart",
+              "color": "red"
+            }
+          ],
+          "cardStyle": {
+            "variant": "elevated",
+            "padding": "lg",
+            "borderRadius": "lg"
+          },
+          "animation": {
+            "enabled": true,
+            "type": "countUp",
+            "duration": 2000,
+            "delay": 200
+          }
+        }
+      }
+    },
+    "performance-charts": {
+      "id": "performance-charts",
+      "title": "Performance Charts",
+      "description": "Visual data representation with interactive charts",
+      "schema": {
+        "type": "organisms.chart-dashboard",
+        "props": {
+          "layout": "grid",
+          "columns": {
+            "default": 1,
+            "lg": 2
+          },
+          "gap": "2rem",
+          "charts": [
+            {
+              "id": "revenue-chart",
+              "title": "Revenue Overview",
+              "subtitle": "Monthly revenue breakdown",
+              "type": "area",
+              "height": "300px",
+              "data": "{charts.revenueData}",
+              "config": {
+                "xAxis": {
+                  "type": "datetime",
+                  "label": "Month"
+                },
+                "yAxis": {
+                  "label": "Revenue ($)",
+                  "format": "currency"
+                },
+                "series": [
+                  {
+                    "name": "Revenue",
+                    "color": "#10B981",
+                    "fill": true,
+                    "opacity": 0.3
+                  },
+                  {
+                    "name": "Target",
+                    "color": "#6B7280",
+                    "dash": [5, 5]
+                  }
+                ],
+                "tooltip": {
+                  "enabled": true,
+                  "format": "currency"
+                },
+                "legend": {
+                  "position": "bottom"
+                }
+              },
+              "actions": [
+                {
+                  "icon": "download",
+                  "label": "Export",
+                  "action": "export-chart"
+                },
+                {
+                  "icon": "expand",
+                  "label": "Fullscreen",
+                  "action": "fullscreen"
+                }
+              ]
+            },
+            {
+              "id": "user-growth-chart",
+              "title": "User Growth",
+              "subtitle": "User acquisition and retention",
+              "type": "line",
+              "height": "300px",
+              "data": "{charts.userGrowthData}",
+              "config": {
+                "xAxis": {
+                  "type": "datetime",
+                  "label": "Date"
+                },
+                "yAxis": {
+                  "label": "Users",
+                  "format": "number"
+                },
+                "series": [
+                  {
+                    "name": "New Users",
+                    "color": "#3B82F6"
+                  },
+                  {
+                    "name": "Returning Users",
+                    "color": "#8B5CF6"
+                  }
+                ],
+                "markers": {
+                  "enabled": true,
+                  "size": 4
+                }
+              }
+            },
+            {
+              "id": "sales-funnel",
+              "title": "Sales Funnel",
+              "subtitle": "Conversion at each stage",
+              "type": "funnel",
+              "height": "300px",
+              "data": "{charts.funnelData}",
+              "config": {
+                "stages": [
+                  { "name": "Visitors", "color": "#EF4444" },
+                  { "name": "Leads", "color": "#F59E0B" },
+                  { "name": "Prospects", "color": "#10B981" },
+                  { "name": "Customers", "color": "#3B82F6" }
+                ],
+                "showPercentages": true,
+                "showValues": true
+              }
+            },
+            {
+              "id": "category-breakdown",
+              "title": "Revenue by Category",
+              "subtitle": "Product category performance",
+              "type": "donut",
+              "height": "300px",
+              "data": "{charts.categoryData}",
+              "config": {
+                "innerRadius": 0.6,
+                "showLabels": true,
+                "showLegend": true,
+                "colors": ["#10B981", "#3B82F6", "#F59E0B", "#EF4444", "#8B5CF6"]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "activity-timeline": {
+      "id": "activity-timeline",
+      "title": "Activity Timeline",
+      "description": "Real-time activity feed with user actions and system events",
+      "schema": {
+        "type": "organisms.activity-timeline",
+        "props": {
+          "title": "Recent Activity",
+          "subtitle": "Latest updates from your team",
+          "height": "400px",
+          "autoRefresh": {
+            "enabled": true,
+            "interval": 30000
+          },
+          "filters": [
+            {
+              "id": "all",
+              "label": "All",
+              "active": true
+            },
+            {
+              "id": "user_actions",
+              "label": "User Actions",
+              "filter": "category:user_action"
+            },
+            {
+              "id": "system_events",
+              "label": "System Events",
+              "filter": "category:system_event"
+            },
+            {
+              "id": "notifications",
+              "label": "Notifications",
+              "filter": "category:notification"
+            }
+          ],
+          "groupBy": {
+            "field": "date",
+            "format": "relative"
+          },
+          "itemTemplate": {
+            "type": "molecules.timeline-item",
+            "props": {
+              "avatar": {
+                "src": "{item.user.avatar}",
+                "name": "{item.user.name}",
+                "size": "sm",
+                "showOnline": true
+              },
+              "content": {
+                "title": "{item.title}",
+                "description": "{item.description}",
+                "timestamp": {
+                  "value": "{item.timestamp}",
+                  "format": "relative",
+                  "precision": "minute"
+                },
+                "metadata": [
+                  {
+                    "type": "badge",
+                    "text": "{item.category}",
+                    "color": "{item.categoryColor}",
+                    "size": "xs"
+                  },
+                  {
+                    "type": "text",
+                    "text": "{item.location}",
+                    "icon": "map-pin",
+                    "color": "muted"
+                  }
+                ]
+              },
+              "typeIndicator": {
+                "icon": "{item.typeIcon}",
+                "color": "{item.typeColor}",
+                "background": true
+              },
+              "attachments": {
+                "files": "{item.files}",
+                "maxVisible": 3,
+                "showMore": true
+              },
+              "actions": [
+                {
+                  "icon": "message-circle",
+                  "label": "Comment",
+                  "action": "comment"
+                },
+                {
+                  "icon": "share",
+                  "label": "Share",
+                  "action": "share"
+                }
+              ]
+            }
+          },
+          "emptyState": {
+            "icon": "activity",
+            "title": "No recent activity",
+            "description": "Activity will appear here as your team works"
+          },
+          "loadMore": {
+            "enabled": true,
+            "autoLoad": false,
+            "threshold": 5
+          }
+        }
+      }
+    },
+    "kpi-dashboard": {
+      "id": "kpi-dashboard",
+      "title": "KPI Dashboard",
+      "description": "Key Performance Indicators with targets and alerts",
+      "schema": {
+        "type": "organisms.kpi-grid",
+        "props": {
+          "layout": "masonry",
+          "columns": {
+            "default": 1,
+            "md": 2,
+            "lg": 3
+          },
+          "gap": "1.5rem",
+          "kpis": [
+            {
+              "id": "monthly-recurring-revenue",
+              "title": "Monthly Recurring Revenue",
+              "value": "{kpis.mrr}",
+              "format": "currency",
+              "target": {
+                "value": "{kpis.mrrTarget}",
+                "label": "Monthly Target"
+              },
+              "trend": {
+                "value": "{kpis.mrrTrend}",
+                "period": "vs last month",
+                "format": "percentage"
+              },
+              "status": {
+                "value": "{kpis.mrrStatus}",
+                "thresholds": {
+                  "excellent": { "min": 100, "color": "green" },
+                  "good": { "min": 90, "color": "blue" },
+                  "warning": { "min": 75, "color": "yellow" },
+                  "critical": { "max": 75, "color": "red" }
+                }
+              },
+              "chart": {
+                "type": "progress-ring",
+                "percentage": "{kpis.mrrProgress}",
+                "size": "lg",
+                "thickness": 8
+              },
+              "alerts": [
+                {
+                  "condition": "value < target * 0.8",
+                  "type": "warning",
+                  "message": "MRR is below 80% of target"
+                }
+              ]
+            },
+            {
+              "id": "customer-acquisition-cost",
+              "title": "Customer Acquisition Cost",
+              "value": "{kpis.cac}",
+              "format": "currency",
+              "trend": {
+                "value": "{kpis.cacTrend}",
+                "period": "vs last quarter",
+                "format": "percentage",
+                "inverse": true
+              },
+              "benchmark": {
+                "value": "{kpis.industryCAC}",
+                "label": "Industry Average"
+              },
+              "chart": {
+                "type": "mini-bar",
+                "data": "{kpis.cacHistory}",
+                "height": "60px"
+              }
+            },
+            {
+              "id": "churn-rate",
+              "title": "Monthly Churn Rate",
+              "value": "{kpis.churnRate}",
+              "format": "percentage",
+              "trend": {
+                "value": "{kpis.churnTrend}",
+                "period": "vs last month",
+                "format": "percentage",
+                "inverse": true
+              },
+              "target": {
+                "value": 5,
+                "label": "Target",
+                "operator": "less_than"
+              },
+              "chart": {
+                "type": "gauge",
+                "min": 0,
+                "max": 20,
+                "zones": [
+                  { "min": 0, "max": 5, "color": "green" },
+                  { "min": 5, "max": 10, "color": "yellow" },
+                  { "min": 10, "max": 20, "color": "red" }
+                ]
+              }
+            },
+            {
+              "id": "net-promoter-score",
+              "title": "Net Promoter Score",
+              "value": "{kpis.nps}",
+              "format": "number",
+              "suffix": " NPS",
+              "trend": {
+                "value": "{kpis.npsTrend}",
+                "period": "vs last survey",
+                "format": "number"
+              },
+              "breakdown": {
+                "promoters": "{kpis.promoters}",
+                "passives": "{kpis.passives}",
+                "detractors": "{kpis.detractors}"
+              },
+              "chart": {
+                "type": "stacked-bar",
+                "data": [
+                  { "label": "Detractors", "value": "{kpis.detractors}", "color": "#EF4444" },
+                  { "label": "Passives", "value": "{kpis.passives}", "color": "#F59E0B" },
+                  { "label": "Promoters", "value": "{kpis.promoters}", "color": "#10B981" }
+                ]
+              }
+            }
+          ],
+          "refreshControl": {
+            "enabled": true,
+            "autoRefresh": true,
+            "interval": 300000,
+            "showLastUpdated": true
+          },
+          "exportOptions": {
+            "enabled": true,
+            "formats": ["pdf", "excel", "csv"],
+            "includeCharts": true
+          }
+        }
+      }
+    },
+    "notification-center": {
+      "id": "notification-center",
+      "title": "Notification Center",
+      "description": "System notifications with priority levels and actions",
+      "schema": {
+        "type": "organisms.notification-panel",
+        "props": {
+          "title": "Notifications",
+          "maxHeight": "400px",
+          "categories": [
+            {
+              "id": "all",
+              "label": "All",
+              "count": "{notifications.total}",
+              "active": true
+            },
+            {
+              "id": "alerts",
+              "label": "Alerts",
+              "count": "{notifications.alerts}",
+              "color": "red"
+            },
+            {
+              "id": "updates",
+              "label": "Updates",
+              "count": "{notifications.updates}",
+              "color": "blue"
+            },
+            {
+              "id": "mentions",
+              "label": "Mentions",
+              "count": "{notifications.mentions}",
+              "color": "yellow"
+            }
+          ],
+          "itemTemplate": {
+            "type": "molecules.notification-item",
+            "props": {
+              "avatar": {
+                "src": "{notification.user.avatar}",
+                "name": "{notification.user.name}",
+                "size": "sm"
+              },
+              "content": {
+                "title": "{notification.title}",
+                "message": "{notification.message}",
+                "timestamp": {
+                  "value": "{notification.timestamp}",
+                  "format": "relative"
+                }
+              },
+              "priority": {
+                "level": "{notification.priority}",
+                "indicator": true,
+                "colors": {
+                  "low": "gray",
+                  "medium": "blue",
+                  "high": "yellow",
+                  "urgent": "red"
+                }
+              },
+              "status": {
+                "read": "{notification.read}",
+                "showUnreadDot": true
+              },
+              "actions": [
+                {
+                  "icon": "check",
+                  "label": "Mark as Read",
+                  "action": "mark-read",
+                  "condition": "!notification.read"
+                },
+                {
+                  "icon": "x",
+                  "label": "Dismiss",
+                  "action": "dismiss"
+                }
+              ],
+              "clickAction": {
+                "href": "{notification.href}",
+                "markAsRead": true
+              }
+            }
+          },
+          "bulkActions": [
+            {
+              "label": "Mark All as Read",
+              "action": "mark-all-read",
+              "icon": "check-circle"
+            },
+            {
+              "label": "Clear All",
+              "action": "clear-all",
+              "icon": "trash",
+              "confirm": true
+            }
+          ],
+          "emptyState": {
+            "icon": "bell",
+            "title": "All caught up!",
+            "description": "No new notifications"
+          }
+        }
+      }
+    }
+  },
+  "design_tokens": {
+    "chart_colors": {
+      "primary": "#3B82F6",
+      "secondary": "#10B981", 
+      "accent": "#F59E0B",
+      "danger": "#EF4444",
+      "warning": "#F59E0B",
+      "success": "#10B981",
+      "info": "#3B82F6"
+    },
+    "trend_indicators": {
+      "positive": {
+        "color": "#10B981",
+        "icon": "trending-up"
+      },
+      "negative": {
+        "color": "#EF4444", 
+        "icon": "trending-down"
+      },
+      "neutral": {
+        "color": "#6B7280",
+        "icon": "minus"
+      }
+    },
+    "priority_levels": {
+      "low": {
+        "color": "#6B7280",
+        "background": "#F9FAFB"
+      },
+      "medium": {
+        "color": "#3B82F6",
+        "background": "#EBF8FF"
+      },
+      "high": {
+        "color": "#F59E0B",
+        "background": "#FFFBEB"
+      },
+      "urgent": {
+        "color": "#EF4444",
+        "background": "#FEF2F2"
+      }
+    }
+  }
+}

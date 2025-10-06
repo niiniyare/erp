@@ -107,7 +107,7 @@ func (sm *SessionManager) CreateSession(ctx context.Context, claims *JWTClaims, 
 
 	// Store session in Redis
 	key := fmt.Sprintf("session:%s", sessionID)
-	if err := sm.redis.HSet(ctx, key, map[string]interface{}{
+	if err := sm.redis.HSet(ctx, key, map[string]any{
 		"user_id":       session.UserID,
 		"tenant_id":     session.TenantID,
 		"client_id":     session.ClientID,
@@ -229,7 +229,7 @@ func (sm *SessionManager) RefreshSession(ctx context.Context, sessionID, refresh
 
 	// Store updated session
 	key := fmt.Sprintf("session:%s", sessionID)
-	sm.redis.HSet(ctx, key, map[string]interface{}{
+	sm.redis.HSet(ctx, key, map[string]any{
 		"access_token": session.AccessToken,
 		"last_access":  session.LastAccess.Unix(),
 	})

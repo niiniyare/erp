@@ -148,7 +148,7 @@ package handlers
 // 	}
 //
 // 	// Return JSON response
-// 	response := map[string]interface{}{
+// 	response := map[string]any{
 // 		"users":      users,
 // 		"pagination": pagination,
 // 		"success":    true,
@@ -390,7 +390,7 @@ package handlers
 //
 // 	// Return JSON response
 // 	w.Header().Set("Content-Type", "application/json")
-// 	json.NewEncoder(w).Encode(map[string]interface{}{
+// 	json.NewEncoder(w).Encode(map[string]any{
 // 		"success": true,
 // 		"message": fmt.Sprintf("Bulk action completed: %d successful, %d failed", results.SuccessCount, results.ErrorCount),
 // 		"results": results,

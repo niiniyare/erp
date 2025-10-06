@@ -68,7 +68,7 @@ func createDateRangeFilter(name, label string) FilterField {
 }
 
 // createNumberFilter creates a number filter field
-func createNumberFilter(name, label string, min, max interface{}) FilterField {
+func createNumberFilter(name, label string, min, max any) FilterField {
 	return FilterField{
 		Name:     name,
 		Label:    label,

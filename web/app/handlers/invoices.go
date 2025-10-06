@@ -136,7 +136,7 @@ package handlers
 // 	}
 //
 // 	// Return JSON response
-// 	response := map[string]interface{}{
+// 	response := map[string]any{
 // 		"invoices":   invoices,
 // 		"pagination": pagination,
 // 		"success":    true,
@@ -323,7 +323,7 @@ package handlers
 // 		})
 //
 // 		w.Header().Set("Content-Type", "application/json")
-// 		json.NewEncoder(w).Encode(map[string]interface{}{
+// 		json.NewEncoder(w).Encode(map[string]any{
 // 			"success": false,
 // 			"error":   "Payment processing failed. Please try again.",
 // 		})
@@ -342,7 +342,7 @@ package handlers
 //
 // 	// Return success response
 // 	w.Header().Set("Content-Type", "application/json")
-// 	json.NewEncoder(w).Encode(map[string]interface{}{
+// 	json.NewEncoder(w).Encode(map[string]any{
 // 		"success":    true,
 // 		"message":    "Payment processed successfully",
 // 		"payment_id": paymentResult.PaymentID,
@@ -410,7 +410,7 @@ package handlers
 //
 // 	// Return JSON response
 // 	w.Header().Set("Content-Type", "application/json")
-// 	json.NewEncoder(w).Encode(map[string]interface{}{
+// 	json.NewEncoder(w).Encode(map[string]any{
 // 		"success": true,
 // 		"message": fmt.Sprintf("Bulk action completed: %d successful, %d failed", results.SuccessCount, results.ErrorCount),
 // 		"results": results,

@@ -261,7 +261,7 @@ type Money struct {
 type BulkTenantOperationRequest struct {
 	Operation  string                 `json:"operation" validate:"required,oneof=suspend reactivate archive update_limits"`
 	TenantIDs  []uuid.UUID            `json:"tenant_ids" validate:"required,min=1,max=100"`
-	Parameters map[string]interface{} `json:"parameters,omitempty"`
+	Parameters map[string]any `json:"parameters,omitempty"`
 	ActorID    uuid.UUID              `json:"actor_id" validate:"required"`
 }
 
@@ -311,7 +311,7 @@ type TenantAuditLogEntry struct {
 	ActorID     uuid.UUID              `json:"actor_id"`
 	ActorName   string                 `json:"actor_name,omitempty"`
 	Description string                 `json:"description"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 	Timestamp   time.Time              `json:"timestamp"`
 	IPAddress   string                 `json:"ip_address,omitempty"`
 }
@@ -323,7 +323,7 @@ type LogTenantActionRequest struct {
 	Action      string                 `json:"action" validate:"required"`
 	ActorID     uuid.UUID              `json:"actor_id"`
 	Description string                 `json:"description" validate:"required"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 	IPAddress   string                 `json:"ip_address,omitempty"`
 }
 
@@ -455,5 +455,5 @@ type AuditLogger interface {
 // NotificationSender defines notification sending interface
 type NotificationSender interface {
 	SendWelcomeEmail(ctx context.Context, tenantID uuid.UUID, email, firstName string) error
-	NotifyTenantUsers(ctx context.Context, tenantID uuid.UUID, eventType string, data map[string]interface{}) error
+	NotifyTenantUsers(ctx context.Context, tenantID uuid.UUID, eventType string, data map[string]any) error
 }

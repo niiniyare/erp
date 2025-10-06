@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"io"
 	"sync"
 
 	"github.com/a-h/templ"
@@ -115,7 +116,7 @@ func (r *ComponentRegistry) Resolve(componentType string) (templ.Component, erro
 	// Create a default component definition for basic resolution
 	def := &schemas.ComponentDefinition{
 		Type:  actualType,
-		Props: make(map[string]interface{}),
+		Props: make(map[string]any),
 	}
 
 	return factory(def, context.Background())
@@ -255,7 +256,7 @@ func fieldFactory(def *schemas.ComponentDefinition, ctx context.Context) (templ.
 
 func dataTableFactory(def *schemas.ComponentDefinition, ctx context.Context) (templ.Component, error) {
 	props := table.DataTableProps{
-		Data:        getInterfaceProp(def.Props, "data", []map[string]interface{}{}).([]map[string]interface{}),
+		Data:        getInterfaceProp(def.Props, "data", []map[string]any{}).([]map[string]any),
 		Columns:     getInterfaceProp(def.Props, "columns", []table.DataTableColumn{}).([]table.DataTableColumn),
 		Config:      getInterfaceProp(def.Props, "config", table.DataTableConfig{}).(table.DataTableConfig),
 		Actions:     getInterfaceProp(def.Props, "actions", []table.DataTableAction{}).([]table.DataTableAction),
@@ -268,6 +269,108 @@ func dataTableFactory(def *schemas.ComponentDefinition, ctx context.Context) (te
 		Compact:     getBoolProp(def.Props, "compact", false),
 	}
 	return table.DataTable(props), nil
+}
+
+func enhancedTableFactory(def *schemas.ComponentDefinition, ctx context.Context) (templ.Component, error) {
+	// Create an enhanced table using the pattern renderer
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		_, err := w.Write([]byte(`<div class="enhanced-table-container" data-component="enhanced-table">
+			<div class="table-header">
+				<h2 class="table-title">` + getStringProp(def.Props, "title", "Data Table") + `</h2>
+				<p class="table-subtitle">` + getStringProp(def.Props, "subtitle", "") + `</p>
+			</div>
+			<div class="table-content">
+				<!-- Enhanced table features will be rendered here -->
+				<div class="table-placeholder">Enhanced table functionality coming soon...</div>
+			</div>
+		</div>`))
+		return err
+	}), nil
+}
+
+func cardGridFactory(def *schemas.ComponentDefinition, ctx context.Context) (templ.Component, error) {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		_, err := w.Write([]byte(`<div class="card-grid" data-component="card-grid">
+			<div class="grid-container">
+				<!-- Card grid functionality coming soon -->
+				<div class="grid-placeholder">Card grid functionality coming soon...</div>
+			</div>
+		</div>`))
+		return err
+	}), nil
+}
+
+func activityFeedFactory(def *schemas.ComponentDefinition, ctx context.Context) (templ.Component, error) {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		_, err := w.Write([]byte(`<div class="activity-feed" data-component="activity-feed">
+			<div class="feed-header">
+				<h3>` + getStringProp(def.Props, "title", "Activity Feed") + `</h3>
+			</div>
+			<div class="feed-content">
+				<!-- Activity feed functionality coming soon -->
+				<div class="feed-placeholder">Activity feed functionality coming soon...</div>
+			</div>
+		</div>`))
+		return err
+	}), nil
+}
+
+func metricsGridFactory(def *schemas.ComponentDefinition, ctx context.Context) (templ.Component, error) {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		_, err := w.Write([]byte(`<div class="metrics-grid" data-component="metrics-grid">
+			<div class="metrics-container">
+				<!-- Metrics grid functionality coming soon -->
+				<div class="metrics-placeholder">Metrics grid functionality coming soon...</div>
+			</div>
+		</div>`))
+		return err
+	}), nil
+}
+
+func chartDashboardFactory(def *schemas.ComponentDefinition, ctx context.Context) (templ.Component, error) {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		_, err := w.Write([]byte(`<div class="chart-dashboard" data-component="chart-dashboard">
+			<div class="dashboard-header">
+				<h3>` + getStringProp(def.Props, "title", "Charts Dashboard") + `</h3>
+			</div>
+			<div class="charts-container">
+				<!-- Chart dashboard functionality coming soon -->
+				<div class="charts-placeholder">Chart dashboard functionality coming soon...</div>
+			</div>
+		</div>`))
+		return err
+	}), nil
+}
+
+func filterSystemFactory(def *schemas.ComponentDefinition, ctx context.Context) (templ.Component, error) {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		_, err := w.Write([]byte(`<div class="filter-system" data-component="filter-system">
+			<div class="filter-header">
+				<h3>` + getStringProp(def.Props, "title", "Filters") + `</h3>
+			</div>
+			<div class="filter-content">
+				<!-- Filter system functionality coming soon -->
+				<div class="filter-placeholder">Filter system functionality coming soon...</div>
+			</div>
+		</div>`))
+		return err
+	}), nil
+}
+
+func sectionedFormFactory(def *schemas.ComponentDefinition, ctx context.Context) (templ.Component, error) {
+	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+		_, err := w.Write([]byte(`<div class="sectioned-form" data-component="sectioned-form">
+			<div class="form-header">
+				<h2>` + getStringProp(def.Props, "title", "Form") + `</h2>
+				<p>` + getStringProp(def.Props, "subtitle", "") + `</p>
+			</div>
+			<div class="form-content">
+				<!-- Sectioned form functionality coming soon -->
+				<div class="form-placeholder">Sectioned form functionality coming soon...</div>
+			</div>
+		</div>`))
+		return err
+	}), nil
 }
 
 func appLayoutFactory(def *schemas.ComponentDefinition, ctx context.Context) (templ.Component, error) {
@@ -482,6 +585,13 @@ func (r *ComponentRegistry) registerDefaultComponents() {
 
 	// Organisms
 	r.Register("organisms.table", dataTableFactory)
+	r.Register("organisms.enhanced-table", enhancedTableFactory)
+	r.Register("organisms.card-grid", cardGridFactory)
+	r.Register("organisms.activity-feed", activityFeedFactory)
+	r.Register("organisms.metrics-grid", metricsGridFactory)
+	r.Register("organisms.chart-dashboard", chartDashboardFactory)
+	r.Register("organisms.filter-system", filterSystemFactory)
+	r.Register("organisms.sectioned-form", sectionedFormFactory)
 
 	// Layouts
 	r.Register("layouts.app", appLayoutFactory)
@@ -523,7 +633,7 @@ func (r *ComponentRegistry) registerDefaultComponents() {
 }
 
 // Prop helper functions
-func getStringProp(props map[string]interface{}, key, defaultValue string) string {
+func getStringProp(props map[string]any, key, defaultValue string) string {
 	if val, exists := props[key]; exists {
 		if str, ok := val.(string); ok {
 			return str
@@ -532,7 +642,7 @@ func getStringProp(props map[string]interface{}, key, defaultValue string) strin
 	return defaultValue
 }
 
-func getBoolProp(props map[string]interface{}, key string, defaultValue bool) bool {
+func getBoolProp(props map[string]any, key string, defaultValue bool) bool {
 	if val, exists := props[key]; exists {
 		if b, ok := val.(bool); ok {
 			return b
@@ -541,7 +651,7 @@ func getBoolProp(props map[string]interface{}, key string, defaultValue bool) bo
 	return defaultValue
 }
 
-func getIntProp(props map[string]interface{}, key string, defaultValue int) int {
+func getIntProp(props map[string]any, key string, defaultValue int) int {
 	if val, exists := props[key]; exists {
 		if i, ok := val.(int); ok {
 			return i
@@ -553,7 +663,7 @@ func getIntProp(props map[string]interface{}, key string, defaultValue int) int 
 	return defaultValue
 }
 
-func getInterfaceProp(props map[string]interface{}, key string, defaultValue interface{}) interface{} {
+func getInterfaceProp(props map[string]any, key string, defaultValue any) any {
 	if val, exists := props[key]; exists {
 		return val
 	}

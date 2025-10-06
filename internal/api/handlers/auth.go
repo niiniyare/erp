@@ -41,7 +41,7 @@ func NewAuthHandler(iamSvc iam.Service, tenantSvc tenant.Service, tracing tracin
 
 // NewAuthHandlerWithIdentity creates a temporary auth handler using identity service
 // TODO: Remove this when full IAM service is available
-func NewAuthHandlerWithIdentity(identitySvc interface{}, tenantSvc tenant.Service, tracing tracing.TracingService, metrics *metrics.MetricsService) auth.Service {
+func NewAuthHandlerWithIdentity(identitySvc any, tenantSvc tenant.Service, tracing tracing.TracingService, metrics *metrics.MetricsService) auth.Service {
 	// Create a simple IAM adapter that wraps the identity service
 	iamAdapter := &identityToIAMAdapter{identityService: identitySvc}
 
@@ -530,7 +530,7 @@ func (h *AuthHandler) Validate(ctx context.Context, p *auth.ValidatePayload) (*a
 // identityToIAMAdapter temporarily adapts the identity service to IAM interface
 // TODO: Remove this when full IAM service is implemented
 type identityToIAMAdapter struct {
-	identityService interface{}
+	identityService any
 }
 
 // Authentication returns a temporary authn service adapter
@@ -666,7 +666,7 @@ func (d *dummyPolicyService) GetPolicyCacheStats(ctx context.Context) (*policy.P
 
 // identityAuthnAdapter adapts identity service to authn interface
 type identityAuthnAdapter struct {
-	identityService interface{}
+	identityService any
 }
 
 // Authenticate method adapter

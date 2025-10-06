@@ -183,7 +183,7 @@ func (s *provisioningService) ProvisionTenantComplete(ctx context.Context, req C
 		Action:      "tenant_provisioned",
 		ActorID:     uuid.Nil, // System action
 		Description: fmt.Sprintf("Tenant '%s' provisioned with plan '%s'", req.Name, req.PlanType),
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"plan_type":       req.PlanType,
 			"enabled_modules": req.EnabledModules,
 			"company_size":    req.CompanySize,
@@ -274,7 +274,7 @@ func (s *provisioningService) SuspendTenant(ctx context.Context, req SuspendTena
 		Action:      "tenant_suspended",
 		ActorID:     req.ActorID,
 		Description: fmt.Sprintf("Tenant suspended: %s", req.Reason),
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"reason":          req.Reason,
 			"previous_status": string(tenant.Status),
 			"notify_users":    req.NotifyUsers,
@@ -289,7 +289,7 @@ func (s *provisioningService) SuspendTenant(ctx context.Context, req SuspendTena
 
 	// Send notifications if requested
 	if req.NotifyUsers {
-		err = s.notifyTenantUsers(ctx, req.TenantID, "tenant_suspended", map[string]interface{}{
+		err = s.notifyTenantUsers(ctx, req.TenantID, "tenant_suspended", map[string]any{
 			"reason": req.Reason,
 		})
 		if err != nil {
@@ -363,7 +363,7 @@ func (s *provisioningService) ReactivateTenant(ctx context.Context, req Reactiva
 		Action:      "tenant_reactivated",
 		ActorID:     req.ActorID,
 		Description: fmt.Sprintf("Tenant reactivated: %s", req.Reason),
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"reason":          req.Reason,
 			"previous_status": string(tenant.Status),
 		},
@@ -445,7 +445,7 @@ func (s *provisioningService) ArchiveTenant(ctx context.Context, req ArchiveTena
 		Action:      "tenant_archived",
 		ActorID:     req.ActorID,
 		Description: fmt.Sprintf("Tenant archived: %s", req.Reason),
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"reason":              req.Reason,
 			"immediate_deletion":  req.ImmediateDeletion,
 			"data_retention_days": req.DataRetentionDays,
@@ -562,7 +562,7 @@ func (s *provisioningService) generateAccessInfo(subdomain string) TenantAccessI
 	}
 }
 
-func (s *provisioningService) notifyTenantUsers(ctx context.Context, tenantID uuid.UUID, eventType string, data map[string]interface{}) error {
+func (s *provisioningService) notifyTenantUsers(ctx context.Context, tenantID uuid.UUID, eventType string, data map[string]any) error {
 	if s.notificationSender != nil {
 		return s.notificationSender.NotifyTenantUsers(ctx, tenantID, eventType, data)
 	}
@@ -695,7 +695,7 @@ func (s *provisioningService) UpdateTenantConfiguration(ctx context.Context, req
 		Action:      "configuration_updated",
 		ActorID:     req.ActorID,
 		Description: fmt.Sprintf("Tenant configuration updated: %s", req.Reason),
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"reason":           req.Reason,
 			"limits_updated":   req.Limits != nil,
 			"features_updated": req.EnabledFeatures != nil,
@@ -967,7 +967,7 @@ func (s *provisioningService) BulkTenantOperation(ctx context.Context, req BulkT
 		Action:      fmt.Sprintf("bulk_%s", req.Operation),
 		ActorID:     req.ActorID,
 		Description: fmt.Sprintf("Bulk operation %s completed: %d successful, %d failed", req.Operation, result.Successful, result.Failed),
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"operation_id":   operationID.String(),
 			"operation_type": req.Operation,
 			"total_tenants":  result.Total,
@@ -1165,7 +1165,7 @@ func (s *provisioningService) ListTenantsAdvanced(ctx context.Context, req Advan
 		"page_size":    req.PageSize,
 		"total_items":  totalCount,
 		"result_count": len(detailedResults),
-		"filters": map[string]interface{}{
+		"filters": map[string]any{
 			"status":   req.StatusFilter,
 			"plan":     req.PlanFilter,
 			"search":   req.Search,
@@ -1314,7 +1314,7 @@ func (s *provisioningService) getAuditLogEntries(ctx context.Context, tenantID u
 			ActorID:     uuid.New(),
 			ActorName:   "System Administrator",
 			Description: "Tenant was created successfully",
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"plan_type": "professional",
 				"subdomain": "acme-corp",
 			},
@@ -1328,7 +1328,7 @@ func (s *provisioningService) getAuditLogEntries(ctx context.Context, tenantID u
 			ActorID:     uuid.New(),
 			ActorName:   "Admin User",
 			Description: "Tenant configuration was updated",
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"reason":           "Increased user limit",
 				"limits_updated":   true,
 				"features_updated": false,
@@ -1445,7 +1445,7 @@ func (s *provisioningService) executeBulkUpdateLimits(ctx context.Context, tenan
 
 	// Extract limits from parameters
 	var limits *TenantLimits
-	if limitsParam, ok := req.Parameters["limits"].(map[string]interface{}); ok {
+	if limitsParam, ok := req.Parameters["limits"].(map[string]any); ok {
 		limits = &TenantLimits{}
 		if maxUsers, ok := limitsParam["max_users"].(float64); ok {
 			limits.MaxUsers = uint(maxUsers)

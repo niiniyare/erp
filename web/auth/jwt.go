@@ -59,7 +59,7 @@ func NewJWTValidator(publicKey *rsa.PublicKey, privateKey *rsa.PrivateKey, issue
 
 // ValidateToken validates a JWT token and returns claims
 func (v *JWTValidator) ValidateToken(tokenString string) (*JWTClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}

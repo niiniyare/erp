@@ -1,0 +1,640 @@
+{
+  "id": "project-management-table",
+  "version": "1.0.0",
+  "layout": "app",
+  "title": "Project Management",
+  "description": "Enhanced project management interface with comprehensive data display",
+  "components": [
+    {
+      "id": "projects-table",
+      "type": "organisms.enhanced-table",
+      "props": {
+        "title": "Active Projects",
+        "subtitle": "Manage your team's projects with advanced tools",
+        "data": [
+          {
+            "id": "proj_001",
+            "favorite": true,
+            "avatar": {
+              "src": "/avatars/marketing-project.png",
+              "name": "Marketing Campaign 2024"
+            },
+            "primaryInfo": {
+              "title": "Marketing Campaign 2024",
+              "subtitle": "Q1-Q4 comprehensive marketing strategy",
+              "href": "/projects/proj_001"
+            },
+            "status": "in_progress",
+            "progress": 68.5,
+            "metrics": {
+              "budget": 150000,
+              "team_size": 12,
+              "tasks_completed": 45,
+              "tasks_total": 67
+            },
+            "tags": ["marketing", "priority", "campaign"],
+            "owner": {
+              "name": "Sarah Johnson",
+              "avatar": "/avatars/sarah.jpg"
+            },
+            "lastActivity": "2024-01-15T10:30:00Z",
+            "createdAt": "2024-01-01T00:00:00Z"
+          },
+          {
+            "id": "proj_002",
+            "favorite": false,
+            "avatar": {
+              "name": "Product Launch"
+            },
+            "primaryInfo": {
+              "title": "Product Launch MVP",
+              "subtitle": "New feature rollout for Q2",
+              "href": "/projects/proj_002"
+            },
+            "status": "pending",
+            "progress": 23.0,
+            "metrics": {
+              "budget": 85000,
+              "team_size": 8,
+              "tasks_completed": 12,
+              "tasks_total": 52
+            },
+            "tags": ["product", "mvp", "launch"],
+            "owner": {
+              "name": "Mike Chen",
+              "avatar": "/avatars/mike.jpg"
+            },
+            "lastActivity": "2024-01-14T15:45:00Z",
+            "createdAt": "2024-01-05T00:00:00Z"
+          },
+          {
+            "id": "proj_003",
+            "favorite": true,
+            "avatar": {
+              "src": "/avatars/website-redesign.png",
+              "name": "Website Redesign"
+            },
+            "primaryInfo": {
+              "title": "Website Redesign",
+              "subtitle": "Complete UX/UI overhaul",
+              "href": "/projects/proj_003"
+            },
+            "status": "completed",
+            "progress": 100.0,
+            "metrics": {
+              "budget": 75000,
+              "team_size": 6,
+              "tasks_completed": 38,
+              "tasks_total": 38
+            },
+            "tags": ["design", "website", "ux"],
+            "owner": {
+              "name": "Emma Wilson",
+              "avatar": "/avatars/emma.jpg"
+            },
+            "lastActivity": "2024-01-10T09:20:00Z",
+            "createdAt": "2023-12-15T00:00:00Z"
+          },
+          {
+            "id": "proj_004",
+            "favorite": false,
+            "avatar": {
+              "name": "Mobile App"
+            },
+            "primaryInfo": {
+              "title": "Mobile App Development",
+              "subtitle": "iOS and Android companion app",
+              "href": "/projects/proj_004"
+            },
+            "status": "on_hold",
+            "progress": 45.2,
+            "metrics": {
+              "budget": 200000,
+              "team_size": 15,
+              "tasks_completed": 28,
+              "tasks_total": 62
+            },
+            "tags": ["mobile", "ios", "android", "development"],
+            "owner": {
+              "name": "Alex Rodriguez",
+              "avatar": "/avatars/alex.jpg"
+            },
+            "lastActivity": "2024-01-08T14:15:00Z",
+            "createdAt": "2023-11-20T00:00:00Z"
+          }
+        ],
+        "columns": [
+          {
+            "key": "selection",
+            "type": "checkbox",
+            "width": "40px",
+            "sortable": false,
+            "sticky": true
+          },
+          {
+            "key": "favorite",
+            "type": "favorite-toggle",
+            "width": "40px",
+            "sortable": false,
+            "label": ""
+          },
+          {
+            "key": "avatar",
+            "type": "avatar",
+            "width": "60px",
+            "sortable": false,
+            "props": {
+              "size": "md",
+              "fallbackToInitials": true
+            }
+          },
+          {
+            "key": "primaryInfo",
+            "type": "primary-info",
+            "label": "Project",
+            "sortable": true,
+            "searchable": true,
+            "primary": true,
+            "props": {
+              "titleField": "title",
+              "subtitleField": "subtitle",
+              "linkField": "href",
+              "truncate": 50
+            }
+          },
+          {
+            "key": "status",
+            "type": "status-badge",
+            "label": "Status",
+            "sortable": true,
+            "filterable": true,
+            "props": {
+              "statusConfig": {
+                "pending": {
+                  "label": "Pending",
+                  "color": "yellow",
+                  "icon": "clock"
+                },
+                "in_progress": {
+                  "label": "In Progress",
+                  "color": "blue",
+                  "icon": "arrow-right",
+                  "animated": true
+                },
+                "completed": {
+                  "label": "Completed",
+                  "color": "green",
+                  "icon": "check"
+                },
+                "on_hold": {
+                  "label": "On Hold",
+                  "color": "gray",
+                  "icon": "pause"
+                },
+                "cancelled": {
+                  "label": "Cancelled",
+                  "color": "red",
+                  "icon": "x"
+                }
+              }
+            }
+          },
+          {
+            "key": "progress",
+            "type": "progress-indicator",
+            "label": "Progress",
+            "sortable": true,
+            "props": {
+              "showPercentage": true,
+              "showBar": true,
+              "colorThresholds": {
+                "low": { "threshold": 25, "color": "red" },
+                "medium": { "threshold": 75, "color": "yellow" },
+                "high": { "threshold": 100, "color": "green" }
+              }
+            }
+          },
+          {
+            "key": "metrics",
+            "type": "metric-display",
+            "label": "Metrics",
+            "sortable": false,
+            "props": {
+              "fields": [
+                {
+                  "key": "budget",
+                  "label": "Budget",
+                  "format": "currency"
+                },
+                {
+                  "key": "team_size",
+                  "label": "Team",
+                  "format": "number",
+                  "suffix": " members"
+                }
+              ],
+              "compact": true
+            }
+          },
+          {
+            "key": "tags",
+            "type": "tag-list",
+            "label": "Tags",
+            "props": {
+              "maxVisible": 2,
+              "showMore": true,
+              "colorMapping": {
+                "priority": "red",
+                "marketing": "blue",
+                "product": "green",
+                "design": "purple",
+                "development": "yellow"
+              }
+            }
+          },
+          {
+            "key": "owner",
+            "type": "user-info",
+            "label": "Owner",
+            "sortable": true,
+            "props": {
+              "showAvatar": true,
+              "avatarSize": "sm"
+            }
+          },
+          {
+            "key": "lastActivity",
+            "type": "relative-time",
+            "label": "Last Activity",
+            "sortable": true,
+            "props": {
+              "format": "relative",
+              "showTooltip": true,
+              "tooltipFormat": "full"
+            }
+          },
+          {
+            "key": "actions",
+            "type": "action-menu",
+            "label": "Actions",
+            "width": "120px",
+            "sortable": false,
+            "sticky": true,
+            "props": {
+              "primary": [
+                {
+                  "id": "view",
+                  "label": "View",
+                  "icon": "eye",
+                  "variant": "ghost",
+                  "size": "sm",
+                  "href": "/projects/{id}"
+                },
+                {
+                  "id": "edit",
+                  "label": "Edit",
+                  "icon": "pencil",
+                  "variant": "ghost",
+                  "size": "sm",
+                  "permissions": ["projects.edit"],
+                  "href": "/projects/{id}/edit"
+                }
+              ],
+              "dropdown": [
+                {
+                  "id": "duplicate",
+                  "label": "Duplicate Project",
+                  "icon": "copy",
+                  "action": "duplicate"
+                },
+                {
+                  "id": "archive",
+                  "label": "Archive",
+                  "icon": "archive",
+                  "action": "archive"
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "id": "delete",
+                  "label": "Delete",
+                  "icon": "trash",
+                  "variant": "danger",
+                  "confirm": {
+                    "title": "Delete Project",
+                    "message": "Are you sure you want to delete this project? This action cannot be undone.",
+                    "confirmText": "Delete Project"
+                  },
+                  "permissions": ["projects.delete"]
+                }
+              ]
+            }
+          }
+        ],
+        "features": {
+          "selection": {
+            "enabled": true,
+            "type": "multiple",
+            "preserveSelection": true
+          },
+          "favorites": {
+            "enabled": true,
+            "persistState": true
+          },
+          "sorting": {
+            "enabled": true,
+            "multiColumn": false,
+            "defaultSort": [
+              { "column": "lastActivity", "direction": "desc" }
+            ]
+          },
+          "filtering": {
+            "enabled": true,
+            "quickFilters": [
+              {
+                "id": "my-projects",
+                "label": "My Projects",
+                "icon": "user",
+                "filter": "owner.id:current_user"
+              },
+              {
+                "id": "favorites",
+                "label": "Favorites",
+                "icon": "star",
+                "filter": "favorite:true"
+              },
+              {
+                "id": "active",
+                "label": "Active",
+                "icon": "play",
+                "filter": "status:in_progress,pending"
+              },
+              {
+                "id": "high-priority",
+                "label": "High Priority",
+                "icon": "alert-triangle",
+                "filter": "tags:priority"
+              }
+            ],
+            "advancedFilters": [
+              {
+                "field": "status",
+                "type": "select",
+                "options": "statusConfig"
+              },
+              {
+                "field": "progress",
+                "type": "range",
+                "min": 0,
+                "max": 100
+              },
+              {
+                "field": "owner",
+                "type": "user-select",
+                "props": {
+                  "searchable": true,
+                  "showAvatars": true
+                }
+              },
+              {
+                "field": "createdAt",
+                "type": "dateRange",
+                "presets": ["last_7_days", "last_30_days", "this_quarter"]
+              },
+              {
+                "field": "tags",
+                "type": "tag-select",
+                "props": {
+                  "multiSelect": true,
+                  "searchable": true
+                }
+              }
+            ]
+          },
+          "search": {
+            "enabled": true,
+            "placeholder": "Search projects by name, description, or tags...",
+            "fields": ["primaryInfo.title", "primaryInfo.subtitle", "tags"],
+            "keyboard": {
+              "shortcut": "ctrl+k",
+              "globalSearch": false
+            }
+          },
+          "pagination": {
+            "enabled": true,
+            "pageSize": 25,
+            "pageSizeOptions": [10, 25, 50, 100],
+            "showInfo": true,
+            "showJumper": true
+          },
+          "batchOperations": {
+            "enabled": true,
+            "position": "top",
+            "actions": [
+              {
+                "id": "bulk-status-update",
+                "label": "Update Status",
+                "icon": "refresh",
+                "variant": "primary",
+                "dropdown": [
+                  {
+                    "value": "in_progress",
+                    "label": "Mark In Progress"
+                  },
+                  {
+                    "value": "on_hold",
+                    "label": "Put On Hold"
+                  },
+                  {
+                    "value": "completed",
+                    "label": "Mark Completed"
+                  }
+                ],
+                "permissions": ["projects.bulk_edit"]
+              },
+              {
+                "id": "bulk-assign",
+                "label": "Assign Owner",
+                "icon": "user-plus",
+                "variant": "secondary",
+                "modal": "/projects/bulk-assign",
+                "permissions": ["projects.assign"]
+              },
+              {
+                "id": "bulk-export",
+                "label": "Export Selected",
+                "icon": "download",
+                "variant": "secondary",
+                "action": "export-projects"
+              },
+              {
+                "id": "bulk-archive",
+                "label": "Archive Selected",
+                "icon": "archive",
+                "variant": "secondary",
+                "confirm": {
+                  "title": "Archive Projects",
+                  "message": "Are you sure you want to archive {count} selected projects?",
+                  "confirmText": "Archive All"
+                },
+                "permissions": ["projects.archive"]
+              }
+            ]
+          },
+          "columnCustomization": {
+            "enabled": true,
+            "hideable": true,
+            "resizable": true,
+            "reorderable": true,
+            "presets": [
+              {
+                "id": "minimal",
+                "label": "Minimal View",
+                "columns": ["selection", "primaryInfo", "status", "progress", "actions"]
+              },
+              {
+                "id": "detailed",
+                "label": "Detailed View",
+                "columns": ["selection", "favorite", "avatar", "primaryInfo", "status", "progress", "metrics", "tags", "owner", "lastActivity", "actions"]
+              },
+              {
+                "id": "manager",
+                "label": "Manager View",
+                "columns": ["selection", "primaryInfo", "status", "progress", "owner", "metrics", "actions"]
+              }
+            ]
+          },
+          "virtualScrolling": {
+            "enabled": false,
+            "threshold": 100,
+            "itemHeight": 64
+          },
+          "realTimeUpdates": {
+            "enabled": true,
+            "websocket": "/ws/projects-updates",
+            "updateStrategy": "merge"
+          }
+        },
+        "styling": {
+          "density": "comfortable",
+          "striped": true,
+          "bordered": false,
+          "hover": true,
+          "stickyHeader": true,
+          "compactMode": false,
+          "theme": {
+            "headerBackground": "slate.50",
+            "selectedRowBackground": "blue.50",
+            "hoverRowBackground": "slate.25"
+          }
+        },
+        "emptyState": {
+          "title": "No projects found",
+          "description": "Get started by creating your first project or adjusting your filters.",
+          "icon": "folder-plus",
+          "actions": [
+            {
+              "text": "Clear Filters",
+              "action": "clear-filters",
+              "variant": "secondary"
+            },
+            {
+              "text": "Create Project",
+              "action": "create-project",
+              "variant": "primary",
+              "permissions": ["projects.create"]
+            }
+          ]
+        },
+        "loadingState": {
+          "type": "skeleton",
+          "rows": 10,
+          "showShimmer": true
+        }
+      },
+      "dataSource": "projects",
+      "permissions": {
+        "requiredPermissions": ["projects.view"]
+      }
+    }
+  ],
+  "dataSources": [
+    {
+      "id": "projects",
+      "type": "api",
+      "endpoint": "/api/projects",
+      "method": "GET",
+      "parameters": {
+        "page": "1",
+        "limit": "25",
+        "sort": "lastActivity",
+        "order": "desc",
+        "include": ["owner", "metrics", "tags"]
+      },
+      "transform": "data.projects",
+      "cache": {
+        "ttl": "5m",
+        "key": "projects-list",
+        "invalidate": ["project-created", "project-updated", "project-deleted"]
+      },
+      "refresh": {
+        "trigger": "focus",
+        "interval": "60s"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "create-project",
+      "type": "navigate",
+      "target": "/projects/new"
+    },
+    {
+      "id": "export-projects",
+      "type": "api",
+      "target": "/api/projects/export",
+      "method": "POST",
+      "data": {
+        "selected": "{selectedIds}",
+        "format": "excel"
+      },
+      "success": {
+        "type": "download",
+        "message": "Export started successfully"
+      }
+    },
+    {
+      "id": "duplicate",
+      "type": "api",
+      "target": "/api/projects/{id}/duplicate",
+      "method": "POST",
+      "success": {
+        "type": "refresh",
+        "message": "Project duplicated successfully"
+      }
+    },
+    {
+      "id": "archive",
+      "type": "api",
+      "target": "/api/projects/{id}/archive",
+      "method": "PUT",
+      "success": {
+        "type": "refresh",
+        "message": "Project archived successfully"
+      }
+    }
+  ],
+  "permissions": {
+    "requiredPermissions": ["dashboard.view"]
+  },
+  "meta": {
+    "breadcrumbs": [
+      { "label": "Dashboard", "href": "/dashboard" },
+      { "label": "Projects", "href": "/projects" }
+    ],
+    "helpUrl": "/help/project-management",
+    "category": "project-management",
+    "tags": ["projects", "management", "enhanced-table"]
+  }
+}

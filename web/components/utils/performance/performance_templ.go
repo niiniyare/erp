@@ -69,7 +69,7 @@ type VirtualListProps struct {
 // VirtualListItem represents an item in a virtual list
 type VirtualListItem struct {
 	ID   string                 `json:"id" validate:"required"`
-	Data map[string]interface{} `json:"data"`
+	Data map[string]any `json:"data"`
 }
 
 // LazyLoaderProps defines properties for lazy loading content sections
@@ -1597,7 +1597,7 @@ type ComponentVirtualizerProps struct {
 type VirtualComponent struct {
 	ID       string                 `json:"id" validate:"required"`
 	Template string                 `json:"template" validate:"required"`
-	Props    map[string]interface{} `json:"props"`
+	Props    map[string]any `json:"props"`
 	Priority int                    `json:"priority"` // Rendering priority
 }
 

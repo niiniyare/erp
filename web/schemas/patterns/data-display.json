@@ -1,0 +1,731 @@
+{
+  "id": "data-display-patterns",
+  "version": "1.0.0",
+  "title": "Unified Data Display Patterns",
+  "description": "Comprehensive patterns for displaying data in tables, cards, and lists",
+  "patterns": {
+    "data-table": {
+      "id": "data-table",
+      "title": "Data Table",
+      "description": "Multi-column table with visual hierarchy, status badges, and batch operations",
+      "schema": {
+        "type": "organisms.table",
+        "props": {
+          "title": "{table.title}",
+          "subtitle": "{table.subtitle}",
+          "data": "{table.data}",
+          "columns": [
+            {
+              "key": "selection",
+              "type": "checkbox",
+              "width": "40px",
+              "sortable": false,
+              "selectable": true,
+              "sticky": true
+            },
+            {
+              "key": "favorite",
+              "type": "favorite-toggle",
+              "width": "40px",
+              "sortable": false,
+              "label": "★"
+            },
+            {
+              "key": "avatar",
+              "type": "avatar",
+              "width": "60px",
+              "sortable": false,
+              "props": {
+                "size": "sm",
+                "fallbackToInitials": true
+              }
+            },
+            {
+              "key": "primaryInfo",
+              "type": "primary-info",
+              "label": "Primary",
+              "sortable": true,
+              "searchable": true,
+              "primary": true,
+              "props": {
+                "titleField": "title",
+                "subtitleField": "subtitle",
+                "linkField": "href",
+                "truncate": 50
+              }
+            },
+            {
+              "key": "status",
+              "type": "status-badge",
+              "label": "Status",
+              "sortable": true,
+              "filterable": true,
+              "props": {
+                "statusConfig": {
+                  "pending": {
+                    "label": "Pending",
+                    "color": "yellow",
+                    "icon": "clock"
+                  },
+                  "in_progress": {
+                    "label": "In Progress",
+                    "color": "blue",
+                    "icon": "arrow-right",
+                    "animated": true
+                  },
+                  "completed": {
+                    "label": "Completed",
+                    "color": "green",
+                    "icon": "check"
+                  },
+                  "on_hold": {
+                    "label": "On Hold",
+                    "color": "gray",
+                    "icon": "pause"
+                  },
+                  "cancelled": {
+                    "label": "Cancelled",
+                    "color": "red",
+                    "icon": "x"
+                  }
+                }
+              }
+            },
+            {
+              "key": "progress",
+              "type": "progress-indicator",
+              "label": "Progress",
+              "sortable": true,
+              "props": {
+                "showPercentage": true,
+                "showBar": true,
+                "colorThresholds": {
+                  "low": { "threshold": 25, "color": "red" },
+                  "medium": { "threshold": 75, "color": "yellow" },
+                  "high": { "threshold": 100, "color": "green" }
+                }
+              }
+            },
+            {
+              "key": "metrics",
+              "type": "metric-display",
+              "label": "Metrics",
+              "sortable": true,
+              "props": {
+                "fields": [
+                  {
+                    "key": "revenue",
+                    "label": "Revenue",
+                    "format": "currency",
+                    "trend": true
+                  },
+                  {
+                    "key": "items",
+                    "label": "Items",
+                    "format": "number",
+                    "suffix": "items"
+                  }
+                ],
+                "compact": true
+              }
+            },
+            {
+              "key": "tags",
+              "type": "tag-list",
+              "label": "Tags",
+              "props": {
+                "maxVisible": 3,
+                "showMore": true,
+                "colorMapping": {
+                  "urgent": "red",
+                  "important": "yellow",
+                  "feature": "blue",
+                  "bug": "red",
+                  "enhancement": "green"
+                }
+              }
+            },
+            {
+              "key": "lastActivity",
+              "type": "relative-time",
+              "label": "Last Activity",
+              "sortable": true,
+              "props": {
+                "format": "relative",
+                "showTooltip": true,
+                "tooltipFormat": "full"
+              }
+            },
+            {
+              "key": "actions",
+              "type": "action-menu",
+              "label": "Actions",
+              "width": "120px",
+              "sortable": false,
+              "sticky": true,
+              "props": {
+                "primary": [
+                  {
+                    "id": "view",
+                    "label": "View",
+                    "icon": "eye",
+                    "variant": "ghost",
+                    "size": "sm"
+                  },
+                  {
+                    "id": "edit",
+                    "label": "Edit",
+                    "icon": "pencil",
+                    "variant": "ghost",
+                    "size": "sm",
+                    "permissions": ["edit"]
+                  }
+                ],
+                "dropdown": [
+                  {
+                    "id": "duplicate",
+                    "label": "Duplicate",
+                    "icon": "copy"
+                  },
+                  {
+                    "id": "archive",
+                    "label": "Archive",
+                    "icon": "archive"
+                  },
+                  {
+                    "id": "delete",
+                    "label": "Delete",
+                    "icon": "trash",
+                    "variant": "danger",
+                    "confirm": true,
+                    "permissions": ["delete"]
+                  }
+                ]
+              }
+            }
+          ],
+          "features": {
+            "selection": {
+              "enabled": true,
+              "type": "multiple",
+              "preserveSelection": true
+            },
+            "favorites": {
+              "enabled": true,
+              "persistState": true
+            },
+            "sorting": {
+              "enabled": true,
+              "multiColumn": true,
+              "defaultSort": [
+                { "column": "lastActivity", "direction": "desc" }
+              ]
+            },
+            "filtering": {
+              "enabled": true,
+              "quickFilters": [
+                {
+                  "id": "favorites",
+                  "label": "Favorites",
+                  "icon": "star",
+                  "filter": "favorite:true"
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "filter": "status:in_progress,pending"
+                },
+                {
+                  "id": "completed",
+                  "label": "Completed",
+                  "filter": "status:completed"
+                }
+              ],
+              "advancedFilters": [
+                {
+                  "field": "status",
+                  "type": "select",
+                  "options": "statusConfig"
+                },
+                {
+                  "field": "progress",
+                  "type": "range",
+                  "min": 0,
+                  "max": 100
+                },
+                {
+                  "field": "lastActivity",
+                  "type": "dateRange"
+                }
+              ]
+            },
+            "search": {
+              "enabled": true,
+              "placeholder": "Search items...",
+              "fields": ["primaryInfo.title", "primaryInfo.subtitle", "tags"],
+              "keyboard": {
+                "shortcut": "ctrl+k",
+                "globalSearch": true
+              }
+            },
+            "pagination": {
+              "enabled": true,
+              "pageSize": 25,
+              "pageSizeOptions": [10, 25, 50, 100],
+              "showInfo": true,
+              "showJumper": true
+            },
+            "batchOperations": {
+              "enabled": true,
+              "position": "top",
+              "actions": [
+                {
+                  "id": "bulk-edit",
+                  "label": "Edit Selected",
+                  "icon": "pencil",
+                  "modal": "/bulk-edit",
+                  "permissions": ["bulk_edit"]
+                },
+                {
+                  "id": "bulk-status",
+                  "label": "Change Status",
+                  "icon": "status",
+                  "dropdown": [
+                    {
+                      "value": "in_progress",
+                      "label": "Mark In Progress"
+                    },
+                    {
+                      "value": "completed",
+                      "label": "Mark Completed"
+                    },
+                    {
+                      "value": "on_hold",
+                      "label": "Put On Hold"
+                    }
+                  ]
+                },
+                {
+                  "id": "bulk-export",
+                  "label": "Export Selected",
+                  "icon": "download",
+                  "action": "export"
+                },
+                {
+                  "id": "bulk-delete",
+                  "label": "Delete Selected",
+                  "icon": "trash",
+                  "variant": "danger",
+                  "confirm": {
+                    "title": "Delete Items",
+                    "message": "Are you sure you want to delete {count} selected items?",
+                    "confirmText": "Delete All"
+                  },
+                  "permissions": ["bulk_delete"]
+                }
+              ]
+            },
+            "columnCustomization": {
+              "enabled": true,
+              "hideable": true,
+              "resizable": true,
+              "reorderable": true,
+              "presets": [
+                {
+                  "id": "minimal",
+                  "label": "Minimal View",
+                  "columns": ["selection", "primaryInfo", "status", "actions"]
+                },
+                {
+                  "id": "detailed",
+                  "label": "Detailed View",
+                  "columns": ["selection", "favorite", "avatar", "primaryInfo", "status", "progress", "metrics", "tags", "lastActivity", "actions"]
+                }
+              ]
+            },
+            "virtualScrolling": {
+              "enabled": true,
+              "threshold": 100,
+              "itemHeight": 64
+            },
+            "realTimeUpdates": {
+              "enabled": true,
+              "websocket": "/ws/table-updates",
+              "updateStrategy": "merge"
+            }
+          },
+          "styling": {
+            "density": "comfortable",
+            "striped": true,
+            "bordered": false,
+            "hover": true,
+            "stickyHeader": true,
+            "compactMode": false,
+            "theme": {
+              "headerBackground": "gray.50",
+              "selectedRowBackground": "blue.50",
+              "hoverRowBackground": "gray.25"
+            }
+          },
+          "emptyState": {
+            "title": "No items found",
+            "description": "There are no items matching your current filters.",
+            "icon": "inbox",
+            "actions": [
+              {
+                "text": "Clear Filters",
+                "action": "clear-filters",
+                "variant": "secondary"
+              },
+              {
+                "text": "Add New Item",
+                "action": "create-new",
+                "variant": "primary",
+                "permissions": ["create"]
+              }
+            ]
+          },
+          "loadingState": {
+            "type": "skeleton",
+            "rows": 10,
+            "showShimmer": true
+          }
+        }
+      }
+    },
+    "information-cards": {
+      "id": "information-cards",
+      "title": "Information Cards",
+      "description": "Card-based display with progress indicators and expandable sections",
+      "schema": {
+        "type": "organisms.card-grid",
+        "props": {
+          "layout": "grid",
+          "columns": {
+            "default": 1,
+            "sm": 2,
+            "lg": 3,
+            "xl": 4
+          },
+          "gap": "1.5rem",
+          "cardTemplate": {
+            "type": "molecules.info-card",
+            "props": {
+              "header": {
+                "avatar": {
+                  "src": "{item.avatar}",
+                  "name": "{item.name}",
+                  "size": "md",
+                  "status": "{item.status}"
+                },
+                "title": "{item.title}",
+                "subtitle": "{item.subtitle}",
+                "badges": [
+                  {
+                    "text": "{item.category}",
+                    "color": "blue",
+                    "size": "sm"
+                  }
+                ],
+                "actions": [
+                  {
+                    "icon": "heart",
+                    "variant": "ghost",
+                    "toggle": true,
+                    "active": "{item.favorite}"
+                  },
+                  {
+                    "icon": "more-vertical",
+                    "variant": "ghost",
+                    "dropdown": [
+                      { "label": "Edit", "action": "edit" },
+                      { "label": "Share", "action": "share" },
+                      { "label": "Delete", "action": "delete", "variant": "danger" }
+                    ]
+                  }
+                ]
+              },
+              "content": {
+                "sections": [
+                  {
+                    "type": "progress-section",
+                    "label": "Progress",
+                    "value": "{item.progress}",
+                    "props": {
+                      "showPercentage": true,
+                      "color": "blue",
+                      "size": "md"
+                    }
+                  },
+                  {
+                    "type": "contact-info",
+                    "items": [
+                      {
+                        "icon": "mail",
+                        "label": "Email",
+                        "value": "{item.email}",
+                        "link": "mailto:{item.email}"
+                      },
+                      {
+                        "icon": "phone",
+                        "label": "Phone",
+                        "value": "{item.phone}",
+                        "link": "tel:{item.phone}"
+                      },
+                      {
+                        "icon": "map-pin",
+                        "label": "Location",
+                        "value": "{item.location}"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "expandable-section",
+                    "title": "Details",
+                    "collapsed": true,
+                    "content": [
+                      {
+                        "type": "key-value-pairs",
+                        "items": [
+                          {
+                            "key": "Created",
+                            "value": "{item.createdAt}",
+                            "format": "date"
+                          },
+                          {
+                            "key": "Last Updated",
+                            "value": "{item.updatedAt}",
+                            "format": "relative"
+                          },
+                          {
+                            "key": "Owner",
+                            "value": "{item.owner.name}"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              "footer": {
+                "actions": [
+                  {
+                    "text": "View Details",
+                    "variant": "primary",
+                    "size": "sm",
+                    "href": "/items/{item.id}"
+                  },
+                  {
+                    "text": "Quick Edit",
+                    "variant": "secondary",
+                    "size": "sm",
+                    "modal": "/items/{item.id}/edit"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "activity-list": {
+      "id": "activity-list",
+      "title": "Activity List",
+      "description": "Timeline-based activity feed with user actions and file attachments",
+      "schema": {
+        "type": "organisms.activity-feed",
+        "props": {
+          "layout": "timeline",
+          "groupBy": "date",
+          "itemTemplate": {
+            "type": "molecules.activity-item",
+            "props": {
+              "avatar": {
+                "src": "{item.user.avatar}",
+                "name": "{item.user.name}",
+                "size": "sm"
+              },
+              "content": {
+                "title": "{item.title}",
+                "description": "{item.description}",
+                "timestamp": {
+                  "value": "{item.timestamp}",
+                  "format": "relative",
+                  "tooltip": "full"
+                },
+                "type": "{item.type}",
+                "typeConfig": {
+                  "comment": {
+                    "icon": "message-circle",
+                    "color": "blue"
+                  },
+                  "status_change": {
+                    "icon": "arrow-right",
+                    "color": "green"
+                  },
+                  "file_upload": {
+                    "icon": "upload",
+                    "color": "purple"
+                  },
+                  "mention": {
+                    "icon": "at-sign",
+                    "color": "yellow"
+                  },
+                  "assignment": {
+                    "icon": "user-plus",
+                    "color": "indigo"
+                  }
+                }
+              },
+              "attachments": {
+                "files": "{item.attachments}",
+                "template": {
+                  "type": "molecules.file-attachment",
+                  "props": {
+                    "name": "{file.name}",
+                    "size": "{file.size}",
+                    "type": "{file.type}",
+                    "url": "{file.url}",
+                    "thumbnail": "{file.thumbnail}",
+                    "downloadable": true
+                  }
+                }
+              },
+              "actions": [
+                {
+                  "icon": "heart",
+                  "label": "Like",
+                  "toggle": true,
+                  "count": "{item.likes}"
+                },
+                {
+                  "icon": "message-circle",
+                  "label": "Reply",
+                  "action": "reply"
+                },
+                {
+                  "icon": "share",
+                  "label": "Share",
+                  "action": "share"
+                }
+              ]
+            }
+          },
+          "filters": [
+            {
+              "id": "all",
+              "label": "All Activity",
+              "active": true
+            },
+            {
+              "id": "comments",
+              "label": "Comments",
+              "filter": "type:comment"
+            },
+            {
+              "id": "status_changes",
+              "label": "Status Changes",
+              "filter": "type:status_change"
+            },
+            {
+              "id": "files",
+              "label": "Files",
+              "filter": "type:file_upload"
+            }
+          ],
+          "loadMore": {
+            "enabled": true,
+            "pageSize": 20,
+            "autoLoad": true,
+            "threshold": 3
+          }
+        }
+      }
+    },
+    "compact-list": {
+      "id": "compact-list",
+      "title": "Compact List",
+      "description": "Dense information display with minimal visual noise",
+      "schema": {
+        "type": "organisms.compact-list",
+        "props": {
+          "density": "compact",
+          "showDividers": true,
+          "itemTemplate": {
+            "type": "molecules.list-item",
+            "props": {
+              "layout": "horizontal",
+              "leading": {
+                "type": "avatar",
+                "src": "{item.avatar}",
+                "name": "{item.name}",
+                "size": "xs",
+                "showStatus": true
+              },
+              "content": {
+                "primary": "{item.title}",
+                "secondary": "{item.subtitle}",
+                "tertiary": "{item.description}",
+                "truncate": {
+                  "primary": 40,
+                  "secondary": 60
+                }
+              },
+              "metadata": [
+                {
+                  "type": "badge",
+                  "text": "{item.status}",
+                  "color": "{item.statusColor}",
+                  "size": "xs"
+                },
+                {
+                  "type": "text",
+                  "text": "{item.updatedAt}",
+                  "format": "relative",
+                  "color": "muted"
+                }
+              ],
+              "trailing": {
+                "type": "action-button",
+                "icon": "chevron-right",
+                "variant": "ghost",
+                "size": "xs"
+              }
+            }
+          },
+          "grouping": {
+            "enabled": true,
+            "field": "category",
+            "collapsible": true,
+            "showCounts": true
+          },
+          "virtualScroll": {
+            "enabled": true,
+            "itemHeight": 48
+          }
+        }
+      }
+    }
+  },
+  "design_tokens": {
+    "status_colors": {
+      "pending": "#F59E0B",
+      "in_progress": "#3B82F6",
+      "completed": "#10B981",
+      "on_hold": "#6B7280",
+      "cancelled": "#EF4444",
+      "draft": "#8B5CF6"
+    },
+    "progress_colors": {
+      "low": "#EF4444",
+      "medium": "#F59E0B",
+      "high": "#10B981"
+    },
+    "priority_colors": {
+      "low": "#6B7280",
+      "medium": "#F59E0B",
+      "high": "#EF4444",
+      "urgent": "#DC2626"
+    }
+  }
+}

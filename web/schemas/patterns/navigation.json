@@ -1,0 +1,782 @@
+{
+  "id": "navigation-patterns",
+  "version": "1.0.0",
+  "title": "Navigation & Layout Patterns",
+  "description": "Comprehensive patterns for navigation, tabs, panels, and responsive layouts",
+  "patterns": {
+    "multi-tab-interface": {
+      "id": "multi-tab-interface",
+      "title": "Multi-Tab Interface",
+      "description": "Tab-based content switching with status indicators and contextual actions",
+      "schema": {
+        "type": "organisms.tabbed-interface",
+        "props": {
+          "variant": "line",
+          "size": "md",
+          "position": "top",
+          "tabs": [
+            {
+              "id": "overview",
+              "label": "Overview",
+              "icon": "layout-dashboard",
+              "badge": {
+                "text": "3",
+                "color": "blue",
+                "variant": "dot"
+              },
+              "content": {
+                "type": "template",
+                "template": "overview-dashboard"
+              }
+            },
+            {
+              "id": "campaigns",
+              "label": "Campaigns",
+              "icon": "megaphone",
+              "badge": {
+                "text": "{campaigns.active}",
+                "color": "green"
+              },
+              "content": {
+                "type": "template",
+                "template": "campaigns-list"
+              }
+            },
+            {
+              "id": "analytics",
+              "label": "Analytics",
+              "icon": "bar-chart",
+              "permissions": ["analytics.view"],
+              "content": {
+                "type": "template",
+                "template": "analytics-dashboard"
+              }
+            },
+            {
+              "id": "settings",
+              "label": "Settings",
+              "icon": "settings",
+              "permissions": ["settings.manage"],
+              "content": {
+                "type": "template",
+                "template": "settings-panel"
+              }
+            }
+          ],
+          "features": {
+            "persistence": {
+              "enabled": true,
+              "key": "active-tab",
+              "scope": "session"
+            },
+            "keyboard": {
+              "enabled": true,
+              "shortcuts": {
+                "next": "ctrl+tab",
+                "previous": "ctrl+shift+tab",
+                "specific": "ctrl+{number}"
+              }
+            },
+            "dragReorder": {
+              "enabled": true,
+              "persist": true
+            },
+            "contextMenu": {
+              "enabled": true,
+              "actions": [
+                {
+                  "label": "Close Tab",
+                  "action": "close-tab",
+                  "condition": "tabs.length > 1"
+                },
+                {
+                  "label": "Close Others",
+                  "action": "close-others"
+                },
+                {
+                  "label": "Refresh Content",
+                  "action": "refresh-content"
+                }
+              ]
+            }
+          },
+          "actions": {
+            "position": "right",
+            "items": [
+              {
+                "icon": "plus",
+                "label": "Add Tab",
+                "action": "add-tab",
+                "dropdown": [
+                  {
+                    "label": "New Campaign",
+                    "action": "new-campaign",
+                    "icon": "megaphone"
+                  },
+                  {
+                    "label": "Import Data",
+                    "action": "import-data",
+                    "icon": "upload"
+                  }
+                ]
+              },
+              {
+                "icon": "more-horizontal",
+                "label": "More Options",
+                "dropdown": [
+                  {
+                    "label": "Export All Data",
+                    "action": "export-all"
+                  },
+                  {
+                    "label": "Print Summary",
+                    "action": "print-summary"
+                  }
+                ]
+              }
+            ]
+          },
+          "responsive": {
+            "breakpoint": "md",
+            "mobileVariant": "dropdown",
+            "showLabels": false,
+            "iconOnly": true
+          }
+        }
+      }
+    },
+    "sidebar-navigation": {
+      "id": "sidebar-navigation",
+      "title": "Advanced Sidebar Navigation",
+      "description": "Hierarchical navigation with search, favorites, and customization",
+      "schema": {
+        "type": "organisms.advanced-sidebar",
+        "props": {
+          "width": "280px",
+          "collapsible": true,
+          "position": "left",
+          "variant": "elevated",
+          "header": {
+            "logo": {
+              "src": "/assets/logo.svg",
+              "alt": "Company Logo",
+              "href": "/dashboard"
+            },
+            "title": "ERP System",
+            "actions": [
+              {
+                "icon": "search",
+                "action": "global-search",
+                "shortcut": "⌘K"
+              },
+              {
+                "icon": "bell",
+                "action": "notifications",
+                "badge": "{notifications.unread}"
+              }
+            ]
+          },
+          "sections": [
+            {
+              "id": "main-nav",
+              "title": "Main Navigation",
+              "items": [
+                {
+                  "id": "dashboard",
+                  "label": "Dashboard",
+                  "icon": "layout-dashboard",
+                  "href": "/dashboard",
+                  "badge": {
+                    "type": "dot",
+                    "color": "green",
+                    "condition": "hasUpdates"
+                  }
+                },
+                {
+                  "id": "projects",
+                  "label": "Projects",
+                  "icon": "folder",
+                  "href": "/projects",
+                  "children": [
+                    {
+                      "id": "active-projects",
+                      "label": "Active Projects",
+                      "href": "/projects/active",
+                      "count": "{projects.active}"
+                    },
+                    {
+                      "id": "archived-projects",
+                      "label": "Archived",
+                      "href": "/projects/archived",
+                      "count": "{projects.archived}"
+                    },
+                    {
+                      "id": "templates",
+                      "label": "Templates",
+                      "href": "/projects/templates"
+                    }
+                  ]
+                },
+                {
+                  "id": "customers",
+                  "label": "Customers",
+                  "icon": "users",
+                  "href": "/customers",
+                  "permissions": ["customers.view"]
+                },
+                {
+                  "id": "sales",
+                  "label": "Sales",
+                  "icon": "trending-up",
+                  "children": [
+                    {
+                      "label": "Opportunities",
+                      "href": "/sales/opportunities",
+                      "permissions": ["sales.opportunities.view"]
+                    },
+                    {
+                      "label": "Quotes",
+                      "href": "/sales/quotes",
+                      "permissions": ["sales.quotes.view"]
+                    },
+                    {
+                      "label": "Orders",
+                      "href": "/sales/orders",
+                      "permissions": ["sales.orders.view"]
+                    }
+                  ]
+                },
+                {
+                  "id": "finance",
+                  "label": "Finance",
+                  "icon": "dollar-sign",
+                  "children": [
+                    {
+                      "label": "Invoices",
+                      "href": "/finance/invoices",
+                      "permissions": ["finance.invoices.view"]
+                    },
+                    {
+                      "label": "Payments",
+                      "href": "/finance/payments",
+                      "permissions": ["finance.payments.view"]
+                    },
+                    {
+                      "label": "Reports",
+                      "href": "/finance/reports",
+                      "permissions": ["finance.reports.view"]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "favorites",
+              "title": "Favorites",
+              "collapsible": true,
+              "items": "{user.favorites}",
+              "emptyState": {
+                "icon": "star",
+                "text": "No favorites yet",
+                "action": {
+                  "text": "Star items to add them here",
+                  "variant": "link"
+                }
+              },
+              "actions": [
+                {
+                  "icon": "settings",
+                  "action": "manage-favorites"
+                }
+              ]
+            },
+            {
+              "id": "recent",
+              "title": "Recent",
+              "maxItems": 5,
+              "items": "{user.recentItems}",
+              "template": {
+                "type": "molecules.nav-item",
+                "props": {
+                  "compact": true,
+                  "showTimestamp": true
+                }
+              }
+            },
+            {
+              "id": "teams",
+              "title": "Teams",
+              "collapsible": true,
+              "items": [
+                {
+                  "label": "Marketing Team",
+                  "icon": "users",
+                  "href": "/teams/marketing",
+                  "members": "{teams.marketing.members}",
+                  "avatar": {
+                    "type": "group",
+                    "members": "{teams.marketing.avatars}"
+                  }
+                },
+                {
+                  "label": "Sales Team",
+                  "icon": "users",
+                  "href": "/teams/sales",
+                  "members": "{teams.sales.members}",
+                  "avatar": {
+                    "type": "group",
+                    "members": "{teams.sales.avatars}"
+                  }
+                }
+              ]
+            }
+          ],
+          "footer": {
+            "user": {
+              "name": "{user.name}",
+              "email": "{user.email}",
+              "avatar": "{user.avatar}",
+              "status": "{user.status}",
+              "dropdown": [
+                {
+                  "label": "Profile Settings",
+                  "href": "/profile",
+                  "icon": "user"
+                },
+                {
+                  "label": "Preferences",
+                  "href": "/preferences",
+                  "icon": "settings"
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "label": "Sign Out",
+                  "action": "logout",
+                  "icon": "log-out"
+                }
+              ]
+            },
+            "actions": [
+              {
+                "icon": "help-circle",
+                "label": "Help & Support",
+                "action": "help"
+              },
+              {
+                "icon": "settings",
+                "label": "Settings",
+                "href": "/settings"
+              }
+            ]
+          },
+          "search": {
+            "enabled": true,
+            "placeholder": "Search navigation...",
+            "shortcut": "/",
+            "fuzzySearch": true
+          },
+          "customization": {
+            "reorder": true,
+            "pinning": true,
+            "grouping": true,
+            "themes": ["light", "dark", "auto"]
+          }
+        }
+      }
+    },
+    "breadcrumb-navigation": {
+      "id": "breadcrumb-navigation",
+      "title": "Enhanced Breadcrumb Navigation",
+      "description": "Hierarchical breadcrumbs with actions and metadata",
+      "schema": {
+        "type": "molecules.enhanced-breadcrumb",
+        "props": {
+          "items": [
+            {
+              "label": "Dashboard",
+              "href": "/dashboard",
+              "icon": "home"
+            },
+            {
+              "label": "Projects",
+              "href": "/projects",
+              "icon": "folder"
+            },
+            {
+              "label": "Marketing Campaign 2024",
+              "href": "/projects/marketing-2024",
+              "dropdown": [
+                {
+                  "label": "Q1 Campaign",
+                  "href": "/projects/q1-campaign"
+                },
+                {
+                  "label": "Q2 Campaign",
+                  "href": "/projects/q2-campaign"
+                },
+                {
+                  "label": "Holiday Campaign",
+                  "href": "/projects/holiday-campaign"
+                }
+              ]
+            },
+            {
+              "label": "Settings",
+              "current": true
+            }
+          ],
+          "separator": "chevron",
+          "maxItems": 5,
+          "collapseFrom": "start",
+          "showHome": true,
+          "actions": [
+            {
+              "icon": "star",
+              "label": "Add to Favorites",
+              "action": "add-favorite"
+            },
+            {
+              "icon": "share",
+              "label": "Share",
+              "action": "share"
+            }
+          ]
+        }
+      }
+    },
+    "command-palette": {
+      "id": "command-palette",
+      "title": "Command Palette",
+      "description": "Global command interface with keyboard shortcuts",
+      "schema": {
+        "type": "organisms.command-palette",
+        "props": {
+          "trigger": {
+            "keyboard": "cmd+k",
+            "global": true
+          },
+          "placeholder": "Type a command or search...",
+          "categories": [
+            {
+              "id": "actions",
+              "label": "Actions",
+              "icon": "zap",
+              "commands": [
+                {
+                  "id": "new-project",
+                  "label": "Create New Project",
+                  "description": "Start a new project from template",
+                  "icon": "plus",
+                  "shortcut": "⌘⇧P",
+                  "action": "create-project"
+                },
+                {
+                  "id": "new-customer",
+                  "label": "Add Customer",
+                  "description": "Add a new customer to the system",
+                  "icon": "user-plus",
+                  "shortcut": "⌘⇧C",
+                  "action": "create-customer"
+                },
+                {
+                  "id": "quick-invoice",
+                  "label": "Quick Invoice",
+                  "description": "Create invoice from template",
+                  "icon": "file-text",
+                  "action": "quick-invoice"
+                }
+              ]
+            },
+            {
+              "id": "navigation",
+              "label": "Go to",
+              "icon": "compass",
+              "commands": [
+                {
+                  "id": "goto-dashboard",
+                  "label": "Dashboard",
+                  "icon": "layout-dashboard",
+                  "shortcut": "G D",
+                  "href": "/dashboard"
+                },
+                {
+                  "id": "goto-projects",
+                  "label": "Projects",
+                  "icon": "folder",
+                  "shortcut": "G P",
+                  "href": "/projects"
+                },
+                {
+                  "id": "goto-customers",
+                  "label": "Customers",
+                  "icon": "users",
+                  "shortcut": "G C",
+                  "href": "/customers"
+                }
+              ]
+            },
+            {
+              "id": "settings",
+              "label": "Settings",
+              "icon": "settings",
+              "commands": [
+                {
+                  "id": "preferences",
+                  "label": "Preferences",
+                  "description": "Update your account preferences",
+                  "icon": "sliders",
+                  "shortcut": "⌘,",
+                  "href": "/preferences"
+                },
+                {
+                  "id": "theme-toggle",
+                  "label": "Toggle Theme",
+                  "description": "Switch between light and dark mode",
+                  "icon": "moon",
+                  "shortcut": "⌘⇧T",
+                  "action": "toggle-theme"
+                }
+              ]
+            },
+            {
+              "id": "recent",
+              "label": "Recent",
+              "icon": "clock",
+              "dynamic": true,
+              "source": "/api/recent-items",
+              "template": {
+                "label": "{item.title}",
+                "description": "{item.type} • {item.updated}",
+                "icon": "{item.icon}",
+                "href": "{item.href}"
+              }
+            }
+          ],
+          "features": {
+            "fuzzySearch": true,
+            "recentCommands": true,
+            "commandHistory": true,
+            "analytics": true
+          },
+          "styling": {
+            "size": "lg",
+            "maxHeight": "60vh",
+            "backdrop": true
+          }
+        }
+      }
+    },
+    "responsive-layout": {
+      "id": "responsive-layout",
+      "title": "Responsive Layout System",
+      "description": "Adaptive layouts that respond to screen size and content",
+      "schema": {
+        "type": "organisms.responsive-layout",
+        "props": {
+          "structure": "sidebar-main-aside",
+          "breakpoints": {
+            "sm": "640px",
+            "md": "768px",
+            "lg": "1024px",
+            "xl": "1280px"
+          },
+          "regions": {
+            "sidebar": {
+              "width": {
+                "default": "280px",
+                "collapsed": "64px"
+              },
+              "collapsible": true,
+              "position": "left",
+              "overlay": {
+                "enabled": true,
+                "breakpoint": "md"
+              },
+              "sticky": true
+            },
+            "header": {
+              "height": "64px",
+              "sticky": true,
+              "backdrop": "blur"
+            },
+            "main": {
+              "padding": {
+                "default": "2rem",
+                "mobile": "1rem"
+              },
+              "maxWidth": "none",
+              "overflow": "auto"
+            },
+            "aside": {
+              "width": "320px",
+              "collapsible": true,
+              "position": "right",
+              "hideBelow": "lg"
+            },
+            "footer": {
+              "height": "auto",
+              "sticky": false
+            }
+          },
+          "responsive": {
+            "behavior": "adaptive",
+            "transitions": {
+              "enabled": true,
+              "duration": "200ms"
+            },
+            "breakpointBehavior": {
+              "md": {
+                "sidebar": "overlay",
+                "aside": "hidden"
+              },
+              "sm": {
+                "sidebar": "drawer",
+                "header": "compact"
+              }
+            }
+          }
+        }
+      }
+    },
+    "page-header": {
+      "id": "page-header",
+      "title": "Enhanced Page Header",
+      "description": "Page headers with breadcrumbs, actions, and metadata",
+      "schema": {
+        "type": "molecules.page-header",
+        "props": {
+          "title": "{page.title}",
+          "subtitle": "{page.subtitle}",
+          "breadcrumbs": {
+            "enabled": true,
+            "items": "{page.breadcrumbs}"
+          },
+          "metadata": [
+            {
+              "type": "status",
+              "label": "Status",
+              "value": "{page.status}",
+              "color": "{page.statusColor}"
+            },
+            {
+              "type": "user",
+              "label": "Owner",
+              "user": "{page.owner}",
+              "showAvatar": true
+            },
+            {
+              "type": "date",
+              "label": "Last updated",
+              "value": "{page.updatedAt}",
+              "format": "relative"
+            }
+          ],
+          "actions": {
+            "primary": [
+              {
+                "text": "Edit",
+                "icon": "pencil",
+                "variant": "primary",
+                "action": "edit",
+                "permissions": ["edit"]
+              }
+            ],
+            "secondary": [
+              {
+                "text": "Share",
+                "icon": "share",
+                "action": "share"
+              },
+              {
+                "text": "Export",
+                "icon": "download",
+                "dropdown": [
+                  {
+                    "label": "Export as PDF",
+                    "action": "export-pdf"
+                  },
+                  {
+                    "label": "Export as Excel",
+                    "action": "export-excel"
+                  }
+                ]
+              }
+            ],
+            "overflow": [
+              {
+                "text": "Duplicate",
+                "icon": "copy",
+                "action": "duplicate"
+              },
+              {
+                "text": "Archive",
+                "icon": "archive",
+                "action": "archive"
+              },
+              {
+                "text": "Delete",
+                "icon": "trash",
+                "action": "delete",
+                "variant": "danger",
+                "confirm": true
+              }
+            ]
+          },
+          "tabs": {
+            "enabled": true,
+            "items": [
+              {
+                "id": "overview",
+                "label": "Overview",
+                "href": "/page/overview"
+              },
+              {
+                "id": "details",
+                "label": "Details",
+                "href": "/page/details"
+              },
+              {
+                "id": "history",
+                "label": "History",
+                "href": "/page/history"
+              }
+            ]
+          },
+          "banner": {
+            "enabled": true,
+            "type": "{page.bannerType}",
+            "message": "{page.bannerMessage}",
+            "dismissible": true
+          }
+        }
+      }
+    }
+  },
+  "design_tokens": {
+    "navigation_colors": {
+      "background": "#FFFFFF",
+      "border": "#E5E7EB",
+      "text": "#374151",
+      "text_secondary": "#6B7280",
+      "active": "#3B82F6",
+      "active_background": "#EBF8FF",
+      "hover": "#F3F4F6"
+    },
+    "layout_spacing": {
+      "sidebar_width": "280px",
+      "sidebar_collapsed": "64px",
+      "header_height": "64px",
+      "content_padding": "2rem",
+      "section_gap": "2rem"
+    },
+    "responsive_breakpoints": {
+      "sm": "640px",
+      "md": "768px",
+      "lg": "1024px",
+      "xl": "1280px",
+      "2xl": "1536px"
+    }
+  }
+}

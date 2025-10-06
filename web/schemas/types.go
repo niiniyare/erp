@@ -18,7 +18,7 @@ type PageSchema struct {
 	DataSources []DataSource           `json:"dataSources,omitempty"`
 	Actions     []ActionDefinition     `json:"actions,omitempty"`
 	Permissions *PermissionRules       `json:"permissions,omitempty"`
-	Meta        map[string]interface{} `json:"meta,omitempty"`
+	Meta        map[string]any `json:"meta,omitempty"`
 	CreatedAt   time.Time              `json:"createdAt,omitempty"`
 	UpdatedAt   time.Time              `json:"updatedAt,omitempty"`
 }
@@ -27,7 +27,7 @@ type PageSchema struct {
 type ComponentDefinition struct {
 	ID          string                 `json:"id"`
 	Type        string                 `json:"type"` // "atoms.button", "organisms.table", etc.
-	Props       map[string]interface{} `json:"props"`
+	Props       map[string]any `json:"props"`
 	Layout      *LayoutRules           `json:"layout,omitempty"`
 	Children    []ComponentDefinition  `json:"children,omitempty"`
 	DataSource  string                 `json:"dataSource,omitempty"`
@@ -91,7 +91,7 @@ type DataSource struct {
 	Transform  string            `json:"transform,omitempty"` // Data transformation expression
 	Cache      *CacheConfig      `json:"cache,omitempty"`
 	Refresh    *RefreshConfig    `json:"refresh,omitempty"`
-	Fallback   interface{}       `json:"fallback,omitempty"` // Fallback data
+	Fallback   any       `json:"fallback,omitempty"` // Fallback data
 }
 
 // CacheConfig defines caching behavior for data sources
@@ -153,7 +153,7 @@ type PermissionRules struct {
 type PermissionCheck struct {
 	Field    string      `json:"field"`            // Field to check
 	Operator string      `json:"operator"`         // "eq", "ne", "in", "contains"
-	Value    interface{} `json:"value"`            // Value to compare
+	Value    any `json:"value"`            // Value to compare
 	Source   string      `json:"source,omitempty"` // "user", "context", "data"
 }
 
@@ -161,7 +161,7 @@ type PermissionCheck struct {
 type RenderCondition struct {
 	Field    string      `json:"field"`
 	Operator string      `json:"operator"` // "eq", "ne", "gt", "lt", "in", "exists"
-	Value    interface{} `json:"value"`
+	Value    any `json:"value"`
 	Source   string      `json:"source,omitempty"` // "props", "data", "user", "context"
 }
 
@@ -170,7 +170,7 @@ type EventHandler struct {
 	Event   string                 `json:"event"`                     // "click", "change", "submit"
 	Action  string                 `json:"action"`                    // Action ID or inline handler
 	Target  string                 `json:"target,omitempty"`          // Element selector for delegation
-	Data    map[string]interface{} `json:"data,omitempty"`            // Additional data for handler
+	Data    map[string]any `json:"data,omitempty"`            // Additional data for handler
 	Prevent bool                   `json:"preventDefault,omitempty"`  // Prevent default behavior
 	Stop    bool                   `json:"stopPropagation,omitempty"` // Stop event bubbling
 }
@@ -218,9 +218,9 @@ type PermissionChecker interface {
 
 // DataProvider fetches and manages data for schema components
 type DataProvider interface {
-	GetData(source *DataSource, ctx context.Context) (interface{}, error)
+	GetData(source *DataSource, ctx context.Context) (any, error)
 	InvalidateCache(sourceID string) error
-	RefreshData(sourceID string, ctx context.Context) (interface{}, error)
+	RefreshData(sourceID string, ctx context.Context) (any, error)
 }
 
 // SchemaManager handles schema storage, versioning, and retrieval
@@ -244,9 +244,9 @@ type SchemaFilter struct {
 
 // RenderContext provides context information for schema rendering
 type RenderContext struct {
-	User        interface{}            `json:"user,omitempty"`
+	User        any            `json:"user,omitempty"`
 	Permissions []string               `json:"permissions"`
-	Data        map[string]interface{} `json:"data,omitempty"`
+	Data        map[string]any `json:"data,omitempty"`
 	Theme       string                 `json:"theme,omitempty"`
 	Language    string                 `json:"language,omitempty"`
 	Timezone    string                 `json:"timezone,omitempty"`

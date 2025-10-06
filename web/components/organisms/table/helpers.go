@@ -239,7 +239,7 @@ func getDataTableAlpineData(props DataTableProps) string {
 
 // formatCellValue formats a cell value based on its type and formatter
 // NOTE: This function needs integration with @internal/shared/format/
-func formatCellValue(value interface{}, valueType string, formatter string) string {
+func formatCellValue(value any, valueType string, formatter string) string {
 	if value == nil {
 		return ""
 	}
@@ -284,8 +284,8 @@ func buildDataTableConfig(config DataTableConfig) DataTableConfig {
 // buildSimpleDatatablesOptions builds options for simple-datatables library
 // TODO: Implement integration with simple-datatables
 // FIXME: Map our config to simple-datatables options format
-func buildSimpleDatatablesOptions(props DataTableProps) map[string]interface{} {
-	options := map[string]interface{}{
+func buildSimpleDatatablesOptions(props DataTableProps) map[string]any {
+	options := map[string]any{
 		"searchable":    props.Config.Searchable,
 		"sortable":      props.Config.Sortable,
 		"paging":        props.Config.Paging,
