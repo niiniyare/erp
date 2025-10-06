@@ -10,7 +10,7 @@ import (
 func main() {
 	fmt.Println("🚀 ERP UI Auto-Generation System - Phase 4.3 Demo")
 	fmt.Println("===============================================")
-	
+
 	// TODO: This demo requires integration with the generator package
 	fmt.Println("\n📝 Phase 4.3 Auto-Generation Demo")
 	fmt.Println("   This demo would showcase the UI generation system capabilities:")
@@ -49,6 +49,6 @@ func writeJSONFile(filename string, data interface{}) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal JSON: %w", err)
 	}
-	
-	return os.WriteFile(filename, jsonData, 0644)
+
+	return os.WriteFile(filename, jsonData, 0o644)
 }

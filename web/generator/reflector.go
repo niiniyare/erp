@@ -9,7 +9,7 @@ import (
 
 // TypeRegistry maintains a registry of types for reflection-based analysis
 type TypeRegistry struct {
-	types map[string]reflect.Type
+	types    map[string]reflect.Type
 	packages map[string][]reflect.Type
 }
 
@@ -26,14 +26,14 @@ func (tr *TypeRegistry) RegisterType(t reflect.Type) {
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
-	
+
 	if t.Kind() != reflect.Struct {
 		return
 	}
-	
+
 	name := t.Name()
 	pkgPath := t.PkgPath()
-	
+
 	tr.types[name] = t
 	tr.packages[pkgPath] = append(tr.packages[pkgPath], t)
 }
@@ -69,16 +69,16 @@ func (r *Reflector) ReflectStruct(v interface{}) (StructInfo, error) {
 	if t == nil {
 		return StructInfo{}, fmt.Errorf("cannot reflect nil interface")
 	}
-	
+
 	// Register the type for future reference
 	r.registry.RegisterType(t)
-	
+
 	// Use analyzer to get detailed struct information
 	structInfo := r.analyzer.AnalyzeStruct(t)
-	
+
 	// Enhance with runtime reflection data
 	r.enhanceWithReflection(&structInfo, t)
-	
+
 	return structInfo, nil
 }
 
@@ -88,35 +88,35 @@ func (r *Reflector) ReflectValue(v interface{}) (map[string]interface{}, error) 
 	if val.Kind() == reflect.Ptr {
 		val = val.Elem()
 	}
-	
+
 	if val.Kind() != reflect.Struct {
 		return nil, fmt.Errorf("value is not a struct")
 	}
-	
+
 	typ := val.Type()
 	result := make(map[string]interface{})
-	
+
 	for i := 0; i < val.NumField(); i++ {
 		field := typ.Field(i)
 		fieldValue := val.Field(i)
-		
+
 		// Skip unexported fields
 		if !field.IsExported() {
 			continue
 		}
-		
+
 		// Handle different field types
 		value := r.extractFieldValue(fieldValue)
 		result[field.Name] = value
 	}
-	
+
 	return result, nil
 }
 
 // GetMethodInfo extracts method information from a type
 func (r *Reflector) GetMethodInfo(t reflect.Type) []MethodInfo {
 	var methods []MethodInfo
-	
+
 	// Get methods on the type
 	for i := 0; i < t.NumMethod(); i++ {
 		method := t.Method(i)
@@ -125,13 +125,13 @@ func (r *Reflector) GetMethodInfo(t reflect.Type) []MethodInfo {
 			IsExported: method.IsExported(),
 			Type:       method.Type.String(),
 		}
-		
+
 		// Analyze method signature
 		r.analyzeMethodSignature(&methodInfo, method.Type)
-		
+
 		methods = append(methods, methodInfo)
 	}
-	
+
 	// Get methods on pointer to the type
 	if t.Kind() != reflect.Ptr {
 		ptrType := reflect.PtrTo(t)
@@ -139,35 +139,35 @@ func (r *Reflector) GetMethodInfo(t reflect.Type) []MethodInfo {
 			method := ptrType.Method(i)
 			if !r.containsMethod(methods, method.Name) {
 				methodInfo := MethodInfo{
-					Name:         method.Name,
-					IsExported:   method.IsExported(),
-					Type:         method.Type.String(),
-					RequiresPtr:  true,
+					Name:        method.Name,
+					IsExported:  method.IsExported(),
+					Type:        method.Type.String(),
+					RequiresPtr: true,
 				}
-				
+
 				r.analyzeMethodSignature(&methodInfo, method.Type)
 				methods = append(methods, methodInfo)
 			}
 		}
 	}
-	
+
 	return methods
 }
 
 // GetInterfaceInfo analyzes if a type implements specific interfaces
 func (r *Reflector) GetInterfaceInfo(t reflect.Type) []InterfaceInfo {
 	var interfaces []InterfaceInfo
-	
+
 	// Common interfaces to check
 	commonInterfaces := map[string]reflect.Type{
-		"fmt.Stringer":        reflect.TypeOf((*fmt.Stringer)(nil)).Elem(),
-		"error":               reflect.TypeOf((*error)(nil)).Elem(),
-		"json.Marshaler":      getJSONMarshalerType(),
-		"json.Unmarshaler":    getJSONUnmarshalerType(),
-		"sql.Scanner":         getSQLScannerType(),
-		"driver.Valuer":       getDriverValuerType(),
+		"fmt.Stringer":     reflect.TypeOf((*fmt.Stringer)(nil)).Elem(),
+		"error":            reflect.TypeOf((*error)(nil)).Elem(),
+		"json.Marshaler":   getJSONMarshalerType(),
+		"json.Unmarshaler": getJSONUnmarshalerType(),
+		"sql.Scanner":      getSQLScannerType(),
+		"driver.Valuer":    getDriverValuerType(),
 	}
-	
+
 	for name, interfaceType := range commonInterfaces {
 		if interfaceType != nil && t.Implements(interfaceType) {
 			interfaces = append(interfaces, InterfaceInfo{
@@ -176,7 +176,7 @@ func (r *Reflector) GetInterfaceInfo(t reflect.Type) []InterfaceInfo {
 			})
 		}
 	}
-	
+
 	return interfaces
 }
 
@@ -185,16 +185,16 @@ func (r *Reflector) GetEmbeddedTypes(t reflect.Type) []EmbeddedTypeInfo {
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
-	
+
 	if t.Kind() != reflect.Struct {
 		return nil
 	}
-	
+
 	var embedded []EmbeddedTypeInfo
-	
+
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		
+
 		if field.Anonymous {
 			embeddedInfo := EmbeddedTypeInfo{
 				Type:      field.Type,
@@ -202,11 +202,11 @@ func (r *Reflector) GetEmbeddedTypes(t reflect.Type) []EmbeddedTypeInfo {
 				Package:   field.Type.PkgPath(),
 				IsPointer: field.Type.Kind() == reflect.Ptr,
 			}
-			
+
 			embedded = append(embedded, embeddedInfo)
 		}
 	}
-	
+
 	return embedded
 }
 
@@ -215,26 +215,26 @@ func (r *Reflector) InspectMemoryLayout(t reflect.Type) MemoryLayoutInfo {
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
-	
+
 	layout := MemoryLayoutInfo{
 		Size:      int(t.Size()),
 		Alignment: int(t.Align()),
 		Fields:    make([]FieldLayoutInfo, 0, t.NumField()),
 	}
-	
+
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		
+
 		fieldLayout := FieldLayoutInfo{
 			Name:   field.Name,
 			Offset: int(field.Offset),
 			Size:   int(field.Type.Size()),
 			Type:   field.Type.String(),
 		}
-		
+
 		layout.Fields = append(layout.Fields, fieldLayout)
 	}
-	
+
 	return layout
 }
 
@@ -243,21 +243,21 @@ func (r *Reflector) enhanceWithReflection(structInfo *StructInfo, t reflect.Type
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
 	}
-	
+
 	// Add method information
 	// TODO: Integrate method analysis into schema generation
 	// This would help determine if the struct has CRUD methods,
 	// validation methods, or other business logic
-	
+
 	// Add interface implementation info
 	// TODO: Use interface information to determine UI capabilities
 	// For example, if a struct implements json.Marshaler,
 	// it might need special handling in forms
-	
+
 	// Add embedded type information
 	// TODO: Handle embedded fields in UI generation
 	// Embedded types might need to be flattened or grouped in the UI
-	
+
 	// Memory layout analysis
 	// NOTE: Memory layout is primarily for debugging and optimization
 	// but could be useful for detecting struct packing issues
@@ -268,7 +268,7 @@ func (r *Reflector) extractFieldValue(v reflect.Value) interface{} {
 	if !v.IsValid() {
 		return nil
 	}
-	
+
 	// Handle pointers
 	if v.Kind() == reflect.Ptr {
 		if v.IsNil() {
@@ -276,7 +276,7 @@ func (r *Reflector) extractFieldValue(v reflect.Value) interface{} {
 		}
 		v = v.Elem()
 	}
-	
+
 	// Handle interfaces
 	if v.Kind() == reflect.Interface {
 		if v.IsNil() {
@@ -284,7 +284,7 @@ func (r *Reflector) extractFieldValue(v reflect.Value) interface{} {
 		}
 		v = v.Elem()
 	}
-	
+
 	switch v.Kind() {
 	case reflect.String:
 		return v.String()
@@ -339,7 +339,7 @@ func (r *Reflector) extractMapValue(v reflect.Value) map[string]interface{} {
 func (r *Reflector) extractStructValue(v reflect.Value) map[string]interface{} {
 	result := make(map[string]interface{})
 	t := v.Type()
-	
+
 	for i := 0; i < v.NumField(); i++ {
 		field := t.Field(i)
 		if field.IsExported() {
@@ -347,7 +347,7 @@ func (r *Reflector) extractStructValue(v reflect.Value) map[string]interface{} {
 			result[field.Name] = r.extractFieldValue(fieldValue)
 		}
 	}
-	
+
 	return result
 }
 
@@ -358,18 +358,18 @@ func (r *Reflector) analyzeMethodSignature(methodInfo *MethodInfo, methodType re
 		param := methodType.In(i)
 		methodInfo.InputTypes = append(methodInfo.InputTypes, param.String())
 	}
-	
+
 	// Analyze return types
 	for i := 0; i < methodType.NumOut(); i++ {
 		returnType := methodType.Out(i)
 		methodInfo.OutputTypes = append(methodInfo.OutputTypes, returnType.String())
-		
+
 		// Check if returns error
 		if returnType.Implements(reflect.TypeOf((*error)(nil)).Elem()) {
 			methodInfo.ReturnsError = true
 		}
 	}
-	
+
 	// Determine method purpose based on naming conventions
 	methodName := strings.ToLower(methodInfo.Name)
 	switch {

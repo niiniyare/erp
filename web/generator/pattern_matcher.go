@@ -10,12 +10,12 @@ type PatternType string
 
 const (
 	// Basic CRUD patterns
-	PatternCRUDTable     PatternType = "crud_table"
-	PatternCreateForm    PatternType = "create_form"
-	PatternEditForm      PatternType = "edit_form"
-	PatternDetailView    PatternType = "detail_view"
-	PatternSearchFilter  PatternType = "search_filter"
-	
+	PatternCRUDTable    PatternType = "crud_table"
+	PatternCreateForm   PatternType = "create_form"
+	PatternEditForm     PatternType = "edit_form"
+	PatternDetailView   PatternType = "detail_view"
+	PatternSearchFilter PatternType = "search_filter"
+
 	// Advanced patterns
 	PatternHierarchyTree PatternType = "hierarchy_tree"
 	PatternKanbanBoard   PatternType = "kanban_board"
@@ -25,7 +25,7 @@ const (
 	PatternCalendarView  PatternType = "calendar_view"
 	PatternCardGrid      PatternType = "card_grid"
 	PatternMasterDetail  PatternType = "master_detail"
-	
+
 	// Specialized patterns
 	PatternUserProfile   PatternType = "user_profile"
 	PatternContactCard   PatternType = "contact_card"
@@ -61,7 +61,7 @@ func NewPatternMatcher() *PatternMatcher {
 	pm := &PatternMatcher{
 		rules: []PatternRule{},
 	}
-	
+
 	pm.initializeDefaultRules()
 	return pm
 }
@@ -69,7 +69,7 @@ func NewPatternMatcher() *PatternMatcher {
 // MatchPatterns analyzes a struct and returns ranked UI patterns
 func (pm *PatternMatcher) MatchPatterns(structInfo StructInfo) []PatternScore {
 	var scores []PatternScore
-	
+
 	for _, rule := range pm.rules {
 		if matches, reason := rule.Condition(structInfo); matches {
 			score := PatternScore{
@@ -77,20 +77,20 @@ func (pm *PatternMatcher) MatchPatterns(structInfo StructInfo) []PatternScore {
 				Score:   rule.Weight,
 				Reasons: []string{reason},
 			}
-			
+
 			// Apply contextual scoring modifiers
 			score.Score *= pm.calculateContextualModifier(structInfo, rule.Pattern)
-			
+
 			scores = append(scores, score)
 		}
 	}
-	
+
 	// Sort by score (highest first)
 	pm.sortScoresByWeight(scores)
-	
+
 	// Merge duplicate patterns and combine reasons
 	scores = pm.mergeDuplicatePatterns(scores)
-	
+
 	return scores
 }
 
@@ -100,7 +100,7 @@ func (pm *PatternMatcher) GetBestPattern(structInfo StructInfo) (PatternType, fl
 	if len(patterns) == 0 {
 		return PatternCRUDTable, 0.5 // Default fallback
 	}
-	
+
 	return patterns[0].Pattern, patterns[0].Score
 }
 
@@ -108,13 +108,13 @@ func (pm *PatternMatcher) GetBestPattern(structInfo StructInfo) (PatternType, fl
 func (pm *PatternMatcher) GetRecommendedPatterns(structInfo StructInfo, threshold float64) []PatternScore {
 	patterns := pm.MatchPatterns(structInfo)
 	var recommended []PatternScore
-	
+
 	for _, pattern := range patterns {
 		if pattern.Score >= threshold {
 			recommended = append(recommended, pattern)
 		}
 	}
-	
+
 	return recommended
 }
 
@@ -124,61 +124,61 @@ func (pm *PatternMatcher) initializeDefaultRules() {
 	pm.addRule(PatternCRUDTable, 10.0, func(s StructInfo) (bool, string) {
 		return s.IsCRUDEntity, "Entity supports CRUD operations"
 	})
-	
+
 	pm.addRule(PatternCreateForm, 9.0, func(s StructInfo) (bool, string) {
 		return s.IsCRUDEntity && !s.IsReadOnly, "Entity supports creation"
 	})
-	
+
 	pm.addRule(PatternEditForm, 9.0, func(s StructInfo) (bool, string) {
 		return s.IsCRUDEntity && !s.IsReadOnly, "Entity supports updates"
 	})
-	
+
 	pm.addRule(PatternDetailView, 8.0, func(s StructInfo) (bool, string) {
 		return s.IsCRUDEntity, "Entity has viewable details"
 	})
-	
+
 	pm.addRule(PatternSearchFilter, 7.0, func(s StructInfo) (bool, string) {
 		return s.IsCRUDEntity && pm.hasFilterableFields(s), "Entity has filterable fields"
 	})
-	
+
 	// Hierarchy patterns
 	pm.addRule(PatternHierarchyTree, 12.0, func(s StructInfo) (bool, string) {
 		return s.HasHierarchy, "Entity has hierarchical structure"
 	})
-	
+
 	// Workflow patterns
 	pm.addRule(PatternKanbanBoard, 11.0, func(s StructInfo) (bool, string) {
 		return s.HasWorkflow && pm.hasStatusField(s), "Entity has workflow states"
 	})
-	
+
 	pm.addRule(PatternWizardForm, 10.0, func(s StructInfo) (bool, string) {
 		return pm.hasComplexForm(s), "Entity has complex form requirements"
 	})
-	
+
 	// Dashboard patterns
 	pm.addRule(PatternDashboard, 8.0, func(s StructInfo) (bool, string) {
 		return pm.hasAggregateFields(s), "Entity suitable for dashboard aggregation"
 	})
-	
+
 	pm.addRule(PatternReportView, 7.0, func(s StructInfo) (bool, string) {
 		return s.IsReadOnly && pm.hasDateFields(s), "Read-only entity with time-based data"
 	})
-	
+
 	// Calendar patterns
 	pm.addRule(PatternCalendarView, 11.0, func(s StructInfo) (bool, string) {
 		return pm.hasCalendarFields(s), "Entity has date/time fields suitable for calendar"
 	})
-	
+
 	// Card patterns
 	pm.addRule(PatternCardGrid, 8.0, func(s StructInfo) (bool, string) {
 		return pm.hasCardLikeFields(s), "Entity has fields suitable for card display"
 	})
-	
+
 	// Master-detail patterns
 	pm.addRule(PatternMasterDetail, 9.0, func(s StructInfo) (bool, string) {
 		return len(s.Fields) > 10, "Entity has many fields suitable for master-detail layout"
 	})
-	
+
 	// Specialized entity patterns
 	pm.addUserProfileRules()
 	pm.addContactRules()
@@ -213,7 +213,7 @@ func (pm *PatternMatcher) addProjectRules() {
 	pm.addRule(PatternTaskBoard, 12.0, func(s StructInfo) (bool, string) {
 		return pm.isTaskLikeEntity(s), "Entity appears to be task/project related"
 	})
-	
+
 	pm.addRule(PatternTimeTracking, 11.0, func(s StructInfo) (bool, string) {
 		return pm.isTimeTrackingEntity(s), "Entity tracks time or duration"
 	})
@@ -224,7 +224,7 @@ func (pm *PatternMatcher) addCommunicationRules() {
 	pm.addRule(PatternChatInterface, 10.0, func(s StructInfo) (bool, string) {
 		return pm.isMessageLikeEntity(s), "Entity appears to be message/communication related"
 	})
-	
+
 	pm.addRule(PatternNotifications, 9.0, func(s StructInfo) (bool, string) {
 		return pm.isNotificationEntity(s), "Entity appears to be notification related"
 	})
@@ -255,23 +255,23 @@ func (pm *PatternMatcher) hasComplexForm(s StructInfo) bool {
 	// - Multiple relationships
 	// - Validation requirements
 	// - File uploads
-	
+
 	fieldCount := len(s.Fields)
 	relationshipCount := 0
 	hasFileFields := false
-	
+
 	for _, field := range s.Fields {
 		if field.IsRelationship {
 			relationshipCount++
 		}
 		if strings.Contains(strings.ToLower(field.Type), "file") ||
-		   strings.Contains(strings.ToLower(field.Name), "file") ||
-		   strings.Contains(strings.ToLower(field.Name), "document") ||
-		   strings.Contains(strings.ToLower(field.Name), "attachment") {
+			strings.Contains(strings.ToLower(field.Name), "file") ||
+			strings.Contains(strings.ToLower(field.Name), "document") ||
+			strings.Contains(strings.ToLower(field.Name), "attachment") {
 			hasFileFields = true
 		}
 	}
-	
+
 	return fieldCount > 8 || relationshipCount > 3 || hasFileFields
 }
 
@@ -300,10 +300,10 @@ func (pm *PatternMatcher) hasCalendarFields(s StructInfo) bool {
 	hasStartDate := false
 	hasEndDate := false
 	hasTitle := false
-	
+
 	for _, field := range s.Fields {
 		fieldName := strings.ToLower(field.Name)
-		
+
 		if field.IsTimeType {
 			if strings.Contains(fieldName, "start") || strings.Contains(fieldName, "begin") {
 				hasStartDate = true
@@ -311,13 +311,13 @@ func (pm *PatternMatcher) hasCalendarFields(s StructInfo) bool {
 				hasEndDate = true
 			}
 		}
-		
-		if field.IsStringType && (strings.Contains(fieldName, "title") || 
-		   strings.Contains(fieldName, "name") || strings.Contains(fieldName, "subject")) {
+
+		if field.IsStringType && (strings.Contains(fieldName, "title") ||
+			strings.Contains(fieldName, "name") || strings.Contains(fieldName, "subject")) {
 			hasTitle = true
 		}
 	}
-	
+
 	// End date is optional but adds to calendar completeness
 	_ = hasEndDate // Mark as intentionally unused for future enhancements
 	return hasStartDate && hasTitle
@@ -328,22 +328,22 @@ func (pm *PatternMatcher) hasCardLikeFields(s StructInfo) bool {
 	hasTitle := false
 	hasDescription := false
 	hasImage := false
-	
+
 	for _, field := range s.Fields {
 		fieldName := strings.ToLower(field.Name)
-		
+
 		if field.IsStringType {
 			if strings.Contains(fieldName, "title") || strings.Contains(fieldName, "name") {
 				hasTitle = true
 			} else if strings.Contains(fieldName, "description") || strings.Contains(fieldName, "summary") {
 				hasDescription = true
 			} else if strings.Contains(fieldName, "image") || strings.Contains(fieldName, "photo") ||
-			         strings.Contains(fieldName, "avatar") || strings.Contains(fieldName, "picture") {
+				strings.Contains(fieldName, "avatar") || strings.Contains(fieldName, "picture") {
 				hasImage = true
 			}
 		}
 	}
-	
+
 	return hasTitle && (hasDescription || hasImage)
 }
 
@@ -353,17 +353,17 @@ func (pm *PatternMatcher) hasCardLikeFields(s StructInfo) bool {
 func (pm *PatternMatcher) isUserLikeEntity(s StructInfo) bool {
 	entityName := strings.ToLower(s.Name)
 	userKeywords := []string{"user", "person", "employee", "member", "account", "profile"}
-	
+
 	for _, keyword := range userKeywords {
 		if strings.Contains(entityName, keyword) {
 			return true
 		}
 	}
-	
+
 	// Check for typical user fields
 	userFields := []string{"email", "password", "username", "firstname", "lastname", "name"}
 	matchCount := 0
-	
+
 	for _, field := range s.Fields {
 		fieldName := strings.ToLower(field.Name)
 		for _, userField := range userFields {
@@ -373,7 +373,7 @@ func (pm *PatternMatcher) isUserLikeEntity(s StructInfo) bool {
 			}
 		}
 	}
-	
+
 	return matchCount >= 2
 }
 
@@ -381,17 +381,17 @@ func (pm *PatternMatcher) isUserLikeEntity(s StructInfo) bool {
 func (pm *PatternMatcher) isContactLikeEntity(s StructInfo) bool {
 	entityName := strings.ToLower(s.Name)
 	contactKeywords := []string{"contact", "customer", "client", "vendor", "supplier", "lead"}
-	
+
 	for _, keyword := range contactKeywords {
 		if strings.Contains(entityName, keyword) {
 			return true
 		}
 	}
-	
+
 	// Check for contact fields
 	contactFields := []string{"email", "phone", "address", "company", "organization"}
 	matchCount := 0
-	
+
 	for _, field := range s.Fields {
 		fieldName := strings.ToLower(field.Name)
 		for _, contactField := range contactFields {
@@ -401,7 +401,7 @@ func (pm *PatternMatcher) isContactLikeEntity(s StructInfo) bool {
 			}
 		}
 	}
-	
+
 	return matchCount >= 2
 }
 
@@ -409,17 +409,17 @@ func (pm *PatternMatcher) isContactLikeEntity(s StructInfo) bool {
 func (pm *PatternMatcher) isInvoiceLikeEntity(s StructInfo) bool {
 	entityName := strings.ToLower(s.Name)
 	financialKeywords := []string{"invoice", "bill", "payment", "order", "transaction", "receipt"}
-	
+
 	for _, keyword := range financialKeywords {
 		if strings.Contains(entityName, keyword) {
 			return true
 		}
 	}
-	
+
 	// Check for financial fields
 	financialFields := []string{"amount", "total", "subtotal", "tax", "discount", "price", "cost"}
 	matchCount := 0
-	
+
 	for _, field := range s.Fields {
 		fieldName := strings.ToLower(field.Name)
 		for _, finField := range financialFields {
@@ -429,7 +429,7 @@ func (pm *PatternMatcher) isInvoiceLikeEntity(s StructInfo) bool {
 			}
 		}
 	}
-	
+
 	return matchCount >= 2
 }
 
@@ -437,17 +437,17 @@ func (pm *PatternMatcher) isInvoiceLikeEntity(s StructInfo) bool {
 func (pm *PatternMatcher) isTaskLikeEntity(s StructInfo) bool {
 	entityName := strings.ToLower(s.Name)
 	taskKeywords := []string{"task", "project", "issue", "ticket", "todo", "work", "job"}
-	
+
 	for _, keyword := range taskKeywords {
 		if strings.Contains(entityName, keyword) {
 			return true
 		}
 	}
-	
+
 	// Check for task fields
 	taskFields := []string{"status", "priority", "assignee", "deadline", "duedate", "progress"}
 	matchCount := 0
-	
+
 	for _, field := range s.Fields {
 		fieldName := strings.ToLower(field.Name)
 		for _, taskField := range taskFields {
@@ -457,7 +457,7 @@ func (pm *PatternMatcher) isTaskLikeEntity(s StructInfo) bool {
 			}
 		}
 	}
-	
+
 	return matchCount >= 2
 }
 
@@ -465,17 +465,17 @@ func (pm *PatternMatcher) isTaskLikeEntity(s StructInfo) bool {
 func (pm *PatternMatcher) isTimeTrackingEntity(s StructInfo) bool {
 	entityName := strings.ToLower(s.Name)
 	timeKeywords := []string{"timesheet", "timeentry", "log", "tracking", "hours", "duration"}
-	
+
 	for _, keyword := range timeKeywords {
 		if strings.Contains(entityName, keyword) {
 			return true
 		}
 	}
-	
+
 	// Check for time fields
 	timeFields := []string{"starttime", "endtime", "duration", "hours", "minutes", "logged"}
 	matchCount := 0
-	
+
 	for _, field := range s.Fields {
 		fieldName := strings.ToLower(field.Name)
 		for _, timeField := range timeFields {
@@ -485,7 +485,7 @@ func (pm *PatternMatcher) isTimeTrackingEntity(s StructInfo) bool {
 			}
 		}
 	}
-	
+
 	return matchCount >= 2
 }
 
@@ -493,17 +493,17 @@ func (pm *PatternMatcher) isTimeTrackingEntity(s StructInfo) bool {
 func (pm *PatternMatcher) isMessageLikeEntity(s StructInfo) bool {
 	entityName := strings.ToLower(s.Name)
 	messageKeywords := []string{"message", "chat", "conversation", "comment", "post", "reply"}
-	
+
 	for _, keyword := range messageKeywords {
 		if strings.Contains(entityName, keyword) {
 			return true
 		}
 	}
-	
+
 	// Check for message fields
 	messageFields := []string{"content", "body", "text", "sender", "recipient", "timestamp"}
 	matchCount := 0
-	
+
 	for _, field := range s.Fields {
 		fieldName := strings.ToLower(field.Name)
 		for _, msgField := range messageFields {
@@ -513,7 +513,7 @@ func (pm *PatternMatcher) isMessageLikeEntity(s StructInfo) bool {
 			}
 		}
 	}
-	
+
 	return matchCount >= 2
 }
 
@@ -521,17 +521,17 @@ func (pm *PatternMatcher) isMessageLikeEntity(s StructInfo) bool {
 func (pm *PatternMatcher) isNotificationEntity(s StructInfo) bool {
 	entityName := strings.ToLower(s.Name)
 	notificationKeywords := []string{"notification", "alert", "reminder", "notice", "announcement"}
-	
+
 	for _, keyword := range notificationKeywords {
 		if strings.Contains(entityName, keyword) {
 			return true
 		}
 	}
-	
+
 	// Check for notification fields
 	notificationFields := []string{"read", "seen", "dismissed", "priority", "type", "recipient"}
 	matchCount := 0
-	
+
 	for _, field := range s.Fields {
 		fieldName := strings.ToLower(field.Name)
 		for _, notifField := range notificationFields {
@@ -541,7 +541,7 @@ func (pm *PatternMatcher) isNotificationEntity(s StructInfo) bool {
 			}
 		}
 	}
-	
+
 	return matchCount >= 2
 }
 
@@ -549,8 +549,8 @@ func (pm *PatternMatcher) isNotificationEntity(s StructInfo) bool {
 
 // isFieldFilterable determines if a field can be used for filtering
 func (pm *PatternMatcher) isFieldFilterable(field FieldInfo) bool {
-	return field.IsStringType || field.IsBoolType || field.IsTimeType || 
-	       field.IsRelationship || len(field.Options) > 0 || field.IsNumberType
+	return field.IsStringType || field.IsBoolType || field.IsTimeType ||
+		field.IsRelationship || len(field.Options) > 0 || field.IsNumberType
 }
 
 // hasFieldWithName checks if entity has fields with specific names
@@ -569,7 +569,7 @@ func (pm *PatternMatcher) hasFieldWithName(s StructInfo, names ...string) bool {
 // calculateContextualModifier applies contextual scoring based on entity characteristics
 func (pm *PatternMatcher) calculateContextualModifier(s StructInfo, pattern PatternType) float64 {
 	modifier := 1.0
-	
+
 	// Boost patterns for entities with many relationships
 	relationshipCount := 0
 	for _, field := range s.Fields {
@@ -577,7 +577,7 @@ func (pm *PatternMatcher) calculateContextualModifier(s StructInfo, pattern Patt
 			relationshipCount++
 		}
 	}
-	
+
 	if relationshipCount > 3 {
 		switch pattern {
 		case PatternMasterDetail, PatternDetailView:
@@ -586,7 +586,7 @@ func (pm *PatternMatcher) calculateContextualModifier(s StructInfo, pattern Patt
 			modifier += 0.1
 		}
 	}
-	
+
 	// Boost workflow patterns for entities with audit trails
 	if s.HasAuditTrail {
 		switch pattern {
@@ -594,7 +594,7 @@ func (pm *PatternMatcher) calculateContextualModifier(s StructInfo, pattern Patt
 			modifier += 0.15
 		}
 	}
-	
+
 	// Reduce form patterns for read-only entities
 	if s.IsReadOnly {
 		switch pattern {
@@ -604,7 +604,7 @@ func (pm *PatternMatcher) calculateContextualModifier(s StructInfo, pattern Patt
 			modifier += 0.2
 		}
 	}
-	
+
 	// Boost hierarchy patterns for tenant-scoped entities
 	if s.HasTenantScope {
 		switch pattern {
@@ -612,7 +612,7 @@ func (pm *PatternMatcher) calculateContextualModifier(s StructInfo, pattern Patt
 			modifier += 0.1
 		}
 	}
-	
+
 	return modifier
 }
 
@@ -641,7 +641,7 @@ func (pm *PatternMatcher) sortScoresByWeight(scores []PatternScore) {
 // mergeDuplicatePatterns combines scores for the same pattern
 func (pm *PatternMatcher) mergeDuplicatePatterns(scores []PatternScore) []PatternScore {
 	patternMap := make(map[PatternType]*PatternScore)
-	
+
 	for _, score := range scores {
 		if existing, exists := patternMap[score.Pattern]; exists {
 			existing.Score += score.Score * 0.1 // Additional matches add 10% bonus
@@ -651,12 +651,12 @@ func (pm *PatternMatcher) mergeDuplicatePatterns(scores []PatternScore) []Patter
 			patternMap[score.Pattern] = &scoreCopy
 		}
 	}
-	
+
 	var merged []PatternScore
 	for _, score := range patternMap {
 		merged = append(merged, *score)
 	}
-	
+
 	pm.sortScoresByWeight(merged)
 	return merged
 }
@@ -666,9 +666,9 @@ func (pm *PatternMatcher) GetPatternDescription(pattern PatternType) string {
 	descriptions := map[PatternType]string{
 		PatternCRUDTable:     "Standard data table with create, read, update, delete operations",
 		PatternCreateForm:    "Form interface for creating new records",
-		PatternEditForm:     "Form interface for editing existing records",
-		PatternDetailView:   "Detailed view of a single record with related information",
-		PatternSearchFilter: "Advanced filtering and search interface",
+		PatternEditForm:      "Form interface for editing existing records",
+		PatternDetailView:    "Detailed view of a single record with related information",
+		PatternSearchFilter:  "Advanced filtering and search interface",
 		PatternHierarchyTree: "Tree structure for hierarchical data navigation",
 		PatternKanbanBoard:   "Kanban-style board for workflow management",
 		PatternWizardForm:    "Multi-step form for complex data entry",
@@ -686,18 +686,18 @@ func (pm *PatternMatcher) GetPatternDescription(pattern PatternType) string {
 		PatternChatInterface: "Real-time communication interface",
 		PatternNotifications: "Notification center and management",
 	}
-	
+
 	if desc, exists := descriptions[pattern]; exists {
 		return desc
 	}
-	
+
 	return fmt.Sprintf("Custom pattern: %s", string(pattern))
 }
 
 // ValidatePattern checks if a pattern is valid for the given struct
 func (pm *PatternMatcher) ValidatePattern(structInfo StructInfo, pattern PatternType) (bool, []string) {
 	var issues []string
-	
+
 	switch pattern {
 	case PatternCRUDTable:
 		if !structInfo.IsCRUDEntity {
@@ -706,7 +706,7 @@ func (pm *PatternMatcher) ValidatePattern(structInfo StructInfo, pattern Pattern
 		if len(structInfo.Fields) == 0 {
 			issues = append(issues, "Entity has no displayable fields")
 		}
-		
+
 	case PatternCreateForm, PatternEditForm:
 		if structInfo.IsReadOnly {
 			issues = append(issues, "Entity is read-only and cannot be modified")
@@ -714,12 +714,12 @@ func (pm *PatternMatcher) ValidatePattern(structInfo StructInfo, pattern Pattern
 		if !structInfo.IsCRUDEntity {
 			issues = append(issues, "Entity does not support CRUD operations")
 		}
-		
+
 	case PatternHierarchyTree:
 		if !structInfo.HasHierarchy {
 			issues = append(issues, "Entity does not have hierarchical structure")
 		}
-		
+
 	case PatternKanbanBoard:
 		if !structInfo.HasWorkflow {
 			issues = append(issues, "Entity does not have workflow states")
@@ -727,13 +727,13 @@ func (pm *PatternMatcher) ValidatePattern(structInfo StructInfo, pattern Pattern
 		if !pm.hasStatusField(structInfo) {
 			issues = append(issues, "Entity does not have status field for workflow")
 		}
-		
+
 	case PatternCalendarView:
 		if !pm.hasCalendarFields(structInfo) {
 			issues = append(issues, "Entity does not have date/time fields suitable for calendar")
 		}
 	}
-	
+
 	return len(issues) == 0, issues
 }
 

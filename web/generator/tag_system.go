@@ -16,11 +16,11 @@ type TagSystem struct {
 
 // TagSystemConfig configures the tag system behavior
 type TagSystemConfig struct {
-	DefaultComponent      string            `json:"defaultComponent"`
-	CustomTagPrefixes     []string          `json:"customTagPrefixes"`
-	StrictValidation      bool              `json:"strictValidation"`
-	AllowUnknownTags      bool              `json:"allowUnknownTags"`
-	ComponentMappings     map[string]string `json:"componentMappings"`
+	DefaultComponent       string            `json:"defaultComponent"`
+	CustomTagPrefixes      []string          `json:"customTagPrefixes"`
+	StrictValidation       bool              `json:"strictValidation"`
+	AllowUnknownTags       bool              `json:"allowUnknownTags"`
+	ComponentMappings      map[string]string `json:"componentMappings"`
 	ValidationRuleMappings map[string]string `json:"validationRuleMappings"`
 }
 
@@ -50,13 +50,13 @@ func NewTagSystem(config TagSystemConfig) *TagSystem {
 		validators: make(map[string]TagValidator),
 		config:     config,
 	}
-	
+
 	// Register default parsers
 	ts.registerDefaultParsers()
-	
+
 	// Register default validators
 	ts.registerDefaultValidators()
-	
+
 	return ts
 }
 
@@ -68,14 +68,14 @@ func (ts *TagSystem) ParseFieldTags(field reflect.StructField) (*FieldTagData, e
 		Tags:      make(map[string]map[string]interface{}),
 		Issues:    []ValidationIssue{},
 	}
-	
+
 	// Parse each supported tag
 	for tagName, parser := range ts.parsers {
 		tagValue := field.Tag.Get(tagName)
 		if tagValue == "" {
 			continue
 		}
-		
+
 		parsed, err := parser.Parse(tagValue)
 		if err != nil {
 			tagData.Issues = append(tagData.Issues, ValidationIssue{
@@ -86,9 +86,9 @@ func (ts *TagSystem) ParseFieldTags(field reflect.StructField) (*FieldTagData, e
 			})
 			continue
 		}
-		
+
 		tagData.Tags[tagName] = parsed
-		
+
 		// Validate parsed tag data
 		if validator, exists := ts.validators[tagName]; exists {
 			if issues := validator.Validate(parsed); len(issues) > 0 {
@@ -96,7 +96,7 @@ func (ts *TagSystem) ParseFieldTags(field reflect.StructField) (*FieldTagData, e
 			}
 		}
 	}
-	
+
 	return tagData, nil
 }
 
@@ -106,29 +106,29 @@ func (ts *TagSystem) ApplyTagCustomizations(fieldInfo *FieldInfo, tagData *Field
 	if uiTags, exists := tagData.Tags["ui"]; exists {
 		ts.applyUITagCustomizations(fieldInfo, uiTags)
 	}
-	
+
 	// Apply validation tag customizations
 	if validateTags, exists := tagData.Tags["validate"]; exists {
 		ts.applyValidationTagCustomizations(fieldInfo, validateTags)
 	}
-	
+
 	// Apply database tag customizations
 	if dbTags, exists := tagData.Tags["db"]; exists {
 		ts.applyDatabaseTagCustomizations(fieldInfo, dbTags)
 	}
-	
+
 	// Apply JSON tag customizations
 	if jsonTags, exists := tagData.Tags["json"]; exists {
 		ts.applyJSONTagCustomizations(fieldInfo, jsonTags)
 	}
-	
+
 	// Apply custom tag prefixes
 	for _, prefix := range ts.config.CustomTagPrefixes {
 		if customTags, exists := tagData.Tags[prefix]; exists {
 			ts.applyCustomTagCustomizations(fieldInfo, prefix, customTags)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -163,11 +163,11 @@ type UITagParser struct{}
 
 func (p *UITagParser) Parse(tagValue string) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
-	
+
 	if tagValue == "" {
 		return result, nil
 	}
-	
+
 	// Parse key=value pairs separated by semicolons
 	pairs := strings.Split(tagValue, ";")
 	for _, pair := range pairs {
@@ -175,10 +175,10 @@ func (p *UITagParser) Parse(tagValue string) (map[string]interface{}, error) {
 		if len(parts) != 2 {
 			continue
 		}
-		
+
 		key := strings.TrimSpace(parts[0])
 		value := strings.TrimSpace(parts[1])
-		
+
 		// Parse specific types
 		switch key {
 		case "component":
@@ -256,7 +256,7 @@ func (p *UITagParser) Parse(tagValue string) (map[string]interface{}, error) {
 			result[key] = value
 		}
 	}
-	
+
 	return result, nil
 }
 
@@ -275,21 +275,21 @@ type ValidateTagParser struct{}
 
 func (p *ValidateTagParser) Parse(tagValue string) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
-	
+
 	if tagValue == "" {
 		return result, nil
 	}
-	
+
 	// Parse validation rules separated by commas
 	rules := strings.Split(tagValue, ",")
 	var validationRules []map[string]interface{}
-	
+
 	for _, rule := range rules {
 		rule = strings.TrimSpace(rule)
 		if rule == "" {
 			continue
 		}
-		
+
 		// Parse rule with optional parameters
 		parts := strings.SplitN(rule, "=", 2)
 		ruleName := strings.TrimSpace(parts[0])
@@ -297,11 +297,11 @@ func (p *ValidateTagParser) Parse(tagValue string) (map[string]interface{}, erro
 		if len(parts) > 1 {
 			ruleValue = strings.TrimSpace(parts[1])
 		}
-		
+
 		ruleData := map[string]interface{}{
 			"rule": ruleName,
 		}
-		
+
 		// Parse rule-specific parameters
 		switch ruleName {
 		case "required":
@@ -345,10 +345,10 @@ func (p *ValidateTagParser) Parse(tagValue string) (map[string]interface{}, erro
 				ruleData["value"] = ruleValue
 			}
 		}
-		
+
 		validationRules = append(validationRules, ruleData)
 	}
-	
+
 	result["rules"] = validationRules
 	return result, nil
 }
@@ -365,23 +365,23 @@ type DatabaseTagParser struct{}
 
 func (p *DatabaseTagParser) Parse(tagValue string) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
-	
+
 	if tagValue == "" {
 		return result, nil
 	}
-	
+
 	// Handle different database tag formats
 	if tagValue == "-" {
 		result["ignored"] = true
 		return result, nil
 	}
-	
+
 	// Parse comma-separated options
 	parts := strings.Split(tagValue, ",")
 	if len(parts) > 0 {
 		result["column"] = strings.TrimSpace(parts[0])
 	}
-	
+
 	for i := 1; i < len(parts); i++ {
 		option := strings.TrimSpace(parts[i])
 		switch option {
@@ -404,7 +404,7 @@ func (p *DatabaseTagParser) Parse(tagValue string) (map[string]interface{}, erro
 			}
 		}
 	}
-	
+
 	return result, nil
 }
 
@@ -419,22 +419,22 @@ type JSONTagParser struct{}
 
 func (p *JSONTagParser) Parse(tagValue string) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
-	
+
 	if tagValue == "" {
 		return result, nil
 	}
-	
+
 	if tagValue == "-" {
 		result["ignored"] = true
 		return result, nil
 	}
-	
+
 	// Parse comma-separated options
 	parts := strings.Split(tagValue, ",")
 	if len(parts) > 0 && parts[0] != "" {
 		result["name"] = strings.TrimSpace(parts[0])
 	}
-	
+
 	for i := 1; i < len(parts); i++ {
 		option := strings.TrimSpace(parts[i])
 		switch option {
@@ -451,7 +451,7 @@ func (p *JSONTagParser) Parse(tagValue string) (map[string]interface{}, error) {
 			}
 		}
 	}
-	
+
 	return result, nil
 }
 
@@ -464,7 +464,7 @@ type FormTagParser struct{}
 
 func (p *FormTagParser) Parse(tagValue string) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
-	
+
 	// Parse form-specific configurations
 	pairs := strings.Split(tagValue, ";")
 	for _, pair := range pairs {
@@ -472,10 +472,10 @@ func (p *FormTagParser) Parse(tagValue string) (map[string]interface{}, error) {
 		if len(parts) != 2 {
 			continue
 		}
-		
+
 		key := strings.TrimSpace(parts[0])
 		value := strings.TrimSpace(parts[1])
-		
+
 		switch key {
 		case "tab":
 			result["tab"] = value
@@ -501,7 +501,7 @@ func (p *FormTagParser) Parse(tagValue string) (map[string]interface{}, error) {
 			result[key] = value
 		}
 	}
-	
+
 	return result, nil
 }
 
@@ -516,7 +516,7 @@ type TableTagParser struct{}
 
 func (p *TableTagParser) Parse(tagValue string) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
-	
+
 	// Parse table-specific configurations
 	pairs := strings.Split(tagValue, ";")
 	for _, pair := range pairs {
@@ -524,10 +524,10 @@ func (p *TableTagParser) Parse(tagValue string) (map[string]interface{}, error) 
 		if len(parts) != 2 {
 			continue
 		}
-		
+
 		key := strings.TrimSpace(parts[0])
 		value := strings.TrimSpace(parts[1])
-		
+
 		switch key {
 		case "width":
 			result["width"] = value
@@ -553,7 +553,7 @@ func (p *TableTagParser) Parse(tagValue string) (map[string]interface{}, error) 
 			result[key] = value
 		}
 	}
-	
+
 	return result, nil
 }
 
@@ -569,7 +569,7 @@ type FilterTagParser struct{}
 
 func (p *FilterTagParser) Parse(tagValue string) (map[string]interface{}, error) {
 	result := make(map[string]interface{})
-	
+
 	// Parse filter-specific configurations
 	pairs := strings.Split(tagValue, ";")
 	for _, pair := range pairs {
@@ -577,10 +577,10 @@ func (p *FilterTagParser) Parse(tagValue string) (map[string]interface{}, error)
 		if len(parts) != 2 {
 			continue
 		}
-		
+
 		key := strings.TrimSpace(parts[0])
 		value := strings.TrimSpace(parts[1])
-		
+
 		switch key {
 		case "type":
 			result["type"] = value
@@ -600,7 +600,7 @@ func (p *FilterTagParser) Parse(tagValue string) (map[string]interface{}, error)
 			result[key] = value
 		}
 	}
-	
+
 	return result, nil
 }
 
@@ -617,7 +617,7 @@ type UITagValidator struct{}
 
 func (v *UITagValidator) Validate(tagData map[string]interface{}) []ValidationIssue {
 	var issues []ValidationIssue
-	
+
 	// Validate component type
 	if component, exists := tagData["component"]; exists {
 		if componentStr, ok := component.(string); ok {
@@ -631,7 +631,7 @@ func (v *UITagValidator) Validate(tagData map[string]interface{}) []ValidationIs
 			}
 		}
 	}
-	
+
 	// Validate numeric ranges
 	if min, minExists := tagData["min"]; minExists {
 		if max, maxExists := tagData["max"]; maxExists {
@@ -649,7 +649,7 @@ func (v *UITagValidator) Validate(tagData map[string]interface{}) []ValidationIs
 			}
 		}
 	}
-	
+
 	// Validate length constraints
 	if minLen, minExists := tagData["minLength"]; minExists {
 		if maxLen, maxExists := tagData["maxLength"]; maxExists {
@@ -667,7 +667,7 @@ func (v *UITagValidator) Validate(tagData map[string]interface{}) []ValidationIs
 			}
 		}
 	}
-	
+
 	return issues
 }
 
@@ -676,7 +676,7 @@ type ValidateTagValidator struct{}
 
 func (v *ValidateTagValidator) Validate(tagData map[string]interface{}) []ValidationIssue {
 	var issues []ValidationIssue
-	
+
 	if rules, exists := tagData["rules"]; exists {
 		if rulesList, ok := rules.([]map[string]interface{}); ok {
 			for _, rule := range rulesList {
@@ -695,7 +695,7 @@ func (v *ValidateTagValidator) Validate(tagData map[string]interface{}) []Valida
 			}
 		}
 	}
-	
+
 	return issues
 }
 
@@ -704,7 +704,7 @@ type FormTagValidator struct{}
 
 func (v *FormTagValidator) Validate(tagData map[string]interface{}) []ValidationIssue {
 	var issues []ValidationIssue
-	
+
 	// Validate conditional dependencies
 	if dependsOn, exists := tagData["dependsOn"]; exists {
 		if dependsOnStr, ok := dependsOn.(string); ok {
@@ -718,7 +718,7 @@ func (v *FormTagValidator) Validate(tagData map[string]interface{}) []Validation
 			}
 		}
 	}
-	
+
 	return issues
 }
 
@@ -730,37 +730,37 @@ func (ts *TagSystem) applyUITagCustomizations(fieldInfo *FieldInfo, uiTags map[s
 			fieldInfo.Component = componentStr
 		}
 	}
-	
+
 	if label, exists := uiTags["label"]; exists {
 		if labelStr, ok := label.(string); ok {
 			fieldInfo.Label = labelStr
 		}
 	}
-	
+
 	if required, exists := uiTags["required"]; exists {
 		if requiredBool, ok := required.(bool); ok {
 			fieldInfo.Required = requiredBool
 		}
 	}
-	
+
 	if placeholder, exists := uiTags["placeholder"]; exists {
 		if placeholderStr, ok := placeholder.(string); ok {
 			fieldInfo.Placeholder = placeholderStr
 		}
 	}
-	
+
 	if hidden, exists := uiTags["hidden"]; exists {
 		if hiddenBool, ok := hidden.(bool); ok {
 			fieldInfo.Hidden = hiddenBool
 		}
 	}
-	
+
 	if options, exists := uiTags["options"]; exists {
 		if optionsList, ok := options.([]string); ok {
 			fieldInfo.Options = optionsList
 		}
 	}
-	
+
 	// Apply additional UI customizations...
 }
 
@@ -790,12 +790,12 @@ func parseOptions(value string) []string {
 	if value == "" {
 		return nil
 	}
-	
+
 	options := strings.Split(value, ",")
 	for i, option := range options {
 		options[i] = strings.TrimSpace(option)
 	}
-	
+
 	return options
 }
 
@@ -804,7 +804,7 @@ func parseAttributes(value string) map[string]string {
 	if value == "" {
 		return attrs
 	}
-	
+
 	// Parse key:value pairs separated by commas
 	pairs := strings.Split(value, ",")
 	for _, pair := range pairs {
@@ -815,7 +815,7 @@ func parseAttributes(value string) map[string]string {
 			attrs[key] = val
 		}
 	}
-	
+
 	return attrs
 }
 
@@ -825,13 +825,13 @@ func isValidComponent(component string) bool {
 		"toggle", "email", "password", "url", "tel", "number", "date",
 		"datetime", "time", "file", "image", "rich-text", "hidden",
 	}
-	
+
 	for _, valid := range validComponents {
 		if component == valid {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -840,13 +840,13 @@ func isValidValidationRule(rule string) bool {
 		"required", "email", "url", "numeric", "alpha", "alphanum",
 		"min", "max", "len", "minlen", "maxlen", "regex", "oneof",
 	}
-	
+
 	for _, valid := range validRules {
 		if rule == valid {
 			return true
 		}
 	}
-	
+
 	return false
 }
 

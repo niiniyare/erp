@@ -8,43 +8,43 @@ import (
 
 // UISchema represents the generated UI schema for a struct
 type UISchema struct {
-	Entity      string                 `json:"entity"`
-	Package     string                 `json:"package"`
-	Title       string                 `json:"title"`
-	Description string                 `json:"description"`
-	Version     string                 `json:"version"`
-	
+	Entity      string `json:"entity"`
+	Package     string `json:"package"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Version     string `json:"version"`
+
 	// Schema components
-	ListSchema   *PageSchema    `json:"listSchema"`
-	CreateSchema *PageSchema    `json:"createSchema"`
-	EditSchema   *PageSchema    `json:"editSchema"`
-	DetailSchema *PageSchema    `json:"detailSchema"`
-	FilterSchema *FilterSchema  `json:"filterSchema"`
-	
+	ListSchema   *PageSchema   `json:"listSchema"`
+	CreateSchema *PageSchema   `json:"createSchema"`
+	EditSchema   *PageSchema   `json:"editSchema"`
+	DetailSchema *PageSchema   `json:"detailSchema"`
+	FilterSchema *FilterSchema `json:"filterSchema"`
+
 	// Entity metadata
 	Metadata EntityMetadata `json:"metadata"`
-	
+
 	// Generated at timestamp
 	GeneratedAt time.Time `json:"generatedAt"`
 }
 
 // FilterSchema defines filtering capabilities
 type FilterSchema struct {
-	ID         string                 `json:"id"`
-	Title      string                 `json:"title"`
-	Fields     []FilterFieldDefinition `json:"fields"`
-	Presets    []FilterPreset         `json:"presets"`
-	Advanced   bool                   `json:"advanced"`
+	ID       string                  `json:"id"`
+	Title    string                  `json:"title"`
+	Fields   []FilterFieldDefinition `json:"fields"`
+	Presets  []FilterPreset          `json:"presets"`
+	Advanced bool                    `json:"advanced"`
 }
 
 // FilterFieldDefinition defines a filterable field
 type FilterFieldDefinition struct {
-	Field       string                 `json:"field"`
-	Type        string                 `json:"type"` // "text", "select", "date-range", "number-range"
-	Label       string                 `json:"label"`
-	Options     []FilterOption         `json:"options,omitempty"`
-	Multiple    bool                   `json:"multiple,omitempty"`
-	Placeholder string                 `json:"placeholder,omitempty"`
+	Field       string         `json:"field"`
+	Type        string         `json:"type"` // "text", "select", "date-range", "number-range"
+	Label       string         `json:"label"`
+	Options     []FilterOption `json:"options,omitempty"`
+	Multiple    bool           `json:"multiple,omitempty"`
+	Placeholder string         `json:"placeholder,omitempty"`
 }
 
 // FilterOption represents a filter option
@@ -63,16 +63,16 @@ type FilterPreset struct {
 
 // EntityMetadata contains metadata about the entity
 type EntityMetadata struct {
-	IsCRUD        bool     `json:"isCrud"`
-	IsReadOnly    bool     `json:"isReadOnly"`
-	HasWorkflow   bool     `json:"hasWorkflow"`
-	HasValidation bool     `json:"hasValidation"`
-	HasAuditTrail bool     `json:"hasAuditTrail"`
-	HasSoftDelete bool     `json:"hasSoftDelete"`
-	HasTenantScope bool    `json:"hasTenantScope"`
-	HasHierarchy  bool     `json:"hasHierarchy"`
-	PrimaryKey    string   `json:"primaryKey"`
-	Relationships []string `json:"relationships"`
+	IsCRUD         bool     `json:"isCrud"`
+	IsReadOnly     bool     `json:"isReadOnly"`
+	HasWorkflow    bool     `json:"hasWorkflow"`
+	HasValidation  bool     `json:"hasValidation"`
+	HasAuditTrail  bool     `json:"hasAuditTrail"`
+	HasSoftDelete  bool     `json:"hasSoftDelete"`
+	HasTenantScope bool     `json:"hasTenantScope"`
+	HasHierarchy   bool     `json:"hasHierarchy"`
+	PrimaryKey     string   `json:"primaryKey"`
+	Relationships  []string `json:"relationships"`
 }
 
 // PageSchema represents a complete page schema (imported from existing types)
@@ -167,13 +167,13 @@ type GeneratorConfig struct {
 	EnablePermissions bool              `json:"enablePermissions"`
 	EnableAuditTrail  bool              `json:"enableAuditTrail"`
 	EnableSoftDelete  bool              `json:"enableSoftDelete"`
-	BaseURL          string            `json:"baseUrl"`
-	APIPrefix        string            `json:"apiPrefix"`
-	CustomComponents map[string]string `json:"customComponents"`
-	TablePageSize    int               `json:"tablePageSize"`
-	EnableFiltering  bool              `json:"enableFiltering"`
-	EnableSorting    bool              `json:"enableSorting"`
-	EnableBulkActions bool             `json:"enableBulkActions"`
+	BaseURL           string            `json:"baseUrl"`
+	APIPrefix         string            `json:"apiPrefix"`
+	CustomComponents  map[string]string `json:"customComponents"`
+	TablePageSize     int               `json:"tablePageSize"`
+	EnableFiltering   bool              `json:"enableFiltering"`
+	EnableSorting     bool              `json:"enableSorting"`
+	EnableBulkActions bool              `json:"enableBulkActions"`
 }
 
 // NewSchemaGenerator creates a new schema generator
@@ -188,7 +188,7 @@ func NewSchemaGenerator(config GeneratorConfig) *SchemaGenerator {
 	if config.TablePageSize == 0 {
 		config.TablePageSize = 20
 	}
-	
+
 	return &SchemaGenerator{
 		patternMatcher: NewPatternMatcher(),
 		config:         config,
@@ -200,10 +200,10 @@ func (sg *SchemaGenerator) GenerateUISchema(structInfo StructInfo) (*UISchema, e
 	if structInfo.Name == "" {
 		return nil, fmt.Errorf("struct name cannot be empty")
 	}
-	
+
 	// Generate entity metadata
 	metadata := sg.generateEntityMetadata(structInfo)
-	
+
 	// Create base schema
 	schema := &UISchema{
 		Entity:      structInfo.Name,
@@ -214,43 +214,43 @@ func (sg *SchemaGenerator) GenerateUISchema(structInfo StructInfo) (*UISchema, e
 		Metadata:    metadata,
 		GeneratedAt: time.Now(),
 	}
-	
+
 	// Generate different view schemas
 	if metadata.IsCRUD {
 		var err error
-		
+
 		// List view schema
 		schema.ListSchema, err = sg.generateListSchema(structInfo)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate list schema: %w", err)
 		}
-		
+
 		// Create form schema
 		if !metadata.IsReadOnly {
 			schema.CreateSchema, err = sg.generateCreateSchema(structInfo)
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate create schema: %w", err)
 			}
-			
+
 			// Edit form schema
 			schema.EditSchema, err = sg.generateEditSchema(structInfo)
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate edit schema: %w", err)
 			}
 		}
-		
+
 		// Detail view schema
 		schema.DetailSchema, err = sg.generateDetailSchema(structInfo)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate detail schema: %w", err)
 		}
-		
+
 		// Filter schema
 		if sg.config.EnableFiltering {
 			schema.FilterSchema = sg.generateFilterSchema(structInfo)
 		}
 	}
-	
+
 	return schema, nil
 }
 
@@ -262,18 +262,18 @@ func (sg *SchemaGenerator) generateEntityMetadata(structInfo StructInfo) EntityM
 			relationships = append(relationships, field.TargetEntity)
 		}
 	}
-	
+
 	return EntityMetadata{
-		IsCRUD:        structInfo.IsCRUDEntity,
-		IsReadOnly:    structInfo.IsReadOnly,
-		HasWorkflow:   structInfo.HasWorkflow,
-		HasValidation: structInfo.HasValidation,
-		HasAuditTrail: structInfo.HasAuditTrail,
-		HasSoftDelete: structInfo.HasSoftDelete,
+		IsCRUD:         structInfo.IsCRUDEntity,
+		IsReadOnly:     structInfo.IsReadOnly,
+		HasWorkflow:    structInfo.HasWorkflow,
+		HasValidation:  structInfo.HasValidation,
+		HasAuditTrail:  structInfo.HasAuditTrail,
+		HasSoftDelete:  structInfo.HasSoftDelete,
 		HasTenantScope: structInfo.HasTenantScope,
-		HasHierarchy:  structInfo.HasHierarchy,
-		PrimaryKey:    structInfo.PrimaryKeyField,
-		Relationships: relationships,
+		HasHierarchy:   structInfo.HasHierarchy,
+		PrimaryKey:     structInfo.PrimaryKeyField,
+		Relationships:  relationships,
 	}
 }
 
@@ -281,7 +281,7 @@ func (sg *SchemaGenerator) generateEntityMetadata(structInfo StructInfo) EntityM
 func (sg *SchemaGenerator) generateListSchema(structInfo StructInfo) (*PageSchema, error) {
 	entityName := strings.ToLower(structInfo.Name)
 	entityPlural := sg.pluralize(entityName)
-	
+
 	schema := &PageSchema{
 		ID:          fmt.Sprintf("%s-list", entityName),
 		Layout:      sg.config.DefaultLayout,
@@ -291,7 +291,7 @@ func (sg *SchemaGenerator) generateListSchema(structInfo StructInfo) (*PageSchem
 		DataSources: []DataSource{},
 		Actions:     []ActionDefinition{},
 	}
-	
+
 	// Add data source for list data
 	schema.DataSources = append(schema.DataSources, DataSource{
 		ID:       fmt.Sprintf("%s-list-data", entityName),
@@ -299,11 +299,11 @@ func (sg *SchemaGenerator) generateListSchema(structInfo StructInfo) (*PageSchem
 		Endpoint: fmt.Sprintf("%s/%s", sg.config.APIPrefix, entityPlural),
 		Method:   "GET",
 	})
-	
+
 	// Generate table component
 	tableComponent := sg.generateTableComponent(structInfo)
 	schema.Components = append(schema.Components, tableComponent)
-	
+
 	// Add create action if not read-only
 	if !structInfo.IsReadOnly {
 		createAction := ActionDefinition{
@@ -313,21 +313,21 @@ func (sg *SchemaGenerator) generateListSchema(structInfo StructInfo) (*PageSchem
 			Icon:   "plus",
 			Target: fmt.Sprintf("/%s/create", entityPlural),
 		}
-		
+
 		if sg.config.EnablePermissions {
 			createAction.Permissions = []string{fmt.Sprintf("%s:create", entityName)}
 		}
-		
+
 		schema.Actions = append(schema.Actions, createAction)
 	}
-	
+
 	return schema, nil
 }
 
 // generateCreateSchema creates a form schema for creating new entities
 func (sg *SchemaGenerator) generateCreateSchema(structInfo StructInfo) (*PageSchema, error) {
 	entityName := strings.ToLower(structInfo.Name)
-	
+
 	schema := &PageSchema{
 		ID:          fmt.Sprintf("%s-create", entityName),
 		Layout:      sg.config.DefaultLayout,
@@ -336,11 +336,11 @@ func (sg *SchemaGenerator) generateCreateSchema(structInfo StructInfo) (*PageSch
 		Components:  []ComponentDefinition{},
 		Actions:     []ActionDefinition{},
 	}
-	
+
 	// Generate form component
 	formComponent := sg.generateFormComponent(structInfo, "create")
 	schema.Components = append(schema.Components, formComponent)
-	
+
 	// Add submit action
 	submitAction := ActionDefinition{
 		ID:     fmt.Sprintf("submit-create-%s", entityName),
@@ -350,20 +350,20 @@ func (sg *SchemaGenerator) generateCreateSchema(structInfo StructInfo) (*PageSch
 		Target: fmt.Sprintf("%s/%s", sg.config.APIPrefix, sg.pluralize(entityName)),
 		Method: "POST",
 	}
-	
+
 	if sg.config.EnablePermissions {
 		submitAction.Permissions = []string{fmt.Sprintf("%s:create", entityName)}
 	}
-	
+
 	schema.Actions = append(schema.Actions, submitAction)
-	
+
 	return schema, nil
 }
 
 // generateEditSchema creates a form schema for editing entities
 func (sg *SchemaGenerator) generateEditSchema(structInfo StructInfo) (*PageSchema, error) {
 	entityName := strings.ToLower(structInfo.Name)
-	
+
 	schema := &PageSchema{
 		ID:          fmt.Sprintf("%s-edit", entityName),
 		Layout:      sg.config.DefaultLayout,
@@ -373,7 +373,7 @@ func (sg *SchemaGenerator) generateEditSchema(structInfo StructInfo) (*PageSchem
 		DataSources: []DataSource{},
 		Actions:     []ActionDefinition{},
 	}
-	
+
 	// Add data source for existing entity data
 	schema.DataSources = append(schema.DataSources, DataSource{
 		ID:       fmt.Sprintf("%s-edit-data", entityName),
@@ -381,12 +381,12 @@ func (sg *SchemaGenerator) generateEditSchema(structInfo StructInfo) (*PageSchem
 		Endpoint: fmt.Sprintf("%s/%s/{id}", sg.config.APIPrefix, sg.pluralize(entityName)),
 		Method:   "GET",
 	})
-	
+
 	// Generate form component
 	formComponent := sg.generateFormComponent(structInfo, "edit")
 	formComponent.DataSource = fmt.Sprintf("%s-edit-data", entityName)
 	schema.Components = append(schema.Components, formComponent)
-	
+
 	// Add update action
 	updateAction := ActionDefinition{
 		ID:     fmt.Sprintf("submit-edit-%s", entityName),
@@ -396,20 +396,20 @@ func (sg *SchemaGenerator) generateEditSchema(structInfo StructInfo) (*PageSchem
 		Target: fmt.Sprintf("%s/%s/{id}", sg.config.APIPrefix, sg.pluralize(entityName)),
 		Method: "PUT",
 	}
-	
+
 	if sg.config.EnablePermissions {
 		updateAction.Permissions = []string{fmt.Sprintf("%s:update", entityName)}
 	}
-	
+
 	schema.Actions = append(schema.Actions, updateAction)
-	
+
 	return schema, nil
 }
 
 // generateDetailSchema creates a detail view schema
 func (sg *SchemaGenerator) generateDetailSchema(structInfo StructInfo) (*PageSchema, error) {
 	entityName := strings.ToLower(structInfo.Name)
-	
+
 	schema := &PageSchema{
 		ID:          fmt.Sprintf("%s-detail", entityName),
 		Layout:      sg.config.DefaultLayout,
@@ -419,7 +419,7 @@ func (sg *SchemaGenerator) generateDetailSchema(structInfo StructInfo) (*PageSch
 		DataSources: []DataSource{},
 		Actions:     []ActionDefinition{},
 	}
-	
+
 	// Add data source
 	schema.DataSources = append(schema.DataSources, DataSource{
 		ID:       fmt.Sprintf("%s-detail-data", entityName),
@@ -427,12 +427,12 @@ func (sg *SchemaGenerator) generateDetailSchema(structInfo StructInfo) (*PageSch
 		Endpoint: fmt.Sprintf("%s/%s/{id}", sg.config.APIPrefix, sg.pluralize(entityName)),
 		Method:   "GET",
 	})
-	
+
 	// Generate detail view component
 	detailComponent := sg.generateDetailComponent(structInfo)
 	detailComponent.DataSource = fmt.Sprintf("%s-detail-data", entityName)
 	schema.Components = append(schema.Components, detailComponent)
-	
+
 	// Add edit action if not read-only
 	if !structInfo.IsReadOnly {
 		editAction := ActionDefinition{
@@ -442,21 +442,21 @@ func (sg *SchemaGenerator) generateDetailSchema(structInfo StructInfo) (*PageSch
 			Icon:   "edit",
 			Target: fmt.Sprintf("/%s/{id}/edit", sg.pluralize(entityName)),
 		}
-		
+
 		if sg.config.EnablePermissions {
 			editAction.Permissions = []string{fmt.Sprintf("%s:update", entityName)}
 		}
-		
+
 		schema.Actions = append(schema.Actions, editAction)
 	}
-	
+
 	return schema, nil
 }
 
 // generateFilterSchema creates a filter schema for the entity
 func (sg *SchemaGenerator) generateFilterSchema(structInfo StructInfo) *FilterSchema {
 	entityName := strings.ToLower(structInfo.Name)
-	
+
 	filterSchema := &FilterSchema{
 		ID:       fmt.Sprintf("%s-filters", entityName),
 		Title:    "Filter " + sg.generateEntityTitle(structInfo.Name),
@@ -464,7 +464,7 @@ func (sg *SchemaGenerator) generateFilterSchema(structInfo StructInfo) *FilterSc
 		Presets:  []FilterPreset{},
 		Advanced: false,
 	}
-	
+
 	// Generate filter fields from struct fields
 	for _, field := range structInfo.Fields {
 		if sg.shouldIncludeInFilter(field) {
@@ -472,7 +472,7 @@ func (sg *SchemaGenerator) generateFilterSchema(structInfo StructInfo) *FilterSc
 			filterSchema.Fields = append(filterSchema.Fields, filterField)
 		}
 	}
-	
+
 	// Add common presets
 	if structInfo.HasStatus {
 		filterSchema.Presets = append(filterSchema.Presets, FilterPreset{
@@ -484,7 +484,7 @@ func (sg *SchemaGenerator) generateFilterSchema(structInfo StructInfo) *FilterSc
 			},
 		})
 	}
-	
+
 	if structInfo.HasCreatedAt {
 		filterSchema.Presets = append(filterSchema.Presets, FilterPreset{
 			ID:    "recent",
@@ -495,7 +495,7 @@ func (sg *SchemaGenerator) generateFilterSchema(structInfo StructInfo) *FilterSc
 			},
 		})
 	}
-	
+
 	return filterSchema
 }
 
@@ -504,7 +504,7 @@ func (sg *SchemaGenerator) generateFilterSchema(structInfo StructInfo) *FilterSc
 // generateTableComponent creates a table component definition
 func (sg *SchemaGenerator) generateTableComponent(structInfo StructInfo) ComponentDefinition {
 	entityName := strings.ToLower(structInfo.Name)
-	
+
 	// Generate columns from struct fields
 	columns := []map[string]any{}
 	for _, field := range structInfo.Fields {
@@ -515,28 +515,28 @@ func (sg *SchemaGenerator) generateTableComponent(structInfo StructInfo) Compone
 				"type":     sg.mapFieldTypeToColumnType(field),
 				"sortable": sg.isFieldSortable(field),
 			}
-			
+
 			if field.IsRelationship {
 				column["component"] = "organisms.relationship-cell"
 				column["props"] = map[string]any{
 					"entity": field.TargetEntity,
 				}
 			}
-			
+
 			columns = append(columns, column)
 		}
 	}
-	
+
 	props := map[string]any{
-		"title":       sg.generateEntityTitle(structInfo.Name) + " List",
-		"columns":     columns,
-		"dataSource":  fmt.Sprintf("%s-list-data", entityName),
-		"pageSize":    sg.config.TablePageSize,
-		"sortable":    sg.config.EnableSorting,
-		"filterable":  sg.config.EnableFiltering,
-		"searchable":  true,
+		"title":      sg.generateEntityTitle(structInfo.Name) + " List",
+		"columns":    columns,
+		"dataSource": fmt.Sprintf("%s-list-data", entityName),
+		"pageSize":   sg.config.TablePageSize,
+		"sortable":   sg.config.EnableSorting,
+		"filterable": sg.config.EnableFiltering,
+		"searchable": true,
 	}
-	
+
 	if sg.config.EnableBulkActions {
 		props["bulkActions"] = []map[string]any{
 			{
@@ -547,10 +547,10 @@ func (sg *SchemaGenerator) generateTableComponent(structInfo StructInfo) Compone
 			},
 		}
 	}
-	
+
 	return ComponentDefinition{
-		ID:   fmt.Sprintf("%s-table", entityName),
-		Type: "organisms.table",
+		ID:    fmt.Sprintf("%s-table", entityName),
+		Type:  "organisms.table",
 		Props: props,
 		Layout: &LayoutRules{
 			Container: "grid",
@@ -565,7 +565,7 @@ func (sg *SchemaGenerator) generateTableComponent(structInfo StructInfo) Compone
 // generateFormComponent creates a form component definition
 func (sg *SchemaGenerator) generateFormComponent(structInfo StructInfo, mode string) ComponentDefinition {
 	entityName := strings.ToLower(structInfo.Name)
-	
+
 	// Generate form fields
 	fields := []map[string]any{}
 	for _, field := range structInfo.Fields {
@@ -574,21 +574,21 @@ func (sg *SchemaGenerator) generateFormComponent(structInfo StructInfo, mode str
 			fields = append(fields, formField)
 		}
 	}
-	
+
 	props := map[string]any{
 		"title":  fmt.Sprintf("%s %s", strings.Title(mode), sg.generateEntityTitle(structInfo.Name)),
 		"fields": fields,
 		"layout": "vertical",
 	}
-	
+
 	if structInfo.HasValidation {
 		props["validation"] = true
 		props["validateOnChange"] = true
 	}
-	
+
 	return ComponentDefinition{
-		ID:   fmt.Sprintf("%s-%s-form", entityName, mode),
-		Type: "organisms.form",
+		ID:    fmt.Sprintf("%s-%s-form", entityName, mode),
+		Type:  "organisms.form",
 		Props: props,
 		Layout: &LayoutRules{
 			Container: "grid",
@@ -603,10 +603,10 @@ func (sg *SchemaGenerator) generateFormComponent(structInfo StructInfo, mode str
 // generateDetailComponent creates a detail view component
 func (sg *SchemaGenerator) generateDetailComponent(structInfo StructInfo) ComponentDefinition {
 	entityName := strings.ToLower(structInfo.Name)
-	
+
 	// Generate detail sections
 	sections := []map[string]any{}
-	
+
 	// Basic information section
 	basicFields := []map[string]any{}
 	for _, field := range structInfo.Fields {
@@ -619,14 +619,14 @@ func (sg *SchemaGenerator) generateDetailComponent(structInfo StructInfo) Compon
 			basicFields = append(basicFields, detailField)
 		}
 	}
-	
+
 	if len(basicFields) > 0 {
 		sections = append(sections, map[string]any{
 			"title":  "Basic Information",
 			"fields": basicFields,
 		})
 	}
-	
+
 	// Relationships section
 	relationshipFields := []map[string]any{}
 	for _, field := range structInfo.Fields {
@@ -640,27 +640,27 @@ func (sg *SchemaGenerator) generateDetailComponent(structInfo StructInfo) Compon
 			relationshipFields = append(relationshipFields, relationField)
 		}
 	}
-	
+
 	if len(relationshipFields) > 0 {
 		sections = append(sections, map[string]any{
 			"title":  "Related Data",
 			"fields": relationshipFields,
 		})
 	}
-	
+
 	props := map[string]any{
 		"title":    sg.generateEntityTitle(structInfo.Name) + " Details",
 		"sections": sections,
 		"layout":   "sections",
 	}
-	
+
 	if structInfo.HasAuditTrail {
 		props["showAuditTrail"] = true
 	}
-	
+
 	return ComponentDefinition{
-		ID:   fmt.Sprintf("%s-detail", entityName),
-		Type: "organisms.detail-view",
+		ID:    fmt.Sprintf("%s-detail", entityName),
+		Type:  "organisms.detail-view",
 		Props: props,
 		Layout: &LayoutRules{
 			Container: "grid",
@@ -677,7 +677,7 @@ func (sg *SchemaGenerator) generateDetailComponent(structInfo StructInfo) Compon
 
 // TODO: Complete implementation of helper methods:
 // - generateFormField(field FieldInfo) map[string]any
-// - generateFilterField(field FieldInfo) FilterFieldDefinition  
+// - generateFilterField(field FieldInfo) FilterFieldDefinition
 // - shouldIncludeInTable(field FieldInfo) bool
 // - shouldIncludeInForm(field FieldInfo, mode string) bool
 // - shouldIncludeInDetail(field FieldInfo) bool
@@ -720,7 +720,7 @@ func (sg *SchemaGenerator) shouldIncludeInForm(field FieldInfo, mode string) boo
 	if field.Hidden {
 		return false
 	}
-	
+
 	// Skip auto-generated fields in create mode
 	if mode == "create" {
 		skipFields := []string{"id", "createdat", "updatedat", "deletedat"}
@@ -730,7 +730,7 @@ func (sg *SchemaGenerator) shouldIncludeInForm(field FieldInfo, mode string) boo
 			}
 		}
 	}
-	
+
 	return true
 }
 
@@ -743,8 +743,8 @@ func (sg *SchemaGenerator) shouldIncludeInFilter(field FieldInfo) bool {
 }
 
 func (sg *SchemaGenerator) isFieldFilterable(field FieldInfo) bool {
-	return field.IsStringType || field.IsBoolType || field.IsTimeType || 
-	       field.IsRelationship || len(field.Options) > 0
+	return field.IsStringType || field.IsBoolType || field.IsTimeType ||
+		field.IsRelationship || len(field.Options) > 0
 }
 
 func (sg *SchemaGenerator) mapFieldTypeToColumnType(field FieldInfo) string {
