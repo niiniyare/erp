@@ -2,14 +2,15 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/niiniyare/erp/cmd/server/bootstrap"
+	"github.com/niiniyare/erp/cmd/server/server"
 	"github.com/niiniyare/erp/cmd/server/services"
-	"github.com/niiniyare/erp/internal/api/handlers"
 	"github.com/niiniyare/erp/internal/shared/logger"
 
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -64,32 +65,31 @@ func main() {
 		financeServices = nil
 	}
 
-	// Initialize Fiber server with IAM service (using identity service for now)
-	fiberServer, err := handlers.NewFiberServer(
-		app.Config,
+	// Initialize GOA server
+	goaServer, err := server.InitializeGOAServer(
 		coreServices,
 		financeServices,
 		deps.Store,
 		deps.RedisClient,
 		deps.Metrics,
 		deps.Tracing,
-		nil, // TODO: Pass actual IAM service when available
 	)
 	if err != nil {
-		logger.Fatal("Failed to initialize Fiber server", logger.Fields{"error": err.Error()})
+		logger.Fatal("Failed to initialize GOA server", logger.Fields{"error": err.Error()})
 	}
+
+	// Create HTTP server
+	srv := app.CreateHTTPServer(goaServer.Handler)
 
 	// Start server in a goroutine
 	go func() {
-		logger.Info("Starting Fiber HTTP server", logger.Fields{
+		logger.Info("Starting HTTP server", logger.Fields{
 			"port":    app.Config.Server.Port,
 			"address": ":" + app.Config.Server.Port,
-			"app":     app.Config.App.Name,
-			"version": app.Config.App.Version,
 		})
 
-		if err := fiberServer.App.Listen(":" + app.Config.Server.Port); err != nil {
-			logger.Fatal("Fiber server failed to start", logger.Fields{
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Fatal("Server failed to start", logger.Fields{
 				"error": err.Error(),
 				"port":  app.Config.Server.Port,
 			})
@@ -97,11 +97,11 @@ func main() {
 	}()
 
 	// Setup graceful shutdown
-	gracefulShutdown(ctx, cancel, fiberServer, app)
+	gracefulShutdown(ctx, cancel, srv, app)
 }
 
 // gracefulShutdown handles graceful shutdown of the application
-func gracefulShutdown(_ context.Context, cancel context.CancelFunc, fiberServer *handlers.FiberServer, app *bootstrap.Application) {
+func gracefulShutdown(_ context.Context, cancel context.CancelFunc, srv *http.Server, app *bootstrap.Application) {
 	// Create a channel to receive OS signals
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -113,18 +113,18 @@ func gracefulShutdown(_ context.Context, cancel context.CancelFunc, fiberServer 
 	// Cancel the main context
 	cancel()
 
-	// Shutdown Fiber server
-	if err := fiberServer.App.Shutdown(); err != nil {
-		logger.Error("Failed to shutdown Fiber server gracefully", logger.Fields{
+	// Create shutdown context with timeout
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer shutdownCancel()
+
+	// Shutdown HTTP server
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		logger.Error("Failed to shutdown HTTP server gracefully", logger.Fields{
 			"error": err.Error(),
 		})
 	} else {
-		logger.Info("Fiber server stopped")
+		logger.Info("HTTP server stopped")
 	}
-
-	// Create shutdown context with timeout for application cleanup
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer shutdownCancel()
 
 	// Shutdown application core
 	if err := app.Stop(shutdownCtx); err != nil {

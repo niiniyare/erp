@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mobile Debug Console</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 10px;
+    }
+
+    #toggle-debug {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: #007acc;
+      color: white;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #toggle-debug:active {
+      background: #005a9e;
+      transform: scale(0.95);
+    }
+
+    #debug-container {
+      transition: all 0.3s ease;
+    }
+
+    #debug-container.hidden {
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none;
+      position: absolute;
+      left: -9999px;
+    }
+
+    #debug-header {
+      background: #2d2d30;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    #debug-header h2 {
+      font-size: 16px;
+      color: #4ec9b0;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 5px;
+    }
+
+    button {
+      background: #007acc;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+    }
+
+    button:active {
+      background: #005a9e;
+    }
+
+    #clear-btn {
+      background: #d73a49;
+    }
+
+    #clear-btn:active {
+      background: #b02a37;
+    }
+
+    #debug-console {
+      background: #252526;
+      border: 1px solid #3e3e42;
+      border-radius: 5px;
+      padding: 10px;
+      max-height: calc(100vh - 180px);
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .log-entry {
+      padding: 5px;
+      border-bottom: 1px solid #2d2d30;
+      margin-bottom: 5px;
+      word-wrap: break-word;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .log-time {
+      color: #858585;
+      font-size: 11px;
+      margin-right: 8px;
+    }
+
+    .log-type {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .log-message {
+      color: #d4d4d4;
+    }
+
+    .log-entry.log {
+      background: #1e1e1e;
+    }
+
+    .log-entry.log .log-type {
+      color: #4ec9b0;
+    }
+
+    .log-entry.warn {
+      background: #332b00;
+      border-left: 3px solid #dcdcaa;
+    }
+
+    .log-entry.warn .log-type {
+      color: #dcdcaa;
+    }
+
+    .log-entry.error {
+      background: #2d1e1e;
+      border-left: 3px solid #f48771;
+    }
+
+    .log-entry.error .log-type {
+      color: #f48771;
+    }
+
+    #test-section {
+      margin-top: 15px;
+      padding: 10px;
+      background: #2d2d30;
+      border-radius: 5px;
+    }
+
+    #test-section h3 {
+      font-size: 14px;
+      margin-bottom: 10px;
+      color: #4ec9b0;
+    }
+
+    #empty-message {
+      color: #858585;
+      font-style: italic;
+      text-align: center;
+      padding: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <button id="toggle-debug" title="Toggle Debug Console">🐛</button>
+
+  <div id="debug-container">
+    <div id="debug-header">
+      <h2>📱 Mobile Debug Console</h2>
+      <div class="button-group">
+        <button id="clear-btn">Clear</button>
+        <button id="scroll-btn">Scroll to Bottom</button>
+      </div>
+    </div>
+
+    <div id="debug-console">
+      <div id="empty-message">Console is empty. Run some code to see output here.</div>
+    </div>
+
+    <div id="test-section">
+      <h3>Test Buttons:</h3>
+      <div class="button-group">
+        <button onclick="console.log('Hello from console.log!')">Log</button>
+        <button onclick="console.warn('This is a warning!')">Warn</button>
+        <button onclick="console.error('This is an error!')">Error</button>
+        <button onclick="testObject()">Log Object</button>
+        <button onclick="testMultiple()">Multiple Logs</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const debugConsole = document.getElementById('debug-console');
+    const emptyMessage = document.getElementById('empty-message');
+    const clearBtn = document.getElementById('clear-btn');
+    const scrollBtn = document.getElementById('scroll-btn');
+    const toggleBtn = document.getElementById('toggle-debug');
+    const debugContainer = document.getElementById('debug-container');
+
+    // Toggle debug console visibility
+    let isVisible = true;
+    toggleBtn.addEventListener('click', function () {
+      isVisible = !isVisible;
+      if (isVisible) {
+        debugContainer.classList.remove('hidden');
+        toggleBtn.textContent = '🐛';
+      } else {
+        debugContainer.classList.add('hidden');
+        toggleBtn.textContent = '👁️';
+      }
+    });
+
+    // Store original console methods
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+    const originalError = console.error;
+
+    function formatValue(value) {
+      if (typeof value === 'object' && value !== null) {
+        try {
+          return JSON.stringify(value, null, 2);
+        } catch (e) {
+          return String(value);
+        }
+      }
+      return String(value);
+    }
+
+    function addLogEntry(type, args) {
+      // Remove empty message if it exists
+      if (emptyMessage) {
+        emptyMessage.style.display = 'none';
+      }
+
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+
+      const time = new Date().toLocaleTimeString();
+      const typeLabel = type.toUpperCase();
+
+      const message = Array.from(args).map(formatValue).join(' ');
+
+      entry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-type">[${typeLabel}]</span>
+                <span class="log-message">${message}</span>
+            `;
+
+      debugConsole.appendChild(entry);
+      debugConsole.scrollTop = debugConsole.scrollHeight;
+    }
+
+    // Override console methods
+    console.log = function (...args) {
+      originalLog.apply(console, args);
+      addLogEntry('log', args);
+    };
+
+    console.warn = function (...args) {
+      originalWarn.apply(console, args);
+      addLogEntry('warn', args);
+    };
+
+    console.error = function (...args) {
+      originalError.apply(console, args);
+      addLogEntry('error', args);
+    };
+
+    // Clear button
+    clearBtn.addEventListener('click', function () {
+      debugConsole.innerHTML = '<div id="empty-message">Console is empty. Run some code to see output here.</div>';
+    });
+
+    // Scroll to bottom button
+    scrollBtn.addEventListener('click', function () {
+      debugConsole.scrollTop = debugConsole.scrollHeight;
+    });
+
+    // Test functions
+    function testObject() {
+      console.log({
+        name: 'Test Object',
+        value: 42,
+        nested: {
+          key: 'value'
+        }
+      });
+    }
+
+    function testMultiple() {
+      console.log('Starting multiple logs...');
+      console.log('Log message 1');
+      console.warn('Warning message 2');
+      console.error('Error message 3');
+      console.log('Completed!');
+    }
+
+    // Capture uncaught errors
+    window.onerror = function (message, source, lineno, colno, error) {
+      console.error(`Uncaught Error: ${message} at ${source}:${lineno}:${colno}`);
+      return false;
+    };
+
+    // Initial welcome message
+    console.log('🚀 Debug console ready!');
+    console.log('All console.log, console.warn, and console.error messages will appear here.');
+  </script>
+</body>
+
+</html>
