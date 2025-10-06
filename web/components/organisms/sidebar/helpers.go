@@ -294,6 +294,7 @@ func getSidebarAlpineData(props SidebarProps) string {
 		collapsed: ` + strconv.FormatBool(props.Collapsed) + `,
 		mobileOpen: false,
 		searchTerm: '',
+		searchTimeout: null,
 		
 		// Toggle methods
 		toggleCollapsed() {
@@ -324,12 +325,145 @@ func getSidebarAlpineData(props SidebarProps) string {
 		
 		// Search functionality
 		filterItems() {
-			// TODO: Implement search filtering
-			// FIXME: Add search logic to filter sidebar items
-			if (this.searchTerm.length > 0) {
-				// Filter logic would go here
-				console.log('Searching for:', this.searchTerm);
+			const searchTerm = this.searchTerm.toLowerCase().trim();
+			const sidebarItems = this.$el.querySelectorAll('[data-sidebar-item]');
+			
+			if (searchTerm.length === 0) {
+				// Show all items when search is cleared
+				sidebarItems.forEach(item => {
+					item.style.display = '';
+					item.classList.remove('search-hidden');
+				});
+				this.updateSectionVisibility();
+				return;
 			}
+			
+			// Filter items based on search term
+			sidebarItems.forEach(item => {
+				const text = item.textContent.toLowerCase();
+				const href = item.getAttribute('href') || '';
+				const searchData = item.getAttribute('data-search') || '';
+				
+				// Check if item matches search term
+				const matches = text.includes(searchTerm) || 
+					href.toLowerCase().includes(searchTerm) ||
+					searchData.toLowerCase().includes(searchTerm);
+				
+				if (matches) {
+					item.style.display = '';
+					item.classList.remove('search-hidden');
+					
+					// Highlight matching text
+					this.highlightSearchTerm(item, searchTerm);
+					
+					// Show parent sections/groups
+					this.showParentSections(item);
+				} else {
+					item.style.display = 'none';
+					item.classList.add('search-hidden');
+					
+					// Remove previous highlights
+					this.removeHighlights(item);
+				}
+			});
+			
+			// Update section visibility based on filtered results
+			this.updateSectionVisibility();
+			
+			// Show "no results" message if needed
+			this.updateNoResultsMessage();
+		},
+		
+		// Highlight matching search terms in item text
+		highlightSearchTerm(item, searchTerm) {
+			const textElement = item.querySelector('[data-item-text]');
+			if (!textElement) return;
+			
+			const originalText = textElement.getAttribute('data-original-text') || textElement.textContent;
+			if (!textElement.hasAttribute('data-original-text')) {
+				textElement.setAttribute('data-original-text', originalText);
+			}
+			
+			// Create highlighted version
+			const regex = new RegExp('(' + searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+			const highlightedText = originalText.replace(regex, '<mark class="bg-yellow-200 dark:bg-yellow-800 px-1 rounded">$1</mark>');
+			
+			textElement.innerHTML = highlightedText;
+		},
+		
+		// Remove search highlights from item
+		removeHighlights(item) {
+			const textElement = item.querySelector('[data-item-text]');
+			if (!textElement) return;
+			
+			const originalText = textElement.getAttribute('data-original-text');
+			if (originalText) {
+				textElement.textContent = originalText;
+			}
+		},
+		
+		// Show parent sections for visible items
+		showParentSections(item) {
+			let parent = item.parentElement;
+			
+			while (parent && parent !== this.$el) {
+				if (parent.hasAttribute('data-sidebar-section')) {
+					parent.style.display = '';
+					parent.classList.remove('search-hidden');
+				}
+				parent = parent.parentElement;
+			}
+		},
+		
+		// Update section visibility based on contained items
+		updateSectionVisibility() {
+			const sections = this.$el.querySelectorAll('[data-sidebar-section]');
+			
+			sections.forEach(section => {
+				const visibleItems = section.querySelectorAll('[data-sidebar-item]:not(.search-hidden)');
+				
+				if (visibleItems.length > 0) {
+					section.style.display = '';
+					section.classList.remove('search-hidden');
+				} else {
+					section.style.display = 'none';
+					section.classList.add('search-hidden');
+				}
+			});
+		},
+		
+		// Show/hide "no results" message
+		updateNoResultsMessage() {
+			const noResultsEl = this.$el.querySelector('[data-no-results]');
+			const visibleItems = this.$el.querySelectorAll('[data-sidebar-item]:not(.search-hidden)');
+			
+			if (noResultsEl) {
+				if (this.searchTerm.length > 0 && visibleItems.length === 0) {
+					noResultsEl.style.display = 'block';
+				} else {
+					noResultsEl.style.display = 'none';
+				}
+			}
+		},
+		
+		// Clear search and reset view
+		clearSearch() {
+			this.searchTerm = '';
+			this.filterItems();
+			
+			// Focus search input if it exists
+			const searchInput = this.$el.querySelector('[data-search-input]');
+			if (searchInput) {
+				searchInput.focus();
+			}
+		},
+		
+		// Handle search input with debouncing
+		handleSearchInput() {
+			clearTimeout(this.searchTimeout);
+			this.searchTimeout = setTimeout(() => {
+				this.filterItems();
+			}, 300); // 300ms debounce
 		},
 		
 		// Initialization

@@ -2,7 +2,11 @@ package table
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
+
+	"github.com/niiniyare/erp/internal/shared/format"
 )
 
 // getDataTableWrapperClasses returns CSS classes for the table wrapper
@@ -127,9 +131,16 @@ func getDataTableAlpineData(props DataTableProps) string {
 			if (this.selectedRows.length > 0) {
 				this.selectedRows = [];
 			} else {
-				// TODO: Select all visible rows based on current page
-				// FIXME: Implement proper select all logic with pagination
-				this.selectedRows = Array.from({length: 10}, (_, i) => i); // Placeholder
+				// Select all visible rows on current page
+				const startIndex = (this.pageInfo.current - 1) * this.pageInfo.pageSize;
+				const endIndex = Math.min(startIndex + this.pageInfo.pageSize, this.pageInfo.total || 0);
+				const visibleRows = [];
+				
+				for (let i = startIndex; i < endIndex; i++) {
+					visibleRows.push(i);
+				}
+				
+				this.selectedRows = visibleRows;
 			}
 		},
 		
@@ -151,9 +162,25 @@ func getDataTableAlpineData(props DataTableProps) string {
 				this.sortDirection = 'asc';
 			}
 			
-			// TODO: Trigger HTMX request with sort parameters
-			// FIXME: Implement server-side sorting integration
-			this.refreshTable();
+			// Reset to first page when sorting changes
+			this.pageInfo.current = 1;
+			
+			// Trigger server-side sorting via HTMX
+			const tableElement = this.$el.closest('[data-table-id]');
+			if (tableElement) {
+				const endpoint = tableElement.dataset.endpoint || '';
+				const params = this.buildQueryParams();
+				
+				// Use HTMX to send sorting request
+				htmx.ajax('GET', endpoint, {
+					target: tableElement.querySelector('.table-body'),
+					values: params,
+					headers: {
+						'HX-Request': 'true',
+						'Content-Type': 'application/json'
+					}
+				});
+			}
 		},
 		
 		// Pagination methods
@@ -172,10 +199,32 @@ func getDataTableAlpineData(props DataTableProps) string {
 		
 		// Data refresh methods
 		refreshTable() {
-			// TODO: Implement table refresh with current state
-			// FIXME: Build query parameters and trigger HTMX request
+			const tableElement = this.$el.closest('[data-table-id]');
+			if (!tableElement) return;
+			
+			const endpoint = tableElement.dataset.endpoint || '';
 			const params = this.buildQueryParams();
-			// htmx.trigger('#table-id', 'refreshTable', {params});
+			
+			// Show loading state
+			const tbody = tableElement.querySelector('.table-body');
+			if (tbody) {
+				tbody.classList.add('opacity-50', 'pointer-events-none');
+			}
+			
+			// Trigger HTMX request with current state
+			htmx.ajax('GET', endpoint, {
+				target: tbody,
+				values: params,
+				headers: {
+					'HX-Request': 'true',
+					'Content-Type': 'application/json'
+				}
+			}).then(() => {
+				// Remove loading state
+				if (tbody) {
+					tbody.classList.remove('opacity-50', 'pointer-events-none');
+				}
+			});
 		},
 		
 		buildQueryParams() {
@@ -191,13 +240,58 @@ func getDataTableAlpineData(props DataTableProps) string {
 		// Bulk action methods
 		handleBulkAction(actionName) {
 			if (this.selectedRows.length === 0) {
-				// TODO: Show notification that no rows are selected
+				// Show notification that no rows are selected
+				this.showNotification('Please select at least one row to perform this action.', 'warning');
 				return;
 			}
 			
-			// TODO: Implement bulk action handling
-			// FIXME: Send selected row IDs to server
-			console.log('Bulk action:', actionName, 'on rows:', this.selectedRows);
+			const tableElement = this.$el.closest('[data-table-id]');
+			if (!tableElement) return;
+			
+			const bulkEndpoint = tableElement.dataset.bulkEndpoint || '';
+			if (!bulkEndpoint) {
+				this.showNotification('Bulk actions not configured for this table.', 'error');
+				return;
+			}
+			
+			// Confirm destructive actions
+			if (['delete', 'archive', 'remove'].includes(actionName.toLowerCase())) {
+				if (!confirm(\`Are you sure you want to \${actionName} \${this.selectedRows.length} selected item(s)?\`)) {
+					return;
+				}
+			}
+			
+			// Send selected row IDs to server
+			const payload = {
+				action: actionName,
+				rowIds: this.selectedRows,
+				selectedCount: this.selectedRows.length
+			};
+			
+			htmx.ajax('POST', bulkEndpoint, {
+				values: payload,
+				headers: {
+					'HX-Request': 'true',
+					'Content-Type': 'application/json'
+				}
+			}).then(() => {
+				// Clear selection and refresh table
+				this.clearSelection();
+				this.refreshTable();
+				this.showNotification(\`Successfully performed \${actionName} on \${payload.selectedCount} item(s).\`, 'success');
+			}).catch(() => {
+				this.showNotification(\`Failed to perform \${actionName}. Please try again.\`, 'error');
+			});
+		},
+		
+		// Notification helper
+		showNotification(message, type = 'info') {
+			// Dispatch custom event for notification system
+			this.$dispatch('show-notification', {
+				message: message,
+				type: type,
+				duration: type === 'error' ? 5000 : 3000
+			});
 		},
 		
 		// Update pagination info (called from server responses)
@@ -238,7 +332,6 @@ func getDataTableAlpineData(props DataTableProps) string {
 }
 
 // formatCellValue formats a cell value based on its type and formatter
-// NOTE: This function needs integration with @internal/shared/format/
 func formatCellValue(value any, valueType string, formatter string) string {
 	if value == nil {
 		return ""
@@ -248,26 +341,267 @@ func formatCellValue(value any, valueType string, formatter string) string {
 	strValue := fmt.Sprintf("%v", value)
 	strValue = strings.TrimSpace(strValue)
 
-	// TODO: Implement proper formatting using @internal/shared/format/
-	// FIXME: Add support for custom formatters and type-specific formatting
 	switch valueType {
 	case "number":
-		// TODO: Use @internal/shared/format/ for number formatting
-		return strValue
+		return formatNumber(strValue, formatter)
 	case "date":
-		// TODO: Use @internal/shared/format/ for date formatting
-		return strValue
+		return formatDate(strValue, formatter)
 	case "datetime":
-		// TODO: Use @internal/shared/format/ for datetime formatting
-		return strValue
+		return formatDateTime(strValue, formatter)
 	case "currency":
-		// TODO: Use @internal/shared/format/ for currency formatting
-		return strValue
+		return formatCurrency(strValue, formatter)
 	case "percentage":
-		// TODO: Use @internal/shared/format/ for percentage formatting
-		return strValue
+		return formatPercentage(strValue, formatter)
+	case "duration":
+		return formatDuration(strValue)
+	case "boolean":
+		return formatBoolean(strValue)
 	default:
 		return strValue
+	}
+}
+
+// formatNumber formats numeric values with proper number formatting
+func formatNumber(value, formatter string) string {
+	if value == "" {
+		return ""
+	}
+
+	// Parse numeric value
+	num, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return value // Return original if parsing fails
+	}
+
+	// Apply specific formatter or use default
+	switch formatter {
+	case "integer":
+		return fmt.Sprintf("%.0f", num)
+	case "decimal2":
+		return fmt.Sprintf("%.2f", num)
+	case "decimal4":
+		return fmt.Sprintf("%.4f", num)
+	case "comma":
+		return formatNumberWithCommas(num, 0)
+	case "comma-decimal":
+		return formatNumberWithCommas(num, 2)
+	default:
+		// Auto-detect decimal places
+		if num == float64(int64(num)) {
+			return fmt.Sprintf("%.0f", num)
+		}
+		return fmt.Sprintf("%.2f", num)
+	}
+}
+
+// formatNumberWithCommas formats numbers with thousand separators
+func formatNumberWithCommas(num float64, decimals int) string {
+	// Format with specified decimal places
+	formatted := fmt.Sprintf("%."+fmt.Sprintf("%d", decimals)+"f", num)
+	
+	// Split integer and decimal parts
+	parts := strings.Split(formatted, ".")
+	intPart := parts[0]
+	
+	// Add commas to integer part
+	if len(intPart) > 3 {
+		var result strings.Builder
+		for i, digit := range intPart {
+			if i > 0 && (len(intPart)-i)%3 == 0 {
+				result.WriteString(",")
+			}
+			result.WriteRune(digit)
+		}
+		intPart = result.String()
+	}
+	
+	// Reconstruct number
+	if decimals > 0 && len(parts) > 1 {
+		return intPart + "." + parts[1]
+	}
+	return intPart
+}
+
+// formatDate formats date values using the shared format package
+func formatDate(value, formatter string) string {
+	if value == "" {
+		return ""
+	}
+
+	// Try to parse the date using the format package
+	formatted, err := format.FormatTimestamp(value, "", format.ISO8601Date, "Local")
+	if err != nil {
+		return value // Return original if parsing fails
+	}
+
+	// Apply specific formatter
+	switch formatter {
+	case "short":
+		if t, err := time.Parse(format.ISO8601Date, formatted); err == nil {
+			return t.Format("01/02/06")
+		}
+	case "long":
+		if t, err := time.Parse(format.ISO8601Date, formatted); err == nil {
+			return t.Format("January 2, 2006")
+		}
+	case "iso":
+		return formatted
+	case "relative":
+		if t, err := time.Parse(format.ISO8601Date, formatted); err == nil {
+			return format.TimeAgo(t)
+		}
+	}
+
+	return formatted
+}
+
+// formatDateTime formats datetime values using the shared format package
+func formatDateTime(value, formatter string) string {
+	if value == "" {
+		return ""
+	}
+
+	// Try to parse the datetime using the format package
+	formatted, err := format.FormatTimestamp(value, "", format.DateTime, "Local")
+	if err != nil {
+		return value // Return original if parsing fails
+	}
+
+	// Apply specific formatter
+	switch formatter {
+	case "short":
+		if t, err := time.Parse(format.DateTime, formatted); err == nil {
+			return t.Format("01/02/06 3:04 PM")
+		}
+	case "long":
+		if t, err := time.Parse(format.DateTime, formatted); err == nil {
+			return t.Format("January 2, 2006 at 3:04 PM")
+		}
+	case "iso":
+		return formatted
+	case "relative":
+		if t, err := time.Parse(format.DateTime, formatted); err == nil {
+			return format.TimeAgo(t)
+		}
+	case "time-only":
+		if t, err := time.Parse(format.DateTime, formatted); err == nil {
+			return t.Format("3:04 PM")
+		}
+	}
+
+	return formatted
+}
+
+// formatCurrency formats currency values with proper currency symbols
+func formatCurrency(value, formatter string) string {
+	if value == "" {
+		return ""
+	}
+
+	// Parse numeric value
+	num, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return value // Return original if parsing fails
+	}
+
+	// Apply specific currency formatter
+	switch formatter {
+	case "usd", "dollar":
+		return "$" + formatNumberWithCommas(num, 2)
+	case "eur", "euro":
+		return "€" + formatNumberWithCommas(num, 2)
+	case "gbp", "pound":
+		return "£" + formatNumberWithCommas(num, 2)
+	case "jpy", "yen":
+		return "¥" + formatNumberWithCommas(num, 0)
+	case "compact":
+		return formatCompactCurrency(num)
+	default:
+		// Default to USD format
+		return "$" + formatNumberWithCommas(num, 2)
+	}
+}
+
+// formatCompactCurrency formats large currency values in compact form (K, M, B)
+func formatCompactCurrency(num float64) string {
+	abs := num
+	if abs < 0 {
+		abs = -abs
+	}
+
+	var formatted string
+	switch {
+	case abs >= 1e9:
+		formatted = fmt.Sprintf("%.1fB", num/1e9)
+	case abs >= 1e6:
+		formatted = fmt.Sprintf("%.1fM", num/1e6)
+	case abs >= 1e3:
+		formatted = fmt.Sprintf("%.1fK", num/1e3)
+	default:
+		formatted = fmt.Sprintf("%.2f", num)
+	}
+
+	return "$" + formatted
+}
+
+// formatPercentage formats percentage values
+func formatPercentage(value, formatter string) string {
+	if value == "" {
+		return ""
+	}
+
+	// Parse numeric value
+	num, err := strconv.ParseFloat(value, 64)
+	if err != nil {
+		return value // Return original if parsing fails
+	}
+
+	// Apply specific percentage formatter
+	switch formatter {
+	case "decimal":
+		// Assume value is already in decimal form (0.25 = 25%)
+		return fmt.Sprintf("%.1f%%", num*100)
+	case "integer":
+		// Assume value is already percentage (25 = 25%)
+		return fmt.Sprintf("%.0f%%", num)
+	default:
+		// Auto-detect format
+		if num <= 1.0 {
+			return fmt.Sprintf("%.1f%%", num*100)
+		}
+		return fmt.Sprintf("%.1f%%", num)
+	}
+}
+
+// formatDuration formats duration values using the shared format package
+func formatDuration(value string) string {
+	if value == "" {
+		return ""
+	}
+
+	// Try to parse as Go duration
+	if duration, err := format.ParseDuration(value); err == nil {
+		return format.FormatDuration(duration)
+	}
+
+	// Try to parse as seconds
+	if seconds, err := strconv.ParseFloat(value, 64); err == nil {
+		duration := time.Duration(seconds) * time.Second
+		return format.FormatDuration(duration)
+	}
+
+	return value
+}
+
+// formatBoolean formats boolean values with user-friendly text
+func formatBoolean(value string) string {
+	switch strings.ToLower(value) {
+	case "true", "1", "yes", "y":
+		return "Yes"
+	case "false", "0", "no", "n":
+		return "No"
+	default:
+		return value
 	}
 }
 
@@ -282,8 +616,6 @@ func buildDataTableConfig(config DataTableConfig) DataTableConfig {
 }
 
 // buildSimpleDatatablesOptions builds options for simple-datatables library
-// TODO: Implement integration with simple-datatables
-// FIXME: Map our config to simple-datatables options format
 func buildSimpleDatatablesOptions(props DataTableProps) map[string]any {
 	options := map[string]any{
 		"searchable":    props.Config.Searchable,
@@ -293,16 +625,186 @@ func buildSimpleDatatablesOptions(props DataTableProps) map[string]any {
 		"info":          props.Config.Info,
 		"perPageSelect": props.Config.LengthChange,
 		"fixedHeight":   props.Config.FixedHeader,
+		"classes": map[string]string{
+			"active":     "bg-blue-100 dark:bg-blue-900",
+			"disabled":   "opacity-50 cursor-not-allowed",
+			"selector":   "w-4 h-4 text-blue-600",
+			"loading":    "opacity-50",
+			"empty":      "text-center text-gray-500 dark:text-gray-400",
+			"info":       "text-sm text-gray-600 dark:text-gray-300",
+			"pagination": "flex items-center justify-between",
+		},
+		"labels": map[string]string{
+			"placeholder": "Search...",
+			"perPage":     "Rows per page:",
+			"noRows":      "No data available",
+			"info":        "Showing {start} to {end} of {rows} entries",
+			"infoEmpty":   "Showing 0 to 0 of 0 entries",
+			"infoFiltered": "filtered from {max} total entries",
+		},
 	}
 
+	// Configure scrolling
 	if props.Config.ScrollY != "" {
 		options["scrollY"] = props.Config.ScrollY
+		options["scrollCollapse"] = true
 	}
 
-	// TODO: Add server-side processing options
+	// Configure column options
+	if len(props.Columns) > 0 {
+		columns := make([]map[string]any, 0, len(props.Columns))
+		for i, col := range props.Columns {
+			columnOpts := map[string]any{
+				"select":   i,
+				"sortable": col.Sortable,
+				"type":     mapColumnTypeToSimpleDT(col.Type),
+			}
+
+			// Add formatting function if needed
+			if col.Type != "text" {
+				columnOpts["render"] = generateFormatterJS(col.Type, col.Format)
+			}
+
+			// Add column width
+			if col.Width != "" {
+				columnOpts["width"] = col.Width
+			}
+
+			columns = append(columns, columnOpts)
+		}
+		options["columns"] = columns
+	}
+
+	// Server-side processing configuration
 	if props.Config.ServerSide {
-		// FIXME: Implement server-side processing configuration
+		options["serverSide"] = true
+		options["ajax"] = map[string]any{
+			"url":    props.Config.AjaxURL,
+			"type":   "POST",
+			"data":   "function(d) { return JSON.stringify(d); }",
+			"contentType": "application/json; charset=utf-8",
+			"dataType": "json",
+		}
+
+		// Disable client-side features when using server-side processing
+		options["searching"] = false
+		options["ordering"] = false
+		options["paging"] = false
+	}
+
+	// Page length options
+	if props.Config.LengthChange {
+		options["perPageSelect"] = []int{10, 25, 50, 100}
+		if props.Config.PageLength > 0 {
+			found := false
+			for _, opt := range options["perPageSelect"].([]int) {
+				if opt == props.Config.PageLength {
+					found = true
+					break
+				}
+			}
+			if !found {
+				options["perPageSelect"] = append(options["perPageSelect"].([]int), props.Config.PageLength)
+			}
+		}
+	}
+
+	// Row selection
+	if props.Config.RowSelection {
+		options["select"] = map[string]any{
+			"style":    "multi",
+			"selector": "td:first-child",
+		}
 	}
 
 	return options
+}
+
+// mapColumnTypeToSimpleDT maps our column types to simple-datatables types
+func mapColumnTypeToSimpleDT(colType string) string {
+	switch colType {
+	case "number", "currency", "percentage":
+		return "number"
+	case "date", "datetime":
+		return "date"
+	case "boolean":
+		return "string" // Handle as string with custom rendering
+	default:
+		return "string"
+	}
+}
+
+// generateFormatterJS generates JavaScript formatter function for columns
+func generateFormatterJS(colType, format string) string {
+	switch colType {
+	case "currency":
+		currency := "USD"
+		if format != "" {
+			currency = strings.ToUpper(format)
+		}
+		return fmt.Sprintf(`function(data, type, row) {
+			if (type === 'display' || type === 'type') {
+				return new Intl.NumberFormat('en-US', {
+					style: 'currency',
+					currency: '%s'
+				}).format(data);
+			}
+			return data;
+		}`, currency)
+
+	case "percentage":
+		return `function(data, type, row) {
+			if (type === 'display' || type === 'type') {
+				return (parseFloat(data) * 100).toFixed(1) + '%';
+			}
+			return data;
+		}`
+
+	case "date":
+		dateFormat := "short"
+		if format != "" {
+			dateFormat = format
+		}
+		return fmt.Sprintf(`function(data, type, row) {
+			if (type === 'display' || type === 'type') {
+				const date = new Date(data);
+				if (isNaN(date.getTime())) return data;
+				
+				switch('%s') {
+					case 'short':
+						return date.toLocaleDateString();
+					case 'long':
+						return date.toLocaleDateString('en-US', {
+							year: 'numeric',
+							month: 'long',
+							day: 'numeric'
+						});
+					default:
+						return date.toLocaleDateString();
+				}
+			}
+			return data;
+		}`, dateFormat)
+
+	case "datetime":
+		return `function(data, type, row) {
+			if (type === 'display' || type === 'type') {
+				const date = new Date(data);
+				if (isNaN(date.getTime())) return data;
+				return date.toLocaleString();
+			}
+			return data;
+		}`
+
+	case "boolean":
+		return `function(data, type, row) {
+			if (type === 'display' || type === 'type') {
+				return data === true || data === 'true' || data === '1' ? 'Yes' : 'No';
+			}
+			return data;
+		}`
+
+	default:
+		return ""
+	}
 }
