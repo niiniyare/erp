@@ -1,0 +1,264 @@
+{
+  "id": "crud-table-template",
+  "version": "1.0.0",
+  "layout": "app",
+  "title": "${entityTitle} Management",
+  "description": "Complete CRUD interface for ${entityTitle} with advanced data table features",
+  "components": [
+    {
+      "id": "page-header",
+      "type": "organisms.siteheader",
+      "props": {
+        "title": "${entityTitle} Management",
+        "subtitle": "Manage and organize ${entityPlural}",
+        "breadcrumbs": [
+          { "label": "Dashboard", "href": "/" },
+          { "label": "${entityTitle}", "href": "/${entityPath}", "current": true }
+        ],
+        "actions": [
+          {
+            "id": "create-new",
+            "actionType": "url",
+            "label": "Create ${entityTitle}",
+            "icon": "plus",
+            "level": "primary",
+            "link": "/${entityPath}/create",
+            "permissions": ["${entityName}:create"]
+          },
+          {
+            "id": "export-data",
+            "actionType": "ajax",
+            "label": "Export",
+            "icon": "download",
+            "level": "secondary",
+            "api": {
+              "method": "GET",
+              "url": "/api/${entityPath}/export",
+              "headers": {
+                "Accept": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              }
+            }
+          }
+        ]
+      },
+      "layout": {
+        "container": "flex",
+        "classes": ["mb-6"]
+      }
+    },
+    {
+      "id": "filter-panel",
+      "type": "organisms.filterpanel",
+      "props": {
+        "title": "Filter ${entityTitle}",
+        "collapsible": true,
+        "collapsed": true,
+        "fields": "${filterFields}",
+        "presets": "${filterPresets}",
+        "actions": [
+          {
+            "id": "apply-filters",
+            "actionType": "ajax",
+            "label": "Apply Filters",
+            "icon": "filter",
+            "level": "primary",
+            "api": {
+              "method": "GET",
+              "url": "/api/${entityPath}",
+              "adaptor": "return {...api, data: {...api.data, ...payload}}"
+            },
+            "reload": "data-table"
+          },
+          {
+            "id": "clear-filters",
+            "actionType": "reset",
+            "label": "Clear",
+            "level": "secondary",
+            "reload": "data-table"
+          }
+        ]
+      },
+      "layout": {
+        "container": "block",
+        "classes": ["mb-4"]
+      }
+    },
+    {
+      "id": "data-table",
+      "type": "organisms.table",
+      "props": {
+        "title": "${entityTitle} List",
+        "columns": "${tableColumns}",
+        "sortable": true,
+        "searchable": true,
+        "selectable": true,
+        "pageSize": 20,
+        "serverSide": true,
+        "bulkActions": [
+          {
+            "id": "bulk-delete",
+            "actionType": "ajax",
+            "label": "Delete Selected",
+            "icon": "trash",
+            "level": "danger",
+            "confirmText": "Are you sure you want to delete the selected ${entityPlural}?",
+            "api": {
+              "method": "DELETE",
+              "url": "/api/${entityPath}/bulk",
+              "data": {
+                "ids": "${selectedIds}"
+              }
+            },
+            "permissions": ["${entityName}:delete"],
+            "toast": {
+              "title": "Success",
+              "body": "Selected ${entityPlural} have been deleted",
+              "level": "success"
+            },
+            "reload": "data-table"
+          },
+          {
+            "id": "bulk-export",
+            "actionType": "ajax",
+            "label": "Export Selected",
+            "icon": "download",
+            "level": "secondary",
+            "api": {
+              "method": "POST",
+              "url": "/api/${entityPath}/export",
+              "data": {
+                "ids": "${selectedIds}"
+              }
+            }
+          }
+        ],
+        "rowActions": [
+          {
+            "id": "view-details",
+            "actionType": "url",
+            "label": "View",
+            "icon": "eye",
+            "size": "sm",
+            "link": "/${entityPath}/${id}",
+            "permissions": ["${entityName}:read"]
+          },
+          {
+            "id": "edit-record",
+            "actionType": "url",
+            "label": "Edit",
+            "icon": "edit",
+            "size": "sm",
+            "link": "/${entityPath}/${id}/edit",
+            "permissions": ["${entityName}:update"],
+            "visibleOn": "${!readonly}"
+          },
+          {
+            "id": "delete-record",
+            "actionType": "ajax",
+            "label": "Delete",
+            "icon": "trash",
+            "size": "sm",
+            "level": "danger",
+            "confirmText": "Are you sure you want to delete this ${entityTitle}?",
+            "api": {
+              "method": "DELETE",
+              "url": "/api/${entityPath}/${id}"
+            },
+            "permissions": ["${entityName}:delete"],
+            "toast": {
+              "title": "Deleted",
+              "body": "${entityTitle} has been deleted successfully",
+              "level": "success"
+            },
+            "reload": "data-table"
+          }
+        ],
+        "emptyState": {
+          "title": "No ${entityTitle} Found",
+          "description": "Get started by creating your first ${entityTitle}",
+          "icon": "folder-open",
+          "actions": [
+            {
+              "id": "create-first",
+              "actionType": "url",
+              "label": "Create ${entityTitle}",
+              "icon": "plus",
+              "level": "primary",
+              "link": "/${entityPath}/create",
+              "permissions": ["${entityName}:create"]
+            }
+          ]
+        }
+      },
+      "dataSource": "table-data",
+      "layout": {
+        "container": "block",
+        "classes": ["bg-white", "shadow", "rounded-lg"]
+      }
+    }
+  ],
+  "dataSources": [
+    {
+      "id": "table-data",
+      "type": "api",
+      "endpoint": "/api/${entityPath}",
+      "method": "GET",
+      "parameters": {
+        "page": "${page || 1}",
+        "limit": "${pageSize || 20}",
+        "sort": "${sort}",
+        "order": "${order}",
+        "search": "${search}",
+        "filters": "${filters}"
+      },
+      "transform": "return {items: api.data.items, total: api.data.total, page: api.data.page}",
+      "cache": {
+        "ttl": "5m",
+        "key": "${entityName}-list-${page}-${sort}-${search}-${JSON.stringify(filters)}"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "refresh-data",
+      "actionType": "reload",
+      "label": "Refresh",
+      "icon": "refresh",
+      "reload": "data-table"
+    }
+  ],
+  "permissions": {
+    "requiredPermissions": ["${entityName}:read"]
+  },
+  "htmx": {
+    "timeout": 10000,
+    "historyEnabled": true,
+    "defaultSwapStyle": "innerHTML",
+    "scrollBehavior": "smooth"
+  },
+  "alpine": {
+    "stores": {
+      "tableState": "{ selectedRows: [], filters: {}, sort: null, search: '' }"
+    }
+  },
+  "meta": {
+    "template": "crud_table",
+    "version": "1.0.0",
+    "capabilities": [
+      "sorting",
+      "filtering", 
+      "searching",
+      "pagination",
+      "bulk_actions",
+      "row_actions",
+      "export",
+      "permissions"
+    ],
+    "responsive": true,
+    "accessibility": {
+      "screen_reader": true,
+      "keyboard_navigation": true,
+      "aria_labels": true
+    }
+  }
+}

@@ -1,0 +1,424 @@
+{
+  "id": "kanban-board-template", 
+  "version": "1.0.0",
+  "layout": "app",
+  "title": "${entityTitle} Board",
+  "description": "Kanban-style workflow management for ${entityTitle} with drag-and-drop functionality",
+  "components": [
+    {
+      "id": "page-header",
+      "type": "organisms.siteheader",
+      "props": {
+        "title": "${entityTitle} Board",
+        "subtitle": "Manage ${entityPlural} workflow with visual boards",
+        "breadcrumbs": [
+          { "label": "Dashboard", "href": "/" },
+          { "label": "${entityTitle}", "href": "/${entityPath}" },
+          { "label": "Board", "current": true }
+        ],
+        "actions": [
+          {
+            "id": "create-new",
+            "actionType": "dialog",
+            "label": "Create ${entityTitle}",
+            "icon": "plus",
+            "level": "primary",
+            "dialog": {
+              "title": "Create ${entityTitle}",
+              "size": "lg",
+              "body": {
+                "type": "form",
+                "form": {
+                  "api": {
+                    "method": "POST",
+                    "url": "/api/${entityPath}"
+                  },
+                  "body": "${quickCreateFields}",
+                  "actions": [
+                    {
+                      "id": "create-submit",
+                      "actionType": "submit",
+                      "label": "Create",
+                      "level": "primary"
+                    }
+                  ]
+                }
+              },
+              "actions": [
+                {
+                  "id": "create-and-close",
+                  "actionType": "submit",
+                  "label": "Create ${entityTitle}",
+                  "level": "primary",
+                  "close": true,
+                  "reload": "kanban-board"
+                }
+              ]
+            },
+            "permissions": ["${entityName}:create"]
+          },
+          {
+            "id": "view-list",
+            "actionType": "url",
+            "label": "List View",
+            "icon": "list",
+            "level": "secondary",
+            "link": "/${entityPath}"
+          },
+          {
+            "id": "board-settings",
+            "actionType": "dialog",
+            "label": "Board Settings",
+            "icon": "settings",
+            "level": "secondary",
+            "dialog": {
+              "title": "Board Configuration",
+              "size": "md",
+              "body": {
+                "type": "form",
+                "form": {
+                  "body": [
+                    {
+                      "type": "atoms.checkbox",
+                      "name": "showCompletedItems",
+                      "label": "Show completed items",
+                      "value": "${boardSettings.showCompletedItems}"
+                    },
+                    {
+                      "type": "atoms.select",
+                      "name": "groupBy",
+                      "label": "Group by",
+                      "options": "${groupByOptions}",
+                      "value": "${boardSettings.groupBy}"
+                    },
+                    {
+                      "type": "atoms.select",
+                      "name": "sortBy",
+                      "label": "Sort items by",
+                      "options": "${sortByOptions}",
+                      "value": "${boardSettings.sortBy}"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "layout": {
+        "container": "flex",
+        "classes": ["mb-6"]
+      }
+    },
+    {
+      "id": "board-filters",
+      "type": "molecules.base-card",
+      "props": {
+        "variant": "subtle",
+        "padding": "sm"
+      },
+      "children": [
+        {
+          "id": "filter-controls",
+          "type": "layout.flex",
+          "props": {
+            "gap": "md",
+            "align": "center",
+            "wrap": true
+          },
+          "children": [
+            {
+              "id": "search-input",
+              "type": "atoms.input",
+              "props": {
+                "placeholder": "Search ${entityPlural}...",
+                "icon": "search",
+                "clearable": true
+              },
+              "xModel": "boardFilters.search",
+              "xOn": {
+                "input": "filterBoard()"
+              }
+            },
+            {
+              "id": "assignee-filter",
+              "type": "atoms.select",
+              "props": {
+                "placeholder": "Filter by assignee",
+                "clearable": true,
+                "options": "${assigneeOptions}"
+              },
+              "xModel": "boardFilters.assignee",
+              "xOn": {
+                "change": "filterBoard()"
+              }
+            },
+            {
+              "id": "priority-filter",
+              "type": "atoms.select", 
+              "props": {
+                "placeholder": "Filter by priority",
+                "clearable": true,
+                "options": [
+                  {"label": "High", "value": "high"},
+                  {"label": "Medium", "value": "medium"},
+                  {"label": "Low", "value": "low"}
+                ]
+              },
+              "xModel": "boardFilters.priority",
+              "xOn": {
+                "change": "filterBoard()"
+              }
+            },
+            {
+              "id": "clear-filters",
+              "type": "atoms.button",
+              "props": {
+                "label": "Clear Filters",
+                "level": "secondary",
+                "size": "sm"
+              },
+              "xOn": {
+                "click": "clearFilters()"
+              }
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "container": "block",
+        "classes": ["mb-4"]
+      }
+    },
+    {
+      "id": "kanban-board",
+      "type": "organisms.kanban-board",
+      "props": {
+        "columns": "${boardColumns}",
+        "draggable": true,
+        "columnWidth": "320px",
+        "maxHeight": "calc(100vh - 200px)",
+        "scrollable": true,
+        "cardTemplate": {
+          "id": "kanban-card",
+          "type": "molecules.kanban-card",
+          "props": {
+            "title": "${item.title || item.name}",
+            "subtitle": "${item.subtitle || item.description}",
+            "status": "${item.status}",
+            "priority": "${item.priority}",
+            "assignee": "${item.assignee}",
+            "dueDate": "${item.dueDate}",
+            "tags": "${item.tags}",
+            "progress": "${item.progress}",
+            "avatar": "${item.assignee?.avatar}",
+            "actions": [
+              {
+                "id": "quick-edit",
+                "actionType": "dialog",
+                "icon": "edit",
+                "label": "Quick Edit",
+                "dialog": {
+                  "title": "Edit ${entityTitle}",
+                  "size": "lg",
+                  "body": {
+                    "type": "form",
+                    "form": {
+                      "initApi": {
+                        "method": "GET",
+                        "url": "/api/${entityPath}/${item.id}"
+                      },
+                      "api": {
+                        "method": "PUT",
+                        "url": "/api/${entityPath}/${item.id}"
+                      },
+                      "body": "${quickEditFields}"
+                    }
+                  }
+                },
+                "permissions": ["${entityName}:update"]
+              },
+              {
+                "id": "view-details",
+                "actionType": "url",
+                "icon": "eye",
+                "label": "View Details",
+                "link": "/${entityPath}/${item.id}",
+                "permissions": ["${entityName}:read"]
+              }
+            ]
+          }
+        },
+        "onDrop": {
+          "actionType": "ajax",
+          "api": {
+            "method": "PUT",
+            "url": "/api/${entityPath}/${item.id}/status",
+            "data": {
+              "status": "${newStatus}",
+              "position": "${newPosition}"
+            }
+          },
+          "toast": {
+            "title": "Updated",
+            "body": "${entityTitle} status updated",
+            "level": "success"
+          },
+          "reload": "kanban-board"
+        },
+        "emptyColumnMessage": "No ${entityPlural} in this status",
+        "loadingMessage": "Loading ${entityPlural}..."
+      },
+      "dataSource": "board-data",
+      "layout": {
+        "container": "block",
+        "classes": ["overflow-x-auto"]
+      }
+    }
+  ],
+  "dataSources": [
+    {
+      "id": "board-data",
+      "type": "api",
+      "endpoint": "/api/${entityPath}/board",
+      "method": "GET",
+      "parameters": {
+        "search": "${boardFilters.search}",
+        "assignee": "${boardFilters.assignee}",
+        "priority": "${boardFilters.priority}",
+        "groupBy": "${boardSettings.groupBy}",
+        "sortBy": "${boardSettings.sortBy}"
+      },
+      "transform": "return api.data.columns",
+      "cache": {
+        "ttl": "2m",
+        "key": "${entityName}-board-${JSON.stringify(boardFilters)}"
+      },
+      "refresh": {
+        "interval": "30s",
+        "trigger": "visibility"
+      }
+    },
+    {
+      "id": "assignee-options",
+      "type": "api",
+      "endpoint": "/api/users",
+      "method": "GET",
+      "parameters": {
+        "active": "true",
+        "fields": "id,name,avatar"
+      },
+      "transform": "return api.data.map(user => ({label: user.name, value: user.id, avatar: user.avatar}))",
+      "cache": {
+        "ttl": "1h",
+        "key": "users-assignee-options"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "refresh-board",
+      "actionType": "reload",
+      "label": "Refresh Board",
+      "icon": "refresh",
+      "reload": "board-data"
+    },
+    {
+      "id": "bulk-update",
+      "actionType": "dialog",
+      "label": "Bulk Update",
+      "icon": "edit",
+      "dialog": {
+        "title": "Bulk Update ${entityPlural}",
+        "body": {
+          "type": "form",
+          "form": {
+            "body": [
+              {
+                "type": "atoms.select",
+                "name": "status",
+                "label": "New Status",
+                "options": "${statusOptions}",
+                "placeholder": "Select status"
+              },
+              {
+                "type": "atoms.select",
+                "name": "assignee",
+                "label": "Assignee",
+                "options": "${assigneeOptions}",
+                "placeholder": "Select assignee"
+              },
+              {
+                "type": "atoms.select",
+                "name": "priority",
+                "label": "Priority",
+                "options": [
+                  {"label": "High", "value": "high"},
+                  {"label": "Medium", "value": "medium"},
+                  {"label": "Low", "value": "low"}
+                ],
+                "placeholder": "Select priority"
+              }
+            ]
+          }
+        }
+      },
+      "permissions": ["${entityName}:bulk_update"]
+    }
+  ],
+  "permissions": {
+    "requiredPermissions": ["${entityName}:read"]
+  },
+  "htmx": {
+    "timeout": 15000,
+    "historyEnabled": true,
+    "defaultSwapStyle": "innerHTML"
+  },
+  "alpine": {
+    "stores": {
+      "boardState": `{
+        filters: { search: '', assignee: '', priority: '' },
+        settings: { showCompletedItems: true, groupBy: 'status', sortBy: 'updated_at' },
+        draggedItem: null,
+        columnStates: {}
+      }`
+    },
+    "plugins": ["morph", "intersect"]
+  },
+  "meta": {
+    "template": "kanban_board",
+    "version": "1.0.0",
+    "capabilities": [
+      "drag_and_drop",
+      "real_time_updates",
+      "filtering",
+      "quick_edit",
+      "bulk_operations",
+      "status_workflow",
+      "assignee_management",
+      "priority_levels",
+      "responsive_columns"
+    ],
+    "workflow_states": "${statusOptions}",
+    "card_properties": [
+      "title",
+      "description",
+      "status",
+      "priority",
+      "assignee",
+      "due_date",
+      "tags",
+      "progress",
+      "created_at",
+      "updated_at"
+    ],
+    "responsive": true,
+    "accessibility": {
+      "screen_reader": true,
+      "keyboard_navigation": true,
+      "aria_labels": true,
+      "focus_management": true,
+      "drag_drop_announcements": true
+    }
+  }
+}

@@ -1,0 +1,604 @@
+{
+  "id": "dashboard-template",
+  "version": "1.0.0", 
+  "layout": "app",
+  "title": "${entityTitle} Dashboard",
+  "description": "Comprehensive dashboard for ${entityTitle} analytics and key metrics",
+  "components": [
+    {
+      "id": "page-header",
+      "type": "organisms.siteheader",
+      "props": {
+        "title": "${entityTitle} Dashboard",
+        "subtitle": "Overview and analytics for ${entityPlural}",
+        "breadcrumbs": [
+          { "label": "Dashboard", "href": "/" },
+          { "label": "${entityTitle}", "href": "/${entityPath}" },
+          { "label": "Dashboard", "current": true }
+        ],
+        "actions": [
+          {
+            "id": "refresh-dashboard",
+            "actionType": "reload",
+            "label": "Refresh",
+            "icon": "refresh",
+            "level": "secondary",
+            "reload": ["stats-data", "chart-data", "activity-data"]
+          },
+          {
+            "id": "export-report",
+            "actionType": "ajax",
+            "label": "Export Report",
+            "icon": "download",
+            "level": "secondary",
+            "api": {
+              "method": "POST",
+              "url": "/api/${entityPath}/dashboard/export",
+              "data": {
+                "period": "${filters.period}",
+                "format": "pdf"
+              }
+            }
+          },
+          {
+            "id": "dashboard-settings",
+            "actionType": "dialog",
+            "label": "Settings",
+            "icon": "settings",
+            "level": "secondary",
+            "dialog": {
+              "title": "Dashboard Settings",
+              "size": "md",
+              "body": {
+                "type": "form",
+                "form": {
+                  "body": [
+                    {
+                      "type": "atoms.select",
+                      "name": "defaultPeriod",
+                      "label": "Default Time Period",
+                      "options": [
+                        {"label": "Last 7 days", "value": "7d"},
+                        {"label": "Last 30 days", "value": "30d"},
+                        {"label": "Last 90 days", "value": "90d"},
+                        {"label": "Last year", "value": "1y"}
+                      ],
+                      "value": "${dashboardSettings.defaultPeriod}"
+                    },
+                    {
+                      "type": "atoms.checkbox",
+                      "name": "autoRefresh",
+                      "label": "Auto-refresh dashboard",
+                      "value": "${dashboardSettings.autoRefresh}"
+                    },
+                    {
+                      "type": "atoms.select",
+                      "name": "refreshInterval",
+                      "label": "Refresh interval",
+                      "options": [
+                        {"label": "30 seconds", "value": "30s"},
+                        {"label": "1 minute", "value": "1m"},
+                        {"label": "5 minutes", "value": "5m"},
+                        {"label": "15 minutes", "value": "15m"}
+                      ],
+                      "value": "${dashboardSettings.refreshInterval}",
+                      "visibleOn": "${dashboardSettings.autoRefresh}"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "layout": {
+        "container": "flex",
+        "classes": ["mb-6"]
+      }
+    },
+    {
+      "id": "dashboard-filters",
+      "type": "molecules.base-card",
+      "props": {
+        "variant": "subtle",
+        "padding": "sm"
+      },
+      "children": [
+        {
+          "id": "filter-controls",
+          "type": "layout.flex",
+          "props": {
+            "gap": "md",
+            "align": "center",
+            "wrap": true
+          },
+          "children": [
+            {
+              "id": "period-filter",
+              "type": "atoms.select",
+              "props": {
+                "label": "Time Period",
+                "options": [
+                  {"label": "Last 7 days", "value": "7d"},
+                  {"label": "Last 30 days", "value": "30d"}, 
+                  {"label": "Last 90 days", "value": "90d"},
+                  {"label": "Last year", "value": "1y"},
+                  {"label": "Custom", "value": "custom"}
+                ],
+                "value": "30d"
+              },
+              "xModel": "filters.period",
+              "xOn": {
+                "change": "updateDashboard()"
+              }
+            },
+            {
+              "id": "date-range",
+              "type": "atoms.date-range",
+              "props": {
+                "label": "Custom Date Range",
+                "placeholder": "Select date range"
+              },
+              "xModel": "filters.dateRange",
+              "xShow": "filters.period === 'custom'",
+              "xOn": {
+                "change": "updateDashboard()"
+              }
+            },
+            {
+              "id": "status-filter",
+              "type": "atoms.select",
+              "props": {
+                "label": "Status",
+                "placeholder": "All statuses",
+                "clearable": true,
+                "options": "${statusOptions}"
+              },
+              "xModel": "filters.status",
+              "xOn": {
+                "change": "updateDashboard()"
+              }
+            },
+            {
+              "id": "category-filter",
+              "type": "atoms.select",
+              "props": {
+                "label": "Category",
+                "placeholder": "All categories",
+                "clearable": true,
+                "options": "${categoryOptions}"
+              },
+              "xModel": "filters.category",
+              "xOn": {
+                "change": "updateDashboard()"
+              },
+              "visibleOn": "${hasCategories}"
+            }
+          ]
+        }
+      ],
+      "layout": {
+        "container": "block",
+        "classes": ["mb-6"]
+      }
+    },
+    {
+      "id": "key-metrics",
+      "type": "layout.grid",
+      "props": {
+        "columns": "repeat(auto-fit, minmax(250px, 1fr))",
+        "gap": "1.5rem"
+      },
+      "children": [
+        {
+          "id": "total-count",
+          "type": "molecules.stat-card",
+          "props": {
+            "title": "Total ${entityPlural}",
+            "value": "${stats.total}",
+            "change": "${stats.totalChange}",
+            "changeType": "${stats.totalChangeType}",
+            "icon": "hash",
+            "color": "blue"
+          },
+          "dataSource": "stats-data"
+        },
+        {
+          "id": "active-count",
+          "type": "molecules.stat-card",
+          "props": {
+            "title": "Active ${entityPlural}",
+            "value": "${stats.active}",
+            "change": "${stats.activeChange}",
+            "changeType": "${stats.activeChangeType}",
+            "icon": "check-circle",
+            "color": "green"
+          },
+          "dataSource": "stats-data",
+          "visibleOn": "${hasStatus}"
+        },
+        {
+          "id": "completion-rate",
+          "type": "molecules.stat-card",
+          "props": {
+            "title": "Completion Rate",
+            "value": "${stats.completionRate}%",
+            "change": "${stats.completionRateChange}",
+            "changeType": "${stats.completionRateChangeType}",
+            "icon": "target",
+            "color": "purple"
+          },
+          "dataSource": "stats-data",
+          "visibleOn": "${hasWorkflow}"
+        },
+        {
+          "id": "average-value",
+          "type": "molecules.stat-card",
+          "props": {
+            "title": "Average Value",
+            "value": "${formatCurrency(stats.averageValue)}",
+            "change": "${stats.averageValueChange}",
+            "changeType": "${stats.averageValueChangeType}",
+            "icon": "dollar-sign",
+            "color": "orange"
+          },
+          "dataSource": "stats-data",
+          "visibleOn": "${hasNumericFields}"
+        }
+      ],
+      "layout": {
+        "container": "grid",
+        "classes": ["mb-6"]
+      }
+    },
+    {
+      "id": "charts-section",
+      "type": "layout.grid",
+      "props": {
+        "columns": "2fr 1fr",
+        "gap": "1.5rem"
+      },
+      "children": [
+        {
+          "id": "trend-chart",
+          "type": "molecules.chart-card",
+          "props": {
+            "title": "${entityTitle} Trends",
+            "subtitle": "Activity over time",
+            "chartType": "line",
+            "data": "${chartData.trends}",
+            "options": {
+              "responsive": true,
+              "scales": {
+                "x": {"type": "time"},
+                "y": {"beginAtZero": true}
+              },
+              "plugins": {
+                "legend": {"display": true},
+                "tooltip": {"mode": "index"}
+              }
+            }
+          },
+          "dataSource": "chart-data"
+        },
+        {
+          "id": "status-distribution",
+          "type": "molecules.chart-card",
+          "props": {
+            "title": "Status Distribution",
+            "subtitle": "Current status breakdown",
+            "chartType": "doughnut",
+            "data": "${chartData.statusDistribution}",
+            "options": {
+              "responsive": true,
+              "plugins": {
+                "legend": {"position": "bottom"},
+                "tooltip": {"callbacks": {"label": "return label + ': ' + value + '%'"}}
+              }
+            }
+          },
+          "dataSource": "chart-data",
+          "visibleOn": "${hasStatus}"
+        }
+      ],
+      "layout": {
+        "container": "grid",
+        "responsive": {
+          "sm": "1fr",
+          "md": "1fr",
+          "lg": "2fr 1fr"
+        },
+        "classes": ["mb-6"]
+      }
+    },
+    {
+      "id": "data-tables-section",
+      "type": "layout.grid",
+      "props": {
+        "columns": "1fr 1fr",
+        "gap": "1.5rem"
+      },
+      "children": [
+        {
+          "id": "recent-items",
+          "type": "molecules.base-card",
+          "props": {
+            "title": "Recent ${entityPlural}",
+            "subtitle": "Latest activity",
+            "actions": [
+              {
+                "id": "view-all-recent",
+                "actionType": "url",
+                "label": "View All",
+                "link": "/${entityPath}?sort=created_at&order=desc"
+              }
+            ]
+          },
+          "children": [
+            {
+              "id": "recent-table",
+              "type": "organisms.table",
+              "props": {
+                "columns": "${recentItemsColumns}",
+                "pageSize": 5,
+                "showPagination": false,
+                "showHeader": false,
+                "compact": true,
+                "emptyMessage": "No recent ${entityPlural}"
+              },
+              "dataSource": "recent-data"
+            }
+          ]
+        },
+        {
+          "id": "top-performers",
+          "type": "molecules.base-card",
+          "props": {
+            "title": "Top Performers",
+            "subtitle": "Best performing ${entityPlural}",
+            "actions": [
+              {
+                "id": "view-all-top",
+                "actionType": "url",
+                "label": "View All",
+                "link": "/${entityPath}?sort=performance&order=desc"
+              }
+            ]
+          },
+          "children": [
+            {
+              "id": "top-table",
+              "type": "organisms.table",
+              "props": {
+                "columns": "${topPerformersColumns}",
+                "pageSize": 5,
+                "showPagination": false,
+                "showHeader": false,
+                "compact": true,
+                "emptyMessage": "No performance data available"
+              },
+              "dataSource": "top-performers-data"
+            }
+          ],
+          "visibleOn": "${hasPerformanceMetrics}"
+        }
+      ],
+      "layout": {
+        "container": "grid",
+        "responsive": {
+          "sm": "1fr",
+          "md": "1fr",
+          "lg": "1fr 1fr"
+        },
+        "classes": ["mb-6"]
+      }
+    },
+    {
+      "id": "activity-feed",
+      "type": "molecules.base-card",
+      "props": {
+        "title": "Recent Activity",
+        "subtitle": "Latest changes and updates"
+      },
+      "children": [
+        {
+          "id": "activity-timeline",
+          "type": "organisms.activity-timeline",
+          "props": {
+            "limit": 20,
+            "showMore": true,
+            "groupByDate": true,
+            "showFilters": true
+          },
+          "dataSource": "activity-data"
+        }
+      ],
+      "layout": {
+        "container": "block",
+        "classes": ["max-w-4xl", "mx-auto"]
+      },
+      "visibleOn": "${hasAuditTrail}"
+    }
+  ],
+  "dataSources": [
+    {
+      "id": "stats-data",
+      "type": "api",
+      "endpoint": "/api/${entityPath}/dashboard/stats",
+      "method": "GET",
+      "parameters": {
+        "period": "${filters.period}",
+        "startDate": "${filters.dateRange?.startDate}",
+        "endDate": "${filters.dateRange?.endDate}",
+        "status": "${filters.status}",
+        "category": "${filters.category}"
+      },
+      "cache": {
+        "ttl": "5m",
+        "key": "${entityName}-dashboard-stats-${JSON.stringify(filters)}"
+      },
+      "refresh": {
+        "interval": "${dashboardSettings.autoRefresh ? dashboardSettings.refreshInterval : null}",
+        "trigger": "visibility"
+      }
+    },
+    {
+      "id": "chart-data",
+      "type": "api",
+      "endpoint": "/api/${entityPath}/dashboard/charts",
+      "method": "GET", 
+      "parameters": {
+        "period": "${filters.period}",
+        "startDate": "${filters.dateRange?.startDate}",
+        "endDate": "${filters.dateRange?.endDate}",
+        "status": "${filters.status}",
+        "category": "${filters.category}"
+      },
+      "cache": {
+        "ttl": "10m",
+        "key": "${entityName}-dashboard-charts-${JSON.stringify(filters)}"
+      }
+    },
+    {
+      "id": "recent-data",
+      "type": "api",
+      "endpoint": "/api/${entityPath}",
+      "method": "GET",
+      "parameters": {
+        "limit": "5",
+        "sort": "created_at",
+        "order": "desc",
+        "fields": "${recentItemsFields}"
+      },
+      "cache": {
+        "ttl": "2m",
+        "key": "${entityName}-recent-items"
+      }
+    },
+    {
+      "id": "top-performers-data",
+      "type": "api",
+      "endpoint": "/api/${entityPath}/top-performers",
+      "method": "GET",
+      "parameters": {
+        "limit": "5",
+        "period": "${filters.period}"
+      },
+      "cache": {
+        "ttl": "15m",
+        "key": "${entityName}-top-performers-${filters.period}"
+      }
+    },
+    {
+      "id": "activity-data",
+      "type": "api",
+      "endpoint": "/api/${entityPath}/activity",
+      "method": "GET",
+      "parameters": {
+        "limit": "20",
+        "period": "${filters.period}"
+      },
+      "cache": {
+        "ttl": "1m",
+        "key": "${entityName}-activity-${filters.period}"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "schedule-report",
+      "actionType": "dialog",
+      "label": "Schedule Report",
+      "icon": "calendar",
+      "dialog": {
+        "title": "Schedule Dashboard Report",
+        "body": {
+          "type": "form",
+          "form": {
+            "api": {
+              "method": "POST",
+              "url": "/api/${entityPath}/dashboard/schedule"
+            },
+            "body": [
+              {
+                "type": "atoms.select",
+                "name": "frequency",
+                "label": "Frequency",
+                "options": [
+                  {"label": "Daily", "value": "daily"},
+                  {"label": "Weekly", "value": "weekly"}, 
+                  {"label": "Monthly", "value": "monthly"}
+                ],
+                "required": true
+              },
+              {
+                "type": "atoms.input",
+                "name": "email",
+                "label": "Email Address",
+                "type": "email",
+                "required": true
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "permissions": {
+    "requiredPermissions": ["${entityName}:read"]
+  },
+  "htmx": {
+    "timeout": 15000,
+    "historyEnabled": true,
+    "defaultSwapStyle": "innerHTML"
+  },
+  "alpine": {
+    "stores": {
+      "dashboardState": `{
+        filters: { period: '30d', dateRange: null, status: '', category: '' },
+        settings: { defaultPeriod: '30d', autoRefresh: false, refreshInterval: '5m' },
+        chartInstances: {}
+      }`
+    },
+    "plugins": ["intersect"]
+  },
+  "meta": {
+    "template": "dashboard",
+    "version": "1.0.0",
+    "capabilities": [
+      "key_metrics",
+      "trend_analysis",
+      "status_distribution",
+      "recent_activity",
+      "top_performers",
+      "real_time_updates",
+      "filtering",
+      "export_reports",
+      "scheduled_reports",
+      "responsive_design"
+    ],
+    "chart_types": [
+      "line",
+      "bar",
+      "doughnut",
+      "pie",
+      "area"
+    ],
+    "metric_types": [
+      "count",
+      "percentage",
+      "currency",
+      "average",
+      "sum",
+      "rate"
+    ],
+    "responsive": true,
+    "accessibility": {
+      "screen_reader": true,
+      "keyboard_navigation": true,
+      "aria_labels": true,
+      "chart_alt_text": true,
+      "color_blind_friendly": true
+    }
+  }
+}

@@ -1,0 +1,244 @@
+{
+  "id": "create-form-template",
+  "version": "1.0.0",
+  "layout": "app",
+  "title": "Create ${entityTitle}",
+  "description": "Create a new ${entityTitle} with comprehensive form validation and user guidance",
+  "components": [
+    {
+      "id": "page-header",
+      "type": "organisms.siteheader",
+      "props": {
+        "title": "Create ${entityTitle}",
+        "subtitle": "Add a new ${entityTitle} to your system",
+        "breadcrumbs": [
+          { "label": "Dashboard", "href": "/" },
+          { "label": "${entityTitle}", "href": "/${entityPath}" },
+          { "label": "Create", "href": "/${entityPath}/create", "current": true }
+        ],
+        "actions": [
+          {
+            "id": "back-to-list",
+            "actionType": "url",
+            "label": "Back to List",
+            "icon": "arrow-left",
+            "level": "secondary",
+            "link": "/${entityPath}"
+          }
+        ]
+      },
+      "layout": {
+        "container": "flex",
+        "classes": ["mb-6"]
+      }
+    },
+    {
+      "id": "create-form",
+      "type": "form",
+      "props": {
+        "title": "${entityTitle} Information",
+        "mode": "normal",
+        "wrapWithPanel": true,
+        "resetAfterSubmit": false,
+        "pristineCheck": true,
+        "submitOnChange": false
+      },
+      "form": {
+        "api": {
+          "method": "POST",
+          "url": "/api/${entityPath}",
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "adaptor": "return { ...api, data: payload }"
+        },
+        "body": "${formFields}",
+        "actions": [
+          {
+            "id": "submit-form",
+            "actionType": "submit",
+            "label": "Create ${entityTitle}",
+            "icon": "save",
+            "level": "primary",
+            "required": "${requiredFields}",
+            "permissions": ["${entityName}:create"]
+          },
+          {
+            "id": "save-draft",
+            "actionType": "ajax",
+            "label": "Save as Draft",
+            "icon": "file-text",
+            "level": "secondary",
+            "api": {
+              "method": "POST",
+              "url": "/api/${entityPath}/draft",
+              "data": "${formData}"
+            },
+            "toast": {
+              "title": "Draft Saved",
+              "body": "Your ${entityTitle} has been saved as a draft",
+              "level": "success"
+            }
+          },
+          {
+            "id": "reset-form",
+            "actionType": "reset",
+            "label": "Reset",
+            "level": "secondary",
+            "confirmText": "Are you sure you want to reset the form? All changes will be lost."
+          }
+        ],
+        "messages": {
+          "saveSuccess": "${entityTitle} created successfully!",
+          "saveFailed": "Failed to create ${entityTitle}. Please try again.",
+          "validateFailed": "Please fix the validation errors before submitting."
+        },
+        "redirect": "/${entityPath}/${id}",
+        "debug": false
+      },
+      "layout": {
+        "container": "grid",
+        "grid": {
+          "columns": "1fr",
+          "gap": "1.5rem"
+        },
+        "classes": ["max-w-4xl", "mx-auto"]
+      }
+    },
+    {
+      "id": "help-panel",
+      "type": "molecules.base-card",
+      "props": {
+        "title": "Need Help?",
+        "variant": "info",
+        "collapsible": true,
+        "collapsed": true
+      },
+      "children": [
+        {
+          "id": "help-content",
+          "type": "atoms.text",
+          "props": {
+            "content": "Tips for creating a ${entityTitle}:",
+            "size": "sm"
+          }
+        },
+        {
+          "id": "help-list",
+          "type": "atoms.list",
+          "props": {
+            "items": "${helpTips}",
+            "variant": "bulleted"
+          }
+        }
+      ],
+      "layout": {
+        "container": "block",
+        "classes": ["mt-6", "max-w-4xl", "mx-auto"]
+      }
+    }
+  ],
+  "dataSources": [
+    {
+      "id": "lookup-data",
+      "type": "api",
+      "endpoint": "/api/${entityPath}/lookup",
+      "method": "GET",
+      "cache": {
+        "ttl": "30m",
+        "key": "${entityName}-lookup"
+      },
+      "transform": "return api.data"
+    },
+    {
+      "id": "validation-rules",
+      "type": "api",
+      "endpoint": "/api/${entityPath}/validation",
+      "method": "GET",
+      "cache": {
+        "ttl": "1h",
+        "key": "${entityName}-validation"
+      }
+    }
+  ],
+  "actions": [
+    {
+      "id": "quick-save",
+      "actionType": "ajax",
+      "label": "Quick Save",
+      "icon": "save",
+      "api": {
+        "method": "POST",
+        "url": "/api/${entityPath}/quick-save",
+        "data": "${formData}"
+      },
+      "toast": {
+        "title": "Saved",
+        "body": "Progress has been saved",
+        "level": "success"
+      }
+    }
+  ],
+  "permissions": {
+    "requiredPermissions": ["${entityName}:create"]
+  },
+  "htmx": {
+    "timeout": 15000,
+    "historyEnabled": true,
+    "defaultSwapStyle": "innerHTML"
+  },
+  "alpine": {
+    "stores": {
+      "formState": "{ isDirty: false, isSubmitting: false, errors: {}, data: {} }"
+    }
+  },
+  "meta": {
+    "template": "create_form",
+    "version": "1.0.0",
+    "capabilities": [
+      "validation",
+      "auto_save",
+      "help_system",
+      "lookup_data",
+      "file_upload",
+      "rich_text",
+      "date_picker",
+      "permissions"
+    ],
+    "form_types": [
+      "text",
+      "email",
+      "password",
+      "number",
+      "textarea", 
+      "select",
+      "multi_select",
+      "checkbox",
+      "radio",
+      "date",
+      "datetime",
+      "file",
+      "image",
+      "rich_text"
+    ],
+    "validation_rules": [
+      "required",
+      "min_length",
+      "max_length",
+      "pattern",
+      "email",
+      "url",
+      "numeric",
+      "min_value",
+      "max_value",
+      "custom"
+    ],
+    "responsive": true,
+    "accessibility": {
+      "screen_reader": true,
+      "keyboard_navigation": true,
+      "aria_labels": true,
+      "focus_management": true
+    }
+  }
+}
