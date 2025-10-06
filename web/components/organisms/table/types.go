@@ -52,8 +52,8 @@ type DataTableConfig struct {
 // DataTableProps defines properties for the DataTable organism
 type DataTableProps struct {
 	// Table structure
-	Columns []DataTableColumn        `json:"columns"`
-	Data    []map[string]any `json:"data,omitempty"`
+	Columns []DataTableColumn `json:"columns"`
+	Data    []map[string]any  `json:"data,omitempty"`
 
 	// Configuration
 	Config DataTableConfig `json:"config"`

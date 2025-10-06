@@ -149,27 +149,27 @@ func (pr *PatternRenderer) RenderEnhancedDataTable(config DataTableConfig, ctx c
 
 // DataTableConfig represents configuration for enhanced data tables
 type DataTableConfig struct {
-	Title        string                   `json:"title"`
-	Subtitle     string                   `json:"subtitle"`
-	Data         []map[string]any `json:"data"`
-	Columns      []ColumnDefinition       `json:"columns"`
-	Features     TableFeatures            `json:"features"`
-	Styling      TableStyling             `json:"styling"`
-	EmptyState   EmptyStateConfig         `json:"emptyState"`
-	LoadingState LoadingStateConfig       `json:"loadingState"`
+	Title        string             `json:"title"`
+	Subtitle     string             `json:"subtitle"`
+	Data         []map[string]any   `json:"data"`
+	Columns      []ColumnDefinition `json:"columns"`
+	Features     TableFeatures      `json:"features"`
+	Styling      TableStyling       `json:"styling"`
+	EmptyState   EmptyStateConfig   `json:"emptyState"`
+	LoadingState LoadingStateConfig `json:"loadingState"`
 }
 
 // ColumnDefinition defines a table column
 type ColumnDefinition struct {
-	Key        string                 `json:"key"`
-	Label      string                 `json:"label"`
-	Type       string                 `json:"type"`
-	Width      string                 `json:"width,omitempty"`
-	Sortable   bool                   `json:"sortable"`
-	Searchable bool                   `json:"searchable"`
-	Filterable bool                   `json:"filterable"`
-	Primary    bool                   `json:"primary,omitempty"`
-	Sticky     bool                   `json:"sticky,omitempty"`
+	Key        string         `json:"key"`
+	Label      string         `json:"label"`
+	Type       string         `json:"type"`
+	Width      string         `json:"width,omitempty"`
+	Sortable   bool           `json:"sortable"`
+	Searchable bool           `json:"searchable"`
+	Filterable bool           `json:"filterable"`
+	Primary    bool           `json:"primary,omitempty"`
+	Sticky     bool           `json:"sticky,omitempty"`
 	Props      map[string]any `json:"props,omitempty"`
 }
 
@@ -230,8 +230,8 @@ type QuickFilter struct {
 
 // AdvancedFilter for complex filtering
 type AdvancedFilter struct {
-	Field   string                 `json:"field"`
-	Type    string                 `json:"type"`
+	Field   string         `json:"field"`
+	Type    string         `json:"type"`
 	Options any            `json:"options,omitempty"`
 	Props   map[string]any `json:"props,omitempty"`
 }
@@ -732,4 +732,3 @@ func (pr *PatternRenderer) interpolateString(template string, data map[string]an
 	}
 	return result
 }
-

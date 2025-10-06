@@ -40,7 +40,7 @@ type ProcessTransactionRequest struct {
 	RequiresApproval bool                      `json:"requires_approval"`
 	ApprovalLevel    ApprovalLevel             `json:"approval_level,omitempty"`
 	Priority         ProcessingPriority        `json:"priority"`
-	Metadata         map[string]any    `json:"metadata,omitempty"`
+	Metadata         map[string]any            `json:"metadata,omitempty"`
 }
 
 // TransactionEntryRequest represents individual transaction entries

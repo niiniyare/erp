@@ -304,7 +304,7 @@ func convertUsersToDataTableRows(users []UserTableRow) []DataTableRow {
 	for i, user := range users {
 		rows[i] = DataTableRow{
 			ID: user.ID.String(),
-			Data: map[string]any{
+			Data: map[string]interface{}{
 				"name":        user.Name,
 				"email":       user.Email,
 				"role":        user.Role,
@@ -336,7 +336,7 @@ func convertTenantsToDataTableRows(tenants []TenantTableRow) []DataTableRow {
 	for i, tenant := range tenants {
 		rows[i] = DataTableRow{
 			ID: tenant.ID.String(),
-			Data: map[string]any{
+			Data: map[string]interface{}{
 				"name":        tenant.Name,
 				"subdomain":   tenant.Subdomain,
 				"plan":        tenant.Plan,
@@ -368,7 +368,7 @@ func convertTransactionsToDataTableRows(transactions []TransactionTableRow) []Da
 	for i, tx := range transactions {
 		rows[i] = DataTableRow{
 			ID: tx.ID.String(),
-			Data: map[string]any{
+			Data: map[string]interface{}{
 				"reference":   tx.Reference,
 				"date":        tx.Date,
 				"description": tx.Description,
@@ -394,7 +394,7 @@ func convertOrdersToDataTableRows(orders []OrderTableRow) []DataTableRow {
 	for i, order := range orders {
 		rows[i] = DataTableRow{
 			ID: order.ID.String(),
-			Data: map[string]any{
+			Data: map[string]interface{}{
 				"order_number":  order.OrderNumber,
 				"date":          order.Date,
 				"items_count":   order.ItemsCount,

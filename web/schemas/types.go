@@ -9,31 +9,31 @@ import (
 
 // PageSchema defines the complete structure for a JSON-driven page
 type PageSchema struct {
-	ID          string                 `json:"id"`
-	Version     string                 `json:"version,omitempty"`
-	Layout      string                 `json:"layout"` // "app", "auth", "minimal", "base"
-	Title       string                 `json:"title"`
-	Description string                 `json:"description,omitempty"`
-	Components  []ComponentDefinition  `json:"components"`
-	DataSources []DataSource           `json:"dataSources,omitempty"`
-	Actions     []ActionDefinition     `json:"actions,omitempty"`
-	Permissions *PermissionRules       `json:"permissions,omitempty"`
-	Meta        map[string]any `json:"meta,omitempty"`
-	CreatedAt   time.Time              `json:"createdAt,omitempty"`
-	UpdatedAt   time.Time              `json:"updatedAt,omitempty"`
+	ID          string                `json:"id"`
+	Version     string                `json:"version,omitempty"`
+	Layout      string                `json:"layout"` // "app", "auth", "minimal", "base"
+	Title       string                `json:"title"`
+	Description string                `json:"description,omitempty"`
+	Components  []ComponentDefinition `json:"components"`
+	DataSources []DataSource          `json:"dataSources,omitempty"`
+	Actions     []ActionDefinition    `json:"actions,omitempty"`
+	Permissions *PermissionRules      `json:"permissions,omitempty"`
+	Meta        map[string]any        `json:"meta,omitempty"`
+	CreatedAt   time.Time             `json:"createdAt,omitempty"`
+	UpdatedAt   time.Time             `json:"updatedAt,omitempty"`
 }
 
 // ComponentDefinition describes how to render a component within a schema
 type ComponentDefinition struct {
-	ID          string                 `json:"id"`
-	Type        string                 `json:"type"` // "atoms.button", "organisms.table", etc.
-	Props       map[string]any `json:"props"`
-	Layout      *LayoutRules           `json:"layout,omitempty"`
-	Children    []ComponentDefinition  `json:"children,omitempty"`
-	DataSource  string                 `json:"dataSource,omitempty"`
-	Permissions *PermissionRules       `json:"permissions,omitempty"`
-	Conditions  []RenderCondition      `json:"conditions,omitempty"`
-	Events      []EventHandler         `json:"events,omitempty"`
+	ID          string                `json:"id"`
+	Type        string                `json:"type"` // "atoms.button", "organisms.table", etc.
+	Props       map[string]any        `json:"props"`
+	Layout      *LayoutRules          `json:"layout,omitempty"`
+	Children    []ComponentDefinition `json:"children,omitempty"`
+	DataSource  string                `json:"dataSource,omitempty"`
+	Permissions *PermissionRules      `json:"permissions,omitempty"`
+	Conditions  []RenderCondition     `json:"conditions,omitempty"`
+	Events      []EventHandler        `json:"events,omitempty"`
 }
 
 // LayoutRules define positioning and styling for components
@@ -91,7 +91,7 @@ type DataSource struct {
 	Transform  string            `json:"transform,omitempty"` // Data transformation expression
 	Cache      *CacheConfig      `json:"cache,omitempty"`
 	Refresh    *RefreshConfig    `json:"refresh,omitempty"`
-	Fallback   any       `json:"fallback,omitempty"` // Fallback data
+	Fallback   any               `json:"fallback,omitempty"` // Fallback data
 }
 
 // CacheConfig defines caching behavior for data sources
@@ -151,28 +151,28 @@ type PermissionRules struct {
 
 // PermissionCheck defines conditional permission logic
 type PermissionCheck struct {
-	Field    string      `json:"field"`            // Field to check
-	Operator string      `json:"operator"`         // "eq", "ne", "in", "contains"
-	Value    any `json:"value"`            // Value to compare
-	Source   string      `json:"source,omitempty"` // "user", "context", "data"
+	Field    string `json:"field"`            // Field to check
+	Operator string `json:"operator"`         // "eq", "ne", "in", "contains"
+	Value    any    `json:"value"`            // Value to compare
+	Source   string `json:"source,omitempty"` // "user", "context", "data"
 }
 
 // RenderCondition defines when a component should be rendered
 type RenderCondition struct {
-	Field    string      `json:"field"`
-	Operator string      `json:"operator"` // "eq", "ne", "gt", "lt", "in", "exists"
-	Value    any `json:"value"`
-	Source   string      `json:"source,omitempty"` // "props", "data", "user", "context"
+	Field    string `json:"field"`
+	Operator string `json:"operator"` // "eq", "ne", "gt", "lt", "in", "exists"
+	Value    any    `json:"value"`
+	Source   string `json:"source,omitempty"` // "props", "data", "user", "context"
 }
 
 // EventHandler defines client-side event handling
 type EventHandler struct {
-	Event   string                 `json:"event"`                     // "click", "change", "submit"
-	Action  string                 `json:"action"`                    // Action ID or inline handler
-	Target  string                 `json:"target,omitempty"`          // Element selector for delegation
+	Event   string         `json:"event"`                     // "click", "change", "submit"
+	Action  string         `json:"action"`                    // Action ID or inline handler
+	Target  string         `json:"target,omitempty"`          // Element selector for delegation
 	Data    map[string]any `json:"data,omitempty"`            // Additional data for handler
-	Prevent bool                   `json:"preventDefault,omitempty"`  // Prevent default behavior
-	Stop    bool                   `json:"stopPropagation,omitempty"` // Stop event bubbling
+	Prevent bool           `json:"preventDefault,omitempty"`  // Prevent default behavior
+	Stop    bool           `json:"stopPropagation,omitempty"` // Stop event bubbling
 }
 
 // SchemaValidator defines validation interface for schemas
@@ -245,13 +245,13 @@ type SchemaFilter struct {
 // RenderContext provides context information for schema rendering
 type RenderContext struct {
 	User        any            `json:"user,omitempty"`
-	Permissions []string               `json:"permissions"`
+	Permissions []string       `json:"permissions"`
 	Data        map[string]any `json:"data,omitempty"`
-	Theme       string                 `json:"theme,omitempty"`
-	Language    string                 `json:"language,omitempty"`
-	Timezone    string                 `json:"timezone,omitempty"`
-	Debug       bool                   `json:"debug,omitempty"`
-	RequestID   string                 `json:"requestId,omitempty"`
+	Theme       string         `json:"theme,omitempty"`
+	Language    string         `json:"language,omitempty"`
+	Timezone    string         `json:"timezone,omitempty"`
+	Debug       bool           `json:"debug,omitempty"`
+	RequestID   string         `json:"requestId,omitempty"`
 }
 
 // SchemaError represents errors in schema processing

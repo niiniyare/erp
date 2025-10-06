@@ -28,7 +28,7 @@ type DataTableColumn struct {
 // DataTableRow represents a table row with data
 type DataTableRow struct {
 	ID       string                 `json:"id" validate:"required"`
-	Data     map[string]any `json:"data" validate:"required"`
+	Data     map[string]interface{} `json:"data" validate:"required"`
 	Selected bool                   `json:"selected"`
 	Actions  []DataTableAction      `json:"actions"`
 }

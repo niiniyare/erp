@@ -259,10 +259,10 @@ type Money struct {
 
 // BulkTenantOperationRequest describes bulk operation request
 type BulkTenantOperationRequest struct {
-	Operation  string                 `json:"operation" validate:"required,oneof=suspend reactivate archive update_limits"`
-	TenantIDs  []uuid.UUID            `json:"tenant_ids" validate:"required,min=1,max=100"`
+	Operation  string         `json:"operation" validate:"required,oneof=suspend reactivate archive update_limits"`
+	TenantIDs  []uuid.UUID    `json:"tenant_ids" validate:"required,min=1,max=100"`
 	Parameters map[string]any `json:"parameters,omitempty"`
-	ActorID    uuid.UUID              `json:"actor_id" validate:"required"`
+	ActorID    uuid.UUID      `json:"actor_id" validate:"required"`
 }
 
 // BulkOperationResult describes bulk operation results
@@ -305,26 +305,26 @@ type AuditLogResult struct {
 
 // TenantAuditLogEntry describes audit log entry
 type TenantAuditLogEntry struct {
-	ID          uuid.UUID              `json:"id"`
-	TenantID    uuid.UUID              `json:"tenant_id"`
-	Action      string                 `json:"action"`
-	ActorID     uuid.UUID              `json:"actor_id"`
-	ActorName   string                 `json:"actor_name,omitempty"`
-	Description string                 `json:"description"`
+	ID          uuid.UUID      `json:"id"`
+	TenantID    uuid.UUID      `json:"tenant_id"`
+	Action      string         `json:"action"`
+	ActorID     uuid.UUID      `json:"actor_id"`
+	ActorName   string         `json:"actor_name,omitempty"`
+	Description string         `json:"description"`
 	Metadata    map[string]any `json:"metadata,omitempty"`
-	Timestamp   time.Time              `json:"timestamp"`
-	IPAddress   string                 `json:"ip_address,omitempty"`
+	Timestamp   time.Time      `json:"timestamp"`
+	IPAddress   string         `json:"ip_address,omitempty"`
 }
 
 // LogTenantActionRequest describes audit logging request
 type LogTenantActionRequest struct {
-	ID          uuid.UUID              `json:"id,omitempty"`
-	TenantID    uuid.UUID              `json:"tenant_id" validate:"required"`
-	Action      string                 `json:"action" validate:"required"`
-	ActorID     uuid.UUID              `json:"actor_id"`
-	Description string                 `json:"description" validate:"required"`
+	ID          uuid.UUID      `json:"id,omitempty"`
+	TenantID    uuid.UUID      `json:"tenant_id" validate:"required"`
+	Action      string         `json:"action" validate:"required"`
+	ActorID     uuid.UUID      `json:"actor_id"`
+	Description string         `json:"description" validate:"required"`
 	Metadata    map[string]any `json:"metadata,omitempty"`
-	IPAddress   string                 `json:"ip_address,omitempty"`
+	IPAddress   string         `json:"ip_address,omitempty"`
 }
 
 // Advanced listing types

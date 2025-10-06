@@ -59,8 +59,8 @@ type FilterField struct {
 	Required    bool       `json:"required"`
 
 	// Value and state
-	Value        any    `json:"value,omitempty"`        // Current value
-	DefaultValue any    `json:"defaultValue,omitempty"` // Default value
+	Value        any            `json:"value,omitempty"`        // Current value
+	DefaultValue any            `json:"defaultValue,omitempty"` // Default value
 	Operator     FilterOperator `json:"operator,omitempty"`     // Comparison operator
 
 	// Options for select/radio/checkbox types
@@ -68,9 +68,9 @@ type FilterField struct {
 	Multiple bool           `json:"multiple"` // Allow multiple selections
 
 	// Validation
-	Min     any `json:"min,omitempty"`     // Min value for numbers/dates
-	Max     any `json:"max,omitempty"`     // Max value for numbers/dates
-	Pattern string      `json:"pattern,omitempty"` // Regex pattern
+	Min     any    `json:"min,omitempty"`     // Min value for numbers/dates
+	Max     any    `json:"max,omitempty"`     // Max value for numbers/dates
+	Pattern string `json:"pattern,omitempty"` // Regex pattern
 
 	// UI behavior
 	Collapsible bool   `json:"collapsible"`     // Can be collapsed
@@ -119,14 +119,14 @@ type FilterGroup struct {
 
 // FilterPreset defines a saved filter configuration
 type FilterPreset struct {
-	ID          string                 `json:"id"`
-	Name        string                 `json:"name"`
-	Description string                 `json:"description,omitempty"`
-	Public      bool                   `json:"public"`  // Shared with other users
-	Default     bool                   `json:"default"` // Default preset
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description,omitempty"`
+	Public      bool           `json:"public"`  // Shared with other users
+	Default     bool           `json:"default"` // Default preset
 	Values      map[string]any `json:"values"`  // Field values
-	CreatedBy   string                 `json:"createdBy,omitempty"`
-	CreatedAt   string                 `json:"createdAt,omitempty"`
+	CreatedBy   string         `json:"createdBy,omitempty"`
+	CreatedAt   string         `json:"createdAt,omitempty"`
 }
 
 // FilterAction defines action buttons for the filter panel

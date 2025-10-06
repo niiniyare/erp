@@ -362,10 +362,10 @@ func UserDataTable(props UserTableProps) templ.Component {
 }
 
 // convertUsersToTableData converts users to table data format
-func convertUsersToTableData(users []User) []map[string]any {
-	data := make([]map[string]any, len(users))
+func convertUsersToTableData(users []User) []map[string]interface{} {
+	data := make([]map[string]interface{}, len(users))
 	for i, user := range users {
-		data[i] = map[string]any{
+		data[i] = map[string]interface{}{
 			"id":         user.ID,
 			"avatar":     user.Avatar,
 			"name":       user.Name,
