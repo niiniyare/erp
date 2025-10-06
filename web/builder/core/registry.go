@@ -180,6 +180,15 @@ func (r *ComponentRegistry) GetComponent(componentType string) *ComponentDefinit
 	return nil
 }
 
+// HasComponent checks if a component type is registered
+func (r *ComponentRegistry) HasComponent(componentType string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	_, exists := r.components[componentType]
+	return exists
+}
+
 // GetComponents returns all registered components
 func (r *ComponentRegistry) GetComponents() []*ComponentDefinition {
 	r.mu.RLock()

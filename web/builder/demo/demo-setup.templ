@@ -1,0 +1,938 @@
+package demo
+
+import (
+	"github.com/niiniyare/erp/web/builder/core"
+	"github.com/niiniyare/erp/web/builder/templates"
+	"github.com/niiniyare/erp/web/builder/ui"
+)
+
+// DemoSetup renders the complete visual builder demo interface
+templ DemoSetup(registry *core.ComponentRegistry, library *templates.TemplateLibrary) {
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Visual Schema Builder - Interactive Demo</title>
+		<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+		<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+		<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+		<style>
+			/* Custom styles for the demo */
+			.demo-panel {
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			}
+			
+			.feature-card {
+				transition: transform 0.2s ease, box-shadow 0.2s ease;
+			}
+			
+			.feature-card:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+			}
+			
+			.demo-workspace {
+				background: #f8fafc;
+				min-height: calc(100vh - 200px);
+			}
+			
+			.step-indicator {
+				position: relative;
+			}
+			
+			.step-indicator::after {
+				content: '';
+				position: absolute;
+				top: 50%;
+				right: -50%;
+				width: 100%;
+				height: 2px;
+				background: #e2e8f0;
+				z-index: -1;
+			}
+			
+			.step-indicator.completed::after {
+				background: #10b981;
+			}
+		</style>
+	</head>
+	<body class="bg-gray-50">
+		<!-- Demo Header -->
+		<header class="demo-panel text-white">
+			<div class="container mx-auto px-4 py-8">
+				<div class="text-center">
+					<h1 class="text-4xl font-bold mb-4">Visual Schema Builder</h1>
+					<p class="text-xl opacity-90 mb-6">Interactive Demo - Phase 4.4 MVP Complete</p>
+					<div class="flex items-center justify-center space-x-6">
+						<div class="flex items-center space-x-2">
+							<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+							</svg>
+							<span>Live Preview</span>
+						</div>
+						<div class="flex items-center space-x-2">
+							<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+							</svg>
+							<span>Device Emulation</span>
+						</div>
+						<div class="flex items-center space-x-2">
+							<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+							</svg>
+							<span>Template Library</span>
+						</div>
+						<div class="flex items-center space-x-2">
+							<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+								<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+							</svg>
+							<span>Schema Import</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</header>
+
+		<!-- Demo Navigation -->
+		<nav class="bg-white shadow-sm border-b">
+			<div class="container mx-auto px-4">
+				<div class="flex items-center justify-between h-16">
+					<div class="flex items-center space-x-8">
+						<button 
+							class="demo-nav-btn active" 
+							data-demo="tutorial"
+							onclick="switchDemo('tutorial')"
+						>
+							📚 Tutorial
+						</button>
+						<button 
+							class="demo-nav-btn" 
+							data-demo="builder"
+							onclick="switchDemo('builder')"
+						>
+							🎨 Visual Builder
+						</button>
+						<button 
+							class="demo-nav-btn" 
+							data-demo="templates"
+							onclick="switchDemo('templates')"
+						>
+							📋 Templates
+						</button>
+						<button 
+							class="demo-nav-btn" 
+							data-demo="import"
+							onclick="switchDemo('import')"
+						>
+							📥 Import
+						</button>
+						<button 
+							class="demo-nav-btn" 
+							data-demo="showcase"
+							onclick="switchDemo('showcase')"
+						>
+							✨ Showcase
+						</button>
+					</div>
+					
+					<div class="flex items-center space-x-4">
+						<button 
+							class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+							onclick="resetDemo()"
+						>
+							Reset Demo
+						</button>
+						<button 
+							class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+							onclick="downloadSchema()"
+						>
+							Download Schema
+						</button>
+					</div>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Demo Content -->
+		<main class="demo-workspace">
+			<!-- Tutorial Demo -->
+			<div class="demo-section active" id="demo-tutorial">
+				<div class="container mx-auto px-4 py-8">
+					<div class="max-w-4xl mx-auto">
+						<h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Interactive Tutorial</h2>
+						
+						<!-- Tutorial Steps -->
+						<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+							<div class="step-indicator text-center" data-step="1">
+								<div class="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">1</div>
+								<h3 class="font-semibold text-gray-900">Choose Template</h3>
+								<p class="text-sm text-gray-600 mt-1">Start with a pre-built template or create from scratch</p>
+							</div>
+							<div class="step-indicator text-center" data-step="2">
+								<div class="w-16 h-16 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">2</div>
+								<h3 class="font-semibold text-gray-900">Drag & Drop</h3>
+								<p class="text-sm text-gray-600 mt-1">Add components to your canvas using drag and drop</p>
+							</div>
+							<div class="step-indicator text-center" data-step="3">
+								<div class="w-16 h-16 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">3</div>
+								<h3 class="font-semibold text-gray-900">Customize</h3>
+								<p class="text-sm text-gray-600 mt-1">Edit properties, styles, and behavior</p>
+							</div>
+							<div class="step-indicator text-center" data-step="4">
+								<div class="w-16 h-16 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">4</div>
+								<h3 class="font-semibold text-gray-900">Preview & Export</h3>
+								<p class="text-sm text-gray-600 mt-1">Test responsiveness and export your schema</p>
+							</div>
+						</div>
+						
+						<!-- Tutorial Content -->
+						<div class="bg-white rounded-lg shadow-lg p-8">
+							<div class="tutorial-step active" id="tutorial-step-1">
+								<h3 class="text-2xl font-bold text-gray-900 mb-4">Step 1: Choose Your Starting Point</h3>
+								<p class="text-gray-600 mb-6">Begin your journey by selecting a template that matches your needs, or start with a blank canvas for complete creative freedom.</p>
+								
+								<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+									<div class="feature-card border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500" onclick="selectTemplate('dashboard')">
+										<div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
+											<span class="text-2xl">📊</span>
+										</div>
+										<h4 class="font-semibold text-gray-900">Dashboard Template</h4>
+										<p class="text-sm text-gray-600 mt-1">Perfect for admin panels and data visualization</p>
+									</div>
+									
+									<div class="feature-card border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500" onclick="selectTemplate('form')">
+										<div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-3">
+											<span class="text-2xl">📝</span>
+										</div>
+										<h4 class="font-semibold text-gray-900">Form Template</h4>
+										<p class="text-sm text-gray-600 mt-1">Great for contact forms and data collection</p>
+									</div>
+									
+									<div class="feature-card border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-blue-500" onclick="selectTemplate('blank')">
+										<div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
+											<span class="text-2xl">🎨</span>
+										</div>
+										<h4 class="font-semibold text-gray-900">Blank Canvas</h4>
+										<p class="text-sm text-gray-600 mt-1">Start from scratch with complete freedom</p>
+									</div>
+								</div>
+								
+								<div class="flex justify-between">
+									<button class="px-6 py-2 bg-gray-300 text-gray-600 rounded cursor-not-allowed" disabled>Previous</button>
+									<button class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onclick="nextTutorialStep()">Next Step</button>
+								</div>
+							</div>
+							
+							<div class="tutorial-step hidden" id="tutorial-step-2">
+								<h3 class="text-2xl font-bold text-gray-900 mb-4">Step 2: Add Components</h3>
+								<p class="text-gray-600 mb-6">Drag components from the toolbox onto your canvas. Components are organized by atomic design principles.</p>
+								
+								<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+									<div class="text-center">
+										<div class="w-16 h-16 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+											<span class="text-2xl">⚛️</span>
+										</div>
+										<h4 class="font-semibold text-sm">Atoms</h4>
+										<p class="text-xs text-gray-600">Basic elements like buttons, inputs</p>
+									</div>
+									<div class="text-center">
+										<div class="w-16 h-16 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+											<span class="text-2xl">🧬</span>
+										</div>
+										<h4 class="font-semibold text-sm">Molecules</h4>
+										<p class="text-xs text-gray-600">Combined atoms like forms, cards</p>
+									</div>
+									<div class="text-center">
+										<div class="w-16 h-16 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+											<span class="text-2xl">🦠</span>
+										</div>
+										<h4 class="font-semibold text-sm">Organisms</h4>
+										<p class="text-xs text-gray-600">Complex components like headers, tables</p>
+									</div>
+									<div class="text-center">
+										<div class="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+											<span class="text-2xl">📐</span>
+										</div>
+										<h4 class="font-semibold text-sm">Templates</h4>
+										<p class="text-xs text-gray-600">Page-level layouts and structures</p>
+									</div>
+								</div>
+								
+								<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+									<div class="flex items-start">
+										<svg class="w-5 h-5 text-blue-600 mt-0.5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+											<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+										</svg>
+										<div>
+											<h4 class="font-semibold text-blue-900">Pro Tip</h4>
+											<p class="text-blue-800 text-sm">You can also double-click components to add them to the center of your canvas.</p>
+										</div>
+									</div>
+								</div>
+								
+								<div class="flex justify-between">
+									<button class="px-6 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" onclick="previousTutorialStep()">Previous</button>
+									<button class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onclick="nextTutorialStep()">Next Step</button>
+								</div>
+							</div>
+							
+							<div class="tutorial-step hidden" id="tutorial-step-3">
+								<h3 class="text-2xl font-bold text-gray-900 mb-4">Step 3: Customize Properties</h3>
+								<p class="text-gray-600 mb-6">Fine-tune your components using the property editor. Modify text, colors, sizes, and behavior.</p>
+								
+								<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+									<div>
+										<h4 class="font-semibold text-gray-900 mb-3">Available Editors</h4>
+										<ul class="space-y-2">
+											<li class="flex items-center">
+												<span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+												<span class="text-sm">Properties Editor - Basic component settings</span>
+											</li>
+											<li class="flex items-center">
+												<span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+												<span class="text-sm">Layout Editor - Positioning and sizing</span>
+											</li>
+											<li class="flex items-center">
+												<span class="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
+												<span class="text-sm">Style Editor - Colors, fonts, and appearance</span>
+											</li>
+											<li class="flex items-center">
+												<span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
+												<span class="text-sm">Data Editor - Dynamic content and binding</span>
+											</li>
+											<li class="flex items-center">
+												<span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+												<span class="text-sm">Event Editor - Interactions and behavior</span>
+											</li>
+										</ul>
+									</div>
+									<div>
+										<h4 class="font-semibold text-gray-900 mb-3">Key Features</h4>
+										<ul class="space-y-2">
+											<li class="flex items-center">
+												<svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+													<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+												</svg>
+												<span class="text-sm">Real-time preview updates</span>
+											</li>
+											<li class="flex items-center">
+												<svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+													<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+												</svg>
+												<span class="text-sm">Undo/redo functionality</span>
+											</li>
+											<li class="flex items-center">
+												<svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+													<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+												</svg>
+												<span class="text-sm">Property validation</span>
+											</li>
+											<li class="flex items-center">
+												<svg class="w-4 h-4 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+													<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+												</svg>
+												<span class="text-sm">Copy/paste properties</span>
+											</li>
+										</ul>
+									</div>
+								</div>
+								
+								<div class="flex justify-between">
+									<button class="px-6 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" onclick="previousTutorialStep()">Previous</button>
+									<button class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onclick="nextTutorialStep()">Next Step</button>
+								</div>
+							</div>
+							
+							<div class="tutorial-step hidden" id="tutorial-step-4">
+								<h3 class="text-2xl font-bold text-gray-900 mb-4">Step 4: Preview & Export</h3>
+								<p class="text-gray-600 mb-6">Test your design across different devices and export the schema for production use.</p>
+								
+								<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+									<div>
+										<h4 class="font-semibold text-gray-900 mb-3">Device Testing</h4>
+										<div class="space-y-3">
+											<div class="flex items-center justify-between p-3 border border-gray-200 rounded">
+												<div class="flex items-center">
+													<span class="text-2xl mr-3">🖥️</span>
+													<span class="text-sm font-medium">Desktop</span>
+												</div>
+												<span class="text-xs text-gray-500">1920×1080</span>
+											</div>
+											<div class="flex items-center justify-between p-3 border border-gray-200 rounded">
+												<div class="flex items-center">
+													<span class="text-2xl mr-3">📱</span>
+													<span class="text-sm font-medium">Tablet</span>
+												</div>
+												<span class="text-xs text-gray-500">768×1024</span>
+											</div>
+											<div class="flex items-center justify-between p-3 border border-gray-200 rounded">
+												<div class="flex items-center">
+													<span class="text-2xl mr-3">📲</span>
+													<span class="text-sm font-medium">Mobile</span>
+												</div>
+												<span class="text-xs text-gray-500">375×667</span>
+											</div>
+										</div>
+									</div>
+									<div>
+										<h4 class="font-semibold text-gray-900 mb-3">Export Options</h4>
+										<div class="space-y-3">
+											<div class="flex items-center p-3 border border-gray-200 rounded">
+												<span class="text-2xl mr-3">📄</span>
+												<div>
+													<span class="text-sm font-medium block">JSON Schema</span>
+													<span class="text-xs text-gray-500">For integration with your app</span>
+												</div>
+											</div>
+											<div class="flex items-center p-3 border border-gray-200 rounded">
+												<span class="text-2xl mr-3">🎨</span>
+												<div>
+													<span class="text-sm font-medium block">HTML Preview</span>
+													<span class="text-xs text-gray-500">Standalone HTML file</span>
+												</div>
+											</div>
+											<div class="flex items-center p-3 border border-gray-200 rounded">
+												<span class="text-2xl mr-3">📋</span>
+												<div>
+													<span class="text-sm font-medium block">Template</span>
+													<span class="text-xs text-gray-500">Save as reusable template</span>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+								
+								<div class="flex justify-between">
+									<button class="px-6 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300" onclick="previousTutorialStep()">Previous</button>
+									<button class="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700" onclick="startBuilder()">Start Building!</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Visual Builder Demo -->
+			<div class="demo-section hidden" id="demo-builder">
+				<div class="h-full flex">
+					<!-- Component Toolbox -->
+					<div class="w-80 bg-white border-r border-gray-200 overflow-y-auto">
+						if registry != nil {
+							@Toolbox(registry)
+						}
+					</div>
+					
+					<!-- Main Canvas Area -->
+					<div class="flex-1 flex flex-col">
+						<!-- Canvas Toolbar -->
+						<div class="bg-white border-b border-gray-200 p-4">
+							<div class="flex items-center justify-between">
+								<div class="flex items-center space-x-4">
+									<h3 class="font-semibold text-gray-900">Canvas</h3>
+									<div class="flex items-center space-x-2">
+										<button class="p-1 hover:bg-gray-100 rounded" title="Undo">
+											<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+											</svg>
+										</button>
+										<button class="p-1 hover:bg-gray-100 rounded" title="Redo">
+											<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6-6m6 6l-6 6"></path>
+											</svg>
+										</button>
+									</div>
+								</div>
+								<div class="flex items-center space-x-2">
+									<select class="text-sm border border-gray-300 rounded px-2 py-1">
+										<option value="100">100%</option>
+										<option value="75">75%</option>
+										<option value="50">50%</option>
+										<option value="25">25%</option>
+									</select>
+									<button class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">Preview</button>
+								</div>
+							</div>
+						</div>
+						
+						<!-- Canvas -->
+						<div class="flex-1 bg-gray-100 overflow-auto">
+							if registry != nil {
+								@Canvas(registry)
+							}
+						</div>
+					</div>
+					
+					<!-- Property Editor -->
+					<div class="w-80 bg-white border-l border-gray-200">
+						if registry != nil {
+							@PropertyEditor(registry)
+						}
+					</div>
+				</div>
+			</div>
+
+			<!-- Templates Demo -->
+			<div class="demo-section hidden" id="demo-templates">
+				<div class="h-full flex">
+					<!-- Template Gallery -->
+					<div class="flex-1">
+						if library != nil {
+							@ui.TemplateGallery(library)
+						}
+					</div>
+					
+					<!-- Template Preview -->
+					<div class="w-96">
+						@PreviewPanel(registry)
+					</div>
+				</div>
+			</div>
+
+			<!-- Import Demo -->
+			<div class="demo-section hidden" id="demo-import">
+				<div class="container mx-auto px-4 py-8">
+					<div class="max-w-4xl mx-auto">
+						<h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Template Import</h2>
+						
+						<div class="bg-white rounded-lg shadow-lg p-8">
+							<div class="text-center mb-8">
+								<div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+									<svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+									</svg>
+								</div>
+								<h3 class="text-2xl font-bold text-gray-900 mb-2">Import Your Existing Templates</h3>
+								<p class="text-gray-600">Convert Phase 4.3 schemas, Templ files, and other formats into visual builder templates.</p>
+							</div>
+							
+							<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+								<div class="text-center p-6 border border-gray-200 rounded-lg">
+									<div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+										<span class="text-2xl">📄</span>
+									</div>
+									<h4 class="font-semibold text-gray-900 mb-2">Phase 4.3 Schemas</h4>
+									<p class="text-sm text-gray-600">Import auto-generated schemas with full compatibility</p>
+								</div>
+								
+								<div class="text-center p-6 border border-gray-200 rounded-lg">
+									<div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+										<span class="text-2xl">🔧</span>
+									</div>
+									<h4 class="font-semibold text-gray-900 mb-2">Templ Files</h4>
+									<p class="text-sm text-gray-600">Convert existing Templ templates to builder format</p>
+								</div>
+								
+								<div class="text-center p-6 border border-gray-200 rounded-lg">
+									<div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+										<span class="text-2xl">📦</span>
+									</div>
+									<h4 class="font-semibold text-gray-900 mb-2">Batch Import</h4>
+									<p class="text-sm text-gray-600">Import multiple files and directories at once</p>
+								</div>
+							</div>
+							
+							<div class="text-center">
+								<button 
+									class="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-lg font-medium"
+									onclick="showImportWizard()"
+								>
+									Start Import Wizard
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Showcase Demo -->
+			<div class="demo-section hidden" id="demo-showcase">
+				<div class="container mx-auto px-4 py-8">
+					<div class="max-w-6xl mx-auto">
+						<h2 class="text-3xl font-bold text-gray-900 mb-8 text-center">Feature Showcase</h2>
+						
+						<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+							<!-- Live Preview -->
+							<div class="feature-card bg-white rounded-lg shadow-lg p-6">
+								<div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+									<svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+									</svg>
+								</div>
+								<h3 class="text-xl font-bold text-gray-900 mb-2">Live Preview</h3>
+								<p class="text-gray-600 mb-4">See your changes instantly with real-time preview updates and hot-reload functionality.</p>
+								<ul class="text-sm text-gray-600 space-y-1">
+									<li>• Real-time rendering</li>
+									<li>• Error boundary handling</li>
+									<li>• Performance optimization</li>
+									<li>• Component highlighting</li>
+								</ul>
+							</div>
+							
+							<!-- Device Emulation -->
+							<div class="feature-card bg-white rounded-lg shadow-lg p-6">
+								<div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+									<svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a1 1 0 001-1V4a1 1 0 00-1-1H8a1 1 0 00-1 1v16a1 1 0 001 1z"></path>
+									</svg>
+								</div>
+								<h3 class="text-xl font-bold text-gray-900 mb-2">Device Emulation</h3>
+								<p class="text-gray-600 mb-4">Test your designs across multiple devices with built-in emulation and responsive testing.</p>
+								<ul class="text-sm text-gray-600 space-y-1">
+									<li>• Multiple device presets</li>
+									<li>• Custom dimensions</li>
+									<li>• Network throttling</li>
+									<li>• Touch event simulation</li>
+								</ul>
+							</div>
+							
+							<!-- Template Library -->
+							<div class="feature-card bg-white rounded-lg shadow-lg p-6">
+								<div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+									<svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14-7H3a2 2 0 00-2 2v8a2 2 0 002 2h2l3-3 3 3h2a2 2 0 002-2V6a2 2 0 00-2-2z"></path>
+									</svg>
+								</div>
+								<h3 class="text-xl font-bold text-gray-900 mb-2">Template Library</h3>
+								<p class="text-gray-600 mb-4">Access a comprehensive library of pre-built templates with search, filtering, and customization.</p>
+								<ul class="text-sm text-gray-600 space-y-1">
+									<li>• Categorized templates</li>
+									<li>• Search and filtering</li>
+									<li>• Variable customization</li>
+									<li>• Template cloning</li>
+								</ul>
+							</div>
+							
+							<!-- Schema Import -->
+							<div class="feature-card bg-white rounded-lg shadow-lg p-6">
+								<div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+									<svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+									</svg>
+								</div>
+								<h3 class="text-xl font-bold text-gray-900 mb-2">Schema Import</h3>
+								<p class="text-gray-600 mb-4">Import existing schemas and templates from various sources with intelligent conversion.</p>
+								<ul class="text-sm text-gray-600 space-y-1">
+									<li>• Phase 4.3 compatibility</li>
+									<li>• Templ file conversion</li>
+									<li>• Batch processing</li>
+									<li>• Conflict resolution</li>
+								</ul>
+							</div>
+							
+							<!-- Responsive Testing -->
+							<div class="feature-card bg-white rounded-lg shadow-lg p-6">
+								<div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+									<svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+									</svg>
+								</div>
+								<h3 class="text-xl font-bold text-gray-900 mb-2">Responsive Testing</h3>
+								<p class="text-gray-600 mb-4">Comprehensive responsive design testing with breakpoint analysis and performance metrics.</p>
+								<ul class="text-sm text-gray-600 space-y-1">
+									<li>• Breakpoint testing</li>
+									<li>• Performance metrics</li>
+									<li>• Multi-device preview</li>
+									<li>• Responsive reports</li>
+								</ul>
+							</div>
+							
+							<!-- Component Registry -->
+							<div class="feature-card bg-white rounded-lg shadow-lg p-6">
+								<div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+									<svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14-7H3a2 2 0 00-2 2v8a2 2 0 002 2h2l3-3 3 3h2a2 2 0 002-2V6a2 2 0 00-2-2z"></path>
+									</svg>
+								</div>
+								<h3 class="text-xl font-bold text-gray-900 mb-2">Component System</h3>
+								<p class="text-gray-600 mb-4">Atomic design-based component system with extensible registry and type safety.</p>
+								<ul class="text-sm text-gray-600 space-y-1">
+									<li>• Atomic design principles</li>
+									<li>• Type-safe properties</li>
+									<li>• Extensible registry</li>
+									<li>• Component validation</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<!-- Import Wizard Modal -->
+		if library != nil {
+			@ui.ImportWizard(library)
+		}
+
+		<!-- Demo JavaScript -->
+		<script>
+			// Demo state
+			const demoState = {
+				currentDemo: 'tutorial',
+				currentStep: 1,
+				selectedTemplate: null,
+				builderData: null
+			};
+
+			// Initialize demo
+			document.addEventListener('DOMContentLoaded', function() {
+				initializeDemo();
+			});
+
+			function initializeDemo() {
+				// Show tutorial by default
+				switchDemo('tutorial');
+				
+				// Setup event listeners
+				setupDemoEvents();
+			}
+
+			function setupDemoEvents() {
+				// Tutorial step navigation
+				window.nextTutorialStep = nextTutorialStep;
+				window.previousTutorialStep = previousTutorialStep;
+				window.selectTemplate = selectTemplate;
+				window.startBuilder = startBuilder;
+				
+				// Demo navigation
+				window.switchDemo = switchDemo;
+				window.resetDemo = resetDemo;
+				window.downloadSchema = downloadSchema;
+			}
+
+			function switchDemo(demoType) {
+				demoState.currentDemo = demoType;
+				
+				// Update navigation
+				document.querySelectorAll('.demo-nav-btn').forEach(btn => {
+					btn.classList.remove('active');
+				});
+				document.querySelector(`[data-demo="${demoType}"]`).classList.add('active');
+				
+				// Show selected demo section
+				document.querySelectorAll('.demo-section').forEach(section => {
+					section.classList.add('hidden');
+				});
+				document.getElementById(`demo-${demoType}`).classList.remove('hidden');
+				
+				// Initialize demo-specific functionality
+				switch (demoType) {
+					case 'builder':
+						initializeBuilder();
+						break;
+					case 'templates':
+						initializeTemplates();
+						break;
+					case 'import':
+						initializeImport();
+						break;
+					case 'showcase':
+						initializeShowcase();
+						break;
+				}
+			}
+
+			function nextTutorialStep() {
+				if (demoState.currentStep < 4) {
+					// Hide current step
+					document.getElementById(`tutorial-step-${demoState.currentStep}`).classList.add('hidden');
+					
+					// Update step indicator
+					document.querySelector(`[data-step="${demoState.currentStep}"]`).classList.remove('active');
+					document.querySelector(`[data-step="${demoState.currentStep}"]`).classList.add('completed');
+					document.querySelector(`[data-step="${demoState.currentStep}"] .w-16`).classList.remove('bg-blue-600', 'text-white');
+					document.querySelector(`[data-step="${demoState.currentStep}"] .w-16`).classList.add('bg-green-600', 'text-white');
+					
+					// Move to next step
+					demoState.currentStep++;
+					
+					// Show next step
+					document.getElementById(`tutorial-step-${demoState.currentStep}`).classList.remove('hidden');
+					document.querySelector(`[data-step="${demoState.currentStep}"]`).classList.add('active');
+					document.querySelector(`[data-step="${demoState.currentStep}"] .w-16`).classList.remove('bg-gray-300', 'text-gray-600');
+					document.querySelector(`[data-step="${demoState.currentStep}"] .w-16`).classList.add('bg-blue-600', 'text-white');
+				}
+			}
+
+			function previousTutorialStep() {
+				if (demoState.currentStep > 1) {
+					// Hide current step
+					document.getElementById(`tutorial-step-${demoState.currentStep}`).classList.add('hidden');
+					
+					// Update step indicator
+					document.querySelector(`[data-step="${demoState.currentStep}"]`).classList.remove('active');
+					document.querySelector(`[data-step="${demoState.currentStep}"] .w-16`).classList.remove('bg-blue-600', 'text-white');
+					document.querySelector(`[data-step="${demoState.currentStep}"] .w-16`).classList.add('bg-gray-300', 'text-gray-600');
+					
+					// Move to previous step
+					demoState.currentStep--;
+					
+					// Show previous step
+					document.getElementById(`tutorial-step-${demoState.currentStep}`).classList.remove('hidden');
+					document.querySelector(`[data-step="${demoState.currentStep}"]`).classList.add('active');
+					document.querySelector(`[data-step="${demoState.currentStep}"]`).classList.remove('completed');
+					document.querySelector(`[data-step="${demoState.currentStep}"] .w-16`).classList.remove('bg-green-600', 'bg-gray-300', 'text-gray-600');
+					document.querySelector(`[data-step="${demoState.currentStep}"] .w-16`).classList.add('bg-blue-600', 'text-white');
+				}
+			}
+
+			function selectTemplate(templateType) {
+				demoState.selectedTemplate = templateType;
+				
+				// Update UI to show selection
+				document.querySelectorAll('.feature-card').forEach(card => {
+					card.classList.remove('border-blue-500', 'bg-blue-50');
+				});
+				
+				event.target.closest('.feature-card').classList.add('border-blue-500', 'bg-blue-50');
+				
+				showNotification(`Selected ${templateType} template!`, 'success');
+			}
+
+			function startBuilder() {
+				switchDemo('builder');
+				showNotification('Welcome to the Visual Builder!', 'success');
+			}
+
+			function initializeBuilder() {
+				// Initialize builder components if needed
+				console.log('Initializing builder demo...');
+			}
+
+			function initializeTemplates() {
+				// Initialize template gallery if needed
+				console.log('Initializing templates demo...');
+			}
+
+			function initializeImport() {
+				// Initialize import demo if needed
+				console.log('Initializing import demo...');
+			}
+
+			function initializeShowcase() {
+				// Initialize showcase animations if needed
+				console.log('Initializing showcase demo...');
+			}
+
+			function resetDemo() {
+				// Reset demo state
+				demoState.currentStep = 1;
+				demoState.selectedTemplate = null;
+				demoState.builderData = null;
+				
+				// Reset tutorial steps
+				document.querySelectorAll('.tutorial-step').forEach(step => {
+					step.classList.add('hidden');
+				});
+				document.getElementById('tutorial-step-1').classList.remove('hidden');
+				
+				// Reset step indicators
+				document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+					indicator.classList.remove('active', 'completed');
+					const stepNumber = indicator.querySelector('.w-16');
+					stepNumber.classList.remove('bg-blue-600', 'bg-green-600', 'text-white');
+					stepNumber.classList.add('bg-gray-300', 'text-gray-600');
+					
+					if (index === 0) {
+						indicator.classList.add('active');
+						stepNumber.classList.remove('bg-gray-300', 'text-gray-600');
+						stepNumber.classList.add('bg-blue-600', 'text-white');
+					}
+				});
+				
+				// Switch back to tutorial
+				switchDemo('tutorial');
+				
+				showNotification('Demo reset successfully!', 'info');
+			}
+
+			function downloadSchema() {
+				// Generate sample schema for download
+				const schema = {
+					id: 'demo-schema',
+					name: 'Demo Schema',
+					description: 'Schema created in the visual builder demo',
+					version: '1.0.0',
+					createdAt: new Date().toISOString(),
+					components: [
+						{
+							id: 'header',
+							type: 'atoms.text',
+							properties: {
+								text: 'Demo Header',
+								size: 'large'
+							},
+							position: { x: 0, y: 0 },
+							size: { width: 400, height: 50 }
+						}
+					],
+					layout: {
+						type: 'flex',
+						direction: 'column',
+						gap: 16
+					}
+				};
+				
+				// Create download link
+				const blob = new Blob([JSON.stringify(schema, null, 2)], { type: 'application/json' });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = 'demo-schema.json';
+				a.click();
+				URL.revokeObjectURL(url);
+				
+				showNotification('Schema downloaded successfully!', 'success');
+			}
+
+			function showNotification(message, type = 'info') {
+				// Create notification element
+				const notification = document.createElement('div');
+				notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 text-white font-medium`;
+				
+				switch (type) {
+					case 'success':
+						notification.classList.add('bg-green-600');
+						break;
+					case 'error':
+						notification.classList.add('bg-red-600');
+						break;
+					case 'warning':
+						notification.classList.add('bg-yellow-600');
+						break;
+					default:
+						notification.classList.add('bg-blue-600');
+				}
+				
+				notification.textContent = message;
+				document.body.appendChild(notification);
+				
+				// Auto remove after 3 seconds
+				setTimeout(() => {
+					notification.remove();
+				}, 3000);
+			}
+		</script>
+
+		<!-- Demo Styles -->
+		<style>
+			.demo-nav-btn {
+				@apply px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300 transition-colors;
+			}
+			
+			.demo-nav-btn.active {
+				@apply text-blue-600 border-blue-600;
+			}
+			
+			.demo-section {
+				@apply min-h-screen;
+			}
+			
+			.tutorial-step {
+				@apply min-h-64;
+			}
+		</style>
+	</body>
+	</html>
+}

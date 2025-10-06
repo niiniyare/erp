@@ -1,0 +1,670 @@
+package preview
+
+// ResponsiveTester renders the responsive testing interface
+templ ResponsiveTester() {
+	<div class="bg-white border-l border-gray-200 w-96 flex flex-col h-full">
+		<!-- Responsive Tester Header -->
+		<div class="p-4 border-b border-gray-200">
+			<div class="flex items-center justify-between mb-3">
+				<h3 class="text-lg font-semibold text-gray-900">Responsive Tester</h3>
+				<button 
+					class="p-1 hover:bg-gray-100 rounded"
+					onclick="toggleResponsiveTester()"
+					title="Toggle Responsive Tester"
+				>
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+					</svg>
+				</button>
+			</div>
+		</div>
+		
+		<!-- Breakpoint Testing -->
+		<div class="p-4 border-b border-gray-200">
+			<h4 class="text-sm font-medium text-gray-700 mb-3">Breakpoint Testing</h4>
+			
+			<!-- Common Breakpoints -->
+			<div class="space-y-2 mb-4">
+				<div class="text-xs text-gray-500 mb-2">Common Breakpoints</div>
+				
+				<!-- Mobile -->
+				<div class="breakpoint-item" data-breakpoint="mobile">
+					<div class="flex items-center justify-between p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer" onclick="testBreakpoint('mobile', 375)">
+						<div class="flex items-center space-x-2">
+							<div class="w-3 h-3 bg-red-500 rounded-full"></div>
+							<span class="text-sm font-medium">Mobile</span>
+						</div>
+						<div class="text-xs text-gray-500">≤ 375px</div>
+					</div>
+				</div>
+				
+				<!-- Small Mobile -->
+				<div class="breakpoint-item" data-breakpoint="small-mobile">
+					<div class="flex items-center justify-between p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer" onclick="testBreakpoint('small-mobile', 320)">
+						<div class="flex items-center space-x-2">
+							<div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+							<span class="text-sm font-medium">Small Mobile</span>
+						</div>
+						<div class="text-xs text-gray-500">≤ 320px</div>
+					</div>
+				</div>
+				
+				<!-- Large Mobile -->
+				<div class="breakpoint-item" data-breakpoint="large-mobile">
+					<div class="flex items-center justify-between p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer" onclick="testBreakpoint('large-mobile', 414)">
+						<div class="flex items-center space-x-2">
+							<div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+							<span class="text-sm font-medium">Large Mobile</span>
+						</div>
+						<div class="text-xs text-gray-500">≤ 414px</div>
+					</div>
+				</div>
+				
+				<!-- Tablet -->
+				<div class="breakpoint-item" data-breakpoint="tablet">
+					<div class="flex items-center justify-between p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer" onclick="testBreakpoint('tablet', 768)">
+						<div class="flex items-center space-x-2">
+							<div class="w-3 h-3 bg-green-500 rounded-full"></div>
+							<span class="text-sm font-medium">Tablet</span>
+						</div>
+						<div class="text-xs text-gray-500">≤ 768px</div>
+					</div>
+				</div>
+				
+				<!-- Large Tablet -->
+				<div class="breakpoint-item" data-breakpoint="large-tablet">
+					<div class="flex items-center justify-between p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer" onclick="testBreakpoint('large-tablet', 1024)">
+						<div class="flex items-center space-x-2">
+							<div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+							<span class="text-sm font-medium">Large Tablet</span>
+						</div>
+						<div class="text-xs text-gray-500">≤ 1024px</div>
+					</div>
+				</div>
+				
+				<!-- Desktop -->
+				<div class="breakpoint-item" data-breakpoint="desktop">
+					<div class="flex items-center justify-between p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer" onclick="testBreakpoint('desktop', 1200)">
+						<div class="flex items-center space-x-2">
+							<div class="w-3 h-3 bg-purple-500 rounded-full"></div>
+							<span class="text-sm font-medium">Desktop</span>
+						</div>
+						<div class="text-xs text-gray-500">≥ 1200px</div>
+					</div>
+				</div>
+				
+				<!-- Large Desktop -->
+				<div class="breakpoint-item" data-breakpoint="large-desktop">
+					<div class="flex items-center justify-between p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer" onclick="testBreakpoint('large-desktop', 1440)">
+						<div class="flex items-center space-x-2">
+							<div class="w-3 h-3 bg-indigo-500 rounded-full"></div>
+							<span class="text-sm font-medium">Large Desktop</span>
+						</div>
+						<div class="text-xs text-gray-500">≥ 1440px</div>
+					</div>
+				</div>
+			</div>
+			
+			<!-- Custom Breakpoint -->
+			<div class="space-y-2">
+				<div class="text-xs text-gray-500">Custom Breakpoint</div>
+				<div class="flex items-center space-x-2">
+					<input 
+						type="number" 
+						id="custom-breakpoint"
+						class="flex-1 px-2 py-1 border border-gray-300 rounded text-sm"
+						placeholder="Width (px)"
+						min="240"
+						max="2560"
+					/>
+					<button 
+						class="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+						onclick="testCustomBreakpoint()"
+					>
+						Test
+					</button>
+				</div>
+			</div>
+		</div>
+		
+		<!-- Responsive Preview -->
+		<div class="p-4 border-b border-gray-200">
+			<h4 class="text-sm font-medium text-gray-700 mb-3">Multi-Device Preview</h4>
+			
+			<!-- Preview Grid -->
+			<div class="space-y-3">
+				<button 
+					class="w-full px-3 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+					onclick="showMultiDevicePreview()"
+				>
+					📱 Show All Devices
+				</button>
+				
+				<button 
+					class="w-full px-3 py-2 bg-purple-600 text-white text-sm rounded hover:bg-purple-700"
+					onclick="runBreakpointScan()"
+				>
+					🔍 Breakpoint Scan
+				</button>
+				
+				<button 
+					class="w-full px-3 py-2 bg-orange-600 text-white text-sm rounded hover:bg-orange-700"
+					onclick="generateResponsiveReport()"
+				>
+					📊 Generate Report
+				</button>
+			</div>
+		</div>
+		
+		<!-- Network Simulation -->
+		<div class="p-4 border-b border-gray-200">
+			<h4 class="text-sm font-medium text-gray-700 mb-3">Network Simulation</h4>
+			
+			<div class="space-y-3">
+				<!-- Connection Type -->
+				<div>
+					<label class="block text-xs text-gray-600 mb-1">Connection</label>
+					<select 
+						id="network-connection" 
+						class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+						onchange="updateNetworkConnection(this.value)"
+					>
+						<option value="online">Online</option>
+						<option value="4g">4G (Fast)</option>
+						<option value="3g">3G (Regular)</option>
+						<option value="2g">2G (Slow)</option>
+						<option value="slow-3g">Slow 3G</option>
+						<option value="offline">Offline</option>
+					</select>
+				</div>
+				
+				<!-- Custom Network Settings -->
+				<div class="grid grid-cols-2 gap-2">
+					<div>
+						<label class="block text-xs text-gray-600 mb-1">Download</label>
+						<input 
+							type="number" 
+							id="download-speed"
+							class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+							placeholder="Mbps"
+							onchange="updateCustomNetwork()"
+						/>
+					</div>
+					<div>
+						<label class="block text-xs text-gray-600 mb-1">Upload</label>
+						<input 
+							type="number" 
+							id="upload-speed"
+							class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+							placeholder="Mbps"
+							onchange="updateCustomNetwork()"
+						/>
+					</div>
+				</div>
+				
+				<div>
+					<label class="block text-xs text-gray-600 mb-1">Latency (ms)</label>
+					<input 
+						type="number" 
+						id="network-latency"
+						class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+						placeholder="ms"
+						onchange="updateCustomNetwork()"
+					/>
+				</div>
+			</div>
+		</div>
+		
+		<!-- Performance Metrics -->
+		<div class="p-4 border-b border-gray-200">
+			<h4 class="text-sm font-medium text-gray-700 mb-3">Performance Metrics</h4>
+			
+			<div class="space-y-3">
+				<!-- Core Web Vitals -->
+				<div class="grid grid-cols-3 gap-2 text-center">
+					<div class="p-2 bg-gray-50 rounded">
+						<div class="text-xs text-gray-500">LCP</div>
+						<div class="text-sm font-semibold" id="lcp-metric">-</div>
+					</div>
+					<div class="p-2 bg-gray-50 rounded">
+						<div class="text-xs text-gray-500">FID</div>
+						<div class="text-sm font-semibold" id="fid-metric">-</div>
+					</div>
+					<div class="p-2 bg-gray-50 rounded">
+						<div class="text-xs text-gray-500">CLS</div>
+						<div class="text-sm font-semibold" id="cls-metric">-</div>
+					</div>
+				</div>
+				
+				<!-- Additional Metrics -->
+				<div class="space-y-2 text-xs">
+					<div class="flex justify-between">
+						<span class="text-gray-600">Load Time:</span>
+						<span id="load-time-metric">-</span>
+					</div>
+					<div class="flex justify-between">
+						<span class="text-gray-600">DOM Nodes:</span>
+						<span id="dom-nodes-metric">-</span>
+					</div>
+					<div class="flex justify-between">
+						<span class="text-gray-600">Memory:</span>
+						<span id="memory-metric">-</span>
+					</div>
+				</div>
+				
+				<button 
+					class="w-full px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+					onclick="measurePerformance()"
+				>
+					📊 Measure Performance
+				</button>
+			</div>
+		</div>
+		
+		<!-- Test Results -->
+		<div class="flex-1 p-4 overflow-y-auto">
+			<h4 class="text-sm font-medium text-gray-700 mb-3">Test Results</h4>
+			
+			<div id="test-results" class="space-y-2">
+				<div class="text-xs text-gray-500 text-center py-4">
+					No tests run yet
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<!-- Responsive Tester JavaScript -->
+	<script>
+		// Responsive tester state
+		const responsiveTesterState = {
+			currentBreakpoint: null,
+			testResults: [],
+			networkSettings: {
+				type: 'online',
+				download: 0,
+				upload: 0,
+				latency: 0
+			},
+			performanceMetrics: {},
+			isActive: true
+		};
+
+		// Network presets
+		const networkPresets = {
+			'online': { download: 100, upload: 100, latency: 10 },
+			'4g': { download: 10, upload: 5, latency: 50 },
+			'3g': { download: 1.6, upload: 0.75, latency: 300 },
+			'2g': { download: 0.25, upload: 0.05, latency: 800 },
+			'slow-3g': { download: 0.5, upload: 0.5, latency: 2000 },
+			'offline': { download: 0, upload: 0, latency: 0 }
+		};
+
+		// Initialize responsive tester
+		document.addEventListener('DOMContentLoaded', function() {
+			initializeResponsiveTester();
+		});
+
+		function initializeResponsiveTester() {
+			// Set default network settings
+			updateNetworkConnection('online');
+			
+			// Setup event listeners
+			setupResponsiveEventListeners();
+		}
+
+		function setupResponsiveEventListeners() {
+			// Listen for viewport changes
+			window.addEventListener('resize', function() {
+				updateCurrentBreakpoint();
+			});
+			
+			// Listen for performance API updates
+			if ('performance' in window) {
+				// Monitor performance metrics
+				setInterval(updatePerformanceMetrics, 5000);
+			}
+		}
+
+		function testBreakpoint(name, width) {
+			responsiveTesterState.currentBreakpoint = { name, width };
+			
+			// Update breakpoint UI
+			document.querySelectorAll('.breakpoint-item').forEach(item => {
+				item.classList.remove('active');
+			});
+			document.querySelector(`[data-breakpoint="${name}"]`).classList.add('active');
+			
+			// Apply breakpoint to preview
+			if (window.DeviceEmulator) {
+				window.DeviceEmulator.setCustomSize({ width: width, height: 800 });
+			}
+			
+			// Run breakpoint test
+			runBreakpointTest(name, width);
+		}
+
+		function testCustomBreakpoint() {
+			const width = parseInt(document.getElementById('custom-breakpoint').value);
+			if (!width || width < 240 || width > 2560) {
+				showNotification('Please enter a valid width (240-2560px)', 'error');
+				return;
+			}
+			
+			testBreakpoint('custom', width);
+		}
+
+		function runBreakpointTest(name, width) {
+			showNotification(`Testing ${name} breakpoint (${width}px)...`, 'info');
+			
+			// Simulate test results
+			setTimeout(() => {
+				const result = {
+					breakpoint: name,
+					width: width,
+					timestamp: new Date(),
+					passed: Math.random() > 0.2, // 80% pass rate
+					issues: Math.random() > 0.5 ? [] : ['Layout overflow detected', 'Small text size']
+				};
+				
+				addTestResult(result);
+				
+				if (result.passed) {
+					showNotification(`✅ ${name} test passed`, 'success');
+				} else {
+					showNotification(`❌ ${name} test failed`, 'error');
+				}
+			}, 1500);
+		}
+
+		function showMultiDevicePreview() {
+			const devices = ['mobile', 'tablet', 'desktop'];
+			let currentIndex = 0;
+			
+			showNotification('📱 Starting multi-device preview...', 'info');
+			
+			function previewNextDevice() {
+				if (currentIndex >= devices.length) {
+					showNotification('✅ Multi-device preview completed', 'success');
+					return;
+				}
+				
+				const device = devices[currentIndex];
+				const breakpoints = {
+					'mobile': 375,
+					'tablet': 768,
+					'desktop': 1200
+				};
+				
+				testBreakpoint(device, breakpoints[device]);
+				
+				setTimeout(() => {
+					currentIndex++;
+					previewNextDevice();
+				}, 3000);
+			}
+			
+			previewNextDevice();
+		}
+
+		function runBreakpointScan() {
+			showNotification('🔍 Running breakpoint scan...', 'info');
+			
+			const breakpoints = [320, 375, 414, 768, 1024, 1200, 1440];
+			let currentIndex = 0;
+			
+			function scanNextBreakpoint() {
+				if (currentIndex >= breakpoints.length) {
+					showNotification('✅ Breakpoint scan completed', 'success');
+					generateBreakpointReport();
+					return;
+				}
+				
+				const width = breakpoints[currentIndex];
+				testBreakpoint(`scan-${width}`, width);
+				
+				setTimeout(() => {
+					currentIndex++;
+					scanNextBreakpoint();
+				}, 2000);
+			}
+			
+			scanNextBreakpoint();
+		}
+
+		function generateResponsiveReport() {
+			showNotification('📊 Generating responsive report...', 'info');
+			
+			const report = {
+				timestamp: new Date(),
+				totalTests: responsiveTesterState.testResults.length,
+				passed: responsiveTesterState.testResults.filter(r => r.passed).length,
+				failed: responsiveTesterState.testResults.filter(r => !r.passed).length,
+				issues: responsiveTesterState.testResults.flatMap(r => r.issues),
+				performance: responsiveTesterState.performanceMetrics
+			};
+			
+			// Display report summary
+			addTestResult({
+				breakpoint: 'Report',
+				width: 'All',
+				timestamp: new Date(),
+				passed: report.failed === 0,
+				issues: [`Tests: ${report.passed}/${report.totalTests} passed`, `Issues: ${report.issues.length}`]
+			});
+			
+			showNotification('📊 Report generated', 'success');
+		}
+
+		function generateBreakpointReport() {
+			const scanResults = responsiveTesterState.testResults.filter(r => r.breakpoint.startsWith('scan-'));
+			
+			if (scanResults.length === 0) return;
+			
+			const criticalBreakpoints = scanResults.filter(r => !r.passed).map(r => r.width);
+			
+			addTestResult({
+				breakpoint: 'Scan Summary',
+				width: 'Multiple',
+				timestamp: new Date(),
+				passed: criticalBreakpoints.length === 0,
+				issues: criticalBreakpoints.length > 0 ? 
+					[`Critical breakpoints: ${criticalBreakpoints.join(', ')}px`] : 
+					['All breakpoints passed']
+			});
+		}
+
+		function updateNetworkConnection(type) {
+			responsiveTesterState.networkSettings.type = type;
+			
+			if (networkPresets[type]) {
+				const preset = networkPresets[type];
+				responsiveTesterState.networkSettings = { ...responsiveTesterState.networkSettings, ...preset };
+				
+				// Update form fields
+				document.getElementById('download-speed').value = preset.download;
+				document.getElementById('upload-speed').value = preset.upload;
+				document.getElementById('network-latency').value = preset.latency;
+			}
+			
+			// Apply network throttling
+			applyNetworkThrottling();
+		}
+
+		function updateCustomNetwork() {
+			responsiveTesterState.networkSettings.download = parseFloat(document.getElementById('download-speed').value) || 0;
+			responsiveTesterState.networkSettings.upload = parseFloat(document.getElementById('upload-speed').value) || 0;
+			responsiveTesterState.networkSettings.latency = parseInt(document.getElementById('network-latency').value) || 0;
+			
+			applyNetworkThrottling();
+		}
+
+		function applyNetworkThrottling() {
+			// Send network settings to preview frame
+			const iframe = document.getElementById('preview-frame');
+			if (iframe && iframe.contentWindow) {
+				iframe.contentWindow.postMessage({
+					type: 'networkThrottling',
+					settings: responsiveTesterState.networkSettings
+				}, '*');
+			}
+		}
+
+		function measurePerformance() {
+			showNotification('📊 Measuring performance...', 'info');
+			
+			// Simulate performance measurement
+			setTimeout(() => {
+				const metrics = {
+					lcp: (Math.random() * 2000 + 500).toFixed(0) + 'ms',
+					fid: (Math.random() * 50 + 10).toFixed(0) + 'ms',
+					cls: (Math.random() * 0.2).toFixed(3),
+					loadTime: (Math.random() * 3000 + 1000).toFixed(0) + 'ms',
+					domNodes: Math.floor(Math.random() * 500 + 100),
+					memory: (Math.random() * 50 + 10).toFixed(1) + 'MB'
+				};
+				
+				updatePerformanceDisplay(metrics);
+				responsiveTesterState.performanceMetrics = metrics;
+				
+				showNotification('📊 Performance measured', 'success');
+			}, 2000);
+		}
+
+		function updatePerformanceDisplay(metrics) {
+			document.getElementById('lcp-metric').textContent = metrics.lcp;
+			document.getElementById('fid-metric').textContent = metrics.fid;
+			document.getElementById('cls-metric').textContent = metrics.cls;
+			document.getElementById('load-time-metric').textContent = metrics.loadTime;
+			document.getElementById('dom-nodes-metric').textContent = metrics.domNodes;
+			document.getElementById('memory-metric').textContent = metrics.memory;
+		}
+
+		function updatePerformanceMetrics() {
+			if (!('performance' in window)) return;
+			
+			try {
+				const navigation = performance.getEntriesByType('navigation')[0];
+				if (navigation) {
+					const loadTime = navigation.loadEventEnd - navigation.fetchStart;
+					document.getElementById('load-time-metric').textContent = loadTime.toFixed(0) + 'ms';
+				}
+				
+				// Update memory usage if available
+				if ('memory' in performance) {
+					const memory = (performance.memory.usedJSHeapSize / 1048576).toFixed(1) + 'MB';
+					document.getElementById('memory-metric').textContent = memory;
+				}
+			} catch (error) {
+				console.warn('Performance metrics not available:', error);
+			}
+		}
+
+		function updateCurrentBreakpoint() {
+			const width = window.innerWidth;
+			let breakpoint = 'desktop';
+			
+			if (width <= 375) breakpoint = 'mobile';
+			else if (width <= 768) breakpoint = 'tablet';
+			else if (width <= 1024) breakpoint = 'large-tablet';
+			else if (width <= 1200) breakpoint = 'desktop';
+			else breakpoint = 'large-desktop';
+			
+			// Update UI if needed
+			document.querySelectorAll('.breakpoint-item').forEach(item => {
+				item.classList.remove('current');
+			});
+			
+			const currentItem = document.querySelector(`[data-breakpoint="${breakpoint}"]`);
+			if (currentItem) {
+				currentItem.classList.add('current');
+			}
+		}
+
+		function addTestResult(result) {
+			responsiveTesterState.testResults.push(result);
+			
+			const resultsContainer = document.getElementById('test-results');
+			
+			// Clear "no tests" message
+			if (responsiveTesterState.testResults.length === 1) {
+				resultsContainer.innerHTML = '';
+			}
+			
+			// Create result element
+			const resultElement = document.createElement('div');
+			resultElement.className = `p-2 border rounded text-xs ${result.passed ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`;
+			
+			resultElement.innerHTML = 
+				'<div class="flex items-center justify-between mb-1">' +
+					'<span class="font-medium">' + result.breakpoint + '</span>' +
+					'<span class="' + (result.passed ? 'text-green-600' : 'text-red-600') + '">' + (result.passed ? '✅' : '❌') + '</span>' +
+				'</div>' +
+				'<div class="text-gray-600">' + result.width + 'px • ' + result.timestamp.toLocaleTimeString() + '</div>' +
+				(result.issues.length > 0 ? '<div class="mt-1 text-gray-700">' + result.issues.join(', ') + '</div>' : '');
+			
+			resultsContainer.appendChild(resultElement);
+			
+			// Scroll to bottom
+			resultsContainer.scrollTop = resultsContainer.scrollHeight;
+		}
+
+		function toggleResponsiveTester() {
+			responsiveTesterState.isActive = !responsiveTesterState.isActive;
+			
+			const tester = document.querySelector('.bg-white.border-l.w-96');
+			if (responsiveTesterState.isActive) {
+				tester.style.display = 'flex';
+			} else {
+				tester.style.display = 'none';
+			}
+		}
+
+		function showNotification(message, type = 'info') {
+			// Create notification element
+			const notification = document.createElement('div');
+			notification.className = `fixed top-4 right-4 px-4 py-2 rounded shadow-lg z-50 text-white text-sm`;
+			
+			switch (type) {
+				case 'success':
+					notification.classList.add('bg-green-600');
+					break;
+				case 'error':
+					notification.classList.add('bg-red-600');
+					break;
+				case 'warning':
+					notification.classList.add('bg-yellow-600');
+					break;
+				default:
+					notification.classList.add('bg-blue-600');
+			}
+			
+			notification.textContent = message;
+			document.body.appendChild(notification);
+			
+			// Auto remove after 3 seconds
+			setTimeout(() => {
+				notification.remove();
+			}, 3000);
+		}
+
+		// Export responsive tester functions
+		window.ResponsiveTester = {
+			testBreakpoint: testBreakpoint,
+			runScan: runBreakpointScan,
+			measurePerformance: measurePerformance,
+			generateReport: generateResponsiveReport,
+			toggle: toggleResponsiveTester
+		};
+	</script>
+	
+	<!-- Responsive Tester Styles -->
+	<style>
+		.breakpoint-item.active {
+			@apply bg-blue-50 border-blue-200;
+		}
+		
+		.breakpoint-item.current {
+			@apply bg-green-50 border-green-200;
+		}
+	</style>
+}

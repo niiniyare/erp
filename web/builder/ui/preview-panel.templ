@@ -1,0 +1,613 @@
+package ui
+
+import (
+	"github.com/niiniyare/erp/web/builder/core"
+)
+
+// PreviewPanel renders the live preview panel with real-time updates
+templ PreviewPanel(registry *core.ComponentRegistry) {
+	<div class="flex-1 bg-white border-l border-gray-200 flex flex-col h-full">
+		<!-- Preview Header -->
+		<div class="p-4 border-b border-gray-200 bg-gray-50">
+			<div class="flex items-center justify-between">
+				<div class="flex items-center space-x-3">
+					<h2 class="text-lg font-semibold text-gray-900">Live Preview</h2>
+					<div class="flex items-center space-x-1">
+						<!-- Preview Status -->
+						<div id="preview-status" class="flex items-center space-x-1">
+							<div class="w-2 h-2 bg-green-500 rounded-full animate-pulse" id="status-indicator"></div>
+							<span class="text-xs text-gray-600" id="status-text">Ready</span>
+						</div>
+					</div>
+				</div>
+				
+				<div class="flex items-center space-x-2">
+					<!-- Preview Controls -->
+					<div class="flex items-center space-x-1 bg-white rounded-lg border p-1">
+						<!-- Refresh Preview -->
+						<button 
+							class="p-1 hover:bg-gray-100 rounded"
+							onclick="refreshPreview()"
+							title="Refresh Preview"
+							id="refresh-btn"
+						>
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+							</svg>
+						</button>
+						
+						<!-- Reset Preview -->
+						<button 
+							class="p-1 hover:bg-gray-100 rounded"
+							onclick="resetPreview()"
+							title="Reset to Initial State"
+							id="reset-btn"
+						>
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+							</svg>
+						</button>
+						
+						<!-- Open in New Tab -->
+						<button 
+							class="p-1 hover:bg-gray-100 rounded"
+							onclick="openPreviewInNewTab()"
+							title="Open in New Tab"
+							id="open-tab-btn"
+						>
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+							</svg>
+						</button>
+					</div>
+					
+					<!-- Device Selection -->
+					<select 
+						class="text-sm border border-gray-300 rounded px-2 py-1"
+						id="device-selector"
+						onchange="changePreviewDevice(this.value)"
+					>
+						<option value="desktop">Desktop</option>
+						<option value="tablet">Tablet</option>
+						<option value="mobile">Mobile</option>
+						<option value="custom">Custom</option>
+					</select>
+					
+					<!-- Zoom Controls -->
+					<div class="flex items-center space-x-1 bg-white rounded border px-2 py-1">
+						<button 
+							class="text-xs hover:bg-gray-100 px-1 rounded"
+							onclick="zoomPreview(-0.1)"
+							title="Zoom Out"
+						>
+							-
+						</button>
+						<span class="text-xs text-gray-600 min-w-12 text-center" id="zoom-level">100%</span>
+						<button 
+							class="text-xs hover:bg-gray-100 px-1 rounded"
+							onclick="zoomPreview(0.1)"
+							title="Zoom In"
+						>
+							+
+						</button>
+					</div>
+				</div>
+			</div>
+			
+			<!-- Preview Options -->
+			<div class="mt-3 flex items-center space-x-4">
+				<label class="flex items-center space-x-2">
+					<input type="checkbox" class="h-4 w-4 text-blue-600" id="interaction-mode" onchange="toggleInteractionMode(this.checked)"/>
+					<span class="text-sm text-gray-600">Interaction Mode</span>
+				</label>
+				
+				<label class="flex items-center space-x-2">
+					<input type="checkbox" class="h-4 w-4 text-blue-600" id="show-grid" onchange="togglePreviewGrid(this.checked)"/>
+					<span class="text-sm text-gray-600">Show Grid</span>
+				</label>
+				
+				<label class="flex items-center space-x-2">
+					<input type="checkbox" class="h-4 w-4 text-blue-600" id="highlight-hover" onchange="toggleHoverHighlight(this.checked)" checked/>
+					<span class="text-sm text-gray-600">Highlight on Hover</span>
+				</label>
+			</div>
+		</div>
+		
+		<!-- Preview Content -->
+		<div class="flex-1 overflow-hidden bg-gray-100 relative">
+			<!-- Device Frame -->
+			<div id="device-frame" class="h-full flex items-center justify-center">
+				<div id="preview-viewport" class="bg-white shadow-lg rounded-lg overflow-hidden relative transition-all duration-300">
+					<!-- Preview Loading State -->
+					<div id="preview-loading" class="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+						<div class="flex items-center space-x-2">
+							<div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+							<span class="text-sm text-gray-600">Rendering preview...</span>
+						</div>
+					</div>
+					
+					<!-- Preview Error State -->
+					<div id="preview-error" class="hidden absolute inset-0 bg-red-50 flex items-center justify-center z-40">
+						<div class="text-center p-6">
+							<svg class="w-12 h-12 text-red-400 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+							</svg>
+							<h3 class="text-lg font-medium text-red-800 mb-2">Preview Error</h3>
+							<p class="text-sm text-red-600 mb-4" id="error-message">Failed to render preview</p>
+							<button 
+								class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+								onclick="retryPreview()"
+							>
+								Try Again
+							</button>
+						</div>
+					</div>
+					
+					<!-- Preview Frame -->
+					<iframe 
+						id="preview-frame"
+						class="w-full h-full border-0"
+						sandbox="allow-scripts allow-same-origin allow-popups"
+						srcdoc=""
+					></iframe>
+				</div>
+			</div>
+			
+			<!-- Performance Metrics Overlay -->
+			<div id="performance-overlay" class="absolute top-4 right-4 bg-black bg-opacity-75 text-white text-xs rounded p-2 hidden">
+				<div>Render: <span id="render-time">0ms</span></div>
+				<div>Components: <span id="component-count">0</span></div>
+				<div>Cache: <span id="cache-status">enabled</span></div>
+			</div>
+		</div>
+		
+		<!-- Preview Footer -->
+		<div class="p-3 border-t border-gray-200 bg-gray-50">
+			<div class="flex items-center justify-between text-xs text-gray-500">
+				<div class="flex items-center space-x-4">
+					<span>Last updated: <span id="last-update">Never</span></span>
+					<span>Errors: <span id="error-count" class="text-red-600">0</span></span>
+					<span>Warnings: <span id="warning-count" class="text-yellow-600">0</span></span>
+				</div>
+				
+				<div class="flex items-center space-x-2">
+					<!-- Performance Toggle -->
+					<button 
+						class="text-gray-400 hover:text-gray-600"
+						onclick="togglePerformanceOverlay()"
+						title="Toggle Performance Metrics"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+						</svg>
+					</button>
+					
+					<!-- Full Screen Toggle -->
+					<button 
+						class="text-gray-400 hover:text-gray-600"
+						onclick="togglePreviewFullscreen()"
+						title="Toggle Fullscreen"
+					>
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+						</svg>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<!-- Preview Panel JavaScript -->
+	<script>
+		// Preview panel state
+		const previewState = {
+			currentSchema: null,
+			isLoading: false,
+			hasError: false,
+			zoomLevel: 1.0,
+			deviceType: 'desktop',
+			interactionMode: false,
+			lastUpdate: null,
+			errorCount: 0,
+			warningCount: 0,
+			renderTime: 0,
+			componentCount: 0,
+			websocket: null,
+			isFullscreen: false,
+			performanceVisible: false
+		};
+
+		// Device configurations
+		const deviceConfigs = {
+			desktop: { width: 1200, height: 800, frame: false },
+			tablet: { width: 768, height: 1024, frame: true },
+			mobile: { width: 375, height: 667, frame: true },
+			custom: { width: 800, height: 600, frame: false }
+		};
+
+		// Initialize preview panel
+		document.addEventListener('DOMContentLoaded', function() {
+			initializePreviewPanel();
+			setupPreviewWebSocket();
+			setupPreviewEventListeners();
+		});
+
+		function initializePreviewPanel() {
+			// Set initial device
+			changePreviewDevice('desktop');
+			
+			// Update status
+			updatePreviewStatus('ready', 'Ready');
+			
+			// Setup iframe communication
+			setupIFrameCommunication();
+		}
+
+		function setupPreviewWebSocket() {
+			// Connect to preview update websocket
+			const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+			const wsUrl = protocol + '//' + window.location.host + '/api/builder/preview/ws';
+			
+			previewState.websocket = new WebSocket(wsUrl);
+			
+			previewState.websocket.onopen = function() {
+				console.log('Preview WebSocket connected');
+				updatePreviewStatus('connected', 'Connected');
+			};
+			
+			previewState.websocket.onmessage = function(event) {
+				const update = JSON.parse(event.data);
+				handlePreviewUpdate(update);
+			};
+			
+			previewState.websocket.onclose = function() {
+				console.log('Preview WebSocket disconnected');
+				updatePreviewStatus('disconnected', 'Disconnected');
+				
+				// Attempt to reconnect after 3 seconds
+				setTimeout(setupPreviewWebSocket, 3000);
+			};
+			
+			previewState.websocket.onerror = function(error) {
+				console.error('Preview WebSocket error:', error);
+				updatePreviewStatus('error', 'Connection Error');
+			};
+		}
+
+		function setupPreviewEventListeners() {
+			// Listen for schema changes from the canvas
+			window.addEventListener('schemaChanged', function(e) {
+				requestPreviewUpdate(e.detail.schema);
+			});
+			
+			// Listen for component selection changes
+			window.addEventListener('componentSelected', function(e) {
+				highlightComponentInPreview(e.detail.componentId);
+			});
+			
+			// Listen for iframe messages
+			window.addEventListener('message', function(e) {
+				if (e.data.type === 'componentSelected') {
+					// Component was selected in preview, notify canvas
+					window.dispatchEvent(new CustomEvent('previewComponentSelected', {
+						detail: { componentId: e.data.componentId }
+					}));
+				}
+			});
+		}
+
+		function setupIFrameCommunication() {
+			const iframe = document.getElementById('preview-frame');
+			
+			iframe.onload = function() {
+				// Inject interaction scripts into iframe
+				if (previewState.interactionMode) {
+					enablePreviewInteraction();
+				}
+			};
+		}
+
+		function handlePreviewUpdate(update) {
+			previewState.isLoading = false;
+			previewState.lastUpdate = new Date();
+			previewState.errorCount = update.errors ? update.errors.length : 0;
+			previewState.warningCount = update.warnings ? update.warnings.length : 0;
+			previewState.renderTime = update.metadata ? update.metadata.renderTime : 0;
+			previewState.componentCount = update.metadata ? update.metadata.componentCount : 0;
+
+			// Hide loading state
+			document.getElementById('preview-loading').style.display = 'none';
+
+			if (update.errors && update.errors.length > 0) {
+				showPreviewError(update.errors[0]);
+				return;
+			}
+
+			// Hide error state
+			document.getElementById('preview-error').classList.add('hidden');
+
+			// Update preview content
+			updatePreviewContent(update.html, update.css, update.javascript);
+			
+			// Update UI indicators
+			updatePreviewMetrics();
+			updatePreviewStatus('success', 'Updated');
+		}
+
+		function updatePreviewContent(html, css, javascript) {
+			const iframe = document.getElementById('preview-frame');
+			
+			// Construct full HTML document
+			const fullHTML = html + `
+				<style>${css}</style>
+				<script>${javascript}</script>
+			`;
+			
+			// Update iframe content
+			iframe.srcdoc = fullHTML;
+		}
+
+		function requestPreviewUpdate(schema) {
+			if (!previewState.websocket || previewState.websocket.readyState !== WebSocket.OPEN) {
+				console.warn('WebSocket not connected, cannot request preview update');
+				return;
+			}
+
+			previewState.isLoading = true;
+			previewState.currentSchema = schema;
+			
+			// Show loading state
+			document.getElementById('preview-loading').style.display = 'flex';
+			updatePreviewStatus('loading', 'Updating...');
+
+			// Send schema to server for rendering
+			previewState.websocket.send(JSON.stringify({
+				type: 'renderPreview',
+				schema: schema
+			}));
+		}
+
+		function refreshPreview() {
+			if (previewState.currentSchema) {
+				requestPreviewUpdate(previewState.currentSchema);
+			}
+		}
+
+		function resetPreview() {
+			const iframe = document.getElementById('preview-frame');
+			iframe.srcdoc = '<div style="padding: 2rem; text-align: center; color: #666;">No content to preview</div>';
+			
+			previewState.currentSchema = null;
+			previewState.errorCount = 0;
+			previewState.warningCount = 0;
+			
+			updatePreviewMetrics();
+			updatePreviewStatus('ready', 'Ready');
+		}
+
+		function openPreviewInNewTab() {
+			if (!previewState.currentSchema) return;
+			
+			// Create a new window with the preview content
+			const newWindow = window.open('', '_blank');
+			newWindow.document.write(document.getElementById('preview-frame').srcdoc);
+			newWindow.document.close();
+		}
+
+		function changePreviewDevice(deviceType) {
+			previewState.deviceType = deviceType;
+			const config = deviceConfigs[deviceType];
+			const viewport = document.getElementById('preview-viewport');
+			
+			// Update viewport size
+			viewport.style.width = config.width + 'px';
+			viewport.style.height = config.height + 'px';
+			
+			// Apply device frame if needed
+			if (config.frame) {
+				viewport.classList.add('device-frame');
+				viewport.style.borderRadius = '20px';
+				viewport.style.border = '8px solid #2d3748';
+			} else {
+				viewport.classList.remove('device-frame');
+				viewport.style.borderRadius = '8px';
+				viewport.style.border = '1px solid #e2e8f0';
+			}
+			
+			// Apply zoom
+			applyPreviewZoom();
+		}
+
+		function zoomPreview(delta) {
+			previewState.zoomLevel = Math.max(0.25, Math.min(2.0, previewState.zoomLevel + delta));
+			applyPreviewZoom();
+			updateZoomDisplay();
+		}
+
+		function applyPreviewZoom() {
+			const viewport = document.getElementById('preview-viewport');
+			viewport.style.transform = `scale(${previewState.zoomLevel})`;
+			viewport.style.transformOrigin = 'center center';
+		}
+
+		function updateZoomDisplay() {
+			document.getElementById('zoom-level').textContent = Math.round(previewState.zoomLevel * 100) + '%';
+		}
+
+		function toggleInteractionMode(enabled) {
+			previewState.interactionMode = enabled;
+			
+			if (enabled) {
+				enablePreviewInteraction();
+			} else {
+				disablePreviewInteraction();
+			}
+		}
+
+		function enablePreviewInteraction() {
+			const iframe = document.getElementById('preview-frame');
+			iframe.style.pointerEvents = 'auto';
+			
+			// Inject interaction scripts
+			if (iframe.contentWindow) {
+				iframe.contentWindow.postMessage({
+					type: 'enableInteraction'
+				}, '*');
+			}
+		}
+
+		function disablePreviewInteraction() {
+			const iframe = document.getElementById('preview-frame');
+			iframe.style.pointerEvents = 'none';
+		}
+
+		function togglePreviewGrid(enabled) {
+			const iframe = document.getElementById('preview-frame');
+			if (iframe.contentWindow) {
+				iframe.contentWindow.postMessage({
+					type: 'toggleGrid',
+					enabled: enabled
+				}, '*');
+			}
+		}
+
+		function toggleHoverHighlight(enabled) {
+			const iframe = document.getElementById('preview-frame');
+			if (iframe.contentWindow) {
+				iframe.contentWindow.postMessage({
+					type: 'toggleHoverHighlight',
+					enabled: enabled
+				}, '*');
+			}
+		}
+
+		function highlightComponentInPreview(componentId) {
+			const iframe = document.getElementById('preview-frame');
+			if (iframe.contentWindow && iframe.contentWindow.PreviewUtils) {
+				iframe.contentWindow.PreviewUtils.highlightComponent(componentId);
+			}
+		}
+
+		function showPreviewError(error) {
+			previewState.hasError = true;
+			
+			document.getElementById('preview-error').classList.remove('hidden');
+			document.getElementById('error-message').textContent = error;
+			
+			updatePreviewStatus('error', 'Error');
+		}
+
+		function retryPreview() {
+			document.getElementById('preview-error').classList.add('hidden');
+			previewState.hasError = false;
+			
+			if (previewState.currentSchema) {
+				requestPreviewUpdate(previewState.currentSchema);
+			}
+		}
+
+		function updatePreviewStatus(status, text) {
+			const indicator = document.getElementById('status-indicator');
+			const statusText = document.getElementById('status-text');
+			
+			// Remove existing classes
+			indicator.className = 'w-2 h-2 rounded-full';
+			
+			switch (status) {
+				case 'ready':
+					indicator.classList.add('bg-gray-400');
+					break;
+				case 'loading':
+					indicator.classList.add('bg-yellow-500', 'animate-pulse');
+					break;
+				case 'success':
+					indicator.classList.add('bg-green-500');
+					break;
+				case 'error':
+					indicator.classList.add('bg-red-500');
+					break;
+				case 'connected':
+					indicator.classList.add('bg-blue-500');
+					break;
+				case 'disconnected':
+					indicator.classList.add('bg-gray-400');
+					break;
+			}
+			
+			statusText.textContent = text;
+		}
+
+		function updatePreviewMetrics() {
+			document.getElementById('last-update').textContent = 
+				previewState.lastUpdate ? previewState.lastUpdate.toLocaleTimeString() : 'Never';
+			document.getElementById('error-count').textContent = previewState.errorCount;
+			document.getElementById('warning-count').textContent = previewState.warningCount;
+			document.getElementById('render-time').textContent = previewState.renderTime + 'ms';
+			document.getElementById('component-count').textContent = previewState.componentCount;
+		}
+
+		function togglePerformanceOverlay() {
+			previewState.performanceVisible = !previewState.performanceVisible;
+			const overlay = document.getElementById('performance-overlay');
+			
+			if (previewState.performanceVisible) {
+				overlay.classList.remove('hidden');
+			} else {
+				overlay.classList.add('hidden');
+			}
+		}
+
+		function togglePreviewFullscreen() {
+			previewState.isFullscreen = !previewState.isFullscreen;
+			const panel = document.querySelector('.flex-1.bg-white.border-l');
+			
+			if (previewState.isFullscreen) {
+				panel.classList.add('fixed', 'inset-0', 'z-50');
+			} else {
+				panel.classList.remove('fixed', 'inset-0', 'z-50');
+			}
+		}
+
+		// Export preview functions for external use
+		window.PreviewPanel = {
+			updateSchema: requestPreviewUpdate,
+			refresh: refreshPreview,
+			reset: resetPreview,
+			setDevice: changePreviewDevice,
+			zoom: zoomPreview,
+			highlightComponent: highlightComponentInPreview
+		};
+	</script>
+	
+	<!-- Preview Panel Styles -->
+	<style>
+		.device-frame {
+			position: relative;
+		}
+		
+		.device-frame::before {
+			content: '';
+			position: absolute;
+			top: -20px;
+			left: 50%;
+			transform: translateX(-50%);
+			width: 60px;
+			height: 6px;
+			background: #4a5568;
+			border-radius: 3px;
+		}
+		
+		#preview-viewport {
+			transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease;
+		}
+		
+		#preview-frame {
+			transition: all 0.3s ease;
+		}
+		
+		.selected-component {
+			outline: 2px solid #3b82f6 !important;
+			outline-offset: 2px !important;
+		}
+	</style>
+}
