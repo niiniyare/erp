@@ -1,0 +1,852 @@
+package ui
+
+import (
+	"fmt"
+	"github.com/niiniyare/erp/web/builder/core"
+)
+
+// Builder renders the complete visual schema builder interface
+templ Builder(engine *core.SchemaCompositionEngine, registry *core.ComponentRegistry) {
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Visual Schema Builder - ERP UI</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom Builder Styles -->
+  <style>
+    /* Builder-specific styles */
+    .builder-container {
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .builder-panel {
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .builder-main {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    /* Component animations */
+    .component-instance {
+      transition: all 0.2s ease;
+    }
+
+    .component-instance:hover {
+      box-shadow: 0 0 0 2px #3b82f6;
+    }
+
+    .component-instance.selected {
+      box-shadow: 0 0 0 2px #2563eb;
+    }
+
+    .component-instance.dragging {
+      z-index: 1000;
+      transform: rotate(2deg);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Drag and drop feedback */
+    .drop-zone {
+      border: 2px dashed #d1d5db;
+      background: rgba(59, 130, 246, 0.05);
+    }
+
+    .drop-zone.drag-over {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    /* Loading states */
+    .loading {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1280px) {
+      .builder-panel {
+        width: 280px;
+      }
+    }
+
+    @media (max-width: 1024px) {
+      .builder-panel {
+        width: 240px;
+      }
+    }
+  </style>
+</head>
+
+<body class="h-full bg-gray-100">
+  <div class="builder-container flex">
+    <!-- Left Panel - Component Toolbox -->
+    <div class="builder-panel bg-white border-r border-gray-200">
+      @Toolbox(registry)
+    </div>
+
+    <!-- Main Builder Area -->
+    <div class="flex-1 flex flex-col builder-main">
+      <!-- Top Toolbar -->
+      @BuilderToolbar(engine)
+
+      <!-- Canvas Area -->
+      <div class="flex-1 flex">
+        <!-- Canvas -->
+        <div class="flex-1 relative">
+          if schema := engine.GetCurrentSchema(); schema != nil {
+          @Canvas(schema, registry)
+          } else {
+          @EmptyCanvas()
+          }
+        </div>
+
+        <!-- Right Panel - Property Editor -->
+        <div class="builder-panel bg-white border-l border-gray-200">
+          @PropertyEditor(registry)
+        </div>
+      </div>
+
+      <!-- Bottom Panel - Layers/History (collapsible) -->
+      @BottomPanel(engine)
+    </div>
+  </div>
+
+  <!-- Modals and Overlays -->
+  @BuilderModals()
+
+  <!-- Toast Notifications -->
+  @ToastContainer()
+
+  <!-- WebSocket Connection for Real-time Updates -->
+  @WebSocketConnection()
+
+  <!-- Global Builder JavaScript -->
+  <script>
+    // Global builder state
+    window.builderState = {
+      engine: null,
+      registry: null,
+      currentSchema: null,
+      isConnected: false,
+      isLoading: false,
+      hasUnsavedChanges: false
+    };
+
+    // Initialize builder
+    document.addEventListener('DOMContentLoaded', function () {
+      initializeBuilder();
+    });
+
+    function initializeBuilder() {
+      console.log('🚀 Initializing Visual Schema Builder...');
+
+      // Setup keyboard shortcuts
+      setupGlobalKeyboardShortcuts();
+
+      // Setup auto-save
+      setupAutoSave();
+
+      // Setup error handling
+      setupErrorHandling();
+
+      // Setup performance monitoring
+      setupPerformanceMonitoring();
+
+      // Mark as ready
+      window.builderState.isReady = true;
+      console.log('✅ Builder initialized successfully');
+
+      // Dispatch ready event
+      window.dispatchEvent(new CustomEvent('builderReady'));
+    }
+
+    function setupGlobalKeyboardShortcuts() {
+      document.addEventListener('keydown', function (e) {
+        // Save: Ctrl/Cmd + S
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+          e.preventDefault();
+          saveSchema();
+        }
+
+        // New: Ctrl/Cmd + N
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+          e.preventDefault();
+          newSchema();
+        }
+
+        // Open: Ctrl/Cmd + O
+        if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+          e.preventDefault();
+          openSchema();
+        }
+
+        // Export: Ctrl/Cmd + E
+        if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+          e.preventDefault();
+          exportSchema();
+        }
+
+        // Preview: Ctrl/Cmd + P
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+          e.preventDefault();
+          togglePreview();
+        }
+
+        // Find: Ctrl/Cmd + F
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+          e.preventDefault();
+          focusComponentSearch();
+        }
+      });
+    }
+
+    function setupAutoSave() {
+      // Auto-save every 30 seconds if there are changes
+      setInterval(() => {
+        if (window.builderState.hasUnsavedChanges) {
+          autoSaveSchema();
+        }
+      }, 30000);
+
+      // Save before unload
+      window.addEventListener('beforeunload', function (e) {
+        if (window.builderState.hasUnsavedChanges) {
+          e.preventDefault();
+          e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+          return e.returnValue;
+        }
+      });
+    }
+
+    function setupErrorHandling() {
+      window.addEventListener('error', function (e) {
+        console.error('Builder error:', e.error);
+        showToast('An error occurred in the builder', 'error');
+      });
+
+      // Handle API errors
+      window.addEventListener('fetch-error', function (e) {
+        console.error('API error:', e.detail);
+        showToast('Connection error. Please check your network.', 'error');
+      });
+    }
+
+    function setupPerformanceMonitoring() {
+      // Monitor component count
+      const observer = new MutationObserver(function (mutations) {
+        const componentCount = document.querySelectorAll('.component-instance').length;
+        if (componentCount > 100) {
+          console.warn('High component count detected:', componentCount);
+          showToast('Many components detected. Consider optimizing your design.', 'warning');
+        }
+      });
+
+      const canvas = document.getElementById('canvas-content');
+      if (canvas) {
+        observer.observe(canvas, {
+          childList: true,
+          subtree: true
+        });
+      }
+    }
+
+    // Builder actions
+    function saveSchema() {
+      window.builderState.isLoading = true;
+      updateLoadingState(true);
+
+      fetch('/api/builder/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+        .then(response => response.json())
+        .then(result => {
+          window.builderState.hasUnsavedChanges = false;
+          showToast('Schema saved successfully', 'success');
+        })
+        .catch(error => {
+          console.error('Error saving schema:', error);
+          showToast('Failed to save schema', 'error');
+        })
+        .finally(() => {
+          window.builderState.isLoading = false;
+          updateLoadingState(false);
+        });
+    }
+
+    function autoSaveSchema() {
+      fetch('/api/builder/autosave', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+        .then(response => response.json())
+        .then(result => {
+          console.log('Auto-saved schema');
+          updateSaveStatus('Auto-saved');
+        })
+        .catch(error => {
+          console.error('Auto-save failed:', error);
+        });
+    }
+
+    function newSchema() {
+      if (window.builderState.hasUnsavedChanges) {
+        if (!confirm('You have unsaved changes. Create a new schema?')) {
+          return;
+        }
+      }
+
+      fetch('/api/builder/new', {
+        method: 'POST'
+      })
+        .then(response => response.json())
+        .then(schema => {
+          window.location.reload(); // Reload with new schema
+        })
+        .catch(error => {
+          console.error('Error creating new schema:', error);
+          showToast('Failed to create new schema', 'error');
+        });
+    }
+
+    function openSchema() {
+      // Show schema picker modal
+      showModal('schema-picker');
+    }
+
+    function exportSchema() {
+      fetch('/api/builder/export')
+        .then(response => response.json())
+        .then(schema => {
+          const blob = new Blob([JSON.stringify(schema, null, 2)], {
+            type: 'application/json'
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `schema-${Date.now()}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+
+          showToast('Schema exported successfully', 'success');
+        })
+        .catch(error => {
+          console.error('Error exporting schema:', error);
+          showToast('Failed to export schema', 'error');
+        });
+    }
+
+    function togglePreview() {
+      const canvas = document.getElementById('visual-canvas');
+      const isPreviewMode = canvas.classList.contains('preview-mode');
+
+      if (isPreviewMode) {
+        setViewMode('design');
+      } else {
+        setViewMode('preview');
+      }
+    }
+
+    function focusComponentSearch() {
+      const searchInput = document.getElementById('component-search');
+      if (searchInput) {
+        searchInput.focus();
+        searchInput.select();
+      }
+    }
+
+    // UI helpers
+    function updateLoadingState(isLoading) {
+      const builder = document.querySelector('.builder-container');
+      if (isLoading) {
+        builder.classList.add('loading');
+      } else {
+        builder.classList.remove('loading');
+      }
+    }
+
+    function updateSaveStatus(status) {
+      const statusElement = document.getElementById('save-status');
+      if (statusElement) {
+        statusElement.textContent = status;
+        statusElement.classList.add('animate-pulse');
+        setTimeout(() => {
+          statusElement.classList.remove('animate-pulse');
+        }, 1000);
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+
+      const container = document.getElementById('toast-container');
+      container.appendChild(toast);
+
+      // Auto-remove after 5 seconds
+      setTimeout(() => {
+        toast.remove();
+      }, 5000);
+    }
+
+    function showModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.remove('hidden');
+      }
+    }
+
+    function hideModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.add('hidden');
+      }
+    }
+  </script>
+</body>
+
+</html>
+}
+
+// BuilderToolbar renders the top toolbar with main actions
+templ BuilderToolbar(engine *core.SchemaCompositionEngine) {
+<div class="bg-white border-b border-gray-200 px-4 py-2">
+  <div class="flex items-center justify-between">
+    <!-- Left Section - File Operations -->
+    <div class="flex items-center space-x-4">
+      <!-- App Logo/Title -->
+      <div class="flex items-center">
+        <h1 class="text-xl font-semibold text-gray-900">Visual Builder</h1>
+      </div>
+
+      <!-- File Menu -->
+      <div class="flex items-center space-x-2">
+        <button class="px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded" onclick="newSchema()"
+          title="New Schema (Ctrl+N)">
+          New
+        </button>
+        <button class="px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded" onclick="openSchema()"
+          title="Open Schema (Ctrl+O)">
+          Open
+        </button>
+        <button class="px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded" onclick="saveSchema()"
+          title="Save Schema (Ctrl+S)">
+          Save
+        </button>
+        <button class="px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100 rounded" onclick="exportSchema()"
+          title="Export Schema (Ctrl+E)">
+          Export
+        </button>
+      </div>
+
+      <div class="w-px h-6 bg-gray-300"></div>
+
+      <!-- History Controls -->
+      <div class="flex items-center space-x-1">
+        <button class="p-1.5 text-gray-700 hover:bg-gray-100 rounded" onclick="undo()" title="Undo (Ctrl+Z)"
+          id="undo-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+          </svg>
+        </button>
+        <button class="p-1.5 text-gray-700 hover:bg-gray-100 rounded" onclick="redo()" title="Redo (Ctrl+Shift+Z)"
+          id="redo-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M21 10h-10a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Center Section - Schema Info -->
+    <div class="flex items-center space-x-4">
+      <div class="text-sm text-gray-600">
+        if schema := engine.GetCurrentSchema(); schema != nil {
+        <span class="font-medium">{ schema.Name }</span>
+        <span class="text-gray-400">•</span>
+        <span>{ fmt.Sprintf("%d components", len(schema.Components)) }</span>
+        } else {
+        <span>No schema loaded</span>
+        }
+      </div>
+
+      <!-- Save Status -->
+      <div class="text-xs text-gray-500" id="save-status">
+        Saved
+      </div>
+    </div>
+
+    <!-- Right Section - View and Tools -->
+    <div class="flex items-center space-x-4">
+      <!-- View Controls -->
+      <div class="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+        <button class="px-3 py-1 text-sm rounded active:bg-white" onclick="setViewMode('design')" id="design-mode-btn">
+          Design
+        </button>
+        <button class="px-3 py-1 text-sm rounded" onclick="setViewMode('preview')" id="preview-mode-btn">
+          Preview
+        </button>
+        <button class="px-3 py-1 text-sm rounded" onclick="setViewMode('code')" id="code-mode-btn">
+          Code
+        </button>
+      </div>
+
+      <div class="w-px h-6 bg-gray-300"></div>
+
+      <!-- Tools -->
+      <div class="flex items-center space-x-2">
+        <button class="p-1.5 text-gray-700 hover:bg-gray-100 rounded" onclick="toggleLayersPanel()"
+          title="Toggle Layers Panel">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 11H5m14-7H3a2 2 0 00-2 2v8a2 2 0 002 2h2l3-3 3 3h2a2 2 0 002-2V6a2 2 0 00-2-2z"></path>
+          </svg>
+        </button>
+
+        <button class="p-1.5 text-gray-700 hover:bg-gray-100 rounded" onclick="showSettings()" title="Builder Settings">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+            </path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z">
+            </path>
+          </svg>
+        </button>
+
+        <button class="p-1.5 text-gray-700 hover:bg-gray-100 rounded" onclick="showHelp()" title="Help & Shortcuts">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+            </path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+// EmptyCanvas renders the initial empty state
+templ EmptyCanvas() {
+<div class="flex-1 flex items-center justify-center bg-gray-50">
+  <div class="text-center max-w-md">
+    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+      </svg>
+    </div>
+    <h3 class="text-lg font-medium text-gray-900 mb-2">Start Building</h3>
+    <p class="text-gray-500 mb-6">Drag components from the left panel to create your interface</p>
+    <div class="space-y-2">
+      <button class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" onclick="newSchema()">
+        Create New Schema
+      </button>
+      <button class="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+        onclick="openSchema()">
+        Open Existing Schema
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+// BottomPanel renders the collapsible bottom panel for layers and history
+templ BottomPanel(engine *core.SchemaCompositionEngine) {
+<div class="bg-white border-t border-gray-200 hidden" id="bottom-panel">
+  <!-- Panel tabs -->
+  <div class="flex border-b border-gray-200">
+    <button
+      class="px-4 py-2 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 hover:border-gray-300"
+      onclick="showBottomTab('layers')" id="layers-tab">
+      Layers
+    </button>
+    <button
+      class="px-4 py-2 text-sm font-medium text-gray-600 border-b-2 border-transparent hover:text-gray-900 hover:border-gray-300"
+      onclick="showBottomTab('history')" id="history-tab">
+      History
+    </button>
+    <div class="flex-1"></div>
+    <button class="p-2 text-gray-400 hover:text-gray-600" onclick="toggleLayersPanel()">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Panel content -->
+  <div class="h-48 overflow-y-auto">
+    <div id="layers-content" class="p-4">
+      <!-- Component layers will be populated here -->
+    </div>
+    <div id="history-content" class="p-4 hidden">
+      <!-- History entries will be populated here -->
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleLayersPanel() {
+    const panel = document.getElementById('bottom-panel');
+    panel.classList.toggle('hidden');
+  }
+
+  function showBottomTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('[id$="-tab"]').forEach(tab => {
+      tab.classList.remove('border-blue-500', 'text-blue-600');
+      tab.classList.add('border-transparent', 'text-gray-600');
+    });
+
+    document.getElementById(tabName + '-tab').classList.remove('border-transparent', 'text-gray-600');
+    document.getElementById(tabName + '-tab').classList.add('border-blue-500', 'text-blue-600');
+
+    // Update content
+    document.querySelectorAll('[id$="-content"]').forEach(content => {
+      content.classList.add('hidden');
+    });
+
+    document.getElementById(tabName + '-content').classList.remove('hidden');
+  }
+</script>
+}
+
+// BuilderModals renders various modal dialogs
+templ BuilderModals() {
+<!-- Schema Picker Modal -->
+<div id="schema-picker" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96">
+      <div class="p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Open Schema</h3>
+        <div class="space-y-3 max-h-64 overflow-y-auto">
+          <!-- Schema list will be populated here -->
+        </div>
+        <div class="mt-6 flex justify-end space-x-3">
+          <button class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+            onclick="hideModal('schema-picker')">
+            Cancel
+          </button>
+          <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" onclick="importSchema()">
+            Import File
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+  <div class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white rounded-lg shadow-xl max-w-lg w-full">
+      <div class="p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Builder Settings</h3>
+        <!-- Settings content -->
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Auto-save interval</label>
+            <select class="w-full px-3 py-2 border border-gray-300 rounded-md">
+              <option value="30">30 seconds</option>
+              <option value="60">1 minute</option>
+              <option value="300">5 minutes</option>
+              <option value="0">Disabled</option>
+            </select>
+          </div>
+          <div>
+            <label class="flex items-center">
+              <input type="checkbox" class="mr-2" />
+              <span class="text-sm text-gray-700">Show grid by default</span>
+            </label>
+          </div>
+          <div>
+            <label class="flex items-center">
+              <input type="checkbox" class="mr-2" />
+              <span class="text-sm text-gray-700">Snap to grid by default</span>
+            </label>
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end space-x-3">
+          <button class="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+            onclick="hideModal('settings-modal')">
+            Cancel
+          </button>
+          <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" onclick="saveSettings()">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+// ToastContainer renders the notification toast container
+templ ToastContainer() {
+<div id="toast-container" class="fixed top-4 right-4 space-y-2 z-50">
+  <!-- Toasts will be dynamically added here -->
+</div>
+
+<style>
+  .toast {
+    @apply px-4 py-3 rounded-lg shadow-lg text-white text-sm font-medium;
+    animation: slideIn 0.3s ease-out;
+  }
+
+  .toast-success {
+    @apply bg-green-600;
+  }
+
+  .toast-error {
+    @apply bg-red-600;
+  }
+
+  .toast-warning {
+    @apply bg-yellow-600;
+  }
+
+  .toast-info {
+    @apply bg-blue-600;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+</style>
+}
+
+// WebSocketConnection handles real-time updates
+templ WebSocketConnection() {
+<script>
+  // WebSocket connection for real-time collaboration
+  let ws = null;
+
+  function connectWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/api/builder/ws`;
+
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = function (event) {
+      console.log('✅ WebSocket connected');
+      window.builderState.isConnected = true;
+      updateConnectionStatus(true);
+    };
+
+    ws.onmessage = function (event) {
+      const data = JSON.parse(event.data);
+      handleWebSocketMessage(data);
+    };
+
+    ws.onclose = function (event) {
+      console.log('❌ WebSocket disconnected');
+      window.builderState.isConnected = false;
+      updateConnectionStatus(false);
+
+      // Attempt to reconnect after 3 seconds
+      setTimeout(connectWebSocket, 3000);
+    };
+
+    ws.onerror = function (error) {
+      console.error('WebSocket error:', error);
+    };
+  }
+
+  function handleWebSocketMessage(data) {
+    switch (data.type) {
+      case 'component_added':
+        // Add component to canvas
+        refreshCanvas();
+        break;
+
+      case 'component_updated':
+        // Update component on canvas
+        updateCanvasComponent(data.data);
+        break;
+
+      case 'component_deleted':
+        // Remove component from canvas
+        removeCanvasComponent(data.data.id);
+        break;
+
+      case 'schema_updated':
+        // Refresh entire canvas
+        refreshCanvas();
+        break;
+
+      case 'user_joined':
+        showToast(`${data.data.name} joined the session`, 'info');
+        break;
+
+      case 'user_left':
+        showToast(`${data.data.name} left the session`, 'info');
+        break;
+    }
+  }
+
+  function updateConnectionStatus(connected) {
+    const indicator = document.getElementById('connection-indicator');
+    if (indicator) {
+      if (connected) {
+        indicator.className = 'w-2 h-2 bg-green-500 rounded-full';
+        indicator.title = 'Connected';
+      } else {
+        indicator.className = 'w-2 h-2 bg-red-500 rounded-full';
+        indicator.title = 'Disconnected';
+      }
+    }
+  }
+
+  function refreshCanvas() {
+    // Reload canvas content
+    window.location.reload();
+  }
+
+  function updateCanvasComponent(componentData) {
+    const element = document.querySelector(`[data-component-id="${componentData.id}"]`);
+    if (element) {
+      // Update component position and properties
+      element.style.left = componentData.position.x + 'px';
+      element.style.top = componentData.position.y + 'px';
+      element.style.width = componentData.size.width + 'px';
+      element.style.height = componentData.size.height + 'px';
+    }
+  }
+
+  function removeCanvasComponent(componentId) {
+    const element = document.querySelector(`[data-component-id="${componentId}"]`);
+    if (element) {
+      element.remove();
+    }
+  }
+
+  // Connect on page load
+  document.addEventListener('DOMContentLoaded', function () {
+    connectWebSocket();
+  });
+</script>
+}

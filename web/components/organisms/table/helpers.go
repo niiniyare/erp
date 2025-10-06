@@ -256,7 +256,7 @@ func getDataTableAlpineData(props DataTableProps) string {
 			
 			// Confirm destructive actions
 			if (['delete', 'archive', 'remove'].includes(actionName.toLowerCase())) {
-				if (!confirm(\`Are you sure you want to \${actionName} \${this.selectedRows.length} selected item(s)?\`)) {
+				if (!confirm("Are you sure you want to " + actionName + " " + this.selectedRows.length + " selected item(s)?")) {
 					return;
 				}
 			}
@@ -278,9 +278,9 @@ func getDataTableAlpineData(props DataTableProps) string {
 				// Clear selection and refresh table
 				this.clearSelection();
 				this.refreshTable();
-				this.showNotification(\`Successfully performed \${actionName} on \${payload.selectedCount} item(s).\`, 'success');
+				this.showNotification("Successfully performed " + actionName + " on " + payload.selectedCount + " item(s).", 'success');
 			}).catch(() => {
-				this.showNotification(\`Failed to perform \${actionName}. Please try again.\`, 'error');
+				this.showNotification("Failed to perform " + actionName + ". Please try again.", 'error');
 			});
 		},
 		
@@ -398,11 +398,11 @@ func formatNumber(value, formatter string) string {
 func formatNumberWithCommas(num float64, decimals int) string {
 	// Format with specified decimal places
 	formatted := fmt.Sprintf("%."+fmt.Sprintf("%d", decimals)+"f", num)
-	
+
 	// Split integer and decimal parts
 	parts := strings.Split(formatted, ".")
 	intPart := parts[0]
-	
+
 	// Add commas to integer part
 	if len(intPart) > 3 {
 		var result strings.Builder
@@ -414,7 +414,7 @@ func formatNumberWithCommas(num float64, decimals int) string {
 		}
 		intPart = result.String()
 	}
-	
+
 	// Reconstruct number
 	if decimals > 0 && len(parts) > 1 {
 		return intPart + "." + parts[1]
@@ -635,11 +635,11 @@ func buildSimpleDatatablesOptions(props DataTableProps) map[string]any {
 			"pagination": "flex items-center justify-between",
 		},
 		"labels": map[string]string{
-			"placeholder": "Search...",
-			"perPage":     "Rows per page:",
-			"noRows":      "No data available",
-			"info":        "Showing {start} to {end} of {rows} entries",
-			"infoEmpty":   "Showing 0 to 0 of 0 entries",
+			"placeholder":  "Search...",
+			"perPage":      "Rows per page:",
+			"noRows":       "No data available",
+			"info":         "Showing {start} to {end} of {rows} entries",
+			"infoEmpty":    "Showing 0 to 0 of 0 entries",
 			"infoFiltered": "filtered from {max} total entries",
 		},
 	}
@@ -679,11 +679,11 @@ func buildSimpleDatatablesOptions(props DataTableProps) map[string]any {
 	if props.Config.ServerSide {
 		options["serverSide"] = true
 		options["ajax"] = map[string]any{
-			"url":    props.Config.AjaxURL,
-			"type":   "POST",
-			"data":   "function(d) { return JSON.stringify(d); }",
+			"url":         props.Config.AjaxURL,
+			"type":        "POST",
+			"data":        "function(d) { return JSON.stringify(d); }",
 			"contentType": "application/json; charset=utf-8",
-			"dataType": "json",
+			"dataType":    "json",
 		}
 
 		// Disable client-side features when using server-side processing

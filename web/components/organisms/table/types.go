@@ -15,6 +15,7 @@ type DataTableColumn struct {
 	Width      string `json:"width,omitempty"`
 	Type       string `json:"type,omitempty"` // "text", "number", "date", "html"
 	Formatter  string `json:"formatter,omitempty"`
+	Format     string `json:"format,omitempty"` // Date/number format
 	Class      string `json:"class,omitempty"`
 }
 
@@ -47,6 +48,8 @@ type DataTableConfig struct {
 	FixedHeader    bool   `json:"fixedHeader"`
 	ResponsiveSync bool   `json:"responsiveSync"`
 	ServerSide     bool   `json:"serverSide"`
+	AjaxURL        string `json:"ajaxUrl,omitempty"` // Ajax data URL
+	RowSelection   bool   `json:"rowSelection"`      // Enable row selection
 }
 
 // DataTableProps defines properties for the DataTable organism
