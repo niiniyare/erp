@@ -56,22 +56,22 @@ type RefreshRequest struct {
 
 // UserProfile represents the user profile response
 type UserProfile struct {
-	ID                     string    `json:"id"`
-	TenantID               string    `json:"tenant_id"`
-	EntityID               string    `json:"entity_id,omitempty"`
-	PersonID               string    `json:"person_id,omitempty"`
-	EmployeeID             string    `json:"employee_id,omitempty"`
-	Email                  string    `json:"email"`
-	Username               string    `json:"username"`
-	UserType               string    `json:"user_type"`
-	AccountStatus          string    `json:"account_status"`
-	IsActive               bool      `json:"is_active"`
-	LastLoginAt            time.Time `json:"last_login_at,omitempty"`
-	MFAEnabled             bool      `json:"mfa_enabled"`
-	SessionTimeoutMinutes  int       `json:"session_timeout_minutes"`
-	Roles                  []string  `json:"roles"`
-	CreatedAt              time.Time `json:"created_at"`
-	UpdatedAt              time.Time `json:"updated_at"`
+	ID                    string    `json:"id"`
+	TenantID              string    `json:"tenant_id"`
+	EntityID              string    `json:"entity_id,omitempty"`
+	PersonID              string    `json:"person_id,omitempty"`
+	EmployeeID            string    `json:"employee_id,omitempty"`
+	Email                 string    `json:"email"`
+	Username              string    `json:"username"`
+	UserType              string    `json:"user_type"`
+	AccountStatus         string    `json:"account_status"`
+	IsActive              bool      `json:"is_active"`
+	LastLoginAt           time.Time `json:"last_login_at,omitempty"`
+	MFAEnabled            bool      `json:"mfa_enabled"`
+	SessionTimeoutMinutes int       `json:"session_timeout_minutes"`
+	Roles                 []string  `json:"roles"`
+	CreatedAt             time.Time `json:"created_at"`
+	UpdatedAt             time.Time `json:"updated_at"`
 }
 
 // Login handles POST /auth/login
@@ -243,11 +243,11 @@ func (h *AuthFiberHandler) Me(c *fiber.Ctx) error {
 // SetupAuthRoutes sets up authentication routes for Fiber
 func SetupAuthRoutes(app fiber.Router, handler *AuthFiberHandler) {
 	auth := app.Group("/auth")
-	
+
 	// Public endpoints (no authentication required)
 	auth.Post("/login", handler.Login)
 	auth.Post("/refresh", handler.Refresh)
-	
+
 	// Protected endpoints (authentication required)
 	auth.Post("/logout", handler.Logout)
 	auth.Get("/me", handler.Me)

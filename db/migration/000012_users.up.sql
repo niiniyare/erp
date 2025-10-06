@@ -30,9 +30,9 @@ CREATE TABLE users (
         'CUSTOMER',
         'VENDOR',
         'PARTNER',
-        'API',
-        'SERVICE',
-        'ADMIN'
+        -- 'API',
+        -- 'SERVICE',
+        'SYSADMIN'
       )
     ),
     account_status VARCHAR(20) DEFAULT 'ACTIVE' CHECK (
@@ -92,7 +92,7 @@ COMMENT ON COLUMN users.email IS 'Email address for login and communication (mus
 
 COMMENT ON COLUMN users.password_hash IS 'Hashed password for authentication';
 
-COMMENT ON COLUMN users.user_type IS 'Classification of user account: INTERNAL, CUSTOMER, VENDOR, PARTNER, API, SERVICE, ADMIN';
+COMMENT ON COLUMN users.user_type IS 'Classification of user account: INTERNAL, CUSTOMER, VENDOR, PARTNER, API, SERVICE, SYSADMIN';
 
 COMMENT ON COLUMN users.account_status IS 'Current account status affecting login ability';
 

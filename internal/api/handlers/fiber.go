@@ -65,8 +65,8 @@ func NewFiberServer(
 	// Add middleware stack
 	setupMiddleware(app, cfg, fiberMiddleware)
 
-	// Header-based routing middleware
-	app.Use(headerBasedRoutingMiddleware())
+	// Content negotiation middleware (replaces simple header-based routing)
+	app.Use(middleware.ContentNegotiationMiddleware())
 
 	// Initialize all routes
 	setupRoutes(app, cfg, coreServices, financeServices, store, cacheService, metricsService, tracingService, fiberMiddleware)
@@ -119,27 +119,7 @@ func setupMiddleware(app *fiber.App, cfg *config.Config, fiberMiddleware *middle
 	app.Use(fiberMiddleware.JWTAuthMiddleware())
 }
 
-func headerBasedRoutingMiddleware() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		acceptHeader := c.Get("Accept")
-		contentType := c.Get("Content-Type")
-
-		// Determine response type based on headers
-		responseType := "html" // default
-		if acceptHeader == "application/json" ||
-			contentType == "application/json" ||
-			c.Path() == "/api/*" ||
-			c.Path()[:4] == "/api" {
-			responseType = "json"
-		}
-
-		// Set context values for downstream handlers
-		c.Locals("responseType", responseType)
-		c.Locals("tenantID", c.Get("X-Tenant-ID"))
-
-		return c.Next()
-	}
-}
+// Note: headerBasedRoutingMiddleware replaced by middleware.ContentNegotiationMiddleware()
 
 func setupRoutes(
 	app *fiber.App,
@@ -157,7 +137,7 @@ func setupRoutes(
 
 	app.Get("/health", func(c *fiber.Ctx) error {
 		dependencies := healthChecker.CheckDependencies(c.Context())
-		
+
 		// Determine overall status
 		overallStatus := "healthy"
 		for _, result := range dependencies {
@@ -168,7 +148,7 @@ func setupRoutes(
 				overallStatus = "degraded"
 			}
 		}
-		
+
 		return Success(c, fiber.Map{
 			"status":       overallStatus,
 			"timestamp":    time.Now(),
@@ -178,7 +158,7 @@ func setupRoutes(
 
 	app.Get("/api/v1/health", func(c *fiber.Ctx) error {
 		dependencies := healthChecker.CheckDependencies(c.Context())
-		
+
 		// Determine overall status
 		overallStatus := "healthy"
 		for _, result := range dependencies {
@@ -189,7 +169,7 @@ func setupRoutes(
 				overallStatus = "degraded"
 			}
 		}
-		
+
 		return Success(c, fiber.Map{
 			"status":       overallStatus,
 			"timestamp":    time.Now(),
@@ -200,13 +180,17 @@ func setupRoutes(
 	// API v1 routes
 	v1 := app.Group("/api/v1")
 
-	// Create handlers
-	authHandler := NewAuthFiberHandler(coreServices, tracingService, metricsService)
-	tenantHandler := NewTenantFiberHandler(coreServices, tracingService, metricsService)
+	// Create unified handlers that serve both HTML and JSON
+	authHandler := NewAuthUnifiedHandler(coreServices, tracingService, metricsService)
+	tenantHandler := NewTenantUnifiedHandler(coreServices, tracingService, metricsService)
 
-	// Setup route groups
-	SetupAuthRoutes(v1, authHandler)
-	SetupTenantRoutes(v1, tenantHandler)
+	// Setup unified route groups (handle both HTML and JSON responses)
+	SetupAuthUnifiedRoutes(app, authHandler)     // Root level for UI routes
+	SetupTenantUnifiedRoutes(app, tenantHandler) // Root level for UI routes
+
+	// API v1 routes (explicit JSON endpoints)
+	SetupAuthUnifiedRoutes(v1, authHandler)     // API endpoints
+	SetupTenantUnifiedRoutes(v1, tenantHandler) // API endpoints
 
 	// TODO: Implement other route groups with proper handlers
 	// setupUserRoutes(v1, coreServices, tracingService, metricsService)
@@ -229,15 +213,14 @@ func setupRoutes(
 	})
 }
 
-
 func setupFinanceRoutes(v1 fiber.Router, financeServices *financeService.Services, tracingService tracing.TracingService, metricsService *metrics.MetricsService) {
 	// TODO: Implement proper Fiber finance handlers
 	finance := v1.Group("/finance")
-	
+
 	finance.Get("/accounts", func(c *fiber.Ctx) error {
 		return Success(c, fiber.Map{"message": "Finance accounts endpoint - TODO: implement"})
 	})
-	
+
 	finance.Get("/transactions", func(c *fiber.Ctx) error {
 		return Success(c, fiber.Map{"message": "Finance transactions endpoint - TODO: implement"})
 	})
@@ -248,19 +231,64 @@ func setupStaticRoutes(app *fiber.App, cfg *config.Config) {
 	staticPath := "./web/static"
 	app.Static("/static", staticPath)
 
+	// Dashboard route (home page after login)
+	app.Get("/dashboard", func(c *fiber.Ctx) error {
+		responseMode := middleware.GetResponseMode(c)
+
+		switch responseMode {
+		case middleware.ResponseModeJSON:
+			return Success(c, fiber.Map{
+				"message": "Dashboard data",
+				"user":    "authenticated_user_data",
+			})
+		default:
+			// Serve dashboard HTML page
+			html := `<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard - ERP System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/htmx.org@1.9.8"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="px-4 py-6 sm:px-0">
+            <div class="border-4 border-dashed border-gray-200 rounded-lg p-6">
+                <h1 class="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+                <p class="text-gray-600">Welcome to the ERP System!</p>
+                <div class="mt-4">
+                    <a href="/tenants" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                        View Tenants
+                    </a>
+                    <button hx-post="/logout" class="ml-2 inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`
+			c.Set("Content-Type", "text/html; charset=utf-8")
+			return c.SendString(html)
+		}
+	})
+
 	// Serve UI for HTML requests (catch-all route)
 	app.Get("/*", func(c *fiber.Ctx) error {
-		responseType := c.Locals("responseType")
-		if responseType == "json" {
+		if middleware.WantsJSON(c) {
 			return c.Status(404).JSON(fiber.Map{
-				"error":   "Not Found",
-				"code":    404,
-				"path":    c.Path(),
-				"method":  c.Method(),
+				"error":  "Not Found",
+				"code":   404,
+				"path":   c.Path(),
+				"method": c.Method(),
 			})
 		}
-		// For HTML responses, serve the UI
-		return c.SendFile(staticPath + "/index.html")
+
+		// For HTML responses, redirect to login page
+		return c.Redirect("/login", 302)
 	})
 }
 
@@ -274,28 +302,43 @@ func createFiberErrorHandler() fiber.ErrorHandler {
 			message = e.Message
 		}
 
-		responseType := c.Locals("responseType")
-		if responseType == "json" {
+		// Use content negotiation middleware to determine response format
+		if middleware.WantsJSON(c) {
 			return c.Status(code).JSON(fiber.Map{
-				"error":   message,
-				"code":    code,
-				"path":    c.Path(),
-				"method":  c.Method(),
+				"error":  message,
+				"code":   code,
+				"path":   c.Path(),
+				"method": c.Method(),
 			})
 		}
 
-		// For HTML responses, serve error page
-		return c.Status(code).SendString(`
-			<html>
-				<head><title>Error ` + strconv.Itoa(code) + `</title></head>
-				<body>
-					<h1>Error ` + strconv.Itoa(code) + `</h1>
-					<p>` + message + `</p>
-					<hr>
-					<small>ERP System</small>
-				</body>
-			</html>
-		`)
+		// For HTML responses, serve styled error page
+		html := `<!DOCTYPE html>
+<html>
+<head>
+    <title>Error ` + strconv.Itoa(code) + ` - ERP System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full space-y-8">
+            <div class="text-center">
+                <h1 class="text-6xl font-bold text-gray-900">` + strconv.Itoa(code) + `</h1>
+                <h2 class="mt-2 text-3xl font-bold text-gray-900">Error</h2>
+                <p class="mt-2 text-sm text-gray-600">` + message + `</p>
+                <div class="mt-5">
+                    <a href="/" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                        Go Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>`
+		c.Set("Content-Type", "text/html; charset=utf-8")
+		return c.Status(code).SendString(html)
 	}
 }
-

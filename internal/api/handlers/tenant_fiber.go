@@ -49,20 +49,20 @@ type TenantListResponse struct {
 
 // TenantDetailResponse represents detailed tenant information
 type TenantDetailResponse struct {
-	ID          string                 `json:"id"`
-	Slug        string                 `json:"slug"`
-	Name        string                 `json:"name"`
-	Email       string                 `json:"email"`
-	Subdomain   string                 `json:"subdomain,omitempty"`
-	Status      string                 `json:"status"`
-	Timezone    string                 `json:"timezone"`
-	CurrencyCode string                `json:"currency_code"`
-	Industry    string                 `json:"industry,omitempty"`
-	CompanySize string                 `json:"company_size,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	Settings    map[string]interface{} `json:"settings,omitempty"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at"`
+	ID           string                 `json:"id"`
+	Slug         string                 `json:"slug"`
+	Name         string                 `json:"name"`
+	Email        string                 `json:"email"`
+	Subdomain    string                 `json:"subdomain,omitempty"`
+	Status       string                 `json:"status"`
+	Timezone     string                 `json:"timezone"`
+	CurrencyCode string                 `json:"currency_code"`
+	Industry     string                 `json:"industry,omitempty"`
+	CompanySize  string                 `json:"company_size,omitempty"`
+	Metadata     map[string]interface{} `json:"metadata,omitempty"`
+	Settings     map[string]interface{} `json:"settings,omitempty"`
+	CreatedAt    time.Time              `json:"created_at"`
+	UpdatedAt    time.Time              `json:"updated_at"`
 }
 
 // CreateTenantRequest represents tenant creation request
@@ -86,15 +86,15 @@ type UpdateTenantRequest struct {
 
 // TenantConfiguration represents tenant configuration
 type TenantConfiguration struct {
-	MaxUsers                   int                    `json:"max_users"`
-	MaxEntities               int                    `json:"max_entities"`
-	MaxTransactionsPerMonth   int                    `json:"max_transactions_per_month"`
-	StorageQuota              int64                  `json:"storage_quota"`
-	AccountingMethod          string                 `json:"accounting_method"`
-	FiscalYearStartMonth      int                    `json:"fiscal_year_start_month"`
-	DefaultCurrency           string                 `json:"default_currency"`
-	PasswordPolicy            map[string]interface{} `json:"password_policy"`
-	APIRateLimits             map[string]interface{} `json:"api_rate_limits"`
+	MaxUsers                int                    `json:"max_users"`
+	MaxEntities             int                    `json:"max_entities"`
+	MaxTransactionsPerMonth int                    `json:"max_transactions_per_month"`
+	StorageQuota            int64                  `json:"storage_quota"`
+	AccountingMethod        string                 `json:"accounting_method"`
+	FiscalYearStartMonth    int                    `json:"fiscal_year_start_month"`
+	DefaultCurrency         string                 `json:"default_currency"`
+	PasswordPolicy          map[string]interface{} `json:"password_policy"`
+	APIRateLimits           map[string]interface{} `json:"api_rate_limits"`
 }
 
 // ListTenants handles GET /tenants (Admin Console Only)
@@ -159,16 +159,16 @@ func (h *TenantFiberHandler) GetTenant(c *fiber.Ctx) error {
 	// TODO: Implement actual tenant retrieval using tenant service
 	// For now, return mock data
 	tenant := TenantDetailResponse{
-		ID:          tenantID,
-		Slug:        "acme-corp",
-		Name:        "ACME Corporation",
-		Email:       "admin@acme.com",
-		Subdomain:   "acme",
-		Status:      "ACTIVE",
-		Timezone:    "America/New_York",
+		ID:           tenantID,
+		Slug:         "acme-corp",
+		Name:         "ACME Corporation",
+		Email:        "admin@acme.com",
+		Subdomain:    "acme",
+		Status:       "ACTIVE",
+		Timezone:     "America/New_York",
 		CurrencyCode: "USD",
-		Industry:    "Technology",
-		CompanySize: "ENTERPRISE",
+		Industry:     "Technology",
+		CompanySize:  "ENTERPRISE",
 		Metadata: map[string]interface{}{
 			"crm_id":    "12345",
 			"sales_rep": "Jane Smith",
@@ -208,19 +208,19 @@ func (h *TenantFiberHandler) CreateTenant(c *fiber.Ctx) error {
 	// TODO: Implement actual tenant creation using tenant service
 	// For now, return mock response
 	tenant := TenantDetailResponse{
-		ID:          uuid.New().String(),
-		Slug:        req.Slug,
-		Name:        req.Name,
-		Email:       req.Email,
-		Status:      "TRIAL",
-		Timezone:    req.Timezone,
+		ID:           uuid.New().String(),
+		Slug:         req.Slug,
+		Name:         req.Name,
+		Email:        req.Email,
+		Status:       "TRIAL",
+		Timezone:     req.Timezone,
 		CurrencyCode: req.CurrencyCode,
-		Industry:    req.Industry,
-		CompanySize: req.CompanySize,
-		Metadata:    make(map[string]interface{}),
-		Settings:    make(map[string]interface{}),
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		Industry:     req.Industry,
+		CompanySize:  req.CompanySize,
+		Metadata:     make(map[string]interface{}),
+		Settings:     make(map[string]interface{}),
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
 	h.logger.InfoContext(ctx, "Tenant created successfully", logger.Fields{
@@ -258,18 +258,18 @@ func (h *TenantFiberHandler) UpdateTenant(c *fiber.Ctx) error {
 	// TODO: Implement actual tenant update using tenant service
 	// For now, return mock updated tenant
 	tenant := TenantDetailResponse{
-		ID:          tenantID,
-		Slug:        "acme-corp",
-		Name:        req.Name,
-		Email:       req.Email,
-		Status:      req.Status,
-		Timezone:    "America/New_York",
+		ID:           tenantID,
+		Slug:         "acme-corp",
+		Name:         req.Name,
+		Email:        req.Email,
+		Status:       req.Status,
+		Timezone:     "America/New_York",
 		CurrencyCode: "USD",
-		Industry:    "Technology",
-		CompanySize: "ENTERPRISE",
-		Settings:    req.Settings,
-		CreatedAt:   time.Now().AddDate(0, -6, 0),
-		UpdatedAt:   time.Now(),
+		Industry:     "Technology",
+		CompanySize:  "ENTERPRISE",
+		Settings:     req.Settings,
+		CreatedAt:    time.Now().AddDate(0, -6, 0),
+		UpdatedAt:    time.Now(),
 	}
 
 	return Success(c, tenant)

@@ -280,18 +280,18 @@ func MultipleValidationErrors(errors []FieldError) map[string]interface{} {
 // HeaderBasedResponse determines response type and sends appropriate response
 func HeaderBasedResponse(c *fiber.Ctx, data interface{}, htmlTemplate string) error {
 	responseType := c.Locals("responseType")
-	
+
 	// Check Accept header as well
 	accept := c.Get("Accept")
 	if accept == "application/json" || responseType == "json" {
 		return Success(c, data)
 	}
-	
+
 	// For HTML responses
 	if htmlTemplate != "" {
 		return c.Render(htmlTemplate, data)
 	}
-	
+
 	// Fallback to JSON
 	return Success(c, data)
 }
@@ -299,7 +299,7 @@ func HeaderBasedResponse(c *fiber.Ctx, data interface{}, htmlTemplate string) er
 // RedirectResponse handles redirects based on request type
 func RedirectResponse(c *fiber.Ctx, url string, status ...int) error {
 	responseType := c.Locals("responseType")
-	
+
 	if responseType == "json" {
 		redirectStatus := 302
 		if len(status) > 0 {
@@ -310,7 +310,7 @@ func RedirectResponse(c *fiber.Ctx, url string, status ...int) error {
 			"status":       redirectStatus,
 		})
 	}
-	
+
 	// For HTML responses
 	return c.Redirect(url, status...)
 }

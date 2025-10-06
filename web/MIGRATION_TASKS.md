@@ -13,7 +13,7 @@
   - **Validation**: ✅ Directory structure matches architecture spec
   - **Commit point**: "feat: implement atomic design file structure"
 
-- [ ] **Task 1.1.2**: Create Alpine.js store structure
+- [x] **Task 1.1.2**: Create Alpine.js store structure
   - **Files to create**:
     - `web/static/js/stores/app.js`
     - `web/static/js/stores/user.js`
