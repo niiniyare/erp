@@ -8,21 +8,6 @@ import (
 
 // ─── CONTEXT HELPERS ─────────────────────────────────────────────
 
-// NewErrorCollectionWithContext creates an error collection with context
-func NewErrorCollectionWithContext(ctx context.Context, operation string) *ErrorCollection {
-	ec := NewErrorCollection(operation)
-
-	if tenantID := getTenantIDFromContext(ctx); tenantID != "" {
-		ec.TenantID = tenantID
-	}
-
-	if requestID := getRequestIDFromContext(ctx); requestID != "" {
-		ec.RequestID = requestID
-	}
-
-	return ec
-}
-
 func getTenantIDFromContext(ctx context.Context) string {
 	if tenantID, ok := ctx.Value(TenantIDKey).(uuid.UUID); ok {
 		return tenantID.String()

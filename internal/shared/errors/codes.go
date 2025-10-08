@@ -1,623 +1,145 @@
 package errors
 
-import (
-	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"net/http"
-	"strings"
-	"time"
-)
+// ─── ERROR CODES ─────────────────────────────────────────────
 
-// ─── CONTEXT KEYS ─────────────────────────────────────────────
-
-type contextKey string
-
+// Tenant Error Codes
 const (
-	TenantIDKey  contextKey = "tenant_id"
-	UserIDKey    contextKey = "user_id"
-	RequestIDKey contextKey = "request_id"
-	OperationKey contextKey = "operation"
+	CodeTenantExists           = "TENANT_EXISTS"
+	CodeTenantNotFound         = "TENANT_NOT_FOUND"
+	CodeTenantContextMissing   = "TENANT_CONTEXT_MISSING"
+	CodeSubdomainExists        = "SUBDOMAIN_EXISTS"
+	CodeSubdomainSoftDeleted   = "SUBDOMAIN_SOFT_DELETED"
+	CodeFeatureNotEnabled      = "FEATURE_NOT_ENABLED"
+	CodeTenantSuspended        = "TENANT_SUSPENDED"
+	CodeTenantLimitExceeded    = "TENANT_LIMIT_EXCEEDED"
 )
 
-// ─── ERROR SEVERITY LEVELS ─────────────────────────────────────────────
-
-type Severity string
-
+// User Error Codes
 const (
-	SeverityInfo     Severity = "info"
-	SeverityWarning  Severity = "warning"
-	SeverityError    Severity = "error"
-	SeverityCritical Severity = "critical"
+	CodeUserNotFound            = "USER_NOT_FOUND"
+	CodeUserExists              = "USER_EXISTS"
+	CodeEmailExists             = "EMAIL_EXISTS"
+	CodeUsernameExists          = "USERNAME_EXISTS"
+	CodeInvalidCredentials      = "INVALID_CREDENTIALS"
+	CodeAuthenticationFailed    = "AUTHENTICATION_FAILED"
+	CodeInvalidUserType         = "INVALID_USER_TYPE"
+	CodeInvalidAccountStatus    = "INVALID_ACCOUNT_STATUS"
+	CodeAccountLocked           = "ACCOUNT_LOCKED"
 )
 
-// ─── ERROR CATEGORIES ─────────────────────────────────────────────
-
-type Category string
-
+// Role & Permission Error Codes
 const (
-	CategoryValidation  Category = "validation"
-	CategoryRepository  Category = "repository"
-	CategoryBusiness    Category = "business"
-	CategorySecurity    Category = "security"
-	CategoryIntegration Category = "integration"
-	CategorySystem      Category = "system"
-	CategoryTenant      Category = "tenant"
+	CodeRoleNotFound    = "ROLE_NOT_FOUND"
+	CodeRoleExists      = "ROLE_EXISTS"
+	CodeUnauthorized    = "UNAUTHORIZED"
+	CodeForbidden       = "FORBIDDEN"
 )
 
-// ─── ENHANCED VALIDATION ERRORS ─────────────────────────────────────────────
-
-// ValidationError represents a validation error with field details
-type ValidationError struct {
-	Field   string `json:"field"`
-	Message string `json:"message"`
-	Code    string `json:"code,omitempty"`  // e.g., "REQUIRED", "INVALID_FORMAT"
-	Value   any    `json:"value,omitempty"` // The invalid value (sanitized)
-}
-
-func (e ValidationError) Error() string {
-	if e.Code != "" {
-		return fmt.Sprintf("%s: %s (%s)", e.Field, e.Message, e.Code)
-	}
-	return fmt.Sprintf("%s: %s", e.Field, e.Message)
-}
-
-// ValidationErrors is a collection of validation errors
-type ValidationErrors []ValidationError
-
-func (ve ValidationErrors) Error() string {
-	if len(ve) == 0 {
-		return ""
-	}
-	if len(ve) == 1 {
-		return ve[0].Error()
-	}
-	return fmt.Sprintf("validation failed with %d errors", len(ve))
-}
-
-// Add adds a validation error to the collection
-func (ve *ValidationErrors) Add(field, message string) {
-	*ve = append(*ve, ValidationError{Field: field, Message: message})
-}
-
-// AddWithCode adds a validation error with a code
-func (ve *ValidationErrors) AddWithCode(field, message, code string) {
-	*ve = append(*ve, ValidationError{Field: field, Message: message, Code: code})
-}
-
-// AddWithValue adds a validation error with the invalid value
-func (ve *ValidationErrors) AddWithValue(field, message, code string, value any) {
-	*ve = append(*ve, ValidationError{
-		Field:   field,
-		Message: message,
-		Code:    code,
-		Value:   sanitizeValue(value),
-	})
-}
-
-// HasErrors returns true if there are validation errors
-func (ve ValidationErrors) HasErrors() bool {
-	return len(ve) > 0
-}
-
-// GetByField returns validation errors for a specific field
-func (ve ValidationErrors) GetByField(field string) []ValidationError {
-	var fieldErrors []ValidationError
-	for _, err := range ve {
-		if err.Field == field {
-			fieldErrors = append(fieldErrors, err)
-		}
-	}
-	return fieldErrors
-}
-
-// ToMap converts validation errors to a map by field
-func (ve ValidationErrors) ToMap() map[string][]string {
-	result := make(map[string][]string)
-	for _, err := range ve {
-		result[err.Field] = append(result[err.Field], err.Message)
-	}
-	return result
-}
-
-// ─── ENHANCED REPOSITORY ERRORS ─────────────────────────────────────────────
-
-// RepositoryError represents a failure in the repository layer
-type RepositoryError struct {
-	Code      string         `json:"code"`    // e.g., "REJECT_FAILED"
-	Message   string         `json:"message"` // e.g., "Failed to reject access request"
-	Err       error          `json:"-"`       // Underlying cause (not serialized)
-	Details   map[string]any `json:"details,omitempty"`
-	Operation string         `json:"operation,omitempty"` // Database operation
-	Table     string         `json:"table,omitempty"`     // Affected table
-	TenantID  string         `json:"tenant_id,omitempty"`
-}
-
-func (e *RepositoryError) Error() string {
-	var parts []string
-
-	if e.Code != "" {
-		parts = append(parts, fmt.Sprintf("[%s]", e.Code))
-	}
-
-	if e.Message != "" {
-		parts = append(parts, e.Message)
-	}
-
-	if e.Operation != "" && e.Table != "" {
-		parts = append(parts, fmt.Sprintf("(operation: %s, table: %s)", e.Operation, e.Table))
-	}
-
-	if e.TenantID != "" {
-		parts = append(parts, fmt.Sprintf("tenant: %s", e.TenantID))
-	}
-
-	result := strings.Join(parts, " ")
-
-	if e.Err != nil {
-		result += fmt.Sprintf(": %v", e.Err)
-	}
-
-	return result
-}
-
-// Unwrap allows errors.Is / errors.As support
-func (e *RepositoryError) Unwrap() error {
-	return e.Err
-}
-
-// WithDetail adds details to the error
-func (e *RepositoryError) WithDetail(key string, value any) *RepositoryError {
-	if e.Details == nil {
-		e.Details = make(map[string]any)
-	}
-	e.Details[key] = value
-	return e
-}
-
-// WithOperation sets the database operation
-func (e *RepositoryError) WithOperation(operation string) *RepositoryError {
-	e.Operation = operation
-	return e
-}
-
-// WithTable sets the affected table
-func (e *RepositoryError) WithTable(table string) *RepositoryError {
-	e.Table = table
-	return e
-}
-
-// WithTenant sets the tenant ID
-func (e *RepositoryError) WithTenant(tenantID string) *RepositoryError {
-	e.TenantID = tenantID
-	return e
-}
-
-// NewRepositoryError creates a new RepositoryError
-func NewRepositoryError(code, message string, err error) *RepositoryError {
-	return &RepositoryError{
-		Code:    code,
-		Message: message,
-		Err:     err,
-		Details: make(map[string]any),
-	}
-}
-
-// NewRepositoryErrorWithContext creates a repository error with context information
-func NewRepositoryErrorWithContext(ctx context.Context, code, message string, err error) *RepositoryError {
-	repoErr := NewRepositoryError(code, message, err)
-
-	if tenantID := getTenantIDFromContext(ctx); tenantID != "" {
-		repoErr.WithTenant(tenantID)
-	}
-
-	if operation := getOperationFromContext(ctx); operation != "" {
-		repoErr.WithOperation(operation)
-	}
-
-	return repoErr
-}
-
-// IsRepositoryErrorCode checks if the error is a RepositoryError with a specific code
-func IsRepositoryErrorCode(err error, code string) bool {
-	var repoErr *RepositoryError
-	if errors.As(err, &repoErr) {
-		return repoErr.Code == code
-	}
-	return false
-}
-
-// ─── BUSINESS LOGIC ERRORS ─────────────────────────────────────────────
-
-// BusinessError represents domain-specific business logic errors
-type BusinessError struct {
-	Code        string         `json:"code"`
-	Message     string         `json:"message"`
-	Details     map[string]any `json:"details,omitempty"`
-	Suggestions []string       `json:"suggestions,omitempty"` // User-friendly suggestions
-	HTTPStatus  int            `json:"-"`                     // HTTP status code mapping
-	Severity    Severity       `json:"severity"`
-	Category    Category       `json:"category"`
-	TenantID    string         `json:"tenant_id,omitempty"`
-	UserID      string         `json:"user_id,omitempty"`
-	Retryable   bool           `json:"retryable"`
-	Err         error          `json:"-"`
-}
-
-func (e *BusinessError) Error() string {
-	var parts []string
-
-	if e.Category != "" {
-		parts = append(parts, fmt.Sprintf("[%s]", e.Category))
-	}
-
-	if e.Code != "" {
-		parts = append(parts, fmt.Sprintf("<%s>", e.Code))
-	}
-
-	if e.Message != "" {
-		parts = append(parts, e.Message)
-	}
-
-	if e.TenantID != "" {
-		parts = append(parts, fmt.Sprintf("(tenant: %s)", e.TenantID))
-	}
-
-	result := strings.Join(parts, " ")
-
-	if e.Err != nil {
-		result += fmt.Sprintf(": %v", e.Err)
-	}
-
-	return result
-}
-
-func (e *BusinessError) Unwrap() error {
-	return e.Err
-}
-
-// WithDetail adds details to the business error
-func (e *BusinessError) WithDetail(key string, value any) *BusinessError {
-	if e.Details == nil {
-		e.Details = make(map[string]any)
-	}
-	e.Details[key] = value
-	return e
-}
-
-// WithCause adds a cause to the error
-func (e *BusinessError) WithCause(cause error) *BusinessError {
-	e.Err = cause
-	return e
-}
-
-func (e *BusinessError) WithCategory(category Category) *BusinessError {
-	e.Category = category
-	return e
-}
-
-func (e *BusinessError) WithSeverity(severity Severity) *BusinessError {
-	e.Severity = severity
-	return e
-}
-
-// WithSuggestion adds a user-friendly suggestion
-func (e *BusinessError) WithSuggestion(suggestion string) *BusinessError {
-	e.Suggestions = append(e.Suggestions, suggestion)
-	return e
-}
-
-// WithHTTPStatus sets the HTTP status code
-func (e *BusinessError) WithHTTPStatus(status int) *BusinessError {
-	e.HTTPStatus = status
-	return e
-}
-
-// IsRetryable returns whether this error is retryable
-func (e *BusinessError) IsRetryable() bool {
-	return e.Retryable
-}
-
-// NewBusinessError creates a new business error
-func NewBusinessError(code, message string) *BusinessError {
-	return &BusinessError{
-		Code:       code,
-		Message:    message,
-		Details:    make(map[string]any),
-		HTTPStatus: http.StatusBadRequest,
-		Severity:   SeverityError,
-		Category:   CategoryBusiness,
-		Retryable:  false,
-	}
-}
-
-// NewBusinessErrorWithContext creates a business error with context
-func NewBusinessErrorWithContext(ctx context.Context, code, message string) *BusinessError {
-	err := NewBusinessError(code, message)
-
-	if tenantID := getTenantIDFromContext(ctx); tenantID != "" {
-		err.TenantID = tenantID
-	}
-
-	if userID := getUserIDFromContext(ctx); userID != "" {
-		err.UserID = userID
-	}
-
-	return err
-}
-
-// ─── DOMAIN-SPECIFIC ERROR CONSTRUCTORS ─────────────────────────────────────────────
-
-//
-// // Authentication/Authorization errors
-// func ErrUnauthorized(reason string) *BusinessError {
-// 	return NewBusinessError("UNAUTHORIZED", "Unauthorized access").
-// 		WithDetail("reason", reason).
-// 		WithHTTPStatus(http.StatusUnauthorized).
-// 		WithCategory(CategorySecurity)
-// }
-//
-// func ErrForbidden(resource string) *BusinessError {
-// 	return NewBusinessError("FORBIDDEN", "Access forbidden").
-// 		WithDetail("resource", resource).
-// 		WithHTTPStatus(http.StatusForbidden).
-// 		WithCategory(CategorySecurity).
-// 		WithSuggestion("Contact your administrator for access")
-// }
-
-// Accounting-specific errors
-func ErrInvalidAccountingPeriod(periodStart, periodEnd time.Time) *BusinessError {
-	return NewBusinessError("INVALID_ACCOUNTING_PERIOD", "Invalid accounting period").
-		WithDetail("period_start", periodStart).
-		WithDetail("period_end", periodEnd).
-		WithHTTPStatus(http.StatusBadRequest).
-		WithSuggestion("Ensure the period start date is before the end date")
-}
-
-func ErrAccountingPeriodClosed(period string) *BusinessError {
-	return NewBusinessError("ACCOUNTING_PERIOD_CLOSED", "Accounting period is closed").
-		WithDetail("period", period).
-		WithHTTPStatus(http.StatusConflict).
-		WithSuggestion("Contact your accountant to reopen the period if necessary")
-}
-
-func ErrInsufficientBalance(accountID string, required, available float64) *BusinessError {
-	return NewBusinessError("INSUFFICIENT_BALANCE", "Insufficient account balance").
-		WithDetail("account_id", accountID).
-		WithDetail("required", required).
-		WithDetail("available", available).
-		WithHTTPStatus(http.StatusConflict).
-		WithSuggestion("Ensure sufficient funds are available before proceeding")
-}
-
-func ErrDuplicateTransaction(transactionID string) *BusinessError {
-	return NewBusinessError("DUPLICATE_TRANSACTION", "Transaction already exists").
-		WithDetail("transaction_id", transactionID).
-		WithHTTPStatus(http.StatusConflict).
-		WithSuggestion("Check if this transaction was already recorded")
-}
-
-// Integration errors
-func ErrThirdPartyAPIFailure(service string, statusCode int) *BusinessError {
-	return NewBusinessError("THIRD_PARTY_API_FAILURE", fmt.Sprintf("External service %s failed", service)).
-		WithDetail("service", service).
-		WithDetail("status_code", statusCode).
-		WithHTTPStatus(http.StatusBadGateway).
-		WithCategory(CategoryIntegration).
-		WithSuggestion("Please try again later").
-		WithDetail("retryable", true)
-}
-
-// ─── ERROR AGGREGATION ─────────────────────────────────────────────
-
-// ErrorCollection aggregates multiple errors with context
-type ErrorCollection struct {
-	Errors    []error        `json:"errors"`
-	Context   map[string]any `json:"context,omitempty"`
-	Operation string         `json:"operation,omitempty"`
-	TenantID  string         `json:"tenant_id,omitempty"`
-	RequestID string         `json:"request_id,omitempty"`
-	Timestamp time.Time      `json:"timestamp"`
-	Severity  Severity       `json:"severity"`
-	Category  Category       `json:"category"`
-}
-
-func (ec *ErrorCollection) Error() string {
-	if len(ec.Errors) == 0 {
-		return "no errors"
-	}
-
-	if len(ec.Errors) == 1 {
-		return ec.Errors[0].Error()
-	}
-
-	var messages []string
-	for _, err := range ec.Errors {
-		messages = append(messages, err.Error())
-	}
-
-	return fmt.Sprintf("multiple errors occurred: [%s]", strings.Join(messages, "; "))
-}
-
-// Add adds an error to the collection
-func (ec *ErrorCollection) Add(err error) {
-	if err != nil {
-		ec.Errors = append(ec.Errors, err)
-		ec.updateSeverity(err)
-	}
-}
-
-// HasErrors returns true if there are errors in the collection
-func (ec *ErrorCollection) HasErrors() bool {
-	return len(ec.Errors) > 0
-}
-
-// Count returns the number of errors
-func (ec *ErrorCollection) Count() int {
-	return len(ec.Errors)
-}
-
-// GetByCategory returns errors of a specific category
-func (ec *ErrorCollection) GetByCategory(category Category) []error {
-	var categoryErrors []error
-	for _, err := range ec.Errors {
-		if be, ok := err.(*BusinessError); ok && be.Category == category {
-			categoryErrors = append(categoryErrors, err)
-		}
-	}
-	return categoryErrors
-}
-
-// GetBusinessErrors returns only business errors
-func (ec *ErrorCollection) GetBusinessErrors() []*BusinessError {
-	var businessErrors []*BusinessError
-	for _, err := range ec.Errors {
-		if be, ok := err.(*BusinessError); ok {
-			businessErrors = append(businessErrors, be)
-		}
-	}
-	return businessErrors
-}
-
-// GetValidationErrors returns only validation errors
-func (ec *ErrorCollection) GetValidationErrors() ValidationErrors {
-	var validationErrors ValidationErrors
-	for _, err := range ec.Errors {
-		if ve, ok := err.(ValidationError); ok {
-			validationErrors = append(validationErrors, ve)
-		} else if ves, ok := err.(ValidationErrors); ok {
-			validationErrors = append(validationErrors, ves...)
-		}
-	}
-	return validationErrors
-}
-
-// updateSeverity updates collection severity based on added error
-func (ec *ErrorCollection) updateSeverity(err error) {
-	if be, ok := err.(*BusinessError); ok {
-		if be.Severity == SeverityCritical ||
-			(be.Severity == SeverityError && ec.Severity != SeverityCritical) ||
-			(be.Severity == SeverityWarning && ec.Severity == SeverityInfo) {
-			ec.Severity = be.Severity
-		}
-	}
-}
-
-// NewErrorCollection creates a new error collection
-func NewErrorCollection(operation string) *ErrorCollection {
-	return &ErrorCollection{
-		Errors:    make([]error, 0),
-		Context:   make(map[string]any),
-		Operation: operation,
-		Timestamp: time.Now(),
-		Severity:  SeverityInfo,
-		Category:  CategorySystem,
-	}
-}
-
-// ─── UTILITY FUNCTIONS ─────────────────────────────────────────────
-
-// sanitizeValue removes sensitive information from values for logging
-func sanitizeValue(value any) any {
-	switch v := value.(type) {
-	case string:
-		// Sanitize potential sensitive strings
-		if len(v) > 100 {
-			return v[:100] + "..."
-		}
-		// Remove common sensitive patterns
-		sensitivePatterns := []string{"password", "token", "secret", "key"}
-		lowerV := strings.ToLower(v)
-		for _, pattern := range sensitivePatterns {
-			if strings.Contains(lowerV, pattern) {
-				return "[REDACTED]"
-			}
-		}
-		return v
-	case map[string]any:
-		// Recursively sanitize maps
-		sanitized := make(map[string]any)
-		for k, val := range v {
-			sanitized[k] = sanitizeValue(val)
-		}
-		return sanitized
-	default:
-		return v
-	}
-}
-
-// IsTemporary checks if an error is temporary/retryable
-func IsTemporary(err error) bool {
-	if be, ok := err.(*BusinessError); ok {
-		return be.Retryable
-	}
-
-	// Check for common temporary error patterns
-	errStr := strings.ToLower(err.Error())
-	temporaryPatterns := []string{
-		"timeout", "connection reset", "connection refused",
-		"temporary failure", "service unavailable", "rate limit",
-	}
-
-	for _, pattern := range temporaryPatterns {
-		if strings.Contains(errStr, pattern) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// GetErrorCode extracts error code from various error types
-func GetErrorCode(err error) string {
-	switch e := err.(type) {
-	case *BusinessError:
-		return e.Code
-	case *RepositoryError:
-		return e.Code
-	case ValidationError:
-		return e.Code
-	default:
-		return "UNKNOWN_ERROR"
-	}
-}
-
-// GetHTTPStatus extracts HTTP status from error
-func GetHTTPStatus(err error) int {
-	switch e := err.(type) {
-	case *BusinessError:
-		return e.HTTPStatus
-	case ValidationErrors:
-		return http.StatusBadRequest
-	case *RepositoryError:
-		return http.StatusInternalServerError
-	default:
-		return http.StatusInternalServerError
-	}
-}
-
-// ─── JSON MARSHALING SUPPORT ─────────────────────────────────────────────
-
-// MarshalJSON implements json.Marshaler for safe error serialization
-func (e *BusinessError) MarshalJSON() ([]byte, error) {
-	type alias BusinessError
-	return json.Marshal(&struct {
-		*alias
-		ErrorMessage string `json:"error_message"`
-	}{
-		alias:        (*alias)(e),
-		ErrorMessage: e.Error(),
-	})
-}
-
-func (e *RepositoryError) MarshalJSON() ([]byte, error) {
-	type alias RepositoryError
-	return json.Marshal(&struct {
-		*alias
-		ErrorMessage string `json:"error_message"`
-	}{
-		alias:        (*alias)(e),
-		ErrorMessage: e.Error(),
-	})
-}
+// Invitation Error Codes
+const (
+	CodeInvitationNotFound  = "INVITATION_NOT_FOUND"
+	CodeInvitationExpired   = "INVITATION_EXPIRED"
+)
+
+// API Key Error Codes
+const (
+	CodeAPIKeyNotFound = "API_KEY_NOT_FOUND"
+)
+
+// Entity Error Codes
+const (
+	CodeEntityNotFound        = "ENTITY_NOT_FOUND"
+	CodeEntityNameExists      = "ENTITY_NAME_EXISTS"
+	CodeEntityCodeExists      = "ENTITY_CODE_EXISTS"
+	CodeInvalidParentEntity   = "INVALID_PARENT_ENTITY"
+	CodeCircularReference     = "CIRCULAR_REFERENCE"
+	CodeEntityHasChildren     = "ENTITY_HAS_CHILDREN"
+	CodeInvalidEntityType     = "INVALID_ENTITY_TYPE"
+)
+
+// ABAC Error Codes
+const (
+	// Policy Errors
+	CodePolicyNotFound    = "POLICY_NOT_FOUND"
+	CodePolicyInvalid     = "POLICY_INVALID"
+	CodePolicyConflict    = "POLICY_CONFLICT"
+	CodePolicyExpired     = "POLICY_EXPIRED"
+
+	// Attribute Errors
+	CodeAttributeNotFound           = "ATTRIBUTE_NOT_FOUND"
+	CodeAttributeInvalid            = "ATTRIBUTE_INVALID"
+	CodeAttributeExpired            = "ATTRIBUTE_EXPIRED"
+	CodeAttributeDefinitionInvalid  = "ATTRIBUTE_DEFINITION_INVALID"
+
+	// Evaluation Errors
+	CodeEvaluationFailed         = "EVALUATION_FAILED"
+	CodeEvaluationTimeout        = "EVALUATION_TIMEOUT"
+	CodeCombiningAlgorithmFailed = "COMBINING_ALGORITHM_FAILED"
+	CodeInsufficientAttributes   = "INSUFFICIENT_ATTRIBUTES"
+)
+
+// General Error Codes
+const (
+	CodeInvalidInput    = "INVALID_INPUT"
+	CodeNotFound        = "NOT_FOUND"
+	CodeUnknownError    = "UNKNOWN_ERROR"
+	CodeInternalError   = "INTERNAL_ERROR"
+	CodeMultipleErrors  = "MULTIPLE_ERRORS"
+	CodeValidationFailed = "VALIDATION_FAILED"
+)
+
+// Financial Error Codes
+const (
+	CodeInvalidAccountingPeriod = "INVALID_ACCOUNTING_PERIOD"
+	CodeAccountingPeriodClosed  = "ACCOUNTING_PERIOD_CLOSED"
+	CodeInsufficientBalance     = "INSUFFICIENT_BALANCE"
+	CodeDuplicateTransaction    = "DUPLICATE_TRANSACTION"
+)
+
+// Integration Error Codes
+const (
+	CodeThirdPartyAPIFailure = "THIRD_PARTY_API_FAILURE"
+)
+
+// Repository Error Codes
+const (
+	CodeRejectFailed     = "REJECT_FAILED"
+	CodeDatabaseError    = "DATABASE_ERROR"
+	CodeConnectionFailed = "CONNECTION_FAILED"
+	CodeQueryFailed      = "QUERY_FAILED"
+	CodeTransactionFailed = "TRANSACTION_FAILED"
+)
+
+// Validation Error Codes
+const (
+	CodeRequired       = "REQUIRED"
+	CodeInvalidFormat  = "INVALID_FORMAT"
+	CodeTooShort       = "TOO_SHORT"
+	CodeTooLong        = "TOO_LONG"
+	CodeInvalidRange   = "INVALID_RANGE"
+	CodeInvalidEmail   = "INVALID_EMAIL"
+	CodeInvalidURL     = "INVALID_URL"
+	CodeInvalidUUID    = "INVALID_UUID"
+	CodeInvalidDate    = "INVALID_DATE"
+	CodeInvalidEnum    = "INVALID_ENUM"
+)
+
+// HTTP Error Codes (for internal mapping)
+const (
+	CodeHTTPBadRequest         = "BAD_REQUEST"
+	CodeHTTPUnauthorized       = "UNAUTHORIZED"
+	CodeHTTPForbidden          = "FORBIDDEN"
+	CodeHTTPNotFound           = "NOT_FOUND"
+	CodeHTTPConflict           = "CONFLICT"
+	CodeHTTPInternalServerError = "INTERNAL_SERVER_ERROR"
+	CodeHTTPBadGateway         = "BAD_GATEWAY"
+	CodeHTTPServiceUnavailable = "SERVICE_UNAVAILABLE"
+)
+
+// System Error Codes
+const (
+	CodeInternalPanic    = "INTERNAL_PANIC"
+	CodeConfigError      = "CONFIG_ERROR"
+	CodeStartupError     = "STARTUP_ERROR"
+	CodeShutdownError    = "SHUTDOWN_ERROR"
+)

@@ -1,17 +1,435 @@
-# Predefined Errors Usage Guide
+# Shared Errors Package
 
-A guide for using the redefined errors in Awo ERP system while maintaining backward compatibility.
+A foundational error handling system for the Awo ERP platform. This package provides core error types, utilities, and patterns that other packages can use to create their own domain-specific errors.
+
+## Package Overview
+
+This is a **shared foundation package** - it provides the building blocks for error handling across the entire ERP system. Individual modules should create their own `errors.go` files that use this package's functionality for domain-specific errors.
+
+### Architecture Philosophy
+
+```
+┌─────────────────────────────────────────────────┐
+│ internal/shared/errors (Foundation Package)     │
+│ - Core error types (BusinessError, etc.)       │
+│ - Utility functions (IsTemporary, etc.)        │ 
+│ - Common error codes and patterns               │
+│ - HTTP integration helpers                      │
+└─────────────────────────────────────────────────┘
+                         ↑ uses
+┌─────────────────────────────────────────────────┐
+│ Module-Specific errors.go Files                 │
+│ internal/core/finance/errors.go                 │
+│ internal/core/tenant/errors.go                  │
+│ internal/core/iam/errors.go                     │
+│ internal/api/handlers/errors.go                 │
+└─────────────────────────────────────────────────┘
+```
+
+## File Organization
+
+```
+internal/shared/errors/
+├── types.go         # Core error types and interfaces
+├── business.go      # Common predefined business errors
+├── codes.go         # Error code constants
+├── context.go       # Context helper functions
+├── http.go          # HTTP error handling
+├── tenant.go        # Tenant-specific errors
+├── utils.go         # Utility and checking functions
+├── errors.go        # Main export file
+└── README.md        # This documentation
+```
 
 ## Table of Contents
 
-- [Backward Compatibility](#backward-compatibility)
-- [ Error Features](#enhanced-error-features)
-- [Usage by Domain](#usage-by-domain)
-- [Error Checking Patterns](#error-checking-patterns)
+- [Core Error Types](#core-error-types)
+- [Creating Module-Specific Errors](#creating-module-specific-errors)
+- [Common Patterns](#common-patterns)
 - [HTTP Integration](#http-integration)
-- [Contextual Error Constructors](#contextual-error-constructors)
-- [Migration Examples](#migration-examples)
-- [Best Practices](#best-practices)
+- [Testing Patterns](#testing-patterns)
+- [Migration Guide](#migration-guide)
+
+## Core Error Types
+
+### BusinessError
+
+The primary error type for business logic errors with rich context:
+
+```go
+type BusinessError struct {
+    Code        string         `json:"code"`
+    Message     string         `json:"message"`
+    Details     map[string]any `json:"details,omitempty"`
+    Suggestions []string       `json:"suggestions,omitempty"`
+    HTTPStatus  int            `json:"-"`
+    Severity    Severity       `json:"severity"`
+    Category    Category       `json:"category"`
+    TenantID    string         `json:"tenant_id,omitempty"`
+    UserID      string         `json:"user_id,omitempty"`
+    Retryable   bool           `json:"retryable"`
+}
+```
+
+### RepositoryError
+
+For database/storage layer errors:
+
+```go
+type RepositoryError struct {
+    Code      string         `json:"code"`
+    Message   string         `json:"message"`
+    Operation string         `json:"operation,omitempty"`
+    Table     string         `json:"table,omitempty"`
+    TenantID  string         `json:"tenant_id,omitempty"`
+}
+```
+
+### ValidationErrors
+
+For input validation errors:
+
+```go
+type ValidationErrors []ValidationError
+
+type ValidationError struct {
+    Field   string `json:"field"`
+    Message string `json:"message"`
+    Code    string `json:"code,omitempty"`
+    Value   any    `json:"value,omitempty"`
+}
+```
+
+## Creating Module-Specific Errors
+
+Each module should create its own `errors.go` file that imports this package and defines domain-specific errors:
+
+### Example: Finance Module Errors
+
+```go
+// internal/core/finance/errors.go
+package finance
+
+import (
+    "net/http"
+    "github.com/niiniyare/erp/internal/shared/errors"
+)
+
+// Finance-specific error codes
+const (
+    CodeAccountNotFound     = "ACCOUNT_NOT_FOUND"
+    CodeInvalidTransaction  = "INVALID_TRANSACTION"
+    CodeInsufficientFunds   = "INSUFFICIENT_FUNDS"
+)
+
+// Predefined finance errors
+var (
+    ErrAccountNotFound = errors.NewBusinessError(CodeAccountNotFound, "Account not found").
+        WithHTTPStatus(http.StatusNotFound).
+        WithCategory(errors.CategoryBusiness).
+        WithSuggestion("Verify the account ID").
+        WithSuggestion("Check if the account exists in your chart of accounts")
+    
+    ErrInsufficientFunds = errors.NewBusinessError(CodeInsufficientFunds, "Insufficient funds").
+        WithHTTPStatus(http.StatusConflict).
+        WithCategory(errors.CategoryBusiness).
+        WithSuggestion("Check account balance before transaction")
+)
+
+// Contextual constructors
+func NewAccountNotFoundError(accountID string) *errors.BusinessError {
+    return errors.NewBusinessError(CodeAccountNotFound, "Account not found").
+        WithHTTPStatus(http.StatusNotFound).
+        WithCategory(errors.CategoryBusiness).
+        WithDetail("account_id", accountID).
+        WithSuggestion("Verify the account ID is correct")
+}
+
+func NewInsufficientFundsError(accountID string, required, available float64) *errors.BusinessError {
+    return errors.NewBusinessError(CodeInsufficientFunds, "Insufficient funds").
+        WithHTTPStatus(http.StatusConflict).
+        WithCategory(errors.CategoryBusiness).
+        WithDetail("account_id", accountID).
+        WithDetail("required_amount", required).
+        WithDetail("available_amount", available).
+        WithSuggestion("Check account balance before proceeding")
+}
+
+// Checking functions
+func IsAccountNotFound(err error) bool {
+    return errors.IsBusinessErrorCode(err, CodeAccountNotFound)
+}
+
+func IsInsufficientFunds(err error) bool {
+    return errors.IsBusinessErrorCode(err, CodeInsufficientFunds)
+}
+```
+
+### Example: IAM Module Errors
+
+```go
+// internal/core/iam/errors.go
+package iam
+
+import (
+    "net/http"
+    "github.com/niiniyare/erp/internal/shared/errors"
+)
+
+// IAM-specific error codes
+const (
+    CodeSessionExpired     = "SESSION_EXPIRED"
+    CodeInvalidToken       = "INVALID_TOKEN"
+    CodePermissionDenied   = "PERMISSION_DENIED"
+)
+
+// Predefined IAM errors
+var (
+    ErrSessionExpired = errors.NewBusinessError(CodeSessionExpired, "Session has expired").
+        WithHTTPStatus(http.StatusUnauthorized).
+        WithCategory(errors.CategorySecurity).
+        WithSuggestion("Please log in again")
+    
+    ErrPermissionDenied = errors.NewBusinessError(CodePermissionDenied, "Permission denied").
+        WithHTTPStatus(http.StatusForbidden).
+        WithCategory(errors.CategorySecurity).
+        WithSuggestion("Contact your administrator for access")
+)
+
+// Contextual constructors
+func NewInvalidTokenError(tokenType string) *errors.BusinessError {
+    return errors.NewBusinessError(CodeInvalidToken, "Invalid token").
+        WithHTTPStatus(http.StatusUnauthorized).
+        WithCategory(errors.CategorySecurity).
+        WithDetail("token_type", tokenType).
+        WithSuggestion("Obtain a new token and try again")
+}
+```
+
+## Common Patterns
+
+### Basic Error Creation
+
+```go
+// Simple business error
+err := errors.NewBusinessError("CUSTOM_ERROR", "Something went wrong").
+    WithHTTPStatus(http.StatusBadRequest).
+    WithCategory(errors.CategoryBusiness)
+
+// With context and details
+err := errors.NewBusinessErrorWithContext(ctx, "USER_ACTION_FAILED", "User action failed").
+    WithDetail("action", "update_profile").
+    WithDetail("user_id", userID).
+    WithSuggestion("Try again later")
+
+// Repository error
+err := errors.NewRepositoryError("QUERY_FAILED", "Database query failed", originalErr).
+    WithOperation("SELECT").
+    WithTable("users")
+```
+
+### Error Checking
+
+```go
+// Check specific error codes
+if errors.IsBusinessErrorCode(err, "ACCOUNT_NOT_FOUND") {
+    // Handle account not found
+}
+
+// Check error categories
+if be, ok := err.(*errors.BusinessError); ok {
+    switch be.Category {
+    case errors.CategorySecurity:
+        // Handle security errors
+    case errors.CategoryValidation:
+        // Handle validation errors
+    }
+}
+
+// Use utility functions
+if errors.IsTemporary(err) {
+    // Retry the operation
+}
+
+if errors.IsConflict(err) {
+    // Handle conflict errors
+}
+```
+
+### Validation Errors
+
+```go
+var validationErrs errors.ValidationErrors
+
+// Add validation errors
+validationErrs.Add("email", "Invalid email format")
+validationErrs.AddWithCode("password", "Password too short", "TOO_SHORT")
+validationErrs.AddWithValue("age", "Must be 18 or older", "INVALID_RANGE", 15)
+
+// Check and return
+if validationErrs.HasErrors() {
+    return validationErrs
+}
+```
+
+## HTTP Integration
+
+### Automatic HTTP Response
+
+```go
+func HandleError(w http.ResponseWriter, err error) {
+    httpErr := errors.ToHTTPError(err)
+    
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(httpErr.Status)
+    json.NewEncoder(w).Encode(httpErr)
+}
+```
+
+### Middleware Integration
+
+```go
+func ErrorMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        defer func() {
+            if recovered := recover(); recovered != nil {
+                err := errors.NewBusinessError("INTERNAL_PANIC", "Unexpected error").
+                    WithHTTPStatus(http.StatusInternalServerError).
+                    WithCategory(errors.CategorySystem).
+                    WithSeverity(errors.SeverityCritical)
+                
+                HandleError(w, err)
+            }
+        }()
+        
+        next.ServeHTTP(w, r)
+    })
+}
+```
+
+## Testing Patterns
+
+### Testing Error Types
+
+```go
+func TestFinanceErrors(t *testing.T) {
+    // Test error creation
+    err := NewAccountNotFoundError("acc_123")
+    assert.True(t, IsAccountNotFound(err))
+    
+    // Test error details
+    be, ok := err.(*errors.BusinessError)
+    require.True(t, ok)
+    assert.Equal(t, "ACCOUNT_NOT_FOUND", be.Code)
+    assert.Equal(t, http.StatusNotFound, be.HTTPStatus)
+    assert.Equal(t, "acc_123", be.Details["account_id"])
+    
+    // Test HTTP conversion
+    httpErr := errors.ToHTTPError(err)
+    assert.Equal(t, http.StatusNotFound, httpErr.Status)
+    assert.Equal(t, "ACCOUNT_NOT_FOUND", httpErr.Code)
+}
+```
+
+### Testing Error Checking
+
+```go
+func TestErrorChecking(t *testing.T) {
+    err := NewInsufficientFundsError("acc_123", 100.0, 50.0)
+    
+    // Test specific checks
+    assert.True(t, IsInsufficientFunds(err))
+    assert.False(t, IsAccountNotFound(err))
+    
+    // Test utility checks
+    assert.True(t, errors.IsConflict(err))
+    assert.False(t, errors.IsTemporary(err))
+}
+```
+
+## Migration Guide
+
+### From Simple Errors
+
+```go
+// Before: Simple errors
+var ErrUserNotFound = errors.New("user not found")
+
+// After: Rich business errors (in module-specific errors.go)
+var ErrUserNotFound = errors.NewBusinessError("USER_NOT_FOUND", "User not found").
+    WithHTTPStatus(http.StatusNotFound).
+    WithCategory(errors.CategorySecurity)
+```
+
+### Gradual Migration Strategy
+
+1. **Phase 1**: Continue using existing errors (100% backward compatible)
+2. **Phase 2**: Create module-specific `errors.go` files using this package
+3. **Phase 3**: Gradually replace simple errors with rich business errors
+4. **Phase 4**: Add contextual constructors and enhanced checking
+
+### Best Practices
+
+#### ✅ Do
+
+- Create module-specific `errors.go` files
+- Use contextual error constructors
+- Include helpful suggestions for users
+- Add relevant details for debugging
+- Use appropriate HTTP status codes
+- Test error handling thoroughly
+
+#### ❌ Don't
+
+- Put all errors in this shared package
+- Create errors without context
+- Expose internal implementation details in error messages
+- Use generic error messages
+- Ignore error categories and severity
+
+## Available Utilities
+
+### Error Checking Functions
+
+```go
+errors.IsBusinessErrorCode(err, "CODE")     // Check specific error code
+errors.IsTemporary(err)                     // Check if retryable
+errors.IsConflict(err)                      // Check for conflict errors
+errors.IsValidationError(err)               // Check for validation errors
+errors.IsNotFoundError(err)                 // Check for any "not found" error
+errors.IsAuthenticationError(err)           // Check for auth errors
+errors.IsSecurityError(err)                 // Check for security category
+errors.IsTenantError(err)                   // Check for tenant category
+```
+
+### Error Utilities
+
+```go
+errors.GetErrorCode(err)                    // Extract error code
+errors.GetHTTPStatus(err)                   // Extract HTTP status
+errors.GetErrorSummary(err)                 // Get debug summary
+errors.GetErrorChain(err)                   // Get wrapped error chain
+errors.FormatErrorCodes(errs)               // Format multiple error codes
+errors.FilterRetryableErrors(errs)          // Filter retryable errors
+```
+
+### Error Constants
+
+```go
+// Categories
+errors.CategoryValidation, errors.CategorySecurity, 
+errors.CategoryBusiness, errors.CategoryTenant, etc.
+
+// Severity Levels  
+errors.SeverityInfo, errors.SeverityWarning,
+errors.SeverityError, errors.SeverityCritical
+
+// Common Error Codes
+errors.CodeUserNotFound, errors.CodeInvalidInput,
+errors.CodeUnauthorized, errors.CodeForbidden, etc.
+```
+
+This shared errors package provides a solid foundation for building consistent, rich error handling across the entire Awo ERP system while allowing each module to define its own domain-specific errors.
 
 ## Backward Compatibility
 
