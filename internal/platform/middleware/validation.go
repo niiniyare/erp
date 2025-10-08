@@ -374,8 +374,12 @@ func (m *ValidationMiddleware) validateAndSanitizeBody(ctx context.Context, r *h
 		}
 
 		if m.config.LogSuspiciousRequests {
+			previewLen := len(bodyStr)
+			if previewLen > 500 {
+				previewLen = 500
+			}
 			m.logger.WarnContext(ctx, "Suspicious content detected in request body", logger.Fields{
-				"content_preview": bodyStr[:min(500, len(bodyStr))],
+				"content_preview": bodyStr[:previewLen],
 				"url":             r.URL.Path,
 				"method":          r.Method,
 			})
@@ -553,7 +557,7 @@ func (m *ValidationMiddleware) handleValidationError(ctx context.Context, w http
 		"error":      err.Error(),
 		"method":     r.Method,
 		"url":        r.URL.Path,
-		"client_ip":  getClientIP(r),
+		"client_ip":  r.RemoteAddr,
 	})
 
 	m.recordValidationMetrics(ctx, fmt.Sprintf("%s:%s", r.Method, r.URL.Path), "failed_"+errorType, time.Since(startTime))
@@ -587,9 +591,3 @@ func (m *ValidationMiddleware) recordValidationMetrics(ctx context.Context, endp
 	}
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}

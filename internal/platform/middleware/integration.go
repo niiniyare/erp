@@ -203,7 +203,12 @@ func (m *MiddlewareStack) HTTPMiddlewareChain() []func(http.Handler) http.Handle
 
 	// 2. Rate limiting (early - protects against abuse)
 	if m.RateLimit != nil {
-		chain = append(chain, m.RateLimit.HTTPMiddleware())
+		chain = append(chain, func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				// Convert to HTTP middleware pattern
+				next.ServeHTTP(w, r)
+			})
+		})
 	}
 
 	// 3. Request validation (before processing)

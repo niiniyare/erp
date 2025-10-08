@@ -361,7 +361,7 @@ func (m *AuthorizationMiddleware) HTTPMiddleware() func(http.Handler) http.Handl
 			if m.config.EmergencyBypass && m.hasEmergencyAccess(r) {
 				m.logger.WarnContext(ctx, "Emergency access granted", logger.Fields{
 					"endpoint":  endpoint,
-					"client_ip": getClientIP(r),
+					"client_ip": r.RemoteAddr,
 				})
 				m.recordAuthzMetrics(ctx, "http", r.Method, "emergency", time.Since(start))
 				next.ServeHTTP(w, r.WithContext(ctx))

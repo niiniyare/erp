@@ -104,7 +104,7 @@ func TestExtractTenantID(t *testing.T) {
 				req.Header.Set(key, value)
 			}
 
-			result, err := extractTenantID(req)
+			result, err := extractTenantIDFromHTTPRequest(req)
 
 			if tt.expectError {
 				if err == nil {

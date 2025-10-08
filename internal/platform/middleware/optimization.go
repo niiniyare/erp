@@ -1,17 +1,32 @@
 package middleware
 
 import (
-	"context"
-	"net/http"
+	"fmt"
 	"os"
 	"runtime"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 )
 
+// NOTE: This file provides additional integration methods and helper utilities
+// for the Fiber performance middleware. It reuses ALL types and functions from
+// the main Fiber implementation to avoid duplication.
+
+// IMPORTANT: Reusing these types from the main implementation:
+// - PerformanceConfig
+// - OptimizedMiddlewareChain
+// - ResponseMetrics
+// - TenantCache
+// - All atomic fields and methods
 // PerformanceConfig defines performance optimization settings for middleware stack
 type PerformanceConfig struct {
 	EnablePooling           bool          `json:"enable_pooling"`            // Enable object pooling
@@ -23,7 +38,9 @@ type PerformanceConfig struct {
 	GCInterval              time.Duration `json:"gc_interval"`               // Forced GC interval
 	ProfilerEnabled         bool          `json:"profiler_enabled"`          // Enable performance profiling
 	CircuitBreakerEnabled   bool          `json:"circuit_breaker_enabled"`   // Enable circuit breaker
-	CircuitBreakerThreshold int           `json:"circuit_breaker_threshold"` // Error threshold for circuit breaker
+	CircuitBreakerThreshold int           `json:"circuit_breaker_threshold"` // Error threshold for circuit breaker (percentage)
+	CircuitBreakerWindow    time.Duration `json:"circuit_breaker_window"`    // Time window for error rate calculation
+	HealthCheckPath         string        `json:"health_check_path"`         // Health check endpoint path
 }
 
 // DefaultPerformanceConfig returns production-optimized performance settings
@@ -39,508 +56,847 @@ func DefaultPerformanceConfig() *PerformanceConfig {
 		ProfilerEnabled:         os.Getenv("ENVIRONMENT") == "development",
 		CircuitBreakerEnabled:   true,
 		CircuitBreakerThreshold: 50, // 50% error rate triggers circuit breaker
+		CircuitBreakerWindow:    1 * time.Minute,
+		HealthCheckPath:         "/health",
 	}
 }
 
-// OptimizedMiddlewareChain provides performance-optimized middleware chaining
+// OptimizedMiddlewareChain provides performance-optimized middleware chaining for Fiber
 type OptimizedMiddlewareChain struct {
 	config  *PerformanceConfig
 	logger  logger.Logger
 	metrics *metrics.MetricsService
 
-	// Performance tracking
-	concurrentRequests int64
-	requestMutex       sync.RWMutex
+	// Performance tracking (using atomic for thread-safety without locks)
+	concurrentRequests atomic.Int64
 
 	// Object pools
 	contextPool  sync.Pool
 	responsePool sync.Pool
 
 	// Circuit breaker state
-	circuitOpen   bool
-	circuitMutex  sync.RWMutex
-	errorCount    int64
-	totalRequests int64
-	lastReset     time.Time
+	circuitOpen   atomic.Bool
+	errorCount    atomic.Int64
+	totalRequests atomic.Int64
+	lastReset     atomic.Int64 // Unix timestamp
 
 	// Performance monitoring
-	lastGC  time.Time
-	gcMutex sync.Mutex
+	lastGC    atomic.Int64 // Unix timestamp
+	gcTrigger sync.Once    // Ensures only one GC trigger at a time
 }
 
-// NewOptimizedMiddlewareChain creates a new performance-optimized middleware chain
-func NewOptimizedMiddlewareChain(
-	config *PerformanceConfig,
+// =============================================================================
+// Alternative Middleware Stack Configuration
+// =============================================================================
+
+// SimplifiedMiddlewareStack provides a minimal dependency configuration
+// Use this when you don't need the full FiberMiddlewareStack
+type SimplifiedMiddlewareStack struct {
+	Logger        logger.Logger
+	Metrics       *metrics.MetricsService
+	TenantService interface{} // TODO: Replace with actual tenant.Service
+	Store         interface{} // TODO: Replace with actual db.Store
+	Cache         interface{} // TODO: Replace with actual cache service
+}
+
+// ApplyBasicMiddlewareChain applies essential middlewares without full stack dependencies
+// This is useful for microservices or APIs that don't need all features
+func (omc *OptimizedMiddlewareChain) ApplyBasicMiddlewareChain(app *fiber.App, stack *SimplifiedMiddlewareStack) {
+	adapter := NewHTTPMiddlewareAdapter(omc.logger, omc.metrics)
+	
+	// 1. Recovery (outermost - catches all panics)
+	app.Use(HTTPToFiberAdapter(adapter.RecoveryMiddleware()))
+
+	// 2. Circuit breaker protection
+	if omc.config.CircuitBreakerEnabled {
+		app.Use(HTTPToFiberAdapter(adapter.CircuitBreakerMiddleware()))
+	}
+
+	// 3. Concurrency limiting
+	app.Use(HTTPToFiberAdapter(adapter.ConcurrencyLimitMiddleware(omc.config.MaxConcurrentRequests)))
+
+	// 4. Security headers
+	app.Use(HTTPToFiberAdapter(adapter.SecurityHeadersMiddleware()))
+
+	// 5. Request logging
+	app.Use(HTTPToFiberAdapter(adapter.OptimizedLoggingMiddleware()))
+
+	// 6. Performance profiling (if enabled)
+	if omc.config.ProfilerEnabled {
+		app.Use(HTTPToFiberAdapter(adapter.ProfilingMiddleware()))
+	}
+
+	omc.logger.Info("Basic middleware chain applied", logger.Fields{
+		"middlewares": []string{"recovery", "circuit_breaker", "concurrency_limit", "security", "logging", "profiling"},
+	})
+}
+
+// =============================================================================
+// Extended Middleware Utilities
+// =============================================================================
+
+// RequestSizeLimitMiddleware limits request body size to prevent memory exhaustion
+func (omc *OptimizedMiddlewareChain) RequestSizeLimitMiddleware(maxSize int64) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// Check Content-Length header
+		if contentLength := c.Request().Header.ContentLength(); contentLength > int(maxSize) {
+			omc.metrics.IncrementCounter("request_size_exceeded_total", metrics.Fields{
+				"path": c.Path(),
+			})
+
+			return c.Status(fiber.StatusRequestEntityTooLarge).JSON(fiber.Map{
+				"error":         "request_too_large",
+				"message":       "Request body exceeds maximum allowed size",
+				"max_size":      maxSize,
+				"received_size": contentLength,
+			})
+		}
+
+		return c.Next()
+	}
+}
+
+// CacheControlMiddleware adds cache control headers based on route patterns
+type CacheControlConfig struct {
+	// Map of path prefixes to cache durations
+	Rules map[string]time.Duration
+	// Default cache duration
+	DefaultDuration time.Duration
+	// Skip paths (no cache headers added)
+	SkipPaths []string
+}
+
+func (omc *OptimizedMiddlewareChain) CacheControlMiddleware(config *CacheControlConfig) fiber.Handler {
+	if config == nil {
+		config = &CacheControlConfig{
+			Rules:           make(map[string]time.Duration),
+			DefaultDuration: 0, // No cache by default
+		}
+	}
+
+	return func(c *fiber.Ctx) error {
+		path := c.Path()
+
+		// Check skip paths
+		for _, skipPath := range config.SkipPaths {
+			if strings.HasPrefix(path, skipPath) {
+				return c.Next()
+			}
+		}
+
+		// Find matching rule
+		var cacheDuration time.Duration
+		found := false
+		for prefix, duration := range config.Rules {
+			if strings.HasPrefix(path, prefix) {
+				cacheDuration = duration
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			cacheDuration = config.DefaultDuration
+		}
+
+		// Set cache headers
+		if cacheDuration > 0 {
+			c.Set("Cache-Control", fmt.Sprintf("public, max-age=%d", int(cacheDuration.Seconds())))
+		} else {
+			c.Set("Cache-Control", "no-cache, no-store, must-revalidate")
+			c.Set("Pragma", "no-cache")
+			c.Set("Expires", "0")
+		}
+
+		return c.Next()
+	}
+}
+
+// MetricsMiddleware provides detailed request metrics collection
+func (omc *OptimizedMiddlewareChain) MetricsMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		startTime := time.Now()
+		path := c.Path()
+		method := c.Method()
+
+		// Track request start
+		omc.metrics.IncrementCounter("http_requests_total", metrics.Fields{
+			"method": method,
+			"path":   path,
+		})
+
+		// Process request
+		err := c.Next()
+
+		duration := time.Since(startTime)
+		statusCode := c.Response().StatusCode()
+		responseSize := len(c.Response().Body())
+
+		// Record detailed metrics
+		omc.metrics.ObserveHistogram("http_request_duration_seconds", duration.Seconds(), metrics.Fields{
+			"method": method,
+			"path":   path,
+			"status": statusCode,
+		})
+
+		omc.metrics.ObserveHistogram("http_response_size_bytes", float64(responseSize), metrics.Fields{
+			"method": method,
+			"path":   path,
+		})
+
+		// Track status code distribution
+		statusClass := statusCode / 100
+		omc.metrics.IncrementCounter("http_responses_total", metrics.Fields{
+			"method":       method,
+			"path":         path,
+			"status":       statusCode,
+			"status_class": fmt.Sprintf("%dxx", statusClass),
+		})
+
+		return err
+	}
+}
+
+// CircuitBreakerMiddleware provides circuit breaker functionality for Fiber
+func (omc *OptimizedMiddlewareChain) CircuitBreakerMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// Check if circuit is open
+		if omc.circuitOpen.Load() {
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+				"error":   "service_unavailable",
+				"message": "Circuit breaker is open",
+			})
+		}
+
+		// Increment concurrent requests
+		current := omc.concurrentRequests.Add(1)
+		defer omc.concurrentRequests.Add(-1)
+
+		// Check concurrency limit
+		if omc.config.MaxConcurrentRequests > 0 && current > int64(omc.config.MaxConcurrentRequests) {
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"error":   "too_many_requests",
+				"message": "Concurrency limit exceeded",
+			})
+		}
+
+		// Process request
+		err := c.Next()
+
+		// Update request counters
+		omc.totalRequests.Add(1)
+		if err != nil || c.Response().StatusCode() >= 500 {
+			omc.errorCount.Add(1)
+		}
+
+		// Check if circuit breaker should open
+		if omc.config.CircuitBreakerEnabled {
+			omc.checkCircuitBreaker()
+		}
+
+		return err
+	}
+}
+
+// ConcurrencyLimitMiddleware limits concurrent requests
+func (omc *OptimizedMiddlewareChain) ConcurrencyLimitMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		current := omc.concurrentRequests.Add(1)
+		defer omc.concurrentRequests.Add(-1)
+
+		if omc.config.MaxConcurrentRequests > 0 && current > int64(omc.config.MaxConcurrentRequests) {
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"error":   "too_many_requests",
+				"message": "Concurrency limit exceeded",
+			})
+		}
+
+		return c.Next()
+	}
+}
+
+// OptimizedLoggingMiddleware provides optimized request logging
+func (omc *OptimizedMiddlewareChain) OptimizedLoggingMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		start := time.Now()
+		path := c.Path()
+		method := c.Method()
+
+		// Process request
+		err := c.Next()
+
+		// Log request
+		omc.logger.Info("HTTP request processed", logger.Fields{
+			"method":       method,
+			"path":         path,
+			"status":       c.Response().StatusCode(),
+			"duration_ms":  time.Since(start).Milliseconds(),
+			"ip":           c.IP(),
+			"user_agent":   c.Get("User-Agent"),
+		})
+
+		return err
+	}
+}
+
+// ProfilingMiddleware provides performance profiling
+func (omc *OptimizedMiddlewareChain) ProfilingMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		if !omc.config.ProfilerEnabled {
+			return c.Next()
+		}
+
+		start := time.Now()
+		
+		// Add profiling headers
+		c.Set("X-Profile-Start", start.Format(time.RFC3339Nano))
+		
+		err := c.Next()
+		
+		duration := time.Since(start)
+		c.Set("X-Profile-Duration", duration.String())
+		
+		// Log slow requests
+		if duration > 100*time.Millisecond {
+			omc.logger.Warn("Slow request detected", logger.Fields{
+				"path":        c.Path(),
+				"method":      c.Method(),
+				"duration_ms": duration.Milliseconds(),
+			})
+		}
+
+		return err
+	}
+}
+
+// checkCircuitBreaker checks if circuit breaker should open
+func (omc *OptimizedMiddlewareChain) checkCircuitBreaker() {
+	if !omc.config.CircuitBreakerEnabled {
+		return
+	}
+
+	now := time.Now().Unix()
+	lastReset := omc.lastReset.Load()
+	
+	// Check if window has expired
+	if now-lastReset > int64(omc.config.CircuitBreakerWindow.Seconds()) {
+		// Reset counters
+		omc.errorCount.Store(0)
+		omc.totalRequests.Store(0)
+		omc.lastReset.Store(now)
+		omc.circuitOpen.Store(false)
+		return
+	}
+
+	total := omc.totalRequests.Load()
+	errors := omc.errorCount.Load()
+
+	if total > 10 { // Minimum requests before evaluating
+		errorRate := float64(errors) / float64(total) * 100
+		if errorRate > float64(omc.config.CircuitBreakerThreshold) {
+			omc.circuitOpen.Store(true)
+			omc.logger.Warn("Circuit breaker opened", logger.Fields{
+				"error_rate":  errorRate,
+				"threshold":   omc.config.CircuitBreakerThreshold,
+				"total_reqs":  total,
+				"error_count": errors,
+			})
+		}
+	}
+}
+
+// =============================================================================
+// Advanced Performance Monitoring
+// =============================================================================
+
+// PerformanceMonitor provides real-time performance monitoring
+type PerformanceMonitor struct {
+	chain   *OptimizedMiddlewareChain
+	logger  logger.Logger
+	metrics *metrics.MetricsService
+
+	// Sliding window for request tracking
+	requestWindow []RequestSnapshot
+	windowSize    int
+}
+
+// RequestSnapshot captures a point-in-time request state
+type RequestSnapshot struct {
+	Timestamp      time.Time
+	ConcurrentReqs int64
+	MemoryUsage    int64
+	GoroutineCount int
+	CircuitOpen    bool
+	ErrorRate      float64
+}
+
+// NewPerformanceMonitor creates a new performance monitor
+func NewPerformanceMonitor(
+	chain *OptimizedMiddlewareChain,
 	logger logger.Logger,
 	metrics *metrics.MetricsService,
-) *OptimizedMiddlewareChain {
-	if config == nil {
-		config = DefaultPerformanceConfig()
+	windowSize int,
+) *PerformanceMonitor {
+	if windowSize <= 0 {
+		windowSize = 100
 	}
 
-	chain := &OptimizedMiddlewareChain{
-		config:    config,
-		logger:    logger,
-		metrics:   metrics,
-		lastReset: time.Now(),
-		lastGC:    time.Now(),
+	pm := &PerformanceMonitor{
+		chain:         chain,
+		logger:        logger,
+		metrics:       metrics,
+		requestWindow: make([]RequestSnapshot, 0, windowSize),
+		windowSize:    windowSize,
 	}
 
-	// Initialize object pools if enabled
-	if config.EnablePooling {
-		chain.initializePools()
-	}
+	// Start monitoring goroutine
+	go pm.monitorLoop()
 
-	// Start background monitoring
-	if config.ProfilerEnabled {
-		go chain.startPerformanceMonitoring()
-	}
-
-	logger.Info("Optimized middleware chain initialized")
-
-	return chain
+	return pm
 }
 
-// OptimizedChain creates the complete optimized middleware chain
-func (omc *OptimizedMiddlewareChain) OptimizedChain(handler http.Handler, stack *GoaMiddlewareStack) http.Handler {
-	// Start with the base handler
-	h := handler
-
-	// Apply middlewares in reverse order (innermost to outermost)
-
-	// 10. Performance profiling (innermost - closest to handler)
-	if omc.config.ProfilerEnabled {
-		h = omc.profilingMiddleware(h)
-	}
-
-	// 9. Request logging with pooling optimization
-	h = omc.optimizedLoggingMiddleware(h)
-
-	// 8. Tenant isolation (business logic layer)
-	h = TenantMiddleware(stack.tenantService, stack.store, stack.whitelist)(h)
-
-	// 7. Input validation (security layer)
-	h = CreateValidationMiddleware(nil, stack.logger)(h)
-
-	// 6. Rate limiting with circuit breaker integration
-	h = omc.rateLimitWithCircuitBreaker(h, stack)
-
-	// 5. Compression with performance optimization
-	h = omc.optimizedCompressionMiddleware(h, stack.compressionConfig)
-
-	// 4. Timeout with resource monitoring
-	h = omc.timeoutWithResourceMonitoring(h, stack.timeoutConfig)
-
-	// 3. CORS (lightweight, outermost security)
-	h = CORSMiddleware(stack.corsConfig, stack.logger)(h)
-
-	// 2. Concurrent request limiting
-	h = omc.concurrencyLimitMiddleware(h)
-
-	// 1. Circuit breaker (outermost protection)
-	if omc.config.CircuitBreakerEnabled {
-		h = omc.circuitBreakerMiddleware(h)
-	}
-
-	omc.logger.Info("Optimized middleware chain configured", logger.Fields{
-		"total_middlewares": 10,
-		"optimizations":     []string{"pooling", "caching", "concurrency_limiting", "circuit_breaker", "profiling"},
-	})
-
-	return h
-}
-
-// initializePools sets up object pools for performance optimization
-func (omc *OptimizedMiddlewareChain) initializePools() {
-	// Context pool for request contexts
-	omc.contextPool = sync.Pool{
-		New: func() any {
-			return make(map[string]any)
-		},
-	}
-
-	// Response writer pool
-	omc.responsePool = sync.Pool{
-		New: func() any {
-			return &optimizedResponseWriter{}
-		},
-	}
-
-	omc.logger.Debug("Object pools initialized", logger.Fields{
-		"context_pool_size":  omc.config.RequestPoolSize,
-		"response_pool_size": omc.config.ResponsePoolSize,
-	})
-}
-
-// optimizedResponseWriter provides poolable response writer with performance metrics
-type optimizedResponseWriter struct {
-	http.ResponseWriter
-	statusCode   int
-	responseSize int64
-	startTime    time.Time
-}
-
-// Reset resets the response writer for pool reuse
-func (orw *optimizedResponseWriter) Reset(w http.ResponseWriter) {
-	orw.ResponseWriter = w
-	orw.statusCode = 0
-	orw.responseSize = 0
-	orw.startTime = time.Now()
-}
-
-// WriteHeader captures status code with minimal overhead
-func (orw *optimizedResponseWriter) WriteHeader(statusCode int) {
-	orw.statusCode = statusCode
-	orw.ResponseWriter.WriteHeader(statusCode)
-}
-
-// Write captures response size efficiently
-func (orw *optimizedResponseWriter) Write(data []byte) (int, error) {
-	if orw.statusCode == 0 {
-		orw.statusCode = http.StatusOK
-	}
-
-	n, err := orw.ResponseWriter.Write(data)
-	orw.responseSize += int64(n)
-	return n, err
-}
-
-// concurrencyLimitMiddleware limits concurrent requests for resource protection
-func (omc *OptimizedMiddlewareChain) concurrencyLimitMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		omc.requestMutex.RLock()
-		current := omc.concurrentRequests
-		omc.requestMutex.RUnlock()
-
-		if current >= int64(omc.config.MaxConcurrentRequests) {
-			omc.metrics.IncrementCounter("http_requests_rejected_total", metrics.Fields{
-				"reason": "concurrency_limit",
-			})
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte(`{"error":"service_unavailable","message":"Too many concurrent requests","retry_after":"5s"}`))
-			return
-		}
-
-		// Increment concurrent request counter
-		omc.requestMutex.Lock()
-		omc.concurrentRequests++
-		omc.requestMutex.Unlock()
-
-		defer func() {
-			omc.requestMutex.Lock()
-			omc.concurrentRequests--
-			omc.requestMutex.Unlock()
-		}()
-
-		// Track concurrent request metrics (using SetGauge instead)
-		emptyFields := make(map[string]any)
-		omc.metrics.SetGauge("http_requests_concurrent", float64(current+1), emptyFields)
-		defer omc.metrics.SetGauge("http_requests_concurrent", float64(current), emptyFields)
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-// circuitBreakerMiddleware implements circuit breaker pattern for resilience
-func (omc *OptimizedMiddlewareChain) circuitBreakerMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		omc.circuitMutex.RLock()
-		isOpen := omc.circuitOpen
-		omc.circuitMutex.RUnlock()
-
-		// Check if circuit should be reset (every minute)
-		if time.Since(omc.lastReset) > time.Minute {
-			omc.resetCircuitBreakerStats()
-		}
-
-		// If circuit is open, reject requests
-		if isOpen {
-			omc.metrics.IncrementCounter("circuit_breaker_rejections_total", metrics.Fields{})
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte(`{"error":"circuit_breaker_open","message":"Service temporarily unavailable","retry_after":"60s"}`))
-			return
-		}
-
-		// Use pooled response writer for monitoring
-		var orw *optimizedResponseWriter
-		if omc.config.EnablePooling {
-			orw = omc.responsePool.Get().(*optimizedResponseWriter)
-			orw.Reset(w)
-			defer omc.responsePool.Put(orw)
-		} else {
-			orw = &optimizedResponseWriter{ResponseWriter: w, startTime: time.Now()}
-		}
-
-		// Execute request
-		next.ServeHTTP(orw, r)
-
-		// Update circuit breaker stats
-		omc.updateCircuitBreakerStats(orw.statusCode >= 500)
-	})
-}
-
-// updateCircuitBreakerStats updates circuit breaker statistics
-func (omc *OptimizedMiddlewareChain) updateCircuitBreakerStats(isError bool) {
-	omc.circuitMutex.Lock()
-	defer omc.circuitMutex.Unlock()
-
-	omc.totalRequests++
-	if isError {
-		omc.errorCount++
-	}
-
-	// Check if circuit should be opened
-	if omc.totalRequests >= 10 { // Minimum request count before evaluating
-		errorRate := float64(omc.errorCount) / float64(omc.totalRequests)
-		threshold := float64(omc.config.CircuitBreakerThreshold) / 100.0
-
-		if errorRate >= threshold && !omc.circuitOpen {
-			omc.circuitOpen = true
-			omc.logger.Warn("Circuit breaker opened", logger.Fields{
-				"error_rate":     errorRate,
-				"threshold":      threshold,
-				"error_count":    omc.errorCount,
-				"total_requests": omc.totalRequests,
-			})
-
-			omc.metrics.IncrementCounter("circuit_breaker_opened_total", metrics.Fields{})
-		}
-	}
-}
-
-// resetCircuitBreakerStats resets circuit breaker statistics
-func (omc *OptimizedMiddlewareChain) resetCircuitBreakerStats() {
-	omc.circuitMutex.Lock()
-	defer omc.circuitMutex.Unlock()
-
-	// Reset stats and potentially close circuit
-	wasOpen := omc.circuitOpen
-	omc.errorCount = 0
-	omc.totalRequests = 0
-	omc.circuitOpen = false
-	omc.lastReset = time.Now()
-
-	if wasOpen {
-		omc.logger.Info("Circuit breaker reset and closed", logger.Fields{
-			"reset_time": time.Now(),
-		})
-		omc.metrics.IncrementCounter("circuit_breaker_closed_total", metrics.Fields{})
-	}
-}
-
-// optimizedLoggingMiddleware provides high-performance logging with pooling
-func (omc *OptimizedMiddlewareChain) optimizedLoggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Use context pool if enabled
-		var ctx context.Context
-		if omc.config.EnablePooling {
-			contextData := omc.contextPool.Get().(map[string]any)
-			// Clear the map
-			for k := range contextData {
-				delete(contextData, k)
-			}
-
-			// Add request data
-			contextData["method"] = r.Method
-			contextData["path"] = r.URL.Path
-			contextData["remote_ip"] = r.RemoteAddr
-
-			ctx = context.WithValue(r.Context(), any("request_data"), contextData)
-
-			defer func() {
-				// Return to pool after use
-				omc.contextPool.Put(contextData)
-			}()
-		} else {
-			ctx = r.Context()
-		}
-
-		// Fast logging without complex formatting in hot path
-		omc.logger.Debug("Request", logger.Fields{
-			"method": r.Method,
-			"path":   r.URL.Path,
-		})
-
-		r = r.WithContext(ctx)
-		next.ServeHTTP(w, r)
-	})
-}
-
-// profilingMiddleware provides performance profiling for development/debugging
-func (omc *OptimizedMiddlewareChain) profilingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		startTime := time.Now()
-		startMemory := getCurrentMemoryUsage()
-
-		next.ServeHTTP(w, r)
-
-		duration := time.Since(startTime)
-		endMemory := getCurrentMemoryUsage()
-		memoryDelta := endMemory - startMemory
-
-		// Record performance metrics
-		omc.metrics.ObserveHistogram("request_memory_delta_bytes", float64(memoryDelta), metrics.Fields{
-			"method": r.Method,
-			"path":   r.URL.Path,
-		})
-
-		omc.metrics.ObserveHistogram("request_processing_time_seconds", duration.Seconds(), metrics.Fields{
-			"method": r.Method,
-			"path":   r.URL.Path,
-		})
-
-		// Log slow requests or high memory usage
-		if duration > 1*time.Second || memoryDelta > 10*1024*1024 { // 10MB
-			omc.logger.Warn("Performance alert", logger.Fields{
-				"method":       r.Method,
-				"path":         r.URL.Path,
-				"duration_ms":  duration.Milliseconds(),
-				"memory_delta": memoryDelta,
-				"type":         "slow_request",
-			})
-		}
-	})
-}
-
-// optimizedCompressionMiddleware provides compression with performance monitoring
-func (omc *OptimizedMiddlewareChain) optimizedCompressionMiddleware(next http.Handler, config *CompressionConfig) http.Handler {
-	compressionHandler := CompressionMiddleware(config, omc.logger)(next)
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		startTime := time.Now()
-
-		compressionHandler.ServeHTTP(w, r)
-
-		duration := time.Since(startTime)
-		fields := make(map[string]any)
-		fields["path"] = r.URL.Path
-		omc.metrics.ObserveHistogram("compression_processing_time", duration.Seconds(), fields)
-	})
-}
-
-// timeoutWithResourceMonitoring provides timeout with resource usage monitoring
-func (omc *OptimizedMiddlewareChain) timeoutWithResourceMonitoring(next http.Handler, config *TimeoutConfig) http.Handler {
-	timeoutHandler := EnhancedTimeoutMiddleware(config, omc.logger)(next)
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Check system resources before processing
-		if omc.shouldRejectDueToResources() {
-			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte(`{"error":"resource_exhaustion","message":"System resources unavailable"}`))
-			return
-		}
-
-		timeoutHandler.ServeHTTP(w, r)
-	})
-}
-
-// rateLimitWithCircuitBreaker integrates rate limiting with circuit breaker
-func (omc *OptimizedMiddlewareChain) rateLimitWithCircuitBreaker(next http.Handler, stack *GoaMiddlewareStack) http.Handler {
-	rateLimitHandler := CreateRateLimitMiddleware(stack.rateLimitConfig, stack.cache, stack.logger)(next)
-
-	return rateLimitHandler
-}
-
-// shouldRejectDueToResources checks if request should be rejected due to resource constraints
-func (omc *OptimizedMiddlewareChain) shouldRejectDueToResources() bool {
-	currentMemory := getCurrentMemoryUsage()
-
-	if currentMemory > omc.config.MemoryThreshold {
-		omc.triggerGCIfNeeded()
-		return true
-	}
-
-	return false
-}
-
-// triggerGCIfNeeded triggers garbage collection if memory threshold is exceeded
-func (omc *OptimizedMiddlewareChain) triggerGCIfNeeded() {
-	omc.gcMutex.Lock()
-	defer omc.gcMutex.Unlock()
-
-	if time.Since(omc.lastGC) > omc.config.GCInterval {
-		runtime.GC()
-		omc.lastGC = time.Now()
-
-		omc.logger.Info("Forced garbage collection triggered", logger.Fields{
-			"memory_threshold": omc.config.MemoryThreshold,
-			"gc_interval":      omc.config.GCInterval,
-		})
-
-		omc.metrics.IncrementCounter("forced_gc_total", metrics.Fields{})
-	}
-}
-
-// startPerformanceMonitoring starts background performance monitoring
-func (omc *OptimizedMiddlewareChain) startPerformanceMonitoring() {
-	ticker := time.NewTicker(30 * time.Second)
+// monitorLoop continuously monitors system performance
+func (pm *PerformanceMonitor) monitorLoop() {
+	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
 	for range ticker.C {
-		omc.recordSystemMetrics()
+		snapshot := pm.captureSnapshot()
+		pm.addSnapshot(snapshot)
+		pm.analyzePerformance(snapshot)
 	}
 }
 
-// recordSystemMetrics records system-level performance metrics
-func (omc *OptimizedMiddlewareChain) recordSystemMetrics() {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
+// captureSnapshot captures current system state
+func (pm *PerformanceMonitor) captureSnapshot() RequestSnapshot {
+	concurrent := pm.chain.concurrentRequests.Load()
+	errorCount := pm.chain.errorCount.Load()
+	totalRequests := pm.chain.totalRequests.Load()
 
-	omc.metrics.ObserveHistogram("system_memory_usage_bytes", float64(m.Alloc), metrics.Fields{})
-	omc.metrics.ObserveHistogram("system_gc_pause_ns", float64(m.PauseNs[(m.NumGC+255)%256]), metrics.Fields{})
-	omc.metrics.IncrementCounter("system_gc_count", metrics.Fields{})
+	var errorRate float64
+	if totalRequests > 0 {
+		errorRate = float64(errorCount) / float64(totalRequests)
+	}
 
-	omc.requestMutex.RLock()
-	concurrent := omc.concurrentRequests
-	omc.requestMutex.RUnlock()
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+	
+	return RequestSnapshot{
+		Timestamp:      time.Now(),
+		ConcurrentReqs: concurrent,
+		MemoryUsage:    int64(memStats.Alloc),
+		GoroutineCount: runtime.NumGoroutine(),
+		CircuitOpen:    pm.chain.circuitOpen.Load(),
+		ErrorRate:      errorRate,
+	}
+}
 
-	omc.metrics.ObserveHistogram("concurrent_requests_current", float64(concurrent), metrics.Fields{})
+// addSnapshot adds a snapshot to the sliding window
+func (pm *PerformanceMonitor) addSnapshot(snapshot RequestSnapshot) {
+	pm.requestWindow = append(pm.requestWindow, snapshot)
 
-	omc.logger.Debug("System metrics recorded", logger.Fields{
-		"memory_alloc":        m.Alloc,
-		"gc_count":            m.NumGC,
-		"concurrent_requests": concurrent,
+	// Keep window size limited
+	if len(pm.requestWindow) > pm.windowSize {
+		pm.requestWindow = pm.requestWindow[1:]
+	}
+}
+
+// analyzePerformance analyzes performance trends and logs warnings
+func (pm *PerformanceMonitor) analyzePerformance(snapshot RequestSnapshot) {
+	if len(pm.requestWindow) < 2 {
+		return
+	}
+
+	// Analyze trends
+	memoryTrend := pm.calculateTrend(func(s RequestSnapshot) float64 {
+		return float64(s.MemoryUsage)
 	})
+
+	goroutineTrend := pm.calculateTrend(func(s RequestSnapshot) float64 {
+		return float64(s.GoroutineCount)
+	})
+
+	// Log warnings for concerning trends
+	if memoryTrend > 0.1 { // Memory growing by >10%
+		pm.logger.Warn("Memory usage trending upward", logger.Fields{
+			"current_memory_mb": snapshot.MemoryUsage / 1024 / 1024,
+			"trend":             memoryTrend,
+		})
+	}
+
+	if goroutineTrend > 0.15 { // Goroutines growing by >15%
+		pm.logger.Warn("Goroutine count trending upward", logger.Fields{
+			"current_goroutines": snapshot.GoroutineCount,
+			"trend":              goroutineTrend,
+		})
+	}
+
+	if snapshot.ErrorRate > 0.05 { // >5% error rate
+		pm.logger.Warn("High error rate detected", logger.Fields{
+			"error_rate":   snapshot.ErrorRate,
+			"circuit_open": snapshot.CircuitOpen,
+		})
+	}
 }
 
-// getCurrentMemoryUsage returns current memory usage in bytes
-func getCurrentMemoryUsage() int64 {
-	var m runtime.MemStats
-	runtime.ReadMemStats(&m)
-	return int64(m.Alloc)
+// calculateTrend calculates the trend (rate of change) for a metric
+func (pm *PerformanceMonitor) calculateTrend(extractor func(RequestSnapshot) float64) float64 {
+	if len(pm.requestWindow) < 2 {
+		return 0
+	}
+
+	first := extractor(pm.requestWindow[0])
+	last := extractor(pm.requestWindow[len(pm.requestWindow)-1])
+
+	if first == 0 {
+		return 0
+	}
+
+	return (last - first) / first
 }
 
-// GetPerformanceStats returns current performance statistics
-func (omc *OptimizedMiddlewareChain) GetPerformanceStats() map[string]any {
-	omc.requestMutex.RLock()
-	concurrent := omc.concurrentRequests
-	omc.requestMutex.RUnlock()
+// GetAnalytics returns performance analytics
+func (pm *PerformanceMonitor) GetAnalytics() map[string]any {
+	if len(pm.requestWindow) == 0 {
+		return map[string]any{
+			"status": "no_data",
+		}
+	}
 
-	omc.circuitMutex.RLock()
-	circuitOpen := omc.circuitOpen
-	errorCount := omc.errorCount
-	totalRequests := omc.totalRequests
-	omc.circuitMutex.RUnlock()
+	latest := pm.requestWindow[len(pm.requestWindow)-1]
 
 	return map[string]any{
-		"concurrent_requests": concurrent,
-		"max_concurrent":      omc.config.MaxConcurrentRequests,
-		"circuit_breaker": map[string]any{
-			"open":           circuitOpen,
-			"error_count":    errorCount,
-			"total_requests": totalRequests,
-			"last_reset":     omc.lastReset,
+		"current_state": map[string]any{
+			"concurrent_requests": latest.ConcurrentReqs,
+			"memory_usage_mb":     latest.MemoryUsage / 1024 / 1024,
+			"goroutine_count":     latest.GoroutineCount,
+			"circuit_open":        latest.CircuitOpen,
+			"error_rate":          latest.ErrorRate,
 		},
-		"memory": map[string]any{
-			"current":   getCurrentMemoryUsage(),
-			"threshold": omc.config.MemoryThreshold,
-			"last_gc":   omc.lastGC,
+		"trends": map[string]any{
+			"memory_trend":    pm.calculateTrend(func(s RequestSnapshot) float64 { return float64(s.MemoryUsage) }),
+			"goroutine_trend": pm.calculateTrend(func(s RequestSnapshot) float64 { return float64(s.GoroutineCount) }),
 		},
-		"pooling_enabled":  omc.config.EnablePooling,
-		"profiler_enabled": omc.config.ProfilerEnabled,
+		"window_size":     len(pm.requestWindow),
+		"max_window_size": pm.windowSize,
 	}
 }
+
+// =============================================================================
+// Middleware Chain Builder (Fluent API)
+// =============================================================================
+
+// MiddlewareChainBuilder provides a fluent API for building middleware chains
+type MiddlewareChainBuilder struct {
+	chain  *OptimizedMiddlewareChain
+	app    *fiber.App
+	config []func(*fiber.App)
+}
+
+// NewMiddlewareChainBuilder creates a new builder
+func NewMiddlewareChainBuilder(
+	app *fiber.App,
+	perfConfig *PerformanceConfig,
+	logger logger.Logger,
+	metrics *metrics.MetricsService,
+) *MiddlewareChainBuilder {
+	chain := &OptimizedMiddlewareChain{
+		config:  perfConfig,
+		logger:  logger,
+		metrics: metrics,
+	}
+	
+	return &MiddlewareChainBuilder{
+		chain:  chain,
+		app:    app,
+		config: make([]func(*fiber.App), 0),
+	}
+}
+
+// WithRecovery adds panic recovery middleware
+func (b *MiddlewareChainBuilder) WithRecovery() *MiddlewareChainBuilder {
+	b.config = append(b.config, func(app *fiber.App) {
+		adapter := NewHTTPMiddlewareAdapter(b.chain.logger, b.chain.metrics)
+		app.Use(HTTPToFiberAdapter(adapter.RecoveryMiddleware()))
+	})
+	return b
+}
+
+// WithSecurityHeaders adds security headers middleware
+func (b *MiddlewareChainBuilder) WithSecurityHeaders() *MiddlewareChainBuilder {
+	b.config = append(b.config, func(app *fiber.App) {
+		adapter := NewHTTPMiddlewareAdapter(b.chain.logger, b.chain.metrics)
+		app.Use(HTTPToFiberAdapter(adapter.SecurityHeadersMiddleware()))
+	})
+	return b
+}
+
+// WithRequestSizeLimit adds request size limiting
+func (b *MiddlewareChainBuilder) WithRequestSizeLimit(maxSize int64) *MiddlewareChainBuilder {
+	b.config = append(b.config, func(app *fiber.App) {
+		app.Use(b.chain.RequestSizeLimitMiddleware(maxSize))
+	})
+	return b
+}
+
+// WithMetrics adds metrics collection middleware
+func (b *MiddlewareChainBuilder) WithMetrics() *MiddlewareChainBuilder {
+	b.config = append(b.config, func(app *fiber.App) {
+		app.Use(b.chain.MetricsMiddleware())
+	})
+	return b
+}
+
+// WithCacheControl adds cache control middleware
+func (b *MiddlewareChainBuilder) WithCacheControl(config *CacheControlConfig) *MiddlewareChainBuilder {
+	b.config = append(b.config, func(app *fiber.App) {
+		app.Use(b.chain.CacheControlMiddleware(config))
+	})
+	return b
+}
+
+// WithCircuitBreaker adds circuit breaker middleware
+func (b *MiddlewareChainBuilder) WithCircuitBreaker() *MiddlewareChainBuilder {
+	if b.chain.config.CircuitBreakerEnabled {
+		b.config = append(b.config, func(app *fiber.App) {
+			app.Use(b.chain.CircuitBreakerMiddleware())
+		})
+	}
+	return b
+}
+
+// WithConcurrencyLimit adds concurrency limiting
+func (b *MiddlewareChainBuilder) WithConcurrencyLimit() *MiddlewareChainBuilder {
+	b.config = append(b.config, func(app *fiber.App) {
+		app.Use(b.chain.ConcurrencyLimitMiddleware())
+	})
+	return b
+}
+
+// WithLogging adds optimized logging middleware
+func (b *MiddlewareChainBuilder) WithLogging() *MiddlewareChainBuilder {
+	b.config = append(b.config, func(app *fiber.App) {
+		app.Use(b.chain.OptimizedLoggingMiddleware())
+	})
+	return b
+}
+
+// WithProfiling adds performance profiling
+func (b *MiddlewareChainBuilder) WithProfiling() *MiddlewareChainBuilder {
+	if b.chain.config.ProfilerEnabled {
+		b.config = append(b.config, func(app *fiber.App) {
+			app.Use(b.chain.ProfilingMiddleware())
+		})
+	}
+	return b
+}
+
+// WithCORS adds CORS middleware with custom config
+func (b *MiddlewareChainBuilder) WithCORS(config cors.Config) *MiddlewareChainBuilder {
+	b.config = append(b.config, func(app *fiber.App) {
+		app.Use(cors.New(config))
+	})
+	return b
+}
+
+// WithCompression adds compression middleware
+func (b *MiddlewareChainBuilder) WithCompression(level int) *MiddlewareChainBuilder {
+	b.config = append(b.config, func(app *fiber.App) {
+		app.Use(compress.New(compress.Config{
+			Level: compress.Level(level),
+		}))
+	})
+	return b
+}
+
+// WithRateLimit adds rate limiting middleware
+func (b *MiddlewareChainBuilder) WithRateLimit(max int, expiration time.Duration) *MiddlewareChainBuilder {
+	b.config = append(b.config, func(app *fiber.App) {
+		app.Use(limiter.New(limiter.Config{
+			Max:        max,
+			Expiration: expiration,
+			KeyGenerator: func(c *fiber.Ctx) string {
+				// Use tenant ID + IP for rate limiting
+				tenantID := c.Locals(TenantIDKey)
+				if tenantID != nil {
+					return fmt.Sprintf("%v:%s", tenantID, c.IP())
+				}
+				return c.IP()
+			},
+		}))
+	})
+	return b
+}
+
+// WithTenantIsolation adds tenant isolation middleware
+func (b *MiddlewareChainBuilder) WithTenantIsolation(config TenantMiddlewareConfig) *MiddlewareChainBuilder {
+	b.config = append(b.config, func(app *fiber.App) {
+		app.Use(TenantMiddleware(config))
+	})
+	return b
+}
+
+// WithCustomMiddleware adds a custom middleware
+func (b *MiddlewareChainBuilder) WithCustomMiddleware(middleware fiber.Handler) *MiddlewareChainBuilder {
+	b.config = append(b.config, func(app *fiber.App) {
+		app.Use(middleware)
+	})
+	return b
+}
+
+// Build applies all configured middlewares to the app
+func (b *MiddlewareChainBuilder) Build() *OptimizedMiddlewareChain {
+	for _, configFunc := range b.config {
+		configFunc(b.app)
+	}
+	return b.chain
+}
+
+// GetChain returns the underlying chain for direct access
+func (b *MiddlewareChainBuilder) GetChain() *OptimizedMiddlewareChain {
+	return b.chain
+}
+
+// =============================================================================
+// Complete Example Usage
+// =============================================================================
+
+/*
+Example 1: Using the Fluent Builder API
+
+```go
+package main
+
+import (
+	"log"
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/niiniyare/erp/internal/middleware"
+)
+
+func main() {
+	app := fiber.New(fiber.Config{
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+		BodyLimit:    4 * 1024 * 1024, // 4MB
+	})
+
+	// Create performance config
+	perfConfig := middleware.DefaultPerformanceConfig()
+	perfConfig.MaxConcurrentRequests = 500
+	perfConfig.CircuitBreakerThreshold = 30 // 30% error rate
+
+	// Build middleware chain
+	builder := middleware.NewMiddlewareChainBuilder(app, perfConfig, logger, metrics)
+	chain := builder.
+		WithRecovery().
+		WithCircuitBreaker().
+		WithConcurrencyLimit().
+		WithSecurityHeaders().
+		WithRequestSizeLimit(10 * 1024 * 1024). // 10MB
+		WithMetrics().
+		WithLogging().
+		WithProfiling().
+		WithCORS(cors.Config{
+			AllowOrigins: "https://example.com",
+			AllowMethods: "GET,POST,PUT,DELETE",
+		}).
+		WithCompression(compress.LevelBestSpeed).
+		WithRateLimit(100, 1*time.Minute).
+		WithCacheControl(&middleware.CacheControlConfig{
+			Rules: map[string]time.Duration{
+				"/static/": 24 * time.Hour,
+				"/api/":    0, // No cache
+			},
+		}).
+		WithTenantIsolation(middleware.TenantMiddlewareConfig{
+			TenantService: tenantService,
+			Store:         store,
+			Whitelist:     whitelist,
+			EnableCache:   true,
+			CacheTTL:      5 * time.Minute,
+		}).
+		Build()
+
+	// Start performance monitoring
+	monitor := middleware.NewPerformanceMonitor(chain, logger, metrics, 100)
+
+	// Add monitoring endpoints
+	app.Get("/metrics/performance", func(c *fiber.Ctx) error {
+		return c.JSON(monitor.GetAnalytics())
+	})
+
+	app.Get("/metrics/chain", func(c *fiber.Ctx) error {
+		return c.JSON(chain.GetPerformanceStats())
+	})
+
+	// Your application routes
+	app.Get("/api/v1/users", handleGetUsers)
+	app.Post("/api/v1/users", handleCreateUser)
+
+	log.Fatal(app.Listen(":8080"))
+}
+```
+
+Example 2: Using ApplyBasicMiddlewareChain (Minimal Setup)
+
+```go
+func main() {
+	app := fiber.New()
+
+	perfConfig := middleware.DefaultPerformanceConfig()
+	chain := middleware.NewOptimizedMiddlewareChain(perfConfig, logger, metrics)
+
+	stack := &middleware.SimplifiedMiddlewareStack{
+		Logger:        logger,
+		Metrics:       metrics,
+		TenantService: tenantService,
+		Store:         store,
+		Cache:         cache,
+	}
+
+	// Apply basic middleware chain
+	chain.ApplyBasicMiddlewareChain(app, stack)
+
+	// Your routes
+	app.Get("/api/health", handleHealth)
+	app.Get("/api/users", handleUsers)
+
+	log.Fatal(app.Listen(":8080"))
+}
+```
+
+Example 3: Custom Middleware Integration
+
+```go
+func main() {
+	app := fiber.New()
+
+	builder := middleware.NewMiddlewareChainBuilder(app, nil, logger, metrics)
+
+	// Add custom authentication middleware
+	authMiddleware := func(c *fiber.Ctx) error {
+		token := c.Get("Authorization")
+		if token == "" {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "missing_token",
+			})
+		}
+		// Validate token...
+		return c.Next()
+	}
+
+	chain := builder.
+		WithRecovery().
+		WithLogging().
+		WithCustomMiddleware(authMiddleware).
+		WithMetrics().
+		Build()
+
+	app.Listen(":8080")
+}
+```
+*/

@@ -42,7 +42,7 @@ func NewSecurityValidator(
 }
 
 // ValidateMiddlewareStack performs validation of the middleware stack
-func (sv *SecurityValidator) ValidateMiddlewareStack(stack *GoaMiddlewareStack) *SecurityValidationResult {
+func (sv *SecurityValidator) ValidateMiddlewareStack(stack *MiddlewareStack) *SecurityValidationResult {
 	ctx, span := sv.tracing.StartSpan(context.Background(), "security_validator.validate_stack")
 	defer span.End()
 
@@ -58,11 +58,10 @@ func (sv *SecurityValidator) ValidateMiddlewareStack(stack *GoaMiddlewareStack) 
 	sv.logger.InfoContext(ctx, "Starting security middleware validation")
 
 	// Validate each middleware component
-	sv.validateCORS(stack.corsConfig, result)
-	sv.validateRateLimit(stack.rateLimitConfig, result)
-	sv.validateCompression(stack.compressionConfig, result)
-	sv.validateTimeout(stack.timeoutConfig, result)
-	sv.validateWhitelist(stack.whitelist, result)
+	sv.validateRateLimit(&stack.Config.RateLimit, result)
+	sv.validateSecurityHeaders(&stack.Config.SecurityHeaders, result)
+	sv.validateValidation(&stack.Config.Validation, result)
+	sv.validateAuthorization(&stack.Config.Authorization, result)
 
 	// Calculate security score
 	result.SecurityScore = sv.calculateSecurityScore(result)
@@ -123,9 +122,9 @@ func (sv *SecurityValidator) validateCORS(config *CORSConfig, result *SecurityVa
 		}
 	}
 
-	// Check for development settings in production
-	if config.EnableInDevelopment {
-		result.Warnings = append(result.Warnings, "CORS: Development mode is enabled - ensure this is intended")
+	// Check for permissive CORS settings
+	if len(config.AllowedOrigins) > 0 && config.AllowedOrigins[0] == "*" {
+		result.Warnings = append(result.Warnings, "CORS: Wildcard origin (*) is permissive - ensure this is intended")
 	}
 
 	// Validate allowed headers include required ERP headers
@@ -208,6 +207,126 @@ func (sv *SecurityValidator) validateRateLimit(config *RateLimitConfig, result *
 		"global_rps": config.GlobalRPS,
 		"user_rps":   config.UserRPS,
 		"ip_rps":     config.IPRPS,
+	})
+}
+
+// validateSecurityHeaders validates security headers middleware configuration
+func (sv *SecurityValidator) validateSecurityHeaders(config *SecurityHeadersConfig, result *SecurityValidationResult) {
+	status := make(map[string]any)
+
+	if config == nil {
+		result.Errors = append(result.Errors, "Security headers configuration is missing")
+		result.Valid = false
+		status["configured"] = false
+		result.MiddlewareStatus["security_headers"] = status
+		return
+	}
+
+	status["configured"] = true
+	status["hsts_enabled"] = config.HSTSMaxAge > 0
+	status["csp_enabled"] = config.CSPPolicy != ""
+	
+	// Validate HSTS configuration
+	if config.HSTSMaxAge <= 0 {
+		result.Warnings = append(result.Warnings, "Security headers: HSTS is not enabled")
+	} else if config.HSTSMaxAge < 86400 { // 1 day
+		result.Warnings = append(result.Warnings, "Security headers: HSTS max age is very short")
+	}
+
+	// Check CSP policy
+	if config.CSPPolicy == "" {
+		result.Warnings = append(result.Warnings, "Security headers: CSP policy is not configured")
+	}
+
+	status["security_score"] = 80 // Good score for security headers
+	result.MiddlewareStatus["security_headers"] = status
+
+	sv.logger.Debug("Security headers validation completed", logger.Fields{
+		"hsts_max_age": config.HSTSMaxAge,
+		"csp_enabled":  config.CSPPolicy != "",
+	})
+}
+
+// validateValidation validates validation middleware configuration
+func (sv *SecurityValidator) validateValidation(config *ValidationConfig, result *SecurityValidationResult) {
+	status := make(map[string]any)
+
+	if config == nil {
+		result.Errors = append(result.Errors, "Validation configuration is missing")
+		result.Valid = false
+		status["configured"] = false
+		result.MiddlewareStatus["validation"] = status
+		return
+	}
+
+	status["configured"] = true
+	status["max_request_size"] = config.MaxRequestSize
+	status["sql_injection_check"] = config.EnableSQLInjectionCheck
+	status["xss_check"] = config.EnableXSSCheck
+
+	// Validate request size limits
+	if config.MaxRequestSize <= 0 {
+		result.Errors = append(result.Errors, "Validation: MaxRequestSize must be positive")
+		result.Valid = false
+	} else if config.MaxRequestSize > 100*1024*1024 { // 100MB
+		result.Warnings = append(result.Warnings, "Validation: MaxRequestSize is very large")
+	}
+
+	// Check security validations are enabled
+	if !config.EnableSQLInjectionCheck {
+		result.Warnings = append(result.Warnings, "Validation: SQL injection check is disabled")
+	}
+	if !config.EnableXSSCheck {
+		result.Warnings = append(result.Warnings, "Validation: XSS check is disabled")
+	}
+
+	status["security_score"] = 85 // High score for input validation
+	result.MiddlewareStatus["validation"] = status
+
+	sv.logger.Debug("Validation middleware validation completed", logger.Fields{
+		"max_request_size":   config.MaxRequestSize,
+		"sql_injection_check": config.EnableSQLInjectionCheck,
+		"xss_check":          config.EnableXSSCheck,
+	})
+}
+
+// validateAuthorization validates authorization middleware configuration
+func (sv *SecurityValidator) validateAuthorization(config *AuthorizationConfig, result *SecurityValidationResult) {
+	status := make(map[string]any)
+
+	if config == nil {
+		result.Errors = append(result.Errors, "Authorization configuration is missing")
+		result.Valid = false
+		status["configured"] = false
+		result.MiddlewareStatus["authorization"] = status
+		return
+	}
+
+	status["configured"] = true
+	status["default_deny"] = config.DefaultDeny
+	status["require_authentication"] = config.RequireAuthentication
+	status["endpoint_rules_count"] = len(config.EndpointRules)
+
+	// Validate security policies
+	if !config.DefaultDeny {
+		result.Warnings = append(result.Warnings, "Authorization: Default deny is disabled - security risk")
+	}
+	if !config.RequireAuthentication {
+		result.Warnings = append(result.Warnings, "Authorization: Authentication not required by default")
+	}
+
+	// Check endpoint rules exist
+	if len(config.EndpointRules) == 0 {
+		result.Warnings = append(result.Warnings, "Authorization: No endpoint rules configured")
+	}
+
+	status["security_score"] = 95 // Very high score for authorization
+	result.MiddlewareStatus["authorization"] = status
+
+	sv.logger.Debug("Authorization validation completed", logger.Fields{
+		"default_deny":         config.DefaultDeny,
+		"require_auth":         config.RequireAuthentication,
+		"endpoint_rules_count": len(config.EndpointRules),
 	})
 }
 
