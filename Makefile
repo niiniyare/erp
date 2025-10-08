@@ -416,7 +416,7 @@ migrate-up: ## ⬆️ Run all up migrations
 .PHONY: migrate-down
 migrate-down: ## ⬇️ Roll back the last migration
 	@echo "$(YELLOW)Rolling back last migration...$(NC)"
-	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose down 1
+	@migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose down
 	@echo "$(YELLOW)⚠️ Migration rolled back$(NC)"
 
 .PHONY: migrate-drop

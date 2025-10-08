@@ -4,35 +4,6 @@
 
 The Financial Module is the core accounting and financial management system of the AWO ERP platform. It provides a production-ready, enterprise-grade double-entry bookkeeping system with  transaction processing, multi-currency support, and advanced validation frameworks. The module implements sophisticated business rules for financial compliance, audit trails, and real-time reporting.
 
-## Quick Start
-
-### Prerequisites
-- Go 1.21+
-- PostgreSQL 15+
-- Redis (for caching and performance)
-- Make (for build automation)
-
-### Database Setup
-```bash
-# Run financial module migrations
-make migrateup
-
-# Generate SQLC code for financial queries
-make sqlc
-```
-
-### Development Setup
-```bash
-# Install dependencies
-go mod download
-
-# Generate code (Goa, mocks)
-make proto goa mock
-
-# Run financial module tests
-make test-unit-finance
-```
-
 ## Architecture Overview
 
 ### Domain Model
@@ -150,54 +121,7 @@ This module implements  row-level security (RLS) for tenant isolation:
 - List with filters: Pagination, status filters, date ranges, amount ranges
 
 [Full API Reference →](api-reference.md)
-
-## Database Schema
-
-### Core Tables
-```sql
--- Chart of accounts with hierarchical structure
-finance_chart_of_accounts (
-    id UUID PRIMARY KEY,
-    tenant_id UUID NOT NULL,
-    account_code VARCHAR(50) NOT NULL,
-    account_name VARCHAR(255) NOT NULL,
-    account_type VARCHAR(50) NOT NULL,
-    root_type VARCHAR(50) NOT NULL,
-    parent_account_id UUID,
-    current_balance DECIMAL(15,4) DEFAULT 0,
-    is_active BOOLEAN DEFAULT true,
-    -- Nested set model for hierarchy
-    lft INTEGER, rgt INTEGER, depth INTEGER
-);
-
--- Financial transactions with approval workflow
-finance_transactions (
-    id UUID PRIMARY KEY,
-    tenant_id UUID NOT NULL,
-    transaction_number VARCHAR(50) NOT NULL,
-    transaction_type VARCHAR(50) NOT NULL,
-    transaction_status VARCHAR(50) DEFAULT 'draft',
-    posting_date DATE NOT NULL,
-    total_amount DECIMAL(15,4) NOT NULL,
-    currency_code VARCHAR(3) NOT NULL,
-    exchange_rate DECIMAL(15,8) DEFAULT 1,
-    -- Approval workflow
-    approved_by UUID,
-    approved_at TIMESTAMP WITH TIME ZONE
-);
-
--- Individual transaction entries (double-entry)
-finance_transaction_entries (
-    id UUID PRIMARY KEY,
-    transaction_id UUID NOT NULL,
-    account_id UUID NOT NULL,
-    debit_amount DECIMAL(15,4) DEFAULT 0,
-    credit_amount DECIMAL(15,4) DEFAULT 0,
-    line_number INTEGER NOT NULL,
-    description TEXT,
-    reconciled BOOLEAN DEFAULT false
-);
-```
+[Database Schema →](./financial.sql)
 
 ### Key Relationships
 ```mermaid

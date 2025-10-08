@@ -132,11 +132,11 @@ func (h *TenantUnifiedHandler) GetTenant(c *fiber.Ctx) error {
 		CurrencyCode: "USD",
 		Industry:     "Technology",
 		CompanySize:  "ENTERPRISE",
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"crm_id":    "12345",
 			"sales_rep": "Jane Smith",
 		},
-		Settings: map[string]interface{}{
+		Settings: map[string]any{
 			"allow_api_access": true,
 			"sso_enabled":      true,
 		},
@@ -195,8 +195,8 @@ func (h *TenantUnifiedHandler) CreateTenant(c *fiber.Ctx) error {
 		CurrencyCode: req.CurrencyCode,
 		Industry:     req.Industry,
 		CompanySize:  req.CompanySize,
-		Metadata:     make(map[string]interface{}),
-		Settings:     make(map[string]interface{}),
+		Metadata:     make(map[string]any),
+		Settings:     make(map[string]any),
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
@@ -219,6 +219,183 @@ func (h *TenantUnifiedHandler) CreateTenant(c *fiber.Ctx) error {
 	default: // ResponseModePage
 		// Redirect to tenant detail page
 		return c.Redirect("/tenants/"+tenant.ID, 302)
+	}
+}
+
+// UpdateTenant handles PATCH /tenants/{id} - processes tenant updates
+func (h *TenantUnifiedHandler) UpdateTenant(c *fiber.Ctx) error {
+	ctx, span := h.tracingService.StartSpan(c.Context(), "tenant.update")
+	defer span.End()
+
+	tenantID := c.Params("id")
+	if tenantID == "" {
+		return h.handleTenantError(c, "Tenant ID is required", 400)
+	}
+
+	// Validate UUID format
+	if _, err := uuid.Parse(tenantID); err != nil {
+		return h.handleTenantError(c, "Invalid tenant ID format", 400)
+	}
+
+	var req UpdateTenantRequest
+	if err := c.BodyParser(&req); err != nil {
+		return h.handleTenantError(c, "Invalid request body", 400)
+	}
+
+	h.logger.InfoContext(ctx, "Updating tenant", logger.Fields{
+		"tenant_id": tenantID,
+	})
+
+	// TODO: Implement actual tenant update using tenant service
+	// For now, return mock updated tenant
+	tenant := TenantDetailResponse{
+		ID:           tenantID,
+		Slug:         "acme-corp",
+		Name:         getTenantStringValue(req.Name, "ACME Corporation"),
+		Email:        getTenantStringValue(req.Email, "admin@acme.com"),
+		Status:       getTenantStringValue(req.Status, "ACTIVE"),
+		Timezone:     "America/New_York",
+		CurrencyCode: "USD",
+		Industry:     "Technology",
+		CompanySize:  "ENTERPRISE",
+		Settings:     req.Settings,
+		CreatedAt:    time.Now().AddDate(0, -6, 0),
+		UpdatedAt:    time.Now(),
+	}
+
+	responseMode := middleware.GetResponseMode(c)
+
+	switch responseMode {
+	case middleware.ResponseModeJSON:
+		return Success(c, tenant)
+
+	case middleware.ResponseModeFragment:
+		// For HTMX requests, trigger refresh
+		middleware.SetHTMXHeaders(c, middleware.HTMXResponseHeaders{
+			Trigger: "tenantUpdated",
+		})
+		html := h.renderTenantDetail(tenant)
+		c.Set("Content-Type", "text/html; charset=utf-8")
+		return c.SendString(html)
+
+	default: // ResponseModePage
+		return c.Redirect("/tenants/"+tenant.ID, 302)
+	}
+}
+
+// DeleteTenant handles DELETE /tenants/{id} - deletes a tenant
+func (h *TenantUnifiedHandler) DeleteTenant(c *fiber.Ctx) error {
+	ctx, span := h.tracingService.StartSpan(c.Context(), "tenant.delete")
+	defer span.End()
+
+	tenantID := c.Params("id")
+	if tenantID == "" {
+		return h.handleTenantError(c, "Tenant ID is required", 400)
+	}
+
+	// Validate UUID format
+	if _, err := uuid.Parse(tenantID); err != nil {
+		return h.handleTenantError(c, "Invalid tenant ID format", 400)
+	}
+
+	h.logger.InfoContext(ctx, "Deleting tenant", logger.Fields{
+		"tenant_id": tenantID,
+	})
+
+	// TODO: Implement actual tenant deletion using tenant service
+	// For now, just log the deletion
+
+	responseMode := middleware.GetResponseMode(c)
+
+	switch responseMode {
+	case middleware.ResponseModeJSON:
+		return NoContent(c)
+
+	case middleware.ResponseModeFragment:
+		// For HTMX requests, trigger refresh
+		middleware.SetHTMXHeaders(c, middleware.HTMXResponseHeaders{
+			Trigger: "tenantDeleted",
+		})
+		return c.SendString("")
+
+	default: // ResponseModePage
+		return c.Redirect("/tenants", 302)
+	}
+}
+
+// GetCreateTenantForm handles GET /tenants/create - serves tenant creation form
+func (h *TenantUnifiedHandler) GetCreateTenantForm(c *fiber.Ctx) error {
+	_, span := h.tracingService.StartSpan(c.Context(), "tenant.create_form")
+	defer span.End()
+
+	responseMode := middleware.GetResponseMode(c)
+
+	switch responseMode {
+	case middleware.ResponseModeJSON:
+		// Return form schema for API consumers
+		return Success(c, fiber.Map{
+			"form_fields": getTenantFormSchema("create"),
+		})
+
+	case middleware.ResponseModeFragment:
+		// Return form HTML for HTMX requests
+		html := h.renderTenantCreateForm()
+		c.Set("Content-Type", "text/html; charset=utf-8")
+		return c.SendString(html)
+
+	default: // ResponseModePage
+		// Return full page with form
+		html := h.renderTenantCreatePage()
+		c.Set("Content-Type", "text/html; charset=utf-8")
+		return c.SendString(html)
+	}
+}
+
+// GetEditTenantForm handles GET /tenants/{id}/edit - serves tenant edit form
+func (h *TenantUnifiedHandler) GetEditTenantForm(c *fiber.Ctx) error {
+	_, span := h.tracingService.StartSpan(c.Context(), "tenant.edit_form")
+	defer span.End()
+
+	tenantID := c.Params("id")
+	if tenantID == "" {
+		return h.handleTenantError(c, "Tenant ID is required", 400)
+	}
+
+	// Validate UUID format
+	if _, err := uuid.Parse(tenantID); err != nil {
+		return h.handleTenantError(c, "Invalid tenant ID format", 400)
+	}
+
+	// TODO: Fetch actual tenant data
+	tenant := TenantDetailResponse{
+		ID:           tenantID,
+		Slug:         "acme-corp",
+		Name:         "ACME Corporation",
+		Email:        "admin@acme.com",
+		Status:       "ACTIVE",
+		Timezone:     "America/New_York",
+		CurrencyCode: "USD",
+		Industry:     "Technology",
+		CompanySize:  "ENTERPRISE",
+		CreatedAt:    time.Now().AddDate(0, -6, 0),
+		UpdatedAt:    time.Now(),
+	}
+
+	responseMode := middleware.GetResponseMode(c)
+
+	switch responseMode {
+	case middleware.ResponseModeJSON:
+		return Success(c, tenant)
+
+	case middleware.ResponseModeFragment:
+		html := h.renderTenantEditForm(tenant)
+		c.Set("Content-Type", "text/html; charset=utf-8")
+		return c.SendString(html)
+
+	default: // ResponseModePage
+		html := h.renderTenantEditPage(tenant)
+		c.Set("Content-Type", "text/html; charset=utf-8")
+		return c.SendString(html)
 	}
 }
 
@@ -371,16 +548,171 @@ func (h *TenantUnifiedHandler) renderTenantDetail(tenant TenantDetailResponse) s
     </div>`
 }
 
+// Helper functions
+func getTenantStringValue(value, defaultValue string) string {
+	if value != "" {
+		return value
+	}
+	return defaultValue
+}
+
+func getTenantFormSchema(mode string) map[string]any {
+	return map[string]any{
+		"mode": mode,
+		"fields": map[string]any{
+			"name":          map[string]any{"type": "text", "required": true},
+			"email":         map[string]any{"type": "email", "required": true},
+			"slug":          map[string]any{"type": "text", "required": mode == "create"},
+			"timezone":      map[string]any{"type": "select", "required": true},
+			"currency_code": map[string]any{"type": "select", "required": true},
+			"industry":      map[string]any{"type": "select", "required": false},
+			"company_size":  map[string]any{"type": "select", "required": false},
+		},
+	}
+}
+
+// HTML rendering methods for forms
+func (h *TenantUnifiedHandler) renderTenantCreateForm() string {
+	return `<div class="bg-white rounded-lg shadow-lg p-6">
+		<h2 class="text-xl font-semibold mb-4">Create New Tenant</h2>
+		<form hx-post="/tenants" hx-target="#modal-container" hx-swap="innerHTML">
+			<div class="space-y-4">
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Organization Name</label>
+					<input type="text" name="name" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+				</div>
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Email</label>
+					<input type="email" name="email" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+				</div>
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Slug</label>
+					<input type="text" name="slug" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+				</div>
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Timezone</label>
+					<select name="timezone" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+						<option value="America/New_York">Eastern Time</option>
+						<option value="America/Chicago">Central Time</option>
+						<option value="America/Los_Angeles">Pacific Time</option>
+						<option value="UTC">UTC</option>
+					</select>
+				</div>
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Currency</label>
+					<select name="currency_code" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+						<option value="USD">USD</option>
+						<option value="EUR">EUR</option>
+						<option value="GBP">GBP</option>
+					</select>
+				</div>
+			</div>
+			<div class="mt-6 flex justify-end space-x-3">
+				<button type="button" onclick="document.getElementById('modal-container').innerHTML=''" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+					Cancel
+				</button>
+				<button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
+					Create Tenant
+				</button>
+			</div>
+		</form>
+	</div>`
+}
+
+func (h *TenantUnifiedHandler) renderTenantCreatePage() string {
+	return `<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Tenant - ERP System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/htmx.org@1.9.8"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-2xl mx-auto py-6 sm:px-6 lg:px-8">
+        ` + h.renderTenantCreateForm() + `
+    </div>
+</body>
+</html>`
+}
+
+func (h *TenantUnifiedHandler) renderTenantEditForm(tenant TenantDetailResponse) string {
+	return `<div class="bg-white rounded-lg shadow-lg p-6">
+		<h2 class="text-xl font-semibold mb-4">Edit Tenant: ` + tenant.Name + `</h2>
+		<form hx-patch="/tenants/` + tenant.ID + `" hx-target="#modal-container" hx-swap="innerHTML">
+			<div class="space-y-4">
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Organization Name</label>
+					<input type="text" name="name" value="` + tenant.Name + `" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+				</div>
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Email</label>
+					<input type="email" name="email" value="` + tenant.Email + `" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" />
+				</div>
+				<div>
+					<label class="block text-sm font-medium text-gray-700">Status</label>
+					<select name="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+						<option value="TRIAL"` + getSelectedAttribute(tenant.Status, "TRIAL") + `>Trial</option>
+						<option value="ACTIVE"` + getSelectedAttribute(tenant.Status, "ACTIVE") + `>Active</option>
+						<option value="SUSPENDED"` + getSelectedAttribute(tenant.Status, "SUSPENDED") + `>Suspended</option>
+						<option value="CANCELLED"` + getSelectedAttribute(tenant.Status, "CANCELLED") + `>Cancelled</option>
+					</select>
+				</div>
+			</div>
+			<div class="mt-6 flex justify-end space-x-3">
+				<button type="button" onclick="document.getElementById('modal-container').innerHTML=''" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+					Cancel
+				</button>
+				<button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700">
+					Save Changes
+				</button>
+			</div>
+		</form>
+	</div>`
+}
+
+func (h *TenantUnifiedHandler) renderTenantEditPage(tenant TenantDetailResponse) string {
+	return `<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Tenant - ERP System</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://unpkg.com/htmx.org@1.9.8"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-2xl mx-auto py-6 sm:px-6 lg:px-8">
+        ` + h.renderTenantEditForm(tenant) + `
+    </div>
+</body>
+</html>`
+}
+
+func getSelectedAttribute(current, value string) string {
+	if current == value {
+		return ` selected="selected"`
+	}
+	return ""
+}
+
 // SetupTenantUnifiedRoutes sets up unified tenant routes
 func SetupTenantUnifiedRoutes(app fiber.Router, handler *TenantUnifiedHandler) {
 	// Tenant routes (both HTML and JSON)
 	app.Get("/tenants", handler.ListTenants)
 	app.Post("/tenants", handler.CreateTenant)
+	app.Get("/tenants/create", handler.GetCreateTenantForm)
 	app.Get("/tenants/:id", handler.GetTenant)
+	app.Get("/tenants/:id/edit", handler.GetEditTenantForm)
+	app.Patch("/tenants/:id", handler.UpdateTenant)
+	app.Delete("/tenants/:id", handler.DeleteTenant)
 
 	// API routes with explicit /api prefix
 	api := app.Group("/api")
 	api.Get("/tenants", handler.ListTenants)
 	api.Post("/tenants", handler.CreateTenant)
 	api.Get("/tenants/:id", handler.GetTenant)
+	api.Patch("/tenants/:id", handler.UpdateTenant)
+	api.Delete("/tenants/:id", handler.DeleteTenant)
 }

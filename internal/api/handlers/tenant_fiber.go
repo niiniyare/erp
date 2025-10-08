@@ -49,20 +49,20 @@ type TenantListResponse struct {
 
 // TenantDetailResponse represents detailed tenant information
 type TenantDetailResponse struct {
-	ID           string                 `json:"id"`
-	Slug         string                 `json:"slug"`
-	Name         string                 `json:"name"`
-	Email        string                 `json:"email"`
-	Subdomain    string                 `json:"subdomain,omitempty"`
-	Status       string                 `json:"status"`
-	Timezone     string                 `json:"timezone"`
-	CurrencyCode string                 `json:"currency_code"`
-	Industry     string                 `json:"industry,omitempty"`
-	CompanySize  string                 `json:"company_size,omitempty"`
-	Metadata     map[string]interface{} `json:"metadata,omitempty"`
-	Settings     map[string]interface{} `json:"settings,omitempty"`
-	CreatedAt    time.Time              `json:"created_at"`
-	UpdatedAt    time.Time              `json:"updated_at"`
+	ID           string         `json:"id"`
+	Slug         string         `json:"slug"`
+	Name         string         `json:"name"`
+	Email        string         `json:"email"`
+	Subdomain    string         `json:"subdomain,omitempty"`
+	Status       string         `json:"status"`
+	Timezone     string         `json:"timezone"`
+	CurrencyCode string         `json:"currency_code"`
+	Industry     string         `json:"industry,omitempty"`
+	CompanySize  string         `json:"company_size,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
+	Settings     map[string]any `json:"settings,omitempty"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 // CreateTenantRequest represents tenant creation request
@@ -78,23 +78,23 @@ type CreateTenantRequest struct {
 
 // UpdateTenantRequest represents tenant update request
 type UpdateTenantRequest struct {
-	Name     string                 `json:"name,omitempty"`
-	Email    string                 `json:"email,omitempty"`
-	Status   string                 `json:"status,omitempty"`
-	Settings map[string]interface{} `json:"settings,omitempty"`
+	Name     string         `json:"name,omitempty"`
+	Email    string         `json:"email,omitempty"`
+	Status   string         `json:"status,omitempty"`
+	Settings map[string]any `json:"settings,omitempty"`
 }
 
 // TenantConfiguration represents tenant configuration
 type TenantConfiguration struct {
-	MaxUsers                int                    `json:"max_users"`
-	MaxEntities             int                    `json:"max_entities"`
-	MaxTransactionsPerMonth int                    `json:"max_transactions_per_month"`
-	StorageQuota            int64                  `json:"storage_quota"`
-	AccountingMethod        string                 `json:"accounting_method"`
-	FiscalYearStartMonth    int                    `json:"fiscal_year_start_month"`
-	DefaultCurrency         string                 `json:"default_currency"`
-	PasswordPolicy          map[string]interface{} `json:"password_policy"`
-	APIRateLimits           map[string]interface{} `json:"api_rate_limits"`
+	MaxUsers                int            `json:"max_users"`
+	MaxEntities             int            `json:"max_entities"`
+	MaxTransactionsPerMonth int            `json:"max_transactions_per_month"`
+	StorageQuota            int64          `json:"storage_quota"`
+	AccountingMethod        string         `json:"accounting_method"`
+	FiscalYearStartMonth    int            `json:"fiscal_year_start_month"`
+	DefaultCurrency         string         `json:"default_currency"`
+	PasswordPolicy          map[string]any `json:"password_policy"`
+	APIRateLimits           map[string]any `json:"api_rate_limits"`
 }
 
 // ListTenants handles GET /tenants (Admin Console Only)
@@ -169,11 +169,11 @@ func (h *TenantFiberHandler) GetTenant(c *fiber.Ctx) error {
 		CurrencyCode: "USD",
 		Industry:     "Technology",
 		CompanySize:  "ENTERPRISE",
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"crm_id":    "12345",
 			"sales_rep": "Jane Smith",
 		},
-		Settings: map[string]interface{}{
+		Settings: map[string]any{
 			"allow_api_access": true,
 			"sso_enabled":      true,
 		},
@@ -217,8 +217,8 @@ func (h *TenantFiberHandler) CreateTenant(c *fiber.Ctx) error {
 		CurrencyCode: req.CurrencyCode,
 		Industry:     req.Industry,
 		CompanySize:  req.CompanySize,
-		Metadata:     make(map[string]interface{}),
-		Settings:     make(map[string]interface{}),
+		Metadata:     make(map[string]any),
+		Settings:     make(map[string]any),
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),
 	}
@@ -304,12 +304,12 @@ func (h *TenantFiberHandler) GetTenantConfiguration(c *fiber.Ctx) error {
 		AccountingMethod:        "ACCRUAL",
 		FiscalYearStartMonth:    1,
 		DefaultCurrency:         "USD",
-		PasswordPolicy: map[string]interface{}{
+		PasswordPolicy: map[string]any{
 			"min_length":        12,
 			"require_uppercase": true,
 			"require_numbers":   true,
 		},
-		APIRateLimits: map[string]interface{}{
+		APIRateLimits: map[string]any{
 			"requests_per_minute": 60,
 		},
 	}

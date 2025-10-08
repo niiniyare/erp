@@ -1,0 +1,184 @@
+package tenant_management
+
+// TenantFormSimpleProps defines properties for a simplified tenant form
+type TenantFormSimpleProps struct {
+	Mode      string `json:"mode"` // "create", "edit", "view"
+	TenantID  string `json:"tenantId,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Email     string `json:"email,omitempty"`
+	Slug      string `json:"slug,omitempty"`
+	Status    string `json:"status,omitempty"`
+	SubmitUrl string `json:"submitUrl"`
+	Errors    map[string]string `json:"errors,omitempty"`
+}
+
+// TenantFormSimple renders a simplified tenant form for testing
+templ TenantFormSimple(props TenantFormSimpleProps) {
+	<div class="bg-white rounded-lg shadow-lg p-6 max-w-2xl mx-auto">
+		<h2 class="text-xl font-semibold mb-6">
+			if props.Mode == "create" {
+				Create New Tenant
+			} else if props.Mode == "edit" {
+				Edit Tenant
+			} else {
+				Tenant Details
+			}
+		</h2>
+		
+		if len(props.Errors) > 0 {
+			<div class="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+				<div class="text-sm text-red-700">
+					<ul class="list-disc list-inside">
+						for field, message := range props.Errors {
+							<li>{ field }: { message }</li>
+						}
+					</ul>
+				</div>
+			</div>
+		}
+		
+		<form 
+			if props.Mode == "create" {
+				hx-post={ props.SubmitUrl }
+			} else if props.Mode == "edit" {
+				hx-patch={ props.SubmitUrl }
+			}
+			hx-target="#modal-container"
+			hx-swap="innerHTML"
+			class="space-y-6"
+		>
+			<!-- Organization Name -->
+			<div>
+				<label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+					Organization Name *
+				</label>
+				<input
+					type="text"
+					id="name"
+					name="name"
+					value={ props.Name }
+					required
+					class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+					placeholder="Enter organization name"
+				/>
+			</div>
+			
+			<!-- Email -->
+			<div>
+				<label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+					Contact Email *
+				</label>
+				<input
+					type="email"
+					id="email"
+					name="email"
+					value={ props.Email }
+					required
+					class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+					placeholder="contact@company.com"
+				/>
+			</div>
+			
+			<!-- Slug (create mode only) -->
+			if props.Mode == "create" {
+				<div>
+					<label for="slug" class="block text-sm font-medium text-gray-700 mb-2">
+						Organization Slug *
+					</label>
+					<input
+						type="text"
+						id="slug"
+						name="slug"
+						value={ props.Slug }
+						required
+						class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+						placeholder="organization-slug"
+						pattern="^[a-z0-9-]+$"
+					/>
+					<p class="mt-1 text-xs text-gray-500">
+						Used in URLs and system references. Must be unique and contain only lowercase letters, numbers, and hyphens.
+					</p>
+				</div>
+			}
+			
+			<!-- Status (edit mode only) -->
+			if props.Mode == "edit" {
+				<div>
+					<label for="status" class="block text-sm font-medium text-gray-700 mb-2">
+						Status
+					</label>
+					<select
+						id="status"
+						name="status"
+						class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+					>
+						<option value="TRIAL" selected?={ props.Status == "TRIAL" }>Trial</option>
+						<option value="ACTIVE" selected?={ props.Status == "ACTIVE" }>Active</option>
+						<option value="SUSPENDED" selected?={ props.Status == "SUSPENDED" }>Suspended</option>
+						<option value="CANCELLED" selected?={ props.Status == "CANCELLED" }>Cancelled</option>
+					</select>
+				</div>
+			}
+			
+			<!-- Timezone -->
+			<div>
+				<label for="timezone" class="block text-sm font-medium text-gray-700 mb-2">
+					Timezone *
+				</label>
+				<select
+					id="timezone"
+					name="timezone"
+					required
+					class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+				>
+					<option value="">Select Timezone</option>
+					<option value="America/New_York">Eastern Time (ET)</option>
+					<option value="America/Chicago">Central Time (CT)</option>
+					<option value="America/Denver">Mountain Time (MT)</option>
+					<option value="America/Los_Angeles">Pacific Time (PT)</option>
+					<option value="UTC">Coordinated Universal Time (UTC)</option>
+				</select>
+			</div>
+			
+			<!-- Currency -->
+			<div>
+				<label for="currency_code" class="block text-sm font-medium text-gray-700 mb-2">
+					Currency *
+				</label>
+				<select
+					id="currency_code"
+					name="currency_code"
+					required
+					class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+				>
+					<option value="">Select Currency</option>
+					<option value="USD">US Dollar (USD)</option>
+					<option value="EUR">Euro (EUR)</option>
+					<option value="GBP">British Pound (GBP)</option>
+					<option value="CAD">Canadian Dollar (CAD)</option>
+				</select>
+			</div>
+			
+			<!-- Form Actions -->
+			<div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+				<button
+					type="button"
+					onclick="document.getElementById('modal-container').innerHTML=''"
+					class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+				>
+					Cancel
+				</button>
+				<button
+					type="submit"
+					class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+				>
+					if props.Mode == "create" {
+						Create Tenant
+					} else {
+						Save Changes
+					}
+				</button>
+			</div>
+		</form>
+	</div>
+}

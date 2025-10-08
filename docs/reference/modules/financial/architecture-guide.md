@@ -1,3 +1,4 @@
+
 # AWO ERP Financial Module - Architecture Guide
 
 **Version**: 1.0  
@@ -110,7 +111,7 @@ type AccountService struct {
 
 // ✅ Account entity: Manages account business rules
 type Account struct {
-    ID          AccountID
+    ID          uuid.UUID
     Code        AccountCode
     Name        string
     AccountType AccountType
@@ -229,8 +230,8 @@ func (a *Account) Deactivate() error {
 // Transaction is an aggregate root ensuring double-entry integrity
 type Transaction struct {
     // Identity
-    ID       TransactionID
-    TenantID tenant.ID
+    ID          uuid.UUID
+    TenantID uuid.UUID
     Number   TransactionNumber
     
     // Business Properties

@@ -11,23 +11,23 @@ import (
 
 // APIResponse represents the standard API response structure
 type APIResponse struct {
-	Data     interface{} `json:"data,omitempty"`
-	Error    *APIError   `json:"error,omitempty"`
-	Metadata *Metadata   `json:"metadata"`
+	Data     any       `json:"data,omitempty"`
+	Error    *APIError `json:"error,omitempty"`
+	Metadata *Metadata `json:"metadata"`
 }
 
 // PaginatedResponse extends APIResponse with pagination information
 type PaginatedResponse struct {
-	Data       interface{} `json:"data"`
+	Data       any         `json:"data"`
 	Pagination *Pagination `json:"pagination"`
 	Metadata   *Metadata   `json:"metadata"`
 }
 
 // APIError represents error information in API responses
 type APIError struct {
-	Code    string                 `json:"code"`
-	Message string                 `json:"message"`
-	Details map[string]interface{} `json:"details,omitempty"`
+	Code    string         `json:"code"`
+	Message string         `json:"message"`
+	Details map[string]any `json:"details,omitempty"`
 }
 
 // Metadata contains response metadata
@@ -92,7 +92,7 @@ func CalculatePagination(total int64, page, perPage int) *Pagination {
 // Response helpers
 
 // Success sends a successful API response
-func Success(c *fiber.Ctx, data interface{}) error {
+func Success(c *fiber.Ctx, data any) error {
 	return c.JSON(APIResponse{
 		Data:     data,
 		Metadata: getMetadata(c),
@@ -100,7 +100,7 @@ func Success(c *fiber.Ctx, data interface{}) error {
 }
 
 // SuccessWithStatus sends a successful API response with custom status
-func SuccessWithStatus(c *fiber.Ctx, status int, data interface{}) error {
+func SuccessWithStatus(c *fiber.Ctx, status int, data any) error {
 	return c.Status(status).JSON(APIResponse{
 		Data:     data,
 		Metadata: getMetadata(c),
@@ -108,7 +108,7 @@ func SuccessWithStatus(c *fiber.Ctx, status int, data interface{}) error {
 }
 
 // SuccessPaginated sends a paginated API response
-func SuccessPaginated(c *fiber.Ctx, data interface{}, pagination *Pagination) error {
+func SuccessPaginated(c *fiber.Ctx, data any, pagination *Pagination) error {
 	return c.JSON(PaginatedResponse{
 		Data:       data,
 		Pagination: pagination,
@@ -117,7 +117,7 @@ func SuccessPaginated(c *fiber.Ctx, data interface{}, pagination *Pagination) er
 }
 
 // Created sends a 201 Created response
-func Created(c *fiber.Ctx, data interface{}) error {
+func Created(c *fiber.Ctx, data any) error {
 	return c.Status(201).JSON(APIResponse{
 		Data:     data,
 		Metadata: getMetadata(c),
@@ -132,52 +132,52 @@ func NoContent(c *fiber.Ctx) error {
 // Error response helpers
 
 // BadRequest sends a 400 Bad Request error
-func BadRequest(c *fiber.Ctx, message string, details ...map[string]interface{}) error {
+func BadRequest(c *fiber.Ctx, message string, details ...map[string]any) error {
 	return sendError(c, 400, "invalid_input", message, details...)
 }
 
 // Unauthorized sends a 401 Unauthorized error
-func Unauthorized(c *fiber.Ctx, message string, details ...map[string]interface{}) error {
+func Unauthorized(c *fiber.Ctx, message string, details ...map[string]any) error {
 	return sendError(c, 401, "unauthorized", message, details...)
 }
 
 // Forbidden sends a 403 Forbidden error
-func Forbidden(c *fiber.Ctx, message string, details ...map[string]interface{}) error {
+func Forbidden(c *fiber.Ctx, message string, details ...map[string]any) error {
 	return sendError(c, 403, "forbidden", message, details...)
 }
 
 // NotFound sends a 404 Not Found error
-func NotFound(c *fiber.Ctx, message string, details ...map[string]interface{}) error {
+func NotFound(c *fiber.Ctx, message string, details ...map[string]any) error {
 	return sendError(c, 404, "not_found", message, details...)
 }
 
 // Conflict sends a 409 Conflict error
-func Conflict(c *fiber.Ctx, message string, details ...map[string]interface{}) error {
+func Conflict(c *fiber.Ctx, message string, details ...map[string]any) error {
 	return sendError(c, 409, "conflict", message, details...)
 }
 
 // ValidationError sends a 400 validation error
-func ValidationError(c *fiber.Ctx, message string, details ...map[string]interface{}) error {
+func ValidationError(c *fiber.Ctx, message string, details ...map[string]any) error {
 	return sendError(c, 400, "validation_error", message, details...)
 }
 
 // RateLimitExceeded sends a 429 rate limit error
-func RateLimitExceeded(c *fiber.Ctx, message string, details ...map[string]interface{}) error {
+func RateLimitExceeded(c *fiber.Ctx, message string, details ...map[string]any) error {
 	return sendError(c, 429, "rate_limit_exceeded", message, details...)
 }
 
 // InternalError sends a 500 Internal Server Error
-func InternalError(c *fiber.Ctx, message string, details ...map[string]interface{}) error {
+func InternalError(c *fiber.Ctx, message string, details ...map[string]any) error {
 	return sendError(c, 500, "internal_error", message, details...)
 }
 
 // CustomError sends a custom error response
-func CustomError(c *fiber.Ctx, status int, code, message string, details ...map[string]interface{}) error {
+func CustomError(c *fiber.Ctx, status int, code, message string, details ...map[string]any) error {
 	return sendError(c, status, code, message, details...)
 }
 
 // sendError is a helper function to send error responses
-func sendError(c *fiber.Ctx, status int, code, message string, details ...map[string]interface{}) error {
+func sendError(c *fiber.Ctx, status int, code, message string, details ...map[string]any) error {
 	apiError := &APIError{
 		Code:    code,
 		Message: message,
@@ -252,8 +252,8 @@ func ParsePagination(c *fiber.Ctx) PaginationParams {
 }
 
 // ValidationErrorDetails creates validation error details
-func ValidationErrorDetails(field, tag, value string) map[string]interface{} {
-	return map[string]interface{}{
+func ValidationErrorDetails(field, tag, value string) map[string]any {
+	return map[string]any{
 		"field":   field,
 		"tag":     tag,
 		"value":   value,
@@ -270,15 +270,15 @@ type FieldError struct {
 }
 
 // MultipleValidationErrors creates error details for multiple validation failures
-func MultipleValidationErrors(errors []FieldError) map[string]interface{} {
-	return map[string]interface{}{
+func MultipleValidationErrors(errors []FieldError) map[string]any {
+	return map[string]any{
 		"validation_errors": errors,
 		"error_count":       len(errors),
 	}
 }
 
 // HeaderBasedResponse determines response type and sends appropriate response
-func HeaderBasedResponse(c *fiber.Ctx, data interface{}, htmlTemplate string) error {
+func HeaderBasedResponse(c *fiber.Ctx, data any, htmlTemplate string) error {
 	responseType := c.Locals("responseType")
 
 	// Check Accept header as well

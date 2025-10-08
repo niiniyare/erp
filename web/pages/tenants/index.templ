@@ -1,0 +1,245 @@
+package tenants
+
+import (
+	"github.com/niiniyare/erp/web/layouts"
+	"github.com/niiniyare/erp/web/components/features/tenant-management"
+	"github.com/niiniyare/erp/web/components/atoms"
+)
+
+// IndexPageProps defines properties for the tenants index page
+type IndexPageProps struct {
+	// Layout props
+	Layout layouts.AppLayoutProps `json:"layout"`
+	
+	// Page content
+	TenantTable tenant_management.TenantTableProps `json:"tenantTable"`
+	
+	// Page state
+	TotalTenants  int64  `json:"totalTenants"`
+	ActiveTenants int64  `json:"activeTenants"`
+	TrialTenants  int64  `json:"trialTenants"`
+	
+	// Permissions
+	Permissions TenantPermissions `json:"permissions"`
+	
+	// Quick stats
+	Stats TenantStats `json:"stats"`
+}
+
+// TenantPermissions defines user permissions for tenant management
+type TenantPermissions struct {
+	CanCreate bool `json:"canCreate"`
+	CanEdit   bool `json:"canEdit"`
+	CanDelete bool `json:"canDelete"`
+	CanView   bool `json:"canView"`
+	CanExport bool `json:"canExport"`
+}
+
+// TenantStats represents tenant statistics
+type TenantStats struct {
+	Total          int64   `json:"total"`
+	Active         int64   `json:"active"`
+	Trial          int64   `json:"trial"`
+	Suspended      int64   `json:"suspended"`
+	Cancelled      int64   `json:"cancelled"`
+	Growth         float64 `json:"growth"`         // Month over month growth %
+	TrialConversion float64 `json:"trialConversion"` // Trial to paid conversion %
+}
+
+// TenantsIndexPage renders the main tenants management page
+templ TenantsIndexPage(props IndexPageProps) {
+	@layouts.AppLayout(props.Layout, TenantsIndexContent(props))
+}
+
+// TenantsIndexContent renders the page content
+templ TenantsIndexContent(props IndexPageProps) {
+	<div class="space-y-6">
+		<!-- Page Stats -->
+		@TenantStatsSection(props.Stats, props.Permissions)
+		
+		<!-- Main Table Section -->
+		<div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg">
+			@tenant_management.TenantTable(props.TenantTable)
+		</div>
+	</div>
+}
+
+// TenantStatsSection renders the statistics cards at the top of the page
+templ TenantStatsSection(stats TenantStats, permissions TenantPermissions) {
+	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+		<!-- Total Tenants -->
+		@TenantStatCard(TenantStatCardProps{
+			Title:  "Total Organizations",
+			Value:  formatStatNumber(stats.Total),
+			Icon:   "building-office",
+			Color:  "blue",
+			Change: stats.Growth,
+			Trend:  "up",
+		})
+		
+		<!-- Active Tenants -->
+		@TenantStatCard(TenantStatCardProps{
+			Title: "Active",
+			Value: formatStatNumber(stats.Active),
+			Icon:  "check-circle",
+			Color: "green",
+			Percentage: calculatePercentage(stats.Active, stats.Total),
+		})
+		
+		<!-- Trial Tenants -->
+		@TenantStatCard(TenantStatCardProps{
+			Title: "Trial",
+			Value: formatStatNumber(stats.Trial),
+			Icon:  "clock",
+			Color: "yellow",
+			Percentage: calculatePercentage(stats.Trial, stats.Total),
+		})
+		
+		<!-- Conversion Rate -->
+		@TenantStatCard(TenantStatCardProps{
+			Title:      "Trial Conversion",
+			Value:      formatPercentage(stats.TrialConversion),
+			Icon:       "trending-up",
+			Color:      "purple",
+			Change:     stats.TrialConversion,
+			Trend:      "up",
+			IsPercent:  true,
+		})
+	</div>
+}
+
+// TenantStatCardProps defines properties for stat cards
+type TenantStatCardProps struct {
+	Title      string  `json:"title"`
+	Value      string  `json:"value"`
+	Icon       string  `json:"icon"`
+	Color      string  `json:"color"`      // blue, green, yellow, red, purple
+	Change     float64 `json:"change,omitempty"`     // Change percentage
+	Trend      string  `json:"trend,omitempty"`      // up, down, stable
+	Percentage float64 `json:"percentage,omitempty"` // Percentage of total
+	IsPercent  bool    `json:"isPercent"`            // Value is already a percentage
+}
+
+// TenantStatCard renders a single statistic card
+templ TenantStatCard(props TenantStatCardProps) {
+	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+		<div class="flex items-center">
+			<div class="flex-shrink-0">
+				<div class={ "w-8 h-8 rounded-md flex items-center justify-center", getStatCardIconClasses(props.Color) }>
+					@atoms.Icon(atoms.IconProps{
+						Name:  props.Icon,
+						Size:  atoms.IconSizeSM,
+						Class: "text-white",
+					})
+				</div>
+			</div>
+			<div class="ml-5 w-0 flex-1">
+				<dl>
+					<dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+						{ props.Title }
+					</dt>
+					<dd class="flex items-baseline">
+						<div class="text-2xl font-semibold text-gray-900 dark:text-white">
+							{ props.Value }
+						</div>
+						
+						<!-- Percentage of total -->
+						if props.Percentage > 0 && !props.IsPercent {
+							<div class="ml-2 flex items-baseline text-sm">
+								<span class="text-gray-500 dark:text-gray-400">
+									({ formatPercentage(props.Percentage) })
+								</span>
+							</div>
+						}
+						
+						<!-- Change indicator -->
+						if props.Change != 0 && props.Trend != "" {
+							<div class="ml-2 flex items-baseline text-sm">
+								<span class={ getStatCardChangeClasses(props.Trend) }>
+									@atoms.Icon(atoms.IconProps{
+										Name: getStatCardTrendIcon(props.Trend),
+										Size: atoms.IconSizeXS,
+										Class: "self-center mr-0.5",
+									})
+									{ formatChangePercentage(props.Change) }
+								</span>
+							</div>
+						}
+					</dd>
+				</dl>
+			</div>
+		</div>
+	</div>
+}
+
+// Helper functions
+func formatStatNumber(n int64) string {
+	if n >= 1000000 {
+		return formatFloat(float64(n)/1000000) + "M"
+	} else if n >= 1000 {
+		return formatFloat(float64(n)/1000) + "K"
+	}
+	return formatInt64(n)
+}
+
+func formatInt64(n int64) string {
+	// Simple int64 formatting - should be replaced with proper number formatting
+	return "0"
+}
+
+func formatPercentage(p float64) string {
+	return formatFloat(p) + "%"
+}
+
+func formatChangePercentage(p float64) string {
+	if p > 0 {
+		return "+" + formatFloat(p) + "%"
+	}
+	return formatFloat(p) + "%"
+}
+
+func calculatePercentage(part, total int64) float64 {
+	if total == 0 {
+		return 0
+	}
+	return float64(part) / float64(total) * 100
+}
+
+func getStatCardIconClasses(color string) string {
+	switch color {
+	case "green":
+		return "bg-green-500"
+	case "yellow":
+		return "bg-yellow-500"
+	case "red":
+		return "bg-red-500"
+	case "purple":
+		return "bg-purple-500"
+	case "blue":
+		fallthrough
+	default:
+		return "bg-blue-500"
+	}
+}
+
+func getStatCardChangeClasses(trend string) string {
+	switch trend {
+	case "up":
+		return "text-green-600 dark:text-green-400"
+	case "down":
+		return "text-red-600 dark:text-red-400"
+	default:
+		return "text-gray-500 dark:text-gray-400"
+	}
+}
+
+func getStatCardTrendIcon(trend string) string {
+	switch trend {
+	case "up":
+		return "arrow-up"
+	case "down":
+		return "arrow-down"
+	default:
+		return "minus"
+	}
+}

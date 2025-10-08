@@ -175,9 +175,9 @@ func (h *AuthUnifiedHandler) handleLoginError(c *fiber.Ctx, message string, fiel
 	switch responseMode {
 	case middleware.ResponseModeJSON:
 		// Convert string map to interface map for ValidationError
-		var interfaceErrors map[string]interface{}
+		var interfaceErrors map[string]any
 		if fieldErrors != nil {
-			interfaceErrors = make(map[string]interface{})
+			interfaceErrors = make(map[string]any)
 			for k, v := range fieldErrors {
 				interfaceErrors[k] = v
 			}
@@ -226,7 +226,7 @@ func (h *AuthUnifiedHandler) handleLoginError(c *fiber.Ctx, message string, fiel
 }
 
 // renderTemplate renders a templ component and returns it as response
-func renderTemplate(c *fiber.Ctx, component interface{}) error {
+func renderTemplate(c *fiber.Ctx, component any) error {
 	// TODO: Implement proper templ rendering
 	// For now, return a placeholder HTML response
 	html := `<!DOCTYPE html>
