@@ -1,0 +1,14 @@
+{
+  "type": "string",
+  "enum": [
+    "center",
+    "end",
+    "flex-end",
+    "flex-start",
+    "self-end",
+    "self-start",
+    "start"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.SelfPosition.json"
+}

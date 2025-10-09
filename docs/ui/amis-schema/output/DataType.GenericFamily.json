@@ -1,0 +1,12 @@
+{
+  "type": "string",
+  "enum": [
+    "cursive",
+    "fantasy",
+    "monospace",
+    "sans-serif",
+    "serif"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.GenericFamily.json"
+}

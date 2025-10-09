@@ -1,0 +1,727 @@
+package {{.PackageName}}
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/niiniyare/erp/internal/api/handlers/{{.PackageName}}"
+	goa{{.ModuleNamePascal}} "github.com/niiniyare/erp/internal/api/gen/{{.PackageName}}"
+	"github.com/niiniyare/erp/internal/core/{{.PackageName}}/domain"
+	{{.PackageName}}Repository "github.com/niiniyare/erp/internal/core/{{.PackageName}}/repository"
+	{{.PackageName}}Service "github.com/niiniyare/erp/internal/core/{{.PackageName}}"
+	"github.com/niiniyare/erp/internal/platform/database"
+	"github.com/niiniyare/erp/internal/shared/auth"
+	"github.com/niiniyare/erp/internal/shared/testutil"
+	"github.com/niiniyare/erp/db/sqlc"
+)
+
+{{comment (printf "%s Integration Tests - Full end-to-end testing" .ModuleNamePascal)}}
+
+// =============================================================================
+// INTEGRATION TEST SUITE
+// =============================================================================
+
+type {{.EntityName}}IntegrationTestSuite struct {
+	suite.Suite
+	app       *fiber.App
+	db        *sqlc.Queries
+	service   *{{.PackageName}}Service.{{.EntityName}}Service
+	handler   goa{{.ModuleNamePascal}}.Service
+	ctx       context.Context
+	tenantID  uuid.UUID
+	userID    uuid.UUID
+	authToken string
+	cleanup   func()
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) SetupSuite() {
+	// Setup test database and dependencies
+	testDB, cleanup, err := testutil.SetupTestDB()
+	require.NoError(suite.T(), err)
+	
+	suite.cleanup = cleanup
+	suite.db = sqlc.New(testDB)
+	suite.tenantID = uuid.New()
+	suite.userID = uuid.New()
+	
+	// Setup context with authentication
+	suite.ctx = auth.WithTenantID(context.Background(), suite.tenantID)
+	suite.ctx = auth.WithUserID(suite.ctx, suite.userID)
+	
+	// Setup service layer
+	repo := {{.PackageName}}Repository.New{{.EntityName}}Repository(suite.db)
+	mockABAC := testutil.NewMockABACService()
+	mockFeatureFlags := testutil.NewMockFeatureFlagService()
+	mockMetrics := testutil.NewMockMetricsProvider()
+	mockLogger := testutil.NewMockLogger()
+	
+	suite.service = {{.PackageName}}Service.New{{.EntityName}}Service(
+		repo,
+		mockABAC,
+		mockFeatureFlags,
+		mockMetrics,
+		mockLogger,
+	)
+	
+	// Setup API handler
+	suite.handler = {{.PackageName}}.New{{.EntityName}}Handler(
+		{{.PackageName}}Service.Services{
+			{{.EntityName}}Service: suite.service,
+		},
+		testutil.NewMockTracingService(),
+		mockMetrics,
+	)
+	
+	// Setup Fiber app
+	suite.app = testutil.SetupTestApp()
+	suite.setupRoutes()
+	
+	// Setup authentication token
+	suite.authToken = testutil.GenerateTestJWT(suite.userID, suite.tenantID)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TearDownSuite() {
+	if suite.cleanup != nil {
+		suite.cleanup()
+	}
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) SetupTest() {
+	// Clean up test data before each test
+	suite.cleanupTestData()
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TearDownTest() {
+	// Clean up test data after each test
+	suite.cleanupTestData()
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) setupRoutes() {
+	api := suite.app.Group("/api/v1")
+	
+	// Add authentication middleware
+	api.Use(testutil.AuthMiddleware(suite.tenantID, suite.userID))
+	
+	// Register {{.EntityName}} routes
+	{{pluralize (camelCase .EntityName)}}Group := api.Group("/{{pluralize (snakeCase .EntityName)}}")
+	{{pluralize (camelCase .EntityName)}}Group.Post("/", suite.create{{.EntityName}}Handler)
+	{{pluralize (camelCase .EntityName)}}Group.Get("/:id", suite.get{{.EntityName}}Handler)
+	{{pluralize (camelCase .EntityName)}}Group.Put("/:id", suite.update{{.EntityName}}Handler)
+	{{pluralize (camelCase .EntityName)}}Group.Delete("/:id", suite.delete{{.EntityName}}Handler)
+	{{pluralize (camelCase .EntityName)}}Group.Get("/", suite.list{{.EntityNamePlural}}Handler)
+	{{pluralize (camelCase .EntityName)}}Group.Get("/search", suite.search{{.EntityNamePlural}}Handler)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) cleanupTestData() {
+	// Delete all test data for this tenant
+	testutil.CleanupTenantData(suite.db, suite.tenantID, "{{snakeCase (pluralize .EntityName)}}")
+}
+
+func TestRun{{.EntityName}}IntegrationTestSuite(t *testing.T) {
+	suite.Run(t, new({{.EntityName}}IntegrationTestSuite))
+}
+
+// =============================================================================
+// CREATE INTEGRATION TESTS
+// =============================================================================
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestCreate{{.EntityName}}_Success() {
+	// Arrange
+	createRequest := &goa{{.ModuleNamePascal}}.Create{{.EntityName}}Payload{
+		Name:        "Integration Test {{.EntityName}}",
+		{{- if contains .ModuleName "finance"}}
+		Code:        "INTTEST001",
+		{{- end}}
+		Description: strPtr("Integration test description"),
+		IsActive:    true,
+	}
+
+	// Act
+	resp, err := suite.makeRequest("POST", "/api/v1/{{pluralize (snakeCase .EntityName)}}", createRequest)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusCreated, resp.StatusCode)
+
+	var result goa{{.ModuleNamePascal}}.{{.EntityName}}Result
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	require.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), createRequest.Name, result.Name)
+	{{- if contains .ModuleName "finance"}}
+	assert.Equal(suite.T(), createRequest.Code, result.Code)
+	{{- end}}
+	assert.Equal(suite.T(), createRequest.IsActive, result.IsActive)
+	assert.NotEmpty(suite.T(), result.ID)
+	assert.NotEmpty(suite.T(), result.CreatedAt)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestCreate{{.EntityName}}_ValidationError() {
+	// Arrange
+	createRequest := &goa{{.ModuleNamePascal}}.Create{{.EntityName}}Payload{
+		Name: "", // Invalid: empty name
+		{{- if contains .ModuleName "finance"}}
+		Code: "INVALID",
+		{{- end}}
+		IsActive: true,
+	}
+
+	// Act
+	resp, err := suite.makeRequest("POST", "/api/v1/{{pluralize (snakeCase .EntityName)}}", createRequest)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusBadRequest, resp.StatusCode)
+
+	var errorResp map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&errorResp)
+	require.NoError(suite.T(), err)
+	
+	assert.Contains(suite.T(), errorResp["error"], "validation")
+}
+
+{{- if contains .ModuleName "finance"}}
+func (suite *{{.EntityName}}IntegrationTestSuite) TestCreate{{.EntityName}}_DuplicateCode() {
+	// Arrange - create first entity
+	createRequest1 := &goa{{.ModuleNamePascal}}.Create{{.EntityName}}Payload{
+		Name:     "First {{.EntityName}}",
+		Code:     "DUPLICATE001",
+		IsActive: true,
+	}
+
+	resp1, err := suite.makeRequest("POST", "/api/v1/{{pluralize (snakeCase .EntityName)}}", createRequest1)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusCreated, resp1.StatusCode)
+
+	// Arrange - create second entity with same code
+	createRequest2 := &goa{{.ModuleNamePascal}}.Create{{.EntityName}}Payload{
+		Name:     "Second {{.EntityName}}",
+		Code:     "DUPLICATE001", // Same code
+		IsActive: true,
+	}
+
+	// Act
+	resp2, err := suite.makeRequest("POST", "/api/v1/{{pluralize (snakeCase .EntityName)}}", createRequest2)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusConflict, resp2.StatusCode)
+}
+{{- end}}
+
+// =============================================================================
+// READ INTEGRATION TESTS
+// =============================================================================
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestGet{{.EntityName}}_Success() {
+	// Arrange - create entity first
+	entity := suite.createTestEntity()
+
+	// Act
+	resp, err := suite.makeRequest("GET", fmt.Sprintf("/api/v1/{{pluralize (snakeCase .EntityName)}}/%s", entity.ID), nil)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusOK, resp.StatusCode)
+
+	var result goa{{.ModuleNamePascal}}.{{.EntityName}}Result
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	require.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), entity.ID.String(), result.ID)
+	assert.Equal(suite.T(), entity.{{.EntityName}}Name, result.Name)
+	{{- if contains .ModuleName "finance"}}
+	assert.Equal(suite.T(), entity.{{.EntityName}}Code, result.Code)
+	{{- end}}
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestGet{{.EntityName}}_NotFound() {
+	// Arrange
+	nonExistentID := uuid.New()
+
+	// Act
+	resp, err := suite.makeRequest("GET", fmt.Sprintf("/api/v1/{{pluralize (snakeCase .EntityName)}}/%s", nonExistentID), nil)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusNotFound, resp.StatusCode)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestList{{.EntityNamePlural}}_Success() {
+	// Arrange - create multiple entities
+	entities := suite.createMultipleTestEntities(3)
+
+	// Act
+	resp, err := suite.makeRequest("GET", "/api/v1/{{pluralize (snakeCase .EntityName)}}", nil)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusOK, resp.StatusCode)
+
+	var result goa{{.ModuleNamePascal}}.{{.EntityName}}ListResult
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	require.NoError(suite.T(), err)
+
+	assert.Len(suite.T(), result.{{.EntityNamePlural}}, 3)
+	assert.Equal(suite.T(), int32(3), result.Pagination.TotalItems)
+	assert.Equal(suite.T(), int32(1), result.Pagination.CurrentPage)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestList{{.EntityNamePlural}}_WithFilters() {
+	// Arrange - create entities with different statuses
+	activeEntity := suite.createTestEntityWithStatus(true)
+	inactiveEntity := suite.createTestEntityWithStatus(false)
+
+	// Act - filter for active entities only
+	resp, err := suite.makeRequest("GET", "/api/v1/{{pluralize (snakeCase .EntityName)}}?is_active=true", nil)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusOK, resp.StatusCode)
+
+	var result goa{{.ModuleNamePascal}}.{{.EntityName}}ListResult
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	require.NoError(suite.T(), err)
+
+	assert.Len(suite.T(), result.{{.EntityNamePlural}}, 1)
+	assert.Equal(suite.T(), activeEntity.ID.String(), result.{{.EntityNamePlural}}[0].ID)
+	assert.True(suite.T(), result.{{.EntityNamePlural}}[0].IsActive)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestList{{.EntityNamePlural}}_Pagination() {
+	// Arrange - create many entities
+	entities := suite.createMultipleTestEntities(25)
+
+	// Act - get first page
+	resp, err := suite.makeRequest("GET", "/api/v1/{{pluralize (snakeCase .EntityName)}}?page=1&limit=10", nil)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusOK, resp.StatusCode)
+
+	var result goa{{.ModuleNamePascal}}.{{.EntityName}}ListResult
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	require.NoError(suite.T(), err)
+
+	assert.Len(suite.T(), result.{{.EntityNamePlural}}, 10)
+	assert.Equal(suite.T(), int32(25), result.Pagination.TotalItems)
+	assert.Equal(suite.T(), int32(3), result.Pagination.TotalPages) // 25/10 = 3 pages
+	assert.True(suite.T(), result.Pagination.HasNext)
+	assert.False(suite.T(), result.Pagination.HasPrev)
+}
+
+// =============================================================================
+// UPDATE INTEGRATION TESTS
+// =============================================================================
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestUpdate{{.EntityName}}_Success() {
+	// Arrange - create entity first
+	entity := suite.createTestEntity()
+
+	updateRequest := &goa{{.ModuleNamePascal}}.Update{{.EntityName}}Payload{
+		Name:        strPtr("Updated Name"),
+		Description: strPtr("Updated description"),
+		IsActive:    boolPtr(false),
+	}
+
+	// Act
+	resp, err := suite.makeRequest("PUT", fmt.Sprintf("/api/v1/{{pluralize (snakeCase .EntityName)}}/%s", entity.ID), updateRequest)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusOK, resp.StatusCode)
+
+	var result goa{{.ModuleNamePascal}}.{{.EntityName}}Result
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	require.NoError(suite.T(), err)
+
+	assert.Equal(suite.T(), entity.ID.String(), result.ID)
+	assert.Equal(suite.T(), "Updated Name", result.Name)
+	assert.Equal(suite.T(), "Updated description", *result.Description)
+	assert.False(suite.T(), result.IsActive)
+	assert.NotEqual(suite.T(), result.CreatedAt, result.UpdatedAt)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestUpdate{{.EntityName}}_NotFound() {
+	// Arrange
+	nonExistentID := uuid.New()
+	updateRequest := &goa{{.ModuleNamePascal}}.Update{{.EntityName}}Payload{
+		Name: strPtr("Updated Name"),
+	}
+
+	// Act
+	resp, err := suite.makeRequest("PUT", fmt.Sprintf("/api/v1/{{pluralize (snakeCase .EntityName)}}/%s", nonExistentID), updateRequest)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusNotFound, resp.StatusCode)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestUpdate{{.EntityName}}_ValidationError() {
+	// Arrange - create entity first
+	entity := suite.createTestEntity()
+
+	updateRequest := &goa{{.ModuleNamePascal}}.Update{{.EntityName}}Payload{
+		Name: strPtr(""), // Invalid: empty name
+	}
+
+	// Act
+	resp, err := suite.makeRequest("PUT", fmt.Sprintf("/api/v1/{{pluralize (snakeCase .EntityName)}}/%s", entity.ID), updateRequest)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusBadRequest, resp.StatusCode)
+}
+
+// =============================================================================
+// DELETE INTEGRATION TESTS
+// =============================================================================
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestDelete{{.EntityName}}_Success() {
+	// Arrange - create entity first
+	entity := suite.createTestEntity()
+
+	// Act
+	resp, err := suite.makeRequest("DELETE", fmt.Sprintf("/api/v1/{{pluralize (snakeCase .EntityName)}}/%s", entity.ID), nil)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusNoContent, resp.StatusCode)
+
+	// Verify entity is deleted (soft delete)
+	getResp, err := suite.makeRequest("GET", fmt.Sprintf("/api/v1/{{pluralize (snakeCase .EntityName)}}/%s", entity.ID), nil)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusNotFound, getResp.StatusCode)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestDelete{{.EntityName}}_NotFound() {
+	// Arrange
+	nonExistentID := uuid.New()
+
+	// Act
+	resp, err := suite.makeRequest("DELETE", fmt.Sprintf("/api/v1/{{pluralize (snakeCase .EntityName)}}/%s", nonExistentID), nil)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusNotFound, resp.StatusCode)
+}
+
+// =============================================================================
+// SEARCH INTEGRATION TESTS
+// =============================================================================
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestSearch{{.EntityNamePlural}}_Success() {
+	// Arrange - create entities with searchable content
+	entity1 := suite.createTestEntityWithName("Searchable Item One")
+	entity2 := suite.createTestEntityWithName("Searchable Item Two")
+	entity3 := suite.createTestEntityWithName("Different Content")
+
+	// Act
+	resp, err := suite.makeRequest("GET", "/api/v1/{{pluralize (snakeCase .EntityName)}}/search?query=Searchable&limit=10", nil)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusOK, resp.StatusCode)
+
+	var result goa{{.ModuleNamePascal}}.Search{{.EntityNamePlural}}Result
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	require.NoError(suite.T(), err)
+
+	assert.Len(suite.T(), result.Results, 2)
+	assert.Equal(suite.T(), int32(2), result.TotalResults)
+	assert.Greater(suite.T(), result.SearchDurationMs, int32(0))
+
+	// Verify results contain search term
+	for _, item := range result.Results {
+		assert.Contains(suite.T(), item.Name, "Searchable")
+	}
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestSearch{{.EntityNamePlural}}_NoResults() {
+	// Arrange - create entity that won't match
+	suite.createTestEntityWithName("No Match Item")
+
+	// Act
+	resp, err := suite.makeRequest("GET", "/api/v1/{{pluralize (snakeCase .EntityName)}}/search?query=nonexistent&limit=10", nil)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusOK, resp.StatusCode)
+
+	var result goa{{.ModuleNamePascal}}.Search{{.EntityNamePlural}}Result
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	require.NoError(suite.T(), err)
+
+	assert.Empty(suite.T(), result.Results)
+	assert.Equal(suite.T(), int32(0), result.TotalResults)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestSearch{{.EntityNamePlural}}_InvalidQuery() {
+	// Act - empty query
+	resp, err := suite.makeRequest("GET", "/api/v1/{{pluralize (snakeCase .EntityName)}}/search?query=&limit=10", nil)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusBadRequest, resp.StatusCode)
+}
+
+// =============================================================================
+// BUSINESS LOGIC INTEGRATION TESTS
+// =============================================================================
+
+func (suite *{{.EntityName}}IntegrationTestSuite) TestBusinessWorkflow_CompleteLifecycle() {
+	// This test demonstrates a complete business workflow
+	
+	// Step 1: Create {{.EntityName}}
+	createRequest := &goa{{.ModuleNamePascal}}.Create{{.EntityName}}Payload{
+		Name:        "Workflow Test {{.EntityName}}",
+		{{- if contains .ModuleName "finance"}}
+		Code:        "WORKFLOW001",
+		{{- end}}
+		Description: strPtr("Complete workflow test"),
+		IsActive:    true,
+	}
+
+	createResp, err := suite.makeRequest("POST", "/api/v1/{{pluralize (snakeCase .EntityName)}}", createRequest)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusCreated, createResp.StatusCode)
+
+	var created goa{{.ModuleNamePascal}}.{{.EntityName}}Result
+	err = json.NewDecoder(createResp.Body).Decode(&created)
+	require.NoError(suite.T(), err)
+
+	// Step 2: Read {{.EntityName}}
+	getResp, err := suite.makeRequest("GET", fmt.Sprintf("/api/v1/{{pluralize (snakeCase .EntityName)}}/%s", created.ID), nil)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusOK, getResp.StatusCode)
+
+	// Step 3: Update {{.EntityName}}
+	updateRequest := &goa{{.ModuleNamePascal}}.Update{{.EntityName}}Payload{
+		Name:        strPtr("Updated Workflow {{.EntityName}}"),
+		Description: strPtr("Updated description"),
+	}
+
+	updateResp, err := suite.makeRequest("PUT", fmt.Sprintf("/api/v1/{{pluralize (snakeCase .EntityName)}}/%s", created.ID), updateRequest)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusOK, updateResp.StatusCode)
+
+	// Step 4: List to verify
+	listResp, err := suite.makeRequest("GET", "/api/v1/{{pluralize (snakeCase .EntityName)}}", nil)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusOK, listResp.StatusCode)
+
+	var listResult goa{{.ModuleNamePascal}}.{{.EntityName}}ListResult
+	err = json.NewDecoder(listResp.Body).Decode(&listResult)
+	require.NoError(suite.T(), err)
+	assert.GreaterOrEqual(suite.T(), len(listResult.{{.EntityNamePlural}}), 1)
+
+	// Step 5: Search for updated entity
+	searchResp, err := suite.makeRequest("GET", "/api/v1/{{pluralize (snakeCase .EntityName)}}/search?query=Updated&limit=10", nil)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusOK, searchResp.StatusCode)
+
+	var searchResult goa{{.ModuleNamePascal}}.Search{{.EntityNamePlural}}Result
+	err = json.NewDecoder(searchResp.Body).Decode(&searchResult)
+	require.NoError(suite.T(), err)
+	assert.GreaterOrEqual(suite.T(), len(searchResult.Results), 1)
+
+	// Step 6: Delete {{.EntityName}}
+	deleteResp, err := suite.makeRequest("DELETE", fmt.Sprintf("/api/v1/{{pluralize (snakeCase .EntityName)}}/%s", created.ID), nil)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusNoContent, deleteResp.StatusCode)
+
+	// Step 7: Verify deletion
+	finalGetResp, err := suite.makeRequest("GET", fmt.Sprintf("/api/v1/{{pluralize (snakeCase .EntityName)}}/%s", created.ID), nil)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), http.StatusNotFound, finalGetResp.StatusCode)
+}
+
+// =============================================================================
+// HELPER METHODS
+// =============================================================================
+
+func (suite *{{.EntityName}}IntegrationTestSuite) makeRequest(method, path string, body interface{}) (*http.Response, error) {
+	var reqBody []byte
+	var err error
+
+	if body != nil {
+		reqBody, err = json.Marshal(body)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	req := httptest.NewRequest(method, path, bytes.NewReader(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+suite.authToken)
+
+	return suite.app.Test(req)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) createTestEntity() *domain.{{.EntityName}} {
+	entity := &domain.{{.EntityName}}{
+		ID:                uuid.New(),
+		TenantID:          suite.tenantID,
+		{{.EntityName}}Code:        "INTTEST" + uuid.New().String()[:8],
+		{{.EntityName}}Name:        "Integration Test {{.EntityName}}",
+		{{.EntityName}}Description: strPtr("Integration test description"),
+		{{.EntityName}}Type:        "STANDARD",
+		Status:            domain.{{.EntityName}}StatusActive,
+		IsActive:          true,
+		IsSystemDefined:   false,
+		AllowManualEntries: true,
+		DisplayOrder:      0,
+		ShowInReports:     true,
+		Version:           1,
+		ValidationStatus:  domain.ValidationStatusPending,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+		CreatedBy:         suite.userID,
+	}
+
+	err := suite.service.Create{{.EntityName}}(suite.ctx, &domain.Create{{.EntityName}}Request{
+		{{.EntityName}}Code: entity.{{.EntityName}}Code,
+		{{.EntityName}}Name: entity.{{.EntityName}}Name,
+		{{.EntityName}}Description: entity.{{.EntityName}}Description,
+		{{.EntityName}}Type: entity.{{.EntityName}}Type,
+		IsActive: entity.IsActive,
+	})
+	require.NoError(suite.T(), err)
+
+	return entity
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) createTestEntityWithName(name string) *domain.{{.EntityName}} {
+	entity := suite.createTestEntity()
+	entity.{{.EntityName}}Name = name
+	return entity
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) createTestEntityWithStatus(isActive bool) *domain.{{.EntityName}} {
+	entity := suite.createTestEntity()
+	entity.IsActive = isActive
+	return entity
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) createMultipleTestEntities(count int) []*domain.{{.EntityName}} {
+	entities := make([]*domain.{{.EntityName}}, count)
+	for i := 0; i < count; i++ {
+		entities[i] = suite.createTestEntity()
+		entities[i].{{.EntityName}}Code = fmt.Sprintf("INTTEST%03d", i+1)
+		entities[i].{{.EntityName}}Name = fmt.Sprintf("Integration Test {{.EntityName}} %d", i+1)
+	}
+	return entities
+}
+
+// Handler wrapper functions (these would be implemented to call the actual handlers)
+func (suite *{{.EntityName}}IntegrationTestSuite) create{{.EntityName}}Handler(c *fiber.Ctx) error {
+	var payload goa{{.ModuleNamePascal}}.Create{{.EntityName}}Payload
+	if err := c.BodyParser(&payload); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid request"})
+	}
+	
+	result, err := suite.handler.Create{{.EntityName}}(c.Context(), &payload)
+	if err != nil {
+		return testutil.HandleError(c, err)
+	}
+	
+	return c.Status(201).JSON(result)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) get{{.EntityName}}Handler(c *fiber.Ctx) error {
+	id := c.Params("id")
+	
+	result, err := suite.handler.Get{{.EntityName}}(c.Context(), &goa{{.ModuleNamePascal}}.Get{{.EntityName}}ByIDPayload{ID: id})
+	if err != nil {
+		return testutil.HandleError(c, err)
+	}
+	
+	return c.JSON(result)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) update{{.EntityName}}Handler(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var payload goa{{.ModuleNamePascal}}.Update{{.EntityName}}Payload
+	payload.ID = id
+	
+	if err := c.BodyParser(&payload); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid request"})
+	}
+	
+	result, err := suite.handler.Update{{.EntityName}}(c.Context(), &payload)
+	if err != nil {
+		return testutil.HandleError(c, err)
+	}
+	
+	return c.JSON(result)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) delete{{.EntityName}}Handler(c *fiber.Ctx) error {
+	id := c.Params("id")
+	
+	err := suite.handler.Delete{{.EntityName}}(c.Context(), &goa{{.ModuleNamePascal}}.Delete{{.EntityName}}Payload{ID: id})
+	if err != nil {
+		return testutil.HandleError(c, err)
+	}
+	
+	return c.SendStatus(204)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) list{{.EntityNamePlural}}Handler(c *fiber.Ctx) error {
+	// Parse query parameters
+	payload := &goa{{.ModuleNamePascal}}.List{{.EntityNamePlural}}Payload{}
+	// Add query parameter parsing logic here
+	
+	result, err := suite.handler.List{{.EntityNamePlural}}(c.Context(), payload)
+	if err != nil {
+		return testutil.HandleError(c, err)
+	}
+	
+	return c.JSON(result)
+}
+
+func (suite *{{.EntityName}}IntegrationTestSuite) search{{.EntityNamePlural}}Handler(c *fiber.Ctx) error {
+	query := c.Query("query")
+	limit := c.QueryInt("limit", 10)
+	
+	payload := &goa{{.ModuleNamePascal}}.Search{{.EntityNamePlural}}Payload{
+		Query: query,
+		Limit: int32Ptr(int32(limit)),
+	}
+	
+	result, err := suite.handler.Search{{.EntityNamePlural}}(c.Context(), payload)
+	if err != nil {
+		return testutil.HandleError(c, err)
+	}
+	
+	return c.JSON(result)
+}
+
+func strPtr(s string) *string {
+	return &s
+}
+
+func int32Ptr(i int32) *int32 {
+	return &i
+}
+
+func boolPtr(b bool) *bool {
+	return &b
+}
+
+{{comment "TODO: Add performance tests for high load scenarios"}}
+{{comment "TODO: Add security tests for unauthorized access"}}
+{{comment "TODO: Add multi-tenant isolation tests"}}
+{{comment "TODO: Add API versioning tests"}}

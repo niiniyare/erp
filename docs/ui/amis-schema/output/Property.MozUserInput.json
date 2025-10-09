@@ -1,0 +1,25 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "auto"
+    },
+    {
+      "type": "string",
+      "const": "disabled"
+    },
+    {
+      "type": "string",
+      "const": "enabled"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.MozUserInput.json"
+}

@@ -1,0 +1,26 @@
+{
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string"
+    },
+    "date": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/moment.Moment"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "支持表达式"
+    }
+  },
+  "required": [
+    "label",
+    "date"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ShortCutDate.json"
+}

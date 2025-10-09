@@ -1,0 +1,25 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "center"
+    },
+    {
+      "type": "string",
+      "const": "space-around"
+    },
+    {
+      "type": "string",
+      "const": "space-between"
+    },
+    {
+      "type": "string",
+      "const": "start"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.RubyAlign.json"
+}

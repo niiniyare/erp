@@ -1,0 +1,226 @@
+{
+  "type": "object",
+  "properties": {
+    "$$id": {
+      "type": "string",
+      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "外层 CSS 类名"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "是否禁用"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否禁用表达式"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "是否隐藏"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否隐藏表达式"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "是否显示"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否显示表达式"
+    },
+    "id": {
+      "type": "string",
+      "description": "组件唯一 id，主要用于日志采集"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "事件动作配置"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "是否静态展示"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否静态展示表达式"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "静态展示空值占位"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项类名"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项Label类名"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项Value类名"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "组件样式"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "组件行为、用途，如 create、update、remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "组件名称，通常是业务名称方便定位"
+        },
+        "mock": {
+          "description": "编辑器假数据，方便展示"
+        }
+      },
+      "description": "编辑器配置，运行时可以忽略"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "可以组件级别用来关闭移动端样式"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "images",
+        "static-images"
+      ],
+      "description": "指定为图片集渲染器"
+    },
+    "testid": {
+      "type": "string"
+    },
+    "defaultImage": {
+      "$ref": "#/definitions/SchemaUrlPath",
+      "description": "默认图片地址"
+    },
+    "placeholder": {
+      "type": "string",
+      "description": "列表为空时显示"
+    },
+    "delimiter": {
+      "type": "string",
+      "description": "配置值的连接符"
+    },
+    "thumbMode": {
+      "type": "string",
+      "enum": [
+        "w-full",
+        "h-full",
+        "contain",
+        "cover"
+      ],
+      "description": "预览图模式"
+    },
+    "thumbRatio": {
+      "type": "string",
+      "enum": [
+        "1:1",
+        "4:3",
+        "16:9"
+      ],
+      "description": "预览图比率"
+    },
+    "name": {
+      "type": "string",
+      "description": "关联字段名，也可以直接配置 src"
+    },
+    "value": {},
+    "source": {
+      "type": "string"
+    },
+    "options": {
+      "type": "array",
+      "items": {}
+    },
+    "src": {
+      "type": "string",
+      "description": "图片地址，默认读取数据中的 image 属性，如果不是请配置 ,如  ${imageUrl}"
+    },
+    "originalSrc": {
+      "type": "string",
+      "description": "大图地址，不设置用 src 属性，如果不是请配置，如：${imageOriginUrl}"
+    },
+    "enlargeAble": {
+      "type": "boolean",
+      "description": "是否启动放大功能。"
+    },
+    "enlargetWithImages": {
+      "type": "boolean",
+      "description": "放大时是否显示图片集"
+    },
+    "showDimensions": {
+      "type": "boolean",
+      "description": "是否显示尺寸。"
+    },
+    "listClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "列表 CSS 类名"
+    },
+    "imageGallaryClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "放大详情图 CSS 类名"
+    },
+    "showToolbar": {
+      "type": "boolean",
+      "description": "是否展示图片工具栏"
+    },
+    "toolbarActions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ImageToolbarAction"
+      },
+      "description": "工具栏配置"
+    }
+  },
+  "required": [
+    "type"
+  ],
+  "additionalProperties": false,
+  "description": "图片集展示控件。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/images",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ImagesSchema.json"
+}

@@ -1,0 +1,12 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/TableColumnWithType"
+    },
+    {
+      "$ref": "#/definitions/TableColumnObject"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./TableColumn.json"
+}

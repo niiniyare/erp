@@ -22,7 +22,7 @@ type FeatureGenerator struct {
 // NewModuleGenerator creates a new module generator
 func NewModuleGenerator() (*ModuleGenerator, error) {
 	// Load templates
-	tmpl, err := template.New("module").Funcs(TemplateFunctions()).ParseFS(templateFS, "templates/module/*", "templates/domain/*", "templates/service/*", "templates/repository/*", "templates/api/*", "templates/database/*")
+	tmpl, err := template.New("module").Funcs(TemplateFunctions()).ParseFS(templateFS, "templates/module/*", "templates/domain/*", "templates/service/*", "templates/repository/*", "templates/api/*", "templates/database/*", "templates/test/*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse module templates: %w", err)
 	}

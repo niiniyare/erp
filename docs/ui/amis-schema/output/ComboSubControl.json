@@ -1,0 +1,29 @@
+{
+  "allOf": [
+    {
+      "$ref": "#/definitions/SchemaObjectComboSubControl",
+      "patternProperties": {
+        "^(unique|columnClassName|testid)$": {}
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "unique": {
+          "type": "boolean",
+          "description": "是否唯一, 只有在 combo 里面才有用"
+        },
+        "columnClassName": {
+          "$ref": "#/definitions/SchemaClassName",
+          "description": "列类名，可以用来修改这类宽度。"
+        },
+        "testid": {
+          "type": "string"
+        }
+      }
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ComboSubControl.json"
+}

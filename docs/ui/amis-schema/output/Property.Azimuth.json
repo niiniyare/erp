@@ -1,0 +1,60 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "behind"
+    },
+    {
+      "type": "string",
+      "const": "center"
+    },
+    {
+      "type": "string",
+      "const": "center-left"
+    },
+    {
+      "type": "string",
+      "const": "center-right"
+    },
+    {
+      "type": "string",
+      "const": "far-left"
+    },
+    {
+      "type": "string",
+      "const": "far-right"
+    },
+    {
+      "type": "string",
+      "const": "left"
+    },
+    {
+      "type": "string",
+      "const": "left-side"
+    },
+    {
+      "type": "string",
+      "const": "leftwards"
+    },
+    {
+      "type": "string",
+      "const": "right"
+    },
+    {
+      "type": "string",
+      "const": "right-side"
+    },
+    {
+      "type": "string",
+      "const": "rightwards"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.Azimuth.json"
+}

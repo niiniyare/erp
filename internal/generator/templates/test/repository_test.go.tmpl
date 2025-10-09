@@ -1,0 +1,719 @@
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/niiniyare/erp/internal/core/{{.PackageName}}/domain"
+	"github.com/niiniyare/erp/internal/core/{{.PackageName}}/repository/mappers"
+	"github.com/niiniyare/erp/db/sqlc"
+	"github.com/niiniyare/erp/internal/platform/database"
+	"github.com/niiniyare/erp/internal/shared/testutil"
+)
+
+{{comment (printf "Test%sRepository tests the %s repository implementation" .EntityName (lowerCase .EntityName))}}
+
+// =============================================================================
+// TEST SUITE SETUP
+// =============================================================================
+
+type {{.EntityName}}RepositoryTestSuite struct {
+	suite.Suite
+	db         *sql.DB
+	queries    *sqlc.Queries
+	repo       domain.{{.EntityName}}Repository
+	ctx        context.Context
+	tenantID   uuid.UUID
+	entityID   uuid.UUID
+	cleanup    func()
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) SetupSuite() {
+	// Setup test database
+	db, cleanup, err := testutil.SetupTestDB()
+	require.NoError(suite.T(), err)
+	
+	suite.db = db
+	suite.queries = sqlc.New(db)
+	suite.repo = New{{.EntityName}}Repository(suite.queries)
+	suite.cleanup = cleanup
+	
+	// Set tenant context for multi-tenancy
+	suite.tenantID = uuid.New()
+	suite.entityID = uuid.New()
+	suite.ctx = database.WithTenantID(context.Background(), suite.tenantID)
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TearDownSuite() {
+	if suite.cleanup != nil {
+		suite.cleanup()
+	}
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) SetupTest() {
+	// Clean up data before each test
+	suite.cleanupTestData()
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TearDownTest() {
+	// Clean up data after each test
+	suite.cleanupTestData()
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) cleanupTestData() {
+	// Delete test data for this tenant
+	_, err := suite.db.Exec(`
+		DELETE FROM {{snakeCase (pluralize .EntityName)}} 
+		WHERE tenant_id = $1
+	`, suite.tenantID)
+	require.NoError(suite.T(), err)
+}
+
+func TestRun{{.EntityName}}RepositoryTestSuite(t *testing.T) {
+	suite.Run(t, new({{.EntityName}}RepositoryTestSuite))
+}
+
+// =============================================================================
+// CREATE TESTS
+// =============================================================================
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestCreate() {
+	// Arrange
+	entity := suite.createValid{{.EntityName}}()
+
+	// Act
+	err := suite.repo.Create(suite.ctx, entity)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	
+	// Verify entity was created in database
+	retrieved, err := suite.repo.GetByID(suite.ctx, entity.ID)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), entity.{{.EntityName}}Code, retrieved.{{.EntityName}}Code)
+	assert.Equal(suite.T(), entity.{{.EntityName}}Name, retrieved.{{.EntityName}}Name)
+	assert.Equal(suite.T(), entity.TenantID, retrieved.TenantID)
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestCreate_DuplicateCode() {
+	// Arrange
+	entity1 := suite.createValid{{.EntityName}}()
+	entity2 := suite.createValid{{.EntityName}}()
+	entity2.{{.EntityName}}Code = entity1.{{.EntityName}}Code // Same code
+
+	// Act
+	err1 := suite.repo.Create(suite.ctx, entity1)
+	err2 := suite.repo.Create(suite.ctx, entity2)
+
+	// Assert
+	require.NoError(suite.T(), err1)
+	require.Error(suite.T(), err2)
+	assert.Contains(suite.T(), err2.Error(), "duplicate")
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestCreate_TenantIsolation() {
+	// Arrange
+	entity1 := suite.createValid{{.EntityName}}()
+	entity1.TenantID = suite.tenantID
+
+	// Create entity with different tenant
+	otherTenantID := uuid.New()
+	entity2 := suite.createValid{{.EntityName}}()
+	entity2.TenantID = otherTenantID
+	entity2.{{.EntityName}}Code = entity1.{{.EntityName}}Code // Same code, different tenant
+
+	// Act
+	err1 := suite.repo.Create(suite.ctx, entity1)
+	
+	// Switch context to other tenant
+	otherCtx := database.WithTenantID(context.Background(), otherTenantID)
+	err2 := suite.repo.Create(otherCtx, entity2)
+
+	// Assert
+	require.NoError(suite.T(), err1)
+	require.NoError(suite.T(), err2) // Should succeed due to tenant isolation
+}
+
+// =============================================================================
+// READ TESTS
+// =============================================================================
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestGetByID() {
+	// Arrange
+	entity := suite.createValid{{.EntityName}}()
+	err := suite.repo.Create(suite.ctx, entity)
+	require.NoError(suite.T(), err)
+
+	// Act
+	retrieved, err := suite.repo.GetByID(suite.ctx, entity.ID)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), entity.ID, retrieved.ID)
+	assert.Equal(suite.T(), entity.{{.EntityName}}Code, retrieved.{{.EntityName}}Code)
+	assert.Equal(suite.T(), entity.{{.EntityName}}Name, retrieved.{{.EntityName}}Name)
+	assert.Equal(suite.T(), entity.TenantID, retrieved.TenantID)
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestGetByID_NotFound() {
+	// Arrange
+	nonExistentID := uuid.New()
+
+	// Act
+	retrieved, err := suite.repo.GetByID(suite.ctx, nonExistentID)
+
+	// Assert
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), retrieved)
+	assert.Equal(suite.T(), domain.ErrNotFound, err)
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestGetByID_TenantIsolation() {
+	// Arrange
+	entity := suite.createValid{{.EntityName}}()
+	err := suite.repo.Create(suite.ctx, entity)
+	require.NoError(suite.T(), err)
+
+	// Act - try to get from different tenant context
+	otherTenantID := uuid.New()
+	otherCtx := database.WithTenantID(context.Background(), otherTenantID)
+	retrieved, err := suite.repo.GetByID(otherCtx, entity.ID)
+
+	// Assert
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), retrieved)
+	assert.Equal(suite.T(), domain.ErrNotFound, err)
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestGetByCode() {
+	// Arrange
+	entity := suite.createValid{{.EntityName}}()
+	err := suite.repo.Create(suite.ctx, entity)
+	require.NoError(suite.T(), err)
+
+	// Act
+	retrieved, err := suite.repo.GetByCode(suite.ctx, nil, entity.{{.EntityName}}Code)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), entity.ID, retrieved.ID)
+	assert.Equal(suite.T(), entity.{{.EntityName}}Code, retrieved.{{.EntityName}}Code)
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestGetByCode_WithEntityFilter() {
+	// Arrange
+	entity := suite.createValid{{.EntityName}}()
+	entity.EntityID = &suite.entityID
+	err := suite.repo.Create(suite.ctx, entity)
+	require.NoError(suite.T(), err)
+
+	// Act
+	retrieved, err := suite.repo.GetByCode(suite.ctx, &suite.entityID, entity.{{.EntityName}}Code)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), entity.ID, retrieved.ID)
+
+	// Test with different entity ID - should not find
+	otherEntityID := uuid.New()
+	notFound, err := suite.repo.GetByCode(suite.ctx, &otherEntityID, entity.{{.EntityName}}Code)
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), notFound)
+}
+
+// =============================================================================
+// UPDATE TESTS
+// =============================================================================
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestUpdate() {
+	// Arrange
+	entity := suite.createValid{{.EntityName}}()
+	err := suite.repo.Create(suite.ctx, entity)
+	require.NoError(suite.T(), err)
+
+	// Modify entity
+	entity.{{.EntityName}}Name = "Updated Name"
+	entity.{{.EntityName}}Description = strPtr("Updated Description")
+	originalVersion := entity.Version
+	entity.Version++
+
+	// Act
+	err = suite.repo.Update(suite.ctx, entity)
+
+	// Assert
+	require.NoError(suite.T(), err)
+
+	// Verify update in database
+	retrieved, err := suite.repo.GetByID(suite.ctx, entity.ID)
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), "Updated Name", retrieved.{{.EntityName}}Name)
+	assert.Equal(suite.T(), "Updated Description", *retrieved.{{.EntityName}}Description)
+	assert.Equal(suite.T(), originalVersion+1, retrieved.Version)
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestUpdate_NotFound() {
+	// Arrange
+	entity := suite.createValid{{.EntityName}}()
+	entity.ID = uuid.New() // Non-existent ID
+
+	// Act
+	err := suite.repo.Update(suite.ctx, entity)
+
+	// Assert
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), domain.ErrNotFound, err)
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestUpdate_OptimisticLocking() {
+	// Arrange
+	entity := suite.createValid{{.EntityName}}()
+	err := suite.repo.Create(suite.ctx, entity)
+	require.NoError(suite.T(), err)
+
+	// Simulate concurrent update by changing version
+	entity.Version = 999 // Incorrect version
+
+	// Act
+	err = suite.repo.Update(suite.ctx, entity)
+
+	// Assert
+	assert.Error(suite.T(), err)
+	assert.Contains(suite.T(), err.Error(), "version")
+}
+
+// =============================================================================
+// DELETE TESTS
+// =============================================================================
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestDelete() {
+	// Arrange
+	entity := suite.createValid{{.EntityName}}()
+	err := suite.repo.Create(suite.ctx, entity)
+	require.NoError(suite.T(), err)
+
+	// Act
+	err = suite.repo.Delete(suite.ctx, entity.ID)
+
+	// Assert
+	require.NoError(suite.T(), err)
+
+	// Verify soft delete - entity should not be retrievable
+	retrieved, err := suite.repo.GetByID(suite.ctx, entity.ID)
+	assert.Error(suite.T(), err)
+	assert.Nil(suite.T(), retrieved)
+	assert.Equal(suite.T(), domain.ErrNotFound, err)
+
+	// Verify entity still exists in database with deleted_at set
+	var deletedAt sql.NullTime
+	err = suite.db.QueryRow(`
+		SELECT deleted_at FROM {{snakeCase (pluralize .EntityName)}} 
+		WHERE id = $1 AND tenant_id = $2
+	`, entity.ID, suite.tenantID).Scan(&deletedAt)
+	require.NoError(suite.T(), err)
+	assert.True(suite.T(), deletedAt.Valid)
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestDelete_NotFound() {
+	// Arrange
+	nonExistentID := uuid.New()
+
+	// Act
+	err := suite.repo.Delete(suite.ctx, nonExistentID)
+
+	// Assert
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), domain.ErrNotFound, err)
+}
+
+// =============================================================================
+// LIST AND FILTER TESTS
+// =============================================================================
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestList() {
+	// Arrange
+	entities := suite.createMultiple{{.EntityNamePlural}}(5)
+	for _, entity := range entities {
+		err := suite.repo.Create(suite.ctx, entity)
+		require.NoError(suite.T(), err)
+	}
+
+	filter := &domain.{{.EntityName}}Filter{
+		Page:  int32Ptr(1),
+		Limit: int32Ptr(10),
+	}
+
+	// Act
+	result, err := suite.repo.List(suite.ctx, filter)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Len(suite.T(), result, 5)
+	
+	// Verify order (should be by {{camelCase .EntityName}}_code by default)
+	for i := 1; i < len(result); i++ {
+		assert.LessOrEqual(suite.T(), result[i-1].{{.EntityName}}Code, result[i].{{.EntityName}}Code)
+	}
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestList_WithFilters() {
+	// Arrange
+	activeEntity := suite.createValid{{.EntityName}}()
+	activeEntity.{{.EntityName}}Code = "ACTIVE001"
+	activeEntity.IsActive = true
+
+	inactiveEntity := suite.createValid{{.EntityName}}()
+	inactiveEntity.{{.EntityName}}Code = "INACTIVE001"
+	inactiveEntity.IsActive = false
+
+	err := suite.repo.Create(suite.ctx, activeEntity)
+	require.NoError(suite.T(), err)
+	err = suite.repo.Create(suite.ctx, inactiveEntity)
+	require.NoError(suite.T(), err)
+
+	// Test active filter
+	activeFilter := &domain.{{.EntityName}}Filter{
+		IsActive: boolPtr(true),
+	}
+
+	// Act
+	activeResults, err := suite.repo.List(suite.ctx, activeFilter)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Len(suite.T(), activeResults, 1)
+	assert.True(suite.T(), activeResults[0].IsActive)
+
+	// Test inactive filter
+	inactiveFilter := &domain.{{.EntityName}}Filter{
+		IsActive: boolPtr(false),
+	}
+
+	inactiveResults, err := suite.repo.List(suite.ctx, inactiveFilter)
+	require.NoError(suite.T(), err)
+	assert.Len(suite.T(), inactiveResults, 1)
+	assert.False(suite.T(), inactiveResults[0].IsActive)
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestList_Pagination() {
+	// Arrange
+	entities := suite.createMultiple{{.EntityNamePlural}}(25)
+	for _, entity := range entities {
+		err := suite.repo.Create(suite.ctx, entity)
+		require.NoError(suite.T(), err)
+	}
+
+	// Test first page
+	filter1 := &domain.{{.EntityName}}Filter{
+		Page:  int32Ptr(1),
+		Limit: int32Ptr(10),
+	}
+
+	// Act
+	page1, err := suite.repo.List(suite.ctx, filter1)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Len(suite.T(), page1, 10)
+
+	// Test second page
+	filter2 := &domain.{{.EntityName}}Filter{
+		Page:  int32Ptr(2),
+		Limit: int32Ptr(10),
+	}
+
+	page2, err := suite.repo.List(suite.ctx, filter2)
+	require.NoError(suite.T(), err)
+	assert.Len(suite.T(), page2, 10)
+
+	// Verify no overlap
+	for _, p1Entity := range page1 {
+		for _, p2Entity := range page2 {
+			assert.NotEqual(suite.T(), p1Entity.ID, p2Entity.ID)
+		}
+	}
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestCount() {
+	// Arrange
+	entities := suite.createMultiple{{.EntityNamePlural}}(7)
+	for _, entity := range entities {
+		err := suite.repo.Create(suite.ctx, entity)
+		require.NoError(suite.T(), err)
+	}
+
+	filter := &domain.{{.EntityName}}Filter{}
+
+	// Act
+	count, err := suite.repo.Count(suite.ctx, filter)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Equal(suite.T(), int64(7), count)
+}
+
+// =============================================================================
+// SEARCH TESTS
+// =============================================================================
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestSearch() {
+	// Arrange
+	entities := []*domain.{{.EntityName}}{
+		suite.create{{.EntityName}}WithDetails("SEARCH001", "Searchable Item One", "First test item"),
+		suite.create{{.EntityName}}WithDetails("SEARCH002", "Searchable Item Two", "Second test item"),
+		suite.create{{.EntityName}}WithDetails("OTHER001", "Different Item", "Not matching"),
+	}
+
+	for _, entity := range entities {
+		err := suite.repo.Create(suite.ctx, entity)
+		require.NoError(suite.T(), err)
+	}
+
+	// Act
+	results, err := suite.repo.Search(suite.ctx, "Searchable", 10)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Len(suite.T(), results, 2)
+	
+	// Verify relevance ordering (exact matches first)
+	for _, result := range results {
+		assert.Contains(suite.T(), result.{{.EntityName}}Name, "Searchable")
+	}
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestSearch_NoResults() {
+	// Arrange
+	entity := suite.createValid{{.EntityName}}()
+	err := suite.repo.Create(suite.ctx, entity)
+	require.NoError(suite.T(), err)
+
+	// Act
+	results, err := suite.repo.Search(suite.ctx, "nonexistent", 10)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Empty(suite.T(), results)
+}
+
+// =============================================================================
+// EXISTS TESTS
+// =============================================================================
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestExists() {
+	// Arrange
+	entity := suite.createValid{{.EntityName}}()
+	err := suite.repo.Create(suite.ctx, entity)
+	require.NoError(suite.T(), err)
+
+	// Act
+	exists, err := suite.repo.Exists(suite.ctx, entity.ID)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.True(suite.T(), exists)
+
+	// Test non-existent
+	nonExistentID := uuid.New()
+	exists, err = suite.repo.Exists(suite.ctx, nonExistentID)
+	require.NoError(suite.T(), err)
+	assert.False(suite.T(), exists)
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestExistsByCode() {
+	// Arrange
+	entity := suite.createValid{{.EntityName}}()
+	err := suite.repo.Create(suite.ctx, entity)
+	require.NoError(suite.T(), err)
+
+	// Act
+	exists, err := suite.repo.ExistsByCode(suite.ctx, nil, entity.{{.EntityName}}Code)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.True(suite.T(), exists)
+
+	// Test non-existent
+	exists, err = suite.repo.ExistsByCode(suite.ctx, nil, "NONEXISTENT")
+	require.NoError(suite.T(), err)
+	assert.False(suite.T(), exists)
+}
+
+{{- if contains .ModuleName "finance"}}
+
+// =============================================================================
+// HIERARCHY TESTS (for financial modules)
+// =============================================================================
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestGetHierarchy() {
+	// Arrange
+	parent := suite.create{{.EntityName}}WithDetails("PARENT", "Parent {{.EntityName}}", "Parent description")
+	parent.Level = 1
+	parent.Path = strPtr("PARENT")
+	parent.HasChildren = true
+
+	child1 := suite.create{{.EntityName}}WithDetails("CHILD1", "Child One", "First child")
+	child1.ParentID = &parent.ID
+	child1.Level = 2
+	child1.Path = strPtr("PARENT/CHILD1")
+	child1.HasChildren = false
+
+	child2 := suite.create{{.EntityName}}WithDetails("CHILD2", "Child Two", "Second child")
+	child2.ParentID = &parent.ID
+	child2.Level = 2
+	child2.Path = strPtr("PARENT/CHILD2")
+	child2.HasChildren = false
+
+	entities := []*domain.{{.EntityName}}{parent, child1, child2}
+	for _, entity := range entities {
+		err := suite.repo.Create(suite.ctx, entity)
+		require.NoError(suite.T(), err)
+	}
+
+	// Act
+	hierarchy, err := suite.repo.GetHierarchy(suite.ctx, parent.ID)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Len(suite.T(), hierarchy, 3) // parent + 2 children
+	
+	// Verify ordering (by level, then code)
+	assert.Equal(suite.T(), parent.ID, hierarchy[0].ID)
+	assert.Equal(suite.T(), int32(1), hierarchy[0].Level)
+	assert.Equal(suite.T(), int32(2), hierarchy[1].Level)
+	assert.Equal(suite.T(), int32(2), hierarchy[2].Level)
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestGetChildren() {
+	// Arrange
+	parent := suite.createValid{{.EntityName}}()
+	parent.HasChildren = true
+	err := suite.repo.Create(suite.ctx, parent)
+	require.NoError(suite.T(), err)
+
+	// Create children
+	child1 := suite.createValid{{.EntityName}}()
+	child1.{{.EntityName}}Code = "CHILD001"
+	child1.ParentID = &parent.ID
+
+	child2 := suite.createValid{{.EntityName}}()
+	child2.{{.EntityName}}Code = "CHILD002"
+	child2.ParentID = &parent.ID
+
+	err = suite.repo.Create(suite.ctx, child1)
+	require.NoError(suite.T(), err)
+	err = suite.repo.Create(suite.ctx, child2)
+	require.NoError(suite.T(), err)
+
+	// Act
+	children, err := suite.repo.GetChildren(suite.ctx, parent.ID)
+
+	// Assert
+	require.NoError(suite.T(), err)
+	assert.Len(suite.T(), children, 2)
+	
+	for _, child := range children {
+		assert.Equal(suite.T(), parent.ID, *child.ParentID)
+	}
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) TestHasChildren() {
+	// Arrange
+	parent := suite.createValid{{.EntityName}}()
+	err := suite.repo.Create(suite.ctx, parent)
+	require.NoError(suite.T(), err)
+
+	// Initially no children
+	hasChildren, err := suite.repo.HasChildren(suite.ctx, parent.ID)
+	require.NoError(suite.T(), err)
+	assert.False(suite.T(), hasChildren)
+
+	// Add a child
+	child := suite.createValid{{.EntityName}}()
+	child.{{.EntityName}}Code = "CHILD001"
+	child.ParentID = &parent.ID
+	err = suite.repo.Create(suite.ctx, child)
+	require.NoError(suite.T(), err)
+
+	// Now should have children
+	hasChildren, err = suite.repo.HasChildren(suite.ctx, parent.ID)
+	require.NoError(suite.T(), err)
+	assert.True(suite.T(), hasChildren)
+}
+
+{{- end}}
+
+// =============================================================================
+// HELPER METHODS
+// =============================================================================
+
+func (suite *{{.EntityName}}RepositoryTestSuite) createValid{{.EntityName}}() *domain.{{.EntityName}} {
+	return &domain.{{.EntityName}}{
+		ID:                uuid.New(),
+		TenantID:          suite.tenantID,
+		EntityID:          &suite.entityID,
+		{{.EntityName}}Code:        "TEST" + uuid.New().String()[:8],
+		{{.EntityName}}Name:        "Test {{.EntityName}}",
+		{{.EntityName}}Description: strPtr("Test description"),
+		{{.EntityName}}Type:        "STANDARD",
+		{{.EntityName}}Category:    strPtr("TEST"),
+		Status:            domain.{{.EntityName}}StatusActive,
+		{{- if contains .ModuleName "finance"}}
+		Level:             1,
+		Path:              strPtr("TEST"),
+		HasChildren:       false,
+		{{- end}}
+		IsActive:          true,
+		IsSystemDefined:   false,
+		AllowManualEntries: true,
+		DisplayOrder:      0,
+		ShowInReports:     true,
+		Version:           1,
+		ValidationStatus:  domain.ValidationStatusPending,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+		CreatedBy:         uuid.New(),
+	}
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) create{{.EntityName}}WithDetails(code, name, description string) *domain.{{.EntityName}} {
+	entity := suite.createValid{{.EntityName}}()
+	entity.{{.EntityName}}Code = code
+	entity.{{.EntityName}}Name = name
+	entity.{{.EntityName}}Description = &description
+	return entity
+}
+
+func (suite *{{.EntityName}}RepositoryTestSuite) createMultiple{{.EntityNamePlural}}(count int) []*domain.{{.EntityName}} {
+	entities := make([]*domain.{{.EntityName}}, count)
+	for i := 0; i < count; i++ {
+		entities[i] = suite.createValid{{.EntityName}}()
+		entities[i].{{.EntityName}}Code = "TEST" + fmt.Sprintf("%03d", i+1)
+		entities[i].{{.EntityName}}Name = "Test {{.EntityName}} " + fmt.Sprintf("%d", i+1)
+	}
+	return entities
+}
+
+func strPtr(s string) *string {
+	return &s
+}
+
+func int32Ptr(i int32) *int32 {
+	return &i
+}
+
+func boolPtr(b bool) *bool {
+	return &b
+}
+
+{{comment "TODO: Add performance tests for large datasets"}}
+{{comment "TODO: Add transaction rollback tests"}}
+{{comment "TODO: Add concurrent access tests"}}
+{{comment "TODO: Add database constraint tests"}}

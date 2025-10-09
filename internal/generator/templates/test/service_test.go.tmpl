@@ -1,0 +1,824 @@
+package {{.PackageName}}
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
+
+	"github.com/niiniyare/erp/internal/core/{{.PackageName}}/domain"
+	"github.com/niiniyare/erp/internal/core/{{.PackageName}}/mocks"
+	"github.com/niiniyare/erp/internal/shared/auth"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/logger"
+)
+
+{{comment (printf "Test%sService tests the %s service layer" .EntityName (lowerCase .EntityName))}}
+
+// =============================================================================
+// TEST SETUP
+// =============================================================================
+
+type {{camelCase .EntityName}}ServiceTestSuite struct {
+	ctrl           *gomock.Controller
+	mockRepo       *mocks.Mock{{.EntityName}}Repository
+	mockABAC       *mocks.MockABACService
+	mockFeatureFlags *mocks.MockFeatureFlagService
+	mockMetrics    *mocks.MockMetricsProvider
+	service        *{{.EntityName}}Service
+	ctx            context.Context
+	tenantID       uuid.UUID
+	userID         uuid.UUID
+}
+
+func setup{{.EntityName}}ServiceTest(t *testing.T) *{{camelCase .EntityName}}ServiceTestSuite {
+	ctrl := gomock.NewController(t)
+	
+	suite := &{{camelCase .EntityName}}ServiceTestSuite{
+		ctrl:           ctrl,
+		mockRepo:       mocks.NewMock{{.EntityName}}Repository(ctrl),
+		mockABAC:       mocks.NewMockABACService(ctrl),
+		mockFeatureFlags: mocks.NewMockFeatureFlagService(ctrl),
+		mockMetrics:    mocks.NewMockMetricsProvider(ctrl),
+		tenantID:       uuid.New(),
+		userID:         uuid.New(),
+	}
+	
+	// Create service with mocks
+	suite.service = New{{.EntityName}}Service(
+		suite.mockRepo,
+		suite.mockABAC,
+		suite.mockFeatureFlags,
+		suite.mockMetrics,
+		logger.NewNullLogger(),
+	)
+	
+	// Setup context with tenant and user
+	suite.ctx = auth.WithTenantID(context.Background(), suite.tenantID)
+	suite.ctx = auth.WithUserID(suite.ctx, suite.userID)
+	
+	return suite
+}
+
+func (suite *{{camelCase .EntityName}}ServiceTestSuite) tearDown() {
+	suite.ctrl.Finish()
+}
+
+// =============================================================================
+// CREATE TESTS
+// =============================================================================
+
+func TestCreate{{.EntityName}}(t *testing.T) {
+	suite := setup{{.EntityName}}ServiceTest(t)
+	defer suite.tearDown()
+
+	t.Run("successful creation", func(t *testing.T) {
+		// Arrange
+		request := &domain.Create{{.EntityName}}Request{
+			{{.EntityName}}Code: "TEST001",
+			{{.EntityName}}Name: "Test {{.EntityName}}",
+			{{.EntityName}}Type: "STANDARD",
+			IsActive: true,
+		}
+
+		expectedEntity := &domain.{{.EntityName}}{
+			ID:       uuid.New(),
+			TenantID: suite.tenantID,
+			{{.EntityName}}Code: request.{{.EntityName}}Code,
+			{{.EntityName}}Name: request.{{.EntityName}}Name,
+			{{.EntityName}}Type: request.{{.EntityName}}Type,
+			Status:   domain.{{.EntityName}}StatusActive,
+			IsActive: request.IsActive,
+			CreatedBy: suite.userID,
+		}
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.create", gomock.Any()).
+			Return(true, nil)
+
+		suite.mockFeatureFlags.EXPECT().
+			IsEnabled(gomock.Any(), "{{snakeCase .ModuleName}}.{{snakeCase .EntityName}}.create").
+			Return(true, nil)
+
+		suite.mockRepo.EXPECT().
+			ExistsByCode(gomock.Any(), request.{{.EntityName}}Code, nil).
+			Return(false, nil)
+
+		suite.mockRepo.EXPECT().
+			Create(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, entity *domain.{{.EntityName}}) error {
+				assert.Equal(t, request.{{.EntityName}}Code, entity.{{.EntityName}}Code)
+				assert.Equal(t, request.{{.EntityName}}Name, entity.{{.EntityName}}Name)
+				assert.Equal(t, suite.tenantID, entity.TenantID)
+				assert.Equal(t, suite.userID, entity.CreatedBy)
+				return nil
+			})
+
+		suite.mockMetrics.EXPECT().
+			Counter(gomock.Any(), gomock.Any()).
+			Return(&metrics.MockCounter{}).
+			AnyTimes()
+
+		// Act
+		result, err := suite.service.Create{{.EntityName}}(suite.ctx, request)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, request.{{.EntityName}}Code, result.{{.EntityName}}Code)
+		assert.Equal(t, request.{{.EntityName}}Name, result.{{.EntityName}}Name)
+		assert.Equal(t, suite.tenantID, result.TenantID)
+	})
+
+	t.Run("permission denied", func(t *testing.T) {
+		// Arrange
+		request := &domain.Create{{.EntityName}}Request{
+			{{.EntityName}}Code: "TEST001",
+			{{.EntityName}}Name: "Test {{.EntityName}}",
+			{{.EntityName}}Type: "STANDARD",
+			IsActive: true,
+		}
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.create", gomock.Any()).
+			Return(false, nil)
+
+		// Act
+		result, err := suite.service.Create{{.EntityName}}(suite.ctx, request)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "permission denied")
+	})
+
+	t.Run("feature disabled", func(t *testing.T) {
+		// Arrange
+		request := &domain.Create{{.EntityName}}Request{
+			{{.EntityName}}Code: "TEST001",
+			{{.EntityName}}Name: "Test {{.EntityName}}",
+			{{.EntityName}}Type: "STANDARD",
+			IsActive: true,
+		}
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.create", gomock.Any()).
+			Return(true, nil)
+
+		suite.mockFeatureFlags.EXPECT().
+			IsEnabled(gomock.Any(), "{{snakeCase .ModuleName}}.{{snakeCase .EntityName}}.create").
+			Return(false, nil)
+
+		// Act
+		result, err := suite.service.Create{{.EntityName}}(suite.ctx, request)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "feature disabled")
+	})
+
+	t.Run("duplicate code", func(t *testing.T) {
+		// Arrange
+		request := &domain.Create{{.EntityName}}Request{
+			{{.EntityName}}Code: "TEST001",
+			{{.EntityName}}Name: "Test {{.EntityName}}",
+			{{.EntityName}}Type: "STANDARD",
+			IsActive: true,
+		}
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.create", gomock.Any()).
+			Return(true, nil)
+
+		suite.mockFeatureFlags.EXPECT().
+			IsEnabled(gomock.Any(), "{{snakeCase .ModuleName}}.{{snakeCase .EntityName}}.create").
+			Return(true, nil)
+
+		suite.mockRepo.EXPECT().
+			ExistsByCode(gomock.Any(), request.{{.EntityName}}Code, nil).
+			Return(true, nil)
+
+		// Act
+		result, err := suite.service.Create{{.EntityName}}(suite.ctx, request)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "already exists")
+	})
+
+	t.Run("invalid request", func(t *testing.T) {
+		// Arrange
+		request := &domain.Create{{.EntityName}}Request{
+			{{.EntityName}}Code: "", // Invalid: empty code
+			{{.EntityName}}Name: "Test {{.EntityName}}",
+			{{.EntityName}}Type: "STANDARD",
+			IsActive: true,
+		}
+
+		// Act
+		result, err := suite.service.Create{{.EntityName}}(suite.ctx, request)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "validation")
+	})
+}
+
+// =============================================================================
+// READ TESTS
+// =============================================================================
+
+func TestGet{{.EntityName}}ByID(t *testing.T) {
+	suite := setup{{.EntityName}}ServiceTest(t)
+	defer suite.tearDown()
+
+	t.Run("successful retrieval", func(t *testing.T) {
+		// Arrange
+		entityID := uuid.New()
+		expectedEntity := &domain.{{.EntityName}}{
+			ID:       entityID,
+			TenantID: suite.tenantID,
+			{{.EntityName}}Code: "TEST001",
+			{{.EntityName}}Name: "Test {{.EntityName}}",
+			{{.EntityName}}Type: "STANDARD",
+			Status:   domain.{{.EntityName}}StatusActive,
+			IsActive: true,
+		}
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.read", gomock.Any()).
+			Return(true, nil)
+
+		suite.mockRepo.EXPECT().
+			GetByID(gomock.Any(), entityID).
+			Return(expectedEntity, nil)
+
+		// Act
+		result, err := suite.service.Get{{.EntityName}}ByID(suite.ctx, entityID)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, entityID, result.ID)
+		assert.Equal(t, expectedEntity.{{.EntityName}}Code, result.{{.EntityName}}Code)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		// Arrange
+		entityID := uuid.New()
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.read", gomock.Any()).
+			Return(true, nil)
+
+		suite.mockRepo.EXPECT().
+			GetByID(gomock.Any(), entityID).
+			Return(nil, domain.ErrNotFound)
+
+		// Act
+		result, err := suite.service.Get{{.EntityName}}ByID(suite.ctx, entityID)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, domain.ErrNotFound, err)
+	})
+
+	t.Run("permission denied", func(t *testing.T) {
+		// Arrange
+		entityID := uuid.New()
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.read", gomock.Any()).
+			Return(false, nil)
+
+		// Act
+		result, err := suite.service.Get{{.EntityName}}ByID(suite.ctx, entityID)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "permission denied")
+	})
+}
+
+// =============================================================================
+// UPDATE TESTS
+// =============================================================================
+
+func TestUpdate{{.EntityName}}(t *testing.T) {
+	suite := setup{{.EntityName}}ServiceTest(t)
+	defer suite.tearDown()
+
+	t.Run("successful update", func(t *testing.T) {
+		// Arrange
+		entityID := uuid.New()
+		existingEntity := &domain.{{.EntityName}}{
+			ID:       entityID,
+			TenantID: suite.tenantID,
+			{{.EntityName}}Code: "TEST001",
+			{{.EntityName}}Name: "Original Name",
+			{{.EntityName}}Type: "STANDARD",
+			Status:   domain.{{.EntityName}}StatusActive,
+			IsActive: true,
+			Version:  1,
+		}
+
+		updateRequest := &domain.Update{{.EntityName}}Request{
+			ID:          entityID,
+			{{.EntityName}}Name: strPtr("Updated Name"),
+		}
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.update", gomock.Any()).
+			Return(true, nil)
+
+		suite.mockRepo.EXPECT().
+			GetByID(gomock.Any(), entityID).
+			Return(existingEntity, nil)
+
+		suite.mockRepo.EXPECT().
+			Update(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, entity *domain.{{.EntityName}}) error {
+				assert.Equal(t, "Updated Name", entity.{{.EntityName}}Name)
+				assert.Equal(t, int32(2), entity.Version) // Should increment
+				assert.NotNil(t, entity.UpdatedBy)
+				return nil
+			})
+
+		suite.mockMetrics.EXPECT().
+			Counter(gomock.Any(), gomock.Any()).
+			Return(&metrics.MockCounter{}).
+			AnyTimes()
+
+		// Act
+		result, err := suite.service.Update{{.EntityName}}(suite.ctx, updateRequest)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, "Updated Name", result.{{.EntityName}}Name)
+	})
+
+	t.Run("entity not found", func(t *testing.T) {
+		// Arrange
+		entityID := uuid.New()
+		updateRequest := &domain.Update{{.EntityName}}Request{
+			ID:          entityID,
+			{{.EntityName}}Name: strPtr("Updated Name"),
+		}
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.update", gomock.Any()).
+			Return(true, nil)
+
+		suite.mockRepo.EXPECT().
+			GetByID(gomock.Any(), entityID).
+			Return(nil, domain.ErrNotFound)
+
+		// Act
+		result, err := suite.service.Update{{.EntityName}}(suite.ctx, updateRequest)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, domain.ErrNotFound, err)
+	})
+}
+
+// =============================================================================
+// DELETE TESTS
+// =============================================================================
+
+func TestDelete{{.EntityName}}(t *testing.T) {
+	suite := setup{{.EntityName}}ServiceTest(t)
+	defer suite.tearDown()
+
+	t.Run("successful deletion", func(t *testing.T) {
+		// Arrange
+		entityID := uuid.New()
+		existingEntity := &domain.{{.EntityName}}{
+			ID:              entityID,
+			TenantID:        suite.tenantID,
+			{{.EntityName}}Code:         "TEST001",
+			{{.EntityName}}Name:         "Test {{.EntityName}}",
+			IsSystemDefined: false,
+			{{- if contains .ModuleName "finance"}}
+			HasChildren:     false,
+			{{- end}}
+		}
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.delete", gomock.Any()).
+			Return(true, nil)
+
+		suite.mockRepo.EXPECT().
+			GetByID(gomock.Any(), entityID).
+			Return(existingEntity, nil)
+
+		{{- if contains .ModuleName "finance"}}
+		suite.mockRepo.EXPECT().
+			HasDependencies(gomock.Any(), entityID).
+			Return(false, nil)
+
+		suite.mockRepo.EXPECT().
+			HasChildren(gomock.Any(), entityID).
+			Return(false, nil)
+		{{- end}}
+
+		suite.mockRepo.EXPECT().
+			Delete(gomock.Any(), entityID).
+			Return(nil)
+
+		suite.mockMetrics.EXPECT().
+			Counter(gomock.Any(), gomock.Any()).
+			Return(&metrics.MockCounter{}).
+			AnyTimes()
+
+		// Act
+		err := suite.service.Delete{{.EntityName}}(suite.ctx, entityID)
+
+		// Assert
+		assert.NoError(t, err)
+	})
+
+	t.Run("cannot delete system entity", func(t *testing.T) {
+		// Arrange
+		entityID := uuid.New()
+		existingEntity := &domain.{{.EntityName}}{
+			ID:              entityID,
+			TenantID:        suite.tenantID,
+			{{.EntityName}}Code:         "SYS001",
+			{{.EntityName}}Name:         "System {{.EntityName}}",
+			IsSystemDefined: true, // System entity
+		}
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.delete", gomock.Any()).
+			Return(true, nil)
+
+		suite.mockRepo.EXPECT().
+			GetByID(gomock.Any(), entityID).
+			Return(existingEntity, nil)
+
+		// Act
+		err := suite.service.Delete{{.EntityName}}(suite.ctx, entityID)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "system-defined")
+	})
+
+	{{- if contains .ModuleName "finance"}}
+	t.Run("cannot delete entity with children", func(t *testing.T) {
+		// Arrange
+		entityID := uuid.New()
+		existingEntity := &domain.{{.EntityName}}{
+			ID:              entityID,
+			TenantID:        suite.tenantID,
+			{{.EntityName}}Code:         "PARENT001",
+			{{.EntityName}}Name:         "Parent {{.EntityName}}",
+			IsSystemDefined: false,
+			HasChildren:     true, // Has children
+		}
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.delete", gomock.Any()).
+			Return(true, nil)
+
+		suite.mockRepo.EXPECT().
+			GetByID(gomock.Any(), entityID).
+			Return(existingEntity, nil)
+
+		suite.mockRepo.EXPECT().
+			HasDependencies(gomock.Any(), entityID).
+			Return(false, nil)
+
+		suite.mockRepo.EXPECT().
+			HasChildren(gomock.Any(), entityID).
+			Return(true, nil)
+
+		// Act
+		err := suite.service.Delete{{.EntityName}}(suite.ctx, entityID)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "children")
+	})
+	{{- end}}
+}
+
+// =============================================================================
+// LIST TESTS
+// =============================================================================
+
+func TestList{{.EntityNamePlural}}(t *testing.T) {
+	suite := setup{{.EntityName}}ServiceTest(t)
+	defer suite.tearDown()
+
+	t.Run("successful list", func(t *testing.T) {
+		// Arrange
+		filter := &domain.{{.EntityName}}Filter{
+			IsActive: boolPtr(true),
+		}
+
+		expected{{.EntityNamePlural}} := []*domain.{{.EntityName}}{
+			{
+				ID:          uuid.New(),
+				TenantID:    suite.tenantID,
+				{{.EntityName}}Code: "TEST001",
+				{{.EntityName}}Name: "Test {{.EntityName}} 1",
+				IsActive:    true,
+			},
+			{
+				ID:          uuid.New(),
+				TenantID:    suite.tenantID,
+				{{.EntityName}}Code: "TEST002",
+				{{.EntityName}}Name: "Test {{.EntityName}} 2",
+				IsActive:    true,
+			},
+		}
+
+		expectedPagination := domain.PaginationMeta{
+			CurrentPage: 1,
+			PageSize:    20,
+			TotalItems:  2,
+			TotalPages:  1,
+			HasNext:     false,
+			HasPrev:     false,
+		}
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.list", gomock.Any()).
+			Return(true, nil)
+
+		suite.mockRepo.EXPECT().
+			List(gomock.Any(), filter).
+			Return(expected{{.EntityNamePlural}}, nil)
+
+		suite.mockRepo.EXPECT().
+			Count(gomock.Any(), filter).
+			Return(int64(2), nil)
+
+		// Act
+		result, err := suite.service.List{{.EntityNamePlural}}(suite.ctx, filter)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Len(t, result.{{.EntityNamePlural}}, 2)
+		assert.Equal(t, expectedPagination.TotalItems, result.Pagination.TotalItems)
+	})
+
+	t.Run("empty result", func(t *testing.T) {
+		// Arrange
+		filter := &domain.{{.EntityName}}Filter{}
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.list", gomock.Any()).
+			Return(true, nil)
+
+		suite.mockRepo.EXPECT().
+			List(gomock.Any(), filter).
+			Return([]*domain.{{.EntityName}}{}, nil)
+
+		suite.mockRepo.EXPECT().
+			Count(gomock.Any(), filter).
+			Return(int64(0), nil)
+
+		// Act
+		result, err := suite.service.List{{.EntityNamePlural}}(suite.ctx, filter)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Empty(t, result.{{.EntityNamePlural}})
+		assert.Equal(t, int32(0), result.Pagination.TotalItems)
+	})
+}
+
+// =============================================================================
+// SEARCH TESTS
+// =============================================================================
+
+func TestSearch{{.EntityNamePlural}}(t *testing.T) {
+	suite := setup{{.EntityName}}ServiceTest(t)
+	defer suite.tearDown()
+
+	t.Run("successful search", func(t *testing.T) {
+		// Arrange
+		searchRequest := &domain.{{.EntityName}}SearchRequest{
+			Query: "test",
+			Limit: int32Ptr(10),
+		}
+
+		searchResults := []*domain.{{.EntityName}}SearchResult{
+			{
+				{{.EntityName}}: &domain.{{.EntityName}}{
+					ID:          uuid.New(),
+					TenantID:    suite.tenantID,
+					{{.EntityName}}Code: "TEST001",
+					{{.EntityName}}Name: "Test {{.EntityName}}",
+				},
+				MatchType:      "NAME",
+				RelevanceScore: 0.95,
+				MatchedField:   "{{camelCase .EntityName}}_name",
+				MatchedText:    "Test",
+			},
+		}
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.search", gomock.Any()).
+			Return(true, nil)
+
+		suite.mockRepo.EXPECT().
+			Search(gomock.Any(), searchRequest.Query, searchRequest.GetLimit()).
+			Return(searchResults, nil)
+
+		// Act
+		result, err := suite.service.Search{{.EntityNamePlural}}(suite.ctx, searchRequest)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Len(t, result.Results, 1)
+		assert.Equal(t, int32(1), result.TotalResults)
+		assert.Greater(t, result.SearchDurationMs, int32(0))
+	})
+
+	t.Run("invalid query", func(t *testing.T) {
+		// Arrange
+		searchRequest := &domain.{{.EntityName}}SearchRequest{
+			Query: "", // Empty query
+		}
+
+		// Act
+		result, err := suite.service.Search{{.EntityNamePlural}}(suite.ctx, searchRequest)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Nil(t, result)
+		assert.Contains(t, err.Error(), "validation")
+	})
+}
+
+// =============================================================================
+// BUSINESS LOGIC TESTS
+// =============================================================================
+
+func TestValidate{{.EntityName}}Code(t *testing.T) {
+	suite := setup{{.EntityName}}ServiceTest(t)
+	defer suite.tearDown()
+
+	t.Run("unique code", func(t *testing.T) {
+		// Arrange
+		code := "UNIQUE001"
+
+		// Setup mocks
+		suite.mockRepo.EXPECT().
+			ExistsByCode(gomock.Any(), code, nil).
+			Return(false, nil)
+
+		// Act
+		err := suite.service.Validate{{.EntityName}}Code(suite.ctx, code, nil)
+
+		// Assert
+		assert.NoError(t, err)
+	})
+
+	t.Run("duplicate code", func(t *testing.T) {
+		// Arrange
+		code := "DUPLICATE001"
+
+		// Setup mocks
+		suite.mockRepo.EXPECT().
+			ExistsByCode(gomock.Any(), code, nil).
+			Return(true, nil)
+
+		// Act
+		err := suite.service.Validate{{.EntityName}}Code(suite.ctx, code, nil)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "already exists")
+	})
+
+	t.Run("code with exclusion", func(t *testing.T) {
+		// Arrange
+		code := "UPDATE001"
+		excludeID := uuid.New()
+
+		// Setup mocks
+		suite.mockRepo.EXPECT().
+			ExistsByCode(gomock.Any(), code, &excludeID).
+			Return(false, nil)
+
+		// Act
+		err := suite.service.Validate{{.EntityName}}Code(suite.ctx, code, &excludeID)
+
+		// Assert
+		assert.NoError(t, err)
+	})
+}
+
+{{- if contains .ModuleName "finance"}}
+
+// =============================================================================
+// HIERARCHY TESTS (for financial modules)
+// =============================================================================
+
+func TestGet{{.EntityName}}Hierarchy(t *testing.T) {
+	suite := setup{{.EntityName}}ServiceTest(t)
+	defer suite.tearDown()
+
+	t.Run("successful hierarchy retrieval", func(t *testing.T) {
+		// Arrange
+		rootID := uuid.New()
+		hierarchy := []*domain.{{.EntityName}}{
+			{
+				ID:          rootID,
+				TenantID:    suite.tenantID,
+				{{.EntityName}}Code: "ROOT",
+				{{.EntityName}}Name: "Root {{.EntityName}}",
+				Level:       1,
+				Path:        strPtr("ROOT"),
+				HasChildren: true,
+			},
+			{
+				ID:          uuid.New(),
+				TenantID:    suite.tenantID,
+				{{.EntityName}}Code: "CHILD",
+				{{.EntityName}}Name: "Child {{.EntityName}}",
+				ParentID:    &rootID,
+				Level:       2,
+				Path:        strPtr("ROOT/CHILD"),
+				HasChildren: false,
+			},
+		}
+
+		// Setup mocks
+		suite.mockABAC.EXPECT().
+			CheckPermission(gomock.Any(), suite.userID, "{{snakeCase .EntityName}}.read", gomock.Any()).
+			Return(true, nil)
+
+		suite.mockRepo.EXPECT().
+			GetHierarchy(gomock.Any(), rootID).
+			Return(hierarchy, nil)
+
+		// Act
+		result, err := suite.service.Get{{.EntityName}}Hierarchy(suite.ctx, rootID)
+
+		// Assert
+		require.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Len(t, result, 2)
+		assert.True(t, result[0].HasChildren)
+		assert.False(t, result[1].HasChildren)
+	})
+}
+
+{{- end}}
+
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+func strPtr(s string) *string {
+	return &s
+}
+
+func int32Ptr(i int32) *int32 {
+	return &i
+}
+
+func boolPtr(b bool) *bool {
+	return &b
+}
+
+{{comment "TODO: Add more edge case tests"}}
+{{comment "TODO: Add performance tests for bulk operations"}}
+{{comment "TODO: Add concurrency tests"}}
+{{comment "TODO: Add integration tests with real database"}}

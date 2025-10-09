@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string"
+    },
+    "startDate": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/moment.Moment"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "endDate": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/moment.Moment"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    }
+  },
+  "required": [
+    "label"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ShortCutDateRange.json"
+}

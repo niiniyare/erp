@@ -1,0 +1,20 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "number",
+      "const": 0
+    },
+    {
+      "type": "string"
+    },
+    {
+      "type": "number",
+      "const": 1
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.MozForceBrokenImageIcon.json"
+}

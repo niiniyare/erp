@@ -1,0 +1,10 @@
+{
+  "type": "string",
+  "enum": [
+    "border-box",
+    "content-box",
+    "padding-box"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.VisualBox.json"
+}

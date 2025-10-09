@@ -1,0 +1,8 @@
+{
+  "type": "array",
+  "items": {
+    "$ref": "#/definitions/Option"
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Options.json"
+}

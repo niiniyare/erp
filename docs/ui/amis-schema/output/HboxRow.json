@@ -1,0 +1,24 @@
+{
+  "allOf": [
+    {
+      "$ref": "#/definitions/SchemaObjectHboxRow",
+      "patternProperties": {
+        "^(rowClassName|cellClassName)$": {}
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "rowClassName": {
+          "type": "string"
+        },
+        "cellClassName": {
+          "type": "string"
+        }
+      }
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./HboxRow.json"
+}

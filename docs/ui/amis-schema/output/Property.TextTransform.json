@@ -1,0 +1,33 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "capitalize"
+    },
+    {
+      "type": "string",
+      "const": "full-size-kana"
+    },
+    {
+      "type": "string",
+      "const": "full-width"
+    },
+    {
+      "type": "string",
+      "const": "lowercase"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string",
+      "const": "uppercase"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.TextTransform.json"
+}

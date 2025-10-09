@@ -1,0 +1,40 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "blink"
+    },
+    {
+      "type": "string",
+      "const": "grammar-error"
+    },
+    {
+      "type": "string",
+      "const": "line-through"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string",
+      "const": "overline"
+    },
+    {
+      "type": "string",
+      "const": "spelling-error"
+    },
+    {
+      "type": "string",
+      "const": "underline"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.TextDecorationLine.json"
+}

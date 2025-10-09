@@ -1,0 +1,33 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "both"
+    },
+    {
+      "type": "string",
+      "const": "inline-end"
+    },
+    {
+      "type": "string",
+      "const": "inline-start"
+    },
+    {
+      "type": "string",
+      "const": "left"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string",
+      "const": "right"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.Clear.json"
+}

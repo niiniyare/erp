@@ -1,0 +1,21 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "normal"
+    },
+    {
+      "type": "string",
+      "const": "sub"
+    },
+    {
+      "type": "string",
+      "const": "super"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.FontVariantPosition.json"
+}

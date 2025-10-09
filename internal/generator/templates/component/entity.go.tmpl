@@ -1,0 +1,197 @@
+package domain
+
+import (
+	"time"
+	"github.com/google/uuid"
+)
+
+{{comment (printf "%s represents a %s entity in the %s module" .ComponentNamePascal (lowerCase .ComponentName) .ModuleName)}}
+
+// {{.ComponentNamePascal}} represents the {{.ComponentName}} entity
+type {{.ComponentNamePascal}} struct {
+	// Identity fields
+	ID       uuid.UUID `json:"id" db:"id"`
+	TenantID uuid.UUID `json:"tenant_id" db:"tenant_id"`
+	EntityID *uuid.UUID `json:"entity_id,omitempty" db:"entity_id"`
+
+	// Core fields
+	{{.ComponentNamePascal}}Code        string  `json:"{{snakeCase .ComponentName}}_code" db:"{{snakeCase .ComponentName}}_code"`
+	{{.ComponentNamePascal}}Name        string  `json:"{{snakeCase .ComponentName}}_name" db:"{{snakeCase .ComponentName}}_name"`
+	{{.ComponentNamePascal}}Description *string `json:"{{snakeCase .ComponentName}}_description,omitempty" db:"{{snakeCase .ComponentName}}_description"`
+	{{.ComponentNamePascal}}Type        string  `json:"{{snakeCase .ComponentName}}_type" db:"{{snakeCase .ComponentName}}_type"`
+	{{.ComponentNamePascal}}Category    *string `json:"{{snakeCase .ComponentName}}_category,omitempty" db:"{{snakeCase .ComponentName}}_category"`
+
+	// Status and control fields
+	Status              {{.ComponentNamePascal}}Status    `json:"status" db:"status"`
+	IsActive            bool                              `json:"is_active" db:"is_active"`
+	IsSystemDefined     bool                              `json:"is_system_defined" db:"is_system_defined"`
+	AllowManualEntries  bool                              `json:"allow_manual_entries" db:"allow_manual_entries"`
+	DisplayOrder        int32                             `json:"display_order" db:"display_order"`
+	ShowInReports       bool                              `json:"show_in_reports" db:"show_in_reports"`
+
+	{{- if contains .ModuleName "finance"}}
+	// Hierarchy fields (for financial modules)
+	ParentID    *uuid.UUID `json:"parent_id,omitempty" db:"parent_id"`
+	Level       int32      `json:"level" db:"level"`
+	Path        *string    `json:"path,omitempty" db:"path"`
+	HasChildren bool       `json:"has_children" db:"has_children"`
+	{{- end}}
+
+	// Metadata fields
+	Version          int32      `json:"version" db:"version"`
+	ValidationStatus ValidationStatus `json:"validation_status" db:"validation_status"`
+
+	// Audit fields
+	CreatedAt time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at" db:"updated_at"`
+	DeletedAt *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
+	CreatedBy uuid.UUID  `json:"created_by" db:"created_by"`
+	UpdatedBy *uuid.UUID `json:"updated_by,omitempty" db:"updated_by"`
+}
+
+// {{.ComponentNamePascal}}Status represents the status of a {{.ComponentName}}
+type {{.ComponentNamePascal}}Status string
+
+const (
+	{{.ComponentNamePascal}}StatusActive   {{.ComponentNamePascal}}Status = "ACTIVE"
+	{{.ComponentNamePascal}}StatusInactive {{.ComponentNamePascal}}Status = "INACTIVE"
+	{{.ComponentNamePascal}}StatusDraft    {{.ComponentNamePascal}}Status = "DRAFT"
+	{{.ComponentNamePascal}}StatusArchived {{.ComponentNamePascal}}Status = "ARCHIVED"
+)
+
+// IsValid checks if the {{.ComponentName}} status is valid
+func (s {{.ComponentNamePascal}}Status) IsValid() bool {
+	switch s {
+	case {{.ComponentNamePascal}}StatusActive, {{.ComponentNamePascal}}StatusInactive, 
+		 {{.ComponentNamePascal}}StatusDraft, {{.ComponentNamePascal}}StatusArchived:
+		return true
+	default:
+		return false
+	}
+}
+
+// String returns the string representation of the status
+func (s {{.ComponentNamePascal}}Status) String() string {
+	return string(s)
+}
+
+// New{{.ComponentNamePascal}} creates a new {{.ComponentName}} entity
+func New{{.ComponentNamePascal}}(tenantID, createdBy uuid.UUID, code, name, entityType string) *{{.ComponentNamePascal}} {
+	return &{{.ComponentNamePascal}}{
+		ID:                 uuid.New(),
+		TenantID:           tenantID,
+		{{.ComponentNamePascal}}Code:        code,
+		{{.ComponentNamePascal}}Name:        name,
+		{{.ComponentNamePascal}}Type:        entityType,
+		Status:             {{.ComponentNamePascal}}StatusActive,
+		IsActive:           true,
+		IsSystemDefined:    false,
+		AllowManualEntries: true,
+		DisplayOrder:       0,
+		ShowInReports:      true,
+		{{- if contains .ModuleName "finance"}}
+		Level:              1,
+		HasChildren:        false,
+		{{- end}}
+		Version:            1,
+		ValidationStatus:   ValidationStatusPending,
+		CreatedAt:          time.Now(),
+		UpdatedAt:          time.Now(),
+		CreatedBy:          createdBy,
+	}
+}
+
+// Validate validates the {{.ComponentName}} entity
+func (e *{{.ComponentNamePascal}}) Validate() error {
+	if e.{{.ComponentNamePascal}}Code == "" {
+		return New{{.ComponentNamePascal}}ValidationError("code", "{{.ComponentName}} code is required")
+	}
+
+	if e.{{.ComponentNamePascal}}Name == "" {
+		return New{{.ComponentNamePascal}}ValidationError("name", "{{.ComponentName}} name is required")
+	}
+
+	if e.{{.ComponentNamePascal}}Type == "" {
+		return New{{.ComponentNamePascal}}ValidationError("type", "{{.ComponentName}} type is required")
+	}
+
+	if !e.Status.IsValid() {
+		return New{{.ComponentNamePascal}}ValidationError("status", "invalid {{.ComponentName}} status")
+	}
+
+	{{- if contains .ModuleName "finance"}}
+	if e.Level < 1 {
+		return New{{.ComponentNamePascal}}ValidationError("level", "{{.ComponentName}} level must be at least 1")
+	}
+
+	if e.ParentID != nil && e.Level == 1 {
+		return New{{.ComponentNamePascal}}ValidationError("parent_id", "root {{.ComponentName}} cannot have a parent")
+	}
+	{{- end}}
+
+	return nil
+}
+
+// Update updates the {{.ComponentName}} entity with new values
+func (e *{{.ComponentNamePascal}}) Update(updatedBy uuid.UUID) {
+	e.UpdatedAt = time.Now()
+	e.UpdatedBy = &updatedBy
+	e.Version++
+}
+
+// Deactivate deactivates the {{.ComponentName}} entity
+func (e *{{.ComponentNamePascal}}) Deactivate(updatedBy uuid.UUID) {
+	e.IsActive = false
+	e.Status = {{.ComponentNamePascal}}StatusInactive
+	e.Update(updatedBy)
+}
+
+// Activate activates the {{.ComponentName}} entity
+func (e *{{.ComponentNamePascal}}) Activate(updatedBy uuid.UUID) {
+	e.IsActive = true
+	e.Status = {{.ComponentNamePascal}}StatusActive
+	e.Update(updatedBy)
+}
+
+{{- if contains .ModuleName "finance"}}
+
+// SetParent sets the parent of this {{.ComponentName}}
+func (e *{{.ComponentNamePascal}}) SetParent(parentID uuid.UUID, level int32, path string, updatedBy uuid.UUID) {
+	e.ParentID = &parentID
+	e.Level = level
+	e.Path = &path
+	e.Update(updatedBy)
+}
+
+// RemoveParent removes the parent relationship
+func (e *{{.ComponentNamePascal}}) RemoveParent(updatedBy uuid.UUID) {
+	e.ParentID = nil
+	e.Level = 1
+	e.Path = &e.{{.ComponentNamePascal}}Code
+	e.Update(updatedBy)
+}
+
+// UpdateChildrenFlag updates the has_children flag
+func (e *{{.ComponentNamePascal}}) UpdateChildrenFlag(hasChildren bool, updatedBy uuid.UUID) {
+	e.HasChildren = hasChildren
+	e.Update(updatedBy)
+}
+
+{{- end}}
+
+// IsEditable checks if the {{.ComponentName}} can be edited
+func (e *{{.ComponentNamePascal}}) IsEditable() bool {
+	return !e.IsSystemDefined && e.Status != {{.ComponentNamePascal}}StatusArchived
+}
+
+// IsDeletable checks if the {{.ComponentName}} can be deleted
+func (e *{{.ComponentNamePascal}}) IsDeletable() bool {
+	return !e.IsSystemDefined && 
+		   {{- if contains .ModuleName "finance"}}
+		   !e.HasChildren &&
+		   {{- end}}
+		   e.Status != {{.ComponentNamePascal}}StatusArchived
+}
+
+{{comment "TODO: Add business logic methods specific to this component"}}
+{{comment "TODO: Add validation for business rules"}}

@@ -1,0 +1,36 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "$ref": "#/definitions/DataType.DisplayOutside"
+    },
+    {
+      "$ref": "#/definitions/DataType.DisplayInside"
+    },
+    {
+      "$ref": "#/definitions/DataType.DisplayInternal"
+    },
+    {
+      "$ref": "#/definitions/DataType.DisplayLegacy"
+    },
+    {
+      "type": "string",
+      "const": "contents"
+    },
+    {
+      "type": "string",
+      "const": "list-item"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.Display.json"
+}

@@ -1,0 +1,67 @@
+{
+  "type": "object",
+  "properties": {
+    "actionType": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "componentId": {
+      "type": "string"
+    },
+    "componentName": {
+      "type": "string"
+    },
+    "ignoreError": {
+      "type": "boolean"
+    },
+    "args": {
+      "type": "object"
+    },
+    "data": {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "dataMergeMode": {
+      "type": "string",
+      "enum": [
+        "merge",
+        "override"
+      ]
+    },
+    "outputVar": {
+      "type": "string"
+    },
+    "preventDefault": {
+      "type": "boolean"
+    },
+    "stopPropagation": {
+      "type": "boolean"
+    },
+    "expression": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/ConditionGroupValue"
+        }
+      ]
+    },
+    "execOn": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "actionType"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ListenerAction.json"
+}
