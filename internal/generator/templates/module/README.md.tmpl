@@ -1,0 +1,23 @@
+# {{.ModuleName}} Module
+
+{{.ModuleDescription}}
+
+## Generated Files
+
+This module was generated with the following structure:
+
+- **Domain Layer**: Core business entities and validation
+- **Service Layer**: Business logic and orchestration  
+- **Repository Layer**: Data access with SQLC integration
+- **API Layer**: Goa DSL definitions and HTTP handlers
+
+## Next Steps
+
+1. Update domain models in `internal/core/{{.PackageName}}/domain/`
+2. Implement business logic in `internal/core/{{.PackageName}}/service/`
+3. Create database queries in `db/queries/{{.PackageName}}.sql`
+4. Run `make sqlc` to generate repository code
+5. Run `make goa` to generate API types
+
+Generated at: {{.GeneratedAt}}
+Generator version: {{.GeneratorVersion}}

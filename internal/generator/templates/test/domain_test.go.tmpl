@@ -1,0 +1,623 @@
+package domain
+
+import (
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+{{comment (printf "Test%s tests the %s domain entity" .EntityName (lowerCase .EntityName))}}
+
+// =============================================================================
+// ENTITY CREATION TESTS
+// =============================================================================
+
+func Test{{.EntityName}}_NewEntity(t *testing.T) {
+	tests := []struct {
+		name        string
+		{{camelCase .EntityName}}Code string
+		{{camelCase .EntityName}}Name string
+		{{camelCase .EntityName}}Type string
+		wantErr     bool
+		errField    string
+	}{
+		{
+			name:        "valid {{lowerCase .EntityName}}",
+			{{camelCase .EntityName}}Code: "TEST001",
+			{{camelCase .EntityName}}Name: "Test {{.EntityName}}",
+			{{camelCase .EntityName}}Type: "STANDARD",
+			wantErr:     false,
+		},
+		{
+			name:        "empty code",
+			{{camelCase .EntityName}}Code: "",
+			{{camelCase .EntityName}}Name: "Test {{.EntityName}}",
+			{{camelCase .EntityName}}Type: "STANDARD",
+			wantErr:     true,
+			errField:    "{{.EntityName}}Code",
+		},
+		{
+			name:        "empty name",
+			{{camelCase .EntityName}}Code: "TEST001",
+			{{camelCase .EntityName}}Name: "",
+			{{camelCase .EntityName}}Type: "STANDARD",
+			wantErr:     true,
+			errField:    "{{.EntityName}}Name",
+		},
+		{
+			name:        "empty type",
+			{{camelCase .EntityName}}Code: "TEST001",
+			{{camelCase .EntityName}}Name: "Test {{.EntityName}}",
+			{{camelCase .EntityName}}Type: "",
+			wantErr:     true,
+			errField:    "{{.EntityName}}Type",
+		},
+		{
+			name:        "code too long",
+			{{camelCase .EntityName}}Code: "THIS_IS_A_VERY_LONG_CODE_THAT_EXCEEDS_THE_MAXIMUM_LENGTH_ALLOWED",
+			{{camelCase .EntityName}}Name: "Test {{.EntityName}}",
+			{{camelCase .EntityName}}Type: "STANDARD",
+			wantErr:     true,
+			errField:    "{{.EntityName}}Code",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			{{camelCase .EntityName}} := &{{.EntityName}}{
+				ID:                uuid.New(),
+				TenantID:          uuid.New(),
+				{{.EntityName}}Code:        tt.{{camelCase .EntityName}}Code,
+				{{.EntityName}}Name:        tt.{{camelCase .EntityName}}Name,
+				{{.EntityName}}Type:        tt.{{camelCase .EntityName}}Type,
+				Status:            {{.EntityName}}StatusActive,
+				IsActive:          true,
+				IsSystemDefined:   false,
+				AllowManualEntries: true,
+				DisplayOrder:      0,
+				ShowInReports:     true,
+				Version:           1,
+				ValidationStatus:  ValidationStatusPending,
+				CreatedAt:         time.Now(),
+				UpdatedAt:         time.Now(),
+				CreatedBy:         uuid.New(),
+			}
+
+			err := {{camelCase .EntityName}}.Validate()
+			
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errField != "" {
+					validationErr, ok := err.(*{{.EntityName}}ValidationError)
+					require.True(t, ok, "expected {{.EntityName}}ValidationError")
+					assert.Equal(t, tt.errField, validationErr.Field)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// =============================================================================
+// VALIDATION TESTS
+// =============================================================================
+
+func Test{{.EntityName}}_Validate(t *testing.T) {
+	validEntity := func() *{{.EntityName}} {
+		return &{{.EntityName}}{
+			ID:                uuid.New(),
+			TenantID:          uuid.New(),
+			{{.EntityName}}Code:        "TEST001",
+			{{.EntityName}}Name:        "Test {{.EntityName}}",
+			{{.EntityName}}Type:        "STANDARD",
+			Status:            {{.EntityName}}StatusActive,
+			IsActive:          true,
+			IsSystemDefined:   false,
+			AllowManualEntries: true,
+			DisplayOrder:      0,
+			ShowInReports:     true,
+			Version:           1,
+			ValidationStatus:  ValidationStatusPending,
+			CreatedAt:         time.Now(),
+			UpdatedAt:         time.Now(),
+			CreatedBy:         uuid.New(),
+		}
+	}
+
+	t.Run("valid entity", func(t *testing.T) {
+		entity := validEntity()
+		err := entity.Validate()
+		assert.NoError(t, err)
+	})
+
+	t.Run("nil tenant ID", func(t *testing.T) {
+		entity := validEntity()
+		entity.TenantID = uuid.Nil
+		err := entity.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "tenant_id")
+	})
+
+	t.Run("nil created by", func(t *testing.T) {
+		entity := validEntity()
+		entity.CreatedBy = uuid.Nil
+		err := entity.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "created_by")
+	})
+
+	t.Run("invalid status", func(t *testing.T) {
+		entity := validEntity()
+		entity.Status = {{.EntityName}}Status("INVALID")
+		err := entity.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "status")
+	})
+
+	t.Run("negative version", func(t *testing.T) {
+		entity := validEntity()
+		entity.Version = -1
+		err := entity.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "version")
+	})
+
+	{{- if contains .ModuleName "finance"}}
+	t.Run("invalid parent hierarchy", func(t *testing.T) {
+		entity := validEntity()
+		entity.ParentID = &entity.ID // Self-reference
+		err := entity.Validate()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "parent")
+	})
+	{{- end}}
+}
+
+// =============================================================================
+// BUSINESS LOGIC TESTS
+// =============================================================================
+
+func Test{{.EntityName}}_CanBeDeleted(t *testing.T) {
+	entity := &{{.EntityName}}{
+		ID:                uuid.New(),
+		TenantID:          uuid.New(),
+		{{.EntityName}}Code:        "TEST001",
+		{{.EntityName}}Name:        "Test {{.EntityName}}",
+		{{.EntityName}}Type:        "STANDARD",
+		Status:            {{.EntityName}}StatusActive,
+		IsActive:          true,
+		IsSystemDefined:   false,
+		AllowManualEntries: true,
+		DisplayOrder:      0,
+		ShowInReports:     true,
+		Version:           1,
+		ValidationStatus:  ValidationStatusPending,
+		CreatedAt:         time.Now(),
+		UpdatedAt:         time.Now(),
+		CreatedBy:         uuid.New(),
+	}
+
+	t.Run("can delete non-system entity", func(t *testing.T) {
+		canDelete := entity.CanBeDeleted()
+		assert.True(t, canDelete)
+	})
+
+	t.Run("cannot delete system entity", func(t *testing.T) {
+		entity.IsSystemDefined = true
+		canDelete := entity.CanBeDeleted()
+		assert.False(t, canDelete)
+	})
+
+	{{- if contains .ModuleName "finance"}}
+	t.Run("cannot delete entity with children", func(t *testing.T) {
+		entity.IsSystemDefined = false
+		entity.HasChildren = true
+		canDelete := entity.CanBeDeleted()
+		assert.False(t, canDelete)
+	})
+	{{- end}}
+}
+
+func Test{{.EntityName}}_UpdateVersion(t *testing.T) {
+	entity := &{{.EntityName}}{
+		Version: 1,
+	}
+
+	oldVersion := entity.Version
+	entity.UpdateVersion()
+	
+	assert.Equal(t, oldVersion+1, entity.Version)
+}
+
+func Test{{.EntityName}}_SetStatus(t *testing.T) {
+	entity := &{{.EntityName}}{
+		Status: {{.EntityName}}StatusActive,
+	}
+
+	t.Run("valid status change", func(t *testing.T) {
+		err := entity.SetStatus({{.EntityName}}StatusInactive)
+		assert.NoError(t, err)
+		assert.Equal(t, {{.EntityName}}StatusInactive, entity.Status)
+	})
+
+	t.Run("invalid status", func(t *testing.T) {
+		err := entity.SetStatus({{.EntityName}}Status("INVALID"))
+		assert.Error(t, err)
+		assert.Equal(t, {{.EntityName}}StatusInactive, entity.Status) // Should remain unchanged
+	})
+}
+
+{{- if contains .ModuleName "finance"}}
+
+// =============================================================================
+// HIERARCHY TESTS (for financial modules)
+// =============================================================================
+
+func Test{{.EntityName}}_Hierarchy(t *testing.T) {
+	parent := &{{.EntityName}}{
+		ID:       uuid.New(),
+		TenantID: uuid.New(),
+		{{.EntityName}}Code: "PARENT",
+		{{.EntityName}}Name: "Parent {{.EntityName}}",
+		{{.EntityName}}Type: "PARENT",
+		Level:    1,
+		Path:     strPtr("PARENT"),
+		HasChildren: true,
+	}
+
+	child := &{{.EntityName}}{
+		ID:       uuid.New(),
+		TenantID: parent.TenantID,
+		{{.EntityName}}Code: "CHILD",
+		{{.EntityName}}Name: "Child {{.EntityName}}",
+		{{.EntityName}}Type: "CHILD",
+		ParentID: &parent.ID,
+		Level:    2,
+		Path:     strPtr("PARENT/CHILD"),
+		HasChildren: false,
+	}
+
+	t.Run("valid hierarchy", func(t *testing.T) {
+		err := child.ValidateHierarchy()
+		assert.NoError(t, err)
+	})
+
+	t.Run("self-parent", func(t *testing.T) {
+		child.ParentID = &child.ID
+		err := child.ValidateHierarchy()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "self-reference")
+	})
+
+	t.Run("level consistency", func(t *testing.T) {
+		child.ParentID = &parent.ID
+		child.Level = 1 // Should be 2 for child
+		err := child.ValidateHierarchy()
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "level")
+	})
+}
+
+func Test{{.EntityName}}_CalculatePath(t *testing.T) {
+	tests := []struct {
+		name       string
+		code       string
+		parentPath *string
+		expected   string
+	}{
+		{
+			name:       "root level",
+			code:       "ROOT",
+			parentPath: nil,
+			expected:   "ROOT",
+		},
+		{
+			name:       "child level",
+			code:       "CHILD",
+			parentPath: strPtr("ROOT"),
+			expected:   "ROOT/CHILD",
+		},
+		{
+			name:       "grandchild level",
+			code:       "GRANDCHILD",
+			parentPath: strPtr("ROOT/CHILD"),
+			expected:   "ROOT/CHILD/GRANDCHILD",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			entity := &{{.EntityName}}{
+				{{.EntityName}}Code: tt.code,
+			}
+			
+			path := entity.CalculatePath(tt.parentPath)
+			assert.Equal(t, tt.expected, path)
+		})
+	}
+}
+
+{{- end}}
+
+// =============================================================================
+// REQUEST VALIDATION TESTS
+// =============================================================================
+
+func TestCreate{{.EntityName}}Request_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		request Create{{.EntityName}}Request
+		wantErr bool
+		errField string
+	}{
+		{
+			name: "valid request",
+			request: Create{{.EntityName}}Request{
+				{{.EntityName}}Code: "TEST001",
+				{{.EntityName}}Name: "Test {{.EntityName}}",
+				{{.EntityName}}Type: "STANDARD",
+				IsActive: true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing code",
+			request: Create{{.EntityName}}Request{
+				{{.EntityName}}Name: "Test {{.EntityName}}",
+				{{.EntityName}}Type: "STANDARD",
+				IsActive: true,
+			},
+			wantErr: true,
+			errField: "{{.EntityName}}Code",
+		},
+		{
+			name: "missing name",
+			request: Create{{.EntityName}}Request{
+				{{.EntityName}}Code: "TEST001",
+				{{.EntityName}}Type: "STANDARD",
+				IsActive: true,
+			},
+			wantErr: true,
+			errField: "{{.EntityName}}Name",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.request.Validate()
+			
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errField != "" {
+					assert.Contains(t, err.Error(), tt.errField)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestUpdate{{.EntityName}}Request_Validate(t *testing.T) {
+	validID := uuid.New()
+	
+	tests := []struct {
+		name    string
+		request Update{{.EntityName}}Request
+		wantErr bool
+	}{
+		{
+			name: "valid update",
+			request: Update{{.EntityName}}Request{
+				ID: validID,
+				{{.EntityName}}Name: strPtr("Updated Name"),
+			},
+			wantErr: false,
+		},
+		{
+			name: "missing ID",
+			request: Update{{.EntityName}}Request{
+				{{.EntityName}}Name: strPtr("Updated Name"),
+			},
+			wantErr: true,
+		},
+		{
+			name: "no fields to update",
+			request: Update{{.EntityName}}Request{
+				ID: validID,
+			},
+			wantErr: true,
+		},
+		{
+			name: "empty name",
+			request: Update{{.EntityName}}Request{
+				ID: validID,
+				{{.EntityName}}Name: strPtr(""),
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.request.Validate()
+			
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// =============================================================================
+// FILTER TESTS
+// =============================================================================
+
+func Test{{.EntityName}}Filter_Pagination(t *testing.T) {
+	tests := []struct {
+		name         string
+		filter       {{.EntityName}}Filter
+		expectedPage int32
+		expectedLimit int32
+		expectedOffset int32
+	}{
+		{
+			name:           "default pagination",
+			filter:         {{.EntityName}}Filter{},
+			expectedPage:   1,
+			expectedLimit:  20,
+			expectedOffset: 0,
+		},
+		{
+			name: "custom pagination",
+			filter: {{.EntityName}}Filter{
+				Page:  int32Ptr(3),
+				Limit: int32Ptr(50),
+			},
+			expectedPage:   3,
+			expectedLimit:  50,
+			expectedOffset: 100,
+		},
+		{
+			name: "limit too high",
+			filter: {{.EntityName}}Filter{
+				Limit: int32Ptr(200),
+			},
+			expectedPage:   1,
+			expectedLimit:  100, // Should be capped
+			expectedOffset: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expectedPage, tt.filter.GetPage())
+			assert.Equal(t, tt.expectedLimit, tt.filter.GetLimit())
+			assert.Equal(t, tt.expectedOffset, tt.filter.GetOffset())
+		})
+	}
+}
+
+func Test{{.EntityName}}Filter_Sorting(t *testing.T) {
+	tests := []struct {
+		name              string
+		filter            {{.EntityName}}Filter
+		expectedSortBy    string
+		expectedSortOrder string
+	}{
+		{
+			name:              "default sorting",
+			filter:            {{.EntityName}}Filter{},
+			expectedSortBy:    "{{camelCase .EntityName}}_code",
+			expectedSortOrder: "asc",
+		},
+		{
+			name: "custom sorting",
+			filter: {{.EntityName}}Filter{
+				SortBy:    strPtr("{{camelCase .EntityName}}_name"),
+				SortOrder: strPtr("desc"),
+			},
+			expectedSortBy:    "{{camelCase .EntityName}}_name",
+			expectedSortOrder: "desc",
+		},
+		{
+			name: "invalid sort order",
+			filter: {{.EntityName}}Filter{
+				SortOrder: strPtr("invalid"),
+			},
+			expectedSortBy:    "{{camelCase .EntityName}}_code",
+			expectedSortOrder: "asc", // Should default
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expectedSortBy, tt.filter.GetSortBy())
+			assert.Equal(t, tt.expectedSortOrder, tt.filter.GetSortOrder())
+		})
+	}
+}
+
+// =============================================================================
+// SEARCH REQUEST TESTS
+// =============================================================================
+
+func Test{{.EntityName}}SearchRequest_Validate(t *testing.T) {
+	tests := []struct {
+		name    string
+		request {{.EntityName}}SearchRequest
+		wantErr bool
+	}{
+		{
+			name: "valid search",
+			request: {{.EntityName}}SearchRequest{
+				Query: "test",
+			},
+			wantErr: false,
+		},
+		{
+			name: "empty query",
+			request: {{.EntityName}}SearchRequest{
+				Query: "",
+			},
+			wantErr: true,
+		},
+		{
+			name: "query too long",
+			request: {{.EntityName}}SearchRequest{
+				Query: "this is a very long query that exceeds the maximum allowed length for search queries in the system which should cause a validation error to be thrown by the validation function when it checks the length",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.request.Validate()
+			
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func Test{{.EntityName}}SearchRequest_Defaults(t *testing.T) {
+	request := {{.EntityName}}SearchRequest{
+		Query: "test",
+	}
+
+	assert.Equal(t, int32(10), request.GetLimit())
+	assert.Equal(t, "contains", request.GetMatchType())
+	assert.Len(t, request.GetSearchFields(), 3) // code, name, description
+}
+
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+func strPtr(s string) *string {
+	return &s
+}
+
+func int32Ptr(i int32) *int32 {
+	return &i
+}
+
+func boolPtr(b bool) *bool {
+	return &b
+}
+
+{{comment "TODO: Add more specific test cases based on your business requirements"}}
+{{comment "TODO: Add performance tests for large datasets"}}
+{{comment "TODO: Add concurrency tests for thread safety"}}
+{{comment "TODO: Add benchmark tests for critical operations"}}

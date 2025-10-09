@@ -1,0 +1,274 @@
+package domain
+
+import (
+	"errors"
+	"fmt"
+)
+
+{{comment (printf "%s domain errors" .EntityName)}}
+var (
+	{{comment "Entity not found errors"}}
+	Err{{.EntityName}}NotFound = errors.New("{{lowerCase .EntityName}} not found")
+	Err{{.EntityName}}CodeNotFound = errors.New("{{lowerCase .EntityName}} code not found")
+	
+	{{comment "Validation errors"}}
+	Err{{.EntityName}}InvalidCode = errors.New("invalid {{lowerCase .EntityName}} code")
+	Err{{.EntityName}}InvalidName = errors.New("invalid {{lowerCase .EntityName}} name")
+	Err{{.EntityName}}InvalidStatus = errors.New("invalid {{lowerCase .EntityName}} status")
+	Err{{.EntityName}}InvalidType = errors.New("invalid {{lowerCase .EntityName}} type")
+	
+	{{comment "Business rule errors"}}
+	Err{{.EntityName}}AlreadyExists = errors.New("{{lowerCase .EntityName}} already exists")
+	Err{{.EntityName}}CodeAlreadyExists = errors.New("{{lowerCase .EntityName}} code already exists")
+	Err{{.EntityName}}CannotBeDeleted = errors.New("{{lowerCase .EntityName}} cannot be deleted")
+	Err{{.EntityName}}CannotBeDeactivated = errors.New("{{lowerCase .EntityName}} cannot be deactivated")
+	Err{{.EntityName}}HasDependencies = errors.New("{{lowerCase .EntityName}} has dependencies")
+	Err{{.EntityName}}HasChildren = errors.New("{{lowerCase .EntityName}} has children")
+	Err{{.EntityName}}HasTransactions = errors.New("{{lowerCase .EntityName}} has transactions")
+	Err{{.EntityName}}IsSystemDefined = errors.New("{{lowerCase .EntityName}} is system defined")
+	
+	{{comment "State transition errors"}}
+	Err{{.EntityName}}InvalidStateTransition = errors.New("invalid {{lowerCase .EntityName}} state transition")
+	Err{{.EntityName}}RequiresApproval = errors.New("{{lowerCase .EntityName}} requires approval")
+	Err{{.EntityName}}AlreadyActive = errors.New("{{lowerCase .EntityName}} is already active")
+	Err{{.EntityName}}AlreadyInactive = errors.New("{{lowerCase .EntityName}} is already inactive")
+	
+	{{comment "Hierarchy errors"}}
+	Err{{.EntityName}}CircularReference = errors.New("{{lowerCase .EntityName}} circular reference detected")
+	Err{{.EntityName}}InvalidParent = errors.New("invalid {{lowerCase .EntityName}} parent")
+	Err{{.EntityName}}MaxDepthExceeded = errors.New("{{lowerCase .EntityName}} hierarchy max depth exceeded")
+	Err{{.EntityName}}OrphanedEntity = errors.New("{{lowerCase .EntityName}} would become orphaned")
+	
+	{{- if or (contains .ModuleName "finance") (contains .ModuleName "account") (contains .ModuleName "budget")}}
+	{{comment "Financial errors"}}
+	Err{{.EntityName}}InvalidAmount = errors.New("invalid {{lowerCase .EntityName}} amount")
+	Err{{.EntityName}}InvalidCurrency = errors.New("invalid {{lowerCase .EntityName}} currency")
+	Err{{.EntityName}}CurrencyMismatch = errors.New("{{lowerCase .EntityName}} currency mismatch")
+	Err{{.EntityName}}InsufficientBalance = errors.New("insufficient {{lowerCase .EntityName}} balance")
+	Err{{.EntityName}}NegativeBalance = errors.New("{{lowerCase .EntityName}} balance cannot be negative")
+	{{- end}}
+	
+	{{comment "Permission errors"}}
+	Err{{.EntityName}}AccessDenied = errors.New("{{lowerCase .EntityName}} access denied")
+	Err{{.EntityName}}InsufficientPermissions = errors.New("insufficient {{lowerCase .EntityName}} permissions")
+	Err{{.EntityName}}ReadOnlyAccess = errors.New("{{lowerCase .EntityName}} is read-only")
+	
+	{{comment "Concurrency errors"}}
+	Err{{.EntityName}}ConcurrentModification = errors.New("{{lowerCase .EntityName}} concurrent modification")
+	Err{{.EntityName}}VersionMismatch = errors.New("{{lowerCase .EntityName}} version mismatch")
+	Err{{.EntityName}}OptimisticLockFailure = errors.New("{{lowerCase .EntityName}} optimistic lock failure")
+)
+
+{{comment (printf "%sError represents a domain-specific error with context" .EntityName)}}
+type {{.EntityName}}Error struct {
+	Code     string
+	Message  string
+	Field    string
+	Value    any
+	Cause    error
+	{{.EntityName}}ID *string
+}
+
+{{comment "Error implements the error interface"}}
+func (e *{{.EntityName}}Error) Error() string {
+	if e.{{.EntityName}}ID != nil {
+		return fmt.Sprintf("{{lowerCase .EntityName}} error [%s]: %s ({{lowerCase .EntityName}}_id: %s)", e.Code, e.Message, *e.{{.EntityName}}ID)
+	}
+	return fmt.Sprintf("{{lowerCase .EntityName}} error [%s]: %s", e.Code, e.Message)
+}
+
+{{comment "Unwrap returns the underlying error"}}
+func (e *{{.EntityName}}Error) Unwrap() error {
+	return e.Cause
+}
+
+{{comment "Is checks if the error matches the target"}}
+func (e *{{.EntityName}}Error) Is(target error) bool {
+	if t, ok := target.(*{{.EntityName}}Error); ok {
+		return e.Code == t.Code
+	}
+	return false
+}
+
+{{comment (printf "New%sError creates a new %s error" .EntityName (lowerCase .EntityName))}}
+func New{{.EntityName}}Error(code, message string) *{{.EntityName}}Error {
+	return &{{.EntityName}}Error{
+		Code:    code,
+		Message: message,
+	}
+}
+
+{{comment (printf "New%sErrorWithField creates a new %s error with field context" .EntityName (lowerCase .EntityName))}}
+func New{{.EntityName}}ErrorWithField(code, message, field string, value any) *{{.EntityName}}Error {
+	return &{{.EntityName}}Error{
+		Code:    code,
+		Message: message,
+		Field:   field,
+		Value:   value,
+	}
+}
+
+{{comment (printf "New%sErrorWithCause creates a new %s error with underlying cause" .EntityName (lowerCase .EntityName))}}
+func New{{.EntityName}}ErrorWithCause(code, message string, cause error) *{{.EntityName}}Error {
+	return &{{.EntityName}}Error{
+		Code:    code,
+		Message: message,
+		Cause:   cause,
+	}
+}
+
+{{comment (printf "New%sErrorWithID creates a new %s error with entity ID" .EntityName (lowerCase .EntityName))}}
+func New{{.EntityName}}ErrorWithID(code, message string, {{camelCase .EntityName}}ID string) *{{.EntityName}}Error {
+	return &{{.EntityName}}Error{
+		Code:       code,
+		Message:    message,
+		{{.EntityName}}ID: &{{camelCase .EntityName}}ID,
+	}
+}
+
+{{comment "Business rule validation errors"}}
+
+{{comment (printf "ValidateNotFound checks if %s was not found" (lowerCase .EntityName))}}
+func ValidateNotFound({{camelCase .EntityName}}ID string) error {
+	return New{{.EntityName}}ErrorWithID("NOT_FOUND", "{{.EntityName}} not found", {{camelCase .EntityName}}ID)
+}
+
+{{comment (printf "ValidateAlreadyExists checks if %s already exists" (lowerCase .EntityName))}}
+func ValidateAlreadyExists(code string) error {
+	return New{{.EntityName}}ErrorWithField("ALREADY_EXISTS", "{{.EntityName}} with this code already exists", "{{snakeCase .EntityName}}_code", code)
+}
+
+{{comment (printf "ValidateCannotDelete checks if %s can be deleted" (lowerCase .EntityName))}}
+func ValidateCannotDelete({{camelCase .EntityName}}ID string, reason string) error {
+	message := fmt.Sprintf("{{.EntityName}} cannot be deleted: %s", reason)
+	return New{{.EntityName}}ErrorWithID("CANNOT_DELETE", message, {{camelCase .EntityName}}ID)
+}
+
+{{comment (printf "ValidateInvalidTransition checks state transition validity for %s" (lowerCase .EntityName))}}
+func ValidateInvalidTransition(from, to {{.EntityName}}Status) error {
+	message := fmt.Sprintf("Invalid transition from %s to %s", from, to)
+	return New{{.EntityName}}Error("INVALID_TRANSITION", message)
+}
+
+{{comment (printf "ValidateCircularReference checks for circular references in %s hierarchy" (lowerCase .EntityName))}}
+func ValidateCircularReference({{camelCase .EntityName}}ID, parentID string) error {
+	message := fmt.Sprintf("Circular reference detected: {{lowerCase .EntityName}} %s cannot be parent of %s", parentID, {{camelCase .EntityName}}ID)
+	return New{{.EntityName}}Error("CIRCULAR_REFERENCE", message)
+}
+
+{{comment (printf "ValidateMaxDepth checks hierarchy depth for %s" (lowerCase .EntityName))}}
+func ValidateMaxDepth(currentDepth, maxDepth int) error {
+	message := fmt.Sprintf("Maximum hierarchy depth (%d) exceeded, current depth: %d", maxDepth, currentDepth)
+	return New{{.EntityName}}Error("MAX_DEPTH_EXCEEDED", message)
+}
+
+{{comment (printf "ValidateSystemEntity checks if %s is system-defined" (lowerCase .EntityName))}}
+func ValidateSystemEntity({{camelCase .EntityName}}ID string) error {
+	return New{{.EntityName}}ErrorWithID("SYSTEM_ENTITY", "Cannot modify system-defined {{lowerCase .EntityName}}", {{camelCase .EntityName}}ID)
+}
+
+{{- if or (contains .ModuleName "finance") (contains .ModuleName "account") (contains .ModuleName "budget")}}
+{{comment "Financial validation errors"}}
+
+{{comment (printf "ValidateInsufficientBalance checks %s balance" (lowerCase .EntityName))}}
+func ValidateInsufficientBalance({{camelCase .EntityName}}ID string, required, available string) error {
+	message := fmt.Sprintf("Insufficient balance: required %s, available %s", required, available)
+	return New{{.EntityName}}ErrorWithID("INSUFFICIENT_BALANCE", message, {{camelCase .EntityName}}ID)
+}
+
+{{comment (printf "ValidateCurrencyMismatch checks currency consistency for %s" (lowerCase .EntityName))}}
+func ValidateCurrencyMismatch(expected, actual string) error {
+	message := fmt.Sprintf("Currency mismatch: expected %s, got %s", expected, actual)
+	return New{{.EntityName}}ErrorWithField("CURRENCY_MISMATCH", message, "currency_code", actual)
+}
+
+{{comment (printf "ValidateNegativeAmount checks for negative amounts in %s" (lowerCase .EntityName))}}
+func ValidateNegativeAmount(amount string) error {
+	message := fmt.Sprintf("Amount cannot be negative: %s", amount)
+	return New{{.EntityName}}ErrorWithField("NEGATIVE_AMOUNT", message, "amount", amount)
+}
+{{- end}}
+
+{{comment "Permission validation errors"}}
+
+{{comment (printf "ValidatePermissionDenied checks %s access permissions" (lowerCase .EntityName))}}
+func ValidatePermissionDenied(action, {{camelCase .EntityName}}ID string) error {
+	message := fmt.Sprintf("Permission denied for action '%s' on {{lowerCase .EntityName}}", action)
+	return New{{.EntityName}}ErrorWithID("PERMISSION_DENIED", message, {{camelCase .EntityName}}ID)
+}
+
+{{comment (printf "ValidateReadOnlyAccess checks if %s is read-only" (lowerCase .EntityName))}}
+func ValidateReadOnlyAccess({{camelCase .EntityName}}ID string) error {
+	return New{{.EntityName}}ErrorWithID("READ_ONLY", "{{.EntityName}} is in read-only mode", {{camelCase .EntityName}}ID)
+}
+
+{{comment "Concurrency validation errors"}}
+
+{{comment (printf "ValidateVersionMismatch checks optimistic locking for %s" (lowerCase .EntityName))}}
+func ValidateVersionMismatch({{camelCase .EntityName}}ID string, expected, actual int32) error {
+	message := fmt.Sprintf("Version mismatch: expected %d, got %d", expected, actual)
+	return New{{.EntityName}}ErrorWithID("VERSION_MISMATCH", message, {{camelCase .EntityName}}ID)
+}
+
+{{comment (printf "ValidateConcurrentModification checks for concurrent modifications to %s" (lowerCase .EntityName))}}
+func ValidateConcurrentModification({{camelCase .EntityName}}ID string) error {
+	return New{{.EntityName}}ErrorWithID("CONCURRENT_MODIFICATION", "{{.EntityName}} was modified by another process", {{camelCase .EntityName}}ID)
+}
+
+{{comment "Error classification helpers"}}
+
+{{comment (printf "Is%sNotFoundError checks if error is a not found error" .EntityName)}}
+func Is{{.EntityName}}NotFoundError(err error) bool {
+	var {{camelCase .EntityName}}Err *{{.EntityName}}Error
+	if errors.As(err, &{{camelCase .EntityName}}Err) {
+		return {{camelCase .EntityName}}Err.Code == "NOT_FOUND"
+	}
+	return errors.Is(err, Err{{.EntityName}}NotFound)
+}
+
+{{comment (printf "Is%sValidationError checks if error is a validation error" .EntityName)}}
+func Is{{.EntityName}}ValidationError(err error) bool {
+	var {{camelCase .EntityName}}Err *{{.EntityName}}Error
+	if errors.As(err, &{{camelCase .EntityName}}Err) {
+		return {{camelCase .EntityName}}Err.Code == "VALIDATION_ERROR" || 
+			   {{camelCase .EntityName}}Err.Code == "INVALID_TRANSITION" ||
+			   {{camelCase .EntityName}}Err.Code == "CIRCULAR_REFERENCE"
+	}
+	return false
+}
+
+{{comment (printf "Is%sBusinessRuleError checks if error is a business rule violation" .EntityName)}}
+func Is{{.EntityName}}BusinessRuleError(err error) bool {
+	var {{camelCase .EntityName}}Err *{{.EntityName}}Error
+	if errors.As(err, &{{camelCase .EntityName}}Err) {
+		return {{camelCase .EntityName}}Err.Code == "ALREADY_EXISTS" ||
+			   {{camelCase .EntityName}}Err.Code == "CANNOT_DELETE" ||
+			   {{camelCase .EntityName}}Err.Code == "SYSTEM_ENTITY" ||
+			   {{camelCase .EntityName}}Err.Code == "MAX_DEPTH_EXCEEDED"
+	}
+	return false
+}
+
+{{comment (printf "Is%sPermissionError checks if error is a permission error" .EntityName)}}
+func Is{{.EntityName}}PermissionError(err error) bool {
+	var {{camelCase .EntityName}}Err *{{.EntityName}}Error
+	if errors.As(err, &{{camelCase .EntityName}}Err) {
+		return {{camelCase .EntityName}}Err.Code == "PERMISSION_DENIED" ||
+			   {{camelCase .EntityName}}Err.Code == "READ_ONLY"
+	}
+	return false
+}
+
+{{comment (printf "Is%sConcurrencyError checks if error is a concurrency error" .EntityName)}}
+func Is{{.EntityName}}ConcurrencyError(err error) bool {
+	var {{camelCase .EntityName}}Err *{{.EntityName}}Error
+	if errors.As(err, &{{camelCase .EntityName}}Err) {
+		return {{camelCase .EntityName}}Err.Code == "VERSION_MISMATCH" ||
+			   {{camelCase .EntityName}}Err.Code == "CONCURRENT_MODIFICATION"
+	}
+	return false
+}
+
+{{generateTODO "Add error metrics and monitoring integration"}}
+{{generateTODO "Consider adding error recovery strategies"}}
+{{generateTODO "Add support for localized error messages"}}

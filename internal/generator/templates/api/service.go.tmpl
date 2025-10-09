@@ -1,0 +1,276 @@
+package {{.PackageName}}
+
+import (
+	. "goa.design/goa/v3/dsl"
+)
+
+{{comment (printf "%sService describes the %s management service with GOA DSL" .EntityName (lowerCase .EntityName))}}
+var _ = Service("{{.PackageName}}", func() {
+	Description("{{.EntityName}} management service with complete CRUD operations")
+
+	HTTP(func() {
+		Path("/api/v1/{{kebabCase .ModuleName}}")
+	})
+
+	{{comment "Core CRUD Methods"}}
+	Method("create{{.EntityName}}", func() {
+		Description("Create a new {{lowerCase .EntityName}}")
+		Payload(Create{{.EntityName}}Payload)
+		Result({{.EntityName}}Result)
+		Error("bad_request")
+		Error("conflict")
+		Error("unauthorized")
+		Error("unprocessable_entity")
+		HTTP(func() {
+			POST("/{{kebabCase (pluralize .EntityName)}}")
+			Response(StatusCreated)
+		})
+	})
+
+	Method("get{{.EntityName}}", func() {
+		Description("Get {{lowerCase .EntityName}} by ID")
+		Payload(Get{{.EntityName}}ByIDPayload)
+		Result({{.EntityName}}Result)
+		Error("not_found")
+		Error("unauthorized")
+		HTTP(func() {
+			GET("/{{kebabCase (pluralize .EntityName)}}/" + "{id}")
+			Param("id")
+		})
+	})
+
+	Method("get{{.EntityName}}ByCode", func() {
+		Description("Get {{lowerCase .EntityName}} by code")
+		Payload(Get{{.EntityName}}ByCodePayload)
+		Result({{.EntityName}}Result)
+		Error("not_found")
+		Error("unauthorized")
+		HTTP(func() {
+			GET("/{{kebabCase (pluralize .EntityName)}}/by-code/" + "{code}")
+			Param("code")
+		})
+	})
+
+	Method("list{{.EntityNamePlural}}", func() {
+		Description("List {{pluralize (lowerCase .EntityName)}} with filtering")
+		Payload(List{{.EntityNamePlural}}Payload)
+		Result({{.EntityName}}ListResult)
+		Error("bad_request")
+		Error("unauthorized")
+		HTTP(func() {
+			GET("/{{kebabCase (pluralize .EntityName)}}")
+			Param("entity_id")
+			Param("{{snakeCase .EntityName}}_type")
+			Param("{{snakeCase .EntityName}}_category")
+			Param("status")
+			Param("is_active")
+			Param("parent_id")
+			Param("search_query")
+			Param("show_in_reports")
+			Param("limit")
+			Param("offset")
+			Param("sort_by")
+			Param("sort_order")
+		})
+	})
+
+	Method("update{{.EntityName}}", func() {
+		Description("Update an existing {{lowerCase .EntityName}}")
+		Payload(Update{{.EntityName}}Payload)
+		Result({{.EntityName}}Result)
+		Error("not_found")
+		Error("bad_request")
+		Error("unauthorized")
+		Error("unprocessable_entity")
+		HTTP(func() {
+			PUT("/{{kebabCase (pluralize .EntityName)}}/" + "{id}")
+			Param("id")
+		})
+	})
+
+	Method("delete{{.EntityName}}", func() {
+		Description("Soft delete a {{lowerCase .EntityName}}")
+		Payload(Delete{{.EntityName}}Payload)
+		Error("not_found")
+		Error("unauthorized")
+		Error("conflict")
+		HTTP(func() {
+			DELETE("/{{kebabCase (pluralize .EntityName)}}/" + "{id}")
+			Param("id")
+			Response(StatusNoContent)
+		})
+	})
+
+	{{comment "Search and Query Methods"}}
+	Method("search{{.EntityNamePlural}}", func() {
+		Description("Search {{pluralize (lowerCase .EntityName)}}")
+		Payload(Search{{.EntityNamePlural}}Payload)
+		Result(Search{{.EntityNamePlural}}Result)
+		Error("bad_request")
+		Error("unauthorized")
+		HTTP(func() {
+			GET("/{{kebabCase (pluralize .EntityName)}}/search")
+			Param("query")
+			Param("limit")
+			Param("include_inactive")
+		})
+	})
+
+	Method("getActive{{.EntityNamePlural}}", func() {
+		Description("Get all active {{pluralize (lowerCase .EntityName)}}")
+		Payload(GetActive{{.EntityNamePlural}}Payload)
+		Result({{.EntityName}}ListResult)
+		Error("unauthorized")
+		HTTP(func() {
+			GET("/{{kebabCase (pluralize .EntityName)}}/active")
+			Param("entity_id")
+		})
+	})
+
+	{{comment "Status Management Methods"}}
+	Method("activate{{.EntityName}}", func() {
+		Description("Activate a {{lowerCase .EntityName}}")
+		Payload(Change{{.EntityName}}StatusPayload)
+		Result({{.EntityName}}Result)
+		Error("not_found")
+		Error("unauthorized")
+		Error("conflict")
+		HTTP(func() {
+			POST("/{{kebabCase (pluralize .EntityName)}}/" + "{id}/activate")
+			Param("id")
+		})
+	})
+
+	Method("deactivate{{.EntityName}}", func() {
+		Description("Deactivate a {{lowerCase .EntityName}}")
+		Payload(Change{{.EntityName}}StatusPayload)
+		Result({{.EntityName}}Result)
+		Error("not_found")
+		Error("unauthorized")
+		Error("conflict")
+		HTTP(func() {
+			POST("/{{kebabCase (pluralize .EntityName)}}/" + "{id}/deactivate")
+			Param("id")
+		})
+	})
+
+	{{comment "Hierarchy Methods"}}
+	Method("get{{.EntityName}}Hierarchy", func() {
+		Description("Get {{lowerCase .EntityName}} hierarchy")
+		Payload(Get{{.EntityName}}HierarchyPayload)
+		Result({{.EntityName}}HierarchyResult)
+		Error("not_found")
+		Error("unauthorized")
+		HTTP(func() {
+			GET("/{{kebabCase (pluralize .EntityName)}}/" + "{id}/hierarchy")
+			Param("id")
+			Param("max_depth")
+			Param("include_inactive")
+		})
+	})
+
+	Method("get{{.EntityName}}Children", func() {
+		Description("Get {{lowerCase .EntityName}} children")
+		Payload(Get{{.EntityName}}ChildrenPayload)
+		Result({{.EntityName}}ListResult)
+		Error("not_found")
+		Error("unauthorized")
+		HTTP(func() {
+			GET("/{{kebabCase (pluralize .EntityName)}}/" + "{id}/children")
+			Param("id")
+			Param("include_inactive")
+		})
+	})
+
+	{{comment "Validation Methods"}}
+	Method("validate{{.EntityName}}Code", func() {
+		Description("Validate {{lowerCase .EntityName}} code uniqueness")
+		Payload(Validate{{.EntityName}}CodePayload)
+		Result(ValidationResult)
+		Error("unauthorized")
+		HTTP(func() {
+			GET("/{{kebabCase (pluralize .EntityName)}}/validate-code")
+			Param("code")
+			Param("exclude_id")
+		})
+	})
+
+	{{- if or (contains .ModuleName "finance") (contains .ModuleName "account")}}
+	{{comment "Financial Methods"}}
+	Method("get{{.EntityName}}Balance", func() {
+		Description("Get {{lowerCase .EntityName}} balance")
+		Payload(Get{{.EntityName}}BalancePayload)
+		Result({{.EntityName}}BalanceResult)
+		Error("not_found")
+		Error("unauthorized")
+		HTTP(func() {
+			GET("/{{kebabCase (pluralize .EntityName)}}/" + "{id}/balance")
+			Param("id")
+			Param("as_of_date")
+		})
+	})
+	{{- end}}
+
+	{{comment "Bulk Operations"}}
+	Method("create{{.EntityNamePlural}}Bulk", func() {
+		Description("Create multiple {{pluralize (lowerCase .EntityName)}} in batch")
+		Payload(Create{{.EntityNamePlural}}BulkPayload)
+		Result({{.EntityName}}BulkResult)
+		Error("bad_request")
+		Error("unauthorized")
+		Error("unprocessable_entity")
+		HTTP(func() {
+			POST("/{{kebabCase (pluralize .EntityName)}}/bulk")
+			Response(StatusCreated)
+		})
+	})
+
+	{{comment "Export/Import Methods"}}
+	Method("export{{.EntityNamePlural}}", func() {
+		Description("Export {{pluralize (lowerCase .EntityName)}} data")
+		Payload(Export{{.EntityNamePlural}}Payload)
+		Result(ExportResult)
+		Error("bad_request")
+		Error("unauthorized")
+		HTTP(func() {
+			GET("/{{kebabCase (pluralize .EntityName)}}/export")
+			Param("format")
+			Param("entity_id")
+			Param("status")
+			Param("include_inactive")
+		})
+	})
+
+	{{comment "Analytics Methods"}}
+	Method("get{{.EntityName}}Analytics", func() {
+		Description("Get {{lowerCase .EntityName}} analytics and statistics")
+		Payload(Get{{.EntityName}}AnalyticsPayload)
+		Result({{.EntityName}}AnalyticsResult)
+		Error("unauthorized")
+		HTTP(func() {
+			GET("/{{kebabCase (pluralize .EntityName)}}/analytics")
+			Param("entity_id")
+			Param("period")
+			Param("group_by")
+		})
+	})
+
+	{{comment "Audit Methods"}}
+	Method("get{{.EntityName}}AuditTrail", func() {
+		Description("Get {{lowerCase .EntityName}} audit trail")
+		Payload(Get{{.EntityName}}AuditTrailPayload)
+		Result(AuditTrailResult)
+		Error("not_found")
+		Error("unauthorized")
+		HTTP(func() {
+			GET("/{{kebabCase (pluralize .EntityName)}}/" + "{id}/audit")
+			Param("id")
+			Param("limit")
+			Param("offset")
+		})
+	})
+})
+
+{{generateTODO "Add Temporal workflow endpoints when workflow integration is ready"}}
+{{generateTODO "Consider adding GraphQL endpoint for complex queries"}}
+{{generateTODO "Add rate limiting and caching headers configuration"}}

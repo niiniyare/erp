@@ -1,0 +1,19 @@
+package repository
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/core/{{.PackageName}}/domain"
+)
+
+{{comment (printf "%sRepository defines the repository interface for %s data access" .EntityName (lowerCase .EntityName))}}
+type {{.EntityName}}Repository interface {
+	domain.{{.EntityName}}Repository
+}
+
+{{comment "Additional repository interfaces can be defined here for extended functionality"}}
+
+{{generateTODO "Add repository implementation when SQLC integration is ready"}}
+{{generateTODO "Consider adding caching repository wrapper"}}
+{{generateTODO "Add support for read replicas"}}

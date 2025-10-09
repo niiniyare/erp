@@ -1,0 +1,246 @@
+package domain
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
+
+{{comment (printf "%sRepository defines the data access interface for %s" .EntityName (lowerCase .EntityName))}}
+type {{.EntityName}}Repository interface {
+	{{comment "Basic CRUD operations"}}
+	Create(ctx context.Context, {{camelCase .EntityName}} *{{.EntityName}}) error
+	GetByID(ctx context.Context, id uuid.UUID) (*{{.EntityName}}, error)
+	GetByCode(ctx context.Context, entityID *uuid.UUID, code string) (*{{.EntityName}}, error)
+	Update(ctx context.Context, {{camelCase .EntityName}} *{{.EntityName}}) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	
+	{{comment "Query operations"}}
+	List(ctx context.Context, filter *{{.EntityName}}Filter) ([]*{{.EntityName}}, error)
+	Count(ctx context.Context, filter *{{.EntityName}}Filter) (int64, error)
+	Search(ctx context.Context, query string, limit int) ([]*{{.EntityName}}, error)
+	
+	{{comment "Existence checks"}}
+	Exists(ctx context.Context, id uuid.UUID) (bool, error)
+	ExistsByCode(ctx context.Context, entityID *uuid.UUID, code string) (bool, error)
+	
+	{{comment "Validation helpers"}}
+	ValidateCode(ctx context.Context, code string, excludeID *uuid.UUID) error
+	ValidateUniqueConstraints(ctx context.Context, {{camelCase .EntityName}} *{{.EntityName}}) error
+	
+	{{comment "Status and filtering"}}
+	GetByStatus(ctx context.Context, status {{.EntityName}}Status) ([]*{{.EntityName}}, error)
+	GetActive(ctx context.Context, entityID *uuid.UUID) ([]*{{.EntityName}}, error)
+	GetInactive(ctx context.Context, entityID *uuid.UUID) ([]*{{.EntityName}}, error)
+	
+	{{comment "Hierarchy operations"}}
+	GetHierarchy(ctx context.Context, rootID uuid.UUID) ([]*{{.EntityName}}, error)
+	GetChildren(ctx context.Context, parentID uuid.UUID) ([]*{{.EntityName}}, error)
+	GetDescendants(ctx context.Context, ancestorID uuid.UUID) ([]*{{.EntityName}}, error)
+	GetAncestors(ctx context.Context, descendantID uuid.UUID) ([]*{{.EntityName}}, error)
+	UpdateHierarchyPath(ctx context.Context, {{camelCase .EntityName}}ID uuid.UUID, newPath string) error
+	
+	{{comment "Business rule checks"}}
+	HasDependencies(ctx context.Context, id uuid.UUID) (bool, error)
+	HasChildren(ctx context.Context, id uuid.UUID) (bool, error)
+	CanBeDeleted(ctx context.Context, id uuid.UUID) (bool, error)
+	
+	{{- if or (contains .ModuleName "finance") (contains .ModuleName "account")}}
+	{{comment "Financial operations"}}
+	HasTransactions(ctx context.Context, id uuid.UUID) (bool, error)
+	GetBalance(ctx context.Context, id uuid.UUID) (*{{.EntityName}}Balance, error)
+	UpdateBalance(ctx context.Context, id uuid.UUID, balance *{{.EntityName}}Balance) error
+	{{- end}}
+	
+	{{comment "Batch operations"}}
+	CreateBatch(ctx context.Context, {{pluralize (camelCase .EntityName)}} []*{{.EntityName}}) error
+	UpdateBatch(ctx context.Context, {{pluralize (camelCase .EntityName)}} []*{{.EntityName}}) error
+	DeleteBatch(ctx context.Context, ids []uuid.UUID) error
+	
+	{{comment "Analytics and reporting"}}
+	GetAnalytics(ctx context.Context, filter *{{.EntityName}}AnalyticsFilter) (*{{.EntityName}}Analytics, error)
+	GetUsageStats(ctx context.Context, {{camelCase .EntityName}}ID uuid.UUID) (*{{.EntityName}}UsageStats, error)
+	
+	{{comment "Audit operations"}}
+	GetAuditTrail(ctx context.Context, id uuid.UUID) ([]*AuditEntry, error)
+	RecordAuditEntry(ctx context.Context, entry *AuditEntry) error
+}
+
+{{comment "Repository helper types"}}
+
+{{comment (printf "%sAnalyticsFilter defines filters for analytics queries" .EntityName)}}
+type {{.EntityName}}AnalyticsFilter struct {
+	EntityID    *uuid.UUID `json:"entity_id,omitempty"`
+	Period      string     `json:"period,omitempty"`      // day, week, month, year
+	GroupBy     string     `json:"group_by,omitempty"`    // type, category, status
+	DateFrom    *time.Time `json:"date_from,omitempty"`
+	DateTo      *time.Time `json:"date_to,omitempty"`
+	IncludeInactive bool   `json:"include_inactive"`
+}
+
+{{comment (printf "%sAnalytics represents analytics data for %s" .EntityName (pluralize (lowerCase .EntityName)))}}
+type {{.EntityName}}Analytics struct {
+	TotalCount         int64                    `json:"total_count"`
+	ActiveCount        int64                    `json:"active_count"`
+	InactiveCount      int64                    `json:"inactive_count"`
+	CreatedInPeriod    int64                    `json:"created_in_period"`
+	UpdatedInPeriod    int64                    `json:"updated_in_period"`
+	StatusDistribution map[string]int64         `json:"status_distribution"`
+	TypeDistribution   map[string]int64         `json:"type_distribution"`
+	CategoryDistribution map[string]int64       `json:"category_distribution"`
+	TrendData          []*{{.EntityName}}TrendPoint `json:"trend_data,omitempty"`
+	{{- if or (contains .ModuleName "finance") (contains .ModuleName "account")}}
+	TotalBalance       decimal.Decimal          `json:"total_balance,omitempty"`
+	CurrencyBreakdown  map[string]decimal.Decimal `json:"currency_breakdown,omitempty"`
+	{{- end}}
+}
+
+{{comment (printf "%sTrendPoint represents a point in trend analysis" .EntityName)}}
+type {{.EntityName}}TrendPoint struct {
+	Date      time.Time `json:"date"`
+	Count     int64     `json:"count"`
+	Value     decimal.Decimal `json:"value,omitempty"`
+}
+
+{{comment (printf "%sUsageStats represents usage statistics for a %s" .EntityName (lowerCase .EntityName))}}
+type {{.EntityName}}UsageStats struct {
+	{{.EntityName}}ID        uuid.UUID `json:"{{snakeCase .EntityName}}_id"`
+	ViewCount         int64     `json:"view_count"`
+	EditCount         int64     `json:"edit_count"`
+	LastViewed        *time.Time `json:"last_viewed,omitempty"`
+	LastEdited        *time.Time `json:"last_edited,omitempty"`
+	{{- if or (contains .ModuleName "finance") (contains .ModuleName "account")}}
+	TransactionCount  int64     `json:"transaction_count,omitempty"`
+	LastTransaction   *time.Time `json:"last_transaction,omitempty"`
+	{{- end}}
+	ReferencedByCount int64     `json:"referenced_by_count"`
+	ActivityScore     float64   `json:"activity_score"`
+}
+
+{{- if or (contains .ModuleName "finance") (contains .ModuleName "account")}}
+{{comment (printf "%sBalance represents balance information for a %s" .EntityName (lowerCase .EntityName))}}
+type {{.EntityName}}Balance struct {
+	{{.EntityName}}ID     uuid.UUID       `json:"{{snakeCase .EntityName}}_id"`
+	CurrentBalance decimal.Decimal `json:"current_balance"`
+	CurrencyCode   string          `json:"currency_code"`
+	LastUpdated    time.Time       `json:"last_updated"`
+	UpdatedBy      uuid.UUID       `json:"updated_by"`
+}
+{{- end}}
+
+{{comment "AuditEntry represents an audit trail entry"}}
+type AuditEntry struct {
+	ID            uuid.UUID       `json:"id"`
+	EntityType    string          `json:"entity_type"`
+	EntityID      uuid.UUID       `json:"entity_id"`
+	Action        string          `json:"action"`        // CREATE, UPDATE, DELETE, STATUS_CHANGE
+	Changes       map[string]any  `json:"changes"`       // Field changes
+	OldValues     map[string]any  `json:"old_values"`    // Previous values
+	NewValues     map[string]any  `json:"new_values"`    // New values
+	Reason        string          `json:"reason"`        // Reason for change
+	UserID        uuid.UUID       `json:"user_id"`
+	TenantID      uuid.UUID       `json:"tenant_id"`
+	IPAddress     string          `json:"ip_address"`
+	UserAgent     string          `json:"user_agent"`
+	Timestamp     time.Time       `json:"timestamp"`
+	RequestID     string          `json:"request_id"`
+}
+
+{{comment "ValidationRules represents validation configuration"}}
+type ValidationRules struct {
+	EntityType           string                 `json:"entity_type"`
+	RequiredFields       []string               `json:"required_fields"`
+	MaxLengths          map[string]int         `json:"max_lengths"`
+	MinLengths          map[string]int         `json:"min_lengths"`
+	FormatRules         map[string]string      `json:"format_rules"`      // field -> regex
+	BusinessRules       map[string]any         `json:"business_rules"`
+	AllowedTransitions  map[string][]string    `json:"allowed_transitions"`
+	CustomValidators    []string               `json:"custom_validators"`
+}
+
+{{comment "HierarchySettings represents hierarchy configuration"}}
+type HierarchySettings struct {
+	MaxDepth              int  `json:"max_depth"`
+	AllowCircularRefs     bool `json:"allow_circular_refs"`
+	EnforceHierarchy      bool `json:"enforce_hierarchy"`
+	RequireParentForChildren bool `json:"require_parent_for_children"`
+	AutoCalculatePaths    bool `json:"auto_calculate_paths"`
+	PathSeparator         string `json:"path_separator"`
+}
+
+{{comment "WorkflowSettings represents workflow configuration"}}
+type WorkflowSettings struct {
+	EnableApprovalWorkflow bool                   `json:"enable_approval_workflow"`
+	ApprovalRequired       []string               `json:"approval_required"`      // actions requiring approval
+	AutoApprove           []string                `json:"auto_approve"`           // actions that auto-approve
+	WorkflowTimeout       int                     `json:"workflow_timeout"`       // timeout in minutes
+	EscalationRules       map[string]any         `json:"escalation_rules"`
+}
+
+{{comment "Repository error types"}}
+var (
+	ErrNotFound           = errors.New("entity not found")
+	ErrAlreadyExists      = errors.New("entity already exists")
+	ErrCodeAlreadyExists  = errors.New("code already exists")
+	ErrCannotDelete       = errors.New("entity cannot be deleted")
+	ErrHasDependencies    = errors.New("entity has dependencies")
+	ErrCircularReference  = errors.New("circular reference detected")
+	ErrMaxDepthExceeded   = errors.New("maximum hierarchy depth exceeded")
+	ErrInvalidHierarchy   = errors.New("invalid hierarchy")
+	ErrVersionMismatch    = errors.New("version mismatch")
+	ErrConcurrentUpdate   = errors.New("concurrent update detected")
+)
+
+{{comment "Repository context keys for tenant isolation"}}
+type contextKey string
+
+const (
+	TenantIDKey contextKey = "tenant_id"
+	UserIDKey   contextKey = "user_id"
+	EntityIDKey contextKey = "entity_id"
+)
+
+{{comment "Helper functions for repository implementations"}}
+
+{{comment "GetTenantIDFromContext extracts tenant ID from context"}}
+func GetTenantIDFromContext(ctx context.Context) (uuid.UUID, bool) {
+	if tenantID, ok := ctx.Value(TenantIDKey).(uuid.UUID); ok {
+		return tenantID, true
+	}
+	return uuid.Nil, false
+}
+
+{{comment "GetUserIDFromContext extracts user ID from context"}}
+func GetUserIDFromContext(ctx context.Context) (uuid.UUID, bool) {
+	if userID, ok := ctx.Value(UserIDKey).(uuid.UUID); ok {
+		return userID, true
+	}
+	return uuid.Nil, false
+}
+
+{{comment "GetEntityIDFromContext extracts entity ID from context"}}
+func GetEntityIDFromContext(ctx context.Context) (uuid.UUID, bool) {
+	if entityID, ok := ctx.Value(EntityIDKey).(uuid.UUID); ok {
+		return entityID, true
+	}
+	return uuid.Nil, false
+}
+
+{{comment "WithTenantID adds tenant ID to context"}}
+func WithTenantID(ctx context.Context, tenantID uuid.UUID) context.Context {
+	return context.WithValue(ctx, TenantIDKey, tenantID)
+}
+
+{{comment "WithUserID adds user ID to context"}}
+func WithUserID(ctx context.Context, userID uuid.UUID) context.Context {
+	return context.WithValue(ctx, UserIDKey, userID)
+}
+
+{{comment "WithEntityID adds entity ID to context"}}
+func WithEntityID(ctx context.Context, entityID uuid.UUID) context.Context {
+	return context.WithValue(ctx, EntityIDKey, entityID)
+}
+
+{{generateTODO "Add support for read replicas in repository interface"}}
+{{generateTODO "Consider adding caching layer interface for frequently accessed data"}}
+{{generateTODO "Add support for database transactions in repository operations"}}

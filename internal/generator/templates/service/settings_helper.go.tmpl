@@ -1,0 +1,69 @@
+package service
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/core/{{.PackageName}}/domain"
+)
+
+{{comment (printf "SettingsHelper provides configuration and settings for %s service" .EntityName)}}
+type SettingsHelper struct {
+	// Configuration cache and helpers
+}
+
+{{comment "NewSettingsHelper creates a new settings helper"}}
+func NewSettingsHelper() *SettingsHelper {
+	return &SettingsHelper{}
+}
+
+{{comment (printf "GetDefault%sSettings returns default settings for %s" .EntityName (lowerCase .EntityName))}}
+func (h *SettingsHelper) GetDefault{{.EntityName}}Settings(ctx context.Context, entityID *uuid.UUID) *{{.EntityName}}Settings {
+	return &{{.EntityName}}Settings{
+		DefaultCurrency:       domain.DefaultBaseCurrency,
+		RequireApproval:       false,
+		MaxHierarchyDepth:     domain.MaxHierarchyDepth,
+		AllowDuplicateCode:    false,
+		ValidationRules:       domain.Default{{.EntityName}}ValidationRules(),
+		HierarchySettings:     getDefaultHierarchySettings(),
+		WorkflowSettings:      getDefaultWorkflowSettings(),
+	}
+}
+
+{{comment (printf "%sSettings represents configuration for %s operations" .EntityName (lowerCase .EntityName))}}
+type {{.EntityName}}Settings struct {
+	DefaultCurrency       string                              `json:"default_currency"`
+	RequireApproval       bool                                `json:"require_approval"`
+	MaxHierarchyDepth     int                                 `json:"max_hierarchy_depth"`
+	AllowDuplicateCode    bool                                `json:"allow_duplicate_code"`
+	ValidationRules       *domain.{{.EntityName}}ValidationRules        `json:"validation_rules"`
+	HierarchySettings     *domain.HierarchySettings           `json:"hierarchy_settings"`
+	WorkflowSettings      *domain.WorkflowSettings            `json:"workflow_settings"`
+}
+
+{{comment "getDefaultHierarchySettings returns default hierarchy configuration"}}
+func getDefaultHierarchySettings() *domain.HierarchySettings {
+	return &domain.HierarchySettings{
+		MaxDepth:                 10,
+		AllowCircularRefs:        false,
+		EnforceHierarchy:         true,
+		RequireParentForChildren: false,
+		AutoCalculatePaths:       true,
+		PathSeparator:            "/",
+	}
+}
+
+{{comment "getDefaultWorkflowSettings returns default workflow configuration"}}
+func getDefaultWorkflowSettings() *domain.WorkflowSettings {
+	return &domain.WorkflowSettings{
+		EnableApprovalWorkflow: false,
+		ApprovalRequired:       []string{"delete", "status_change"},
+		AutoApprove:           []string{"create", "update"},
+		WorkflowTimeout:       60, // 1 hour
+		EscalationRules:       make(map[string]any),
+	}
+}
+
+{{generateTODO "Integrate with Settings service when available"}}
+{{generateTODO "Add caching for frequently accessed settings"}}
+{{generateTODO "Add support for tenant-specific settings overrides"}}

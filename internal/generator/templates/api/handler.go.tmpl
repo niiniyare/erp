@@ -1,0 +1,237 @@
+package {{.PackageName}}
+
+import (
+	"context"
+	"time"
+
+	"github.com/google/uuid"
+	goa{{.ModuleNamePascal}} "github.com/niiniyare/erp/internal/api/gen/{{.PackageName}}"
+	{{.PackageName}}Service "github.com/niiniyare/erp/internal/core/{{.PackageName}}"
+	"github.com/niiniyare/erp/internal/shared/logger"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/tracing"
+)
+
+{{comment (printf "%sHandler implements the GOA %s service interface" .EntityName (lowerCase .PackageName))}}
+type {{.EntityName}}Handler struct {
+	services {{.PackageName}}Service.Services
+	tracing  tracing.TracingService
+	metrics  metrics.MetricsProvider
+}
+
+{{comment (printf "New%sHandler creates a new %s handler implementing all GOA service methods" .EntityName (lowerCase .PackageName))}}
+func New{{.EntityName}}Handler(
+	services {{.PackageName}}Service.Services,
+	tracing tracing.TracingService,
+	metrics metrics.MetricsProvider,
+) goa{{.ModuleNamePascal}}.Service {
+	return &{{.EntityName}}Handler{
+		services: services,
+		tracing:  tracing,
+		metrics:  metrics,
+	}
+}
+
+// =============================================================================
+// {{upper .EntityName}} CRUD METHODS
+// =============================================================================
+
+{{comment (printf "Create%s creates a new %s" .EntityName (lowerCase .EntityName))}}
+func (h *{{.EntityName}}Handler) Create{{.EntityName}}(ctx context.Context, payload *goa{{.ModuleNamePascal}}.Create{{.EntityName}}Payload) (*goa{{.ModuleNamePascal}}.{{.EntityName}}Result, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "{{.PackageName}}_handler.create_{{.EntityNameSnake}}")
+	defer span.End()
+
+	h.metrics.Counter("{{.PackageName}}.create_{{.EntityNameSnake}}.requests", "{{.ModuleNamePascal}} create {{.EntityNameSnake}} requests").Add(1, nil)
+
+	logger.InfoContext(ctx, "Creating {{.EntityNameSnake}}", logger.Fields{
+		"name": payload.Name,
+		{{- if contains .ModuleName "finance"}}
+		"code": payload.Code,
+		{{- end}}
+	})
+
+	{{comment "TODO: Convert payload to domain request and call service"}}
+	{{comment "For now, return a placeholder response"}}
+	result := &goa{{.ModuleNamePascal}}.{{.EntityName}}Result{
+		ID:          uuid.New().String(),
+		Name:        payload.Name,
+		{{- if contains .ModuleName "finance"}}
+		Code:        payload.Code,
+		{{- end}}
+		IsActive:    payload.IsActive,
+		CreatedAt:   stringPtr(time.Now().Format(time.RFC3339)),
+		UpdatedAt:   stringPtr(time.Now().Format(time.RFC3339)),
+	}
+
+	h.metrics.Counter("{{.PackageName}}.create_{{.EntityNameSnake}}.success", "{{.ModuleNamePascal}} create {{.EntityNameSnake}} success").Add(1, nil)
+	return result, nil
+}
+
+{{comment (printf "Get%s gets %s by ID" .EntityName (lowerCase .EntityName))}}
+func (h *{{.EntityName}}Handler) Get{{.EntityName}}(ctx context.Context, payload *goa{{.ModuleNamePascal}}.Get{{.EntityName}}ByIDPayload) (*goa{{.ModuleNamePascal}}.{{.EntityName}}Result, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "{{.PackageName}}_handler.get_{{.EntityNameSnake}}")
+	defer span.End()
+
+	logger.InfoContext(ctx, "Getting {{.EntityNameSnake}}", logger.Fields{"id": payload.ID})
+
+	{{comment "TODO: Parse UUID and call service"}}
+	return &goa{{.ModuleNamePascal}}.{{.EntityName}}Result{
+		ID:        payload.ID,
+		Name:      "Sample {{.EntityName}}",
+		{{- if contains .ModuleName "finance"}}
+		Code:      "SAM001",
+		{{- end}}
+		IsActive:  true,
+		CreatedAt: stringPtr(time.Now().Format(time.RFC3339)),
+	}, nil
+}
+
+{{comment (printf "List%s lists %s with filtering and pagination" .EntityNamePlural (pluralize (lowerCase .EntityName)))}}
+func (h *{{.EntityName}}Handler) List{{.EntityNamePlural}}(ctx context.Context, payload *goa{{.ModuleNamePascal}}.List{{.EntityNamePlural}}Payload) (*goa{{.ModuleNamePascal}}.{{.EntityName}}ListResult, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "{{.PackageName}}_handler.list_{{pluralize .EntityNameSnake}}")
+	defer span.End()
+
+	logger.InfoContext(ctx, "Listing {{pluralize .EntityNameSnake}}", logger.Fields{
+		"page":  payload.Page,
+		"limit": payload.Limit,
+	})
+
+	{{comment "TODO: Implement filtering and pagination"}}
+	{{pluralize .EntityNameSnake}} := []*goa{{.ModuleNamePascal}}.{{.EntityName}}Result{
+		{
+			ID:        uuid.New().String(),
+			Name:      "Sample {{.EntityName}} 1",
+			{{- if contains .ModuleName "finance"}}
+			Code:      "SAM001",
+			{{- end}}
+			IsActive:  true,
+			CreatedAt: stringPtr(time.Now().Format(time.RFC3339)),
+		},
+	}
+
+	pagination := &goa{{.ModuleNamePascal}}.PaginationMeta{
+		CurrentPage: 1,
+		PageSize:    20,
+		TotalItems:  1,
+		TotalPages:  1,
+		HasNext:     false,
+		HasPrev:     false,
+	}
+
+	return &goa{{.ModuleNamePascal}}.{{.EntityName}}ListResult{
+		{{.EntityNamePlural}}: {{pluralize .EntityNameSnake}},
+		Pagination: pagination,
+	}, nil
+}
+
+{{comment (printf "Update%s updates an existing %s" .EntityName (lowerCase .EntityName))}}
+func (h *{{.EntityName}}Handler) Update{{.EntityName}}(ctx context.Context, payload *goa{{.ModuleNamePascal}}.Update{{.EntityName}}Payload) (*goa{{.ModuleNamePascal}}.{{.EntityName}}Result, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "{{.PackageName}}_handler.update_{{.EntityNameSnake}}")
+	defer span.End()
+
+	logger.InfoContext(ctx, "Updating {{.EntityNameSnake}}", logger.Fields{"id": payload.ID})
+
+	{{comment "TODO: Implement update logic"}}
+	return &goa{{.ModuleNamePascal}}.{{.EntityName}}Result{
+		ID:        payload.ID,
+		Name:      *payload.Name,
+		{{- if contains .ModuleName "finance"}}
+		Code:      *payload.Code,
+		{{- end}}
+		IsActive:  *payload.IsActive,
+		UpdatedAt: stringPtr(time.Now().Format(time.RFC3339)),
+	}, nil
+}
+
+{{comment (printf "Delete%s soft deletes a %s" .EntityName (lowerCase .EntityName))}}
+func (h *{{.EntityName}}Handler) Delete{{.EntityName}}(ctx context.Context, payload *goa{{.ModuleNamePascal}}.Delete{{.EntityName}}Payload) error {
+	ctx, span := h.tracing.StartSpan(ctx, "{{.PackageName}}_handler.delete_{{.EntityNameSnake}}")
+	defer span.End()
+
+	logger.InfoContext(ctx, "Deleting {{.EntityNameSnake}}", logger.Fields{"id": payload.ID})
+
+	{{comment "TODO: Implement soft delete logic"}}
+	return nil
+}
+
+{{- if contains .ModuleName "finance"}}
+
+// =============================================================================
+// FINANCIAL OPERATIONS
+// =============================================================================
+
+{{comment (printf "Get%sBalance gets current balance for a %s" .EntityName (lowerCase .EntityName))}}
+func (h *{{.EntityName}}Handler) Get{{.EntityName}}Balance(ctx context.Context, payload *goa{{.ModuleNamePascal}}.Get{{.EntityName}}BalancePayload) (*goa{{.ModuleNamePascal}}.{{.EntityName}}BalanceResult, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "{{.PackageName}}_handler.get_{{.EntityNameSnake}}_balance")
+	defer span.End()
+
+	logger.InfoContext(ctx, "Getting {{.EntityNameSnake}} balance", logger.Fields{"{{.EntityNameSnake}}_id": payload.{{.EntityName}}ID})
+
+	{{comment "TODO: Calculate balance"}}
+	return &goa{{.ModuleNamePascal}}.{{.EntityName}}BalanceResult{
+		{{.EntityName}}ID:     payload.{{.EntityName}}ID,
+		CurrentBalance: "0.00",
+		Currency:       "USD",
+		AsOfDate:       time.Now().Format("2006-01-02"),
+	}, nil
+}
+
+{{- end}}
+
+// =============================================================================
+// SEARCH AND FILTER OPERATIONS
+// =============================================================================
+
+{{comment (printf "Search%s searches %s by query" .EntityNamePlural (pluralize (lowerCase .EntityName)))}}
+func (h *{{.EntityName}}Handler) Search{{.EntityNamePlural}}(ctx context.Context, payload *goa{{.ModuleNamePascal}}.Search{{.EntityNamePlural}}Payload) (*goa{{.ModuleNamePascal}}.Search{{.EntityNamePlural}}Result, error) {
+	ctx, span := h.tracing.StartSpan(ctx, "{{.PackageName}}_handler.search_{{pluralize .EntityNameSnake}}")
+	defer span.End()
+
+	logger.InfoContext(ctx, "Searching {{pluralize .EntityNameSnake}}", logger.Fields{
+		"query": payload.Query,
+		"limit": payload.Limit,
+	})
+
+	{{comment "TODO: Implement full-text search"}}
+	results := []*goa{{.ModuleNamePascal}}.SearchResultItem{
+		{
+			ID:             uuid.New().String(),
+			Name:           "Sample {{.EntityName}}",
+			{{- if contains .ModuleName "finance"}}
+			Code:           "SAM001",
+			{{- end}}
+			MatchType:      "NAME",
+			RelevanceScore: 0.95,
+		},
+	}
+
+	return &goa{{.ModuleNamePascal}}.Search{{.EntityNamePlural}}Result{
+		Results:          results,
+		TotalResults:     1,
+		SearchDurationMs: 50,
+	}, nil
+}
+
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+{{comment "stringPtr returns a pointer to a string value"}}
+func stringPtr(s string) *string {
+	return &s
+}
+
+{{comment "int32Ptr returns a pointer to an int32 value"}}
+func int32Ptr(i int32) *int32 {
+	return &i
+}
+
+{{comment "boolPtr returns a pointer to a bool value"}}
+func boolPtr(b bool) *bool {
+	return &b
+}
+
+{{generateTODO "Implement all handler methods with proper service calls"}}
+{{generateTODO "Add proper error handling and validation"}}
+{{generateTODO "Add comprehensive logging and metrics"}}
+{{generateTODO "Add request/response transformation helpers"}}

@@ -1,0 +1,543 @@
+package repository
+
+import (
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/core/{{.PackageName}}/domain"
+)
+
+{{comment (printf "%sFilters provides filtering utilities for %s repository operations" .EntityName (lowerCase .EntityName))}}
+
+// =============================================================================
+// FILTER BUILDERS
+// =============================================================================
+
+{{comment (printf "%sFilterBuilder helps build complex filters for %s queries" .EntityName (lowerCase .EntityName))}}
+type {{.EntityName}}FilterBuilder struct {
+	filter *domain.{{.EntityName}}Filter
+	errors []error
+}
+
+{{comment (printf "New%sFilterBuilder creates a new filter builder" .EntityName)}}
+func New{{.EntityName}}FilterBuilder() *{{.EntityName}}FilterBuilder {
+	return &{{.EntityName}}FilterBuilder{
+		filter: &domain.{{.EntityName}}Filter{},
+		errors: make([]error, 0),
+	}
+}
+
+{{comment "WithEntityID sets the entity ID filter"}}
+func (b *{{.EntityName}}FilterBuilder) WithEntityID(entityID uuid.UUID) *{{.EntityName}}FilterBuilder {
+	if entityID != uuid.Nil {
+		b.filter.EntityID = &entityID
+	}
+	return b
+}
+
+{{comment (printf "With%sCode sets the %s code filter" .EntityName (lowerCase .EntityName))}}
+func (b *{{.EntityName}}FilterBuilder) With{{.EntityName}}Code(code string) *{{.EntityName}}FilterBuilder {
+	if code != "" {
+		b.filter.{{.EntityName}}Code = &code
+	}
+	return b
+}
+
+{{comment (printf "With%sName sets the %s name filter" .EntityName (lowerCase .EntityName))}}
+func (b *{{.EntityName}}FilterBuilder) With{{.EntityName}}Name(name string) *{{.EntityName}}FilterBuilder {
+	if name != "" {
+		b.filter.{{.EntityName}}Name = &name
+	}
+	return b
+}
+
+{{comment (printf "With%sType sets the %s type filter" .EntityName (lowerCase .EntityName))}}
+func (b *{{.EntityName}}FilterBuilder) With{{.EntityName}}Type(entityType string) *{{.EntityName}}FilterBuilder {
+	if entityType != "" {
+		b.filter.{{.EntityName}}Type = &entityType
+	}
+	return b
+}
+
+{{comment "WithIsActive sets the active status filter"}}
+func (b *{{.EntityName}}FilterBuilder) WithIsActive(isActive bool) *{{.EntityName}}FilterBuilder {
+	b.filter.IsActive = &isActive
+	return b
+}
+
+{{comment (printf "WithStatus sets the %s status filter" (lowerCase .EntityName))}}
+func (b *{{.EntityName}}FilterBuilder) WithStatus(status domain.{{.EntityName}}Status) *{{.EntityName}}FilterBuilder {
+	b.filter.Status = &status
+	return b
+}
+
+{{- if contains .ModuleName "finance"}}
+
+{{comment "WithParentID sets the parent ID filter for hierarchical queries"}}
+func (b *{{.EntityName}}FilterBuilder) WithParentID(parentID uuid.UUID) *{{.EntityName}}FilterBuilder {
+	if parentID != uuid.Nil {
+		b.filter.ParentID = &parentID
+	}
+	return b
+}
+
+{{comment "WithLevel sets the hierarchy level filter"}}
+func (b *{{.EntityName}}FilterBuilder) WithLevel(level int32) *{{.EntityName}}FilterBuilder {
+	if level >= 0 {
+		b.filter.Level = &level
+	}
+	return b
+}
+
+{{comment "WithHasChildren sets the has children filter"}}
+func (b *{{.EntityName}}FilterBuilder) WithHasChildren(hasChildren bool) *{{.EntityName}}FilterBuilder {
+	b.filter.HasChildren = &hasChildren
+	return b
+}
+
+{{- end}}
+
+{{comment "WithCreatedAfter sets the created after date filter"}}
+func (b *{{.EntityName}}FilterBuilder) WithCreatedAfter(date time.Time) *{{.EntityName}}FilterBuilder {
+	dateStr := date.Format("2006-01-02")
+	b.filter.CreatedAfter = &dateStr
+	return b
+}
+
+{{comment "WithCreatedBefore sets the created before date filter"}}
+func (b *{{.EntityName}}FilterBuilder) WithCreatedBefore(date time.Time) *{{.EntityName}}FilterBuilder {
+	dateStr := date.Format("2006-01-02")
+	b.filter.CreatedBefore = &dateStr
+	return b
+}
+
+{{comment "WithUpdatedAfter sets the updated after date filter"}}
+func (b *{{.EntityName}}FilterBuilder) WithUpdatedAfter(date time.Time) *{{.EntityName}}FilterBuilder {
+	dateStr := date.Format("2006-01-02")
+	b.filter.UpdatedAfter = &dateStr
+	return b
+}
+
+{{comment "WithUpdatedBefore sets the updated before date filter"}}
+func (b *{{.EntityName}}FilterBuilder) WithUpdatedBefore(date time.Time) *{{.EntityName}}FilterBuilder {
+	dateStr := date.Format("2006-01-02")
+	b.filter.UpdatedBefore = &dateStr
+	return b
+}
+
+{{comment "WithDateRange sets both created after and before filters"}}
+func (b *{{.EntityName}}FilterBuilder) WithDateRange(startDate, endDate time.Time) *{{.EntityName}}FilterBuilder {
+	if !startDate.IsZero() {
+		b.WithCreatedAfter(startDate)
+	}
+	if !endDate.IsZero() {
+		b.WithCreatedBefore(endDate)
+	}
+	return b
+}
+
+{{comment "WithPagination sets pagination parameters"}}
+func (b *{{.EntityName}}FilterBuilder) WithPagination(page, limit int32) *{{.EntityName}}FilterBuilder {
+	if page > 0 {
+		b.filter.Page = &page
+	}
+	if limit > 0 {
+		b.filter.Limit = &limit
+	}
+	return b
+}
+
+{{comment "WithSorting sets sorting parameters"}}
+func (b *{{.EntityName}}FilterBuilder) WithSorting(sortBy, sortOrder string) *{{.EntityName}}FilterBuilder {
+	if sortBy != "" {
+		b.filter.SortBy = &sortBy
+	}
+	if sortOrder != "" && (sortOrder == "asc" || sortOrder == "desc") {
+		b.filter.SortOrder = &sortOrder
+	}
+	return b
+}
+
+{{comment "Build returns the constructed filter and any validation errors"}}
+func (b *{{.EntityName}}FilterBuilder) Build() (*domain.{{.EntityName}}Filter, error) {
+	if len(b.errors) > 0 {
+		return nil, fmt.Errorf("filter validation errors: %v", b.errors)
+	}
+	
+	// Validate date ranges
+	if err := b.validateDateRanges(); err != nil {
+		return nil, err
+	}
+	
+	// Validate pagination
+	if err := b.validatePagination(); err != nil {
+		return nil, err
+	}
+	
+	return b.filter, nil
+}
+
+{{comment "validateDateRanges validates that date ranges are logical"}}
+func (b *{{.EntityName}}FilterBuilder) validateDateRanges() error {
+	// Validate created date range
+	if b.filter.CreatedAfter != nil && b.filter.CreatedBefore != nil {
+		after, err1 := time.Parse("2006-01-02", *b.filter.CreatedAfter)
+		before, err2 := time.Parse("2006-01-02", *b.filter.CreatedBefore)
+		
+		if err1 != nil || err2 != nil {
+			return fmt.Errorf("invalid date format in created date range")
+		}
+		
+		if after.After(before) {
+			return fmt.Errorf("created_after cannot be after created_before")
+		}
+	}
+	
+	// Validate updated date range
+	if b.filter.UpdatedAfter != nil && b.filter.UpdatedBefore != nil {
+		after, err1 := time.Parse("2006-01-02", *b.filter.UpdatedAfter)
+		before, err2 := time.Parse("2006-01-02", *b.filter.UpdatedBefore)
+		
+		if err1 != nil || err2 != nil {
+			return fmt.Errorf("invalid date format in updated date range")
+		}
+		
+		if after.After(before) {
+			return fmt.Errorf("updated_after cannot be after updated_before")
+		}
+	}
+	
+	return nil
+}
+
+{{comment "validatePagination validates pagination parameters"}}
+func (b *{{.EntityName}}FilterBuilder) validatePagination() error {
+	if b.filter.Page != nil && *b.filter.Page < 1 {
+		return fmt.Errorf("page must be greater than 0")
+	}
+	
+	if b.filter.Limit != nil && (*b.filter.Limit < 1 || *b.filter.Limit > 1000) {
+		return fmt.Errorf("limit must be between 1 and 1000")
+	}
+	
+	return nil
+}
+
+// =============================================================================
+// QUERY BUILDERS
+// =============================================================================
+
+{{comment (printf "%sQueryBuilder builds SQL query conditions for %s filtering" .EntityName (lowerCase .EntityName))}}
+type {{.EntityName}}QueryBuilder struct {
+	conditions []string
+	args       []interface{}
+	argIndex   int
+}
+
+{{comment (printf "New%sQueryBuilder creates a new query builder" .EntityName)}}
+func New{{.EntityName}}QueryBuilder() *{{.EntityName}}QueryBuilder {
+	return &{{.EntityName}}QueryBuilder{
+		conditions: make([]string, 0),
+		args:       make([]interface{}, 0),
+		argIndex:   1,
+	}
+}
+
+{{comment "AddTenantIDCondition adds tenant ID condition (always required)"}}
+func (qb *{{.EntityName}}QueryBuilder) AddTenantIDCondition(tenantID uuid.UUID) *{{.EntityName}}QueryBuilder {
+	qb.addCondition("tenant_id = $%d", tenantID)
+	return qb
+}
+
+{{comment "AddEntityIDCondition adds entity ID condition if provided"}}
+func (qb *{{.EntityName}}QueryBuilder) AddEntityIDCondition(entityID *uuid.UUID) *{{.EntityName}}QueryBuilder {
+	if entityID != nil {
+		qb.addCondition("entity_id = $%d", *entityID)
+	}
+	return qb
+}
+
+{{comment "AddActiveCondition adds active status condition"}}
+func (qb *{{.EntityName}}QueryBuilder) AddActiveCondition(isActive *bool) *{{.EntityName}}QueryBuilder {
+	if isActive != nil {
+		qb.addCondition("is_active = $%d", *isActive)
+	}
+	return qb
+}
+
+{{comment "AddDeletedCondition adds deleted_at condition"}}
+func (qb *{{.EntityName}}QueryBuilder) AddDeletedCondition(includeDeleted bool) *{{.EntityName}}QueryBuilder {
+	if !includeDeleted {
+		qb.addCondition("deleted_at IS NULL")
+	}
+	return qb
+}
+
+{{comment (printf "AddCodeCondition adds %s code condition" (lowerCase .EntityName))}}
+func (qb *{{.EntityName}}QueryBuilder) AddCodeCondition(code *string, matchType string) *{{.EntityName}}QueryBuilder {
+	if code != nil {
+		switch strings.ToLower(matchType) {
+		case "exact":
+			qb.addCondition("{{snakeCase .EntityName}}_code = $%d", *code)
+		case "prefix":
+			qb.addCondition("{{snakeCase .EntityName}}_code ILIKE $%d", *code+"%")
+		case "contains":
+			qb.addCondition("{{snakeCase .EntityName}}_code ILIKE $%d", "%"+*code+"%")
+		default:
+			qb.addCondition("{{snakeCase .EntityName}}_code ILIKE $%d", "%"+*code+"%")
+		}
+	}
+	return qb
+}
+
+{{comment (printf "AddNameCondition adds %s name condition" (lowerCase .EntityName))}}
+func (qb *{{.EntityName}}QueryBuilder) AddNameCondition(name *string, matchType string) *{{.EntityName}}QueryBuilder {
+	if name != nil {
+		switch strings.ToLower(matchType) {
+		case "exact":
+			qb.addCondition("{{snakeCase .EntityName}}_name = $%d", *name)
+		case "prefix":
+			qb.addCondition("{{snakeCase .EntityName}}_name ILIKE $%d", *name+"%")
+		case "contains":
+			qb.addCondition("{{snakeCase .EntityName}}_name ILIKE $%d", "%"+*name+"%")
+		default:
+			qb.addCondition("{{snakeCase .EntityName}}_name ILIKE $%d", "%"+*name+"%")
+		}
+	}
+	return qb
+}
+
+{{comment (printf "AddTypeCondition adds %s type condition" (lowerCase .EntityName))}}
+func (qb *{{.EntityName}}QueryBuilder) AddTypeCondition(entityType *string) *{{.EntityName}}QueryBuilder {
+	if entityType != nil {
+		qb.addCondition("{{snakeCase .EntityName}}_type = $%d", *entityType)
+	}
+	return qb
+}
+
+{{comment "AddStatusCondition adds status condition"}}
+func (qb *{{.EntityName}}QueryBuilder) AddStatusCondition(status *domain.{{.EntityName}}Status) *{{.EntityName}}QueryBuilder {
+	if status != nil {
+		qb.addCondition("status = $%d", string(*status))
+	}
+	return qb
+}
+
+{{- if contains .ModuleName "finance"}}
+
+{{comment "AddParentIDCondition adds parent ID condition for hierarchy"}}
+func (qb *{{.EntityName}}QueryBuilder) AddParentIDCondition(parentID *uuid.UUID) *{{.EntityName}}QueryBuilder {
+	if parentID != nil {
+		if *parentID == uuid.Nil {
+			qb.addCondition("parent_id IS NULL")
+		} else {
+			qb.addCondition("parent_id = $%d", *parentID)
+		}
+	}
+	return qb
+}
+
+{{comment "AddLevelCondition adds level condition for hierarchy"}}
+func (qb *{{.EntityName}}QueryBuilder) AddLevelCondition(level *int32) *{{.EntityName}}QueryBuilder {
+	if level != nil {
+		qb.addCondition("level = $%d", *level)
+	}
+	return qb
+}
+
+{{comment "AddHasChildrenCondition adds has children condition"}}
+func (qb *{{.EntityName}}QueryBuilder) AddHasChildrenCondition(hasChildren *bool) *{{.EntityName}}QueryBuilder {
+	if hasChildren != nil {
+		qb.addCondition("has_children = $%d", *hasChildren)
+	}
+	return qb
+}
+
+{{- end}}
+
+{{comment "AddDateRangeCondition adds date range condition"}}
+func (qb *{{.EntityName}}QueryBuilder) AddDateRangeCondition(field string, after, before *string) *{{.EntityName}}QueryBuilder {
+	if after != nil {
+		qb.addCondition(field+" >= $%d", *after)
+	}
+	if before != nil {
+		qb.addCondition(field+" <= $%d", *before)
+	}
+	return qb
+}
+
+{{comment "AddSearchCondition adds full-text search condition"}}
+func (qb *{{.EntityName}}QueryBuilder) AddSearchCondition(query string, fields []string) *{{.EntityName}}QueryBuilder {
+	if query != "" && len(fields) > 0 {
+		var searchConditions []string
+		
+		for _, field := range fields {
+			searchConditions = append(searchConditions, 
+				fmt.Sprintf("%s ILIKE $%d", field, qb.argIndex))
+			qb.args = append(qb.args, "%"+query+"%")
+			qb.argIndex++
+		}
+		
+		if len(searchConditions) > 0 {
+			qb.conditions = append(qb.conditions, 
+				"("+strings.Join(searchConditions, " OR ")+")")
+		}
+	}
+	return qb
+}
+
+{{comment "addCondition is a helper to add a condition with argument"}}
+func (qb *{{.EntityName}}QueryBuilder) addCondition(condition string, args ...interface{}) {
+	if len(args) > 0 {
+		qb.conditions = append(qb.conditions, fmt.Sprintf(condition, qb.argIndex))
+		qb.args = append(qb.args, args[0])
+		qb.argIndex++
+	} else {
+		qb.conditions = append(qb.conditions, condition)
+	}
+}
+
+{{comment "BuildWhereClause builds the WHERE clause and returns conditions and arguments"}}
+func (qb *{{.EntityName}}QueryBuilder) BuildWhereClause() (string, []interface{}) {
+	if len(qb.conditions) == 0 {
+		return "", nil
+	}
+	
+	whereClause := "WHERE " + strings.Join(qb.conditions, " AND ")
+	return whereClause, qb.args
+}
+
+{{comment "BuildOrderByClause builds the ORDER BY clause"}}
+func (qb *{{.EntityName}}QueryBuilder) BuildOrderByClause(sortBy, sortOrder string) string {
+	// Validate sort field
+	validSortFields := []string{
+		"{{snakeCase .EntityName}}_code",
+		"{{snakeCase .EntityName}}_name",
+		"{{snakeCase .EntityName}}_type",
+		"status",
+		"created_at",
+		"updated_at",
+		"display_order",
+		{{- if contains .ModuleName "finance"}}
+		"level",
+		"path",
+		{{- end}}
+	}
+	
+	// Default sorting
+	if sortBy == "" {
+		sortBy = "{{snakeCase .EntityName}}_code"
+	}
+	
+	// Validate sort field
+	isValidField := false
+	for _, field := range validSortFields {
+		if field == sortBy {
+			isValidField = true
+			break
+		}
+	}
+	
+	if !isValidField {
+		sortBy = "{{snakeCase .EntityName}}_code"
+	}
+	
+	// Validate sort order
+	if sortOrder != "desc" {
+		sortOrder = "asc"
+	}
+	
+	return fmt.Sprintf("ORDER BY %s %s", sortBy, strings.ToUpper(sortOrder))
+}
+
+{{comment "BuildLimitOffsetClause builds the LIMIT and OFFSET clause"}}
+func (qb *{{.EntityName}}QueryBuilder) BuildLimitOffsetClause(limit, offset int32) string {
+	if limit <= 0 {
+		limit = 20 // Default limit
+	}
+	if limit > 1000 {
+		limit = 1000 // Max limit
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	
+	return fmt.Sprintf("LIMIT %d OFFSET %d", limit, offset)
+}
+
+// =============================================================================
+// FILTER PRESETS
+// =============================================================================
+
+{{comment (printf "ActiveOnly%sFilter returns a filter for active %s only" .EntityName (pluralize (lowerCase .EntityName)))}}
+func ActiveOnly{{.EntityName}}Filter() *domain.{{.EntityName}}Filter {
+	isActive := true
+	return &domain.{{.EntityName}}Filter{
+		IsActive: &isActive,
+	}
+}
+
+{{comment (printf "InactiveOnly%sFilter returns a filter for inactive %s only" .EntityName (pluralize (lowerCase .EntityName)))}}
+func InactiveOnly{{.EntityName}}Filter() *domain.{{.EntityName}}Filter {
+	isActive := false
+	return &domain.{{.EntityName}}Filter{
+		IsActive: &isActive,
+	}
+}
+
+{{- if contains .ModuleName "finance"}}
+
+{{comment (printf "RootLevel%sFilter returns a filter for root level %s only" .EntityName (pluralize (lowerCase .EntityName)))}}
+func RootLevel{{.EntityName}}Filter() *domain.{{.EntityName}}Filter {
+	level := int32(1)
+	return &domain.{{.EntityName}}Filter{
+		Level: &level,
+	}
+}
+
+{{comment (printf "ParentNodes%sFilter returns a filter for parent nodes (has children)" .EntityName)}}
+func ParentNodes{{.EntityName}}Filter() *domain.{{.EntityName}}Filter {
+	hasChildren := true
+	return &domain.{{.EntityName}}Filter{
+		HasChildren: &hasChildren,
+	}
+}
+
+{{comment (printf "LeafNodes%sFilter returns a filter for leaf nodes (no children)" .EntityName)}}
+func LeafNodes{{.EntityName}}Filter() *domain.{{.EntityName}}Filter {
+	hasChildren := false
+	return &domain.{{.EntityName}}Filter{
+		HasChildren: &hasChildren,
+	}
+}
+
+{{- end}}
+
+{{comment (printf "Recent%sFilter returns a filter for recently created %s (last 30 days)" .EntityName (pluralize (lowerCase .EntityName)))}}
+func Recent{{.EntityName}}Filter() *domain.{{.EntityName}}Filter {
+	thirtyDaysAgo := time.Now().AddDate(0, 0, -30).Format("2006-01-02")
+	return &domain.{{.EntityName}}Filter{
+		CreatedAfter: &thirtyDaysAgo,
+	}
+}
+
+{{comment (printf "System%sFilter returns a filter for system-defined %s" .EntityName (pluralize (lowerCase .EntityName)))}}
+func System{{.EntityName}}Filter() *domain.{{.EntityName}}Filter {
+	// Note: This would require extending the filter to include IsSystemDefined
+	// For now, this is a placeholder
+	return &domain.{{.EntityName}}Filter{}
+}
+
+{{comment (printf "User%sFilter returns a filter for user-defined %s" .EntityName (pluralize (lowerCase .EntityName)))}}
+func User{{.EntityName}}Filter() *domain.{{.EntityName}}Filter {
+	// Note: This would require extending the filter to include IsSystemDefined
+	// For now, this is a placeholder
+	return &domain.{{.EntityName}}Filter{}
+}
+
+{{generateTODO "Add more sophisticated filtering options"}}
+{{generateTODO "Add support for complex boolean logic (AND/OR)"}}
+{{generateTODO "Add support for custom filter functions"}}
+{{generateTODO "Add query optimization for large datasets"}}

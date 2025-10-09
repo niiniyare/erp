@@ -1,0 +1,396 @@
+package domain
+
+{{comment (printf "Validation constants and rules for %s module" .ModuleName)}}
+
+{{comment "Validation rule constants"}}
+const (
+	{{comment "Field length limits"}}
+	Max{{.EntityName}}CodeLength        = 50
+	Max{{.EntityName}}NameLength        = 200
+	Max{{.EntityName}}DescriptionLength = 1000
+	Max{{.EntityName}}TypeLength        = 100
+	Max{{.EntityName}}CategoryLength    = 100
+	
+	{{comment "Hierarchy limits"}}
+	MaxHierarchyDepth = 10
+	MinHierarchyLevel = 0
+	
+	{{comment "Business rule limits"}}
+	MaxDisplayOrder = 999999
+	MinDisplayOrder = 0
+	
+	{{- if or (contains .ModuleName "finance") (contains .ModuleName "account") (contains .ModuleName "budget")}}
+	{{comment "Financial limits"}}
+	MaxAmount = "99999999999999.99"
+	MinAmount = "-99999999999999.99"
+	CurrencyCodeLength = 3
+	{{- end}}
+)
+
+{{comment "Validation message constants"}}
+const (
+	MsgRequired                = "Field is required"
+	MsgMaxLength               = "Field exceeds maximum length"
+	MsgMinLength               = "Field is below minimum length"
+	MsgInvalidFormat           = "Field has invalid format"
+	MsgInvalidValue            = "Field has invalid value"
+	MsgBusinessRuleViolation   = "Business rule violation"
+	MsgCircularReference       = "Circular reference detected"
+	MsgDuplicateValue          = "Duplicate value"
+	MsgInvalidStateTransition  = "Invalid state transition"
+	MsgMaxDepthExceeded        = "Maximum hierarchy depth exceeded"
+	MsgSystemEntityProtected   = "System entity cannot be modified"
+)
+
+{{comment (printf "%sValidationRules defines validation rules for %s" .EntityName (lowerCase .EntityName))}}
+type {{.EntityName}}ValidationRules struct {
+	{{comment "Field validation rules"}}
+	CodeRequired        bool
+	NameRequired        bool
+	TypeRequired        bool
+	StatusRequired      bool
+	
+	{{comment "Format validation rules"}}
+	CodeFormat          string // Regex pattern
+	NameFormat          string // Regex pattern
+	
+	{{comment "Length validation rules"}}
+	MaxCodeLength       int
+	MaxNameLength       int
+	MaxDescriptionLength int
+	
+	{{comment "Business rules"}}
+	AllowDuplicateCode  bool
+	AllowCircularRefs   bool
+	EnforceHierarchy    bool
+	RequireParentForChildren bool
+	
+	{{comment "Status transition rules"}}
+	AllowedTransitions  map[{{.EntityName}}Status][]{{.EntityName}}Status
+	
+	{{- if or (contains .ModuleName "finance") (contains .ModuleName "account") (contains .ModuleName "budget")}}
+	{{comment "Financial rules"}}
+	AllowNegativeAmount bool
+	RequireCurrency     bool
+	DefaultCurrency     string
+	{{- end}}
+}
+
+{{comment (printf "Default%sValidationRules returns default validation rules" .EntityName)}}
+func Default{{.EntityName}}ValidationRules() *{{.EntityName}}ValidationRules {
+	return &{{.EntityName}}ValidationRules{
+		CodeRequired:        true,
+		NameRequired:        true,
+		TypeRequired:        true,
+		StatusRequired:      true,
+		CodeFormat:          `^[A-Za-z0-9\-_]+$`,
+		NameFormat:          `^[^<>{}]*$`, // No dangerous characters
+		MaxCodeLength:       Max{{.EntityName}}CodeLength,
+		MaxNameLength:       Max{{.EntityName}}NameLength,
+		MaxDescriptionLength: Max{{.EntityName}}DescriptionLength,
+		AllowDuplicateCode:  false,
+		AllowCircularRefs:   false,
+		EnforceHierarchy:    true,
+		RequireParentForChildren: false,
+		AllowedTransitions: map[{{.EntityName}}Status][]{{.EntityName}}Status{
+			{{.EntityName}}StatusDraft: {
+				{{.EntityName}}StatusPendingApproval,
+				{{.EntityName}}StatusActive,
+			},
+			{{.EntityName}}StatusPendingApproval: {
+				{{.EntityName}}StatusActive,
+				{{.EntityName}}StatusDraft,
+			},
+			{{.EntityName}}StatusActive: {
+				{{.EntityName}}StatusInactive,
+				{{.EntityName}}StatusSuspended,
+				{{.EntityName}}StatusUnderReview,
+			},
+			{{.EntityName}}StatusInactive: {
+				{{.EntityName}}StatusActive,
+				{{.EntityName}}StatusClosed,
+			},
+			{{.EntityName}}StatusSuspended: {
+				{{.EntityName}}StatusActive,
+				{{.EntityName}}StatusInactive,
+			},
+			{{.EntityName}}StatusClosed: {
+				{{.EntityName}}StatusArchived,
+			},
+		},
+		{{- if or (contains .ModuleName "finance") (contains .ModuleName "account") (contains .ModuleName "budget")}}
+		AllowNegativeAmount: false,
+		RequireCurrency:     true,
+		DefaultCurrency:     DefaultBaseCurrency,
+		{{- end}}
+	}
+}
+
+{{comment (printf "%sBusinessValidator handles complex business rule validation" .EntityName)}}
+type {{.EntityName}}BusinessValidator struct {
+	rules      *{{.EntityName}}ValidationRules
+	repository {{.EntityName}}Repository
+}
+
+{{comment (printf "New%sBusinessValidator creates a new business validator" .EntityName)}}
+func New{{.EntityName}}BusinessValidator(rules *{{.EntityName}}ValidationRules, repo {{.EntityName}}Repository) *{{.EntityName}}BusinessValidator {
+	return &{{.EntityName}}BusinessValidator{
+		rules:      rules,
+		repository: repo,
+	}
+}
+
+{{comment "ValidateForCreate validates entity for creation"}}
+func (v *{{.EntityName}}BusinessValidator) ValidateForCreate(ctx context.Context, {{camelCase .EntityName}} *{{.EntityName}}) []ValidationError {
+	var errors []ValidationError
+	
+	{{comment "Basic field validation"}}
+	errors = append(errors, v.validateFields({{camelCase .EntityName}})...)
+	
+	{{comment "Business rule validation"}}
+	errors = append(errors, v.validateBusinessRules(ctx, {{camelCase .EntityName}}, nil)...)
+	
+	{{comment "Uniqueness validation"}}
+	errors = append(errors, v.validateUniqueness(ctx, {{camelCase .EntityName}}, nil)...)
+	
+	return errors
+}
+
+{{comment "ValidateForUpdate validates entity for update"}}
+func (v *{{.EntityName}}BusinessValidator) ValidateForUpdate(ctx context.Context, {{camelCase .EntityName}} *{{.EntityName}}, existing *{{.EntityName}}) []ValidationError {
+	var errors []ValidationError
+	
+	{{comment "Basic field validation"}}
+	errors = append(errors, v.validateFields({{camelCase .EntityName}})...)
+	
+	{{comment "Business rule validation"}}
+	errors = append(errors, v.validateBusinessRules(ctx, {{camelCase .EntityName}}, existing)...)
+	
+	{{comment "Uniqueness validation"}}
+	errors = append(errors, v.validateUniqueness(ctx, {{camelCase .EntityName}}, &existing.ID)...)
+	
+	{{comment "State transition validation"}}
+	if {{camelCase .EntityName}}.Status != existing.Status {
+		errors = append(errors, v.validateStatusTransition(existing.Status, {{camelCase .EntityName}}.Status)...)
+	}
+	
+	return errors
+}
+
+{{comment "ValidateForDelete validates entity for deletion"}}
+func (v *{{.EntityName}}BusinessValidator) ValidateForDelete(ctx context.Context, {{camelCase .EntityName}} *{{.EntityName}}) []ValidationError {
+	var errors []ValidationError
+	
+	{{comment "Check if entity can be deleted"}}
+	if {{camelCase .EntityName}}.IsSystemDefined {
+		errors = append(errors, ValidationError{
+			Field:   "is_system_defined",
+			Message: "System-defined entities cannot be deleted",
+			Code:    ErrorCodeBusinessRule,
+		})
+	}
+	
+	{{comment "Check for dependencies"}}
+	if hasDeps, err := v.repository.HasDependencies(ctx, {{camelCase .EntityName}}.ID); err == nil && hasDeps {
+		errors = append(errors, ValidationError{
+			Field:   "dependencies",
+			Message: "Entity has dependencies and cannot be deleted",
+			Code:    ErrorCodeBusinessRule,
+		})
+	}
+	
+	{{comment "Check for children"}}
+	if hasChildren, err := v.repository.HasChildren(ctx, {{camelCase .EntityName}}.ID); err == nil && hasChildren {
+		errors = append(errors, ValidationError{
+			Field:   "children",
+			Message: "Entity has children and cannot be deleted",
+			Code:    ErrorCodeBusinessRule,
+		})
+	}
+	
+	{{- if or (contains .ModuleName "finance") (contains .ModuleName "account")}}
+	{{comment "Check for transactions (financial entities)"}}
+	if hasTransactions, err := v.repository.HasTransactions(ctx, {{camelCase .EntityName}}.ID); err == nil && hasTransactions {
+		errors = append(errors, ValidationError{
+			Field:   "transactions",
+			Message: "Entity has transactions and cannot be deleted",
+			Code:    ErrorCodeBusinessRule,
+		})
+	}
+	{{- end}}
+	
+	return errors
+}
+
+{{comment "validateFields validates basic field requirements"}}
+func (v *{{.EntityName}}BusinessValidator) validateFields({{camelCase .EntityName}} *{{.EntityName}}) []ValidationError {
+	var errors []ValidationError
+	
+	{{comment "Required field validation"}}
+	if v.rules.CodeRequired && strings.TrimSpace({{camelCase .EntityName}}.{{.EntityName}}Code) == "" {
+		errors = append(errors, ValidationError{
+			Field:   "{{snakeCase .EntityName}}_code",
+			Message: MsgRequired,
+			Code:    ErrorCodeValidation,
+		})
+	}
+	
+	if v.rules.NameRequired && strings.TrimSpace({{camelCase .EntityName}}.{{.EntityName}}Name) == "" {
+		errors = append(errors, ValidationError{
+			Field:   "{{snakeCase .EntityName}}_name",
+			Message: MsgRequired,
+			Code:    ErrorCodeValidation,
+		})
+	}
+	
+	{{comment "Length validation"}}
+	if len({{camelCase .EntityName}}.{{.EntityName}}Code) > v.rules.MaxCodeLength {
+		errors = append(errors, ValidationError{
+			Field:   "{{snakeCase .EntityName}}_code",
+			Message: fmt.Sprintf("Maximum length is %d characters", v.rules.MaxCodeLength),
+			Code:    ErrorCodeValidation,
+		})
+	}
+	
+	if len({{camelCase .EntityName}}.{{.EntityName}}Name) > v.rules.MaxNameLength {
+		errors = append(errors, ValidationError{
+			Field:   "{{snakeCase .EntityName}}_name",
+			Message: fmt.Sprintf("Maximum length is %d characters", v.rules.MaxNameLength),
+			Code:    ErrorCodeValidation,
+		})
+	}
+	
+	{{comment "Format validation"}}
+	if v.rules.CodeFormat != "" {
+		if matched, _ := regexp.MatchString(v.rules.CodeFormat, {{camelCase .EntityName}}.{{.EntityName}}Code); !matched {
+			errors = append(errors, ValidationError{
+				Field:   "{{snakeCase .EntityName}}_code",
+				Message: MsgInvalidFormat,
+				Code:    ErrorCodeValidation,
+			})
+		}
+	}
+	
+	{{- if or (contains .ModuleName "finance") (contains .ModuleName "account") (contains .ModuleName "budget")}}
+	{{comment "Financial validation"}}
+	if !v.rules.AllowNegativeAmount && {{camelCase .EntityName}}.Amount.IsNegative() {
+		errors = append(errors, ValidationError{
+			Field:   "amount",
+			Message: "Amount cannot be negative",
+			Code:    ErrorCodeValidation,
+		})
+	}
+	
+	if v.rules.RequireCurrency && ({{camelCase .EntityName}}.CurrencyCode == nil || *{{camelCase .EntityName}}.CurrencyCode == "") {
+		errors = append(errors, ValidationError{
+			Field:   "currency_code",
+			Message: MsgRequired,
+			Code:    ErrorCodeValidation,
+		})
+	}
+	{{- end}}
+	
+	return errors
+}
+
+{{comment "validateBusinessRules validates complex business rules"}}
+func (v *{{.EntityName}}BusinessValidator) validateBusinessRules(ctx context.Context, {{camelCase .EntityName}} *{{.EntityName}}, existing *{{.EntityName}}) []ValidationError {
+	var errors []ValidationError
+	
+	{{comment "Hierarchy validation"}}
+	if v.rules.EnforceHierarchy && {{camelCase .EntityName}}.ParentID != nil {
+		{{comment "Check for circular reference"}}
+		if !v.rules.AllowCircularRefs {
+			if {{camelCase .EntityName}}.ID != uuid.Nil && *{{camelCase .EntityName}}.ParentID == {{camelCase .EntityName}}.ID {
+				errors = append(errors, ValidationError{
+					Field:   "parent_id",
+					Message: "Entity cannot be its own parent",
+					Code:    ErrorCodeBusinessRule,
+				})
+			}
+		}
+		
+		{{comment "Check hierarchy depth"}}
+		if {{camelCase .EntityName}}.Level > MaxHierarchyDepth {
+			errors = append(errors, ValidationError{
+				Field:   "level",
+				Message: fmt.Sprintf("Maximum hierarchy depth (%d) exceeded", MaxHierarchyDepth),
+				Code:    ErrorCodeBusinessRule,
+			})
+		}
+	}
+	
+	{{comment "System entity protection"}}
+	if existing != nil && existing.IsSystemDefined {
+		{{comment "System entities have restricted modifications"}}
+		if {{camelCase .EntityName}}.{{.EntityName}}Code != existing.{{.EntityName}}Code {
+			errors = append(errors, ValidationError{
+				Field:   "{{snakeCase .EntityName}}_code",
+				Message: MsgSystemEntityProtected,
+				Code:    ErrorCodeBusinessRule,
+			})
+		}
+		
+		if {{camelCase .EntityName}}.{{.EntityName}}Type != existing.{{.EntityName}}Type {
+			errors = append(errors, ValidationError{
+				Field:   "{{snakeCase .EntityName}}_type",
+				Message: MsgSystemEntityProtected,
+				Code:    ErrorCodeBusinessRule,
+			})
+		}
+	}
+	
+	return errors
+}
+
+{{comment "validateUniqueness validates uniqueness constraints"}}
+func (v *{{.EntityName}}BusinessValidator) validateUniqueness(ctx context.Context, {{camelCase .EntityName}} *{{.EntityName}}, excludeID *uuid.UUID) []ValidationError {
+	var errors []ValidationError
+	
+	if !v.rules.AllowDuplicateCode {
+		if err := v.repository.ValidateCode(ctx, {{camelCase .EntityName}}.{{.EntityName}}Code, excludeID); err != nil {
+			errors = append(errors, ValidationError{
+				Field:   "{{snakeCase .EntityName}}_code",
+				Message: "Code already exists",
+				Code:    ErrorCodeBusinessRule,
+			})
+		}
+	}
+	
+	return errors
+}
+
+{{comment "validateStatusTransition validates status transitions"}}
+func (v *{{.EntityName}}BusinessValidator) validateStatusTransition(from, to {{.EntityName}}Status) []ValidationError {
+	var errors []ValidationError
+	
+	if allowedStatuses, exists := v.rules.AllowedTransitions[from]; exists {
+		allowed := false
+		for _, allowedStatus := range allowedStatuses {
+			if allowedStatus == to {
+				allowed = true
+				break
+			}
+		}
+		
+		if !allowed {
+			errors = append(errors, ValidationError{
+				Field:   "status",
+				Message: fmt.Sprintf("Invalid transition from %s to %s", from, to),
+				Code:    ErrorCodeBusinessRule,
+			})
+		}
+	} else {
+		errors = append(errors, ValidationError{
+			Field:   "status",
+			Message: fmt.Sprintf("No transitions defined for status %s", from),
+			Code:    ErrorCodeBusinessRule,
+		})
+	}
+	
+	return errors
+}
+
+{{generateTODO "Add support for custom validation rules via configuration"}}
+{{generateTODO "Implement validation rule caching for performance"}}
+{{generateTODO "Add validation context for conditional rules"}}

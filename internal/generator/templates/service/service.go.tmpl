@@ -1,0 +1,367 @@
+package service
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/core/{{.PackageName}}/domain"
+	"github.com/niiniyare/erp/internal/core/featureflag"
+	"github.com/niiniyare/erp/internal/core/iam"
+	"github.com/niiniyare/erp/internal/core/iam/authz"
+	"github.com/niiniyare/erp/internal/core/iam/model"
+	"github.com/niiniyare/erp/internal/shared"
+	"github.com/niiniyare/erp/internal/shared/errors"
+	"github.com/niiniyare/erp/internal/shared/logger"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/tracing"
+	"go.opentelemetry.io/otel/attribute"
+)
+
+{{comment (printf "%sService implements the %s service interface" .EntityName (lowerCase .EntityName))}}
+type {{camelCase .EntityName}}Service struct {
+	repository       domain.{{.EntityName}}Repository
+	validator        *domain.{{.EntityName}}BusinessValidator
+	tracing          tracing.TracingService
+	metrics          metrics.MetricsProvider
+	iamService       iam.Service
+	featureFlagService featureflag.Service
+	logger           logger.Logger
+}
+
+{{comment (printf "New%sService creates a new %s service" .EntityName (lowerCase .EntityName))}}
+func New{{.EntityName}}Service(
+	repository domain.{{.EntityName}}Repository,
+	tracing tracing.TracingService,
+	metrics metrics.MetricsProvider,
+	iamService iam.Service,
+	featureFlagService featureflag.Service,
+	logger logger.Logger,
+) {{.EntityName}}Service {
+	validationRules := domain.Default{{.EntityName}}ValidationRules()
+	validator := domain.New{{.EntityName}}BusinessValidator(validationRules, repository)
+	
+	return &{{camelCase .EntityName}}Service{
+		repository:         repository,
+		validator:          validator,
+		tracing:            tracing,
+		metrics:            metrics,
+		iamService:         iamService,
+		featureFlagService: featureFlagService,
+		logger:             logger,
+	}
+}
+
+{{comment (printf "Create%s creates a new %s" .EntityName (lowerCase .EntityName))}}
+func (s *{{camelCase .EntityName}}Service) Create{{.EntityName}}(ctx context.Context, req domain.Create{{.EntityName}}Request) (*domain.{{.EntityName}}, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "{{camelCase .EntityName}}_service.create_{{snakeCase .EntityName}}",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("{{snakeCase .EntityName}}.code", req.{{.EntityName}}Code),
+			attribute.String("{{snakeCase .EntityName}}.name", req.{{.EntityName}}Name),
+			attribute.String("{{snakeCase .EntityName}}.type", req.{{.EntityName}}Type),
+		))
+	defer span.End()
+
+	s.logger.InfoContext(ctx, "Starting {{lowerCase .EntityName}} creation",
+		logger.Fields{
+			"{{snakeCase .EntityName}}_code": req.{{.EntityName}}Code,
+			"{{snakeCase .EntityName}}_name": req.{{.EntityName}}Name,
+			"{{snakeCase .EntityName}}_type": req.{{.EntityName}}Type,
+		})
+
+	{{comment "ABAC - Check if user can create {{pluralize (lowerCase .EntityName)}}"}}
+	if userID, ok := shared.GetUserID(ctx); ok {
+		permissionReq := &authz.PermissionEvaluationRequest{
+			UserID:       userID,
+			ResourceType: "{{snakeCase .EntityName}}",
+			Action:       "create",
+			EntityID:     req.EntityID,
+		}
+
+		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
+		if err != nil {
+			s.logger.ErrorContext(ctx, "Failed to evaluate permission", logger.Fields{
+				"user_id": userID.String(),
+				"error":   err.Error(),
+			})
+			return nil, errors.NewBusinessError("PERMISSION_ERROR", "Failed to evaluate permissions")
+		}
+
+		if result.Decision != model.PolicyDecisionAllow {
+			s.logger.WarnContext(ctx, "Permission denied for {{lowerCase .EntityName}} creation", logger.Fields{
+				"user_id":  userID.String(),
+				"decision": string(result.Decision),
+			})
+			return nil, errors.NewBusinessError("UNAUTHORIZED", "Cannot create {{lowerCase .EntityName}}")
+		}
+	}
+
+	{{comment "Validate request"}}
+	if validationErrors := req.Validate(); len(validationErrors) > 0 {
+		s.metrics.IncrementCounter("{{snakeCase .EntityName}}_creation_errors", metrics.Fields{
+			"error_type": "validation_error",
+		})
+		s.logger.WarnContext(ctx, "{{.EntityName}} validation failed",
+			logger.Fields{
+				"{{snakeCase .EntityName}}_code": req.{{.EntityName}}Code,
+				"errors":                         len(validationErrors),
+			})
+		return nil, fmt.Errorf("{{lowerCase .EntityName}} validation failed: %v", validationErrors)
+	}
+
+	{{comment "Create domain entity"}}
+	userID, _ := shared.GetUserID(ctx)
+	tenantID, _ := shared.GetTenantID(ctx)
+	
+	{{camelCase .EntityName}} := &domain.{{.EntityName}}{
+		ID:                      uuid.New(),
+		TenantID:                tenantID,
+		EntityID:                req.EntityID,
+		{{.EntityName}}Code:               req.{{.EntityName}}Code,
+		{{.EntityName}}Name:               req.{{.EntityName}}Name,
+		{{.EntityName}}Description:       req.{{.EntityName}}Description,
+		{{.EntityName}}Type:               req.{{.EntityName}}Type,
+		{{.EntityName}}Category:           req.{{.EntityName}}Category,
+		Status:                  domain.{{.EntityName}}StatusDraft,
+		ParentID:                req.ParentID,
+		Level:                   0, // Will be calculated based on parent
+		HasChildren:             false,
+		IsLeafAccount:           true,
+		{{- if or (contains .ModuleName "finance") (contains .ModuleName "account") (contains .ModuleName "budget")}}
+		Amount:                  req.Amount,
+		CurrencyCode:            req.CurrencyCode,
+		{{- end}}
+		IsActive:                req.IsActive,
+		IsSystemDefined:         false,
+		AllowManualEntries:      req.AllowManualEntries,
+		DisplayOrder:            req.DisplayOrder,
+		ShowInReports:           req.ShowInReports,
+		ReportCategory:          req.ReportCategory,
+		Version:                 1,
+		ValidationStatus:        domain.ValidationStatusValid,
+		{{.EntityName}}Attributes:         req.{{.EntityName}}Attributes,
+		CreatedAt:               time.Now(),
+		UpdatedAt:               time.Now(),
+		CreatedBy:               userID,
+	}
+
+	{{comment "Business validation"}}
+	if validationErrors := s.validator.ValidateForCreate(ctx, {{camelCase .EntityName}}); len(validationErrors) > 0 {
+		s.metrics.IncrementCounter("{{snakeCase .EntityName}}_creation_errors", metrics.Fields{
+			"error_type": "business_rule_error",
+		})
+		return nil, fmt.Errorf("{{lowerCase .EntityName}} business validation failed: %v", validationErrors)
+	}
+
+	{{comment "Calculate hierarchy level if parent is specified"}}
+	if {{camelCase .EntityName}}.ParentID != nil {
+		parent, err := s.repository.GetByID(ctx, *{{camelCase .EntityName}}.ParentID)
+		if err != nil {
+			return nil, fmt.Errorf("parent {{lowerCase .EntityName}} not found: %w", err)
+		}
+		{{camelCase .EntityName}}.Level = parent.Level + 1
+		{{camelCase .EntityName}}.Path = &fmt.Sprintf("%s%s/", *parent.Path, parent.ID.String())
+	} else {
+		path := fmt.Sprintf("/%s/", {{camelCase .EntityName}}.ID.String())
+		{{camelCase .EntityName}}.Path = &path
+	}
+
+	{{comment "Create in repository"}}
+	timer := s.metrics.Timer("{{snakeCase .EntityName}}_creation_duration", metrics.Fields{
+		"{{snakeCase .EntityName}}_type": {{camelCase .EntityName}}.{{.EntityName}}Type,
+	})
+
+	err := s.repository.Create(ctx, {{camelCase .EntityName}})
+	duration := timer.Stop()
+
+	if err != nil {
+		s.metrics.IncrementCounter("{{snakeCase .EntityName}}_creation_errors", metrics.Fields{
+			"error_type": "repository_error",
+		})
+		s.logger.ErrorContext(ctx, "Failed to create {{lowerCase .EntityName}}",
+			logger.Fields{"error": err.Error()})
+		return nil, fmt.Errorf("failed to create {{lowerCase .EntityName}}: %w", err)
+	}
+
+	{{comment "Update metrics"}}
+	s.metrics.IncrementCounter("{{pluralize (snakeCase .EntityName)}}_created_total", metrics.Fields{
+		"{{snakeCase .EntityName}}_type": {{camelCase .EntityName}}.{{.EntityName}}Type,
+		"status":                         "success",
+	})
+
+	s.metrics.ObserveHistogram("{{snakeCase .EntityName}}_creation_duration",
+		duration.Seconds(), metrics.Fields{
+			"{{snakeCase .EntityName}}_type": {{camelCase .EntityName}}.{{.EntityName}}Type,
+		})
+
+	s.logger.InfoContext(ctx, "{{.EntityName}} created successfully",
+		logger.Fields{
+			"{{snakeCase .EntityName}}_id":   {{camelCase .EntityName}}.ID.String(),
+			"{{snakeCase .EntityName}}_code": {{camelCase .EntityName}}.{{.EntityName}}Code,
+			"{{snakeCase .EntityName}}_name": {{camelCase .EntityName}}.{{.EntityName}}Name,
+			"duration_ms":                    duration.Milliseconds(),
+		})
+
+	return {{camelCase .EntityName}}, nil
+}
+
+{{comment (printf "Get%sByID retrieves a %s by ID" .EntityName (lowerCase .EntityName))}}
+func (s *{{camelCase .EntityName}}Service) Get{{.EntityName}}ByID(ctx context.Context, id uuid.UUID) (*domain.{{.EntityName}}, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "{{camelCase .EntityName}}_service.get_{{snakeCase .EntityName}}_by_id",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("{{snakeCase .EntityName}}.id", id.String()),
+		))
+	defer span.End()
+
+	s.logger.DebugContext(ctx, "Getting {{lowerCase .EntityName}} by ID",
+		logger.Fields{"{{snakeCase .EntityName}}_id": id.String()})
+
+	{{comment "ABAC - Check if user can read {{pluralize (lowerCase .EntityName)}}"}}
+	if err := s.checkReadPermission(ctx, &id); err != nil {
+		return nil, err
+	}
+
+	{{camelCase .EntityName}}, err := s.repository.GetByID(ctx, id)
+	if err != nil {
+		if err == domain.Err{{.EntityName}}NotFound {
+			s.logger.WarnContext(ctx, "{{.EntityName}} not found",
+				logger.Fields{"{{snakeCase .EntityName}}_id": id.String()})
+			return nil, fmt.Errorf("{{lowerCase .EntityName}} not found: %s", id.String())
+		}
+
+		s.logger.ErrorContext(ctx, "Failed to get {{lowerCase .EntityName}} by ID",
+			logger.Fields{
+				"{{snakeCase .EntityName}}_id": id.String(),
+				"error":                        err.Error(),
+			})
+		return nil, fmt.Errorf("failed to get {{lowerCase .EntityName}}: %w", err)
+	}
+
+	s.logger.DebugContext(ctx, "{{.EntityName}} retrieved successfully",
+		logger.Fields{
+			"{{snakeCase .EntityName}}_id":   {{camelCase .EntityName}}.ID.String(),
+			"{{snakeCase .EntityName}}_code": {{camelCase .EntityName}}.{{.EntityName}}Code,
+		})
+
+	return {{camelCase .EntityName}}, nil
+}
+
+{{comment (printf "Get%sByCode retrieves a %s by code" .EntityName (lowerCase .EntityName))}}
+func (s *{{camelCase .EntityName}}Service) Get{{.EntityName}}ByCode(ctx context.Context, code string) (*domain.{{.EntityName}}, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "{{camelCase .EntityName}}_service.get_{{snakeCase .EntityName}}_by_code",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("{{snakeCase .EntityName}}.code", code),
+		))
+	defer span.End()
+
+	s.logger.DebugContext(ctx, "Getting {{lowerCase .EntityName}} by code",
+		logger.Fields{"{{snakeCase .EntityName}}_code": code})
+
+	{{comment "ABAC - Check if user can read {{pluralize (lowerCase .EntityName)}}"}}
+	if err := s.checkReadPermission(ctx, nil); err != nil {
+		return nil, err
+	}
+
+	{{camelCase .EntityName}}, err := s.repository.GetByCode(ctx, nil, code)
+	if err != nil {
+		if err == domain.Err{{.EntityName}}NotFound {
+			s.logger.WarnContext(ctx, "{{.EntityName}} not found",
+				logger.Fields{"{{snakeCase .EntityName}}_code": code})
+			return nil, fmt.Errorf("{{lowerCase .EntityName}} not found: %s", code)
+		}
+
+		s.logger.ErrorContext(ctx, "Failed to get {{lowerCase .EntityName}} by code",
+			logger.Fields{
+				"{{snakeCase .EntityName}}_code": code,
+				"error":                          err.Error(),
+			})
+		return nil, fmt.Errorf("failed to get {{lowerCase .EntityName}}: %w", err)
+	}
+
+	return {{camelCase .EntityName}}, nil
+}
+
+{{comment (printf "List%s lists %s with filtering" .EntityNamePlural (pluralize (lowerCase .EntityName)))}}
+func (s *{{camelCase .EntityName}}Service) List{{.EntityNamePlural}}(ctx context.Context, filter *domain.{{.EntityName}}Filter) ([]*domain.{{.EntityName}}, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "{{camelCase .EntityName}}_service.list_{{pluralize (snakeCase .EntityName)}}",
+		tracing.WithSpanKind(tracing.SpanKindInternal))
+	defer span.End()
+
+	s.logger.DebugContext(ctx, "Listing {{pluralize (lowerCase .EntityName)}}")
+
+	{{comment "ABAC - Check if user can list {{pluralize (lowerCase .EntityName)}}"}}
+	if err := s.checkReadPermission(ctx, nil); err != nil {
+		return nil, err
+	}
+
+	{{comment "Apply default pagination if not specified"}}
+	if filter.Limit == nil || *filter.Limit <= 0 {
+		limit := 50
+		filter.Limit = &limit
+	}
+
+	if *filter.Limit > 1000 {
+		limit := 1000
+		filter.Limit = &limit
+	}
+
+	timer := s.metrics.Timer("{{snakeCase .EntityName}}_list_duration", metrics.Fields{})
+	{{pluralize (camelCase .EntityName)}}, err := s.repository.List(ctx, filter)
+	duration := timer.Stop()
+
+	if err != nil {
+		s.metrics.IncrementCounter("{{snakeCase .EntityName}}_list_errors", metrics.Fields{
+			"error_type": "repository_error",
+		})
+		s.logger.ErrorContext(ctx, "Failed to list {{pluralize (lowerCase .EntityName)}}",
+			logger.Fields{"error": err.Error()})
+		return nil, fmt.Errorf("failed to list {{pluralize (lowerCase .EntityName)}}: %w", err)
+	}
+
+	s.metrics.IncrementCounter("{{snakeCase .EntityName}}_list_requests_total", metrics.Fields{
+		"status": "success",
+	})
+
+	s.metrics.ObserveHistogram("{{snakeCase .EntityName}}_list_duration",
+		duration.Seconds(), metrics.Fields{})
+
+	s.logger.DebugContext(ctx, "{{.EntityNamePlural}} listed successfully",
+		logger.Fields{
+			"count":       len({{pluralize (camelCase .EntityName)}}),
+			"duration_ms": duration.Milliseconds(),
+		})
+
+	return {{pluralize (camelCase .EntityName)}}, nil
+}
+
+{{comment "Helper methods"}}
+
+{{comment (printf "checkReadPermission checks if user has permission to read %s" (pluralize (lowerCase .EntityName)))}}
+func (s *{{camelCase .EntityName}}Service) checkReadPermission(ctx context.Context, resourceID *uuid.UUID) error {
+	if userID, ok := shared.GetUserID(ctx); ok {
+		permissionReq := &authz.PermissionEvaluationRequest{
+			UserID:       userID,
+			ResourceType: "{{snakeCase .EntityName}}",
+			Action:       "read",
+			ResourceID:   resourceID,
+		}
+
+		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
+		if err != nil || result.Decision != model.PolicyDecisionAllow {
+			s.logger.WarnContext(ctx, "Permission denied for {{lowerCase .EntityName}} read", logger.Fields{
+				"user_id": userID.String(),
+			})
+			return errors.NewBusinessError("UNAUTHORIZED", "Cannot read {{lowerCase .EntityName}}")
+		}
+	}
+	return nil
+}
+
+{{generateTODO (printf "Implement remaining CRUD operations for %s" .EntityName)}}
+{{generateTODO (printf "Add caching layer for frequently accessed %s" (pluralize (lowerCase .EntityName)))}}
+{{generateTODO (printf "Implement batch operations for %s" (pluralize (lowerCase .EntityName)))}}
+{{generateTODO (printf "Add workflow integration for %s approval processes" (lowerCase .EntityName))}}

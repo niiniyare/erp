@@ -1,0 +1,433 @@
+package domain
+
+import (
+	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
+)
+
+{{comment (printf "%s request and response types for service layer operations" .EntityName)}}
+
+// =============================================================================
+// CREATE REQUESTS
+// =============================================================================
+
+{{comment (printf "Create%sRequest represents a request to create a new %s" .EntityName (lowerCase .EntityName))}}
+type Create{{.EntityName}}Request struct {
+	// Entity context
+	EntityID *uuid.UUID `json:"entity_id,omitempty" {{generateValidationTags "EntityID" "uuid.UUID"}}`
+	
+	// Core fields
+	{{.EntityName}}Code        string  `json:"{{camelCase .EntityName}}_code" {{generateValidationTags (printf "%sCode" .EntityName) "string"}}`
+	{{.EntityName}}Name        string  `json:"{{camelCase .EntityName}}_name" {{generateValidationTags (printf "%sName" .EntityName) "string"}}`
+	{{.EntityName}}Description *string `json:"{{camelCase .EntityName}}_description,omitempty" {{generateValidationTags (printf "%sDescription" .EntityName) "string"}}`
+	{{.EntityName}}Type        string  `json:"{{camelCase .EntityName}}_type" {{generateValidationTags (printf "%sType" .EntityName) "string"}}`
+	{{.EntityName}}Category    *string `json:"{{camelCase .EntityName}}_category,omitempty"`
+	
+	{{- if contains .ModuleName "finance"}}
+	// Hierarchy fields (for financial modules)
+	ParentID *uuid.UUID `json:"parent_id,omitempty" {{generateValidationTags "ParentID" "uuid.UUID"}}`
+	{{- end}}
+	
+	// Configuration
+	IsActive           bool    `json:"is_active" {{generateValidationTags "IsActive" "bool"}}`
+	DisplayOrder       *int32  `json:"display_order,omitempty"`
+	ShowInReports      *bool   `json:"show_in_reports,omitempty"`
+	ReportCategory     *string `json:"report_category,omitempty"`
+	AllowManualEntries *bool   `json:"allow_manual_entries,omitempty"`
+	
+	{{- if contains .ModuleName "finance"}}
+	// Financial-specific fields
+	Amount       *decimal.Decimal `json:"amount,omitempty"`
+	CurrencyCode *string          `json:"currency_code,omitempty"`
+	{{- end}}
+}
+
+{{comment (printf "Validate validates the create %s request" (lowerCase .EntityName))}}
+func (r *Create{{.EntityName}}Request) Validate() error {
+	if r.{{.EntityName}}Code == "" {
+		return New{{.EntityName}}ValidationError("{{.EntityName}}Code", "{{camelCase .EntityName}}_code is required")
+	}
+	
+	if r.{{.EntityName}}Name == "" {
+		return New{{.EntityName}}ValidationError("{{.EntityName}}Name", "{{camelCase .EntityName}}_name is required")
+	}
+	
+	if r.{{.EntityName}}Type == "" {
+		return New{{.EntityName}}ValidationError("{{.EntityName}}Type", "{{camelCase .EntityName}}_type is required")
+	}
+	
+	{{- if contains .ModuleName "finance"}}
+	// Validate parent-child relationship
+	if r.ParentID != nil {
+		// TODO: Add parent validation logic
+	}
+	{{- end}}
+	
+	return nil
+}
+
+// =============================================================================
+// UPDATE REQUESTS
+// =============================================================================
+
+{{comment (printf "Update%sRequest represents a request to update an existing %s" .EntityName (lowerCase .EntityName))}}
+type Update{{.EntityName}}Request struct {
+	// Identifier
+	ID uuid.UUID `json:"id" {{generateValidationTags "ID" "uuid.UUID"}}`
+	
+	// Optional update fields
+	{{.EntityName}}Name        *string `json:"{{camelCase .EntityName}}_name,omitempty" {{generateValidationTags (printf "%sName" .EntityName) "string"}}`
+	{{.EntityName}}Description *string `json:"{{camelCase .EntityName}}_description,omitempty" {{generateValidationTags (printf "%sDescription" .EntityName) "string"}}`
+	{{.EntityName}}Type        *string `json:"{{camelCase .EntityName}}_type,omitempty" {{generateValidationTags (printf "%sType" .EntityName) "string"}}`
+	{{.EntityName}}Category    *string `json:"{{camelCase .EntityName}}_category,omitempty"`
+	
+	{{- if contains .ModuleName "finance"}}
+	// Hierarchy fields
+	ParentID *uuid.UUID `json:"parent_id,omitempty" {{generateValidationTags "ParentID" "uuid.UUID"}}`
+	{{- end}}
+	
+	// Configuration
+	IsActive           *bool   `json:"is_active,omitempty"`
+	DisplayOrder       *int32  `json:"display_order,omitempty"`
+	ShowInReports      *bool   `json:"show_in_reports,omitempty"`
+	ReportCategory     *string `json:"report_category,omitempty"`
+	AllowManualEntries *bool   `json:"allow_manual_entries,omitempty"`
+	
+	{{- if contains .ModuleName "finance"}}
+	// Financial-specific fields
+	Amount       *decimal.Decimal `json:"amount,omitempty"`
+	CurrencyCode *string          `json:"currency_code,omitempty"`
+	{{- end}}
+}
+
+{{comment (printf "Validate validates the update %s request" (lowerCase .EntityName))}}
+func (r *Update{{.EntityName}}Request) Validate() error {
+	if r.ID == uuid.Nil {
+		return New{{.EntityName}}ValidationError("ID", "id is required")
+	}
+	
+	// At least one field must be provided for update
+	hasUpdate := r.{{.EntityName}}Name != nil || 
+		r.{{.EntityName}}Description != nil || 
+		r.{{.EntityName}}Type != nil || 
+		r.{{.EntityName}}Category != nil || 
+		r.IsActive != nil || 
+		r.DisplayOrder != nil || 
+		r.ShowInReports != nil || 
+		r.ReportCategory != nil || 
+		r.AllowManualEntries != nil
+		{{- if contains .ModuleName "finance"}} ||
+		r.ParentID != nil ||
+		r.Amount != nil ||
+		r.CurrencyCode != nil
+		{{- end}}
+	
+	if !hasUpdate {
+		return New{{.EntityName}}ValidationError("Update", "at least one field must be provided for update")
+	}
+	
+	// Validate non-empty strings
+	if r.{{.EntityName}}Name != nil && *r.{{.EntityName}}Name == "" {
+		return New{{.EntityName}}ValidationError("{{.EntityName}}Name", "{{camelCase .EntityName}}_name cannot be empty")
+	}
+	
+	if r.{{.EntityName}}Type != nil && *r.{{.EntityName}}Type == "" {
+		return New{{.EntityName}}ValidationError("{{.EntityName}}Type", "{{camelCase .EntityName}}_type cannot be empty")
+	}
+	
+	return nil
+}
+
+// =============================================================================
+// FILTER REQUESTS
+// =============================================================================
+
+{{comment (printf "%sFilter represents filtering criteria for %s queries" .EntityName (pluralize (lowerCase .EntityName)))}}
+type {{.EntityName}}Filter struct {
+	// Entity context
+	EntityID *uuid.UUID `json:"entity_id,omitempty"`
+	
+	// Basic filters
+	{{.EntityName}}Code *string `json:"{{camelCase .EntityName}}_code,omitempty"`
+	{{.EntityName}}Name *string `json:"{{camelCase .EntityName}}_name,omitempty"`
+	{{.EntityName}}Type *string `json:"{{camelCase .EntityName}}_type,omitempty"`
+	
+	// Status filters
+	IsActive   *bool               `json:"is_active,omitempty"`
+	Status     *{{.EntityName}}Status `json:"status,omitempty"`
+	
+	{{- if contains .ModuleName "finance"}}
+	// Hierarchy filters
+	ParentID     *uuid.UUID `json:"parent_id,omitempty"`
+	Level        *int32     `json:"level,omitempty"`
+	HasChildren  *bool      `json:"has_children,omitempty"`
+	{{- end}}
+	
+	// Advanced filters
+	CreatedAfter  *string `json:"created_after,omitempty"`  // ISO 8601 date
+	CreatedBefore *string `json:"created_before,omitempty"` // ISO 8601 date
+	UpdatedAfter  *string `json:"updated_after,omitempty"`  // ISO 8601 date
+	UpdatedBefore *string `json:"updated_before,omitempty"` // ISO 8601 date
+	
+	// Pagination
+	Page  *int32 `json:"page,omitempty"`
+	Limit *int32 `json:"limit,omitempty"`
+	
+	// Sorting
+	SortBy    *string `json:"sort_by,omitempty"`    // Field name
+	SortOrder *string `json:"sort_order,omitempty"` // "asc" or "desc"
+}
+
+{{comment (printf "GetPage returns the page number (default: 1)" )}}
+func (f *{{.EntityName}}Filter) GetPage() int32 {
+	if f.Page == nil || *f.Page < 1 {
+		return 1
+	}
+	return *f.Page
+}
+
+{{comment (printf "GetLimit returns the limit (default: 20, max: 100)")}}
+func (f *{{.EntityName}}Filter) GetLimit() int32 {
+	if f.Limit == nil {
+		return 20
+	}
+	if *f.Limit > 100 {
+		return 100
+	}
+	if *f.Limit < 1 {
+		return 1
+	}
+	return *f.Limit
+}
+
+{{comment (printf "GetOffset returns the offset for pagination")}}
+func (f *{{.EntityName}}Filter) GetOffset() int32 {
+	return (f.GetPage() - 1) * f.GetLimit()
+}
+
+{{comment (printf "GetSortBy returns the sort field (default: {{camelCase .EntityName}}_code)")}}
+func (f *{{.EntityName}}Filter) GetSortBy() string {
+	if f.SortBy == nil {
+		return "{{camelCase .EntityName}}_code"
+	}
+	return *f.SortBy
+}
+
+{{comment (printf "GetSortOrder returns the sort order (default: asc)")}}
+func (f *{{.EntityName}}Filter) GetSortOrder() string {
+	if f.SortOrder == nil {
+		return "asc"
+	}
+	if *f.SortOrder != "desc" {
+		return "asc"
+	}
+	return *f.SortOrder
+}
+
+// =============================================================================
+// SEARCH REQUESTS
+// =============================================================================
+
+{{comment (printf "%sSearchRequest represents a search request for %s" .EntityName (pluralize (lowerCase .EntityName)))}}
+type {{.EntityName}}SearchRequest struct {
+	// Search query
+	Query string `json:"query" {{generateValidationTags "Query" "string"}}`
+	
+	// Entity context
+	EntityID *uuid.UUID `json:"entity_id,omitempty"`
+	
+	// Search options
+	Limit        *int32    `json:"limit,omitempty"`         // Max results (default: 10, max: 50)
+	MatchType    *string   `json:"match_type,omitempty"`    // "exact", "prefix", "contains" (default: "contains")
+	SearchFields []string  `json:"search_fields,omitempty"` // Fields to search in
+	
+	// Filters to apply to search results
+	IsActive *bool `json:"is_active,omitempty"`
+	{{- if contains .ModuleName "finance"}}
+	ParentID *uuid.UUID `json:"parent_id,omitempty"`
+	{{- end}}
+}
+
+{{comment (printf "Validate validates the search request")}}
+func (r *{{.EntityName}}SearchRequest) Validate() error {
+	if r.Query == "" {
+		return New{{.EntityName}}ValidationError("Query", "search query is required")
+	}
+	
+	if len(r.Query) > 255 {
+		return New{{.EntityName}}ValidationError("Query", "search query too long (max 255 characters)")
+	}
+	
+	return nil
+}
+
+{{comment (printf "GetLimit returns the search limit (default: 10, max: 50)")}}
+func (r *{{.EntityName}}SearchRequest) GetLimit() int32 {
+	if r.Limit == nil {
+		return 10
+	}
+	if *r.Limit > 50 {
+		return 50
+	}
+	if *r.Limit < 1 {
+		return 1
+	}
+	return *r.Limit
+}
+
+{{comment (printf "GetMatchType returns the match type (default: contains)")}}
+func (r *{{.EntityName}}SearchRequest) GetMatchType() string {
+	if r.MatchType == nil {
+		return "contains"
+	}
+	
+	switch *r.MatchType {
+	case "exact", "prefix", "contains":
+		return *r.MatchType
+	default:
+		return "contains"
+	}
+}
+
+{{comment (printf "GetSearchFields returns the fields to search in")}}
+func (r *{{.EntityName}}SearchRequest) GetSearchFields() []string {
+	if len(r.SearchFields) == 0 {
+		return []string{"{{camelCase .EntityName}}_code", "{{camelCase .EntityName}}_name", "{{camelCase .EntityName}}_description"}
+	}
+	return r.SearchFields
+}
+
+{{- if contains .ModuleName "finance"}}
+
+// =============================================================================
+// FINANCIAL REQUESTS (for financial modules)
+// =============================================================================
+
+{{comment (printf "%sBalanceRequest represents a request to get %s balance" .EntityName (lowerCase .EntityName))}}
+type {{.EntityName}}BalanceRequest struct {
+	{{.EntityName}}ID uuid.UUID `json:"{{camelCase .EntityName}}_id" {{generateValidationTags (printf "%sID" .EntityName) "uuid.UUID"}}`
+	AsOfDate  *string    `json:"as_of_date,omitempty"` // ISO 8601 date (YYYY-MM-DD)
+	Currency  *string    `json:"currency,omitempty"`   // Currency code
+}
+
+{{comment (printf "Validate validates the balance request")}}
+func (r *{{.EntityName}}BalanceRequest) Validate() error {
+	if r.{{.EntityName}}ID == uuid.Nil {
+		return New{{.EntityName}}ValidationError("{{.EntityName}}ID", "{{camelCase .EntityName}}_id is required")
+	}
+	
+	// TODO: Add date format validation if AsOfDate is provided
+	
+	return nil
+}
+
+{{comment (printf "%sAnalyticsFilter represents filtering criteria for %s analytics" .EntityName (lowerCase .EntityName))}}
+type {{.EntityName}}AnalyticsFilter struct {
+	// Entity context
+	EntityID *uuid.UUID `json:"entity_id,omitempty"`
+	
+	// Date range
+	StartDate *string `json:"start_date,omitempty"` // ISO 8601 date
+	EndDate   *string `json:"end_date,omitempty"`   // ISO 8601 date
+	
+	// Grouping
+	GroupBy    *string `json:"group_by,omitempty"`    // "day", "week", "month", "quarter", "year"
+	Currency   *string `json:"currency,omitempty"`    // Currency filter
+	
+	// Hierarchy
+	ParentID    *uuid.UUID `json:"parent_id,omitempty"`
+	IncludeChildren *bool   `json:"include_children,omitempty"`
+}
+
+{{- end}}
+
+// =============================================================================
+// RESPONSE TYPES
+// =============================================================================
+
+{{comment (printf "%sListResponse represents a paginated list of %s" .EntityName (pluralize (lowerCase .EntityName)))}}
+type {{.EntityName}}ListResponse struct {
+	{{.EntityNamePlural}} []*{{.EntityName}}        `json:"{{pluralize (camelCase .EntityName)}}"`
+	Pagination   PaginationMeta `json:"pagination"`
+}
+
+{{comment (printf "%sSearchResponse represents search results for %s" .EntityName (pluralize (lowerCase .EntityName)))}}
+type {{.EntityName}}SearchResponse struct {
+	Results          []*{{.EntityName}}SearchResult `json:"results"`
+	TotalResults     int32                    `json:"total_results"`
+	SearchDurationMs int32                    `json:"search_duration_ms"`
+}
+
+{{comment (printf "%sSearchResult represents a single search result" .EntityName)}}
+type {{.EntityName}}SearchResult struct {
+	{{.EntityName}}      *{{.EntityName}} `json:"{{camelCase .EntityName}}"`
+	MatchType      string        `json:"match_type"`      // "CODE", "NAME", "DESCRIPTION"
+	RelevanceScore float64       `json:"relevance_score"` // 0.0 to 1.0
+	MatchedField   string        `json:"matched_field"`   // Field that matched
+	MatchedText    string        `json:"matched_text"`    // Text that matched
+}
+
+{{comment "PaginationMeta represents pagination metadata"}}
+type PaginationMeta struct {
+	CurrentPage int32 `json:"current_page"`
+	PageSize    int32 `json:"page_size"`
+	TotalItems  int32 `json:"total_items"`
+	TotalPages  int32 `json:"total_pages"`
+	HasNext     bool  `json:"has_next"`
+	HasPrev     bool  `json:"has_prev"`
+}
+
+{{- if contains .ModuleName "finance"}}
+
+{{comment (printf "%sBalance represents %s balance information" .EntityName (lowerCase .EntityName))}}
+type {{.EntityName}}Balance struct {
+	{{.EntityName}}ID      uuid.UUID       `json:"{{camelCase .EntityName}}_id"`
+	CurrentBalance decimal.Decimal `json:"current_balance"`
+	Currency       string          `json:"currency"`
+	AsOfDate       string          `json:"as_of_date"` // ISO 8601 date
+	LastUpdated    string          `json:"last_updated"` // ISO 8601 datetime
+}
+
+{{comment (printf "%sAnalytics represents analytics data for %s" .EntityName (lowerCase .EntityName))}}
+type {{.EntityName}}Analytics struct {
+	// Summary statistics
+	TotalCount    int32  `json:"total_count"`
+	ActiveCount   int32  `json:"active_count"`
+	InactiveCount int32  `json:"inactive_count"`
+	
+	// Financial metrics (if applicable)
+	TotalBalance  *decimal.Decimal `json:"total_balance,omitempty"`
+	AverageBalance *decimal.Decimal `json:"average_balance,omitempty"`
+	Currency      *string          `json:"currency,omitempty"`
+	
+	// Time range
+	StartDate string `json:"start_date"`
+	EndDate   string `json:"end_date"`
+	
+	// Breakdown data
+	Breakdown []*{{.EntityName}}AnalyticsBreakdown `json:"breakdown,omitempty"`
+}
+
+{{comment (printf "%sAnalyticsBreakdown represents breakdown data for analytics" .EntityName)}}
+type {{.EntityName}}AnalyticsBreakdown struct {
+	Label      string           `json:"label"`       // Time period or category label
+	Count      int32            `json:"count"`       // Number of items
+	Balance    *decimal.Decimal `json:"balance,omitempty"`    // Total balance for period
+	Percentage *float64         `json:"percentage,omitempty"` // Percentage of total
+}
+
+{{comment (printf "%sUsageStats represents usage statistics for %s" .EntityName (lowerCase .EntityName))}}
+type {{.EntityName}}UsageStats struct {
+	{{.EntityName}}ID    uuid.UUID `json:"{{camelCase .EntityName}}_id"`
+	AccessCount   int32     `json:"access_count"`
+	LastAccessed  *string   `json:"last_accessed,omitempty"`  // ISO 8601 datetime
+	LastModified  *string   `json:"last_modified,omitempty"`  // ISO 8601 datetime
+	CreatedAt     string    `json:"created_at"`               // ISO 8601 datetime
+}
+
+{{- end}}
+
+{{generateTODO "Add more specific request types based on your business requirements"}}
+{{generateTODO "Add request validation using a validation library"}}
+{{generateTODO "Add custom validation rules for business logic"}}
+{{generateTODO "Consider adding audit information to requests"}}
