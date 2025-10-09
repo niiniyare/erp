@@ -83,7 +83,7 @@ Basic Usage:
 Error Categories:
 
 - CategoryValidation: Input validation errors
-- CategoryRepository: Database/storage errors  
+- CategoryRepository: Database/storage errors
 - CategoryBusiness: Business logic errors
 - CategorySecurity: Authentication/authorization errors
 - CategoryIntegration: External service errors

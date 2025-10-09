@@ -156,7 +156,7 @@ func HasCriticalErrors(errs []error) bool {
 // GetMaxSeverity returns the highest severity level from a collection of errors
 func GetMaxSeverity(errs []error) Severity {
 	maxSeverity := SeverityInfo
-	
+
 	for _, err := range errs {
 		if be, ok := err.(*BusinessError); ok {
 			switch be.Severity {
@@ -173,7 +173,7 @@ func GetMaxSeverity(errs []error) Severity {
 			}
 		}
 	}
-	
+
 	return maxSeverity
 }
 
@@ -207,7 +207,7 @@ func FilterNonRetryableErrors(errs []error) []error {
 func FormatErrorCodes(errs []error) string {
 	var codes []string
 	seen := make(map[string]bool)
-	
+
 	for _, err := range errs {
 		code := GetErrorCode(err)
 		if !seen[code] {
@@ -215,7 +215,7 @@ func FormatErrorCodes(errs []error) string {
 			seen[code] = true
 		}
 	}
-	
+
 	return strings.Join(codes, ", ")
 }
 
@@ -237,7 +237,7 @@ func IsNotFoundError(err error) bool {
 		CodeTenantNotFound, CodeInvitationNotFound, CodeAPIKeyNotFound,
 		CodePolicyNotFound, CodeAttributeNotFound, CodeNotFound,
 	}
-	
+
 	for _, code := range notFoundCodes {
 		if IsBusinessErrorCode(err, code) {
 			return true
@@ -252,7 +252,7 @@ func IsAuthenticationError(err error) bool {
 		CodeInvalidCredentials, CodeAuthenticationFailed,
 		CodeUnauthorized, CodeForbidden, CodeAccountLocked,
 	}
-	
+
 	for _, code := range authCodes {
 		if IsBusinessErrorCode(err, code) {
 			return true
@@ -287,7 +287,7 @@ func GetErrorSummary(err error) map[string]interface{} {
 		"code":    GetErrorCode(err),
 		"status":  GetHTTPStatus(err),
 	}
-	
+
 	switch e := err.(type) {
 	case *BusinessError:
 		summary["category"] = e.Category
@@ -297,22 +297,22 @@ func GetErrorSummary(err error) map[string]interface{} {
 		summary["user_id"] = e.UserID
 		summary["details"] = e.Details
 		summary["suggestions"] = e.Suggestions
-		
+
 	case *RepositoryError:
 		summary["operation"] = e.Operation
 		summary["table"] = e.Table
 		summary["tenant_id"] = e.TenantID
 		summary["details"] = e.Details
-		
+
 	case ValidationErrors:
 		summary["field_count"] = len(e)
 		summary["fields"] = e.ToMap()
-		
+
 	case ValidationError:
 		summary["field"] = e.Field
 		summary["value"] = e.Value
 	}
-	
+
 	return summary
 }
 
@@ -320,11 +320,11 @@ func GetErrorSummary(err error) map[string]interface{} {
 func GetErrorChain(err error) []string {
 	var chain []string
 	current := err
-	
+
 	for current != nil {
 		chain = append(chain, current.Error())
 		current = errors.Unwrap(current)
 	}
-	
+
 	return chain
 }

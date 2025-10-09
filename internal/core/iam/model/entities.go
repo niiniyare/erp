@@ -149,6 +149,25 @@ func (ur *UserRole) IsExpired() bool {
 	return ur.ExpiresAt != nil && ur.ExpiresAt.Before(time.Now())
 }
 
+// Defines actions that can be performed on resources with risk assessment and approval workflow requirements.
+type Action struct {
+	ID          uuid.UUID `json:"id"`
+	TenantID    uuid.UUID `json:"tenant_id"`
+	Name        string    `json:"name"`
+	DisplayName *string   `json:"display_name"`
+	Description *string   `json:"description"`
+	// Standard action type: CREATE, READ, UPDATE, DELETE, EXECUTE, APPROVE, REJECT, EXPORT, IMPORT
+	ActionType ActionType `json:"action_type"`
+	// Action category for risk assessment: STANDARD, ADMINISTRATIVE, SENSITIVE, BULK, SYSTEM
+	ActionCategory ActionCategory `json:"action_category"`
+	// Risk level for audit and approval workflows: LOW, MEDIUM, HIGH, CRITICAL
+	RiskLevel *string `json:"risk_level"`
+	// Whether this action requires explicit approval before execution
+	RequiresApproval *bool     `json:"requires_approval"`
+	IsActive         *bool     `json:"is_active"`
+	CreatedAt        time.Time `json:"created_at"`
+}
+
 // Permission represents a permission in the system
 type Permission struct {
 	ID           uuid.UUID      `json:"id"`

@@ -37,7 +37,7 @@ func (a *HTTPMiddlewareAdapter) RecoveryMiddleware() HTTPMiddleware {
 						"method": r.Method,
 						"ip":     r.RemoteAddr,
 					})
-					
+
 					if a.metrics != nil {
 						a.metrics.IncrementCounter("panic_recovered_total", metrics.Fields{
 							"path": r.URL.Path,
@@ -62,7 +62,7 @@ func (a *HTTPMiddlewareAdapter) SecurityHeadersMiddleware() HTTPMiddleware {
 			w.Header().Set("X-Frame-Options", "DENY")
 			w.Header().Set("X-XSS-Protection", "1; mode=block")
 			w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
-			
+
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -71,7 +71,7 @@ func (a *HTTPMiddlewareAdapter) SecurityHeadersMiddleware() HTTPMiddleware {
 // ConcurrencyLimitMiddleware limits concurrent requests for HTTP
 func (a *HTTPMiddlewareAdapter) ConcurrencyLimitMiddleware(maxConcurrent int) HTTPMiddleware {
 	semaphore := make(chan struct{}, maxConcurrent)
-	
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			select {
@@ -105,7 +105,7 @@ func (a *HTTPMiddlewareAdapter) OptimizedLoggingMiddleware() HTTPMiddleware {
 				"path":   r.URL.Path,
 				"ip":     r.RemoteAddr,
 			})
-			
+
 			next.ServeHTTP(w, r)
 		})
 	}
@@ -132,7 +132,7 @@ func FiberToHTTPAdapter(fiberHandler fiber.Handler) HTTPMiddleware {
 	}
 }
 
-// HTTPToFiberAdapter converts HTTP middleware to Fiber middleware  
+// HTTPToFiberAdapter converts HTTP middleware to Fiber middleware
 func HTTPToFiberAdapter(httpMiddleware HTTPMiddleware) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// This would require converting between Fiber and HTTP contexts

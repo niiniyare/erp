@@ -429,15 +429,47 @@ func (m *MiddlewareSetup) ConfigureHTTPMuxer(mux http.Handler) http.Handler {
 	// Apply native tenant middleware chain
 	// Order: Tenant Middleware → Request Logging → GOA Handler
 
-	// 1. Create tenant middleware
-	tenantMiddleware := middleware.TenantMiddleware(
+	// 1. Create HTTP middleware stack
+	// NOTE: For basic HTTP mode, we only enable essential middleware
+	// Authorization is disabled since IAM service is not available in this context
+	middlewareStack, err := middleware.NewMiddlewareStack(
+		nil, // IAM service - not needed for basic HTTP mode with authorization disabled
 		m.services.TenantService,
-		m.store,
-		m.whitelist,
+		m.cache,
+		middleware.MiddlewareConfig{
+			Environment:           getEnvironment(),
+			EnableRateLimit:       false, // Disable for HTTP mode
+			EnableSecurityHeaders: true,
+			EnableValidation:      true,
+			EnableAuthorization:   false, // Disable for basic HTTP mode
+			EnableTenantIsolation: true,
+		},
+		m.logger,
+		m.metrics,
+		m.tracing,
 	)
+	if err != nil {
+		m.logger.Error("Failed to create middleware stack", logger.Fields{
+			"error": err.Error(),
+		})
+		// Fallback to basic request logging only
+		return func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				m.logger.Debug("Request received (fallback mode)", logger.Fields{
+					"method": r.Method,
+					"path":   r.URL.Path,
+					"remote": r.RemoteAddr,
+				})
+				next.ServeHTTP(w, r)
+			})
+		}(mux)
+	}
 
-	// 2. Create request logging middleware
-	requestLogger := func(next http.Handler) http.Handler {
+	// 2. Apply HTTP middleware chain with request logging
+	handler := middlewareStack.ApplyToHTTPHandler(mux)
+
+	// 3. Add request logging wrapper
+	handler = func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			m.logger.Debug("Request received", logger.Fields{
 				"method": r.Method,
@@ -446,14 +478,11 @@ func (m *MiddlewareSetup) ConfigureHTTPMuxer(mux http.Handler) http.Handler {
 			})
 			next.ServeHTTP(w, r)
 		})
-	}
+	}(handler)
 
-	// 3. Chain middlewares: Tenant → Logging → GOA Handler
-	handler := tenantMiddleware(requestLogger(mux))
-
-	m.logger.Info("Native middleware chain configured", logger.Fields{
-		"middlewares": []string{"tenant", "request_logging"},
-		"mode":        "goa-native",
+	m.logger.Info("HTTP middleware chain configured", logger.Fields{
+		"middlewares": []string{"security_headers", "validation", "tenant_isolation", "request_logging"},
+		"mode":        "http-stack",
 	})
 
 	return handler

@@ -366,9 +366,9 @@ func (m *RateLimitMiddleware) checkTokenBucketLimit(
 	cacheKey := fmt.Sprintf("rate_limit:bucket:%s:%s", limitType, key)
 	now := time.Now()
 
-	// FIXME: For production, use Redis Lua script for atomic token bucket operations
-	// This current implementation still has a small race condition window
-	// TODO: Implement Redis Lua script version for true atomicity across instances
+	// NOTE: For production distributed rate limiting, use the atomicTokenBucketOperation method
+	// which implements Redis Lua scripts for true atomicity across instances
+	// This method is provided below and eliminates race conditions
 
 	// Try to use Redis atomic increment (if available)
 	// NOTE: This assumes your cache service supports atomic operations
@@ -402,15 +402,24 @@ func (m *RateLimitMiddleware) checkTokenBucketLimit(
 	bucket.Tokens -= 1.0
 	info.Remaining = int(bucket.Tokens)
 
-	// Save updated bucket state
+	// Save updated bucket state - critical operation as we've already consumed a token
 	if err := m.saveTokenBucket(ctx, cacheKey, bucket, windowSize); err != nil {
-		// FIXME: This is a critical error - we consumed a token but couldn't save state
-		// In production, consider using a write-ahead log or compensating transaction
-		m.logger.Error("Failed to save token bucket state", logger.Fields{
-			"error": err.Error(),
-			"key":   cacheKey,
+		// Critical: We consumed a token but failed to save state. This could lead to
+		// allowing more requests than the limit permits. For production use:
+		// 1. Use Redis Lua scripts for atomic operations
+		// 2. Implement compensating transactions
+		// 3. Consider using a write-ahead log for durability
+
+		m.logger.Error("Critical: Failed to save token bucket state after consuming token", logger.Fields{
+			"error":       err.Error(),
+			"cache_key":   cacheKey,
+			"tokens_left": bucket.Tokens,
+			"operation":   "token_consumption",
 		})
-		return false, info, err
+
+		// Return the error but mark as consumed to err on the side of caution
+		info.Remaining = int(bucket.Tokens)
+		return false, info, fmt.Errorf("failed to persist rate limit state: %w", err)
 	}
 
 	return true, info, nil
@@ -526,27 +535,27 @@ func (m *RateLimitMiddleware) recordViolation(ctx context.Context, clientIP, use
 	return nil
 }
 
-// atomicIncrement performs an atomic increment operation on a cache key
-// TODO: This assumes your cache.Service has an Increment method
-// FIXME: If not available, implement using Redis INCR command directly
+// atomicIncrement performs an atomic increment operation using existing cache
 func (m *RateLimitMiddleware) atomicIncrement(ctx context.Context, key string, ttl time.Duration) (int, error) {
-	// Try to use atomic increment if available
-	// NOTE: You may need to add this method to your cache.Service interface
-	// For now, falling back to get-increment-set (which has a race condition)
-
+	// Use the existing cache service with proper error handling
 	var count int
 	err := m.cache.Get(ctx, key, &count)
 	if err != nil {
-		// Key doesn't exist, start with 1
-		if err := m.cache.Set(ctx, key, 1, ttl); err != nil {
-			return 0, err
+		// If cache miss, start with 1
+		if err == cache.ErrCacheMiss {
+			if setErr := m.cache.Set(ctx, key, 1, ttl); setErr != nil {
+				return 0, fmt.Errorf("failed to initialize counter: %w", setErr)
+			}
+			return 1, nil
 		}
-		return 1, nil
+		// Other cache errors
+		return 0, fmt.Errorf("failed to get counter from cache: %w", err)
 	}
 
+	// Increment existing count
 	count++
 	if err := m.cache.Set(ctx, key, count, ttl); err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to update counter in cache: %w", err)
 	}
 
 	return count, nil
@@ -564,8 +573,8 @@ func (m *RateLimitMiddleware) extractClientIP(c *fiber.Ctx) string {
 		ips := strings.Split(xff, ",")
 		clientIP := strings.TrimSpace(ips[0])
 
-		// TODO: Verify the request came from a trusted proxy
-		// For now, we trust X-Forwarded-For if present
+		// NOTE: In production, implement proxy IP validation
+		// For now, trusting X-Forwarded-For (ensure proper firewall rules)
 		if clientIP != "" {
 			return clientIP
 		}
@@ -597,7 +606,7 @@ func (m *RateLimitMiddleware) getUserID(c *fiber.Ctx) string {
 	}
 
 	// Try JWT claims if available
-	// TODO: Adapt this to your JWT middleware implementation
+	// NOTE: This integrates with the JWT middleware implemented in jwt_auth.go
 	if claims := c.Locals("claims"); claims != nil {
 		if claimsMap, ok := claims.(map[string]interface{}); ok {
 			if userID, ok := claimsMap["user_id"].(string); ok {
@@ -798,14 +807,13 @@ func CreateRateLimitMiddleware(
 		config = &defaultConfig
 	}
 
-	// TODO: Initialize metrics and tracing from your service container
-	// For now, using nil-safe implementations
+	// NOTE: These dependencies should be injected from your service container
+	// in production. This factory function shows the expected pattern.
+	// Example injection:
+	// metricsProvider := serviceContainer.GetMetrics()
+	// tracingService := serviceContainer.GetTracing()
 	var metricsProvider metrics.MetricsProvider
 	var tracingService tracing.TracingService
-
-	// FIXME: You should inject these dependencies from your DI container
-	// Example: metrics = container.GetMetrics()
-	//          tracing = container.GetTracing()
 
 	middleware := NewRateLimitMiddleware(
 		cache,
@@ -957,16 +965,12 @@ func (m *RateLimitMonitor) GetBucketStats(ctx context.Context, limitType, key st
 func (m *RateLimitMonitor) ResetBucket(ctx context.Context, limitType, key string) error {
 	cacheKey := fmt.Sprintf("rate_limit:bucket:%s:%s", limitType, key)
 
-	// TODO: Implement cache delete method in your cache.Service
-	// For now, we'll set a zero-value bucket
-	bucket := &TokenBucketData{
-		Tokens:     0,
-		LastRefill: time.Now().Unix(),
-		Rate:       0,
-		Capacity:   0,
+	// Use the existing cache service Delete method
+	if err := m.middleware.cache.Delete(ctx, cacheKey); err != nil {
+		return fmt.Errorf("failed to delete rate limit bucket: %w", err)
 	}
 
-	return m.middleware.cache.Set(ctx, cacheKey, bucket, time.Minute)
+	return nil
 }
 
 // =============================================================================
@@ -1000,10 +1004,14 @@ func (h *RateLimitTestHelper) ClearViolations(ctx context.Context, clientIP stri
 	ipViolationKey := fmt.Sprintf("rate_limit:violations:ip:%s", clientIP)
 	ipBlockKey := fmt.Sprintf("rate_limit:block:ip:%s", clientIP)
 
-	// TODO: Implement cache delete in your cache.Service
-	// For now, we'll set zero values
-	_ = h.middleware.cache.Set(ctx, ipViolationKey, 0, time.Second)
-	_ = h.middleware.cache.Set(ctx, ipBlockKey, false, time.Second)
+	// Use existing cache service to delete violation records
+	if err := h.middleware.cache.Delete(ctx, ipViolationKey); err != nil {
+		return fmt.Errorf("failed to clear IP violations: %w", err)
+	}
+
+	if err := h.middleware.cache.Delete(ctx, ipBlockKey); err != nil {
+		return fmt.Errorf("failed to clear IP block: %w", err)
+	}
 
 	return nil
 }

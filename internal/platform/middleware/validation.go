@@ -590,4 +590,3 @@ func (m *ValidationMiddleware) recordValidationMetrics(ctx context.Context, endp
 		m.metrics.IncrementCounter("validation_failures_total", labels)
 	}
 }
-

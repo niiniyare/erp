@@ -49,6 +49,11 @@ UNIT_TEST_DIRS := ./internal/core/... ./internal/shared/... ./internal/adapters/
 INTEGRATION_TEST_DIRS := ./test/integration/...
 E2E_TEST_DIRS := ./test/e2e/...
 
+
+# ====== SERVER LOG ======
+LOG_FILE=server.log
+PID_FILE=server.pid
+
 # Colors for output
 ESC := $(shell printf '\033')
 RED := $(ESC)[0;31m
@@ -82,13 +87,6 @@ check-tools: ## 🔧 Check if required tools are installed
 		};)
 	@echo "$(GREEN)✅ All required tools are installed$(NC)"
 
-.PHONY: clean
-clean: ## 🧹 Clean generated files and artifacts
-	@echo "$(YELLOW)Cleaning generated files...$(NC)"
-	@rm -f doc/swagger/*.json
-	@rm -f $(COVERAGE_FILE) $(COVERAGE_HTML) benchmark.out
-	@go clean -testcache -cache -modcache
-	@echo "$(GREEN)✅ Cleanup complete$(NC)"
 
 .PHONY: status
 status: ## 📊 Show project status and configuration
@@ -486,10 +484,48 @@ sql2dbml: ## 🔄 Convert SQL migration to DBML
 # 🚀 Application & Services
 # ============================================================================
 
+# .PHONY: run
+# run: ## 🚀 Run the application server
+# 	@echo "$(BLUE)Starting application server...$(NC)"
+# 	@go run ./cmd/server/
+
 .PHONY: run
-run: ## 🚀 Run the application server
+run: ## Run the application server (logs printed and saved to server.log)
 	@echo "$(BLUE)Starting application server...$(NC)"
-	@go run ./cmd/server/ -http-port 8081
+	@echo "$(YELLOW)Logs will be written to $(LOG_FILE)$(NC)"
+	@go run ./cmd/server/ 2>&1 | tee $(LOG_FILE)
+
+
+.PHONY: run-bg
+run-bg: ##  Run the server in background (Termux-friendly)
+	@echo "$(BLUE)Starting server in background...$(NC)"
+	@bash -c "go run ./cmd/server/ 2>&1 | tee -a $(LOG_FILE)" &
+	@echo $$! > $(PID_FILE)
+	@echo "$(GREEN)Server started in background (PID: $$(cat $(PID_FILE)))$(NC)"
+	@echo "$(YELLOW)Logs are being written to $(LOG_FILE)$(NC)"
+
+
+.PHONY: stop
+stop:  ## 🛑 Stop the background server
+	@if [ -f $(PID_FILE) ]; then \
+		echo "$(RED)Stopping server (PID: $$(cat $(PID_FILE)))...$(NC)"; \
+		kill $$(cat $(PID_FILE)) 2>/dev/null || true; \
+		rm -f $(PID_FILE); \
+		echo "$(GREEN)Server stopped.$(NC)"; \
+	else \
+		echo "$(YELLOW)No running server found.$(NC)"; \
+	fi
+
+.PHONY: clean
+clean: ## 🧹 Clean up log and pid files 
+	@echo "$(RED)Cleaning up logs and pid file...$(NC)"
+	@rm -f $(LOG_FILE) $(PID_FILE)
+	@echo "$(YELLOW)Cleaning generated files...$(NC)"
+	@rm -f doc/swagger/*.json
+	@rm -f $(COVERAGE_FILE) $(COVERAGE_HTML) benchmark.out
+	@go clean -testcache -cache -modcache
+	@echo "$(GREEN)✅ Cleanup complete$(NC)"
+
 
 .PHONY: build
 build: ## 🔨 Build the application

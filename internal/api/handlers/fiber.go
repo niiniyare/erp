@@ -37,7 +37,6 @@ func NewFiberServer(
 	tracingService tracing.TracingService,
 	iamService iam.Service,
 ) (*FiberServer, error) {
-
 	// Create Fiber app with configuration from config
 	app := fiber.New(fiber.Config{
 		ErrorHandler:  createFiberErrorHandler(),

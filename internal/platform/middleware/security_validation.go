@@ -225,7 +225,7 @@ func (sv *SecurityValidator) validateSecurityHeaders(config *SecurityHeadersConf
 	status["configured"] = true
 	status["hsts_enabled"] = config.HSTSMaxAge > 0
 	status["csp_enabled"] = config.CSPPolicy != ""
-	
+
 	// Validate HSTS configuration
 	if config.HSTSMaxAge <= 0 {
 		result.Warnings = append(result.Warnings, "Security headers: HSTS is not enabled")
@@ -284,9 +284,9 @@ func (sv *SecurityValidator) validateValidation(config *ValidationConfig, result
 	result.MiddlewareStatus["validation"] = status
 
 	sv.logger.Debug("Validation middleware validation completed", logger.Fields{
-		"max_request_size":   config.MaxRequestSize,
+		"max_request_size":    config.MaxRequestSize,
 		"sql_injection_check": config.EnableSQLInjectionCheck,
-		"xss_check":          config.EnableXSSCheck,
+		"xss_check":           config.EnableXSSCheck,
 	})
 }
 

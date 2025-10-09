@@ -1,9 +1,11 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/niiniyare/erp/internal/core/iam"
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/platform/cache"
@@ -129,11 +131,41 @@ func (m *MiddlewareStack) createTenantHTTPMiddleware() func(http.Handler) http.H
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Extract tenant info from request (subdomain, header, etc.)
-			// This is a simplified version - you might want to implement
-			// the full tenant extraction logic from the gin version
+			// NOTE: HTTP tenant extraction implementation for non-Fiber handlers
+			// This adapts the Fiber tenant middleware logic for standard HTTP handlers
 
-			// For now, pass through without tenant context
-			// TODO: Implement proper tenant extraction for HTTP middleware
+			tenantIDStr, err := extractTenantIDFromHTTPRequest(r)
+			if err != nil {
+				// Skip tenant context for requests that don't require it
+				// (health checks, static assets, etc.)
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			// Parse and validate tenant ID
+			tenantID, err := uuid.Parse(tenantIDStr)
+			if err != nil {
+				writeErrorResponse(w, "Invalid tenant ID format", http.StatusBadRequest)
+				return
+			}
+
+			// Validate tenant exists using tenant service
+			tenantEntity, err := m.Tenant.GetTenantByID(r.Context(), tenantID)
+			if err != nil {
+				writeErrorResponse(w, "Tenant not found", http.StatusNotFound)
+				return
+			}
+
+			// Check tenant status
+			if tenantEntity.Status != tenant.StatusActive {
+				writeErrorResponse(w, "Tenant account is not active", http.StatusForbidden)
+				return
+			}
+
+			// Add tenant context to request
+			ctx := context.WithValue(r.Context(), "tenant_id", tenantID)
+			ctx = context.WithValue(ctx, "tenant", tenantEntity)
+			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
 		})
 	}

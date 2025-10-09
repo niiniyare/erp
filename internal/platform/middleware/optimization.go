@@ -92,18 +92,20 @@ type OptimizedMiddlewareChain struct {
 // SimplifiedMiddlewareStack provides a minimal dependency configuration
 // Use this when you don't need the full FiberMiddlewareStack
 type SimplifiedMiddlewareStack struct {
-	Logger        logger.Logger
-	Metrics       *metrics.MetricsService
-	TenantService interface{} // TODO: Replace with actual tenant.Service
-	Store         interface{} // TODO: Replace with actual db.Store
-	Cache         interface{} // TODO: Replace with actual cache service
+	Logger  logger.Logger
+	Metrics *metrics.MetricsService
+	// NOTE: Using interfaces to avoid circular dependencies
+	// Production implementation should inject these via dependency injection
+	TenantService interface{} // Use tenant.Service interface from internal/core/tenant
+	Store         interface{} // Use db.Store interface from db/sqlc
+	Cache         interface{} // Use cache.Service interface from internal/platform/cache
 }
 
 // ApplyBasicMiddlewareChain applies essential middlewares without full stack dependencies
 // This is useful for microservices or APIs that don't need all features
 func (omc *OptimizedMiddlewareChain) ApplyBasicMiddlewareChain(app *fiber.App, stack *SimplifiedMiddlewareStack) {
 	adapter := NewHTTPMiddlewareAdapter(omc.logger, omc.metrics)
-	
+
 	// 1. Recovery (outermost - catches all panics)
 	app.Use(HTTPToFiberAdapter(adapter.RecoveryMiddleware()))
 
@@ -327,12 +329,12 @@ func (omc *OptimizedMiddlewareChain) OptimizedLoggingMiddleware() fiber.Handler 
 
 		// Log request
 		omc.logger.Info("HTTP request processed", logger.Fields{
-			"method":       method,
-			"path":         path,
-			"status":       c.Response().StatusCode(),
-			"duration_ms":  time.Since(start).Milliseconds(),
-			"ip":           c.IP(),
-			"user_agent":   c.Get("User-Agent"),
+			"method":      method,
+			"path":        path,
+			"status":      c.Response().StatusCode(),
+			"duration_ms": time.Since(start).Milliseconds(),
+			"ip":          c.IP(),
+			"user_agent":  c.Get("User-Agent"),
 		})
 
 		return err
@@ -347,15 +349,15 @@ func (omc *OptimizedMiddlewareChain) ProfilingMiddleware() fiber.Handler {
 		}
 
 		start := time.Now()
-		
+
 		// Add profiling headers
 		c.Set("X-Profile-Start", start.Format(time.RFC3339Nano))
-		
+
 		err := c.Next()
-		
+
 		duration := time.Since(start)
 		c.Set("X-Profile-Duration", duration.String())
-		
+
 		// Log slow requests
 		if duration > 100*time.Millisecond {
 			omc.logger.Warn("Slow request detected", logger.Fields{
@@ -377,7 +379,7 @@ func (omc *OptimizedMiddlewareChain) checkCircuitBreaker() {
 
 	now := time.Now().Unix()
 	lastReset := omc.lastReset.Load()
-	
+
 	// Check if window has expired
 	if now-lastReset > int64(omc.config.CircuitBreakerWindow.Seconds()) {
 		// Reset counters
@@ -480,7 +482,7 @@ func (pm *PerformanceMonitor) captureSnapshot() RequestSnapshot {
 
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
-	
+
 	return RequestSnapshot{
 		Timestamp:      time.Now(),
 		ConcurrentReqs: concurrent,
@@ -605,7 +607,7 @@ func NewMiddlewareChainBuilder(
 		logger:  logger,
 		metrics: metrics,
 	}
-	
+
 	return &MiddlewareChainBuilder{
 		chain:  chain,
 		app:    app,

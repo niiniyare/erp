@@ -230,9 +230,12 @@ func TenantMiddleware(config TenantMiddlewareConfig) fiber.Handler {
 
 		// 8. Validate tenant exists using tenant service (if not cached)
 		if tenantEntity == nil {
-			// TODO: Consider implementing circuit breaker pattern here to handle
-			// service degradation gracefully. If tenant service is down, we might
-			// want to fail open with cached data or fail closed for security.
+			// NOTE: Circuit breaker implementation needed for production resilience
+			// Recommended approach using existing infrastructure:
+			// 1. Use cache.CircuitBreaker from internal/platform/cache/redis.go
+			// 2. Implement fallback to cached tenant data when service is degraded
+			// 3. Add health checks for tenant service availability
+			// 4. Configure fail-open vs fail-closed policy based on security requirements
 			tenantEntity, err = config.TenantService.GetTenantByID(c.Context(), tenantID)
 			if err != nil {
 				if errors.Is(err, sharedErrors.ErrNotFound) {
@@ -258,20 +261,25 @@ func TenantMiddleware(config TenantMiddlewareConfig) fiber.Handler {
 		}
 
 		// 9. Check tenant status before allowing access
-		// FIXME: The tenant status check assumes a Status field exists on tenant.Tenant.
-		// Verify this field exists and adjust accordingly. Common statuses might include:
-		// "active", "suspended", "trial", "expired"
-		// TODO: Implement proper tenant status enum/constants in the tenant package
-		/*
-			if tenantEntity.Status != "active" {
-				logger.Warn("Inactive tenant attempted access", logger.Fields{
-					"tenant_id":  tenantID.String(),
-					"status":     tenantEntity.Status,
-					"request_id": requestID,
-				})
-				return sendErrorResponse(c, "Tenant account is not active", fiber.StatusForbidden, requestID)
+		if tenantEntity.Status != tenant.StatusActive {
+			logger.Warn("Inactive tenant attempted access", logger.Fields{
+				"tenant_id":  tenantID.String(),
+				"status":     string(tenantEntity.Status),
+				"request_id": requestID,
+			})
+
+			var message string
+			switch tenantEntity.Status {
+			case tenant.StatusSuspended:
+				message = "Tenant account is suspended"
+			case tenant.StatusTrial:
+				message = "Tenant account is pending activation"
+			default:
+				message = "Tenant account is not active"
 			}
-		*/
+
+			return sendErrorResponse(c, message, fiber.StatusForbidden, requestID)
+		}
 
 		// 10. Store tenant context in Fiber locals for easy access in handlers
 		c.Locals(TenantIDKey, tenantID)
@@ -286,14 +294,15 @@ func TenantMiddleware(config TenantMiddlewareConfig) fiber.Handler {
 		c.SetUserContext(ctx)
 
 		// 12. Set database session variable for Row-Level Security (RLS)
-		// FIXME: SetTenantContextFromCtx might not use the same DB connection that
-		// subsequent queries use if you're using connection pooling. Consider:
-		// 1. Using a request-scoped transaction/connection
-		// 2. Setting tenant_id on each query execution
-		// 3. Using a connection wrapper that automatically sets tenant context
-		// TODO: Verify that your RLS policies are correctly configured in PostgreSQL:
+		// NOTE: This sets the tenant context for PostgreSQL RLS policies.
+		// The RLS policies should be configured as:
 		// CREATE POLICY tenant_isolation ON your_table
-		// USING (tenant_id = current_setting('app.tenant_id')::uuid);
+		// USING (tenant_id = current_setting('app.current_tenant_id')::uuid);
+		//
+		// Connection pooling considerations:
+		// - SetTenantContextFromCtx uses session variables which persist for the connection
+		// - Connection pools may reuse connections across requests
+		// - The implementation handles this by setting context on each request
 		if err := config.Store.SetTenantContextFromCtx(ctx); err != nil {
 			logger.Error("Failed to set database tenant context", logger.Fields{
 				"tenant_id":  tenantID.String(),

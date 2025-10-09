@@ -172,3 +172,58 @@ const (
 	RoleTypeCustom     RoleType = "CUSTOM"     // User-defined roles
 	RoleTypeFunctional RoleType = "FUNCTIONAL" // Job-based roles
 )
+
+// ActionCategory represents a category of action (string-based enum)
+type ActionCategory string
+
+const (
+	STANDARD       ActionCategory = "STANDARD"
+	ADMINISTRATIVE ActionCategory = "ADMINISTRATIVE"
+	SENSITIVE      ActionCategory = "SENSITIVE"
+	BULK           ActionCategory = "BULK"
+	SYSTEM         ActionCategory = "SYSTEM"
+)
+
+// String returns the string value of the ActionCategory
+func (a ActionCategory) String() string {
+	return string(a)
+}
+
+// IsValid checks if the ActionCategory is one of the defined constants
+func (a ActionCategory) IsValid() bool {
+	switch a {
+	case STANDARD, ADMINISTRATIVE, SENSITIVE, BULK, SYSTEM:
+		return true
+	default:
+		return false
+	}
+}
+
+type ActionType string
+
+const (
+	Create  ActionType = "CREATE"
+	Read    ActionType = "READ"
+	Update  ActionType = "UPDATE"
+	Delete  ActionType = "DELETE"
+	Execute ActionType = "EXECUTE"
+	Approve ActionType = "APPROVE"
+	Reject  ActionType = "REJECT"
+	Export  ActionType = "EXPORT"
+	Import  ActionType = "IMPORT"
+)
+
+// String returns the string value of the ActionType
+func (a ActionType) String() string {
+	return string(a)
+}
+
+// IsValid checks if the ActionType is one of the defined constants
+func (a ActionType) IsValid() bool {
+	switch a {
+	case Create, Read, Update, Delete, Execute, Approve, Reject, Export, Import:
+		return true
+	default:
+		return false
+	}
+}
