@@ -1,6 +1,0 @@
-{
-  "type": "object",
-  "description": "初始数据，设置得值可用于组件内部模板使用。",
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "./SchemaDefaultData.json"
-}

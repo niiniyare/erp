@@ -1,6 +1,0 @@
-{
-  "type": "string",
-  "description": "iconfont 里面的类名。",
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "./SchemaIcon.json"
-}
