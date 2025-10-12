@@ -1,0 +1,278 @@
+package middleware
+
+import (
+	"context"
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/niiniyare/erp/internal/shared/logging"
+	"github.com/niiniyare/erp/internal/shared/metrics"
+	"github.com/niiniyare/erp/internal/shared/response"
+	"github.com/niiniyare/erp/internal/shared/tracing"
+	"go.opentelemetry.io/otel/attribute"
+)
+
+// {{.ComponentNamePascal}}Middleware provides middleware functions for {{.ComponentName}} operations
+type {{.ComponentNamePascal}}Middleware struct {
+	logger logging.Logger
+	tracer tracing.Tracer
+}
+
+// New{{.ComponentNamePascal}}Middleware creates a new {{.ComponentNamePascal}}Middleware
+func New{{.ComponentNamePascal}}Middleware(
+	logger logging.Logger,
+	tracer tracing.Tracer,
+) *{{.ComponentNamePascal}}Middleware {
+	return &{{.ComponentNamePascal}}Middleware{
+		logger: logger,
+		tracer: tracer,
+	}
+}
+
+// {{.ComponentNamePascal}}Logging provides request/response logging for {{.ComponentName}} endpoints
+func (m *{{.ComponentNamePascal}}Middleware) {{.ComponentNamePascal}}Logging() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		start := time.Now()
+		
+		// Extract request information
+		method := c.Method()
+		path := c.Path()
+		userAgent := c.Get("User-Agent")
+		ip := c.IP()
+		
+		// Create span for the request
+		ctx, span := m.tracer.Start(c.Context(), "{{.ComponentNamePascal}}Middleware.Request")
+		defer span.End()
+		
+		// Set span attributes
+		span.SetAttributes(
+			attribute.String("http.method", method),
+			attribute.String("http.url", path),
+			attribute.String("http.user_agent", userAgent),
+			attribute.String("http.remote_addr", ip),
+		)
+		
+		// Store context in fiber context
+		c.SetUserContext(ctx)
+		
+		// Log request
+		m.logger.Info("{{.ComponentNamePascal}} request started",
+			"method", method,
+			"path", path,
+			"user_agent", userAgent,
+			"ip", ip,
+		)
+		
+		// Process request
+		err := c.Next()
+		
+		// Calculate duration
+		duration := time.Since(start)
+		
+		// Get response information
+		statusCode := c.Response().StatusCode()
+		
+		// Update span with response information
+		span.SetAttributes(
+			attribute.Int("http.status_code", statusCode),
+			attribute.Int64("http.duration_ms", duration.Milliseconds()),
+		)
+		
+		// Record metrics
+		metrics.RecordHTTPRequest(method, path, statusCode, duration)
+		
+		// Log response
+		if err != nil {
+			m.logger.Error("{{.ComponentNamePascal}} request failed",
+				"method", method,
+				"path", path,
+				"status_code", statusCode,
+				"duration_ms", duration.Milliseconds(),
+				"error", err,
+			)
+			span.RecordError(err)
+		} else {
+			m.logger.Info("{{.ComponentNamePascal}} request completed",
+				"method", method,
+				"path", path,
+				"status_code", statusCode,
+				"duration_ms", duration.Milliseconds(),
+			)
+		}
+		
+		return err
+	}
+}
+
+// {{.ComponentNamePascal}}RateLimit provides rate limiting for {{.ComponentName}} endpoints
+func (m *{{.ComponentNamePascal}}Middleware) {{.ComponentNamePascal}}RateLimit() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// Extract client identifier (IP or user ID)
+		clientID := m.getClientIdentifier(c)
+		
+		// Check rate limit
+		allowed, err := m.checkRateLimit(c.Context(), clientID)
+		if err != nil {
+			m.logger.Error("Rate limit check failed", "client_id", clientID, "error", err)
+			return response.HandleInternalError(c, err)
+		}
+		
+		if !allowed {
+			m.logger.Warn("Rate limit exceeded", "client_id", clientID)
+			return response.HandleRateLimitError(c)
+		}
+		
+		return c.Next()
+	}
+}
+
+// {{.ComponentNamePascal}}Auth provides authentication for {{.ComponentName}} endpoints
+func (m *{{.ComponentNamePascal}}Middleware) {{.ComponentNamePascal}}Auth() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// Extract authentication token
+		token := m.extractAuthToken(c)
+		if token == "" {
+			m.logger.Warn("Missing authentication token")
+			return response.HandleUnauthorizedError(c)
+		}
+		
+		// Validate token and get user context
+		userCtx, err := m.validateToken(c.Context(), token)
+		if err != nil {
+			m.logger.Error("Token validation failed", "error", err)
+			return response.HandleUnauthorizedError(c)
+		}
+		
+		// Store user context
+		c.Locals("user", userCtx)
+		
+		return c.Next()
+	}
+}
+
+// {{.ComponentNamePascal}}Authorization provides authorization for {{.ComponentName}} endpoints
+func (m *{{.ComponentNamePascal}}Middleware) {{.ComponentNamePascal}}Authorization(requiredPermission string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// Get user context
+		userCtx := c.Locals("user")
+		if userCtx == nil {
+			m.logger.Warn("User context not found")
+			return response.HandleUnauthorizedError(c)
+		}
+		
+		// Check permissions
+		hasPermission, err := m.checkPermission(c.Context(), userCtx, requiredPermission)
+		if err != nil {
+			m.logger.Error("Permission check failed", "permission", requiredPermission, "error", err)
+			return response.HandleInternalError(c, err)
+		}
+		
+		if !hasPermission {
+			m.logger.Warn("Insufficient permissions", "permission", requiredPermission)
+			return response.HandleForbiddenError(c)
+		}
+		
+		return c.Next()
+	}
+}
+
+// {{.ComponentNamePascal}}Validation provides request validation for {{.ComponentName}} endpoints
+func (m *{{.ComponentNamePascal}}Middleware) {{.ComponentNamePascal}}Validation() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		// Validate common headers
+		if err := m.validateHeaders(c); err != nil {
+			m.logger.Error("Header validation failed", "error", err)
+			return response.HandleValidationError(c, err)
+		}
+		
+		// Validate content type for POST/PUT requests
+		if c.Method() == "POST" || c.Method() == "PUT" {
+			if err := m.validateContentType(c); err != nil {
+				m.logger.Error("Content type validation failed", "error", err)
+				return response.HandleValidationError(c, err)
+			}
+		}
+		
+		return c.Next()
+	}
+}
+
+// Helper methods
+
+// getClientIdentifier extracts a unique identifier for the client
+func (m *{{.ComponentNamePascal}}Middleware) getClientIdentifier(c *fiber.Ctx) string {
+	// Try to get user ID from context first
+	if userCtx := c.Locals("user"); userCtx != nil {
+		// Extract user ID from user context
+		// This would depend on your user context structure
+		return "user_id" // Replace with actual user ID extraction
+	}
+	
+	// Fall back to IP address
+	return c.IP()
+}
+
+// checkRateLimit checks if the client has exceeded rate limits
+func (m *{{.ComponentNamePascal}}Middleware) checkRateLimit(ctx context.Context, clientID string) (bool, error) {
+	// TODO: Implement rate limiting logic
+	// This could use Redis, in-memory cache, or a database
+	// For now, always allow (should be implemented based on your rate limiting strategy)
+	return true, nil
+}
+
+// extractAuthToken extracts the authentication token from the request
+func (m *{{.ComponentNamePascal}}Middleware) extractAuthToken(c *fiber.Ctx) string {
+	// Check Authorization header
+	auth := c.Get("Authorization")
+	if auth != "" && len(auth) > 7 && auth[:7] == "Bearer " {
+		return auth[7:]
+	}
+	
+	// Check query parameter (less secure, only for development)
+	return c.Query("token")
+}
+
+// validateToken validates the authentication token
+func (m *{{.ComponentNamePascal}}Middleware) validateToken(ctx context.Context, token string) (interface{}, error) {
+	// TODO: Implement token validation logic
+	// This should validate JWT tokens, session tokens, etc.
+	// Return user context information
+	return map[string]interface{}{
+		"user_id": "example_user_id",
+		"tenant_id": "example_tenant_id",
+	}, nil
+}
+
+// checkPermission checks if the user has the required permission
+func (m *{{.ComponentNamePascal}}Middleware) checkPermission(ctx context.Context, userCtx interface{}, permission string) (bool, error) {
+	// TODO: Implement ABAC permission checking
+	// This should integrate with your ABAC engine
+	// For now, always allow (should be implemented based on your ABAC system)
+	return true, nil
+}
+
+// validateHeaders validates required headers
+func (m *{{.ComponentNamePascal}}Middleware) validateHeaders(c *fiber.Ctx) error {
+	// Validate required headers
+	requiredHeaders := []string{
+		"Content-Type",
+		"Accept",
+	}
+	
+	for _, header := range requiredHeaders {
+		if c.Get(header) == "" {
+			return fiber.NewError(fiber.StatusBadRequest, "Missing required header: "+header)
+		}
+	}
+	
+	return nil
+}
+
+// validateContentType validates the content type for requests with body
+func (m *{{.ComponentNamePascal}}Middleware) validateContentType(c *fiber.Ctx) error {
+	contentType := c.Get("Content-Type")
+	if contentType != "application/json" {
+		return fiber.NewError(fiber.StatusUnsupportedMediaType, "Content-Type must be application/json")
+	}
+	return nil
+}

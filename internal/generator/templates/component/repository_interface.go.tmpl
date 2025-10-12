@@ -1,0 +1,35 @@
+package domain
+
+import (
+	"context"
+)
+
+// {{.EntityNamePascal}}Repository defines the interface for {{.EntityNameCamel}} data access
+type {{.EntityNamePascal}}Repository interface {
+	// Create creates a new {{.EntityNameCamel}}
+	Create(ctx context.Context, {{.EntityNameCamel}} *{{.EntityNamePascal}}) error
+
+	// GetByID retrieves a {{.EntityNameCamel}} by ID
+	GetByID(ctx context.Context, id {{.EntityNamePascal}}ID) (*{{.EntityNamePascal}}, error)
+
+	// Update updates an existing {{.EntityNameCamel}}
+	Update(ctx context.Context, {{.EntityNameCamel}} *{{.EntityNamePascal}}) error
+
+	// Delete deletes a {{.EntityNameCamel}} by ID
+	Delete(ctx context.Context, id {{.EntityNamePascal}}ID) error
+
+	// List lists {{.EntityNamePlural}} with filtering and pagination
+	List(ctx context.Context, filter {{.EntityNamePascal}}Filter) ([]{{.EntityNamePascal}}, *PaginationResult, error)
+
+	// GetByName retrieves a {{.EntityNameCamel}} by name
+	GetByName(ctx context.Context, name string) (*{{.EntityNamePascal}}, error)
+
+	// ExistsByName checks if a {{.EntityNameCamel}} with the given name exists
+	ExistsByName(ctx context.Context, name string) (bool, error)
+
+	// CountByStatus counts {{.EntityNamePlural}} by status
+	CountByStatus(ctx context.Context, status {{.EntityNamePascal}}Status) (int64, error)
+
+	// GetActiveList retrieves all active {{.EntityNamePlural}}
+	GetActiveList(ctx context.Context) ([]{{.EntityNamePascal}}, error)
+}

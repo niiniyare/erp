@@ -34,7 +34,7 @@ DOC_PORT ?= 8081
 GRPC_PORT ?= 9090
 
 # Tools
-REQUIRED_TOOLS := sqlc mockgen migrate psql golangci-lint mkdocs java sleek
+REQUIRED_TOOLS := sqlc mockgen migrate psql golangci-lint mkdocs java sleek awoctl
 
 # Test Configuration
 TEST_TIMEOUT := 10m
@@ -103,6 +103,58 @@ status: ## 📊 Show project status and configuration
 
 .PHONY: generate
 generate: sqlc mock ## 🔄 Generate all code (SQLC, Mocks)
+
+# ============================================================================
+# 🏗️ Scaffolding & Code Generation
+# ============================================================================
+
+.PHONY: scaffold-install
+scaffold-install: ## 🔧 Build and install awoctl scaffolding tool
+	@echo "$(BLUE)Building awoctl scaffolding tool...$(NC)"
+	@go build -o awoctl ./cmd/awoctl/
+	@echo "$(GREEN)✅ awoctl built successfully$(NC)"
+
+.PHONY: scaffold-module
+scaffold-module: ## 📦 Generate new module (usage: make scaffold-module name=moduleName)
+	@if [ -z "$(name)" ]; then \
+		echo "$(RED)❌ Error: module name required$(NC)"; \
+		echo "$(YELLOW)Usage: make scaffold-module name=inventory$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(BLUE)Generating module: $(name)$(NC)"
+	@./awoctl new module $(name) --verbose
+	@echo "$(GREEN)✅ Module '$(name)' generated successfully$(NC)"
+	@echo "$(YELLOW)Next steps:$(NC)"
+	@echo "  1. Update domain models in internal/core/$(name)/domain/"
+	@echo "  2. Run 'make sqlc goa' to generate code"
+	@echo "  3. Implement business logic"
+
+.PHONY: scaffold-component
+scaffold-component: ## 🧩 Generate component (usage: make scaffold-component module=finance name=payment type=entity)
+	@if [ -z "$(module)" ] || [ -z "$(name)" ] || [ -z "$(type)" ]; then \
+		echo "$(RED)❌ Error: module, name, and type are required$(NC)"; \
+		echo "$(YELLOW)Usage: make scaffold-component module=finance name=payment type=entity$(NC)"; \
+		echo "$(YELLOW)Types: entity, service, repository, handler, dto, middleware, validator, mapper$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(BLUE)Generating $(type) component: $(name) in module $(module)$(NC)"
+	@./awoctl new component $(module) $(name) $(type) --verbose
+	@echo "$(GREEN)✅ Component '$(name)' generated successfully$(NC)"
+
+.PHONY: scaffold-feature
+scaffold-feature: ## ⭐ Generate feature (usage: make scaffold-feature path=finance/budgets)
+	@if [ -z "$(path)" ]; then \
+		echo "$(RED)❌ Error: feature path required$(NC)"; \
+		echo "$(YELLOW)Usage: make scaffold-feature path=finance/budgets$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(BLUE)Generating feature: $(path)$(NC)"
+	@./awoctl new feature $(path) --verbose
+	@echo "$(GREEN)✅ Feature '$(path)' generated successfully$(NC)"
+
+.PHONY: scaffold-help
+scaffold-help: ## 📚 Show scaffolding tool help
+	@./awoctl --help
 
 .PHONY: sqlc-install
 sqlc-install: ## Install sqlc excutable of if it's not in the system
@@ -543,7 +595,7 @@ temporal-server: ## ⏰ Start Temporal server
 # ============================================================================
 
 .PHONY: dev-setup
-dev-setup: check-tools db-create migrate-up generate test-deps ## 🛠️ Setup development environment
+dev-setup: check-tools scaffold-install db-create migrate-up generate test-deps ## 🛠️ Setup development environment
 
 .PHONY: dev-test
 dev-test: test-unit-fast build ## 👨‍💻 Quick development test cycle

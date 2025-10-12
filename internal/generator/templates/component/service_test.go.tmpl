@@ -1,0 +1,368 @@
+package {{.PackageName}}_test
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/niiniyare/erp/internal/core/{{.ModuleNameSnake}}/domain"
+	"github.com/niiniyare/erp/internal/core/{{.ModuleNameSnake}}"
+	"github.com/niiniyare/erp/internal/shared/errors"
+	"github.com/niiniyare/erp/internal/shared/logging"
+	"github.com/niiniyare/erp/internal/shared/tracing"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+)
+
+// Mock repository
+type Mock{{.EntityNamePascal}}Repository struct {
+	mock.Mock
+}
+
+func (m *Mock{{.EntityNamePascal}}Repository) Create(ctx context.Context, {{.EntityNameCamel}} *domain.{{.EntityNamePascal}}) error {
+	args := m.Called(ctx, {{.EntityNameCamel}})
+	return args.Error(0)
+}
+
+func (m *Mock{{.EntityNamePascal}}Repository) GetByID(ctx context.Context, id domain.{{.EntityNamePascal}}ID) (*domain.{{.EntityNamePascal}}, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(*domain.{{.EntityNamePascal}}), args.Error(1)
+}
+
+func (m *Mock{{.EntityNamePascal}}Repository) Update(ctx context.Context, {{.EntityNameCamel}} *domain.{{.EntityNamePascal}}) error {
+	args := m.Called(ctx, {{.EntityNameCamel}})
+	return args.Error(0)
+}
+
+func (m *Mock{{.EntityNamePascal}}Repository) Delete(ctx context.Context, id domain.{{.EntityNamePascal}}ID) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *Mock{{.EntityNamePascal}}Repository) List(ctx context.Context, filter domain.{{.EntityNamePascal}}Filter) ([]domain.{{.EntityNamePascal}}, *domain.PaginationResult, error) {
+	args := m.Called(ctx, filter)
+	return args.Get(0).([]domain.{{.EntityNamePascal}}), args.Get(1).(*domain.PaginationResult), args.Error(2)
+}
+
+func (m *Mock{{.EntityNamePascal}}Repository) GetByName(ctx context.Context, name string) (*domain.{{.EntityNamePascal}}, error) {
+	args := m.Called(ctx, name)
+	return args.Get(0).(*domain.{{.EntityNamePascal}}), args.Error(1)
+}
+
+func (m *Mock{{.EntityNamePascal}}Repository) ExistsByName(ctx context.Context, name string) (bool, error) {
+	args := m.Called(ctx, name)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *Mock{{.EntityNamePascal}}Repository) CountByStatus(ctx context.Context, status domain.{{.EntityNamePascal}}Status) (int64, error) {
+	args := m.Called(ctx, status)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *Mock{{.EntityNamePascal}}Repository) GetActiveList(ctx context.Context) ([]domain.{{.EntityNamePascal}}, error) {
+	args := m.Called(ctx)
+	return args.Get(0).([]domain.{{.EntityNamePascal}}), args.Error(1)
+}
+
+// Test setup helpers
+func setup{{.ComponentNamePascal}}ServiceTest() (*{{.PackageName}}.{{.ComponentNamePascal}}Service, *Mock{{.EntityNamePascal}}Repository) {
+	mockRepo := &Mock{{.EntityNamePascal}}Repository{}
+	logger := logging.NewNopLogger()
+	tracer := tracing.NewNopTracer()
+	
+	service := {{.PackageName}}.New{{.ComponentNamePascal}}Service(mockRepo, logger, tracer)
+	return service, mockRepo
+}
+
+func createTest{{.EntityNamePascal}}() *domain.{{.EntityNamePascal}} {
+	now := time.Now()
+	return &domain.{{.EntityNamePascal}}{
+		ID:          domain.New{{.EntityNamePascal}}ID(),
+		Name:        "Test {{.EntityNamePascal}}",
+		Description: stringPtr("Test description"),
+		Status:      domain.{{.EntityNamePascal}}StatusActive,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		TenantID:    "test-tenant-id",
+	}
+}
+
+func Test{{.ComponentNamePascal}}Service_Create{{.EntityNamePascal}}_Success(t *testing.T) {
+	service, mockRepo := setup{{.ComponentNamePascal}}ServiceTest()
+	ctx := context.Background()
+	
+	req := domain.Create{{.EntityNamePascal}}Request{
+		Name:        "Test {{.EntityNamePascal}}",
+		Description: stringPtr("Test description"),
+	}
+	
+	mockRepo.On("Create", ctx, mock.AnythingOfType("*domain.{{.EntityNamePascal}}")).Return(nil)
+	
+	result, err := service.Create{{.EntityNamePascal}}(ctx, req)
+	
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, req.Name, result.Name)
+	assert.Equal(t, req.Description, result.Description)
+	assert.Equal(t, domain.{{.EntityNamePascal}}StatusActive, result.Status)
+	assert.NotEmpty(t, result.ID)
+	
+	mockRepo.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Service_Create{{.EntityNamePascal}}_ValidationError(t *testing.T) {
+	service, _ := setup{{.ComponentNamePascal}}ServiceTest()
+	ctx := context.Background()
+	
+	req := domain.Create{{.EntityNamePascal}}Request{
+		Name: "", // Invalid: empty name
+	}
+	
+	result, err := service.Create{{.EntityNamePascal}}(ctx, req)
+	
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.IsType(t, &errors.ValidationError{}, err)
+}
+
+func Test{{.ComponentNamePascal}}Service_Create{{.EntityNamePascal}}_RepositoryError(t *testing.T) {
+	service, mockRepo := setup{{.ComponentNamePascal}}ServiceTest()
+	ctx := context.Background()
+	
+	req := domain.Create{{.EntityNamePascal}}Request{
+		Name:        "Test {{.EntityNamePascal}}",
+		Description: stringPtr("Test description"),
+	}
+	
+	expectedErr := errors.NewInternalError("database error", nil)
+	mockRepo.On("Create", ctx, mock.AnythingOfType("*domain.{{.EntityNamePascal}}")).Return(expectedErr)
+	
+	result, err := service.Create{{.EntityNamePascal}}(ctx, req)
+	
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Equal(t, expectedErr, err)
+	
+	mockRepo.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Service_Get{{.EntityNamePascal}}_Success(t *testing.T) {
+	service, mockRepo := setup{{.ComponentNamePascal}}ServiceTest()
+	ctx := context.Background()
+	
+	expected{{.EntityNamePascal}} := createTest{{.EntityNamePascal}}()
+	
+	mockRepo.On("GetByID", ctx, expected{{.EntityNamePascal}}.ID).Return(expected{{.EntityNamePascal}}, nil)
+	
+	result, err := service.Get{{.EntityNamePascal}}(ctx, expected{{.EntityNamePascal}}.ID)
+	
+	require.NoError(t, err)
+	assert.Equal(t, expected{{.EntityNamePascal}}, result)
+	
+	mockRepo.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Service_Get{{.EntityNamePascal}}_NotFound(t *testing.T) {
+	service, mockRepo := setup{{.ComponentNamePascal}}ServiceTest()
+	ctx := context.Background()
+	
+	id := domain.New{{.EntityNamePascal}}ID()
+	
+	mockRepo.On("GetByID", ctx, id).Return((*domain.{{.EntityNamePascal}})(nil), nil)
+	
+	result, err := service.Get{{.EntityNamePascal}}(ctx, id)
+	
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.IsType(t, &errors.NotFoundError{}, err)
+	
+	mockRepo.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Service_Update{{.EntityNamePascal}}_Success(t *testing.T) {
+	service, mockRepo := setup{{.ComponentNamePascal}}ServiceTest()
+	ctx := context.Background()
+	
+	existing{{.EntityNamePascal}} := createTest{{.EntityNamePascal}}()
+	
+	req := domain.Update{{.EntityNamePascal}}Request{
+		Name:        stringPtr("Updated {{.EntityNamePascal}}"),
+		Description: stringPtr("Updated description"),
+	}
+	
+	mockRepo.On("GetByID", ctx, existing{{.EntityNamePascal}}.ID).Return(existing{{.EntityNamePascal}}, nil)
+	mockRepo.On("Update", ctx, mock.AnythingOfType("*domain.{{.EntityNamePascal}}")).Return(nil)
+	
+	result, err := service.Update{{.EntityNamePascal}}(ctx, existing{{.EntityNamePascal}}.ID, req)
+	
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, *req.Name, result.Name)
+	assert.Equal(t, req.Description, result.Description)
+	
+	mockRepo.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Service_Update{{.EntityNamePascal}}_NotFound(t *testing.T) {
+	service, mockRepo := setup{{.ComponentNamePascal}}ServiceTest()
+	ctx := context.Background()
+	
+	id := domain.New{{.EntityNamePascal}}ID()
+	req := domain.Update{{.EntityNamePascal}}Request{
+		Name: stringPtr("Updated {{.EntityNamePascal}}"),
+	}
+	
+	mockRepo.On("GetByID", ctx, id).Return((*domain.{{.EntityNamePascal}})(nil), nil)
+	
+	result, err := service.Update{{.EntityNamePascal}}(ctx, id, req)
+	
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.IsType(t, &errors.NotFoundError{}, err)
+	
+	mockRepo.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Service_Delete{{.EntityNamePascal}}_Success(t *testing.T) {
+	service, mockRepo := setup{{.ComponentNamePascal}}ServiceTest()
+	ctx := context.Background()
+	
+	existing{{.EntityNamePascal}} := createTest{{.EntityNamePascal}}()
+	
+	mockRepo.On("GetByID", ctx, existing{{.EntityNamePascal}}.ID).Return(existing{{.EntityNamePascal}}, nil)
+	mockRepo.On("Delete", ctx, existing{{.EntityNamePascal}}.ID).Return(nil)
+	
+	err := service.Delete{{.EntityNamePascal}}(ctx, existing{{.EntityNamePascal}}.ID)
+	
+	assert.NoError(t, err)
+	
+	mockRepo.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Service_Delete{{.EntityNamePascal}}_NotFound(t *testing.T) {
+	service, mockRepo := setup{{.ComponentNamePascal}}ServiceTest()
+	ctx := context.Background()
+	
+	id := domain.New{{.EntityNamePascal}}ID()
+	
+	mockRepo.On("GetByID", ctx, id).Return((*domain.{{.EntityNamePascal}})(nil), nil)
+	
+	err := service.Delete{{.EntityNamePascal}}(ctx, id)
+	
+	assert.Error(t, err)
+	assert.IsType(t, &errors.NotFoundError{}, err)
+	
+	mockRepo.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Service_List{{.EntityNamePlural}}_Success(t *testing.T) {
+	service, mockRepo := setup{{.ComponentNamePascal}}ServiceTest()
+	ctx := context.Background()
+	
+	filter := domain.{{.EntityNamePascal}}Filter{
+		Limit:  20,
+		Offset: 0,
+	}
+	
+	expected{{.EntityNamePlural}} := []domain.{{.EntityNamePascal}}{
+		*createTest{{.EntityNamePascal}}(),
+		*createTest{{.EntityNamePascal}}(),
+	}
+	
+	expectedPagination := &domain.PaginationResult{
+		Total:       2,
+		Count:       2,
+		Limit:       20,
+		Offset:      0,
+		HasNext:     false,
+		HasPrevious: false,
+	}
+	
+	mockRepo.On("List", ctx, filter).Return(expected{{.EntityNamePlural}}, expectedPagination, nil)
+	
+	result, pagination, err := service.List{{.EntityNamePlural}}(ctx, filter)
+	
+	require.NoError(t, err)
+	assert.Equal(t, expected{{.EntityNamePlural}}, result)
+	assert.Equal(t, expectedPagination, pagination)
+	
+	mockRepo.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Service_List{{.EntityNamePlural}}_InvalidFilter(t *testing.T) {
+	service, _ := setup{{.ComponentNamePascal}}ServiceTest()
+	ctx := context.Background()
+	
+	filter := domain.{{.EntityNamePascal}}Filter{
+		Limit:  0, // Invalid limit
+		Offset: 0,
+	}
+	
+	result, pagination, err := service.List{{.EntityNamePlural}}(ctx, filter)
+	
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Nil(t, pagination)
+	assert.IsType(t, &errors.ValidationError{}, err)
+}
+
+func Test{{.ComponentNamePascal}}Service_List{{.EntityNamePlural}}_RepositoryError(t *testing.T) {
+	service, mockRepo := setup{{.ComponentNamePascal}}ServiceTest()
+	ctx := context.Background()
+	
+	filter := domain.{{.EntityNamePascal}}Filter{
+		Limit:  20,
+		Offset: 0,
+	}
+	
+	expectedErr := errors.NewInternalError("database error", nil)
+	mockRepo.On("List", ctx, filter).Return([]domain.{{.EntityNamePascal}}{}, (*domain.PaginationResult)(nil), expectedErr)
+	
+	result, pagination, err := service.List{{.EntityNamePlural}}(ctx, filter)
+	
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Nil(t, pagination)
+	assert.Equal(t, expectedErr, err)
+	
+	mockRepo.AssertExpectations(t)
+}
+
+// Benchmark tests
+
+func Benchmark{{.ComponentNamePascal}}Service_Create{{.EntityNamePascal}}(b *testing.B) {
+	service, mockRepo := setup{{.ComponentNamePascal}}ServiceTest()
+	ctx := context.Background()
+	
+	req := domain.Create{{.EntityNamePascal}}Request{
+		Name:        "Benchmark {{.EntityNamePascal}}",
+		Description: stringPtr("Benchmark description"),
+	}
+	
+	mockRepo.On("Create", ctx, mock.AnythingOfType("*domain.{{.EntityNamePascal}}")).Return(nil)
+	
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = service.Create{{.EntityNamePascal}}(ctx, req)
+	}
+}
+
+func Benchmark{{.ComponentNamePascal}}Service_Get{{.EntityNamePascal}}(b *testing.B) {
+	service, mockRepo := setup{{.ComponentNamePascal}}ServiceTest()
+	ctx := context.Background()
+	
+	test{{.EntityNamePascal}} := createTest{{.EntityNamePascal}}()
+	mockRepo.On("GetByID", ctx, test{{.EntityNamePascal}}.ID).Return(test{{.EntityNamePascal}}, nil)
+	
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = service.Get{{.EntityNamePascal}}(ctx, test{{.EntityNamePascal}}.ID)
+	}
+}
+
+// Test helper functions
+
+func stringPtr(s string) *string {
+	return &s
+}

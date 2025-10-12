@@ -1,0 +1,283 @@
+package repository
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
+
+	"github.com/niiniyare/erp/internal/core/{{.ModuleNameSnake}}/domain"
+ db "github.com/niiniyare/erp/db/sqlc"
+	"github.com/niiniyare/erp/internal/shared/errors"
+	"github.com/niiniyare/erp/internal/platform/cache"
+
+	"github.com/niiniyare/erp/internal/shared/logging"
+	"github.com/niiniyare/erp/internal/shared/tracing"
+	"go.opentelemetry.io/otel/attribute"
+)
+
+// {{.ComponentNamePascal}}Repository implements domain.{{.EntityNamePascal}}Repository
+type {{.ComponentNamePascal}}Repository struct {
+	db     db.Store
+	cache cache.Service
+
+	logger logging.Logger
+	tracer tracing.Tracer
+}
+
+// New{{.ComponentNamePascal}}Repository creates a new {{.ComponentNamePascal}}Repository
+func New{{.ComponentNamePascal}}Repository(
+	db *database.DB,
+	logger logging.Logger,
+	tracer tracing.Tracer,
+) domain.{{.EntityNamePascal}}Repository {
+	return &{{.ComponentNamePascal}}Repository{
+		db:     db,
+		logger: logger,
+		tracer: tracer,
+	}
+}
+
+// Create creates a new {{.EntityNameCamel}} in the database
+func (r *{{.ComponentNamePascal}}Repository) Create(ctx context.Context, {{.EntityNameCamel}} *domain.{{.EntityNamePascal}}) error {
+	ctx, span := r.tracer.Start(ctx, "{{.ComponentNamePascal}}Repository.Create")
+	defer span.End()
+
+	query := `
+		INSERT INTO {{.ModuleNameSnake}}_{{.ComponentNameSnake}} (
+			id, name, description, status, 
+			created_at, updated_at, tenant_id
+		) VALUES (
+			$1, $2, $3, $4, $5, $6, current_tenant_id()
+		)`
+
+	_, err := r.db.ExecContext(ctx, query,
+		{{.EntityNameCamel}}.ID,
+		{{.EntityNameCamel}}.Name,
+		{{.EntityNameCamel}}.Description,
+		{{.EntityNameCamel}}.Status,
+		{{.EntityNameCamel}}.CreatedAt,
+		{{.EntityNameCamel}}.UpdatedAt,
+	)
+
+	if err != nil {
+		r.logger.Error("Failed to create {{.EntityNameCamel}}", "error", err)
+		span.RecordError(err)
+		return errors.NewInternalError("failed to create {{.EntityNameCamel}}", err)
+	}
+
+	span.SetAttributes(attribute.String("{{.EntityNameSnake}}.id", {{.EntityNameCamel}}.ID.String()))
+	return nil
+}
+
+// GetByID retrieves a {{.EntityNameCamel}} by ID
+func (r *{{.ComponentNamePascal}}Repository) GetByID(ctx context.Context, id domain.{{.EntityNamePascal}}ID) (*domain.{{.EntityNamePascal}}, error) {
+	ctx, span := r.tracer.Start(ctx, "{{.ComponentNamePascal}}Repository.GetByID")
+	defer span.End()
+
+	span.SetAttributes(attribute.String("{{.EntityNameSnake}}.id", id.String()))
+
+	query := `
+		SELECT id, name, description, status, 
+			   created_at, updated_at, tenant_id
+		FROM {{.ModuleNameSnake}}_{{.ComponentNameSnake}}
+		WHERE id = $1 AND tenant_id = current_tenant_id()`
+
+	var {{.EntityNameCamel}} domain.{{.EntityNamePascal}}
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&{{.EntityNameCamel}}.ID,
+		&{{.EntityNameCamel}}.Name,
+		&{{.EntityNameCamel}}.Description,
+		&{{.EntityNameCamel}}.Status,
+		&{{.EntityNameCamel}}.CreatedAt,
+		&{{.EntityNameCamel}}.UpdatedAt,
+		&{{.EntityNameCamel}}.TenantID,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // Not found
+		}
+		r.logger.Error("Failed to get {{.EntityNameCamel}} by ID", "id", id, "error", err)
+		span.RecordError(err)
+		return nil, errors.NewInternalError("failed to retrieve {{.EntityNameCamel}}", err)
+	}
+
+	return &{{.EntityNameCamel}}, nil
+}
+
+// Update updates an existing {{.EntityNameCamel}}
+func (r *{{.ComponentNamePascal}}Repository) Update(ctx context.Context, {{.EntityNameCamel}} *domain.{{.EntityNamePascal}}) error {
+	ctx, span := r.tracer.Start(ctx, "{{.ComponentNamePascal}}Repository.Update")
+	defer span.End()
+
+	span.SetAttributes(attribute.String("{{.EntityNameSnake}}.id", {{.EntityNameCamel}}.ID.String()))
+
+	query := `
+		UPDATE {{.ModuleNameSnake}}_{{.ComponentNameSnake}}
+		SET name = $2, description = $3, status = $4, updated_at = $5
+		WHERE id = $1 AND tenant_id = current_tenant_id()`
+
+	result, err := r.db.ExecContext(ctx, query,
+		{{.EntityNameCamel}}.ID,
+		{{.EntityNameCamel}}.Name,
+		{{.EntityNameCamel}}.Description,
+		{{.EntityNameCamel}}.Status,
+		{{.EntityNameCamel}}.UpdatedAt,
+	)
+
+	if err != nil {
+		r.logger.Error("Failed to update {{.EntityNameCamel}}", "id", {{.EntityNameCamel}}.ID, "error", err)
+		span.RecordError(err)
+		return errors.NewInternalError("failed to update {{.EntityNameCamel}}", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		r.logger.Error("Failed to get rows affected for update", "error", err)
+		return errors.NewInternalError("failed to verify update", err)
+	}
+
+	if rowsAffected == 0 {
+		return errors.NewNotFoundError("{{.EntityNameCamel}} not found")
+	}
+
+	return nil
+}
+
+// Delete deletes a {{.EntityNameCamel}} by ID
+func (r *{{.ComponentNamePascal}}Repository) Delete(ctx context.Context, id domain.{{.EntityNamePascal}}ID) error {
+	ctx, span := r.tracer.Start(ctx, "{{.ComponentNamePascal}}Repository.Delete")
+	defer span.End()
+
+	span.SetAttributes(attribute.String("{{.EntityNameSnake}}.id", id.String()))
+
+	query := `
+		DELETE FROM {{.ModuleNameSnake}}_{{.ComponentNameSnake}}
+		WHERE id = $1 AND tenant_id = current_tenant_id()`
+
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		r.logger.Error("Failed to delete {{.EntityNameCamel}}", "id", id, "error", err)
+		span.RecordError(err)
+		return errors.NewInternalError("failed to delete {{.EntityNameCamel}}", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		r.logger.Error("Failed to get rows affected for delete", "error", err)
+		return errors.NewInternalError("failed to verify deletion", err)
+	}
+
+	if rowsAffected == 0 {
+		return errors.NewNotFoundError("{{.EntityNameCamel}} not found")
+	}
+
+	return nil
+}
+
+// List lists {{.EntityNamePlural}} with filtering and pagination
+func (r *{{.ComponentNamePascal}}Repository) List(ctx context.Context, filter domain.{{.EntityNamePascal}}Filter) ([]domain.{{.EntityNamePascal}}, *domain.PaginationResult, error) {
+	ctx, span := r.tracer.Start(ctx, "{{.ComponentNamePascal}}Repository.List")
+	defer span.End()
+
+	// Build query with filters
+	baseQuery := `
+		SELECT id, name, description, status, 
+			   created_at, updated_at, tenant_id
+		FROM {{.ModuleNameSnake}}_{{.ComponentNameSnake}}
+		WHERE tenant_id = current_tenant_id()`
+	
+	countQuery := `
+		SELECT COUNT(*)
+		FROM {{.ModuleNameSnake}}_{{.ComponentNameSnake}}
+		WHERE tenant_id = current_tenant_id()`
+
+	var conditions []string
+	var args []interface{}
+	argIndex := 1
+
+	// Add status filter
+	if filter.Status != nil {
+		conditions = append(conditions, fmt.Sprintf("status = $%d", argIndex))
+		args = append(args, *filter.Status)
+		argIndex++
+	}
+
+	// Add name filter
+	if filter.Name != nil {
+		conditions = append(conditions, fmt.Sprintf("name ILIKE $%d", argIndex))
+		args = append(args, "%"+*filter.Name+"%")
+		argIndex++
+	}
+
+	// Apply conditions
+	if len(conditions) > 0 {
+		conditionStr := " AND " + fmt.Sprintf("(%s)", fmt.Sprintf(" AND %s", conditions))
+		baseQuery += conditionStr
+		countQuery += conditionStr
+	}
+
+	// Get total count
+	var totalCount int64
+	err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&totalCount)
+	if err != nil {
+		r.logger.Error("Failed to get {{.EntityNameCamel}} count", "error", err)
+		span.RecordError(err)
+		return nil, nil, errors.NewInternalError("failed to count {{.EntityNamePlural}}", err)
+	}
+
+	// Add pagination
+	baseQuery += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
+	args = append(args, filter.Limit, filter.Offset)
+
+	// Execute query
+	rows, err := r.db.QueryContext(ctx, baseQuery, args...)
+	if err != nil {
+		r.logger.Error("Failed to list {{.EntityNamePlural}}", "error", err)
+		span.RecordError(err)
+		return nil, nil, errors.NewInternalError("failed to list {{.EntityNamePlural}}", err)
+	}
+	defer rows.Close()
+
+	var {{.EntityNamePlural}} []domain.{{.EntityNamePascal}}
+	for rows.Next() {
+		var {{.EntityNameCamel}} domain.{{.EntityNamePascal}}
+		err := rows.Scan(
+			&{{.EntityNameCamel}}.ID,
+			&{{.EntityNameCamel}}.Name,
+			&{{.EntityNameCamel}}.Description,
+			&{{.EntityNameCamel}}.Status,
+			&{{.EntityNameCamel}}.CreatedAt,
+			&{{.EntityNameCamel}}.UpdatedAt,
+			&{{.EntityNameCamel}}.TenantID,
+		)
+		if err != nil {
+			r.logger.Error("Failed to scan {{.EntityNameCamel}} row", "error", err)
+			span.RecordError(err)
+			return nil, nil, errors.NewInternalError("failed to scan {{.EntityNameCamel}}", err)
+		}
+		{{.EntityNamePlural}} = append({{.EntityNamePlural}}, {{.EntityNameCamel}})
+	}
+
+	if err = rows.Err(); err != nil {
+		r.logger.Error("Error iterating {{.EntityNameCamel}} rows", "error", err)
+		span.RecordError(err)
+		return nil, nil, errors.NewInternalError("failed to iterate {{.EntityNamePlural}}", err)
+	}
+
+	// Calculate pagination
+	pagination := &domain.PaginationResult{
+		Total:       totalCount,
+		Count:       int64(len({{.EntityNamePlural}})),
+		Limit:       filter.Limit,
+		Offset:      filter.Offset,
+		HasNext:     filter.Offset+filter.Limit < totalCount,
+		HasPrevious: filter.Offset > 0,
+	}
+
+	span.SetAttributes(attribute.Int("{{.EntityNameSnake}}.count", len({{.EntityNamePlural}})))
+	return {{.EntityNamePlural}}, pagination, nil
+}

@@ -1,0 +1,222 @@
+package mappers
+
+import (
+	"time"
+
+	"github.com/niiniyare/erp/internal/core/{{.ModuleNameSnake}}/domain"
+	"github.com/niiniyare/erp/internal/platform/database/models"
+)
+
+// {{.ComponentNamePascal}}Mapper handles mapping between domain and database models for {{.ComponentName}}
+type {{.ComponentNamePascal}}Mapper struct{}
+
+// New{{.ComponentNamePascal}}Mapper creates a new {{.ComponentNamePascal}}Mapper
+func New{{.ComponentNamePascal}}Mapper() *{{.ComponentNamePascal}}Mapper {
+	return &{{.ComponentNamePascal}}Mapper{}
+}
+
+// ToDomain converts a database model to a domain entity
+func (m *{{.ComponentNamePascal}}Mapper) ToDomain(dbModel *models.{{.EntityNamePascal}}) *domain.{{.EntityNamePascal}} {
+	if dbModel == nil {
+		return nil
+	}
+
+	// Parse the ID
+	id, err := domain.Parse{{.EntityNamePascal}}ID(dbModel.ID)
+	if err != nil {
+		// Handle error appropriately - log and return nil or default
+		return nil
+	}
+
+	// Parse the status
+	status, err := domain.Parse{{.EntityNamePascal}}Status(dbModel.Status)
+	if err != nil {
+		// Default to active if parsing fails
+		status = domain.{{.EntityNamePascal}}StatusActive
+	}
+
+	return &domain.{{.EntityNamePascal}}{
+		ID:          id,
+		Name:        dbModel.Name,
+		Description: m.stringPtrFromDB(dbModel.Description),
+		Status:      status,
+		CreatedAt:   dbModel.CreatedAt,
+		UpdatedAt:   dbModel.UpdatedAt,
+		TenantID:    dbModel.TenantID,
+	}
+}
+
+// ToDatabase converts a domain entity to a database model
+func (m *{{.ComponentNamePascal}}Mapper) ToDatabase(entity *domain.{{.EntityNamePascal}}) *models.{{.EntityNamePascal}} {
+	if entity == nil {
+		return nil
+	}
+
+	return &models.{{.EntityNamePascal}}{
+		ID:          entity.ID.String(),
+		Name:        entity.Name,
+		Description: m.stringPtrToDB(entity.Description),
+		Status:      string(entity.Status),
+		CreatedAt:   entity.CreatedAt,
+		UpdatedAt:   entity.UpdatedAt,
+		TenantID:    entity.TenantID,
+	}
+}
+
+// ToDomainList converts a list of database models to domain entities
+func (m *{{.ComponentNamePascal}}Mapper) ToDomainList(dbModels []models.{{.EntityNamePascal}}) []domain.{{.EntityNamePascal}} {
+	if dbModels == nil {
+		return nil
+	}
+
+	entities := make([]domain.{{.EntityNamePascal}}, 0, len(dbModels))
+	for _, dbModel := range dbModels {
+		if entity := m.ToDomain(&dbModel); entity != nil {
+			entities = append(entities, *entity)
+		}
+	}
+
+	return entities
+}
+
+// ToDatabaseList converts a list of domain entities to database models
+func (m *{{.ComponentNamePascal}}Mapper) ToDatabaseList(entities []domain.{{.EntityNamePascal}}) []models.{{.EntityNamePascal}} {
+	if entities == nil {
+		return nil
+	}
+
+	dbModels := make([]models.{{.EntityNamePascal}}, 0, len(entities))
+	for _, entity := range entities {
+		if dbModel := m.ToDatabase(&entity); dbModel != nil {
+			dbModels = append(dbModels, *dbModel)
+		}
+	}
+
+	return dbModels
+}
+
+// ToCreateModel converts a create request to a database model
+func (m *{{.ComponentNamePascal}}Mapper) ToCreateModel(req domain.Create{{.EntityNamePascal}}Request, id domain.{{.EntityNamePascal}}ID, tenantID string) *models.{{.EntityNamePascal}} {
+	now := time.Now()
+
+	return &models.{{.EntityNamePascal}}{
+		ID:          id.String(),
+		Name:        req.Name,
+		Description: m.stringPtrToDB(req.Description),
+		Status:      string(domain.{{.EntityNamePascal}}StatusActive),
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		TenantID:    tenantID,
+	}
+}
+
+// ApplyUpdateToModel applies an update request to an existing database model
+func (m *{{.ComponentNamePascal}}Mapper) ApplyUpdateToModel(dbModel *models.{{.EntityNamePascal}}, req domain.Update{{.EntityNamePascal}}Request) {
+	if dbModel == nil {
+		return
+	}
+
+	// Update fields that are provided in the request
+	if req.Name != nil {
+		dbModel.Name = *req.Name
+	}
+	
+	if req.Description != nil {
+		dbModel.Description = m.stringPtrToDB(req.Description)
+	}
+
+	// Always update the timestamp
+	dbModel.UpdatedAt = time.Now()
+}
+
+// ToFilterParams converts a domain filter to database query parameters
+func (m *{{.ComponentNamePascal}}Mapper) ToFilterParams(filter domain.{{.EntityNamePascal}}Filter) map[string]interface{} {
+	params := make(map[string]interface{})
+
+	if filter.Status != nil {
+		params["status"] = string(*filter.Status)
+	}
+
+	if filter.Name != nil && *filter.Name != "" {
+		params["name_pattern"] = "%" + *filter.Name + "%"
+	}
+
+	params["limit"] = filter.Limit
+	params["offset"] = filter.Offset
+
+	if filter.SortBy != nil {
+		params["sort_by"] = *filter.SortBy
+	}
+
+	if filter.SortOrder != nil {
+		params["sort_order"] = *filter.SortOrder
+	}
+
+	return params
+}
+
+// ToResponse converts a domain entity to an API response
+func (m *{{.ComponentNamePascal}}Mapper) ToResponse(entity *domain.{{.EntityNamePascal}}) *domain.{{.EntityNamePascal}}Response {
+	if entity == nil {
+		return nil
+	}
+
+	return &domain.{{.EntityNamePascal}}Response{
+		ID:          entity.ID.String(),
+		Name:        entity.Name,
+		Description: entity.Description,
+		Status:      string(entity.Status),
+		CreatedAt:   entity.CreatedAt,
+		UpdatedAt:   entity.UpdatedAt,
+	}
+}
+
+// ToResponseList converts a list of domain entities to API responses
+func (m *{{.ComponentNamePascal}}Mapper) ToResponseList(entities []domain.{{.EntityNamePascal}}) []domain.{{.EntityNamePascal}}Response {
+	if entities == nil {
+		return nil
+	}
+
+	responses := make([]domain.{{.EntityNamePascal}}Response, 0, len(entities))
+	for _, entity := range entities {
+		if response := m.ToResponse(&entity); response != nil {
+			responses = append(responses, *response)
+		}
+	}
+
+	return responses
+}
+
+// Helper methods for handling pointer conversions
+
+// stringPtrFromDB converts a database string pointer to a domain string pointer
+func (m *{{.ComponentNamePascal}}Mapper) stringPtrFromDB(dbPtr *string) *string {
+	if dbPtr == nil || *dbPtr == "" {
+		return nil
+	}
+	return dbPtr
+}
+
+// stringPtrToDB converts a domain string pointer to a database string pointer
+func (m *{{.ComponentNamePascal}}Mapper) stringPtrToDB(domainPtr *string) *string {
+	if domainPtr == nil {
+		return nil
+	}
+	return domainPtr
+}
+
+// timeFromDB converts a database time to domain time (handles nullable times)
+func (m *{{.ComponentNamePascal}}Mapper) timeFromDB(dbTime *time.Time) time.Time {
+	if dbTime == nil {
+		return time.Time{}
+	}
+	return *dbTime
+}
+
+// timeToDB converts a domain time to database time pointer
+func (m *{{.ComponentNamePascal}}Mapper) timeToDB(domainTime time.Time) *time.Time {
+	if domainTime.IsZero() {
+		return nil
+	}
+	return &domainTime
+}

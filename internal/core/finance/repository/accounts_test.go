@@ -503,3 +503,35 @@ func (s *AccountsRepositoryTestSuite) TestDeleteAccount() {
 }
 
 // Helper functions are now in mappers.go
+
+func Test_accountsRepository_GetAccountHierarchy(t *testing.T) {
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for target function.
+		rootID  uuid.UUID
+		want    []*domain.Accounts
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// TODO: construct the receiver type.
+			var r accountsRepository
+			got, gotErr := r.GetAccountHierarchy(context.Background(), tt.rootID)
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("GetAccountHierarchy() failed: %v", gotErr)
+				}
+				return
+			}
+			if tt.wantErr {
+				t.Fatal("GetAccountHierarchy() succeeded unexpectedly")
+			}
+			// TODO: update the condition below to compare got with tt.want.
+			if true {
+				t.Errorf("GetAccountHierarchy() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

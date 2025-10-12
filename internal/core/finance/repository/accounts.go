@@ -45,14 +45,9 @@ func (r *accountsRepository) Create(ctx context.Context, account *domain.Account
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.Create")
 	defer span.End()
 
-	// Get tenant ID from context
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
-		return fmt.Errorf("tenant ID not found in context")
-	}
-
 	// Use tenant-aware transaction for proper isolation
-	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	// return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		// Map domain account directly to SQLC parameters
 		params, err := mapDomainAccountToSQLCCreateDirect(account)
 		if err != nil {
@@ -81,14 +76,8 @@ func (r *accountsRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetByID")
 	defer span.End()
 
-	// Get tenant ID from context
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
-		return nil, fmt.Errorf("tenant ID not found in context")
-	}
-
 	var account *domain.Accounts
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		sqlcAccount, err := s.GetAccountByID(ctx, id)
 		if err != nil {
 			if err == db.ErrNoRows {
@@ -116,13 +105,13 @@ func (r *accountsRepository) GetByCode(ctx context.Context, entityID *uuid.UUID,
 	defer span.End()
 
 	// Get tenant ID from context
-	tenantID, ok := shared.GetTenantID(ctx)
+	_, ok := shared.GetTenantID(ctx)
 	if !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var account *domain.Accounts
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		// Note: SQLC GetAccountByCode only takes accountCode string, entityID filtering handled by RLS
 		sqlcAccount, err := s.GetAccountByCode(ctx, accountCode)
 		if err != nil {
@@ -151,12 +140,12 @@ func (r *accountsRepository) Update(ctx context.Context, account *domain.Account
 	defer span.End()
 
 	// Get tenant ID from context
-	tenantID, ok := shared.GetTenantID(ctx)
+	_, ok := shared.GetTenantID(ctx)
 	if !ok {
 		return fmt.Errorf("tenant ID not found in context")
 	}
 
-	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		// Map account to SQLC parameters
 		params := db.UpdateAccountParams{
 			AccountID:              account.ID,
@@ -205,14 +194,14 @@ func (r *accountsRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	defer span.End()
 
 	// Get tenant and user ID from context
-	tenantID, ok := shared.GetTenantID(ctx)
+	_, ok := shared.GetTenantID(ctx)
 	if !ok {
 		return fmt.Errorf("tenant ID not found in context")
 	}
 
 	userID, _ := shared.GetUserID(ctx) // Optional
 
-	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		params := db.SoftDeleteAccountParams{
 			AccountID: id,
 			UpdatedBy: nil, // Don't set updated_by if userID is not available
@@ -243,13 +232,13 @@ func (r *accountsRepository) List(ctx context.Context, filter *domain.AccountFil
 	defer span.End()
 
 	// Get tenant ID from context
-	tenantID, ok := shared.GetTenantID(ctx)
+	_, ok := shared.GetTenantID(ctx)
 	if !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var accounts []*domain.Accounts
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		// Map domain filter to SQLC parameters
 		params, err := mapAccountFilterToSQLCParams(filter)
 		if err != nil {
@@ -286,13 +275,13 @@ func (r *accountsRepository) Count(ctx context.Context, filter *domain.AccountFi
 	defer span.End()
 
 	// Get tenant ID from context
-	tenantID, ok := shared.GetTenantID(ctx)
+	_, ok := shared.GetTenantID(ctx)
 	if !ok {
 		return 0, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var count int64
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		// Map basic filter parameters for count
 		params := db.CountAccountsParams{}
 
@@ -340,13 +329,13 @@ func (r *accountsRepository) ListByParent(ctx context.Context, parentID uuid.UUI
 	defer span.End()
 
 	// Get tenant ID from context
-	tenantID, ok := shared.GetTenantID(ctx)
+	_, ok := shared.GetTenantID(ctx)
 	if !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var accounts []*domain.Accounts
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		sqlcAccounts, err := s.ListAccountsByParent(ctx, &parentID)
 		if err != nil {
 			return r.mapDatabaseError(err, "list_accounts_by_parent")
@@ -390,13 +379,13 @@ func (r *accountsRepository) GetAccountHierarchy(ctx context.Context, rootID uui
 	defer span.End()
 
 	// Get tenant ID from context
-	tenantID, ok := shared.GetTenantID(ctx)
+	_, ok := shared.GetTenantID(ctx)
 	if !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var accounts []*domain.Accounts
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		// Convert rootID to string for hierarchy query
 		rootIDStr := rootID.String()
 		sqlcAccounts, err := s.GetAccountHierarchy(ctx, &rootIDStr)

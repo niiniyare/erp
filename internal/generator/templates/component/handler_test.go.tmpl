@@ -1,0 +1,393 @@
+package handlers_test
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	"time"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/niiniyare/erp/internal/api/handlers"
+	"github.com/niiniyare/erp/internal/core/{{.ModuleNameSnake}}/domain"
+	"github.com/niiniyare/erp/internal/shared/errors"
+	"github.com/niiniyare/erp/internal/shared/logging"
+	"github.com/niiniyare/erp/internal/shared/tracing"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+)
+
+// Mock service
+type Mock{{.ComponentNamePascal}}Service struct {
+	mock.Mock
+}
+
+func (m *Mock{{.ComponentNamePascal}}Service) Create{{.EntityNamePascal}}(ctx context.Context, req domain.Create{{.EntityNamePascal}}Request) (*domain.{{.EntityNamePascal}}, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*domain.{{.EntityNamePascal}}), args.Error(1)
+}
+
+func (m *Mock{{.ComponentNamePascal}}Service) Get{{.EntityNamePascal}}(ctx context.Context, id domain.{{.EntityNamePascal}}ID) (*domain.{{.EntityNamePascal}}, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(*domain.{{.EntityNamePascal}}), args.Error(1)
+}
+
+func (m *Mock{{.ComponentNamePascal}}Service) Update{{.EntityNamePascal}}(ctx context.Context, id domain.{{.EntityNamePascal}}ID, req domain.Update{{.EntityNamePascal}}Request) (*domain.{{.EntityNamePascal}}, error) {
+	args := m.Called(ctx, id, req)
+	return args.Get(0).(*domain.{{.EntityNamePascal}}), args.Error(1)
+}
+
+func (m *Mock{{.ComponentNamePascal}}Service) Delete{{.EntityNamePascal}}(ctx context.Context, id domain.{{.EntityNamePascal}}ID) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *Mock{{.ComponentNamePascal}}Service) List{{.EntityNamePlural}}(ctx context.Context, filter domain.{{.EntityNamePascal}}Filter) ([]domain.{{.EntityNamePascal}}, *domain.PaginationResult, error) {
+	args := m.Called(ctx, filter)
+	return args.Get(0).([]domain.{{.EntityNamePascal}}), args.Get(1).(*domain.PaginationResult), args.Error(2)
+}
+
+func setup{{.ComponentNamePascal}}HandlerTest() (*fiber.App, *handlers.{{.ComponentNamePascal}}Handler, *Mock{{.ComponentNamePascal}}Service) {
+	app := fiber.New()
+	
+	mockService := &Mock{{.ComponentNamePascal}}Service{}
+	logger := logging.NewNopLogger()
+	tracer := tracing.NewNopTracer()
+	
+	handler := handlers.New{{.ComponentNamePascal}}Handler(mockService, logger, tracer)
+	
+	// Setup routes
+	api := app.Group("/api/v1")
+	{{.ComponentNameSnake}} := api.Group("/{{.ModuleNameKebab}}/{{.ComponentNameKebab}}")
+	{{.ComponentNameSnake}}.Post("/", handler.Create{{.EntityNamePascal}})
+	{{.ComponentNameSnake}}.Get("/:id", handler.Get{{.EntityNamePascal}})
+	{{.ComponentNameSnake}}.Put("/:id", handler.Update{{.EntityNamePascal}})
+	{{.ComponentNameSnake}}.Delete("/:id", handler.Delete{{.EntityNamePascal}})
+	{{.ComponentNameSnake}}.Get("/", handler.List{{.EntityNamePlural}})
+	
+	return app, handler, mockService
+}
+
+func createTest{{.EntityNamePascal}}() *domain.{{.EntityNamePascal}} {
+	now := time.Now()
+	return &domain.{{.EntityNamePascal}}{
+		ID:          domain.New{{.EntityNamePascal}}ID(),
+		Name:        "Test {{.EntityNamePascal}}",
+		Description: stringPtr("Test description"),
+		Status:      domain.{{.EntityNamePascal}}StatusActive,
+		CreatedAt:   now,
+		UpdatedAt:   now,
+		TenantID:    "test-tenant-id",
+	}
+}
+
+func Test{{.ComponentNamePascal}}Handler_Create{{.EntityNamePascal}}_Success(t *testing.T) {
+	app, _, mockService := setup{{.ComponentNamePascal}}HandlerTest()
+	
+	payload := map[string]interface{}{
+		"name":        "Test {{.EntityNamePascal}}",
+		"description": "Test description",
+	}
+	
+	expected{{.EntityNamePascal}} := createTest{{.EntityNamePascal}}()
+	expected{{.EntityNamePascal}}.Name = payload["name"].(string)
+	expected{{.EntityNamePascal}}.Description = stringPtr(payload["description"].(string))
+	
+	mockService.On("Create{{.EntityNamePascal}}", mock.Anything, mock.AnythingOfType("domain.Create{{.EntityNamePascal}}Request")).
+		Return(expected{{.EntityNamePascal}}, nil)
+	
+	body, _ := json.Marshal(payload)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/{{.ModuleNameKebab}}/{{.ComponentNameKebab}}/", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	
+	assert.Equal(t, http.StatusCreated, resp.StatusCode)
+	
+	var response map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	require.NoError(t, err)
+	
+	assert.Equal(t, expected{{.EntityNamePascal}}.ID.String(), response["id"])
+	assert.Equal(t, expected{{.EntityNamePascal}}.Name, response["name"])
+	
+	mockService.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Handler_Create{{.EntityNamePascal}}_ValidationError(t *testing.T) {
+	app, _, _ := setup{{.ComponentNamePascal}}HandlerTest()
+	
+	payload := map[string]interface{}{
+		"name": "", // Invalid: empty name
+	}
+	
+	body, _ := json.Marshal(payload)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/{{.ModuleNameKebab}}/{{.ComponentNameKebab}}/", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}
+
+func Test{{.ComponentNamePascal}}Handler_Create{{.EntityNamePascal}}_ServiceError(t *testing.T) {
+	app, _, mockService := setup{{.ComponentNamePascal}}HandlerTest()
+	
+	payload := map[string]interface{}{
+		"name":        "Test {{.EntityNamePascal}}",
+		"description": "Test description",
+	}
+	
+	serviceErr := errors.NewInternalError("service error", nil)
+	mockService.On("Create{{.EntityNamePascal}}", mock.Anything, mock.AnythingOfType("domain.Create{{.EntityNamePascal}}Request")).
+		Return((*domain.{{.EntityNamePascal}})(nil), serviceErr)
+	
+	body, _ := json.Marshal(payload)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/{{.ModuleNameKebab}}/{{.ComponentNameKebab}}/", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	
+	assert.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+	
+	mockService.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Handler_Get{{.EntityNamePascal}}_Success(t *testing.T) {
+	app, _, mockService := setup{{.ComponentNamePascal}}HandlerTest()
+	
+	expected{{.EntityNamePascal}} := createTest{{.EntityNamePascal}}()
+	
+	mockService.On("Get{{.EntityNamePascal}}", mock.Anything, expected{{.EntityNamePascal}}.ID).
+		Return(expected{{.EntityNamePascal}}, nil)
+	
+	url := fmt.Sprintf("/api/v1/{{.ModuleNameKebab}}/{{.ComponentNameKebab}}/%s", expected{{.EntityNamePascal}}.ID.String())
+	req := httptest.NewRequest(http.MethodGet, url, nil)
+	
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	
+	var response map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	require.NoError(t, err)
+	
+	assert.Equal(t, expected{{.EntityNamePascal}}.ID.String(), response["id"])
+	assert.Equal(t, expected{{.EntityNamePascal}}.Name, response["name"])
+	
+	mockService.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Handler_Get{{.EntityNamePascal}}_NotFound(t *testing.T) {
+	app, _, mockService := setup{{.ComponentNamePascal}}HandlerTest()
+	
+	id := domain.New{{.EntityNamePascal}}ID()
+	
+	notFoundErr := errors.NewNotFoundError("{{.EntityNameCamel}} not found")
+	mockService.On("Get{{.EntityNamePascal}}", mock.Anything, id).
+		Return((*domain.{{.EntityNamePascal}})(nil), notFoundErr)
+	
+	url := fmt.Sprintf("/api/v1/{{.ModuleNameKebab}}/{{.ComponentNameKebab}}/%s", id.String())
+	req := httptest.NewRequest(http.MethodGet, url, nil)
+	
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	
+	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
+	
+	mockService.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Handler_Get{{.EntityNamePascal}}_InvalidID(t *testing.T) {
+	app, _, _ := setup{{.ComponentNamePascal}}HandlerTest()
+	
+	url := "/api/v1/{{.ModuleNameKebab}}/{{.ComponentNameKebab}}/invalid-id"
+	req := httptest.NewRequest(http.MethodGet, url, nil)
+	
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	
+	assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+}
+
+func Test{{.ComponentNamePascal}}Handler_Update{{.EntityNamePascal}}_Success(t *testing.T) {
+	app, _, mockService := setup{{.ComponentNamePascal}}HandlerTest()
+	
+	existing{{.EntityNamePascal}} := createTest{{.EntityNamePascal}}()
+	
+	payload := map[string]interface{}{
+		"name":        "Updated {{.EntityNamePascal}}",
+		"description": "Updated description",
+	}
+	
+	updated{{.EntityNamePascal}} := *existing{{.EntityNamePascal}}
+	updated{{.EntityNamePascal}}.Name = payload["name"].(string)
+	updated{{.EntityNamePascal}}.Description = stringPtr(payload["description"].(string))
+	
+	mockService.On("Update{{.EntityNamePascal}}", mock.Anything, existing{{.EntityNamePascal}}.ID, mock.AnythingOfType("domain.Update{{.EntityNamePascal}}Request")).
+		Return(&updated{{.EntityNamePascal}}, nil)
+	
+	body, _ := json.Marshal(payload)
+	url := fmt.Sprintf("/api/v1/{{.ModuleNameKebab}}/{{.ComponentNameKebab}}/%s", existing{{.EntityNamePascal}}.ID.String())
+	req := httptest.NewRequest(http.MethodPut, url, bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	
+	var response map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	require.NoError(t, err)
+	
+	assert.Equal(t, updated{{.EntityNamePascal}}.Name, response["name"])
+	
+	mockService.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Handler_Delete{{.EntityNamePascal}}_Success(t *testing.T) {
+	app, _, mockService := setup{{.ComponentNamePascal}}HandlerTest()
+	
+	id := domain.New{{.EntityNamePascal}}ID()
+	
+	mockService.On("Delete{{.EntityNamePascal}}", mock.Anything, id).
+		Return(nil)
+	
+	url := fmt.Sprintf("/api/v1/{{.ModuleNameKebab}}/{{.ComponentNameKebab}}/%s", id.String())
+	req := httptest.NewRequest(http.MethodDelete, url, nil)
+	
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	
+	assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+	
+	mockService.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Handler_List{{.EntityNamePlural}}_Success(t *testing.T) {
+	app, _, mockService := setup{{.ComponentNamePascal}}HandlerTest()
+	
+	{{.EntityNamePlural}} := []domain.{{.EntityNamePascal}}{
+		*createTest{{.EntityNamePascal}}(),
+		*createTest{{.EntityNamePascal}}(),
+	}
+	
+	pagination := &domain.PaginationResult{
+		Total:       2,
+		Count:       2,
+		Limit:       20,
+		Offset:      0,
+		HasNext:     false,
+		HasPrevious: false,
+	}
+	
+	mockService.On("List{{.EntityNamePlural}}", mock.Anything, mock.AnythingOfType("domain.{{.EntityNamePascal}}Filter")).
+		Return({{.EntityNamePlural}}, pagination, nil)
+	
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/{{.ModuleNameKebab}}/{{.ComponentNameKebab}}/", nil)
+	
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	
+	var response map[string]interface{}
+	err = json.NewDecoder(resp.Body).Decode(&response)
+	require.NoError(t, err)
+	
+	data := response["data"].([]interface{})
+	assert.Len(t, data, 2)
+	
+	paginationResp := response["pagination"].(map[string]interface{})
+	assert.Equal(t, float64(2), paginationResp["total"])
+	
+	mockService.AssertExpectations(t)
+}
+
+func Test{{.ComponentNamePascal}}Handler_List{{.EntityNamePlural}}_WithFilters(t *testing.T) {
+	app, _, mockService := setup{{.ComponentNamePascal}}HandlerTest()
+	
+	{{.EntityNamePlural}} := []domain.{{.EntityNamePascal}}{
+		*createTest{{.EntityNamePascal}}(),
+	}
+	
+	pagination := &domain.PaginationResult{
+		Total:       1,
+		Count:       1,
+		Limit:       10,
+		Offset:      0,
+		HasNext:     false,
+		HasPrevious: false,
+	}
+	
+	mockService.On("List{{.EntityNamePlural}}", mock.Anything, mock.MatchedBy(func(filter domain.{{.EntityNamePascal}}Filter) bool {
+		return filter.Limit == 10 && filter.Offset == 0 && 
+			   filter.Status != nil && *filter.Status == domain.{{.EntityNamePascal}}StatusActive &&
+			   filter.Name != nil && *filter.Name == "test"
+	})).Return({{.EntityNamePlural}}, pagination, nil)
+	
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/{{.ModuleNameKebab}}/{{.ComponentNameKebab}}/?limit=10&offset=0&status=active&name=test", nil)
+	
+	resp, err := app.Test(req)
+	require.NoError(t, err)
+	
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	
+	mockService.AssertExpectations(t)
+}
+
+// Benchmark tests
+
+func Benchmark{{.ComponentNamePascal}}Handler_Create{{.EntityNamePascal}}(b *testing.B) {
+	app, _, mockService := setup{{.ComponentNamePascal}}HandlerTest()
+	
+	payload := map[string]interface{}{
+		"name":        "Benchmark {{.EntityNamePascal}}",
+		"description": "Benchmark description",
+	}
+	
+	test{{.EntityNamePascal}} := createTest{{.EntityNamePascal}}()
+	mockService.On("Create{{.EntityNamePascal}}", mock.Anything, mock.AnythingOfType("domain.Create{{.EntityNamePascal}}Request")).
+		Return(test{{.EntityNamePascal}}, nil)
+	
+	body, _ := json.Marshal(payload)
+	
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodPost, "/api/v1/{{.ModuleNameKebab}}/{{.ComponentNameKebab}}/", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		
+		_, _ = app.Test(req)
+	}
+}
+
+func Benchmark{{.ComponentNamePascal}}Handler_Get{{.EntityNamePascal}}(b *testing.B) {
+	app, _, mockService := setup{{.ComponentNamePascal}}HandlerTest()
+	
+	test{{.EntityNamePascal}} := createTest{{.EntityNamePascal}}()
+	mockService.On("Get{{.EntityNamePascal}}", mock.Anything, test{{.EntityNamePascal}}.ID).
+		Return(test{{.EntityNamePascal}}, nil)
+	
+	url := fmt.Sprintf("/api/v1/{{.ModuleNameKebab}}/{{.ComponentNameKebab}}/%s", test{{.EntityNamePascal}}.ID.String())
+	
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodGet, url, nil)
+		_, _ = app.Test(req)
+	}
+}
+
+// Test helper functions
+
+func stringPtr(s string) *string {
+	return &s
+}
