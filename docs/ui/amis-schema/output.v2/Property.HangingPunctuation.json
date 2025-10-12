@@ -1,0 +1,32 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "allow-end"
+    },
+    {
+      "type": "string",
+      "const": "first"
+    },
+    {
+      "type": "string",
+      "const": "force-end"
+    },
+    {
+      "type": "string",
+      "const": "last"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.HangingPunctuation.json"
+}

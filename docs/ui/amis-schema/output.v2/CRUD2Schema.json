@@ -1,0 +1,15 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/CRUD2CardsSchema"
+    },
+    {
+      "$ref": "#/definitions/CRUD2ListSchema"
+    },
+    {
+      "$ref": "#/definitions/CRUD2TableSchema"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./CRUD2Schema.json"
+}

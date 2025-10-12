@@ -15,7 +15,7 @@ def chunk_json_schema(schema_path: str, output_dir: str = "chunked_schemas"):
     created_files = []
 
     # Load schema
-    print(f"📥 Loading schema: {schema_path}")
+    print(f" Loading schema: {schema_path}")
     if not schema_path.exists():
         raise FileNotFoundError(f"Schema file not found: {schema_path}")
 
@@ -25,7 +25,7 @@ def chunk_json_schema(schema_path: str, output_dir: str = "chunked_schemas"):
         except json.JSONDecodeError as e:
             raise ValueError(f"Invalid JSON in {schema_path}: {e}")
 
-    print("🔑 Top-level keys:", list(schema.keys()))
+    print("Top-level keys:", list(schema.keys()))
 
     # Detect definition source
     if "$defs" in schema and isinstance(schema["$defs"], dict):
@@ -45,14 +45,14 @@ def chunk_json_schema(schema_path: str, output_dir: str = "chunked_schemas"):
             schema.pop("components", None)
         defs_source = "components/schemas"
     elif "properties" in schema and isinstance(schema["properties"], dict):
-        print("⚠️ No $defs/definitions/components found. Falling back to 'properties'.")
+        print("No $defs/definitions/components found. Falling back to 'properties'.")
         definitions = schema.pop("properties")
         defs_source = "properties (fallback)"
     else:
-        print("❌ No definitions or properties found — nothing to chunk.")
+        print(" No definitions or properties found — nothing to chunk.")
         return []
 
-    print(f"🧠 Using definitions source: {defs_source} ({len(definitions)} items)")
+    print(f"Using definitions source: {defs_source} ({len(definitions)} items)")
 
     # Write each sub-schema file
     for name, sub_schema in definitions.items():
@@ -85,8 +85,8 @@ def chunk_json_schema(schema_path: str, output_dir: str = "chunked_schemas"):
         json.dump(main_schema, f, indent=2, ensure_ascii=False)
 
     created_files.append(str(main_file))
-    print(f"\n✅ Main schema saved: {main_file}")
-    print(f"🔗 Each sub-schema now referenced via $ref.\n")
+    print(f"\nMain schema saved: {main_file}")
+    print(f"Each sub-schema now referenced via $ref.\n")
 
     return created_files
 

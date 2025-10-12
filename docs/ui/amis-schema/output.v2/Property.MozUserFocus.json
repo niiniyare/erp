@@ -1,0 +1,41 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "ignore"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string",
+      "const": "normal"
+    },
+    {
+      "type": "string",
+      "const": "select-after"
+    },
+    {
+      "type": "string",
+      "const": "select-all"
+    },
+    {
+      "type": "string",
+      "const": "select-before"
+    },
+    {
+      "type": "string",
+      "const": "select-menu"
+    },
+    {
+      "type": "string",
+      "const": "select-same"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.MozUserFocus.json"
+}

@@ -1,0 +1,29 @@
+{
+  "anyOf": [
+    {
+      "type": "string"
+    },
+    {
+      "type": "object",
+      "properties": {
+        "prototype": {},
+        "length": {
+          "type": "number"
+        },
+        "arguments": {},
+        "caller": {
+          "$ref": "#/definitions/interface-1922134811-9821-11285-1922134811-0-212510"
+        }
+      },
+      "required": [
+        "prototype",
+        "length",
+        "arguments",
+        "caller"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataProvider.json"
+}

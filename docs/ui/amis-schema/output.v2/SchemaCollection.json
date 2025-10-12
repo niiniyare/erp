@@ -1,0 +1,25 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/SchemaObject"
+    },
+    {
+      "$ref": "#/definitions/SchemaTpl"
+    },
+    {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/SchemaObject"
+          },
+          {
+            "$ref": "#/definitions/SchemaTpl"
+          }
+        ]
+      }
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./SchemaCollection.json"
+}

@@ -1,0 +1,25 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "column"
+    },
+    {
+      "type": "string",
+      "const": "column-reverse"
+    },
+    {
+      "type": "string",
+      "const": "row"
+    },
+    {
+      "type": "string",
+      "const": "row-reverse"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.FlexDirection.json"
+}

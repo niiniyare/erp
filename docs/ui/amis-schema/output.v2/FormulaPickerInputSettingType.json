@@ -1,0 +1,15 @@
+{
+  "type": "string",
+  "enum": [
+    "text",
+    "number",
+    "boolean",
+    "date",
+    "time",
+    "datetime",
+    "select",
+    "custom"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./FormulaPickerInputSettingType.json"
+}

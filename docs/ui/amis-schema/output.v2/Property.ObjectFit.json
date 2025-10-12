@@ -1,0 +1,29 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "contain"
+    },
+    {
+      "type": "string",
+      "const": "cover"
+    },
+    {
+      "type": "string",
+      "const": "fill"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string",
+      "const": "scale-down"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.ObjectFit.json"
+}

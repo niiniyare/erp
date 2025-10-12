@@ -1,0 +1,28 @@
+{
+  "anyOf": [
+    {
+      "type": "string"
+    },
+    {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "not": {}
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ClassName.json"
+}

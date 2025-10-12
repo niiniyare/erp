@@ -1,0 +1,12 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/DataProvider"
+    },
+    {
+      "$ref": "#/definitions/DataProviderCollection"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ComposedDataProvider.json"
+}

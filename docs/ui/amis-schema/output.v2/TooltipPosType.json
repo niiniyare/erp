@@ -1,0 +1,12 @@
+{
+  "type": "string",
+  "enum": [
+    "auto",
+    "top",
+    "right",
+    "bottom",
+    "left"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./TooltipPosType.json"
+}

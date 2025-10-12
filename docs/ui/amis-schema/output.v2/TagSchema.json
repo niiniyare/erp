@@ -1,0 +1,179 @@
+{
+  "type": "object",
+  "properties": {
+    "$$id": {
+      "type": "string",
+      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "类名"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "是否禁用"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否禁用表达式"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "是否隐藏"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否隐藏表达式"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "是否显示"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否显示表达式"
+    },
+    "id": {
+      "type": "string",
+      "description": "组件唯一 id，主要用于日志采集"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "事件动作配置"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "是否静态展示"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否静态展示表达式"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "静态展示空值占位"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项类名"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项Label类名"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项Value类名"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "自定义样式"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "组件行为、用途，如 create、update、remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "组件名称，通常是业务名称方便定位"
+        },
+        "mock": {
+          "description": "编辑器假数据，方便展示"
+        }
+      },
+      "description": "编辑器配置，运行时可以忽略"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "可以组件级别用来关闭移动端样式"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "type": {
+      "type": "string",
+      "const": "tag"
+    },
+    "testid": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string",
+      "description": "标签颜色"
+    },
+    "label": {
+      "type": "string",
+      "description": "标签文本内容"
+    },
+    "displayMode": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "rounded",
+        "status"
+      ],
+      "description": "normal: 面性标签，对应color的背景色 rounded: 线性标签， 对应color的边框 status: 带图标的标签， 图标可以自定义"
+    },
+    "icon": {
+      "$ref": "#/definitions/SchemaIcon",
+      "description": "status模式时候设置的前置图标"
+    },
+    "closable": {
+      "type": "boolean",
+      "description": "是否展示关闭按钮"
+    },
+    "closeIcon": {
+      "$ref": "#/definitions/SchemaIcon",
+      "description": "关闭图标"
+    },
+    "checkable": {
+      "type": "boolean",
+      "description": "是否是可选的标签"
+    },
+    "checked": {
+      "type": "boolean",
+      "description": "是否选中"
+    }
+  },
+  "required": [
+    "closeIcon",
+    "label",
+    "type"
+  ],
+  "additionalProperties": false,
+  "description": "Tag",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./TagSchema.json"
+}

@@ -1,0 +1,52 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "common-ligatures"
+    },
+    {
+      "type": "string",
+      "const": "contextual"
+    },
+    {
+      "type": "string",
+      "const": "discretionary-ligatures"
+    },
+    {
+      "type": "string",
+      "const": "historical-ligatures"
+    },
+    {
+      "type": "string",
+      "const": "no-common-ligatures"
+    },
+    {
+      "type": "string",
+      "const": "no-contextual"
+    },
+    {
+      "type": "string",
+      "const": "no-discretionary-ligatures"
+    },
+    {
+      "type": "string",
+      "const": "no-historical-ligatures"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string",
+      "const": "normal"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.FontVariantLigatures.json"
+}

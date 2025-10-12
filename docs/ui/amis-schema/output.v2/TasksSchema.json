@@ -1,0 +1,281 @@
+{
+  "type": "object",
+  "properties": {
+    "loadingConfig": {
+      "type": "object",
+      "properties": {
+        "root": {
+          "type": "string"
+        },
+        "show": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "$$id": {
+      "type": "string",
+      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "容器 css 类名"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "是否禁用"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否禁用表达式"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "是否隐藏"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否隐藏表达式"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "是否显示"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否显示表达式"
+    },
+    "id": {
+      "type": "string",
+      "description": "组件唯一 id，主要用于日志采集"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "事件动作配置"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "是否静态展示"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否静态展示表达式"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "静态展示空值占位"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项类名"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项Label类名"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项Value类名"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "组件样式"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "组件行为、用途，如 create、update、remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "组件名称，通常是业务名称方便定位"
+        },
+        "mock": {
+          "description": "编辑器假数据，方便展示"
+        }
+      },
+      "description": "编辑器配置，运行时可以忽略"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "可以组件级别用来关闭移动端样式"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "type": {
+      "type": "string",
+      "const": "tasks",
+      "description": "指定为任务类型"
+    },
+    "testid": {
+      "type": "string"
+    },
+    "btnClassName": {
+      "$ref": "#/definitions/SchemaClassName"
+    },
+    "btnText": {
+      "type": "string",
+      "description": "操作按钮文字"
+    },
+    "checkApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "用来获取任务状态的 API，当没有进行时任务时不会发送。"
+    },
+    "interval": {
+      "type": "number",
+      "description": "当有任务进行中，会每隔一段时间再次检测，而时间间隔就是通过此项配置，默认 3s。",
+      "default": 3000
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "任务键值，请唯一区分"
+          },
+          "label": {
+            "type": "string",
+            "description": "任务名称"
+          },
+          "remark": {
+            "type": "string",
+            "description": "当前任务状态，支持 html"
+          },
+          "status": {
+            "type": "number",
+            "enum": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ],
+            "description": "任务状态： 0: 初始状态，不可操作。 1: 就绪，可操作状态。 2: 进行中，还没有结束。 3：有错误，不可重试。 4: 已正常结束。 5：有错误，且可以重试。"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "name": {
+      "$ref": "#/definitions/SchemaName"
+    },
+    "operationLabel": {
+      "type": "string",
+      "description": "操作列说明"
+    },
+    "reSubmitApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "如果任务失败，且可以重试，提交的时候会使用此 API"
+    },
+    "remarkLabel": {
+      "type": "string",
+      "description": "备注列说明"
+    },
+    "retryBtnClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "配置容器重试按钮 className"
+    },
+    "retryBtnText": {
+      "type": "string",
+      "description": "重试操作按钮文字"
+    },
+    "statusLabel": {
+      "type": "string",
+      "description": "状态列说明"
+    },
+    "statusLabelMap": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "状态显示对应的类名配置。",
+      "default": [
+        "label-warning",
+        "label-info",
+        "label-success",
+        "label-danger",
+        "label-default",
+        "label-danger"
+      ]
+    },
+    "statusTextMap": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "状态显示对应的文字显示配置。"
+    },
+    "submitApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "提交任务使用的 API"
+    },
+    "tableClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "配置 table className"
+    },
+    "taskNameLabel": {
+      "type": "string",
+      "description": "任务名称列说明"
+    },
+    "initialStatusCode": {
+      "type": "number"
+    },
+    "readyStatusCode": {
+      "type": "number"
+    },
+    "loadingStatusCode": {
+      "type": "number"
+    },
+    "canRetryStatusCode": {
+      "type": "number"
+    },
+    "finishStatusCode": {
+      "type": "number"
+    },
+    "errorStatusCode": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "type"
+  ],
+  "additionalProperties": false,
+  "description": "Tasks 渲染器，格式说明 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/tasks",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./TasksSchema.json"
+}
