@@ -1,0 +1,19 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "$ref": "#/definitions/DataType.LineStyle"
+    },
+    {
+      "type": "string",
+      "const": "auto"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.OutlineStyle.json"
+}

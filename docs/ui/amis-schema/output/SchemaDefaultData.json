@@ -1,6 +1,6 @@
 {
   "type": "object",
-  "description": "初始数据，设置得值可用于组件内部模板使用。",
+  "description": "Initial data, the set value can be used in the component's internal template.",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./SchemaDefaultData.json"
 }

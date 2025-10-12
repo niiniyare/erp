@@ -12,7 +12,7 @@
       "properties": {
         "label": {
           "type": "string",
-          "description": "列标题"
+          "description": "Column header"
         },
         "fixed": {
           "type": "string",
@@ -21,31 +21,31 @@
             "right",
             "none"
           ],
-          "description": "配置是否固定当前列"
+          "description": "Configure whether to fix the current column"
         },
         "name": {
           "type": "string",
-          "description": "绑定字段名"
+          "description": "Bind field name"
         },
         "popOver": {
           "$ref": "#/definitions/SchemaPopOver",
-          "description": "配置查看详情功能"
+          "description": "Configure the view details function"
         },
         "quickEdit": {
           "$ref": "#/definitions/SchemaQuickEdit",
-          "description": "配置快速编辑功能"
+          "description": "Configure quick editing function"
         },
         "quickEditOnUpdate": {
           "$ref": "#/definitions/SchemaQuickEdit",
-          "description": "作为表单项时，可以单独配置编辑时的快速编辑面板。"
+          "description": "When used as a form item, the quick editing panel during editing can be configured separately."
         },
         "copyable": {
           "$ref": "#/definitions/SchemaCopyable",
-          "description": "配置点击复制功能"
+          "description": "Configure click-to-copy functionality"
         },
         "sortable": {
           "type": "boolean",
-          "description": "配置是否可以排序"
+          "description": "Whether the configuration can be sorted"
         },
         "searchable": {
           "anyOf": [
@@ -56,18 +56,18 @@
               "$ref": "#/definitions/SchemaObject"
             }
           ],
-          "description": "是否可快速搜索"
+          "description": "Is it possible to search quickly?"
         },
         "toggled": {
           "type": "boolean",
-          "description": "配置是否默认展示"
+          "description": "Configure whether to display by default"
         },
         "width": {
           "type": [
             "number",
             "string"
           ],
-          "description": "列宽度"
+          "description": "column width"
         },
         "align": {
           "type": "string",
@@ -77,7 +77,7 @@
             "center",
             "justify"
           ],
-          "description": "列对齐方式"
+          "description": "column alignment"
         },
         "vAlign": {
           "type": "string",
@@ -86,7 +86,7 @@
             "middle",
             "bottom"
           ],
-          "description": "列垂直对齐方式"
+          "description": "column vertical alignment"
         },
         "headerAlign": {
           "type": "string",
@@ -96,19 +96,19 @@
             "center",
             "justify"
           ],
-          "description": "标题左右对齐方式"
+          "description": "Title left and right alignment"
         },
         "className": {
           "type": "string",
-          "description": "列样式表"
+          "description": "Column style sheet"
         },
         "classNameExpr": {
           "type": "string",
-          "description": "单元格样式表达式"
+          "description": "cell style expression"
         },
         "labelClassName": {
           "type": "string",
-          "description": "列头样式表"
+          "description": "Column header style sheet"
         },
         "filterable": {
           "anyOf": [
@@ -140,31 +140,31 @@
             "md",
             "lg"
           ],
-          "description": "结合表格的 footable 一起使用。 填写 *、xs、sm、md、lg指定 footable 的触发条件，可以填写多个用空格隔开"
+          "description": "Used in conjunction with the table's footable. Fill in *, xs, sm, md, lg to specify the trigger conditions of footable. You can fill in multiple separated by spaces."
         },
         "remark": {
           "$ref": "#/definitions/SchemaRemark",
-          "description": "提示信息"
+          "description": "Prompt message"
         },
         "value": {
-          "description": "默认值, 只有在 inputTable 里面才有用"
+          "description": "Default value, only useful in inputTable"
         },
         "unique": {
           "type": "boolean",
-          "description": "是否唯一, 只有在 inputTable 里面才有用"
+          "description": "Whether it is unique or not is only useful in inputTable."
         },
         "canAccessSuperData": {
           "type": "boolean",
-          "description": "表格列单元格是否可以获取父级数据域值，默认为true，该配置对当前列内单元格生效"
+          "description": "Whether table column cells can obtain the parent data field value. The default is true. This configuration takes effect for cells in the current column."
         },
         "lazyRenderAfter": {
           "type": "number",
-          "description": "当一次性渲染太多列上有用，默认为 100，可以用来提升表格渲染性能",
+          "description": "Useful when rendering too many columns at once. The default is 100, which can be used to improve table rendering performance.",
           "default": 100
         },
         "innerStyle": {
           "type": "object",
-          "description": "单元格内部组件自定义样式 style作为单元格自定义样式的配置"
+          "description": "Cell internal component custom style style as the configuration of cell custom style"
         }
       },
       "required": [

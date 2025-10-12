@@ -1,0 +1,27 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string"
+    },
+    {
+      "type": "number"
+    },
+    {
+      "type": "string",
+      "const": "baseline"
+    },
+    {
+      "type": "string",
+      "const": "sub"
+    },
+    {
+      "type": "string",
+      "const": "super"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.BaselineShift<(string|number)>.json"
+}

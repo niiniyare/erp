@@ -6,7 +6,7 @@
           "type": {
             "type": "string",
             "const": "page",
-            "description": "指定为 page 渲染器。"
+            "description": "Specified as the page renderer."
           }
         }
       },
@@ -20,7 +20,7 @@
           "type": {
             "type": "string",
             "const": "flex",
-            "description": "指定为 flex 展示类型"
+            "description": "Specify as flex display type"
           }
         }
       },
@@ -37,7 +37,7 @@
               "tpl",
               "html"
             ],
-            "description": "指定为模板渲染器。\n\n文档：https://aisuda.bce.baidu.com/amis/zh-CN/docs/concepts/template"
+            "description": "Specified as template renderer. \n\nDocument: https://aisuda.bce.baidu.com/amis/zh-CN/docs/concepts/template"
           }
         }
       },
@@ -51,7 +51,7 @@
           "type": {
             "type": "string",
             "const": "remark",
-            "description": "指定为提示类型"
+            "description": "Specify as prompt type"
           }
         }
       },
@@ -69,12 +69,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "ajax",
-            "description": "指定为发送 ajax 的行为。"
+            "description": "Specifies the behavior for sending ajax."
           }
         }
       },
@@ -92,12 +92,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "url",
-            "description": "指定为打开链接"
+            "description": "Specify as open link"
           }
         }
       },
@@ -115,12 +115,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "link",
-            "description": "指定为打开链接行为，跟 url 不同的时这个行为为单页模式。"
+            "description": "Specifies the link opening behavior. When different from the url, this behavior is single page mode."
           }
         }
       },
@@ -138,12 +138,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "dialog",
-            "description": "指定为打开弹窗"
+            "description": "Specify to open a pop-up window"
           }
         }
       },
@@ -161,12 +161,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "drawer",
-            "description": "指定为打开弹窗，抽出式弹窗"
+            "description": "Specify to open the pop-up window, pull out the pop-up window"
           }
         }
       },
@@ -184,12 +184,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "toast",
-            "description": "指定为打开弹窗，抽出式弹窗"
+            "description": "Specify to open the pop-up window, pull out the pop-up window"
           }
         }
       },
@@ -207,12 +207,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "copy",
-            "description": "指定为复制内容行为"
+            "description": "Specify behavior for copying content"
           }
         }
       },
@@ -230,12 +230,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "reload",
-            "description": "指定为刷新目标组件。"
+            "description": "Specify the refresh target component."
           }
         }
       },
@@ -253,12 +253,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "email",
-            "description": "指定为打开邮箱行为"
+            "description": "Specify as open mailbox behavior"
           }
         }
       },
@@ -276,7 +276,7 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
@@ -308,7 +308,7 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           }
         }
       },
@@ -322,7 +322,7 @@
           "type": {
             "type": "string",
             "const": "alert",
-            "description": "指定为提示框类型"
+            "description": "Specify as prompt box type"
           }
         }
       },
@@ -336,7 +336,7 @@
           "type": {
             "type": "string",
             "const": "audio",
-            "description": "指定为音频播放器"
+            "description": "Specify as audio player"
           }
         }
       },
@@ -363,7 +363,7 @@
           "type": {
             "type": "string",
             "const": "button-group",
-            "description": "指定为提交按钮类型"
+            "description": "Specify as submit button type"
           }
         }
       },
@@ -377,7 +377,7 @@
           "type": {
             "type": "string",
             "const": "button-toolbar",
-            "description": "指定为按钮工具集合类型"
+            "description": "Specified as button tool collection type"
           }
         }
       },
@@ -391,7 +391,7 @@
           "type": {
             "type": "string",
             "const": "calendar",
-            "description": "指定为日历选择控件"
+            "description": "Designated as a calendar selection control"
           }
         }
       },
@@ -405,7 +405,7 @@
           "type": {
             "type": "string",
             "const": "card",
-            "description": "指定为 card 类型"
+            "description": "Specified as card type"
           }
         }
       },
@@ -419,7 +419,7 @@
           "type": {
             "type": "string",
             "const": "cards",
-            "description": "指定为 cards 类型"
+            "description": "Specified as cards type"
           }
         }
       },
@@ -433,7 +433,7 @@
           "type": {
             "type": "string",
             "const": "carousel",
-            "description": "指定为轮播图类型"
+            "description": "Specify as carousel image type"
           },
           "thumbMode": {
             "type": "string",
@@ -441,7 +441,7 @@
               "contain",
               "cover"
             ],
-            "description": "预览图模式"
+            "description": "Preview mode"
           }
         }
       },
@@ -455,7 +455,7 @@
           "type": {
             "type": "string",
             "const": "chart",
-            "description": "指定为 chart 类型"
+            "description": "Specified as chart type"
           }
         }
       },
@@ -469,7 +469,7 @@
           "type": {
             "type": "string",
             "const": "collapse",
-            "description": "指定为折叠器类型"
+            "description": "Specify as folder type"
           }
         }
       },
@@ -483,7 +483,7 @@
           "type": {
             "type": "string",
             "const": "collapse-group",
-            "description": "指定为折叠器类型"
+            "description": "Specify as folder type"
           }
         }
       },
@@ -497,7 +497,7 @@
           "type": {
             "type": "string",
             "const": "color",
-            "description": "指定为颜色显示控件"
+            "description": "Designated as a color indicator"
           }
         }
       },
@@ -511,7 +511,7 @@
           "type": {
             "type": "string",
             "const": "container",
-            "description": "指定为 container 类型"
+            "description": "Specified as container type"
           }
         }
       },
@@ -525,7 +525,7 @@
           "type": {
             "type": "string",
             "const": "switch-container",
-            "description": "指定为 container 类型"
+            "description": "Specified as container type"
           }
         }
       },
@@ -538,13 +538,13 @@
         "properties": {
           "mode": {
             "type": "string",
-            "description": "指定内容区的展示模式。",
+            "description": "Specifies the display mode of the content area.",
             "const": "cards"
           },
           "type": {
             "type": "string",
             "const": "crud",
-            "description": "指定为 CRUD 渲染器。"
+            "description": "Specified as a CRUD renderer."
           }
         }
       },
@@ -557,13 +557,13 @@
         "properties": {
           "mode": {
             "type": "string",
-            "description": "指定内容区的展示模式。",
+            "description": "Specifies the display mode of the content area.",
             "const": "list"
           },
           "type": {
             "type": "string",
             "const": "crud",
-            "description": "指定为 CRUD 渲染器。"
+            "description": "Specified as a CRUD renderer."
           }
         }
       },
@@ -576,13 +576,13 @@
         "properties": {
           "mode": {
             "type": "string",
-            "description": "指定内容区的展示模式。",
+            "description": "Specifies the display mode of the content area.",
             "const": "table"
           },
           "type": {
             "type": "string",
             "const": "crud",
-            "description": "指定为 CRUD 渲染器。"
+            "description": "Specified as a CRUD renderer."
           }
         }
       },
@@ -595,13 +595,13 @@
         "properties": {
           "mode": {
             "type": "string",
-            "description": "指定内容区的展示模式。",
+            "description": "Specifies the display mode of the content area.",
             "const": "cards"
           },
           "type": {
             "type": "string",
             "const": "crud2",
-            "description": "指定为 CRUD2 渲染器。"
+            "description": "Specified as a CRUD2 renderer."
           },
           "loadType": {
             "type": "string",
@@ -609,7 +609,7 @@
               "more",
               "pagination"
             ],
-            "description": "数据展示模式 无限加载 or 分页"
+            "description": "Data display mode infinite loading or paging"
           }
         }
       },
@@ -622,13 +622,13 @@
         "properties": {
           "mode": {
             "type": "string",
-            "description": "指定内容区的展示模式。",
+            "description": "Specifies the display mode of the content area.",
             "const": "list"
           },
           "type": {
             "type": "string",
             "const": "crud2",
-            "description": "指定为 CRUD2 渲染器。"
+            "description": "Specified as a CRUD2 renderer."
           },
           "loadType": {
             "type": "string",
@@ -636,7 +636,7 @@
               "more",
               "pagination"
             ],
-            "description": "数据展示模式 无限加载 or 分页"
+            "description": "Data display mode infinite loading or paging"
           }
         }
       },
@@ -649,13 +649,13 @@
         "properties": {
           "mode": {
             "type": "string",
-            "description": "指定内容区的展示模式。",
+            "description": "Specifies the display mode of the content area.",
             "const": "table2"
           },
           "type": {
             "type": "string",
             "const": "crud2",
-            "description": "指定为 CRUD2 渲染器。"
+            "description": "Specified as a CRUD2 renderer."
           },
           "loadType": {
             "type": "string",
@@ -663,7 +663,7 @@
               "more",
               "pagination"
             ],
-            "description": "数据展示模式 无限加载 or 分页"
+            "description": "Data display mode infinite loading or paging"
           }
         }
       },
@@ -684,7 +684,7 @@
               "static-datetime",
               "static-time"
             ],
-            "description": "指定为日期展示类型"
+            "description": "Assigned as date impression type"
           }
         }
       },
@@ -702,7 +702,7 @@
           "dialogType": {
             "type": "string",
             "const": "confirm",
-            "description": "弹框类型 confirm 确认弹框"
+            "description": "Pop-up box type confirm Confirm pop-up box"
           }
         }
       },
@@ -742,7 +742,7 @@
           "type": {
             "type": "string",
             "const": "dropdown-button",
-            "description": "指定为 DropDown Button 类型"
+            "description": "Specified as type DropDown Button"
           }
         }
       },
@@ -756,7 +756,7 @@
           "type": {
             "type": "string",
             "const": "each",
-            "description": "指定为each展示类型"
+            "description": "Specify as each display type"
           }
         }
       },
@@ -770,7 +770,7 @@
           "type": {
             "type": "string",
             "const": "grid",
-            "description": "指定为 Grid 格子布局渲染器。"
+            "description": "Designated as a Grid layout renderer."
           }
         }
       },
@@ -784,7 +784,7 @@
           "type": {
             "type": "string",
             "const": "grid-2d",
-            "description": "指定为 grid-2d 展示类型"
+            "description": "Specify grid-2d display type"
           }
         }
       },
@@ -798,7 +798,7 @@
           "type": {
             "type": "string",
             "const": "hbox",
-            "description": "指定为each展示类型"
+            "description": "Specify as each display type"
           },
           "subFormMode": {
             "type": "string",
@@ -807,7 +807,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置子表单项默认的展示方式。"
+            "description": "Configure the default display mode of subform items."
           }
         }
       },
@@ -850,7 +850,7 @@
               "image",
               "static-image"
             ],
-            "description": "指定为图片展示类型"
+            "description": "Specify as image display type"
           },
           "imageMode": {
             "type": "string",
@@ -858,7 +858,7 @@
               "thumb",
               "original"
             ],
-            "description": "图片展示模式，默认为缩略图模式、可以配置成原图模式"
+            "description": "Image display mode, the default is thumbnail mode and can be configured to original image mode"
           },
           "thumbMode": {
             "type": "string",
@@ -868,7 +868,7 @@
               "contain",
               "cover"
             ],
-            "description": "预览图模式"
+            "description": "Preview mode"
           }
         }
       },
@@ -885,7 +885,7 @@
               "images",
               "static-images"
             ],
-            "description": "指定为图片集渲染器"
+            "description": "Specify as picture gallery renderer"
           },
           "thumbMode": {
             "type": "string",
@@ -895,7 +895,7 @@
               "contain",
               "cover"
             ],
-            "description": "预览图模式"
+            "description": "Preview mode"
           }
         }
       },
@@ -912,7 +912,7 @@
               "json",
               "static-json"
             ],
-            "description": "指定为Json展示类型"
+            "description": "Specify as Json display type"
           }
         }
       },
@@ -926,7 +926,7 @@
           "type": {
             "type": "string",
             "const": "link",
-            "description": "指定为 link 链接展示控件"
+            "description": "Designated as link link display control"
           }
         }
       },
@@ -943,7 +943,7 @@
               "list",
               "static-list"
             ],
-            "description": "指定为 List 列表展示控件。"
+            "description": "Designated as a List list display control."
           }
         }
       },
@@ -960,7 +960,7 @@
               "map",
               "mapping"
             ],
-            "description": "指定为映射展示控件"
+            "description": "Designated as a mapped display control"
           }
         }
       },
@@ -974,7 +974,7 @@
           "type": {
             "type": "string",
             "const": "nav",
-            "description": "指定为 Nav 导航渲染器"
+            "description": "Designated as Nav navigation renderer"
           },
           "mode": {
             "type": "string",
@@ -982,7 +982,7 @@
               "float",
               "inline"
             ],
-            "description": "垂直模式 非折叠状态下 控制菜单打开方式"
+            "description": "Vertical mode, in the unfolded state, controls how the menu is opened."
           }
         }
       },
@@ -996,7 +996,7 @@
           "type": {
             "type": "string",
             "const": "operation",
-            "description": "指定为操作栏"
+            "description": "Designated as action bar"
           }
         }
       },
@@ -1023,7 +1023,7 @@
           "type": {
             "type": "string",
             "const": "pagination-wrapper",
-            "description": "指定为分页容器功能性渲染器"
+            "description": "Designated as a paging container functional renderer"
           }
         }
       },
@@ -1037,7 +1037,7 @@
           "type": {
             "type": "string",
             "const": "panel",
-            "description": "指定为Panel渲染器。"
+            "description": "Specified as Panel renderer."
           },
           "subFormMode": {
             "type": "string",
@@ -1046,7 +1046,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置子表单项默认的展示方式。"
+            "description": "Configure the default display mode of subform items."
           }
         }
       },
@@ -1063,7 +1063,7 @@
               "plain",
               "text"
             ],
-            "description": "指定为模板渲染器。\n\n文档：https://aisuda.bce.baidu.com/amis/zh-CN/docs/concepts/template"
+            "description": "Specified as template renderer. \n\nDocument: https://aisuda.bce.baidu.com/amis/zh-CN/docs/concepts/template"
           }
         }
       },
@@ -1085,7 +1085,7 @@
               "circle",
               "dashboard"
             ],
-            "description": "进度条类型"
+            "description": "Progress bar type"
           }
         }
       },
@@ -1109,7 +1109,7 @@
               "canvas",
               "svg"
             ],
-            "description": "渲染模式"
+            "description": "Rendering mode"
           }
         }
       },
@@ -1123,7 +1123,7 @@
           "type": {
             "type": "string",
             "const": "search-box",
-            "description": "指定为搜索框。\n\n文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/search-box"
+            "description": "Designated as a search box. \n\nDocument: https://aisuda.bce.baidu.com/amis/zh-CN/components/search-box"
           }
         }
       },
@@ -1137,7 +1137,7 @@
           "type": {
             "type": "string",
             "const": "service",
-            "description": "指定为 Service 数据拉取控件。"
+            "description": "Designated as a Service data pull control."
           }
         }
       },
@@ -1164,7 +1164,7 @@
           "type": {
             "type": "string",
             "const": "status",
-            "description": "指定为状态展示控件"
+            "description": "Designated as a status display control"
           }
         }
       },
@@ -1178,7 +1178,7 @@
           "type": {
             "type": "string",
             "const": "spinner",
-            "description": "组件类型"
+            "description": "Component type"
           }
         }
       },
@@ -1195,7 +1195,7 @@
               "table",
               "static-table"
             ],
-            "description": "指定为表格渲染器。"
+            "description": "Specified as table renderer."
           }
         }
       },
@@ -1209,7 +1209,7 @@
           "type": {
             "type": "string",
             "const": "table2",
-            "description": "指定为表格类型"
+            "description": "Specify as table type"
           }
         }
       },
@@ -1231,7 +1231,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置子表单项默认的展示方式。"
+            "description": "Configure the default display mode of subform items."
           }
         }
       },
@@ -1245,7 +1245,7 @@
           "type": {
             "type": "string",
             "const": "tasks",
-            "description": "指定为任务类型"
+            "description": "Specify as task type"
           }
         }
       },
@@ -1272,7 +1272,7 @@
           "type": {
             "type": "string",
             "const": "video",
-            "description": "指定为视频类型"
+            "description": "Specify as video type"
           }
         }
       },
@@ -1286,7 +1286,7 @@
           "type": {
             "type": "string",
             "const": "wizard",
-            "description": "指定为表单向导"
+            "description": "Designated as form wizard"
           },
           "mode": {
             "type": "string",
@@ -1294,7 +1294,7 @@
               "vertical",
               "horizontal"
             ],
-            "description": "展示模式"
+            "description": "display mode"
           }
         }
       },
@@ -1308,7 +1308,7 @@
           "type": {
             "type": "string",
             "const": "wrapper",
-            "description": "指定为 container 类型"
+            "description": "Specified as container type"
           }
         }
       },
@@ -1322,7 +1322,7 @@
           "type": {
             "type": "string",
             "const": "tooltip-wrapper",
-            "description": "文字提示容器"
+            "description": "text prompt container"
           }
         }
       },
@@ -1336,7 +1336,7 @@
           "type": {
             "type": "string",
             "const": "form",
-            "description": "指定为表单渲染器。"
+            "description": "Specified as the form renderer."
           },
           "mode": {
             "type": "string",
@@ -1346,7 +1346,7 @@
               "horizontal",
               "flex"
             ],
-            "description": "配置表单项默认的展示方式。"
+            "description": "Configure the default display mode of form items."
           }
         }
       },
@@ -1360,7 +1360,7 @@
           "type": {
             "type": "string",
             "const": "anchor-nav",
-            "description": "指定为 AnchorNav 锚点导航渲染器"
+            "description": "Specified as AnchorNav anchor navigation renderer"
           }
         }
       },
@@ -1374,7 +1374,7 @@
           "type": {
             "type": "string",
             "const": "steps",
-            "description": "指定为 Steps 步骤条渲染器"
+            "description": "Specified as the Steps step bar renderer"
           },
           "mode": {
             "type": "string",
@@ -1382,7 +1382,7 @@
               "horizontal",
               "vertical"
             ],
-            "description": "展示模式"
+            "description": "display mode"
           }
         }
       },
@@ -1396,7 +1396,7 @@
           "type": {
             "type": "string",
             "const": "portlet",
-            "description": "指定为 portlet 类型"
+            "description": "Specified as portlet type"
           },
           "tabsMode": {
             "type": "string",
@@ -1408,7 +1408,7 @@
               "vertical",
               "tiled"
             ],
-            "description": "展示形式"
+            "description": "Display form"
           }
         }
       },
@@ -1422,7 +1422,7 @@
           "type": {
             "type": "string",
             "const": "timeline",
-            "description": "指定为 Timeline 时间轴渲染器"
+            "description": "Specified as Timeline timeline renderer"
           },
           "mode": {
             "type": "string",
@@ -1431,7 +1431,7 @@
               "right",
               "alternate"
             ],
-            "description": "文字相对于时间轴展示方向"
+            "description": "Text display direction relative to the timeline"
           }
         }
       },
@@ -1449,12 +1449,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "control",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -1472,7 +1472,7 @@
               "horizontal",
               "inline"
             ],
-            "description": "子表单的模式。"
+            "description": "The subform's mode."
           },
           "mode": {
             "type": "string",
@@ -1481,12 +1481,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-array",
-            "description": "指定为数组输入框类型"
+            "description": "Specified as array input box type"
           }
         }
       },
@@ -1504,7 +1504,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
@@ -1526,12 +1526,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "chained-select",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -1549,12 +1549,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "checkbox",
-            "description": "指定为多行文本输入框"
+            "description": "Designated as a multi-line text input box"
           },
           "optionType": {
             "type": "string",
@@ -1579,12 +1579,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "checkboxes",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -1602,12 +1602,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-city",
-            "description": "指定为城市选择框。"
+            "description": "Designated as a city selection box."
           }
         }
       },
@@ -1625,12 +1625,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-color",
-            "description": "指定为颜色选择框"
+            "description": "Designated as a color selection box"
           }
         }
       },
@@ -1648,12 +1648,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "combo",
-            "description": "指定为组合输入框类型"
+            "description": "Specified as a combination input box type"
           },
           "subFormMode": {
             "type": "string",
@@ -1662,7 +1662,7 @@
               "horizontal",
               "inline"
             ],
-            "description": "子表单的模式。"
+            "description": "The subform's mode."
           }
         }
       },
@@ -1680,12 +1680,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "condition-builder",
-            "description": "指定为"
+            "description": "designated as"
           },
           "builderMode": {
             "type": "string",
@@ -1693,7 +1693,7 @@
               "simple",
               "full"
             ],
-            "description": "展现模式"
+            "description": "display mode"
           }
         }
       },
@@ -1711,12 +1711,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-date",
-            "description": "指定为日期选择控件"
+            "description": "Designated as a date selection control"
           },
           "borderMode": {
             "type": "string",
@@ -1725,7 +1725,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           }
         }
       },
@@ -1743,12 +1743,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-datetime",
-            "description": "指定为日期时间选择控件"
+            "description": "Designated as a date and time selection control"
           },
           "borderMode": {
             "type": "string",
@@ -1757,7 +1757,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           }
         }
       },
@@ -1775,12 +1775,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-time",
-            "description": "指定为日期时间选择控件"
+            "description": "Designated as a date and time selection control"
           },
           "borderMode": {
             "type": "string",
@@ -1789,7 +1789,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           }
         }
       },
@@ -1807,12 +1807,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-month",
-            "description": "指定为月份时间选择控件"
+            "description": "Designated as month time selection control"
           },
           "borderMode": {
             "type": "string",
@@ -1821,7 +1821,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           }
         }
       },
@@ -1839,12 +1839,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-quarter",
-            "description": "指定为月份时间选择控件"
+            "description": "Designated as month time selection control"
           },
           "borderMode": {
             "type": "string",
@@ -1853,7 +1853,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           }
         }
       },
@@ -1871,12 +1871,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-year",
-            "description": "指定为月份时间选择控件"
+            "description": "Designated as month time selection control"
           },
           "borderMode": {
             "type": "string",
@@ -1885,7 +1885,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           }
         }
       },
@@ -1903,7 +1903,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
@@ -1912,7 +1912,7 @@
               "input-datetime-range",
               "input-time-range"
             ],
-            "description": "指定为日期范围控件"
+            "description": "Specified as a date range control"
           },
           "borderMode": {
             "type": "string",
@@ -1921,7 +1921,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           }
         }
       },
@@ -1939,12 +1939,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "diff-editor",
-            "description": "指定为 Diff 编辑器"
+            "description": "Designated as Diff Editor"
           }
         }
       },
@@ -1962,7 +1962,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
@@ -2024,7 +2024,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
@@ -2032,7 +2032,7 @@
               "fieldset",
               "fieldSet"
             ],
-            "description": "指定为表单项集合"
+            "description": "Specified as a collection of form items"
           },
           "subFormMode": {
             "type": "string",
@@ -2041,7 +2041,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置子表单项默认的展示方式。"
+            "description": "Configure the default display mode of subform items."
           }
         }
       },
@@ -2059,12 +2059,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-file",
-            "description": "指定为文件上传"
+            "description": "Specify file upload"
           }
         }
       },
@@ -2082,12 +2082,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "formula",
-            "description": "指定为公式功能控件。"
+            "description": "Designated as a formula function control."
           }
         }
       },
@@ -2105,12 +2105,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "group",
-            "description": "表单项类型"
+            "description": "form item type"
           },
           "subFormMode": {
             "type": "string",
@@ -2119,7 +2119,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置子表单项默认的展示方式。"
+            "description": "Configure the default display mode of subform items."
           }
         }
       },
@@ -2137,12 +2137,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "hidden",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -2160,12 +2160,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "icon-picker",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -2183,12 +2183,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-image",
-            "description": "指定为图片上传控件"
+            "description": "Designated as image upload control"
           },
           "thumbMode": {
             "type": "string",
@@ -2198,7 +2198,7 @@
               "contain",
               "cover"
             ],
-            "description": "缩路图展示模式"
+            "description": "Thumbnail display mode"
           }
         }
       },
@@ -2216,12 +2216,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-group",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -2239,12 +2239,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "list-select",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -2258,7 +2258,7 @@
           "type": {
             "type": "string",
             "const": "json-schema-editor",
-            "description": "指定为 JSON Schema Editor"
+            "description": "Specify as JSON Schema Editor"
           },
           "mode": {
             "type": "string",
@@ -2267,7 +2267,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           }
         }
       },
@@ -2285,12 +2285,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-signature",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -2308,12 +2308,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "location-picker",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -2331,12 +2331,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "uuid",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -2354,12 +2354,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "matrix-checkboxes",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -2377,7 +2377,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           },
           "mode": {
             "type": "string",
@@ -2386,7 +2386,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
@@ -2408,7 +2408,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           },
           "mode": {
             "type": "string",
@@ -2417,7 +2417,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
@@ -2439,12 +2439,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "nested-select",
-            "description": "表单项类型"
+            "description": "form item type"
           },
           "borderMode": {
             "type": "string",
@@ -2453,7 +2453,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           }
         }
       },
@@ -2471,12 +2471,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-number",
-            "description": "表单项类型"
+            "description": "form item type"
           },
           "borderMode": {
             "type": "string",
@@ -2485,7 +2485,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           },
           "displayMode": {
             "type": "string",
@@ -2493,7 +2493,7 @@
               "base",
               "enhance"
             ],
-            "description": "输入框为基础输入框还是加强输入框"
+            "description": "Is the input box a basic input box or an enhanced input box?"
           }
         }
       },
@@ -2511,12 +2511,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "picker",
-            "description": "表单项类型"
+            "description": "form item type"
           },
           "modalMode": {
             "type": "string",
@@ -2524,7 +2524,7 @@
               "dialog",
               "drawer"
             ],
-            "description": "弹窗模式，dialog 或者 drawer"
+            "description": "Pop-up window mode, dialog or drawer"
           }
         }
       },
@@ -2542,12 +2542,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "radios",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -2565,12 +2565,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "radio",
-            "description": "指定为多行文本输入框"
+            "description": "Designated as a multi-line text input box"
           },
           "optionType": {
             "type": "string",
@@ -2595,12 +2595,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-range",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -2618,12 +2618,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-rating",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -2641,12 +2641,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-rich-text",
-            "description": "表单项类型"
+            "description": "form item type"
           },
           "borderMode": {
             "type": "string",
@@ -2655,7 +2655,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           }
         }
       },
@@ -2673,12 +2673,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-repeat",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -2696,7 +2696,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
@@ -2704,7 +2704,7 @@
               "select",
               "multi-select"
             ],
-            "description": "表单项类型"
+            "description": "form item type"
           },
           "borderMode": {
             "type": "string",
@@ -2713,7 +2713,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           },
           "selectMode": {
             "type": "string",
@@ -2724,7 +2724,7 @@
               "chained",
               "associated"
             ],
-            "description": "勾选展示模式"
+            "description": "Check display mode"
           },
           "leftMode": {
             "type": "string",
@@ -2732,7 +2732,7 @@
               "tree",
               "list"
             ],
-            "description": "当 selectMode 为 associated 时用来定义左侧的选择模式"
+            "description": "When selectMode is associated, it is used to define the selection mode on the left"
           },
           "rightMode": {
             "type": "string",
@@ -2742,7 +2742,7 @@
               "tree",
               "chained"
             ],
-            "description": "当 selectMode 为 associated 时用来定义右侧的选择模式"
+            "description": "When selectMode is associated, it is used to define the selection mode on the right"
           },
           "searchResultMode": {
             "type": "string",
@@ -2752,7 +2752,7 @@
               "tree",
               "chained"
             ],
-            "description": "搜索结果展示模式"
+            "description": "Search results display mode"
           }
         }
       },
@@ -2770,12 +2770,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-sub-form",
-            "description": "指定为 SubForm 子表单"
+            "description": "Designated as a SubForm subform"
           }
         }
       },
@@ -2793,12 +2793,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "switch",
-            "description": "指定为多行文本输入框"
+            "description": "Designated as a multi-line text input box"
           }
         }
       },
@@ -2816,12 +2816,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "static",
-            "description": "表单项类型"
+            "description": "form item type"
           },
           "borderMode": {
             "type": "string",
@@ -2830,7 +2830,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，默认是无边框的"
+            "description": "Border mode, the default is borderless"
           }
         }
       },
@@ -2848,7 +2848,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
@@ -2872,7 +2872,7 @@
               "chained",
               "associated"
             ],
-            "description": "勾选展示模式"
+            "description": "Check display mode"
           },
           "leftMode": {
             "type": "string",
@@ -2880,7 +2880,7 @@
               "tree",
               "list"
             ],
-            "description": "当 selectMode 为 associated 时用来定义左侧的选择模式"
+            "description": "When selectMode is associated, it is used to define the selection mode on the left"
           },
           "rightMode": {
             "type": "string",
@@ -2890,7 +2890,7 @@
               "tree",
               "chained"
             ],
-            "description": "当 selectMode 为 associated 时用来定义右侧的选择模式"
+            "description": "When selectMode is associated, it is used to define the selection mode on the right"
           },
           "searchResultMode": {
             "type": "string",
@@ -2900,7 +2900,7 @@
               "tree",
               "chained"
             ],
-            "description": "搜索结果展示模式"
+            "description": "Search results display mode"
           },
           "mode": {
             "type": "string",
@@ -2909,7 +2909,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
@@ -2931,12 +2931,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-tag",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -2954,7 +2954,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
@@ -2967,7 +2967,7 @@
               "native-time",
               "native-number"
             ],
-            "description": "表单项类型"
+            "description": "form item type"
           },
           "borderMode": {
             "type": "string",
@@ -2976,7 +2976,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           }
         }
       },
@@ -2994,12 +2994,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "textarea",
-            "description": "指定为多行文本输入框"
+            "description": "Designated as a multi-line text input box"
           },
           "borderMode": {
             "type": "string",
@@ -3008,7 +3008,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           }
         }
       },
@@ -3026,12 +3026,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "transfer",
-            "description": "表单项类型"
+            "description": "form item type"
           },
           "selectMode": {
             "type": "string",
@@ -3042,7 +3042,7 @@
               "chained",
               "associated"
             ],
-            "description": "勾选展示模式"
+            "description": "Check display mode"
           },
           "leftMode": {
             "type": "string",
@@ -3050,7 +3050,7 @@
               "tree",
               "list"
             ],
-            "description": "当 selectMode 为 associated 时用来定义左侧的选择模式"
+            "description": "When selectMode is associated, it is used to define the selection mode on the left"
           },
           "rightMode": {
             "type": "string",
@@ -3060,7 +3060,7 @@
               "tree",
               "chained"
             ],
-            "description": "当 selectMode 为 associated 时用来定义右侧的选择模式"
+            "description": "When selectMode is associated, it is used to define the selection mode on the right"
           },
           "searchResultMode": {
             "type": "string",
@@ -3070,7 +3070,7 @@
               "tree",
               "chained"
             ],
-            "description": "搜索结果展示模式"
+            "description": "Search results display mode"
           }
         }
       },
@@ -3090,7 +3090,7 @@
               "chained",
               "associated"
             ],
-            "description": "勾选展示模式"
+            "description": "Check display mode"
           },
           "leftMode": {
             "type": "string",
@@ -3098,7 +3098,7 @@
               "tree",
               "list"
             ],
-            "description": "当 selectMode 为 associated 时用来定义左侧的选择模式"
+            "description": "When selectMode is associated, it is used to define the selection mode on the left"
           },
           "rightMode": {
             "type": "string",
@@ -3108,7 +3108,7 @@
               "tree",
               "chained"
             ],
-            "description": "当 selectMode 为 associated 时用来定义右侧的选择模式"
+            "description": "When selectMode is associated, it is used to define the selection mode on the right"
           },
           "searchResultMode": {
             "type": "string",
@@ -3118,7 +3118,7 @@
               "tree",
               "chained"
             ],
-            "description": "搜索结果展示模式"
+            "description": "Search results display mode"
           },
           "mode": {
             "type": "string",
@@ -3127,7 +3127,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
@@ -3140,7 +3140,7 @@
               "half",
               "none"
             ],
-            "description": "边框模式，全边框，还是半边框，或者没边框。"
+            "description": "Border mode, full border, half border, or no border."
           }
         }
       },
@@ -3160,7 +3160,7 @@
               "chained",
               "associated"
             ],
-            "description": "勾选展示模式"
+            "description": "Check display mode"
           },
           "leftMode": {
             "type": "string",
@@ -3168,7 +3168,7 @@
               "tree",
               "list"
             ],
-            "description": "当 selectMode 为 associated 时用来定义左侧的选择模式"
+            "description": "When selectMode is associated, it is used to define the selection mode on the left"
           },
           "rightMode": {
             "type": "string",
@@ -3178,7 +3178,7 @@
               "tree",
               "chained"
             ],
-            "description": "当 selectMode 为 associated 时用来定义右侧的选择模式"
+            "description": "When selectMode is associated, it is used to define the selection mode on the right"
           },
           "searchResultMode": {
             "type": "string",
@@ -3188,7 +3188,7 @@
               "tree",
               "chained"
             ],
-            "description": "搜索结果展示模式"
+            "description": "Search results display mode"
           },
           "mode": {
             "type": "string",
@@ -3197,7 +3197,7 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
@@ -3219,12 +3219,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "input-tree",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -3242,12 +3242,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "tree-select",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -3265,12 +3265,12 @@
               "inline",
               "horizontal"
             ],
-            "description": "配置当前表单项展示模式"
+            "description": "Configure the current form item display mode"
           },
           "type": {
             "type": "string",
             "const": "users-select",
-            "description": "表单项类型"
+            "description": "form item type"
           }
         }
       },
@@ -3284,7 +3284,7 @@
           "type": {
             "type": "string",
             "const": "date-range",
-            "description": "指定为日期展示类型"
+            "description": "Assigned as date impression type"
           }
         }
       },

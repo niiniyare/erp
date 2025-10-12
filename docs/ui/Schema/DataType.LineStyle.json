@@ -1,0 +1,17 @@
+{
+  "type": "string",
+  "enum": [
+    "dashed",
+    "dotted",
+    "double",
+    "groove",
+    "hidden",
+    "inset",
+    "none",
+    "outset",
+    "ridge",
+    "solid"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.LineStyle.json"
+}

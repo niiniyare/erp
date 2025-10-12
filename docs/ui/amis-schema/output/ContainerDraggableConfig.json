@@ -8,7 +8,7 @@
         "x",
         "y"
       ],
-      "description": "可拖拽的方向, 默认为所有方向, 支持设置为X或Y轴"
+      "description": "The draggable direction, the default is all directions, supports setting to X or Y axis"
     },
     "defaultPosition": {
       "type": "object",
@@ -25,7 +25,7 @@
         "y"
       ],
       "additionalProperties": false,
-      "description": "元素的起始位置"
+      "description": "the starting position of the element"
     },
     "bounds": {
       "anyOf": [
@@ -51,7 +51,7 @@
           "type": "string"
         }
       ],
-      "description": "拖拽的边界, 可以设置坐标, 也可以设置父级元素的选择器"
+      "description": "You can set the coordinates of the dragging boundary, or you can set the selector of the parent element."
     },
     "grid": {
       "type": "array",
@@ -60,27 +60,27 @@
       },
       "minItems": 2,
       "maxItems": 2,
-      "description": "以网格模式拖拽的步长"
+      "description": "The step size for dragging in grid mode"
     },
     "handle": {
       "type": "string",
-      "description": "初始化拖拽的选择器"
+      "description": "Initialize the drag selector"
     },
     "cancel": {
       "type": "string",
-      "description": "禁止拖拽的选择器"
+      "description": "Disable drag selector"
     },
     "scale": {
       "type": "number",
-      "description": "拖拽距离的缩放比, 默认为1"
+      "description": "The scaling ratio of the drag distance, the default is 1"
     },
     "enableUserSelect": {
       "type": "boolean",
-      "description": "默认设置容器内部为'user-select:none', 可以设置true关闭"
+      "description": "The default setting inside the container is 'user-select:none', which can be turned off by setting true"
     }
   },
   "additionalProperties": false,
-  "description": "容器拖拽配置",
+  "description": "Container drag and drop configuration",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./ContainerDraggableConfig.json"
 }

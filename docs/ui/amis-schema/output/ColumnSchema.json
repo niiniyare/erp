@@ -3,7 +3,7 @@
   "properties": {
     "name": {
       "type": "string",
-      "description": "指定列唯一标识"
+      "description": "Specify column unique identifier"
     },
     "title": {
       "anyOf": [
@@ -14,34 +14,34 @@
           "$ref": "#/definitions/SchemaObject"
         }
       ],
-      "description": "指定列标题"
+      "description": "Specify column headers"
     },
     "type": {
       "type": "string",
-      "description": "指定列内容渲染器"
+      "description": "Specify column content renderer"
     },
     "rowSpanExpr": {
       "type": "string",
-      "description": "指定行合并表达式"
+      "description": "Specify row merge expression"
     },
     "colSpanExpr": {
       "type": "string",
-      "description": "指定列合并表达式"
+      "description": "Specify column merge expression"
     },
     "children": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/ColumnSchema"
       },
-      "description": "表头分组"
+      "description": "Header grouping"
     },
     "copyable": {
       "type": "boolean",
-      "description": "可复制"
+      "description": "Copyable"
     },
     "remark": {
       "type": "string",
-      "description": "列表头提示"
+      "description": "List header prompt"
     },
     "searchable": {
       "anyOf": [
@@ -52,15 +52,15 @@
           "$ref": "#/definitions/SchemaObject"
         }
       ],
-      "description": "快速搜索"
+      "description": "Quick search"
     },
     "sorter": {
       "type": "boolean",
-      "description": "快速排序"
+      "description": "Quick sort"
     },
     "sortable": {
       "type": "boolean",
-      "description": "兼容table快速排序"
+      "description": "Compatible with table quick sort"
     },
     "filterable": {
       "type": "object",
@@ -74,38 +74,38 @@
         }
       },
       "additionalProperties": false,
-      "description": "兼容table列筛选"
+      "description": "Compatible with table column filtering"
     },
     "align": {
       "type": "string",
-      "description": "内容居左、居中、居右"
+      "description": "Content left, center, right"
     },
     "fixed": {
       "type": [
         "boolean",
         "string"
       ],
-      "description": "是否固定在左侧/右侧"
+      "description": "Is it fixed on the left/right side?"
     },
     "toggled": {
       "type": "boolean",
-      "description": "当前列是否展示"
+      "description": "Whether the current column is displayed"
     },
     "className": {
       "type": "string",
-      "description": "列样式"
+      "description": "Column style"
     },
     "titleClassName": {
       "type": "string",
-      "description": "表头单元格样式"
+      "description": "Header cell style"
     },
     "classNameExpr": {
       "type": "string",
-      "description": "单元格样式"
+      "description": "cell style"
     },
     "quickEdit": {
       "$ref": "#/definitions/SchemaQuickEdit",
-      "description": "配置快速编辑功能"
+      "description": "Configure quick editing function"
     },
     "width": {
       "type": [
@@ -115,7 +115,7 @@
     },
     "canAccessSuperData": {
       "type": "boolean",
-      "description": "表格列单元格是否可以获取父级数据域值，默认为true，该配置对当前列内单元格生效"
+      "description": "Whether table column cells can obtain the parent data field value. The default is true. This configuration takes effect for cells in the current column."
     }
   },
   "required": [

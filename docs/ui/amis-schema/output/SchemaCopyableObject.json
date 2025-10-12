@@ -3,15 +3,15 @@
   "properties": {
     "icon": {
       "$ref": "#/definitions/SchemaIcon",
-      "description": "可以配置图标"
+      "description": "Configurable icons"
     },
     "content": {
       "$ref": "#/definitions/SchemaTpl",
-      "description": "配置复制时的内容模板。"
+      "description": "Configure content templates for replication."
     },
     "tooltip": {
       "type": "string",
-      "description": "提示文字内容"
+      "description": "Prompt text content"
     }
   },
   "additionalProperties": false,

@@ -3,43 +3,43 @@
   "properties": {
     "$$id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
     },
     "className": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "容器 css 类名"
+      "description": "Container css class name"
     },
     "$ref": {
       "type": "string",
-      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
     },
     "disabled": {
       "type": "boolean",
-      "description": "是否禁用"
+      "description": "Whether to disable"
     },
     "disabledOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否禁用表达式"
+      "description": "Whether to disable expressions"
     },
     "hidden": {
       "type": "boolean",
-      "description": "是否隐藏"
+      "description": "Whether to hide"
     },
     "hiddenOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否隐藏表达式"
+      "description": "Whether to hide expressions"
     },
     "visible": {
       "type": "boolean",
-      "description": "是否显示"
+      "description": "Whether to display"
     },
     "visibleOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否显示表达式"
+      "description": "Whether to display expressions"
     },
     "id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于日志采集"
+      "description": "The unique id of the component, mainly used for log collection"
     },
     "onEvent": {
       "type": "object",
@@ -67,57 +67,57 @@
         ],
         "additionalProperties": false
       },
-      "description": "事件动作配置"
+      "description": "Event action configuration"
     },
     "static": {
       "type": "boolean",
-      "description": "是否静态展示"
+      "description": "Whether to display statically"
     },
     "staticOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否静态展示表达式"
+      "description": "Whether to display expressions statically"
     },
     "staticPlaceholder": {
       "type": "string",
-      "description": "静态展示空值占位"
+      "description": "Static display of empty value placeholder"
     },
     "staticClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项类名"
+      "description": "Static display form item class name"
     },
     "staticLabelClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Label类名"
+      "description": "Static display of form item Label class name"
     },
     "staticInputClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Value类名"
+      "description": "Static display of form item Value class name"
     },
     "staticSchema": {},
     "style": {
       "type": "object",
-      "description": "组件样式"
+      "description": "Component style"
     },
     "editorSetting": {
       "type": "object",
       "properties": {
         "behavior": {
           "type": "string",
-          "description": "组件行为、用途，如 create、update、remove"
+          "description": "Component behavior and usage, such as create, update, remove"
         },
         "displayName": {
           "type": "string",
-          "description": "组件名称，通常是业务名称方便定位"
+          "description": "Component name, usually the business name for easy location"
         },
         "mock": {
-          "description": "编辑器假数据，方便展示"
+          "description": "Editor fake data for easy display"
         }
       },
-      "description": "编辑器配置，运行时可以忽略"
+      "description": "Editor configuration, can be ignored at runtime"
     },
     "useMobileUI": {
       "type": "boolean",
-      "description": "可以组件级别用来关闭移动端样式"
+      "description": "Can be used to turn off mobile style at the component level"
     },
     "testIdBuilder": {
       "$ref": "#/definitions/TestIdBuilder"
@@ -131,7 +131,7 @@
         "lg",
         "full"
       ],
-      "description": "表单项大小"
+      "description": "Form item size"
     },
     "label": {
       "anyOf": [
@@ -143,69 +143,69 @@
           "const": false
         }
       ],
-      "description": "描述标题"
+      "description": "Description title"
     },
     "labelAlign": {
       "$ref": "#/definitions/LabelAlign",
-      "description": "描述标题"
+      "description": "Description title"
     },
     "labelWidth": {
       "type": [
         "number",
         "string"
       ],
-      "description": "label自定义宽度，默认单位为px"
+      "description": "Label custom width, default unit is px"
     },
     "labelClassName": {
       "type": "string",
-      "description": "配置 label className"
+      "description": "Configure label className"
     },
     "name": {
       "type": "string",
-      "description": "字段名，表单提交时的 key，支持多层级，用.连接，如： a.b.c"
+      "description": "Field name, key when submitting the form, supports multi-level, use . to connect, such as: a.b.c"
     },
     "extraName": {
       "type": "string",
-      "description": "额外的字段名，当为范围组件时可以用来将另外一个值打平出来"
+      "description": "Additional field name, when used as a range component, can be used to flatten out another value"
     },
     "remark": {
       "$ref": "#/definitions/SchemaRemark",
-      "description": "显示一个小图标, 鼠标放上去的时候显示提示内容"
+      "description": "Display a small icon and display prompt content when the mouse is placed on it"
     },
     "labelRemark": {
       "$ref": "#/definitions/SchemaRemark",
-      "description": "显示一个小图标, 鼠标放上去的时候显示提示内容, 这个小图标跟 label 在一起"
+      "description": "Display a small icon. When the mouse is placed on it, the prompt content is displayed. This small icon is together with the label."
     },
     "hint": {
       "type": "string",
-      "description": "输入提示，聚焦的时候显示"
+      "description": "Input prompt, displayed when focusing"
     },
     "submitOnChange": {
       "type": "boolean",
-      "description": "当修改完的时候是否提交表单。"
+      "description": "Whether to submit the form when modifications are completed."
     },
     "readOnly": {
       "type": "boolean",
-      "description": "是否只读"
+      "description": "Is it read-only?"
     },
     "readOnlyOn": {
       "type": "string",
-      "description": "只读条件"
+      "description": "read-only condition"
     },
     "validateOnChange": {
       "type": "boolean",
-      "description": "不设置时，当表单提交过后表单项每次修改都会触发重新验证， 如果设置了，则由此配置项来决定要不要每次修改都触发验证。"
+      "description": "If it is not set, every modification of the form item after the form is submitted will trigger re-validation. If it is set, this configuration item will determine whether to trigger validation every time it is modified."
     },
     "description": {
       "type": "string",
-      "description": "描述内容，支持 Html 片段。"
+      "description": "Describe content and support Html fragments."
     },
     "desc": {
       "type": "string"
     },
     "descriptionClassName": {
       "$ref": "#/definitions/ClassName",
-      "description": "配置描述上的 className"
+      "description": "className on configuration description"
     },
     "mode": {
       "type": "string",
@@ -214,27 +214,27 @@
         "inline",
         "horizontal"
       ],
-      "description": "配置当前表单项展示模式"
+      "description": "Configure the current form item display mode"
     },
     "horizontal": {
       "$ref": "#/definitions/FormHorizontal",
-      "description": "当配置为水平布局的时候，用来配置具体的左右分配。"
+      "description": "When configured as a horizontal layout, it is used to configure specific left and right distribution."
     },
     "inline": {
       "type": "boolean",
-      "description": "表单 control 是否为 inline 模式。"
+      "description": "Whether the form control is in inline mode."
     },
     "inputClassName": {
       "$ref": "#/definitions/ClassName",
-      "description": "配置 input className"
+      "description": "Configure input className"
     },
     "placeholder": {
       "type": "string",
-      "description": "占位符"
+      "description": "placeholder"
     },
     "required": {
       "type": "boolean",
-      "description": "是否为必填"
+      "description": "Is it required?"
     },
     "validationErrors": {
       "type": "object",
@@ -333,7 +333,7 @@
           "type": "string"
         }
       },
-      "description": "验证失败的提示信息"
+      "description": "Verification failed prompt message"
     },
     "validations": {
       "anyOf": [
@@ -345,83 +345,83 @@
           "properties": {
             "isAlpha": {
               "type": "boolean",
-              "description": "是否是字母"
+              "description": "Is it a letter"
             },
             "isAlphanumeric": {
               "type": "boolean",
-              "description": "是否为字母数字"
+              "description": "Is it alphanumeric?"
             },
             "isEmail": {
               "type": "boolean",
-              "description": "是否为邮箱地址"
+              "description": "Is it an email address?"
             },
             "isFloat": {
               "type": "boolean",
-              "description": "是否为浮点型"
+              "description": "Whether it is floating point type"
             },
             "isInt": {
               "type": "boolean",
-              "description": "是否为整型"
+              "description": "Whether it is an integer"
             },
             "isJson": {
               "type": "boolean",
-              "description": "是否为 json"
+              "description": "Is it json"
             },
             "isLength": {
               "type": "number",
-              "description": "长度等于指定值"
+              "description": "The length is equal to the specified value"
             },
             "isNumeric": {
               "type": "boolean",
-              "description": "是否为数字"
+              "description": "Is it a number"
             },
             "isRequired": {
               "type": "boolean",
-              "description": "是否为必填"
+              "description": "Is it required?"
             },
             "isUrl": {
               "type": "boolean",
-              "description": "是否为 URL 地址"
+              "description": "Whether it is a URL address"
             },
             "matchRegexp": {
               "type": "string",
-              "description": "内容命中指定正则"
+              "description": "Content hits specified regular rules"
             },
             "matchRegexp1": {
               "type": "string",
-              "description": "内容命中指定正则"
+              "description": "Content hits specified regular rules"
             },
             "matchRegexp2": {
               "type": "string",
-              "description": "内容命中指定正则"
+              "description": "Content hits specified regular rules"
             },
             "matchRegexp3": {
               "type": "string",
-              "description": "内容命中指定正则"
+              "description": "Content hits specified regular rules"
             },
             "matchRegexp4": {
               "type": "string",
-              "description": "内容命中指定正则"
+              "description": "Content hits specified regular rules"
             },
             "matchRegexp5": {
               "type": "string",
-              "description": "内容命中指定正则"
+              "description": "Content hits specified regular rules"
             },
             "maxLength": {
               "type": "number",
-              "description": "最大长度为指定值"
+              "description": "The maximum length is the specified value"
             },
             "maximum": {
               "type": "number",
-              "description": "最大值为指定值"
+              "description": "The maximum value is the specified value"
             },
             "minLength": {
               "type": "number",
-              "description": "最小长度为指定值"
+              "description": "The minimum length is the specified value"
             },
             "minimum": {
               "type": "number",
-              "description": "最小值为指定值"
+              "description": "The minimum value is the specified value"
             },
             "isDateTimeSame": {
               "anyOf": [
@@ -435,7 +435,7 @@
                   }
                 }
               ],
-              "description": "和目标日期相同，支持指定粒度，默认到毫秒"
+              "description": "Same as target date, supports specified granularity, defaults to milliseconds"
             },
             "isDateTimeBefore": {
               "anyOf": [
@@ -449,7 +449,7 @@
                   }
                 }
               ],
-              "description": "早于目标日期，支持指定粒度，默认到毫秒"
+              "description": "Earlier than the target date, supports specified granularity, defaults to milliseconds"
             },
             "isDateTimeAfter": {
               "anyOf": [
@@ -463,7 +463,7 @@
                   }
                 }
               ],
-              "description": "晚于目标日期，支持指定粒度，默认到毫秒"
+              "description": "Later than the target date, supports specified granularity, defaults to milliseconds"
             },
             "isDateTimeSameOrBefore": {
               "anyOf": [
@@ -477,7 +477,7 @@
                   }
                 }
               ],
-              "description": "早于目标日期或和目标日期相同，支持指定粒度，默认到毫秒"
+              "description": "Earlier than the target date or the same as the target date, supports specified granularity, defaults to milliseconds"
             },
             "isDateTimeSameOrAfter": {
               "anyOf": [
@@ -491,7 +491,7 @@
                   }
                 }
               ],
-              "description": "晚于目标日期或和目标日期相同，支持指定粒度，默认到毫秒"
+              "description": "Later than the target date or the same as the target date, supports specified granularity, defaults to milliseconds"
             },
             "isDateTimeBetween": {
               "anyOf": [
@@ -505,7 +505,7 @@
                   }
                 }
               ],
-              "description": "日期处于目标日期范围，支持指定粒度和区间的开闭形式，默认到毫秒, 左右开区间"
+              "description": "The date is within the target date range, and supports the opening and closing forms of specified granularity and interval. The default is milliseconds, and the left and right open intervals are"
             },
             "isTimeSame": {
               "anyOf": [
@@ -519,7 +519,7 @@
                   }
                 }
               ],
-              "description": "和目标时间相同，支持指定粒度，默认到毫秒"
+              "description": "Same as target time, supports specified granularity, defaults to milliseconds"
             },
             "isTimeBefore": {
               "anyOf": [
@@ -533,7 +533,7 @@
                   }
                 }
               ],
-              "description": "早于目标时间，支持指定粒度，默认到毫秒"
+              "description": "Earlier than the target time, supports specified granularity, defaults to milliseconds"
             },
             "isTimeAfter": {
               "anyOf": [
@@ -547,7 +547,7 @@
                   }
                 }
               ],
-              "description": "晚于目标时间，支持指定粒度，默认到毫秒"
+              "description": "Later than the target time, supports specified granularity, defaults to milliseconds"
             },
             "isTimeSameOrBefore": {
               "anyOf": [
@@ -561,7 +561,7 @@
                   }
                 }
               ],
-              "description": "早于目标时间或和目标时间相同，支持指定粒度，默认到毫秒"
+              "description": "Earlier than the target time or the same as the target time, supports specified granularity, defaults to milliseconds"
             },
             "isTimeSameOrAfter": {
               "anyOf": [
@@ -575,7 +575,7 @@
                   }
                 }
               ],
-              "description": "晚于目标时间或和目标时间相同，支持指定粒度，默认到毫秒"
+              "description": "Later than the target time or the same as the target time, supports specified granularity, defaults to milliseconds"
             },
             "isTimeBetween": {
               "anyOf": [
@@ -589,18 +589,18 @@
                   }
                 }
               ],
-              "description": "时间处于目标时间范围，支持指定粒度和区间的开闭形式，默认到毫秒, 左右开区间"
+              "description": "The time is within the target time range, and supports the opening and closing forms of specified granularity and intervals. The default is milliseconds, and the left and right open intervals are"
             }
           }
         }
       ]
     },
     "value": {
-      "description": "默认值，切记只能是静态值，不支持取变量，跟数据关联是通过设置 name 属性来实现的。"
+      "description": "The default value, please remember that it can only be a static value. Variables are not supported. Association with data is achieved by setting the name attribute."
     },
     "clearValueOnHidden": {
       "type": "boolean",
-      "description": "表单项隐藏时，是否在当前 Form 中删除掉该表单项值。注意同名的未隐藏的表单项值也会删掉"
+      "description": "When a form item is hidden, whether to delete the form item value in the current Form. Note that unhidden form item values with the same name will also be deleted."
     },
     "validateApi": {
       "anyOf": [
@@ -611,7 +611,7 @@
           "$ref": "#/definitions/BaseApiObject"
         }
       ],
-      "description": "远端校验表单项接口"
+      "description": "Remote verification form item interface"
     },
     "autoFill": {
       "anyOf": [
@@ -626,10 +626,10 @@
           "properties": {
             "showSuggestion": {
               "type": "boolean",
-              "description": "是否为参照录入模式，参照录入会展示候选值供用户选择，而不是直接填充。"
+              "description": "Whether it is in reference entry mode, reference entry will display candidate values for users to select instead of filling them in directly."
             },
             "defaultSelection": {
-              "description": "参照录入时，默认选中的值"
+              "description": "When reference is entered, the value selected by default"
             },
             "api": {
               "anyOf": [
@@ -640,16 +640,16 @@
                   "type": "string"
                 }
               ],
-              "description": "自动填充 api"
+              "description": "autofill api"
             },
             "silent": {
               "type": "boolean",
-              "description": "是否展示数据格式错误提示，默认为不展示",
+              "description": "Whether to display data format error prompts, the default is not to display",
               "default": true
             },
             "fillMappinng": {
               "type": "object",
-              "description": "填充时的数据映射"
+              "description": "Data mapping when filling"
             },
             "trigger": {
               "type": "string",
@@ -658,7 +658,7 @@
                 "focus",
                 "blur"
               ],
-              "description": "触发条件，默认为 change"
+              "description": "Trigger condition, default is change"
             },
             "mode": {
               "type": "string",
@@ -667,29 +667,29 @@
                 "dialog",
                 "drawer"
               ],
-              "description": "弹窗方式，当为参照录入时用可以配置"
+              "description": "Pop-up window mode, configurable when entering for reference"
             },
             "position": {
               "type": "string",
-              "description": "当参照录入为抽屉时可以配置弹出位置"
+              "description": "When the reference is entered as a drawer, the pop-up position can be configured"
             },
             "size": {
               "type": "string",
-              "description": "当为参照录入时可以配置弹出容器的大小"
+              "description": "Configurable size of popup container when typing for reference"
             },
             "columns": {
               "type": "array",
               "items": {},
-              "description": "参照录入展示的项"
+              "description": "Refer to the entry displayed items"
             },
             "filter": {
-              "description": "参照录入时的过滤条件"
+              "description": "Refer to the filter conditions when entering"
             }
           },
           "additionalProperties": false
         }
       ],
-      "description": "自动填充，当选项被选择的时候，将选项中的其他值同步设置到表单内。"
+      "description": "Autofill, when an option is selected, synchronously sets the other values in the option into the form."
     },
     "initAutoFill": {
       "anyOf": [
@@ -708,15 +708,15 @@
     "type": {
       "type": "string",
       "const": "textarea",
-      "description": "指定为多行文本输入框"
+      "description": "Designated as a multi-line text input box"
     },
     "maxRows": {
       "type": "number",
-      "description": "最大行数"
+      "description": "Maximum number of rows"
     },
     "minRows": {
       "type": "number",
-      "description": "最小行数"
+      "description": "Minimum number of rows"
     },
     "borderMode": {
       "type": "string",
@@ -725,30 +725,30 @@
         "half",
         "none"
       ],
-      "description": "边框模式，全边框，还是半边框，或者没边框。"
+      "description": "Border mode, full border, half border, or no border."
     },
     "maxLength": {
       "type": "number",
-      "description": "限制文字个数"
+      "description": "Limit the number of characters"
     },
     "showCounter": {
       "type": "boolean",
-      "description": "是否显示计数"
+      "description": "Whether to display count"
     },
     "clearable": {
       "type": "boolean",
-      "description": "输入内容是否可清除"
+      "description": "Whether the input content can be cleared"
     },
     "resetValue": {
       "type": "string",
-      "description": "重置值"
+      "description": "reset value"
     }
   },
   "required": [
     "type"
   ],
   "additionalProperties": false,
-  "description": "TextArea 多行文本输入框。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/form/textarea",
+  "description": "TextArea multi-line text input box. Documentation: https://aisuda.bce.baidu.com/amis/zh-CN/components/form/textarea",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./TextareaControlSchema.json"
 }

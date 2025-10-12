@@ -3,15 +3,15 @@
   "properties": {
     "className": {
       "type": "string",
-      "description": "类名"
+      "description": "Class name"
     },
     "popOverClassName": {
       "type": "string",
-      "description": "弹框外层类名"
+      "description": "Pop-up box outer class name"
     },
     "popOverEnableOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "配置当前行是否启动，要用表达式"
+      "description": "To configure whether the current row is started, use an expression"
     },
     "mode": {
       "type": "string",
@@ -20,7 +20,7 @@
         "drawer",
         "popOver"
       ],
-      "description": "弹出模式"
+      "description": "popup mode"
     },
     "size": {
       "type": "string",
@@ -30,7 +30,7 @@
         "lg",
         "xl"
       ],
-      "description": "是弹窗形式的时候有用。"
+      "description": "Useful when it is in the form of a pop-up window."
     },
     "position": {
       "type": "string",
@@ -82,7 +82,7 @@
         "fixed-left-bottom",
         "fixed-right-bottom"
       ],
-      "description": "弹出位置"
+      "description": "popup location"
     },
     "trigger": {
       "type": "string",
@@ -90,11 +90,11 @@
         "click",
         "hover"
       ],
-      "description": "触发条件，默认是 click"
+      "description": "Trigger condition, default is click"
     },
     "showIcon": {
       "type": "boolean",
-      "description": "是否显示查看更多的 icon，通常是放大图标。"
+      "description": "Whether to display the view more icon, usually the enlarge icon."
     },
     "offset": {
       "type": "object",
@@ -107,11 +107,11 @@
         }
       },
       "additionalProperties": false,
-      "description": "偏移量"
+      "description": "offset"
     },
     "title": {
       "type": "string",
-      "description": "标题"
+      "description": "title"
     },
     "body": {
       "$ref": "#/definitions/SchemaCollection"

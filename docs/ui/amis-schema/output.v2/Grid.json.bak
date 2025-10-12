@@ -1,0 +1,78 @@
+{
+  "allOf": [
+    {
+      "$ref": "#/definitions/SchemaObjectGrid",
+      "patternProperties": {
+        "^(x|y|w|h|width|height|align|valign|gridClassName)$": {}
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "起始横坐标位置，以 1 为起点"
+        },
+        "y": {
+          "type": "number",
+          "description": "起始纵坐标位置，以 1 为起点"
+        },
+        "w": {
+          "type": "number",
+          "description": "宽度，跨几列"
+        },
+        "h": {
+          "type": "number",
+          "description": "高度，跨几行"
+        },
+        "width": {
+          "type": [
+            "number",
+            "string"
+          ],
+          "description": "宽度，会影响起始位置对应那一列的宽度"
+        },
+        "height": {
+          "type": [
+            "number",
+            "string"
+          ],
+          "description": "高度，会影响起始位置那一行的高度，设置为 auto 就会自适应"
+        },
+        "align": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right",
+            "center",
+            "auto"
+          ],
+          "description": "水平展示方式，用于内容宽度比 grid 小的情况，默认是 auto 自动撑满"
+        },
+        "valign": {
+          "type": "string",
+          "enum": [
+            "top",
+            "bottom",
+            "middle",
+            "auto"
+          ],
+          "description": "垂直展示方式，用于内容高度比 grid 小的情况，默认是 auto 自动撑满"
+        },
+        "gridClassName": {
+          "type": "string",
+          "description": "每个格子最外层容器的 className"
+        }
+      },
+      "required": [
+        "h",
+        "w",
+        "x",
+        "y"
+      ]
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Grid.json"
+}

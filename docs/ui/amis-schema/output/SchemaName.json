@@ -1,6 +1,6 @@
 {
   "type": "string",
-  "description": "组件名字，这个名字可以用来定位，用于组件通信",
+  "description": "Component name. This name can be used for positioning and component communication.",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./SchemaName.json"
 }

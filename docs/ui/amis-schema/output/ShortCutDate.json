@@ -13,7 +13,7 @@
           "type": "string"
         }
       ],
-      "description": "支持表达式"
+      "description": "Supports expressions"
     }
   },
   "required": [

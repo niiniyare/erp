@@ -1,0 +1,25 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "block"
+    },
+    {
+      "type": "string",
+      "const": "horizontal"
+    },
+    {
+      "type": "string",
+      "const": "inline"
+    },
+    {
+      "type": "string",
+      "const": "vertical"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.MozOrient.json"
+}

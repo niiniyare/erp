@@ -48,7 +48,7 @@
         "number",
         "string"
       ],
-      "description": "label自定义宽度，默认单位为px"
+      "description": "Label custom width, default unit is px"
     }
   },
   "additionalProperties": false,

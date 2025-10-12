@@ -1,0 +1,213 @@
+[
+  {
+    "file": "./output/AudioSchema.json",
+    "line": 139,
+    "text": {
+      "tag": null,
+      "value": "\"description\": \"\\\"视频播放地址, 支持 $ 取变量。\""
+    },
+    "translation": ""
+  },
+  {
+    "file": "./output/BaseApiObject.json",
+    "line": 23,
+    "tag": "description",
+    "value": "用来控制携带数据. 当key 为 `&` 值为 `$` 时, 将所有原始数据打平设置到 data 中. 当值为 $ 将所有原始数据赋值到对应的 key 中. 当值为 $ 打头时, 将变量值设置到 key 中.",
+    "translation": "Used to control carrying data. When the key is `&` and the value is `$`, all original data will be set to data flatly. When the value is $, all original data will be assigned to the corresponding key. When the value starts with $, the variable value will be set to key."
+  },
+  {
+    "file": "./output/ConditionBuilderControlSchema.json",
+    "line": 772,
+    "tag": "description",
+    "value": "evalMode 即直接就是表达式，否则 需要  默认为 true",
+    "translation": "evalMode is the expression directly, otherwise ${this is the expression} is required. The default is true."
+  },
+  {
+    "file": "./output/ConditionBuilderControlSchema.json",
+    "line": 776,
+    "tag": "description",
+    "value": "混合模式，意味着这个输入框既可以输入不同文本 也可以输入公式。 当输入公式时，值格式为  其他内容当字符串。",
+    "translation": "Mixed mode means that this input box can input different text or formulas. When entering a formula, the value format is ${formula content} and other contents are treated as strings."
+  },
+  {
+    "file": "./output/DateRangeControlSchema.json",
+    "line": 743,
+    "tag": "description",
+    "value": "最大日期限制，支持变量  来取值，或者用相对值如：* `-2mins` 2分钟前\\\\n * `+2days` 2天后\\\\n* `-10week` 十周前\\\\n可用单位： `min`、`hour`、`day`、`week`、`month`、`year`。所有单位支持复数形式。",
+    "translation": "The maximum date limit supports the variable  to take the value, or use relative values such as: * `-2mins` 2 minutes ago\\\\n * `+2days` 2 days later\\\\n* `-10week` ten weeks ago\\\\n Available units: `min`, `hour`, `day`, `week`, `month`, `year`. All units support plural forms."
+  },
+  {
+    "file": "./output/DateRangeControlSchema.json",
+    "line": 747,
+    "tag": "description",
+    "value": "最小日期限制，支持变量  来取值，或者用相对值如：* `-2mins` 2分钟前\\\\n * `+2days` 2天后\\\\n* `-10week` 十周前\\\\n可用单位： `min`、`hour`、`day`、`week`、`month`、`year`。所有单位支持复数形式。",
+    "translation": "Minimum date limit, support variable  to take value, or use relative values such as: * `-2mins` 2 minutes ago\\\\n * `+2days` 2 days later\\\\n* `-10week` ten weeks ago\\\\n Available units: `min`, `hour`, `day`, `week`, `month`, `year`. All units support plural forms."
+  },
+  {
+    "file": "./output/FileControlSchema.json",
+    "line": 678,
+    "tag": "description",
+    "value": "默认显示文件路径的时候会支持直接下载， 可以支持加前缀如：`http://xx.dom/filename=` ， 如果不希望这样，可以把当前配置项设置为 `false`。\\n\\n1.1.6 版本开始将支持变量  来自己拼凑个下载地址，并且支持配置成 post.",
+    "translation": "By default, direct downloading will be supported when the file path is displayed, and prefixes such as `http://xx.dom/filename=` can be supported. If you do not want this, you can set the current configuration item to `false`. \\n\\nVersion 1.1.6 starts to support variables  to piece together a download address, and supports configuration as post."
+  },
+  {
+    "file": "./output/ImagesSchema.json",
+    "line": 181,
+    "tag": "description",
+    "value": "图片地址，默认读取数据中的 image 属性，如果不是请配置 ,如  ",
+    "translation": "Image address, the image attribute in the data is read by default. If not, please configure it, such as "
+  },
+  {
+    "file": "./output/ImagesSchema.json",
+    "line": 185,
+    "tag": "description",
+    "value": "大图地址，不设置用 src 属性，如果不是请配置，如：",
+    "translation": "Large image address, if not set, use the src attribute. If not, please configure it, such as: "
+  },
+  {
+    "file": "./output/JSONSchemaEditorControlSchema.json",
+    "line": 758,
+    "text": {
+      "tag": null,
+      "value": "\"description\": \"Custom details configuration panel such as: \\n\\n{ boolean: [ {type: \\\"input-text\\\", name: \\\"aa\\\", label: \\\"AA\\\" }   ] }\\n\\n当配置布尔字段详情时，就会出现以上配置\""
+    },
+    "translation": ""
+  },
+  {
+    "file": "./output/FieldSimple.json",
+    "line": 503,
+    "tag": "description",
+    "value": "自动完成 API，当输入部分文字的时候，会将这些文字通过  可以取到，发送给接口。 接口可以返回匹配到的选项，帮助用户输入。",
+    "translation": "Autocomplete API, when entering some text, the text will be retrieved through  and sent to the interface. The interface can return matching options to help the user input."
+  },
+  {
+    "file": "./output/FormulaControlSchema.json",
+    "line": 715,
+    "text": {
+      "tag": null,
+      "value": "\"description\": \"The conditions that trigger the formula, such as data.xxx == \\\\\\\"a\\\\\\\" 或者 ${xx}\""
+    },
+    "translation": ""
+  },
+  {
+    "file": "./output/MonthRangeControlSchema.json",
+    "line": 30,
+    "tag": "description",
+    "value": "最大日期限制，支持变量  来取值，或者用相对值如：* `-2mins` 2分钟前\\\\n * `+2days` 2天后\\\\n* `-10week` 十周前\\\\n可用单位： `min`、`hour`、`day`、`week`、`month`、`year`。所有单位支持复数形式。",
+    "translation": "The maximum date limit supports the variable  to take the value, or use relative values such as: * `-2mins` 2 minutes ago\\\\n * `+2days` 2 days later\\\\n* `-10week` ten weeks ago\\\\n Available units: `min`, `hour`, `day`, `week`, `month`, `year`. All units support plural forms."
+  },
+  {
+    "file": "./output/MonthRangeControlSchema.json",
+    "line": 34,
+    "tag": "description",
+    "value": "最小日期限制，支持变量  来取值，或者用相对值如：* `-2mins` 2分钟前\\\\n * `+2days` 2天后\\\\n* `-10week` 十周前\\\\n可用单位： `min`、`hour`、`day`、`week`、`month`、`year`。所有单位支持复数形式。",
+    "translation": "Minimum date limit, support variable  to take value, or use relative values such as: * `-2mins` 2 minutes ago\\\\n * `+2days` 2 days later\\\\n* `-10week` ten weeks ago\\\\n Available units: `min`, `hour`, `day`, `week`, `month`, `year`. All units support plural forms."
+  },
+  {
+    "file": "./output/SchemaApiObject.json",
+    "line": 23,
+    "tag": "description",
+    "value": "用来控制携带数据. 当key 为 `&` 值为 `$` 时, 将所有原始数据打平设置到 data 中. 当值为 $ 将所有原始数据赋值到对应的 key 中. 当值为 $ 打头时, 将变量值设置到 key 中.",
+    "translation": "Used to control carrying data. When the key is `&` and the value is `$`, all original data will be set to data flatly. When the value is $, all original data will be assigned to the corresponding key. When the value starts with $, the variable value will be set to key."
+  },
+  {
+    "file": "./output/SchemaClassName.json",
+    "line": 26,
+    "text": {
+      "tag": null,
+      "value": "\"description\": \"css class name, configuration string, or object. \\n\\n className: \\\"red\\\"\\n\\n用对象配置时意味着你能跟表达式一起搭配使用，如：\\n\\n    className: {         \\\"red\\\": \\\"data.progress > 80\\\",         \\\"blue\\\": \\\"data.progress > 60\\\"     }\","
+    },
+    "translation": ""
+  },
+  {
+    "file": "./output/TextControlSchema.json",
+    "line": 4244,
+    "tag": "description",
+    "value": "自动完成 API，当输入部分文字的时候，会将这些文字通过  可以取到，发送给接口。 接口可以返回匹配到的选项，帮助用户输入。",
+    "translation": "Autocomplete API, when entering some text, the text will be retrieved through  and sent to the interface. The interface can return matching options to help the user input."
+  },
+  {
+    "file": "./output/SchemaReload.json",
+    "line": 3,
+    "tag": "description",
+    "value": "配置刷新动作，这个动作通常在完成渲染器本省的固定动作后出发。\\n\\n一般用来配置目标组件的 name 属性。多个目标可以用逗号隔开。\\n\\n当目标是 windows 时表示刷新整个页面。\\n\\n刷新目标的同时还支持传递参数如： `foo?a=&b=,boo?c=`",
+    "translation": "Configure the refresh action. This action usually starts after completing the fixed action of the renderer itself. \\n\\nGenerally used to configure the name attribute of the target component. Multiple targets can be separated by commas. \\n\\nWhen the target is windows, it means refreshing the entire page. \\n\\nWhile refreshing the target, it also supports passing parameters such as: `foo?a=&b=,boo?c=`"
+  },
+  {
+    "file": "./output/TableControlSchema.json",
+    "line": 916,
+    "tag": "description",
+    "value": "复制的时候用来配置复制映射的数据。默认值是 {&:$}，相当与复制整个行数据 通常有时候需要用来标记是复制过来的，也可能需要删掉一下主键字段。",
+    "translation": "Used to configure replication mapping data during replication. The default value is {&:$}, which is equivalent to copying the entire row of data. Sometimes it is necessary to mark that it was copied, and it may also be necessary to delete the primary key field."
+  },
+  {
+    "file": "./output/SchemaTpl.json",
+    "line": 3,
+    "tag": "description",
+    "value": "支持两种语法，但是不能混着用。分别是：\\n\\n1. `` 或者 `${xxx|upperCase}` 2. `<%= data.xxx %>`\\n\\n\\n更多文档：https://aisuda.bce.baidu.com/amis/zh-CN/docs/concepts/template",
+    "translation": "Both syntaxes are supported, but cannot be mixed. They are:\\n\\n1. `` or `${xxx|upperCase}` 2. `<%= data.xxx %>`\\n\\n\\nMore documents: https://aisuda.bce.baidu.com/amis/zh-CN/docs/concepts/template"
+  },
+  {
+    "file": "./output/WizardSchema.json",
+    "line": 194,
+    "tag": "description",
+    "value": "保存完后，可以指定跳转地址，支持相对路径和组内绝对路径，同时可以通过  使用变量",
+    "translation": "After saving, you can specify the jump address, support relative paths and absolute paths within the group, and use variables through "
+  },
+  {
+    "file": "./output/StatusSchema.json",
+    "line": 151,
+    "tag": "success",
+    "value": "成功",
+    "translation": "success"
+  },
+  {
+    "file": "./output/StatusSchema.json",
+    "line": 152,
+    "tag": "pending",
+    "value": "运行中",
+    "translation": "Running"
+  },
+  {
+    "file": "./output/StatusSchema.json",
+    "line": 153,
+    "tag": "fail",
+    "value": "失败",
+    "translation": "fail"
+  },
+  {
+    "file": "./output/StatusSchema.json",
+    "line": 154,
+    "tag": "queue",
+    "value": "排队中",
+    "translation": "Queuing"
+  },
+  {
+    "file": "./output/StatusSchema.json",
+    "line": 155,
+    "tag": "schedule",
+    "value": "调度中",
+    "translation": "Scheduling"
+  },
+  {
+    "file": "./output/QuarterRangeControlSchema.json",
+    "line": 30,
+    "tag": "description",
+    "value": "最大日期限制，支持变量  来取值，或者用相对值如：* `-2mins` 2分钟前\\\\n * `+2days` 2天后\\\\n* `-10week` 十周前\\\\n可用单位： `min`、`hour`、`day`、`week`、`month`、`year`。所有单位支持复数形式。",
+    "translation": "The maximum date limit supports the variable  to take the value, or use relative values such as: * `-2mins` 2 minutes ago\\\\n * `+2days` 2 days later\\\\n* `-10week` ten weeks ago\\\\n Available units: `min`, `hour`, `day`, `week`, `month`, `year`. All units support plural forms."
+  },
+  {
+    "file": "./output/QuarterRangeControlSchema.json",
+    "line": 34,
+    "tag": "description",
+    "value": "最小日期限制，支持变量  来取值，或者用相对值如：* `-2mins` 2分钟前\\\\n * `+2days` 2天后\\\\n* `-10week` 十周前\\\\n可用单位： `min`、`hour`、`day`、`week`、`month`、`year`。所有单位支持复数形式。",
+    "translation": "Minimum date limit, support variable  to take value, or use relative values such as: * `-2mins` 2 minutes ago\\\\n * `+2days` 2 days later\\\\n* `-10week` ten weeks ago\\\\n Available units: `min`, `hour`, `day`, `week`, `month`, `year`. All units support plural forms."
+  },
+  {
+    "file": "./output/SelectControlSchema.json",
+    "line": 892,
+    "tag": "description",
+    "value": "自动完成 API，当输入部分文字的时候，会将这些文字通过  可以取到，发送给接口。 接口可以返回匹配到的选项，帮助用户输入。",
+    "translation": "Autocomplete API, when entering some text, the text will be retrieved through  and sent to the interface. The interface can return matching options to help the user input."
+  }
+]

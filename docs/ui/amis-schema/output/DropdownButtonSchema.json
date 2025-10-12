@@ -3,43 +3,43 @@
   "properties": {
     "$$id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
     },
     "className": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "容器 css 类名"
+      "description": "Container css class name"
     },
     "$ref": {
       "type": "string",
-      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
     },
     "disabled": {
       "type": "boolean",
-      "description": "是否禁用"
+      "description": "Whether to disable"
     },
     "disabledOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否禁用表达式"
+      "description": "Whether to disable expressions"
     },
     "hidden": {
       "type": "boolean",
-      "description": "是否隐藏"
+      "description": "Whether to hide"
     },
     "hiddenOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否隐藏表达式"
+      "description": "Whether to hide expressions"
     },
     "visible": {
       "type": "boolean",
-      "description": "是否显示"
+      "description": "Whether to display"
     },
     "visibleOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否显示表达式"
+      "description": "Whether to display expressions"
     },
     "id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于日志采集"
+      "description": "The unique id of the component, mainly used for log collection"
     },
     "onEvent": {
       "type": "object",
@@ -67,57 +67,57 @@
         ],
         "additionalProperties": false
       },
-      "description": "事件动作配置"
+      "description": "Event action configuration"
     },
     "static": {
       "type": "boolean",
-      "description": "是否静态展示"
+      "description": "Whether to display statically"
     },
     "staticOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否静态展示表达式"
+      "description": "Whether to display expressions statically"
     },
     "staticPlaceholder": {
       "type": "string",
-      "description": "静态展示空值占位"
+      "description": "Static display of empty value placeholder"
     },
     "staticClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项类名"
+      "description": "Static display form item class name"
     },
     "staticLabelClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Label类名"
+      "description": "Static display of form item Label class name"
     },
     "staticInputClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Value类名"
+      "description": "Static display of form item Value class name"
     },
     "staticSchema": {},
     "style": {
       "type": "object",
-      "description": "组件样式"
+      "description": "Component style"
     },
     "editorSetting": {
       "type": "object",
       "properties": {
         "behavior": {
           "type": "string",
-          "description": "组件行为、用途，如 create、update、remove"
+          "description": "Component behavior and usage, such as create, update, remove"
         },
         "displayName": {
           "type": "string",
-          "description": "组件名称，通常是业务名称方便定位"
+          "description": "Component name, usually the business name for easy location"
         },
         "mock": {
-          "description": "编辑器假数据，方便展示"
+          "description": "Editor fake data for easy display"
         }
       },
-      "description": "编辑器配置，运行时可以忽略"
+      "description": "Editor configuration, can be ignored at runtime"
     },
     "useMobileUI": {
       "type": "boolean",
-      "description": "可以组件级别用来关闭移动端样式"
+      "description": "Can be used to turn off mobile style at the component level"
     },
     "testIdBuilder": {
       "$ref": "#/definitions/TestIdBuilder"
@@ -125,33 +125,33 @@
     "type": {
       "type": "string",
       "const": "dropdown-button",
-      "description": "指定为 DropDown Button 类型"
+      "description": "Specified as type DropDown Button"
     },
     "testid": {
       "type": "string"
     },
     "block": {
       "type": "boolean",
-      "description": "是否独占一行 `display: block`"
+      "description": "Whether to occupy one line `display: block`"
     },
     "btnClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "给 Button 配置 className。"
+      "description": "Configure className for Button."
     },
     "buttons": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/DropdownButton"
       },
-      "description": "按钮集合，支持分组"
+      "description": "Button collection, supports grouping"
     },
     "body": {
       "$ref": "#/definitions/SchemaCollection",
-      "description": "内容区域"
+      "description": "content area"
     },
     "label": {
       "type": "string",
-      "description": "按钮文字"
+      "description": "button text"
     },
     "level": {
       "type": "string",
@@ -163,15 +163,15 @@
         "primary",
         "link"
       ],
-      "description": "按钮级别，样式"
+      "description": "Button level, style"
     },
     "closeOnOutside": {
       "type": "boolean",
-      "description": "点击外部是否关闭"
+      "description": "Click whether to close outside"
     },
     "closeOnClick": {
       "type": "boolean",
-      "description": "点击内容是否关闭"
+      "description": "Click whether to close the content"
     },
     "size": {
       "type": "string",
@@ -181,7 +181,7 @@
         "md",
         "lg"
       ],
-      "description": "按钮大小"
+      "description": "button size"
     },
     "align": {
       "type": "string",
@@ -189,15 +189,15 @@
         "left",
         "right"
       ],
-      "description": "对齐方式"
+      "description": "Alignment"
     },
     "iconOnly": {
       "type": "boolean",
-      "description": "是否只显示图标。"
+      "description": "Whether to display only icons."
     },
     "rightIcon": {
       "$ref": "#/definitions/SchemaIcon",
-      "description": "右侧图标"
+      "description": "right icon"
     },
     "trigger": {
       "type": "string",
@@ -205,15 +205,15 @@
         "click",
         "hover"
       ],
-      "description": "触发条件，默认是 click"
+      "description": "Trigger condition, default is click"
     },
     "hideCaret": {
       "type": "boolean",
-      "description": "是否显示下拉按钮"
+      "description": "Whether to display drop-down button"
     },
     "menuClassName": {
       "type": "string",
-      "description": "菜单 CSS 样式"
+      "description": "Menu CSS style"
     },
     "overlayPlacement": {
       "type": "string"
@@ -223,7 +223,7 @@
     "type"
   ],
   "additionalProperties": false,
-  "description": "下拉按钮渲染器。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/dropdown-button",
+  "description": "Dropdown button renderer. Documentation: https://aisuda.bce.baidu.com/amis/zh-CN/components/dropdown-button",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./DropdownButtonSchema.json"
 }

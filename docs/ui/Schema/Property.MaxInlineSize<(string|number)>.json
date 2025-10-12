@@ -1,0 +1,47 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string"
+    },
+    {
+      "type": "number"
+    },
+    {
+      "type": "string",
+      "const": "-moz-fit-content"
+    },
+    {
+      "type": "string",
+      "const": "-moz-max-content"
+    },
+    {
+      "type": "string",
+      "const": "-moz-min-content"
+    },
+    {
+      "type": "string",
+      "const": "-webkit-fill-available"
+    },
+    {
+      "type": "string",
+      "const": "fit-content"
+    },
+    {
+      "type": "string",
+      "const": "max-content"
+    },
+    {
+      "type": "string",
+      "const": "min-content"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.MaxInlineSize<(string|number)>.json"
+}

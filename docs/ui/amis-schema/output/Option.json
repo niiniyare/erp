@@ -3,38 +3,38 @@
   "properties": {
     "label": {
       "type": "string",
-      "description": "用来显示的文字"
+      "description": "text to display"
     },
     "scopeLabel": {
       "type": "string",
-      "description": "可以用来给 Option 标记个范围，让数据展示更清晰。\n\n这个只有在数值展示的时候显示。"
+      "description": "It can be used to mark a range for Option to display the data more clearly. \n\nThis is only displayed when numerical values are displayed."
     },
     "value": {
-      "description": "请保证数值唯一，多个选项值一致会认为是同一个选项。"
+      "description": "Please ensure that the values are unique. Multiple options with consistent values will be considered the same option."
     },
     "disabled": {
       "type": "boolean",
-      "description": "是否禁用"
+      "description": "Whether to disable"
     },
     "children": {
       "$ref": "#/definitions/Options",
-      "description": "支持嵌套"
+      "description": "Support nesting"
     },
     "visible": {
       "type": "boolean",
-      "description": "是否可见"
+      "description": "visible or not"
     },
     "hidden": {
       "type": "boolean",
-      "description": "最好不要用！因为有 visible 就够了。"
+      "description": "It's best not to use it! Because visible is enough."
     },
     "description": {
       "type": "string",
-      "description": "描述，部分控件支持"
+      "description": "Description, supported by some controls"
     },
     "defer": {
       "type": "boolean",
-      "description": "标记后数据延时加载"
+      "description": "Delayed loading of data after marking"
     },
     "deferApi": {
       "anyOf": [
@@ -45,15 +45,15 @@
           "type": "string"
         }
       ],
-      "description": "如果设置了，优先级更高，不设置走 source 接口加载。"
+      "description": "If set, the priority is higher. If it is not set, the source interface is used to load."
     },
     "loading": {
       "type": "boolean",
-      "description": "标记正在加载。只有 defer 为 true 时有意义。内部字段不可以外部设置"
+      "description": "Tags are loading. Only meaningful if defer is true. Internal fields cannot be set externally"
     },
     "loaded": {
       "type": "boolean",
-      "description": "只有设置了 defer 才有意义，内部字段不可以外部设置"
+      "description": "It only makes sense if defer is set, internal fields cannot be set externally"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",

@@ -1,0 +1,812 @@
+{
+  "type": "object",
+  "properties": {
+    "$$id": {
+      "type": "string",
+      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "容器 css 类名"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "是否禁用"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否禁用表达式"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "是否隐藏"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否隐藏表达式"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "是否显示"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否显示表达式"
+    },
+    "id": {
+      "type": "string",
+      "description": "组件唯一 id，主要用于日志采集"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "事件动作配置"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "是否静态展示"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否静态展示表达式"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "静态展示空值占位"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项类名"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项Label类名"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项Value类名"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "组件样式"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "组件行为、用途，如 create、update、remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "组件名称，通常是业务名称方便定位"
+        },
+        "mock": {
+          "description": "编辑器假数据，方便展示"
+        }
+      },
+      "description": "编辑器配置，运行时可以忽略"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "可以组件级别用来关闭移动端样式"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "size": {
+      "type": "string",
+      "enum": [
+        "xs",
+        "sm",
+        "md",
+        "lg",
+        "full"
+      ],
+      "description": "表单项大小"
+    },
+    "label": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean",
+          "const": false
+        }
+      ],
+      "description": "描述标题"
+    },
+    "labelAlign": {
+      "$ref": "#/definitions/LabelAlign",
+      "description": "描述标题"
+    },
+    "labelWidth": {
+      "type": [
+        "number",
+        "string"
+      ],
+      "description": "label自定义宽度，默认单位为px"
+    },
+    "labelClassName": {
+      "type": "string",
+      "description": "配置 label className"
+    },
+    "name": {
+      "type": "string",
+      "description": "字段名，表单提交时的 key，支持多层级，用.连接，如： a.b.c"
+    },
+    "extraName": {
+      "type": "string",
+      "description": "额外的字段名，当为范围组件时可以用来将另外一个值打平出来"
+    },
+    "remark": {
+      "$ref": "#/definitions/SchemaRemark",
+      "description": "显示一个小图标, 鼠标放上去的时候显示提示内容"
+    },
+    "labelRemark": {
+      "$ref": "#/definitions/SchemaRemark",
+      "description": "显示一个小图标, 鼠标放上去的时候显示提示内容, 这个小图标跟 label 在一起"
+    },
+    "hint": {
+      "type": "string",
+      "description": "输入提示，聚焦的时候显示"
+    },
+    "submitOnChange": {
+      "type": "boolean",
+      "description": "当修改完的时候是否提交表单。"
+    },
+    "readOnly": {
+      "type": "boolean",
+      "description": "是否只读"
+    },
+    "readOnlyOn": {
+      "type": "string",
+      "description": "只读条件"
+    },
+    "validateOnChange": {
+      "type": "boolean",
+      "description": "不设置时，当表单提交过后表单项每次修改都会触发重新验证， 如果设置了，则由此配置项来决定要不要每次修改都触发验证。"
+    },
+    "description": {
+      "type": "string",
+      "description": "描述内容，支持 Html 片段。"
+    },
+    "desc": {
+      "type": "string"
+    },
+    "descriptionClassName": {
+      "$ref": "#/definitions/ClassName",
+      "description": "配置描述上的 className"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "inline",
+        "horizontal"
+      ],
+      "description": "配置当前表单项展示模式"
+    },
+    "horizontal": {
+      "$ref": "#/definitions/FormHorizontal",
+      "description": "当配置为水平布局的时候，用来配置具体的左右分配。"
+    },
+    "inline": {
+      "type": "boolean",
+      "description": "表单 control 是否为 inline 模式。"
+    },
+    "inputClassName": {
+      "$ref": "#/definitions/ClassName",
+      "description": "配置 input className"
+    },
+    "placeholder": {
+      "type": "string",
+      "description": "占位符"
+    },
+    "required": {
+      "type": "boolean",
+      "description": "是否为必填"
+    },
+    "validationErrors": {
+      "type": "object",
+      "properties": {
+        "isAlpha": {
+          "type": "string"
+        },
+        "isAlphanumeric": {
+          "type": "string"
+        },
+        "isEmail": {
+          "type": "string"
+        },
+        "isFloat": {
+          "type": "string"
+        },
+        "isInt": {
+          "type": "string"
+        },
+        "isJson": {
+          "type": "string"
+        },
+        "isLength": {
+          "type": "string"
+        },
+        "isNumeric": {
+          "type": "string"
+        },
+        "isRequired": {
+          "type": "string"
+        },
+        "isUrl": {
+          "type": "string"
+        },
+        "matchRegexp": {
+          "type": "string"
+        },
+        "matchRegexp2": {
+          "type": "string"
+        },
+        "matchRegexp3": {
+          "type": "string"
+        },
+        "matchRegexp4": {
+          "type": "string"
+        },
+        "matchRegexp5": {
+          "type": "string"
+        },
+        "maxLength": {
+          "type": "string"
+        },
+        "maximum": {
+          "type": "string"
+        },
+        "minLength": {
+          "type": "string"
+        },
+        "minimum": {
+          "type": "string"
+        },
+        "isDateTimeSame": {
+          "type": "string"
+        },
+        "isDateTimeBefore": {
+          "type": "string"
+        },
+        "isDateTimeAfter": {
+          "type": "string"
+        },
+        "isDateTimeSameOrBefore": {
+          "type": "string"
+        },
+        "isDateTimeSameOrAfter": {
+          "type": "string"
+        },
+        "isDateTimeBetween": {
+          "type": "string"
+        },
+        "isTimeSame": {
+          "type": "string"
+        },
+        "isTimeBefore": {
+          "type": "string"
+        },
+        "isTimeAfter": {
+          "type": "string"
+        },
+        "isTimeSameOrBefore": {
+          "type": "string"
+        },
+        "isTimeSameOrAfter": {
+          "type": "string"
+        },
+        "isTimeBetween": {
+          "type": "string"
+        }
+      },
+      "description": "验证失败的提示信息"
+    },
+    "validations": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "isAlpha": {
+              "type": "boolean",
+              "description": "是否是字母"
+            },
+            "isAlphanumeric": {
+              "type": "boolean",
+              "description": "是否为字母数字"
+            },
+            "isEmail": {
+              "type": "boolean",
+              "description": "是否为邮箱地址"
+            },
+            "isFloat": {
+              "type": "boolean",
+              "description": "是否为浮点型"
+            },
+            "isInt": {
+              "type": "boolean",
+              "description": "是否为整型"
+            },
+            "isJson": {
+              "type": "boolean",
+              "description": "是否为 json"
+            },
+            "isLength": {
+              "type": "number",
+              "description": "长度等于指定值"
+            },
+            "isNumeric": {
+              "type": "boolean",
+              "description": "是否为数字"
+            },
+            "isRequired": {
+              "type": "boolean",
+              "description": "是否为必填"
+            },
+            "isUrl": {
+              "type": "boolean",
+              "description": "是否为 URL 地址"
+            },
+            "matchRegexp": {
+              "type": "string",
+              "description": "内容命中指定正则"
+            },
+            "matchRegexp1": {
+              "type": "string",
+              "description": "内容命中指定正则"
+            },
+            "matchRegexp2": {
+              "type": "string",
+              "description": "内容命中指定正则"
+            },
+            "matchRegexp3": {
+              "type": "string",
+              "description": "内容命中指定正则"
+            },
+            "matchRegexp4": {
+              "type": "string",
+              "description": "内容命中指定正则"
+            },
+            "matchRegexp5": {
+              "type": "string",
+              "description": "内容命中指定正则"
+            },
+            "maxLength": {
+              "type": "number",
+              "description": "最大长度为指定值"
+            },
+            "maximum": {
+              "type": "number",
+              "description": "最大值为指定值"
+            },
+            "minLength": {
+              "type": "number",
+              "description": "最小长度为指定值"
+            },
+            "minimum": {
+              "type": "number",
+              "description": "最小值为指定值"
+            },
+            "isDateTimeSame": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "和目标日期相同，支持指定粒度，默认到毫秒"
+            },
+            "isDateTimeBefore": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "早于目标日期，支持指定粒度，默认到毫秒"
+            },
+            "isDateTimeAfter": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "晚于目标日期，支持指定粒度，默认到毫秒"
+            },
+            "isDateTimeSameOrBefore": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "早于目标日期或和目标日期相同，支持指定粒度，默认到毫秒"
+            },
+            "isDateTimeSameOrAfter": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "晚于目标日期或和目标日期相同，支持指定粒度，默认到毫秒"
+            },
+            "isDateTimeBetween": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "日期处于目标日期范围，支持指定粒度和区间的开闭形式，默认到毫秒, 左右开区间"
+            },
+            "isTimeSame": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "和目标时间相同，支持指定粒度，默认到毫秒"
+            },
+            "isTimeBefore": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "早于目标时间，支持指定粒度，默认到毫秒"
+            },
+            "isTimeAfter": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "晚于目标时间，支持指定粒度，默认到毫秒"
+            },
+            "isTimeSameOrBefore": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "早于目标时间或和目标时间相同，支持指定粒度，默认到毫秒"
+            },
+            "isTimeSameOrAfter": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "晚于目标时间或和目标时间相同，支持指定粒度，默认到毫秒"
+            },
+            "isTimeBetween": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "时间处于目标时间范围，支持指定粒度和区间的开闭形式，默认到毫秒, 左右开区间"
+            }
+          }
+        }
+      ]
+    },
+    "value": {
+      "description": "默认值，切记只能是静态值，不支持取变量，跟数据关联是通过设置 name 属性来实现的。"
+    },
+    "clearValueOnHidden": {
+      "type": "boolean",
+      "description": "表单项隐藏时，是否在当前 Form 中删除掉该表单项值。注意同名的未隐藏的表单项值也会删掉"
+    },
+    "validateApi": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/BaseApiObject"
+        }
+      ],
+      "description": "远端校验表单项接口"
+    },
+    "autoFill": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/SchemaTokenizeableString"
+      },
+      "description": "上传后把其他字段同步到表单内部。"
+    },
+    "initAutoFill": {
+      "type": "boolean",
+      "description": "初始化时是否把其他字段同步到表单内部。"
+    },
+    "row": {
+      "type": "number"
+    },
+    "type": {
+      "type": "string",
+      "const": "input-file",
+      "description": "指定为文件上传"
+    },
+    "btnLabel": {
+      "type": "string",
+      "description": "上传文件按钮说明"
+    },
+    "accept": {
+      "type": "string",
+      "description": "默认只支持纯文本，要支持其他类型，请配置此属性。建议直接填写文件后缀 如：.txt,.csv\n\n多个类型用逗号隔开。"
+    },
+    "capture": {
+      "type": "string",
+      "description": "控制 input 标签的 capture 属性，用于移动端拍照或录像。"
+    },
+    "asBase64": {
+      "type": "boolean",
+      "description": "如果上传的文件比较小可以设置此选项来简单的把文件 base64 的值给 form 一起提交，目前不支持多选。"
+    },
+    "asBlob": {
+      "type": "boolean",
+      "description": "如果不希望 File 组件上传，可以配置 `asBlob` 或者 `asBase64`，采用这种方式后，组件不再自己上传了，而是直接把文件数据作为表单项的值，文件内容会在 Form 表单提交的接口里面一起带上。"
+    },
+    "autoUpload": {
+      "type": "boolean",
+      "description": "是否自动开始上传"
+    },
+    "chunkApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "默认 `/api/upload/chunk` 想自己存储时才需要关注。"
+    },
+    "chunkSize": {
+      "type": "number",
+      "description": "分块大小，默认为 5M.",
+      "default": 5242880
+    },
+    "concurrency": {
+      "type": "number",
+      "description": "分块上传的并发数"
+    },
+    "delimiter": {
+      "type": "string",
+      "description": "分割符"
+    },
+    "downloadUrl": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "默认显示文件路径的时候会支持直接下载， 可以支持加前缀如：`http://xx.dom/filename=` ， 如果不希望这样，可以把当前配置项设置为 `false`。\n\n1.1.6 版本开始将支持变量 ${xxx} 来自己拼凑个下载地址，并且支持配置成 post."
+    },
+    "templateUrl": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "模板下载地址"
+    },
+    "fileField": {
+      "type": "string",
+      "description": "默认 `file`, 如果你不想自己存储，则可以忽略此属性。"
+    },
+    "finishChunkApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "默认 `/api/upload/finishChunkApi` 想自己存储时才需要关注。"
+    },
+    "hideUploadButton": {
+      "type": "boolean",
+      "description": "是否隐藏上传按钮"
+    },
+    "maxLength": {
+      "type": "number",
+      "description": "最多的个数"
+    },
+    "maxSize": {
+      "type": "number",
+      "description": "默认没有限制，当设置后，文件大小大于此值将不允许上传。"
+    },
+    "receiver": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "默认 `/api/upload/file` 如果想自己存储，请设置此选项。"
+    },
+    "startChunkApi": {
+      "type": "string",
+      "description": "默认 `/api/upload/startChunk` 想自己存储时才需要关注。"
+    },
+    "useChunk": {
+      "anyOf": [
+        {
+          "type": "string",
+          "const": "auto"
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "默认为 'auto' amis 所在服务器，限制了文件上传大小不得超出10M，所以 amis 在用户选择大文件的时候，自动会改成分块上传模式。"
+    },
+    "btnClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "按钮 CSS 类名"
+    },
+    "btnUploadClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "上传按钮 CSS 类名"
+    },
+    "multiple": {
+      "type": "boolean",
+      "description": "是否为多选"
+    },
+    "joinValues": {
+      "type": "boolean",
+      "description": "1. 单选模式：当用户选中某个选项时，选项中的 value 将被作为该表单项的值提交， 否则，整个选项对象都会作为该表单项的值提交。 2. 多选模式：选中的多个选项的 `value` 会通过 `delimiter` 连接起来， 否则直接将以数组的形式提交值。"
+    },
+    "extractValue": {
+      "type": "boolean",
+      "description": "开启后将选中的选项 value 的值封装为数组，作为当前表单项的值。"
+    },
+    "resetValue": {
+      "description": "清除时设置的值"
+    },
+    "valueField": {
+      "type": "string",
+      "description": "接口返回的数据中，哪个用来当做值"
+    },
+    "nameField": {
+      "type": "string",
+      "description": "接口返回的数据中，哪个用来展示文件名"
+    },
+    "urlField": {
+      "type": "string",
+      "description": "接口返回的数据中哪个用来作为下载地址。"
+    },
+    "stateTextMap": {
+      "type": "object",
+      "properties": {
+        "init": {
+          "type": "string"
+        },
+        "pending": {
+          "type": "string"
+        },
+        "uploading": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        },
+        "uploaded": {
+          "type": "string"
+        },
+        "ready": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "init",
+        "pending",
+        "uploading",
+        "error",
+        "uploaded",
+        "ready"
+      ],
+      "additionalProperties": false,
+      "description": "按钮状态文案配置。"
+    },
+    "documentation": {
+      "type": "string",
+      "description": "说明文档内容配置"
+    },
+    "documentLink": {
+      "type": "string",
+      "description": "说明文档链接配置"
+    },
+    "drag": {
+      "type": "boolean",
+      "description": "是否为拖拽上传"
+    }
+  },
+  "required": [
+    "type"
+  ],
+  "additionalProperties": false,
+  "description": "File 文件上传控件 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/form/file",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./FileControlSchema.json"
+}

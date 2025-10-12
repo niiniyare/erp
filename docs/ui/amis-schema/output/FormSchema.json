@@ -3,43 +3,43 @@
   "properties": {
     "$$id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
     },
     "className": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "容器 css 类名"
+      "description": "Container css class name"
     },
     "$ref": {
       "type": "string",
-      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
     },
     "disabled": {
       "type": "boolean",
-      "description": "是否禁用"
+      "description": "Whether to disable"
     },
     "disabledOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否禁用表达式"
+      "description": "Whether to disable expressions"
     },
     "hidden": {
       "type": "boolean",
-      "description": "是否隐藏"
+      "description": "Whether to hide"
     },
     "hiddenOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否隐藏表达式"
+      "description": "Whether to hide expressions"
     },
     "visible": {
       "type": "boolean",
-      "description": "是否显示"
+      "description": "Whether to display"
     },
     "visibleOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否显示表达式"
+      "description": "Whether to display expressions"
     },
     "id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于日志采集"
+      "description": "The unique id of the component, mainly used for log collection"
     },
     "onEvent": {
       "type": "object",
@@ -67,55 +67,55 @@
         ],
         "additionalProperties": false
       },
-      "description": "事件动作配置"
+      "description": "Event action configuration"
     },
     "static": {
       "type": "boolean",
-      "description": "展示态时的className"
+      "description": "className when displaying state"
     },
     "staticOn": {
       "$ref": "#/definitions/SchemaExpression"
     },
     "staticPlaceholder": {
       "type": "string",
-      "description": "静态展示空值占位"
+      "description": "Static display of empty value placeholder"
     },
     "staticClassName": {
       "$ref": "#/definitions/SchemaClassName"
     },
     "staticLabelClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Label类名"
+      "description": "Static display of form item Label class name"
     },
     "staticInputClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Value类名"
+      "description": "Static display of form item Value class name"
     },
     "staticSchema": {},
     "style": {
       "type": "object",
-      "description": "组件样式"
+      "description": "Component style"
     },
     "editorSetting": {
       "type": "object",
       "properties": {
         "behavior": {
           "type": "string",
-          "description": "组件行为、用途，如 create、update、remove"
+          "description": "Component behavior and usage, such as create, update, remove"
         },
         "displayName": {
           "type": "string",
-          "description": "组件名称，通常是业务名称方便定位"
+          "description": "Component name, usually the business name for easy location"
         },
         "mock": {
-          "description": "编辑器假数据，方便展示"
+          "description": "Editor fake data for easy display"
         }
       },
-      "description": "编辑器配置，运行时可以忽略"
+      "description": "Editor configuration, can be ignored at runtime"
     },
     "useMobileUI": {
       "type": "boolean",
-      "description": "可以组件级别用来关闭移动端样式"
+      "description": "Can be used to turn off mobile style at the component level"
     },
     "testIdBuilder": {
       "$ref": "#/definitions/TestIdBuilder"
@@ -123,43 +123,43 @@
     "type": {
       "type": "string",
       "const": "form",
-      "description": "指定为表单渲染器。"
+      "description": "Specified as the form renderer."
     },
     "testid": {
       "type": "string"
     },
     "title": {
       "type": "string",
-      "description": "表单标题"
+      "description": "form title"
     },
     "actions": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/ActionSchema"
       },
-      "description": "按钮集合，会固定在底部显示。"
+      "description": "The button collection will be displayed at the bottom."
     },
     "body": {
       "$ref": "#/definitions/SchemaCollection",
-      "description": "表单项集合"
+      "description": "Collection of form items"
     },
     "tabs": {},
     "fieldSet": {},
     "data": {},
     "debug": {
       "type": "boolean",
-      "description": "是否开启调试，开启后会在顶部实时显示表单项数据。"
+      "description": "Whether to enable debugging. When enabled, the form item data will be displayed at the top in real time."
     },
     "debugConfig": {
       "type": "object",
       "properties": {
         "levelExpand": {
           "type": "number",
-          "description": "默认展开的级别"
+          "description": "Default expansion level"
         },
         "enableClipboard": {
           "type": "boolean",
-          "description": "是否可复制"
+          "description": "Can it be copied?"
         },
         "iconStyle": {
           "type": "string",
@@ -168,15 +168,15 @@
             "circle",
             "triangle"
           ],
-          "description": "图标风格"
+          "description": "icon style"
         },
         "quotesOnKeys": {
           "type": "boolean",
-          "description": "是否显示键的引号"
+          "description": "Whether to display key quotes"
         },
         "sortKeys": {
           "type": "boolean",
-          "description": "是否为键排序"
+          "description": "Whether to sort keys"
         },
         "ellipsisThreshold": {
           "anyOf": [
@@ -188,11 +188,11 @@
               "const": false
             }
           ],
-          "description": "设置字符串的最大展示长度，超出长度阈值的字符串将被截断，点击value可切换字符串展示方式，默认为120"
+          "description": "Set the maximum display length of the string. Strings exceeding the length threshold will be truncated. Click value to switch the string display mode. The default is 120"
         }
       },
       "additionalProperties": false,
-      "description": "Debug面板配置"
+      "description": "Debug panel configuration"
     },
     "initApi": {
       "anyOf": [
@@ -203,7 +203,7 @@
           "$ref": "#/definitions/BaseApiObject"
         }
       ],
-      "description": "用来初始化表单数据"
+      "description": "Used to initialize form data"
     },
     "initAsyncApi": {
       "anyOf": [
@@ -214,50 +214,50 @@
           "$ref": "#/definitions/BaseApiObject"
         }
       ],
-      "description": "Form 用来获取初始数据的 api,与initApi不同的是，会一直轮询请求该接口，直到返回 finished 属性为 true 才 结束。"
+      "description": "The API used by Form to obtain initial data is different from initApi in that it will keep polling and requesting this interface until the finished attribute is returned as true."
     },
     "initFinishedField": {
       "type": "string",
-      "description": "设置了initAsyncApi后，默认会从返回数据的data.finished来判断是否完成，也可以设置成其他的xxx，就会从data.xxx中获取"
+      "description": "After setting initAsyncApi, by default, it will judge whether it is completed from the data.finished of the returned data. It can also be set to other xxx, and it will be obtained from data.xxx"
     },
     "initCheckInterval": {
       "type": "number",
-      "description": "设置了initAsyncApi以后，默认拉取的时间间隔"
+      "description": "After setting initAsyncApi, the default pull time interval"
     },
     "initFetch": {
       "type": "boolean",
-      "description": "是否初始加载"
+      "description": "Whether to initial load"
     },
     "initFetchOn": {
       "type": "string",
-      "description": "建议改成 api 的 sendOn 属性。"
+      "description": "It is recommended to change it to the sendOn attribute of the api."
     },
     "interval": {
       "type": "number",
-      "description": "设置后将轮询调用 initApi"
+      "description": "After setting, initApi will be called in a polling manner"
     },
     "silentPolling": {
       "type": "boolean",
-      "description": "是否静默拉取"
+      "description": "Whether to pull silently"
     },
     "stopAutoRefreshWhen": {
       "type": "string",
-      "description": "配置停止轮询的条件"
+      "description": "Configure conditions to stop polling"
     },
     "persistData": {
       "type": "string",
-      "description": "是否开启本地缓存"
+      "description": "Whether to enable local cache"
     },
     "persistDataKeys": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "开启本地缓存后限制保存哪些 key"
+      "description": "Limit which keys are saved after turning on local cache"
     },
     "clearPersistDataAfterSubmit": {
       "type": "boolean",
-      "description": "提交成功后清空本地缓存"
+      "description": "Clear local cache after successful submission"
     },
     "api": {
       "anyOf": [
@@ -268,10 +268,10 @@
           "$ref": "#/definitions/BaseApiObject"
         }
       ],
-      "description": "Form 用来保存数据的 api。\n\n详情：https://aisuda.bce.baidu.com/amis/zh-CN/components/form/index#%E8%A1%A8%E5%8D%95%E6%8F%90%E4%BA%A4"
+      "description": "API used by Form to save data. \n\nDetails: https://aisuda.bce.baidu.com/amis/zh-CN/components/form/index#%E8%A1%A8%E5%8D%95%E6%8F%90%E4%BA%A4"
     },
     "feedback": {
-      "description": "Form 也可以配置 feedback。"
+      "description": "Form can also be configured with feedback."
     },
     "asyncApi": {
       "anyOf": [
@@ -282,23 +282,23 @@
           "$ref": "#/definitions/BaseApiObject"
         }
       ],
-      "description": "设置此属性后，表单提交发送保存接口后，还会继续轮询请求该接口，直到返回 finished 属性为 true 才 结束。"
+      "description": "After setting this attribute, after the form is submitted and the save interface is sent, the interface will continue to be polled and requested until the finished attribute is returned to true."
     },
     "checkInterval": {
       "type": "number",
-      "description": "轮询请求的时间间隔，默认为 3秒。设置 asyncApi 才有效"
+      "description": "The time interval for polling requests, the default is 3 seconds. It is only valid if asyncApi is set"
     },
     "finishedField": {
       "type": "string",
-      "description": "如果决定结束的字段名不是 `finished` 请设置此属性，比如 `is_success`"
+      "description": "If the field name that determines the end is not `finished`, please set this attribute, such as `is_success`"
     },
     "resetAfterSubmit": {
       "type": "boolean",
-      "description": "提交完后重置表单"
+      "description": "Reset form after submission"
     },
     "clearAfterSubmit": {
       "type": "boolean",
-      "description": "提交后清空表单"
+      "description": "Clear form after submission"
     },
     "mode": {
       "type": "string",
@@ -308,41 +308,41 @@
         "horizontal",
         "flex"
       ],
-      "description": "配置表单项默认的展示方式。"
+      "description": "Configure the default display mode of form items."
     },
     "columnCount": {
       "type": "number",
-      "description": "表单项显示为几列"
+      "description": "Form items are displayed in several columns"
     },
     "horizontal": {
       "$ref": "#/definitions/FormHorizontal",
-      "description": "如果是水平排版，这个属性可以细化水平排版的左右宽度占比。"
+      "description": "If it is horizontal typesetting, this attribute can refine the left and right width ratio of horizontal typesetting."
     },
     "autoFocus": {
       "type": "boolean",
-      "description": "是否自动将第一个表单元素聚焦。"
+      "description": "Whether to automatically focus the first form element."
     },
     "messages": {
       "type": "object",
       "properties": {
         "validateFailed": {
           "type": "string",
-          "description": "表单验证失败时的提示"
+          "description": "Tips when form validation fails"
         }
       },
       "additionalProperties": false,
-      "description": "消息文案配置，记住这个优先级是最低的，如果你的接口返回了 msg，接口返回的优先。"
+      "description": "Message copy configuration, remember that this priority is the lowest. If your interface returns msg, the interface returns priority."
     },
     "name": {
       "type": "string"
     },
     "panelClassName": {
       "$ref": "#/definitions/ClassName",
-      "description": "配置容器 panel className"
+      "description": "Configure container panel className"
     },
     "primaryField": {
       "type": "string",
-      "description": "设置主键 id, 当设置后，检测表单是否完成时（asyncApi），只会携带此数据。"
+      "description": "Set the primary key id. After setting, only this data will be carried when checking whether the form is completed (asyncApi)."
     },
     "redirect": {
       "type": "string"
@@ -352,35 +352,35 @@
     },
     "submitOnChange": {
       "type": "boolean",
-      "description": "修改的时候是否直接提交表单。"
+      "description": "Whether to submit the form directly when making changes."
     },
     "submitOnInit": {
       "type": "boolean",
-      "description": "表单初始先提交一次，联动的时候有用"
+      "description": "The form is submitted once initially, which is useful when linking"
     },
     "submitText": {
       "type": "string",
-      "description": "默认的提交按钮名称，如果设置成空，则可以把默认按钮去掉。"
+      "description": "The default submit button name. If set to empty, the default button can be removed."
     },
     "target": {
       "type": "string",
-      "description": "默认表单提交自己会通过发送 api 保存数据，但是也可以设定另外一个 form 的 name 值，或者另外一个 `CRUD` 模型的 name 值。 如果 target 目标是一个 `Form` ，则目标 `Form` 会重新触发 `initApi` 和 `schemaApi`，api 可以拿到当前 form 数据。如果目标是一个 `CRUD` 模型，则目标模型会重新触发搜索，参数为当前 Form 数据。"
+      "description": "By default, the form submission itself will save the data by sending the api, but you can also set the name value of another form, or the name value of another `CRUD` model. If the target is a `Form`, the target `Form` will retrigger `initApi` and `schemaApi`, and the api can get the current form data. If the target is a `CRUD` model, the target model retriggers the search with the current Form data as the parameter."
     },
     "wrapWithPanel": {
       "type": "boolean",
-      "description": "是否用 panel 包裹起来"
+      "description": "Whether to wrap it with panel"
     },
     "affixFooter": {
       "type": "boolean",
-      "description": "是否固定底下的按钮在底部。"
+      "description": "Whether to fix the bottom button to the bottom."
     },
     "promptPageLeave": {
       "type": "boolean",
-      "description": "页面离开提示，为了防止页面不小心跳转而导致表单没有保存。"
+      "description": "Page exit prompt, in order to prevent the page from accidentally jumping and causing the form to not be saved."
     },
     "promptPageLeaveMessage": {
       "type": "string",
-      "description": "具体的提示信息，选填。"
+      "description": "Specific prompt information is optional."
     },
     "rules": {
       "type": "array",
@@ -413,29 +413,29 @@
         ],
         "additionalProperties": false
       },
-      "description": "组合校验规则，选填"
+      "description": "Combination verification rules, optional"
     },
     "preventEnterSubmit": {
       "type": "boolean",
-      "description": "禁用回车提交"
+      "description": "Disable carriage return submission"
     },
     "labelAlign": {
       "$ref": "#/definitions/LabelAlign",
-      "description": "表单label的对齐方式"
+      "description": "Alignment of form label"
     },
     "labelWidth": {
       "type": [
         "number",
         "string"
       ],
-      "description": "label自定义宽度，默认单位为px"
+      "description": "Label custom width, default unit is px"
     }
   },
   "required": [
     "type"
   ],
   "additionalProperties": false,
-  "description": "Form 表单渲染器。\n\n说明：https://aisuda.bce.baidu.com/amis/zh-CN/components/form/index",
+  "description": "Form form renderer. \n\nInstructions: https://aisuda.bce.baidu.com/amis/zh-CN/components/form/index",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./FormSchema.json"
 }

@@ -1,0 +1,92 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "-moz-pre-wrap"
+    },
+    {
+      "type": "string",
+      "const": "balance"
+    },
+    {
+      "type": "string",
+      "const": "break-spaces"
+    },
+    {
+      "type": "string",
+      "const": "collapse"
+    },
+    {
+      "type": "string",
+      "const": "discard"
+    },
+    {
+      "type": "string",
+      "const": "discard-after"
+    },
+    {
+      "type": "string",
+      "const": "discard-before"
+    },
+    {
+      "type": "string",
+      "const": "discard-inner"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string",
+      "const": "normal"
+    },
+    {
+      "type": "string",
+      "const": "nowrap"
+    },
+    {
+      "type": "string",
+      "const": "pre"
+    },
+    {
+      "type": "string",
+      "const": "pre-line"
+    },
+    {
+      "type": "string",
+      "const": "pre-wrap"
+    },
+    {
+      "type": "string",
+      "const": "preserve"
+    },
+    {
+      "type": "string",
+      "const": "preserve-breaks"
+    },
+    {
+      "type": "string",
+      "const": "preserve-spaces"
+    },
+    {
+      "type": "string",
+      "const": "pretty"
+    },
+    {
+      "type": "string",
+      "const": "stable"
+    },
+    {
+      "type": "string",
+      "const": "wrap"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.WhiteSpace.json"
+}

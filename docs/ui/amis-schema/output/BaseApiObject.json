@@ -12,27 +12,27 @@
         "jsonp",
         "js"
       ],
-      "description": "API 发送类型"
+      "description": "API send type"
     },
     "url": {
       "type": "string",
-      "description": "API 发送目标地址"
+      "description": "API send destination address"
     },
     "data": {
       "type": "object",
-      "description": "用来控制携带数据. 当key 为 `&` 值为 `$$` 时, 将所有原始数据打平设置到 data 中. 当值为 $$ 将所有原始数据赋值到对应的 key 中. 当值为 $ 打头时, 将变量值设置到 key 中."
+      "description": "Used to control data carrying. When key is `&` and value is `$`, all original data is flattened and set to data. When value is $, all original data is assigned to the corresponding key. When value starts with $, the variable value is set to the key."
     },
     "convertKeyToPath": {
       "type": "boolean",
-      "description": "默认数据映射中的key如果带点，或者带大括号，会转成对象比如：\n\n{   'a.b': '123' }\n\n经过数据映射后变成 {  a: {   b: '123  } }\n\n如果想要关闭此功能，请设置 convertKeyToPath 为 false"
+      "description": "If the key in the default data mapping has a dot or braces, it will be converted into an object. For example:\n\n{ 'a.b': '123' }\n\nAfter data mapping, it becomes { a: { b: '123 } }\n\nIf you want to turn off this function, please set convertKeyToPath to false"
     },
     "responseData": {
       "type": "object",
-      "description": "用来做接口返回的数据映射。"
+      "description": "Used for data mapping returned by the interface."
     },
     "attachDataToQuery": {
       "type": "boolean",
-      "description": "如果 method 为 get 的接口，设置了 data 信息。 默认 data 会自动附带在 query 里面发送给后端。\n\n如果想通过 body 发送给后端，那么请把这个配置成 false。\n\n但是，浏览器还不支持啊，设置了只是摆设。除非服务端支持 method-override"
+      "description": "If method is the interface of get, data information is set. By default, data will be automatically included in the query and sent to the backend. \n\nIf you want to send it to the backend through body, please configure this to false. \n\nHowever, the browser does not support it yet, and setting it up is just for decoration. Unless the server supports method-override"
     },
     "dataType": {
       "type": "string",
@@ -41,12 +41,12 @@
         "form-data",
         "form"
       ],
-      "description": "发送体的格式"
+      "description": "The format of the sending body"
     },
     "responseType": {
       "type": "string",
       "const": "blob",
-      "description": "如果是文件下载接口，请配置这个。"
+      "description": "If it is a file download interface, please configure this."
     },
     "headers": {
       "type": "object",
@@ -56,15 +56,15 @@
           "number"
         ]
       },
-      "description": "携带 headers，用法和 data 一样，可以用变量。"
+      "description": "Carrying headers, the usage is the same as data, and variables can be used."
     },
     "sendOn": {
       "type": "string",
-      "description": "设置发送条件"
+      "description": "Set sending conditions"
     },
     "replaceData": {
       "type": "boolean",
-      "description": "默认都是追加模式，如果想完全替换把这个配置成 true"
+      "description": "The default is append mode. If you want to completely replace it, configure this to true."
     },
     "concatDataFields": {
       "anyOf": [
@@ -78,24 +78,24 @@
           }
         }
       ],
-      "description": "是否将两次返回的数据字段，做一个合并。配置返回对象中的字段名，支持配置多个。\n\n比如：同时返回 log 字段，第一次返回 {log: '1'}，第二次返回 {log: '2'}，合并后的结果是 {log: ['1', '2']]} 再比如：同时返回 items 字段，第一次返回 {items: [1, 2]}，第二次返回 {items: [3, 4]}，合并后的结果是 {items: [1, 2, 3, 4]}"
+      "description": "Whether to merge the data fields returned twice. Configure the field name in the returned object, multiple configurations are supported. \n\nFor example: return the log field at the same time, the first time returns {log: '1'}, the second time returns {log: '2'}, the merged result is {log: ['1', '2']]} Another example: return the items field at the same time, the first time returns {items: [1, 2]}, the second time returns {items: [3, 4]}, the merged result is {items: [1, 2, 3, 4]}"
     },
     "autoRefresh": {
       "type": "boolean",
-      "description": "是否自动刷新，当 url 中的取值结果变化时，自动刷新数据。",
+      "description": "Whether to refresh automatically. When the value result in the url changes, the data will be refreshed automatically.",
       "default": true
     },
     "trackExpression": {
       "type": "string",
-      "description": "当开启自动刷新的时候，默认是 api 的 url 来自动跟踪变量变化的。 如果你希望监控 url 外的变量，请配置 trackExpression。"
+      "description": "When auto-refresh is enabled, the default is the API URL to automatically track variable changes. If you wish to monitor variables outside of the url, configure trackExpression."
     },
     "cache": {
       "type": "number",
-      "description": "如果设置了值，同一个接口，相同参数，指定的时间（单位：ms）内请求将直接走缓存。"
+      "description": "If a value is set, requests for the same interface, the same parameters, and the specified time (unit: ms) will go directly to the cache."
     },
     "forceAppendDataToQuery": {
       "type": "boolean",
-      "description": "强制将数据附加在 query，默认只有 api 地址中没有用变量的时候 crud 查询接口才会 自动附加数据到 query 部分，如果想强制附加请设置这个属性。 对于那种临时加了个变量但是又不想全部参数写一遍的时候配置很有用。"
+      "description": "Force data to be appended to the query. By default, the crud query interface will automatically append data to the query part only when there are no variables in the api address. If you want to force the append, please set this attribute. This configuration is useful when you temporarily add a variable but don't want to write all the parameters again."
     },
     "qsOptions": {
       "type": "object",
@@ -117,11 +117,11 @@
         }
       },
       "additionalProperties": false,
-      "description": "qs 配置项"
+      "description": "qs configuration items"
     },
     "silent": {
       "type": "boolean",
-      "description": "autoFill 是否显示自动填充错误提示"
+      "description": "autoFill whether to display autofill error prompts"
     },
     "messages": {
       "type": "object",
@@ -134,7 +134,7 @@
         }
       },
       "additionalProperties": false,
-      "description": "提示信息"
+      "description": "Prompt message"
     }
   },
   "required": [

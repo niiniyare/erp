@@ -6,43 +6,43 @@
     },
     "$$id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
     },
     "className": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "容器 css 类名"
+      "description": "Container css class name"
     },
     "$ref": {
       "type": "string",
-      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
     },
     "disabled": {
       "type": "boolean",
-      "description": "是否禁用"
+      "description": "Whether to disable"
     },
     "disabledOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否禁用表达式"
+      "description": "Whether to disable expressions"
     },
     "hidden": {
       "type": "boolean",
-      "description": "是否隐藏"
+      "description": "Whether to hide"
     },
     "hiddenOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否隐藏表达式"
+      "description": "Whether to hide expressions"
     },
     "visible": {
       "type": "boolean",
-      "description": "是否显示"
+      "description": "Whether to display"
     },
     "visibleOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否显示表达式"
+      "description": "Whether to display expressions"
     },
     "id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于日志采集"
+      "description": "The unique id of the component, mainly used for log collection"
     },
     "onEvent": {
       "type": "object",
@@ -70,84 +70,84 @@
         ],
         "additionalProperties": false
       },
-      "description": "事件动作配置"
+      "description": "Event action configuration"
     },
     "static": {
       "type": "boolean",
-      "description": "是否静态展示"
+      "description": "Whether to display statically"
     },
     "staticOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否静态展示表达式"
+      "description": "Whether to display expressions statically"
     },
     "staticPlaceholder": {
       "type": "string",
-      "description": "静态展示空值占位"
+      "description": "Static display of empty value placeholder"
     },
     "staticClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项类名"
+      "description": "Static display form item class name"
     },
     "staticLabelClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Label类名"
+      "description": "Static display of form item Label class name"
     },
     "staticInputClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Value类名"
+      "description": "Static display of form item Value class name"
     },
     "staticSchema": {},
     "style": {
       "type": "object",
-      "description": "组件样式"
+      "description": "Component style"
     },
     "editorSetting": {
       "type": "object",
       "properties": {
         "behavior": {
           "type": "string",
-          "description": "组件行为、用途，如 create、update、remove"
+          "description": "Component behavior and usage, such as create, update, remove"
         },
         "displayName": {
           "type": "string",
-          "description": "组件名称，通常是业务名称方便定位"
+          "description": "Component name, usually the business name for easy location"
         },
         "mock": {
-          "description": "编辑器假数据，方便展示"
+          "description": "Editor fake data for easy display"
         }
       },
-      "description": "编辑器配置，运行时可以忽略"
+      "description": "Editor configuration, can be ignored at runtime"
     },
     "useMobileUI": {
       "type": "boolean",
-      "description": "可以组件级别用来关闭移动端样式"
+      "description": "Can be used to turn off mobile style at the component level"
     },
     "testIdBuilder": {
       "$ref": "#/definitions/TestIdBuilder"
     },
     "time": {
       "type": "string",
-      "description": "时间点"
+      "description": "time point"
     },
     "title": {
       "$ref": "#/definitions/SchemaCollection",
-      "description": "时间节点标题"
+      "description": "Time node title"
     },
     "detail": {
       "type": "string",
-      "description": "详细内容"
+      "description": "Details"
     },
     "detailCollapsedText": {
       "type": "string",
-      "description": "detail折叠时文案"
+      "description": "detail copywriting when folding"
     },
     "detailExpandedText": {
       "type": "string",
-      "description": "detail展开时文案"
+      "description": "Copywriting when detail is expanded"
     },
     "color": {
       "type": "string",
-      "description": "时间点圆圈颜色"
+      "description": "Time point circle color"
     },
     "icon": {
       "anyOf": [
@@ -158,23 +158,23 @@
           "$ref": "#/definitions/IconCheckedSchema"
         }
       ],
-      "description": "图标"
+      "description": "icon"
     },
     "iconClassName": {
       "type": "string",
-      "description": "图标的CSS类名"
+      "description": "The CSS class name of the icon"
     },
     "timeClassName": {
       "type": "string",
-      "description": "节点时间的CSS类名（优先级高于统一配置的timeClassName）"
+      "description": "The CSS class name of the node time (the priority is higher than the uniformly configured timeClassName)"
     },
     "titleClassName": {
       "type": "string",
-      "description": "节点标题的CSS类名（优先级高于统一配置的titleClassName）"
+      "description": "The CSS class name of the node title (which has higher priority than the uniformly configured titleClassName)"
     },
     "detailClassName": {
       "type": "string",
-      "description": "节点详情的CSS类名（优先级高于统一配置的detailClassName）"
+      "description": "The CSS class name of the node details (which has higher priority than the uniformly configured detailClassName)"
     }
   },
   "required": [

@@ -1,0 +1,463 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SchemaObject"
+          }
+        }
+      ],
+      "description": "表格标题"
+    },
+    "source": {
+      "$ref": "#/definitions/SchemaTokenizeableString",
+      "description": "也可以直接从环境变量中读取，但是不太推荐。"
+    },
+    "columnsTogglable": {
+      "anyOf": [
+        {
+          "type": "string",
+          "const": "auto"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        }
+      ],
+      "description": "表格可自定义列"
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ColumnSchema"
+      },
+      "description": "表格列配置"
+    },
+    "rowSelection": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/RowSelectionSchema"
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "表格可选择配置"
+    },
+    "expandable": {
+      "$ref": "#/definitions/ExpandableSchema",
+      "description": "表格行可展开配置"
+    },
+    "sticky": {
+      "type": "boolean",
+      "description": "粘性头部"
+    },
+    "loading": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        }
+      ],
+      "description": "加载中"
+    },
+    "itemBadge": {
+      "$ref": "#/definitions/BadgeObject",
+      "description": "行角标内容"
+    },
+    "showBadge": {
+      "type": "boolean",
+      "description": "是否展示行角标"
+    },
+    "popOverContainer": {
+      "description": "指定挂载dom"
+    },
+    "keyField": {
+      "type": "string",
+      "description": "多选、嵌套展开记录的ID字段名 默认id"
+    },
+    "childrenColumnName": {
+      "type": "string",
+      "description": "数据源嵌套自定义字段名"
+    },
+    "rowClassNameExpr": {
+      "type": "string",
+      "description": "自定义行样式"
+    },
+    "lineHeight": {
+      "type": "string",
+      "description": "是否固定内容行高度"
+    },
+    "bordered": {
+      "type": "boolean",
+      "description": "是否展示边框"
+    },
+    "showHeader": {
+      "type": "boolean",
+      "description": "是否展示表头"
+    },
+    "footer": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SchemaObject"
+          }
+        }
+      ],
+      "description": "指定表尾"
+    },
+    "quickSaveApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "快速编辑后用来批量保存的 API"
+    },
+    "quickSaveItemApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "快速编辑配置成及时保存时使用的 API"
+    },
+    "messages": {
+      "$ref": "#/definitions/SchemaMessage",
+      "description": "接口报错信息配置"
+    },
+    "reload": {
+      "type": "string",
+      "description": "重新加载的组件名称"
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ActionSchema"
+      },
+      "description": "操作列配置"
+    },
+    "maxKeepItemSelectionLength": {
+      "type": "number",
+      "description": "批量操作最大限制数"
+    },
+    "keepItemSelectionOnPageChange": {
+      "type": "boolean",
+      "description": "翻页时是否保留用户已选的数据"
+    },
+    "selectable": {
+      "type": "boolean",
+      "description": "是否可以选择数据，外部事件动作"
+    },
+    "multiple": {
+      "type": "boolean",
+      "description": "是否可以多选数据，仅当selectable为 true 时生效"
+    },
+    "primaryField": {
+      "type": "string",
+      "description": "行标识符，默认为id"
+    },
+    "tableLayout": {
+      "type": "string",
+      "enum": [
+        "fixed",
+        "auto"
+      ]
+    },
+    "autoFillHeight": {
+      "type": "boolean",
+      "description": "内容区域占满屏幕剩余空间"
+    },
+    "canAccessSuperData": {
+      "type": "boolean",
+      "description": "表格是否可以获取父级数据域值，默认为false"
+    },
+    "lazyRenderAfter": {
+      "type": "number",
+      "description": "当一次性渲染太多列上有用，默认为 100，可以用来提升表格渲染性能",
+      "default": 100
+    },
+    "testid": {
+      "type": "string"
+    },
+    "$$id": {
+      "type": "string",
+      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "容器 css 类名"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "是否禁用"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否禁用表达式"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "是否隐藏"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否隐藏表达式"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "是否显示"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否显示表达式"
+    },
+    "id": {
+      "type": "string",
+      "description": "组件唯一 id，主要用于日志采集"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "事件动作配置"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "是否静态展示"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否静态展示表达式"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "静态展示空值占位"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项类名"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项Label类名"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项Value类名"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "组件样式"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "组件行为、用途，如 create、update、remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "组件名称，通常是业务名称方便定位"
+        },
+        "mock": {
+          "description": "编辑器假数据，方便展示"
+        }
+      },
+      "description": "编辑器配置，运行时可以忽略"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "可以组件级别用来关闭移动端样式"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "mode": {
+      "type": "string",
+      "description": "指定内容区的展示模式。",
+      "const": "table2"
+    },
+    "loadingConfig": {
+      "type": "object",
+      "properties": {
+        "root": {
+          "type": "string"
+        },
+        "show": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "type": {
+      "type": "string",
+      "const": "crud2",
+      "description": "指定为 CRUD2 渲染器。"
+    },
+    "api": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "初始化数据 API"
+    },
+    "silentPolling": {
+      "type": "boolean",
+      "description": "静默拉取"
+    },
+    "interval": {
+      "type": "number",
+      "description": "设置自动刷新时间"
+    },
+    "stopAutoRefreshWhen": {
+      "$ref": "#/definitions/SchemaExpression"
+    },
+    "loadType": {
+      "type": "string",
+      "enum": [
+        "more",
+        "pagination"
+      ],
+      "description": "数据展示模式 无限加载 or 分页"
+    },
+    "perPage": {
+      "type": "number",
+      "description": "无限加载时，根据此项设置其每页加载数量，可以不限制"
+    },
+    "loadDataOnce": {
+      "type": "boolean",
+      "description": "是否为前端单次加载模式，可以用来实现前端分页。"
+    },
+    "showSelection": {
+      "type": "boolean",
+      "description": "是否展示已选数据区域，仅当selectable为 true 时生效"
+    },
+    "saveOrderApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "保存排序的 api"
+    },
+    "syncLocation": {
+      "type": "boolean",
+      "description": "是否将过滤条件的参数同步到地址栏,默认为true",
+      "default": true
+    },
+    "pageField": {
+      "type": "string",
+      "description": "设置分页页码字段名。"
+    },
+    "perPageField": {
+      "type": "string",
+      "description": "设置分页一页显示的多少条数据的字段名。"
+    },
+    "name": {
+      "$ref": "#/definitions/SchemaName"
+    },
+    "hideQuickSaveBtn": {
+      "type": "boolean",
+      "description": "是否隐藏快速编辑的按钮。"
+    },
+    "autoJumpToTopOnPagerChange": {
+      "type": "boolean",
+      "description": "是否自动跳顶部，当切分页的时候。"
+    },
+    "headerToolbar": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "顶部区域"
+    },
+    "headerToolbarClassName": {
+      "type": "string",
+      "description": "顶部区域CSS类名"
+    },
+    "footerToolbar": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "底部区域"
+    },
+    "footerToolbarClassName": {
+      "type": "string",
+      "description": "底部区域CSS类名"
+    },
+    "syncResponse2Query": {
+      "type": "boolean",
+      "description": "是否将接口返回的内容自动同步到地址栏，前提是开启了同步地址栏。"
+    },
+    "parsePrimitiveQuery": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "enable": {
+              "type": "boolean"
+            },
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "boolean",
+                  "number"
+                ]
+              }
+            }
+          },
+          "required": [
+            "enable"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "是否开启Query信息转换，开启后将会对url中的Query进行转换，默认开启，默认仅转化布尔值"
+    }
+  },
+  "required": [
+    "columns",
+    "source",
+    "type"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./CRUD2TableSchema.json"
+}

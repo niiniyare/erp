@@ -3,43 +3,43 @@
   "properties": {
     "$$id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
     },
     "className": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "容器 css 类名"
+      "description": "Container css class name"
     },
     "$ref": {
       "type": "string",
-      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
     },
     "disabled": {
       "type": "boolean",
-      "description": "是否禁用"
+      "description": "Whether to disable"
     },
     "disabledOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否禁用表达式"
+      "description": "Whether to disable expressions"
     },
     "hidden": {
       "type": "boolean",
-      "description": "是否隐藏"
+      "description": "Whether to hide"
     },
     "hiddenOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否隐藏表达式"
+      "description": "Whether to hide expressions"
     },
     "visible": {
       "type": "boolean",
-      "description": "是否显示"
+      "description": "Whether to display"
     },
     "visibleOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否显示表达式"
+      "description": "Whether to display expressions"
     },
     "id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于日志采集"
+      "description": "The unique id of the component, mainly used for log collection"
     },
     "onEvent": {
       "type": "object",
@@ -67,57 +67,57 @@
         ],
         "additionalProperties": false
       },
-      "description": "事件动作配置"
+      "description": "Event action configuration"
     },
     "static": {
       "type": "boolean",
-      "description": "是否静态展示"
+      "description": "Whether to display statically"
     },
     "staticOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否静态展示表达式"
+      "description": "Whether to display expressions statically"
     },
     "staticPlaceholder": {
       "type": "string",
-      "description": "静态展示空值占位"
+      "description": "Static display of empty value placeholder"
     },
     "staticClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项类名"
+      "description": "Static display form item class name"
     },
     "staticLabelClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Label类名"
+      "description": "Static display of form item Label class name"
     },
     "staticInputClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Value类名"
+      "description": "Static display of form item Value class name"
     },
     "staticSchema": {},
     "style": {
       "type": "object",
-      "description": "组件样式"
+      "description": "Component style"
     },
     "editorSetting": {
       "type": "object",
       "properties": {
         "behavior": {
           "type": "string",
-          "description": "组件行为、用途，如 create、update、remove"
+          "description": "Component behavior and usage, such as create, update, remove"
         },
         "displayName": {
           "type": "string",
-          "description": "组件名称，通常是业务名称方便定位"
+          "description": "Component name, usually the business name for easy location"
         },
         "mock": {
-          "description": "编辑器假数据，方便展示"
+          "description": "Editor fake data for easy display"
         }
       },
-      "description": "编辑器配置，运行时可以忽略"
+      "description": "Editor configuration, can be ignored at runtime"
     },
     "useMobileUI": {
       "type": "boolean",
-      "description": "可以组件级别用来关闭移动端样式"
+      "description": "Can be used to turn off mobile style at the component level"
     },
     "testIdBuilder": {
       "$ref": "#/definitions/TestIdBuilder"
@@ -125,7 +125,7 @@
     "type": {
       "type": "string",
       "const": "nav",
-      "description": "指定为 Nav 导航渲染器"
+      "description": "Designated as Nav navigation renderer"
     },
     "testid": {
       "type": "string"
@@ -135,7 +135,7 @@
       "items": {
         "$ref": "#/definitions/NavItemSchema"
       },
-      "description": "链接地址集合"
+      "description": "Link address collection"
     },
     "indentSize": {
       "type": "number",
@@ -143,11 +143,11 @@
     },
     "source": {
       "$ref": "#/definitions/SchemaApi",
-      "description": "可以通过 API 拉取。"
+      "description": "Can be pulled via API."
     },
     "deferApi": {
       "$ref": "#/definitions/SchemaApi",
-      "description": "懒加载 api，如果不配置复用 source 接口。"
+      "description": "Lazy loading api, if the reuse source interface is not configured."
     },
     "stacked": {
       "type": "boolean",
@@ -155,51 +155,51 @@
         true,
         false
       ],
-      "description": "true 为垂直排列，false 为水平排列类似如 tabs。"
+      "description": "true means vertical arrangement, false means horizontal arrangement like tabs."
     },
     "itemActions": {
       "$ref": "#/definitions/SchemaCollection",
-      "description": "更多操作菜单列表"
+      "description": "More action menu lists"
     },
     "draggable": {
       "type": "boolean",
-      "description": "可拖拽"
+      "description": "Draggable"
     },
     "saveOrderApi": {
       "$ref": "#/definitions/SchemaApi",
-      "description": "保存排序的 api"
+      "description": "Save sorted api"
     },
     "itemBadge": {
       "$ref": "#/definitions/BadgeObject",
-      "description": "角标"
+      "description": "corner mark"
     },
     "badge": {
       "$ref": "#/definitions/BadgeObject",
-      "description": "角标"
+      "description": "corner mark"
     },
     "dragOnSameLevel": {
       "type": "boolean",
-      "description": "仅允许同层级拖拽"
+      "description": "Only dragging at the same level is allowed"
     },
     "overflow": {
       "$ref": "#/definitions/NavOverflow",
-      "description": "横向导航时自动收纳配置"
+      "description": "Automatically collapse configuration during horizontal navigation"
     },
     "level": {
       "type": "number",
-      "description": "最多展示多少层级"
+      "description": "How many levels can be displayed at most?"
     },
     "defaultOpenLevel": {
       "type": "number",
-      "description": "默认展开层级 小于等于该层数的节点默认全部打开"
+      "description": "The default expansion level is that all nodes less than or equal to this level are opened by default."
     },
     "showKey": {
       "type": "string",
-      "description": "控制仅展示指定key菜单下的子菜单项"
+      "description": "Controls only the submenu items under the specified key menu to be displayed"
     },
     "collapsed": {
       "type": "boolean",
-      "description": "控制菜单缩起"
+      "description": "control menu shrink"
     },
     "mode": {
       "type": "string",
@@ -207,7 +207,7 @@
         "float",
         "inline"
       ],
-      "description": "垂直模式 非折叠状态下 控制菜单打开方式"
+      "description": "Vertical mode, in the unfolded state, controls how the menu is opened."
     },
     "expandIcon": {
       "anyOf": [
@@ -218,11 +218,11 @@
           "$ref": "#/definitions/SchemaObject"
         }
       ],
-      "description": "自定义展开图标"
+      "description": "Custom expand icon"
     },
     "expandPosition": {
       "type": "string",
-      "description": "自定义展开图标位置 默认在前面 before after"
+      "description": "Customize the expansion icon position. Default is in front before after"
     },
     "themeColor": {
       "type": "string",
@@ -230,26 +230,26 @@
         "light",
         "dark"
       ],
-      "description": "主题配色 默认light"
+      "description": "Theme color default light"
     },
     "accordion": {
       "type": "boolean",
-      "description": "手风琴展开 仅垂直inline模式支持"
+      "description": "Accordion expansion is only supported in vertical inline mode"
     },
     "popupClassName": {
       "type": "string",
-      "description": "子菜单项展开浮层样式"
+      "description": "Submenu item expansion floating layer style"
     },
     "searchable": {
       "type": "boolean",
-      "description": "是否开启搜索"
+      "description": "Whether to enable search"
     },
     "searchConfig": {
       "type": "object",
       "properties": {
         "className": {
           "type": "string",
-          "description": "搜索框外层CSS样式类"
+          "description": "Search box outer CSS style class"
         },
         "matchFunc": {
           "anyOf": [
@@ -258,35 +258,35 @@
             },
             {}
           ],
-          "description": "搜索匹配函数"
+          "description": "Search matching function"
         },
         "placeholder": {
           "type": "string",
-          "description": "占位符"
+          "description": "placeholder"
         },
         "mini": {
           "type": "boolean",
-          "description": "是否为 Mini 样式。"
+          "description": "Whether it is Mini style."
         },
         "enhance": {
           "type": "boolean",
-          "description": "是否为加强样式"
+          "description": "Whether to enhance the style"
         },
         "clearable": {
           "type": "boolean",
-          "description": "是否可清除"
+          "description": "Is it purgeable?"
         },
         "searchImediately": {
           "type": "boolean",
-          "description": "是否立马搜索。"
+          "description": "Whether to search immediately."
         },
         "valueField": {
           "type": "string",
-          "description": "指定唯一标识字段"
+          "description": "Specify a unique identification field"
         }
       },
       "additionalProperties": false,
-      "description": "搜索框相关配置"
+      "description": "Search box related configurations"
     }
   },
   "required": [
@@ -294,7 +294,7 @@
     "type"
   ],
   "additionalProperties": false,
-  "description": "Nav 导航渲染器 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/nav",
+  "description": "Nav navigation renderer documentation: https://aisuda.bce.baidu.com/amis/zh-CN/components/nav",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./NavSchema.json"
 }

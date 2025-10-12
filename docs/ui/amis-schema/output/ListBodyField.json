@@ -12,31 +12,31 @@
       "properties": {
         "label": {
           "type": "string",
-          "description": "列标题"
+          "description": "Column header"
         },
         "labelClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "label 类名"
+          "description": "label class name"
         },
         "innerClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "内层组件的CSS类名"
+          "description": "CSS class name of inner component"
         },
         "name": {
           "type": "string",
-          "description": "绑定字段名"
+          "description": "Bind field name"
         },
         "popOver": {
           "$ref": "#/definitions/SchemaPopOver",
-          "description": "配置查看详情功能"
+          "description": "Configure the view details function"
         },
         "quickEdit": {
           "$ref": "#/definitions/SchemaQuickEdit",
-          "description": "配置快速编辑功能"
+          "description": "Configure quick editing function"
         },
         "copyable": {
           "$ref": "#/definitions/SchemaCopyable",
-          "description": "配置点击复制功能"
+          "description": "Configure click-to-copy functionality"
         }
       }
     }

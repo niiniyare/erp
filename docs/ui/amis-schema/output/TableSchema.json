@@ -3,43 +3,43 @@
   "properties": {
     "$$id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
     },
     "className": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "容器 css 类名"
+      "description": "Container css class name"
     },
     "$ref": {
       "type": "string",
-      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
     },
     "disabled": {
       "type": "boolean",
-      "description": "是否禁用"
+      "description": "Whether to disable"
     },
     "disabledOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否禁用表达式"
+      "description": "Whether to disable expressions"
     },
     "hidden": {
       "type": "boolean",
-      "description": "是否隐藏"
+      "description": "Whether to hide"
     },
     "hiddenOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否隐藏表达式"
+      "description": "Whether to hide expressions"
     },
     "visible": {
       "type": "boolean",
-      "description": "是否显示"
+      "description": "Whether to display"
     },
     "visibleOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否显示表达式"
+      "description": "Whether to display expressions"
     },
     "id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于日志采集"
+      "description": "The unique id of the component, mainly used for log collection"
     },
     "onEvent": {
       "type": "object",
@@ -67,57 +67,57 @@
         ],
         "additionalProperties": false
       },
-      "description": "事件动作配置"
+      "description": "Event action configuration"
     },
     "static": {
       "type": "boolean",
-      "description": "是否静态展示"
+      "description": "Whether to display statically"
     },
     "staticOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否静态展示表达式"
+      "description": "Whether to display expressions statically"
     },
     "staticPlaceholder": {
       "type": "string",
-      "description": "静态展示空值占位"
+      "description": "Static display of empty value placeholder"
     },
     "staticClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项类名"
+      "description": "Static display form item class name"
     },
     "staticLabelClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Label类名"
+      "description": "Static display of form item Label class name"
     },
     "staticInputClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Value类名"
+      "description": "Static display of form item Value class name"
     },
     "staticSchema": {},
     "style": {
       "type": "object",
-      "description": "组件样式"
+      "description": "Component style"
     },
     "editorSetting": {
       "type": "object",
       "properties": {
         "behavior": {
           "type": "string",
-          "description": "组件行为、用途，如 create、update、remove"
+          "description": "Component behavior and usage, such as create, update, remove"
         },
         "displayName": {
           "type": "string",
-          "description": "组件名称，通常是业务名称方便定位"
+          "description": "Component name, usually the business name for easy location"
         },
         "mock": {
-          "description": "编辑器假数据，方便展示"
+          "description": "Editor fake data for easy display"
         }
       },
-      "description": "编辑器配置，运行时可以忽略"
+      "description": "Editor configuration, can be ignored at runtime"
     },
     "useMobileUI": {
       "type": "boolean",
-      "description": "可以组件级别用来关闭移动端样式"
+      "description": "Can be used to turn off mobile style at the component level"
     },
     "testIdBuilder": {
       "$ref": "#/definitions/TestIdBuilder"
@@ -128,25 +128,25 @@
         "table",
         "static-table"
       ],
-      "description": "指定为表格渲染器。"
+      "description": "Specified as table renderer."
     },
     "testid": {
       "type": "string"
     },
     "affixHeader": {
       "type": "boolean",
-      "description": "是否固定表头"
+      "description": "Whether to fix the header"
     },
     "affixFooter": {
       "type": "boolean",
-      "description": "是否固底"
+      "description": "Is it solid?"
     },
     "columns": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/TableColumn"
       },
-      "description": "表格的列信息"
+      "description": "Table column information"
     },
     "columnsTogglable": {
       "anyOf": [
@@ -158,7 +158,7 @@
           "const": "auto"
         }
       ],
-      "description": "展示列显示开关，自动即：列数量大于或等于5个时自动开启"
+      "description": "Display column display switch, automatic: automatically turned on when the number of columns is greater than or equal to 5"
     },
     "footable": {
       "anyOf": [
@@ -178,21 +178,21 @@
             },
             "accordion": {
               "type": "boolean",
-              "description": "是否为手风琴模式"
+              "description": "Whether it is accordion mode"
             }
           },
           "additionalProperties": false
         }
       ],
-      "description": "是否开启底部展示功能，适合移动端展示"
+      "description": "Whether to enable the bottom display function, suitable for mobile display"
     },
     "footerClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "底部外层 CSS 类名"
+      "description": "Bottom outer CSS class name"
     },
     "headerClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "顶部外层 CSS 类名"
+      "description": "Top outer CSS class name"
     },
     "placeholder": {
       "anyOf": [
@@ -203,31 +203,31 @@
           "$ref": "#/definitions/SchemaTpl"
         }
       ],
-      "description": "占位符"
+      "description": "placeholder"
     },
     "showFooter": {
       "type": "boolean",
-      "description": "是否显示底部"
+      "description": "Whether to show the bottom"
     },
     "showHeader": {
       "type": "boolean",
-      "description": "是否显示头部"
+      "description": "Whether to display the header"
     },
     "source": {
       "$ref": "#/definitions/SchemaTokenizeableString",
-      "description": "数据源：绑定当前环境变量"
+      "description": "Data source: bind current environment variables"
     },
     "tableClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "表格 CSS 类名"
+      "description": "Table CSS class name"
     },
     "title": {
       "type": "string",
-      "description": "标题"
+      "description": "title"
     },
     "toolbarClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "工具栏 CSS 类名"
+      "description": "Toolbar CSS class name"
     },
     "combineNum": {
       "anyOf": [
@@ -238,37 +238,37 @@
           "$ref": "#/definitions/SchemaExpression"
         }
       ],
-      "description": "合并单元格配置，配置数字表示从左到右的多少列自动合并单元格。"
+      "description": "Merge cell configuration, the configuration number indicates how many columns from left to right to automatically merge cells."
     },
     "combineFromIndex": {
       "type": "number",
-      "description": "合并单元格配置，配置从第几列开始合并。"
+      "description": "Merge cell configuration, configure the column from which to start merging."
     },
     "prefixRow": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/SchemaObject"
       },
-      "description": "顶部总结行"
+      "description": "top summary line"
     },
     "affixRow": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/SchemaObject"
       },
-      "description": "底部总结行"
+      "description": "Bottom summary line"
     },
     "resizable": {
       "type": "boolean",
-      "description": "是否可调整列宽"
+      "description": "Whether the column width can be adjusted"
     },
     "rowClassNameExpr": {
       "type": "string",
-      "description": "行样式表表达式"
+      "description": "Row style sheet expression"
     },
     "itemBadge": {
       "$ref": "#/definitions/BadgeObject",
-      "description": "行角标"
+      "description": "Row mark"
     },
     "autoGenerateFilter": {
       "anyOf": [
@@ -279,11 +279,11 @@
           "type": "boolean"
         }
       ],
-      "description": "开启查询区域，会根据列元素的searchable属性值，自动生成查询条件表单"
+      "description": "When the query area is enabled, a query condition form will be automatically generated based on the searchable attribute value of the column element."
     },
     "canAccessSuperData": {
       "type": "boolean",
-      "description": "表格是否可以获取父级数据域值，默认为false"
+      "description": "Whether the table can obtain the parent data field value, the default is false"
     },
     "autoFillHeight": {
       "anyOf": [
@@ -307,7 +307,7 @@
           "additionalProperties": false
         }
       ],
-      "description": "表格自动计算高度"
+      "description": "Table automatically calculates height"
     },
     "tableLayout": {
       "type": "string",
@@ -319,14 +319,14 @@
     },
     "deferApi": {
       "$ref": "#/definitions/SchemaApi",
-      "description": "懒加载 API，当行数据中用 defer: true 标记了，则其孩子节点将会用这个 API 来拉取数据。"
+      "description": "Lazy loading API, when the row data is marked with defer: true, its child nodes will use this API to pull data."
     }
   },
   "required": [
     "type"
   ],
   "additionalProperties": false,
-  "description": "Table 表格渲染器。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/table",
+  "description": "Table table renderer. Documentation: https://aisuda.bce.baidu.com/amis/zh-CN/components/table",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./TableSchema.json"
 }

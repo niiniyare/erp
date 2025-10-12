@@ -3,7 +3,7 @@
   "properties": {
     "enable": {
       "type": "boolean",
-      "description": "是否开启响应式收纳"
+      "description": "Whether to enable responsive storage"
     },
     "overflowLabel": {
       "anyOf": [
@@ -14,46 +14,46 @@
           "$ref": "#/definitions/SchemaObject"
         }
       ],
-      "description": "菜单触发按钮的文字"
+      "description": "The text of the menu trigger button"
     },
     "overflowIndicator": {
       "$ref": "#/definitions/SchemaIcon",
-      "description": "菜单触发按钮的图标",
+      "description": "Menu trigger button icon",
       "default": "fa fa-ellipsis-h"
     },
     "overflowClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "菜单触发按钮CSS类名"
+      "description": "Menu trigger button CSS class name"
     },
     "overflowPopoverClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "Popover浮层CSS类名"
+      "description": "Popover floating layer CSS class name"
     },
     "overflowListClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "菜单外层CSS类名"
+      "description": "Menu outer CSS class name"
     },
     "maxVisibleCount": {
       "type": "number",
-      "description": "导航横向布局时，开启开启响应式收纳后最大可显示数量，超出此数量的导航将被收纳到下拉菜单中"
+      "description": "When the navigation is laid out horizontally, the maximum number that can be displayed after responsive storage is turned on. Navigations exceeding this number will be stored in the drop-down menu."
     },
     "wrapperComponent": {
       "type": "string",
-      "description": "包裹导航的外层标签名，可以使用其他标签渲染",
+      "description": "The outer label name of the package navigation, which can be rendered using other labels",
       "default": "ul"
     },
     "itemWidth": {
       "type": "number",
-      "description": "导航项目宽度",
+      "description": "Navigation item width",
       "default": 160
     },
     "overflowSuffix": {
       "$ref": "#/definitions/SchemaCollection",
-      "description": "导航列表后缀节点"
+      "description": "Navigation list suffix node"
     },
     "style": {
       "$ref": "#/definitions/React.CSSProperties",
-      "description": "自定义样式"
+      "description": "Custom style"
     }
   },
   "required": [

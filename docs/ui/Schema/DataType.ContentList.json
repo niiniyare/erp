@@ -1,0 +1,16 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/DataType.Quote"
+    },
+    {
+      "type": "string",
+      "const": "contents"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.ContentList.json"
+}

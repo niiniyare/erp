@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "properties": {
+    "fetchFailed": {
+      "type": "string",
+      "description": "获取失败时的提示"
+    },
+    "fetchSuccess": {
+      "type": "string",
+      "description": "获取成功的提示，默认为空。"
+    },
+    "saveFailed": {
+      "type": "string",
+      "description": "保存失败时的提示。"
+    },
+    "saveSuccess": {
+      "type": "string",
+      "description": "保存成功时的提示。"
+    }
+  },
+  "additionalProperties": false,
+  "description": "消息文案配置，记住这个优先级是最低的，如果你的接口返回了 msg，接口返回的优先。",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./SchemaMessage.json"
+}

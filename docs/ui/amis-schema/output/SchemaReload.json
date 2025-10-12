@@ -1,6 +1,6 @@
 {
   "type": "string",
-  "description": "配置刷新动作，这个动作通常在完成渲染器本省的固定动作后出发。\n\n一般用来配置目标组件的 name 属性。多个目标可以用逗号隔开。\n\n当目标是 windows 时表示刷新整个页面。\n\n刷新目标的同时还支持传递参数如： `foo?a=${a}&b=${b},boo?c=${c}`",
+  "description": "Configure refresh action, this action is usually triggered after completing the renderer's own fixed actions.\n\nGenerally used to configure the name property of target components. Multiple targets can be separated by commas.\n\nWhen the target is windows, it means refreshing the entire page.\n\nRefreshing targets also supports passing parameters such as: `foo?a=${a}&b=${b},boo?c=${c}`",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./SchemaReload.json"
 }

@@ -1,0 +1,11 @@
+{
+  "type": "string",
+  "enum": [
+    "backwards",
+    "both",
+    "forwards",
+    "none"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.SingleAnimationFillMode.json"
+}

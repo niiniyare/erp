@@ -12,43 +12,43 @@
         },
         "$$id": {
           "type": "string",
-          "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+          "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
         },
         "className": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "容器 css 类名"
+          "description": "Container css class name"
         },
         "$ref": {
           "type": "string",
-          "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+          "description": "Used together with definitions, an infinite loop renderer can be implemented."
         },
         "disabled": {
           "type": "boolean",
-          "description": "是否禁用"
+          "description": "Whether to disable"
         },
         "disabledOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否禁用表达式"
+          "description": "Whether to disable expressions"
         },
         "hidden": {
           "type": "boolean",
-          "description": "是否隐藏"
+          "description": "Whether to hide"
         },
         "hiddenOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否隐藏表达式"
+          "description": "Whether to hide expressions"
         },
         "visible": {
           "type": "boolean",
-          "description": "是否显示"
+          "description": "Whether to display"
         },
         "visibleOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否显示表达式"
+          "description": "Whether to display expressions"
         },
         "id": {
           "type": "string",
-          "description": "主要用于用户行为跟踪里区分是哪个按钮"
+          "description": "Mainly used to distinguish which button is used in user behavior tracking"
         },
         "onEvent": {
           "type": "object",
@@ -76,57 +76,57 @@
             ],
             "additionalProperties": false
           },
-          "description": "事件动作配置"
+          "description": "Event action configuration"
         },
         "static": {
           "type": "boolean",
-          "description": "是否静态展示"
+          "description": "Whether to display statically"
         },
         "staticOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否静态展示表达式"
+          "description": "Whether to display expressions statically"
         },
         "staticPlaceholder": {
           "type": "string",
-          "description": "静态展示空值占位"
+          "description": "Static display of empty value placeholder"
         },
         "staticClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项类名"
+          "description": "Static display form item class name"
         },
         "staticLabelClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Label类名"
+          "description": "Static display of form item Label class name"
         },
         "staticInputClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Value类名"
+          "description": "Static display of form item Value class name"
         },
         "staticSchema": {},
         "style": {
           "type": "object",
-          "description": "组件样式"
+          "description": "Component style"
         },
         "editorSetting": {
           "type": "object",
           "properties": {
             "behavior": {
               "type": "string",
-              "description": "组件行为、用途，如 create、update、remove"
+              "description": "Component behavior and usage, such as create, update, remove"
             },
             "displayName": {
               "type": "string",
-              "description": "组件名称，通常是业务名称方便定位"
+              "description": "Component name, usually the business name for easy location"
             },
             "mock": {
-              "description": "编辑器假数据，方便展示"
+              "description": "Editor fake data for easy display"
             }
           },
-          "description": "编辑器配置，运行时可以忽略"
+          "description": "Editor configuration, can be ignored at runtime"
         },
         "useMobileUI": {
           "type": "boolean",
-          "description": "可以组件级别用来关闭移动端样式"
+          "description": "Can be used to turn off mobile style at the component level"
         },
         "testIdBuilder": {
           "$ref": "#/definitions/TestIdBuilder"
@@ -138,42 +138,42 @@
             "submit",
             "reset"
           ],
-          "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+          "description": "Specify the button type, supporting three types: button, submit or reset."
         },
         "testid": {
           "type": "string"
         },
         "block": {
           "type": "boolean",
-          "description": "是否为块状展示，默认为内联。"
+          "description": "Whether to display in block format, the default is inline."
         },
         "disabledTip": {
           "type": "string",
-          "description": "禁用时的文案提示。"
+          "description": "Copy hint when disabled."
         },
         "icon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "按钮图标， iconfont 的类名"
+          "description": "Button icon, class name of iconfont"
         },
         "iconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "icon 上的css 类名"
+          "description": "css class name on icon"
         },
         "rightIcon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "右侧按钮图标， iconfont 的类名"
+          "description": "Right button icon, class name of iconfont"
         },
         "rightIconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "右侧 icon 上的 css 类名"
+          "description": "css class name on the right icon"
         },
         "loadingClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "loading 上的css 类名"
+          "description": "css class name on loading"
         },
         "label": {
           "type": "string",
-          "description": "按钮文字"
+          "description": "button text"
         },
         "level": {
           "type": "string",
@@ -188,7 +188,7 @@
             "light",
             "secondary"
           ],
-          "description": "按钮样式"
+          "description": "button style"
         },
         "primary": {
           "type": "boolean"
@@ -201,7 +201,7 @@
             "md",
             "lg"
           ],
-          "description": "按钮大小"
+          "description": "button size"
         },
         "tooltip": {
           "$ref": "#/definitions/SchemaTooltip"
@@ -217,61 +217,61 @@
         },
         "confirmText": {
           "type": "string",
-          "description": "提示文字，配置了操作前会要求用户确认。"
+          "description": "Prompt text, configured to require user confirmation before operation."
         },
         "required": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "如果按钮在form中，配置此属性会要求用户把指定的字段通过验证后才会触发行为。"
+          "description": "If the button is in a form, configuring this attribute will require the user to pass verification of the specified field before triggering the behavior."
         },
         "activeLevel": {
           "type": "string",
-          "description": "激活状态时的样式"
+          "description": "Active style"
         },
         "activeClassName": {
           "type": "string",
-          "description": "激活状态时的类名"
+          "description": "Class name when activated"
         },
         "close": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "如果按钮在弹框中，可以配置这个动作完成后是否关闭弹窗，或者指定关闭目标弹框。"
+          "description": "If the button is in a pop-up box, you can configure whether to close the pop-up window after the action is completed, or specify to close the target pop-up box."
         },
         "requireSelected": {
           "type": "boolean",
-          "description": "当按钮时批量操作按钮时，默认必须有勾选元素才能可点击，如果此属性配置成 false，则没有点选成员也能点击。"
+          "description": "When the button is a batch operation button, there must be a checked element by default to be clickable. If this attribute is configured to false, the member can be clicked without clicking."
         },
         "mergeData": {
           "type": "boolean",
-          "description": "是否将弹框中数据 merge 到父级作用域。"
+          "description": "Whether to merge the data in the pop-up box into the parent scope."
         },
         "target": {
           "type": "string",
-          "description": "可以指定让谁来触发这个动作。"
+          "description": "You can specify who should trigger this action."
         },
         "countDown": {
           "type": "number",
-          "description": "点击后的禁止倒计时（秒）"
+          "description": "Ban countdown after click (seconds)"
         },
         "countDownTpl": {
           "type": "string",
-          "description": "倒计时文字自定义"
+          "description": "Countdown text customization"
         },
         "badge": {
           "$ref": "#/definitions/BadgeObject",
-          "description": "角标"
+          "description": "corner mark"
         },
         "hotKey": {
           "type": "string",
-          "description": "键盘快捷键"
+          "description": "keyboard shortcuts"
         },
         "loadingOn": {
           "type": "string",
-          "description": "是否显示loading效果"
+          "description": "Whether to display the loading effect"
         },
         "onClick": {
           "anyOf": [
@@ -280,20 +280,20 @@
             },
             {}
           ],
-          "description": "自定义事件处理函数"
+          "description": "Custom event handler function"
         },
         "body": {
           "$ref": "#/definitions/SchemaCollection",
-          "description": "子内容"
+          "description": "sub content"
         },
         "actionType": {
           "type": "string",
           "const": "ajax",
-          "description": "指定为发送 ajax 的行为。"
+          "description": "Specifies the behavior for sending ajax."
         },
         "api": {
           "$ref": "#/definitions/SchemaApi",
-          "description": "配置 ajax 发送地址"
+          "description": "Configure ajax sending address"
         },
         "feedback": {
           "$ref": "#/definitions/FeedbackDialog"
@@ -309,7 +309,7 @@
         },
         "isolateScope": {
           "type": "boolean",
-          "description": "是否开启请求隔离, 主要用于隔离联动CRUD, Service的请求"
+          "description": "Whether to enable request isolation, mainly used to isolate requests for linkage CRUD and Service"
         }
       },
       "required": [
@@ -330,43 +330,43 @@
         },
         "$$id": {
           "type": "string",
-          "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+          "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
         },
         "className": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "容器 css 类名"
+          "description": "Container css class name"
         },
         "$ref": {
           "type": "string",
-          "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+          "description": "Used together with definitions, an infinite loop renderer can be implemented."
         },
         "disabled": {
           "type": "boolean",
-          "description": "是否禁用"
+          "description": "Whether to disable"
         },
         "disabledOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否禁用表达式"
+          "description": "Whether to disable expressions"
         },
         "hidden": {
           "type": "boolean",
-          "description": "是否隐藏"
+          "description": "Whether to hide"
         },
         "hiddenOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否隐藏表达式"
+          "description": "Whether to hide expressions"
         },
         "visible": {
           "type": "boolean",
-          "description": "是否显示"
+          "description": "Whether to display"
         },
         "visibleOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否显示表达式"
+          "description": "Whether to display expressions"
         },
         "id": {
           "type": "string",
-          "description": "主要用于用户行为跟踪里区分是哪个按钮"
+          "description": "Mainly used to distinguish which button is used in user behavior tracking"
         },
         "onEvent": {
           "type": "object",
@@ -394,57 +394,57 @@
             ],
             "additionalProperties": false
           },
-          "description": "事件动作配置"
+          "description": "Event action configuration"
         },
         "static": {
           "type": "boolean",
-          "description": "是否静态展示"
+          "description": "Whether to display statically"
         },
         "staticOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否静态展示表达式"
+          "description": "Whether to display expressions statically"
         },
         "staticPlaceholder": {
           "type": "string",
-          "description": "静态展示空值占位"
+          "description": "Static display of empty value placeholder"
         },
         "staticClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项类名"
+          "description": "Static display form item class name"
         },
         "staticLabelClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Label类名"
+          "description": "Static display of form item Label class name"
         },
         "staticInputClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Value类名"
+          "description": "Static display of form item Value class name"
         },
         "staticSchema": {},
         "style": {
           "type": "object",
-          "description": "组件样式"
+          "description": "Component style"
         },
         "editorSetting": {
           "type": "object",
           "properties": {
             "behavior": {
               "type": "string",
-              "description": "组件行为、用途，如 create、update、remove"
+              "description": "Component behavior and usage, such as create, update, remove"
             },
             "displayName": {
               "type": "string",
-              "description": "组件名称，通常是业务名称方便定位"
+              "description": "Component name, usually the business name for easy location"
             },
             "mock": {
-              "description": "编辑器假数据，方便展示"
+              "description": "Editor fake data for easy display"
             }
           },
-          "description": "编辑器配置，运行时可以忽略"
+          "description": "Editor configuration, can be ignored at runtime"
         },
         "useMobileUI": {
           "type": "boolean",
-          "description": "可以组件级别用来关闭移动端样式"
+          "description": "Can be used to turn off mobile style at the component level"
         },
         "testIdBuilder": {
           "$ref": "#/definitions/TestIdBuilder"
@@ -456,42 +456,42 @@
             "submit",
             "reset"
           ],
-          "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+          "description": "Specify the button type, supporting three types: button, submit or reset."
         },
         "testid": {
           "type": "string"
         },
         "block": {
           "type": "boolean",
-          "description": "是否为块状展示，默认为内联。"
+          "description": "Whether to display in block format, the default is inline."
         },
         "disabledTip": {
           "type": "string",
-          "description": "禁用时的文案提示。"
+          "description": "Copy hint when disabled."
         },
         "icon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "按钮图标， iconfont 的类名"
+          "description": "Button icon, class name of iconfont"
         },
         "iconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "icon 上的css 类名"
+          "description": "css class name on icon"
         },
         "rightIcon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "右侧按钮图标， iconfont 的类名"
+          "description": "Right button icon, class name of iconfont"
         },
         "rightIconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "右侧 icon 上的 css 类名"
+          "description": "css class name on the right icon"
         },
         "loadingClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "loading 上的css 类名"
+          "description": "css class name on loading"
         },
         "label": {
           "type": "string",
-          "description": "按钮文字"
+          "description": "button text"
         },
         "level": {
           "type": "string",
@@ -506,7 +506,7 @@
             "light",
             "secondary"
           ],
-          "description": "按钮样式"
+          "description": "button style"
         },
         "primary": {
           "type": "boolean"
@@ -519,7 +519,7 @@
             "md",
             "lg"
           ],
-          "description": "按钮大小"
+          "description": "button size"
         },
         "tooltip": {
           "$ref": "#/definitions/SchemaTooltip"
@@ -535,61 +535,61 @@
         },
         "confirmText": {
           "type": "string",
-          "description": "提示文字，配置了操作前会要求用户确认。"
+          "description": "Prompt text, configured to require user confirmation before operation."
         },
         "required": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "如果按钮在form中，配置此属性会要求用户把指定的字段通过验证后才会触发行为。"
+          "description": "If the button is in a form, configuring this attribute will require the user to pass verification of the specified field before triggering the behavior."
         },
         "activeLevel": {
           "type": "string",
-          "description": "激活状态时的样式"
+          "description": "Active style"
         },
         "activeClassName": {
           "type": "string",
-          "description": "激活状态时的类名"
+          "description": "Class name when activated"
         },
         "close": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "如果按钮在弹框中，可以配置这个动作完成后是否关闭弹窗，或者指定关闭目标弹框。"
+          "description": "If the button is in a pop-up box, you can configure whether to close the pop-up window after the action is completed, or specify to close the target pop-up box."
         },
         "requireSelected": {
           "type": "boolean",
-          "description": "当按钮时批量操作按钮时，默认必须有勾选元素才能可点击，如果此属性配置成 false，则没有点选成员也能点击。"
+          "description": "When the button is a batch operation button, there must be a checked element by default to be clickable. If this attribute is configured to false, the member can be clicked without clicking."
         },
         "mergeData": {
           "type": "boolean",
-          "description": "是否将弹框中数据 merge 到父级作用域。"
+          "description": "Whether to merge the data in the pop-up box into the parent scope."
         },
         "target": {
           "type": "string",
-          "description": "可以指定让谁来触发这个动作。"
+          "description": "You can specify who should trigger this action."
         },
         "countDown": {
           "type": "number",
-          "description": "点击后的禁止倒计时（秒）"
+          "description": "Ban countdown after click (seconds)"
         },
         "countDownTpl": {
           "type": "string",
-          "description": "倒计时文字自定义"
+          "description": "Countdown text customization"
         },
         "badge": {
           "$ref": "#/definitions/BadgeObject",
-          "description": "角标"
+          "description": "corner mark"
         },
         "hotKey": {
           "type": "string",
-          "description": "键盘快捷键"
+          "description": "keyboard shortcuts"
         },
         "loadingOn": {
           "type": "string",
-          "description": "是否显示loading效果"
+          "description": "Whether to display the loading effect"
         },
         "onClick": {
           "anyOf": [
@@ -598,24 +598,24 @@
             },
             {}
           ],
-          "description": "自定义事件处理函数"
+          "description": "Custom event handler function"
         },
         "body": {
           "$ref": "#/definitions/SchemaCollection",
-          "description": "子内容"
+          "description": "sub content"
         },
         "actionType": {
           "type": "string",
           "const": "url",
-          "description": "指定为打开链接"
+          "description": "Specify as open link"
         },
         "blank": {
           "type": "boolean",
-          "description": "是否新窗口打开"
+          "description": "Whether a new window opens"
         },
         "url": {
           "type": "string",
-          "description": "打开的目标地址"
+          "description": "open target address"
         }
       },
       "required": [
@@ -636,43 +636,43 @@
         },
         "$$id": {
           "type": "string",
-          "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+          "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
         },
         "className": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "容器 css 类名"
+          "description": "Container css class name"
         },
         "$ref": {
           "type": "string",
-          "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+          "description": "Used together with definitions, an infinite loop renderer can be implemented."
         },
         "disabled": {
           "type": "boolean",
-          "description": "是否禁用"
+          "description": "Whether to disable"
         },
         "disabledOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否禁用表达式"
+          "description": "Whether to disable expressions"
         },
         "hidden": {
           "type": "boolean",
-          "description": "是否隐藏"
+          "description": "Whether to hide"
         },
         "hiddenOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否隐藏表达式"
+          "description": "Whether to hide expressions"
         },
         "visible": {
           "type": "boolean",
-          "description": "是否显示"
+          "description": "Whether to display"
         },
         "visibleOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否显示表达式"
+          "description": "Whether to display expressions"
         },
         "id": {
           "type": "string",
-          "description": "主要用于用户行为跟踪里区分是哪个按钮"
+          "description": "Mainly used to distinguish which button is used in user behavior tracking"
         },
         "onEvent": {
           "type": "object",
@@ -700,57 +700,57 @@
             ],
             "additionalProperties": false
           },
-          "description": "事件动作配置"
+          "description": "Event action configuration"
         },
         "static": {
           "type": "boolean",
-          "description": "是否静态展示"
+          "description": "Whether to display statically"
         },
         "staticOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否静态展示表达式"
+          "description": "Whether to display expressions statically"
         },
         "staticPlaceholder": {
           "type": "string",
-          "description": "静态展示空值占位"
+          "description": "Static display of empty value placeholder"
         },
         "staticClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项类名"
+          "description": "Static display form item class name"
         },
         "staticLabelClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Label类名"
+          "description": "Static display of form item Label class name"
         },
         "staticInputClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Value类名"
+          "description": "Static display of form item Value class name"
         },
         "staticSchema": {},
         "style": {
           "type": "object",
-          "description": "组件样式"
+          "description": "Component style"
         },
         "editorSetting": {
           "type": "object",
           "properties": {
             "behavior": {
               "type": "string",
-              "description": "组件行为、用途，如 create、update、remove"
+              "description": "Component behavior and usage, such as create, update, remove"
             },
             "displayName": {
               "type": "string",
-              "description": "组件名称，通常是业务名称方便定位"
+              "description": "Component name, usually the business name for easy location"
             },
             "mock": {
-              "description": "编辑器假数据，方便展示"
+              "description": "Editor fake data for easy display"
             }
           },
-          "description": "编辑器配置，运行时可以忽略"
+          "description": "Editor configuration, can be ignored at runtime"
         },
         "useMobileUI": {
           "type": "boolean",
-          "description": "可以组件级别用来关闭移动端样式"
+          "description": "Can be used to turn off mobile style at the component level"
         },
         "testIdBuilder": {
           "$ref": "#/definitions/TestIdBuilder"
@@ -762,42 +762,42 @@
             "submit",
             "reset"
           ],
-          "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+          "description": "Specify the button type, supporting three types: button, submit or reset."
         },
         "testid": {
           "type": "string"
         },
         "block": {
           "type": "boolean",
-          "description": "是否为块状展示，默认为内联。"
+          "description": "Whether to display in block format, the default is inline."
         },
         "disabledTip": {
           "type": "string",
-          "description": "禁用时的文案提示。"
+          "description": "Copy hint when disabled."
         },
         "icon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "按钮图标， iconfont 的类名"
+          "description": "Button icon, class name of iconfont"
         },
         "iconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "icon 上的css 类名"
+          "description": "css class name on icon"
         },
         "rightIcon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "右侧按钮图标， iconfont 的类名"
+          "description": "Right button icon, class name of iconfont"
         },
         "rightIconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "右侧 icon 上的 css 类名"
+          "description": "css class name on the right icon"
         },
         "loadingClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "loading 上的css 类名"
+          "description": "css class name on loading"
         },
         "label": {
           "type": "string",
-          "description": "按钮文字"
+          "description": "button text"
         },
         "level": {
           "type": "string",
@@ -812,7 +812,7 @@
             "light",
             "secondary"
           ],
-          "description": "按钮样式"
+          "description": "button style"
         },
         "primary": {
           "type": "boolean"
@@ -825,7 +825,7 @@
             "md",
             "lg"
           ],
-          "description": "按钮大小"
+          "description": "button size"
         },
         "tooltip": {
           "$ref": "#/definitions/SchemaTooltip"
@@ -841,61 +841,61 @@
         },
         "confirmText": {
           "type": "string",
-          "description": "提示文字，配置了操作前会要求用户确认。"
+          "description": "Prompt text, configured to require user confirmation before operation."
         },
         "required": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "如果按钮在form中，配置此属性会要求用户把指定的字段通过验证后才会触发行为。"
+          "description": "If the button is in a form, configuring this attribute will require the user to pass verification of the specified field before triggering the behavior."
         },
         "activeLevel": {
           "type": "string",
-          "description": "激活状态时的样式"
+          "description": "Active style"
         },
         "activeClassName": {
           "type": "string",
-          "description": "激活状态时的类名"
+          "description": "Class name when activated"
         },
         "close": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "如果按钮在弹框中，可以配置这个动作完成后是否关闭弹窗，或者指定关闭目标弹框。"
+          "description": "If the button is in a pop-up box, you can configure whether to close the pop-up window after the action is completed, or specify to close the target pop-up box."
         },
         "requireSelected": {
           "type": "boolean",
-          "description": "当按钮时批量操作按钮时，默认必须有勾选元素才能可点击，如果此属性配置成 false，则没有点选成员也能点击。"
+          "description": "When the button is a batch operation button, there must be a checked element by default to be clickable. If this attribute is configured to false, the member can be clicked without clicking."
         },
         "mergeData": {
           "type": "boolean",
-          "description": "是否将弹框中数据 merge 到父级作用域。"
+          "description": "Whether to merge the data in the pop-up box into the parent scope."
         },
         "target": {
           "type": "string",
-          "description": "可以指定让谁来触发这个动作。"
+          "description": "You can specify who should trigger this action."
         },
         "countDown": {
           "type": "number",
-          "description": "点击后的禁止倒计时（秒）"
+          "description": "Ban countdown after click (seconds)"
         },
         "countDownTpl": {
           "type": "string",
-          "description": "倒计时文字自定义"
+          "description": "Countdown text customization"
         },
         "badge": {
           "$ref": "#/definitions/BadgeObject",
-          "description": "角标"
+          "description": "corner mark"
         },
         "hotKey": {
           "type": "string",
-          "description": "键盘快捷键"
+          "description": "keyboard shortcuts"
         },
         "loadingOn": {
           "type": "string",
-          "description": "是否显示loading效果"
+          "description": "Whether to display the loading effect"
         },
         "onClick": {
           "anyOf": [
@@ -904,20 +904,20 @@
             },
             {}
           ],
-          "description": "自定义事件处理函数"
+          "description": "Custom event handler function"
         },
         "body": {
           "$ref": "#/definitions/SchemaCollection",
-          "description": "子内容"
+          "description": "sub content"
         },
         "actionType": {
           "type": "string",
           "const": "link",
-          "description": "指定为打开链接行为，跟 url 不同的时这个行为为单页模式。"
+          "description": "Specifies the link opening behavior. When different from the url, this behavior is single page mode."
         },
         "link": {
           "type": "string",
-          "description": "跳转到哪？支持配置相对路径。"
+          "description": "Jump to where? Supports configuring relative paths."
         }
       },
       "required": [
@@ -938,43 +938,43 @@
         },
         "$$id": {
           "type": "string",
-          "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+          "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
         },
         "className": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "容器 css 类名"
+          "description": "Container css class name"
         },
         "$ref": {
           "type": "string",
-          "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+          "description": "Used together with definitions, an infinite loop renderer can be implemented."
         },
         "disabled": {
           "type": "boolean",
-          "description": "是否禁用"
+          "description": "Whether to disable"
         },
         "disabledOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否禁用表达式"
+          "description": "Whether to disable expressions"
         },
         "hidden": {
           "type": "boolean",
-          "description": "是否隐藏"
+          "description": "Whether to hide"
         },
         "hiddenOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否隐藏表达式"
+          "description": "Whether to hide expressions"
         },
         "visible": {
           "type": "boolean",
-          "description": "是否显示"
+          "description": "Whether to display"
         },
         "visibleOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否显示表达式"
+          "description": "Whether to display expressions"
         },
         "id": {
           "type": "string",
-          "description": "主要用于用户行为跟踪里区分是哪个按钮"
+          "description": "Mainly used to distinguish which button is used in user behavior tracking"
         },
         "onEvent": {
           "type": "object",
@@ -1002,57 +1002,57 @@
             ],
             "additionalProperties": false
           },
-          "description": "事件动作配置"
+          "description": "Event action configuration"
         },
         "static": {
           "type": "boolean",
-          "description": "是否静态展示"
+          "description": "Whether to display statically"
         },
         "staticOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否静态展示表达式"
+          "description": "Whether to display expressions statically"
         },
         "staticPlaceholder": {
           "type": "string",
-          "description": "静态展示空值占位"
+          "description": "Static display of empty value placeholder"
         },
         "staticClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项类名"
+          "description": "Static display form item class name"
         },
         "staticLabelClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Label类名"
+          "description": "Static display of form item Label class name"
         },
         "staticInputClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Value类名"
+          "description": "Static display of form item Value class name"
         },
         "staticSchema": {},
         "style": {
           "type": "object",
-          "description": "组件样式"
+          "description": "Component style"
         },
         "editorSetting": {
           "type": "object",
           "properties": {
             "behavior": {
               "type": "string",
-              "description": "组件行为、用途，如 create、update、remove"
+              "description": "Component behavior and usage, such as create, update, remove"
             },
             "displayName": {
               "type": "string",
-              "description": "组件名称，通常是业务名称方便定位"
+              "description": "Component name, usually the business name for easy location"
             },
             "mock": {
-              "description": "编辑器假数据，方便展示"
+              "description": "Editor fake data for easy display"
             }
           },
-          "description": "编辑器配置，运行时可以忽略"
+          "description": "Editor configuration, can be ignored at runtime"
         },
         "useMobileUI": {
           "type": "boolean",
-          "description": "可以组件级别用来关闭移动端样式"
+          "description": "Can be used to turn off mobile style at the component level"
         },
         "testIdBuilder": {
           "$ref": "#/definitions/TestIdBuilder"
@@ -1064,42 +1064,42 @@
             "submit",
             "reset"
           ],
-          "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+          "description": "Specify the button type, supporting three types: button, submit or reset."
         },
         "testid": {
           "type": "string"
         },
         "block": {
           "type": "boolean",
-          "description": "是否为块状展示，默认为内联。"
+          "description": "Whether to display in block format, the default is inline."
         },
         "disabledTip": {
           "type": "string",
-          "description": "禁用时的文案提示。"
+          "description": "Copy hint when disabled."
         },
         "icon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "按钮图标， iconfont 的类名"
+          "description": "Button icon, class name of iconfont"
         },
         "iconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "icon 上的css 类名"
+          "description": "css class name on icon"
         },
         "rightIcon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "右侧按钮图标， iconfont 的类名"
+          "description": "Right button icon, class name of iconfont"
         },
         "rightIconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "右侧 icon 上的 css 类名"
+          "description": "css class name on the right icon"
         },
         "loadingClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "loading 上的css 类名"
+          "description": "css class name on loading"
         },
         "label": {
           "type": "string",
-          "description": "按钮文字"
+          "description": "button text"
         },
         "level": {
           "type": "string",
@@ -1114,7 +1114,7 @@
             "light",
             "secondary"
           ],
-          "description": "按钮样式"
+          "description": "button style"
         },
         "primary": {
           "type": "boolean"
@@ -1127,7 +1127,7 @@
             "md",
             "lg"
           ],
-          "description": "按钮大小"
+          "description": "button size"
         },
         "tooltip": {
           "$ref": "#/definitions/SchemaTooltip"
@@ -1143,61 +1143,61 @@
         },
         "confirmText": {
           "type": "string",
-          "description": "提示文字，配置了操作前会要求用户确认。"
+          "description": "Prompt text, configured to require user confirmation before operation."
         },
         "required": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "如果按钮在form中，配置此属性会要求用户把指定的字段通过验证后才会触发行为。"
+          "description": "If the button is in a form, configuring this attribute will require the user to pass verification of the specified field before triggering the behavior."
         },
         "activeLevel": {
           "type": "string",
-          "description": "激活状态时的样式"
+          "description": "Active style"
         },
         "activeClassName": {
           "type": "string",
-          "description": "激活状态时的类名"
+          "description": "Class name when activated"
         },
         "close": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "如果按钮在弹框中，可以配置这个动作完成后是否关闭弹窗，或者指定关闭目标弹框。"
+          "description": "If the button is in a pop-up box, you can configure whether to close the pop-up window after the action is completed, or specify to close the target pop-up box."
         },
         "requireSelected": {
           "type": "boolean",
-          "description": "当按钮时批量操作按钮时，默认必须有勾选元素才能可点击，如果此属性配置成 false，则没有点选成员也能点击。"
+          "description": "When the button is a batch operation button, there must be a checked element by default to be clickable. If this attribute is configured to false, the member can be clicked without clicking."
         },
         "mergeData": {
           "type": "boolean",
-          "description": "是否将弹框中数据 merge 到父级作用域。"
+          "description": "Whether to merge the data in the pop-up box into the parent scope."
         },
         "target": {
           "type": "string",
-          "description": "可以指定让谁来触发这个动作。"
+          "description": "You can specify who should trigger this action."
         },
         "countDown": {
           "type": "number",
-          "description": "点击后的禁止倒计时（秒）"
+          "description": "Ban countdown after click (seconds)"
         },
         "countDownTpl": {
           "type": "string",
-          "description": "倒计时文字自定义"
+          "description": "Countdown text customization"
         },
         "badge": {
           "$ref": "#/definitions/BadgeObject",
-          "description": "角标"
+          "description": "corner mark"
         },
         "hotKey": {
           "type": "string",
-          "description": "键盘快捷键"
+          "description": "keyboard shortcuts"
         },
         "loadingOn": {
           "type": "string",
-          "description": "是否显示loading效果"
+          "description": "Whether to display the loading effect"
         },
         "onClick": {
           "anyOf": [
@@ -1206,24 +1206,24 @@
             },
             {}
           ],
-          "description": "自定义事件处理函数"
+          "description": "Custom event handler function"
         },
         "body": {
           "$ref": "#/definitions/SchemaCollection",
-          "description": "子内容"
+          "description": "sub content"
         },
         "actionType": {
           "type": "string",
           "const": "dialog",
-          "description": "指定为打开弹窗"
+          "description": "Specify to open a pop-up window"
         },
         "dialog": {
           "$ref": "#/definitions/DialogSchemaBase",
-          "description": "弹框详情 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/dialog"
+          "description": "Pop-up box details document: https://aisuda.bce.baidu.com/amis/zh-CN/components/dialog"
         },
         "nextCondition": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否有下一个的表达式，正常可以不用配置，如果想要刷掉某些数据可以配置这个。"
+          "description": "Whether there is a next expression, normally you don’t need to configure it. If you want to erase some data, you can configure this."
         },
         "reload": {
           "$ref": "#/definitions/SchemaReload"
@@ -1232,7 +1232,7 @@
           "type": "string"
         },
         "data": {
-          "description": "数据映射"
+          "description": "data mapping"
         }
       },
       "required": [
@@ -1253,43 +1253,43 @@
         },
         "$$id": {
           "type": "string",
-          "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+          "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
         },
         "className": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "容器 css 类名"
+          "description": "Container css class name"
         },
         "$ref": {
           "type": "string",
-          "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+          "description": "Used together with definitions, an infinite loop renderer can be implemented."
         },
         "disabled": {
           "type": "boolean",
-          "description": "是否禁用"
+          "description": "Whether to disable"
         },
         "disabledOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否禁用表达式"
+          "description": "Whether to disable expressions"
         },
         "hidden": {
           "type": "boolean",
-          "description": "是否隐藏"
+          "description": "Whether to hide"
         },
         "hiddenOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否隐藏表达式"
+          "description": "Whether to hide expressions"
         },
         "visible": {
           "type": "boolean",
-          "description": "是否显示"
+          "description": "Whether to display"
         },
         "visibleOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否显示表达式"
+          "description": "Whether to display expressions"
         },
         "id": {
           "type": "string",
-          "description": "主要用于用户行为跟踪里区分是哪个按钮"
+          "description": "Mainly used to distinguish which button is used in user behavior tracking"
         },
         "onEvent": {
           "type": "object",
@@ -1317,57 +1317,57 @@
             ],
             "additionalProperties": false
           },
-          "description": "事件动作配置"
+          "description": "Event action configuration"
         },
         "static": {
           "type": "boolean",
-          "description": "是否静态展示"
+          "description": "Whether to display statically"
         },
         "staticOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否静态展示表达式"
+          "description": "Whether to display expressions statically"
         },
         "staticPlaceholder": {
           "type": "string",
-          "description": "静态展示空值占位"
+          "description": "Static display of empty value placeholder"
         },
         "staticClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项类名"
+          "description": "Static display form item class name"
         },
         "staticLabelClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Label类名"
+          "description": "Static display of form item Label class name"
         },
         "staticInputClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Value类名"
+          "description": "Static display of form item Value class name"
         },
         "staticSchema": {},
         "style": {
           "type": "object",
-          "description": "组件样式"
+          "description": "Component style"
         },
         "editorSetting": {
           "type": "object",
           "properties": {
             "behavior": {
               "type": "string",
-              "description": "组件行为、用途，如 create、update、remove"
+              "description": "Component behavior and usage, such as create, update, remove"
             },
             "displayName": {
               "type": "string",
-              "description": "组件名称，通常是业务名称方便定位"
+              "description": "Component name, usually the business name for easy location"
             },
             "mock": {
-              "description": "编辑器假数据，方便展示"
+              "description": "Editor fake data for easy display"
             }
           },
-          "description": "编辑器配置，运行时可以忽略"
+          "description": "Editor configuration, can be ignored at runtime"
         },
         "useMobileUI": {
           "type": "boolean",
-          "description": "可以组件级别用来关闭移动端样式"
+          "description": "Can be used to turn off mobile style at the component level"
         },
         "testIdBuilder": {
           "$ref": "#/definitions/TestIdBuilder"
@@ -1379,42 +1379,42 @@
             "submit",
             "reset"
           ],
-          "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+          "description": "Specify the button type, supporting three types: button, submit or reset."
         },
         "testid": {
           "type": "string"
         },
         "block": {
           "type": "boolean",
-          "description": "是否为块状展示，默认为内联。"
+          "description": "Whether to display in block format, the default is inline."
         },
         "disabledTip": {
           "type": "string",
-          "description": "禁用时的文案提示。"
+          "description": "Copy hint when disabled."
         },
         "icon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "按钮图标， iconfont 的类名"
+          "description": "Button icon, class name of iconfont"
         },
         "iconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "icon 上的css 类名"
+          "description": "css class name on icon"
         },
         "rightIcon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "右侧按钮图标， iconfont 的类名"
+          "description": "Right button icon, class name of iconfont"
         },
         "rightIconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "右侧 icon 上的 css 类名"
+          "description": "css class name on the right icon"
         },
         "loadingClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "loading 上的css 类名"
+          "description": "css class name on loading"
         },
         "label": {
           "type": "string",
-          "description": "按钮文字"
+          "description": "button text"
         },
         "level": {
           "type": "string",
@@ -1429,7 +1429,7 @@
             "light",
             "secondary"
           ],
-          "description": "按钮样式"
+          "description": "button style"
         },
         "primary": {
           "type": "boolean"
@@ -1442,7 +1442,7 @@
             "md",
             "lg"
           ],
-          "description": "按钮大小"
+          "description": "button size"
         },
         "tooltip": {
           "$ref": "#/definitions/SchemaTooltip"
@@ -1458,61 +1458,61 @@
         },
         "confirmText": {
           "type": "string",
-          "description": "提示文字，配置了操作前会要求用户确认。"
+          "description": "Prompt text, configured to require user confirmation before operation."
         },
         "required": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "如果按钮在form中，配置此属性会要求用户把指定的字段通过验证后才会触发行为。"
+          "description": "If the button is in a form, configuring this attribute will require the user to pass verification of the specified field before triggering the behavior."
         },
         "activeLevel": {
           "type": "string",
-          "description": "激活状态时的样式"
+          "description": "Active style"
         },
         "activeClassName": {
           "type": "string",
-          "description": "激活状态时的类名"
+          "description": "Class name when activated"
         },
         "close": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "如果按钮在弹框中，可以配置这个动作完成后是否关闭弹窗，或者指定关闭目标弹框。"
+          "description": "If the button is in a pop-up box, you can configure whether to close the pop-up window after the action is completed, or specify to close the target pop-up box."
         },
         "requireSelected": {
           "type": "boolean",
-          "description": "当按钮时批量操作按钮时，默认必须有勾选元素才能可点击，如果此属性配置成 false，则没有点选成员也能点击。"
+          "description": "When the button is a batch operation button, there must be a checked element by default to be clickable. If this attribute is configured to false, the member can be clicked without clicking."
         },
         "mergeData": {
           "type": "boolean",
-          "description": "是否将弹框中数据 merge 到父级作用域。"
+          "description": "Whether to merge the data in the pop-up box into the parent scope."
         },
         "target": {
           "type": "string",
-          "description": "可以指定让谁来触发这个动作。"
+          "description": "You can specify who should trigger this action."
         },
         "countDown": {
           "type": "number",
-          "description": "点击后的禁止倒计时（秒）"
+          "description": "Ban countdown after click (seconds)"
         },
         "countDownTpl": {
           "type": "string",
-          "description": "倒计时文字自定义"
+          "description": "Countdown text customization"
         },
         "badge": {
           "$ref": "#/definitions/BadgeObject",
-          "description": "角标"
+          "description": "corner mark"
         },
         "hotKey": {
           "type": "string",
-          "description": "键盘快捷键"
+          "description": "keyboard shortcuts"
         },
         "loadingOn": {
           "type": "string",
-          "description": "是否显示loading效果"
+          "description": "Whether to display the loading effect"
         },
         "onClick": {
           "anyOf": [
@@ -1521,24 +1521,24 @@
             },
             {}
           ],
-          "description": "自定义事件处理函数"
+          "description": "Custom event handler function"
         },
         "body": {
           "$ref": "#/definitions/SchemaCollection",
-          "description": "子内容"
+          "description": "sub content"
         },
         "actionType": {
           "type": "string",
           "const": "drawer",
-          "description": "指定为打开弹窗，抽出式弹窗"
+          "description": "Specify to open the pop-up window, pull out the pop-up window"
         },
         "drawer": {
           "$ref": "#/definitions/DrawerSchemaBase",
-          "description": "抽出式弹框详情 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/drawer"
+          "description": "Details of the pull-out pop-up frame Document: https://aisuda.bce.baidu.com/amis/zh-CN/components/drawer"
         },
         "nextCondition": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否有下一个的表达式，正常可以不用配置，如果想要刷掉某些数据可以配置这个。"
+          "description": "Whether there is a next expression, normally you don’t need to configure it. If you want to erase some data, you can configure this."
         },
         "reload": {
           "$ref": "#/definitions/SchemaReload"
@@ -1547,7 +1547,7 @@
           "type": "string"
         },
         "data": {
-          "description": "数据映射"
+          "description": "data mapping"
         }
       },
       "required": [
@@ -1568,43 +1568,43 @@
         },
         "$$id": {
           "type": "string",
-          "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+          "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
         },
         "className": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "容器 css 类名"
+          "description": "Container css class name"
         },
         "$ref": {
           "type": "string",
-          "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+          "description": "Used together with definitions, an infinite loop renderer can be implemented."
         },
         "disabled": {
           "type": "boolean",
-          "description": "是否禁用"
+          "description": "Whether to disable"
         },
         "disabledOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否禁用表达式"
+          "description": "Whether to disable expressions"
         },
         "hidden": {
           "type": "boolean",
-          "description": "是否隐藏"
+          "description": "Whether to hide"
         },
         "hiddenOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否隐藏表达式"
+          "description": "Whether to hide expressions"
         },
         "visible": {
           "type": "boolean",
-          "description": "是否显示"
+          "description": "Whether to display"
         },
         "visibleOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否显示表达式"
+          "description": "Whether to display expressions"
         },
         "id": {
           "type": "string",
-          "description": "主要用于用户行为跟踪里区分是哪个按钮"
+          "description": "Mainly used to distinguish which button is used in user behavior tracking"
         },
         "onEvent": {
           "type": "object",
@@ -1632,57 +1632,57 @@
             ],
             "additionalProperties": false
           },
-          "description": "事件动作配置"
+          "description": "Event action configuration"
         },
         "static": {
           "type": "boolean",
-          "description": "是否静态展示"
+          "description": "Whether to display statically"
         },
         "staticOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否静态展示表达式"
+          "description": "Whether to display expressions statically"
         },
         "staticPlaceholder": {
           "type": "string",
-          "description": "静态展示空值占位"
+          "description": "Static display of empty value placeholder"
         },
         "staticClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项类名"
+          "description": "Static display form item class name"
         },
         "staticLabelClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Label类名"
+          "description": "Static display of form item Label class name"
         },
         "staticInputClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Value类名"
+          "description": "Static display of form item Value class name"
         },
         "staticSchema": {},
         "style": {
           "type": "object",
-          "description": "组件样式"
+          "description": "Component style"
         },
         "editorSetting": {
           "type": "object",
           "properties": {
             "behavior": {
               "type": "string",
-              "description": "组件行为、用途，如 create、update、remove"
+              "description": "Component behavior and usage, such as create, update, remove"
             },
             "displayName": {
               "type": "string",
-              "description": "组件名称，通常是业务名称方便定位"
+              "description": "Component name, usually the business name for easy location"
             },
             "mock": {
-              "description": "编辑器假数据，方便展示"
+              "description": "Editor fake data for easy display"
             }
           },
-          "description": "编辑器配置，运行时可以忽略"
+          "description": "Editor configuration, can be ignored at runtime"
         },
         "useMobileUI": {
           "type": "boolean",
-          "description": "可以组件级别用来关闭移动端样式"
+          "description": "Can be used to turn off mobile style at the component level"
         },
         "testIdBuilder": {
           "$ref": "#/definitions/TestIdBuilder"
@@ -1694,42 +1694,42 @@
             "submit",
             "reset"
           ],
-          "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+          "description": "Specify the button type, supporting three types: button, submit or reset."
         },
         "testid": {
           "type": "string"
         },
         "block": {
           "type": "boolean",
-          "description": "是否为块状展示，默认为内联。"
+          "description": "Whether to display in block format, the default is inline."
         },
         "disabledTip": {
           "type": "string",
-          "description": "禁用时的文案提示。"
+          "description": "Copy hint when disabled."
         },
         "icon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "按钮图标， iconfont 的类名"
+          "description": "Button icon, class name of iconfont"
         },
         "iconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "icon 上的css 类名"
+          "description": "css class name on icon"
         },
         "rightIcon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "右侧按钮图标， iconfont 的类名"
+          "description": "Right button icon, class name of iconfont"
         },
         "rightIconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "右侧 icon 上的 css 类名"
+          "description": "css class name on the right icon"
         },
         "loadingClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "loading 上的css 类名"
+          "description": "css class name on loading"
         },
         "label": {
           "type": "string",
-          "description": "按钮文字"
+          "description": "button text"
         },
         "level": {
           "type": "string",
@@ -1744,7 +1744,7 @@
             "light",
             "secondary"
           ],
-          "description": "按钮样式"
+          "description": "button style"
         },
         "primary": {
           "type": "boolean"
@@ -1757,7 +1757,7 @@
             "md",
             "lg"
           ],
-          "description": "按钮大小"
+          "description": "button size"
         },
         "tooltip": {
           "$ref": "#/definitions/SchemaTooltip"
@@ -1773,61 +1773,61 @@
         },
         "confirmText": {
           "type": "string",
-          "description": "提示文字，配置了操作前会要求用户确认。"
+          "description": "Prompt text, configured to require user confirmation before operation."
         },
         "required": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "如果按钮在form中，配置此属性会要求用户把指定的字段通过验证后才会触发行为。"
+          "description": "If the button is in a form, configuring this attribute will require the user to pass verification of the specified field before triggering the behavior."
         },
         "activeLevel": {
           "type": "string",
-          "description": "激活状态时的样式"
+          "description": "Active style"
         },
         "activeClassName": {
           "type": "string",
-          "description": "激活状态时的类名"
+          "description": "Class name when activated"
         },
         "close": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "如果按钮在弹框中，可以配置这个动作完成后是否关闭弹窗，或者指定关闭目标弹框。"
+          "description": "If the button is in a pop-up box, you can configure whether to close the pop-up window after the action is completed, or specify to close the target pop-up box."
         },
         "requireSelected": {
           "type": "boolean",
-          "description": "当按钮时批量操作按钮时，默认必须有勾选元素才能可点击，如果此属性配置成 false，则没有点选成员也能点击。"
+          "description": "When the button is a batch operation button, there must be a checked element by default to be clickable. If this attribute is configured to false, the member can be clicked without clicking."
         },
         "mergeData": {
           "type": "boolean",
-          "description": "是否将弹框中数据 merge 到父级作用域。"
+          "description": "Whether to merge the data in the pop-up box into the parent scope."
         },
         "target": {
           "type": "string",
-          "description": "可以指定让谁来触发这个动作。"
+          "description": "You can specify who should trigger this action."
         },
         "countDown": {
           "type": "number",
-          "description": "点击后的禁止倒计时（秒）"
+          "description": "Ban countdown after click (seconds)"
         },
         "countDownTpl": {
           "type": "string",
-          "description": "倒计时文字自定义"
+          "description": "Countdown text customization"
         },
         "badge": {
           "$ref": "#/definitions/BadgeObject",
-          "description": "角标"
+          "description": "corner mark"
         },
         "hotKey": {
           "type": "string",
-          "description": "键盘快捷键"
+          "description": "keyboard shortcuts"
         },
         "loadingOn": {
           "type": "string",
-          "description": "是否显示loading效果"
+          "description": "Whether to display the loading effect"
         },
         "onClick": {
           "anyOf": [
@@ -1836,20 +1836,20 @@
             },
             {}
           ],
-          "description": "自定义事件处理函数"
+          "description": "Custom event handler function"
         },
         "body": {
           "$ref": "#/definitions/SchemaCollection",
-          "description": "子内容"
+          "description": "sub content"
         },
         "actionType": {
           "type": "string",
           "const": "toast",
-          "description": "指定为打开弹窗，抽出式弹窗"
+          "description": "Specify to open the pop-up window, pull out the pop-up window"
         },
         "toast": {
           "$ref": "#/definitions/ToastSchemaBase",
-          "description": "轻提示详情 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/toast"
+          "description": "Light prompt details document: https://aisuda.bce.baidu.com/amis/zh-CN/components/toast"
         }
       },
       "required": [
@@ -1870,43 +1870,43 @@
         },
         "$$id": {
           "type": "string",
-          "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+          "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
         },
         "className": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "容器 css 类名"
+          "description": "Container css class name"
         },
         "$ref": {
           "type": "string",
-          "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+          "description": "Used together with definitions, an infinite loop renderer can be implemented."
         },
         "disabled": {
           "type": "boolean",
-          "description": "是否禁用"
+          "description": "Whether to disable"
         },
         "disabledOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否禁用表达式"
+          "description": "Whether to disable expressions"
         },
         "hidden": {
           "type": "boolean",
-          "description": "是否隐藏"
+          "description": "Whether to hide"
         },
         "hiddenOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否隐藏表达式"
+          "description": "Whether to hide expressions"
         },
         "visible": {
           "type": "boolean",
-          "description": "是否显示"
+          "description": "Whether to display"
         },
         "visibleOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否显示表达式"
+          "description": "Whether to display expressions"
         },
         "id": {
           "type": "string",
-          "description": "主要用于用户行为跟踪里区分是哪个按钮"
+          "description": "Mainly used to distinguish which button is used in user behavior tracking"
         },
         "onEvent": {
           "type": "object",
@@ -1934,57 +1934,57 @@
             ],
             "additionalProperties": false
           },
-          "description": "事件动作配置"
+          "description": "Event action configuration"
         },
         "static": {
           "type": "boolean",
-          "description": "是否静态展示"
+          "description": "Whether to display statically"
         },
         "staticOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否静态展示表达式"
+          "description": "Whether to display expressions statically"
         },
         "staticPlaceholder": {
           "type": "string",
-          "description": "静态展示空值占位"
+          "description": "Static display of empty value placeholder"
         },
         "staticClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项类名"
+          "description": "Static display form item class name"
         },
         "staticLabelClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Label类名"
+          "description": "Static display of form item Label class name"
         },
         "staticInputClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Value类名"
+          "description": "Static display of form item Value class name"
         },
         "staticSchema": {},
         "style": {
           "type": "object",
-          "description": "组件样式"
+          "description": "Component style"
         },
         "editorSetting": {
           "type": "object",
           "properties": {
             "behavior": {
               "type": "string",
-              "description": "组件行为、用途，如 create、update、remove"
+              "description": "Component behavior and usage, such as create, update, remove"
             },
             "displayName": {
               "type": "string",
-              "description": "组件名称，通常是业务名称方便定位"
+              "description": "Component name, usually the business name for easy location"
             },
             "mock": {
-              "description": "编辑器假数据，方便展示"
+              "description": "Editor fake data for easy display"
             }
           },
-          "description": "编辑器配置，运行时可以忽略"
+          "description": "Editor configuration, can be ignored at runtime"
         },
         "useMobileUI": {
           "type": "boolean",
-          "description": "可以组件级别用来关闭移动端样式"
+          "description": "Can be used to turn off mobile style at the component level"
         },
         "testIdBuilder": {
           "$ref": "#/definitions/TestIdBuilder"
@@ -1996,42 +1996,42 @@
             "submit",
             "reset"
           ],
-          "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+          "description": "Specify the button type, supporting three types: button, submit or reset."
         },
         "testid": {
           "type": "string"
         },
         "block": {
           "type": "boolean",
-          "description": "是否为块状展示，默认为内联。"
+          "description": "Whether to display in block format, the default is inline."
         },
         "disabledTip": {
           "type": "string",
-          "description": "禁用时的文案提示。"
+          "description": "Copy hint when disabled."
         },
         "icon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "按钮图标， iconfont 的类名"
+          "description": "Button icon, class name of iconfont"
         },
         "iconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "icon 上的css 类名"
+          "description": "css class name on icon"
         },
         "rightIcon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "右侧按钮图标， iconfont 的类名"
+          "description": "Right button icon, class name of iconfont"
         },
         "rightIconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "右侧 icon 上的 css 类名"
+          "description": "css class name on the right icon"
         },
         "loadingClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "loading 上的css 类名"
+          "description": "css class name on loading"
         },
         "label": {
           "type": "string",
-          "description": "按钮文字"
+          "description": "button text"
         },
         "level": {
           "type": "string",
@@ -2046,7 +2046,7 @@
             "light",
             "secondary"
           ],
-          "description": "按钮样式"
+          "description": "button style"
         },
         "primary": {
           "type": "boolean"
@@ -2059,7 +2059,7 @@
             "md",
             "lg"
           ],
-          "description": "按钮大小"
+          "description": "button size"
         },
         "tooltip": {
           "$ref": "#/definitions/SchemaTooltip"
@@ -2075,61 +2075,61 @@
         },
         "confirmText": {
           "type": "string",
-          "description": "提示文字，配置了操作前会要求用户确认。"
+          "description": "Prompt text, configured to require user confirmation before operation."
         },
         "required": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "如果按钮在form中，配置此属性会要求用户把指定的字段通过验证后才会触发行为。"
+          "description": "If the button is in a form, configuring this attribute will require the user to pass verification of the specified field before triggering the behavior."
         },
         "activeLevel": {
           "type": "string",
-          "description": "激活状态时的样式"
+          "description": "Active style"
         },
         "activeClassName": {
           "type": "string",
-          "description": "激活状态时的类名"
+          "description": "Class name when activated"
         },
         "close": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "如果按钮在弹框中，可以配置这个动作完成后是否关闭弹窗，或者指定关闭目标弹框。"
+          "description": "If the button is in a pop-up box, you can configure whether to close the pop-up window after the action is completed, or specify to close the target pop-up box."
         },
         "requireSelected": {
           "type": "boolean",
-          "description": "当按钮时批量操作按钮时，默认必须有勾选元素才能可点击，如果此属性配置成 false，则没有点选成员也能点击。"
+          "description": "When the button is a batch operation button, there must be a checked element by default to be clickable. If this attribute is configured to false, the member can be clicked without clicking."
         },
         "mergeData": {
           "type": "boolean",
-          "description": "是否将弹框中数据 merge 到父级作用域。"
+          "description": "Whether to merge the data in the pop-up box into the parent scope."
         },
         "target": {
           "type": "string",
-          "description": "可以指定让谁来触发这个动作。"
+          "description": "You can specify who should trigger this action."
         },
         "countDown": {
           "type": "number",
-          "description": "点击后的禁止倒计时（秒）"
+          "description": "Ban countdown after click (seconds)"
         },
         "countDownTpl": {
           "type": "string",
-          "description": "倒计时文字自定义"
+          "description": "Countdown text customization"
         },
         "badge": {
           "$ref": "#/definitions/BadgeObject",
-          "description": "角标"
+          "description": "corner mark"
         },
         "hotKey": {
           "type": "string",
-          "description": "键盘快捷键"
+          "description": "keyboard shortcuts"
         },
         "loadingOn": {
           "type": "string",
-          "description": "是否显示loading效果"
+          "description": "Whether to display the loading effect"
         },
         "onClick": {
           "anyOf": [
@@ -2138,20 +2138,20 @@
             },
             {}
           ],
-          "description": "自定义事件处理函数"
+          "description": "Custom event handler function"
         },
         "body": {
           "$ref": "#/definitions/SchemaCollection",
-          "description": "子内容"
+          "description": "sub content"
         },
         "actionType": {
           "type": "string",
           "const": "copy",
-          "description": "指定为复制内容行为"
+          "description": "Specify behavior for copying content"
         },
         "copy": {
           "$ref": "#/definitions/SchemaTpl",
-          "description": "复制啥内容由此配置，支持模板语法。"
+          "description": "What content is copied is configured here, and template syntax is supported."
         }
       },
       "required": [
@@ -2172,43 +2172,43 @@
         },
         "$$id": {
           "type": "string",
-          "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+          "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
         },
         "className": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "容器 css 类名"
+          "description": "Container css class name"
         },
         "$ref": {
           "type": "string",
-          "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+          "description": "Used together with definitions, an infinite loop renderer can be implemented."
         },
         "disabled": {
           "type": "boolean",
-          "description": "是否禁用"
+          "description": "Whether to disable"
         },
         "disabledOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否禁用表达式"
+          "description": "Whether to disable expressions"
         },
         "hidden": {
           "type": "boolean",
-          "description": "是否隐藏"
+          "description": "Whether to hide"
         },
         "hiddenOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否隐藏表达式"
+          "description": "Whether to hide expressions"
         },
         "visible": {
           "type": "boolean",
-          "description": "是否显示"
+          "description": "Whether to display"
         },
         "visibleOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否显示表达式"
+          "description": "Whether to display expressions"
         },
         "id": {
           "type": "string",
-          "description": "主要用于用户行为跟踪里区分是哪个按钮"
+          "description": "Mainly used to distinguish which button is used in user behavior tracking"
         },
         "onEvent": {
           "type": "object",
@@ -2236,57 +2236,57 @@
             ],
             "additionalProperties": false
           },
-          "description": "事件动作配置"
+          "description": "Event action configuration"
         },
         "static": {
           "type": "boolean",
-          "description": "是否静态展示"
+          "description": "Whether to display statically"
         },
         "staticOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否静态展示表达式"
+          "description": "Whether to display expressions statically"
         },
         "staticPlaceholder": {
           "type": "string",
-          "description": "静态展示空值占位"
+          "description": "Static display of empty value placeholder"
         },
         "staticClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项类名"
+          "description": "Static display form item class name"
         },
         "staticLabelClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Label类名"
+          "description": "Static display of form item Label class name"
         },
         "staticInputClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Value类名"
+          "description": "Static display of form item Value class name"
         },
         "staticSchema": {},
         "style": {
           "type": "object",
-          "description": "组件样式"
+          "description": "Component style"
         },
         "editorSetting": {
           "type": "object",
           "properties": {
             "behavior": {
               "type": "string",
-              "description": "组件行为、用途，如 create、update、remove"
+              "description": "Component behavior and usage, such as create, update, remove"
             },
             "displayName": {
               "type": "string",
-              "description": "组件名称，通常是业务名称方便定位"
+              "description": "Component name, usually the business name for easy location"
             },
             "mock": {
-              "description": "编辑器假数据，方便展示"
+              "description": "Editor fake data for easy display"
             }
           },
-          "description": "编辑器配置，运行时可以忽略"
+          "description": "Editor configuration, can be ignored at runtime"
         },
         "useMobileUI": {
           "type": "boolean",
-          "description": "可以组件级别用来关闭移动端样式"
+          "description": "Can be used to turn off mobile style at the component level"
         },
         "testIdBuilder": {
           "$ref": "#/definitions/TestIdBuilder"
@@ -2298,42 +2298,42 @@
             "submit",
             "reset"
           ],
-          "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+          "description": "Specify the button type, supporting three types: button, submit or reset."
         },
         "testid": {
           "type": "string"
         },
         "block": {
           "type": "boolean",
-          "description": "是否为块状展示，默认为内联。"
+          "description": "Whether to display in block format, the default is inline."
         },
         "disabledTip": {
           "type": "string",
-          "description": "禁用时的文案提示。"
+          "description": "Copy hint when disabled."
         },
         "icon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "按钮图标， iconfont 的类名"
+          "description": "Button icon, class name of iconfont"
         },
         "iconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "icon 上的css 类名"
+          "description": "css class name on icon"
         },
         "rightIcon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "右侧按钮图标， iconfont 的类名"
+          "description": "Right button icon, class name of iconfont"
         },
         "rightIconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "右侧 icon 上的 css 类名"
+          "description": "css class name on the right icon"
         },
         "loadingClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "loading 上的css 类名"
+          "description": "css class name on loading"
         },
         "label": {
           "type": "string",
-          "description": "按钮文字"
+          "description": "button text"
         },
         "level": {
           "type": "string",
@@ -2348,7 +2348,7 @@
             "light",
             "secondary"
           ],
-          "description": "按钮样式"
+          "description": "button style"
         },
         "primary": {
           "type": "boolean"
@@ -2361,7 +2361,7 @@
             "md",
             "lg"
           ],
-          "description": "按钮大小"
+          "description": "button size"
         },
         "tooltip": {
           "$ref": "#/definitions/SchemaTooltip"
@@ -2377,61 +2377,61 @@
         },
         "confirmText": {
           "type": "string",
-          "description": "提示文字，配置了操作前会要求用户确认。"
+          "description": "Prompt text, configured to require user confirmation before operation."
         },
         "required": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "如果按钮在form中，配置此属性会要求用户把指定的字段通过验证后才会触发行为。"
+          "description": "If the button is in a form, configuring this attribute will require the user to pass verification of the specified field before triggering the behavior."
         },
         "activeLevel": {
           "type": "string",
-          "description": "激活状态时的样式"
+          "description": "Active style"
         },
         "activeClassName": {
           "type": "string",
-          "description": "激活状态时的类名"
+          "description": "Class name when activated"
         },
         "close": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "如果按钮在弹框中，可以配置这个动作完成后是否关闭弹窗，或者指定关闭目标弹框。"
+          "description": "If the button is in a pop-up box, you can configure whether to close the pop-up window after the action is completed, or specify to close the target pop-up box."
         },
         "requireSelected": {
           "type": "boolean",
-          "description": "当按钮时批量操作按钮时，默认必须有勾选元素才能可点击，如果此属性配置成 false，则没有点选成员也能点击。"
+          "description": "When the button is a batch operation button, there must be a checked element by default to be clickable. If this attribute is configured to false, the member can be clicked without clicking."
         },
         "mergeData": {
           "type": "boolean",
-          "description": "是否将弹框中数据 merge 到父级作用域。"
+          "description": "Whether to merge the data in the pop-up box into the parent scope."
         },
         "target": {
           "$ref": "#/definitions/SchemaReload",
-          "description": "指定目标组件。"
+          "description": "Specify the target component."
         },
         "countDown": {
           "type": "number",
-          "description": "点击后的禁止倒计时（秒）"
+          "description": "Ban countdown after click (seconds)"
         },
         "countDownTpl": {
           "type": "string",
-          "description": "倒计时文字自定义"
+          "description": "Countdown text customization"
         },
         "badge": {
           "$ref": "#/definitions/BadgeObject",
-          "description": "角标"
+          "description": "corner mark"
         },
         "hotKey": {
           "type": "string",
-          "description": "键盘快捷键"
+          "description": "keyboard shortcuts"
         },
         "loadingOn": {
           "type": "string",
-          "description": "是否显示loading效果"
+          "description": "Whether to display the loading effect"
         },
         "onClick": {
           "anyOf": [
@@ -2440,16 +2440,16 @@
             },
             {}
           ],
-          "description": "自定义事件处理函数"
+          "description": "Custom event handler function"
         },
         "body": {
           "$ref": "#/definitions/SchemaCollection",
-          "description": "子内容"
+          "description": "sub content"
         },
         "actionType": {
           "type": "string",
           "const": "reload",
-          "description": "指定为刷新目标组件。"
+          "description": "Specify the refresh target component."
         }
       },
       "required": [
@@ -2469,43 +2469,43 @@
         },
         "$$id": {
           "type": "string",
-          "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+          "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
         },
         "className": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "容器 css 类名"
+          "description": "Container css class name"
         },
         "$ref": {
           "type": "string",
-          "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+          "description": "Used together with definitions, an infinite loop renderer can be implemented."
         },
         "disabled": {
           "type": "boolean",
-          "description": "是否禁用"
+          "description": "Whether to disable"
         },
         "disabledOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否禁用表达式"
+          "description": "Whether to disable expressions"
         },
         "hidden": {
           "type": "boolean",
-          "description": "是否隐藏"
+          "description": "Whether to hide"
         },
         "hiddenOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否隐藏表达式"
+          "description": "Whether to hide expressions"
         },
         "visible": {
           "type": "boolean",
-          "description": "是否显示"
+          "description": "Whether to display"
         },
         "visibleOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否显示表达式"
+          "description": "Whether to display expressions"
         },
         "id": {
           "type": "string",
-          "description": "主要用于用户行为跟踪里区分是哪个按钮"
+          "description": "Mainly used to distinguish which button is used in user behavior tracking"
         },
         "onEvent": {
           "type": "object",
@@ -2533,57 +2533,57 @@
             ],
             "additionalProperties": false
           },
-          "description": "事件动作配置"
+          "description": "Event action configuration"
         },
         "static": {
           "type": "boolean",
-          "description": "是否静态展示"
+          "description": "Whether to display statically"
         },
         "staticOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否静态展示表达式"
+          "description": "Whether to display expressions statically"
         },
         "staticPlaceholder": {
           "type": "string",
-          "description": "静态展示空值占位"
+          "description": "Static display of empty value placeholder"
         },
         "staticClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项类名"
+          "description": "Static display form item class name"
         },
         "staticLabelClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Label类名"
+          "description": "Static display of form item Label class name"
         },
         "staticInputClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Value类名"
+          "description": "Static display of form item Value class name"
         },
         "staticSchema": {},
         "style": {
           "type": "object",
-          "description": "组件样式"
+          "description": "Component style"
         },
         "editorSetting": {
           "type": "object",
           "properties": {
             "behavior": {
               "type": "string",
-              "description": "组件行为、用途，如 create、update、remove"
+              "description": "Component behavior and usage, such as create, update, remove"
             },
             "displayName": {
               "type": "string",
-              "description": "组件名称，通常是业务名称方便定位"
+              "description": "Component name, usually the business name for easy location"
             },
             "mock": {
-              "description": "编辑器假数据，方便展示"
+              "description": "Editor fake data for easy display"
             }
           },
-          "description": "编辑器配置，运行时可以忽略"
+          "description": "Editor configuration, can be ignored at runtime"
         },
         "useMobileUI": {
           "type": "boolean",
-          "description": "可以组件级别用来关闭移动端样式"
+          "description": "Can be used to turn off mobile style at the component level"
         },
         "testIdBuilder": {
           "$ref": "#/definitions/TestIdBuilder"
@@ -2595,42 +2595,42 @@
             "submit",
             "reset"
           ],
-          "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+          "description": "Specify the button type, supporting three types: button, submit or reset."
         },
         "testid": {
           "type": "string"
         },
         "block": {
           "type": "boolean",
-          "description": "是否为块状展示，默认为内联。"
+          "description": "Whether to display in block format, the default is inline."
         },
         "disabledTip": {
           "type": "string",
-          "description": "禁用时的文案提示。"
+          "description": "Copy hint when disabled."
         },
         "icon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "按钮图标， iconfont 的类名"
+          "description": "Button icon, class name of iconfont"
         },
         "iconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "icon 上的css 类名"
+          "description": "css class name on icon"
         },
         "rightIcon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "右侧按钮图标， iconfont 的类名"
+          "description": "Right button icon, class name of iconfont"
         },
         "rightIconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "右侧 icon 上的 css 类名"
+          "description": "css class name on the right icon"
         },
         "loadingClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "loading 上的css 类名"
+          "description": "css class name on loading"
         },
         "label": {
           "type": "string",
-          "description": "按钮文字"
+          "description": "button text"
         },
         "level": {
           "type": "string",
@@ -2645,7 +2645,7 @@
             "light",
             "secondary"
           ],
-          "description": "按钮样式"
+          "description": "button style"
         },
         "primary": {
           "type": "boolean"
@@ -2658,7 +2658,7 @@
             "md",
             "lg"
           ],
-          "description": "按钮大小"
+          "description": "button size"
         },
         "tooltip": {
           "$ref": "#/definitions/SchemaTooltip"
@@ -2674,61 +2674,61 @@
         },
         "confirmText": {
           "type": "string",
-          "description": "提示文字，配置了操作前会要求用户确认。"
+          "description": "Prompt text, configured to require user confirmation before operation."
         },
         "required": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "如果按钮在form中，配置此属性会要求用户把指定的字段通过验证后才会触发行为。"
+          "description": "If the button is in a form, configuring this attribute will require the user to pass verification of the specified field before triggering the behavior."
         },
         "activeLevel": {
           "type": "string",
-          "description": "激活状态时的样式"
+          "description": "Active style"
         },
         "activeClassName": {
           "type": "string",
-          "description": "激活状态时的类名"
+          "description": "Class name when activated"
         },
         "close": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "如果按钮在弹框中，可以配置这个动作完成后是否关闭弹窗，或者指定关闭目标弹框。"
+          "description": "If the button is in a pop-up box, you can configure whether to close the pop-up window after the action is completed, or specify to close the target pop-up box."
         },
         "requireSelected": {
           "type": "boolean",
-          "description": "当按钮时批量操作按钮时，默认必须有勾选元素才能可点击，如果此属性配置成 false，则没有点选成员也能点击。"
+          "description": "When the button is a batch operation button, there must be a checked element by default to be clickable. If this attribute is configured to false, the member can be clicked without clicking."
         },
         "mergeData": {
           "type": "boolean",
-          "description": "是否将弹框中数据 merge 到父级作用域。"
+          "description": "Whether to merge the data in the pop-up box into the parent scope."
         },
         "target": {
           "type": "string",
-          "description": "可以指定让谁来触发这个动作。"
+          "description": "You can specify who should trigger this action."
         },
         "countDown": {
           "type": "number",
-          "description": "点击后的禁止倒计时（秒）"
+          "description": "Ban countdown after click (seconds)"
         },
         "countDownTpl": {
           "type": "string",
-          "description": "倒计时文字自定义"
+          "description": "Countdown text customization"
         },
         "badge": {
           "$ref": "#/definitions/BadgeObject",
-          "description": "角标"
+          "description": "corner mark"
         },
         "hotKey": {
           "type": "string",
-          "description": "键盘快捷键"
+          "description": "keyboard shortcuts"
         },
         "loadingOn": {
           "type": "string",
-          "description": "是否显示loading效果"
+          "description": "Whether to display the loading effect"
         },
         "onClick": {
           "anyOf": [
@@ -2737,32 +2737,32 @@
             },
             {}
           ],
-          "description": "自定义事件处理函数"
+          "description": "Custom event handler function"
         },
         "body": {
           "type": "string",
-          "description": "邮件正文"
+          "description": "Email text"
         },
         "actionType": {
           "type": "string",
           "const": "email",
-          "description": "指定为打开邮箱行为"
+          "description": "Specify as open mailbox behavior"
         },
         "to": {
           "type": "string",
-          "description": "收件人邮箱"
+          "description": "Recipient email"
         },
         "cc": {
           "type": "string",
-          "description": "抄送邮箱"
+          "description": "Cc email"
         },
         "bcc": {
           "type": "string",
-          "description": "匿名抄送邮箱"
+          "description": "Anonymous CC email"
         },
         "subject": {
           "type": "string",
-          "description": "邮件主题"
+          "description": "Email subject"
         }
       },
       "required": [
@@ -2782,43 +2782,43 @@
         },
         "$$id": {
           "type": "string",
-          "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+          "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
         },
         "className": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "容器 css 类名"
+          "description": "Container css class name"
         },
         "$ref": {
           "type": "string",
-          "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+          "description": "Used together with definitions, an infinite loop renderer can be implemented."
         },
         "disabled": {
           "type": "boolean",
-          "description": "是否禁用"
+          "description": "Whether to disable"
         },
         "disabledOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否禁用表达式"
+          "description": "Whether to disable expressions"
         },
         "hidden": {
           "type": "boolean",
-          "description": "是否隐藏"
+          "description": "Whether to hide"
         },
         "hiddenOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否隐藏表达式"
+          "description": "Whether to hide expressions"
         },
         "visible": {
           "type": "boolean",
-          "description": "是否显示"
+          "description": "Whether to display"
         },
         "visibleOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否显示表达式"
+          "description": "Whether to display expressions"
         },
         "id": {
           "type": "string",
-          "description": "主要用于用户行为跟踪里区分是哪个按钮"
+          "description": "Mainly used to distinguish which button is used in user behavior tracking"
         },
         "onEvent": {
           "type": "object",
@@ -2846,57 +2846,57 @@
             ],
             "additionalProperties": false
           },
-          "description": "事件动作配置"
+          "description": "Event action configuration"
         },
         "static": {
           "type": "boolean",
-          "description": "是否静态展示"
+          "description": "Whether to display statically"
         },
         "staticOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否静态展示表达式"
+          "description": "Whether to display expressions statically"
         },
         "staticPlaceholder": {
           "type": "string",
-          "description": "静态展示空值占位"
+          "description": "Static display of empty value placeholder"
         },
         "staticClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项类名"
+          "description": "Static display form item class name"
         },
         "staticLabelClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Label类名"
+          "description": "Static display of form item Label class name"
         },
         "staticInputClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Value类名"
+          "description": "Static display of form item Value class name"
         },
         "staticSchema": {},
         "style": {
           "type": "object",
-          "description": "组件样式"
+          "description": "Component style"
         },
         "editorSetting": {
           "type": "object",
           "properties": {
             "behavior": {
               "type": "string",
-              "description": "组件行为、用途，如 create、update、remove"
+              "description": "Component behavior and usage, such as create, update, remove"
             },
             "displayName": {
               "type": "string",
-              "description": "组件名称，通常是业务名称方便定位"
+              "description": "Component name, usually the business name for easy location"
             },
             "mock": {
-              "description": "编辑器假数据，方便展示"
+              "description": "Editor fake data for easy display"
             }
           },
-          "description": "编辑器配置，运行时可以忽略"
+          "description": "Editor configuration, can be ignored at runtime"
         },
         "useMobileUI": {
           "type": "boolean",
-          "description": "可以组件级别用来关闭移动端样式"
+          "description": "Can be used to turn off mobile style at the component level"
         },
         "testIdBuilder": {
           "$ref": "#/definitions/TestIdBuilder"
@@ -2908,42 +2908,42 @@
             "submit",
             "reset"
           ],
-          "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+          "description": "Specify the button type, supporting three types: button, submit or reset."
         },
         "testid": {
           "type": "string"
         },
         "block": {
           "type": "boolean",
-          "description": "是否为块状展示，默认为内联。"
+          "description": "Whether to display in block format, the default is inline."
         },
         "disabledTip": {
           "type": "string",
-          "description": "禁用时的文案提示。"
+          "description": "Copy hint when disabled."
         },
         "icon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "按钮图标， iconfont 的类名"
+          "description": "Button icon, class name of iconfont"
         },
         "iconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "icon 上的css 类名"
+          "description": "css class name on icon"
         },
         "rightIcon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "右侧按钮图标， iconfont 的类名"
+          "description": "Right button icon, class name of iconfont"
         },
         "rightIconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "右侧 icon 上的 css 类名"
+          "description": "css class name on the right icon"
         },
         "loadingClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "loading 上的css 类名"
+          "description": "css class name on loading"
         },
         "label": {
           "type": "string",
-          "description": "按钮文字"
+          "description": "button text"
         },
         "level": {
           "type": "string",
@@ -2958,7 +2958,7 @@
             "light",
             "secondary"
           ],
-          "description": "按钮样式"
+          "description": "button style"
         },
         "primary": {
           "type": "boolean"
@@ -2971,7 +2971,7 @@
             "md",
             "lg"
           ],
-          "description": "按钮大小"
+          "description": "button size"
         },
         "tooltip": {
           "$ref": "#/definitions/SchemaTooltip"
@@ -2987,61 +2987,61 @@
         },
         "confirmText": {
           "type": "string",
-          "description": "提示文字，配置了操作前会要求用户确认。"
+          "description": "Prompt text, configured to require user confirmation before operation."
         },
         "required": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "如果按钮在form中，配置此属性会要求用户把指定的字段通过验证后才会触发行为。"
+          "description": "If the button is in a form, configuring this attribute will require the user to pass verification of the specified field before triggering the behavior."
         },
         "activeLevel": {
           "type": "string",
-          "description": "激活状态时的样式"
+          "description": "Active style"
         },
         "activeClassName": {
           "type": "string",
-          "description": "激活状态时的类名"
+          "description": "Class name when activated"
         },
         "close": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "如果按钮在弹框中，可以配置这个动作完成后是否关闭弹窗，或者指定关闭目标弹框。"
+          "description": "If the button is in a pop-up box, you can configure whether to close the pop-up window after the action is completed, or specify to close the target pop-up box."
         },
         "requireSelected": {
           "type": "boolean",
-          "description": "当按钮时批量操作按钮时，默认必须有勾选元素才能可点击，如果此属性配置成 false，则没有点选成员也能点击。"
+          "description": "When the button is a batch operation button, there must be a checked element by default to be clickable. If this attribute is configured to false, the member can be clicked without clicking."
         },
         "mergeData": {
           "type": "boolean",
-          "description": "是否将弹框中数据 merge 到父级作用域。"
+          "description": "Whether to merge the data in the pop-up box into the parent scope."
         },
         "target": {
           "type": "string",
-          "description": "可以指定让谁来触发这个动作。"
+          "description": "You can specify who should trigger this action."
         },
         "countDown": {
           "type": "number",
-          "description": "点击后的禁止倒计时（秒）"
+          "description": "Ban countdown after click (seconds)"
         },
         "countDownTpl": {
           "type": "string",
-          "description": "倒计时文字自定义"
+          "description": "Countdown text customization"
         },
         "badge": {
           "$ref": "#/definitions/BadgeObject",
-          "description": "角标"
+          "description": "corner mark"
         },
         "hotKey": {
           "type": "string",
-          "description": "键盘快捷键"
+          "description": "keyboard shortcuts"
         },
         "loadingOn": {
           "type": "string",
-          "description": "是否显示loading效果"
+          "description": "Whether to display the loading effect"
         },
         "onClick": {
           "anyOf": [
@@ -3050,11 +3050,11 @@
             },
             {}
           ],
-          "description": "自定义事件处理函数"
+          "description": "Custom event handler function"
         },
         "body": {
           "$ref": "#/definitions/SchemaCollection",
-          "description": "子内容"
+          "description": "sub content"
         },
         "actionType": {
           "type": "string",
@@ -3088,43 +3088,43 @@
         },
         "$$id": {
           "type": "string",
-          "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+          "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
         },
         "className": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "容器 css 类名"
+          "description": "Container css class name"
         },
         "$ref": {
           "type": "string",
-          "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+          "description": "Used together with definitions, an infinite loop renderer can be implemented."
         },
         "disabled": {
           "type": "boolean",
-          "description": "是否禁用"
+          "description": "Whether to disable"
         },
         "disabledOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否禁用表达式"
+          "description": "Whether to disable expressions"
         },
         "hidden": {
           "type": "boolean",
-          "description": "是否隐藏"
+          "description": "Whether to hide"
         },
         "hiddenOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否隐藏表达式"
+          "description": "Whether to hide expressions"
         },
         "visible": {
           "type": "boolean",
-          "description": "是否显示"
+          "description": "Whether to display"
         },
         "visibleOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否显示表达式"
+          "description": "Whether to display expressions"
         },
         "id": {
           "type": "string",
-          "description": "主要用于用户行为跟踪里区分是哪个按钮"
+          "description": "Mainly used to distinguish which button is used in user behavior tracking"
         },
         "onEvent": {
           "type": "object",
@@ -3152,57 +3152,57 @@
             ],
             "additionalProperties": false
           },
-          "description": "事件动作配置"
+          "description": "Event action configuration"
         },
         "static": {
           "type": "boolean",
-          "description": "是否静态展示"
+          "description": "Whether to display statically"
         },
         "staticOn": {
           "$ref": "#/definitions/SchemaExpression",
-          "description": "是否静态展示表达式"
+          "description": "Whether to display expressions statically"
         },
         "staticPlaceholder": {
           "type": "string",
-          "description": "静态展示空值占位"
+          "description": "Static display of empty value placeholder"
         },
         "staticClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项类名"
+          "description": "Static display form item class name"
         },
         "staticLabelClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Label类名"
+          "description": "Static display of form item Label class name"
         },
         "staticInputClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "静态展示表单项Value类名"
+          "description": "Static display of form item Value class name"
         },
         "staticSchema": {},
         "style": {
           "type": "object",
-          "description": "组件样式"
+          "description": "Component style"
         },
         "editorSetting": {
           "type": "object",
           "properties": {
             "behavior": {
               "type": "string",
-              "description": "组件行为、用途，如 create、update、remove"
+              "description": "Component behavior and usage, such as create, update, remove"
             },
             "displayName": {
               "type": "string",
-              "description": "组件名称，通常是业务名称方便定位"
+              "description": "Component name, usually the business name for easy location"
             },
             "mock": {
-              "description": "编辑器假数据，方便展示"
+              "description": "Editor fake data for easy display"
             }
           },
-          "description": "编辑器配置，运行时可以忽略"
+          "description": "Editor configuration, can be ignored at runtime"
         },
         "useMobileUI": {
           "type": "boolean",
-          "description": "可以组件级别用来关闭移动端样式"
+          "description": "Can be used to turn off mobile style at the component level"
         },
         "testIdBuilder": {
           "$ref": "#/definitions/TestIdBuilder"
@@ -3214,42 +3214,42 @@
             "submit",
             "reset"
           ],
-          "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+          "description": "Specify the button type, supporting three types: button, submit or reset."
         },
         "testid": {
           "type": "string"
         },
         "block": {
           "type": "boolean",
-          "description": "是否为块状展示，默认为内联。"
+          "description": "Whether to display in block format, the default is inline."
         },
         "disabledTip": {
           "type": "string",
-          "description": "禁用时的文案提示。"
+          "description": "Copy hint when disabled."
         },
         "icon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "按钮图标， iconfont 的类名"
+          "description": "Button icon, class name of iconfont"
         },
         "iconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "icon 上的css 类名"
+          "description": "css class name on icon"
         },
         "rightIcon": {
           "$ref": "#/definitions/SchemaIcon",
-          "description": "右侧按钮图标， iconfont 的类名"
+          "description": "Right button icon, class name of iconfont"
         },
         "rightIconClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "右侧 icon 上的 css 类名"
+          "description": "css class name on the right icon"
         },
         "loadingClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "loading 上的css 类名"
+          "description": "css class name on loading"
         },
         "label": {
           "type": "string",
-          "description": "按钮文字"
+          "description": "button text"
         },
         "level": {
           "type": "string",
@@ -3264,7 +3264,7 @@
             "light",
             "secondary"
           ],
-          "description": "按钮样式"
+          "description": "button style"
         },
         "primary": {
           "type": "boolean"
@@ -3277,7 +3277,7 @@
             "md",
             "lg"
           ],
-          "description": "按钮大小"
+          "description": "button size"
         },
         "tooltip": {
           "$ref": "#/definitions/SchemaTooltip"
@@ -3293,61 +3293,61 @@
         },
         "confirmText": {
           "type": "string",
-          "description": "提示文字，配置了操作前会要求用户确认。"
+          "description": "Prompt text, configured to require user confirmation before operation."
         },
         "required": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "如果按钮在form中，配置此属性会要求用户把指定的字段通过验证后才会触发行为。"
+          "description": "If the button is in a form, configuring this attribute will require the user to pass verification of the specified field before triggering the behavior."
         },
         "activeLevel": {
           "type": "string",
-          "description": "激活状态时的样式"
+          "description": "Active style"
         },
         "activeClassName": {
           "type": "string",
-          "description": "激活状态时的类名"
+          "description": "Class name when activated"
         },
         "close": {
           "type": [
             "boolean",
             "string"
           ],
-          "description": "如果按钮在弹框中，可以配置这个动作完成后是否关闭弹窗，或者指定关闭目标弹框。"
+          "description": "If the button is in a pop-up box, you can configure whether to close the pop-up window after the action is completed, or specify to close the target pop-up box."
         },
         "requireSelected": {
           "type": "boolean",
-          "description": "当按钮时批量操作按钮时，默认必须有勾选元素才能可点击，如果此属性配置成 false，则没有点选成员也能点击。"
+          "description": "When the button is a batch operation button, there must be a checked element by default to be clickable. If this attribute is configured to false, the member can be clicked without clicking."
         },
         "mergeData": {
           "type": "boolean",
-          "description": "是否将弹框中数据 merge 到父级作用域。"
+          "description": "Whether to merge the data in the pop-up box into the parent scope."
         },
         "target": {
           "type": "string",
-          "description": "可以指定让谁来触发这个动作。"
+          "description": "You can specify who should trigger this action."
         },
         "countDown": {
           "type": "number",
-          "description": "点击后的禁止倒计时（秒）"
+          "description": "Ban countdown after click (seconds)"
         },
         "countDownTpl": {
           "type": "string",
-          "description": "倒计时文字自定义"
+          "description": "Countdown text customization"
         },
         "badge": {
           "$ref": "#/definitions/BadgeObject",
-          "description": "角标"
+          "description": "corner mark"
         },
         "hotKey": {
           "type": "string",
-          "description": "键盘快捷键"
+          "description": "keyboard shortcuts"
         },
         "loadingOn": {
           "type": "string",
-          "description": "是否显示loading效果"
+          "description": "Whether to display the loading effect"
         },
         "onClick": {
           "anyOf": [
@@ -3356,11 +3356,11 @@
             },
             {}
           ],
-          "description": "自定义事件处理函数"
+          "description": "Custom event handler function"
         },
         "body": {
           "$ref": "#/definitions/SchemaCollection",
-          "description": "子内容"
+          "description": "sub content"
         },
         "actionType": {
           "type": "string"

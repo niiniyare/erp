@@ -3,23 +3,23 @@
   "properties": {
     "fetchFailed": {
       "type": "string",
-      "description": "获取失败时的提示"
+      "description": "Obtain prompts when failure"
     },
     "fetchSuccess": {
       "type": "string",
-      "description": "获取成功的提示，默认为空。"
+      "description": "Get a successful prompt, which is empty by default."
     },
     "saveFailed": {
       "type": "string",
-      "description": "保存失败时的提示。"
+      "description": "Prompt when saving fails."
     },
     "saveSuccess": {
       "type": "string",
-      "description": "保存成功时的提示。"
+      "description": "Prompt when saving is successful."
     }
   },
   "additionalProperties": false,
-  "description": "消息文案配置，记住这个优先级是最低的，如果你的接口返回了 msg，接口返回的优先。",
+  "description": "Message copy configuration, remember that this priority is the lowest. If your interface returns msg, the interface returns priority.",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./SchemaMessage.json"
 }

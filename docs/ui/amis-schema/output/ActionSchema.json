@@ -10,12 +10,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "ajax",
-            "description": "指定为发送 ajax 的行为。"
+            "description": "Specifies the behavior for sending ajax."
           }
         }
       },
@@ -33,12 +33,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "url",
-            "description": "指定为打开链接"
+            "description": "Specify as open link"
           }
         }
       },
@@ -56,12 +56,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "link",
-            "description": "指定为打开链接行为，跟 url 不同的时这个行为为单页模式。"
+            "description": "Specifies the link opening behavior. When different from the url, this behavior is single page mode."
           }
         }
       },
@@ -79,12 +79,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "dialog",
-            "description": "指定为打开弹窗"
+            "description": "Specify to open a pop-up window"
           }
         }
       },
@@ -102,12 +102,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "drawer",
-            "description": "指定为打开弹窗，抽出式弹窗"
+            "description": "Specify to open the pop-up window, pull out the pop-up window"
           }
         }
       },
@@ -125,12 +125,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "toast",
-            "description": "指定为打开弹窗，抽出式弹窗"
+            "description": "Specify to open the pop-up window, pull out the pop-up window"
           }
         }
       },
@@ -148,12 +148,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "copy",
-            "description": "指定为复制内容行为"
+            "description": "Specify behavior for copying content"
           }
         }
       },
@@ -171,12 +171,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "reload",
-            "description": "指定为刷新目标组件。"
+            "description": "Specify the refresh target component."
           }
         }
       },
@@ -194,12 +194,12 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
             "const": "email",
-            "description": "指定为打开邮箱行为"
+            "description": "Specify as open mailbox behavior"
           }
         }
       },
@@ -217,7 +217,7 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           },
           "actionType": {
             "type": "string",
@@ -249,7 +249,7 @@
               "submit",
               "reset"
             ],
-            "description": "指定按钮类型，支持 button、submit或者reset三种类型。"
+            "description": "Specify the button type, supporting three types: button, submit or reset."
           }
         }
       },

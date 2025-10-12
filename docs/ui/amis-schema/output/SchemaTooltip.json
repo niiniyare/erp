@@ -8,11 +8,11 @@
       "properties": {
         "title": {
           "type": "string",
-          "description": "标题"
+          "description": "title"
         },
         "content": {
           "type": "string",
-          "description": "内容"
+          "description": "content"
         }
       },
       "required": [

@@ -4,71 +4,71 @@
   "properties": {
     "title": {
       "$ref": "#/definitions/SchemaTpl",
-      "description": "标题"
+      "description": "title"
     },
     "footer": {
       "$ref": "#/definitions/SchemaCollection",
-      "description": "底部区域"
+      "description": "bottom area"
     },
     "footerClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "底部区域类名"
+      "description": "Bottom area class name"
     },
     "header": {
       "$ref": "#/definitions/SchemaCollection",
-      "description": "顶部区域"
+      "description": "top area"
     },
     "headerClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "顶部区域类名"
+      "description": "Top area class name"
     },
     "listItem": {
       "$ref": "#/definitions/ListItemSchema",
-      "description": "单条数据展示内容配置"
+      "description": "Single data display content configuration"
     },
     "source": {
       "$ref": "#/definitions/SchemaTokenizeableString",
-      "description": "也可以直接从环境变量中读取，但是不太推荐。"
+      "description": "It is also possible to read directly from environment variables, but this is not recommended."
     },
     "showFooter": {
       "type": "boolean",
-      "description": "是否显示底部"
+      "description": "Whether to show the bottom"
     },
     "showHeader": {
       "type": "boolean",
-      "description": "是否显示头部"
+      "description": "Whether to display the header"
     },
     "placeholder": {
       "$ref": "#/definitions/SchemaTpl",
-      "description": "无数据提示"
+      "description": "No data prompt"
     },
     "hideCheckToggler": {
       "type": "boolean",
-      "description": "是否隐藏勾选框"
+      "description": "Whether to hide the check box"
     },
     "affixHeader": {
       "type": "boolean",
-      "description": "是否固顶"
+      "description": "Whether to fix the top"
     },
     "affixFooter": {
       "type": "boolean",
-      "description": "是否固底"
+      "description": "Is it solid?"
     },
     "itemCheckableOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "配置某项是否可以点选"
+      "description": "Configure whether an item can be clicked"
     },
     "itemDraggableOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "配置某项是否可拖拽排序，前提是要开启拖拽功能"
+      "description": "Configure whether an item can be sorted by drag-and-drop, provided that the drag-and-drop function is turned on"
     },
     "checkOnItemClick": {
       "type": "boolean",
-      "description": "点击列表单行时，是否选择"
+      "description": "When clicking on a single row in the list, whether to select"
     },
     "valueField": {
       "type": "string",
-      "description": "可以用来作为值的字段"
+      "description": "Fields that can be used as values"
     },
     "size": {
       "type": "string",
@@ -76,54 +76,54 @@
         "sm",
         "base"
       ],
-      "description": "大小"
+      "description": "size"
     },
     "itemAction": {
       "$ref": "#/definitions/ActionSchema",
-      "description": "点击列表项的行为"
+      "description": "Click behavior on list items"
     },
     "testid": {
       "type": "string"
     },
     "$$id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
     },
     "className": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "容器 css 类名"
+      "description": "Container css class name"
     },
     "$ref": {
       "type": "string",
-      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
     },
     "disabled": {
       "type": "boolean",
-      "description": "是否禁用"
+      "description": "Whether to disable"
     },
     "disabledOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否禁用表达式"
+      "description": "Whether to disable expressions"
     },
     "hidden": {
       "type": "boolean",
-      "description": "是否隐藏"
+      "description": "Whether to hide"
     },
     "hiddenOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否隐藏表达式"
+      "description": "Whether to hide expressions"
     },
     "visible": {
       "type": "boolean",
-      "description": "是否显示"
+      "description": "Whether to display"
     },
     "visibleOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否显示表达式"
+      "description": "Whether to display expressions"
     },
     "id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于日志采集"
+      "description": "The unique id of the component, mainly used for log collection"
     },
     "onEvent": {
       "type": "object",
@@ -151,64 +151,64 @@
         ],
         "additionalProperties": false
       },
-      "description": "事件动作配置"
+      "description": "Event action configuration"
     },
     "static": {
       "type": "boolean",
-      "description": "是否静态展示"
+      "description": "Whether to display statically"
     },
     "staticOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否静态展示表达式"
+      "description": "Whether to display expressions statically"
     },
     "staticPlaceholder": {
       "type": "string",
-      "description": "静态展示空值占位"
+      "description": "Static display of empty value placeholder"
     },
     "staticClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项类名"
+      "description": "Static display form item class name"
     },
     "staticLabelClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Label类名"
+      "description": "Static display of form item Label class name"
     },
     "staticInputClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Value类名"
+      "description": "Static display of form item Value class name"
     },
     "staticSchema": {},
     "style": {
       "type": "object",
-      "description": "组件样式"
+      "description": "Component style"
     },
     "editorSetting": {
       "type": "object",
       "properties": {
         "behavior": {
           "type": "string",
-          "description": "组件行为、用途，如 create、update、remove"
+          "description": "Component behavior and usage, such as create, update, remove"
         },
         "displayName": {
           "type": "string",
-          "description": "组件名称，通常是业务名称方便定位"
+          "description": "Component name, usually the business name for easy location"
         },
         "mock": {
-          "description": "编辑器假数据，方便展示"
+          "description": "Editor fake data for easy display"
         }
       },
-      "description": "编辑器配置，运行时可以忽略"
+      "description": "Editor configuration, can be ignored at runtime"
     },
     "useMobileUI": {
       "type": "boolean",
-      "description": "可以组件级别用来关闭移动端样式"
+      "description": "Can be used to turn off mobile style at the component level"
     },
     "testIdBuilder": {
       "$ref": "#/definitions/TestIdBuilder"
     },
     "mode": {
       "type": "string",
-      "description": "指定内容区的展示模式。",
+      "description": "Specifies the display mode of the content area.",
       "const": "list"
     },
     "loadingConfig": {
@@ -226,19 +226,19 @@
     "type": {
       "type": "string",
       "const": "crud2",
-      "description": "指定为 CRUD2 渲染器。"
+      "description": "Specified as a CRUD2 renderer."
     },
     "api": {
       "$ref": "#/definitions/SchemaApi",
-      "description": "初始化数据 API"
+      "description": "Initialize data API"
     },
     "silentPolling": {
       "type": "boolean",
-      "description": "静默拉取"
+      "description": "Silent pull"
     },
     "interval": {
       "type": "number",
-      "description": "设置自动刷新时间"
+      "description": "Set automatic refresh time"
     },
     "stopAutoRefreshWhen": {
       "$ref": "#/definitions/SchemaExpression"
@@ -249,95 +249,95 @@
         "more",
         "pagination"
       ],
-      "description": "数据展示模式 无限加载 or 分页"
+      "description": "Data display mode infinite loading or paging"
     },
     "perPage": {
       "type": "number",
-      "description": "无限加载时，根据此项设置其每页加载数量，可以不限制"
+      "description": "When loading infinitely, set the number of loads per page according to this item, which can be unlimited"
     },
     "loadDataOnce": {
       "type": "boolean",
-      "description": "是否为前端单次加载模式，可以用来实现前端分页。"
+      "description": "Whether it is front-end single loading mode, which can be used to implement front-end paging."
     },
     "selectable": {
       "type": "boolean",
-      "description": "是否可以选择数据，外部事件动作"
+      "description": "Whether it is possible to select data and external event actions"
     },
     "multiple": {
       "type": "boolean",
-      "description": "是否可以多选数据，仅当selectable为 true 时生效"
+      "description": "Whether multiple selection of data can be performed will only take effect when selectable is true."
     },
     "showSelection": {
       "type": "boolean",
-      "description": "是否展示已选数据区域，仅当selectable为 true 时生效"
+      "description": "Whether to display the selected data area, only takes effect when selectable is true"
     },
     "quickSaveApi": {
       "$ref": "#/definitions/SchemaApi",
-      "description": "快速编辑后用来批量保存的 API"
+      "description": "API for batch saving after quick editing"
     },
     "quickSaveItemApi": {
       "$ref": "#/definitions/SchemaApi",
-      "description": "快速编辑配置成及时保存时使用的 API"
+      "description": "API used when quick editing is configured to save in real time"
     },
     "saveOrderApi": {
       "$ref": "#/definitions/SchemaApi",
-      "description": "保存排序的 api"
+      "description": "Save sorted api"
     },
     "syncLocation": {
       "type": "boolean",
-      "description": "是否将过滤条件的参数同步到地址栏,默认为true",
+      "description": "Whether to synchronize the parameters of filter conditions to the address bar, the default is true",
       "default": true
     },
     "pageField": {
       "type": "string",
-      "description": "设置分页页码字段名。"
+      "description": "Set the paging page number field name."
     },
     "perPageField": {
       "type": "string",
-      "description": "设置分页一页显示的多少条数据的字段名。"
+      "description": "Set the field names of how many pieces of data are displayed on one pagination page."
     },
     "name": {
       "$ref": "#/definitions/SchemaName"
     },
     "hideQuickSaveBtn": {
       "type": "boolean",
-      "description": "是否隐藏快速编辑的按钮。"
+      "description": "Whether to hide the quick edit button."
     },
     "autoJumpToTopOnPagerChange": {
       "type": "boolean",
-      "description": "是否自动跳顶部，当切分页的时候。"
+      "description": "Whether to automatically jump to the top when splitting pages."
     },
     "headerToolbar": {
       "$ref": "#/definitions/SchemaCollection",
-      "description": "顶部区域"
+      "description": "top area"
     },
     "headerToolbarClassName": {
       "type": "string",
-      "description": "顶部区域CSS类名"
+      "description": "Top area CSS class name"
     },
     "footerToolbar": {
       "$ref": "#/definitions/SchemaCollection",
-      "description": "底部区域"
+      "description": "bottom area"
     },
     "footerToolbarClassName": {
       "type": "string",
-      "description": "底部区域CSS类名"
+      "description": "Bottom area CSS class name"
     },
     "syncResponse2Query": {
       "type": "boolean",
-      "description": "是否将接口返回的内容自动同步到地址栏，前提是开启了同步地址栏。"
+      "description": "Whether to automatically synchronize the content returned by the interface to the address bar, provided that synchronizing the address bar is enabled."
     },
     "keepItemSelectionOnPageChange": {
       "type": "boolean",
-      "description": "翻页时是否保留用户已选的数据"
+      "description": "Whether to retain the data selected by the user when turning pages"
     },
     "autoFillHeight": {
       "type": "boolean",
-      "description": "内容区域占满屏幕剩余空间"
+      "description": "The content area takes up the remaining space on the screen"
     },
     "primaryField": {
       "type": "string",
-      "description": "行标识符，默认为id"
+      "description": "Row identifier, default is id"
     },
     "parsePrimitiveQuery": {
       "anyOf": [
@@ -367,7 +367,7 @@
           "type": "boolean"
         }
       ],
-      "description": "是否开启Query信息转换，开启后将会对url中的Query进行转换，默认开启，默认仅转化布尔值"
+      "description": "Whether to enable Query information conversion. When enabled, the Query in the URL will be converted. It is enabled by default. By default, only Boolean values are converted."
     }
   },
   "required": [

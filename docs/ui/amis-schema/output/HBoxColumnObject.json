@@ -3,7 +3,7 @@
   "properties": {
     "columnClassName": {
       "type": "string",
-      "description": "列上 CSS 类名"
+      "description": "List CSS class names"
     },
     "valign": {
       "type": "string",
@@ -13,25 +13,25 @@
         "bottom",
         "between"
       ],
-      "description": "垂直对齐方式"
+      "description": "vertical alignment"
     },
     "width": {
       "type": [
         "number",
         "string"
       ],
-      "description": "宽度"
+      "description": "width"
     },
     "height": {
       "type": [
         "number",
         "string"
       ],
-      "description": "高度"
+      "description": "high"
     },
     "style": {
       "type": "object",
-      "description": "其他样式"
+      "description": "Other styles"
     },
     "mode": {
       "type": "string",
@@ -40,23 +40,23 @@
         "inline",
         "horizontal"
       ],
-      "description": "配置子表单项默认的展示方式。"
+      "description": "Configure the default display mode of subform items."
     },
     "horizontal": {
       "$ref": "#/definitions/FormHorizontal",
-      "description": "如果是水平排版，这个属性可以细化水平排版的左右宽度占比。"
+      "description": "If it is horizontal typesetting, this attribute can refine the left and right width ratio of horizontal typesetting."
     },
     "body": {
       "$ref": "#/definitions/SchemaCollection",
-      "description": "内容区"
+      "description": "content area"
     },
     "visible": {
       "type": "boolean",
-      "description": "是否显示"
+      "description": "Whether to display"
     },
     "visibleOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否显示表达式"
+      "description": "Whether to display expressions"
     }
   },
   "additionalProperties": false,

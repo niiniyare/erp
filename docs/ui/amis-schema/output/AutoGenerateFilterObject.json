@@ -3,15 +3,15 @@
   "properties": {
     "columnsNum": {
       "type": "number",
-      "description": "过滤条件单行列数"
+      "description": "Filter condition single column number"
     },
     "showBtnToolbar": {
       "type": "boolean",
-      "description": "是否显示设置查询字段"
+      "description": "Whether to display the setting query field"
     },
     "defaultCollapsed": {
       "type": "boolean",
-      "description": "是否默认收起",
+      "description": "Whether to collapse by default",
       "default": true
     }
   },

@@ -3,22 +3,22 @@
   "properties": {
     "type": {
       "type": "string",
-      "description": "选择类型 单选/多选"
+      "description": "Selection type single selection/multiple selection"
     },
     "keyField": {
       "type": "string",
-      "description": "对应数据源的key值"
+      "description": "The key value corresponding to the data source"
     },
     "disableOn": {
       "type": "string",
-      "description": "行是否禁用表达式"
+      "description": "Whether the row disables the expression"
     },
     "selections": {
       "type": "array",
       "items": {
         "$ref": "#/definitions/RowSelectionOptionsSchema"
       },
-      "description": "自定义选择菜单"
+      "description": "Custom selection menu"
     },
     "selectedRowKeys": {
       "type": "array",
@@ -28,19 +28,19 @@
           "number"
         ]
       },
-      "description": "已选择的key值"
+      "description": "Selected key value"
     },
     "selectedRowKeysExpr": {
       "type": "string",
-      "description": "已选择的key值表达式"
+      "description": "Selected key value expression"
     },
     "columnWidth": {
       "type": "number",
-      "description": "已选择的key值表达式"
+      "description": "Selected key value expression"
     },
     "rowClick": {
       "type": "boolean",
-      "description": "是否点击行触发选中或取消选中"
+      "description": "Whether clicking on a row triggers selection or deselection"
     }
   },
   "required": [

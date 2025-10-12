@@ -1,0 +1,40 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "column"
+    },
+    {
+      "type": "string",
+      "const": "column-reverse"
+    },
+    {
+      "type": "string",
+      "const": "nowrap"
+    },
+    {
+      "type": "string",
+      "const": "row"
+    },
+    {
+      "type": "string",
+      "const": "row-reverse"
+    },
+    {
+      "type": "string",
+      "const": "wrap"
+    },
+    {
+      "type": "string",
+      "const": "wrap-reverse"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.FlexFlow.json"
+}

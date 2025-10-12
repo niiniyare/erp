@@ -3,43 +3,43 @@
   "properties": {
     "$$id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
     },
     "className": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "容器 css 类名"
+      "description": "Container css class name"
     },
     "$ref": {
       "type": "string",
-      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
     },
     "disabled": {
       "type": "boolean",
-      "description": "是否禁用"
+      "description": "Whether to disable"
     },
     "disabledOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否禁用表达式"
+      "description": "Whether to disable expressions"
     },
     "hidden": {
       "type": "boolean",
-      "description": "是否隐藏"
+      "description": "Whether to hide"
     },
     "hiddenOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否隐藏表达式"
+      "description": "Whether to hide expressions"
     },
     "visible": {
       "type": "boolean",
-      "description": "是否显示"
+      "description": "Whether to display"
     },
     "visibleOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否显示表达式"
+      "description": "Whether to display expressions"
     },
     "id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于日志采集"
+      "description": "The unique id of the component, mainly used for log collection"
     },
     "onEvent": {
       "type": "object",
@@ -67,57 +67,57 @@
         ],
         "additionalProperties": false
       },
-      "description": "事件动作配置"
+      "description": "Event action configuration"
     },
     "static": {
       "type": "boolean",
-      "description": "是否静态展示"
+      "description": "Whether to display statically"
     },
     "staticOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否静态展示表达式"
+      "description": "Whether to display expressions statically"
     },
     "staticPlaceholder": {
       "type": "string",
-      "description": "静态展示空值占位"
+      "description": "Static display of empty value placeholder"
     },
     "staticClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项类名"
+      "description": "Static display form item class name"
     },
     "staticLabelClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Label类名"
+      "description": "Static display of form item Label class name"
     },
     "staticInputClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Value类名"
+      "description": "Static display of form item Value class name"
     },
     "staticSchema": {},
     "style": {
       "type": "object",
-      "description": "组件样式"
+      "description": "Component style"
     },
     "editorSetting": {
       "type": "object",
       "properties": {
         "behavior": {
           "type": "string",
-          "description": "组件行为、用途，如 create、update、remove"
+          "description": "Component behavior and usage, such as create, update, remove"
         },
         "displayName": {
           "type": "string",
-          "description": "组件名称，通常是业务名称方便定位"
+          "description": "Component name, usually the business name for easy location"
         },
         "mock": {
-          "description": "编辑器假数据，方便展示"
+          "description": "Editor fake data for easy display"
         }
       },
-      "description": "编辑器配置，运行时可以忽略"
+      "description": "Editor configuration, can be ignored at runtime"
     },
     "useMobileUI": {
       "type": "boolean",
-      "description": "可以组件级别用来关闭移动端样式"
+      "description": "Can be used to turn off mobile style at the component level"
     },
     "testIdBuilder": {
       "$ref": "#/definitions/TestIdBuilder"
@@ -134,35 +134,35 @@
       "items": {
         "$ref": "#/definitions/TabSchema"
       },
-      "description": "选项卡成员。当配置了 source 时，选项卡成员，将会根据目标数据进行重复。"
+      "description": "Tab members. When source is configured, tab members will be repeated based on the target data."
     },
     "source": {
       "type": "string",
-      "description": "关联已有数据，选项卡直接根据目标数据重复。"
+      "description": "Associating existing data, tabs are repeated directly based on the target data."
     },
     "tabsMode": {
       "$ref": "#/definitions/TabsMode",
-      "description": "展示形式"
+      "description": "Display form"
     },
     "contentClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "内容类名"
+      "description": "Content class name"
     },
     "linksClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "链接外层类名"
+      "description": "Link outer class name"
     },
     "mountOnEnter": {
       "type": "boolean",
-      "description": "卡片是否只有在点开的时候加载？"
+      "description": "Do cards only load when clicked?"
     },
     "unmountOnExit": {
       "type": "boolean",
-      "description": "卡片隐藏的时候是否销毁卡片内容"
+      "description": "Whether to destroy the card content when the card is hidden"
     },
     "toolbar": {
       "$ref": "#/definitions/ActionSchema",
-      "description": "可以在右侧配置点其他功能按钮。"
+      "description": "You can configure other function buttons on the right side."
     },
     "subFormMode": {
       "type": "string",
@@ -171,39 +171,39 @@
         "inline",
         "horizontal"
       ],
-      "description": "配置子表单项默认的展示方式。"
+      "description": "Configure the default display mode of subform items."
     },
     "subFormHorizontal": {
       "$ref": "#/definitions/FormHorizontal",
-      "description": "如果是水平排版，这个属性可以细化水平排版的左右宽度占比。"
+      "description": "If it is horizontal typesetting, this attribute can refine the left and right width ratio of horizontal typesetting."
     },
     "addable": {
       "type": "boolean",
-      "description": "是否支持新增"
+      "description": "Whether to support new"
     },
     "closable": {
       "type": "boolean",
-      "description": "是否支持删除"
+      "description": "Whether to support deletion"
     },
     "draggable": {
       "type": "boolean",
-      "description": "是否支持拖拽"
+      "description": "Whether to support drag and drop"
     },
     "showTip": {
       "type": "boolean",
-      "description": "是否显示提示"
+      "description": "Whether to display prompts"
     },
     "showTipClassName": {
       "type": "string",
-      "description": "tooltip 提示的类名"
+      "description": "tooltip class name"
     },
     "editable": {
       "type": "boolean",
-      "description": "是否可编辑标签名"
+      "description": "Whether the tag name can be edited"
     },
     "scrollable": {
       "type": "boolean",
-      "description": "是否导航支持内容溢出滚动。属性废弃，为了兼容暂且保留"
+      "description": "Whether the navigation supports content overflow scrolling. The attribute is obsolete and will be retained for the sake of compatibility."
     },
     "sidePosition": {
       "type": "string",
@@ -211,11 +211,11 @@
         "left",
         "right"
       ],
-      "description": "编辑器模式，侧边的位置"
+      "description": "Editor mode, side position"
     },
     "addBtnText": {
       "type": "string",
-      "description": "自定义增加按钮文案"
+      "description": "Customize button copy"
     },
     "defaultKey": {
       "anyOf": [
@@ -226,7 +226,7 @@
           "type": "number"
         }
       ],
-      "description": "初始化激活的选项卡，hash值或索引值，支持使用表达式"
+      "description": "Initialize the activated tab, hash value or index value, support the use of expressions"
     },
     "activeKey": {
       "anyOf": [
@@ -237,19 +237,19 @@
           "type": "number"
         }
       ],
-      "description": "激活的选项卡，hash值或索引值，支持使用表达式"
+      "description": "Activated tab, hash value or index value, supports the use of expressions"
     },
     "collapseOnExceed": {
       "type": "number",
-      "description": "超过多少个时折叠按钮"
+      "description": "Collapse button when exceeded"
     },
     "collapseBtnLabel": {
       "type": "string",
-      "description": "折叠按钮文字"
+      "description": "Collapse button text"
     },
     "swipeable": {
       "type": "boolean",
-      "description": "是否滑动切换只在移动端生效"
+      "description": "Whether sliding switching only takes effect on mobile terminals"
     }
   },
   "required": [
@@ -257,7 +257,7 @@
     "type"
   ],
   "additionalProperties": false,
-  "description": "选项卡控件。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/tabs",
+  "description": "Tab control. Documentation: https://aisuda.bce.baidu.com/amis/zh-CN/components/tabs",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./TabsSchema.json"
 }

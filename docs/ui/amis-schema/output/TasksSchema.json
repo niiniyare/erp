@@ -15,43 +15,43 @@
     },
     "$$id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
     },
     "className": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "容器 css 类名"
+      "description": "Container css class name"
     },
     "$ref": {
       "type": "string",
-      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
     },
     "disabled": {
       "type": "boolean",
-      "description": "是否禁用"
+      "description": "Whether to disable"
     },
     "disabledOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否禁用表达式"
+      "description": "Whether to disable expressions"
     },
     "hidden": {
       "type": "boolean",
-      "description": "是否隐藏"
+      "description": "Whether to hide"
     },
     "hiddenOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否隐藏表达式"
+      "description": "Whether to hide expressions"
     },
     "visible": {
       "type": "boolean",
-      "description": "是否显示"
+      "description": "Whether to display"
     },
     "visibleOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否显示表达式"
+      "description": "Whether to display expressions"
     },
     "id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于日志采集"
+      "description": "The unique id of the component, mainly used for log collection"
     },
     "onEvent": {
       "type": "object",
@@ -79,57 +79,57 @@
         ],
         "additionalProperties": false
       },
-      "description": "事件动作配置"
+      "description": "Event action configuration"
     },
     "static": {
       "type": "boolean",
-      "description": "是否静态展示"
+      "description": "Whether to display statically"
     },
     "staticOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否静态展示表达式"
+      "description": "Whether to display expressions statically"
     },
     "staticPlaceholder": {
       "type": "string",
-      "description": "静态展示空值占位"
+      "description": "Static display of empty value placeholder"
     },
     "staticClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项类名"
+      "description": "Static display form item class name"
     },
     "staticLabelClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Label类名"
+      "description": "Static display of form item Label class name"
     },
     "staticInputClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Value类名"
+      "description": "Static display of form item Value class name"
     },
     "staticSchema": {},
     "style": {
       "type": "object",
-      "description": "组件样式"
+      "description": "Component style"
     },
     "editorSetting": {
       "type": "object",
       "properties": {
         "behavior": {
           "type": "string",
-          "description": "组件行为、用途，如 create、update、remove"
+          "description": "Component behavior and usage, such as create, update, remove"
         },
         "displayName": {
           "type": "string",
-          "description": "组件名称，通常是业务名称方便定位"
+          "description": "Component name, usually the business name for easy location"
         },
         "mock": {
-          "description": "编辑器假数据，方便展示"
+          "description": "Editor fake data for easy display"
         }
       },
-      "description": "编辑器配置，运行时可以忽略"
+      "description": "Editor configuration, can be ignored at runtime"
     },
     "useMobileUI": {
       "type": "boolean",
-      "description": "可以组件级别用来关闭移动端样式"
+      "description": "Can be used to turn off mobile style at the component level"
     },
     "testIdBuilder": {
       "$ref": "#/definitions/TestIdBuilder"
@@ -137,7 +137,7 @@
     "type": {
       "type": "string",
       "const": "tasks",
-      "description": "指定为任务类型"
+      "description": "Specify as task type"
     },
     "testid": {
       "type": "string"
@@ -147,15 +147,15 @@
     },
     "btnText": {
       "type": "string",
-      "description": "操作按钮文字"
+      "description": "Action button text"
     },
     "checkApi": {
       "$ref": "#/definitions/SchemaApi",
-      "description": "用来获取任务状态的 API，当没有进行时任务时不会发送。"
+      "description": "API used to obtain task status. It will not be sent when there is no ongoing task."
     },
     "interval": {
       "type": "number",
-      "description": "当有任务进行中，会每隔一段时间再次检测，而时间间隔就是通过此项配置，默认 3s。",
+      "description": "When a task is in progress, it will be detected again at regular intervals, and the time interval is configured through this item. The default is 3s.",
       "default": 3000
     },
     "items": {
@@ -165,15 +165,15 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "任务键值，请唯一区分"
+            "description": "Task key value, please uniquely distinguish it"
           },
           "label": {
             "type": "string",
-            "description": "任务名称"
+            "description": "Task name"
           },
           "remark": {
             "type": "string",
-            "description": "当前任务状态，支持 html"
+            "description": "Current task status, supports html"
           },
           "status": {
             "type": "number",
@@ -185,7 +185,7 @@
               4,
               5
             ],
-            "description": "任务状态： 0: 初始状态，不可操作。 1: 就绪，可操作状态。 2: 进行中，还没有结束。 3：有错误，不可重试。 4: 已正常结束。 5：有错误，且可以重试。"
+            "description": "3: There is an error and cannot be retried. 4: Ended normally. Task status: 0: Initial status, inoperable. 5: There is an error and you can try again.1: Ready, operable state. 2: In progress, not over yet."
           }
         },
         "additionalProperties": false
@@ -196,34 +196,34 @@
     },
     "operationLabel": {
       "type": "string",
-      "description": "操作列说明"
+      "description": "Operation column description"
     },
     "reSubmitApi": {
       "$ref": "#/definitions/SchemaApi",
-      "description": "如果任务失败，且可以重试，提交的时候会使用此 API"
+      "description": "If the task fails and can be retried, this API will be used when submitting."
     },
     "remarkLabel": {
       "type": "string",
-      "description": "备注列说明"
+      "description": "Note column description"
     },
     "retryBtnClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "配置容器重试按钮 className"
+      "description": "Configure container retry button className"
     },
     "retryBtnText": {
       "type": "string",
-      "description": "重试操作按钮文字"
+      "description": "Retry action button text"
     },
     "statusLabel": {
       "type": "string",
-      "description": "状态列说明"
+      "description": "Status column description"
     },
     "statusLabelMap": {
       "type": "array",
       "items": {
         "type": "string"
       },
-      "description": "状态显示对应的类名配置。",
+      "description": "The status displays the corresponding class name configuration.",
       "default": [
         "label-warning",
         "label-info",
@@ -238,19 +238,19 @@
       "items": {
         "type": "string"
       },
-      "description": "状态显示对应的文字显示配置。"
+      "description": "The text display configuration corresponding to the status display."
     },
     "submitApi": {
       "$ref": "#/definitions/SchemaApi",
-      "description": "提交任务使用的 API"
+      "description": "API used to submit tasks"
     },
     "tableClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "配置 table className"
+      "description": "Configure table className"
     },
     "taskNameLabel": {
       "type": "string",
-      "description": "任务名称列说明"
+      "description": "Task name column description"
     },
     "initialStatusCode": {
       "type": "number"
@@ -275,7 +275,7 @@
     "type"
   ],
   "additionalProperties": false,
-  "description": "Tasks 渲染器，格式说明 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/tasks",
+  "description": "Tasks renderer, format description document: https://aisuda.bce.baidu.com/amis/zh-CN/components/tasks",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./TasksSchema.json"
 }

@@ -15,43 +15,43 @@
     },
     "$$id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
     },
     "className": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "容器 css 类名"
+      "description": "Container css class name"
     },
     "$ref": {
       "type": "string",
-      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
     },
     "disabled": {
       "type": "boolean",
-      "description": "是否禁用"
+      "description": "Whether to disable"
     },
     "disabledOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否禁用表达式"
+      "description": "Whether to disable expressions"
     },
     "hidden": {
       "type": "boolean",
-      "description": "是否隐藏"
+      "description": "Whether to hide"
     },
     "hiddenOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否隐藏表达式"
+      "description": "Whether to hide expressions"
     },
     "visible": {
       "type": "boolean",
-      "description": "是否显示"
+      "description": "Whether to display"
     },
     "visibleOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否显示表达式"
+      "description": "Whether to display expressions"
     },
     "id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于日志采集"
+      "description": "The unique id of the component, mainly used for log collection"
     },
     "onEvent": {
       "type": "object",
@@ -79,57 +79,57 @@
         ],
         "additionalProperties": false
       },
-      "description": "事件动作配置"
+      "description": "Event action configuration"
     },
     "static": {
       "type": "boolean",
-      "description": "是否静态展示"
+      "description": "Whether to display statically"
     },
     "staticOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否静态展示表达式"
+      "description": "Whether to display expressions statically"
     },
     "staticPlaceholder": {
       "type": "string",
-      "description": "静态展示空值占位"
+      "description": "Static display of empty value placeholder"
     },
     "staticClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项类名"
+      "description": "Static display form item class name"
     },
     "staticLabelClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Label类名"
+      "description": "Static display of form item Label class name"
     },
     "staticInputClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Value类名"
+      "description": "Static display of form item Value class name"
     },
     "staticSchema": {},
     "style": {
       "type": "object",
-      "description": "组件样式"
+      "description": "Component style"
     },
     "editorSetting": {
       "type": "object",
       "properties": {
         "behavior": {
           "type": "string",
-          "description": "组件行为、用途，如 create、update、remove"
+          "description": "Component behavior and usage, such as create, update, remove"
         },
         "displayName": {
           "type": "string",
-          "description": "组件名称，通常是业务名称方便定位"
+          "description": "Component name, usually the business name for easy location"
         },
         "mock": {
-          "description": "编辑器假数据，方便展示"
+          "description": "Editor fake data for easy display"
         }
       },
-      "description": "编辑器配置，运行时可以忽略"
+      "description": "Editor configuration, can be ignored at runtime"
     },
     "useMobileUI": {
       "type": "boolean",
-      "description": "可以组件级别用来关闭移动端样式"
+      "description": "Can be used to turn off mobile style at the component level"
     },
     "testIdBuilder": {
       "$ref": "#/definitions/TestIdBuilder"
@@ -137,61 +137,61 @@
     "type": {
       "type": "string",
       "const": "service",
-      "description": "指定为 Service 数据拉取控件。"
+      "description": "Designated as a Service data pull control."
     },
     "testid": {
       "type": "string"
     },
     "api": {
       "$ref": "#/definitions/SchemaApi",
-      "description": "页面初始化的时候，可以设置一个 API 让其取拉取，发送数据会携带当前 data 数据（包含地址栏参数），获取得数据会合并到 data 中，供组件内使用。"
+      "description": "When the page is initialized, you can set up an API to pull it. The data sent will carry the current data data (including address bar parameters), and the obtained data will be merged into data for use within the component."
     },
     "ws": {
       "type": "string",
-      "description": "WebScocket 地址，用于实时获取数据"
+      "description": "WebScocket address, used to obtain data in real time"
     },
     "dataProvider": {
       "$ref": "#/definitions/ComposedDataProvider",
-      "description": "通过调用外部函数来获取数据"
+      "description": "Get data by calling external functions"
     },
     "body": {
       "$ref": "#/definitions/SchemaCollection",
-      "description": "内容区域"
+      "description": "content area"
     },
     "fetchOn": {
       "$ref": "#/definitions/SchemaExpression"
     },
     "initFetch": {
       "type": "boolean",
-      "description": "是否默认就拉取？"
+      "description": "Does it pull by default?"
     },
     "initFetchOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否默认就拉取？通过表达式来决定."
+      "description": "Does it pull by default? Determined by expression."
     },
     "schemaApi": {
       "$ref": "#/definitions/SchemaApi",
-      "description": "用来获取远程 Schema 的 api"
+      "description": "API used to obtain remote Schema"
     },
     "initFetchSchema": {
       "type": "boolean",
-      "description": "是否默认加载 schemaApi"
+      "description": "Whether to load schemaApi by default"
     },
     "initFetchSchemaOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "用表达式来配置。"
+      "description": "Use expressions to configure."
     },
     "interval": {
       "type": "number",
-      "description": "是否轮询拉取"
+      "description": "Whether to poll for pull"
     },
     "silentPolling": {
       "type": "boolean",
-      "description": "是否静默拉取"
+      "description": "Whether to pull silently"
     },
     "stopAutoRefreshWhen": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "关闭轮询的条件。"
+      "description": "Condition to turn off polling."
     },
     "messages": {
       "$ref": "#/definitions/SchemaMessage"
@@ -201,14 +201,14 @@
     },
     "showErrorMsg": {
       "type": "boolean",
-      "description": "是否以Alert的形式显示api接口响应的错误信息，默认展示"
+      "description": "Whether to display the error message of the API interface response in the form of Alert. It is displayed by default."
     }
   },
   "required": [
     "type"
   ],
   "additionalProperties": false,
-  "description": "Service 服务类控件。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/service",
+  "description": "Service service class control. Documentation: https://aisuda.bce.baidu.com/amis/zh-CN/components/service",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./ServiceSchema.json"
 }

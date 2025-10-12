@@ -23,7 +23,7 @@
       }
     }
   ],
-  "description": "css类名，配置字符串，或者对象。\n\n    className: \"red\"\n\n用对象配置时意味着你能跟表达式一起搭配使用，如：\n\n    className: {         \"red\": \"data.progress > 80\",         \"blue\": \"data.progress > 60\"     }",
+  "description": "css class name, configuration string, or object. \n\n className: \"red\"\n\nWhen configuring with objects, it means you can use it together with expressions, such as:\n\n    className: {         \"red\": \"data.progress > 80\",         \"blue\": \"data.progress > 60\"     }",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./SchemaClassName.json"
 }

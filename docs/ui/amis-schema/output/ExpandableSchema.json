@@ -3,19 +3,19 @@
   "properties": {
     "type": {
       "type": "string",
-      "description": "对应渲染器类型"
+      "description": "Corresponding renderer type"
     },
     "keyField": {
       "type": "string",
-      "description": "对应数据源的key值"
+      "description": "The key value corresponding to the data source"
     },
     "expandableOn": {
       "type": "string",
-      "description": "行是否可展开表达式"
+      "description": "Whether the row can expand the expression"
     },
     "expandedRowClassNameExpr": {
       "type": "string",
-      "description": "展开行自定义样式表达式"
+      "description": "Expand row custom style expression"
     },
     "expandedRowKeys": {
       "type": "array",
@@ -25,11 +25,11 @@
           "number"
         ]
       },
-      "description": "已展开的key值"
+      "description": "expanded key value"
     },
     "expandedRowKeysExpr": {
       "type": "string",
-      "description": "已展开的key值表达式"
+      "description": "expanded key value expression"
     }
   },
   "required": [

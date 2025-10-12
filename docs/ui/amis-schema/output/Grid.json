@@ -12,33 +12,33 @@
       "properties": {
         "x": {
           "type": "number",
-          "description": "起始横坐标位置，以 1 为起点"
+          "description": "Starting abscissa position, starting from 1"
         },
         "y": {
           "type": "number",
-          "description": "起始纵坐标位置，以 1 为起点"
+          "description": "Starting vertical coordinate position, starting from 1"
         },
         "w": {
           "type": "number",
-          "description": "宽度，跨几列"
+          "description": "Width, how many columns to span"
         },
         "h": {
           "type": "number",
-          "description": "高度，跨几行"
+          "description": "height, how many lines to span"
         },
         "width": {
           "type": [
             "number",
             "string"
           ],
-          "description": "宽度，会影响起始位置对应那一列的宽度"
+          "description": "Width will affect the width of the column corresponding to the starting position."
         },
         "height": {
           "type": [
             "number",
             "string"
           ],
-          "description": "高度，会影响起始位置那一行的高度，设置为 auto 就会自适应"
+          "description": "Height will affect the height of the row at the starting position. If set to auto, it will be adaptive."
         },
         "align": {
           "type": "string",
@@ -48,7 +48,7 @@
             "center",
             "auto"
           ],
-          "description": "水平展示方式，用于内容宽度比 grid 小的情况，默认是 auto 自动撑满"
+          "description": "Horizontal display mode, used when the content width is smaller than the grid. The default is auto to automatically fill the space."
         },
         "valign": {
           "type": "string",
@@ -58,11 +58,11 @@
             "middle",
             "auto"
           ],
-          "description": "垂直展示方式，用于内容高度比 grid 小的情况，默认是 auto 自动撑满"
+          "description": "Vertical display mode, used when the content height is smaller than the grid. The default is auto to automatically fill the space."
         },
         "gridClassName": {
           "type": "string",
-          "description": "每个格子最外层容器的 className"
+          "description": "The className of the outermost container of each grid"
         }
       },
       "required": [

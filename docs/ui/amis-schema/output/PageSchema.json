@@ -15,43 +15,43 @@
     },
     "$$id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
     },
     "className": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "配置容器 className"
+      "description": "Configure container className"
     },
     "$ref": {
       "type": "string",
-      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
     },
     "disabled": {
       "type": "boolean",
-      "description": "是否禁用"
+      "description": "Whether to disable"
     },
     "disabledOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否禁用表达式"
+      "description": "Whether to disable expressions"
     },
     "hidden": {
       "type": "boolean",
-      "description": "是否隐藏"
+      "description": "Whether to hide"
     },
     "hiddenOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否隐藏表达式"
+      "description": "Whether to hide expressions"
     },
     "visible": {
       "type": "boolean",
-      "description": "是否显示"
+      "description": "Whether to display"
     },
     "visibleOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否显示表达式"
+      "description": "Whether to display expressions"
     },
     "id": {
       "type": "string",
-      "description": "组件唯一 id，主要用于日志采集"
+      "description": "The unique id of the component, mainly used for log collection"
     },
     "onEvent": {
       "type": "object",
@@ -79,57 +79,57 @@
         ],
         "additionalProperties": false
       },
-      "description": "事件动作配置"
+      "description": "Event action configuration"
     },
     "static": {
       "type": "boolean",
-      "description": "是否静态展示"
+      "description": "Whether to display statically"
     },
     "staticOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否静态展示表达式"
+      "description": "Whether to display expressions statically"
     },
     "staticPlaceholder": {
       "type": "string",
-      "description": "静态展示空值占位"
+      "description": "Static display of empty value placeholder"
     },
     "staticClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项类名"
+      "description": "Static display form item class name"
     },
     "staticLabelClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Label类名"
+      "description": "Static display of form item Label class name"
     },
     "staticInputClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "静态展示表单项Value类名"
+      "description": "Static display of form item Value class name"
     },
     "staticSchema": {},
     "style": {
       "type": "object",
-      "description": "自定义样式"
+      "description": "Custom style"
     },
     "editorSetting": {
       "type": "object",
       "properties": {
         "behavior": {
           "type": "string",
-          "description": "组件行为、用途，如 create、update、remove"
+          "description": "Component behavior and usage, such as create, update, remove"
         },
         "displayName": {
           "type": "string",
-          "description": "组件名称，通常是业务名称方便定位"
+          "description": "Component name, usually the business name for easy location"
         },
         "mock": {
-          "description": "编辑器假数据，方便展示"
+          "description": "Editor fake data for easy display"
         }
       },
-      "description": "编辑器配置，运行时可以忽略"
+      "description": "Editor configuration, can be ignored at runtime"
     },
     "useMobileUI": {
       "type": "boolean",
-      "description": "可以组件级别用来关闭移动端样式"
+      "description": "Can be used to turn off mobile style at the component level"
     },
     "testIdBuilder": {
       "$ref": "#/definitions/TestIdBuilder"
@@ -137,42 +137,42 @@
     "type": {
       "type": "string",
       "const": "page",
-      "description": "指定为 page 渲染器。"
+      "description": "Specified as the page renderer."
     },
     "testid": {
       "type": "string"
     },
     "title": {
       "type": "string",
-      "description": "页面标题"
+      "description": "Page title"
     },
     "subTitle": {
       "type": "string",
-      "description": "页面副标题"
+      "description": "Page subtitle"
     },
     "remark": {
       "$ref": "#/definitions/SchemaRemark",
-      "description": "页面描述, 标题旁边会出现个小图标，放上去会显示这个属性配置的内容。"
+      "description": "A small icon will appear next to the page description and title. When placed, the content of this attribute configuration will be displayed."
     },
     "body": {
       "$ref": "#/definitions/SchemaCollection",
-      "description": "内容区域"
+      "description": "content area"
     },
     "bodyClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "内容区 css 类名"
+      "description": "Content area css class name"
     },
     "aside": {
       "$ref": "#/definitions/SchemaCollection",
-      "description": "边栏区域"
+      "description": "sidebar area"
     },
     "asideResizor": {
       "type": "boolean",
-      "description": "边栏是否允许拖动"
+      "description": "Whether the sidebar allows dragging"
     },
     "asideSticky": {
       "type": "boolean",
-      "description": "边栏内容是否粘住，即不跟随滚动。",
+      "description": "Whether the sidebar content is sticky, that is, does not follow scrolling.",
       "default": true
     },
     "asidePosition": {
@@ -181,20 +181,20 @@
         "left",
         "right"
       ],
-      "description": "边栏位置",
+      "description": "sidebar position",
       "default": "left"
     },
     "asideMinWidth": {
       "type": "number",
-      "description": "边栏最小宽度"
+      "description": "Sidebar minimum width"
     },
     "asideMaxWidth": {
       "type": "number",
-      "description": "边栏最小宽度"
+      "description": "Sidebar minimum width"
     },
     "asideClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "边栏区 css 类名"
+      "description": "Sidebar area css class name"
     },
     "css": {
       "type": "object",
@@ -217,7 +217,7 @@
           }
         ]
       },
-      "description": "自定义页面级别样式表"
+      "description": "Custom page level style sheet"
     },
     "mobileCSS": {
       "type": "object",
@@ -240,27 +240,27 @@
           }
         ]
       },
-      "description": "移动端下的样式表"
+      "description": "Style sheet under mobile terminal"
     },
     "data": {
       "$ref": "#/definitions/SchemaDefaultData",
-      "description": "页面级别的初始数据"
+      "description": "Page level initial data"
     },
     "headerClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "配置 header 容器 className"
+      "description": "Configure header container className"
     },
     "initApi": {
       "$ref": "#/definitions/SchemaApi",
-      "description": "页面初始化的时候，可以设置一个 API 让其取拉取，发送数据会携带当前 data 数据（包含地址栏参数），获取得数据会合并到 data 中，供组件内使用。"
+      "description": "When the page is initialized, you can set up an API to pull it. The data sent will carry the current data data (including address bar parameters), and the obtained data will be merged into data for use within the component."
     },
     "initFetch": {
       "type": "boolean",
-      "description": "是否默认就拉取？"
+      "description": "Does it pull by default?"
     },
     "initFetchOn": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "是否默认就拉取表达式"
+      "description": "Whether to pull expressions by default"
     },
     "messages": {
       "$ref": "#/definitions/SchemaMessage"
@@ -270,31 +270,31 @@
     },
     "toolbar": {
       "$ref": "#/definitions/SchemaCollection",
-      "description": "页面顶部区域，当存在 title 时在右上角显示。"
+      "description": "The top area of the page, displayed in the upper right corner when title exists."
     },
     "toolbarClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "配置 toolbar 容器 className"
+      "description": "Configure toolbar container className"
     },
     "definitions": {},
     "interval": {
       "type": "number",
-      "description": "配置轮询间隔，配置后 initApi 将轮询加载。"
+      "description": "Configure the polling interval. After configuration, initApi will poll for loading."
     },
     "silentPolling": {
       "type": "boolean",
-      "description": "是否要静默加载，也就是说不显示进度"
+      "description": "Whether to load silently, that is to say, do not show the progress"
     },
     "stopAutoRefreshWhen": {
       "$ref": "#/definitions/SchemaExpression",
-      "description": "配置停止轮询的条件。"
+      "description": "Configure conditions to stop polling."
     },
     "showErrorMsg": {
       "type": "boolean",
-      "description": "是否显示错误信息，默认是显示的。"
+      "description": "Whether to display error messages. It is displayed by default."
     },
     "cssVars": {
-      "description": "css 变量"
+      "description": "css variables"
     },
     "regions": {
       "type": "array",
@@ -307,7 +307,7 @@
           "header"
         ]
       },
-      "description": "默认不设置自动感觉内容来决定要不要展示这些区域 如果配置了，以配置为主。"
+      "description": "By default, automatic sensing of content is not set to decide whether to display these areas. If configured, the configuration is the main one."
     },
     "pullRefresh": {
       "type": "object",
@@ -323,14 +323,14 @@
         }
       },
       "additionalProperties": false,
-      "description": "下拉刷新配置"
+      "description": "Pull down to refresh configuration"
     }
   },
   "required": [
     "type"
   ],
   "additionalProperties": false,
-  "description": "amis Page 渲染器。详情请见：https://aisuda.bce.baidu.com/amis/zh-CN/components/page",
+  "description": "amis Page renderer. For details, please visit: https://aisuda.bce.baidu.com/amis/zh-CN/components/page",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./PageSchema.json"
 }

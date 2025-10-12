@@ -1,0 +1,20 @@
+{
+  "anyOf": [
+    {
+      "type": "string",
+      "const": "bold"
+    },
+    {
+      "type": "string",
+      "const": "normal"
+    },
+    {
+      "type": "number"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.FontWeightAbsolute.json"
+}

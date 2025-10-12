@@ -3,7 +3,7 @@
   "properties": {
     "id": {
       "type": "string",
-      "description": "组件唯一 id"
+      "description": "Component unique id"
     },
     "xs": {
       "anyOf": [
@@ -15,7 +15,7 @@
           "const": "auto"
         }
       ],
-      "description": "极小屏（<768px）时宽度占比"
+      "description": "Width-to-body ratio for extremely small screens (<768px)"
     },
     "sm": {
       "anyOf": [
@@ -27,7 +27,7 @@
           "const": "auto"
         }
       ],
-      "description": "小屏时（>=768px）宽度占比"
+      "description": "Width ratio for small screen (>=768px)"
     },
     "md": {
       "anyOf": [
@@ -39,7 +39,7 @@
           "const": "auto"
         }
       ],
-      "description": "中屏时(>=992px)宽度占比"
+      "description": "Width ratio for medium screen (>=992px)"
     },
     "lg": {
       "anyOf": [
@@ -51,7 +51,7 @@
           "const": "auto"
         }
       ],
-      "description": "大屏时(>=1200px)宽度占比"
+      "description": "Width ratio for large screen (>=1200px)"
     },
     "valign": {
       "type": "string",
@@ -61,7 +61,7 @@
         "bottom",
         "between"
       ],
-      "description": "垂直对齐方式"
+      "description": "vertical alignment"
     },
     "mode": {
       "type": "string",
@@ -70,21 +70,21 @@
         "inline",
         "horizontal"
       ],
-      "description": "配置子表单项默认的展示方式。"
+      "description": "Configure the default display mode of subform items."
     },
     "horizontal": {
       "$ref": "#/definitions/FormHorizontal",
-      "description": "如果是水平排版，这个属性可以细化水平排版的左右宽度占比。"
+      "description": "If it is horizontal typesetting, this attribute can refine the left and right width ratio of horizontal typesetting."
     },
     "body": {
       "$ref": "#/definitions/SchemaCollection"
     },
     "columnClassName": {
       "$ref": "#/definitions/SchemaClassName",
-      "description": "列类名"
+      "description": "Column class name"
     },
     "style": {
-      "description": "样式"
+      "description": "style"
     },
     "wrapperCustomStyle": {},
     "themeCss": {}

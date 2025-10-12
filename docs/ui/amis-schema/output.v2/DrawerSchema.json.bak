@@ -1,0 +1,248 @@
+{
+  "type": "object",
+  "properties": {
+    "$$id": {
+      "type": "string",
+      "description": "组件唯一 id，主要用于页面设计器中定位 json 节点"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "配置 外层 className"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "配合 definitions 一起使用，可以实现无限循环的渲染器。"
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "是否禁用"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否禁用表达式"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "是否隐藏"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否隐藏表达式"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "是否显示"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否显示表达式"
+    },
+    "id": {
+      "type": "string",
+      "description": "组件唯一 id，主要用于日志采集"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "事件动作配置"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "是否静态展示"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "是否静态展示表达式"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "静态展示空值占位"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项类名"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项Label类名"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "静态展示表单项Value类名"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "组件样式"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "组件行为、用途，如 create、update、remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "组件名称，通常是业务名称方便定位"
+        },
+        "mock": {
+          "description": "编辑器假数据，方便展示"
+        }
+      },
+      "description": "编辑器配置，运行时可以忽略"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "可以组件级别用来关闭移动端样式"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "type": {
+      "type": "string",
+      "const": "drawer"
+    },
+    "testid": {
+      "type": "string"
+    },
+    "inputParams": {
+      "description": "弹窗参数说明，值格式为 JSONSchema。"
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ActionSchema"
+      },
+      "description": "默认不用填写，自动会创建确认和取消按钮。"
+    },
+    "body": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "内容区域"
+    },
+    "bodyClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "配置 Body 容器 className"
+    },
+    "headerClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "配置 头部 容器 className"
+    },
+    "footerClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "配置 头部 容器 className"
+    },
+    "closeOnEsc": {
+      "type": "boolean",
+      "description": "是否支持按 ESC 关闭 Dialog"
+    },
+    "name": {
+      "$ref": "#/definitions/SchemaName"
+    },
+    "size": {
+      "type": "string",
+      "enum": [
+        "xs",
+        "sm",
+        "md",
+        "lg",
+        "full"
+      ],
+      "description": "Dialog 大小"
+    },
+    "title": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "请通过配置 title 设置标题"
+    },
+    "position": {
+      "type": "string",
+      "enum": [
+        "left",
+        "right",
+        "top",
+        "bottom"
+      ],
+      "description": "从什么位置弹出"
+    },
+    "showCloseButton": {
+      "type": "boolean",
+      "description": "是否展示关闭按钮 当值为false时，默认开启closeOnOutside"
+    },
+    "width": {
+      "type": [
+        "number",
+        "string"
+      ],
+      "description": "抽屉的宽度 （当position为left | right时生效）"
+    },
+    "height": {
+      "type": [
+        "number",
+        "string"
+      ],
+      "description": "抽屉的高度 （当position为top | bottom时生效）"
+    },
+    "header": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "头部"
+    },
+    "footer": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "底部"
+    },
+    "confirm": {
+      "type": "boolean",
+      "description": "影响自动生成的按钮，如果自己配置了按钮这个配置无效。"
+    },
+    "resizable": {
+      "type": "boolean",
+      "description": "是否可以拖动弹窗大小"
+    },
+    "overlay": {
+      "type": "boolean",
+      "description": "是否显示蒙层"
+    },
+    "closeOnOutside": {
+      "type": "boolean",
+      "description": "点击外部的时候是否关闭弹框。"
+    },
+    "showErrorMsg": {
+      "type": "boolean",
+      "description": "是否显示错误信息"
+    },
+    "data": {
+      "type": "object",
+      "description": "数据映射"
+    }
+  },
+  "required": [
+    "type"
+  ],
+  "additionalProperties": false,
+  "description": "Drawer 抽出式弹框。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/drawer",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DrawerSchema.json"
+}

@@ -12,7 +12,7 @@
       "properties": {
         "columnClassName": {
           "$ref": "#/definitions/SchemaClassName",
-          "description": "列类名"
+          "description": "Column class name"
         },
         "columnRatio": {
           "anyOf": [
@@ -24,11 +24,11 @@
               "const": "auto"
             }
           ],
-          "description": "宽度占用比率。在某些容器里面有用比如 group"
+          "description": "Width occupancy ratio. Useful in some containers such as group"
         },
         "name": {
           "type": "string",
-          "description": "列名称"
+          "description": "Column name"
         }
       }
     }

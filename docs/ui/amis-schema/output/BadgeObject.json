@@ -9,11 +9,11 @@
         "string",
         "number"
       ],
-      "description": "文本内容"
+      "description": "text content"
     },
     "size": {
       "type": "number",
-      "description": "大小"
+      "description": "size"
     },
     "mode": {
       "type": "string",
@@ -22,7 +22,7 @@
         "dot",
         "ribbon"
       ],
-      "description": "角标类型"
+      "description": "Tag type"
     },
     "offset": {
       "type": "array",
@@ -34,7 +34,7 @@
       },
       "minItems": 2,
       "maxItems": 2,
-      "description": "角标位置，相对于position的位置进行偏移"
+      "description": "The position of the corner marker, offset relative to the position of position"
     },
     "position": {
       "type": "string",
@@ -44,31 +44,31 @@
         "bottom-right",
         "bottom-left"
       ],
-      "description": "角标位置"
+      "description": "corner mark position"
     },
     "overflowCount": {
       "type": "number",
-      "description": "封顶的数字值"
+      "description": "Capped numeric value"
     },
     "visibleOn": {
       "type": "string",
-      "description": "动态控制是否显示"
+      "description": "Dynamic control whether to display"
     },
     "animation": {
       "type": "boolean",
-      "description": "是否显示动画"
+      "description": "Whether to display animation"
     },
     "style": {
       "type": "object",
-      "description": "角标的自定义样式"
+      "description": "Custom style for corner mark"
     },
     "level": {
       "type": "string",
-      "description": "提示类型"
+      "description": "prompt type"
     }
   },
   "additionalProperties": false,
-  "description": "Badge 角标。 文档：https://aisuda.bce.baidu.com/amis/zh-CN/components/badge",
+  "description": "Badge. Documentation: https://aisuda.bce.baidu.com/amis/zh-CN/components/badge",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "./BadgeObject.json"
 }

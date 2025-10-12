@@ -1,7 +1,7 @@
 import os, re, json, sys
 
 # --- Settings ---
-dir_path = sys.argv[1] if len(sys.argv) > 1 else "."
+dir_path = sys.argv[1] if len(sys.argv) > 1 else "./output"
 pattern_chinese = re.compile(r"[\u4E00-\u9FFF]")  # Any Chinese character
 # Match all "key": "value" pairs containing Chinese
 pattern_kv = re.compile(r'"([^"]+)"\s*:\s*"([^"]*[\u4E00-\u9FFF][^"]*)"')
@@ -28,11 +28,13 @@ for root, _, files in os.walk(dir_path):
                             results.append({
                                 "file": path,
                                 "line": i,
-                                "text": {
-                                    "tag": tag,
-                                    "value": value
-                                },
+                                # "text": {
+                                "tag": tag,
+                                "value": value,
                                 "translation": ""
+
+                                # },
+                                # "translation": ""
                             })
                     else:
                         # fallback if Chinese exists but not in "key": "value" form
