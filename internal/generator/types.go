@@ -24,6 +24,13 @@ type FeatureConfig struct {
 	Verbose   bool   // Verbose output
 }
 
+// DocsConfig represents configuration for documentation generation
+type DocsConfig struct {
+	ModuleName string // Module name (e.g., "inventory", "payroll")
+	DryRun     bool   // Preview mode
+	Verbose    bool   // Verbose output
+}
+
 // TemplateData contains all data needed for template rendering
 type TemplateData struct {
 	// Module information
@@ -134,6 +141,59 @@ func (c *FeatureConfig) Validate() error {
 	}
 	
 	return nil
+}
+
+// Validate validates the docs configuration
+func (c *DocsConfig) Validate() error {
+	if c.ModuleName == "" {
+		return fmt.Errorf("module name cannot be empty")
+	}
+	
+	// Validate module name format
+	if !isValidIdentifier(c.ModuleName) {
+		return fmt.Errorf("module name '%s' is not a valid Go identifier", c.ModuleName)
+	}
+	
+	// Check for reserved Go keywords
+	if isReservedKeyword(c.ModuleName) {
+		return fmt.Errorf("module name '%s' is a reserved Go keyword", c.ModuleName)
+	}
+	
+	return nil
+}
+
+// ToTemplateData converts DocsConfig to TemplateData
+func (c *DocsConfig) ToTemplateData() TemplateData {
+	return TemplateData{
+		ModuleName:         c.ModuleName,
+		ModuleNamePascal:   ToPascalCase(c.ModuleName),
+		ModuleNameCamel:    ToCamelCase(c.ModuleName),
+		ModuleNameSnake:    ToSnakeCase(c.ModuleName),
+		ModuleNameKebab:    ToKebabCase(c.ModuleName),
+		ModuleNamePlural:   Pluralize(c.ModuleName),
+		ModuleDescription:  fmt.Sprintf("%s management module", ToPascalCase(c.ModuleName)),
+		
+		EntityName:         ToPascalCase(Singularize(c.ModuleName)),
+		EntityNamePascal:   ToPascalCase(Singularize(c.ModuleName)),
+		EntityNameCamel:    ToCamelCase(Singularize(c.ModuleName)),
+		EntityNameSnake:    ToSnakeCase(Singularize(c.ModuleName)),
+		EntityNamePlural:   ToPascalCase(c.ModuleName),
+		
+		PackageName:        ToSnakeCase(c.ModuleName),
+		ImportPath:         fmt.Sprintf("github.com/niiniyare/erp/internal/core/%s", ToSnakeCase(c.ModuleName)),
+		
+		GeneratedAt:        time.Now(),
+		GeneratorVersion:   "0.1.0",
+		WithTests:          false, // Docs don't have tests
+		
+		RootType:           inferRootType(c.ModuleName),
+		DefaultPermissions: generateDefaultPermissions(c.ModuleName),
+		
+		DomainPath:         filepath.Join("internal", "core", ToSnakeCase(c.ModuleName), "domain"),
+		ServicePath:        filepath.Join("internal", "core", ToSnakeCase(c.ModuleName)),
+		RepositoryPath:     filepath.Join("internal", "core", ToSnakeCase(c.ModuleName), "repository"),
+		APIPath:            filepath.Join("internal", "api", "design", "services", ToSnakeCase(c.ModuleName)),
+	}
 }
 
 // ToTemplateData converts ModuleConfig to TemplateData

@@ -100,6 +100,31 @@ Examples:
 	RunE: runNewComponent,
 }
 
+// docsCmd represents the docs command
+var docsCmd = &cobra.Command{
+	Use:   "docs",
+	Short: "Generate documentation for modules",
+	Long:  `Generate documentation for modules including README, API reference, testing guide, and architecture documentation.`,
+}
+
+// newDocsCmd represents the new docs command
+var newDocsCmd = &cobra.Command{
+	Use:   "module [module_name]",
+	Short: "Generate complete documentation set for a module",
+	Long: `Generate a complete documentation set for a module including:
+- README.md: Module overview and quick start guide
+- api-reference.md: Complete API documentation with examples
+- testing.md: Testing strategy and test cases
+- architecture-guide.md: Detailed architecture documentation
+
+Examples:
+  awoctl docs module finance
+  awoctl docs module inventory --dry-run
+  awoctl docs module hr --verbose`,
+	Args: cobra.ExactArgs(1),
+	RunE: runNewDocs,
+}
+
 func init() {
 	// Global flags
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Preview what would be generated without creating files")
@@ -111,6 +136,9 @@ func init() {
 	newCmd.AddCommand(newModuleCmd)
 	newCmd.AddCommand(newFeatureCmd)
 	newCmd.AddCommand(newComponentCmd)
+	
+	rootCmd.AddCommand(docsCmd)
+	docsCmd.AddCommand(newDocsCmd)
 }
 
 func runNewModule(cmd *cobra.Command, args []string) error {
@@ -257,6 +285,49 @@ func runNewComponent(cmd *cobra.Command, args []string) error {
 		fmt.Printf("3. Run 'make goa sqlc' to update generated code\n")
 	} else {
 		fmt.Printf("🔍 Dry run completed for %s component: %s\n", componentType, componentName)
+	}
+
+	return nil
+}
+
+func runNewDocs(cmd *cobra.Command, args []string) error {
+	moduleName := args[0]
+
+	if verbose {
+		fmt.Printf("Generating documentation for module: %s\n", moduleName)
+		fmt.Printf("Dry run: %v\n", dryRun)
+	}
+
+	config := generator.DocsConfig{
+		ModuleName: moduleName,
+		DryRun:     dryRun,
+		Verbose:    verbose,
+	}
+
+	gen, err := generator.NewDocsGenerator()
+	if err != nil {
+		return fmt.Errorf("failed to create docs generator: %w", err)
+	}
+
+	if err := gen.Generate(config); err != nil {
+		return fmt.Errorf("failed to generate documentation for module %s: %w", moduleName, err)
+	}
+
+	if !dryRun {
+		fmt.Printf("✅ Successfully generated documentation for module: %s\n", moduleName)
+		fmt.Printf("📚 Documentation created at: docs/reference/modules/%s/\n", moduleName)
+		fmt.Printf("\nGenerated files:\n")
+		fmt.Printf("- README.md: Module overview and quick start\n")
+		fmt.Printf("- api-reference.md: Complete API documentation\n")
+		fmt.Printf("- testing.md: Testing strategy and test cases\n")
+		fmt.Printf("- architecture-guide.md: Detailed architecture documentation\n")
+		fmt.Printf("\nNext steps:\n")
+		fmt.Printf("1. Review and customize the generated documentation\n")
+		fmt.Printf("2. Update API examples with actual endpoint data\n")
+		fmt.Printf("3. Add module-specific business rules and constraints\n")
+		fmt.Printf("4. Update integration points and dependencies\n")
+	} else {
+		fmt.Printf("🔍 Dry run completed for module documentation: %s\n", moduleName)
 	}
 
 	return nil

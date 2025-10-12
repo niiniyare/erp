@@ -1,0 +1,997 @@
+# {{.ModuleNamePascal}} Module - Architecture Guide
+
+**Version**: 1.0  
+**Date**: {{.GeneratedAt.Format "January 2, 2006"}}  
+**Status**: Implementation In Progress
+
+---
+
+## Table of Contents
+
+- [Architecture Overview](#architecture-overview)
+- [Clean Architecture Implementation](#clean-architecture-implementation)
+- [Domain-Driven Design Patterns](#domain-driven-design-patterns)
+- [{{.ModuleNamePascal}} Domain Model](#{{.ModuleNameSnake}}-domain-model)
+- [Service Layer Architecture](#service-layer-architecture)
+- [Repository & Data Access](#repository--data-access)
+- [API Layer Design](#api-layer-design)
+- [Multi-Tenancy Architecture](#multi-tenancy-architecture)
+- [Security & Authorization](#security--authorization)
+- [Performance & Scalability](#performance--scalability)
+- [Integration Patterns](#integration-patterns)
+
+---
+
+## Architecture Overview
+
+### System Context
+
+The {{.ModuleNamePascal}} Module operates within the AWO ERP ecosystem, implementing clean architecture principles with domain-driven design patterns to ensure maintainability, testability, and business alignment.
+
+```mermaid
+graph TB
+    Client[Client Applications]
+    API[API Layer<br/>Fiber + Goa]
+    Service[Service Layer<br/>Business Logic]
+    Domain[Domain Layer<br/>Business Rules]
+    Repo[Repository Layer<br/>Data Access]
+    DB[(PostgreSQL<br/>with RLS)]
+    Cache[(Redis<br/>Cache)]
+    
+    Client --> API
+    API --> Service
+    Service --> Domain
+    Service --> Repo
+    Repo --> DB
+    Service --> Cache
+    
+    subgraph "{{.ModuleNamePascal}} Module Boundaries"
+        API
+        Service
+        Domain
+        Repo
+    end
+```
+
+### Design Principles
+
+1. **Clean Architecture**: Dependency inversion with business logic at the center
+2. **Domain-Driven Design**: Rich domain model with ubiquitous language
+3. **SOLID Principles**: Single responsibility, open/closed, interface segregation
+4. **Multi-Tenancy**: Row-level security with tenant isolation
+5. **Security-First**: ABAC authorization integrated throughout
+6. **Performance**: Optimized for high-throughput financial operations
+
+---
+
+## Clean Architecture Implementation
+
+### Layer Dependencies
+
+```mermaid
+graph BT
+    Infrastructure[Infrastructure Layer<br/>Database, Cache, External APIs]
+    Repository[Repository Layer<br/>Data Access Interfaces]
+    Service[Service Layer<br/>Application Business Logic]
+    Domain[Domain Layer<br/>Business Entities & Rules]
+    API[API Layer<br/>HTTP Handlers & DTOs]
+    
+    Repository --> Domain
+    Service --> Domain
+    Service --> Repository
+    API --> Service
+    Infrastructure --> Repository
+    
+    classDef domain fill:#e1f5fe
+    classDef service fill:#f3e5f5
+    classDef api fill:#fff3e0
+    classDef infra fill:#e8f5e8
+    
+    class Domain domain
+    class Service service
+    class API api
+    class Infrastructure,Repository infra
+```
+
+### Dependency Injection
+
+```go
+// Dependency injection container structure
+type {{.ModuleNamePascal}}Container struct {
+    // Infrastructure
+    db     *database.DB
+    cache  cache.Cache
+    logger *slog.Logger
+    tracer trace.Tracer
+    
+    // Repositories
+    {{.EntityNameCamel}}Repo repository.{{.EntityNamePascal}}Repository
+    
+    // Services
+    {{.EntityNameCamel}}Service service.{{.EntityNamePascal}}Service
+    
+    // ABAC & Validation
+    abacEngine abac.Engine
+    validator  validation.Validator
+}
+
+func New{{.ModuleNamePascal}}Container(deps Dependencies) *{{.ModuleNamePascal}}Container {
+    container := &{{.ModuleNamePascal}}Container{
+        db:     deps.DB,
+        cache:  deps.Cache,
+        logger: deps.Logger,
+        tracer: deps.Tracer,
+    }
+    
+    // Repository layer
+    container.{{.EntityNameCamel}}Repo = repository.New{{.EntityNamePascal}}Repository(
+        container.db, container.logger, container.tracer)
+    
+    // Service layer
+    container.{{.EntityNameCamel}}Service = service.New{{.EntityNamePascal}}Service(
+        container.{{.EntityNameCamel}}Repo, deps.ABACEngine, container.logger, container.tracer)
+    
+    return container
+}
+```
+
+---
+
+## Domain-Driven Design Patterns
+
+### Ubiquitous Language
+
+**Core Domain Terms:**
+- **{{.EntityNamePascal}}**: Primary aggregate root representing {{.EntityNameSnake}} business concept
+- **{{.EntityNamePascal}}ID**: Strong-typed identifier using UUID v4
+- **{{.EntityNamePascal}}Status**: State enumeration with business meaning
+- **Tenant Context**: Multi-tenant boundary enforcement
+- **Domain Events**: Business event notifications for workflow integration
+
+### Bounded Context
+
+```mermaid
+graph LR
+    subgraph "{{.ModuleNamePascal}} Bounded Context"
+        {{.EntityNamePascal}}[{{.EntityNamePascal}}<br/>Aggregate Root]
+        {{.EntityNamePascal}}Status[{{.EntityNamePascal}}Status<br/>Value Object]
+        {{.EntityNamePascal}}Events[{{.EntityNamePascal}} Events<br/>Domain Events]
+        
+        {{.EntityNamePascal}} --> {{.EntityNamePascal}}Status
+        {{.EntityNamePascal}} --> {{.EntityNamePascal}}Events
+    end
+    
+    subgraph "Shared Kernel"
+        TenantID[Tenant ID<br/>Value Object]
+        AuditInfo[Audit Info<br/>Value Object]
+        Money[Money<br/>Value Object]
+    end
+    
+    {{.EntityNamePascal}} --> TenantID
+    {{.EntityNamePascal}} --> AuditInfo
+    {{.EntityNamePascal}} --> Money
+```
+
+### Aggregate Design
+
+```go
+// {{.EntityNamePascal}} aggregate root
+type {{.EntityNamePascal}} struct {
+    // Identity
+    id       {{.EntityNamePascal}}ID
+    tenantID tenant.ID
+    
+    // Core attributes
+    name        string
+    description *string
+    status      {{.EntityNamePascal}}Status
+    
+    // Business rules
+    validator *{{.EntityNamePascal}}Validator
+    
+    // Event sourcing
+    events []DomainEvent
+    
+    // Audit trail
+    audit AuditInfo
+}
+
+// Business methods with domain logic
+func ({{.EntityNameCamel}} *{{.EntityNamePascal}}) Activate(ctx context.Context, reason string) error {
+    if err := {{.EntityNameCamel}}.validator.ValidateActivation({{.EntityNameCamel}}); err != nil {
+        return fmt.Errorf("cannot activate {{.EntityNameSnake}}: %w", err)
+    }
+    
+    if {{.EntityNameCamel}}.status == {{.EntityNamePascal}}StatusActive {
+        return business.ErrAlreadyActive
+    }
+    
+    {{.EntityNameCamel}}.status = {{.EntityNamePascal}}StatusActive
+    {{.EntityNameCamel}}.audit.UpdatedAt = time.Now()
+    
+    // Emit domain event
+    {{.EntityNameCamel}}.AddEvent({{.EntityNamePascal}}ActivatedEvent{
+        {{.EntityNamePascal}}ID: {{.EntityNameCamel}}.id,
+        TenantID: {{.EntityNameCamel}}.tenantID,
+        Reason:   reason,
+        Timestamp: time.Now(),
+    })
+    
+    return nil
+}
+```
+
+---
+
+## {{.ModuleNamePascal}} Domain Model
+
+### Core Entities
+
+#### {{.EntityNamePascal}} Entity
+
+```go
+type {{.EntityNamePascal}} struct {
+    // Strong-typed identifiers
+    ID       {{.EntityNamePascal}}ID `json:"id"`
+    TenantID tenant.ID         `json:"tenant_id"`
+    
+    // Business attributes
+    Name        string                  `json:"name"`
+    Description *string                 `json:"description,omitempty"`
+    Status      {{.EntityNamePascal}}Status        `json:"status"`
+    
+    // Hierarchical structure (if applicable)
+    ParentID *{{.EntityNamePascal}}ID           `json:"parent_id,omitempty"`
+    Level    int                       `json:"level"`
+    Path     string                    `json:"path"`
+    
+    {{if eq .RootType "RootTypeAsset"}}
+    // Financial attributes
+    Balance      decimal.Decimal       `json:"balance"`
+    Currency     Currency              `json:"currency"`
+    LastValued   *time.Time           `json:"last_valued,omitempty"`
+    {{end}}
+    
+    // Metadata
+    Tags         map[string]string     `json:"tags,omitempty"`
+    CustomFields map[string]interface{} `json:"custom_fields,omitempty"`
+    
+    // Audit information
+    CreatedAt time.Time `json:"created_at"`
+    UpdatedAt time.Time `json:"updated_at"`
+    CreatedBy UserID    `json:"created_by"`
+    UpdatedBy UserID    `json:"updated_by"`
+    Version   int64     `json:"version"`
+}
+```
+
+#### Value Objects
+
+```go
+// {{.EntityNamePascal}}ID - Strong-typed identifier
+type {{.EntityNamePascal}}ID string
+
+func New{{.EntityNamePascal}}ID() {{.EntityNamePascal}}ID {
+    return {{.EntityNamePascal}}ID(uuid.New().String())
+}
+
+func (id {{.EntityNamePascal}}ID) String() string {
+    return string(id)
+}
+
+func (id {{.EntityNamePascal}}ID) Validate() error {
+    if id == "" {
+        return ErrInvalid{{.EntityNamePascal}}ID
+    }
+    _, err := uuid.Parse(string(id))
+    return err
+}
+
+// {{.EntityNamePascal}}Status - State enumeration
+type {{.EntityNamePascal}}Status string
+
+const (
+    {{.EntityNamePascal}}StatusPending   {{.EntityNamePascal}}Status = "pending"
+    {{.EntityNamePascal}}StatusActive    {{.EntityNamePascal}}Status = "active"
+    {{.EntityNamePascal}}StatusInactive  {{.EntityNamePascal}}Status = "inactive"
+    {{.EntityNamePascal}}StatusArchived  {{.EntityNamePascal}}Status = "archived"
+)
+
+func (s {{.EntityNamePascal}}Status) IsValid() bool {
+    switch s {
+    case {{.EntityNamePascal}}StatusPending, {{.EntityNamePascal}}StatusActive, 
+         {{.EntityNamePascal}}StatusInactive, {{.EntityNamePascal}}StatusArchived:
+        return true
+    default:
+        return false
+    }
+}
+
+func (s {{.EntityNamePascal}}Status) CanTransitionTo(target {{.EntityNamePascal}}Status) bool {
+    transitions := map[{{.EntityNamePascal}}Status][]{{.EntityNamePascal}}Status{
+        {{.EntityNamePascal}}StatusPending:  { {{.EntityNamePascal}}StatusActive, {{.EntityNamePascal}}StatusArchived},
+        {{.EntityNamePascal}}StatusActive:   { {{.EntityNamePascal}}StatusInactive, {{.EntityNamePascal}}StatusArchived},
+        {{.EntityNamePascal}}StatusInactive: { {{.EntityNamePascal}}StatusActive, {{.EntityNamePascal}}StatusArchived},
+        {{.EntityNamePascal}}StatusArchived: {}, // Terminal state
+    }
+    
+    allowed := transitions[s]
+    for _, allowedStatus := range allowed {
+        if allowedStatus == target {
+            return true
+        }
+    }
+    return false
+}
+```
+
+### Business Rules & Validation
+
+```go
+type {{.EntityNamePascal}}Validator struct {
+    repo   {{.EntityNamePascal}}Repository
+    abac   abac.Engine
+    logger *slog.Logger
+}
+
+func (v *{{.EntityNamePascal}}Validator) ValidateCreate(ctx context.Context, cmd Create{{.EntityNamePascal}}Command) error {
+    var errs []error
+    
+    // Basic validation
+    if cmd.Name == "" {
+        errs = append(errs, ErrInvalidName)
+    }
+    
+    if len(cmd.Name) > 255 {
+        errs = append(errs, ErrNameTooLong)
+    }
+    
+    // Business rule validation
+    if err := v.validateNameUniqueness(ctx, cmd.TenantID, cmd.Name); err != nil {
+        errs = append(errs, err)
+    }
+    
+    {{if eq .RootType "RootTypeAsset"}}
+    // Financial validation
+    if cmd.Currency == "" {
+        errs = append(errs, ErrCurrencyRequired)
+    }
+    {{end}}
+    
+    // Authorization check
+    if err := v.abac.Authorize(ctx, abac.Request{
+        Subject:  authz.SubjectFromContext(ctx),
+        Action:   "{{.ModuleNameSnake}}.{{.EntityNameSnake}}.create",
+        Resource: abac.Resource{Type: "{{.EntityNameSnake}}", Attributes: cmd.ToAttributes()},
+    }); err != nil {
+        errs = append(errs, err)
+    }
+    
+    if len(errs) > 0 {
+        return validation.CombineErrors(errs...)
+    }
+    
+    return nil
+}
+
+func (v *{{.EntityNamePascal}}Validator) validateNameUniqueness(ctx context.Context, tenantID tenant.ID, name string) error {
+    exists, err := v.repo.ExistsByName(ctx, tenantID, name)
+    if err != nil {
+        return fmt.Errorf("failed to check name uniqueness: %w", err)
+    }
+    
+    if exists {
+        return ErrNameAlreadyExists
+    }
+    
+    return nil
+}
+```
+
+---
+
+## Service Layer Architecture
+
+### Service Interface Design
+
+```go
+type {{.EntityNamePascal}}Service interface {
+    // Core CRUD operations
+    Create{{.EntityNamePascal}}(ctx context.Context, cmd Create{{.EntityNamePascal}}Command) (*{{.EntityNamePascal}}, error)
+    Get{{.EntityNamePascal}}ByID(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID) (*{{.EntityNamePascal}}, error)
+    Update{{.EntityNamePascal}}(ctx context.Context, id {{.EntityNamePascal}}ID, cmd Update{{.EntityNamePascal}}Command) (*{{.EntityNamePascal}}, error)
+    Delete{{.EntityNamePascal}}(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID) error
+    
+    // Business operations
+    List{{.EntityNamePlural}}(ctx context.Context, tenantID tenant.ID, filter {{.EntityNamePascal}}Filter) (*{{.EntityNamePascal}}List, error)
+    Search{{.EntityNamePlural}}(ctx context.Context, tenantID tenant.ID, query string, options SearchOptions) (*{{.EntityNamePascal}}List, error)
+    
+    // State management
+    Activate{{.EntityNamePascal}}(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID, reason string) error
+    Deactivate{{.EntityNamePascal}}(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID, reason string) error
+    
+    {{if eq .RootType "RootTypeAsset"}}
+    // Financial operations
+    Calculate{{.EntityNamePascal}}Balance(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID, asOf time.Time) (decimal.Decimal, error)
+    Update{{.EntityNamePascal}}Valuation(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID, amount decimal.Decimal) error
+    {{end}}
+}
+```
+
+### Command Pattern Implementation
+
+```go
+// Commands encapsulate user intent and validation rules
+type Create{{.EntityNamePascal}}Command struct {
+    TenantID    tenant.ID            `json:"tenant_id" validate:"required"`
+    Name        string               `json:"name" validate:"required,min=1,max=255"`
+    Description *string              `json:"description,omitempty" validate:"omitempty,max=1000"`
+    ParentID    *{{.EntityNamePascal}}ID        `json:"parent_id,omitempty"`
+    
+    {{if eq .RootType "RootTypeAsset"}}
+    Currency    Currency             `json:"currency" validate:"required"`
+    InitialBalance decimal.Decimal   `json:"initial_balance,omitempty"`
+    {{end}}
+    
+    Tags        map[string]string    `json:"tags,omitempty"`
+    CustomFields map[string]interface{} `json:"custom_fields,omitempty"`
+}
+
+func (cmd Create{{.EntityNamePascal}}Command) ToAttributes() map[string]interface{} {
+    return map[string]interface{}{
+        "tenant_id":   cmd.TenantID,
+        "name":        cmd.Name,
+        "has_parent":  cmd.ParentID != nil,
+        {{if eq .RootType "RootTypeAsset"}}
+        "currency":    cmd.Currency,
+        {{end}}
+    }
+}
+
+type Update{{.EntityNamePascal}}Command struct {
+    Name        *string              `json:"name,omitempty" validate:"omitempty,min=1,max=255"`
+    Description *string              `json:"description,omitempty" validate:"omitempty,max=1000"`
+    Tags        map[string]string    `json:"tags,omitempty"`
+    CustomFields map[string]interface{} `json:"custom_fields,omitempty"`
+    Version     int64                `json:"version" validate:"required"`
+}
+```
+
+### Service Implementation
+
+```go
+type {{.EntityNameCamel}}Service struct {
+    repo      {{.EntityNamePascal}}Repository
+    abac      abac.Engine
+    validator *{{.EntityNamePascal}}Validator
+    logger    *slog.Logger
+    tracer    trace.Tracer
+    cache     cache.Cache
+}
+
+func (s *{{.EntityNameCamel}}Service) Create{{.EntityNamePascal}}(ctx context.Context, cmd Create{{.EntityNamePascal}}Command) (*{{.EntityNamePascal}}, error) {
+    ctx, span := s.tracer.Start(ctx, "{{.EntityNameCamel}}_service.create")
+    defer span.End()
+    
+    // Validation
+    if err := s.validator.ValidateCreate(ctx, cmd); err != nil {
+        span.RecordError(err)
+        return nil, fmt.Errorf("validation failed: %w", err)
+    }
+    
+    // Create domain entity
+    {{.EntityNameCamel}} := &{{.EntityNamePascal}}{
+        ID:          New{{.EntityNamePascal}}ID(),
+        TenantID:    cmd.TenantID,
+        Name:        cmd.Name,
+        Description: cmd.Description,
+        Status:      {{.EntityNamePascal}}StatusPending,
+        ParentID:    cmd.ParentID,
+        Tags:        cmd.Tags,
+        CustomFields: cmd.CustomFields,
+        CreatedAt:   time.Now(),
+        UpdatedAt:   time.Now(),
+        Version:     1,
+    }
+    
+    {{if eq .RootType "RootTypeAsset"}}
+    {{.EntityNameCamel}}.Currency = cmd.Currency
+    {{.EntityNameCamel}}.Balance = cmd.InitialBalance
+    {{end}}
+    
+    // Hierarchy validation and path calculation
+    if cmd.ParentID != nil {
+        parent, err := s.repo.GetByID(ctx, cmd.TenantID, *cmd.ParentID)
+        if err != nil {
+            return nil, fmt.Errorf("failed to validate parent: %w", err)
+        }
+        {{.EntityNameCamel}}.Level = parent.Level + 1
+        {{.EntityNameCamel}}.Path = fmt.Sprintf("%s/%s", parent.Path, {{.EntityNameCamel}}.ID)
+    } else {
+        {{.EntityNameCamel}}.Level = 0
+        {{.EntityNameCamel}}.Path = string({{.EntityNameCamel}}.ID)
+    }
+    
+    // Persist to repository
+    created{{.EntityNamePascal}}, err := s.repo.Create(ctx, {{.EntityNameCamel}})
+    if err != nil {
+        span.RecordError(err)
+        return nil, fmt.Errorf("failed to create {{.EntityNameSnake}}: %w", err)
+    }
+    
+    // Clear relevant caches
+    s.clearCacheForTenant(ctx, cmd.TenantID)
+    
+    // Emit domain event
+    s.emitEvent(ctx, {{.EntityNamePascal}}CreatedEvent{
+        {{.EntityNamePascal}}ID: created{{.EntityNamePascal}}.ID,
+        TenantID: created{{.EntityNamePascal}}.TenantID,
+        Name:     created{{.EntityNamePascal}}.Name,
+        Timestamp: time.Now(),
+    })
+    
+    s.logger.InfoContext(ctx, "{{.EntityNameSnake}} created",
+        "{{.EntityNameSnake}}_id", created{{.EntityNamePascal}}.ID,
+        "tenant_id", created{{.EntityNamePascal}}.TenantID,
+        "name", created{{.EntityNamePascal}}.Name)
+    
+    return created{{.EntityNamePascal}}, nil
+}
+```
+
+---
+
+## Repository & Data Access
+
+### Repository Interface
+
+```go
+type {{.EntityNamePascal}}Repository interface {
+    // Basic CRUD
+    Create(ctx context.Context, {{.EntityNameCamel}} *{{.EntityNamePascal}}) (*{{.EntityNamePascal}}, error)
+    GetByID(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID) (*{{.EntityNamePascal}}, error)
+    Update(ctx context.Context, {{.EntityNameCamel}} *{{.EntityNamePascal}}) (*{{.EntityNamePascal}}, error)
+    Delete(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID) error
+    
+    // Queries
+    List(ctx context.Context, tenantID tenant.ID, filter {{.EntityNamePascal}}Filter) ([]*{{.EntityNamePascal}}, error)
+    ExistsByName(ctx context.Context, tenantID tenant.ID, name string) (bool, error)
+    GetByPath(ctx context.Context, tenantID tenant.ID, path string) (*{{.EntityNamePascal}}, error)
+    
+    // Hierarchical operations
+    GetChildren(ctx context.Context, tenantID tenant.ID, parentID {{.EntityNamePascal}}ID) ([]*{{.EntityNamePascal}}, error)
+    GetAncestors(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID) ([]*{{.EntityNamePascal}}, error)
+    
+    {{if eq .RootType "RootTypeAsset"}}
+    // Financial queries
+    GetBalance(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID, asOf time.Time) (decimal.Decimal, error)
+    UpdateBalance(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID, amount decimal.Decimal) error
+    {{end}}
+}
+```
+
+### SQLC Integration
+
+```sql
+-- name: Create{{.EntityNamePascal}} :one
+INSERT INTO {{.ModuleNameSnake}}_{{.EntityNameSnake}} (
+    id, tenant_id, name, description, status, parent_id, level, path,
+    {{if eq .RootType "RootTypeAsset"}}
+    balance, currency,
+    {{end}}
+    tags, custom_fields, created_at, updated_at, created_by, updated_by, version
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8,
+    {{if eq .RootType "RootTypeAsset"}}
+    $9, $10,
+    {{end}}
+    ${{if eq .RootType "RootTypeAsset"}}11{{else}}9{{end}}, ${{if eq .RootType "RootTypeAsset"}}12{{else}}10{{end}}, ${{if eq .RootType "RootTypeAsset"}}13{{else}}11{{end}}, ${{if eq .RootType "RootTypeAsset"}}14{{else}}12{{end}}, ${{if eq .RootType "RootTypeAsset"}}15{{else}}13{{end}}, ${{if eq .RootType "RootTypeAsset"}}16{{else}}14{{end}}, ${{if eq .RootType "RootTypeAsset"}}17{{else}}15{{end}}
+) RETURNING *;
+
+-- name: Get{{.EntityNamePascal}}ByID :one
+SELECT * FROM {{.ModuleNameSnake}}_{{.EntityNameSnake}}
+WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL;
+
+-- name: List{{.EntityNamePlural}} :many
+SELECT * FROM {{.ModuleNameSnake}}_{{.EntityNameSnake}}
+WHERE tenant_id = $1 
+  AND deleted_at IS NULL
+  AND ($2::text IS NULL OR status = $2)
+  AND ($3::text IS NULL OR name ILIKE '%' || $3 || '%')
+ORDER BY name ASC
+LIMIT $4 OFFSET $5;
+
+-- name: Update{{.EntityNamePascal}} :one
+UPDATE {{.ModuleNameSnake}}_{{.EntityNameSnake}}
+SET 
+    name = COALESCE($3, name),
+    description = COALESCE($4, description),
+    tags = COALESCE($5, tags),
+    custom_fields = COALESCE($6, custom_fields),
+    updated_at = $7,
+    updated_by = $8,
+    version = version + 1
+WHERE id = $1 AND tenant_id = $2 AND version = $9 AND deleted_at IS NULL
+RETURNING *;
+```
+
+### Repository Implementation with Multi-Tenancy
+
+```go
+type {{.EntityNameCamel}}Repository struct {
+    db     *database.DB
+    logger *slog.Logger
+    tracer trace.Tracer
+}
+
+func (r *{{.EntityNameCamel}}Repository) Create(ctx context.Context, {{.EntityNameCamel}} *{{.EntityNamePascal}}) (*{{.EntityNamePascal}}, error) {
+    ctx, span := r.tracer.Start(ctx, "{{.EntityNameCamel}}_repository.create")
+    defer span.End()
+    
+    // Set tenant context for RLS
+    if err := r.db.SetTenantContext(ctx, {{.EntityNameCamel}}.TenantID); err != nil {
+        return nil, fmt.Errorf("failed to set tenant context: %w", err)
+    }
+    
+    // Execute SQLC query
+    created, err := r.db.Queries.Create{{.EntityNamePascal}}(ctx, Create{{.EntityNamePascal}}Params{
+        ID:          {{.EntityNameCamel}}.ID,
+        TenantID:    {{.EntityNameCamel}}.TenantID,
+        Name:        {{.EntityNameCamel}}.Name,
+        Description: {{.EntityNameCamel}}.Description,
+        Status:      {{.EntityNameCamel}}.Status,
+        ParentID:    {{.EntityNameCamel}}.ParentID,
+        Level:       int32({{.EntityNameCamel}}.Level),
+        Path:        {{.EntityNameCamel}}.Path,
+        {{if eq .RootType "RootTypeAsset"}}
+        Balance:     {{.EntityNameCamel}}.Balance,
+        Currency:    {{.EntityNameCamel}}.Currency,
+        {{end}}
+        Tags:         {{.EntityNameCamel}}.Tags,
+        CustomFields: {{.EntityNameCamel}}.CustomFields,
+        CreatedAt:    {{.EntityNameCamel}}.CreatedAt,
+        UpdatedAt:    {{.EntityNameCamel}}.UpdatedAt,
+        CreatedBy:    {{.EntityNameCamel}}.CreatedBy,
+        UpdatedBy:    {{.EntityNameCamel}}.UpdatedBy,
+        Version:      {{.EntityNameCamel}}.Version,
+    })
+    
+    if err != nil {
+        span.RecordError(err)
+        return nil, r.handleDBError(err)
+    }
+    
+    return r.mapToEntity(created), nil
+}
+
+func (r *{{.EntityNameCamel}}Repository) handleDBError(err error) error {
+    var pgErr *pgconn.PgError
+    if errors.As(err, &pgErr) {
+        switch pgErr.Code {
+        case "23505": // unique_violation
+            if strings.Contains(pgErr.ConstraintName, "name") {
+                return ErrNameAlreadyExists
+            }
+            return ErrDuplicate{{.EntityNamePascal}}
+        case "23503": // foreign_key_violation
+            return ErrInvalidReference
+        }
+    }
+    return fmt.Errorf("database error: %w", err)
+}
+```
+
+---
+
+## API Layer Design
+
+### HTTP Handler Structure
+
+```go
+type {{.EntityNamePascal}}Handler struct {
+    service service.{{.EntityNamePascal}}Service
+    logger  *slog.Logger
+    tracer  trace.Tracer
+}
+
+func (h *{{.EntityNamePascal}}Handler) Create{{.EntityNamePascal}}(c *fiber.Ctx) error {
+    ctx, span := h.tracer.Start(c.Context(), "{{.EntityNameCamel}}_handler.create")
+    defer span.End()
+    
+    // Parse request
+    var req gen.Create{{.EntityNamePascal}}Request
+    if err := c.BodyParser(&req); err != nil {
+        return h.handleValidationError(c, err)
+    }
+    
+    // Extract tenant from context
+    tenantID := tenant.FromContext(ctx)
+    if tenantID == "" {
+        return h.handleError(c, ErrMissingTenant, fiber.StatusBadRequest)
+    }
+    
+    // Convert to command
+    cmd := Create{{.EntityNamePascal}}Command{
+        TenantID:    tenantID,
+        Name:        req.Name,
+        Description: req.Description,
+        ParentID:    (*{{.EntityNamePascal}}ID)(req.ParentID),
+        {{if eq .RootType "RootTypeAsset"}}
+        Currency:    Currency(req.Currency),
+        InitialBalance: decimal.NewFromFloat(req.InitialBalance),
+        {{end}}
+        Tags:         req.Tags,
+        CustomFields: req.CustomFields,
+    }
+    
+    // Execute business logic
+    {{.EntityNameCamel}}, err := h.service.Create{{.EntityNamePascal}}(ctx, cmd)
+    if err != nil {
+        return h.handleServiceError(c, err)
+    }
+    
+    // Return response
+    return h.handleResponse(c, h.mapToResponse({{.EntityNameCamel}}), fiber.StatusCreated)
+}
+```
+
+### Error Handling
+
+```go
+func (h *{{.EntityNamePascal}}Handler) handleServiceError(c *fiber.Ctx, err error) error {
+    switch {
+    case errors.Is(err, ErrNameAlreadyExists):
+        return h.handleError(c, err, fiber.StatusConflict)
+    case errors.Is(err, ErrInvalidParent):
+        return h.handleError(c, err, fiber.StatusBadRequest)
+    case errors.Is(err, abac.ErrForbidden):
+        return h.handleError(c, err, fiber.StatusForbidden)
+    case errors.Is(err, ErrNotFound):
+        return h.handleError(c, err, fiber.StatusNotFound)
+    default:
+        h.logger.ErrorContext(c.Context(), "internal service error",
+            "error", err,
+            "path", c.Path(),
+            "method", c.Method())
+        return h.handleError(c, ErrInternalError, fiber.StatusInternalServerError)
+    }
+}
+
+func (h *{{.EntityNamePascal}}Handler) handleError(c *fiber.Ctx, err error, status int) error {
+    return c.Status(status).JSON(gen.ErrorResponse{
+        Error: gen.Error{
+            Code:          getErrorCode(err),
+            Message:       err.Error(),
+            CorrelationID: correlation.FromContext(c.Context()),
+        },
+    })
+}
+```
+
+---
+
+## Multi-Tenancy Architecture
+
+### Row-Level Security Implementation
+
+```sql
+-- Enable RLS on the {{.EntityNameSnake}} table
+ALTER TABLE {{.ModuleNameSnake}}_{{.EntityNameSnake}} ENABLE ROW LEVEL SECURITY;
+
+-- Create policy for tenant isolation
+CREATE POLICY {{.EntityNameSnake}}_tenant_isolation ON {{.ModuleNameSnake}}_{{.EntityNameSnake}}
+    USING (tenant_id = current_setting('app.current_tenant_id')::uuid);
+
+-- Grant permissions
+GRANT SELECT, INSERT, UPDATE, DELETE ON {{.ModuleNameSnake}}_{{.EntityNameSnake}} TO app_user;
+```
+
+### Tenant Context Management
+
+```go
+type TenantContextMiddleware struct {
+    extractor TenantExtractor
+}
+
+func (m *TenantContextMiddleware) Handler(c *fiber.Ctx) error {
+    tenantID, err := m.extractor.ExtractTenant(c)
+    if err != nil {
+        return fiber.NewError(fiber.StatusBadRequest, "invalid tenant context")
+    }
+    
+    // Set in context for service layer
+    ctx := tenant.WithContext(c.Context(), tenantID)
+    c.SetUserContext(ctx)
+    
+    return c.Next()
+}
+
+func (db *DB) SetTenantContext(ctx context.Context, tenantID tenant.ID) error {
+    _, err := db.ExecContext(ctx, "SELECT set_config('app.current_tenant_id', $1, true)", tenantID)
+    return err
+}
+```
+
+---
+
+## Security & Authorization
+
+### ABAC Integration
+
+```go
+// ABAC policies for {{.EntityNamePascal}} operations
+type {{.EntityNamePascal}}ABACPolicies struct {
+    engine abac.Engine
+}
+
+func (p *{{.EntityNamePascal}}ABACPolicies) RegisterPolicies() error {
+    policies := []abac.Policy{
+        {
+            ID:          "{{.ModuleNameSnake}}.{{.EntityNameSnake}}.create",
+            Description: "Allow {{.EntityNameSnake}} creation based on role and tenant",
+            Rule: abac.Rule{
+                Subject: abac.SubjectRules{
+                    "role": abac.OneOf("admin", "manager", "accountant"),
+                },
+                Resource: abac.ResourceRules{
+                    "type": abac.Equals("{{.EntityNameSnake}}"),
+                },
+                Context: abac.ContextRules{
+                    "tenant_id": abac.Equals("$subject.tenant_id"),
+                },
+            },
+        },
+        {
+            ID:          "{{.ModuleNameSnake}}.{{.EntityNameSnake}}.update",
+            Description: "Allow {{.EntityNameSnake}} updates with ownership or manager role",
+            Rule: abac.Rule{
+                Subject: abac.SubjectRules{
+                    "role": abac.OneOf("admin", "manager"),
+                },
+                Resource: abac.ResourceRules{
+                    "type":      abac.Equals("{{.EntityNameSnake}}"),
+                    "tenant_id": abac.Equals("$subject.tenant_id"),
+                },
+                Context: abac.ContextRules{
+                    "operation": abac.Equals("update"),
+                },
+            },
+        },
+    }
+    
+    for _, policy := range policies {
+        if err := p.engine.RegisterPolicy(policy); err != nil {
+            return fmt.Errorf("failed to register policy %s: %w", policy.ID, err)
+        }
+    }
+    
+    return nil
+}
+```
+
+---
+
+## Performance & Scalability
+
+### Database Optimization
+
+```sql
+-- Indexes for {{.EntityNameSnake}} table
+CREATE INDEX CONCURRENTLY idx_{{.EntityNameSnake}}_tenant_id ON {{.ModuleNameSnake}}_{{.EntityNameSnake}} (tenant_id);
+CREATE INDEX CONCURRENTLY idx_{{.EntityNameSnake}}_name_tenant ON {{.ModuleNameSnake}}_{{.EntityNameSnake}} (tenant_id, name);
+CREATE INDEX CONCURRENTLY idx_{{.EntityNameSnake}}_status_tenant ON {{.ModuleNameSnake}}_{{.EntityNameSnake}} (tenant_id, status);
+CREATE INDEX CONCURRENTLY idx_{{.EntityNameSnake}}_path ON {{.ModuleNameSnake}}_{{.EntityNameSnake}} USING GIN (string_to_array(path, '/'));
+CREATE INDEX CONCURRENTLY idx_{{.EntityNameSnake}}_parent_id ON {{.ModuleNameSnake}}_{{.EntityNameSnake}} (parent_id) WHERE parent_id IS NOT NULL;
+
+{{if eq .RootType "RootTypeAsset"}}
+-- Financial indexes
+CREATE INDEX CONCURRENTLY idx_{{.EntityNameSnake}}_balance ON {{.ModuleNameSnake}}_{{.EntityNameSnake}} (tenant_id, balance) WHERE balance != 0;
+CREATE INDEX CONCURRENTLY idx_{{.EntityNameSnake}}_currency ON {{.ModuleNameSnake}}_{{.EntityNameSnake}} (tenant_id, currency);
+{{end}}
+```
+
+### Caching Strategy
+
+```go
+type {{.EntityNamePascal}}Cache struct {
+    cache cache.Cache
+    ttl   time.Duration
+}
+
+func (c *{{.EntityNamePascal}}Cache) Get{{.EntityNamePascal}}(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID) (*{{.EntityNamePascal}}, error) {
+    key := fmt.Sprintf("{{.EntityNameSnake}}:%s:%s", tenantID, id)
+    
+    var {{.EntityNameCamel}} {{.EntityNamePascal}}
+    if err := c.cache.Get(ctx, key, &{{.EntityNameCamel}}); err != nil {
+        if errors.Is(err, cache.ErrNotFound) {
+            return nil, nil
+        }
+        return nil, err
+    }
+    
+    return &{{.EntityNameCamel}}, nil
+}
+
+func (c *{{.EntityNamePascal}}Cache) Set{{.EntityNamePascal}}(ctx context.Context, {{.EntityNameCamel}} *{{.EntityNamePascal}}) error {
+    key := fmt.Sprintf("{{.EntityNameSnake}}:%s:%s", {{.EntityNameCamel}}.TenantID, {{.EntityNameCamel}}.ID)
+    return c.cache.Set(ctx, key, {{.EntityNameCamel}}, c.ttl)
+}
+```
+
+---
+
+## Integration Patterns
+
+### Event-Driven Architecture
+
+```go
+// Domain events for integration
+type {{.EntityNamePascal}}CreatedEvent struct {
+    {{.EntityNamePascal}}ID {{.EntityNamePascal}}ID `json:"{{.EntityNameSnake}}_id"`
+    TenantID tenant.ID     `json:"tenant_id"`
+    Name     string        `json:"name"`
+    Timestamp time.Time    `json:"timestamp"`
+}
+
+func (e {{.EntityNamePascal}}CreatedEvent) EventType() string {
+    return "{{.ModuleNameSnake}}.{{.EntityNameSnake}}.created"
+}
+
+// Event handler for workflow integration
+type {{.EntityNamePascal}}WorkflowHandler struct {
+    workflow workflow.Client
+    logger   *slog.Logger
+}
+
+func (h *{{.EntityNamePascal}}WorkflowHandler) Handle{{.EntityNamePascal}}Created(ctx context.Context, event {{.EntityNamePascal}}CreatedEvent) error {
+    // Start approval workflow if needed
+    workflowOptions := workflow.StartWorkflowOptions{
+        ID:        fmt.Sprintf("{{.EntityNameSnake}}-approval-%s", event.{{.EntityNamePascal}}ID),
+        TaskQueue: "{{.ModuleNameSnake}}-approval",
+    }
+    
+    _, err := h.workflow.ExecuteWorkflow(ctx, workflowOptions, "{{.EntityNamePascal}}ApprovalWorkflow", event)
+    if err != nil {
+        return fmt.Errorf("failed to start approval workflow: %w", err)
+    }
+    
+    return nil
+}
+```
+
+### External API Integration
+
+```go
+// External service integration patterns
+type External{{.EntityNamePascal}}Sync struct {
+    client   external.{{.EntityNamePascal}}Client
+    repo     {{.EntityNamePascal}}Repository
+    logger   *slog.Logger
+}
+
+func (s *External{{.EntityNamePascal}}Sync) Sync{{.EntityNamePascal}}(ctx context.Context, tenantID tenant.ID, externalID string) error {
+    // Fetch from external system
+    external{{.EntityNamePascal}}, err := s.client.Get{{.EntityNamePascal}}(ctx, externalID)
+    if err != nil {
+        return fmt.Errorf("failed to fetch external {{.EntityNameSnake}}: %w", err)
+    }
+    
+    // Map to internal model
+    internal{{.EntityNamePascal}} := s.mapFromExternal(external{{.EntityNamePascal}}, tenantID)
+    
+    // Upsert to repository
+    _, err = s.repo.Upsert(ctx, internal{{.EntityNamePascal}})
+    if err != nil {
+        return fmt.Errorf("failed to sync {{.EntityNameSnake}}: %w", err)
+    }
+    
+    return nil
+}
+```
+
+---
+
+**Architecture Version**: 1.0.0  
+**Generated**: {{.GeneratedAt.Format "2006-01-02 15:04:05"}}  
+**Generator**: awoctl {{.GeneratorVersion}}  
+**Architecture Patterns**: Clean Architecture + DDD + Multi-Tenancy + ABAC

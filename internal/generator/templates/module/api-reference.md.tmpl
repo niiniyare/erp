@@ -1,0 +1,509 @@
+# {{.ModuleNamePascal}} Module - API Reference
+
+**Version**: 1.0  
+**Date**: {{.GeneratedAt.Format "January 2, 2006"}}  
+**Status**: In Development  
+**OpenAPI Version**: 3.0.3
+
+---
+
+## Overview
+
+### API Description
+The {{.ModuleNamePascal}} Module API provides comprehensive {{.ModuleNameSnake}} management capabilities within the AWO ERP system. This business-focused API supports multi-tenant operations, ABAC-based access control, and enterprise-grade compliance features.
+
+### Base Information
+- **Base URL**: `https://api.awo-erp.com/api/v1/{{.ModuleNameKebab}}`
+- **Authentication**: Bearer Token with Attribute-Based Access Control
+- **Content Type**: `application/json`
+- **API Version**: `v1`
+
+### Quick Links
+- [Authentication Guide](../../../reference/api/auth/index.md) - Get started with API authentication
+- [SDK Examples](examples/) - Code examples in multiple languages
+
+---
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Authentication](#authentication)
+3. [{{.EntityNamePascal}} Endpoints](#{{.EntityNameSnake}}-endpoints)
+4. [Data Models](#data-models)
+5. [Error Handling](#error-handling)
+6. [Rate Limiting](#rate-limiting)
+7. [Examples](#examples)
+
+---
+
+## Authentication
+
+### Bearer Token Authentication
+All API requests require authentication using a Bearer token in the Authorization header:
+
+```http
+Authorization: Bearer <your-api-token>
+```
+
+### ABAC Permissions Required
+The following permissions are required for {{.ModuleNamePascal}} operations:
+
+{{range .DefaultPermissions}}
+- `{{.}}`: {{. | title | replace "_" " "}} operations
+{{end}}
+
+[Authentication Guide →](../../../reference/api/auth/index.md)
+
+---
+
+## {{.EntityNamePascal}} Endpoints
+
+### List {{.EntityNamePlural}}
+
+Retrieve a list of {{.EntityNamePlural}} with optional filtering and pagination.
+
+**Endpoint**: `GET /{{.EntityNameSnake}}`
+
+**Required Permissions**: `{{.ModuleNameSnake}}.{{.EntityNameSnake}}.list`
+
+**Query Parameters**:
+| Parameter | Type | Description | Default |
+|-----------|------|-------------|---------|
+| `limit` | integer | Number of results to return (1-100) | 20 |
+| `offset` | integer | Number of results to skip | 0 |
+| `status` | string | Filter by status (`active`, `inactive`, `pending`, `archived`) | - |
+| `name` | string | Filter by name (partial match) | - |
+| `sort_by` | string | Sort field (`name`, `created_at`, `updated_at`) | `created_at` |
+| `sort_order` | string | Sort order (`asc`, `desc`) | `desc` |
+
+**Example Request**:
+```http
+GET /api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}?limit=10&status=active&sort_by=name
+Authorization: Bearer <token>
+```
+
+**Example Response**:
+```json
+{
+  "data": [
+    {
+      "id": "01234567-89ab-cdef-0123-456789abcdef",
+      "name": "Sample {{.EntityNamePascal}}",
+      "description": "A sample {{.EntityNameSnake}} for demonstration",
+      "status": "active",
+      "created_at": "2024-01-15T10:30:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "pagination": {
+    "total": 150,
+    "count": 10,
+    "limit": 10,
+    "offset": 0,
+    "has_next": true,
+    "has_previous": false
+  }
+}
+```
+
+---
+
+### Create {{.EntityNamePascal}}
+
+Create a new {{.EntityNameSnake}} with the provided information.
+
+**Endpoint**: `POST /{{.EntityNameSnake}}`
+
+**Required Permissions**: `{{.ModuleNameSnake}}.{{.EntityNameSnake}}.create`
+
+**Request Body**:
+```json
+{
+  "name": "string (required, 1-255 characters)",
+  "description": "string (optional, max 1000 characters)"
+}
+```
+
+**Example Request**:
+```http
+POST /api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "New {{.EntityNamePascal}}",
+  "description": "Description for the new {{.EntityNameSnake}}"
+}
+```
+
+**Example Response** (201 Created):
+```json
+{
+  "id": "01234567-89ab-cdef-0123-456789abcdef",
+  "name": "New {{.EntityNamePascal}}",
+  "description": "Description for the new {{.EntityNameSnake}}",
+  "status": "active",
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z"
+}
+```
+
+---
+
+### Get {{.EntityNamePascal}} by ID
+
+Retrieve a specific {{.EntityNameSnake}} by its unique identifier.
+
+**Endpoint**: `GET /{{.EntityNameSnake}}/{id}`
+
+**Required Permissions**: `{{.ModuleNameSnake}}.{{.EntityNameSnake}}.read`
+
+**Path Parameters**:
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string (UUID) | Unique identifier of the {{.EntityNameSnake}} |
+
+**Example Request**:
+```http
+GET /api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}/01234567-89ab-cdef-0123-456789abcdef
+Authorization: Bearer <token>
+```
+
+**Example Response** (200 OK):
+```json
+{
+  "id": "01234567-89ab-cdef-0123-456789abcdef",
+  "name": "Sample {{.EntityNamePascal}}",
+  "description": "A sample {{.EntityNameSnake}} for demonstration",
+  "status": "active",
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z"
+}
+```
+
+---
+
+### Update {{.EntityNamePascal}}
+
+Update an existing {{.EntityNameSnake}} with new information.
+
+**Endpoint**: `PUT /{{.EntityNameSnake}}/{id}`
+
+**Required Permissions**: `{{.ModuleNameSnake}}.{{.EntityNameSnake}}.update`
+
+**Path Parameters**:
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string (UUID) | Unique identifier of the {{.EntityNameSnake}} |
+
+**Request Body**:
+```json
+{
+  "name": "string (optional, 1-255 characters)",
+  "description": "string (optional, max 1000 characters)"
+}
+```
+
+**Example Request**:
+```http
+PUT /api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}/01234567-89ab-cdef-0123-456789abcdef
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "Updated {{.EntityNamePascal}}",
+  "description": "Updated description"
+}
+```
+
+**Example Response** (200 OK):
+```json
+{
+  "id": "01234567-89ab-cdef-0123-456789abcdef",
+  "name": "Updated {{.EntityNamePascal}}",
+  "description": "Updated description",
+  "status": "active",
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T11:45:00Z"
+}
+```
+
+---
+
+### Delete {{.EntityNamePascal}}
+
+Delete an existing {{.EntityNameSnake}}.
+
+**Endpoint**: `DELETE /{{.EntityNameSnake}}/{id}`
+
+**Required Permissions**: `{{.ModuleNameSnake}}.{{.EntityNameSnake}}.delete`
+
+**Path Parameters**:
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string (UUID) | Unique identifier of the {{.EntityNameSnake}} |
+
+**Example Request**:
+```http
+DELETE /api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}/01234567-89ab-cdef-0123-456789abcdef
+Authorization: Bearer <token>
+```
+
+**Example Response** (204 No Content):
+```
+(Empty response body)
+```
+
+---
+
+## Data Models
+
+### {{.EntityNamePascal}}
+
+Represents a {{.EntityNameSnake}} entity in the system.
+
+```json
+{
+  "id": "string (UUID)",
+  "name": "string",
+  "description": "string | null",
+  "status": "string (enum)",
+  "created_at": "string (ISO 8601)",
+  "updated_at": "string (ISO 8601)"
+}
+```
+
+**Field Descriptions**:
+- `id`: Unique identifier (UUID v4)
+- `name`: {{.EntityNamePascal}} name (1-255 characters)
+- `description`: Optional description (max 1000 characters)
+- `status`: Current status (`active`, `inactive`, `pending`, `archived`)
+- `created_at`: Creation timestamp
+- `updated_at`: Last modification timestamp
+
+### {{.EntityNamePascal}}Status Enum
+
+Valid status values for {{.EntityNamePascal}} entities:
+
+- `active`: {{.EntityNamePascal}} is active and operational
+- `inactive`: {{.EntityNamePascal}} is inactive but can be reactivated
+- `pending`: {{.EntityNamePascal}} is pending approval or setup
+- `archived`: {{.EntityNamePascal}} is archived and read-only
+
+### Pagination Response
+
+Standard pagination wrapper for list endpoints:
+
+```json
+{
+  "data": [/* array of entities */],
+  "pagination": {
+    "total": "integer",
+    "count": "integer", 
+    "limit": "integer",
+    "offset": "integer",
+    "has_next": "boolean",
+    "has_previous": "boolean"
+  }
+}
+```
+
+---
+
+## Error Handling
+
+### Error Response Format
+
+All errors follow a consistent JSON structure:
+
+```json
+{
+  "error": {
+    "code": "string",
+    "message": "string",
+    "details": "string (optional)",
+    "correlation_id": "string"
+  }
+}
+```
+
+### HTTP Status Codes
+
+| Status Code | Description | Common Causes |
+|-------------|-------------|---------------|
+| `400` | Bad Request | Invalid request format, validation errors |
+| `401` | Unauthorized | Missing or invalid authentication token |
+| `403` | Forbidden | Insufficient permissions for the operation |
+| `404` | Not Found | {{.EntityNamePascal}} not found or inaccessible |
+| `409` | Conflict | {{.EntityNamePascal}} name already exists |
+| `422` | Unprocessable Entity | Business rule validation failures |
+| `429` | Too Many Requests | Rate limit exceeded |
+| `500` | Internal Server Error | Unexpected server error |
+
+### Example Error Responses
+
+**Validation Error (400)**:
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid {{.EntityNameSnake}} data",
+    "details": "Name is required and must be between 1 and 255 characters",
+    "correlation_id": "req_01234567"
+  }
+}
+```
+
+**Permission Error (403)**:
+```json
+{
+  "error": {
+    "code": "INSUFFICIENT_PERMISSIONS",
+    "message": "Access denied",
+    "details": "Missing required permission: {{.ModuleNameSnake}}.{{.EntityNameSnake}}.create",
+    "correlation_id": "req_01234567"
+  }
+}
+```
+
+**Not Found Error (404)**:
+```json
+{
+  "error": {
+    "code": "{{.EntityNameSnake|upper}}_NOT_FOUND",
+    "message": "{{.EntityNamePascal}} not found",
+    "details": "{{.EntityNamePascal}} with ID 01234567-89ab-cdef-0123-456789abcdef was not found",
+    "correlation_id": "req_01234567"
+  }
+}
+```
+
+---
+
+## Rate Limiting
+
+### Rate Limits
+
+The API implements rate limiting to ensure fair usage:
+
+- **Standard Operations**: 1000 requests per hour per token
+- **List Operations**: 100 requests per hour per token
+- **Bulk Operations**: 50 requests per hour per token
+
+### Rate Limit Headers
+
+Rate limit information is included in response headers:
+
+```http
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 999
+X-RateLimit-Reset: 1640995200
+```
+
+---
+
+## Examples
+
+### Complete CRUD Workflow
+
+```bash
+# 1. Create a new {{.EntityNameSnake}}
+curl -X POST "https://api.awo-erp.com/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Example {{.EntityNamePascal}}",
+    "description": "This is an example {{.EntityNameSnake}}"
+  }'
+
+# 2. List {{.EntityNamePlural}}
+curl -X GET "https://api.awo-erp.com/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}?limit=10" \
+  -H "Authorization: Bearer <token>"
+
+# 3. Get specific {{.EntityNameSnake}}
+curl -X GET "https://api.awo-erp.com/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}/01234567-89ab-cdef-0123-456789abcdef" \
+  -H "Authorization: Bearer <token>"
+
+# 4. Update {{.EntityNameSnake}}
+curl -X PUT "https://api.awo-erp.com/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}/01234567-89ab-cdef-0123-456789abcdef" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Updated {{.EntityNamePascal}}",
+    "description": "Updated description"
+  }'
+
+# 5. Delete {{.EntityNameSnake}}
+curl -X DELETE "https://api.awo-erp.com/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}/01234567-89ab-cdef-0123-456789abcdef" \
+  -H "Authorization: Bearer <token>"
+```
+
+### Filtering and Pagination
+
+```bash
+# Get active {{.EntityNamePlural}} with pagination
+curl -X GET "https://api.awo-erp.com/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}?status=active&limit=20&offset=40&sort_by=name&sort_order=asc" \
+  -H "Authorization: Bearer <token>"
+
+# Search {{.EntityNamePlural}} by name
+curl -X GET "https://api.awo-erp.com/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}?name=example&limit=10" \
+  -H "Authorization: Bearer <token>"
+```
+
+---
+
+## SDK Examples
+
+### Go SDK Example
+
+```go
+package main
+
+import (
+    "context"
+    "fmt"
+    "github.com/niiniyare/erp-sdk-go/{{.ModuleNameSnake}}"
+)
+
+func main() {
+    client := {{.ModuleNameSnake}}.NewClient("https://api.awo-erp.com", "your-api-token")
+    
+    // Create {{.EntityNameSnake}}
+    {{.EntityNameCamel}}, err := client.Create{{.EntityNamePascal}}(context.Background(), {{.ModuleNameSnake}}.Create{{.EntityNamePascal}}Request{
+        Name:        "Example {{.EntityNamePascal}}",
+        Description: ptr("This is an example"),
+    })
+    if err != nil {
+        panic(err)
+    }
+    
+    fmt.Printf("Created {{.EntityNameSnake}}: %s\n", {{.EntityNameCamel}}.ID)
+}
+
+func ptr(s string) *string { return &s }
+```
+
+### JavaScript SDK Example
+
+```javascript
+import { {{.ModuleNamePascal}}Client } from '@awo-erp/sdk';
+
+const client = new {{.ModuleNamePascal}}Client({
+  baseURL: 'https://api.awo-erp.com',
+  apiToken: 'your-api-token'
+});
+
+// Create {{.EntityNameSnake}}
+const {{.EntityNameCamel}} = await client.create{{.EntityNamePascal}}({
+  name: 'Example {{.EntityNamePascal}}',
+  description: 'This is an example'
+});
+
+console.log('Created {{.EntityNameSnake}}:', {{.EntityNameCamel}}.id);
+```
+
+---
+
+**API Version**: 1.0.0  
+**Generated**: {{.GeneratedAt.Format "2006-01-02 15:04:05"}}  
+**Generator**: awoctl {{.GeneratorVersion}}

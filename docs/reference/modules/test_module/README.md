@@ -1,8 +1,8 @@
-# {{.ModuleNamePascal}} Module
+# TestModule Module
 
 ## Overview
 
-{{.ModuleDescription}} - A comprehensive business management module within the AWO ERP system designed to handle {{.ModuleNameSnake}} operations with enterprise-grade reliability, multi-tenant support, and full audit compliance.
+TestModule management module - A comprehensive business management module within the AWO ERP system designed to handle test_module operations with enterprise-grade reliability, multi-tenant support, and full audit compliance.
 
 ## Quick Start
 
@@ -36,52 +36,52 @@ make test-unit
 ## Architecture Overview
 
 ### Domain Model
-The {{.ModuleNamePascal}} Module implements clean architecture principles with domain-driven design patterns:
+The TestModule Module implements clean architecture principles with domain-driven design patterns:
 
 **Core Entities:**
-- `{{.EntityNamePascal}}`: Primary aggregate root for {{.ModuleNameSnake}} management
-- `{{.EntityNamePascal}}Status`: State management and lifecycle tracking
-{{if eq .RootType "RootTypeAsset"}}
-- `{{.EntityNamePascal}}Balance`: Financial balance tracking and valuation
-{{end}}
+- `TestModule`: Primary aggregate root for test_module management
+- `TestModuleStatus`: State management and lifecycle tracking
+
+- `TestModuleBalance`: Financial balance tracking and valuation
+
 
 **Domain Services:**
-- `{{.EntityNamePascal}}Service`: Core business logic and workflow orchestration
-- `Validation{{.EntityNamePascal}}Service`: Business rule enforcement and compliance
-{{if eq .RootType "RootTypeAsset"}}
-- `Calculation{{.EntityNamePascal}}Service`: Financial calculations and reporting
-{{end}}
+- `TestModuleService`: Core business logic and workflow orchestration
+- `ValidationTestModuleService`: Business rule enforcement and compliance
+
+- `CalculationTestModuleService`: Financial calculations and reporting
+
 
 ### Service Layer
 ```go
-type {{.EntityNamePascal}}Service interface {
+type TestModuleService interface {
     // Core operations
-    Create{{.EntityNamePascal}}(ctx context.Context, cmd Create{{.EntityNamePascal}}Command) (*{{.EntityNamePascal}}, error)
-    Get{{.EntityNamePascal}}ByID(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID) (*{{.EntityNamePascal}}, error)
-    Update{{.EntityNamePascal}}(ctx context.Context, id {{.EntityNamePascal}}ID, cmd Update{{.EntityNamePascal}}Command) (*{{.EntityNamePascal}}, error)
-    Delete{{.EntityNamePascal}}(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID) error
+    CreateTestModule(ctx context.Context, cmd CreateTestModuleCommand) (*TestModule, error)
+    GetTestModuleByID(ctx context.Context, tenantID tenant.ID, id TestModuleID) (*TestModule, error)
+    UpdateTestModule(ctx context.Context, id TestModuleID, cmd UpdateTestModuleCommand) (*TestModule, error)
+    DeleteTestModule(ctx context.Context, tenantID tenant.ID, id TestModuleID) error
     
     // Business operations
-    List{{.EntityNamePlural}}(ctx context.Context, tenantID tenant.ID, filter {{.EntityNamePascal}}Filter) ([]*{{.EntityNamePascal}}, error)
-    Search{{.EntityNamePlural}}(ctx context.Context, tenantID tenant.ID, query string) ([]*{{.EntityNamePascal}}, error)
+    ListTestModule(ctx context.Context, tenantID tenant.ID, filter TestModuleFilter) ([]*TestModule, error)
+    SearchTestModule(ctx context.Context, tenantID tenant.ID, query string) ([]*TestModule, error)
 }
 ```
 
 ### Repository Layer
 ```go
-type {{.EntityNamePascal}}Repository interface {
-    Create(ctx context.Context, {{.EntityNameCamel}} *{{.EntityNamePascal}}) (*{{.EntityNamePascal}}, error)
-    GetByID(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID) (*{{.EntityNamePascal}}, error)
-    Update(ctx context.Context, {{.EntityNameCamel}} *{{.EntityNamePascal}}) (*{{.EntityNamePascal}}, error)
-    Delete(ctx context.Context, tenantID tenant.ID, id {{.EntityNamePascal}}ID) error
-    List(ctx context.Context, tenantID tenant.ID, filter {{.EntityNamePascal}}Filter) ([]*{{.EntityNamePascal}}, error)
+type TestModuleRepository interface {
+    Create(ctx context.Context, testModule *TestModule) (*TestModule, error)
+    GetByID(ctx context.Context, tenantID tenant.ID, id TestModuleID) (*TestModule, error)
+    Update(ctx context.Context, testModule *TestModule) (*TestModule, error)
+    Delete(ctx context.Context, tenantID tenant.ID, id TestModuleID) error
+    List(ctx context.Context, tenantID tenant.ID, filter TestModuleFilter) ([]*TestModule, error)
 }
 ```
 
 ## Key Features
 
 ### Core Functionality
-- ✅ **{{.EntityNamePascal}} Management**: Complete CRUD operations with validation
+- ✅ **TestModule Management**: Complete CRUD operations with validation
 - ✅ **Multi-Tenant Support**: Row-level security and tenant isolation
 - ✅ **ABAC Integration**: Attribute-based access control for security
 - 🚧 **Workflow Integration**: Temporal.io workflow orchestration
@@ -89,7 +89,7 @@ type {{.EntityNamePascal}}Repository interface {
 
 ### Business Rules
 1. **Tenant Isolation**: All operations are tenant-scoped and validated
-2. **{{.EntityNamePascal}} Validation**: Business rule enforcement for data integrity
+2. **TestModule Validation**: Business rule enforcement for data integrity
 3. **Audit Trail**: Complete activity logging for compliance
 4. **Permission Control**: ABAC-based authorization for all operations
 
@@ -105,11 +105,11 @@ This module implements PostgreSQL row-level security (RLS) for tenant isolation:
 ### REST API
 | Endpoint | Method | Description | Status |
 |----------|--------|-------------|--------|
-| `/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}` | GET | List {{.EntityNamePlural}} | ✅ |
-| `/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}` | POST | Create {{.EntityNameCamel}} | ✅ |
-| `/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}/{id}` | GET | Get {{.EntityNameCamel}} by ID | ✅ |
-| `/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}/{id}` | PUT | Update {{.EntityNameCamel}} | 🚧 |
-| `/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}/{id}` | DELETE | Delete {{.EntityNameCamel}} | 📋 |
+| `/api/v1/test-module/test_module` | GET | List TestModule | ✅ |
+| `/api/v1/test-module/test_module` | POST | Create testModule | ✅ |
+| `/api/v1/test-module/test_module/{id}` | GET | Get testModule by ID | ✅ |
+| `/api/v1/test-module/test_module/{id}` | PUT | Update testModule | 🚧 |
+| `/api/v1/test-module/test_module/{id}` | DELETE | Delete testModule | 📋 |
 
 ### Search Capabilities
 - Search by ID: `GET /{id}`
@@ -122,20 +122,20 @@ This module implements PostgreSQL row-level security (RLS) for tenant isolation:
 ## Database Schema
 
 ### Tables
-- `{{.ModuleNameSnake}}_{{.EntityNameSnake}}`: Core entity storage with tenant isolation
-- `{{.ModuleNameSnake}}_audit_log`: Complete audit trail and change tracking
-{{if eq .RootType "RootTypeAsset"}}
-- `{{.ModuleNameSnake}}_balances`: Financial balance tracking
-{{end}}
+- `test_module_test_module`: Core entity storage with tenant isolation
+- `test_module_audit_log`: Complete audit trail and change tracking
+
+- `test_module_balances`: Financial balance tracking
+
 
 ### Key Relationships
 ```mermaid
 erDiagram
-    TENANT ||--o{ {{.EntityNameSnake|upper}} : "owns"
-    {{.EntityNameSnake|upper}} ||--o{ AUDIT_LOG : "tracks"
-{{if eq .RootType "RootTypeAsset"}}
-    {{.EntityNameSnake|upper}} ||--o{ BALANCE : "has"
-{{end}}
+    TENANT ||--o{ TEST_MODULE : "owns"
+    TEST_MODULE ||--o{ AUDIT_LOG : "tracks"
+
+    TEST_MODULE ||--o{ BALANCE : "has"
+
 ```
 
 ## Integration Points
@@ -144,9 +144,9 @@ erDiagram
 - **User Module**: Authentication and authorization via ABAC
 - **Tenant Module**: Multi-tenancy support and tenant management
 - **Audit Module**: Activity logging and compliance tracking
-{{if eq .RootType "RootTypeAsset"}}
+
 - **Finance Module**: Financial calculations and reporting
-{{end}}
+
 
 ### External Services
 - **Temporal.io**: Workflow orchestration and distributed processing
@@ -204,9 +204,19 @@ make test-coverage
 - **Multi-Tenant Isolation**: PostgreSQL RLS with automatic tenant filtering
 
 ### Default Permissions
-{{range .DefaultPermissions}}
-- `{{.}}`: {{. | title | replace "_" " "}} operations
-{{end}}
+
+- `test_module.create`: _ operations
+
+- `test_module.read`: _ operations
+
+- `test_module.update`: _ operations
+
+- `test_module.delete`: _ operations
+
+- `test_module.list`: _ operations
+
+- `test_module.search`: _ operations
+
 
 ### Audit Trail
 - **Operation Logging**: All CRUD operations tracked with user context
@@ -239,7 +249,7 @@ make test-coverage
 ### Environment Configuration
 ```bash
 # Required environment variables
-DATABASE_URL=postgresql://user:pass@host:5432/{{.ModuleNameSnake}}_db
+DATABASE_URL=postgresql://user:pass@host:5432/test_module_db
 REDIS_URL=redis://host:6379/0
 ABAC_POLICY_URL=http://abac-service:8080
 ```
@@ -301,7 +311,7 @@ TEST_DATABASE_URL="..." make test-integration
 ### Performance Issues
 ```bash
 # Check database query performance
-EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM {{.ModuleNameSnake}}_{{.EntityNameSnake}};
+EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM test_module_test_module;
 
 # Monitor cache hit rates
 redis-cli info stats
@@ -310,12 +320,12 @@ redis-cli info stats
 ### Support Channels
 - **GitHub Issues**: Bug reports and feature requests
 - **Team Documentation**: Module-specific documentation
-- **Development Chat**: #{{.ModuleNameKebab}}-module
+- **Development Chat**: #test-module-module
 
 ---
 
 **Module Status**: In Development  
 **Version**: 1.0.0  
-**Generated**: {{.GeneratedAt.Format "2006-01-02 15:04:05"}}  
-**Generator**: awoctl {{.GeneratorVersion}}  
-**Maintainer**: {{.ModuleNamePascal}} Development Team
+**Generated**: 2025-10-12 22:32:13  
+**Generator**: awoctl 0.1.0  
+**Maintainer**: TestModule Development Team

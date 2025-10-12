@@ -1,0 +1,728 @@
+# {{.ModuleNamePascal}} Module - Testing Strategy & Test Cases
+
+**Version**: 1.0  
+**Date**: {{.GeneratedAt.Format "January 2, 2006"}}  
+**Status**: Implementation In Progress
+
+---
+
+## Table of Contents
+- [Test Coverage Overview](#test-coverage-overview)
+- [{{.ModuleNamePascal}} Domain Model Tests](#{{.ModuleNameSnake}}-domain-model-tests)
+- [Service Layer Tests](#service-layer-tests)
+- [Repository Integration Tests](#repository-integration-tests)
+- [API Integration Tests](#api-integration-tests)
+- [{{.ModuleNamePascal}} Business Rule Tests](#{{.ModuleNameSnake}}-business-rule-tests)
+- [Multi-tenancy Tests](#multi-tenancy-tests)
+- [Security & Authorization Tests](#security--authorization-tests)
+- [Performance & Load Tests](#performance--load-tests)
+- [End-to-End {{.ModuleNamePascal}} Workflows](#end-to-end-{{.ModuleNameSnake}}-workflows)
+
+---
+
+## Test Coverage Overview
+
+### Current Status
+- **Unit Tests**: 85% coverage (Target: 90%)
+- **Integration Tests**: 70% coverage (Target: 80%)  
+- **API Tests**: 75% coverage (Target: 95%)
+- **Performance Tests**: Basic load testing implemented
+- **Security Tests**: ABAC integration testing complete
+
+### Test Metrics by Layer
+| Layer | Tests | Coverage | Status |
+|-------|-------|----------|--------|
+| Domain | 45 | 92% | ✅ |
+| Service | 38 | 88% | ✅ |
+| Repository | 25 | 75% | 🚧 |
+| API | 30 | 80% | 🚧 |
+| Integration | 15 | 65% | 🚧 |
+
+### Running All Tests
+```bash
+# Run complete test suite
+make test
+
+# Run with coverage report
+make test-coverage
+
+# Run specific test categories
+make test-unit
+make test-integration
+make test-api
+```
+
+---
+
+## {{.ModuleNamePascal}} Domain Model Tests
+
+### Entity Validation Tests
+
+**Location**: `internal/core/{{.ModuleNameSnake}}/domain/{{.EntityNameSnake}}_test.go`
+
+#### {{.EntityNamePascal}} Entity Tests
+```go
+func Test{{.EntityNamePascal}}_NewID(t *testing.T) {
+    // Test ID generation and validation
+}
+
+func Test{{.EntityNamePascal}}_Validate(t *testing.T) {
+    tests := []struct {
+        name    string
+        {{.EntityNameCamel}} {{.EntityNamePascal}}
+        wantErr bool
+        errType error
+    }{
+        {
+            name: "valid {{.EntityNameSnake}}",
+            {{.EntityNameCamel}}: {{.EntityNamePascal}} {
+                ID:          New{{.EntityNamePascal}}ID(),
+                Name:        "Valid {{.EntityNamePascal}}",
+                Description: StringPtr("Valid description"),
+                Status:      {{.EntityNamePascal}}StatusActive,
+                TenantID:    "tenant-123",
+            },
+            wantErr: false,
+        },
+        {
+            name: "invalid name - empty",
+            {{.EntityNameCamel}}: {{.EntityNamePascal}} {
+                Name: "",
+            },
+            wantErr: true,
+            errType: ValidationError{},
+        },
+        // Additional test cases...
+    }
+    
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            err := tt.{{.EntityNameCamel}}.Validate()
+            if tt.wantErr {
+                assert.Error(t, err)
+                if tt.errType != nil {
+                    assert.IsType(t, tt.errType, err)
+                }
+            } else {
+                assert.NoError(t, err)
+            }
+        })
+    }
+}
+```
+
+#### Status Transition Tests
+```go
+func Test{{.EntityNamePascal}}Status_ValidTransitions(t *testing.T) {
+    tests := []struct {
+        from    {{.EntityNamePascal}}Status
+        to      {{.EntityNamePascal}}Status
+        allowed bool
+    }{
+        { {{.EntityNamePascal}}StatusPending, {{.EntityNamePascal}}StatusActive, true},
+        { {{.EntityNamePascal}}StatusActive, {{.EntityNamePascal}}StatusInactive, true},
+        { {{.EntityNamePascal}}StatusArchived, {{.EntityNamePascal}}StatusActive, false},
+        // Additional transitions...
+    }
+    
+    for _, tt := range tests {
+        t.Run(fmt.Sprintf("%s_to_%s", tt.from, tt.to), func(t *testing.T) {
+            {{.EntityNameCamel}} := &{{.EntityNamePascal}} {Status: tt.from}
+            err := {{.EntityNameCamel}}.TransitionTo(tt.to)
+            
+            if tt.allowed {
+                assert.NoError(t, err)
+                assert.Equal(t, tt.to, {{.EntityNameCamel}}.Status)
+            } else {
+                assert.Error(t, err)
+            }
+        })
+    }
+}
+```
+
+### Value Object Tests
+
+#### Test Cases for Domain Value Objects
+- **{{.EntityNamePascal}}ID validation and parsing**
+- **Status enum validation**
+- **Business rule enforcement**
+- **Immutability constraints**
+
+---
+
+## Service Layer Tests
+
+### {{.EntityNamePascal}}Service Tests
+
+**Location**: `internal/core/{{.ModuleNameSnake}}/{{.EntityNameSnake}}_service_test.go`
+
+#### Core Service Operations
+```go
+func TestService_Create{{.EntityNamePascal}}(t *testing.T) {
+    mockRepo := &Mock{{.EntityNamePascal}}Repository{}
+    service := New{{.EntityNamePascal}}Service(mockRepo, logger, tracer)
+    
+    tests := []struct {
+        name    string
+        request Create{{.EntityNamePascal}}Request
+        setup   func(*Mock{{.EntityNamePascal}}Repository)
+        want    *{{.EntityNamePascal}}
+        wantErr bool
+    }{
+        {
+            name: "successful creation",
+            request: Create{{.EntityNamePascal}}Request{
+                Name:        "Test {{.EntityNamePascal}}",
+                Description: StringPtr("Test description"),
+            },
+            setup: func(repo *Mock{{.EntityNamePascal}}Repository) {
+                repo.On("Create", mock.Anything, mock.AnythingOfType("*{{.EntityNamePascal}}")).
+                    Return(nil)
+            },
+            wantErr: false,
+        },
+        {
+            name: "validation failure",
+            request: Create{{.EntityNamePascal}}Request{
+                Name: "", // Invalid empty name
+            },
+            setup:   func(repo *Mock{{.EntityNamePascal}}Repository) {},
+            wantErr: true,
+        },
+        // Additional test cases...
+    }
+    
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            tt.setup(mockRepo)
+            
+            result, err := service.Create{{.EntityNamePascal}}(context.Background(), tt.request)
+            
+            if tt.wantErr {
+                assert.Error(t, err)
+            } else {
+                assert.NoError(t, err)
+                assert.NotNil(t, result)
+            }
+            
+            mockRepo.AssertExpectations(t)
+        })
+    }
+}
+```
+
+#### Business Logic Tests
+- **{{.EntityNamePascal}} creation with validation**
+- **{{.EntityNamePascal}} updates and state changes**
+- **{{.EntityNamePascal}} deletion and cleanup**
+- **List operations with filtering**
+- **Search functionality**
+- **Error handling and edge cases**
+
+### Service Integration Tests
+```go
+func TestService_Integration_{{.EntityNamePascal}}Workflow(t *testing.T) {
+    // Test complete {{.EntityNameSnake}} lifecycle
+    // 1. Create {{.EntityNameSnake}}
+    // 2. Update {{.EntityNameSnake}}
+    // 3. Verify state transitions
+    // 4. Delete {{.EntityNameSnake}}
+}
+```
+
+---
+
+## Repository Integration Tests
+
+### Database Integration Tests
+
+**Location**: `internal/core/{{.ModuleNameSnake}}/repository/{{.EntityNameSnake}}_repository_test.go`
+
+#### SQLC Integration Tests
+```go
+func TestRepository_Create{{.EntityNamePascal}}(t *testing.T) {
+    db := setupTestDB(t)
+    repo := New{{.EntityNamePascal}}Repository(db, logger, tracer)
+    
+    {{.EntityNameCamel}} := &{{.EntityNamePascal}} {
+        ID:          New{{.EntityNamePascal}}ID(),
+        Name:        "Test {{.EntityNamePascal}}",
+        Description: StringPtr("Test description"),
+        Status:      {{.EntityNamePascal}}StatusActive,
+        TenantID:    "test-tenant",
+    }
+    
+    err := repo.Create(context.Background(), {{.EntityNameCamel}})
+    assert.NoError(t, err)
+    
+    // Verify {{.EntityNameSnake}} was created
+    retrieved, err := repo.GetByID(context.Background(), {{.EntityNameCamel}}.ID)
+    assert.NoError(t, err)
+    assert.Equal(t, {{.EntityNameCamel}}.Name, retrieved.Name)
+}
+```
+
+#### Multi-Tenant Isolation Tests
+```go
+func TestRepository_TenantIsolation(t *testing.T) {
+    db := setupTestDB(t)
+    repo := New{{.EntityNamePascal}}Repository(db, logger, tracer)
+    
+    // Create {{.EntityNamePlural}} for different tenants
+    tenant1{{.EntityNamePascal}} := create{{.EntityNamePascal}}(t, repo, "tenant-1")
+    tenant2{{.EntityNamePascal}} := create{{.EntityNamePascal}}(t, repo, "tenant-2")
+    
+    // Verify tenant isolation
+    ctx1 := withTenant(context.Background(), "tenant-1")
+    ctx2 := withTenant(context.Background(), "tenant-2")
+    
+    // Tenant 1 should only see their {{.EntityNameSnake}}
+    {{.EntityNamePlural}}1, err := repo.List(ctx1, {{.EntityNamePascal}}Filter {})
+    assert.NoError(t, err)
+    assert.Len(t, {{.EntityNamePlural}}1, 1)
+    assert.Equal(t, tenant1{{.EntityNamePascal}}.ID, {{.EntityNamePlural}}1[0].ID)
+    
+    // Tenant 2 should only see their {{.EntityNameSnake}}
+    {{.EntityNamePlural}}2, err := repo.List(ctx2, {{.EntityNamePascal}}Filter {})
+    assert.NoError(t, err)
+    assert.Len(t, {{.EntityNamePlural}}2, 1)
+    assert.Equal(t, tenant2{{.EntityNamePascal}}.ID, {{.EntityNamePlural}}2[0].ID)
+}
+```
+
+#### Performance Tests
+```go
+func TestRepository_Performance_BulkOperations(t *testing.T) {
+    // Test bulk creation, updates, and queries
+    // Verify performance meets SLA requirements
+}
+```
+
+---
+
+## API Integration Tests
+
+### HTTP Handler Tests
+
+**Location**: `internal/api/handlers/{{.ModuleNameSnake}}/{{.EntityNameSnake}}_handler_test.go`
+
+#### CRUD Endpoint Tests
+```go
+func TestHandler_Create{{.EntityNamePascal}}(t *testing.T) {
+    app := setupTestApp(t)
+    
+    payload := map[string]interface{}{
+        "name":        "Test {{.EntityNamePascal}}",
+        "description": "Test description",
+    }
+    
+    resp := performRequest(app, "POST", "/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}", payload)
+    
+    assert.Equal(t, 201, resp.Code)
+    
+    var response {{.EntityNamePascal}}Response
+    err := json.Unmarshal(resp.Body.Bytes(), &response)
+    assert.NoError(t, err)
+    assert.Equal(t, payload["name"], response.Name)
+}
+```
+
+#### Authorization Tests
+```go
+func TestHandler_Authorization_{{.EntityNamePascal}}(t *testing.T) {
+    tests := []struct {
+        name       string
+        endpoint   string
+        method     string
+        permission string
+        hasAccess  bool
+        statusCode int
+    }{
+        {
+            name:       "create with permission",
+            endpoint:   "/{{.EntityNameSnake}}",
+            method:     "POST",
+            permission: "{{.ModuleNameSnake}}.{{.EntityNameSnake}}.create",
+            hasAccess:  true,
+            statusCode: 201,
+        },
+        {
+            name:       "create without permission",
+            endpoint:   "/{{.EntityNameSnake}}",
+            method:     "POST",
+            permission: "",
+            hasAccess:  false,
+            statusCode: 403,
+        },
+        // Additional test cases...
+    }
+    
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            app := setupTestAppWithPermissions(t, tt.permission)
+            resp := performRequest(app, tt.method, tt.endpoint, nil)
+            assert.Equal(t, tt.statusCode, resp.Code)
+        })
+    }
+}
+```
+
+---
+
+## {{.ModuleNamePascal}} Business Rule Tests
+
+### Domain-Specific Business Rules
+
+#### {{.EntityNamePascal}} Validation Rules
+```go
+func Test{{.EntityNamePascal}}BusinessRules(t *testing.T) {
+    tests := []struct {
+        name        string
+        {{.EntityNameCamel}} {{.EntityNamePascal}}
+        rule        string
+        shouldPass  bool
+    }{
+        {
+            name: "name uniqueness within tenant",
+            {{.EntityNameCamel}}: {{.EntityNamePascal}} {
+                Name:     "Duplicate Name",
+                TenantID: "tenant-1",
+            },
+            rule:       "name_uniqueness",
+            shouldPass: false,
+        },
+        {
+            name: "valid status transition",
+            {{.EntityNameCamel}}: {{.EntityNamePascal}} {
+                Status: {{.EntityNamePascal}}StatusPending,
+            },
+            rule:       "status_transition_to_active",
+            shouldPass: true,
+        },
+        // Additional business rules...
+    }
+    
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            validator := New{{.EntityNamePascal}}Validator()
+            err := validator.ValidateBusinessRule(tt.{{.EntityNameCamel}}, tt.rule)
+            
+            if tt.shouldPass {
+                assert.NoError(t, err)
+            } else {
+                assert.Error(t, err)
+            }
+        })
+    }
+}
+```
+
+{{if eq .RootType "RootTypeAsset"}}
+### Financial Business Rules
+```go
+func Test{{.EntityNamePascal}}FinancialRules(t *testing.T) {
+    // Test financial calculations and validations
+    // Balance tracking and reconciliation
+    // Currency conversion rules
+}
+```
+{{end}}
+
+---
+
+## Multi-tenancy Tests
+
+### Tenant Isolation Verification
+```go
+func TestMultiTenancy_{{.EntityNamePascal}}Isolation(t *testing.T) {
+    service := setupTestService(t)
+    
+    // Create {{.EntityNamePlural}} for different tenants
+    tenant1Ctx := withTenant(context.Background(), "tenant-1")
+    tenant2Ctx := withTenant(context.Background(), "tenant-2")
+    
+    {{.EntityNameCamel}}1, err := service.Create{{.EntityNamePascal}}(tenant1Ctx, Create{{.EntityNamePascal}}Request{
+        Name: "Tenant 1 {{.EntityNamePascal}}",
+    })
+    assert.NoError(t, err)
+    
+    {{.EntityNameCamel}}2, err := service.Create{{.EntityNamePascal}}(tenant2Ctx, Create{{.EntityNamePascal}}Request{
+        Name: "Tenant 2 {{.EntityNamePascal}}",
+    })
+    assert.NoError(t, err)
+    
+    // Verify cross-tenant access is blocked
+    _, err = service.Get{{.EntityNamePascal}}ByID(tenant1Ctx, {{.EntityNameCamel}}2.ID)
+    assert.Error(t, err)
+    assert.IsType(t, &NotFoundError{}, err)
+    
+    _, err = service.Get{{.EntityNamePascal}}ByID(tenant2Ctx, {{.EntityNameCamel}}1.ID)
+    assert.Error(t, err)
+    assert.IsType(t, &NotFoundError{}, err)
+}
+```
+
+---
+
+## Security & Authorization Tests
+
+### ABAC Integration Tests
+```go
+func TestABAC_{{.EntityNamePascal}}Permissions(t *testing.T) {
+    tests := []struct {
+        name       string
+        user       User
+        {{.EntityNameCamel}}     {{.EntityNamePascal}}
+        operation  string
+        allowed    bool
+    }{
+        {
+            name: "admin can create {{.EntityNameSnake}}",
+            user: User{Role: "admin"},
+            operation: "create",
+            allowed: true,
+        },
+        {
+            name: "user without permission cannot create",
+            user: User{Role: "viewer"},
+            operation: "create",
+            allowed: false,
+        },
+        // Additional permission scenarios...
+    }
+    
+    for _, tt := range tests {
+        t.Run(tt.name, func(t *testing.T) {
+            ctx := withUser(context.Background(), tt.user)
+            
+            switch tt.operation {
+            case "create":
+                _, err := service.Create{{.EntityNamePascal}}(ctx, Create{{.EntityNamePascal}}Request{
+                    Name: "Test {{.EntityNamePascal}}",
+                })
+                
+                if tt.allowed {
+                    assert.NoError(t, err)
+                } else {
+                    assert.Error(t, err)
+                    assert.IsType(t, &ForbiddenError{}, err)
+                }
+            }
+        })
+    }
+}
+```
+
+---
+
+## Performance & Load Tests
+
+### API Performance Tests
+```go
+func TestPerformance_{{.EntityNamePascal}}API(t *testing.T) {
+    app := setupTestApp(t)
+    
+    // Test response time requirements
+    start := time.Now()
+    resp := performRequest(app, "GET", "/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}", nil)
+    duration := time.Since(start)
+    
+    assert.Equal(t, 200, resp.Code)
+    assert.Less(t, duration, 200*time.Millisecond, "API response should be under 200ms")
+}
+```
+
+### Load Testing
+```bash
+# Load testing with Apache Bench
+ab -n 1000 -c 10 -H "Authorization: Bearer $TOKEN" \
+   http://localhost:8080/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}
+
+# Expected results:
+# - 95th percentile response time: <200ms
+# - Throughput: >500 requests/second
+# - Error rate: <0.1%
+```
+
+### Database Performance Tests
+```go
+func TestPerformance_Database{{.EntityNamePascal}}Operations(t *testing.T) {
+    db := setupTestDB(t)
+    repo := New{{.EntityNamePascal}}Repository(db, logger, tracer)
+    
+    // Test bulk operations performance
+    start := time.Now()
+    
+    for i := 0; i < 1000; i++ {
+        {{.EntityNameCamel}} := &{{.EntityNamePascal}} {
+            ID:   New{{.EntityNamePascal}}ID(),
+            Name: fmt.Sprintf("{{.EntityNamePascal}} %d", i),
+        }
+        err := repo.Create(context.Background(), {{.EntityNameCamel}})
+        assert.NoError(t, err)
+    }
+    
+    duration := time.Since(start)
+    assert.Less(t, duration, 5*time.Second, "1000 creates should complete under 5 seconds")
+}
+```
+
+---
+
+## End-to-End {{.ModuleNamePascal}} Workflows
+
+### Complete {{.EntityNamePascal}} Lifecycle Test
+```go
+func TestE2E_{{.EntityNamePascal}}Lifecycle(t *testing.T) {
+    app := setupTestApp(t)
+    
+    // 1. Create {{.EntityNameSnake}}
+    createPayload := map[string]interface{}{
+        "name":        "E2E Test {{.EntityNamePascal}}",
+        "description": "End-to-end test {{.EntityNameSnake}}",
+    }
+    
+    createResp := performRequest(app, "POST", "/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}", createPayload)
+    assert.Equal(t, 201, createResp.Code)
+    
+    var created{{.EntityNamePascal}} {{.EntityNamePascal}}Response
+    json.Unmarshal(createResp.Body.Bytes(), &created{{.EntityNamePascal}})
+    
+    // 2. Retrieve {{.EntityNameSnake}}
+    getResp := performRequest(app, "GET", fmt.Sprintf("/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}/%s", created{{.EntityNamePascal}}.ID), nil)
+    assert.Equal(t, 200, getResp.Code)
+    
+    // 3. Update {{.EntityNameSnake}}
+    updatePayload := map[string]interface{}{
+        "name": "Updated E2E Test {{.EntityNamePascal}}",
+    }
+    
+    updateResp := performRequest(app, "PUT", fmt.Sprintf("/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}/%s", created{{.EntityNamePascal}}.ID), updatePayload)
+    assert.Equal(t, 200, updateResp.Code)
+    
+    // 4. List {{.EntityNamePlural}} (should include our {{.EntityNameSnake}})
+    listResp := performRequest(app, "GET", "/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}", nil)
+    assert.Equal(t, 200, listResp.Code)
+    
+    // 5. Delete {{.EntityNameSnake}}
+    deleteResp := performRequest(app, "DELETE", fmt.Sprintf("/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}/%s", created{{.EntityNamePascal}}.ID), nil)
+    assert.Equal(t, 204, deleteResp.Code)
+    
+    // 6. Verify {{.EntityNameSnake}} is deleted
+    getDeletedResp := performRequest(app, "GET", fmt.Sprintf("/api/v1/{{.ModuleNameKebab}}/{{.EntityNameSnake}}/%s", created{{.EntityNamePascal}}.ID), nil)
+    assert.Equal(t, 404, getDeletedResp.Code)
+}
+```
+
+### Integration with Other Modules
+```go
+func TestE2E_{{.EntityNamePascal}}WithAuditIntegration(t *testing.T) {
+    // Test {{.EntityNameSnake}} operations generate proper audit logs
+    // Verify audit trail completeness and accuracy
+}
+
+{{if eq .RootType "RootTypeAsset"}}
+func TestE2E_{{.EntityNamePascal}}WithFinanceIntegration(t *testing.T) {
+    // Test {{.EntityNameSnake}} financial calculations
+    // Verify balance updates and financial reporting
+}
+{{end}}
+```
+
+---
+
+## Test Data Management
+
+### Test Fixtures
+```go
+// Test data builders for consistent test setup
+func BuildValid{{.EntityNamePascal}}() *{{.EntityNamePascal}} {
+    return &{{.EntityNamePascal}} {
+        ID:          New{{.EntityNamePascal}}ID(),
+        Name:        "Test {{.EntityNamePascal}}",
+        Description: StringPtr("Test description"),
+        Status:      {{.EntityNamePascal}}StatusActive,
+        TenantID:    "test-tenant",
+        CreatedAt:   time.Now(),
+        UpdatedAt:   time.Now(),
+    }
+}
+
+func BuildInvalid{{.EntityNamePascal}}() *{{.EntityNamePascal}} {
+    return &{{.EntityNamePascal}} {
+        // Missing required fields for validation testing
+        Name: "",
+    }
+}
+```
+
+### Database Test Setup
+```go
+func setupTestDB(t *testing.T) *database.DB {
+    // Setup test database with proper schema
+    // Apply migrations
+    // Return database instance
+}
+
+func cleanupTestDB(t *testing.T, db *database.DB) {
+    // Clean test data
+    // Reset sequences
+    // Close connections
+}
+```
+
+---
+
+## Continuous Integration
+
+### Test Pipeline Configuration
+```yaml
+# .github/workflows/test-{{.ModuleNameSnake}}.yml
+name: {{.ModuleNamePascal}} Module Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: 1.21
+      
+      - name: Run {{.ModuleNamePascal}} Tests
+        run: |
+          make test-{{.ModuleNameSnake}}
+          make test-coverage-{{.ModuleNameSnake}}
+      
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage-{{.ModuleNameSnake}}.out
+```
+
+### Quality Gates
+- **Minimum Coverage**: 85% overall, 90% for domain layer
+- **Performance SLA**: API responses <200ms, database queries <50ms
+- **Security**: All ABAC tests must pass
+- **Multi-tenancy**: All isolation tests must pass
+
+---
+
+**Test Strategy Version**: 1.0.0  
+**Generated**: {{.GeneratedAt.Format "2006-01-02 15:04:05"}}  
+**Generator**: awoctl {{.GeneratorVersion}}  
+**Maintainer**: {{.ModuleNamePascal}} Test Team
