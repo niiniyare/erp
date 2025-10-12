@@ -13,6 +13,7 @@ const version = "0.1.0"
 var (
 	dryRun    bool
 	withTests bool
+	withDocs  bool
 	verbose   bool
 )
 
@@ -28,8 +29,8 @@ It generates boilerplate code following established patterns for:
 
 Examples:
   awoctl new module inventory
-  awoctl new feature finance/budgets
-  awoctl new module hr --with-tests
+  awoctl new module finance --with-docs
+  awoctl new module hr --with-tests --with-docs
   awoctl new module projects --dry-run`,
 	Version: version,
 }
@@ -51,13 +52,20 @@ var newModuleCmd = &cobra.Command{
 - Repository layer (data access, SQLC integration)
 - API layer (Goa DSL, handlers)
 - Test scaffolds (if --with-tests flag is used)
+- Complete documentation (if --with-docs flag is used)
 
 The generated code follows ERP best practices including:
 - Clean Architecture patterns
 - ABAC security integration
 - Feature flag support
 - Observability (metrics, tracing, logging)
-- Proper error handling`,
+- Proper error handling
+
+Documentation includes:
+- Module README with architecture overview
+- Complete API reference with examples
+- Comprehensive testing strategy
+- Detailed architecture guide`,
 	Args: cobra.ExactArgs(1),
 	RunE: runNewModule,
 }
@@ -129,6 +137,7 @@ func init() {
 	// Global flags
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Preview what would be generated without creating files")
 	rootCmd.PersistentFlags().BoolVar(&withTests, "with-tests", false, "Generate test scaffolds alongside implementation")
+	rootCmd.PersistentFlags().BoolVar(&withDocs, "with-docs", false, "Generate comprehensive documentation alongside implementation")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
 
 	// Add subcommands
@@ -148,6 +157,7 @@ func runNewModule(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Generating module: %s\n", moduleName)
 		fmt.Printf("Dry run: %v\n", dryRun)
 		fmt.Printf("With tests: %v\n", withTests)
+		fmt.Printf("With docs: %v\n", withDocs)
 	}
 
 	config := generator.ModuleConfig{
@@ -166,11 +176,36 @@ func runNewModule(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to generate module %s: %w", moduleName, err)
 	}
 
+	// Generate documentation if requested
+	if withDocs {
+		if verbose {
+			fmt.Printf("Generating documentation for module: %s\n", moduleName)
+		}
+
+		docsConfig := generator.DocsConfig{
+			ModuleName: moduleName,
+			DryRun:     dryRun,
+			Verbose:    verbose,
+		}
+
+		docsGen, err := generator.NewDocsGenerator()
+		if err != nil {
+			return fmt.Errorf("failed to create docs generator: %w", err)
+		}
+
+		if err := docsGen.Generate(docsConfig); err != nil {
+			return fmt.Errorf("failed to generate documentation for module %s: %w", moduleName, err)
+		}
+	}
+
 	if !dryRun {
 		fmt.Printf("✅ Successfully generated module: %s\n", moduleName)
 		fmt.Printf("📂 Module created at: internal/core/%s/\n", moduleName)
 		if withTests {
 			fmt.Printf("🧪 Test scaffolds created\n")
+		}
+		if withDocs {
+			fmt.Printf("📚 Documentation generated at: docs/reference/modules/%s/\n", moduleName)
 		}
 		fmt.Printf("\nNext steps:\n")
 		fmt.Printf("1. Update domain models in internal/core/%s/domain/\n", moduleName)

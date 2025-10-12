@@ -115,15 +115,22 @@ scaffold-install: ## 🔧 Build and install awoctl scaffolding tool
 	@echo "$(GREEN)✅ awoctl built successfully$(NC)"
 
 .PHONY: scaffold-module
-scaffold-module: ## 📦 Generate new module (usage: make scaffold-module name=moduleName)
+scaffold-module: ## 📦 Generate new module (usage: make scaffold-module name=moduleName [docs=true] [tests=true])
 	@if [ -z "$(name)" ]; then \
 		echo "$(RED)❌ Error: module name required$(NC)"; \
 		echo "$(YELLOW)Usage: make scaffold-module name=inventory$(NC)"; \
+		echo "$(YELLOW)Options: docs=true tests=true$(NC)"; \
 		exit 1; \
 	fi
 	@echo "$(BLUE)Generating module: $(name)$(NC)"
-	@./awoctl new module $(name) --verbose
+	@cmd="./awoctl new module $(name) --verbose"; \
+	if [ "$(docs)" = "true" ]; then cmd="$$cmd --with-docs"; fi; \
+	if [ "$(tests)" = "true" ]; then cmd="$$cmd --with-tests"; fi; \
+	eval $$cmd
 	@echo "$(GREEN)✅ Module '$(name)' generated successfully$(NC)"
+	@if [ "$(docs)" = "true" ]; then \
+		echo "$(GREEN)📚 Documentation generated at: docs/reference/modules/$(name)/$(NC)"; \
+	fi
 	@echo "$(YELLOW)Next steps:$(NC)"
 	@echo "  1. Update domain models in internal/core/$(name)/domain/"
 	@echo "  2. Run 'make sqlc goa' to generate code"
@@ -151,6 +158,18 @@ scaffold-feature: ## ⭐ Generate feature (usage: make scaffold-feature path=fin
 	@echo "$(BLUE)Generating feature: $(path)$(NC)"
 	@./awoctl new feature $(path) --verbose
 	@echo "$(GREEN)✅ Feature '$(path)' generated successfully$(NC)"
+
+.PHONY: scaffold-docs
+scaffold-docs: ## 📖 Generate documentation for existing module (usage: make scaffold-docs name=moduleName)
+	@if [ -z "$(name)" ]; then \
+		echo "$(RED)❌ Error: module name required$(NC)"; \
+		echo "$(YELLOW)Usage: make scaffold-docs name=inventory$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(BLUE)Generating documentation for module: $(name)$(NC)"
+	@./awoctl docs module $(name) --verbose
+	@echo "$(GREEN)✅ Documentation for '$(name)' generated successfully$(NC)"
+	@echo "$(GREEN)📚 Documentation available at: docs/reference/modules/$(name)/$(NC)"
 
 .PHONY: scaffold-help
 scaffold-help: ## 📚 Show scaffolding tool help

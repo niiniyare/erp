@@ -98,6 +98,43 @@ make mock                  # Generate gomock interfaces
 make templ                 # Generate Templ templates
 ```
 
+### Module Scaffolding
+
+```bash
+# Module generation with documentation
+make scaffold-module name=inventory docs=true tests=true
+
+# Component generation
+make scaffold-component module=finance name=payment type=entity
+
+# Standalone documentation generation
+make scaffold-docs name=finance
+
+# Show scaffolding help
+make scaffold-help
+```
+
+### Direct awoctl Commands
+
+```bash
+# Module generation
+awoctl new module inventory --with-docs --with-tests --verbose
+
+# Feature generation  
+awoctl new feature finance/budgets
+
+# Component generation
+awoctl new component finance payment entity
+
+# Documentation generation
+awoctl docs module finance --verbose
+
+# Help and options
+awoctl --help
+awoctl new --help
+awoctl docs --help
+```
+
 ## Multi-Tenant Architecture
 
 **Core Concept**: Shared database with PostgreSQL Row-Level Security (RLS) for tenant isolation.
