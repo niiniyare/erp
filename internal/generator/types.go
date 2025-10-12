@@ -42,6 +42,12 @@ type TemplateData struct {
 	FeatureNameSnake   string    // snake_case (e.g., "budgets")
 	FeatureNameSingular string   // Singular form (e.g., "budget")
 	
+	// Component information (for component generation)
+	ComponentName       string    // Component name (e.g., "user_profile")
+	ComponentNamePascal string    // PascalCase (e.g., "UserProfile")
+	ComponentNameCamel  string    // camelCase (e.g., "userProfile")
+	ComponentNameSnake  string    // snake_case (e.g., "user_profile")
+	
 	// Entity information (derived from module/feature)
 	EntityName         string    // Main entity name (e.g., "Item", "Budget")
 	EntityNamePascal   string    // PascalCase (e.g., "Item")

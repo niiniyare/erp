@@ -5,9 +5,10 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+	"time"
 )
 
-{{comment "ComponentGenerator generates individual components within existing modules"}}
+// ComponentGenerator generates individual components within existing modules
 
 // ComponentType represents the type of component to generate
 type ComponentType string
@@ -440,7 +441,7 @@ func (c *ComponentConfig) ToTemplateData() TemplateData {
 	}
 }
 
-{{comment "TODO: Add support for generating multiple related components at once"}}
-{{comment "TODO: Add dependency analysis for component generation"}}
-{{comment "TODO: Add component template validation"}}
-{{comment "TODO: Add support for custom component templates"}}
+// TODO: Add support for generating multiple related components at once
+// TODO: Add dependency analysis for component generation
+// TODO: Add component template validation
+// TODO: Add support for custom component templates

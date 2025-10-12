@@ -10,8 +10,10 @@ import (
 
 // FileSystemOperations handles file system operations with safety checks
 type FileSystemOperations struct {
-	dryRun  bool
-	verbose bool
+	dryRun       bool
+	verbose      bool
+	overwrite    bool
+	skipExisting bool
 }
 
 // NewFileSystemOperations creates a new file system operations handler
@@ -20,6 +22,31 @@ func NewFileSystemOperations(dryRun, verbose bool) *FileSystemOperations {
 		dryRun:  dryRun,
 		verbose: verbose,
 	}
+}
+
+// SetOverwriteMode sets whether to overwrite existing files
+func (fso *FileSystemOperations) SetOverwriteMode(overwrite bool) {
+	fso.overwrite = overwrite
+}
+
+// SetSkipExistingMode sets whether to skip existing files
+func (fso *FileSystemOperations) SetSkipExistingMode(skipExisting bool) {
+	fso.skipExisting = skipExisting
+}
+
+// ShouldOverwrite returns whether files should be overwritten
+func (fso *FileSystemOperations) ShouldOverwrite() bool {
+	return fso.overwrite
+}
+
+// ShouldSkipExisting returns whether existing files should be skipped
+func (fso *FileSystemOperations) ShouldSkipExisting() bool {
+	return fso.skipExisting
+}
+
+// IsVerbose returns whether verbose mode is enabled
+func (fso *FileSystemOperations) IsVerbose() bool {
+	return fso.verbose
 }
 
 // CreateFile creates a file with the given content

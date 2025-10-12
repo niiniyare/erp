@@ -76,6 +76,30 @@ Example:
 	RunE: runNewFeature,
 }
 
+// newComponentCmd represents the new component command
+var newComponentCmd = &cobra.Command{
+	Use:   "component [module] [component_name] [type]",
+	Short: "Generate a specific component within an existing module",
+	Long: `Generate a specific component within an existing module.
+
+Available component types:
+- entity: Domain entity with validation
+- service: Business logic service
+- repository: Data access layer
+- handler: API handler
+- dto: Data transfer object
+- middleware: HTTP middleware
+- validator: Input validator
+- mapper: Data mapper
+
+Examples:
+  awoctl new component finance payment entity
+  awoctl new component inventory item_adjustment service
+  awoctl new component hr employee_profile repository`,
+	Args: cobra.ExactArgs(3),
+	RunE: runNewComponent,
+}
+
 func init() {
 	// Global flags
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "Preview what would be generated without creating files")
@@ -86,6 +110,7 @@ func init() {
 	rootCmd.AddCommand(newCmd)
 	newCmd.AddCommand(newModuleCmd)
 	newCmd.AddCommand(newFeatureCmd)
+	newCmd.AddCommand(newComponentCmd)
 }
 
 func runNewModule(cmd *cobra.Command, args []string) error {
@@ -164,6 +189,74 @@ func runNewFeature(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		fmt.Printf("🔍 Dry run completed for feature: %s\n", featurePath)
+	}
+
+	return nil
+}
+
+func runNewComponent(cmd *cobra.Command, args []string) error {
+	moduleName := args[0]
+	componentName := args[1]
+	componentTypeStr := args[2]
+
+	// Parse component type
+	var componentType generator.ComponentType
+	switch componentTypeStr {
+	case "entity":
+		componentType = generator.ComponentTypeEntity
+	case "service":
+		componentType = generator.ComponentTypeService
+	case "repository":
+		componentType = generator.ComponentTypeRepository
+	case "handler":
+		componentType = generator.ComponentTypeHandler
+	case "dto":
+		componentType = generator.ComponentTypeDTO
+	case "middleware":
+		componentType = generator.ComponentTypeMiddleware
+	case "validator":
+		componentType = generator.ComponentTypeValidator
+	case "mapper":
+		componentType = generator.ComponentTypeMapper
+	default:
+		return fmt.Errorf("invalid component type '%s'. Valid types: entity, service, repository, handler, dto, middleware, validator, mapper", componentTypeStr)
+	}
+
+	if verbose {
+		fmt.Printf("Generating %s component '%s' in module '%s'\n", componentType, componentName, moduleName)
+		fmt.Printf("Dry run: %v\n", dryRun)
+		fmt.Printf("With tests: %v\n", withTests)
+	}
+
+	config := generator.ComponentConfig{
+		ModuleName:    moduleName,
+		ComponentName: componentName,
+		ComponentType: componentType,
+		WithTests:     withTests,
+		DryRun:        dryRun,
+		Verbose:       verbose,
+	}
+
+	gen, err := generator.NewComponentGenerator()
+	if err != nil {
+		return fmt.Errorf("failed to create component generator: %w", err)
+	}
+
+	if err := gen.Generate(config); err != nil {
+		return fmt.Errorf("failed to generate component %s: %w", componentName, err)
+	}
+
+	if !dryRun {
+		fmt.Printf("✅ Successfully generated %s component: %s\n", componentType, componentName)
+		if withTests {
+			fmt.Printf("🧪 Test scaffolds created\n")
+		}
+		fmt.Printf("\nNext steps:\n")
+		fmt.Printf("1. Review generated code in internal/core/%s/\n", moduleName)
+		fmt.Printf("2. Implement business logic as needed\n")
+		fmt.Printf("3. Run 'make goa sqlc' to update generated code\n")
+	} else {
+		fmt.Printf("🔍 Dry run completed for %s component: %s\n", componentType, componentName)
 	}
 
 	return nil
