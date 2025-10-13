@@ -3,15 +3,20 @@
 
 package datatypes
 
+
+
+
 // Fontweightabsolute represents the CSS DataType FontWeightAbsolute (union type: [string number])
 // This type accepts both strings and numbers, but uses string as the underlying type
 type Fontweightabsolute string
 
+
 // Predefined constants
 const (
-	FontweightabsoluteBold   = "bold"
+	FontweightabsoluteBold = "bold"
 	FontweightabsoluteNormal = "normal"
 )
+
 
 // IsValid validates that the value is a non-empty string or valid number
 func (d Fontweightabsolute) IsValid() bool {
@@ -24,3 +29,5 @@ func (d Fontweightabsolute) IsValid() bool {
 func (d Fontweightabsolute) String() string {
 	return string(d)
 }
+
+

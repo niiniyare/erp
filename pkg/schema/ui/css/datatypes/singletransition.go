@@ -3,16 +3,21 @@
 
 package datatypes
 
+
+
+
 // Singletransition represents the CSS DataType SingleTransition (union type: [])
 type Singletransition string
 
+
 // Predefined constants
 const (
-	SingletransitionAll           = "all"
+	SingletransitionAll = "all"
 	SingletransitionAllowdiscrete = "allow-discrete"
-	SingletransitionNone          = "none"
-	SingletransitionNormal        = "normal"
+	SingletransitionNone = "none"
+	SingletransitionNormal = "normal"
 )
+
 
 func (d Singletransition) IsValid() bool {
 	return string(d) != ""
@@ -22,3 +27,5 @@ func (d Singletransition) IsValid() bool {
 func (d Singletransition) String() string {
 	return string(d)
 }
+
+

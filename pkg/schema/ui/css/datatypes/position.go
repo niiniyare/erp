@@ -3,18 +3,23 @@
 
 package datatypes
 
+
+
+
 // Position represents the CSS DataType Position (union type: [string number])
 // This type accepts both strings and numbers, but uses string as the underlying type
 type Position string
+
 
 // Predefined constants
 const (
 	PositionBottom = "bottom"
 	PositionCenter = "center"
-	PositionLeft   = "left"
-	PositionRight  = "right"
-	PositionTop    = "top"
+	PositionLeft = "left"
+	PositionRight = "right"
+	PositionTop = "top"
 )
+
 
 // IsValid validates that the value is a non-empty string or valid number
 func (d Position) IsValid() bool {
@@ -27,3 +32,5 @@ func (d Position) IsValid() bool {
 func (d Position) String() string {
 	return string(d)
 }
+
+

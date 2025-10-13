@@ -3,13 +3,18 @@
 
 package datatypes
 
+
+
+
 // Contentlist represents the CSS DataType ContentList (union type: [])
 type Contentlist string
+
 
 // Predefined constants
 const (
 	ContentlistContents = "contents"
 )
+
 
 func (d Contentlist) IsValid() bool {
 	return string(d) != ""
@@ -19,3 +24,5 @@ func (d Contentlist) IsValid() bool {
 func (d Contentlist) String() string {
 	return string(d)
 }
+
+

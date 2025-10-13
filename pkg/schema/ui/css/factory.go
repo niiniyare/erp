@@ -50,6 +50,108 @@ func (f *Factory) GetPropertyDefinition(propertyName string) (*PropertyDefinitio
 	return f.propertyRegistry.GetPropertyDefinition(propertyName)
 }
 
+// ValidateDataType validates a value against a CSS DataType using schema-based validation
+func (f *Factory) ValidateDataType(dataTypeName, value string) error {
+	if f.propertyRegistry == nil {
+		return fmt.Errorf("property registry not initialized")
+	}
+	return f.propertyRegistry.ValidateDataType(dataTypeName, value)
+}
+
+// IsSchemaBasedValidationAvailable returns true if schema-based validation is available
+func (f *Factory) IsSchemaBasedValidationAvailable() bool {
+	if f.propertyRegistry == nil {
+		return false
+	}
+	return f.propertyRegistry.IsSchemaBasedValidationAvailable()
+}
+
+// GetSupportedDataTypes returns all DataTypes supported by schema-based validation
+func (f *Factory) GetSupportedDataTypes() []string {
+	if f.propertyRegistry == nil {
+		return nil
+	}
+	return f.propertyRegistry.GetSupportedDataTypes()
+}
+
+// GetDataTypeInfo returns information about a specific DataType
+func (f *Factory) GetDataTypeInfo(dataTypeName string) map[string]any {
+	if f.propertyRegistry == nil {
+		return map[string]any{
+			"name":      dataTypeName,
+			"supported": false,
+			"error":     "property registry not initialized",
+		}
+	}
+	return f.propertyRegistry.GetDataTypeInfo(dataTypeName)
+}
+
+// CSS Property Categorization methods
+
+// GetPropertyCategory returns the category for a CSS property
+func (f *Factory) GetPropertyCategory(propertyName string) string {
+	if f.propertyRegistry == nil {
+		return "Other"
+	}
+	return f.propertyRegistry.GetPropertyCategory(propertyName)
+}
+
+// GetAllCategories returns all CSS property categories
+func (f *Factory) GetAllCategories() []*PropertyCategory {
+	if f.propertyRegistry == nil {
+		return nil
+	}
+	return f.propertyRegistry.GetAllCategories()
+}
+
+// GetCategoryNames returns all category names
+func (f *Factory) GetCategoryNames() []string {
+	if f.propertyRegistry == nil {
+		return nil
+	}
+	return f.propertyRegistry.GetCategoryNames()
+}
+
+// GetPropertiesByCategory returns all properties in a specific category
+func (f *Factory) GetPropertiesByCategory(categoryName string) []string {
+	if f.propertyRegistry == nil {
+		return nil
+	}
+	return f.propertyRegistry.GetPropertiesByCategory(categoryName)
+}
+
+// GetCategorizedProperties returns all properties organized by category
+func (f *Factory) GetCategorizedProperties() map[string][]string {
+	if f.propertyRegistry == nil {
+		return nil
+	}
+	return f.propertyRegistry.GetCategorizedProperties()
+}
+
+// SearchProperties searches for properties across all categories
+func (f *Factory) SearchProperties(query string) map[string][]string {
+	if f.propertyRegistry == nil {
+		return nil
+	}
+	return f.propertyRegistry.SearchProperties(query)
+}
+
+// GetRelatedProperties returns properties related to a given property
+func (f *Factory) GetRelatedProperties(propertyName string) []string {
+	if f.propertyRegistry == nil {
+		return nil
+	}
+	return f.propertyRegistry.GetRelatedProperties(propertyName)
+}
+
+// GetCategoryStats returns statistics about each category
+func (f *Factory) GetCategoryStats() map[string]CategoryStats {
+	if f.propertyRegistry == nil {
+		return nil
+	}
+	return f.propertyRegistry.GetCategoryStats()
+}
+
 // ============================================================================
 // COMPONENT STYLE FACTORIES
 // ============================================================================

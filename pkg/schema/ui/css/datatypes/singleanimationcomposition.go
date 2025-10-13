@@ -3,13 +3,16 @@
 
 package datatypes
 
+
+
+
 // Singleanimationcomposition represents the CSS DataType SingleAnimationComposition with predefined values
 type Singleanimationcomposition string
 
 const (
 	SingleanimationcompositionAccumulate Singleanimationcomposition = "accumulate"
-	SingleanimationcompositionAdd        Singleanimationcomposition = "add"
-	SingleanimationcompositionReplace    Singleanimationcomposition = "replace"
+	SingleanimationcompositionAdd Singleanimationcomposition = "add"
+	SingleanimationcompositionReplace Singleanimationcomposition = "replace"
 )
 
 func (d Singleanimationcomposition) IsValid() bool {
@@ -26,3 +29,5 @@ func (d Singleanimationcomposition) IsValid() bool {
 func (d Singleanimationcomposition) String() string {
 	return string(d)
 }
+
+

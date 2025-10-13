@@ -3,21 +3,24 @@
 
 package datatypes
 
+
+
+
 // Compositestyle represents the CSS DataType CompositeStyle with predefined values
 type Compositestyle string
 
 const (
-	CompositestyleClear           Compositestyle = "clear"
-	CompositestyleCopy            Compositestyle = "copy"
+	CompositestyleClear Compositestyle = "clear"
+	CompositestyleCopy Compositestyle = "copy"
 	CompositestyleDestinationatop Compositestyle = "destination-atop"
-	CompositestyleDestinationin   Compositestyle = "destination-in"
-	CompositestyleDestinationout  Compositestyle = "destination-out"
+	CompositestyleDestinationin Compositestyle = "destination-in"
+	CompositestyleDestinationout Compositestyle = "destination-out"
 	CompositestyleDestinationover Compositestyle = "destination-over"
-	CompositestyleSourceatop      Compositestyle = "source-atop"
-	CompositestyleSourcein        Compositestyle = "source-in"
-	CompositestyleSourceout       Compositestyle = "source-out"
-	CompositestyleSourceover      Compositestyle = "source-over"
-	CompositestyleXor             Compositestyle = "xor"
+	CompositestyleSourceatop Compositestyle = "source-atop"
+	CompositestyleSourcein Compositestyle = "source-in"
+	CompositestyleSourceout Compositestyle = "source-out"
+	CompositestyleSourceover Compositestyle = "source-over"
+	CompositestyleXor Compositestyle = "xor"
 )
 
 func (d Compositestyle) IsValid() bool {
@@ -34,3 +37,5 @@ func (d Compositestyle) IsValid() bool {
 func (d Compositestyle) String() string {
 	return string(d)
 }
+
+

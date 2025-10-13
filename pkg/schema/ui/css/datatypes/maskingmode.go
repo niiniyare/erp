@@ -3,12 +3,15 @@
 
 package datatypes
 
+
+
+
 // Maskingmode represents the CSS DataType MaskingMode with predefined values
 type Maskingmode string
 
 const (
-	MaskingmodeAlpha       Maskingmode = "alpha"
-	MaskingmodeLuminance   Maskingmode = "luminance"
+	MaskingmodeAlpha Maskingmode = "alpha"
+	MaskingmodeLuminance Maskingmode = "luminance"
 	MaskingmodeMatchsource Maskingmode = "match-source"
 )
 
@@ -26,3 +29,5 @@ func (d Maskingmode) IsValid() bool {
 func (d Maskingmode) String() string {
 	return string(d)
 }
+
+

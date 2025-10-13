@@ -3,14 +3,19 @@
 
 package datatypes
 
+
+
+
 // Masklayer represents the CSS DataType MaskLayer (union type: [])
 type Masklayer string
+
 
 // Predefined constants
 const (
 	MasklayerNoclip = "no-clip"
-	MasklayerNone   = "none"
+	MasklayerNone = "none"
 )
+
 
 func (d Masklayer) IsValid() bool {
 	return string(d) != ""
@@ -20,3 +25,5 @@ func (d Masklayer) IsValid() bool {
 func (d Masklayer) String() string {
 	return string(d)
 }
+
+

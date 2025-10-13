@@ -3,26 +3,29 @@
 
 package datatypes
 
+
+
+
 // Blendmode represents the CSS DataType BlendMode with predefined values
 type Blendmode string
 
 const (
-	BlendmodeColor      Blendmode = "color"
-	BlendmodeColorburn  Blendmode = "color-burn"
+	BlendmodeColor Blendmode = "color"
+	BlendmodeColorburn Blendmode = "color-burn"
 	BlendmodeColordodge Blendmode = "color-dodge"
-	BlendmodeDarken     Blendmode = "darken"
+	BlendmodeDarken Blendmode = "darken"
 	BlendmodeDifference Blendmode = "difference"
-	BlendmodeExclusion  Blendmode = "exclusion"
-	BlendmodeHardlight  Blendmode = "hard-light"
-	BlendmodeHue        Blendmode = "hue"
-	BlendmodeLighten    Blendmode = "lighten"
+	BlendmodeExclusion Blendmode = "exclusion"
+	BlendmodeHardlight Blendmode = "hard-light"
+	BlendmodeHue Blendmode = "hue"
+	BlendmodeLighten Blendmode = "lighten"
 	BlendmodeLuminosity Blendmode = "luminosity"
-	BlendmodeMultiply   Blendmode = "multiply"
-	BlendmodeNormal     Blendmode = "normal"
-	BlendmodeOverlay    Blendmode = "overlay"
+	BlendmodeMultiply Blendmode = "multiply"
+	BlendmodeNormal Blendmode = "normal"
+	BlendmodeOverlay Blendmode = "overlay"
 	BlendmodeSaturation Blendmode = "saturation"
-	BlendmodeScreen     Blendmode = "screen"
-	BlendmodeSoftlight  Blendmode = "soft-light"
+	BlendmodeScreen Blendmode = "screen"
+	BlendmodeSoftlight Blendmode = "soft-light"
 )
 
 func (d Blendmode) IsValid() bool {
@@ -39,3 +42,5 @@ func (d Blendmode) IsValid() bool {
 func (d Blendmode) String() string {
 	return string(d)
 }
+
+

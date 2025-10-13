@@ -3,13 +3,18 @@
 
 package datatypes
 
+
+
+
 // Easingfunction represents the CSS DataType EasingFunction (union type: [])
 type Easingfunction string
+
 
 // Predefined constants
 const (
 	EasingfunctionLinear = "linear"
 )
+
 
 func (d Easingfunction) IsValid() bool {
 	return string(d) != ""
@@ -19,3 +24,5 @@ func (d Easingfunction) IsValid() bool {
 func (d Easingfunction) String() string {
 	return string(d)
 }
+
+

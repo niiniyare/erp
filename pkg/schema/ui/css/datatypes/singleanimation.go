@@ -3,17 +3,22 @@
 
 package datatypes
 
+
+
+
 // Singleanimation represents the CSS DataType SingleAnimation (union type: [string number])
 // This type accepts both strings and numbers, but uses string as the underlying type
 type Singleanimation string
 
+
 // Predefined constants
 const (
 	SingleanimationInfinite = "infinite"
-	SingleanimationNone     = "none"
-	SingleanimationPaused   = "paused"
-	SingleanimationRunning  = "running"
+	SingleanimationNone = "none"
+	SingleanimationPaused = "paused"
+	SingleanimationRunning = "running"
 )
+
 
 // IsValid validates that the value is a non-empty string or valid number
 func (d Singleanimation) IsValid() bool {
@@ -26,3 +31,5 @@ func (d Singleanimation) IsValid() bool {
 func (d Singleanimation) String() string {
 	return string(d)
 }
+
+

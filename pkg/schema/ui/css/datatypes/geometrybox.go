@@ -3,16 +3,21 @@
 
 package datatypes
 
+
+
+
 // Geometrybox represents the CSS DataType GeometryBox (union type: [])
 type Geometrybox string
 
+
 // Predefined constants
 const (
-	GeometryboxFillbox   = "fill-box"
+	GeometryboxFillbox = "fill-box"
 	GeometryboxMarginbox = "margin-box"
 	GeometryboxStrokebox = "stroke-box"
-	GeometryboxViewbox   = "view-box"
+	GeometryboxViewbox = "view-box"
 )
+
 
 func (d Geometrybox) IsValid() bool {
 	return string(d) != ""
@@ -22,3 +27,5 @@ func (d Geometrybox) IsValid() bool {
 func (d Geometrybox) String() string {
 	return string(d)
 }
+
+
