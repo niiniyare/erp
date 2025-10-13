@@ -159,6 +159,17 @@ func (v *SchemaValidator) ValidateComponent(component interface{}) *ValidationRe
 	// Get validation rules for this component type
 	rules := v.getValidationRules(componentType)
 	
+	// Add custom rules if any
+	for name, customRule := range v.customRules {
+		customValidationRule := ComponentValidationRule{
+			Name:    name,
+			Type:    "custom",
+			Custom:  customRule,
+			Message: "Custom validation rule: " + name,
+		}
+		rules = append(rules, customValidationRule)
+	}
+	
 	// Perform validation
 	errors := v.validateAgainstRules(component, rules)
 	
@@ -460,7 +471,19 @@ func (v *SchemaValidator) validateFieldValue(fieldValue interface{}, rule Compon
 		return errors
 	}
 	
-	// Skip further validation if field is empty and not required
+	// For warning-level validations, check empty values even if not required
+	if rule.Severity == SeverityWarning && isEmptyValue(fieldValue) {
+		errors = append(errors, ComponentValidationError{
+			Field:    rule.Field,
+			Value:    fieldValue,
+			Rule:     rule.Name,
+			Message:  rule.Message,
+			Severity: rule.Severity,
+		})
+		return errors
+	}
+	
+	// Skip further validation if field is empty and not required (for non-warnings)
 	if isEmptyValue(fieldValue) {
 		return errors
 	}
@@ -664,7 +687,23 @@ func getFieldValue(componentValue reflect.Value, fieldPath string) interface{} {
 	currentValue := componentValue
 	
 	for _, part := range parts {
-		field := currentValue.FieldByName(strings.Title(part))
+		// Convert field name to proper Go struct field case
+		fieldName := strings.Title(strings.ToLower(part))
+		if part == "id" {
+			fieldName = "ID"
+		} else if part == "className" {
+			fieldName = "ClassName"
+		} else if part == "api" {
+			fieldName = "API"
+		} else if part == "body" {
+			fieldName = "Body"
+		} else if part == "label" {
+			fieldName = "Label"
+		} else if part == "actionType" {
+			fieldName = "ActionType"
+		}
+		
+		field := currentValue.FieldByName(fieldName)
 		if !field.IsValid() {
 			return nil
 		}
@@ -697,6 +736,9 @@ func isEmptyValue(value interface{}) bool {
 		}
 		if rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array {
 			return rv.Len() == 0
+		}
+		if rv.Kind() == reflect.String {
+			return rv.String() == ""
 		}
 		return false
 	}

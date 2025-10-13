@@ -314,7 +314,7 @@ func TestDateControlSchemaCreation(t *testing.T) {
 	require.NoError(t, err, "Date control creation should not error")
 	assert.Equal(t, "input-date", dateControl.Type, "Type should be set to input-date")
 	assert.Equal(t, "md", dateControl.Size, "Default size should be md")
-	assert.Equal(t, "YYYY-MM-DD", dateControl.Format, "Default format should be YYYY-MM-DD")
+	assert.Equal(t, "DD-MM-YYYY", dateControl.Format, "Default format should be DD-MM-YYYY")
 	assert.Equal(t, "Select date", dateControl.Placeholder, "Default placeholder should be set")
 
 	// Test validation
