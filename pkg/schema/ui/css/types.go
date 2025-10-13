@@ -72,22 +72,23 @@ func (p PositionValue) PropertyName() string { return "position" }
 
 // Styles represents a collection of CSS properties with validation
 type Styles struct {
-	loader *SchemaLoader
+	loader           *SchemaLoader
+	propertyRegistry *PropertyRegistry
 
 	// Layout Properties
-	Display       string `json:"display,omitempty"`
-	Position      string `json:"position,omitempty"`
-	Top           string `json:"top,omitempty"`
-	Bottom        string `json:"bottom,omitempty"`
-	Left          string `json:"left,omitempty"`
-	Right         string `json:"right,omitempty"`
-	Width         string `json:"width,omitempty"`
-	Height        string `json:"height,omitempty"`
-	MaxWidth      string `json:"max_width,omitempty"`
-	MaxHeight     string `json:"max_height,omitempty"`
-	MinWidth      string `json:"min_width,omitempty"`
-	MinHeight     string `json:"min_height,omitempty"`
-	
+	Display   string `json:"display,omitempty"`
+	Position  string `json:"position,omitempty"`
+	Top       string `json:"top,omitempty"`
+	Bottom    string `json:"bottom,omitempty"`
+	Left      string `json:"left,omitempty"`
+	Right     string `json:"right,omitempty"`
+	Width     string `json:"width,omitempty"`
+	Height    string `json:"height,omitempty"`
+	MaxWidth  string `json:"max_width,omitempty"`
+	MaxHeight string `json:"max_height,omitempty"`
+	MinWidth  string `json:"min_width,omitempty"`
+	MinHeight string `json:"min_height,omitempty"`
+
 	// Spacing Properties
 	Margin        string `json:"margin,omitempty"`
 	MarginTop     string `json:"margin_top,omitempty"`
@@ -101,70 +102,70 @@ type Styles struct {
 	PaddingRight  string `json:"padding_right,omitempty"`
 
 	// Typography Properties
-	FontSize      string `json:"font_size,omitempty"`
-	FontWeight    string `json:"font_weight,omitempty"`
-	FontFamily    string `json:"font_family,omitempty"`
-	LineHeight    string `json:"line_height,omitempty"`
-	Color         string `json:"color,omitempty"`
-	TextAlign     string `json:"text_align,omitempty"`
-	
+	FontSize   string `json:"font_size,omitempty"`
+	FontWeight string `json:"font_weight,omitempty"`
+	FontFamily string `json:"font_family,omitempty"`
+	LineHeight string `json:"line_height,omitempty"`
+	Color      string `json:"color,omitempty"`
+	TextAlign  string `json:"text_align,omitempty"`
+
 	// Background Properties
 	Background      string `json:"background,omitempty"`
 	BackgroundColor string `json:"background_color,omitempty"`
 	BackgroundImage string `json:"background_image,omitempty"`
 	BackgroundSize  string `json:"background_size,omitempty"`
-	
+
 	// Border Properties
-	Border            string `json:"border,omitempty"`
-	BorderRadius      string `json:"border_radius,omitempty"`
-	BorderColor       string `json:"border_color,omitempty"`
-	BorderWidth       string `json:"border_width,omitempty"`
-	BorderStyle       string `json:"border_style,omitempty"`
-	
+	Border       string `json:"border,omitempty"`
+	BorderRadius string `json:"border_radius,omitempty"`
+	BorderColor  string `json:"border_color,omitempty"`
+	BorderWidth  string `json:"border_width,omitempty"`
+	BorderStyle  string `json:"border_style,omitempty"`
+
 	// Flexbox Properties
-	Flex          string `json:"flex,omitempty"`
-	FlexDirection string `json:"flex_direction,omitempty"`
-	FlexWrap      string `json:"flex_wrap,omitempty"`
-	FlexGrow      string `json:"flex_grow,omitempty"`
-	FlexShrink    string `json:"flex_shrink,omitempty"`
-	FlexBasis     string `json:"flex_basis,omitempty"`
+	Flex           string `json:"flex,omitempty"`
+	FlexDirection  string `json:"flex_direction,omitempty"`
+	FlexWrap       string `json:"flex_wrap,omitempty"`
+	FlexGrow       string `json:"flex_grow,omitempty"`
+	FlexShrink     string `json:"flex_shrink,omitempty"`
+	FlexBasis      string `json:"flex_basis,omitempty"`
 	JustifyContent string `json:"justify_content,omitempty"`
-	AlignItems    string `json:"align_items,omitempty"`
-	AlignContent  string `json:"align_content,omitempty"`
-	
+	AlignItems     string `json:"align_items,omitempty"`
+	AlignContent   string `json:"align_content,omitempty"`
+
 	// Grid Properties
 	GridTemplateColumns string `json:"grid_template_columns,omitempty"`
 	GridTemplateRows    string `json:"grid_template_rows,omitempty"`
 	GridGap             string `json:"grid_gap,omitempty"`
 	GridColumnGap       string `json:"grid_column_gap,omitempty"`
 	GridRowGap          string `json:"grid_row_gap,omitempty"`
-	
+
 	// Visual Effects
 	BoxShadow string `json:"box_shadow,omitempty"`
 	Opacity   string `json:"opacity,omitempty"`
 	Transform string `json:"transform,omitempty"`
 	Filter    string `json:"filter,omitempty"`
-	
+
 	// Animation Properties
-	Transition           string `json:"transition,omitempty"`
-	TransitionDuration   string `json:"transition_duration,omitempty"`
-	TransitionProperty   string `json:"transition_property,omitempty"`
+	Transition               string `json:"transition,omitempty"`
+	TransitionDuration       string `json:"transition_duration,omitempty"`
+	TransitionProperty       string `json:"transition_property,omitempty"`
 	TransitionTimingFunction string `json:"transition_timing_function,omitempty"`
-	Animation            string `json:"animation,omitempty"`
-	AnimationDuration    string `json:"animation_duration,omitempty"`
-	AnimationName        string `json:"animation_name,omitempty"`
-	
+	Animation                string `json:"animation,omitempty"`
+	AnimationDuration        string `json:"animation_duration,omitempty"`
+	AnimationName            string `json:"animation_name,omitempty"`
+
 	// Overflow Properties
 	Overflow  string `json:"overflow,omitempty"`
 	OverflowX string `json:"overflow_x,omitempty"`
 	OverflowY string `json:"overflow_y,omitempty"`
-	
+
 	// Z-Index and Stacking
 	ZIndex string `json:"z_index,omitempty"`
-	
+
 	// Visibility
 	Visibility string `json:"visibility,omitempty"`
-	
+
 	// Custom properties for framework-specific values
 	Custom map[string]string `json:"custom,omitempty"`
 }
@@ -172,8 +173,9 @@ type Styles struct {
 // NewStyles creates a new Styles instance with schema validation
 func NewStyles(schemaDir string) *Styles {
 	return &Styles{
-		loader: NewSchemaLoader(schemaDir),
-		Custom: make(map[string]string),
+		loader:           NewSchemaLoader(schemaDir),
+		propertyRegistry: NewPropertyRegistry(schemaDir),
+		Custom:           make(map[string]string),
 	}
 }
 
@@ -184,23 +186,68 @@ func NewStyles(schemaDir string) *Styles {
 // Validate validates all CSS properties against their schemas
 func (s *Styles) Validate() error {
 	properties := s.getAllProperties()
-	
+
 	for propertyName, value := range properties {
 		if value == "" {
 			continue // Skip empty values
 		}
-		
-		if err := s.loader.ValidateValue(propertyName, value); err != nil {
-			return fmt.Errorf("invalid value for property '%s': %w", propertyName, err)
+
+		// Try new PropertyRegistry first, fallback to SchemaLoader
+		var err error
+		if s.propertyRegistry != nil {
+			err = s.propertyRegistry.ValidateProperty(propertyName, value)
+		}
+
+		// If PropertyRegistry validation fails or isn't available, try SchemaLoader
+		if err != nil && s.loader != nil {
+			if loaderErr := s.loader.ValidateValue(propertyName, value); loaderErr != nil {
+				return fmt.Errorf("invalid value for property '%s': %w", propertyName, err)
+			}
 		}
 	}
-	
+
 	return nil
 }
 
 // ValidateProperty validates a specific CSS property
 func (s *Styles) ValidateProperty(propertyName, value string) error {
-	return s.loader.ValidateValue(propertyName, value)
+	// Try new PropertyRegistry first, fallback to SchemaLoader
+	if s.propertyRegistry != nil {
+		if err := s.propertyRegistry.ValidateProperty(propertyName, value); err == nil {
+			return nil
+		}
+	}
+
+	// Fallback to SchemaLoader
+	if s.loader != nil {
+		return s.loader.ValidateValue(propertyName, value)
+	}
+
+	return fmt.Errorf("no validation system available")
+}
+
+// GetAvailableProperties returns all available CSS properties from the registry
+func (s *Styles) GetAvailableProperties() []string {
+	if s.propertyRegistry != nil {
+		return s.propertyRegistry.GetAllPropertyNames()
+	}
+	return nil
+}
+
+// GetPropertyDefinition returns the definition for a CSS property
+func (s *Styles) GetPropertyDefinition(propertyName string) (*PropertyDefinition, bool) {
+	if s.propertyRegistry != nil {
+		return s.propertyRegistry.GetPropertyDefinition(propertyName)
+	}
+	return nil, false
+}
+
+// GetPropertyCount returns the number of available CSS properties
+func (s *Styles) GetPropertyCount() int {
+	if s.propertyRegistry != nil {
+		return s.propertyRegistry.GetPropertyCount()
+	}
+	return 0
 }
 
 // ============================================================================
@@ -211,25 +258,25 @@ func (s *Styles) ValidateProperty(propertyName, value string) error {
 func (s *Styles) ToCSS() string {
 	var cssRules []string
 	properties := s.getAllProperties()
-	
+
 	for property, value := range properties {
 		if value != "" {
 			cssProperty := s.toCSSPropertyName(property)
 			cssRules = append(cssRules, fmt.Sprintf("%s: %s", cssProperty, value))
 		}
 	}
-	
+
 	// Add custom properties
 	for property, value := range s.Custom {
 		if value != "" {
 			cssRules = append(cssRules, fmt.Sprintf("%s: %s", property, value))
 		}
 	}
-	
+
 	if len(cssRules) == 0 {
 		return ""
 	}
-	
+
 	return strings.Join(cssRules, "; ")
 }
 
@@ -239,7 +286,7 @@ func (s *Styles) ToCSSClass(className string) string {
 	if cssRules == "" {
 		return ""
 	}
-	
+
 	return fmt.Sprintf(".%s { %s; }", className, cssRules)
 }
 
@@ -622,73 +669,73 @@ func (s *Styles) GetAllProperties() map[string]string {
 // getAllProperties returns all non-empty CSS properties as a map
 func (s *Styles) getAllProperties() map[string]string {
 	return map[string]string{
-		"display":         s.Display,
-		"position":        s.Position,
-		"top":            s.Top,
-		"bottom":         s.Bottom,
-		"left":           s.Left,
-		"right":          s.Right,
-		"width":          s.Width,
-		"height":         s.Height,
-		"max-width":      s.MaxWidth,
-		"max-height":     s.MaxHeight,
-		"min-width":      s.MinWidth,
-		"min-height":     s.MinHeight,
-		"margin":         s.Margin,
-		"margin-top":     s.MarginTop,
-		"margin-bottom":  s.MarginBottom,
-		"margin-left":    s.MarginLeft,
-		"margin-right":   s.MarginRight,
-		"padding":        s.Padding,
-		"padding-top":    s.PaddingTop,
-		"padding-bottom": s.PaddingBottom,
-		"padding-left":   s.PaddingLeft,
-		"padding-right":  s.PaddingRight,
-		"font-size":      s.FontSize,
-		"font-weight":    s.FontWeight,
-		"font-family":    s.FontFamily,
-		"line-height":    s.LineHeight,
-		"color":          s.Color,
-		"text-align":     s.TextAlign,
-		"background":          s.Background,
-		"background-color":    s.BackgroundColor,
-		"background-image":    s.BackgroundImage,
-		"background-size":     s.BackgroundSize,
-		"border":              s.Border,
-		"border-radius":       s.BorderRadius,
-		"border-color":        s.BorderColor,
-		"border-width":        s.BorderWidth,
-		"border-style":        s.BorderStyle,
-		"flex":                s.Flex,
-		"flex-direction":      s.FlexDirection,
-		"flex-wrap":           s.FlexWrap,
-		"flex-grow":           s.FlexGrow,
-		"flex-shrink":         s.FlexShrink,
-		"flex-basis":          s.FlexBasis,
-		"justify-content":     s.JustifyContent,
-		"align-items":         s.AlignItems,
-		"align-content":       s.AlignContent,
-		"grid-template-columns": s.GridTemplateColumns,
-		"grid-template-rows":    s.GridTemplateRows,
-		"grid-gap":              s.GridGap,
-		"grid-column-gap":       s.GridColumnGap,
-		"grid-row-gap":          s.GridRowGap,
-		"box-shadow":         s.BoxShadow,
-		"opacity":            s.Opacity,
-		"transform":          s.Transform,
-		"filter":             s.Filter,
-		"transition":         s.Transition,
-		"transition-duration": s.TransitionDuration,
-		"transition-property": s.TransitionProperty,
+		"display":                    s.Display,
+		"position":                   s.Position,
+		"top":                        s.Top,
+		"bottom":                     s.Bottom,
+		"left":                       s.Left,
+		"right":                      s.Right,
+		"width":                      s.Width,
+		"height":                     s.Height,
+		"max-width":                  s.MaxWidth,
+		"max-height":                 s.MaxHeight,
+		"min-width":                  s.MinWidth,
+		"min-height":                 s.MinHeight,
+		"margin":                     s.Margin,
+		"margin-top":                 s.MarginTop,
+		"margin-bottom":              s.MarginBottom,
+		"margin-left":                s.MarginLeft,
+		"margin-right":               s.MarginRight,
+		"padding":                    s.Padding,
+		"padding-top":                s.PaddingTop,
+		"padding-bottom":             s.PaddingBottom,
+		"padding-left":               s.PaddingLeft,
+		"padding-right":              s.PaddingRight,
+		"font-size":                  s.FontSize,
+		"font-weight":                s.FontWeight,
+		"font-family":                s.FontFamily,
+		"line-height":                s.LineHeight,
+		"color":                      s.Color,
+		"text-align":                 s.TextAlign,
+		"background":                 s.Background,
+		"background-color":           s.BackgroundColor,
+		"background-image":           s.BackgroundImage,
+		"background-size":            s.BackgroundSize,
+		"border":                     s.Border,
+		"border-radius":              s.BorderRadius,
+		"border-color":               s.BorderColor,
+		"border-width":               s.BorderWidth,
+		"border-style":               s.BorderStyle,
+		"flex":                       s.Flex,
+		"flex-direction":             s.FlexDirection,
+		"flex-wrap":                  s.FlexWrap,
+		"flex-grow":                  s.FlexGrow,
+		"flex-shrink":                s.FlexShrink,
+		"flex-basis":                 s.FlexBasis,
+		"justify-content":            s.JustifyContent,
+		"align-items":                s.AlignItems,
+		"align-content":              s.AlignContent,
+		"grid-template-columns":      s.GridTemplateColumns,
+		"grid-template-rows":         s.GridTemplateRows,
+		"grid-gap":                   s.GridGap,
+		"grid-column-gap":            s.GridColumnGap,
+		"grid-row-gap":               s.GridRowGap,
+		"box-shadow":                 s.BoxShadow,
+		"opacity":                    s.Opacity,
+		"transform":                  s.Transform,
+		"filter":                     s.Filter,
+		"transition":                 s.Transition,
+		"transition-duration":        s.TransitionDuration,
+		"transition-property":        s.TransitionProperty,
 		"transition-timing-function": s.TransitionTimingFunction,
-		"animation":          s.Animation,
-		"animation-duration": s.AnimationDuration,
-		"animation-name":     s.AnimationName,
-		"overflow":           s.Overflow,
-		"overflow-x":         s.OverflowX,
-		"overflow-y":         s.OverflowY,
-		"z-index":            s.ZIndex,
-		"visibility":         s.Visibility,
+		"animation":                  s.Animation,
+		"animation-duration":         s.AnimationDuration,
+		"animation-name":             s.AnimationName,
+		"overflow":                   s.Overflow,
+		"overflow-x":                 s.OverflowX,
+		"overflow-y":                 s.OverflowY,
+		"z-index":                    s.ZIndex,
+		"visibility":                 s.Visibility,
 	}
 }
 
@@ -714,24 +761,24 @@ func FlexCenter() *Styles {
 // Card creates styles for a typical card component
 func Card() *Styles {
 	return &Styles{
-		Background:    "#ffffff",
-		BorderRadius:  "8px",
-		BoxShadow:     "0 2px 4px rgba(0, 0, 0, 0.1)",
-		Padding:       "1rem",
+		Background:   "#ffffff",
+		BorderRadius: "8px",
+		BoxShadow:    "0 2px 4px rgba(0, 0, 0, 0.1)",
+		Padding:      "1rem",
 	}
 }
 
 // Button creates styles for a button component
 func Button() *Styles {
 	return &Styles{
-		Display:       "inline-flex",
-		AlignItems:    "center",
+		Display:        "inline-flex",
+		AlignItems:     "center",
 		JustifyContent: "center",
-		Padding:       "0.5rem 1rem",
-		BorderRadius:  "4px",
-		Border:        "none",
-		FontWeight:    "500",
-		Transition:    "all 0.2s ease-in-out",
+		Padding:        "0.5rem 1rem",
+		BorderRadius:   "4px",
+		Border:         "none",
+		FontWeight:     "500",
+		Transition:     "all 0.2s ease-in-out",
 	}
 }
 
