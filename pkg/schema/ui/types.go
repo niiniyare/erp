@@ -6,153 +6,250 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/niiniyare/erp/pkg/schema/ui/css"
 )
 
+// ============================================================================
+// CORE COMPONENT TYPES
+// ============================================================================
+
 // ComponentType represents the type of UI component
+// These are the primary component types supported by the ERP system
 type ComponentType string
 
 const (
-	// Form Components
-	ComponentForm       ComponentType = "form"
-	ComponentInput      ComponentType = "input"
-	ComponentTextarea   ComponentType = "textarea"
-	ComponentSelect     ComponentType = "select"
-	ComponentCheckbox   ComponentType = "checkbox"
-	ComponentRadio      ComponentType = "radio"
-	ComponentButton     ComponentType = "button"
-	ComponentDatePicker ComponentType = "date-picker"
-	ComponentTimePicker ComponentType = "time-picker"
-	ComponentFileUpload ComponentType = "file-upload"
+	// Form Components - Interactive input elements
+	ComponentForm       ComponentType = "form"        // Form container with validation
+	ComponentInput      ComponentType = "input"       // Single-line text input
+	ComponentTextarea   ComponentType = "textarea"    // Multi-line text input
+	ComponentSelect     ComponentType = "select"      // Dropdown selection
+	ComponentCheckbox   ComponentType = "checkbox"    // Boolean checkbox input
+	ComponentRadio      ComponentType = "radio"       // Radio button group
+	ComponentButton     ComponentType = "button"      // Action button
+	ComponentDatePicker ComponentType = "date-picker" // Date/time selection
+	ComponentTimePicker ComponentType = "time-picker" // Time-only selection
+	ComponentFileUpload ComponentType = "file-upload" // File upload component
 
-	// Layout Components
-	ComponentContainer ComponentType = "container"
-	ComponentCard      ComponentType = "card"
-	ComponentPanel     ComponentType = "panel"
-	ComponentTabs      ComponentType = "tabs"
-	ComponentModal     ComponentType = "modal"
-	ComponentDrawer    ComponentType = "drawer"
+	// Layout Components - Structural containers
+	ComponentContainer ComponentType = "container" // General purpose container
+	ComponentCard      ComponentType = "card"      // Content card with optional header/footer
+	ComponentPanel     ComponentType = "panel"     // Collapsible panel
+	ComponentTabs      ComponentType = "tabs"      // Tabbed interface
+	ComponentModal     ComponentType = "modal"     // Overlay dialog
+	ComponentDrawer    ComponentType = "drawer"    // Side panel
 
-	// Data Display
-	ComponentTable ComponentType = "table"
-	ComponentList  ComponentType = "list"
-	ComponentTree  ComponentType = "tree"
-	ComponentChart ComponentType = "chart"
-	ComponentBadge ComponentType = "badge"
-	ComponentTag   ComponentType = "tag"
+	// Data Display Components - Information presentation
+	ComponentTable ComponentType = "table" // Data table with sorting/filtering
+	ComponentList  ComponentType = "list"  // Simple list display
+	ComponentTree  ComponentType = "tree"  // Hierarchical tree view
+	ComponentChart ComponentType = "chart" // Data visualization charts
+	ComponentBadge ComponentType = "badge" // Status indicator
+	ComponentTag   ComponentType = "tag"   // Label/category tag
 
-	// Navigation
-	ComponentNav        ComponentType = "nav"
-	ComponentBreadcrumb ComponentType = "breadcrumb"
-	ComponentPagination ComponentType = "pagination"
+	// Navigation Components - User navigation
+	ComponentNav        ComponentType = "nav"        // Navigation menu
+	ComponentBreadcrumb ComponentType = "breadcrumb" // Breadcrumb trail
+	ComponentPagination ComponentType = "pagination" // Page navigation
 )
 
-// Size represents component size variants
+// ============================================================================
+// COMMON ENUMS & CONSTANTS
+// ============================================================================
+
+// Size represents standard component sizing options
+// Follows common UI library conventions (xs, sm, md, lg, xl)
 type Size string
 
 const (
-	SizeXS Size = "xs"
-	SizeSM Size = "sm"
-	SizeMD Size = "md"
-	SizeLG Size = "lg"
-	SizeXL Size = "xl"
+	SizeXS Size = "xs" // Extra small (minimal padding, compact)
+	SizeSM Size = "sm" // Small (reduced padding)
+	SizeMD Size = "md" // Medium (default size)
+	SizeLG Size = "lg" // Large (increased padding)
+	SizeXL Size = "xl" // Extra large (maximum padding)
 )
 
-// Variant represents component style variants
+// Variant represents component style/color variants
+// Based on semantic color system for consistent UI
 type Variant string
 
 const (
-	VariantPrimary   Variant = "primary"
-	VariantSecondary Variant = "secondary"
-	VariantSuccess   Variant = "success"
-	VariantDanger    Variant = "danger"
-	VariantWarning   Variant = "warning"
-	VariantInfo      Variant = "info"
-	VariantLight     Variant = "light"
-	VariantDark      Variant = "dark"
+	VariantPrimary   Variant = "primary"   // Primary brand color (blue)
+	VariantSecondary Variant = "secondary" // Secondary color (gray)
+	VariantSuccess   Variant = "success"   // Success state (green)
+	VariantDanger    Variant = "danger"    // Error/destructive actions (red)
+	VariantWarning   Variant = "warning"   // Warning state (orange/yellow)
+	VariantInfo      Variant = "info"      // Informational (light blue)
+	VariantLight     Variant = "light"     // Light background
+	VariantDark      Variant = "dark"      // Dark background
 )
 
-// Position represents positioning options
+// Position represents positioning/alignment options
+// Used for tooltips, dropdowns, modals, etc.
 type Position string
 
 const (
-	PositionTop    Position = "top"
-	PositionBottom Position = "bottom"
-	PositionLeft   Position = "left"
-	PositionRight  Position = "right"
-	PositionCenter Position = "center"
+	PositionTop    Position = "top"    // Above the element
+	PositionBottom Position = "bottom" // Below the element
+	PositionLeft   Position = "left"   // Left of the element
+	PositionRight  Position = "right"  // Right of the element
+	PositionCenter Position = "center" // Centered
 )
 
-// BaseComponent represents the common properties of all UI components
+// Alignment represents text/content alignment
+// Standard CSS text-align values
+type Alignment string
+
+const (
+	AlignLeft   Alignment = "left"   // Left-aligned content
+	AlignCenter Alignment = "center" // Center-aligned content
+	AlignRight  Alignment = "right"  // Right-aligned content
+)
+
+// ============================================================================
+// SHARED DATA TYPES
+// ============================================================================
+
+// Option represents a selectable option in dropdowns, radio groups, etc.
+// Reused across Select, Radio, Checkbox components
+type Option struct {
+	Value    string `json:"value" validate:"required"`    // The actual value submitted
+	Label    string `json:"label" validate:"required"`    // Display text for the option
+	Disabled bool   `json:"disabled,omitempty"`           // Whether option is disabled
+	Group    string `json:"group,omitempty"`              // Option group (for grouped selects)
+	Icon     string `json:"icon,omitempty"`               // Optional icon identifier
+	Badge    string `json:"badge,omitempty"`              // Optional badge/count display
+}
+
+// Validator represents validation rules for form components
+// Centralized validation configuration reused across all form fields
+type Validator struct {
+	// Basic validation
+	Required bool `json:"required,omitempty"` // Field is required
+
+	// Length validation
+	MinLength *int `json:"min_length,omitempty"` // Minimum character length
+	MaxLength *int `json:"max_length,omitempty"` // Maximum character length
+
+	// Numeric validation
+	Min *float64 `json:"min,omitempty"` // Minimum numeric value
+	Max *float64 `json:"max,omitempty"` // Maximum numeric value
+
+	// Pattern validation
+	Pattern string `json:"pattern,omitempty"` // Regular expression pattern
+
+	// Custom validation
+	CustomRules []string `json:"custom_rules,omitempty"` // Custom validation rule names
+
+	// Error messaging
+	Message string `json:"message,omitempty"` // Custom validation error message
+}
+
+// Action represents an actionable button or link
+// Reused in tables, cards, forms, and other interactive components
+type Action struct {
+	Key      string      `json:"key" validate:"required"`      // Unique identifier
+	Label    string      `json:"label" validate:"required"`    // Display text
+	Icon     string      `json:"icon,omitempty"`               // Icon identifier
+	Type     ActionType  `json:"type,omitempty"`               // Action type
+	Variant  Variant     `json:"variant,omitempty"`            // Visual style
+	OnClick  string      `json:"on_click,omitempty"`           // Click handler
+	Disabled string      `json:"disabled,omitempty"`           // Disable condition
+	Confirm  *ConfirmDialog `json:"confirm,omitempty"`         // Confirmation dialog
+}
+
+// ActionType represents different action behaviors
+type ActionType string
+
+const (
+	ActionButton   ActionType = "button"   // Regular button action
+	ActionLink     ActionType = "link"     // Navigation link
+	ActionDropdown ActionType = "dropdown" // Dropdown menu
+)
+
+// ConfirmDialog represents a confirmation dialog for destructive actions
+type ConfirmDialog struct {
+	Title       string `json:"title,omitempty"`       // Dialog title
+	Description string `json:"description,omitempty"` // Warning message
+	OkText      string `json:"ok_text,omitempty"`     // Confirm button text (default: "OK")
+	CancelText  string `json:"cancel_text,omitempty"` // Cancel button text (default: "Cancel")
+}
+
+// ============================================================================
+// COMPONENT BASE TYPES
+// ============================================================================
+
+// BaseComponent contains common properties shared by all UI components
+// This provides consistent structure and multi-tenant support
 type BaseComponent struct {
-	// Identity
-	ID   string        `json:"id" validate:"required"`
-	Type ComponentType `json:"type" validate:"required"`
-	Name string        `json:"name,omitempty"`
+	// Core Identity
+	ID   string        `json:"id" validate:"required"`   // Unique component identifier
+	Type ComponentType `json:"type" validate:"required"` // Component type
+	Name string        `json:"name,omitempty"`           // Form field name (for inputs)
 
-	// Display
-	Label       string `json:"label,omitempty"`
-	Description string `json:"description,omitempty"`
-	Placeholder string `json:"placeholder,omitempty"`
+	// Display Properties
+	Label       string `json:"label,omitempty"`       // Display label/title
+	Description string `json:"description,omitempty"` // Help text or description
+	Placeholder string `json:"placeholder,omitempty"` // Input placeholder text
 
-	// Styling
-	Class   string  `json:"class,omitempty"`
-	Style   string  `json:"style,omitempty"`
-	Size    Size    `json:"size,omitempty"`
-	Variant Variant `json:"variant,omitempty"`
-	Width   string  `json:"width,omitempty"`
-	Height  string  `json:"height,omitempty"`
+	// Visual Styling
+	Class   string  `json:"class,omitempty"`   // CSS classes
+	Style   string  `json:"style,omitempty"`   // Inline CSS styles
+	Size    Size    `json:"size,omitempty"`    // Component size
+	Variant Variant `json:"variant,omitempty"` // Visual variant/theme
+	Width   string  `json:"width,omitempty"`   // Component width
+	Height  string  `json:"height,omitempty"`  // Component height
 
-	// Behavior
-	Disabled bool `json:"disabled,omitempty"`
-	Hidden   bool `json:"hidden,omitempty"`
-	Required bool `json:"required,omitempty"`
-	ReadOnly bool `json:"readonly,omitempty"`
+	// Behavioral States
+	Disabled bool `json:"disabled,omitempty"` // Disable user interaction
+	Hidden   bool `json:"hidden,omitempty"`   // Hide component
+	Required bool `json:"required,omitempty"` // Required field (forms)
+	ReadOnly bool `json:"readonly,omitempty"` // Read-only mode
 
-	// Accessibility
-	AriaLabel       string `json:"aria_label,omitempty"`
-	AriaDescribedBy string `json:"aria_described_by,omitempty"`
-	TabIndex        int    `json:"tab_index,omitempty"`
+	// Accessibility Support
+	AriaLabel       string `json:"aria_label,omitempty"`        // ARIA label for screen readers
+	AriaDescribedBy string `json:"aria_described_by,omitempty"` // ARIA described-by reference
+	TabIndex        int    `json:"tab_index,omitempty"`         // Tab order index
 
-	// Events
-	OnClick  string `json:"on_click,omitempty"`
-	OnChange string `json:"on_change,omitempty"`
-	OnFocus  string `json:"on_focus,omitempty"`
-	OnBlur   string `json:"on_blur,omitempty"`
+	// Event Handlers
+	OnClick  string `json:"on_click,omitempty"`  // Click event handler
+	OnChange string `json:"on_change,omitempty"` // Change event handler
+	OnFocus  string `json:"on_focus,omitempty"`  // Focus event handler
+	OnBlur   string `json:"on_blur,omitempty"`   // Blur event handler
 
-	// Multi-tenant context
-	TenantID uuid.UUID `json:"tenant_id,omitempty"`
+	// Multi-Tenant Support
+	TenantID uuid.UUID `json:"tenant_id,omitempty"` // Tenant context
 
 	// Metadata
-	CreatedAt *time.Time `json:"created_at,omitempty"`
-	UpdatedAt *time.Time `json:"updated_at,omitempty"`
+	CreatedAt *time.Time `json:"created_at,omitempty"` // Creation timestamp
+	UpdatedAt *time.Time `json:"updated_at,omitempty"` // Last update timestamp
 }
 
-// Component represents a complete UI component with its configuration
+// Component represents a complete UI component with configuration and children
+// This is the main component structure used throughout the system
 type Component struct {
-	BaseComponent
-	Config    json.RawMessage `json:"config,omitempty"`
-	Children  []Component     `json:"children,omitempty"`
-	Validator *Validator      `json:"validator,omitempty"`
+	BaseComponent                           // Embedded base properties
+	Config    json.RawMessage `json:"config,omitempty"`    // Component-specific configuration
+	Children  []Component     `json:"children,omitempty"`  // Child components
+	Validator *Validator      `json:"validator,omitempty"` // Validation rules
+	Styles    *css.Styles     `json:"styles,omitempty"`    // CSS styling properties
+	
+	// Security enhancements for military-grade multi-tenant architecture
+	metadata       map[string]string `json:"-"` // Internal metadata, never serialized
+	encrypted      bool             `json:"-"` // Encryption status
+	encryptedConfig []byte          `json:"-"` // Encrypted configuration data
 }
 
-// Validator represents validation rules for a component
-type Validator struct {
-	Required    bool     `json:"required,omitempty"`
-	MinLength   *int     `json:"min_length,omitempty"`
-	MaxLength   *int     `json:"max_length,omitempty"`
-	Min         *float64 `json:"min,omitempty"`
-	Max         *float64 `json:"max,omitempty"`
-	Pattern     string   `json:"pattern,omitempty"`
-	CustomRules []string `json:"custom_rules,omitempty"`
-	Message     string   `json:"message,omitempty"`
-}
+// ============================================================================
+// COMPONENT BUILDER PATTERN
+// ============================================================================
 
-// ComponentBuilder provides a fluent interface for building components
+// ComponentBuilder provides a fluent interface for constructing components
+// Implements the Builder pattern for easy component creation
 type ComponentBuilder struct {
 	component Component
 }
 
-// NewComponent creates a new component builder
+// NewComponent creates a new component builder with the specified type and ID
 func NewComponent(componentType ComponentType, id string) *ComponentBuilder {
 	return &ComponentBuilder{
 		component: Component{
@@ -164,21 +261,29 @@ func NewComponent(componentType ComponentType, id string) *ComponentBuilder {
 	}
 }
 
-// WithLabel sets the component label
+// Fluent Builder Methods for Common Properties
+
+// WithLabel sets the component display label
 func (b *ComponentBuilder) WithLabel(label string) *ComponentBuilder {
 	b.component.Label = label
 	return b
 }
 
-// WithName sets the component name
+// WithName sets the form field name (for form controls)
 func (b *ComponentBuilder) WithName(name string) *ComponentBuilder {
 	b.component.Name = name
 	return b
 }
 
-// WithDescription sets the component description
+// WithDescription sets the help text or description
 func (b *ComponentBuilder) WithDescription(desc string) *ComponentBuilder {
 	b.component.Description = desc
+	return b
+}
+
+// WithPlaceholder sets the input placeholder text
+func (b *ComponentBuilder) WithPlaceholder(placeholder string) *ComponentBuilder {
+	b.component.Placeholder = placeholder
 	return b
 }
 
@@ -188,13 +293,13 @@ func (b *ComponentBuilder) WithSize(size Size) *ComponentBuilder {
 	return b
 }
 
-// WithVariant sets the component variant
+// WithVariant sets the visual style variant
 func (b *ComponentBuilder) WithVariant(variant Variant) *ComponentBuilder {
 	b.component.Variant = variant
 	return b
 }
 
-// WithClass sets the component CSS class
+// WithClass sets custom CSS classes
 func (b *ComponentBuilder) WithClass(class string) *ComponentBuilder {
 	b.component.Class = class
 	return b
@@ -206,31 +311,49 @@ func (b *ComponentBuilder) Disabled() *ComponentBuilder {
 	return b
 }
 
-// Required marks the component as required
+// Hidden marks the component as hidden
+func (b *ComponentBuilder) Hidden() *ComponentBuilder {
+	b.component.Hidden = true
+	return b
+}
+
+// Required marks the component as required (for form fields)
 func (b *ComponentBuilder) Required() *ComponentBuilder {
 	b.component.Required = true
 	return b
 }
 
-// WithTenantID sets the tenant context
+// ReadOnly marks the component as read-only
+func (b *ComponentBuilder) ReadOnly() *ComponentBuilder {
+	b.component.ReadOnly = true
+	return b
+}
+
+// WithTenantID sets the tenant context for multi-tenant deployments
 func (b *ComponentBuilder) WithTenantID(tenantID uuid.UUID) *ComponentBuilder {
 	b.component.TenantID = tenantID
 	return b
 }
 
-// WithValidator sets the component validator
+// WithValidator sets validation rules for form components
 func (b *ComponentBuilder) WithValidator(validator *Validator) *ComponentBuilder {
 	b.component.Validator = validator
 	return b
 }
 
-// WithChildren adds child components
+// WithStyles sets CSS styling properties for the component
+func (b *ComponentBuilder) WithStyles(styles *css.Styles) *ComponentBuilder {
+	b.component.Styles = styles
+	return b
+}
+
+// WithChildren adds child components (for container components)
 func (b *ComponentBuilder) WithChildren(children ...Component) *ComponentBuilder {
 	b.component.Children = append(b.component.Children, children...)
 	return b
 }
 
-// WithConfig sets the component configuration
+// WithConfig sets component-specific configuration
 func (b *ComponentBuilder) WithConfig(config any) *ComponentBuilder {
 	if configBytes, err := json.Marshal(config); err == nil {
 		b.component.Config = configBytes
@@ -238,7 +361,16 @@ func (b *ComponentBuilder) WithConfig(config any) *ComponentBuilder {
 	return b
 }
 
-// Build returns the constructed component
+// WithMetadata sets internal security metadata
+func (b *ComponentBuilder) WithMetadata(key, value string) *ComponentBuilder {
+	if b.component.metadata == nil {
+		b.component.metadata = make(map[string]string)
+	}
+	b.component.metadata[key] = value
+	return b
+}
+
+// Build returns the constructed component with timestamps
 func (b *ComponentBuilder) Build() Component {
 	now := time.Now()
 	if b.component.CreatedAt == nil {
@@ -248,42 +380,135 @@ func (b *ComponentBuilder) Build() Component {
 	return b.component
 }
 
+// ============================================================================
+// COMPONENT REGISTRY INTERFACES
+// ============================================================================
+
 // ComponentRegistry manages component types and their configurations
+// Provides a centralized system for component creation and validation
 type ComponentRegistry interface {
+	// Register a component factory for a specific type
 	Register(componentType ComponentType, factory ComponentFactory)
+
+	// Create a component using the registered factory
 	Create(ctx context.Context, componentType ComponentType, config map[string]any) (Component, error)
+
+	// Get all registered component types
 	GetTypes() []ComponentType
+
+	// Validate a component using its factory
 	Validate(ctx context.Context, component Component) error
 }
 
-// ComponentFactory creates components of a specific type
+// ComponentFactory creates and validates components of a specific type
+// Each component type implements this interface for creation and validation
 type ComponentFactory interface {
+	// Create a new component instance with the given configuration
 	Create(ctx context.Context, config map[string]any) (Component, error)
+
+	// Validate a component instance
 	Validate(ctx context.Context, component Component) error
+
+	// Get the schema definition for this component type
 	GetSchema() ComponentSchema
 }
 
 // ComponentSchema defines the structure and validation rules for a component type
+// Used for documentation, validation, and UI generation
 type ComponentSchema struct {
-	Type        ComponentType            `json:"type"`
-	Title       string                   `json:"title"`
-	Description string                   `json:"description"`
-	Properties  map[string]Property      `json:"properties"`
-	Required    []string                 `json:"required"`
-	Examples    []map[string]any `json:"examples"`
+	Type        ComponentType                    `json:"type"`        // Component type identifier
+	Title       string                           `json:"title"`       // Human-readable title
+	Description string                           `json:"description"` // Detailed description
+	Properties  map[string]Property              `json:"properties"`  // Configuration properties
+	Required    []string                         `json:"required"`    // Required property names
+	Examples    []map[string]any `json:"examples"`    // Usage examples
 }
 
-// Property defines a component property schema
+// Property defines a component configuration property
+// Describes the type, constraints, and documentation for config properties
 type Property struct {
-	Type        string      `json:"type"`
-	Format      string      `json:"format,omitempty"`
-	Description string      `json:"description,omitempty"`
-	Default     any `json:"default,omitempty"`
-	Enum        []string    `json:"enum,omitempty"`
-	MinLength   *int        `json:"min_length,omitempty"`
-	MaxLength   *int        `json:"max_length,omitempty"`
-	Min         *float64    `json:"min,omitempty"`
-	Max         *float64    `json:"max,omitempty"`
-	Pattern     string      `json:"pattern,omitempty"`
+	Type        string      `json:"type"`                 // Property data type (string, number, boolean, etc.)
+	Format      string      `json:"format,omitempty"`     // Format specification (email, url, etc.)
+	Description string      `json:"description,omitempty"` // Property description
+	Default     any `json:"default,omitempty"`    // Default value
+	Enum        []string    `json:"enum,omitempty"`       // Allowed values (for enums)
+	MinLength   *int        `json:"min_length,omitempty"` // Minimum string length
+	MaxLength   *int        `json:"max_length,omitempty"` // Maximum string length
+	Min         *float64    `json:"min,omitempty"`        // Minimum numeric value
+	Max         *float64    `json:"max,omitempty"`        // Maximum numeric value
+	Pattern     string      `json:"pattern,omitempty"`    // Regular expression pattern
 }
 
+// ============================================================================
+// UTILITY TYPES
+// ============================================================================
+
+// InputType represents different HTML input types
+// Used by the Input component for type-specific behavior
+type InputType string
+
+const (
+	InputText     InputType = "text"     // Plain text input
+	InputEmail    InputType = "email"    // Email input with validation
+	InputPassword InputType = "password" // Password input (masked)
+	InputNumber   InputType = "number"   // Numeric input
+	InputTel      InputType = "tel"      // Telephone number input
+	InputURL      InputType = "url"      // URL input with validation
+	InputSearch   InputType = "search"   // Search input
+	InputHidden   InputType = "hidden"   // Hidden form field
+)
+
+// ButtonType represents HTML button types
+// Used by Button component for form behavior
+type ButtonType string
+
+const (
+	ButtonSubmit ButtonType = "submit" // Submit form button
+	ButtonButton ButtonType = "button" // Regular button
+	ButtonReset  ButtonType = "reset"  // Reset form button
+)
+
+// DataType represents different data display types
+// Used by Table component for column formatting
+type DataType string
+
+const (
+	DataTypeText     DataType = "text"     // Plain text display
+	DataTypeNumber   DataType = "number"   // Numeric formatting
+	DataTypeDate     DataType = "date"     // Date formatting
+	DataTypeDateTime DataType = "datetime" // Date/time formatting
+	DataTypeBoolean  DataType = "boolean"  // Boolean checkbox/switch
+	DataTypeCurrency DataType = "currency" // Currency formatting
+	DataTypePercent  DataType = "percent"  // Percentage formatting
+	DataTypeImage    DataType = "image"    // Image display
+	DataTypeLink     DataType = "link"     // Clickable link
+	DataTypeBadge    DataType = "badge"    // Status badge
+	DataTypeAction   DataType = "action"   // Action buttons
+)
+
+// ============================================================================
+// COMPONENT LIFECYCLE METHODS
+// ============================================================================
+
+// initializeLifecycle initializes component lifecycle metadata
+func (c *Component) initializeLifecycle() {
+	now := time.Now()
+	if c.CreatedAt == nil {
+		c.CreatedAt = &now
+	}
+	c.UpdatedAt = &now
+}
+
+// updateLifecycle updates component lifecycle metadata
+func (c *Component) updateLifecycle() {
+	now := time.Now()
+	c.UpdatedAt = &now
+}
+
+// markDisposed marks a component as disposed (for cleanup tracking)
+func (c *Component) markDisposed() {
+	// In a real implementation, this might set a disposed flag
+	// For now, we just update the timestamp
+	now := time.Now()
+	c.UpdatedAt = &now
+}

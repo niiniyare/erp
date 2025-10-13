@@ -78,7 +78,7 @@ type Tab struct {
 	ID       string    `json:"id" validate:"required"`
 	Label    string    `json:"label" validate:"required"`
 	Icon     string    `json:"icon,omitempty"`
-	Content  Component `json:"content,omitempty"`
+	Content  Component `json:"content,omitempty"` // Component is defined in types.go
 	Disabled bool      `json:"disabled,omitempty"`
 	Closable bool      `json:"closable,omitempty"`
 	Badge    string    `json:"badge,omitempty"`
@@ -126,7 +126,7 @@ const (
 // Drawer component configuration
 type DrawerConfig struct {
 	Title       string       `json:"title,omitempty"`
-	Position    Position     `json:"position,omitempty"`
+	Position    Position     `json:"position,omitempty"` // Position is defined in types.go
 	Width       string       `json:"width,omitempty"`
 	Height      string       `json:"height,omitempty"`
 	Closable    bool         `json:"closable,omitempty"`
@@ -411,7 +411,7 @@ func (f *TabsFactory) GetSchema() ComponentSchema {
 }
 
 // Panel factory implementation
-func (f *PanelFactory) Create(ctx context.Context, config map[string]interface{}) (Component, error) {
+func (f *PanelFactory) Create(ctx context.Context, config map[string]any) (Component, error) {
 	var panelConfig PanelConfig
 	if err := mapToStruct(config, &panelConfig); err != nil {
 		return Component{}, fmt.Errorf("invalid panel config: %w", err)
@@ -433,7 +433,7 @@ func (f *PanelFactory) GetSchema() ComponentSchema {
 }
 
 // Modal factory implementation
-func (f *ModalFactory) Create(ctx context.Context, config map[string]interface{}) (Component, error) {
+func (f *ModalFactory) Create(ctx context.Context, config map[string]any) (Component, error) {
 	var modalConfig ModalConfig
 	if err := mapToStruct(config, &modalConfig); err != nil {
 		return Component{}, fmt.Errorf("invalid modal config: %w", err)
@@ -455,7 +455,7 @@ func (f *ModalFactory) GetSchema() ComponentSchema {
 }
 
 // Drawer factory implementation
-func (f *DrawerFactory) Create(ctx context.Context, config map[string]interface{}) (Component, error) {
+func (f *DrawerFactory) Create(ctx context.Context, config map[string]any) (Component, error) {
 	var drawerConfig DrawerConfig
 	if err := mapToStruct(config, &drawerConfig); err != nil {
 		return Component{}, fmt.Errorf("invalid drawer config: %w", err)

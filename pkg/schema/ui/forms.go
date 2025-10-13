@@ -19,19 +19,7 @@ type InputConfig struct {
 	SpellCheck  bool      `json:"spell_check,omitempty"`
 }
 
-// InputType represents different input types
-type InputType string
-
-const (
-	InputText     InputType = "text"
-	InputEmail    InputType = "email"
-	InputPassword InputType = "password"
-	InputNumber   InputType = "number"
-	InputTel      InputType = "tel"
-	InputURL      InputType = "url"
-	InputSearch   InputType = "search"
-	InputHidden   InputType = "hidden"
-)
+// InputType is already defined in types.go - no need to duplicate
 
 // Textarea component configuration
 type TextareaConfig struct {
@@ -57,14 +45,7 @@ type SelectConfig struct {
 	DataSource   string   `json:"data_source,omitempty"` // API endpoint for dynamic options
 }
 
-// Option represents a select option
-type Option struct {
-	Value    string `json:"value" validate:"required"`
-	Label    string `json:"label" validate:"required"`
-	Disabled bool   `json:"disabled,omitempty"`
-	Group    string `json:"group,omitempty"`
-	Icon     string `json:"icon,omitempty"`
-}
+// Option is already defined in types.go - no need to duplicate
 
 // Checkbox component configuration
 type CheckboxConfig struct {
@@ -75,7 +56,7 @@ type CheckboxConfig struct {
 
 // Radio component configuration
 type RadioConfig struct {
-	Options   []Option `json:"options" validate:"required"`
+	Options   []Option `json:"options" validate:"required"` // Option is defined in types.go
 	Value     string   `json:"value,omitempty"`
 	Direction string   `json:"direction,omitempty"` // horizontal, vertical
 }
@@ -93,14 +74,7 @@ type ButtonConfig struct {
 	Loading      bool       `json:"loading,omitempty"`
 }
 
-// ButtonType represents different button types
-type ButtonType string
-
-const (
-	ButtonSubmit ButtonType = "submit"
-	ButtonButton ButtonType = "button"
-	ButtonReset  ButtonType = "reset"
-)
+// ButtonType is already defined in types.go - no need to duplicate
 
 // DatePicker component configuration
 type DatePickerConfig struct {
@@ -384,7 +358,7 @@ func generateID() string {
 }
 
 // Textarea factory implementation
-func (f *TextareaFactory) Create(ctx context.Context, config map[string]interface{}) (Component, error) {
+func (f *TextareaFactory) Create(ctx context.Context, config map[string]any) (Component, error) {
 	var textareaConfig TextareaConfig
 	if err := mapToStruct(config, &textareaConfig); err != nil {
 		return Component{}, fmt.Errorf("invalid textarea config: %w", err)
@@ -410,7 +384,7 @@ func (f *TextareaFactory) GetSchema() ComponentSchema {
 }
 
 // Checkbox factory implementation
-func (f *CheckboxFactory) Create(ctx context.Context, config map[string]interface{}) (Component, error) {
+func (f *CheckboxFactory) Create(ctx context.Context, config map[string]any) (Component, error) {
 	var checkboxConfig CheckboxConfig
 	if err := mapToStruct(config, &checkboxConfig); err != nil {
 		return Component{}, fmt.Errorf("invalid checkbox config: %w", err)
@@ -432,7 +406,7 @@ func (f *CheckboxFactory) GetSchema() ComponentSchema {
 }
 
 // Radio factory implementation
-func (f *RadioFactory) Create(ctx context.Context, config map[string]interface{}) (Component, error) {
+func (f *RadioFactory) Create(ctx context.Context, config map[string]any) (Component, error) {
 	var radioConfig RadioConfig
 	if err := mapToStruct(config, &radioConfig); err != nil {
 		return Component{}, fmt.Errorf("invalid radio config: %w", err)
@@ -454,7 +428,7 @@ func (f *RadioFactory) GetSchema() ComponentSchema {
 }
 
 // DatePicker factory implementation
-func (f *DatePickerFactory) Create(ctx context.Context, config map[string]interface{}) (Component, error) {
+func (f *DatePickerFactory) Create(ctx context.Context, config map[string]any) (Component, error) {
 	var datePickerConfig DatePickerConfig
 	if err := mapToStruct(config, &datePickerConfig); err != nil {
 		return Component{}, fmt.Errorf("invalid date picker config: %w", err)
@@ -476,7 +450,7 @@ func (f *DatePickerFactory) GetSchema() ComponentSchema {
 }
 
 // FileUpload factory implementation
-func (f *FileUploadFactory) Create(ctx context.Context, config map[string]interface{}) (Component, error) {
+func (f *FileUploadFactory) Create(ctx context.Context, config map[string]any) (Component, error) {
 	var fileUploadConfig FileUploadConfig
 	if err := mapToStruct(config, &fileUploadConfig); err != nil {
 		return Component{}, fmt.Errorf("invalid file upload config: %w", err)
@@ -498,7 +472,7 @@ func (f *FileUploadFactory) GetSchema() ComponentSchema {
 }
 
 // Form factory implementation
-func (f *FormFactory) Create(ctx context.Context, config map[string]interface{}) (Component, error) {
+func (f *FormFactory) Create(ctx context.Context, config map[string]any) (Component, error) {
 	var formConfig FormConfig
 	if err := mapToStruct(config, &formConfig); err != nil {
 		return Component{}, fmt.Errorf("invalid form config: %w", err)

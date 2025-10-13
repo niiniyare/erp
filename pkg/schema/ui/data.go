@@ -47,22 +47,7 @@ type TableColumn struct {
 	Ellipsis   bool        `json:"ellipsis,omitempty"`
 }
 
-// DataType represents column data types
-type DataType string
-
-const (
-	DataTypeText     DataType = "text"
-	DataTypeNumber   DataType = "number"
-	DataTypeDate     DataType = "date"
-	DataTypeDateTime DataType = "datetime"
-	DataTypeBoolean  DataType = "boolean"
-	DataTypeCurrency DataType = "currency"
-	DataTypePercent  DataType = "percent"
-	DataTypeImage    DataType = "image"
-	DataTypeLink     DataType = "link"
-	DataTypeBadge    DataType = "badge"
-	DataTypeAction   DataType = "action"
-)
+// DataType is already defined in types.go - no need to duplicate
 
 // FixedColumn represents column fixing options
 type FixedColumn string
@@ -72,14 +57,7 @@ const (
 	FixedRight FixedColumn = "right"
 )
 
-// Alignment represents text alignment options
-type Alignment string
-
-const (
-	AlignLeft   Alignment = "left"
-	AlignCenter Alignment = "center"
-	AlignRight  Alignment = "right"
-)
+// Alignment is already defined in types.go - no need to duplicate
 
 // Pagination configuration
 type Pagination struct {
@@ -124,7 +102,7 @@ type Filtering struct {
 type Filter struct {
 	Column      string     `json:"column" validate:"required"`
 	Type        FilterType `json:"type" validate:"required"`
-	Options     []Option   `json:"options,omitempty"`
+	Options     []Option   `json:"options,omitempty"` // Option is defined in types.go
 	Multiple    bool       `json:"multiple,omitempty"`
 	SearchQuery string     `json:"search_query,omitempty"`
 }
@@ -166,34 +144,7 @@ type Search struct {
 	Debounce    int      `json:"debounce,omitempty"`
 }
 
-// Action represents a table action
-type Action struct {
-	Key      string         `json:"key" validate:"required"`
-	Label    string         `json:"label" validate:"required"`
-	Icon     string         `json:"icon,omitempty"`
-	Type     ActionType     `json:"type,omitempty"`
-	Variant  Variant        `json:"variant,omitempty"`
-	OnClick  string         `json:"on_click,omitempty"`
-	Disabled string         `json:"disabled,omitempty"`
-	Confirm  *ConfirmDialog `json:"confirm,omitempty"`
-}
-
-// ActionType represents action types
-type ActionType string
-
-const (
-	ActionButton   ActionType = "button"
-	ActionLink     ActionType = "link"
-	ActionDropdown ActionType = "dropdown"
-)
-
-// ConfirmDialog configuration for destructive actions
-type ConfirmDialog struct {
-	Title       string `json:"title,omitempty"`
-	Description string `json:"description,omitempty"`
-	OkText      string `json:"ok_text,omitempty"`
-	CancelText  string `json:"cancel_text,omitempty"`
-}
+// Action, ActionType, and ConfirmDialog are already defined in types.go - no need to duplicate
 
 // List component configuration
 type ListConfig struct {
@@ -476,7 +427,7 @@ func (f *ChartFactory) GetSchema() ComponentSchema {
 }
 
 // List factory implementation
-func (f *ListFactory) Create(ctx context.Context, config map[string]interface{}) (Component, error) {
+func (f *ListFactory) Create(ctx context.Context, config map[string]any) (Component, error) {
 	var listConfig ListConfig
 	if err := mapToStruct(config, &listConfig); err != nil {
 		return Component{}, fmt.Errorf("invalid list config: %w", err)
@@ -498,7 +449,7 @@ func (f *ListFactory) GetSchema() ComponentSchema {
 }
 
 // Tree factory implementation
-func (f *TreeFactory) Create(ctx context.Context, config map[string]interface{}) (Component, error) {
+func (f *TreeFactory) Create(ctx context.Context, config map[string]any) (Component, error) {
 	var treeConfig TreeConfig
 	if err := mapToStruct(config, &treeConfig); err != nil {
 		return Component{}, fmt.Errorf("invalid tree config: %w", err)
@@ -520,7 +471,7 @@ func (f *TreeFactory) GetSchema() ComponentSchema {
 }
 
 // Badge factory implementation
-func (f *BadgeFactory) Create(ctx context.Context, config map[string]interface{}) (Component, error) {
+func (f *BadgeFactory) Create(ctx context.Context, config map[string]any) (Component, error) {
 	var badgeConfig BadgeConfig
 	if err := mapToStruct(config, &badgeConfig); err != nil {
 		return Component{}, fmt.Errorf("invalid badge config: %w", err)
@@ -542,7 +493,7 @@ func (f *BadgeFactory) GetSchema() ComponentSchema {
 }
 
 // Tag factory implementation
-func (f *TagFactory) Create(ctx context.Context, config map[string]interface{}) (Component, error) {
+func (f *TagFactory) Create(ctx context.Context, config map[string]any) (Component, error) {
 	var tagConfig TagConfig
 	if err := mapToStruct(config, &tagConfig); err != nil {
 		return Component{}, fmt.Errorf("invalid tag config: %w", err)

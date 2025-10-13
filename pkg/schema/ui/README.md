@@ -14,7 +14,7 @@ This package provides:
 ## Key Benefits vs Generated Schemas
 
 - ✅ **Type Safety**: Proper Go types with compile-time checking
-- ✅ **Performance**: No reflection or `interface{}` usage
+- ✅ **Performance**: No reflection or `any` usage
 - ✅ **Maintainability**: Hand-crafted, focused component definitions
 - ✅ **Business Logic**: Built-in validation and ERP-specific features
 - ✅ **Multi-tenant Ready**: Built-in tenant context support

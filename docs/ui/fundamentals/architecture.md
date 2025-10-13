@@ -1,28 +1,23 @@
 # UI Architecture Fundamentals
 
-<!-- LLM-CONTEXT-START -->
 **FILE PURPOSE**: Core architectural principles and system design patterns for ERP UI components
 **SCOPE**: State management, configuration, security patterns, performance considerations
 **TARGET AUDIENCE**: Senior developers, architects, system designers
 **RELATED FILES**: `state.md` (implementation details), `components/forms.md` (component usage)
-<!-- LLM-CONTEXT-END -->
 
 ## Architecture Overview
 
 This document outlines the fundamental architectural principles for building scalable, secure, and maintainable ERP user interfaces using the **Templ + HTMX + Alpine.js + Flowbite** technology stack.
 
-<!-- LLM-TECH-STACK-START -->
 **CORE TECHNOLOGY STACK:**
 - **Templ** - Type-safe Go templating with compilation to Go code
 - **HTMX** - Server-driven UI interactions without complex JavaScript
 - **Alpine.js** - Lightweight reactive client-side state management
 - **Flowbite** - Production-ready UI components based on TailwindCSS
 - **Go Backend** - Business logic, validation, security, and data persistence
-<!-- LLM-TECH-STACK-END -->
 
 ## System Architecture Principles
 
-<!-- LLM-PRINCIPLES-START -->
 **ARCHITECTURAL PRINCIPLES:**
 
 ### 1. Progressive Enhancement
@@ -49,7 +44,6 @@ This document outlines the fundamental architectural principles for building sca
 - **Minimal client-side JavaScript**
 - **Efficient server-side rendering**
 - **Smart caching strategies**
-<!-- LLM-PRINCIPLES-END -->
 
 ---
 
@@ -57,7 +51,6 @@ This document outlines the fundamental architectural principles for building sca
 
 ### Multi-Layer State Design
 
-<!-- LLM-STATE-ARCHITECTURE-START -->
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    CLIENT LAYER                             │
@@ -91,11 +84,9 @@ This document outlines the fundamental architectural principles for building sca
 │  └─────────────────┘ └─────────────────┘ └───────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
-<!-- LLM-STATE-ARCHITECTURE-END -->
 
 ### State Synchronization Patterns
 
-<!-- LLM-STATE-SYNC-START -->
 **STATE SYNCHRONIZATION STRATEGIES:**
 
 #### 1. Client-to-Server Sync
@@ -170,7 +161,6 @@ function collaborativeEditor() {
     }
 }
 ```
-<!-- LLM-STATE-SYNC-END -->
 
 ---
 
@@ -178,7 +168,6 @@ function collaborativeEditor() {
 
 ### Hierarchical Configuration
 
-<!-- LLM-CONFIG-HIERARCHY-START -->
 **CONFIGURATION HIERARCHY:**
 ```
 System Configuration
@@ -205,11 +194,9 @@ System Configuration
 3. Dynamic Configuration
 4. Static Configuration Files
 5. Default Values (lowest)
-<!-- LLM-CONFIG-HIERARCHY-END -->
 
 ### Feature Flag Architecture
 
-<!-- LLM-FEATURE-FLAGS-START -->
 **FEATURE FLAG EVALUATION ENGINE:**
 
 #### 1. Context-Aware Evaluation
@@ -259,7 +246,6 @@ Alpine.store('features', {
     }
 });
 ```
-<!-- LLM-FEATURE-FLAGS-END -->
 
 ---
 
@@ -267,7 +253,6 @@ Alpine.store('features', {
 
 ### Multi-Layer Security Design
 
-<!-- LLM-SECURITY-LAYERS-START -->
 **SECURITY ARCHITECTURE LAYERS:**
 
 #### 1. Transport Layer Security
@@ -292,11 +277,9 @@ Alpine.store('features', {
 - **Field-level encryption** for PII
 - **Audit logging** for compliance
 - **Data masking** in non-production environments
-<!-- LLM-SECURITY-LAYERS-END -->
 
 ### Attribute-Based Access Control (ABAC)
 
-<!-- LLM-ABAC-ARCHITECTURE-START -->
 **ABAC DECISION FLOW:**
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -355,7 +338,6 @@ policy:
         operator: not_equals
         value: top_secret
 ```
-<!-- LLM-ABAC-ARCHITECTURE-END -->
 
 ---
 
@@ -363,7 +345,6 @@ policy:
 
 ### Optimization Strategies
 
-<!-- LLM-PERFORMANCE-START -->
 **PERFORMANCE OPTIMIZATION LAYERS:**
 
 #### 1. Client-Side Optimization
@@ -415,11 +396,9 @@ func (ch *CacheHierarchy) Get(key string) (interface{}, error) {
 - **CDN distribution** for static assets
 - **Resource bundling** and minification
 - **Efficient HTMX partial updates**
-<!-- LLM-PERFORMANCE-END -->
 
 ### Scalability Patterns
 
-<!-- LLM-SCALABILITY-START -->
 **HORIZONTAL SCALING ARCHITECTURE:**
 
 #### 1. Stateless Application Design
@@ -444,7 +423,6 @@ func (ch *CacheHierarchy) Get(key string) (interface{}, error) {
 - **API-first design** for service extraction
 - **Event-driven architecture** support
 - **Service mesh compatibility**
-<!-- LLM-SCALABILITY-END -->
 
 ---
 
@@ -452,7 +430,6 @@ func (ch *CacheHierarchy) Get(key string) (interface{}, error) {
 
 ### Atomic Design Hierarchy
 
-<!-- LLM-ATOMIC-DESIGN-START -->
 **COMPONENT HIERARCHY:**
 ```
 Application Layer (Pages)
@@ -484,11 +461,9 @@ Application Layer (Pages)
 - **Predictable Interface** - Consistent props and behavior patterns
 - **Isolated Styling** - No external dependencies for appearance
 - **Testable Logic** - Separable business logic from presentation
-<!-- LLM-ATOMIC-DESIGN-END -->
 
 ### State Management Patterns
 
-<!-- LLM-COMPONENT-STATE-START -->
 **COMPONENT STATE PATTERNS:**
 
 #### 1. Local Component State
@@ -548,7 +523,6 @@ templ UserProfile(user *User, canEdit bool) {
     </div>
 }
 ```
-<!-- LLM-COMPONENT-STATE-END -->
 
 ---
 
@@ -556,7 +530,6 @@ templ UserProfile(user *User, canEdit bool) {
 
 ### HTMX Integration Architecture
 
-<!-- LLM-HTMX-PATTERNS-START -->
 **HTMX INTERACTION PATTERNS:**
 
 #### 1. Progressive Enhancement
@@ -608,11 +581,9 @@ document.body.addEventListener('htmx:afterSwap', function(evt) {
     }
 });
 ```
-<!-- LLM-HTMX-PATTERNS-END -->
 
 ### Alpine.js Integration Patterns
 
-<!-- LLM-ALPINE-PATTERNS-START -->
 **ALPINE.JS ARCHITECTURAL PATTERNS:**
 
 #### 1. Component Communication
@@ -685,7 +656,6 @@ Alpine.plugin((Alpine) => {
     });
 });
 ```
-<!-- LLM-ALPINE-PATTERNS-END -->
 
 ---
 
@@ -693,7 +663,6 @@ Alpine.plugin((Alpine) => {
 
 ### Environment Strategy
 
-<!-- LLM-DEPLOYMENT-START -->
 **DEPLOYMENT ENVIRONMENTS:**
 
 #### 1. Development Environment
@@ -734,11 +703,9 @@ stages:
       command: "docker build"
       output: "production container"
 ```
-<!-- LLM-DEPLOYMENT-END -->
 
 ### Monitoring Architecture
 
-<!-- LLM-MONITORING-START -->
 **OBSERVABILITY STACK:**
 
 #### 1. Application Metrics
@@ -777,7 +744,6 @@ alerts:
     severity: "warning"
     action: "auto_scale"
 ```
-<!-- LLM-MONITORING-END -->
 
 ---
 
@@ -785,7 +751,6 @@ alerts:
 
 ### Legacy System Integration
 
-<!-- LLM-MIGRATION-START -->
 **MIGRATION PATTERNS:**
 
 #### 1. Strangler Fig Pattern
@@ -805,11 +770,9 @@ alerts:
 - **Dual-write** during transition periods
 - **Eventual consistency** between systems
 - **Event replay** for data recovery
-<!-- LLM-MIGRATION-END -->
 
 ### Technology Evolution Path
 
-<!-- LLM-EVOLUTION-START -->
 **EVOLUTION STRATEGY:**
 
 #### 1. Incremental Enhancement
@@ -829,11 +792,9 @@ alerts:
 - **Standard interfaces** for integration
 - **Technology abstraction** layers
 - **Documentation** for future maintainers
-<!-- LLM-EVOLUTION-END -->
 
 ## References
 
-<!-- LLM-REFERENCES-START -->
 **RELATED DOCUMENTATION:**
 - [Form Components](../components/forms.md) - Form architecture and validation patterns
 - [Validation Guide](../guides/validation-guide.md) - Complete validation implementation
@@ -849,9 +810,7 @@ alerts:
 - [OWASP Security Guidelines](https://owasp.org/) - Web application security
 - [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) - Architectural patterns
 - [Domain-Driven Design](https://martinfowler.com/bliki/DomainDrivenDesign.html) - System design approach
-<!-- LLM-REFERENCES-END -->
 
-<!-- LLM-METADATA-START -->
 **METADATA FOR AI ASSISTANTS:**
 - File Type: Architecture Documentation
 - Scope: System design and architectural patterns
@@ -859,4 +818,3 @@ alerts:
 - Complexity: Advanced
 - Focus: Scalable, secure, maintainable ERP UI architecture
 - Dependencies: Templ + HTMX + Alpine.js + Flowbite
-<!-- LLM-METADATA-END -->
