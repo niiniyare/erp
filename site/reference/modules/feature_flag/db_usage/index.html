@@ -1,0 +1,5910 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+      
+      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+    
+    
+      
+        <title>Feature Flag System - Usage Guide - Awo ERP Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#feature-flag-system-usage-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="Awo ERP Documentation" class="md-header__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Awo ERP Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Feature Flag System - Usage Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/niiniyare/erp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../getting-started/01-developer-quick-start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../architecture/abac-design-and-roadmap/" class="md-tabs__link">
+          
+  
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../financial/" class="md-tabs__link">
+          
+  
+  
+  Modules
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="Awo ERP Documentation" class="md-nav__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Awo ERP Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/niiniyare/erp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../getting-started/01-developer-quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Developer Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_1" id="__nav_2_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/abac-design-and-roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/FRAMEWORK_MIGRATION_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/GIN_HANDLERS_INVENTORY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GIN Handlers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../performance-optimization-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Performance Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    UI
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            UI
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ui/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ux-improvement-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UX Improvement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ui/fundamentals/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ui/templ-llms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Templ LLMs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ui/CLAUDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Claude
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2_7" id="__nav_2_2_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Components
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Components
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ui/components/elements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Elements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ui/components/forms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Forms
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2_8" id="__nav_2_2_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ui/guides/validation-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2_9" id="__nav_2_2_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Patterns
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_2_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2_9">
+            <span class="md-nav__icon md-icon"></span>
+            Patterns
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ui/patterns/htmx-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    HTMX Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2_10" id="__nav_2_2_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_2_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2_10">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../ui/reference/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/01-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Best Practices
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/documentation-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/condition-package/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Package Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/documentation-structure-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Structure Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/mermaid-diagrams-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mermaid Diagrams
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/code-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/database-transactions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Transactions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Error Handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/general-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/goa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Goa Framework
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/middleware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Middleware
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Observability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/securityHandbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Handbook
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Layer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../contributing/sqlc-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SQLC Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../sqlc-implementation-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SQLC Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../MAKEFILE_INTEGRATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Makefile Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/swagger-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    🚀 Interactive API Explorer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/users/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/organizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Organizations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/abac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Authorization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4_7" id="__nav_2_4_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tutorials
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4_7">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/tutorials/api-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Complete Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Legacy API Source
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/user-service-abac-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4_10" id="__nav_2_4_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core APIs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_4_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4_10">
+            <span class="md-nav__icon md-icon"></span>
+            Core APIs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/auth/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Auth Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api/core-apis/auth/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Auth API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/entities/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entity Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/entities/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entity API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/entities/schema-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entity Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/organizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Organizations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/organizations/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Org Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/tenants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenants
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/users/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/users/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4_11" id="__nav_2_4_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_4_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4_11">
+            <span class="md-nav__icon md-icon"></span>
+            Workflows
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Request Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/schema-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/access-requests/workflow-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests Workflow Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/conditional-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/workflows/user-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Analytics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4_12" id="__nav_2_4_12_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_4_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4_12">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/testing/manual/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/testing/manual/manual-curl-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Manual Tests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4_13" id="__nav_2_4_13_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_4_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4_13">
+            <span class="md-nav__icon md-icon"></span>
+            Utilities
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/utilities/todo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TODO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Schema
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../examples/mermaid-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mermaid Test
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Scripts
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Scripts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../scripts/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Project Completion
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Project Completion
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../completion/PROJECT_COMPLETION_SUMMARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Summary
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../team/awoctl-rollout-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rollout Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../metrics/awoctl-success-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Success Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../maintenance/awoctl-maintenance-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Maintenance Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/awoctl-scaffolding-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Financial
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            Financial
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/PRD/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Product Requirements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/testing-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Task Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/currency-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Currency Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/integration-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/settings-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Settings Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/security-compliance-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security & Compliance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/ACCOUNT_SERVICE_INTEGRATION_SUMMARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Account Service Integration Summary
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/sql-ledger-user-guideV306/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SQL Ledger User Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../financial/financial-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Financial Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Users & IAM
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            Users & IAM
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/01_identity_model_and_rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity & RBAC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/02_abac_evaluation_lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/03_hybrid_access_control_strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hybrid Access Control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/04_architecture_service_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/IAM_MAPPING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Restructuring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/PHASE_3_ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Phase 3 Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/RELEASE_NOTES_RC1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release Notes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2_11" id="__nav_3_2_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    ABAC Framework
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_11">
+            <span class="md-nav__icon md-icon"></span>
+            ABAC Framework
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/administrative_performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Administrative Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/attribute_definitions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Attribute Definitions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/audit_monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit & Monitoring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/context_attribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Context Attributes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy_evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy_evaluation_CEL/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CEL Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/policy_evaluation_expr-lang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expression Language
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user/abac/POLICY_SERVICE_ENHANCEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Service Enhancement
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Audit
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Audit
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../audit/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Feature Flags
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Feature Flags
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../00_README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../feature_flag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Feature Flag
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4_5" id="__nav_3_4_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Onboarding
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_4_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/01_introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/02_core_concepts_and_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Core Concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/03_developer_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/04_admin_api_manual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API Manual
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/05_lifecycle_gotchas_and_improvements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Lifecycle & Improvements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tenant
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            Tenant
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/tenant-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../tenant-management-migration-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/tenants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenants
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    cURL Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    System Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            System Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../settings/service-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../settings/integration-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../settings/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../settings/architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../settings/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Other Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_7">
+            <span class="md-nav__icon md-icon"></span>
+            Other Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../airline-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Airline Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../asset-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Asset Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../forecourt-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Forecourt Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../human-resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Human Resources
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../implementation-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Phases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../inventory-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Inventory Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../module-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Module Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../project-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../restaurant-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Restaurant Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../retail-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retail Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tax-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tax Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../technical-specifications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Technical Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflow-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Workflow Engine
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="feature-flag-system-usage-guide">Feature Flag System - Usage Guide</h1>
+<p>A comprehensive guide for using the feature flag system, including examples, best practices, and troubleshooting tips.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#quick-start">Quick Start</a></li>
+<li><a href="#basic-operations">Basic Operations</a></li>
+<li><a href="#feature-flag-evaluation">Feature Flag Evaluation</a></li>
+<li><a href="#monitoring--analytics">Monitoring &amp; Analytics</a></li>
+<li><a href="#bulk-operations">Bulk Operations</a></li>
+<li><a href="#maintenance">Maintenance</a></li>
+<li><a href="#best-practices">Best Practices</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+</ol>
+<hr />
+<h2 id="quick-start">Quick Start</h2>
+<p>Before working with feature flags, you must set the tenant context. This ensures all operations are scoped to the correct tenant:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Required: Set tenant context for all operations</span>
+<span class="k">SET</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">current_tenant_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">;</span>
+<span class="k">SET</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">current_user_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;your-user-uuid&#39;</span><span class="p">;</span>
+<span class="k">SET</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">current_session_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;your-session-uuid&#39;</span><span class="p">;</span>
+</code></pre></div>
+<blockquote>
+<p><strong>Note:</strong> Replace the UUID values with your actual tenant, user, and session identifiers.</p>
+</blockquote>
+<hr />
+<h2 id="basic-operations">Basic Operations</h2>
+<h3 id="creating-feature-flags">Creating Feature Flags</h3>
+<p>Feature flags can be created with various types (boolean, number, string) and optional configuration:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Create multiple feature flags with different purposes</span>
+<span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">feature_flags</span><span class="w"> </span><span class="p">(</span><span class="n">tenant_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="p">,</span><span class="w"> </span><span class="n">flag_type</span><span class="p">,</span><span class="w"> </span><span class="n">default_value</span><span class="p">,</span><span class="w"> </span><span class="n">metadata</span><span class="p">)</span><span class="w"> </span><span class="k">VALUES</span>
+<span class="w">  </span><span class="p">(</span>
+<span class="w">    </span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;advanced_reporting&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;Enable advanced reporting features&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;boolean&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="k">false</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;{&quot;category&quot;: &quot;reporting&quot;, &quot;priority&quot;: &quot;high&quot;}&#39;</span>
+<span class="w">  </span><span class="p">),</span>
+<span class="w">  </span><span class="p">(</span>
+<span class="w">    </span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;new_dashboard&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;Enable new dashboard UI&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;boolean&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="k">false</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;{&quot;category&quot;: &quot;ui&quot;, &quot;priority&quot;: &quot;medium&quot;}&#39;</span>
+<span class="w">  </span><span class="p">),</span>
+<span class="w">  </span><span class="p">(</span>
+<span class="w">    </span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;api_rate_limit&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;API rate limit configuration&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;number&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="k">true</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;{&quot;category&quot;: &quot;performance&quot;, &quot;default_limit&quot;: 1000}&#39;</span>
+<span class="w">  </span><span class="p">),</span>
+<span class="w">  </span><span class="p">(</span>
+<span class="w">    </span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;feature_rollout_test&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;Test gradual rollout&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;boolean&#39;</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="k">false</span><span class="p">,</span><span class="w"> </span>
+<span class="w">    </span><span class="s1">&#39;{&quot;category&quot;: &quot;testing&quot;}&#39;</span>
+<span class="w">  </span><span class="p">);</span>
+</code></pre></div>
+<p><strong>Key Components:</strong>
+- <strong>name</strong>: Unique identifier for the feature flag
+- <strong>flag_type</strong>: <code>boolean</code>, <code>number</code>, or <code>string</code>
+- <strong>default_value</strong>: Default state when no overrides exist
+- <strong>metadata</strong>: JSON field for additional configuration and categorization</p>
+<h3 id="configuring-gradual-rollouts">Configuring Gradual Rollouts</h3>
+<p>For controlled feature releases, set a rollout percentage. The system will enable the feature for approximately that percentage of users:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Enable feature for 25% of users (useful for phased rollouts)</span>
+<span class="k">UPDATE</span><span class="w"> </span><span class="n">feature_flags</span><span class="w"> </span>
+<span class="k">SET</span><span class="w"> </span><span class="n">rollout_percentage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">25</span><span class="w"> </span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;feature_rollout_test&#39;</span><span class="w"> </span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">tenant_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">;</span>
+</code></pre></div>
+<p><strong>Use Cases:</strong>
+- Initial testing: 5-10%
+- Controlled expansion: 25-50%
+- Near-full rollout: 75-95%
+- Full release: 100%</p>
+<h3 id="creating-tenant-overrides">Creating Tenant Overrides</h3>
+<p>Override default behavior for specific tenants, useful for premium features or special access:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Enable advanced reporting for a specific premium tenant</span>
+<span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">tenant_feature_overrides</span><span class="w"> </span><span class="p">(</span><span class="n">tenant_id</span><span class="p">,</span><span class="w"> </span><span class="n">feature_flag_id</span><span class="p">,</span><span class="w"> </span><span class="n">feature_flag_name</span><span class="p">,</span><span class="w"> </span><span class="n">enabled</span><span class="p">,</span><span class="w"> </span><span class="n">reason</span><span class="p">)</span><span class="w"> </span>
+<span class="k">SELECT</span><span class="w"> </span>
+<span class="w">  </span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="n">ff</span><span class="p">.</span><span class="n">id</span><span class="p">,</span>
+<span class="w">  </span><span class="n">ff</span><span class="p">.</span><span class="n">name</span><span class="p">,</span>
+<span class="w">  </span><span class="k">true</span><span class="p">,</span>
+<span class="w">  </span><span class="s1">&#39;Enable advanced reporting for premium tenant&#39;</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">feature_flags</span><span class="w"> </span><span class="n">ff</span><span class="w"> </span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">ff</span><span class="p">.</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;advanced_reporting&#39;</span><span class="w"> </span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">ff</span><span class="p">.</span><span class="n">tenant_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">;</span>
+</code></pre></div>
+<p><strong>Benefits:</strong>
+- Override rollout percentages for specific tenants
+- Provide early access to beta testers
+- Disable problematic features for affected tenants
+- Document reasoning for audit purposes</p>
+<hr />
+<h2 id="feature-flag-evaluation">Feature Flag Evaluation</h2>
+<h3 id="standard-evaluation">Standard Evaluation</h3>
+<p>Evaluate a feature flag with full audit logging (recommended for critical features):</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Evaluate with complete audit trail</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">evaluate_feature_flag</span><span class="p">(</span><span class="s1">&#39;advanced_reporting&#39;</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>Returns:</strong> Flag status, evaluation source (override, rollout, default), and metadata.</p>
+<h3 id="fast-evaluation">Fast Evaluation</h3>
+<p>Skip audit logging for performance-critical paths where you don't need historical tracking:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Faster evaluation without audit logging (use for high-frequency checks)</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">evaluate_feature_flag_fast</span><span class="p">(</span><span class="s1">&#39;new_dashboard&#39;</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>When to Use:</strong>
+- High-frequency API endpoints
+- Real-time UI rendering
+- Performance-critical operations</p>
+<h3 id="batch-evaluation">Batch Evaluation</h3>
+<p>Evaluate all feature flags at once, useful for application initialization:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Get all feature flags for the current tenant in one query</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">evaluate_all_feature_flags</span><span class="p">();</span>
+</code></pre></div>
+<p><strong>Common Use Case:</strong> Load all feature flags when a user logs in, cache them client-side.</p>
+<h3 id="cached-evaluation">Cached Evaluation</h3>
+<p>Use materialized view cache for maximum performance (best for very high-frequency access):</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Use pre-computed cache (fastest option)</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">evaluate_feature_flag_cached</span><span class="p">(</span><span class="s1">&#39;advanced_reporting&#39;</span><span class="p">);</span>
+
+<span class="c1">-- Get all flags from cache</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">evaluate_all_feature_flags_cached</span><span class="p">();</span>
+</code></pre></div>
+<p><strong>Performance Benefit:</strong> 10-100x faster than standard evaluation for read-heavy workloads.</p>
+<p><strong>Cache Refresh:</strong> The cache is automatically refreshed when flags are modified.</p>
+<hr />
+<h2 id="monitoring-analytics">Monitoring &amp; Analytics</h2>
+<h3 id="system-health-metrics">System Health Metrics</h3>
+<p>Get an overview of the feature flag system's health and performance:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Check overall system health and usage statistics</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">get_feature_flags_health_metrics</span><span class="p">();</span>
+</code></pre></div>
+<p><strong>Metrics Included:</strong>
+- Total feature flags
+- Active/inactive counts
+- Average rollout percentages
+- Cache hit rates</p>
+<h3 id="tenant-specific-statistics">Tenant-Specific Statistics</h3>
+<p>Analyze feature flag usage for a specific tenant:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Get detailed statistics for a tenant</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">get_tenant_feature_flag_stats</span><span class="p">(</span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>Information Provided:</strong>
+- Number of flags by type
+- Override counts
+- Evaluation frequency
+- Enabled/disabled ratios</p>
+<h3 id="cache-performance">Cache Performance</h3>
+<p>Monitor the effectiveness of the caching layer:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Check cache statistics and hit rates</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">get_feature_flags_cache_stats</span><span class="p">();</span>
+
+<span class="c1">-- Verify cache freshness for a tenant</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">check_cache_freshness</span><span class="p">(</span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>Why Monitor Cache:</strong>
+- Identify stale data issues
+- Optimize refresh strategies
+- Ensure performance targets are met</p>
+<h3 id="data-integrity-checks">Data Integrity Checks</h3>
+<p>Verify the consistency and correctness of feature flag data:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Run comprehensive integrity checks</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">check_feature_flags_integrity</span><span class="p">();</span>
+</code></pre></div>
+<p><strong>Detects:</strong>
+- Orphaned overrides
+- Invalid flag references
+- Inconsistent tenant associations
+- Duplicate entries</p>
+<h3 id="advanced-analytics">Advanced Analytics</h3>
+<h4 id="feature-flag-usage-by-type">Feature Flag Usage by Type</h4>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Analyze flag distribution and enabled rates by type</span>
+<span class="k">SELECT</span><span class="w"> </span>
+<span class="w">  </span><span class="n">flag_type</span><span class="p">,</span>
+<span class="w">  </span><span class="n">evaluation_source</span><span class="p">,</span>
+<span class="w">  </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">count</span><span class="p">,</span>
+<span class="w">  </span><span class="n">ROUND</span><span class="p">(</span><span class="k">AVG</span><span class="p">(</span><span class="k">CASE</span><span class="w"> </span><span class="k">WHEN</span><span class="w"> </span><span class="n">enabled</span><span class="w"> </span><span class="k">THEN</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="k">ELSE</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="k">END</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">enabled_percentage</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">mv_tenant_feature_flags_cache</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">tenant_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;your-tenant-uuid&#39;</span>
+<span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">flag_type</span><span class="p">,</span><span class="w"> </span><span class="n">evaluation_source</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">flag_type</span><span class="p">,</span><span class="w"> </span><span class="n">evaluation_source</span><span class="p">;</span>
+</code></pre></div>
+<p><strong>Insights:</strong> Understand which types of flags are most commonly enabled and their evaluation sources.</p>
+<h4 id="most-evaluated-features">Most Evaluated Features</h4>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Identify the most frequently checked features (last 7 days)</span>
+<span class="k">SELECT</span><span class="w"> </span>
+<span class="w">  </span><span class="n">context</span><span class="o">-&gt;&gt;</span><span class="s1">&#39;feature_flag_name&#39;</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">feature_name</span><span class="p">,</span>
+<span class="w">  </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">evaluation_count</span><span class="p">,</span>
+<span class="w">  </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="n">FILTER</span><span class="w"> </span><span class="p">(</span><span class="k">WHERE</span><span class="w"> </span><span class="n">decision</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;ALLOW&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">enabled_count</span><span class="p">,</span>
+<span class="w">  </span><span class="n">ROUND</span><span class="p">(</span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="n">FILTER</span><span class="w"> </span><span class="p">(</span><span class="k">WHERE</span><span class="w"> </span><span class="n">decision</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;ALLOW&#39;</span><span class="p">)::</span><span class="nb">NUMERIC</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">enabled_percentage</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">audit_log</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">tenant_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;your-tenant-uuid&#39;</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">event_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;FEATURE_FLAG_EVALUATED&#39;</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">created_at</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">INTERVAL</span><span class="w"> </span><span class="s1">&#39;7 days&#39;</span>
+<span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">context</span><span class="o">-&gt;&gt;</span><span class="s1">&#39;feature_flag_name&#39;</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">evaluation_count</span><span class="w"> </span><span class="k">DESC</span>
+<span class="k">LIMIT</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+</code></pre></div>
+<p><strong>Use Cases:</strong>
+- Identify candidates for caching
+- Find features to optimize
+- Understand usage patterns</p>
+<h4 id="rollout-effectiveness">Rollout Effectiveness</h4>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Verify that rollout percentages are working as expected</span>
+<span class="k">SELECT</span><span class="w"> </span>
+<span class="w">  </span><span class="n">ff</span><span class="p">.</span><span class="n">name</span><span class="p">,</span>
+<span class="w">  </span><span class="n">ff</span><span class="p">.</span><span class="n">rollout_percentage</span><span class="p">,</span>
+<span class="w">  </span><span class="k">COUNT</span><span class="p">(</span><span class="k">DISTINCT</span><span class="w"> </span><span class="n">al</span><span class="p">.</span><span class="n">session_id</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">unique_evaluations</span><span class="p">,</span>
+<span class="w">  </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="n">FILTER</span><span class="w"> </span><span class="p">(</span><span class="k">WHERE</span><span class="w"> </span><span class="n">al</span><span class="p">.</span><span class="n">decision</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;ALLOW&#39;</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">enabled_evaluations</span><span class="p">,</span>
+<span class="w">  </span><span class="n">ROUND</span><span class="p">(</span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="n">FILTER</span><span class="w"> </span><span class="p">(</span><span class="k">WHERE</span><span class="w"> </span><span class="n">al</span><span class="p">.</span><span class="n">decision</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;ALLOW&#39;</span><span class="p">)::</span><span class="nb">NUMERIC</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">actual_enabled_percentage</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">feature_flags</span><span class="w"> </span><span class="n">ff</span>
+<span class="k">JOIN</span><span class="w"> </span><span class="n">audit_log</span><span class="w"> </span><span class="n">al</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">al</span><span class="p">.</span><span class="n">context</span><span class="o">-&gt;&gt;</span><span class="s1">&#39;feature_flag_name&#39;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ff</span><span class="p">.</span><span class="n">name</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">ff</span><span class="p">.</span><span class="n">tenant_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;your-tenant-uuid&#39;</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">ff</span><span class="p">.</span><span class="n">rollout_percentage</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">al</span><span class="p">.</span><span class="n">event_type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;FEATURE_FLAG_EVALUATED&#39;</span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">al</span><span class="p">.</span><span class="n">created_at</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">NOW</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">INTERVAL</span><span class="w"> </span><span class="s1">&#39;24 hours&#39;</span>
+<span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">ff</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">ff</span><span class="p">.</span><span class="n">rollout_percentage</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">ff</span><span class="p">.</span><span class="n">rollout_percentage</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</code></pre></div>
+<p><strong>Validation:</strong> Ensure actual enabled percentage roughly matches the configured rollout percentage.</p>
+<hr />
+<h2 id="bulk-operations">Bulk Operations</h2>
+<h3 id="bulk-rollout-updates">Bulk Rollout Updates</h3>
+<p>Update rollout percentages for multiple features simultaneously:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Increase rollout to 50% for multiple features at once</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">bulk_update_rollout_percentage</span><span class="p">(</span>
+<span class="w">  </span><span class="nb">ARRAY</span><span class="p">[</span><span class="s1">&#39;new_dashboard&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;feature_rollout_test&#39;</span><span class="p">],</span><span class="w"> </span>
+<span class="w">  </span><span class="mi">50</span><span class="p">,</span><span class="w"> </span>
+<span class="w">  </span><span class="s1">&#39;your-tenant-uuid&#39;</span>
+<span class="p">);</span>
+</code></pre></div>
+<p><strong>Scenario:</strong> Coordinated feature releases that should roll out together.</p>
+<h3 id="bulk-feature-creation">Bulk Feature Creation</h3>
+<p>Create multiple feature flags from JSON configuration:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Create multiple experimental features in one operation</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">bulk_create_feature_flags</span><span class="p">(</span><span class="s1">&#39;[</span>
+<span class="s1">  {</span>
+<span class="s1">    &quot;name&quot;: &quot;experimental_feature_a&quot;,</span>
+<span class="s1">    &quot;description&quot;: &quot;Experimental feature A&quot;,</span>
+<span class="s1">    &quot;flag_type&quot;: &quot;boolean&quot;,</span>
+<span class="s1">    &quot;default_value&quot;: false,</span>
+<span class="s1">    &quot;rollout_percentage&quot;: 10,</span>
+<span class="s1">    &quot;metadata&quot;: {&quot;category&quot;: &quot;experimental&quot;}</span>
+<span class="s1">  },</span>
+<span class="s1">  {</span>
+<span class="s1">    &quot;name&quot;: &quot;experimental_feature_b&quot;,</span>
+<span class="s1">    &quot;description&quot;: &quot;Experimental feature B&quot;,</span>
+<span class="s1">    &quot;flag_type&quot;: &quot;boolean&quot;,  </span>
+<span class="s1">    &quot;default_value&quot;: false,</span>
+<span class="s1">    &quot;metadata&quot;: {&quot;category&quot;: &quot;experimental&quot;}</span>
+<span class="s1">  }</span>
+<span class="s1">]&#39;</span><span class="p">::</span><span class="n">jsonb</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>Benefits:</strong>
+- Faster than individual inserts
+- Atomic operation (all or nothing)
+- Easier configuration management</p>
+<h3 id="configuration-export">Configuration Export</h3>
+<p>Export all feature flag configurations for a tenant:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Export complete feature flag configuration as JSON</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">export_tenant_feature_flags</span><span class="p">(</span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>Use Cases:</strong>
+- Backup configurations
+- Replicate settings across environments
+- Documentation and auditing</p>
+<hr />
+<h2 id="maintenance">Maintenance</h2>
+<h3 id="cache-refresh">Cache Refresh</h3>
+<p>Manually refresh the materialized view cache after bulk operations:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Force cache refresh (usually automatic, but useful after bulk changes)</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">refresh_feature_flags_cache</span><span class="p">();</span>
+</code></pre></div>
+<p><strong>When to Use:</strong>
+- After bulk updates
+- When cache freshness checks fail
+- During maintenance windows</p>
+<h3 id="audit-log-cleanup">Audit Log Cleanup</h3>
+<p>Remove old audit logs to manage database size:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Delete audit logs older than 90 days</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">cleanup_old_feature_flag_audit_logs</span><span class="p">(</span><span class="mi">90</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>Recommendation:</strong> Run monthly, adjust retention period based on compliance requirements.</p>
+<h3 id="soft-deleted-flag-cleanup">Soft-Deleted Flag Cleanup</h3>
+<p>Permanently remove feature flags that were soft-deleted:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Hard delete flags that have been soft-deleted for 30+ days</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">cleanup_soft_deleted_feature_flags</span><span class="p">(</span><span class="mi">30</span><span class="p">);</span>
+</code></pre></div>
+<p><strong>Best Practice:</strong> Keep a grace period (30-90 days) to allow for recovery if needed.</p>
+<h3 id="fix-orphaned-data">Fix Orphaned Data</h3>
+<p>Repair data integrity issues automatically:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Clean up orphaned overrides and fix inconsistencies</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">fix_orphaned_overrides</span><span class="p">();</span>
+</code></pre></div>
+<p><strong>Run After:</strong> Bulk deletions or when integrity checks report issues.</p>
+<hr />
+<h2 id="best-practices">Best Practices</h2>
+<h3 id="naming-conventions">Naming Conventions</h3>
+<p>Use clear, hierarchical naming to improve organization and discoverability:</p>
+<div class="highlight"><pre><span></span><code>✅ Good Examples:
+- ui.new_dashboard
+- api.v2_endpoints
+- reporting.advanced_analytics
+- performance.cache_enabled
+
+❌ Avoid:
+- feature1
+- test flag
+- NewFeature
+</code></pre></div>
+<p><strong>Guidelines:</strong>
+- Use lowercase with underscores or dots
+- Prefix with feature area (ui, api, reporting)
+- Be descriptive and specific
+- Avoid abbreviations unless widely understood</p>
+<h3 id="rollout-strategy">Rollout Strategy</h3>
+<p>Implement gradual, measured rollouts to minimize risk:</p>
+<ol>
+<li><strong>Initial Testing (5-10%)</strong>: Limited internal or beta users</li>
+<li><strong>Controlled Expansion (25-50%)</strong>: Monitor metrics closely</li>
+<li><strong>Broad Rollout (75-95%)</strong>: Watch for any issues at scale</li>
+<li><strong>Full Release (100%)</strong>: Complete deployment</li>
+</ol>
+<p><strong>Key Actions:</strong>
+- Monitor error rates and performance metrics
+- Use tenant overrides for early access testers
+- Have rollback procedures ready
+- Communicate clearly with users</p>
+<h3 id="cleanup-lifecycle-management">Cleanup &amp; Lifecycle Management</h3>
+<p>Prevent technical debt from accumulating:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Add expiration metadata when creating flags</span>
+<span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">feature_flags</span><span class="w"> </span><span class="p">(</span><span class="n">tenant_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="p">,</span><span class="w"> </span><span class="n">flag_type</span><span class="p">,</span><span class="w"> </span><span class="n">default_value</span><span class="p">,</span><span class="w"> </span><span class="n">metadata</span><span class="p">)</span>
+<span class="k">VALUES</span><span class="w"> </span><span class="p">(</span>
+<span class="w">  </span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="s1">&#39;temporary_holiday_theme&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="s1">&#39;Special holiday UI theme&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="s1">&#39;boolean&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="k">false</span><span class="p">,</span>
+<span class="w">  </span><span class="s1">&#39;{&quot;category&quot;: &quot;ui&quot;, &quot;expires&quot;: &quot;2025-01-15&quot;, &quot;owner&quot;: &quot;design-team&quot;}&#39;</span>
+<span class="p">);</span>
+</code></pre></div>
+<p><strong>Regular Reviews:</strong>
+- Monthly: Review flags with expiration dates
+- Quarterly: Audit all flags at 100% rollout
+- Annually: Remove flags fully integrated into codebase</p>
+<h3 id="monitoring-alerting">Monitoring &amp; Alerting</h3>
+<p>Set up proactive monitoring for the feature flag system:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Create a daily health check job</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">get_feature_flags_health_metrics</span><span class="p">();</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">check_feature_flags_integrity</span><span class="p">();</span>
+</code></pre></div>
+<p><strong>Alert On:</strong>
+- Integrity check failures
+- Cache staleness exceeding threshold
+- Abnormal evaluation patterns
+- Audit log size growth</p>
+<h3 id="documentation">Documentation</h3>
+<p>Maintain clear documentation for each feature flag:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Well-documented feature flag example</span>
+<span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">feature_flags</span><span class="w"> </span><span class="p">(</span><span class="n">tenant_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">description</span><span class="p">,</span><span class="w"> </span><span class="n">flag_type</span><span class="p">,</span><span class="w"> </span><span class="n">default_value</span><span class="p">,</span><span class="w"> </span><span class="n">metadata</span><span class="p">)</span>
+<span class="k">VALUES</span><span class="w"> </span><span class="p">(</span>
+<span class="w">  </span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="s1">&#39;api.rate_limiting_v2&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="s1">&#39;New rate limiting algorithm with burst support. See RFC-2024-007 for details.&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="s1">&#39;boolean&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="k">false</span><span class="p">,</span>
+<span class="w">  </span><span class="s1">&#39;{</span>
+<span class="s1">    &quot;category&quot;: &quot;performance&quot;,</span>
+<span class="s1">    &quot;owner&quot;: &quot;platform-team&quot;,</span>
+<span class="s1">    &quot;created_date&quot;: &quot;2025-01-15&quot;,</span>
+<span class="s1">    &quot;target_completion&quot;: &quot;2025-03-01&quot;,</span>
+<span class="s1">    &quot;jira_ticket&quot;: &quot;PLAT-1234&quot;,</span>
+<span class="s1">    &quot;documentation_url&quot;: &quot;https://docs.internal.com/rate-limiting-v2&quot;</span>
+<span class="s1">  }&#39;</span>
+<span class="p">);</span>
+</code></pre></div>
+<p><strong>Documentation Elements:</strong>
+- Purpose and expected outcome
+- Responsible team or individual
+- Timeline and milestones
+- Related tickets or documentation
+- Dependencies and prerequisites</p>
+<h3 id="security-compliance">Security &amp; Compliance</h3>
+<p>Maintain audit trails and access controls:</p>
+<ul>
+<li><strong>Always Use Reason Field</strong>: Document why overrides are created</li>
+<li><strong>Regular Access Reviews</strong>: Audit who can modify flags</li>
+<li><strong>Monitor Admin Actions</strong>: Review all flag modifications</li>
+<li><strong>Data Retention</strong>: Follow company policies for audit logs</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Example: Override with clear justification</span>
+<span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">tenant_feature_overrides</span><span class="w"> </span><span class="p">(</span><span class="n">tenant_id</span><span class="p">,</span><span class="w"> </span><span class="n">feature_flag_id</span><span class="p">,</span><span class="w"> </span><span class="n">feature_flag_name</span><span class="p">,</span><span class="w"> </span><span class="n">enabled</span><span class="p">,</span><span class="w"> </span><span class="n">reason</span><span class="p">)</span>
+<span class="k">VALUES</span><span class="w"> </span><span class="p">(</span>
+<span class="w">  </span><span class="s1">&#39;tenant-123&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="p">(</span><span class="k">SELECT</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">feature_flags</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;advanced_features&#39;</span><span class="p">),</span>
+<span class="w">  </span><span class="s1">&#39;advanced_features&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="k">true</span><span class="p">,</span>
+<span class="w">  </span><span class="s1">&#39;Approved by CSM for enterprise customer. Ticket: SUP-9876. Approved by: j.smith@company.com&#39;</span>
+<span class="p">);</span>
+</code></pre></div>
+<h3 id="performance-optimization">Performance Optimization</h3>
+<p>Choose the right evaluation method for your use case:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Speed</th>
+<th>Audit Trail</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>evaluate_feature_flag()</code></td>
+<td>Normal</td>
+<td>Yes</td>
+<td>Critical business logic</td>
+</tr>
+<tr>
+<td><code>evaluate_feature_flag_fast()</code></td>
+<td>Fast</td>
+<td>No</td>
+<td>High-frequency checks</td>
+</tr>
+<tr>
+<td><code>evaluate_feature_flag_cached()</code></td>
+<td>Fastest</td>
+<td>No</td>
+<td>Read-heavy workloads</td>
+</tr>
+<tr>
+<td><code>evaluate_all_feature_flags_cached()</code></td>
+<td>Fastest</td>
+<td>No</td>
+<td>Application initialization</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Tips:</strong>
+- Use cached evaluation for features checked on every request
+- Batch evaluate flags during user login
+- Monitor query performance regularly
+- Consider caching results in application layer</p>
+<h3 id="testing">Testing</h3>
+<p>Comprehensive testing ensures feature flags work as intended:</p>
+<p><strong>Test Cases:</strong>
+1. <strong>Both States</strong>: Verify feature works when enabled AND disabled
+2. <strong>Rollout Percentages</strong>: Confirm approximate distribution
+3. <strong>Overrides</strong>: Test tenant-specific overrides
+4. <strong>Edge Cases</strong>: Missing context, invalid flags, network issues
+5. <strong>Performance</strong>: Load test evaluation under high concurrency</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Testing example: Verify rollout percentage distribution</span>
+<span class="c1">-- Run this multiple times with different session IDs to verify randomness</span>
+<span class="k">SET</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">current_session_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gen_random_uuid</span><span class="p">()::</span><span class="nb">text</span><span class="p">;</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">evaluate_feature_flag</span><span class="p">(</span><span class="s1">&#39;feature_rollout_test&#39;</span><span class="p">);</span>
+</code></pre></div>
+<hr />
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="error-no-tenant-context-set">Error: "No tenant context set"</h3>
+<p><strong>Problem:</strong> Functions require tenant context but it hasn't been set.</p>
+<p><strong>Solution:</strong>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Set the tenant context before any operations</span>
+<span class="k">SET</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">current_tenant_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">;</span>
+</code></pre></div></p>
+<p><strong>Prevention:</strong> Include context setup in application initialization code.</p>
+<hr />
+<h3 id="error-feature-flag-not-found">Error: "Feature flag not found"</h3>
+<p><strong>Problem:</strong> The requested feature flag doesn't exist or has been deleted.</p>
+<p><strong>Diagnosis:</strong>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Check if flag exists and its status</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">feature_flags</span><span class="w"> </span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;flag_name&#39;</span><span class="w"> </span>
+<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">deleted_at</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
+</code></pre></div></p>
+<p><strong>Common Causes:</strong>
+- Typo in flag name
+- Flag was soft-deleted
+- Wrong tenant context
+- Flag not created yet</p>
+<hr />
+<h3 id="stale-cache-issues">Stale Cache Issues</h3>
+<p><strong>Problem:</strong> Cached values don't reflect recent changes.</p>
+<p><strong>Diagnosis:</strong>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Check cache freshness</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">check_cache_freshness</span><span class="p">(</span><span class="s1">&#39;your-tenant-uuid&#39;</span><span class="p">);</span>
+</code></pre></div></p>
+<p><strong>Solution:</strong>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Manually refresh cache</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">refresh_feature_flags_cache</span><span class="p">();</span>
+
+<span class="c1">-- Listen for automatic refresh notifications</span>
+<span class="k">LISTEN</span><span class="w"> </span><span class="n">feature_flags_cache_refresh</span><span class="p">;</span>
+</code></pre></div></p>
+<p><strong>Prevention:</strong> Cache should auto-refresh on changes. Check notification system if this isn't working.</p>
+<hr />
+<h3 id="performance-degradation">Performance Degradation</h3>
+<p><strong>Problem:</strong> Feature flag evaluations are slow.</p>
+<p><strong>Diagnosis:</strong>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Check index usage</span>
+<span class="k">SELECT</span><span class="w"> </span>
+<span class="w">  </span><span class="n">schemaname</span><span class="p">,</span>
+<span class="w">  </span><span class="n">tablename</span><span class="p">,</span>
+<span class="w">  </span><span class="n">indexname</span><span class="p">,</span>
+<span class="w">  </span><span class="n">idx_scan</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">index_scans</span><span class="p">,</span>
+<span class="w">  </span><span class="n">idx_tup_read</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">tuples_read</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_user_indexes</span><span class="w"> </span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">tablename</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;feature_flags&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;tenant_feature_overrides&#39;</span><span class="p">)</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">idx_scan</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+
+<span class="c1">-- Check slow queries</span>
+<span class="k">SELECT</span><span class="w"> </span>
+<span class="w">  </span><span class="n">query</span><span class="p">,</span>
+<span class="w">  </span><span class="n">calls</span><span class="p">,</span>
+<span class="w">  </span><span class="n">mean_time</span><span class="p">,</span>
+<span class="w">  </span><span class="n">total_time</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_statements</span><span class="w"> </span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">query</span><span class="w"> </span><span class="k">ILIKE</span><span class="w"> </span><span class="s1">&#39;%feature_flag%&#39;</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">mean_time</span><span class="w"> </span><span class="k">DESC</span>
+<span class="k">LIMIT</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+</code></pre></div></p>
+<p><strong>Solutions:</strong>
+1. Use cached evaluation functions
+2. Batch evaluate flags at initialization
+3. Check if indexes are being used
+4. Consider database-level query optimization</p>
+<hr />
+<h3 id="data-integrity-issues">Data Integrity Issues</h3>
+<p><strong>Problem:</strong> Inconsistent or orphaned data detected.</p>
+<p><strong>Diagnosis:</strong>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Run integrity checks</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">check_feature_flags_integrity</span><span class="p">();</span>
+</code></pre></div></p>
+<p><strong>Solution:</strong>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Automatically fix common issues</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">fix_orphaned_overrides</span><span class="p">();</span>
+</code></pre></div></p>
+<p><strong>Prevention:</strong>
+- Use foreign key constraints (should be in schema)
+- Regular integrity check scheduling
+- Proper transaction handling in bulk operations</p>
+<hr />
+<h3 id="audit-log-size-growth">Audit Log Size Growth</h3>
+<p><strong>Problem:</strong> Audit log table becoming too large, affecting performance.</p>
+<p><strong>Solutions:</strong></p>
+<ol>
+<li>
+<p><strong>Regular Cleanup:</strong>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Remove logs older than retention period</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">cleanup_old_feature_flag_audit_logs</span><span class="p">(</span><span class="mi">90</span><span class="p">);</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Partitioning:</strong> For very large deployments, consider time-based partitioning:
+<div class="highlight"><pre><span></span><code><span class="c1">-- Example partitioning strategy (requires schema modifications)</span>
+<span class="c1">-- Partition by month for efficient querying and cleanup</span>
+</code></pre></div></p>
+</li>
+<li>
+<p><strong>Selective Logging:</strong> Use <code>evaluate_feature_flag_fast()</code> for high-frequency, low-priority checks.</p>
+</li>
+</ol>
+<hr />
+<h3 id="row-level-security-rls-issues">Row Level Security (RLS) Issues</h3>
+<p><strong>Problem:</strong> Users can't access feature flags they should be able to see.</p>
+<p><strong>Diagnosis:</strong>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Verify RLS policies</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">pg_policies</span><span class="w"> </span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">tablename</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;feature_flags&#39;</span><span class="p">;</span>
+
+<span class="c1">-- Check current tenant context</span>
+<span class="k">SHOW</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">current_tenant_id</span><span class="p">;</span>
+</code></pre></div></p>
+<p><strong>Common Issues:</strong>
+- Tenant context not set correctly
+- User doesn't have required role
+- RLS policies too restrictive</p>
+<p><strong>Solution:</strong> Review RLS policies and ensure proper context setup.</p>
+<hr />
+<h2 id="performance-monitoring">Performance Monitoring</h2>
+<h3 id="index-usage-statistics">Index Usage Statistics</h3>
+<p>Monitor which indexes are being used effectively:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Verify indexes are being utilized</span>
+<span class="k">SELECT</span><span class="w"> </span>
+<span class="w">  </span><span class="n">schemaname</span><span class="p">,</span>
+<span class="w">  </span><span class="n">tablename</span><span class="p">,</span>
+<span class="w">  </span><span class="n">indexname</span><span class="p">,</span>
+<span class="w">  </span><span class="n">idx_scan</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">index_scans</span><span class="p">,</span>
+<span class="w">  </span><span class="n">idx_tup_read</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">tuples_read</span><span class="p">,</span>
+<span class="w">  </span><span class="n">idx_tup_fetch</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">tuples_fetched</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_user_indexes</span><span class="w"> </span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">tablename</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;feature_flags&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;tenant_feature_overrides&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;mv_tenant_feature_flags_cache&#39;</span><span class="p">)</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">idx_scan</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</code></pre></div>
+<p><strong>Red Flags:</strong>
+- Indexes with 0 scans
+- Sequential scans on large tables
+- High tuples_read vs tuples_fetched ratio</p>
+<h3 id="table-size-growth">Table Size &amp; Growth</h3>
+<p>Track storage usage and plan capacity:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Monitor table sizes and statistics</span>
+<span class="k">SELECT</span><span class="w"> </span>
+<span class="w">  </span><span class="n">schemaname</span><span class="p">,</span>
+<span class="w">  </span><span class="n">tablename</span><span class="p">,</span>
+<span class="w">  </span><span class="n">pg_size_pretty</span><span class="p">(</span><span class="n">pg_total_relation_size</span><span class="p">(</span><span class="n">schemaname</span><span class="o">||</span><span class="s1">&#39;.&#39;</span><span class="o">||</span><span class="n">tablename</span><span class="p">))</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="k">size</span><span class="p">,</span>
+<span class="w">  </span><span class="n">n_tup_ins</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">inserts</span><span class="p">,</span>
+<span class="w">  </span><span class="n">n_tup_upd</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">updates</span><span class="p">,</span>
+<span class="w">  </span><span class="n">n_tup_del</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">deletes</span><span class="p">,</span>
+<span class="w">  </span><span class="n">n_live_tup</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">live_tuples</span><span class="p">,</span>
+<span class="w">  </span><span class="n">n_dead_tup</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">dead_tuples</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_user_tables</span><span class="w"> </span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">tablename</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">&#39;feature_flags&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;tenant_feature_overrides&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;audit_log&#39;</span><span class="p">)</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">pg_total_relation_size</span><span class="p">(</span><span class="n">schemaname</span><span class="o">||</span><span class="s1">&#39;.&#39;</span><span class="o">||</span><span class="n">tablename</span><span class="p">)</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</code></pre></div>
+<p><strong>Action Items:</strong>
+- High dead_tuples: Schedule VACUUM
+- Rapid growth: Review retention policies
+- Large audit_log: Implement cleanup job</p>
+<h3 id="query-performance-analysis">Query Performance Analysis</h3>
+<p>Identify slow queries that need optimization:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Find slow feature flag operations (requires pg_stat_statements extension)</span>
+<span class="k">SELECT</span><span class="w"> </span>
+<span class="w">  </span><span class="n">query</span><span class="p">,</span>
+<span class="w">  </span><span class="n">calls</span><span class="p">,</span>
+<span class="w">  </span><span class="n">total_time</span><span class="p">,</span>
+<span class="w">  </span><span class="n">mean_time</span><span class="p">,</span>
+<span class="w">  </span><span class="k">rows</span><span class="p">,</span>
+<span class="w">  </span><span class="mi">100</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">shared_blks_hit</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">NULLIF</span><span class="p">(</span><span class="n">shared_blks_hit</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">shared_blks_read</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">cache_hit_percent</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_statements</span><span class="w"> </span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">query</span><span class="w"> </span><span class="k">ILIKE</span><span class="w"> </span><span class="s1">&#39;%feature_flag%&#39;</span><span class="w"> </span>
+<span class="w">  </span><span class="k">OR</span><span class="w"> </span><span class="n">query</span><span class="w"> </span><span class="k">ILIKE</span><span class="w"> </span><span class="s1">&#39;%tenant_feature_overrides%&#39;</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">mean_time</span><span class="w"> </span><span class="k">DESC</span>
+<span class="k">LIMIT</span><span class="w"> </span><span class="mi">10</span><span class="p">;</span>
+</code></pre></div>
+<p><strong>Optimization Targets:</strong>
+- Queries with high mean_time
+- Low cache hit percentages
+- High call counts with moderate times (good candidates for caching)</p>
+<hr />
+<h2 id="summary">Summary</h2>
+<p>This feature flag system provides a robust, performant solution for managing feature releases across multi-tenant applications. Key takeaways:</p>
+<ul>
+<li><strong>Start Simple</strong>: Use basic boolean flags for most use cases</li>
+<li><strong>Scale Gradually</strong>: Implement rollout percentages for controlled releases</li>
+<li><strong>Monitor Actively</strong>: Use built-in health checks and analytics</li>
+<li><strong>Optimize Strategically</strong>: Use cached evaluation for high-frequency access</li>
+<li><strong>Clean Regularly</strong>: Remove deprecated flags and old audit logs</li>
+<li><strong>Document Thoroughly</strong>: Make flag purpose and lifecycle clear</li>
+</ul>
+<p>By following these best practices and using the provided tools, you can safely and efficiently manage feature releases while maintaining system performance and data integrity.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2024 Awo ERP
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../../../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../../../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+      
+        <script src="../../../../javascripts/mermaid-config.js"></script>
+      
+        <script src="../../../../javascripts/search-enhancements.js"></script>
+      
+        <script src="../../../../javascripts/search-analytics.js"></script>
+      
+    
+  </body>
+</html>

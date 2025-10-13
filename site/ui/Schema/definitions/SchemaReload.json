@@ -1,0 +1,6 @@
+{
+  "type": "string",
+  "description": "Configure refresh action, this action is usually triggered after completing the renderer's own fixed actions.\n\nGenerally used to configure the name property of target components. Multiple targets can be separated by commas.\n\nWhen the target is windows, it means refreshing the entire page.\n\nRefreshing targets also supports passing parameters such as: `foo?a=${a}&b=${b},boo?c=${c}`",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./SchemaReload.json"
+}

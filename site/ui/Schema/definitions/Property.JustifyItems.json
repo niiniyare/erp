@@ -1,0 +1,39 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "$ref": "#/definitions/DataType.SelfPosition"
+    },
+    {
+      "type": "string",
+      "const": "baseline"
+    },
+    {
+      "type": "string",
+      "const": "left"
+    },
+    {
+      "type": "string",
+      "const": "legacy"
+    },
+    {
+      "type": "string",
+      "const": "normal"
+    },
+    {
+      "type": "string",
+      "const": "right"
+    },
+    {
+      "type": "string",
+      "const": "stretch"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.JustifyItems.json"
+}

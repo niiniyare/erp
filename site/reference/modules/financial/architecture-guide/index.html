@@ -1155,6 +1155,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../../contributing/condition-package/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Package Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../../contributing/documentation-structure-guide/" class="md-nav__link">
         
   
@@ -2742,6 +2765,172 @@
   
   <span class="md-ellipsis">
     API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Project Completion
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Project Completion
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../completion/PROJECT_COMPLETION_SUMMARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Summary
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../team/awoctl-rollout-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rollout Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../metrics/awoctl-success-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Success Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../maintenance/awoctl-maintenance-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Maintenance Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../architecture/awoctl-scaffolding-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Overview
     
   </span>
   
@@ -5514,7 +5703,7 @@
 
 <span class="c1">// ✅ Account entity: Manages account business rules</span>
 <span class="kd">type</span><span class="w"> </span><span class="nx">Account</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">ID</span><span class="w">          </span><span class="nx">AccountID</span>
+<span class="w">    </span><span class="nx">ID</span><span class="w">          </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span>
 <span class="w">    </span><span class="nx">Code</span><span class="w">        </span><span class="nx">AccountCode</span>
 <span class="w">    </span><span class="nx">Name</span><span class="w">        </span><span class="kt">string</span>
 <span class="w">    </span><span class="nx">AccountType</span><span class="w"> </span><span class="nx">AccountType</span>
@@ -5624,8 +5813,8 @@
 <span class="c1">// Transaction is an aggregate root ensuring double-entry integrity</span>
 <span class="kd">type</span><span class="w"> </span><span class="nx">Transaction</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="c1">// Identity</span>
-<span class="w">    </span><span class="nx">ID</span><span class="w">       </span><span class="nx">TransactionID</span>
-<span class="w">    </span><span class="nx">TenantID</span><span class="w"> </span><span class="nx">tenant</span><span class="p">.</span><span class="nx">ID</span>
+<span class="w">    </span><span class="nx">ID</span><span class="w">          </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span>
+<span class="w">    </span><span class="nx">TenantID</span><span class="w"> </span><span class="nx">uuid</span><span class="p">.</span><span class="nx">UUID</span>
 <span class="w">    </span><span class="nx">Number</span><span class="w">   </span><span class="nx">TransactionNumber</span>
 
 <span class="w">    </span><span class="c1">// Business Properties</span>

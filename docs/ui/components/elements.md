@@ -1,27 +1,22 @@
 # UI Elements Reference
 
-<!-- LLM-CONTEXT-START -->
 **FILE PURPOSE**: Comprehensive reference for foundational UI elements (buttons, inputs, cards, etc.)
 **DEPENDENCIES**: Templ + Flowbite + TailwindCSS, optional Alpine.js
 **TARGET AUDIENCE**: Developers building atomic UI components
 <!-- **RELATED FILES**: `templ-llms.md` (advanced features), `flowbite-llms-full.txt` (styling reference) -->
-<!-- LLM-CONTEXT-END -->
 
 ## Overview
 
 This reference documents foundational UI elements built with Templ, styled with Flowbite, and optionally enhanced with Alpine.js. These atomic components serve as building blocks for complex applications.
 
-<!-- LLM-TECH-STACK-START -->
 **TECHNOLOGY STACK:**
 - **[Templ](https://templ.guide)** - Type-safe Go templating language (Required)
 - **[Flowbite](https://flowbite.com)** - UI component library based on TailwindCSS (Required) 
 - **[Alpine.js](https://alpinejs.dev)** - Lightweight reactive JavaScript framework (Optional)
 - **[TailwindCSS](https://tailwindcss.com)** - Utility-first CSS framework (Included with Flowbite)
-<!-- LLM-TECH-STACK-END -->
 
 ## Design Principles
 
-<!-- LLM-PRINCIPLES-START -->
 **COMPONENT DESIGN PRINCIPLES:**
 1. **Atomic Design**: Each element serves a single, well-defined purpose
 2. **Composability**: Elements combine to create complex components
@@ -29,13 +24,11 @@ This reference documents foundational UI elements built with Templ, styled with 
 4. **Progressive Enhancement**: Core functionality works without JavaScript
 5. **Type Safety**: Leverages Go's type system through Templ
 6. **Consistency**: Unified design system via Flowbite
-<!-- LLM-PRINCIPLES-END -->
 
 ## Props Pattern
 
 All elements follow a consistent props structure:
 
-<!-- LLM-PROPS-PATTERN-START -->
 ```go
 type ElementProps struct {
     // Content Properties
@@ -62,13 +55,11 @@ type ElementProps struct {
     AriaLabel   string    // Accessibility label
 }
 ```
-<!-- LLM-PROPS-PATTERN-END -->
 
 ---
 
 ## Button Element
 
-<!-- LLM-BUTTON-START -->
 **PURPOSE**: Interactive element for user actions and form submissions
 
 **FUNCTION SIGNATURE:**
@@ -136,13 +127,11 @@ Button(ButtonProps{
 **DEPENDENCIES:**
 - Required: Flowbite CSS framework
 - Optional: Alpine.js for enhanced interactivity
-<!-- LLM-BUTTON-END -->
 
 ---
 
 ## Input Element
 
-<!-- LLM-INPUT-START -->
 **PURPOSE**: Single-line text input with validation and accessibility features
 
 **FUNCTION SIGNATURE:**
@@ -222,13 +211,11 @@ Input(InputProps{
 **DEPENDENCIES:**
 - Required: Flowbite CSS framework
 - Optional: Alpine.js for real-time validation
-<!-- LLM-INPUT-END -->
 
 ---
 
 ## Card Element
 
-<!-- LLM-CARD-START -->
 **PURPOSE**: Flexible container component for grouping related content
 
 **FUNCTION SIGNATURE:**
@@ -295,13 +282,11 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 **DEPENDENCIES:**
 - Required: Flowbite CSS framework
 - Optional: Alpine.js for dynamic content updates
-<!-- LLM-CARD-END -->
 
 ---
 
 ## Alert Element
 
-<!-- LLM-ALERT-START -->
 **PURPOSE**: Display important messages and notifications with semantic styling
 
 **FUNCTION SIGNATURE:**
@@ -373,13 +358,11 @@ Alert(AlertProps{
 - Required: Flowbite CSS framework
 - Required: Flowbite JavaScript (for dismissible functionality)
 - Optional: Alpine.js for state management
-<!-- LLM-ALERT-END -->
 
 ---
 
 ## Modal Element
 
-<!-- LLM-MODAL-START -->
 **PURPOSE**: Overlay dialog component for focused content and user interactions
 
 **FUNCTION SIGNATURE:**
@@ -445,7 +428,6 @@ Modal(ModalProps{
 - Required: Flowbite CSS framework
 - Required: Flowbite JavaScript (for modal functionality and focus management)
 - Optional: Alpine.js for state management
-<!-- LLM-MODAL-END -->
 
 ---
 
@@ -453,7 +435,6 @@ Modal(ModalProps{
 
 ### Select Element
 
-<!-- LLM-SELECT-START -->
 **PURPOSE**: Dropdown selection component with single or multiple selection
 
 **FUNCTION SIGNATURE:**
@@ -510,11 +491,9 @@ Select(SelectProps{
     HelperText: "Select all applicable skills",
 })
 ```
-<!-- LLM-SELECT-END -->
 
 ### Checkbox Element
 
-<!-- LLM-CHECKBOX-START -->
 **PURPOSE**: Binary or multi-state selection component
 
 **FUNCTION SIGNATURE:**
@@ -559,11 +538,9 @@ Checkbox(CheckboxProps{
     OnChange: "toggleSelectAll()",
 })
 ```
-<!-- LLM-CHECKBOX-END -->
 
 ### Textarea Element
 
-<!-- LLM-TEXTAREA-START -->
 **PURPOSE**: Multi-line text input for longer content
 
 **FUNCTION SIGNATURE:**
@@ -612,7 +589,6 @@ Textarea(TextareaProps{
     Resize: "vertical",
 })
 ```
-<!-- LLM-TEXTAREA-END -->
 
 ---
 
@@ -620,7 +596,6 @@ Textarea(TextareaProps{
 
 ### Heading Element
 
-<!-- LLM-HEADING-START -->
 **PURPOSE**: Semantic heading component with customizable styling
 
 **FUNCTION SIGNATURE:**
@@ -661,11 +636,9 @@ Heading(HeadingProps{
     Color: "gray-800",
 })
 ```
-<!-- LLM-HEADING-END -->
 
 ### Link Element
 
-<!-- LLM-LINK-START -->
 **PURPOSE**: Accessible hyperlink component with styling options
 
 **FUNCTION SIGNATURE:**
@@ -705,7 +678,6 @@ Link(LinkProps{
     Target: "_blank",
 })
 ```
-<!-- LLM-LINK-END -->
 
 ---
 
@@ -713,7 +685,6 @@ Link(LinkProps{
 
 ### Container Element
 
-<!-- LLM-CONTAINER-START -->
 **PURPOSE**: Responsive container with max-width constraints and centering
 
 **FUNCTION SIGNATURE:**
@@ -750,11 +721,9 @@ Container(ContainerProps{
     Padding: "xl",
 })
 ```
-<!-- LLM-CONTAINER-END -->
 
 ### Grid Element
 
-<!-- LLM-GRID-START -->
 **PURPOSE**: CSS Grid layout component with responsive column support
 
 **FUNCTION SIGNATURE:**
@@ -795,13 +764,11 @@ Grid(GridProps{
     Gap: "4",
 })
 ```
-<!-- LLM-GRID-END -->
 
 ---
 
 ## Composition Guidelines
 
-<!-- LLM-COMPOSITION-START -->
 **COMPOSITION PATTERNS:**
 
 ### 1. Container-Content Pattern
@@ -845,11 +812,9 @@ Card
 2. Props passed to complex components
 3. Direct attributes on elements (highest priority)
 4. CSS classes are appended, not replaced
-<!-- LLM-COMPOSITION-END -->
 
 ## Accessibility Guidelines
 
-<!-- LLM-ACCESSIBILITY-START -->
 **BUILT-IN ACCESSIBILITY FEATURES:**
 - Semantic HTML structure for all elements
 - Proper label association for form controls
@@ -888,11 +853,9 @@ Link(LinkProps{
     Href: "/products/123",
 })
 ```
-<!-- LLM-ACCESSIBILITY-END -->
 
 ## Performance Considerations
 
-<!-- LLM-PERFORMANCE-START -->
 **OPTIMIZATION STRATEGIES:**
 1. **Component Reuse**: Define variants through props rather than duplicate components
 2. **Conditional Rendering**: Use Templ's conditional syntax to avoid unnecessary HTML
@@ -920,28 +883,25 @@ templ Button(props ButtonProps) {
     </button>
 }
 ```
-<!-- LLM-PERFORMANCE-END -->
 
 ## References
 
-<!-- LLM-REFERENCES-START -->
 **EXTERNAL REFERENCE FILES:**
-- `templ-llms.md` - Advanced Templ features (streaming, suspense patterns)
-- `flowbite-llms-full.txt` - Complete Flowbite component catalog
+- [templ-llms.md](../templ-llms.md)   - Advanced Templ features (streaming, suspense patterns)
+- [flowbite-llms-full.txt](../flowbite-llms-full.txt)  - Complete Flowbite component catalog
 
 **OFFICIAL DOCUMENTATION:**
 - [Templ Guide](https://templ.guide) - Go templating language reference
-- [Flowbite Components](https://flowbite.com/docs/components/) - UI component library
+- [Flowbite Components](../flowbite/) - UI component library
 - [Alpine.js Documentation](https://alpinejs.dev) - Reactive JavaScript framework
 - [TailwindCSS](https://tailwindcss.com/docs) - Utility-first CSS framework
+- [Schema](../Schema/) - Ui framework Json Schema 
 
 **RELATED DOCUMENTATION:**
 - [Forms Guide](forms.md) - Advanced form patterns and validation
 - [Composition Patterns](../patterns/composition.md) - Building complex UIs
 - [HTMX Integration](../patterns/htmx-integration.md) - Server interaction patterns
-<!-- LLM-REFERENCES-END -->
 
-<!-- LLM-METADATA-START -->
 **METADATA FOR AI ASSISTANTS:**
 - File Type: Component Reference Documentation
 - Scope: Foundational UI elements only
@@ -949,4 +909,3 @@ templ Button(props ButtonProps) {
 - Optional: Alpine.js for enhanced interactivity  
 - Target: Atomic design components
 - Complexity: Beginner to Intermediate
-<!-- LLM-METADATA-END -->

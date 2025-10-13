@@ -1,0 +1,29 @@
+{
+  "anyOf": [
+    {
+      "type": "string"
+    },
+    {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "not": {}
+          },
+          {
+            "type": "null"
+          },
+          {
+            "$ref": "#/definitions/SchemaExpression"
+          }
+        ]
+      }
+    }
+  ],
+  "description": "css class name, configuration string, or object. \n\n className: \"red\"\n\nWhen configuring with objects, it means you can use it together with expressions, such as:\n\n    className: {         \"red\": \"data.progress > 80\",         \"blue\": \"data.progress > 60\"     }",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./SchemaClassName.json"
+}

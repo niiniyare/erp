@@ -1,27 +1,22 @@
 # Form Components Reference
 
-<!-- LLM-CONTEXT-START -->
 **FILE PURPOSE**: Form components, patterns, and interactive elements with validation
 **DEPENDENCIES**: Templ + HTMX + Alpine.js + Flowbite
 **TARGET AUDIENCE**: Developers building form interfaces
 **RELATED FILES**: `validation-guide.md` (implementation details), `elements.md` (basic components)
-<!-- LLM-CONTEXT-END -->
 
 ## Overview
 
 This reference documents advanced form components and patterns for building interactive, validated forms in ERP applications. These components extend basic elements with validation, real-time feedback, and complex interactions.
 
-<!-- LLM-TECH-STACK-START -->
 **TECHNOLOGY INTEGRATION:**
 - **Templ** - Type-safe form rendering
 - **HTMX** - Server-side validation and partial updates
 - **Alpine.js** - Client-side reactivity and state management
 - **Flowbite** - Consistent form styling and validation states
-<!-- LLM-TECH-STACK-END -->
 
 ## Form Component Architecture
 
-<!-- LLM-ARCHITECTURE-START -->
 **VALIDATION LAYERS:**
 1. **Client-Side** (Alpine.js) - Immediate feedback, format validation
 2. **Real-Time Server** (HTMX) - Business logic, uniqueness checks
@@ -35,7 +30,6 @@ Form Container
 ├── Multi-step Form Logic
 └── Submission Handling
 ```
-<!-- LLM-ARCHITECTURE-END -->
 
 ---
 
@@ -43,7 +37,6 @@ Form Container
 
 ### ValidatedTextInput
 
-<!-- LLM-VALIDATED-INPUT-START -->
 **PURPOSE**: Text input with real-time validation and visual feedback
 
 **PROPS STRUCTURE:**
@@ -85,11 +78,9 @@ type ValidatedInputProps struct {
 // Immediate validation on blur
 @blur="validateField()"
 ```
-<!-- LLM-VALIDATED-INPUT-END -->
 
 ### ValidatedEmailInput
 
-<!-- LLM-EMAIL-INPUT-START -->
 **PURPOSE**: Email input with format validation and uniqueness checking
 
 **ENHANCED FEATURES:**
@@ -114,11 +105,9 @@ type ValidatedInputProps struct {
 2. Domain validation (debounced)
 3. Uniqueness check (server)
 4. Visual feedback update
-<!-- LLM-EMAIL-INPUT-END -->
 
 ### ValidatedFileInput
 
-<!-- LLM-FILE-INPUT-START -->
 **PURPOSE**: File upload with type, size, and security validation
 
 **PROPS STRUCTURE:**
@@ -149,7 +138,6 @@ type ValidatedFileProps struct {
 - Size limit enforcement
 - Security scanning (basic)
 - Progress indication
-<!-- LLM-FILE-INPUT-END -->
 
 ---
 
@@ -157,7 +145,6 @@ type ValidatedFileProps struct {
 
 ### CascadingSelect
 
-<!-- LLM-CASCADING-SELECT-START -->
 **PURPOSE**: Select input that depends on parent field selection
 
 **PROPS STRUCTURE:**
@@ -198,11 +185,9 @@ type CascadingSelectProps struct {
 3. AJAX request loads dependent options
 4. Select updates with new options
 5. Loading states provide feedback
-<!-- LLM-CASCADING-SELECT-END -->
 
 ### DynamicFieldGroup
 
-<!-- LLM-DYNAMIC-FIELDS-START -->
 **PURPOSE**: Add/remove field groups dynamically (e.g., multiple phone numbers)
 
 **USAGE EXAMPLE:**
@@ -234,7 +219,6 @@ validateAllFields() {
     return this.fields.every(field => this.validateField(field));
 }
 ```
-<!-- LLM-DYNAMIC-FIELDS-END -->
 
 ---
 
@@ -242,7 +226,6 @@ validateAllFields() {
 
 ### Multi-Step Forms
 
-<!-- LLM-MULTISTEP-START -->
 **PURPOSE**: Break complex forms into manageable steps with validation
 
 **STEP STRUCTURE:**
@@ -304,11 +287,9 @@ multiStepFormHandler() {
     }
 }
 ```
-<!-- LLM-MULTISTEP-END -->
 
 ### Form Builder Pattern
 
-<!-- LLM-FORM-BUILDER-START -->
 **PURPOSE**: Dynamically generate forms based on configuration
 
 **CONFIGURATION STRUCTURE:**
@@ -344,7 +325,6 @@ type FieldConfig struct {
 - A/B testing different form layouts
 - User-customizable forms
 - Rapid prototyping capabilities
-<!-- LLM-FORM-BUILDER-END -->
 
 ---
 
@@ -352,7 +332,6 @@ type FieldConfig struct {
 
 ### Visual Feedback System
 
-<!-- LLM-VISUAL-FEEDBACK-START -->
 **VALIDATION STATES:**
 ```css
 /* Default state */
@@ -388,11 +367,9 @@ type FieldConfig struct {
 - **Yellow**: Processing/validating
 - **Green**: Valid/success
 - **Red**: Invalid/error
-<!-- LLM-VISUAL-FEEDBACK-END -->
 
 ### Error Display Patterns
 
-<!-- LLM-ERROR-DISPLAY-START -->
 **ERROR HIERARCHY:**
 1. **Field-Level**: Individual field validation messages
 2. **Section-Level**: Related field group errors
@@ -419,7 +396,6 @@ type FieldConfig struct {
 - Provide format examples
 - Suggest corrections where possible
 - Auto-format when applicable
-<!-- LLM-ERROR-DISPLAY-END -->
 
 ---
 
@@ -427,7 +403,6 @@ type FieldConfig struct {
 
 ### Screen Reader Support
 
-<!-- LLM-ACCESSIBILITY-START -->
 **ARIA ATTRIBUTES:**
 ```go
 // Proper label association
@@ -461,11 +436,9 @@ type FieldConfig struct {
 - Modal forms trap focus appropriately
 - Validation errors announced immediately
 - Loading states communicated clearly
-<!-- LLM-ACCESSIBILITY-END -->
 
 ### Mobile Optimization
 
-<!-- LLM-MOBILE-START -->
 **TOUCH-FRIENDLY DESIGN:**
 - Minimum 44px touch targets
 - Appropriate virtual keyboards
@@ -493,7 +466,6 @@ Type: "date"
     // Single column on mobile, two columns on desktop
 </div>
 ```
-<!-- LLM-MOBILE-END -->
 
 ---
 
@@ -501,7 +473,6 @@ Type: "date"
 
 ### Debouncing and Caching
 
-<!-- LLM-PERFORMANCE-START -->
 **DEBOUNCING STRATEGY:**
 ```javascript
 // Different timing for different validations
@@ -529,11 +500,9 @@ func (v *Validator) CachedEmailValidation(email string) bool {
 - Cancel previous requests on new input
 - Minimize payload size
 - Use HTTP status codes effectively
-<!-- LLM-PERFORMANCE-END -->
 
 ### Progressive Enhancement
 
-<!-- LLM-PROGRESSIVE-START -->
 **GRACEFUL DEGRADATION:**
 ```go
 // Forms work without JavaScript
@@ -563,7 +532,6 @@ func (v *Validator) CachedEmailValidation(email string) bool {
 2. **HTMX**: Partial page updates, real-time validation
 3. **Alpine.js**: Client-side state, enhanced UX
 4. **Advanced**: Real-time collaboration, auto-save
-<!-- LLM-PROGRESSIVE-END -->
 
 ---
 
@@ -571,7 +539,6 @@ func (v *Validator) CachedEmailValidation(email string) bool {
 
 ### Permission-Based Forms
 
-<!-- LLM-PERMISSIONS-START -->
 **ROLE-BASED FIELD ACCESS:**
 ```go
 @ValidatedTextInput(ValidatedInputProps{
@@ -592,11 +559,9 @@ if user.HasPermission("edit_sensitive_data") {
     @SensitiveDataFields()
 }
 ```
-<!-- LLM-PERMISSIONS-END -->
 
 ### Workflow Integration
 
-<!-- LLM-WORKFLOW-START -->
 **STATE-DEPENDENT VALIDATION:**
 ```go
 func (f *OrderForm) ValidateForState(state string) {
@@ -622,7 +587,6 @@ func (f *OrderForm) ValidateForState(state string) {
     ApprovalRequired: order.RequiresApproval(),
 })
 ```
-<!-- LLM-WORKFLOW-END -->
 
 ---
 
@@ -630,7 +594,6 @@ func (f *OrderForm) ValidateForState(state string) {
 
 ### Component Testing
 
-<!-- LLM-TESTING-START -->
 **VALIDATION TESTING:**
 ```go
 func TestValidatedInput(t *testing.T) {
@@ -666,11 +629,9 @@ describe('Field Validator', () => {
     });
 });
 ```
-<!-- LLM-TESTING-END -->
 
 ### End-to-End Testing
 
-<!-- LLM-E2E-TESTING-START -->
 **USER INTERACTION FLOWS:**
 ```javascript
 // Playwright test example
@@ -692,7 +653,6 @@ test('form validation flow', async ({ page }) => {
     await expect(page.locator('.success-icon')).toBeVisible();
 });
 ```
-<!-- LLM-E2E-TESTING-END -->
 
 ---
 
@@ -700,7 +660,6 @@ test('form validation flow', async ({ page }) => {
 
 ### Component Design
 
-<!-- LLM-BEST-PRACTICES-START -->
 **COMPOSITION OVER INHERITANCE:**
 ```go
 // ✅ Good: Composable components
@@ -737,11 +696,9 @@ const ValidationStates = {
 // ❌ Bad: Ambiguous boolean flags
 let isValid, isValidating, hasError, wasValidated;
 ```
-<!-- LLM-BEST-PRACTICES-END -->
 
 ### Security Considerations
 
-<!-- LLM-SECURITY-START -->
 **CLIENT-SIDE VALIDATION LIMITATIONS:**
 - Never rely solely on client validation
 - Sanitize all user inputs on server
@@ -762,32 +719,26 @@ ErrorMessage: template.HTMLEscapeString(userInput)
 // Include CSRF token in forms
 <input type="hidden" name="csrf_token" value={ csrfToken }>
 ```
-<!-- LLM-SECURITY-END -->
 
 ## References
 
-<!-- LLM-REFERENCES-START -->
 **RELATED DOCUMENTATION:**
 - [Elements Reference](elements.md) - Basic UI components
 - [Validation Guide](../guides/validation-guide.md) - Complete validation implementation
 - [HTMX Integration](../patterns/htmx-integration.md) - Server interaction patterns
 
 **EXTERNAL REFERENCES:**
-- `templ-llms.md` - Advanced Templ features
-- `flowbite-llms-full.txt` - Complete component styling reference
+
+- [templ-llms.md](../templ-llms.md)   - Advanced Templ features (streaming, suspense patterns)
+- [flowbite-llms-full.txt](../flowbite-llms-full.txt)  - Complete Flowbite component catalog
 
 **OFFICIAL DOCUMENTATION:**
-- [Templ Guide](https://templ.guide) - Go templating language
+- [Templ Guide](https://templ.guide) - Go templating language reference
+- [Flowbite Components](../flowbite/) - UI component library
+- [Alpine.js Documentation](https://alpinejs.dev) - Reactive JavaScript framework
+- [TailwindCSS](https://tailwindcss.com/docs) - Utility-first CSS framework
+- [Schema](../Schema/) - Ui framework Json Schema 
+- [Design](../design/README.md) 
 - [HTMX Documentation](https://htmx.org/docs/) - Hypermedia interactions
 - [Alpine.js Guide](https://alpinejs.dev) - Reactive JavaScript framework
-- [Flowbite Forms](https://flowbite.com/docs/components/forms/) - Form component styling
-<!-- LLM-REFERENCES-END -->
-
-<!-- LLM-METADATA-START -->
-**METADATA FOR AI ASSISTANTS:**
-- File Type: Form Components Reference
-- Scope: Interactive form elements with validation
-- Dependencies: Templ + HTMX + Alpine.js + Flowbite
-- Complexity: Intermediate to Advanced
-- Use Case: ERP form interfaces with real-time validation
-<!-- LLM-METADATA-END -->
+- [Flowbite Forms](../components/forms.md) - Form component styling

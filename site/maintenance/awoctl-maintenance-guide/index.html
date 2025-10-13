@@ -1,0 +1,6905 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../../metrics/awoctl-success-metrics/">
+      
+      
+        <link rel="next" href="../../architecture/awoctl-scaffolding-system/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.18">
+    
+    
+      
+        <title>Maintenance Guide - Awo ERP Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.7e37652d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#awo-erp-scaffolding-system-maintenance-support-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Awo ERP Documentation" class="md-header__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Awo ERP Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Maintenance Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/niiniyare/erp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting-started/01-developer-quick-start/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../architecture/abac-design-and-roadmap/" class="md-tabs__link">
+          
+  
+  
+  Developer Guide
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/modules/financial/" class="md-tabs__link">
+          
+  
+  
+  Modules
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Awo ERP Documentation" class="md-nav__button md-logo" aria-label="Awo ERP Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Awo ERP Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/niiniyare/erp" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/01-developer-quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Developer Guide
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Developer Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_1" id="__nav_2_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            Architecture
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/abac-design-and-roadmap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/FRAMEWORK_MIGRATION_PLAN/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/GIN_HANDLERS_INVENTORY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GIN Handlers
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../performance-optimization-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Performance Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    UI
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            UI
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ui/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ux-improvement-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    UX Improvement Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ui/fundamentals/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ui/templ-llms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Templ LLMs
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ui/CLAUDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Claude
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2_7" id="__nav_2_2_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Components
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Components
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ui/components/elements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Elements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ui/components/forms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Forms
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2_8" id="__nav_2_2_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ui/guides/validation-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Validation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2_9" id="__nav_2_2_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Patterns
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_2_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2_9">
+            <span class="md-nav__icon md-icon"></span>
+            Patterns
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ui/patterns/htmx-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    HTMX Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_2_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2_10" id="__nav_2_2_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_2_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2_10">
+            <span class="md-nav__icon md-icon"></span>
+            Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ui/reference/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Contributing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/01-best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Best Practices
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/documentation-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/condition-package/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Package Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/documentation-structure-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Documentation Structure Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/mermaid-diagrams-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mermaid Diagrams
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/code-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Code Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/database-transactions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Database Transactions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Error Handling
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/general-testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    General Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/goa/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Goa Framework
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/middleware/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Middleware
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/observability/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Observability
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/securityHandbook/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security Handbook
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/service/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Layer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/sqlc-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SQLC Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../sqlc-implementation-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SQLC Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../MAKEFILE_INTEGRATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Makefile Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4" id="__nav_2_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/swagger-ui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    🚀 Interactive API Explorer
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/users/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/organizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Organizations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/abac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Authorization
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4_7" id="__nav_2_4_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tutorials
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4_7">
+            <span class="md-nav__icon md-icon"></span>
+            Tutorials
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/tutorials/api-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Complete Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Legacy API Source
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/user-service-abac-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4_10" id="__nav_2_4_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core APIs
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_4_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4_10">
+            <span class="md-nav__icon md-icon"></span>
+            Core APIs
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/auth/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Auth Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api/core-apis/auth/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Auth API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/entities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entities
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/entities/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entity Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/entities/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entity API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/entities/schema-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Entity Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/organizations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Organizations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/organizations/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Org Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/tenants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenants
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/users/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/users/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Users Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4_11" id="__nav_2_4_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Workflows
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_4_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4_11">
+            <span class="md-nav__icon md-icon"></span>
+            Workflows
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/workflows/access-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/workflows/access-requests/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Request Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/workflows/access-requests/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/workflows/access-requests/schema-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests Schema Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/workflows/access-requests/workflow-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Access Requests Workflow Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/workflows/auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Authentication
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/workflows/conditional-access/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Access
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/workflows/user-analytics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    User Analytics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4_12" id="__nav_2_4_12_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_4_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4_12">
+            <span class="md-nav__icon md-icon"></span>
+            Testing
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/testing/manual/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/testing/manual/manual-curl-tests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Manual Tests
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_4_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_4_13" id="__nav_2_4_13_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Utilities
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_2_4_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_4_13">
+            <span class="md-nav__icon md-icon"></span>
+            Utilities
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/utilities/todo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TODO
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../schema/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Schema
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_6" id="__nav_2_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Examples
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_6">
+            <span class="md-nav__icon md-icon"></span>
+            Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/mermaid-test/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Mermaid Test
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_7" id="__nav_2_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Scripts
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_7">
+            <span class="md-nav__icon md-icon"></span>
+            Scripts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../scripts/api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Project Completion
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Project Completion
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../completion/PROJECT_COMPLETION_SUMMARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Summary
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../team/awoctl-rollout-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rollout Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../metrics/awoctl-success-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Success Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Maintenance Guide
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Maintenance Guide
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance-overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      Maintenance Overview
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Maintenance Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#maintenance-philosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Maintenance Philosophy
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ownership-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ownership Structure
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Ownership Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#primary-ownership" class="md-nav__link">
+    <span class="md-ellipsis">
+      Primary Ownership
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Primary Ownership">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#template-steward-primary-owner" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template Steward (Primary Owner)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secondary-stewards-2-positions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Secondary Stewards (2 positions)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#support-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Support Structure
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Support Structure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tier-1-self-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tier 1: Self-Service
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tier-2-community-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tier 2: Community Support
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tier-3-expert-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tier 3: Expert Support
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#maintenance-processes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Maintenance Processes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Maintenance Processes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#regular-maintenance-schedule" class="md-nav__link">
+    <span class="md-ellipsis">
+      Regular Maintenance Schedule
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Regular Maintenance Schedule">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#daily-automated" class="md-nav__link">
+    <span class="md-ellipsis">
+      Daily (Automated)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#weekly-30-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Weekly (30 minutes)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monthly-2-hours" class="md-nav__link">
+    <span class="md-ellipsis">
+      Monthly (2 hours)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quarterly-4-hours" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quarterly (4 hours)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-update-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template Update Process
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Template Update Process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minor-updates-bug-fixes-small-improvements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Minor Updates (Bug fixes, small improvements)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#major-updates-architecture-changes-new-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      Major Updates (Architecture changes, new patterns)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#version-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Version Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Version Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#versioning-strategy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Versioning Strategy
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rollback-procedures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rollback Procedures
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compatibility-matrix" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compatibility Matrix
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quality-assurance-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quality Assurance Framework
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Quality Assurance Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#continuous-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Continuous Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Continuous Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#template-validation-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template Validation Pipeline
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quality-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quality Gates
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#manual-quality-reviews" class="md-nav__link">
+    <span class="md-ellipsis">
+      Manual Quality Reviews
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Manual Quality Reviews">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quarterly-template-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quarterly Template Audit
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#generated-code-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Generated Code Review
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#user-support-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      User Support Framework
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="User Support Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#support-channel-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Support Channel Management
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Support Channel Management">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#slack-channel-awoctl-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      Slack Channel (#awoctl-support)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#office-hours-weekly-30-minutes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Office Hours (Weekly, 30 minutes)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#support-issue-triage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Support Issue Triage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Support Issue Triage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#priority-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      Priority Levels
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#troubleshooting-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      Troubleshooting Framework
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-issues-solutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common Issues &amp; Solutions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Common Issues &amp; Solutions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#issue-module-already-exists-error" class="md-nav__link">
+    <span class="md-ellipsis">
+      Issue: "Module already exists" error
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-template-rendering-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Issue: Template rendering errors
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-generated-code-doesnt-compile" class="md-nav__link">
+    <span class="md-ellipsis">
+      Issue: Generated code doesn't compile
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#self-diagnostic-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      Self-Diagnostic Tools
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Self-Diagnostic Tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#health-check-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      Health Check Command
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-diagnostics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Diagnostics
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#template-development-guidelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template Development Guidelines
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Template Development Guidelines">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#contributing-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Contributing Process
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Contributing Process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#new-template-contributions" class="md-nav__link">
+    <span class="md-ellipsis">
+      New Template Contributions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-style-guide" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template Style Guide
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Template Style Guide">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#naming-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Naming Conventions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template Structure
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variable-naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      Variable Naming
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#template-testing-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template Testing Framework
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Template Testing Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unit-tests-for-templates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit Tests for Templates
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#integration-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Integration Tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#performance-monitoring-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Monitoring &amp; Optimization
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Monitoring &amp; Optimization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#performance-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Metrics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#generation-performance-targets" class="md-nav__link">
+    <span class="md-ellipsis">
+      Generation Performance Targets
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Monitoring
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#performance-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Performance Optimization
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Performance Optimization">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#template-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template Optimization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-io-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      File I/O Optimization
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#memory-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Memory Optimization
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#monitoring-dashboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      Monitoring Dashboard
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Monitoring Dashboard">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#key-metrics-to-track" class="md-nav__link">
+    <span class="md-ellipsis">
+      Key Metrics to Track
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#emergency-procedures" class="md-nav__link">
+    <span class="md-ellipsis">
+      Emergency Procedures
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Emergency Procedures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#critical-issue-response" class="md-nav__link">
+    <span class="md-ellipsis">
+      Critical Issue Response
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Critical Issue Response">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#incident-classification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Incident Classification
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#emergency-patch-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Emergency Patch Process
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#communication-protocol" class="md-nav__link">
+    <span class="md-ellipsis">
+      Communication Protocol
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rollback-procedures_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rollback Procedures
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rollback Procedures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#template-rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      Template Rollback
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#full-system-rollback" class="md-nav__link">
+    <span class="md-ellipsis">
+      Full System Rollback
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#continuous-improvement-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      Continuous Improvement Framework
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Continuous Improvement Framework">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#feedback-collection" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feedback Collection
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Feedback Collection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#user-feedback-channels" class="md-nav__link">
+    <span class="md-ellipsis">
+      User Feedback Channels
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-driven-improvements" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data-Driven Improvements
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#innovation-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Innovation Process
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Innovation Process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#feature-development-pipeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      Feature Development Pipeline
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#research-development" class="md-nav__link">
+    <span class="md-ellipsis">
+      Research &amp; Development
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#success-measurement" class="md-nav__link">
+    <span class="md-ellipsis">
+      Success Measurement
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Success Measurement">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#long-term-success-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Long-term Success Metrics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Long-term Success Metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adoption-and-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Adoption and Usage
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quality-and-value" class="md-nav__link">
+    <span class="md-ellipsis">
+      Quality and Value
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#innovation-and-evolution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Innovation and Evolution
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#maintenance-success-indicators" class="md-nav__link">
+    <span class="md-ellipsis">
+      Maintenance Success Indicators
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Maintenance Success Indicators">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#health-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Health Metrics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#community-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Community Metrics
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/awoctl-scaffolding-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Financial
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
+            <span class="md-nav__icon md-icon"></span>
+            Financial
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/PRD/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Product Requirements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/testing-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Task Plan
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/currency-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Currency Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/deployment-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/integration-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/settings-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Settings Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/security-compliance-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Security & Compliance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/ACCOUNT_SERVICE_INTEGRATION_SUMMARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Account Service Integration Summary
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/sql-ledger-user-guideV306/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    SQL Ledger User Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/financial/financial-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Financial Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Users & IAM
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            Users & IAM
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/01_identity_model_and_rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Identity & RBAC
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/02_abac_evaluation_lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    ABAC Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/03_hybrid_access_control_strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hybrid Access Control
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/04_architecture_service_integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/IAM_MAPPING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Mapping
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    IAM Restructuring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/PHASE_3_ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Phase 3 Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/RELEASE_NOTES_RC1/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release Notes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2_11" id="__nav_3_2_11_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    ABAC Framework
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_2_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2_11">
+            <span class="md-nav__icon md-icon"></span>
+            ABAC Framework
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/administrative_performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Administrative Performance
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/attribute_definitions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Attribute Definitions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/audit_monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Audit & Monitoring
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/context_attribute/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Context Attributes
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Design
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/policy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/policy_evaluation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/policy_evaluation_CEL/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    CEL Policy Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/policy_evaluation_expr-lang/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Expression Language
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/user/abac/POLICY_SERVICE_ENHANCEMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Policy Service Enhancement
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Audit
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Audit
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/audit/audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/audit/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Feature Flags
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            Feature Flags
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/00_README/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/feature_flag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Feature Flag
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/TASK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Features
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/test_cases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Test Cases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_4_5" id="__nav_3_4_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Onboarding
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_4_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/onboarding/01_introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/onboarding/02_core_concepts_and_architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Core Concepts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/onboarding/03_developer_quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Developer Quickstart
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/onboarding/04_admin_api_manual/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Admin API Manual
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/feature_flag/onboarding/05_lifecycle_gotchas_and_improvements/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Lifecycle & Improvements
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Tenant
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            Tenant
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/tenant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/tenant/tenant-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tenant-management-migration-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Migration Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/tenant/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Testing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/tenants/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenants
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/tenant/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    cURL Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/api-source/core-apis/tenants/curl-examples/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tenant Examples
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    System Configuration
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            System Configuration
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/service-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Service Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/integration-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Integration Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/data-flow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data Flow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/architecture-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/settings/api-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_7" id="__nav_3_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Other Modules
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_7">
+            <span class="md-nav__icon md-icon"></span>
+            Other Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/Architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    System Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/airline-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Airline Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/asset-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Asset Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/forecourt-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Forecourt Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/human-resources/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Human Resources
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/implementation-phases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Implementation Phases
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/inventory-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Inventory Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/module-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Module Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/project-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/restaurant-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Restaurant Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/retail-module/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Retail Module
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/tax-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Tax Management
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/technical-specifications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Technical Specifications
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/modules/workflow-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Workflow Engine
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="awo-erp-scaffolding-system-maintenance-support-guide">AWO ERP Scaffolding System - Maintenance &amp; Support Guide</h1>
+<p><strong>Version</strong>: 1.0.0<br />
+<strong>Date</strong>: October 12, 2025<br />
+<strong>Maintenance Level</strong>: Production  </p>
+<hr />
+<h2 id="maintenance-overview">Maintenance Overview</h2>
+<p>The AWO ERP Scaffolding System (awoctl) requires ongoing maintenance to ensure continued reliability, relevance, and value delivery. This guide establishes the framework for sustainable long-term operation of the system.</p>
+<h3 id="maintenance-philosophy">Maintenance Philosophy</h3>
+<ul>
+<li><strong>Proactive</strong>: Prevent issues before they impact users</li>
+<li><strong>Community-Driven</strong>: Enable team contributions and improvements</li>
+<li><strong>Quality-Focused</strong>: Maintain high standards for generated code</li>
+<li><strong>User-Centric</strong>: Prioritize developer experience and productivity</li>
+</ul>
+<hr />
+<h2 id="ownership-structure">Ownership Structure</h2>
+<h3 id="primary-ownership">Primary Ownership</h3>
+<h4 id="template-steward-primary-owner">Template Steward (Primary Owner)</h4>
+<p><strong>Role</strong>: Senior Full-stack Developer<br />
+<strong>Responsibilities</strong>:
+- Template quality assurance and updates
+- Architecture pattern evolution
+- Breaking change coordination
+- Community contribution review</p>
+<p><strong>Time Commitment</strong>: 20% (1 day per week)</p>
+<h4 id="secondary-stewards-2-positions">Secondary Stewards (2 positions)</h4>
+<p><strong>Role</strong>: Experienced Backend/Frontend Developers<br />
+<strong>Responsibilities</strong>:
+- Template specialization (backend/frontend focus)
+- User support and troubleshooting
+- Documentation maintenance
+- Training material updates</p>
+<p><strong>Time Commitment</strong>: 10% each (0.5 days per week)</p>
+<h3 id="support-structure">Support Structure</h3>
+<h4 id="tier-1-self-service">Tier 1: Self-Service</h4>
+<p><strong>Resources</strong>:
+- Comprehensive documentation
+- FAQ database
+- Video tutorials
+- Interactive examples</p>
+<p><strong>Coverage</strong>: 80% of user questions
+<strong>Response Time</strong>: Immediate (available 24/7)</p>
+<h4 id="tier-2-community-support">Tier 2: Community Support</h4>
+<p><strong>Resources</strong>:
+- Team Slack channel (#awoctl-support)
+- Weekly office hours (30 minutes)
+- Peer-to-peer assistance
+- Template usage examples</p>
+<p><strong>Coverage</strong>: 15% of user questions
+<strong>Response Time</strong>: &lt;4 hours during business hours</p>
+<h4 id="tier-3-expert-support">Tier 3: Expert Support</h4>
+<p><strong>Resources</strong>:
+- Template stewards
+- Architecture team consultation
+- Deep troubleshooting
+- Custom template development</p>
+<p><strong>Coverage</strong>: 5% of complex issues
+<strong>Response Time</strong>: &lt;24 hours for critical issues</p>
+<hr />
+<h2 id="maintenance-processes">Maintenance Processes</h2>
+<h3 id="regular-maintenance-schedule">Regular Maintenance Schedule</h3>
+<h4 id="daily-automated">Daily (Automated)</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Automated template validation</span>
+make<span class="w"> </span>validate-templates
+
+<span class="c1"># Generated code compilation check</span>
+make<span class="w"> </span>test-generated-code
+
+<span class="c1"># Performance benchmarking</span>
+make<span class="w"> </span>benchmark-generation
+</code></pre></div>
+<h4 id="weekly-30-minutes">Weekly (30 minutes)</h4>
+<ul>
+<li><strong>Template Health Check</strong>: Validate all templates compile and generate correctly</li>
+<li><strong>Support Channel Review</strong>: Address outstanding questions and issues</li>
+<li><strong>Metrics Review</strong>: Check adoption and performance metrics</li>
+<li><strong>Documentation Updates</strong>: Update FAQ based on recent questions</li>
+</ul>
+<h4 id="monthly-2-hours">Monthly (2 hours)</h4>
+<ul>
+<li><strong>Community Feedback Review</strong>: Analyze user feedback and improvement suggestions</li>
+<li><strong>Template Updates</strong>: Implement minor improvements and bug fixes</li>
+<li><strong>Documentation Refresh</strong>: Update tutorials and guides based on usage patterns</li>
+<li><strong>Performance Analysis</strong>: Review generation performance and optimize if needed</li>
+</ul>
+<h4 id="quarterly-4-hours">Quarterly (4 hours)</h4>
+<ul>
+<li><strong>Major Template Review</strong>: Comprehensive template quality and pattern review</li>
+<li><strong>Architecture Updates</strong>: Align templates with evolving ERP architecture</li>
+<li><strong>Training Material Updates</strong>: Refresh training content and add new scenarios</li>
+<li><strong>Roadmap Planning</strong>: Plan next quarter's improvements and features</li>
+</ul>
+<h3 id="template-update-process">Template Update Process</h3>
+<h4 id="minor-updates-bug-fixes-small-improvements">Minor Updates (Bug fixes, small improvements)</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Development workflow</span>
+git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>template/fix-validation-issue
+<span class="c1"># Make template changes</span>
+make<span class="w"> </span>validate-templates
+make<span class="w"> </span>test-generation
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;fix: correct validation pattern in entity template&quot;</span>
+</code></pre></div>
+<p><strong>Review Process</strong>:
+1. Create branch with descriptive name
+2. Make template changes with tests
+3. Validate all templates still work
+4. Create pull request with impact assessment
+5. Get approval from one template steward
+6. Merge and update version tag</p>
+<h4 id="major-updates-architecture-changes-new-patterns">Major Updates (Architecture changes, new patterns)</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Development workflow with extended testing</span>
+git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>template/major-abac-enhancement
+<span class="c1"># Make significant changes</span>
+make<span class="w"> </span>validate-templates
+make<span class="w"> </span>test-all-modules
+make<span class="w"> </span>benchmark-performance
+<span class="c1"># Document breaking changes</span>
+</code></pre></div>
+<p><strong>Review Process</strong>:
+1. RFC (Request for Comments) for significant changes
+2. Architecture team review and approval
+3. Backward compatibility analysis
+4. Migration guide creation
+5. Staged rollout with feedback collection
+6. Full team communication before deployment</p>
+<h3 id="version-management">Version Management</h3>
+<h4 id="versioning-strategy">Versioning Strategy</h4>
+<ul>
+<li><strong>Template Version</strong>: Semantic versioning (MAJOR.MINOR.PATCH)</li>
+<li><strong>Tool Version</strong>: Independent versioning for CLI tool</li>
+<li><strong>Breaking Changes</strong>: Major version increment with migration guide</li>
+</ul>
+<h4 id="rollback-procedures">Rollback Procedures</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Emergency rollback capability</span>
+awoctl<span class="w"> </span>version<span class="w"> </span>--rollback<span class="o">=</span><span class="m">1</span>.2.3
+make<span class="w"> </span>restore-template-version<span class="w"> </span><span class="nv">version</span><span class="o">=</span><span class="m">1</span>.2.3
+</code></pre></div>
+<h4 id="compatibility-matrix">Compatibility Matrix</h4>
+<div class="highlight"><pre><span></span><code>awoctl v1.0.x: Compatible with templates v1.0.x - v1.1.x
+awoctl v1.1.x: Compatible with templates v1.0.x - v1.2.x
+Template v1.x.x: Requires awoctl v1.0.0+
+</code></pre></div>
+<hr />
+<h2 id="quality-assurance-framework">Quality Assurance Framework</h2>
+<h3 id="continuous-integration">Continuous Integration</h3>
+<h4 id="template-validation-pipeline">Template Validation Pipeline</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># .github/workflows/template-validation.yml</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Template Quality Assurance</span>
+<span class="nt">on</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">push</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">pull_request</span><span class="p p-Indicator">]</span>
+
+<span class="nt">jobs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">validate-templates</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Validate Template Syntax</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">make validate-template-syntax</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Test Code Generation</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">make test-all-generation-types</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Compile Generated Code</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">make compile-generated-test-modules</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run Generated Tests</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">make test-generated-modules</span>
+
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Performance Benchmark</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">make benchmark-generation-time</span>
+</code></pre></div>
+<h4 id="quality-gates">Quality Gates</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Required checks before template updates</span>
+make<span class="w"> </span>quality-gate-templates
+</code></pre></div>
+<p><strong>Quality Criteria</strong>:
+- All templates compile without errors
+- Generated code passes linting (golangci-lint)
+- Generated tests pass with &gt;85% coverage
+- Performance benchmarks meet thresholds (&lt;5s generation)
+- Documentation builds without warnings</p>
+<h3 id="manual-quality-reviews">Manual Quality Reviews</h3>
+<h4 id="quarterly-template-audit">Quarterly Template Audit</h4>
+<p><strong>Checklist</strong>:
+- [ ] Template code quality and maintainability
+- [ ] Generated code follows current best practices
+- [ ] Documentation accuracy and completeness
+- [ ] Performance optimization opportunities
+- [ ] Security pattern updates needed
+- [ ] User feedback integration opportunities</p>
+<h4 id="generated-code-review">Generated Code Review</h4>
+<p><strong>Sample Generation for Review</strong>:
+<div class="highlight"><pre><span></span><code><span class="c1"># Generate test modules for quality review</span>
+awoctl<span class="w"> </span>new<span class="w"> </span>module<span class="w"> </span>audit_sample_finance<span class="w"> </span>--with-docs<span class="w"> </span>--with-tests
+awoctl<span class="w"> </span>new<span class="w"> </span>module<span class="w"> </span>audit_sample_inventory<span class="w"> </span>--with-docs<span class="w"> </span>--with-tests
+awoctl<span class="w"> </span>new<span class="w"> </span>module<span class="w"> </span>audit_sample_reporting<span class="w"> </span>--with-docs<span class="w"> </span>--with-tests
+</code></pre></div></p>
+<p><strong>Review Criteria</strong>:
+- Architecture pattern compliance
+- Code readability and maintainability
+- Security pattern implementation
+- Documentation quality and accuracy
+- Test coverage and quality</p>
+<hr />
+<h2 id="user-support-framework">User Support Framework</h2>
+<h3 id="support-channel-management">Support Channel Management</h3>
+<h4 id="slack-channel-awoctl-support">Slack Channel (#awoctl-support)</h4>
+<p><strong>Guidelines</strong>:
+- Monitor during business hours (9 AM - 5 PM)
+- Respond within 4 hours
+- Escalate complex issues to template stewards
+- Document common questions for FAQ</p>
+<p><strong>Response Templates</strong>:
+<div class="highlight"><pre><span></span><code># Quick help template
+👋 Hi! For quick issues, check our FAQ: [link]
+For generation problems, try: `awoctl validate project`
+Still stuck? Share your command and error message!
+
+# Escalation template  
+🔧 This looks like a template issue. Tagging @template-stewards
+Please provide: awoctl version, command used, full error output
+</code></pre></div></p>
+<h4 id="office-hours-weekly-30-minutes">Office Hours (Weekly, 30 minutes)</h4>
+<p><strong>Format</strong>: Open video call for live troubleshooting
+<strong>Time</strong>: Every Tuesday 2:00-2:30 PM
+<strong>Scope</strong>: Live problem solving, template usage guidance, improvement discussions</p>
+<h4 id="support-issue-triage">Support Issue Triage</h4>
+<h5 id="priority-levels">Priority Levels</h5>
+<p><strong>P0 - Critical (Response: 2 hours)</strong>
+- Tool completely broken
+- Security vulnerability in generated code
+- Data loss or corruption</p>
+<p><strong>P1 - High (Response: 8 hours)</strong>
+- Generation fails for specific module types
+- Performance significantly degraded
+- Blocking development work</p>
+<p><strong>P2 - Medium (Response: 24 hours)</strong>
+- Minor generation issues
+- Documentation inaccuracies
+- Feature enhancement requests</p>
+<p><strong>P3 - Low (Response: 72 hours)</strong>
+- Cosmetic issues
+- Nice-to-have improvements
+- General questions</p>
+<h3 id="troubleshooting-framework">Troubleshooting Framework</h3>
+<h4 id="common-issues-solutions">Common Issues &amp; Solutions</h4>
+<h5 id="issue-module-already-exists-error">Issue: "Module already exists" error</h5>
+<div class="highlight"><pre><span></span><code><span class="c1"># Diagnosis</span>
+awoctl<span class="w"> </span>validate<span class="w"> </span>project
+ls<span class="w"> </span>internal/core/
+
+<span class="c1"># Solutions</span>
+<span class="c1"># Option 1: Use different name</span>
+awoctl<span class="w"> </span>new<span class="w"> </span>module<span class="w"> </span>different_name
+
+<span class="c1"># Option 2: Remove existing module (if safe)</span>
+rm<span class="w"> </span>-rf<span class="w"> </span>internal/core/existing_module
+</code></pre></div>
+<h5 id="issue-template-rendering-errors">Issue: Template rendering errors</h5>
+<div class="highlight"><pre><span></span><code><span class="c1"># Diagnosis</span>
+awoctl<span class="w"> </span>validate<span class="w"> </span>templates
+awoctl<span class="w"> </span>version<span class="w"> </span>--verbose
+
+<span class="c1"># Solutions</span>
+<span class="c1"># Update to latest version</span>
+make<span class="w"> </span>scaffold-install
+
+<span class="c1"># Check template integrity</span>
+make<span class="w"> </span>validate-templates
+</code></pre></div>
+<h5 id="issue-generated-code-doesnt-compile">Issue: Generated code doesn't compile</h5>
+<div class="highlight"><pre><span></span><code><span class="c1"># Diagnosis</span>
+go<span class="w"> </span>build<span class="w"> </span>./internal/core/module_name/...
+golangci-lint<span class="w"> </span>run<span class="w"> </span>./internal/core/module_name/...
+
+<span class="c1"># Solutions</span>
+<span class="c1"># Regenerate with latest templates</span>
+awoctl<span class="w"> </span>new<span class="w"> </span>module<span class="w"> </span>module_name<span class="w"> </span>--overwrite
+
+<span class="c1"># Check for custom modifications</span>
+git<span class="w"> </span>diff<span class="w"> </span>HEAD~1<span class="w"> </span>--<span class="w"> </span>internal/core/module_name/
+</code></pre></div>
+<h4 id="self-diagnostic-tools">Self-Diagnostic Tools</h4>
+<h5 id="health-check-command">Health Check Command</h5>
+<div class="highlight"><pre><span></span><code><span class="c1"># Comprehensive system check</span>
+awoctl<span class="w"> </span>doctor
+
+<span class="c1"># Expected output</span>
+✅<span class="w"> </span>awoctl<span class="w"> </span>version:<span class="w"> </span><span class="m">1</span>.0.0
+✅<span class="w"> </span>Project<span class="w"> </span>structure<span class="w"> </span>valid
+✅<span class="w"> </span>Templates<span class="w"> </span>integrity<span class="w"> </span>verified
+✅<span class="w"> </span>Dependencies<span class="w"> </span>available
+✅<span class="w"> </span>Generated<span class="w"> </span>code<span class="w"> </span>compiles
+</code></pre></div>
+<h5 id="performance-diagnostics">Performance Diagnostics</h5>
+<div class="highlight"><pre><span></span><code><span class="c1"># Performance profiling</span>
+awoctl<span class="w"> </span>benchmark<span class="w"> </span>--profile<span class="o">=</span>cpu
+awoctl<span class="w"> </span>benchmark<span class="w"> </span>--profile<span class="o">=</span>memory
+
+<span class="c1"># Performance comparison</span>
+awoctl<span class="w"> </span>benchmark<span class="w"> </span>--baseline<span class="o">=</span>v1.0.0
+</code></pre></div>
+<hr />
+<h2 id="template-development-guidelines">Template Development Guidelines</h2>
+<h3 id="contributing-process">Contributing Process</h3>
+<h4 id="new-template-contributions">New Template Contributions</h4>
+<ol>
+<li><strong>Proposal Phase</strong>:</li>
+<li>Create GitHub issue with template proposal</li>
+<li>Include use case and business justification</li>
+<li>
+<p>Get approval from template steward</p>
+</li>
+<li>
+<p><strong>Development Phase</strong>:</p>
+</li>
+<li>Fork repository and create feature branch</li>
+<li>Implement template following style guide</li>
+<li>
+<p>Add comprehensive tests and documentation</p>
+</li>
+<li>
+<p><strong>Review Phase</strong>:</p>
+</li>
+<li>Submit pull request with complete description</li>
+<li>Template steward review and feedback</li>
+<li>
+<p>Address feedback and resubmit</p>
+</li>
+<li>
+<p><strong>Integration Phase</strong>:</p>
+</li>
+<li>Merge after approval</li>
+<li>Update documentation and version</li>
+<li>Announce to team and collect feedback</li>
+</ol>
+<h4 id="template-style-guide">Template Style Guide</h4>
+<h5 id="naming-conventions">Naming Conventions</h5>
+<div class="highlight"><pre><span></span><code><span class="c1">// Template file naming</span>
+<span class="nx">entity</span><span class="p">.</span><span class="k">go</span><span class="p">.</span><span class="nx">tmpl</span><span class="w">           </span><span class="c1">// Primary entity template</span>
+<span class="nx">entity_test</span><span class="p">.</span><span class="k">go</span><span class="p">.</span><span class="nx">tmpl</span><span class="w">     </span><span class="c1">// Corresponding test template</span>
+<span class="p">{</span><span class="nx">component</span><span class="p">}</span><span class="nx">_</span><span class="p">{</span><span class="kd">type</span><span class="p">}.</span><span class="k">go</span><span class="p">.</span><span class="nx">tmpl</span><span class="w"> </span><span class="c1">// Component-specific templates</span>
+</code></pre></div>
+<h5 id="template-structure">Template Structure</h5>
+<div class="highlight"><pre><span></span><code><span class="p">{{</span><span class="cm">/* Template header with description */</span><span class="p">}}</span>
+<span class="p">{{</span><span class="cm">/* Input validation */</span><span class="p">}}</span>
+<span class="p">{{</span><span class="k">if</span><span class="w"> </span><span class="nx">not</span><span class="w"> </span><span class="p">.</span><span class="nx">EntityNamePascal</span><span class="p">}}</span>
+<span class="w">  </span><span class="p">{{</span><span class="kt">error</span><span class="w"> </span><span class="s">&quot;EntityNamePascal is required&quot;</span><span class="p">}}</span>
+<span class="p">{{</span><span class="nx">end</span><span class="p">}}</span>
+
+<span class="p">{{</span><span class="cm">/* Template content with clear sections */</span><span class="p">}}</span>
+<span class="kn">package</span><span class="w"> </span><span class="p">{{.</span><span class="nx">PackageName</span><span class="p">}}</span>
+
+<span class="c1">// Generated content with appropriate comments</span>
+</code></pre></div>
+<h5 id="variable-naming">Variable Naming</h5>
+<div class="highlight"><pre><span></span><code><span class="c1">// Use descriptive template variables</span>
+<span class="p">{{.</span><span class="nx">ModuleNamePascal</span><span class="p">}}</span><span class="w">     </span><span class="c1">// PascalCase for types</span>
+<span class="p">{{.</span><span class="nx">ModuleNameSnake</span><span class="p">}}</span><span class="w">      </span><span class="c1">// snake_case for files/packages</span>
+<span class="p">{{.</span><span class="nx">ModuleNameKebab</span><span class="p">}}</span><span class="w">      </span><span class="c1">// kebab-case for URLs</span>
+<span class="p">{{.</span><span class="nx">ModuleNameCamel</span><span class="p">}}</span><span class="w">      </span><span class="c1">// camelCase for JSON fields</span>
+</code></pre></div>
+<h3 id="template-testing-framework">Template Testing Framework</h3>
+<h4 id="unit-tests-for-templates">Unit Tests for Templates</h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// internal/generator/templates_test.go</span>
+<span class="kd">func</span><span class="w"> </span><span class="nx">TestEntityTemplate</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">data</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">TemplateData</span><span class="p">{</span>
+<span class="w">        </span><span class="nx">EntityNamePascal</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;User&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">ModuleName</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;user&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="c1">// ... other required fields</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nx">result</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">renderTemplate</span><span class="p">(</span><span class="s">&quot;entity.go.tmpl&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">NoError</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">Contains</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">result</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;type User struct&quot;</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1">// Verify generated code compiles</span>
+<span class="w">    </span><span class="nx">err</span><span class="w"> </span><span class="p">=</span><span class="w"> </span><span class="nx">compileGoCode</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">NoError</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4 id="integration-tests">Integration Tests</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Test complete module generation</span>
+make<span class="w"> </span>test-generation-integration
+
+<span class="c1"># Test specific scenarios</span>
+make<span class="w"> </span>test-financial-module-generation
+make<span class="w"> </span>test-multi-tenant-patterns
+make<span class="w"> </span>test-documentation-generation
+</code></pre></div>
+<hr />
+<h2 id="performance-monitoring-optimization">Performance Monitoring &amp; Optimization</h2>
+<h3 id="performance-metrics">Performance Metrics</h3>
+<h4 id="generation-performance-targets">Generation Performance Targets</h4>
+<div class="highlight"><pre><span></span><code>Module Generation:     &lt;3 seconds (target: 2.5s)
+Documentation Gen:     &lt;2 seconds (target: 1.5s)
+Component Generation:  &lt;1 second (target: 0.8s)
+Template Rendering:    &lt;500ms per template
+File I/O Operations:   &lt;100ms per file
+</code></pre></div>
+<h4 id="performance-monitoring">Performance Monitoring</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Automated performance tracking</span>
+awoctl<span class="w"> </span>benchmark<span class="w"> </span>--continuous
+awoctl<span class="w"> </span>metrics<span class="w"> </span>--performance<span class="w"> </span>--export<span class="o">=</span>prometheus
+</code></pre></div>
+<h4 id="performance-optimization">Performance Optimization</h4>
+<h5 id="template-optimization">Template Optimization</h5>
+<ul>
+<li>Minimize template complexity and loops</li>
+<li>Cache frequently used template functions</li>
+<li>Optimize string operations and formatting</li>
+<li>Use efficient template variable access</li>
+</ul>
+<h5 id="file-io-optimization">File I/O Optimization</h5>
+<ul>
+<li>Batch file operations when possible</li>
+<li>Use efficient directory creation</li>
+<li>Minimize disk writes with buffering</li>
+<li>Implement atomic file operations</li>
+</ul>
+<h5 id="memory-optimization">Memory Optimization</h5>
+<ul>
+<li>Reuse template objects when possible</li>
+<li>Implement garbage collection friendly patterns</li>
+<li>Minimize temporary string allocations</li>
+<li>Use efficient data structures</li>
+</ul>
+<h3 id="monitoring-dashboard">Monitoring Dashboard</h3>
+<h4 id="key-metrics-to-track">Key Metrics to Track</h4>
+<div class="highlight"><pre><span></span><code>Usage Metrics:
+- Generations per day/week/month
+- Most used templates and patterns
+- Error rates and common failures
+- User satisfaction scores
+
+Performance Metrics:
+- Average generation time
+- Memory usage patterns
+- File I/O performance
+- Template rendering speed
+
+Quality Metrics:
+- Generated code compilation rates
+- Test coverage of generated code
+- Documentation completeness
+- Security pattern compliance
+</code></pre></div>
+<hr />
+<h2 id="emergency-procedures">Emergency Procedures</h2>
+<h3 id="critical-issue-response">Critical Issue Response</h3>
+<h4 id="incident-classification">Incident Classification</h4>
+<p><strong>Severity 1</strong>: Tool completely broken, blocking all development
+- Response time: 2 hours
+- All-hands alert to template stewards
+- Emergency patch process activated</p>
+<p><strong>Severity 2</strong>: Specific functionality broken, workaround available
+- Response time: 8 hours
+- Normal patch process with expedited review
+- Communication to affected users</p>
+<p><strong>Severity 3</strong>: Minor issues, quality degradation
+- Response time: 24 hours
+- Standard patch process
+- Include in next regular update</p>
+<h4 id="emergency-patch-process">Emergency Patch Process</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Emergency hotfix workflow</span>
+git<span class="w"> </span>checkout<span class="w"> </span>main
+git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>hotfix/critical-template-fix
+<span class="c1"># Make minimal fix</span>
+make<span class="w"> </span>validate-templates
+make<span class="w"> </span>test-critical-paths
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;hotfix: resolve critical template issue&quot;</span>
+<span class="c1"># Fast-track review and deploy</span>
+</code></pre></div>
+<h4 id="communication-protocol">Communication Protocol</h4>
+<ol>
+<li><strong>Immediate</strong>: Update #awoctl-support channel</li>
+<li><strong>Within 1 hour</strong>: Email to development team</li>
+<li><strong>Within 4 hours</strong>: Incident report with timeline</li>
+<li><strong>Post-resolution</strong>: Post-mortem and prevention measures</li>
+</ol>
+<h3 id="rollback-procedures_1">Rollback Procedures</h3>
+<h4 id="template-rollback">Template Rollback</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Rollback to previous template version</span>
+awoctl<span class="w"> </span>template<span class="w"> </span>rollback<span class="w"> </span>--version<span class="o">=</span><span class="m">1</span>.2.3
+make<span class="w"> </span>validate-rollback
+</code></pre></div>
+<h4 id="full-system-rollback">Full System Rollback</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Emergency rollback to manual workflow</span>
+make<span class="w"> </span>disable-awoctl-integration
+<span class="c1"># Restore previous manual processes</span>
+make<span class="w"> </span>restore-manual-workflow
+</code></pre></div>
+<hr />
+<h2 id="continuous-improvement-framework">Continuous Improvement Framework</h2>
+<h3 id="feedback-collection">Feedback Collection</h3>
+<h4 id="user-feedback-channels">User Feedback Channels</h4>
+<ul>
+<li><strong>Weekly Pulse Survey</strong>: 2-minute satisfaction survey</li>
+<li><strong>Monthly Feature Requests</strong>: Structured improvement suggestions</li>
+<li><strong>Quarterly Usage Review</strong>: Comprehensive usage analysis</li>
+<li><strong>Annual Strategy Session</strong>: Long-term direction planning</li>
+</ul>
+<h4 id="data-driven-improvements">Data-Driven Improvements</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># Usage analytics for improvements</span>
+awoctl<span class="w"> </span>analytics<span class="w"> </span>--improvement-suggestions
+awoctl<span class="w"> </span>usage-patterns<span class="w"> </span>--optimize-templates
+</code></pre></div>
+<h3 id="innovation-process">Innovation Process</h3>
+<h4 id="feature-development-pipeline">Feature Development Pipeline</h4>
+<ol>
+<li><strong>Idea Collection</strong>: User suggestions, team brainstorming</li>
+<li><strong>Impact Assessment</strong>: Cost-benefit analysis</li>
+<li><strong>Prototyping</strong>: Proof-of-concept development</li>
+<li><strong>User Testing</strong>: Pilot with select team members</li>
+<li><strong>Integration</strong>: Full implementation and rollout</li>
+</ol>
+<h4 id="research-development">Research &amp; Development</h4>
+<ul>
+<li><strong>Quarterly Innovation Time</strong>: 20% time for template improvements</li>
+<li><strong>External Research</strong>: Industry best practices monitoring</li>
+<li><strong>Technology Updates</strong>: Framework and tool evolution tracking</li>
+<li><strong>Pattern Evolution</strong>: Architecture pattern advancement</li>
+</ul>
+<hr />
+<h2 id="success-measurement">Success Measurement</h2>
+<h3 id="long-term-success-metrics">Long-term Success Metrics</h3>
+<h4 id="adoption-and-usage">Adoption and Usage</h4>
+<ul>
+<li>Sustained 100% usage for new modules</li>
+<li>Growing usage for existing module documentation</li>
+<li>Positive developer satisfaction (&gt;90%)</li>
+<li>Reduced support requests over time</li>
+</ul>
+<h4 id="quality-and-value">Quality and Value</h4>
+<ul>
+<li>Consistent architecture pattern compliance</li>
+<li>Reduced code review time</li>
+<li>Faster developer onboarding</li>
+<li>Lower maintenance overhead</li>
+</ul>
+<h4 id="innovation-and-evolution">Innovation and Evolution</h4>
+<ul>
+<li>Regular template improvements</li>
+<li>Community contributions</li>
+<li>Alignment with architecture evolution</li>
+<li>Continued performance optimization</li>
+</ul>
+<h3 id="maintenance-success-indicators">Maintenance Success Indicators</h3>
+<h4 id="health-metrics">Health Metrics</h4>
+<ul>
+<li>Zero critical issues per quarter</li>
+<li>&lt;5% support request rate</li>
+<li>
+<blockquote>
+<p>95% template reliability</p>
+</blockquote>
+</li>
+<li>Continuous performance improvement</li>
+</ul>
+<h4 id="community-metrics">Community Metrics</h4>
+<ul>
+<li>Active community participation</li>
+<li>Regular contributions and suggestions</li>
+<li>High training completion rates</li>
+<li>Strong knowledge sharing culture</li>
+</ul>
+<hr />
+<h2 id="conclusion">Conclusion</h2>
+<p>The maintenance and support framework for the AWO ERP Scaffolding System ensures sustainable long-term operation while continuously improving developer experience and code quality. By establishing clear ownership, comprehensive support processes, and continuous improvement mechanisms, the system will remain valuable and relevant as the ERP platform evolves.</p>
+<p><strong>Key Success Factors</strong>:
+- Proactive maintenance with automated quality gates
+- Strong community support and contribution culture
+- Continuous feedback integration and improvement
+- Clear escalation paths for complex issues</p>
+<p>The framework balances automation with human expertise, ensuring both reliability and innovation in the scaffolding system's evolution.</p>
+<hr />
+<p><strong>Document Metadata</strong><br />
+<strong>Author</strong>: AWO ERP Platform Team<br />
+<strong>Review Cycle</strong>: Quarterly<br />
+<strong>Next Review</strong>: January 12, 2026<br />
+<strong>Maintenance Level</strong>: Production</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2024 Awo ERP
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10.6.1/dist/mermaid.min.js"></script>
+      
+        <script src="../../javascripts/mermaid-config.js"></script>
+      
+        <script src="../../javascripts/search-enhancements.js"></script>
+      
+        <script src="../../javascripts/search-analytics.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "horizontal-tb"
+    },
+    {
+      "type": "string",
+      "const": "sideways-lr"
+    },
+    {
+      "type": "string",
+      "const": "sideways-rl"
+    },
+    {
+      "type": "string",
+      "const": "vertical-lr"
+    },
+    {
+      "type": "string",
+      "const": "vertical-rl"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.WritingMode.json"
+}

@@ -1464,6 +1464,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../contributing/condition-package/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Package Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../contributing/documentation-structure-guide/" class="md-nav__link">
         
   
@@ -3060,6 +3083,175 @@
   
   <span class="md-ellipsis">
     API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Project Completion
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Project Completion
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../completion/PROJECT_COMPLETION_SUMMARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Summary
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../team/awoctl-rollout-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rollout Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metrics/awoctl-success-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Success Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../maintenance/awoctl-maintenance-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Maintenance Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/awoctl-scaffolding-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Overview
     
   </span>
   
@@ -5313,25 +5505,19 @@
 
 
 <h1 id="ui-elements-reference">UI Elements Reference</h1>
-<!-- LLM-CONTEXT-START -->
 <p><strong>FILE PURPOSE</strong>: Comprehensive reference for foundational UI elements (buttons, inputs, cards, etc.)
 <strong>DEPENDENCIES</strong>: Templ + Flowbite + TailwindCSS, optional Alpine.js
 <strong>TARGET AUDIENCE</strong>: Developers building atomic UI components</p>
 <!-- **RELATED FILES**: `templ-llms.md` (advanced features), `flowbite-llms-full.txt` (styling reference) -->
-<!-- LLM-CONTEXT-END -->
 
 <h2 id="overview">Overview</h2>
 <p>This reference documents foundational UI elements built with Templ, styled with Flowbite, and optionally enhanced with Alpine.js. These atomic components serve as building blocks for complex applications.</p>
-<!-- LLM-TECH-STACK-START -->
 <p><strong>TECHNOLOGY STACK:</strong>
 - <strong><a href="https://templ.guide">Templ</a></strong> - Type-safe Go templating language (Required)
 - <strong><a href="https://flowbite.com">Flowbite</a></strong> - UI component library based on TailwindCSS (Required) 
 - <strong><a href="https://alpinejs.dev">Alpine.js</a></strong> - Lightweight reactive JavaScript framework (Optional)
 - <strong><a href="https://tailwindcss.com">TailwindCSS</a></strong> - Utility-first CSS framework (Included with Flowbite)</p>
-<!-- LLM-TECH-STACK-END -->
-
 <h2 id="design-principles">Design Principles</h2>
-<!-- LLM-PRINCIPLES-START -->
 <p><strong>COMPONENT DESIGN PRINCIPLES:</strong>
 1. <strong>Atomic Design</strong>: Each element serves a single, well-defined purpose
 2. <strong>Composability</strong>: Elements combine to create complex components
@@ -5339,11 +5525,8 @@
 4. <strong>Progressive Enhancement</strong>: Core functionality works without JavaScript
 5. <strong>Type Safety</strong>: Leverages Go's type system through Templ
 6. <strong>Consistency</strong>: Unified design system via Flowbite</p>
-<!-- LLM-PRINCIPLES-END -->
-
 <h2 id="props-pattern">Props Pattern</h2>
 <p>All elements follow a consistent props structure:</p>
-<!-- LLM-PROPS-PATTERN-START -->
 <div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">ElementProps</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="c1">// Content Properties</span>
 <span class="w">    </span><span class="nx">Text</span><span class="w">        </span><span class="kt">string</span><span class="w">    </span><span class="c1">// Display text or content</span>
@@ -5369,11 +5552,8 @@
 <span class="w">    </span><span class="nx">AriaLabel</span><span class="w">   </span><span class="kt">string</span><span class="w">    </span><span class="c1">// Accessibility label</span>
 <span class="p">}</span>
 </code></pre></div>
-<!-- LLM-PROPS-PATTERN-END -->
-
 <hr />
 <h2 id="button-element">Button Element</h2>
-<!-- LLM-BUTTON-START -->
 <p><strong>PURPOSE</strong>: Interactive element for user actions and form submissions</p>
 <p><strong>FUNCTION SIGNATURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="nx">templ</span><span class="w"> </span><span class="nx">Button</span><span class="p">(</span><span class="nx">props</span><span class="w"> </span><span class="nx">ButtonProps</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
@@ -5433,11 +5613,8 @@
 <p><strong>DEPENDENCIES:</strong>
 - Required: Flowbite CSS framework
 - Optional: Alpine.js for enhanced interactivity</p>
-<!-- LLM-BUTTON-END -->
-
 <hr />
 <h2 id="input-element">Input Element</h2>
-<!-- LLM-INPUT-START -->
 <p><strong>PURPOSE</strong>: Single-line text input with validation and accessibility features</p>
 <p><strong>FUNCTION SIGNATURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="nx">templ</span><span class="w"> </span><span class="nx">Input</span><span class="p">(</span><span class="nx">props</span><span class="w"> </span><span class="nx">InputProps</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
@@ -5509,11 +5686,8 @@
 <p><strong>DEPENDENCIES:</strong>
 - Required: Flowbite CSS framework
 - Optional: Alpine.js for real-time validation</p>
-<!-- LLM-INPUT-END -->
-
 <hr />
 <h2 id="card-element">Card Element</h2>
-<!-- LLM-CARD-START -->
 <p><strong>PURPOSE</strong>: Flexible container component for grouping related content</p>
 <p><strong>FUNCTION SIGNATURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="nx">templ</span><span class="w"> </span><span class="nx">Card</span><span class="p">(</span><span class="nx">props</span><span class="w"> </span><span class="nx">CardProps</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
@@ -5572,11 +5746,8 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 <p><strong>DEPENDENCIES:</strong>
 - Required: Flowbite CSS framework
 - Optional: Alpine.js for dynamic content updates</p>
-<!-- LLM-CARD-END -->
-
 <hr />
 <h2 id="alert-element">Alert Element</h2>
-<!-- LLM-ALERT-START -->
 <p><strong>PURPOSE</strong>: Display important messages and notifications with semantic styling</p>
 <p><strong>FUNCTION SIGNATURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="nx">templ</span><span class="w"> </span><span class="nx">Alert</span><span class="p">(</span><span class="nx">props</span><span class="w"> </span><span class="nx">AlertProps</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
@@ -5640,11 +5811,8 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 - Required: Flowbite CSS framework
 - Required: Flowbite JavaScript (for dismissible functionality)
 - Optional: Alpine.js for state management</p>
-<!-- LLM-ALERT-END -->
-
 <hr />
 <h2 id="modal-element">Modal Element</h2>
-<!-- LLM-MODAL-START -->
 <p><strong>PURPOSE</strong>: Overlay dialog component for focused content and user interactions</p>
 <p><strong>FUNCTION SIGNATURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="nx">templ</span><span class="w"> </span><span class="nx">Modal</span><span class="p">(</span><span class="nx">props</span><span class="w"> </span><span class="nx">ModalProps</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
@@ -5702,12 +5870,9 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 - Required: Flowbite CSS framework
 - Required: Flowbite JavaScript (for modal functionality and focus management)
 - Optional: Alpine.js for state management</p>
-<!-- LLM-MODAL-END -->
-
 <hr />
 <h2 id="form-elements">Form Elements</h2>
 <h3 id="select-element">Select Element</h3>
-<!-- LLM-SELECT-START -->
 <p><strong>PURPOSE</strong>: Dropdown selection component with single or multiple selection</p>
 <p><strong>FUNCTION SIGNATURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="nx">templ</span><span class="w"> </span><span class="nx">Select</span><span class="p">(</span><span class="nx">props</span><span class="w"> </span><span class="nx">SelectProps</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
@@ -5758,10 +5923,7 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 <span class="w">    </span><span class="nx">HelperText</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Select all applicable skills&quot;</span><span class="p">,</span>
 <span class="p">})</span>
 </code></pre></div></p>
-<!-- LLM-SELECT-END -->
-
 <h3 id="checkbox-element">Checkbox Element</h3>
-<!-- LLM-CHECKBOX-START -->
 <p><strong>PURPOSE</strong>: Binary or multi-state selection component</p>
 <p><strong>FUNCTION SIGNATURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="nx">templ</span><span class="w"> </span><span class="nx">Checkbox</span><span class="p">(</span><span class="nx">props</span><span class="w"> </span><span class="nx">CheckboxProps</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
@@ -5800,10 +5962,7 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 <span class="w">    </span><span class="nx">OnChange</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;toggleSelectAll()&quot;</span><span class="p">,</span>
 <span class="p">})</span>
 </code></pre></div></p>
-<!-- LLM-CHECKBOX-END -->
-
 <h3 id="textarea-element">Textarea Element</h3>
-<!-- LLM-TEXTAREA-START -->
 <p><strong>PURPOSE</strong>: Multi-line text input for longer content</p>
 <p><strong>FUNCTION SIGNATURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="nx">templ</span><span class="w"> </span><span class="nx">Textarea</span><span class="p">(</span><span class="nx">props</span><span class="w"> </span><span class="nx">TextareaProps</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
@@ -5846,12 +6005,9 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 <span class="w">    </span><span class="nx">Resize</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;vertical&quot;</span><span class="p">,</span>
 <span class="p">})</span>
 </code></pre></div></p>
-<!-- LLM-TEXTAREA-END -->
-
 <hr />
 <h2 id="typography-elements">Typography Elements</h2>
 <h3 id="heading-element">Heading Element</h3>
-<!-- LLM-HEADING-START -->
 <p><strong>PURPOSE</strong>: Semantic heading component with customizable styling</p>
 <p><strong>FUNCTION SIGNATURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="nx">templ</span><span class="w"> </span><span class="nx">Heading</span><span class="p">(</span><span class="nx">props</span><span class="w"> </span><span class="nx">HeadingProps</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
@@ -5886,10 +6042,7 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 <span class="w">    </span><span class="nx">Color</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;gray-800&quot;</span><span class="p">,</span>
 <span class="p">})</span>
 </code></pre></div></p>
-<!-- LLM-HEADING-END -->
-
 <h3 id="link-element">Link Element</h3>
-<!-- LLM-LINK-START -->
 <p><strong>PURPOSE</strong>: Accessible hyperlink component with styling options</p>
 <p><strong>FUNCTION SIGNATURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="nx">templ</span><span class="w"> </span><span class="nx">Link</span><span class="p">(</span><span class="nx">props</span><span class="w"> </span><span class="nx">LinkProps</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
@@ -5923,12 +6076,9 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 <span class="w">    </span><span class="nx">Target</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;_blank&quot;</span><span class="p">,</span>
 <span class="p">})</span>
 </code></pre></div></p>
-<!-- LLM-LINK-END -->
-
 <hr />
 <h2 id="layout-elements">Layout Elements</h2>
 <h3 id="container-element">Container Element</h3>
-<!-- LLM-CONTAINER-START -->
 <p><strong>PURPOSE</strong>: Responsive container with max-width constraints and centering</p>
 <p><strong>FUNCTION SIGNATURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="nx">templ</span><span class="w"> </span><span class="nx">Container</span><span class="p">(</span><span class="nx">props</span><span class="w"> </span><span class="nx">ContainerProps</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
@@ -5959,10 +6109,7 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 <span class="w">    </span><span class="nx">Padding</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;xl&quot;</span><span class="p">,</span>
 <span class="p">})</span>
 </code></pre></div></p>
-<!-- LLM-CONTAINER-END -->
-
 <h3 id="grid-element">Grid Element</h3>
-<!-- LLM-GRID-START -->
 <p><strong>PURPOSE</strong>: CSS Grid layout component with responsive column support</p>
 <p><strong>FUNCTION SIGNATURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="nx">templ</span><span class="w"> </span><span class="nx">Grid</span><span class="p">(</span><span class="nx">props</span><span class="w"> </span><span class="nx">GridProps</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
@@ -5997,11 +6144,8 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 <span class="w">    </span><span class="nx">Gap</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;4&quot;</span><span class="p">,</span>
 <span class="p">})</span>
 </code></pre></div></p>
-<!-- LLM-GRID-END -->
-
 <hr />
 <h2 id="composition-guidelines">Composition Guidelines</h2>
-<!-- LLM-COMPOSITION-START -->
 <p><strong>COMPOSITION PATTERNS:</strong></p>
 <h3 id="1-container-content-pattern">1. Container-Content Pattern</h3>
 <p>Use Container as a wrapper for consistent spacing and layout:
@@ -6038,10 +6182,7 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 2. Props passed to complex components
 3. Direct attributes on elements (highest priority)
 4. CSS classes are appended, not replaced</p>
-<!-- LLM-COMPOSITION-END -->
-
 <h2 id="accessibility-guidelines">Accessibility Guidelines</h2>
-<!-- LLM-ACCESSIBILITY-START -->
 <p><strong>BUILT-IN ACCESSIBILITY FEATURES:</strong>
 - Semantic HTML structure for all elements
 - Proper label association for form controls
@@ -6077,10 +6218,7 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 <span class="w">    </span><span class="nx">Href</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/products/123&quot;</span><span class="p">,</span>
 <span class="p">})</span>
 </code></pre></div></p>
-<!-- LLM-ACCESSIBILITY-END -->
-
 <h2 id="performance-considerations">Performance Considerations</h2>
-<!-- LLM-PERFORMANCE-START -->
 <p><strong>OPTIMIZATION STRATEGIES:</strong>
 1. <strong>Component Reuse</strong>: Define variants through props rather than duplicate components
 2. <strong>Conditional Rendering</strong>: Use Templ's conditional syntax to avoid unnecessary HTML
@@ -6106,25 +6244,20 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 <span class="w">    </span><span class="p">&lt;</span><span class="o">/</span><span class="nx">button</span><span class="p">&gt;</span>
 <span class="p">}</span>
 </code></pre></div></p>
-<!-- LLM-PERFORMANCE-END -->
-
 <h2 id="references">References</h2>
-<!-- LLM-REFERENCES-START -->
 <p><strong>EXTERNAL REFERENCE FILES:</strong>
-- <code>templ-llms.md</code> - Advanced Templ features (streaming, suspense patterns)
-- <code>flowbite-llms-full.txt</code> - Complete Flowbite component catalog</p>
+- <a href="../../templ-llms/">templ-llms.md</a>   - Advanced Templ features (streaming, suspense patterns)
+- <a href="../../flowbite-llms-full.txt">flowbite-llms-full.txt</a>  - Complete Flowbite component catalog</p>
 <p><strong>OFFICIAL DOCUMENTATION:</strong>
 - <a href="https://templ.guide">Templ Guide</a> - Go templating language reference
-- <a href="https://flowbite.com/docs/components/">Flowbite Components</a> - UI component library
+- <a href="../flowbite/">Flowbite Components</a> - UI component library
 - <a href="https://alpinejs.dev">Alpine.js Documentation</a> - Reactive JavaScript framework
-- <a href="https://tailwindcss.com/docs">TailwindCSS</a> - Utility-first CSS framework</p>
+- <a href="https://tailwindcss.com/docs">TailwindCSS</a> - Utility-first CSS framework
+- <a href="../Schema/">Schema</a> - Ui framework Json Schema </p>
 <p><strong>RELATED DOCUMENTATION:</strong>
 - <a href="../forms/">Forms Guide</a> - Advanced form patterns and validation
 - <a href="../patterns/composition.md">Composition Patterns</a> - Building complex UIs
 - <a href="../../patterns/htmx-integration/">HTMX Integration</a> - Server interaction patterns</p>
-<!-- LLM-REFERENCES-END -->
-
-<!-- LLM-METADATA-START -->
 <p><strong>METADATA FOR AI ASSISTANTS:</strong>
 - File Type: Component Reference Documentation
 - Scope: Foundational UI elements only
@@ -6132,7 +6265,6 @@ Cards follow a hierarchical content structure: optional image → title/subtitle
 - Optional: Alpine.js for enhanced interactivity<br />
 - Target: Atomic design components
 - Complexity: Beginner to Intermediate</p>
-<!-- LLM-METADATA-END -->
 
 
 

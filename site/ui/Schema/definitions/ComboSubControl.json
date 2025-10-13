@@ -1,0 +1,29 @@
+{
+  "allOf": [
+    {
+      "$ref": "#/definitions/SchemaObjectComboSubControl",
+      "patternProperties": {
+        "^(unique|columnClassName|testid)$": {}
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "unique": {
+          "type": "boolean",
+          "description": "Is it unique? It is only useful in combo."
+        },
+        "columnClassName": {
+          "$ref": "#/definitions/SchemaClassName",
+          "description": "Column class name, which can be used to modify this type of width."
+        },
+        "testid": {
+          "type": "string"
+        }
+      }
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ComboSubControl.json"
+}

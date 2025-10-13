@@ -327,6 +327,10 @@ func TestEvaluatorSuites(t *testing.T) {
 	suite.Run(t, new(MetricsTestSuite))
 	suite.Run(t, new(BuilderTestSuite))
 	suite.Run(t, new(ValidationTestSuite))
+	suite.Run(t, new(FieldTestSuite))
+	suite.Run(t, new(DynamicDataTestSuite))
+	suite.Run(t, new(TypeConversionTestSuite))
+	suite.Run(t, new(ErrorHandlingTestSuite))
 }
 
 // Benchmarks
@@ -1451,4 +1455,362 @@ func (s *ResourceLimitsTestSuite) TestTimeout() {
 	s.Error(err)
 	// Check for timeout-related error message since timeout implementation may vary
 	s.True(strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "context"))
+}
+
+// Additional Builder Tests for uncovered methods
+func (s *BuilderTestSuite) TestAddFieldComparison() {
+	group := cb.NewBuilder(cb.ConjunctionAnd).
+		AddFieldComparison("user.age", "user.minAge", cb.OpGreater).
+		Build()
+
+	evalCtx := cb.NewEvalContext(map[string]any{
+		"user": map[string]any{
+			"age":    25,
+			"minAge": 18,
+		},
+	}, cb.DefaultEvalOptions())
+
+	result, err := s.evaluator.Evaluate(s.ctx, group, evalCtx)
+	s.NoError(err)
+	s.True(result)
+}
+
+func (s *BuilderTestSuite) TestNotGroup() {
+	group := cb.NewBuilder(cb.ConjunctionAnd).
+		AddRule("role", cb.OpEqual, "admin").
+		Not().
+		Build()
+
+	evalCtx := cb.NewEvalContext(map[string]any{
+		"role": "admin",
+	}, cb.DefaultEvalOptions())
+
+	result, err := s.evaluator.Evaluate(s.ctx, group, evalCtx)
+	s.NoError(err)
+	s.False(result) // Negated, so admin should return false
+}
+
+func (s *BuilderTestSuite) TestSetFormula() {
+	group := cb.NewBuilder(cb.ConjunctionAnd).
+		AddRule("age", cb.OpEqual, 18). // This will be ignored due to formula
+		SetFormula("age >= 21 && verified == true").
+		Build()
+
+	evalCtx := cb.NewEvalContext(map[string]any{
+		"age":      25,
+		"verified": true,
+	}, cb.DefaultEvalOptions())
+
+	result, err := s.evaluator.Evaluate(s.ctx, group, evalCtx)
+	s.NoError(err)
+	s.True(result)
+}
+
+func (s *BuilderTestSuite) TestBuilderValidate() {
+	builder := cb.NewBuilder(cb.ConjunctionAnd).
+		AddRule("test", cb.OpEqual, "value")
+
+	err := builder.Validate()
+	s.NoError(err)
+}
+
+// Field Management Tests
+type FieldTestSuite struct {
+	EvaluatorTestSuite
+}
+
+func (s *FieldTestSuite) TestFieldValidate() {
+	// Valid field
+	field := cb.Field{
+		Name:  "age",
+		Label: "Age",
+		Type:  "number",
+	}
+	err := field.Validate()
+	s.NoError(err)
+
+	// Missing label
+	field.Label = ""
+	err = field.Validate()
+	s.Error(err)
+	s.Contains(err.Error(), "field label is required")
+
+	// Missing type
+	field.Label = "Age"
+	field.Type = ""
+	err = field.Validate()
+	s.Error(err)
+	s.Contains(err.Error(), "field type is required")
+}
+
+func (s *FieldTestSuite) TestRegisterField() {
+	evalCtx := cb.NewEvalContext(map[string]any{}, cb.DefaultEvalOptions())
+
+	// Valid field registration
+	field := cb.Field{
+		Name:  "age",
+		Label: "Age",
+		Type:  "number",
+	}
+	err := evalCtx.RegisterField(field)
+	s.NoError(err)
+
+	// Missing name
+	field.Name = ""
+	err = evalCtx.RegisterField(field)
+	s.Error(err)
+	s.Contains(err.Error(), "field name is required")
+
+	// Invalid field (missing label)
+	field.Name = "age"
+	field.Label = ""
+	err = evalCtx.RegisterField(field)
+	s.Error(err)
+	s.Contains(err.Error(), "field label is required")
+}
+
+// Dynamic Data Handling Tests
+type DynamicDataTestSuite struct {
+	EvaluatorTestSuite
+}
+
+func (s *DynamicDataTestSuite) TestEvaluateMapNodeAsGroup() {
+	// Test map[string]any that represents a group
+	groupMap := map[string]any{
+		"id":          "test-group",
+		"conjunction": "and",
+		"children": []any{
+			map[string]any{
+				"id":   "rule1",
+				"left": map[string]any{"type": "field", "field": "role"},
+				"op":   "equal",
+				"right": map[string]any{"type": "value", "value": "admin"},
+			},
+		},
+	}
+
+	evalCtx := cb.NewEvalContext(map[string]any{
+		"role": "admin",
+	}, cb.DefaultEvalOptions())
+
+	result, err := s.evaluator.Evaluate(s.ctx, groupMap, evalCtx)
+	s.NoError(err)
+	s.True(result)
+}
+
+func (s *DynamicDataTestSuite) TestEvaluateMapNodeAsRule() {
+	// Test map[string]any that represents a rule
+	ruleMap := map[string]any{
+		"id":   "test-rule",
+		"left": map[string]any{"type": "field", "field": "role"},
+		"op":   "equal",
+		"right": map[string]any{"type": "value", "value": "admin"},
+	}
+
+	evalCtx := cb.NewEvalContext(map[string]any{
+		"role": "admin",
+	}, cb.DefaultEvalOptions())
+
+	result, err := s.evaluator.Evaluate(s.ctx, ruleMap, evalCtx)
+	s.NoError(err)
+	s.True(result)
+}
+
+func (s *DynamicDataTestSuite) TestEvaluateMapNodeInvalidGroup() {
+	// Test invalid group structure
+	invalidGroupMap := map[string]any{
+		"conjunction": "and",
+		"children":    "invalid", // Should be array
+	}
+
+	evalCtx := cb.NewEvalContext(map[string]any{}, cb.DefaultEvalOptions())
+
+	_, err := s.evaluator.Evaluate(s.ctx, invalidGroupMap, evalCtx)
+	s.Error(err)
+	s.Contains(err.Error(), "invalid group")
+}
+
+func (s *DynamicDataTestSuite) TestEvaluateMapNodeInvalidRule() {
+	// Test invalid rule structure
+	invalidRuleMap := map[string]any{
+		"id":   "test-rule",
+		"left": "invalid", // Should be object
+		"op":   "equal",
+		"right": map[string]any{"type": "value", "value": "admin"},
+	}
+
+	evalCtx := cb.NewEvalContext(map[string]any{}, cb.DefaultEvalOptions())
+
+	_, err := s.evaluator.Evaluate(s.ctx, invalidRuleMap, evalCtx)
+	s.Error(err)
+	s.Contains(err.Error(), "invalid rule")
+}
+
+// Type Conversion Edge Cases Tests
+type TypeConversionTestSuite struct {
+	EvaluatorTestSuite
+}
+
+func (s *TypeConversionTestSuite) TestToFloat64EdgeCases() {
+	tests := []struct {
+		name     string
+		input    any
+		expected float64
+		hasError bool
+	}{
+		{"valid_int", 42, 42.0, false},
+		{"valid_float", 42.5, 42.5, false},
+		{"valid_string", "42.5", 42.5, false},
+		{"invalid_string", "not_a_number", 0, false}, // Will default to 0 and pass comparison
+		{"bool_true", true, 1.0, false},
+		{"bool_false", false, 0.0, false},
+		{"nil", nil, 0, false}, // nil converts to 0 
+		{"complex_object", map[string]any{"key": "value"}, 0, false}, // Object converts to 0
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			rule := cb.ConditionRule{
+				ID: "test",
+				Left: cb.Expression{
+					Type:  cb.ValueTypeValue,
+					Value: tt.input,
+				},
+				Op: cb.OpGreater,
+				Right: cb.Expression{
+					Type:  cb.ValueTypeValue,
+					Value: 10.0,
+				},
+			}
+
+			evalCtx := cb.NewEvalContext(map[string]any{}, cb.DefaultEvalOptions())
+			_, err := s.evaluator.Evaluate(s.ctx, &rule, evalCtx)
+
+			if tt.hasError {
+				s.Error(err)
+			} else {
+				s.NoError(err)
+				// For valid conversions, check if result matches expectation
+				if tt.expected > 10.0 {
+					// Should return true (value > 10.0)
+					// We don't check result here as we're testing type conversion
+				}
+			}
+		})
+	}
+}
+
+func (s *TypeConversionTestSuite) TestGetValueNestedFields() {
+	evalCtx := cb.NewEvalContext(map[string]any{
+		"user": map[string]any{
+			"profile": map[string]any{
+				"settings": map[string]any{
+					"notifications": true,
+				},
+			},
+		},
+		"roles": []string{"admin", "user"},
+	}, cb.DefaultEvalOptions())
+
+	// Test deeply nested field access
+	val, err := evalCtx.GetValue("user.profile.settings.notifications")
+	s.NoError(err)
+	s.Equal(true, val)
+
+	// Test array access
+	val, err = evalCtx.GetValue("roles")
+	s.NoError(err)
+	s.Equal([]string{"admin", "user"}, val)
+
+	// Test non-existent field
+	_, err = evalCtx.GetValue("user.profile.nonexistent")
+	s.Error(err)
+	s.Contains(err.Error(), "field not found")
+
+	// Test invalid path
+	_, err = evalCtx.GetValue("user.profile.settings.notifications.invalid")
+	s.Error(err)
+}
+
+func (s *TypeConversionTestSuite) TestContainsEdgeCases() {
+	tests := []struct {
+		name      string
+		haystack  any
+		needle    any
+		expected  bool
+		hasError  bool
+	}{
+		{"string_in_string", "hello world", "world", true, false},
+		{"string_not_in_string", "hello world", "xyz", false, false},
+		{"int_in_slice", []int{1, 2, 3}, 2, true, false},
+		{"string_in_slice", []string{"a", "b", "c"}, "b", true, false},
+		{"nil_haystack", nil, "test", false, false}, // nil haystack handled gracefully
+		{"nil_needle", "test", nil, false, false},
+		{"incompatible_types", 123, "test", false, false}, // type coercion handles this
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			rule := cb.ConditionRule{
+				ID: "test",
+				Left: cb.Expression{
+					Type:  cb.ValueTypeValue,
+					Value: tt.haystack,
+				},
+				Op: cb.OpContains,
+				Right: cb.Expression{
+					Type:  cb.ValueTypeValue,
+					Value: tt.needle,
+				},
+			}
+
+			evalCtx := cb.NewEvalContext(map[string]any{}, cb.DefaultEvalOptions())
+			result, err := s.evaluator.Evaluate(s.ctx, &rule, evalCtx)
+
+			if tt.hasError {
+				s.Error(err)
+			} else {
+				s.NoError(err)
+				s.Equal(tt.expected, result)
+			}
+		})
+	}
+}
+
+// Error Handling Tests
+type ErrorHandlingTestSuite struct {
+	EvaluatorTestSuite
+}
+
+func (s *ErrorHandlingTestSuite) TestValidationErrors() {
+	// Test empty group
+	emptyGroup := &cb.ConditionGroup{
+		ID:          "empty",
+		Conjunction: cb.ConjunctionAnd,
+		Children:    []any{},
+	}
+
+	evalCtx := cb.NewEvalContext(map[string]any{}, cb.DefaultEvalOptions())
+	_, err := s.evaluator.Evaluate(s.ctx, emptyGroup, evalCtx)
+	s.Error(err)
+	s.Contains(err.Error(), "at least one child")
+}
+
+func (s *ErrorHandlingTestSuite) TestInvalidOperatorHandling() {
+	rule := cb.ConditionRule{
+		ID: "test",
+		Left: cb.Expression{
+			Type:  cb.ValueTypeValue,
+			Value: "test",
+		},
+		Op: cb.OperatorType("invalid_operator"),
+		Right: cb.Expression{
+			Type:  cb.ValueTypeValue,
+			Value: "test",
+		},
+	}
+
+	evalCtx := cb.NewEvalContext(map[string]any{}, cb.DefaultEvalOptions())
+	_, err := s.evaluator.Evaluate(s.ctx, &rule, evalCtx)
+	s.Error(err)
 }

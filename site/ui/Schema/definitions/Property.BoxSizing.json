@@ -1,0 +1,17 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "border-box"
+    },
+    {
+      "type": "string",
+      "const": "content-box"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.BoxSizing.json"
+}

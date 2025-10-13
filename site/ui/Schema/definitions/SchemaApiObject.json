@@ -1,0 +1,123 @@
+{
+  "type": "object",
+  "properties": {
+    "method": {
+      "type": "string",
+      "enum": [
+        "get",
+        "post",
+        "put",
+        "delete",
+        "patch",
+        "jsonp",
+        "js"
+      ],
+      "description": "API send type"
+    },
+    "url": {
+      "$ref": "#/definitions/SchemaUrlPath",
+      "description": "API send destination address"
+    },
+    "data": {
+      "type": "object",
+      "description": "Used to control data carrying. When key is `&` and value is `$`, all original data is flattened and set to data. When value is $, all original data is assigned to the corresponding key. When value starts with $, the variable value is set to the key."
+    },
+    "convertKeyToPath": {
+      "type": "boolean",
+      "description": "If the key in the default data mapping has a dot or braces, it will be converted into an object. For example:\n\n{ 'a.b': '123' }\n\nAfter data mapping, it becomes { a: { b: '123 } }\n\nIf you want to turn off this function, please set convertKeyToPath to false"
+    },
+    "responseData": {
+      "type": "object",
+      "description": "Used for data mapping returned by the interface."
+    },
+    "attachDataToQuery": {
+      "type": "boolean",
+      "description": "If method is the interface of get, data information is set. By default, data will be automatically included in the query and sent to the backend. \n\nIf you want to send it to the backend through body, please configure this to false. \n\nHowever, the browser does not support it yet, and setting it up is just for decoration. Unless the server supports method-override"
+    },
+    "dataType": {
+      "type": "string",
+      "enum": [
+        "json",
+        "form-data",
+        "form"
+      ],
+      "description": "The format of the sending body"
+    },
+    "responseType": {
+      "type": "string",
+      "const": "blob",
+      "description": "If it is a file download interface, please configure this."
+    },
+    "headers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "description": "Carrying headers, the usage is the same as data, and variables can be used."
+    },
+    "sendOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Set sending conditions"
+    },
+    "replaceData": {
+      "type": "boolean",
+      "description": "The default is append mode. If you want to completely replace it, configure this to true."
+    },
+    "autoRefresh": {
+      "type": "boolean",
+      "description": "Whether to refresh automatically. When the value result in the url changes, the data will be refreshed automatically.",
+      "default": true
+    },
+    "trackExpression": {
+      "type": "string",
+      "description": "When auto-refresh is enabled, the default is the API URL to automatically track variable changes. If you wish to monitor variables outside of the url, configure trackExpression."
+    },
+    "cache": {
+      "type": "number",
+      "description": "If a value is set, requests for the same interface, the same parameters, and the specified time (unit: ms) will go directly to the cache."
+    },
+    "forceAppendDataToQuery": {
+      "type": "boolean",
+      "description": "Force data to be appended to the query. By default, the crud query interface will automatically append data to the query part only when there are no variables in the api address. If you want to force the append, please set this attribute. This configuration is useful when you temporarily add a variable but don't want to write all the parameters again."
+    },
+    "qsOptions": {
+      "type": "object",
+      "properties": {
+        "arrayFormat": {
+          "type": "string",
+          "enum": [
+            "indices",
+            "brackets",
+            "repeat",
+            "comma"
+          ]
+        },
+        "indices": {
+          "type": "boolean"
+        },
+        "allowDots": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "description": "qs configuration items"
+    },
+    "silent": {
+      "type": "boolean",
+      "description": "autoFill whether to display autofill error prompts"
+    },
+    "downloadFileName": {
+      "type": "string",
+      "description": "When downloading a file, specify the file name"
+    }
+  },
+  "required": [
+    "url"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./SchemaApiObject.json"
+}

@@ -1548,6 +1548,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../../contributing/condition-package/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Package Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../../contributing/documentation-structure-guide/" class="md-nav__link">
         
   
@@ -3144,6 +3167,175 @@
   
   <span class="md-ellipsis">
     API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Project Completion
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Project Completion
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../completion/PROJECT_COMPLETION_SUMMARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Summary
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../team/awoctl-rollout-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rollout Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../metrics/awoctl-success-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Success Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../maintenance/awoctl-maintenance-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Maintenance Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../architecture/awoctl-scaffolding-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Overview
     
   </span>
   
@@ -5397,25 +5589,18 @@
 
 
 <h1 id="form-components-reference">Form Components Reference</h1>
-<!-- LLM-CONTEXT-START -->
 <p><strong>FILE PURPOSE</strong>: Form components, patterns, and interactive elements with validation
 <strong>DEPENDENCIES</strong>: Templ + HTMX + Alpine.js + Flowbite
 <strong>TARGET AUDIENCE</strong>: Developers building form interfaces
 <strong>RELATED FILES</strong>: <code>validation-guide.md</code> (implementation details), <code>elements.md</code> (basic components)</p>
-<!-- LLM-CONTEXT-END -->
-
 <h2 id="overview">Overview</h2>
 <p>This reference documents advanced form components and patterns for building interactive, validated forms in ERP applications. These components extend basic elements with validation, real-time feedback, and complex interactions.</p>
-<!-- LLM-TECH-STACK-START -->
 <p><strong>TECHNOLOGY INTEGRATION:</strong>
 - <strong>Templ</strong> - Type-safe form rendering
 - <strong>HTMX</strong> - Server-side validation and partial updates
 - <strong>Alpine.js</strong> - Client-side reactivity and state management
 - <strong>Flowbite</strong> - Consistent form styling and validation states</p>
-<!-- LLM-TECH-STACK-END -->
-
 <h2 id="form-component-architecture">Form Component Architecture</h2>
-<!-- LLM-ARCHITECTURE-START -->
 <p><strong>VALIDATION LAYERS:</strong>
 1. <strong>Client-Side</strong> (Alpine.js) - Immediate feedback, format validation
 2. <strong>Real-Time Server</strong> (HTMX) - Business logic, uniqueness checks
@@ -5427,12 +5612,9 @@
 ├── Multi-step Form Logic
 └── Submission Handling
 </code></pre></div></p>
-<!-- LLM-ARCHITECTURE-END -->
-
 <hr />
 <h2 id="validated-input-components">Validated Input Components</h2>
 <h3 id="validatedtextinput">ValidatedTextInput</h3>
-<!-- LLM-VALIDATED-INPUT-START -->
 <p><strong>PURPOSE</strong>: Text input with real-time validation and visual feedback</p>
 <p><strong>PROPS STRUCTURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">ValidatedInputProps</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
@@ -5467,10 +5649,7 @@
 <span class="c1">// Immediate validation on blur</span>
 <span class="err">@</span><span class="nx">blur</span><span class="o">=</span><span class="s2">&quot;validateField()&quot;</span>
 </code></pre></div></p>
-<!-- LLM-VALIDATED-INPUT-END -->
-
 <h3 id="validatedemailinput">ValidatedEmailInput</h3>
-<!-- LLM-EMAIL-INPUT-START -->
 <p><strong>PURPOSE</strong>: Email input with format validation and uniqueness checking</p>
 <p><strong>ENHANCED FEATURES:</strong>
 - Client-side email format validation
@@ -5491,10 +5670,7 @@
 2. Domain validation (debounced)
 3. Uniqueness check (server)
 4. Visual feedback update</p>
-<!-- LLM-EMAIL-INPUT-END -->
-
 <h3 id="validatedfileinput">ValidatedFileInput</h3>
-<!-- LLM-FILE-INPUT-START -->
 <p><strong>PURPOSE</strong>: File upload with type, size, and security validation</p>
 <p><strong>PROPS STRUCTURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">ValidatedFileProps</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
@@ -5520,12 +5696,9 @@
 - Size limit enforcement
 - Security scanning (basic)
 - Progress indication</p>
-<!-- LLM-FILE-INPUT-END -->
-
 <hr />
 <h2 id="advanced-form-elements">Advanced Form Elements</h2>
 <h3 id="cascadingselect">CascadingSelect</h3>
-<!-- LLM-CASCADING-SELECT-START -->
 <p><strong>PURPOSE</strong>: Select input that depends on parent field selection</p>
 <p><strong>PROPS STRUCTURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">CascadingSelectProps</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
@@ -5561,10 +5734,7 @@
 3. AJAX request loads dependent options
 4. Select updates with new options
 5. Loading states provide feedback</p>
-<!-- LLM-CASCADING-SELECT-END -->
-
 <h3 id="dynamicfieldgroup">DynamicFieldGroup</h3>
-<!-- LLM-DYNAMIC-FIELDS-START -->
 <p><strong>PURPOSE</strong>: Add/remove field groups dynamically (e.g., multiple phone numbers)</p>
 <p><strong>USAGE EXAMPLE:</strong>
 <div class="highlight"><pre><span></span><code><span class="err">@</span><span class="nx">DynamicFieldGroup</span><span class="p">(</span><span class="nx">DynamicFieldProps</span><span class="p">{</span>
@@ -5592,12 +5762,9 @@
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">fields</span><span class="p">.</span><span class="nx">every</span><span class="p">(</span><span class="nx">field</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">validateField</span><span class="p">(</span><span class="nx">field</span><span class="p">));</span>
 <span class="p">}</span>
 </code></pre></div></p>
-<!-- LLM-DYNAMIC-FIELDS-END -->
-
 <hr />
 <h2 id="form-patterns">Form Patterns</h2>
 <h3 id="multi-step-forms">Multi-Step Forms</h3>
-<!-- LLM-MULTISTEP-START -->
 <p><strong>PURPOSE</strong>: Break complex forms into manageable steps with validation</p>
 <p><strong>STEP STRUCTURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">FormStep</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
@@ -5652,10 +5819,7 @@
 <span class="w">    </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div></p>
-<!-- LLM-MULTISTEP-END -->
-
 <h3 id="form-builder-pattern">Form Builder Pattern</h3>
-<!-- LLM-FORM-BUILDER-START -->
 <p><strong>PURPOSE</strong>: Dynamically generate forms based on configuration</p>
 <p><strong>CONFIGURATION STRUCTURE:</strong>
 <div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">FormConfig</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
@@ -5686,12 +5850,9 @@
 - A/B testing different form layouts
 - User-customizable forms
 - Rapid prototyping capabilities</p>
-<!-- LLM-FORM-BUILDER-END -->
-
 <hr />
 <h2 id="form-validation-states">Form Validation States</h2>
 <h3 id="visual-feedback-system">Visual Feedback System</h3>
-<!-- LLM-VISUAL-FEEDBACK-START -->
 <p><strong>VALIDATION STATES:</strong>
 <div class="highlight"><pre><span></span><code><span class="c">/* Default state */</span>
 <span class="p">.</span><span class="nc">field-default</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">border-color</span><span class="p">:</span><span class="w"> </span><span class="mh">#d1d5db</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
@@ -5724,10 +5885,7 @@
 - <strong>Yellow</strong>: Processing/validating
 - <strong>Green</strong>: Valid/success
 - <strong>Red</strong>: Invalid/error</p>
-<!-- LLM-VISUAL-FEEDBACK-END -->
-
 <h3 id="error-display-patterns">Error Display Patterns</h3>
-<!-- LLM-ERROR-DISPLAY-START -->
 <p><strong>ERROR HIERARCHY:</strong>
 1. <strong>Field-Level</strong>: Individual field validation messages
 2. <strong>Section-Level</strong>: Related field group errors
@@ -5751,12 +5909,9 @@
 - Provide format examples
 - Suggest corrections where possible
 - Auto-format when applicable</p>
-<!-- LLM-ERROR-DISPLAY-END -->
-
 <hr />
 <h2 id="accessibility-features">Accessibility Features</h2>
 <h3 id="screen-reader-support">Screen Reader Support</h3>
-<!-- LLM-ACCESSIBILITY-START -->
 <p><strong>ARIA ATTRIBUTES:</strong>
 <div class="highlight"><pre><span></span><code><span class="c1">// Proper label association</span>
 <span class="p">&lt;</span><span class="nx">label</span><span class="w"> </span><span class="k">for</span><span class="p">=</span><span class="s">&quot;email-input&quot;</span><span class="p">&gt;</span><span class="nx">Email</span><span class="w"> </span><span class="nx">Address</span><span class="w"> </span><span class="o">*</span><span class="p">&lt;</span><span class="o">/</span><span class="nx">label</span><span class="p">&gt;</span>
@@ -5785,10 +5940,7 @@
 - Modal forms trap focus appropriately
 - Validation errors announced immediately
 - Loading states communicated clearly</p>
-<!-- LLM-ACCESSIBILITY-END -->
-
 <h3 id="mobile-optimization">Mobile Optimization</h3>
-<!-- LLM-MOBILE-START -->
 <p><strong>TOUCH-FRIENDLY DESIGN:</strong>
 - Minimum 44px touch targets
 - Appropriate virtual keyboards
@@ -5812,12 +5964,9 @@
 <span class="w">    </span><span class="c1">// Single column on mobile, two columns on desktop</span>
 <span class="p">&lt;</span><span class="o">/</span><span class="nx">div</span><span class="p">&gt;</span>
 </code></pre></div></p>
-<!-- LLM-MOBILE-END -->
-
 <hr />
 <h2 id="performance-optimization">Performance Optimization</h2>
 <h3 id="debouncing-and-caching">Debouncing and Caching</h3>
-<!-- LLM-PERFORMANCE-START -->
 <p><strong>DEBOUNCING STRATEGY:</strong>
 <div class="highlight"><pre><span></span><code><span class="c1">// Different timing for different validations</span>
 <span class="err">@</span><span class="nx">input</span><span class="p">.</span><span class="nx">debounce</span><span class="mf">.100</span><span class="nx">ms</span><span class="o">=</span><span class="s2">&quot;formatField()&quot;</span><span class="w">    </span><span class="c1">// Immediate formatting</span>
@@ -5841,10 +5990,7 @@
 - Cancel previous requests on new input
 - Minimize payload size
 - Use HTTP status codes effectively</p>
-<!-- LLM-PERFORMANCE-END -->
-
 <h3 id="progressive-enhancement">Progressive Enhancement</h3>
-<!-- LLM-PROGRESSIVE-START -->
 <p><strong>GRACEFUL DEGRADATION:</strong>
 <div class="highlight"><pre><span></span><code><span class="c1">// Forms work without JavaScript</span>
 <span class="p">&lt;</span><span class="nx">form</span><span class="w"> </span><span class="nx">method</span><span class="p">=</span><span class="s">&quot;POST&quot;</span><span class="w"> </span><span class="nx">action</span><span class="p">=</span><span class="s">&quot;/users/create&quot;</span><span class="p">&gt;</span>
@@ -5872,12 +6018,9 @@
 2. <strong>HTMX</strong>: Partial page updates, real-time validation
 3. <strong>Alpine.js</strong>: Client-side state, enhanced UX
 4. <strong>Advanced</strong>: Real-time collaboration, auto-save</p>
-<!-- LLM-PROGRESSIVE-END -->
-
 <hr />
 <h2 id="integration-with-erp-features">Integration with ERP Features</h2>
 <h3 id="permission-based-forms">Permission-Based Forms</h3>
-<!-- LLM-PERMISSIONS-START -->
 <p><strong>ROLE-BASED FIELD ACCESS:</strong>
 <div class="highlight"><pre><span></span><code><span class="err">@</span><span class="nx">ValidatedTextInput</span><span class="p">(</span><span class="nx">ValidatedInputProps</span><span class="p">{</span>
 <span class="w">    </span><span class="nx">Name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;salary&quot;</span><span class="p">,</span>
@@ -5895,10 +6038,7 @@
 <span class="w">    </span><span class="err">@</span><span class="nx">SensitiveDataFields</span><span class="p">()</span>
 <span class="p">}</span>
 </code></pre></div></p>
-<!-- LLM-PERMISSIONS-END -->
-
 <h3 id="workflow-integration">Workflow Integration</h3>
-<!-- LLM-WORKFLOW-START -->
 <p><strong>STATE-DEPENDENT VALIDATION:</strong>
 <div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">f</span><span class="w"> </span><span class="o">*</span><span class="nx">OrderForm</span><span class="p">)</span><span class="w"> </span><span class="nx">ValidateForState</span><span class="p">(</span><span class="nx">state</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">switch</span><span class="w"> </span><span class="nx">state</span><span class="w"> </span><span class="p">{</span>
@@ -5921,12 +6061,9 @@
 <span class="w">    </span><span class="nx">ApprovalRequired</span><span class="p">:</span><span class="w"> </span><span class="nx">order</span><span class="p">.</span><span class="nx">RequiresApproval</span><span class="p">(),</span>
 <span class="p">})</span>
 </code></pre></div></p>
-<!-- LLM-WORKFLOW-END -->
-
 <hr />
 <h2 id="testing-form-components">Testing Form Components</h2>
 <h3 id="component-testing">Component Testing</h3>
-<!-- LLM-TESTING-START -->
 <p><strong>VALIDATION TESTING:</strong>
 <div class="highlight"><pre><span></span><code><span class="kd">func</span><span class="w"> </span><span class="nx">TestValidatedInput</span><span class="p">(</span><span class="nx">t</span><span class="w"> </span><span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nx">props</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">ValidatedInputProps</span><span class="p">{</span>
@@ -5959,10 +6096,7 @@
 <span class="w">    </span><span class="p">});</span>
 <span class="p">});</span>
 </code></pre></div></p>
-<!-- LLM-TESTING-END -->
-
 <h3 id="end-to-end-testing">End-to-End Testing</h3>
-<!-- LLM-E2E-TESTING-START -->
 <p><strong>USER INTERACTION FLOWS:</strong>
 <div class="highlight"><pre><span></span><code><span class="c1">// Playwright test example</span>
 <span class="nx">test</span><span class="p">(</span><span class="s1">&#39;form validation flow&#39;</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">page</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
@@ -5983,12 +6117,9 @@
 <span class="w">    </span><span class="k">await</span><span class="w"> </span><span class="nx">expect</span><span class="p">(</span><span class="nx">page</span><span class="p">.</span><span class="nx">locator</span><span class="p">(</span><span class="s1">&#39;.success-icon&#39;</span><span class="p">)).</span><span class="nx">toBeVisible</span><span class="p">();</span>
 <span class="p">});</span>
 </code></pre></div></p>
-<!-- LLM-E2E-TESTING-END -->
-
 <hr />
 <h2 id="best-practices">Best Practices</h2>
 <h3 id="component-design">Component Design</h3>
-<!-- LLM-BEST-PRACTICES-START -->
 <p><strong>COMPOSITION OVER INHERITANCE:</strong>
 <div class="highlight"><pre><span></span><code><span class="c1">// ✅ Good: Composable components</span>
 <span class="err">@</span><span class="nx">FormContainer</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
@@ -6020,10 +6151,7 @@
 <span class="c1">// ❌ Bad: Ambiguous boolean flags</span>
 <span class="kd">let</span><span class="w"> </span><span class="nx">isValid</span><span class="p">,</span><span class="w"> </span><span class="nx">isValidating</span><span class="p">,</span><span class="w"> </span><span class="nx">hasError</span><span class="p">,</span><span class="w"> </span><span class="nx">wasValidated</span><span class="p">;</span>
 </code></pre></div></p>
-<!-- LLM-BEST-PRACTICES-END -->
-
 <h3 id="security-considerations">Security Considerations</h3>
-<!-- LLM-SECURITY-START -->
 <p><strong>CLIENT-SIDE VALIDATION LIMITATIONS:</strong>
 - Never rely solely on client validation
 - Sanitize all user inputs on server
@@ -6040,32 +6168,26 @@
 <div class="highlight"><pre><span></span><code><span class="c1">// Include CSRF token in forms</span>
 <span class="p">&lt;</span><span class="nx">input</span><span class="w"> </span><span class="kd">type</span><span class="p">=</span><span class="s">&quot;hidden&quot;</span><span class="w"> </span><span class="nx">name</span><span class="p">=</span><span class="s">&quot;csrf_token&quot;</span><span class="w"> </span><span class="nx">value</span><span class="p">={</span><span class="w"> </span><span class="nx">csrfToken</span><span class="w"> </span><span class="p">}&gt;</span>
 </code></pre></div></p>
-<!-- LLM-SECURITY-END -->
-
 <h2 id="references">References</h2>
-<!-- LLM-REFERENCES-START -->
 <p><strong>RELATED DOCUMENTATION:</strong>
 - <a href="../elements/">Elements Reference</a> - Basic UI components
 - <a href="../../guides/validation-guide/">Validation Guide</a> - Complete validation implementation
 - <a href="../../patterns/htmx-integration/">HTMX Integration</a> - Server interaction patterns</p>
-<p><strong>EXTERNAL REFERENCES:</strong>
-- <code>templ-llms.md</code> - Advanced Templ features
-- <code>flowbite-llms-full.txt</code> - Complete component styling reference</p>
+<p><strong>EXTERNAL REFERENCES:</strong></p>
+<ul>
+<li><a href="../../templ-llms/">templ-llms.md</a>   - Advanced Templ features (streaming, suspense patterns)</li>
+<li><a href="../../flowbite-llms-full.txt">flowbite-llms-full.txt</a>  - Complete Flowbite component catalog</li>
+</ul>
 <p><strong>OFFICIAL DOCUMENTATION:</strong>
-- <a href="https://templ.guide">Templ Guide</a> - Go templating language
+- <a href="https://templ.guide">Templ Guide</a> - Go templating language reference
+- <a href="../flowbite/">Flowbite Components</a> - UI component library
+- <a href="https://alpinejs.dev">Alpine.js Documentation</a> - Reactive JavaScript framework
+- <a href="https://tailwindcss.com/docs">TailwindCSS</a> - Utility-first CSS framework
+- <a href="../Schema/">Schema</a> - Ui framework Json Schema 
+- <a href="../../design/">Design</a> 
 - <a href="https://htmx.org/docs/">HTMX Documentation</a> - Hypermedia interactions
 - <a href="https://alpinejs.dev">Alpine.js Guide</a> - Reactive JavaScript framework
-- <a href="https://flowbite.com/docs/components/forms/">Flowbite Forms</a> - Form component styling</p>
-<!-- LLM-REFERENCES-END -->
-
-<!-- LLM-METADATA-START -->
-<p><strong>METADATA FOR AI ASSISTANTS:</strong>
-- File Type: Form Components Reference
-- Scope: Interactive form elements with validation
-- Dependencies: Templ + HTMX + Alpine.js + Flowbite
-- Complexity: Intermediate to Advanced
-- Use Case: ERP form interfaces with real-time validation</p>
-<!-- LLM-METADATA-END -->
+- <a href="./">Flowbite Forms</a> - Form component styling</p>
 
 
 

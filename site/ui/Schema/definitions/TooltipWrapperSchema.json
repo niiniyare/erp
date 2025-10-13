@@ -1,0 +1,233 @@
+{
+  "type": "object",
+  "properties": {
+    "$$id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
+    },
+    "className": {
+      "type": "string",
+      "description": "Content area CSS class name"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "Whether to disable prompts"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to disable expressions"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "Whether to hide"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to hide expressions"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "Whether to display"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions"
+    },
+    "id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used for log collection"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Event action configuration"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "Whether to display statically"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions statically"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "Static display of empty value placeholder"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display form item class name"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Label class name"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Value class name"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "Content area custom style"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "Component behavior and usage, such as create, update, remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Component name, usually the business name for easy location"
+        },
+        "mock": {
+          "description": "Editor fake data for easy display"
+        }
+      },
+      "description": "Editor configuration, can be ignored at runtime"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "Can be used to turn off mobile style at the component level"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "type": {
+      "type": "string",
+      "const": "tooltip-wrapper",
+      "description": "text prompt container"
+    },
+    "testid": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string",
+      "description": "text prompt title"
+    },
+    "content": {
+      "type": "string",
+      "description": "Text prompt content, compatible with tooltip, but it is recommended to use content to implement prompt content"
+    },
+    "tooltip": {
+      "type": "string"
+    },
+    "placement": {
+      "type": "string",
+      "enum": [
+        "top",
+        "right",
+        "bottom",
+        "left"
+      ],
+      "description": "The text prompts the position where the floating layer appears. The default is top."
+    },
+    "offset": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "maxItems": 2,
+      "description": "Relative offset of floating layer position"
+    },
+    "showArrow": {
+      "type": "boolean",
+      "description": "Whether to display the floating layer pointing arrow"
+    },
+    "trigger": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Trigger"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Trigger"
+          }
+        }
+      ],
+      "description": "Floating layer trigger mode, default is hover"
+    },
+    "mouseEnterDelay": {
+      "type": "number",
+      "description": "Floating layer delay display time, unit ms"
+    },
+    "mouseLeaveDelay": {
+      "type": "number",
+      "description": "Floating layer delay hiding time, unit ms"
+    },
+    "rootClose": {
+      "type": "boolean",
+      "description": "Whether to click the non-content area to close the prompt, the default is true"
+    },
+    "body": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "content area"
+    },
+    "wrapperComponent": {
+      "type": "string",
+      "description": "Content area package tag"
+    },
+    "inline": {
+      "type": "boolean",
+      "description": "Whether the content area is displayed inline, the default is false"
+    },
+    "tooltipTheme": {
+      "type": "string",
+      "enum": [
+        "light",
+        "dark"
+      ],
+      "description": "Theme style, default is light"
+    },
+    "enterable": {
+      "type": "boolean",
+      "description": "Whether it can be moved into the floating layer, default true"
+    },
+    "tooltipStyle": {
+      "type": "object",
+      "description": "Custom prompt floating layer style"
+    },
+    "tooltipClassName": {
+      "type": "string",
+      "description": "Text prompt floating layer CSS class name"
+    }
+  },
+  "required": [
+    "type",
+    "wrapperComponent"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./TooltipWrapperSchema.json"
+}

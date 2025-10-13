@@ -1,0 +1,19 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/DataType.NamedColor"
+    },
+    {
+      "$ref": "#/definitions/DataType.DeprecatedSystemColor"
+    },
+    {
+      "type": "string",
+      "const": "currentcolor"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.Color.json"
+}

@@ -1321,6 +1321,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../contributing/condition-package/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional Package Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../contributing/documentation-structure-guide/" class="md-nav__link">
         
   
@@ -2917,6 +2940,175 @@
   
   <span class="md-ellipsis">
     API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_8" id="__nav_2_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Project Completion
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_8">
+            <span class="md-nav__icon md-icon"></span>
+            Project Completion
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../completion/PROJECT_COMPLETION_SUMMARY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Project Summary
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../team/awoctl-rollout-strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Rollout Strategy
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../metrics/awoctl-success-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Success Metrics
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../maintenance/awoctl-maintenance-guide/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Maintenance Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/awoctl-scaffolding-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture Overview
     
   </span>
   
@@ -5180,6 +5372,7 @@
 - 📚 <a href="guides/">Guides</a> - Step-by-step tutorials for complex features
 - 📖 <a href="reference/">Reference</a> - Complete API docs and examples</p>
 <p><strong>TECH STACK:</strong> <code>Templ + HTMX + Alpine.js + Flowbite + TailwindCSS</code>
+<strong>ARCHITECTURE:</strong> Server-side rendered Go templates with progressive enhancement
 <strong>USE CASE:</strong> Building modern ERP admin interfaces
 <strong>EXTERNAL REFS:</strong> <code>templ-llms.md</code> (streaming), <code>flowbite-llms-full.txt</code> (components)</p>
 <!-- LLM-NAVIGATION-END -->
@@ -5187,10 +5380,11 @@
 <h2 id="overview">Overview</h2>
 <p>This documentation provides a complete UI component system for building ERP applications using:</p>
 <ul>
-<li><strong><a href="https://templ.guide">Templ</a></strong> - Type-safe Go templating that compiles to Go code</li>
+<li><strong><a href="https://templ.guide">Templ</a></strong> - Type-safe Go templating that compiles to Go code (PRIMARY)</li>
 <li><strong><a href="https://htmx.org">HTMX</a></strong> - Hypermedia-driven interactions without complex JavaScript</li>
-<li><strong><a href="https://alpinejs.dev">Alpine.js</a></strong> - Lightweight reactive framework for UI state</li>
+<li><strong><a href="https://alpinejs.dev">Alpine.js</a></strong> - Lightweight reactive framework for client-side state</li>
 <li><strong><a href="https://flowbite.com">Flowbite</a></strong> - Production-ready components built on TailwindCSS</li>
+<li><strong><a href="https://tailwindcss.com">TailwindCSS</a></strong> - Utility-first CSS framework for styling</li>
 </ul>
 <h2 id="quick-start-paths">Quick Start Paths</h2>
 <!-- LLM-QUICK-PATHS-START -->
@@ -5240,20 +5434,21 @@
 <h2 id="key-features">Key Features</h2>
 <!-- LLM-FEATURES-START -->
 <p><strong>COMPONENT CAPABILITIES:</strong>
-- ✅ Type-safe Go templating with hot reload
-- ✅ Server-side rendering with progressive enhancement
-- ✅ Real-time form validation (client + server)
-- ✅ Responsive design with mobile support
+- ✅ Type-safe Go templating with hot reload (Templ)
+- ✅ Server-side rendering with progressive enhancement (Go + HTMX)
+- ✅ Real-time form validation (Alpine.js + server validation)
+- ✅ Responsive design with mobile support (TailwindCSS)
 - ✅ Accessibility compliance (WCAG 2.1 AA)
-- ✅ Multi-tenant state management
-- ✅ Feature flag integration
+- ✅ Multi-tenant state management (Alpine.js stores)
+- ✅ Feature flag integration (Go backend + Alpine.js)
 - ✅ ABAC (Attribute-Based Access Control) UI components</p>
 <p><strong>DEVELOPER EXPERIENCE:</strong>
 - Hot reload: <code>templ generate --watch</code>
-- Component composition patterns
+- Server-first architecture with client enhancement
+- Component composition patterns (atomic design)
 - Progressive complexity (basic → advanced)
 - Production deployment strategies
-- Comprehensive testing approaches</p>
+- Type safety across Go templates and data</p>
 <!-- LLM-FEATURES-END -->
 
 <h2 id="architecture-overview">Architecture Overview</h2>
@@ -5308,16 +5503,20 @@
 <!-- LLM-WORKFLOW-START -->
 <p><strong>TYPICAL DEVELOPMENT FLOW:</strong>
 1. <strong>Design Phase</strong>: Plan component structure using <a href="patterns/">patterns</a>
-2. <strong>Build Phase</strong>: Create components using <a href="components/">elements</a> as building blocks
-3. <strong>Validate Phase</strong>: Implement validation using <a href="components/forms/">forms guide</a>
-4. <strong>Test Phase</strong>: Follow <a href="guides/testing.md">testing strategies</a>
-5. <strong>Deploy Phase</strong>: Use <a href="guides/deployment.md">deployment guide</a></p>
+2. <strong>Build Phase</strong>: Create Templ components using <a href="components/">elements</a> as building blocks
+3. <strong>Enhance Phase</strong>: Add HTMX interactions and Alpine.js state management
+4. <strong>Validate Phase</strong>: Implement validation using <a href="components/forms/">forms guide</a>
+5. <strong>Test Phase</strong>: Follow <a href="guides/testing.md">testing strategies</a>
+6. <strong>Deploy Phase</strong>: Use <a href="guides/deployment.md">deployment guide</a></p>
 <p><strong>KEY COMMANDS:</strong>
-<div class="highlight"><pre><span></span><code><span class="c1"># Hot reload during development</span>
+<div class="highlight"><pre><span></span><code><span class="c1"># Hot reload during development (Templ)</span>
 templ<span class="w"> </span>generate<span class="w"> </span>--watch
 
 <span class="c1"># Generate components after changes</span>
 templ<span class="w"> </span>generate
+
+<span class="c1"># Run ERP server with UI</span>
+make<span class="w"> </span>run
 
 <span class="c1"># Run tests</span>
 go<span class="w"> </span><span class="nb">test</span><span class="w"> </span>./...
@@ -5347,9 +5546,10 @@ go<span class="w"> </span>build<span class="w"> </span>-o<span class="w"> </span
 <h2 id="migration-from-existing-ui">Migration from Existing UI</h2>
 <p>If you're migrating from other UI frameworks:</p>
 <ul>
-<li><strong>From React/Vue</strong>: See <a href="reference/migration.md#from-spa-frameworks">migration guide</a></li>
-<li><strong>From traditional server-side</strong>: See <a href="reference/migration.md#from-traditional-ssr">migration guide</a></li>
-<li><strong>From existing Templ</strong>: See <a href="reference/migration.md#from-basic-templ">migration guide</a></li>
+<li><strong>From React/Vue SPA</strong>: See <a href="reference/migration.md#from-spa-frameworks">migration guide</a> - Learn server-first approach</li>
+<li><strong>From traditional server-side</strong>: See <a href="reference/migration.md#from-traditional-ssr">migration guide</a> - Add progressive enhancement</li>
+<li><strong>From basic Templ</strong>: See <a href="reference/migration.md#from-basic-templ">migration guide</a> - Add HTMX and Alpine.js</li>
+<li><strong>From PHP/Django templates</strong>: See <a href="reference/migration.md#from-template-engines">migration guide</a> - Adopt Go type safety</li>
 </ul>
 <h2 id="contributing-maintenance">Contributing &amp; Maintenance</h2>
 <!-- LLM-CONTRIBUTING-START -->

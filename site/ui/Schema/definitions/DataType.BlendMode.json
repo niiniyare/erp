@@ -1,0 +1,23 @@
+{
+  "type": "string",
+  "enum": [
+    "color",
+    "color-burn",
+    "color-dodge",
+    "darken",
+    "difference",
+    "exclusion",
+    "hard-light",
+    "hue",
+    "lighten",
+    "luminosity",
+    "multiply",
+    "normal",
+    "overlay",
+    "saturation",
+    "screen",
+    "soft-light"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.BlendMode.json"
+}

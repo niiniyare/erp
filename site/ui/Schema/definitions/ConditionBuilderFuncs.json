@@ -1,0 +1,31 @@
+{
+  "type": "array",
+  "items": {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ConditionFieldFunc"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ConditionFieldFunc"
+            }
+          }
+        },
+        "required": [
+          "label",
+          "children"
+        ],
+        "additionalProperties": false
+      }
+    ]
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ConditionBuilderFuncs.json"
+}

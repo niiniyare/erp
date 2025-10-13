@@ -1,0 +1,72 @@
+{
+  "type": "object",
+  "properties": {
+    "type": {
+      "$ref": "#/definitions/FieldTypes"
+    },
+    "label": {
+      "type": "string"
+    },
+    "valueTypes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "value",
+          "field",
+          "func"
+        ]
+      }
+    },
+    "operators": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "lable": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              },
+              "values": {
+                "type": "array",
+                "items": {}
+              }
+            },
+            "required": [
+              "lable",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "funcs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "defaultValue": {},
+    "placeholder": {
+      "type": "string"
+    },
+    "isOptional": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "label",
+    "type"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ConditionBuilderFuncArg.json"
+}

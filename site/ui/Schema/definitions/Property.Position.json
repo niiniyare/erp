@@ -1,0 +1,33 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "-webkit-sticky"
+    },
+    {
+      "type": "string",
+      "const": "absolute"
+    },
+    {
+      "type": "string",
+      "const": "fixed"
+    },
+    {
+      "type": "string",
+      "const": "relative"
+    },
+    {
+      "type": "string",
+      "const": "static"
+    },
+    {
+      "type": "string",
+      "const": "sticky"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.Position.json"
+}

@@ -72,6 +72,7 @@ nav:
     - 'Contributing':
       - 'Best Practices': 'contributing/01-best-practices.md'
       - 'Documentation Guide': 'contributing/documentation-guide.md'
+      - 'Conditional Package Guide': 'contributing/condition-package.md'
       - 'Documentation Structure Guide': 'contributing/documentation-structure-guide.md'
       - 'Mermaid Diagrams': 'contributing/mermaid-diagrams-guide.md'
       - 'Architecture': 'contributing/architecture.md'
@@ -133,6 +134,12 @@ nav:
       - 'Mermaid Test': 'examples/mermaid-test.md'
     - 'Scripts':
       - 'API': 'scripts/api/README.md'
+    - 'Project Completion':
+      - 'Project Summary': 'completion/PROJECT_COMPLETION_SUMMARY.md'
+      - 'Rollout Strategy': 'team/awoctl-rollout-strategy.md'
+      - 'Success Metrics': 'metrics/awoctl-success-metrics.md'
+      - 'Maintenance Guide': 'maintenance/awoctl-maintenance-guide.md'
+      - 'Architecture Overview': 'architecture/awoctl-scaffolding-system.md'
   - 'Modules':
     - 'Financial':
       - 'Overview': 'reference/modules/financial/README.md'

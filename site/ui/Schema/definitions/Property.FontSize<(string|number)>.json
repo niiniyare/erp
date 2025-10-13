@@ -1,0 +1,26 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "$ref": "#/definitions/DataType.AbsoluteSize"
+    },
+    {
+      "type": "string"
+    },
+    {
+      "type": "number"
+    },
+    {
+      "type": "string",
+      "const": "larger"
+    },
+    {
+      "type": "string",
+      "const": "smaller"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.FontSize<(string|number)>.json"
+}

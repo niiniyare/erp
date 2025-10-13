@@ -1,0 +1,263 @@
+{
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "button",
+              "submit",
+              "reset"
+            ],
+            "description": "Specify the button type, supporting three types: button, submit or reset."
+          },
+          "actionType": {
+            "type": "string",
+            "const": "ajax",
+            "description": "Specifies the behavior for sending ajax."
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/AjaxActionSchema"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "button",
+              "submit",
+              "reset"
+            ],
+            "description": "Specify the button type, supporting three types: button, submit or reset."
+          },
+          "actionType": {
+            "type": "string",
+            "const": "url",
+            "description": "Specify as open link"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/UrlActionSchema"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "button",
+              "submit",
+              "reset"
+            ],
+            "description": "Specify the button type, supporting three types: button, submit or reset."
+          },
+          "actionType": {
+            "type": "string",
+            "const": "link",
+            "description": "Specifies the link opening behavior. When different from the url, this behavior is single page mode."
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/LinkActionSchema"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "button",
+              "submit",
+              "reset"
+            ],
+            "description": "Specify the button type, supporting three types: button, submit or reset."
+          },
+          "actionType": {
+            "type": "string",
+            "const": "dialog",
+            "description": "Specify to open a pop-up window"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/DialogActionSchema"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "button",
+              "submit",
+              "reset"
+            ],
+            "description": "Specify the button type, supporting three types: button, submit or reset."
+          },
+          "actionType": {
+            "type": "string",
+            "const": "drawer",
+            "description": "Specify to open the pop-up window, pull out the pop-up window"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/DrawerActionSchema"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "button",
+              "submit",
+              "reset"
+            ],
+            "description": "Specify the button type, supporting three types: button, submit or reset."
+          },
+          "actionType": {
+            "type": "string",
+            "const": "toast",
+            "description": "Specify to open the pop-up window, pull out the pop-up window"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/ToastActionSchema"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "button",
+              "submit",
+              "reset"
+            ],
+            "description": "Specify the button type, supporting three types: button, submit or reset."
+          },
+          "actionType": {
+            "type": "string",
+            "const": "copy",
+            "description": "Specify behavior for copying content"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/CopyActionSchema"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "button",
+              "submit",
+              "reset"
+            ],
+            "description": "Specify the button type, supporting three types: button, submit or reset."
+          },
+          "actionType": {
+            "type": "string",
+            "const": "reload",
+            "description": "Specify the refresh target component."
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/ReloadActionSchema"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "button",
+              "submit",
+              "reset"
+            ],
+            "description": "Specify the button type, supporting three types: button, submit or reset."
+          },
+          "actionType": {
+            "type": "string",
+            "const": "email",
+            "description": "Specify as open mailbox behavior"
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/EmailActionSchema"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "button",
+              "submit",
+              "reset"
+            ],
+            "description": "Specify the button type, supporting three types: button, submit or reset."
+          },
+          "actionType": {
+            "type": "string",
+            "enum": [
+              "prev",
+              "next",
+              "cancel",
+              "close",
+              "submit",
+              "confirm",
+              "add",
+              "reset",
+              "reset-and-submit"
+            ]
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/OtherActionSchema"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "button",
+              "submit",
+              "reset"
+            ],
+            "description": "Specify the button type, supporting three types: button, submit or reset."
+          }
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/VanillaAction"
+      }
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ActionSchema.json"
+}
