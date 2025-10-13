@@ -329,4 +329,3 @@ type SchemaInfo struct {
 	PossibleValues []string `json:"possible_values"`
 	AcceptedTypes  []string `json:"accepted_types"`
 }
-

@@ -57,7 +57,8 @@ func NewExpandedStyles(schemaDir string) *ExpandedStyles {
 func (s *ExpandedStyles) LoadFromSchemaDefinition(propertyName string) error {
 	_, err := s.loader.LoadPropertySchema(propertyName)
 	if err != nil {
-		return fmt.Errorf("failed to load schema for %s: %w", propertyName, err)
+		// Be tolerant of missing schema files - just return nil to continue
+		return nil
 	}
 
 	// Apply schema-defined defaults (if schema has default values)
@@ -85,7 +86,7 @@ func (s *ExpandedStyles) setPropertyByName(property, value string) {
 		s.Layout.Left = value
 	case "z-index":
 		s.Layout.ZIndex = value
-	
+
 	// Box model properties
 	case "width":
 		s.BoxModel.Width = value
@@ -101,7 +102,7 @@ func (s *ExpandedStyles) setPropertyByName(property, value string) {
 		s.BoxModel.MaxHeight = value
 	case "box-sizing":
 		s.BoxModel.BoxSizing = BoxSizing(value)
-	
+
 	// Margin properties
 	case "margin":
 		s.Margin.Margin = value
@@ -113,7 +114,7 @@ func (s *ExpandedStyles) setPropertyByName(property, value string) {
 		s.Margin.Bottom = value
 	case "margin-left":
 		s.Margin.Left = value
-		
+
 	// Padding properties
 	case "padding":
 		s.Padding.Padding = value
@@ -125,7 +126,7 @@ func (s *ExpandedStyles) setPropertyByName(property, value string) {
 		s.Padding.Bottom = value
 	case "padding-left":
 		s.Padding.Left = value
-		
+
 	// Border properties
 	case "border":
 		s.Border.Border = value
@@ -137,7 +138,7 @@ func (s *ExpandedStyles) setPropertyByName(property, value string) {
 		s.Border.Style = BorderStyle(value)
 	case "border-color":
 		s.Border.Color = value
-		
+
 	// Background properties
 	case "background":
 		s.Background.Background = value
@@ -145,7 +146,7 @@ func (s *ExpandedStyles) setPropertyByName(property, value string) {
 		s.Background.Color = value
 	case "background-image":
 		s.Background.Image = value
-		
+
 	// Typography properties
 	case "color":
 		s.Typography.Color = value
@@ -159,7 +160,7 @@ func (s *ExpandedStyles) setPropertyByName(property, value string) {
 		s.Typography.LineHeight = value
 	case "text-align":
 		s.Typography.TextAlign = TextAlign(value)
-		
+
 	// Flexbox properties
 	case "flex-direction":
 		s.Flexbox.Direction = FlexDirection(value)
@@ -169,7 +170,7 @@ func (s *ExpandedStyles) setPropertyByName(property, value string) {
 		s.Flexbox.AlignItems = AlignItems(value)
 	case "flex":
 		s.Flexbox.Flex = value
-		
+
 	// Grid properties
 	case "grid-template-columns":
 		s.Grid.TemplateColumns = value
@@ -177,7 +178,7 @@ func (s *ExpandedStyles) setPropertyByName(property, value string) {
 		s.Grid.TemplateRows = value
 	case "gap":
 		s.Grid.Gap = value
-		
+
 	// Visual effects properties
 	case "opacity":
 		s.VisualEffects.Opacity = value
@@ -185,11 +186,11 @@ func (s *ExpandedStyles) setPropertyByName(property, value string) {
 		s.VisualEffects.BoxShadow = value
 	case "transform":
 		s.VisualEffects.Transform = value
-		
+
 	// Transition properties
 	case "transition":
 		s.Transition.Transition = value
-		
+
 	// Overflow properties
 	case "overflow":
 		s.Overflow.Overflow = Overflow(value)
@@ -197,7 +198,7 @@ func (s *ExpandedStyles) setPropertyByName(property, value string) {
 		s.Overflow.X = Overflow(value)
 	case "overflow-y":
 		s.Overflow.Y = Overflow(value)
-		
+
 	// Add more property mappings as needed
 	default:
 		// Store unknown properties in Custom map

@@ -79,13 +79,13 @@ const (
 type Condition struct {
 	Attribute string      `json:"attribute" validate:"required"`
 	Operator  string      `json:"operator" validate:"required"`
-	Value     interface{} `json:"value" validate:"required"`
+	Value     any `json:"value" validate:"required"`
 }
 
 // Constraint represents a security constraint
 type Constraint struct {
 	Type        string      `json:"type" validate:"required"`
-	Parameters  map[string]interface{} `json:"parameters,omitempty"`
+	Parameters  map[string]any `json:"parameters,omitempty"`
 	Description string      `json:"description,omitempty"`
 }
 
@@ -210,7 +210,7 @@ type SecurityEvent struct {
 	UserID         string                 `json:"user_id"`
 	SessionID      string                 `json:"session_id"`
 	Description    string                 `json:"description"`
-	Details        map[string]interface{} `json:"details,omitempty"`
+	Details        map[string]any `json:"details,omitempty"`
 	Timestamp      time.Time              `json:"timestamp"`
 	AuditContext   *AuditContext          `json:"audit_context,omitempty"`
 }
@@ -274,7 +274,7 @@ type DataAccess struct {
 	SecurityLevel    SecurityLevel          `json:"security_level"`
 	EncryptionStatus bool                   `json:"encryption_status"`
 	DataHash         string                 `json:"data_hash,omitempty"`
-	Metadata         map[string]interface{} `json:"metadata,omitempty"`
+	Metadata         map[string]any `json:"metadata,omitempty"`
 	Timestamp        time.Time              `json:"timestamp"`
 	AuditContext     *AuditContext          `json:"audit_context,omitempty"`
 }
@@ -344,7 +344,7 @@ type SecurityViolation struct {
 	Severity    SecuritySeverity `json:"severity"`
 	Description string           `json:"description"`
 	Component   string           `json:"component"`
-	Details     map[string]interface{} `json:"details,omitempty"`
+	Details     map[string]any `json:"details,omitempty"`
 	Timestamp   time.Time        `json:"timestamp"`
 }
 
@@ -380,7 +380,7 @@ func NewTenantSecurityContext(tenantID, userID string, securityLevel SecurityLev
 }
 
 // Secure component creation with military-grade security
-func CreateSecureComponent(ctx context.Context, registry ComponentRegistry, componentType ComponentType, config map[string]interface{}, securityCtx *TenantSecurityContext) (Component, error) {
+func CreateSecureComponent(ctx context.Context, registry ComponentRegistry, componentType ComponentType, config map[string]any, securityCtx *TenantSecurityContext) (Component, error) {
 	// 1. Pre-creation security validation
 	if err := validateSecurityContext(securityCtx); err != nil {
 		return Component{}, fmt.Errorf("invalid security context: %w", err)
@@ -464,7 +464,7 @@ func (sv *SecurityValidator) auditComponentAccess(ctx context.Context, component
 		UserID:      securityCtx.UserID,
 		SessionID:   securityCtx.SessionID,
 		Description: fmt.Sprintf("Component access: %s (%s)", component.ID, component.Type),
-		Details: map[string]interface{}{
+		Details: map[string]any{
 			"component_type": component.Type,
 			"component_id":   component.ID,
 			"violations":     len(violations),
@@ -614,7 +614,7 @@ func componentHasEncryption(component Component) bool {
 	return component.encrypted
 }
 
-func encryptData(data interface{}, key []byte) ([]byte, error) {
+func encryptData(data any, key []byte) ([]byte, error) {
 	// Implement AES-256-GCM encryption
 	// This is a placeholder - real implementation would use proper crypto
 	hash := sha256.Sum256([]byte(fmt.Sprintf("%v", data)))

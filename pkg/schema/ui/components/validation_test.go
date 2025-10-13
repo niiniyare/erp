@@ -87,7 +87,7 @@ func TestFormComponentValidation(t *testing.T) {
 			Type:  "form",
 			Title: "Test Form",
 			Mode:  "horizontal",
-			Body:  []interface{}{"input1", "input2"}, // Non-empty body
+			Body:  []any{"input1", "input2"}, // Non-empty body
 		}
 
 		result := validator.ValidateComponent(form)
@@ -111,7 +111,7 @@ func TestFormComponentValidation(t *testing.T) {
 			Type:  "form",
 			Title: "Empty Form",
 			Mode:  "normal",
-			Body:  []interface{}{}, // Empty body
+			Body:  []any{}, // Empty body
 		}
 
 		result := validator.ValidateComponent(form)
@@ -323,7 +323,7 @@ func TestDialogComponentValidation(t *testing.T) {
 	t.Run("Dialog with Body", func(t *testing.T) {
 		dialog := &DialogSchema{
 			Type: "dialog",
-			Body: []interface{}{"content"},
+			Body: []any{"content"},
 		}
 
 		result := validator.ValidateComponent(dialog)
@@ -348,7 +348,7 @@ func TestCustomValidationRules(t *testing.T) {
 	validator := NewSchemaValidator()
 
 	// Add a custom rule
-	validator.AddCustomRule("custom_test", func(value interface{}, context *ValidationContext) []ComponentValidationError {
+	validator.AddCustomRule("custom_test", func(value any, context *ValidationContext) []ComponentValidationError {
 		crud, ok := value.(*CRUDSchema)
 		if !ok {
 			return []ComponentValidationError{}
@@ -403,7 +403,7 @@ func TestCustomValidationRules(t *testing.T) {
 func TestBatchValidation(t *testing.T) {
 	validator := NewSchemaValidator()
 
-	components := map[string]interface{}{
+	components := map[string]any{
 		"valid_crud": &CRUDSchema{
 			Type:  "crud",
 			Title: "Valid CRUD",
@@ -465,7 +465,7 @@ func TestValidationResultMethods(t *testing.T) {
 	assert.NotEmpty(t, jsonStr, "JSON should not be empty")
 	
 	// Verify it's valid JSON
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	err = json.Unmarshal([]byte(jsonStr), &parsed)
 	assert.NoError(t, err, "Should be valid JSON")
 }

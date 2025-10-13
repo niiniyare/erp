@@ -97,7 +97,7 @@ func (suite *SecurityTestSuite) TestSecurityContextValidation() {
 // TestSecureComponentCreation tests secure component creation
 func (suite *SecurityTestSuite) TestSecureComponentCreation() {
 	// Test creating a secure button component
-	buttonConfig := map[string]interface{}{
+	buttonConfig := map[string]any{
 		"text":    "Secure Button",
 		"variant": "primary",
 	}
@@ -129,7 +129,7 @@ func (suite *SecurityTestSuite) TestSecureComponentCreationWithInsufficientPermi
 	// Create context without permissions
 	unauthorizedCtx := NewTenantSecurityContext("tenant-002", "user-002", SecurityLevelPublic)
 	
-	buttonConfig := map[string]interface{}{
+	buttonConfig := map[string]any{
 		"text":    "Unauthorized Button",
 		"variant": "primary",
 	}

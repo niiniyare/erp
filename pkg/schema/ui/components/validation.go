@@ -30,11 +30,11 @@ const (
 // ComponentValidationError represents a validation error with detailed context
 type ComponentValidationError struct {
 	Field       string            `json:"field"`
-	Value       interface{}       `json:"value,omitempty"`
+	Value       any       `json:"value,omitempty"`
 	Rule        string            `json:"rule"`
 	Message     string            `json:"message"`
 	Severity    ValidationSeverity `json:"severity"`
-	Context     map[string]interface{} `json:"context,omitempty"`
+	Context     map[string]any `json:"context,omitempty"`
 	Suggestions []string          `json:"suggestions,omitempty"`
 }
 
@@ -97,7 +97,7 @@ type SchemaValidator struct {
 }
 
 // ValidationFunc represents a custom validation function
-type ValidationFunc func(value interface{}, context *ValidationContext) []ComponentValidationError
+type ValidationFunc func(value any, context *ValidationContext) []ComponentValidationError
 
 // ComponentValidationRule represents a single validation rule with metadata
 type ComponentValidationRule struct {
@@ -110,11 +110,11 @@ type ComponentValidationRule struct {
 	MaxLength   *int              `json:"maxLength,omitempty"`
 	MinValue    *float64          `json:"minValue,omitempty"`
 	MaxValue    *float64          `json:"maxValue,omitempty"`
-	Enum        []interface{}     `json:"enum,omitempty"`
+	Enum        []any     `json:"enum,omitempty"`
 	Custom      ValidationFunc    `json:"-"`
 	Message     string            `json:"message,omitempty"`
 	Severity    ValidationSeverity `json:"severity,omitempty"`
-	Conditions  map[string]interface{} `json:"conditions,omitempty"`
+	Conditions  map[string]any `json:"conditions,omitempty"`
 	Description string            `json:"description,omitempty"`
 }
 
@@ -142,7 +142,7 @@ func (v *SchemaValidator) AddCustomRule(name string, rule ValidationFunc) {
 }
 
 // ValidateComponent performs comprehensive component validation
-func (v *SchemaValidator) ValidateComponent(component interface{}) *ValidationResult {
+func (v *SchemaValidator) ValidateComponent(component any) *ValidationResult {
 	startTime := getCurrentTimeMs()
 	
 	result := &ValidationResult{
@@ -208,7 +208,7 @@ func (v *SchemaValidator) ValidateComponent(component interface{}) *ValidationRe
 }
 
 // ValidateComponentBatch validates multiple components efficiently
-func (v *SchemaValidator) ValidateComponentBatch(components map[string]interface{}) map[string]*ValidationResult {
+func (v *SchemaValidator) ValidateComponentBatch(components map[string]any) map[string]*ValidationResult {
 	results := make(map[string]*ValidationResult)
 	
 	for name, component := range components {
@@ -267,7 +267,7 @@ func (v *SchemaValidator) getComponentSpecificRules(componentType string) []Comp
 				Name:     "crud_mode_valid",
 				Field:    "mode",
 				Type:     "string",
-				Enum:     []interface{}{"table", "cards", "list"},
+				Enum:     []any{"table", "cards", "list"},
 				Message:  "CRUD mode must be one of: table, cards, list",
 				Severity: SeverityError,
 			},
@@ -287,7 +287,7 @@ func (v *SchemaValidator) getComponentSpecificRules(componentType string) []Comp
 				Name:     "form_mode_valid",
 				Field:    "mode",
 				Type:     "string",
-				Enum:     []interface{}{"normal", "inline", "horizontal"},
+				Enum:     []any{"normal", "inline", "horizontal"},
 				Message:  "Form mode must be one of: normal, inline, horizontal",
 				Severity: SeverityError,
 			},
@@ -387,7 +387,7 @@ func (v *SchemaValidator) getComponentSpecificRules(componentType string) []Comp
 				Name:     "action_type_valid",
 				Field:    "actionType",
 				Type:     "string",
-				Enum:     []interface{}{"ajax", "link", "dialog", "drawer", "submit", "reset", "button"},
+				Enum:     []any{"ajax", "link", "dialog", "drawer", "submit", "reset", "button"},
 				Message:  "Action type should be one of the supported types",
 				Severity: SeverityError,
 			},
@@ -407,7 +407,7 @@ func (v *SchemaValidator) getComponentSpecificRules(componentType string) []Comp
 				Name:     "dialog_size_valid",
 				Field:    "size",
 				Type:     "string",
-				Enum:     []interface{}{"xs", "sm", "md", "lg", "xl", "full"},
+				Enum:     []any{"xs", "sm", "md", "lg", "xl", "full"},
 				Message:  "Dialog size should be one of the predefined sizes",
 				Severity: SeverityWarning,
 			},
@@ -419,7 +419,7 @@ func (v *SchemaValidator) getComponentSpecificRules(componentType string) []Comp
 }
 
 // validateAgainstRules executes validation rules against a component
-func (v *SchemaValidator) validateAgainstRules(component interface{}, rules []ComponentValidationRule) []ComponentValidationError {
+func (v *SchemaValidator) validateAgainstRules(component any, rules []ComponentValidationRule) []ComponentValidationError {
 	var errors []ComponentValidationError
 	
 	componentValue := reflect.ValueOf(component)
@@ -436,7 +436,7 @@ func (v *SchemaValidator) validateAgainstRules(component interface{}, rules []Co
 }
 
 // executeValidationRule executes a single validation rule
-func (v *SchemaValidator) executeValidationRule(component interface{}, componentValue reflect.Value, rule ComponentValidationRule) []ComponentValidationError {
+func (v *SchemaValidator) executeValidationRule(component any, componentValue reflect.Value, rule ComponentValidationRule) []ComponentValidationError {
 	var errors []ComponentValidationError
 	
 	// Handle custom validation functions
@@ -456,7 +456,7 @@ func (v *SchemaValidator) executeValidationRule(component interface{}, component
 }
 
 // validateFieldValue validates a single field value against a rule
-func (v *SchemaValidator) validateFieldValue(fieldValue interface{}, rule ComponentValidationRule) []ComponentValidationError {
+func (v *SchemaValidator) validateFieldValue(fieldValue any, rule ComponentValidationRule) []ComponentValidationError {
 	var errors []ComponentValidationError
 	
 	// Required field validation
@@ -566,7 +566,7 @@ func (v *SchemaValidator) validateFieldValue(fieldValue interface{}, rule Compon
 
 // Custom validation functions for specific components
 
-func (v *SchemaValidator) validateSelectOptionsOrSource(value interface{}, context *ValidationContext) []ComponentValidationError {
+func (v *SchemaValidator) validateSelectOptionsOrSource(value any, context *ValidationContext) []ComponentValidationError {
 	var errors []ComponentValidationError
 	
 	selectControl, ok := value.(*SelectControlSchema)
@@ -594,7 +594,7 @@ func (v *SchemaValidator) validateSelectOptionsOrSource(value interface{}, conte
 	return errors
 }
 
-func (v *SchemaValidator) validateActionLabelOrIcon(value interface{}, context *ValidationContext) []ComponentValidationError {
+func (v *SchemaValidator) validateActionLabelOrIcon(value any, context *ValidationContext) []ComponentValidationError {
 	var errors []ComponentValidationError
 	
 	action, ok := value.(*ActionSchema)
@@ -622,7 +622,7 @@ func (v *SchemaValidator) validateActionLabelOrIcon(value interface{}, context *
 	return errors
 }
 
-func (v *SchemaValidator) validateDialogContent(value interface{}, context *ValidationContext) []ComponentValidationError {
+func (v *SchemaValidator) validateDialogContent(value any, context *ValidationContext) []ComponentValidationError {
 	var errors []ComponentValidationError
 	
 	dialog, ok := value.(*DialogSchema)
@@ -652,7 +652,7 @@ func (v *SchemaValidator) validateDialogContent(value interface{}, context *Vali
 
 // Utility functions
 
-func getComponentType(component interface{}) string {
+func getComponentType(component any) string {
 	switch c := component.(type) {
 	case *CRUDSchema:
 		return c.Type
@@ -677,7 +677,7 @@ func getComponentType(component interface{}) string {
 	}
 }
 
-func getFieldValue(componentValue reflect.Value, fieldPath string) interface{} {
+func getFieldValue(componentValue reflect.Value, fieldPath string) any {
 	if componentValue.Kind() != reflect.Struct {
 		return nil
 	}
@@ -717,7 +717,7 @@ func getFieldValue(componentValue reflect.Value, fieldPath string) interface{} {
 	return currentValue.Interface()
 }
 
-func isEmptyValue(value interface{}) bool {
+func isEmptyValue(value any) bool {
 	if value == nil {
 		return true
 	}
@@ -725,9 +725,9 @@ func isEmptyValue(value interface{}) bool {
 	switch v := value.(type) {
 	case string:
 		return v == ""
-	case []interface{}:
+	case []any:
 		return len(v) == 0
-	case map[string]interface{}:
+	case map[string]any:
 		return len(v) == 0
 	default:
 		rv := reflect.ValueOf(value)
@@ -744,7 +744,7 @@ func isEmptyValue(value interface{}) bool {
 	}
 }
 
-func (v *SchemaValidator) validateType(value interface{}, expectedType string) bool {
+func (v *SchemaValidator) validateType(value any, expectedType string) bool {
 	switch expectedType {
 	case "string":
 		_, ok := value.(string)
@@ -770,11 +770,11 @@ func (v *SchemaValidator) validateType(value interface{}, expectedType string) b
 	}
 }
 
-func getValueLength(value interface{}) int {
+func getValueLength(value any) int {
 	switch v := value.(type) {
 	case string:
 		return len(v)
-	case []interface{}:
+	case []any:
 		return len(v)
 	default:
 		rv := reflect.ValueOf(value)
@@ -785,7 +785,7 @@ func getValueLength(value interface{}) int {
 	}
 }
 
-func convertEnumToStrings(enum []interface{}) []string {
+func convertEnumToStrings(enum []any) []string {
 	suggestions := make([]string, len(enum))
 	for i, value := range enum {
 		suggestions[i] = fmt.Sprintf("%v", value)
@@ -793,7 +793,7 @@ func convertEnumToStrings(enum []interface{}) []string {
 	return suggestions
 }
 
-func countFields(component interface{}) int {
+func countFields(component any) int {
 	rv := reflect.ValueOf(component)
 	if rv.Kind() == reflect.Ptr {
 		rv = rv.Elem()

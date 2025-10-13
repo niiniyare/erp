@@ -221,7 +221,7 @@ func (r *ComponentRenderer) RenderComponent(component Component) (RenderedCompon
 	
 	// Parse component configuration
 	if len(component.Config) > 0 {
-		var config map[string]interface{}
+		var config map[string]any
 		if err := json.Unmarshal(component.Config, &config); err != nil {
 			return rendered, fmt.Errorf("failed to parse component config: %w", err)
 		}
@@ -248,7 +248,7 @@ type RenderedComponent struct {
 	Class    string                 `json:"class"`
 	CSS      string                 `json:"css"`
 	CSSClass string                 `json:"css_class"`
-	Config   map[string]interface{} `json:"config"`
+	Config   map[string]any `json:"config"`
 	Children []RenderedComponent    `json:"children"`
 }
 

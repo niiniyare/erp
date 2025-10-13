@@ -5,8 +5,19 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/pkg/schema/ui/css"
 )
+
+// wrapWithCategory wraps an error with category and message
+func wrapWithCategory(err error, category errors.Category, message string) *errors.BusinessError {
+	return errors.NewBusinessError("COMPONENT_ERROR", message).
+		WithCategory(category).
+		WithSeverity(errors.SeverityError).
+		WithDetail("underlying_error", err.Error())
+}
+
 
 // DefaultRegistry implements ComponentRegistry with built-in factories and CSS integration
 type DefaultRegistry struct {
@@ -83,10 +94,22 @@ func (r *DefaultRegistry) Create(ctx context.Context, componentType ComponentTyp
 	r.mu.RUnlock()
 
 	if !exists {
-		return Component{}, fmt.Errorf("no factory registered for component type: %s", componentType)
+		return Component{}, errors.NewBusinessError("FACTORY_NOT_FOUND", "No factory registered for component type").
+			WithCategory(errors.CategorySystem).
+			WithSeverity(errors.SeverityError).
+			WithDetail("component_type", string(componentType)).
+			WithSuggestion("Register a factory for this component type before using it").
+			WithSuggestion("Check if the component type is spelled correctly")
 	}
 
-	return factory.Create(ctx, config)
+	component, err := factory.Create(ctx, config)
+	if err != nil {
+		return Component{}, wrapWithCategory(err, errors.CategorySystem, "Failed to create component").
+			WithDetail("component_type", string(componentType)).
+			WithDetail("config", config)
+	}
+
+	return component, nil
 }
 
 // GetTypes returns all registered component types
@@ -108,10 +131,23 @@ func (r *DefaultRegistry) Validate(ctx context.Context, component Component) err
 	r.mu.RUnlock()
 
 	if !exists {
-		return fmt.Errorf("no factory registered for component type: %s", component.Type)
+		return errors.NewBusinessError("FACTORY_NOT_FOUND", "No factory registered for component type").
+			WithCategory(errors.CategoryValidation).
+			WithSeverity(errors.SeverityError).
+			WithDetail("component_type", string(component.Type)).
+			WithDetail("component_id", component.ID).
+			WithSuggestion("Register a factory for this component type before validating").
+			WithSuggestion("Check if the component type is spelled correctly")
 	}
 
-	return factory.Validate(ctx, component)
+	err := factory.Validate(ctx, component)
+	if err != nil {
+		return wrapWithCategory(err, errors.CategoryValidation, "Component validation failed").
+			WithDetail("component_type", string(component.Type)).
+			WithDetail("component_id", component.ID)
+	}
+
+	return nil
 }
 
 // GetSchema returns the schema for a component type
@@ -121,7 +157,12 @@ func (r *DefaultRegistry) GetSchema(componentType ComponentType) (ComponentSchem
 	r.mu.RUnlock()
 
 	if !exists {
-		return ComponentSchema{}, fmt.Errorf("no factory registered for component type: %s", componentType)
+		return ComponentSchema{}, errors.NewBusinessError("FACTORY_NOT_FOUND", "No factory registered for component type").
+			WithCategory(errors.CategorySystem).
+			WithSeverity(errors.SeverityError).
+			WithDetail("component_type", string(componentType)).
+			WithSuggestion("Register a factory for this component type before retrieving its schema").
+			WithSuggestion("Check if the component type is spelled correctly")
 	}
 
 	return factory.GetSchema(), nil
@@ -333,6 +374,77 @@ func (r *DefaultRegistry) GetSchemaDir() string {
 	return r.schemaDir
 }
 
+// GetFactoryCount returns the number of registered factories
+func (r *DefaultRegistry) GetFactoryCount() int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return len(r.factories)
+}
+
+// IsRegistered checks if a component type has a registered factory
+func (r *DefaultRegistry) IsRegistered(componentType ComponentType) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	_, exists := r.factories[componentType]
+	return exists
+}
+
+// Unregister removes a factory for a component type
+func (r *DefaultRegistry) Unregister(componentType ComponentType) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	
+	if _, exists := r.factories[componentType]; !exists {
+		return errors.NewBusinessError("FACTORY_NOT_FOUND", "Cannot unregister non-existent factory").
+			WithCategory(errors.CategorySystem).
+			WithSeverity(errors.SeverityWarning).
+			WithDetail("component_type", string(componentType)).
+			WithSuggestion("Check if the component type is spelled correctly")
+	}
+	
+	delete(r.factories, componentType)
+	return nil
+}
+
+// RegisterBatch registers multiple factories at once
+func (r *DefaultRegistry) RegisterBatch(factories map[ComponentType]ComponentFactory) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	
+	// Validate all factories first
+	for componentType, factory := range factories {
+		if factory == nil {
+			return errors.NewBusinessError("INVALID_FACTORY", "Factory cannot be nil").
+				WithCategory(errors.CategorySystem).
+				WithSeverity(errors.SeverityError).
+				WithDetail("component_type", string(componentType)).
+				WithSuggestion("Provide a valid factory implementation")
+		}
+	}
+	
+	// Register all factories
+	for componentType, factory := range factories {
+		r.factories[componentType] = factory
+	}
+	
+	return nil
+}
+
+// ValidateRegistration checks if all required component types are registered
+func (r *DefaultRegistry) ValidateRegistration(requiredTypes []ComponentType) []ComponentType {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	
+	var missing []ComponentType
+	for _, componentType := range requiredTypes {
+		if _, exists := r.factories[componentType]; !exists {
+			missing = append(missing, componentType)
+		}
+	}
+	
+	return missing
+}
+
 // ============================================================================
 // COMPONENT LIFECYCLE MANAGEMENT (Task 1.1.2)
 // ============================================================================
@@ -342,7 +454,9 @@ func (r *DefaultRegistry) CreateComponent(ctx context.Context, componentType Com
 	// Create component using factory
 	component, err := r.Create(ctx, componentType, config)
 	if err != nil {
-		return Component{}, fmt.Errorf("failed to create component: %w", err)
+		return Component{}, wrapWithCategory(err, errors.CategorySystem, "Failed to create component with lifecycle").
+			WithDetail("component_type", string(componentType)).
+			WithDetail("config", config)
 	}
 	
 	// Initialize lifecycle metadata
@@ -352,14 +466,19 @@ func (r *DefaultRegistry) CreateComponent(ctx context.Context, componentType Com
 	if styleConfig, exists := config["styles"]; exists {
 		if styleMap, ok := styleConfig.(map[string]any); ok {
 			if err := r.applyStyles(&component, styleMap); err != nil {
-				return Component{}, fmt.Errorf("failed to apply styles: %w", err)
+				return Component{}, wrapWithCategory(err, errors.CategorySystem, "Failed to apply component styles").
+					WithDetail("component_type", string(componentType)).
+					WithDetail("component_id", component.ID).
+					WithSuggestion("Check that the style configuration is valid")
 			}
 		}
 	}
 	
 	// Validate final component
 	if err := r.Validate(ctx, component); err != nil {
-		return Component{}, fmt.Errorf("component failed validation: %w", err)
+		return Component{}, wrapWithCategory(err, errors.CategoryValidation, "Component failed final validation").
+			WithDetail("component_type", string(componentType)).
+			WithDetail("component_id", component.ID)
 	}
 	
 	return component, nil
@@ -507,8 +626,7 @@ func (r *DefaultRegistry) applyStyles(component *Component, styleConfig map[stri
 
 // generateComponentID generates a unique component ID
 func generateComponentID() string {
-	// In a real implementation, this would use a proper UUID generator
-	return fmt.Sprintf("component_%d", len("placeholder"))
+	return fmt.Sprintf("comp_%s", uuid.New().String()[:8])
 }
 
 // ============================================================================
@@ -783,16 +901,23 @@ func (r *DefaultRegistry) CreateComponentWithChildren(ctx context.Context, compo
 	// Create parent component
 	component, err := r.CreateComponent(ctx, componentType, config)
 	if err != nil {
-		return Component{}, fmt.Errorf("failed to create parent component: %w", err)
+		return Component{}, wrapWithCategory(err, errors.CategorySystem, "Failed to create parent component").
+			WithDetail("component_type", string(componentType))
 	}
 	
 	// Add children
 	component.Children = children
 	
 	// Validate composition
-	errors := r.ValidateComponentWithComposition(ctx, component)
-	if len(errors) > 0 {
-		return Component{}, fmt.Errorf("composition validation failed: %s", errors[0].Message)
+	validationErrors := r.ValidateComponentWithComposition(ctx, component)
+	if len(validationErrors) > 0 {
+		return Component{}, errors.NewBusinessError("COMPOSITION_VALIDATION_FAILED", "Component composition validation failed").
+			WithCategory(errors.CategoryValidation).
+			WithSeverity(errors.SeverityError).
+			WithDetail("component_type", string(componentType)).
+			WithDetail("component_id", component.ID).
+			WithDetail("validation_errors", validationErrors).
+			WithSuggestion("Check parent-child relationships and composition rules")
 	}
 	
 	return component, nil
@@ -805,10 +930,22 @@ func (r *DefaultRegistry) AddChildComponent(ctx context.Context, parent Componen
 	// Check if child can be added
 	canAdd, err := compositionValidator.CanAddChild(parent, child.Type)
 	if err != nil {
-		return Component{}, fmt.Errorf("cannot add child: %w", err)
+		return Component{}, wrapWithCategory(err, errors.CategoryValidation, "Cannot add child component").
+			WithDetail("parent_type", string(parent.Type)).
+			WithDetail("child_type", string(child.Type)).
+			WithDetail("parent_id", parent.ID).
+			WithDetail("child_id", child.ID)
 	}
 	if !canAdd {
-		return Component{}, fmt.Errorf("child component %s cannot be added to parent %s", child.Type, parent.Type)
+		return Component{}, errors.NewBusinessError("INVALID_CHILD_COMPONENT", "Child component cannot be added to parent").
+			WithCategory(errors.CategoryValidation).
+			WithSeverity(errors.SeverityError).
+			WithDetail("parent_type", string(parent.Type)).
+			WithDetail("child_type", string(child.Type)).
+			WithDetail("parent_id", parent.ID).
+			WithDetail("child_id", child.ID).
+			WithSuggestion("Check composition rules for this component type").
+			WithSuggestion("Verify that the child component is allowed within the parent")
 	}
 	
 	// Add the child
@@ -816,9 +953,15 @@ func (r *DefaultRegistry) AddChildComponent(ctx context.Context, parent Componen
 	updatedParent.Children = append(updatedParent.Children, child)
 	
 	// Validate final composition
-	errors := r.ValidateComponentWithComposition(ctx, updatedParent)
-	if len(errors) > 0 {
-		return Component{}, fmt.Errorf("composition validation failed after adding child: %s", errors[0].Message)
+	validationErrors := r.ValidateComponentWithComposition(ctx, updatedParent)
+	if len(validationErrors) > 0 {
+		return Component{}, errors.NewBusinessError("COMPOSITION_VALIDATION_FAILED", "Composition validation failed after adding child").
+			WithCategory(errors.CategoryValidation).
+			WithSeverity(errors.SeverityError).
+			WithDetail("parent_id", parent.ID).
+			WithDetail("child_id", child.ID).
+			WithDetail("validation_errors", validationErrors).
+			WithSuggestion("Review composition rules and child component configuration")
 	}
 	
 	// Update lifecycle

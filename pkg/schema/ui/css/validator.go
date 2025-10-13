@@ -22,14 +22,14 @@ func NewValidator(schemaDir string) *Validator {
 // ValidateStyles validates a complete Styles object
 func (v *Validator) ValidateStyles(styles *Styles) []ValidationError {
 	var errors []ValidationError
-	
+
 	properties := styles.getAllProperties()
-	
+
 	for propertyName, value := range properties {
 		if value == "" {
 			continue
 		}
-		
+
 		if err := v.ValidateProperty(propertyName, value); err != nil {
 			errors = append(errors, ValidationError{
 				Property: propertyName,
@@ -38,13 +38,13 @@ func (v *Validator) ValidateStyles(styles *Styles) []ValidationError {
 			})
 		}
 	}
-	
+
 	// Validate custom properties
 	for propertyName, value := range styles.Custom {
 		if value == "" {
 			continue
 		}
-		
+
 		if err := v.ValidateCustomProperty(propertyName, value); err != nil {
 			errors = append(errors, ValidationError{
 				Property: propertyName,
@@ -54,7 +54,7 @@ func (v *Validator) ValidateStyles(styles *Styles) []ValidationError {
 			})
 		}
 	}
-	
+
 	return errors
 }
 
@@ -64,7 +64,7 @@ func (v *Validator) ValidateProperty(propertyName, value string) error {
 	if err := v.loader.ValidateValue(propertyName, value); err == nil {
 		return nil
 	}
-	
+
 	// Fallback to pattern-based validation for common properties
 	return v.validateWithPatterns(propertyName, value)
 }
@@ -75,16 +75,16 @@ func (v *Validator) ValidateCustomProperty(propertyName, value string) error {
 	if propertyName == "" {
 		return fmt.Errorf("custom property name cannot be empty")
 	}
-	
+
 	if value == "" {
 		return fmt.Errorf("custom property value cannot be empty")
 	}
-	
+
 	// CSS custom properties should start with --
 	if strings.HasPrefix(propertyName, "--") {
 		return nil // CSS custom properties are flexible
 	}
-	
+
 	// For other custom properties, use pattern validation
 	return v.validateWithPatterns(propertyName, value)
 }
@@ -97,7 +97,7 @@ func (v *Validator) validateWithPatterns(propertyName, value string) error {
 	case "width", "height", "max-width", "max-height", "min-width", "min-height":
 		return v.validateSize(value)
 	case "margin", "padding", "margin-top", "margin-bottom", "margin-left", "margin-right",
-		 "padding-top", "padding-bottom", "padding-left", "padding-right":
+		"padding-top", "padding-bottom", "padding-left", "padding-right":
 		return v.validateSpacing(value)
 	case "font-size", "line-height":
 		return v.validateFontSize(value)
@@ -131,44 +131,44 @@ func (v *Validator) validateWithPatterns(propertyName, value string) error {
 // Color validation patterns
 func (v *Validator) validateColor(value string) error {
 	value = strings.TrimSpace(value)
-	
+
 	// Named colors
 	namedColors := []string{
 		"transparent", "currentcolor", "inherit", "initial", "unset",
 		"black", "white", "red", "green", "blue", "yellow", "orange", "purple", "pink", "gray", "grey",
 	}
-	
+
 	for _, color := range namedColors {
 		if strings.EqualFold(value, color) {
 			return nil
 		}
 	}
-	
+
 	// Hex colors (#rgb, #rrggbb, #rgba, #rrggbbaa)
 	hexPattern := regexp.MustCompile(`^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{8})$`)
 	if hexPattern.MatchString(value) {
 		return nil
 	}
-	
+
 	// RGB/RGBA
 	rgbPattern := regexp.MustCompile(`^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(?:,\s*(?:0?\.\d+|1|0))?\s*\)$`)
 	if rgbPattern.MatchString(value) {
 		return nil
 	}
-	
+
 	// HSL/HSLA
 	hslPattern := regexp.MustCompile(`^hsla?\(\s*\d+\s*,\s*\d+%\s*,\s*\d+%\s*(?:,\s*(?:0?\.\d+|1|0))?\s*\)$`)
 	if hslPattern.MatchString(value) {
 		return nil
 	}
-	
+
 	return fmt.Errorf("invalid color value: %s", value)
 }
 
 // Size validation (width, height, etc.)
 func (v *Validator) validateSize(value string) error {
 	value = strings.TrimSpace(value)
-	
+
 	// Keywords
 	keywords := []string{"auto", "inherit", "initial", "unset", "max-content", "min-content", "fit-content"}
 	for _, keyword := range keywords {
@@ -176,7 +176,7 @@ func (v *Validator) validateSize(value string) error {
 			return nil
 		}
 	}
-	
+
 	// Percentage
 	if strings.HasSuffix(value, "%") {
 		numStr := strings.TrimSuffix(value, "%")
@@ -185,7 +185,7 @@ func (v *Validator) validateSize(value string) error {
 		}
 		return nil
 	}
-	
+
 	// Length units
 	units := []string{"px", "em", "rem", "vh", "vw", "vmin", "vmax", "pt", "pc", "in", "cm", "mm", "ex", "ch"}
 	for _, unit := range units {
@@ -197,7 +197,7 @@ func (v *Validator) validateSize(value string) error {
 			return nil
 		}
 	}
-	
+
 	// Pure number (should be 0 for most properties)
 	if num, err := strconv.ParseFloat(value, 64); err == nil {
 		if num == 0 {
@@ -205,45 +205,45 @@ func (v *Validator) validateSize(value string) error {
 		}
 		return fmt.Errorf("non-zero length requires a unit: %s", value)
 	}
-	
+
 	return fmt.Errorf("invalid size value: %s", value)
 }
 
 // Spacing validation (margin, padding)
 func (v *Validator) validateSpacing(value string) error {
 	value = strings.TrimSpace(value)
-	
+
 	// Handle multiple values (e.g., "10px 20px")
 	parts := strings.Fields(value)
 	if len(parts) > 4 {
 		return fmt.Errorf("too many spacing values: %s", value)
 	}
-	
+
 	for _, part := range parts {
 		if err := v.validateSize(part); err != nil {
 			return fmt.Errorf("invalid spacing component '%s' in '%s': %v", part, value, err)
 		}
 	}
-	
+
 	return nil
 }
 
 // Font size validation
 func (v *Validator) validateFontSize(value string) error {
 	value = strings.TrimSpace(value)
-	
+
 	// Keywords
 	keywords := []string{
 		"xx-small", "x-small", "small", "medium", "large", "x-large", "xx-large",
 		"smaller", "larger", "inherit", "initial", "unset",
 	}
-	
+
 	for _, keyword := range keywords {
 		if strings.EqualFold(value, keyword) {
 			return nil
 		}
 	}
-	
+
 	// Size values
 	return v.validateSize(value)
 }
@@ -251,18 +251,18 @@ func (v *Validator) validateFontSize(value string) error {
 // Font weight validation
 func (v *Validator) validateFontWeight(value string) error {
 	value = strings.TrimSpace(value)
-	
+
 	// Keywords
 	keywords := []string{
 		"normal", "bold", "bolder", "lighter", "inherit", "initial", "unset",
 	}
-	
+
 	for _, keyword := range keywords {
 		if strings.EqualFold(value, keyword) {
 			return nil
 		}
 	}
-	
+
 	// Numeric values (100-900)
 	if num, err := strconv.Atoi(value); err == nil {
 		if num >= 100 && num <= 900 && num%100 == 0 {
@@ -270,7 +270,7 @@ func (v *Validator) validateFontWeight(value string) error {
 		}
 		return fmt.Errorf("font weight must be between 100-900 in increments of 100: %s", value)
 	}
-	
+
 	return fmt.Errorf("invalid font weight: %s", value)
 }
 
@@ -281,13 +281,13 @@ func (v *Validator) validateDisplay(value string) error {
 		"grid", "inline-grid", "table", "table-cell", "table-row",
 		"list-item", "run-in", "contents", "inherit", "initial", "unset",
 	}
-	
+
 	for _, valid := range validValues {
 		if strings.EqualFold(value, valid) {
 			return nil
 		}
 	}
-	
+
 	return fmt.Errorf("invalid display value: %s", value)
 }
 
@@ -297,13 +297,13 @@ func (v *Validator) validatePosition(value string) error {
 		"static", "relative", "absolute", "fixed", "sticky",
 		"inherit", "initial", "unset",
 	}
-	
+
 	for _, valid := range validValues {
 		if strings.EqualFold(value, valid) {
 			return nil
 		}
 	}
-	
+
 	return fmt.Errorf("invalid position value: %s", value)
 }
 
@@ -313,13 +313,13 @@ func (v *Validator) validateFlexDirection(value string) error {
 		"row", "row-reverse", "column", "column-reverse",
 		"inherit", "initial", "unset",
 	}
-	
+
 	for _, valid := range validValues {
 		if strings.EqualFold(value, valid) {
 			return nil
 		}
 	}
-	
+
 	return fmt.Errorf("invalid flex-direction value: %s", value)
 }
 
@@ -330,13 +330,13 @@ func (v *Validator) validateJustifyContent(value string) error {
 		"space-evenly", "start", "end", "left", "right",
 		"inherit", "initial", "unset",
 	}
-	
+
 	for _, valid := range validValues {
 		if strings.EqualFold(value, valid) {
 			return nil
 		}
 	}
-	
+
 	return fmt.Errorf("invalid justify-content value: %s", value)
 }
 
@@ -347,13 +347,13 @@ func (v *Validator) validateAlignment(value string) error {
 		"start", "end", "self-start", "self-end",
 		"inherit", "initial", "unset",
 	}
-	
+
 	for _, valid := range validValues {
 		if strings.EqualFold(value, valid) {
 			return nil
 		}
 	}
-	
+
 	return fmt.Errorf("invalid alignment value: %s", value)
 }
 
@@ -365,12 +365,12 @@ func (v *Validator) validateBorderRadius(value string) error {
 // Opacity validation
 func (v *Validator) validateOpacity(value string) error {
 	value = strings.TrimSpace(value)
-	
+
 	// Keywords
 	if strings.EqualFold(value, "inherit") || strings.EqualFold(value, "initial") || strings.EqualFold(value, "unset") {
 		return nil
 	}
-	
+
 	// Numeric value (0-1)
 	if num, err := strconv.ParseFloat(value, 64); err == nil {
 		if num >= 0 && num <= 1 {
@@ -378,25 +378,25 @@ func (v *Validator) validateOpacity(value string) error {
 		}
 		return fmt.Errorf("opacity must be between 0 and 1: %s", value)
 	}
-	
+
 	return fmt.Errorf("invalid opacity value: %s", value)
 }
 
 // Z-index validation
 func (v *Validator) validateZIndex(value string) error {
 	value = strings.TrimSpace(value)
-	
+
 	// Keywords
-	if strings.EqualFold(value, "auto") || strings.EqualFold(value, "inherit") || 
-	   strings.EqualFold(value, "initial") || strings.EqualFold(value, "unset") {
+	if strings.EqualFold(value, "auto") || strings.EqualFold(value, "inherit") ||
+		strings.EqualFold(value, "initial") || strings.EqualFold(value, "unset") {
 		return nil
 	}
-	
+
 	// Integer value
 	if _, err := strconv.Atoi(value); err == nil {
 		return nil
 	}
-	
+
 	return fmt.Errorf("invalid z-index value: %s", value)
 }
 
@@ -426,11 +426,11 @@ func FormatErrors(errors []ValidationError) string {
 	if len(errors) == 0 {
 		return "No validation errors"
 	}
-	
+
 	var lines []string
 	for _, err := range errors {
 		lines = append(lines, fmt.Sprintf("- %s", err.Error()))
 	}
-	
+
 	return fmt.Sprintf("CSS Validation Errors:\n%s", strings.Join(lines, "\n"))
 }

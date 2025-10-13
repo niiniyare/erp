@@ -362,7 +362,7 @@ func NewMockRegistry() ComponentRegistry {
 type mockRegistry struct{}
 
 func (m *mockRegistry) Register(componentType ComponentType, factory ComponentFactory) {}
-func (m *mockRegistry) Create(ctx context.Context, componentType ComponentType, config map[string]interface{}) (Component, error) {
+func (m *mockRegistry) Create(ctx context.Context, componentType ComponentType, config map[string]any) (Component, error) {
 	return Component{}, nil
 }
 func (m *mockRegistry) GetTypes() []ComponentType { return []ComponentType{} }
