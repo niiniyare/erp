@@ -1627,7 +1627,7 @@ func (s *DynamicDataTestSuite) TestEvaluateMapNodeInvalidGroup() {
 
 	_, err := s.evaluator.Evaluate(s.ctx, invalidGroupMap, evalCtx)
 	s.Error(err)
-	s.Contains(err.Error(), "invalid group")
+	s.Contains(err.Error(), "invalid structure")
 }
 
 func (s *DynamicDataTestSuite) TestEvaluateMapNodeInvalidRule() {
@@ -1643,7 +1643,7 @@ func (s *DynamicDataTestSuite) TestEvaluateMapNodeInvalidRule() {
 
 	_, err := s.evaluator.Evaluate(s.ctx, invalidRuleMap, evalCtx)
 	s.Error(err)
-	s.Contains(err.Error(), "invalid rule")
+	s.Contains(err.Error(), "invalid structure")
 }
 
 // Type Conversion Edge Cases Tests

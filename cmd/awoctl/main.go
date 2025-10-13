@@ -145,7 +145,7 @@ func init() {
 	newCmd.AddCommand(newModuleCmd)
 	newCmd.AddCommand(newFeatureCmd)
 	newCmd.AddCommand(newComponentCmd)
-	
+
 	rootCmd.AddCommand(docsCmd)
 	docsCmd.AddCommand(newDocsCmd)
 }

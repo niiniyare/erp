@@ -4,7 +4,7 @@
       "$ref": "#/definitions/DataType.Color"
     },
     {
-      "$ref": "#/definitions/DataType.BgPosition%3C(string%7Cnumber)%3E"
+      "$ref": "#/definitions/DataType.BgPositionStringOrNumber"
     },
     {
       "$ref": "#/definitions/DataType.RepeatStyle"

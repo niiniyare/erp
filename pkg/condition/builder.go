@@ -31,6 +31,7 @@ var (
 	ErrRegexTimeout          = errors.New("regex timeout")
 	ErrRegexComplexity       = errors.New("regex pattern too complex")
 	ErrEvaluationTimeout     = errors.New("evaluation timeout")
+	ErrFormulaComplexity     = errors.New("formula too complex")
 )
 
 // Constants for resource limits with documented rationale
@@ -54,6 +55,12 @@ const (
 
 	// MaxRegexPatternLength prevents compilation of extremely complex patterns
 	MaxRegexPatternLength = 1000
+
+	// MaxFormulaLength prevents compilation of extremely complex formulas
+	MaxFormulaLength = 10000
+
+	// MaxLRUEvictionBatch controls how many entries to evict at once
+	MaxLRUEvictionBatch = 100
 )
 
 // FieldType represents the data type of a field
@@ -147,6 +154,17 @@ type FuncArg struct {
 	IsOptional   bool        `json:"isOptional,omitempty"`
 }
 
+// Validate checks if the function argument is valid
+func (f *FuncArg) Validate() error {
+	if f.Label == "" {
+		return fmt.Errorf("%w: function argument label is required", ErrValidation)
+	}
+	if f.Type == "" {
+		return fmt.Errorf("%w: function argument type is required", ErrValidation)
+	}
+	return nil
+}
+
 // FieldFunc represents a function definition
 type FieldFunc struct {
 	Type       string      `json:"type"`
@@ -156,10 +174,31 @@ type FieldFunc struct {
 	Handler    FuncHandler `json:"-"`
 }
 
+// Validate checks if the function definition is valid
+func (f *FieldFunc) Validate() error {
+	if f.Type == "" {
+		return fmt.Errorf("%w: function type is required", ErrValidation)
+	}
+	if f.Label == "" {
+		return fmt.Errorf("%w: function label is required", ErrValidation)
+	}
+	if f.Handler == nil {
+		return fmt.Errorf("%w: function handler is required", ErrValidation)
+	}
+	for i, arg := range f.Args {
+		if err := arg.Validate(); err != nil {
+			return fmt.Errorf("arg %d: %w", i, err)
+		}
+	}
+	return nil
+}
+
 // FuncHandler is the function signature for custom functions
+// Context is passed for cancellation and timeout support
 type FuncHandler func(ctx context.Context, args []any, evalCtx *EvalContext) (any, error)
 
 // Config represents the condition builder configuration
+// WARNING: Config should not be modified after creating an Evaluator
 type Config struct {
 	ValueTypes []ValueType           `json:"valueTypes,omitempty"`
 	Fields     []any                 `json:"fields"`
@@ -201,8 +240,8 @@ func (e *Expression) Validate() error {
 		if e.Func == nil {
 			return fmt.Errorf("%w: function call is required for func expression", ErrValidation)
 		}
-		if e.Func.Type == "" {
-			return fmt.Errorf("%w: function type is required", ErrValidation)
+		if err := e.Func.Validate(); err != nil {
+			return fmt.Errorf("function call: %w", err)
 		}
 	default:
 		return fmt.Errorf("%w: unknown expression type %s", ErrValidation, e.Type)
@@ -215,6 +254,15 @@ func (e *Expression) Validate() error {
 type FuncCall struct {
 	Type string `json:"type"`
 	Args []any  `json:"args"`
+}
+
+// Validate checks if the function call is valid
+func (f *FuncCall) Validate() error {
+	if f.Type == "" {
+		return fmt.Errorf("%w: function type is required", ErrValidation)
+	}
+	// Note: Args validation happens during evaluation when we know the function signature
+	return nil
 }
 
 // ConditionRule represents a single condition
@@ -234,6 +282,10 @@ func (r *ConditionRule) Validate() error {
 
 	// If this is a formula rule, don't validate traditional rule fields
 	if r.If != "" {
+		if len(r.If) > MaxFormulaLength {
+			return fmt.Errorf("%w: formula length %d exceeds limit %d",
+				ErrFormulaComplexity, len(r.If), MaxFormulaLength)
+		}
 		return nil
 	}
 
@@ -243,6 +295,10 @@ func (r *ConditionRule) Validate() error {
 
 	if r.Op == "" {
 		return fmt.Errorf("%w: operator is required", ErrValidation)
+	}
+
+	if !isValidOperator(r.Op) {
+		return fmt.Errorf("%w: unknown operator %s", ErrInvalidOperator, r.Op)
 	}
 
 	// Unary operators don't need a right value
@@ -258,6 +314,18 @@ func (r *ConditionRule) Validate() error {
 // isUnaryOperator checks if an operator doesn't require a right operand
 func isUnaryOperator(op OperatorType) bool {
 	return op == OpIsEmpty || op == OpIsNotEmpty
+}
+
+// isValidOperator checks if an operator is recognized
+func isValidOperator(op OperatorType) bool {
+	switch op {
+	case OpEqual, OpNotEqual, OpLess, OpLessOrEqual, OpGreater, OpGreaterOrEqual,
+		OpBetween, OpNotBetween, OpIsEmpty, OpIsNotEmpty, OpContains, OpNotContains,
+		OpStartsWith, OpEndsWith, OpIn, OpNotIn, OpMatchRegexp:
+		return true
+	default:
+		return false
+	}
 }
 
 // ConditionGroup represents a group of conditions
@@ -279,14 +347,20 @@ func (g *ConditionGroup) Validate() error {
 		return fmt.Errorf("%w: invalid conjunction %s", ErrValidation, g.Conjunction)
 	}
 
-	if len(g.Children) == 0 {
-		return fmt.Errorf("%w: group must have at least one child", ErrValidation)
+	if len(g.Children) == 0 && g.If == "" {
+		return fmt.Errorf("%w: group must have at least one child or a formula", ErrValidation)
+	}
+
+	if g.If != "" && len(g.If) > MaxFormulaLength {
+		return fmt.Errorf("%w: formula length %d exceeds limit %d",
+			ErrFormulaComplexity, len(g.If), MaxFormulaLength)
 	}
 
 	return nil
 }
 
 // EvalContext holds runtime evaluation context
+// Thread-safe for concurrent reads, writes must be externally synchronized
 type EvalContext struct {
 	mu        sync.RWMutex
 	Data      map[string]any
@@ -299,7 +373,8 @@ type EvalContext struct {
 	conditionCount int32 // Use atomic for thread-safety
 
 	// Metrics for observability
-	metrics EvaluationMetrics
+	metrics   EvaluationMetrics
+	metricsMu sync.Mutex // Protects Duration field
 }
 
 // EvaluationMetrics tracks evaluation statistics
@@ -314,6 +389,9 @@ type EvaluationMetrics struct {
 
 // GetMetrics returns a copy of the current metrics (thread-safe)
 func (ctx *EvalContext) GetMetrics() EvaluationMetrics {
+	ctx.metricsMu.Lock()
+	defer ctx.metricsMu.Unlock()
+
 	return EvaluationMetrics{
 		RulesEvaluated:  atomic.LoadInt32(&ctx.metrics.RulesEvaluated),
 		GroupsEvaluated: atomic.LoadInt32(&ctx.metrics.GroupsEvaluated),
@@ -360,13 +438,17 @@ func NewEvalContext(data map[string]any, opts EvalOptions) *EvalContext {
 }
 
 // RegisterFunction registers a custom function (thread-safe)
-func (ctx *EvalContext) RegisterFunction(name string, handler FuncHandler) {
+func (ctx *EvalContext) RegisterFunction(name string, handler FuncHandler) error {
+	if name == "" {
+		return fmt.Errorf("%w: function name is required", ErrValidation)
+	}
 	if handler == nil {
-		return
+		return fmt.Errorf("%w: function handler is required", ErrValidation)
 	}
 	ctx.mu.Lock()
 	defer ctx.mu.Unlock()
 	ctx.Functions[name] = handler
+	return nil
 }
 
 // RegisterField registers a field definition (thread-safe)
@@ -430,11 +512,18 @@ func (ctx *EvalContext) GetValue(path string) (any, error) {
 	return current, nil
 }
 
-// regexCache implements a bounded LRU-like cache for compiled regex patterns
+// lruEntry tracks access time for LRU eviction
+type lruEntry struct {
+	pattern    string
+	regex      *regexp2.Regexp
+	lastAccess int64 // Unix timestamp
+}
+
+// regexCache implements a bounded LRU cache for compiled regex patterns
 type regexCache struct {
-	cache sync.Map
-	size  atomic.Int32
-	max   int32
+	entries sync.Map // map[string]*lruEntry
+	size    atomic.Int32
+	max     int32
 }
 
 // newRegexCache creates a new bounded regex cache
@@ -444,28 +533,91 @@ func newRegexCache(maxSize int32) *regexCache {
 	}
 }
 
-// Get retrieves a compiled regex from cache
+// Get retrieves a compiled regex from cache and updates access time
 func (rc *regexCache) Get(pattern string) (*regexp2.Regexp, bool) {
-	if val, ok := rc.cache.Load(pattern); ok {
-		return val.(*regexp2.Regexp), true
+	if val, ok := rc.entries.Load(pattern); ok {
+		entry := val.(*lruEntry)
+		atomic.StoreInt64(&entry.lastAccess, time.Now().Unix())
+		return entry.regex, true
 	}
 	return nil, false
 }
 
-// Set stores a compiled regex in cache with size limit
+// Set stores a compiled regex in cache with LRU eviction
 func (rc *regexCache) Set(pattern string, re *regexp2.Regexp) {
-	// Simple eviction: if at capacity, don't cache new patterns
-	// A production implementation might use LRU or similar
-	if rc.size.Load() >= rc.max {
-		return
+	entry := &lruEntry{
+		pattern:    pattern,
+		regex:      re,
+		lastAccess: time.Now().Unix(),
 	}
 
-	if _, loaded := rc.cache.LoadOrStore(pattern, re); !loaded {
-		rc.size.Add(1)
+	// Try to store
+	if _, loaded := rc.entries.LoadOrStore(pattern, entry); loaded {
+		return // Already exists
+	}
+
+	// Check if we need to evict
+	newSize := rc.size.Add(1)
+	if newSize > rc.max {
+		rc.evictLRU()
 	}
 }
 
+// evictLRU removes least recently used entries
+func (rc *regexCache) evictLRU() {
+	var entries []*lruEntry
+
+	// Collect all entries
+	rc.entries.Range(func(key, value any) bool {
+		entries = append(entries, value.(*lruEntry))
+		return true
+	})
+
+	if len(entries) == 0 {
+		return
+	}
+
+	// Sort by access time (oldest first)
+	// Simple selection of oldest entries without full sort for performance
+	toEvict := min(MaxLRUEvictionBatch, len(entries)/4) // Evict 25% or batch size
+	if toEvict == 0 {
+		toEvict = 1
+	}
+
+	// Find oldest entries using partial selection
+	for i := 0; i < toEvict; i++ {
+		oldestIdx := i
+		oldestTime := atomic.LoadInt64(&entries[i].lastAccess)
+
+		for j := i + 1; j < len(entries); j++ {
+			accessTime := atomic.LoadInt64(&entries[j].lastAccess)
+			if accessTime < oldestTime {
+				oldestIdx = j
+				oldestTime = accessTime
+			}
+		}
+
+		// Swap to position i
+		if oldestIdx != i {
+			entries[i], entries[oldestIdx] = entries[oldestIdx], entries[i]
+		}
+
+		// Delete the oldest entry
+		rc.entries.Delete(entries[i].pattern)
+		rc.size.Add(-1)
+	}
+}
+
+// min returns the minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 // Evaluator evaluates conditions with resource limits
+// Thread-safe for concurrent evaluations
 type Evaluator struct {
 	config       *Config
 	opts         EvalOptions
@@ -474,6 +626,7 @@ type Evaluator struct {
 }
 
 // NewEvaluator creates a new condition evaluator
+// The config should not be modified after creating the evaluator
 func NewEvaluator(config *Config, opts EvalOptions) *Evaluator {
 	// Apply defaults if not set
 	if opts.MaxDepth == 0 {
@@ -502,6 +655,7 @@ func NewEvaluator(config *Config, opts EvalOptions) *Evaluator {
 }
 
 // Evaluate evaluates a condition with context and timeout
+// This method is thread-safe and can be called concurrently
 func (e *Evaluator) Evaluate(ctx context.Context, root any, evalCtx *EvalContext) (bool, error) {
 	if root == nil {
 		return false, fmt.Errorf("%w: nil root condition", ErrInvalidExpression)
@@ -512,7 +666,9 @@ func (e *Evaluator) Evaluate(ctx context.Context, root any, evalCtx *EvalContext
 
 	startTime := time.Now()
 	defer func() {
+		evalCtx.metricsMu.Lock()
 		evalCtx.metrics.Duration = time.Since(startTime)
+		evalCtx.metricsMu.Unlock()
 	}()
 
 	// Apply timeout if configured
@@ -525,6 +681,11 @@ func (e *Evaluator) Evaluate(ctx context.Context, root any, evalCtx *EvalContext
 	result, err := e.evaluateWithDepth(ctx, root, evalCtx, 0)
 	if err != nil {
 		atomic.AddInt32(&evalCtx.metrics.Errors, 1)
+
+		// Wrap timeout errors for clarity
+		if errors.Is(err, context.DeadlineExceeded) {
+			return false, fmt.Errorf("%w: %v", ErrEvaluationTimeout, err)
+		}
 	}
 	return result, err
 }
@@ -553,27 +714,43 @@ func (e *Evaluator) evaluateWithDepth(ctx context.Context, node any, evalCtx *Ev
 	switch v := node.(type) {
 	case *ConditionGroup:
 		if err := v.Validate(); err != nil {
-			return false, err
+			return false, fmt.Errorf("group %s: %w", v.ID, err)
 		}
-		return e.evaluateGroup(ctx, v, evalCtx, depth)
+		result, err := e.evaluateGroup(ctx, v, evalCtx, depth)
+		if err != nil {
+			return false, fmt.Errorf("group %s: %w", v.ID, err)
+		}
+		return result, nil
 
 	case ConditionGroup:
 		if err := v.Validate(); err != nil {
-			return false, err
+			return false, fmt.Errorf("group %s: %w", v.ID, err)
 		}
-		return e.evaluateGroup(ctx, &v, evalCtx, depth)
+		result, err := e.evaluateGroup(ctx, &v, evalCtx, depth)
+		if err != nil {
+			return false, fmt.Errorf("group %s: %w", v.ID, err)
+		}
+		return result, nil
 
 	case *ConditionRule:
 		if err := v.Validate(); err != nil {
-			return false, err
+			return false, fmt.Errorf("rule %s: %w", v.ID, err)
 		}
-		return e.evaluateRule(ctx, v, evalCtx)
+		result, err := e.evaluateRule(ctx, v, evalCtx)
+		if err != nil {
+			return false, fmt.Errorf("rule %s: %w", v.ID, err)
+		}
+		return result, nil
 
 	case ConditionRule:
 		if err := v.Validate(); err != nil {
-			return false, err
+			return false, fmt.Errorf("rule %s: %w", v.ID, err)
 		}
-		return e.evaluateRule(ctx, &v, evalCtx)
+		result, err := e.evaluateRule(ctx, &v, evalCtx)
+		if err != nil {
+			return false, fmt.Errorf("rule %s: %w", v.ID, err)
+		}
+		return result, nil
 
 	case map[string]any:
 		// Fallback for dynamic JSON-like structures
@@ -586,25 +763,39 @@ func (e *Evaluator) evaluateWithDepth(ctx context.Context, node any, evalCtx *Ev
 
 // evaluateMapNode handles map[string]any nodes by converting to typed structures
 func (e *Evaluator) evaluateMapNode(ctx context.Context, m map[string]any, evalCtx *EvalContext, depth int) (bool, error) {
+	// Extract ID for better error messages
+	id, _ := m["id"].(string)
+	if id == "" {
+		id = "unknown"
+	}
+
 	if _, hasConjunction := m["conjunction"]; hasConjunction {
 		var group ConditionGroup
 		if err := mapToStruct(m, &group); err != nil {
-			return false, fmt.Errorf("invalid group: %w", err)
+			return false, fmt.Errorf("group %s: invalid structure: %w", id, err)
 		}
 		if err := group.Validate(); err != nil {
-			return false, err
+			return false, fmt.Errorf("group %s: %w", id, err)
 		}
-		return e.evaluateGroup(ctx, &group, evalCtx, depth)
+		result, err := e.evaluateGroup(ctx, &group, evalCtx, depth)
+		if err != nil {
+			return false, fmt.Errorf("group %s: %w", id, err)
+		}
+		return result, nil
 	}
 
 	var rule ConditionRule
 	if err := mapToStruct(m, &rule); err != nil {
-		return false, fmt.Errorf("invalid rule: %w", err)
+		return false, fmt.Errorf("rule %s: invalid structure: %w", id, err)
 	}
 	if err := rule.Validate(); err != nil {
-		return false, err
+		return false, fmt.Errorf("rule %s: %w", id, err)
 	}
-	return e.evaluateRule(ctx, &rule, evalCtx)
+	result, err := e.evaluateRule(ctx, &rule, evalCtx)
+	if err != nil {
+		return false, fmt.Errorf("rule %s: %w", id, err)
+	}
+	return result, nil
 }
 
 // mapToStruct converts a map to a struct using JSON marshaling
@@ -635,25 +826,22 @@ func (e *Evaluator) evaluateGroup(ctx context.Context, group *ConditionGroup, ev
 		if !ok {
 			return false, fmt.Errorf("formula must return boolean, got %T", result)
 		}
+		if group.Not {
+			boolResult = !boolResult
+		}
 		return boolResult, nil
 	}
 
-	// Evaluate all children
-	results := make([]bool, len(group.Children))
-	for i, child := range group.Children {
-		result, err := e.evaluateWithDepth(ctx, child, evalCtx, depth+1)
-		if err != nil {
-			return false, fmt.Errorf("child %d: %w", i, err)
-		}
-		results[i] = result
-	}
-
-	// Apply conjunction logic
+	// Evaluate all children with short-circuit optimization
 	var finalResult bool
 	if group.Conjunction == ConjunctionAnd {
 		finalResult = true
-		for _, r := range results {
-			finalResult = finalResult && r
+		for i, child := range group.Children {
+			result, err := e.evaluateWithDepth(ctx, child, evalCtx, depth+1)
+			if err != nil {
+				return false, fmt.Errorf("child %d: %w", i, err)
+			}
+			finalResult = finalResult && result
 			// Short-circuit on first false for AND
 			if !finalResult {
 				break
@@ -661,8 +849,12 @@ func (e *Evaluator) evaluateGroup(ctx context.Context, group *ConditionGroup, ev
 		}
 	} else { // ConjunctionOr
 		finalResult = false
-		for _, r := range results {
-			finalResult = finalResult || r
+		for i, child := range group.Children {
+			result, err := e.evaluateWithDepth(ctx, child, evalCtx, depth+1)
+			if err != nil {
+				return false, fmt.Errorf("child %d: %w", i, err)
+			}
+			finalResult = finalResult || result
 			// Short-circuit on first true for OR
 			if finalResult {
 				break
@@ -678,10 +870,16 @@ func (e *Evaluator) evaluateGroup(ctx context.Context, group *ConditionGroup, ev
 	return finalResult, nil
 }
 
-// evaluateFormula evaluates an expr-lang formula
+// evaluateFormula evaluates an expr-lang formula with complexity limits
 func (e *Evaluator) evaluateFormula(ctx context.Context, formula string, evalCtx *EvalContext) (any, error) {
 	if formula == "" {
 		return nil, errors.New("empty formula")
+	}
+
+	// Check formula length to prevent compilation of overly complex expressions
+	if len(formula) > MaxFormulaLength {
+		return nil, fmt.Errorf("%w: formula length %d exceeds limit %d",
+			ErrFormulaComplexity, len(formula), MaxFormulaLength)
 	}
 
 	// Check cache for compiled program
@@ -724,7 +922,9 @@ func (e *Evaluator) evaluateFormula(ctx context.Context, formula string, evalCtx
 	// Add special variables
 	env["now"] = evalCtx.Now
 
-	// Execute the program
+	// Execute the program with context awareness
+	// Note: expr-lang doesn't natively support context cancellation
+	// We rely on the parent evaluation timeout
 	result, err := expr.Run(program, env)
 	if err != nil {
 		return nil, fmt.Errorf("formula execution failed: %w", err)
@@ -767,7 +967,7 @@ func (e *Evaluator) evaluateRule(ctx context.Context, rule *ConditionRule, evalC
 		return false, fmt.Errorf("right expression: %w", err)
 	}
 
-	return e.applyOperator(rule.Op, leftVal, rightVals)
+	return e.applyOperator(ctx, rule.Op, leftVal, rightVals)
 }
 
 // evaluateRightExpression handles the various forms of right expressions
@@ -781,16 +981,28 @@ func (e *Evaluator) evaluateRightExpression(ctx context.Context, right any, eval
 	switch v := right.(type) {
 	case []any:
 		// Array of expressions (for IN, BETWEEN, etc.)
-		for i, item := range v {
-			expr, err := e.toExpression(item)
-			if err != nil {
-				return nil, fmt.Errorf("item %d: %w", i, err)
+		// Special handling: check if this looks like a literal array value
+		// vs an array of Expression objects
+		if len(v) > 0 {
+			// Peek at first item to determine intent
+			switch v[0].(type) {
+			case Expression, map[string]any:
+				// Treat as array of expressions
+				for i, item := range v {
+					expr, err := e.toExpression(item)
+					if err != nil {
+						return nil, fmt.Errorf("item %d: %w", i, err)
+					}
+					val, err := e.evaluateExpression(ctx, expr, evalCtx)
+					if err != nil {
+						return nil, fmt.Errorf("item %d: %w", i, err)
+					}
+					rightVals = append(rightVals, val)
+				}
+			default:
+				// Treat as literal array values for IN operator
+				rightVals = v
 			}
-			val, err := e.evaluateExpression(ctx, expr, evalCtx)
-			if err != nil {
-				return nil, fmt.Errorf("item %d: %w", i, err)
-			}
-			rightVals = append(rightVals, val)
 		}
 
 	case Expression:
@@ -869,6 +1081,7 @@ func (e *Evaluator) evaluateExpression(ctx context.Context, expr Expression, eva
 			return nil, fmt.Errorf("%w: %s", ErrFunctionNotFound, expr.Func.Type)
 		}
 
+		// Pass context to function handler for cancellation support
 		return handler(ctx, expr.Func.Args, evalCtx)
 
 	default:
@@ -889,15 +1102,18 @@ func (e *Evaluator) applyUnaryOperator(op OperatorType, left any) (bool, error) 
 }
 
 // applyOperator applies binary operators with proper type handling and validation
-func (e *Evaluator) applyOperator(op OperatorType, left any, right []any) (bool, error) {
+func (e *Evaluator) applyOperator(ctx context.Context, op OperatorType, left any, right []any) (bool, error) {
 	// Validate right operands based on operator requirements
 	switch op {
 	case OpBetween, OpNotBetween:
-		if len(right) < 2 {
+		if len(right) != 2 {
 			return false, fmt.Errorf("%s requires exactly 2 values, got %d", op, len(right))
 		}
 	case OpIn, OpNotIn:
 		// Can have any number of values
+		if len(right) == 0 {
+			return false, fmt.Errorf("%s requires at least one value", op)
+		}
 	default:
 		// Most operators need exactly 1 right value
 		if len(right) == 0 {
@@ -951,7 +1167,19 @@ func (e *Evaluator) applyOperator(op OperatorType, left any, right []any) (bool,
 		return !e.in(left, right), nil
 
 	case OpMatchRegexp:
-		return e.matchRegexp(left, right[0])
+		// Calculate remaining context timeout for regex
+		deadline, hasDeadline := ctx.Deadline()
+		regexTimeout := e.opts.RegexTimeout
+		if hasDeadline {
+			remaining := time.Until(deadline)
+			if remaining < regexTimeout {
+				regexTimeout = remaining
+			}
+			if regexTimeout <= 0 {
+				return false, context.DeadlineExceeded
+			}
+		}
+		return e.matchRegexp(left, right[0], regexTimeout)
 
 	default:
 		return false, fmt.Errorf("%w: %s", ErrInvalidOperator, op)
@@ -1163,7 +1391,7 @@ func (e *Evaluator) in(needle any, haystack []any) bool {
 
 // matchRegexp performs regex matching with timeout and complexity limits
 // Uses regexp2 for ReDoS protection
-func (e *Evaluator) matchRegexp(str, pattern any) (bool, error) {
+func (e *Evaluator) matchRegexp(str, pattern any, timeout time.Duration) (bool, error) {
 	if str == nil || pattern == nil {
 		return false, nil
 	}
@@ -1192,7 +1420,7 @@ func (e *Evaluator) matchRegexp(str, pattern any) (bool, error) {
 	}
 
 	// Set match timeout to prevent ReDoS
-	re.MatchTimeout = e.opts.RegexTimeout
+	re.MatchTimeout = timeout
 
 	// Perform match
 	matched, err := re.MatchString(strVal)
@@ -1224,6 +1452,13 @@ func NewBuilder(conjunction Conjunction) *Builder {
 
 // AddRule adds a simple field comparison rule
 func (b *Builder) AddRule(fieldName string, op OperatorType, value any) *Builder {
+	if fieldName == "" {
+		return b // Skip invalid rules silently in builder pattern
+	}
+	if !isValidOperator(op) {
+		return b
+	}
+
 	rule := ConditionRule{
 		ID: uuid.New().String(),
 		Left: Expression{
@@ -1242,6 +1477,13 @@ func (b *Builder) AddRule(fieldName string, op OperatorType, value any) *Builder
 
 // AddFieldComparison adds a rule comparing two fields
 func (b *Builder) AddFieldComparison(leftField, rightField string, op OperatorType) *Builder {
+	if leftField == "" || rightField == "" {
+		return b
+	}
+	if !isValidOperator(op) {
+		return b
+	}
+
 	rule := ConditionRule{
 		ID: uuid.New().String(),
 		Left: Expression{
@@ -1260,6 +1502,10 @@ func (b *Builder) AddFieldComparison(leftField, rightField string, op OperatorTy
 
 // AddBetweenRule adds a BETWEEN comparison rule
 func (b *Builder) AddBetweenRule(fieldName string, min, max any) *Builder {
+	if fieldName == "" {
+		return b
+	}
+
 	rule := ConditionRule{
 		ID: uuid.New().String(),
 		Left: Expression{
@@ -1278,6 +1524,10 @@ func (b *Builder) AddBetweenRule(fieldName string, min, max any) *Builder {
 
 // AddInRule adds an IN comparison rule
 func (b *Builder) AddInRule(fieldName string, values ...any) *Builder {
+	if fieldName == "" || len(values) == 0 {
+		return b
+	}
+
 	rightVals := make([]any, len(values))
 	for i, v := range values {
 		rightVals[i] = Expression{Type: ValueTypeValue, Value: v}
@@ -1298,6 +1548,13 @@ func (b *Builder) AddInRule(fieldName string, values ...any) *Builder {
 
 // AddFormula adds a rule with an expr-lang formula
 func (b *Builder) AddFormula(formula string) *Builder {
+	if formula == "" {
+		return b
+	}
+	if len(formula) > MaxFormulaLength {
+		return b
+	}
+
 	rule := ConditionRule{
 		ID: uuid.New().String(),
 		If: formula,
@@ -1323,6 +1580,9 @@ func (b *Builder) Not() *Builder {
 // SetFormula sets an expr-lang formula for the entire group
 // When set, this overrides child evaluation
 func (b *Builder) SetFormula(formula string) *Builder {
+	if formula == "" || len(formula) > MaxFormulaLength {
+		return b
+	}
 	b.group.If = formula
 	return b
 }

@@ -1,7 +1,7 @@
 {
   "anyOf": [
     {
-      "$ref": "#/definitions/DataType.Position%3C(string%7Cnumber)%3E"
+      "$ref": "#/definitions/DataType.PositionStringOrNumber"
     },
     {
       "$ref": "#/definitions/DataType.RepeatStyle"
