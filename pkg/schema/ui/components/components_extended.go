@@ -253,41 +253,7 @@ type TabItem struct {
 	Tip           string `json:"tip,omitempty"`
 }
 
-// 17. File Control Schema - File uploads
-type FileControlSchema struct {
-	BaseComponentProps
-	Type               string            `json:"type"` // "input-file"
-	Name               string            `json:"name"`
-	Label              string            `json:"label,omitempty"`
-	Multiple           bool              `json:"multiple,omitempty"`
-	MaxLength          int               `json:"maxLength,omitempty"`
-	MaxSize            int               `json:"maxSize,omitempty"`
-	Accept             string            `json:"accept,omitempty"`
-	AutoUpload         bool              `json:"autoUpload,omitempty"`
-	HideUploadButton   bool              `json:"hideUploadButton,omitempty"`
-	StateTextMap       map[string]string `json:"stateTextMap,omitempty"`
-	AsBase64           bool              `json:"asBase64,omitempty"`
-	AsBlob             bool              `json:"asBlob,omitempty"`
-	Receiver           *APIConfig        `json:"receiver,omitempty"`
-	VideoReceiver      *APIConfig        `json:"videoReceiver,omitempty"`
-	UseChunk           bool              `json:"useChunk,omitempty"`
-	ChunkSize          int               `json:"chunkSize,omitempty"`
-	StartChunkAPI      *APIConfig        `json:"startChunkApi,omitempty"`
-	ChunkAPI           *APIConfig        `json:"chunkApi,omitempty"`
-	FinishChunkAPI     *APIConfig        `json:"finishChunkApi,omitempty"`
-	FileField          string            `json:"fileField,omitempty"`
-	NameField          string            `json:"nameField,omitempty"`
-	ValueField         string            `json:"valueField,omitempty"`
-	UrlField           string            `json:"urlField,omitempty"`
-	BtnLabel           string            `json:"btnLabel,omitempty"`
-	BtnUploadClassName string            `json:"btnUploadClassName,omitempty"`
-	DropCrop           any               `json:"dropCrop,omitempty"`
-	InitAutoFill       bool              `json:"initAutoFill,omitempty"`
-	Drag               bool              `json:"drag,omitempty"`
-	JoinValues         bool              `json:"joinValues,omitempty"`
-	ExtractValue       bool              `json:"extractValue,omitempty"`
-	Delimiter          string            `json:"delimiter,omitempty"`
-}
+// 17. File Control Schema - File uploads (moved to separate file: file_control.go)
 
 // 18. Checkbox Control Schema - Boolean selections
 type CheckboxControlSchema struct {
@@ -474,26 +440,7 @@ func (f *DefaultComponentFactory) CreateTabs(config TabsSchema) (*TabsSchema, er
 	return &config, nil
 }
 
-func (f *DefaultComponentFactory) CreateFileControl(config FileControlSchema) (*FileControlSchema, error) {
-	if config.Type == "" {
-		config.Type = "input-file"
-	}
-	if config.BtnLabel == "" {
-		config.BtnLabel = "Upload"
-	}
-	if config.MaxSize == 0 {
-		config.MaxSize = 1024 * 1024 * 10 // 10MB default
-	}
-	if config.FileField == "" {
-		config.FileField = "file"
-	}
-	if config.Accept == "" {
-		config.Accept = "*/*"
-	}
-	config.AutoUpload = true
-
-	return &config, nil
-}
+// CreateFileControl moved to file_control.go
 
 func (f *DefaultComponentFactory) CreateCheckbox(config CheckboxControlSchema) (*CheckboxControlSchema, error) {
 	if config.Type == "" {
@@ -544,7 +491,7 @@ type ExtendedComponentFactory interface {
 	CreatePagination(config PaginationSchema) (*PaginationSchema, error)
 	CreateSearchBox(config SearchBoxSchema) (*SearchBoxSchema, error)
 	CreateTabs(config TabsSchema) (*TabsSchema, error)
-	CreateFileControl(config FileControlSchema) (*FileControlSchema, error)
+	// CreateFileControl moved to file_control.go
 	CreateCheckbox(config CheckboxControlSchema) (*CheckboxControlSchema, error)
 	CreatePanel(config PanelSchema) (*PanelSchema, error)
 	CreateStatus(config StatusSchema) (*StatusSchema, error)
@@ -572,8 +519,7 @@ func validateExtendedComponent(component any) error {
 		return validateSearchBox(c)
 	case *TabsSchema:
 		return validateTabs(c)
-	case *FileControlSchema:
-		return validateFileControl(c)
+	// FileControlSchema validation moved to file_control.go
 	case *CheckboxControlSchema:
 		return validateCheckbox(c)
 	case *PanelSchema:
@@ -653,15 +599,7 @@ func validateTabs(t *TabsSchema) error {
 	return nil
 }
 
-func validateFileControl(f *FileControlSchema) error {
-	if f.Type != "input-file" {
-		return fmt.Errorf("invalid file control type: %s", f.Type)
-	}
-	if f.Name == "" {
-		return fmt.Errorf("file control name is required")
-	}
-	return nil
-}
+// validateFileControl moved to file_control.go
 
 func validateCheckbox(c *CheckboxControlSchema) error {
 	if c.Type != "checkbox" {
