@@ -3,13 +3,18 @@
 
 package datatypes
 
+
+
+
 // Color represents the CSS DataType Color (union type: [])
 type Color string
+
 
 // Predefined constants
 const (
 	ColorCurrentcolor = "currentcolor"
 )
+
 
 func (d Color) IsValid() bool {
 	return string(d) != ""
@@ -19,3 +24,5 @@ func (d Color) IsValid() bool {
 func (d Color) String() string {
 	return string(d)
 }
+
+

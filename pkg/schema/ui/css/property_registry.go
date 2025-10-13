@@ -11,10 +11,12 @@ import (
 
 // PropertyRegistry manages all CSS property definitions and validation
 type PropertyRegistry struct {
-	properties map[string]*PropertyDefinition
-	dataTypes  map[string]*DataTypeSpec
-	schemaDir  string
-	mu         sync.RWMutex
+	properties      map[string]*PropertyDefinition
+	dataTypes       map[string]*DataTypeSpec
+	schemaDir       string
+	schemaValidator *SchemaBasedValidator
+	categoryManager *CategoryManager
+	mu              sync.RWMutex
 }
 
 // PropertyDefinition represents a CSS property with its validation rules
@@ -43,9 +45,11 @@ type DataTypeSpec struct {
 // NewPropertyRegistry creates a new CSS property registry
 func NewPropertyRegistry(schemaDir string) *PropertyRegistry {
 	registry := &PropertyRegistry{
-		properties: make(map[string]*PropertyDefinition),
-		dataTypes:  make(map[string]*DataTypeSpec),
-		schemaDir:  schemaDir,
+		properties:      make(map[string]*PropertyDefinition),
+		dataTypes:       make(map[string]*DataTypeSpec),
+		schemaDir:       schemaDir,
+		schemaValidator: NewSchemaBasedValidator(),
+		categoryManager: NewCategoryManager(),
 	}
 
 	// Load all CSS property and data type definitions
@@ -283,7 +287,7 @@ func (pr *PropertyRegistry) extractAnyOfValues(def *PropertyDefinition, anyOfSli
 	}
 }
 
-// ValidateProperty validates a CSS property value against its definition
+// ValidateProperty validates a CSS property value against its definition using schema-based validation
 func (pr *PropertyRegistry) ValidateProperty(propertyName, value string) error {
 	pr.mu.RLock()
 	definition, exists := pr.properties[strings.ToLower(propertyName)]
@@ -294,7 +298,7 @@ func (pr *PropertyRegistry) ValidateProperty(propertyName, value string) error {
 		return nil
 	}
 
-	return pr.validateValue(value, definition)
+	return pr.validateValueWithSchema(value, definition)
 }
 
 // validateValue validates a value against a property definition
@@ -319,6 +323,28 @@ func (pr *PropertyRegistry) validateValue(value string, definition *PropertyDefi
 	}
 
 	return fmt.Errorf("invalid value '%s' for property '%s'", value, definition.Name)
+}
+
+// validateValueWithSchema validates a value using enhanced schema-based validation
+func (pr *PropertyRegistry) validateValueWithSchema(value string, definition *PropertyDefinition) error {
+	// Check direct enum values first
+	for _, validValue := range definition.Values {
+		if value == validValue {
+			return nil
+		}
+	}
+
+	// Use schema-based validation for data types
+	for _, dataTypeName := range definition.DataTypes {
+		if pr.schemaValidator != nil {
+			if err := pr.schemaValidator.ValidateDataType(dataTypeName, value); err == nil {
+				return nil // Valid according to schema-based validator
+			}
+		}
+	}
+
+	// Fallback to original validation method
+	return pr.validateValue(value, definition)
 }
 
 // validateAgainstDataType validates a value against a data type definition
@@ -403,4 +429,113 @@ func (pr *PropertyRegistry) GetDataTypeCount() int {
 	defer pr.mu.RUnlock()
 
 	return len(pr.dataTypes)
+}
+
+// Enhanced schema-based validation methods
+
+// ValidateDataType validates a value against a specific CSS DataType using schema-based validation
+func (pr *PropertyRegistry) ValidateDataType(dataTypeName, value string) error {
+	if pr.schemaValidator == nil {
+		return fmt.Errorf("schema validator not initialized")
+	}
+	return pr.schemaValidator.ValidateDataType(dataTypeName, value)
+}
+
+// IsSchemaBasedValidationAvailable returns true if schema-based validation is available
+func (pr *PropertyRegistry) IsSchemaBasedValidationAvailable() bool {
+	return pr.schemaValidator != nil
+}
+
+// GetSupportedDataTypes returns all DataTypes supported by schema-based validation
+func (pr *PropertyRegistry) GetSupportedDataTypes() []string {
+	if pr.schemaValidator == nil {
+		return nil
+	}
+	return pr.schemaValidator.GetSupportedDataTypes()
+}
+
+// GetDataTypeInfo returns information about a specific DataType
+func (pr *PropertyRegistry) GetDataTypeInfo(dataTypeName string) map[string]any {
+	if pr.schemaValidator == nil {
+		return map[string]any{
+			"name":      dataTypeName,
+			"supported": false,
+			"error":     "schema validator not initialized",
+		}
+	}
+	return pr.schemaValidator.GetDataTypeInfo(dataTypeName)
+}
+
+// Enhanced categorization methods
+
+// GetPropertyCategory returns the category for a CSS property
+func (pr *PropertyRegistry) GetPropertyCategory(propertyName string) string {
+	if pr.categoryManager == nil {
+		return "Other"
+	}
+	return pr.categoryManager.GetPropertyCategory(propertyName)
+}
+
+// GetAllCategories returns all CSS property categories
+func (pr *PropertyRegistry) GetAllCategories() []*PropertyCategory {
+	if pr.categoryManager == nil {
+		return nil
+	}
+	return pr.categoryManager.GetAllCategories()
+}
+
+// GetCategoryNames returns all category names
+func (pr *PropertyRegistry) GetCategoryNames() []string {
+	if pr.categoryManager == nil {
+		return nil
+	}
+	return pr.categoryManager.GetCategoryNames()
+}
+
+// GetPropertiesByCategory returns all properties in a specific category
+func (pr *PropertyRegistry) GetPropertiesByCategory(categoryName string) []string {
+	if pr.categoryManager == nil {
+		return nil
+	}
+	return pr.categoryManager.GetPropertiesByCategory(categoryName)
+}
+
+// GetCategorizedProperties returns all properties organized by category
+func (pr *PropertyRegistry) GetCategorizedProperties() map[string][]string {
+	if pr.categoryManager == nil {
+		return nil
+	}
+	return pr.categoryManager.GetCategorizedProperties()
+}
+
+// SearchProperties searches for properties across all categories
+func (pr *PropertyRegistry) SearchProperties(query string) map[string][]string {
+	if pr.categoryManager == nil {
+		return nil
+	}
+	return pr.categoryManager.SearchProperties(query)
+}
+
+// GetRelatedProperties returns properties related to a given property
+func (pr *PropertyRegistry) GetRelatedProperties(propertyName string) []string {
+	if pr.categoryManager == nil {
+		return nil
+	}
+	return pr.categoryManager.GetRelatedProperties(propertyName)
+}
+
+// GetCategoryStats returns statistics about each category
+func (pr *PropertyRegistry) GetCategoryStats() map[string]CategoryStats {
+	if pr.categoryManager == nil {
+		return nil
+	}
+	return pr.categoryManager.GetCategoryStats()
+}
+
+// GetCategory returns a specific category by name
+func (pr *PropertyRegistry) GetCategory(categoryName string) (*PropertyCategory, bool) {
+	if pr.categoryManager == nil {
+		return nil, false
+	}
+	return pr.categoryManager.GetCategory(categoryName)
 }

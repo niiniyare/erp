@@ -3,13 +3,16 @@
 
 package datatypes
 
+
+
+
 // Displayoutside represents the CSS DataType DisplayOutside with predefined values
 type Displayoutside string
 
 const (
-	DisplayoutsideBlock  Displayoutside = "block"
+	DisplayoutsideBlock Displayoutside = "block"
 	DisplayoutsideInline Displayoutside = "inline"
-	DisplayoutsideRunin  Displayoutside = "run-in"
+	DisplayoutsideRunin Displayoutside = "run-in"
 )
 
 func (d Displayoutside) IsValid() bool {
@@ -26,3 +29,5 @@ func (d Displayoutside) IsValid() bool {
 func (d Displayoutside) String() string {
 	return string(d)
 }
+
+

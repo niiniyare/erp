@@ -3,6 +3,9 @@
 
 package datatypes
 
+
+
+
 // Steptimingfunction represents the CSS DataType StepTimingFunction
 type Steptimingfunction string
 
@@ -14,3 +17,5 @@ func (d Steptimingfunction) IsValid() bool {
 func (d Steptimingfunction) String() string {
 	return string(d)
 }
+
+

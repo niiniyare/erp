@@ -3,14 +3,17 @@
 
 package datatypes
 
+
+
+
 // Contentdistribution represents the CSS DataType ContentDistribution with predefined values
 type Contentdistribution string
 
 const (
-	ContentdistributionSpacearound  Contentdistribution = "space-around"
+	ContentdistributionSpacearound Contentdistribution = "space-around"
 	ContentdistributionSpacebetween Contentdistribution = "space-between"
-	ContentdistributionSpaceevenly  Contentdistribution = "space-evenly"
-	ContentdistributionStretch      Contentdistribution = "stretch"
+	ContentdistributionSpaceevenly Contentdistribution = "space-evenly"
+	ContentdistributionStretch Contentdistribution = "stretch"
 )
 
 func (d Contentdistribution) IsValid() bool {
@@ -27,3 +30,5 @@ func (d Contentdistribution) IsValid() bool {
 func (d Contentdistribution) String() string {
 	return string(d)
 }
+
+

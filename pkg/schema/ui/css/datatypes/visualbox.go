@@ -3,11 +3,14 @@
 
 package datatypes
 
+
+
+
 // Visualbox represents the CSS DataType VisualBox with predefined values
 type Visualbox string
 
 const (
-	VisualboxBorderbox  Visualbox = "border-box"
+	VisualboxBorderbox Visualbox = "border-box"
 	VisualboxContentbox Visualbox = "content-box"
 	VisualboxPaddingbox Visualbox = "padding-box"
 )
@@ -26,3 +29,5 @@ func (d Visualbox) IsValid() bool {
 func (d Visualbox) String() string {
 	return string(d)
 }
+
+

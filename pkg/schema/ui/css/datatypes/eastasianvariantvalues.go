@@ -3,15 +3,18 @@
 
 package datatypes
 
+
+
+
 // Eastasianvariantvalues represents the CSS DataType EastAsianVariantValues with predefined values
 type Eastasianvariantvalues string
 
 const (
-	EastasianvariantvaluesJis04       Eastasianvariantvalues = "jis04"
-	EastasianvariantvaluesJis78       Eastasianvariantvalues = "jis78"
-	EastasianvariantvaluesJis83       Eastasianvariantvalues = "jis83"
-	EastasianvariantvaluesJis90       Eastasianvariantvalues = "jis90"
-	EastasianvariantvaluesSimplified  Eastasianvariantvalues = "simplified"
+	EastasianvariantvaluesJis04 Eastasianvariantvalues = "jis04"
+	EastasianvariantvaluesJis78 Eastasianvariantvalues = "jis78"
+	EastasianvariantvaluesJis83 Eastasianvariantvalues = "jis83"
+	EastasianvariantvaluesJis90 Eastasianvariantvalues = "jis90"
+	EastasianvariantvaluesSimplified Eastasianvariantvalues = "simplified"
 	EastasianvariantvaluesTraditional Eastasianvariantvalues = "traditional"
 )
 
@@ -29,3 +32,5 @@ func (d Eastasianvariantvalues) IsValid() bool {
 func (d Eastasianvariantvalues) String() string {
 	return string(d)
 }
+
+

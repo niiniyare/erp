@@ -3,6 +3,9 @@
 
 package datatypes
 
+
+
+
 // Linestyle represents the CSS DataType LineStyle with predefined values
 type Linestyle string
 
@@ -12,11 +15,11 @@ const (
 	LinestyleDouble Linestyle = "double"
 	LinestyleGroove Linestyle = "groove"
 	LinestyleHidden Linestyle = "hidden"
-	LinestyleInset  Linestyle = "inset"
-	LinestyleNone   Linestyle = "none"
+	LinestyleInset Linestyle = "inset"
+	LinestyleNone Linestyle = "none"
 	LinestyleOutset Linestyle = "outset"
-	LinestyleRidge  Linestyle = "ridge"
-	LinestyleSolid  Linestyle = "solid"
+	LinestyleRidge Linestyle = "ridge"
+	LinestyleSolid Linestyle = "solid"
 )
 
 func (d Linestyle) IsValid() bool {
@@ -33,3 +36,5 @@ func (d Linestyle) IsValid() bool {
 func (d Linestyle) String() string {
 	return string(d)
 }
+
+
