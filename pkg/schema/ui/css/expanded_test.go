@@ -452,14 +452,14 @@ func (suite *ExpandedCSSTestSuite) TestSchemaIntegration() {
 	styles := NewExpandedStyles(suite.schemaDir)
 
 	// Test property validation (if schemas are available)
-	err := styles.ValidateProperty("display", "flex")
+	err := styles.ValidateProperty("Property.Display", "flex")
 	// Note: This may fail if schema files aren't available, which is acceptable
 	if err != nil {
 		suite.T().Logf("Schema validation not available: %v", err)
 	}
 
 	// Test loading property from schema definition
-	err = styles.LoadFromSchemaDefinition("display")
+	err = styles.LoadFromSchemaDefinition("Property.Display")
 	if err != nil {
 		suite.T().Logf("Schema loading not available: %v", err)
 	}
