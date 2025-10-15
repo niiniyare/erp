@@ -1,24 +1,20 @@
 # TypeScript Hooks Integration with Alpine.js and Templ
 
-<!-- LLM-CONTEXT-START -->
 **FILE PURPOSE**: Complete integration guide for TypeScript hooks with Alpine.js, Templ, and Flowbite components
 **SCOPE**: Hook architecture, Alpine.js patterns, TypeScript integration, component development workflow
 **TARGET AUDIENCE**: Full-stack developers building ERP interfaces with type-safe client-side interactions
 **RELATED FILES**: `fundamentals/architecture.md` (system design), `components/elements.md` (basic components), `getting-started.md` (setup)
-<!-- LLM-CONTEXT-END -->
 
 ## Overview
 
 This guide documents the integration of TypeScript hooks with Alpine.js for type-safe, reactive client-side behavior in Templ-based ERP interfaces. The hooks system provides reusable, composable functionality while maintaining the server-first architecture principles.
 
-<!-- LLM-INTEGRATION-PRINCIPLES-START -->
 **INTEGRATION PRINCIPLES:**
 - **Type Safety First** - TypeScript interfaces for all hook configurations and state
 - **Server-First Architecture** - Hooks enhance server-rendered Templ components
 - **Progressive Enhancement** - Works without JavaScript, enhanced with Alpine.js
 - **Composition Over Inheritance** - Reusable hooks for complex UI behaviors
 - **Performance Optimized** - Minimal JavaScript footprint with efficient state management
-<!-- LLM-INTEGRATION-PRINCIPLES-END -->
 
 ---
 
@@ -26,7 +22,6 @@ This guide documents the integration of TypeScript hooks with Alpine.js for type
 
 ### Hook Integration Flow
 
-<!-- LLM-INTEGRATION-FLOW-START -->
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    DEVELOPMENT FLOW                        │
@@ -49,11 +44,9 @@ This guide documents the integration of TypeScript hooks with Alpine.js for type
 │     └── Alpine.js hydrates client-side                     │
 └─────────────────────────────────────────────────────────────┘
 ```
-<!-- LLM-INTEGRATION-FLOW-END -->
 
 ### Technology Stack Integration
 
-<!-- LLM-TECH-STACK-START -->
 **TECHNOLOGY LAYERS:**
 
 #### 1. TypeScript Layer (`/web/hooks/`)
@@ -79,7 +72,6 @@ This guide documents the integration of TypeScript hooks with Alpine.js for type
 - **Responsive design** patterns and utilities
 - **Interactive elements** (modals, dropdowns, forms)
 - **Design system** compliance and theming
-<!-- LLM-TECH-STACK-END -->
 
 ---
 
@@ -87,7 +79,6 @@ This guide documents the integration of TypeScript hooks with Alpine.js for type
 
 ### 1. Hook File Structure
 
-<!-- LLM-HOOK-STRUCTURE-START -->
 **STANDARD HOOK FILE STRUCTURE:**
 
 ```typescript
@@ -171,11 +162,9 @@ function useFeature(config: FeatureConfig = {}): FeatureStore {
 // Export for type checking
 export { useFeature, FeatureConfig, FeatureStore };
 ```
-<!-- LLM-HOOK-STRUCTURE-END -->
 
 ### 2. Component Integration Patterns
 
-<!-- LLM-COMPONENT-INTEGRATION-START -->
 **TEMPL COMPONENT WITH TYPESCRIPT HOOK:**
 
 ```go
@@ -284,11 +273,9 @@ func toJSON(v interface{}) string {
     return string(b)
 }
 ```
-<!-- LLM-COMPONENT-INTEGRATION-END -->
 
 ### 3. Advanced Hook Patterns
 
-<!-- LLM-ADVANCED-PATTERNS-START -->
 **ADVANCED HOOK COMPOSITION PATTERNS:**
 
 #### A. Multi-Hook Composition
@@ -425,7 +412,6 @@ class StateManager {
 const stateManager = new StateManager();
 (window as any).stateManager = stateManager;
 ```
-<!-- LLM-ADVANCED-PATTERNS-END -->
 
 ---
 
@@ -433,7 +419,6 @@ const stateManager = new StateManager();
 
 ### 1. Creating New Components
 
-<!-- LLM-COMPONENT-CREATION-START -->
 **STEP-BY-STEP COMPONENT CREATION:**
 
 #### Step 1: Define TypeScript Hook
@@ -522,11 +507,9 @@ tsc --noEmit
 # Start development server
 go run cmd/server/main.go
 ```
-<!-- LLM-COMPONENT-CREATION-END -->
 
 ### 2. File Organization
 
-<!-- LLM-FILE-ORGANIZATION-START -->
 **RECOMMENDED FILE STRUCTURE:**
 
 ```
@@ -574,11 +557,9 @@ project/
 - **Components**: `camelCase.templ` (e.g., `dataTable.templ`, `userForm.templ`)
 - **Types**: `PascalCase` interfaces (e.g., `DataTableConfig`, `FormValidationStore`)
 - **Functions**: `camelCase` with `use` prefix (e.g., `useDataTable`, `useFormValidation`)
-<!-- LLM-FILE-ORGANIZATION-END -->
 
 ### 3. Development Best Practices
 
-<!-- LLM-BEST-PRACTICES-START -->
 **DEVELOPMENT BEST PRACTICES:**
 
 #### A. Type Safety
@@ -709,7 +690,6 @@ function useTestableDataTable(config: DataTableConfig): DataTableStore & Testabl
     };
 }
 ```
-<!-- LLM-BEST-PRACTICES-END -->
 
 ---
 
@@ -717,7 +697,6 @@ function useTestableDataTable(config: DataTableConfig): DataTableStore & Testabl
 
 ### 1. Server-Side Integration
 
-<!-- LLM-SERVER-INTEGRATION-START -->
 **GO HANDLER INTEGRATION:**
 
 ```go
@@ -769,11 +748,9 @@ func (h *Handler) SearchUsers(w http.ResponseWriter, r *http.Request) {
     component.Render(r.Context(), w)
 }
 ```
-<!-- LLM-SERVER-INTEGRATION-END -->
 
 ### 2. HTMX Integration
 
-<!-- LLM-HTMX-INTEGRATION-START -->
 **HTMX + TYPESCRIPT HOOKS COORDINATION:**
 
 ```typescript
@@ -836,11 +813,9 @@ function useHTMXDataTable(config: DataTableConfig): DataTableStore {
     };
 }
 ```
-<!-- LLM-HTMX-INTEGRATION-END -->
 
 ### 3. State Persistence
 
-<!-- LLM-STATE-PERSISTENCE-START -->
 **STATE PERSISTENCE PATTERNS:**
 
 ```typescript
@@ -913,7 +888,6 @@ function usePersistentDataTable(config: DataTableConfig & {
     };
 }
 ```
-<!-- LLM-STATE-PERSISTENCE-END -->
 
 ---
 
@@ -921,7 +895,6 @@ function usePersistentDataTable(config: DataTableConfig & {
 
 ### 1. TypeScript Hook Testing
 
-<!-- LLM-TESTING-STRATEGIES-START -->
 **UNIT TESTING APPROACH:**
 
 ```typescript
@@ -1026,11 +999,9 @@ describe('Component Integration', () => {
     });
 });
 ```
-<!-- LLM-TESTING-STRATEGIES-END -->
 
 ### 2. Component Testing
 
-<!-- LLM-COMPONENT-TESTING-START -->
 **TEMPL COMPONENT TESTING:**
 
 ```go
@@ -1102,7 +1073,6 @@ func TestDataTableComponent(t *testing.T) {
     }
 }
 ```
-<!-- LLM-COMPONENT-TESTING-END -->
 
 ---
 
@@ -1110,7 +1080,6 @@ func TestDataTableComponent(t *testing.T) {
 
 ### 1. Bundle Optimization
 
-<!-- LLM-BUNDLE-OPTIMIZATION-START -->
 **TYPESCRIPT COMPILATION OPTIMIZATION:**
 
 ```json
@@ -1147,11 +1116,9 @@ tsc && uglifyjs dist/**/*.js -c -m -o dist/hooks.min.js
 # Or use modern bundler
 npx esbuild web/hooks/*.ts --bundle --minify --outdir=dist
 ```
-<!-- LLM-BUNDLE-OPTIMIZATION-END -->
 
 ### 2. Runtime Optimization
 
-<!-- LLM-RUNTIME-OPTIMIZATION-START -->
 **PERFORMANCE OPTIMIZATION TECHNIQUES:**
 
 ```typescript
@@ -1249,7 +1216,6 @@ function useOptimizedDataTable(config: DataTableConfig): DataTableStore {
     };
 }
 ```
-<!-- LLM-RUNTIME-OPTIMIZATION-END -->
 
 ---
 
@@ -1257,7 +1223,6 @@ function useOptimizedDataTable(config: DataTableConfig): DataTableStore {
 
 ### 1. JavaScript to TypeScript Migration
 
-<!-- LLM-MIGRATION-STRATEGIES-START -->
 **MIGRATION ROADMAP:**
 
 #### Phase 1: Add TypeScript Support
@@ -1356,11 +1321,9 @@ function useDataTable<T extends DataRow = DataRow>(
     // Implementation with generic type safety
 }
 ```
-<!-- LLM-MIGRATION-STRATEGIES-END -->
 
 ### 2. Version Management
 
-<!-- LLM-VERSION-MANAGEMENT-START -->
 **VERSION MANAGEMENT STRATEGY:**
 
 ```typescript
@@ -1422,13 +1385,11 @@ const useDataTableV2 = createVersionedHook(
     { major: 2, minor: 0, patch: 0 }
 );
 ```
-<!-- LLM-VERSION-MANAGEMENT-END -->
 
 ---
 
 ## References
 
-<!-- LLM-REFERENCES-START -->
 **RELATED DOCUMENTATION:**
 - [Getting Started](../getting-started.md) - Initial setup and configuration
 - [Architecture](../fundamentals/architecture.md) - System design principles
@@ -1447,9 +1408,7 @@ const useDataTableV2 = createVersionedHook(
 - [Alpine.js Examples](https://alpinejs.dev/start-here) - Community patterns and examples
 - [TypeScript Best Practices](https://typescript-eslint.io/rules/) - Code quality guidelines
 - [Web Components Standards](https://developer.mozilla.org/en-US/docs/Web/Web_Components) - Modern web standards
-<!-- LLM-REFERENCES-END -->
 
-<!-- LLM-METADATA-START -->
 **METADATA FOR AI ASSISTANTS:**
 - File Type: Integration Documentation
 - Scope: TypeScript hooks, Alpine.js, Templ components, development workflow
@@ -1458,4 +1417,3 @@ const useDataTableV2 = createVersionedHook(
 - Focus: Type-safe client-side interactions with server-rendered components
 - Dependencies: TypeScript, Alpine.js, Templ, Flowbite, TailwindCSS
 - Last Updated: December 2024
-<!-- LLM-METADATA-END -->
