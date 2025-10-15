@@ -1,7 +1,6 @@
 package css
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -260,16 +259,16 @@ func TestCompleteStyledComponent(t *testing.T) {
 		WithPadding("0.75rem 1.5rem").
 		WithCustomProperty("--hover-transform", "translateY(-1px)")
 
-	fmt.Println("Button CSS:")
-	fmt.Println(buttonStyles.ToCSS())
+	t.Logf("\nButton CSS: \n")
+	t.Log(buttonStyles.ToCSS())
 
 	// Create a styled card
 	cardStyles := factory.CardStyles("lg").
 		WithPadding("2rem").
 		WithMargin("1rem")
 
-	fmt.Println("\nCard CSS:")
-	fmt.Println(cardStyles.ToCSS())
+	t.Log("\nCard CSS:\n")
+	t.Log(cardStyles.ToCSS())
 
 	// Create responsive layout
 	layoutStyles := factory.ResponsiveStyles().
@@ -283,8 +282,10 @@ func TestCompleteStyledComponent(t *testing.T) {
 		}).
 		Build()
 
-	fmt.Println("\nResponsive Layout CSS:")
-	fmt.Println(layoutStyles.ToCSS())
+	t.Logf("\nResponsive Layout CSS:\n")
+	t.Log(layoutStyles.ToCSS())
+
+	// t.Log(layoutStyles.ToCSS())
 
 	// Output:
 	// Button CSS:

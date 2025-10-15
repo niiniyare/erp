@@ -61,15 +61,11 @@ docs/ui/
 All documentation files include semantic markers for AI navigation:
 
 ```html
-<!-- LLM-CONTEXT-START -->
 **FILE PURPOSE**: Brief description of file purpose
 **SCOPE**: What this file covers
 **TARGET AUDIENCE**: Who should use this file
-<!-- LLM-CONTEXT-END -->
 
-<!-- LLM-SECTION-NAME-START -->
 Content organized by semantic sections...
-<!-- LLM-SECTION-NAME-END -->
 ```
 
 These markers help AI assistants quickly locate relevant information.
@@ -261,7 +257,7 @@ type ComponentProps struct {
 1. Verify Flowbite CSS is loaded
 2. Check class names match Flowbite documentation
 3. Ensure TailwindCSS is properly configured
-4. Reference `flowbite-llms-full.txt` for examples
+4. Reference `flowbite-llms-full.txt` `` for examples
 
 ### Validation Problems
 1. Check server-side validation logic
