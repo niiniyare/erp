@@ -10,7 +10,6 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"encoding/json"
-	"github.com/niiniyare/erp/web/engine"
 	"github.com/niiniyare/erp/web/schemas"
 )
 
@@ -111,13 +110,6 @@ type FooterConfig struct {
 	Links   []FooterLink `json:"links,omitempty"`
 }
 
-// FooterLink represents a footer link
-type FooterLink struct {
-	Label  string `json:"label"`
-	URL    string `json:"url"`
-	Target string `json:"target,omitempty"`
-}
-
 // BrandingConfig defines branding elements
 type BrandingConfig struct {
 	Name      string `json:"name"`
@@ -146,7 +138,7 @@ type SlotCondition struct {
 }
 
 // LayoutFromSchema creates a layout component from schema definition
-func LayoutFromSchema(schema LayoutSchema, registry *engine.SchemaComponentRegistry, content templ.Component) templ.Component {
+func LayoutFromSchema(schema LayoutSchema, content templ.Component) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -169,22 +161,22 @@ func LayoutFromSchema(schema LayoutSchema, registry *engine.SchemaComponentRegis
 		ctx = templ.ClearChildren(ctx)
 		switch schema.Layout.Template {
 		case "app":
-			templ_7745c5c3_Err = AppLayoutFromSchema(schema, registry, content).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = AppLayoutFromSchema(schema, content).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case "auth":
-			templ_7745c5c3_Err = AuthLayoutFromSchema(schema, registry, content).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = AuthLayoutFromSchema(schema, content).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case "minimal":
-			templ_7745c5c3_Err = MinimalLayoutFromSchema(schema, registry, content).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = MinimalLayoutFromSchema(schema, content).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		default:
-			templ_7745c5c3_Err = AppLayoutFromSchema(schema, registry, content).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = AppLayoutFromSchema(schema, content).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -194,7 +186,7 @@ func LayoutFromSchema(schema LayoutSchema, registry *engine.SchemaComponentRegis
 }
 
 // AppLayoutFromSchema creates an app layout from schema
-func AppLayoutFromSchema(schema LayoutSchema, registry *engine.SchemaComponentRegistry, content templ.Component) templ.Component {
+func AppLayoutFromSchema(schema LayoutSchema, content templ.Component) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -224,7 +216,7 @@ func AppLayoutFromSchema(schema LayoutSchema, registry *engine.SchemaComponentRe
 }
 
 // AuthLayoutFromSchema creates an auth layout from schema
-func AuthLayoutFromSchema(schema LayoutSchema, registry *engine.SchemaComponentRegistry, content templ.Component) templ.Component {
+func AuthLayoutFromSchema(schema LayoutSchema, content templ.Component) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -254,7 +246,7 @@ func AuthLayoutFromSchema(schema LayoutSchema, registry *engine.SchemaComponentR
 }
 
 // MinimalLayoutFromSchema creates a minimal layout from schema
-func MinimalLayoutFromSchema(schema LayoutSchema, registry *engine.SchemaComponentRegistry, content templ.Component) templ.Component {
+func MinimalLayoutFromSchema(schema LayoutSchema, content templ.Component) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {

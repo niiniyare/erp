@@ -10,235 +10,167 @@ import (
 )
 
 // ============================================================================
-// UNIFIED BRIDGE REGISTRY
+// UNIFIED REGISTRY
 // ============================================================================
 
-// UnifiedRegistry manages both schema components and Templ components through a single interface
+// UnifiedRegistry provides a unified interface for managing both schema and Templ components.
 type UnifiedRegistry struct {
-	schemaRegistry schemaui.ComponentRegistry
-	templRegistry  *TemplRegistry
-	bridge         *Bridge
-	mu             sync.RWMutex
+	schema schemaui.ComponentRegistry
+	templ  *TemplRegistry
+	bridge *Bridge
+	mu     sync.RWMutex
 }
 
-// NewUnifiedRegistry creates a registry that supports both schema and Templ components
+// NewUnifiedRegistry creates a new unified registry instance.
 func NewUnifiedRegistry() *UnifiedRegistry {
-	bridge := NewBridge()
 	return &UnifiedRegistry{
-		schemaRegistry: schemaui.NewRegistry(),
-		templRegistry:  NewTemplRegistry(),
-		bridge:         bridge,
+		schema: schemaui.NewRegistry(),
+		templ:  newTemplRegistry(),
+		bridge: NewBridge(),
 	}
 }
 
-// ============================================================================
-// UNIFIED COMPONENT CREATION
-// ============================================================================
-
-// CreateSchemaComponent creates a component using the schema system
-func (r *UnifiedRegistry) CreateSchemaComponent(ctx context.Context, componentType schemaui.ComponentType, config map[string]any) (schemaui.Component, error) {
-	return r.schemaRegistry.Create(ctx, componentType, config)
+// CreateSchema creates a component using the schema system.
+func (r *UnifiedRegistry) CreateSchema(ctx context.Context, typ schemaui.ComponentType, config map[string]any) (schemaui.Component, error) {
+	return r.schema.Create(ctx, typ, config)
 }
 
-// CreateTemplComponent creates a Templ component from schema configuration
-func (r *UnifiedRegistry) CreateTemplComponent(ctx context.Context, componentType schemaui.ComponentType, config map[string]any) (TemplComponent, error) {
-	// First create schema component
-	schemaComponent, err := r.schemaRegistry.Create(ctx, componentType, config)
+// CreateTempl creates a Templ component from schema configuration.
+func (r *UnifiedRegistry) CreateTempl(ctx context.Context, typ schemaui.ComponentType, config map[string]any) (TemplComponent, error) {
+	component, err := r.schema.Create(ctx, typ, config)
 	if err != nil {
-		return TemplComponent{}, fmt.Errorf("failed to create schema component: %w", err)
+		return TemplComponent{}, fmt.Errorf("create schema component: %w", err)
 	}
 
-	// Convert to Templ component
-	return r.bridge.ConvertSchemaToTempl(ctx, schemaComponent)
+	return r.bridge.ConvertToTempl(ctx, component)
 }
 
-// CreateFromTemplate creates components from a pre-defined template
-func (r *UnifiedRegistry) CreateFromTemplate(ctx context.Context, templateName string, data map[string]any) ([]TemplComponent, []schemaui.Component, error) {
-	// This would load a template and create both representations
-	// For now, we'll implement a basic form template
-	
-	switch templateName {
-	case "login-form":
-		return r.createLoginFormTemplate(ctx, data)
-	case "user-form":
-		return r.createUserFormTemplate(ctx, data)
-	case "data-table":
-		return r.createDataTableTemplate(ctx, data)
-	default:
-		return nil, nil, fmt.Errorf("unknown template: %s", templateName)
-	}
+// ValidateSchema validates a schema component.
+func (r *UnifiedRegistry) ValidateSchema(ctx context.Context, component schemaui.Component) error {
+	return r.schema.Validate(ctx, component)
 }
 
-// ============================================================================
-// COMPONENT VALIDATION
-// ============================================================================
-
-// ValidateSchemaComponent validates a schema component
-func (r *UnifiedRegistry) ValidateSchemaComponent(ctx context.Context, component schemaui.Component) error {
-	return r.schemaRegistry.Validate(ctx, component)
-}
-
-// ValidateTemplComponent validates a Templ component by converting to schema first
-func (r *UnifiedRegistry) ValidateTemplComponent(ctx context.Context, templComponent TemplComponent) error {
-	// Convert to schema component
-	schemaComponent, err := r.bridge.ConvertTemplToSchema(ctx, templComponent)
+// ValidateTempl validates a Templ component by converting to schema first.
+func (r *UnifiedRegistry) ValidateTempl(ctx context.Context, component TemplComponent) error {
+	schema, err := r.bridge.ConvertTemplToSchema(ctx, component)
 	if err != nil {
-		return fmt.Errorf("failed to convert to schema for validation: %w", err)
+		return fmt.Errorf("convert to schema: %w", err)
 	}
 
-	// Validate using schema system
-	return r.schemaRegistry.Validate(ctx, schemaComponent)
+	return r.schema.Validate(ctx, schema)
 }
 
-// ============================================================================
-// REGISTRY INFORMATION
-// ============================================================================
-
-// GetSupportedTypes returns all supported component types from both systems
-func (r *UnifiedRegistry) GetSupportedTypes() []schemaui.ComponentType {
-	return r.schemaRegistry.GetTypes()
+// SupportedTypes returns all supported component types.
+func (r *UnifiedRegistry) SupportedTypes() []schemaui.ComponentType {
+	return r.schema.GetTypes()
 }
 
-// GetSchemaForType returns the schema definition for a component type
-func (r *UnifiedRegistry) GetSchemaForType(componentType schemaui.ComponentType) (schemaui.ComponentSchema, error) {
+// SchemaForType returns the schema definition for a component type.
+func (r *UnifiedRegistry) SchemaForType(typ schemaui.ComponentType) (schemaui.ComponentSchema, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	// Get all schemas and find the one for this type
-	schemas := r.schemaRegistry.GetAllSchemas()
-	if schema, exists := schemas[componentType]; exists {
-		return schema, nil
+	// TODO: Implement when GetAllSchemas method is available
+	return schemaui.ComponentSchema{}, fmt.Errorf("GetAllSchemas method not implemented yet for type: %s", typ)
+}
+
+// ============================================================================
+// TEMPLATE SYSTEM
+// ============================================================================
+
+// Template represents a reusable component template.
+type Template interface {
+	Name() string
+	Build(ctx context.Context, data map[string]any, r *UnifiedRegistry) ([]TemplComponent, []schemaui.Component, error)
+}
+
+// templateRegistry holds registered templates.
+var templateRegistry = make(map[string]Template)
+
+func init() {
+	RegisterTemplate(&loginFormTemplate{})
+	RegisterTemplate(&userFormTemplate{})
+	RegisterTemplate(&dataTableTemplate{})
+}
+
+// RegisterTemplate registers a template for use.
+func RegisterTemplate(t Template) {
+	templateRegistry[t.Name()] = t
+}
+
+// CreateFromTemplate creates components from a registered template.
+func (r *UnifiedRegistry) CreateFromTemplate(ctx context.Context, name string, data map[string]any) ([]TemplComponent, []schemaui.Component, error) {
+	template, exists := templateRegistry[name]
+	if !exists {
+		return nil, nil, fmt.Errorf("unknown template: %s", name)
 	}
 
-	return schemaui.ComponentSchema{}, fmt.Errorf("no schema found for component type: %s", componentType)
+	return template.Build(ctx, data, r)
 }
 
 // ============================================================================
 // TEMPLATE IMPLEMENTATIONS
 // ============================================================================
 
-// createLoginFormTemplate creates a complete login form in both representations
-func (r *UnifiedRegistry) createLoginFormTemplate(ctx context.Context, data map[string]any) ([]TemplComponent, []schemaui.Component, error) {
-	var templComponents []TemplComponent
-	var schemaComponents []schemaui.Component
+type loginFormTemplate struct{}
 
-	// Email input
-	emailSchema, err := r.schemaRegistry.Create(ctx, schemaui.ComponentInput, map[string]any{
+func (t *loginFormTemplate) Name() string { return "login-form" }
+
+func (t *loginFormTemplate) Build(ctx context.Context, data map[string]any, r *UnifiedRegistry) ([]TemplComponent, []schemaui.Component, error) {
+	builder := newTemplateBuilder(ctx, r)
+
+	builder.addInput(map[string]any{
 		"input_type":  "email",
 		"name":        "email",
 		"placeholder": "Enter your email",
 		"required":    true,
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-	schemaComponents = append(schemaComponents, emailSchema)
 
-	emailTempl, err := r.bridge.ConvertSchemaToTempl(ctx, emailSchema)
-	if err != nil {
-		return nil, nil, err
-	}
-	templComponents = append(templComponents, emailTempl)
-
-	// Password input
-	passwordSchema, err := r.schemaRegistry.Create(ctx, schemaui.ComponentInput, map[string]any{
+	builder.addInput(map[string]any{
 		"input_type":  "password",
 		"name":        "password",
 		"placeholder": "Enter your password",
 		"required":    true,
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-	schemaComponents = append(schemaComponents, passwordSchema)
 
-	passwordTempl, err := r.bridge.ConvertSchemaToTempl(ctx, passwordSchema)
-	if err != nil {
-		return nil, nil, err
-	}
-	templComponents = append(templComponents, passwordTempl)
-
-	// Submit button
-	submitSchema, err := r.schemaRegistry.Create(ctx, schemaui.ComponentButton, map[string]any{
+	builder.addButton(map[string]any{
 		"text":        "Sign In",
 		"button_type": "submit",
 		"variant":     "primary",
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-	schemaComponents = append(schemaComponents, submitSchema)
 
-	submitTempl, err := r.bridge.ConvertSchemaToTempl(ctx, submitSchema)
-	if err != nil {
-		return nil, nil, err
-	}
-	templComponents = append(templComponents, submitTempl)
-
-	return templComponents, schemaComponents, nil
+	return builder.build()
 }
 
-// createUserFormTemplate creates a complete user registration form
-func (r *UnifiedRegistry) createUserFormTemplate(ctx context.Context, data map[string]any) ([]TemplComponent, []schemaui.Component, error) {
-	var templComponents []TemplComponent
-	var schemaComponents []schemaui.Component
+type userFormTemplate struct{}
 
-	// First name input
-	firstNameSchema, err := r.schemaRegistry.Create(ctx, schemaui.ComponentInput, map[string]any{
+func (t *userFormTemplate) Name() string { return "user-form" }
+
+func (t *userFormTemplate) Build(ctx context.Context, data map[string]any, r *UnifiedRegistry) ([]TemplComponent, []schemaui.Component, error) {
+	builder := newTemplateBuilder(ctx, r)
+
+	builder.addInput(map[string]any{
 		"input_type":  "text",
 		"name":        "first_name",
 		"placeholder": "First Name",
 		"required":    true,
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-	schemaComponents = append(schemaComponents, firstNameSchema)
 
-	firstNameTempl, err := r.bridge.ConvertSchemaToTempl(ctx, firstNameSchema)
-	if err != nil {
-		return nil, nil, err
-	}
-	templComponents = append(templComponents, firstNameTempl)
-
-	// Last name input
-	lastNameSchema, err := r.schemaRegistry.Create(ctx, schemaui.ComponentInput, map[string]any{
+	builder.addInput(map[string]any{
 		"input_type":  "text",
 		"name":        "last_name",
 		"placeholder": "Last Name",
 		"required":    true,
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-	schemaComponents = append(schemaComponents, lastNameSchema)
 
-	lastNameTempl, err := r.bridge.ConvertSchemaToTempl(ctx, lastNameSchema)
-	if err != nil {
-		return nil, nil, err
-	}
-	templComponents = append(templComponents, lastNameTempl)
-
-	// Email input
-	emailSchema, err := r.schemaRegistry.Create(ctx, schemaui.ComponentInput, map[string]any{
+	builder.addInput(map[string]any{
 		"input_type":  "email",
 		"name":        "email",
 		"placeholder": "Email Address",
 		"required":    true,
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-	schemaComponents = append(schemaComponents, emailSchema)
 
-	emailTempl, err := r.bridge.ConvertSchemaToTempl(ctx, emailSchema)
-	if err != nil {
-		return nil, nil, err
-	}
-	templComponents = append(templComponents, emailTempl)
-
-	// Role select
-	roleSchema, err := r.schemaRegistry.Create(ctx, schemaui.ComponentSelect, map[string]any{
+	builder.addSelect(map[string]any{
 		"name":        "role",
 		"placeholder": "Select Role",
 		"options": []map[string]any{
@@ -248,61 +180,30 @@ func (r *UnifiedRegistry) createUserFormTemplate(ctx context.Context, data map[s
 		},
 		"required": true,
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-	schemaComponents = append(schemaComponents, roleSchema)
 
-	roleTempl, err := r.bridge.ConvertSchemaToTempl(ctx, roleSchema)
-	if err != nil {
-		return nil, nil, err
-	}
-	templComponents = append(templComponents, roleTempl)
-
-	// Submit button
-	submitSchema, err := r.schemaRegistry.Create(ctx, schemaui.ComponentButton, map[string]any{
+	builder.addButton(map[string]any{
 		"text":        "Create User",
 		"button_type": "submit",
 		"variant":     "primary",
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-	schemaComponents = append(schemaComponents, submitSchema)
 
-	submitTempl, err := r.bridge.ConvertSchemaToTempl(ctx, submitSchema)
-	if err != nil {
-		return nil, nil, err
-	}
-	templComponents = append(templComponents, submitTempl)
-
-	return templComponents, schemaComponents, nil
+	return builder.build()
 }
 
-// createDataTableTemplate creates a data table configuration
-func (r *UnifiedRegistry) createDataTableTemplate(ctx context.Context, data map[string]any) ([]TemplComponent, []schemaui.Component, error) {
-	var templComponents []TemplComponent
-	var schemaComponents []schemaui.Component
+type dataTableTemplate struct{}
 
-	// Search input
-	searchSchema, err := r.schemaRegistry.Create(ctx, schemaui.ComponentInput, map[string]any{
+func (t *dataTableTemplate) Name() string { return "data-table" }
+
+func (t *dataTableTemplate) Build(ctx context.Context, data map[string]any, r *UnifiedRegistry) ([]TemplComponent, []schemaui.Component, error) {
+	builder := newTemplateBuilder(ctx, r)
+
+	builder.addInput(map[string]any{
 		"input_type":  "search",
 		"name":        "search",
 		"placeholder": "Search...",
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-	schemaComponents = append(schemaComponents, searchSchema)
 
-	searchTempl, err := r.bridge.ConvertSchemaToTempl(ctx, searchSchema)
-	if err != nil {
-		return nil, nil, err
-	}
-	templComponents = append(templComponents, searchTempl)
-
-	// Filter select
-	filterSchema, err := r.schemaRegistry.Create(ctx, schemaui.ComponentSelect, map[string]any{
+	builder.addSelect(map[string]any{
 		"name":        "status_filter",
 		"placeholder": "Filter by status",
 		"options": []map[string]any{
@@ -311,406 +212,421 @@ func (r *UnifiedRegistry) createDataTableTemplate(ctx context.Context, data map[
 			{"value": "inactive", "label": "Inactive"},
 		},
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-	schemaComponents = append(schemaComponents, filterSchema)
 
-	filterTempl, err := r.bridge.ConvertSchemaToTempl(ctx, filterSchema)
-	if err != nil {
-		return nil, nil, err
-	}
-	templComponents = append(templComponents, filterTempl)
-
-	// Add button
-	addSchema, err := r.schemaRegistry.Create(ctx, schemaui.ComponentButton, map[string]any{
+	builder.addButton(map[string]any{
 		"text":    "Add New",
 		"icon":    "plus",
 		"variant": "primary",
 	})
-	if err != nil {
-		return nil, nil, err
-	}
-	schemaComponents = append(schemaComponents, addSchema)
 
-	addTempl, err := r.bridge.ConvertSchemaToTempl(ctx, addSchema)
-	if err != nil {
-		return nil, nil, err
-	}
-	templComponents = append(templComponents, addTempl)
-
-	return templComponents, schemaComponents, nil
+	return builder.build()
 }
 
 // ============================================================================
-// TEMPL REGISTRY FOR COMPONENT FACTORIES
+// TEMPLATE BUILDER
 // ============================================================================
 
-// TemplRegistry manages Templ component creation and validation
+// templateBuilder helps construct templates with error handling.
+type templateBuilder struct {
+	ctx      context.Context
+	registry *UnifiedRegistry
+	templ    []TemplComponent
+	schema   []schemaui.Component
+	err      error
+}
+
+func newTemplateBuilder(ctx context.Context, r *UnifiedRegistry) *templateBuilder {
+	return &templateBuilder{
+		ctx:      ctx,
+		registry: r,
+		templ:    make([]TemplComponent, 0),
+		schema:   make([]schemaui.Component, 0),
+	}
+}
+
+func (b *templateBuilder) addComponent(typ schemaui.ComponentType, config map[string]any) {
+	if b.err != nil {
+		return
+	}
+
+	schema, err := b.registry.CreateSchema(b.ctx, typ, config)
+	if err != nil {
+		b.err = fmt.Errorf("create %s: %w", typ, err)
+		return
+	}
+
+	templ, err := b.registry.bridge.ConvertToTempl(b.ctx, schema)
+	if err != nil {
+		b.err = fmt.Errorf("convert %s: %w", typ, err)
+		return
+	}
+
+	b.schema = append(b.schema, schema)
+	b.templ = append(b.templ, templ)
+}
+
+func (b *templateBuilder) addButton(config map[string]any) {
+	b.addComponent(schemaui.ComponentButton, config)
+}
+
+func (b *templateBuilder) addInput(config map[string]any) {
+	b.addComponent(schemaui.ComponentInput, config)
+}
+
+func (b *templateBuilder) addSelect(config map[string]any) {
+	b.addComponent(schemaui.ComponentSelect, config)
+}
+
+func (b *templateBuilder) addTextarea(config map[string]any) {
+	b.addComponent(schemaui.ComponentTextarea, config)
+}
+
+func (b *templateBuilder) addCheckbox(config map[string]any) {
+	b.addComponent(schemaui.ComponentCheckbox, config)
+}
+
+func (b *templateBuilder) addRadio(config map[string]any) {
+	b.addComponent(schemaui.ComponentRadio, config)
+}
+
+func (b *templateBuilder) build() ([]TemplComponent, []schemaui.Component, error) {
+	if b.err != nil {
+		return nil, nil, b.err
+	}
+	return b.templ, b.schema, nil
+}
+
+// ============================================================================
+// TEMPL REGISTRY
+// ============================================================================
+
+// TemplRegistry manages Templ component factories.
 type TemplRegistry struct {
-	factories map[string]TemplComponentFactory
+	factories map[string]Factory
 	mu        sync.RWMutex
 }
 
-// TemplComponentFactory creates Templ components
-type TemplComponentFactory interface {
+// Factory creates and validates Templ components.
+type Factory interface {
 	Create(ctx context.Context, config map[string]any) (TemplComponent, error)
 	Validate(ctx context.Context, component TemplComponent) error
 }
 
-// NewTemplRegistry creates a new Templ component registry
-func NewTemplRegistry() *TemplRegistry {
-	registry := &TemplRegistry{
-		factories: make(map[string]TemplComponentFactory),
+func newTemplRegistry() *TemplRegistry {
+	r := &TemplRegistry{
+		factories: make(map[string]Factory),
 	}
 
-	// Register Templ component factories
-	registry.Register("Button", &ButtonTemplFactory{})
-	registry.Register("Input", &InputTemplFactory{})
-	registry.Register("Textarea", &TextareaTemplFactory{})
-	registry.Register("Select", &SelectTemplFactory{})
-	registry.Register("Checkbox", &CheckboxTemplFactory{})
-	registry.Register("Radio", &RadioTemplFactory{})
+	r.register("Button", &buttonFactory{})
+	r.register("Input", &inputFactory{})
+	r.register("Textarea", &textareaFactory{})
+	r.register("Select", &selectFactory{})
+	r.register("Checkbox", &checkboxFactory{})
+	r.register("Radio", &radioFactory{})
 
-	return registry
+	return r
 }
 
-// Register registers a Templ component factory
-func (r *TemplRegistry) Register(componentType string, factory TemplComponentFactory) {
+func (r *TemplRegistry) register(typ string, f Factory) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	r.factories[componentType] = factory
+	r.factories[typ] = f
 }
 
-// Create creates a Templ component using the registered factory
-func (r *TemplRegistry) Create(ctx context.Context, componentType string, config map[string]any) (TemplComponent, error) {
+func (r *TemplRegistry) Create(ctx context.Context, typ string, config map[string]any) (TemplComponent, error) {
 	r.mu.RLock()
-	factory, exists := r.factories[componentType]
+	factory, exists := r.factories[typ]
 	r.mu.RUnlock()
 
 	if !exists {
-		return TemplComponent{}, fmt.Errorf("no factory registered for Templ component type: %s", componentType)
+		return TemplComponent{}, fmt.Errorf("no factory for type: %s", typ)
 	}
 
 	return factory.Create(ctx, config)
 }
 
 // ============================================================================
-// TEMPL COMPONENT FACTORIES
+// COMPONENT FACTORIES
 // ============================================================================
 
-// ButtonTemplFactory creates Button Templ components
-type ButtonTemplFactory struct{}
+type buttonFactory struct{}
 
-func (f *ButtonTemplFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
-	props := atoms.ButtonProps{}
-	
-	if text, ok := config["text"].(string); ok {
-		props.Text = text
-	}
-	if icon, ok := config["icon"].(string); ok {
-		props.Icon = icon
-	}
-	if variant, ok := config["variant"].(string); ok {
-		props.Variant = atoms.ButtonVariant(variant)
-	}
-	if size, ok := config["size"].(string); ok {
-		props.Size = atoms.ButtonSize(size)
-	}
-	if disabled, ok := config["disabled"].(bool); ok {
-		props.Disabled = disabled
+func (f *buttonFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
+	props := atoms.ButtonProps{
+		Text:     getString(config, "text"),
+		Icon:     getString(config, "icon"),
+		Variant:  atoms.ButtonVariant(getString(config, "variant")),
+		Size:     atoms.ButtonSize(getString(config, "size")),
+		Disabled: getBool(config, "disabled"),
 	}
 
-	return TemplComponent{
-		Type:  "Button",
-		Props: props,
-	}, nil
+	return TemplComponent{Type: "Button", Props: props}, nil
 }
 
-func (f *ButtonTemplFactory) Validate(ctx context.Context, component TemplComponent) error {
+func (f *buttonFactory) Validate(ctx context.Context, component TemplComponent) error {
 	if component.Type != "Button" {
-		return fmt.Errorf("invalid component type for ButtonTemplFactory: %s", component.Type)
+		return fmt.Errorf("expected Button, got %s", component.Type)
 	}
-	
+
 	props, ok := component.Props.(atoms.ButtonProps)
 	if !ok {
-		return fmt.Errorf("invalid props type for Button component")
+		return fmt.Errorf("invalid props type")
 	}
-	
+
 	if props.Text == "" && props.Icon == "" {
-		return fmt.Errorf("button must have either text or icon")
+		return fmt.Errorf("button requires text or icon")
 	}
-	
+
 	return nil
 }
 
-// InputTemplFactory creates Input Templ components
-type InputTemplFactory struct{}
+type inputFactory struct{}
 
-func (f *InputTemplFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
-	props := atoms.InputProps{}
-	
-	if inputType, ok := config["type"].(string); ok {
-		props.Type = inputType
-	}
-	if name, ok := config["name"].(string); ok {
-		props.Name = name
-	}
-	if placeholder, ok := config["placeholder"].(string); ok {
-		props.Placeholder = placeholder
-	}
-	if required, ok := config["required"].(bool); ok {
-		props.Required = required
-	}
-	if disabled, ok := config["disabled"].(bool); ok {
-		props.Disabled = disabled
+func (f *inputFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
+	props := atoms.InputProps{
+		Type:        stringToAtomsInputType(getString(config, "type")),
+		Name:        getString(config, "name"),
+		Placeholder: getString(config, "placeholder"),
+		Required:    getBool(config, "required"),
+		Disabled:    getBool(config, "disabled"),
 	}
 
-	return TemplComponent{
-		Type:  "Input",
-		Props: props,
-	}, nil
+	return TemplComponent{Type: "Input", Props: props}, nil
 }
 
-func (f *InputTemplFactory) Validate(ctx context.Context, component TemplComponent) error {
+func (f *inputFactory) Validate(ctx context.Context, component TemplComponent) error {
 	if component.Type != "Input" {
-		return fmt.Errorf("invalid component type for InputTemplFactory: %s", component.Type)
+		return fmt.Errorf("expected Input, got %s", component.Type)
 	}
-	
+
 	props, ok := component.Props.(atoms.InputProps)
 	if !ok {
-		return fmt.Errorf("invalid props type for Input component")
+		return fmt.Errorf("invalid props type")
 	}
-	
+
 	if props.Name == "" {
-		return fmt.Errorf("input must have a name")
+		return fmt.Errorf("input requires name")
 	}
-	
+
 	return nil
 }
 
-// TextareaTemplFactory creates Textarea Templ components
-type TextareaTemplFactory struct{}
+type textareaFactory struct{}
 
-func (f *TextareaTemplFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
-	props := atoms.TextareaProps{}
-	
-	if name, ok := config["name"].(string); ok {
-		props.Name = name
-	}
-	if placeholder, ok := config["placeholder"].(string); ok {
-		props.Placeholder = placeholder
-	}
-	if rows, ok := config["rows"].(int); ok {
-		props.Rows = rows
-	}
-	if required, ok := config["required"].(bool); ok {
-		props.Required = required
-	}
-	if disabled, ok := config["disabled"].(bool); ok {
-		props.Disabled = disabled
+func (f *textareaFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
+	props := atoms.TextareaProps{
+		Name:        getString(config, "name"),
+		Placeholder: getString(config, "placeholder"),
+		Rows:        getInt(config, "rows"),
+		Required:    getBool(config, "required"),
+		Disabled:    getBool(config, "disabled"),
 	}
 
-	return TemplComponent{
-		Type:  "Textarea",
-		Props: props,
-	}, nil
+	return TemplComponent{Type: "Textarea", Props: props}, nil
 }
 
-func (f *TextareaTemplFactory) Validate(ctx context.Context, component TemplComponent) error {
+func (f *textareaFactory) Validate(ctx context.Context, component TemplComponent) error {
 	if component.Type != "Textarea" {
-		return fmt.Errorf("invalid component type for TextareaTemplFactory: %s", component.Type)
+		return fmt.Errorf("expected Textarea, got %s", component.Type)
 	}
-	
+
 	props, ok := component.Props.(atoms.TextareaProps)
 	if !ok {
-		return fmt.Errorf("invalid props type for Textarea component")
+		return fmt.Errorf("invalid props type")
 	}
-	
+
 	if props.Name == "" {
-		return fmt.Errorf("textarea must have a name")
+		return fmt.Errorf("textarea requires name")
 	}
-	
+
 	return nil
 }
 
-// SelectTemplFactory creates Select Templ components
-type SelectTemplFactory struct{}
+type selectFactory struct{}
 
-func (f *SelectTemplFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
-	props := atoms.SelectProps{}
-	
-	if name, ok := config["name"].(string); ok {
-		props.Name = name
-	}
-	if placeholder, ok := config["placeholder"].(string); ok {
-		props.Placeholder = placeholder
-	}
-	if multiple, ok := config["multiple"].(bool); ok {
-		props.Multiple = multiple
-	}
-	if required, ok := config["required"].(bool); ok {
-		props.Required = required
-	}
-	if disabled, ok := config["disabled"].(bool); ok {
-		props.Disabled = disabled
+func (f *selectFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
+	props := atoms.SelectProps{
+		Name:        getString(config, "name"),
+		Placeholder: getString(config, "placeholder"),
+		Multiple:    getBool(config, "multiple"),
+		Required:    getBool(config, "required"),
+		Disabled:    getBool(config, "disabled"),
+		Options:     parseSelectOptions(config["options"]),
 	}
 
-	// Handle options
-	if optionsData, ok := config["options"].([]map[string]any); ok {
-		var options []atoms.SelectOption
-		for _, optionData := range optionsData {
-			option := atoms.SelectOption{}
-			if value, ok := optionData["value"].(string); ok {
-				option.Value = value
-			}
-			if label, ok := optionData["label"].(string); ok {
-				option.Label = label
-			}
-			if disabled, ok := optionData["disabled"].(bool); ok {
-				option.Disabled = disabled
-			}
-			options = append(options, option)
-		}
-		props.Options = options
-	}
-
-	return TemplComponent{
-		Type:  "Select",
-		Props: props,
-	}, nil
+	return TemplComponent{Type: "Select", Props: props}, nil
 }
 
-func (f *SelectTemplFactory) Validate(ctx context.Context, component TemplComponent) error {
+func (f *selectFactory) Validate(ctx context.Context, component TemplComponent) error {
 	if component.Type != "Select" {
-		return fmt.Errorf("invalid component type for SelectTemplFactory: %s", component.Type)
+		return fmt.Errorf("expected Select, got %s", component.Type)
 	}
-	
+
 	props, ok := component.Props.(atoms.SelectProps)
 	if !ok {
-		return fmt.Errorf("invalid props type for Select component")
+		return fmt.Errorf("invalid props type")
 	}
-	
+
 	if props.Name == "" {
-		return fmt.Errorf("select must have a name")
+		return fmt.Errorf("select requires name")
 	}
-	
+
 	if len(props.Options) == 0 {
-		return fmt.Errorf("select must have at least one option")
+		return fmt.Errorf("select requires at least one option")
 	}
-	
+
 	return nil
 }
 
-// CheckboxTemplFactory creates Checkbox Templ components
-type CheckboxTemplFactory struct{}
+type checkboxFactory struct{}
 
-func (f *CheckboxTemplFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
-	props := atoms.CheckboxProps{}
-	
-	if name, ok := config["name"].(string); ok {
-		props.Name = name
-	}
-	if label, ok := config["label"].(string); ok {
-		props.Label = label
-	}
-	if checked, ok := config["checked"].(bool); ok {
-		props.Checked = checked
-	}
-	if required, ok := config["required"].(bool); ok {
-		props.Required = required
-	}
-	if disabled, ok := config["disabled"].(bool); ok {
-		props.Disabled = disabled
+func (f *checkboxFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
+	props := atoms.CheckboxProps{
+		Name:     getString(config, "name"),
+		Label:    getString(config, "label"),
+		Checked:  getBool(config, "checked"),
+		Required: getBool(config, "required"),
+		Disabled: getBool(config, "disabled"),
 	}
 
-	return TemplComponent{
-		Type:  "Checkbox",
-		Props: props,
-	}, nil
+	return TemplComponent{Type: "Checkbox", Props: props}, nil
 }
 
-func (f *CheckboxTemplFactory) Validate(ctx context.Context, component TemplComponent) error {
+func (f *checkboxFactory) Validate(ctx context.Context, component TemplComponent) error {
 	if component.Type != "Checkbox" {
-		return fmt.Errorf("invalid component type for CheckboxTemplFactory: %s", component.Type)
+		return fmt.Errorf("expected Checkbox, got %s", component.Type)
 	}
-	
+
 	props, ok := component.Props.(atoms.CheckboxProps)
 	if !ok {
-		return fmt.Errorf("invalid props type for Checkbox component")
+		return fmt.Errorf("invalid props type")
 	}
-	
+
 	if props.Name == "" {
-		return fmt.Errorf("checkbox must have a name")
+		return fmt.Errorf("checkbox requires name")
 	}
-	
+
 	return nil
 }
 
-// RadioTemplFactory creates Radio Templ components
-type RadioTemplFactory struct{}
+type radioFactory struct{}
 
-func (f *RadioTemplFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
-	props := atoms.RadioProps{}
-	
-	if name, ok := config["name"].(string); ok {
-		props.Name = name
-	}
-	if value, ok := config["value"].(string); ok {
-		props.Value = value
-	}
-	if inline, ok := config["inline"].(bool); ok {
-		props.Inline = inline
-	}
-	if required, ok := config["required"].(bool); ok {
-		props.Required = required
-	}
-	if disabled, ok := config["disabled"].(bool); ok {
-		props.Disabled = disabled
+func (f *radioFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
+	layout := "vertical"
+	if getBool(config, "inline") {
+		layout = "horizontal"
 	}
 
-	// Handle options
-	if optionsData, ok := config["options"].([]map[string]any); ok {
-		var options []atoms.RadioOption
-		for _, optionData := range optionsData {
-			option := atoms.RadioOption{}
-			if value, ok := optionData["value"].(string); ok {
-				option.Value = value
-			}
-			if label, ok := optionData["label"].(string); ok {
-				option.Label = label
-			}
-			if disabled, ok := optionData["disabled"].(bool); ok {
-				option.Disabled = disabled
-			}
-			options = append(options, option)
-		}
-		props.Options = options
+	props := atoms.RadioGroupProps{
+		Name:     getString(config, "name"),
+		Value:    getString(config, "value"),
+		Layout:   layout,
+		Required: getBool(config, "required"),
+		Disabled: getBool(config, "disabled"),
+		Options:  parseRadioOptions(config["options"]),
 	}
 
-	return TemplComponent{
-		Type:  "Radio",
-		Props: props,
-	}, nil
+	return TemplComponent{Type: "RadioGroup", Props: props}, nil
 }
 
-func (f *RadioTemplFactory) Validate(ctx context.Context, component TemplComponent) error {
-	if component.Type != "Radio" {
-		return fmt.Errorf("invalid component type for RadioTemplFactory: %s", component.Type)
+func (f *radioFactory) Validate(ctx context.Context, component TemplComponent) error {
+	if component.Type != "RadioGroup" {
+		return fmt.Errorf("expected RadioGroup, got %s", component.Type)
 	}
-	
-	props, ok := component.Props.(atoms.RadioProps)
+
+	props, ok := component.Props.(atoms.RadioGroupProps)
 	if !ok {
-		return fmt.Errorf("invalid props type for Radio component")
+		return fmt.Errorf("invalid props type")
 	}
-	
+
 	if props.Name == "" {
-		return fmt.Errorf("radio must have a name")
+		return fmt.Errorf("radio requires name")
 	}
-	
+
 	if len(props.Options) == 0 {
-		return fmt.Errorf("radio must have at least one option")
+		return fmt.Errorf("radio requires at least one option")
 	}
-	
+
 	return nil
 }
+
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+func stringToAtomsInputType(inputType string) atoms.InputType {
+	switch inputType {
+	case "email":
+		return atoms.InputEmail
+	case "password":
+		return atoms.InputPassword
+	case "number":
+		return atoms.InputNumber
+	case "tel":
+		return atoms.InputTel
+	case "url":
+		return atoms.InputURL
+	case "search":
+		return atoms.InputSearch
+	default:
+		return atoms.InputText
+	}
+}
+
+func getString(config map[string]any, key string) string {
+	if v, ok := config[key].(string); ok {
+		return v
+	}
+	return ""
+}
+
+func getBool(config map[string]any, key string) bool {
+	if v, ok := config[key].(bool); ok {
+		return v
+	}
+	return false
+}
+
+func getInt(config map[string]any, key string) int {
+	if v, ok := config[key].(int); ok {
+		return v
+	}
+	return 0
+}
+
+func parseSelectOptions(data any) []atoms.SelectOption {
+	optionsData, ok := data.([]map[string]any)
+	if !ok {
+		return nil
+	}
+
+	options := make([]atoms.SelectOption, 0, len(optionsData))
+	for _, opt := range optionsData {
+		options = append(options, atoms.SelectOption{
+			Value:    getString(opt, "value"),
+			Label:    getString(opt, "label"),
+			Disabled: getBool(opt, "disabled"),
+		})
+	}
+
+	return options
+}
+
+func parseRadioOptions(data any) []atoms.RadioOption {
+	optionsData, ok := data.([]map[string]any)
+	if !ok {
+		return nil
+	}
+
+	options := make([]atoms.RadioOption, 0, len(optionsData))
+	for _, opt := range optionsData {
+		options = append(options, atoms.RadioOption{
+			Value:    getString(opt, "value"),
+			Label:    getString(opt, "label"),
+			Disabled: getBool(opt, "disabled"),
+		})
+	}
+
+	return options
+}
+

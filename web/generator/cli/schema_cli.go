@@ -18,12 +18,11 @@ import (
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/niiniyare/erp/web/engine"
-	"github.com/niiniyare/erp/web/layouts"
 	"github.com/niiniyare/erp/web/schemas"
 )
 
-// CLI configuration structure
-type CLIConfig struct {
+// Schema CLI configuration structure
+type SchemaCLIConfig struct {
 	// Input options
 	File     string
 	Package  string
@@ -53,13 +52,13 @@ type CLIConfig struct {
 
 // Generator state
 type SchemaGenerator struct {
-	config     CLIConfig
+	config     SchemaCLIConfig
 	registry   *engine.SchemaComponentRegistry
 	fileSet    *token.FileSet
 	cache      map[string]time.Time // File modification cache
 }
 
-func main() {
+func schemaMain() {
 	config := parseFlags()
 	
 	if config.Verbose {
@@ -81,8 +80,8 @@ func main() {
 	}
 }
 
-func parseFlags() CLIConfig {
-	var config CLIConfig
+func parseFlags() SchemaCLIConfig {
+	var config SchemaCLIConfig
 	
 	// Input flags
 	flag.StringVar(&config.File, "file", "", "Input Go file to analyze")
@@ -120,7 +119,7 @@ func parseFlags() CLIConfig {
 	return config
 }
 
-func NewSchemaGenerator(config CLIConfig) *SchemaGenerator {
+func NewSchemaGenerator(config SchemaCLIConfig) *SchemaGenerator {
 	return &SchemaGenerator{
 		config:   config,
 		registry: engine.NewSchemaComponentRegistry(),
@@ -381,7 +380,7 @@ func (g *SchemaGenerator) processStruct(structName string, structType *ast.Struc
 		
 		// Create component schema using registry
 		fieldType := reflect.TypeOf("")  // Simplified - would need proper type resolution
-		component, err := g.registry.ResolveFromTags(componentType, fieldName, fieldType, tags, context.Background())
+		_, err := g.registry.ResolveFromTags(componentType, fieldName, fieldType, tags, context.Background())
 		if err != nil {
 			if g.config.Verbose {
 				log.Printf("Warning: Failed to resolve component for field %s: %v", fieldName, err)

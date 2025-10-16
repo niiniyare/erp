@@ -86,6 +86,18 @@ func (f *Factory) GetDataTypeInfo(dataTypeName string) map[string]any {
 	return f.propertyRegistry.GetDataTypeInfo(dataTypeName)
 }
 
+// GenerateCSS generates CSS string from styles configuration
+func (f *Factory) GenerateCSS(styles Styles) (string, error) {
+	// Validate the styles first
+	if err := styles.Validate(); err != nil {
+		return "", fmt.Errorf("style validation failed: %w", err)
+	}
+	
+	// Generate CSS using the ToCSS method
+	cssOutput := styles.ToCSS()
+	return cssOutput, nil
+}
+
 // CSS Property Categorization methods
 
 // GetPropertyCategory returns the category for a CSS property

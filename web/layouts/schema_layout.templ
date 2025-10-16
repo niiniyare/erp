@@ -3,7 +3,6 @@ package layouts
 import (
 	"encoding/json"
 	"github.com/niiniyare/erp/web/schemas"
-	"github.com/niiniyare/erp/web/engine"
 )
 
 // LayoutSchema defines the schema structure for layout generation
@@ -103,13 +102,6 @@ type FooterConfig struct {
 	Links       []FooterLink      `json:"links,omitempty"`
 }
 
-// FooterLink represents a footer link
-type FooterLink struct {
-	Label  string `json:"label"`
-	URL    string `json:"url"`
-	Target string `json:"target,omitempty"`
-}
-
 // BrandingConfig defines branding elements
 type BrandingConfig struct {
 	Name        string `json:"name"`
@@ -138,32 +130,32 @@ type SlotCondition struct {
 }
 
 // LayoutFromSchema creates a layout component from schema definition
-templ LayoutFromSchema(schema LayoutSchema, registry *engine.SchemaComponentRegistry, content templ.Component) {
+templ LayoutFromSchema(schema LayoutSchema, content templ.Component) {
 	switch schema.Layout.Template {
 		case "app":
-			@AppLayoutFromSchema(schema, registry, content)
+			@AppLayoutFromSchema(schema, content)
 		case "auth":
-			@AuthLayoutFromSchema(schema, registry, content)
+			@AuthLayoutFromSchema(schema, content)
 		case "minimal":
-			@MinimalLayoutFromSchema(schema, registry, content)
+			@MinimalLayoutFromSchema(schema, content)
 		default:
-			@AppLayoutFromSchema(schema, registry, content)
+			@AppLayoutFromSchema(schema, content)
 	}
 }
 
 // AppLayoutFromSchema creates an app layout from schema
-templ AppLayoutFromSchema(schema LayoutSchema, registry *engine.SchemaComponentRegistry, content templ.Component) {
+templ AppLayoutFromSchema(schema LayoutSchema, content templ.Component) {
 	// Convert schema to traditional AppLayoutProps for backward compatibility
 	@AppLayout(convertSchemaToAppProps(schema), content)
 }
 
 // AuthLayoutFromSchema creates an auth layout from schema  
-templ AuthLayoutFromSchema(schema LayoutSchema, registry *engine.SchemaComponentRegistry, content templ.Component) {
+templ AuthLayoutFromSchema(schema LayoutSchema, content templ.Component) {
 	@AuthLayout(convertSchemaToAuthProps(schema), content)
 }
 
 // MinimalLayoutFromSchema creates a minimal layout from schema
-templ MinimalLayoutFromSchema(schema LayoutSchema, registry *engine.SchemaComponentRegistry, content templ.Component) {
+templ MinimalLayoutFromSchema(schema LayoutSchema, content templ.Component) {
 	@MinimalLayout(convertSchemaToMinimalProps(schema), content)
 }
 

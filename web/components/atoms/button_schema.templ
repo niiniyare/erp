@@ -12,6 +12,8 @@ type ButtonSchema struct {
 	UITags    ButtonUITags    `json:"uiTags"`
 	FormTags  ButtonFormTags  `json:"formTags"`
 	TableTags ButtonTableTags `json:"tableTags"`
+	Class     string          `json:"class,omitempty"`     // Additional CSS classes
+	Disabled  bool            `json:"disabled,omitempty"`  // Disabled state
 }
 
 // ButtonUITags represents ui: tag configuration
@@ -27,6 +29,8 @@ type ButtonUITags struct {
 	Help        string `json:"help,omitempty"`      // Help text/tooltip
 	Loading     bool   `json:"loading,omitempty"`   // Show loading state
 	Pill        bool   `json:"pill,omitempty"`      // Rounded full
+	Class       string `json:"class,omitempty"`     // Additional CSS classes
+	Disabled    bool   `json:"disabled,omitempty"`  // Disabled state
 }
 
 // ButtonFormTags represents form: tag configuration
