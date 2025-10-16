@@ -5,10 +5,12 @@ package atoms
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
+import (
+	"strings"
 
-import "strings"
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
+)
 
 // RadioSize defines the size of the radio button
 type RadioSize string
@@ -31,8 +33,9 @@ const (
 // RadioProps defines the properties for the Radio component
 type RadioProps struct {
 	// Content
-	Label     string `json:"label,omitempty"`
-	Value     string `json:"value"`
+	Label string `json:"label,omitempty"`
+	Value string `json:"value"`
+
 	HelpText  string `json:"helpText,omitempty"`
 	ErrorText string `json:"errorText,omitempty"`
 
@@ -115,7 +118,7 @@ func Radio(props RadioProps) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var2 = []any{getRadioWrapperClasses(props)}
+		templ_7745c5c3_Var2 := []any{getRadioWrapperClasses(props)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -138,7 +141,7 @@ func Radio(props RadioProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if props.LabelPosition == "left" && props.Label != "" {
-			var templ_7745c5c3_Var4 = []any{getRadioLabelClasses(props, "left")}
+			templ_7745c5c3_Var4 := []any{getRadioLabelClasses(props, "left")}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var4...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -207,7 +210,7 @@ func Radio(props RadioProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		var templ_7745c5c3_Var8 = []any{getRadioClasses(props)}
+		templ_7745c5c3_Var8 := []any{getRadioClasses(props)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var8...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -415,7 +418,7 @@ func Radio(props RadioProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if props.LabelPosition != "left" && props.Label != "" {
-			var templ_7745c5c3_Var19 = []any{getRadioLabelClasses(props, "right")}
+			templ_7745c5c3_Var19 := []any{getRadioLabelClasses(props, "right")}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var19...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -524,7 +527,7 @@ func RadioGroup(props RadioGroupProps) templ.Component {
 			templ_7745c5c3_Var23 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var24 = []any{getRadioGroupClasses(props)}
+		templ_7745c5c3_Var24 := []any{getRadioGroupClasses(props)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var24...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -575,7 +578,7 @@ func RadioGroup(props RadioGroupProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		var templ_7745c5c3_Var27 = []any{getRadioGroupLayoutClasses(props.Layout)}
+		templ_7745c5c3_Var27 := []any{getRadioGroupLayoutClasses(props.Layout)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var27...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err

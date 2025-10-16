@@ -10,43 +10,43 @@ import (
 // DemoStyledComponents demonstrates the complete CSS integration system
 func DemoStyledComponents() {
 	schemaDir := "../../../docs/ui/Schema"
-	
+
 	fmt.Println("=== ERP UI Schema with CSS Integration Demo ===")
-	
+
 	// 1. Create a styled login form
 	loginForm := createStyledLoginForm(schemaDir)
 	fmt.Println("1. Styled Login Form:")
 	printComponentInfo(loginForm)
 	fmt.Println()
-	
+
 	// 2. Create a styled dashboard card
 	dashboardCard := createStyledDashboardCard(schemaDir)
 	fmt.Println("2. Styled Dashboard Card:")
 	printComponentInfo(dashboardCard)
 	fmt.Println()
-	
+
 	// 3. Create a styled data table
 	dataTable := createStyledDataTable(schemaDir)
 	fmt.Println("3. Styled Data Table:")
 	printComponentInfo(dataTable)
 	fmt.Println()
-	
+
 	// 4. Create responsive layout
 	responsiveLayout := createResponsiveLayout(schemaDir)
 	fmt.Println("4. Responsive Layout:")
 	printComponentInfo(responsiveLayout)
 	fmt.Println()
-	
+
 	// 5. Demonstrate theme-aware components
 	darkModeCard := createThemeAwareCard("dark", schemaDir)
 	fmt.Println("5. Dark Mode Card:")
 	printComponentInfo(darkModeCard)
 	fmt.Println()
-	
+
 	// 6. Validate all components
 	fmt.Println("6. Component Validation:")
 	validateComponents([]Component{loginForm, dashboardCard, dataTable, responsiveLayout, darkModeCard}, schemaDir)
-	
+
 	// 7. Generate stylesheet
 	fmt.Println("\n7. Generated Stylesheet:")
 	stylesheet := GenerateStylesheet([]Component{loginForm, dashboardCard, dataTable})
@@ -75,7 +75,7 @@ func createStyledLoginForm(schemaDir string) Component {
 					Message:  "Please enter a valid email address",
 				}).
 				Build(),
-			
+
 			// Password input with custom styling
 			CreateStyledInput("password", "password", "default", schemaDir).
 				WithLabel("Password").
@@ -88,13 +88,13 @@ func createStyledLoginForm(schemaDir string) Component {
 					Message:   "Password must be at least 8 characters",
 				}).
 				Build(),
-			
+
 			// Submit button with primary styling
 			CreateStyledButton("login-btn", "Sign In", "primary", schemaDir).
 				WithCustomCSS("width", "100%").
 				WithCustomCSS("margin-top", "1rem").
 				Build(),
-			
+
 			// Link for forgot password
 			CreateStyledButton("forgot-link", "Forgot Password?", "outline", schemaDir).
 				WithCustomCSS("width", "100%").
@@ -107,13 +107,13 @@ func createStyledLoginForm(schemaDir string) Component {
 // createStyledDashboardCard creates a dashboard statistics card
 func createStyledDashboardCard(schemaDir string) Component {
 	factory := css.NewFactory(schemaDir)
-	
+
 	// Custom card styling with hover effects
 	cardStyles := factory.CardStyles("md").
 		WithPadding("1.5rem").
 		WithCustomProperty("transition", "transform 0.2s ease-in-out").
 		WithCustomProperty("--hover-transform", "translateY(-2px)")
-	
+
 	return NewComponent(ComponentCard, "stats-card").
 		WithLabel("Revenue Stats").
 		WithStyles(cardStyles).
@@ -127,14 +127,14 @@ func createStyledDashboardCard(schemaDir string) Component {
 						WithCustomCSS("font-size", "1.25rem").
 						WithCustomCSS("font-weight", "600").
 						Build(),
-					
+
 					NewComponent(ComponentBadge, "trend-badge").
 						WithLabel("+12%").
 						WithStyledVariant("success", schemaDir).
 						Build(),
 				).
 				Build(),
-			
+
 			// Card content
 			NewComponent(ComponentContainer, "card-content").
 				WithCustomCSS("margin-top", "1rem").
@@ -145,7 +145,7 @@ func createStyledDashboardCard(schemaDir string) Component {
 						WithCustomCSS("font-weight", "700").
 						WithCustomCSS("color", "#1f2937").
 						Build(),
-					
+
 					NewComponent(ComponentContainer, "revenue-description").
 						WithLabel("Compared to last month").
 						WithCustomCSS("color", "#6b7280").
@@ -161,11 +161,11 @@ func createStyledDashboardCard(schemaDir string) Component {
 func createStyledDataTable(schemaDir string) Component {
 	columns := []TableColumn{
 		{
-			Key:        "id",
-			Title:      "ID",
-			DataType:   DataTypeNumber,
-			Width:      "80px",
-			Sortable:   true,
+			Key:      "id",
+			Title:    "ID",
+			DataType: DataTypeNumber,
+			Width:    "80px",
+			Sortable: true,
 		},
 		{
 			Key:        "name",
@@ -196,19 +196,19 @@ func createStyledDataTable(schemaDir string) Component {
 		{
 			Key:      "actions",
 			Title:    "Actions",
-			DataType: DataTypeAction,
+			DataType: DataTypeActions,
 			Width:    "120px",
 		},
 	}
-	
+
 	return CreateStyledTable("orders-table", columns, "hover", schemaDir).
 		WithLabel("Customer Orders").
 		WithCustomCSS("box-shadow", "0 1px 3px rgba(0, 0, 0, 0.1)").
 		WithCustomCSS("border-radius", "8px").
 		WithCustomCSS("overflow", "hidden").
 		WithConfig(TableConfig{
-			Columns:     columns,
-			DataSource:  "/api/orders",
+			Columns:      columns,
+			DataSource:   "/api/orders",
 			EmptyMessage: "No orders found",
 			Pagination: &Pagination{
 				PageSize:        25,
@@ -263,7 +263,7 @@ func createStyledDataTable(schemaDir string) Component {
 // createResponsiveLayout creates a responsive grid layout
 func createResponsiveLayout(schemaDir string) Component {
 	factory := css.NewFactory(schemaDir)
-	
+
 	// Responsive grid that adapts to screen size
 	layoutStyles := factory.ResponsiveStyles().
 		Base(factory.GridStyles("1fr", "1rem")).
@@ -278,7 +278,7 @@ func createResponsiveLayout(schemaDir string) Component {
 			s.WithGridGap("1.5rem")
 		}).
 		Build()
-	
+
 	return NewComponent(ComponentContainer, "responsive-grid").
 		WithLabel("Responsive Dashboard Grid").
 		WithStyles(layoutStyles).
@@ -294,13 +294,13 @@ func createResponsiveLayout(schemaDir string) Component {
 // createThemeAwareCard creates a card that adapts to light/dark themes
 func createThemeAwareCard(theme, schemaDir string) Component {
 	factory := css.NewFactory(schemaDir)
-	
+
 	themeStyles := factory.ThemeStyles(theme).
 		Primary("#1f2937", "#f9fafb").
 		Background("#ffffff", "#1f2937").
 		Border("#e5e7eb", "#374151").
 		Build()
-	
+
 	return NewComponent(ComponentCard, "theme-card").
 		WithLabel("Theme-Aware Card").
 		WithStyles(themeStyles).
@@ -317,7 +317,7 @@ func createThemeAwareCard(theme, schemaDir string) Component {
 func validateComponents(components []Component, schemaDir string) {
 	registry := NewMockRegistry()
 	ctx := context.Background()
-	
+
 	for _, component := range components {
 		errors := ValidateComponentWithStyles(ctx, registry, component, schemaDir)
 		if len(errors) == 0 {
@@ -335,14 +335,14 @@ func validateComponents(components []Component, schemaDir string) {
 func printComponentInfo(component Component) {
 	fmt.Printf("Component: %s (%s)\n", component.ID, component.Type)
 	fmt.Printf("Label: %s\n", component.Label)
-	
+
 	if component.Styles != nil {
 		css := component.Styles.ToCSS()
 		if css != "" {
 			fmt.Printf("CSS: %s\n", css[:min(100, len(css))]+"...")
 		}
 	}
-	
+
 	fmt.Printf("Children: %d\n", len(component.Children))
 }
 
@@ -365,5 +365,6 @@ func (m *mockRegistry) Register(componentType ComponentType, factory ComponentFa
 func (m *mockRegistry) Create(ctx context.Context, componentType ComponentType, config map[string]any) (Component, error) {
 	return Component{}, nil
 }
-func (m *mockRegistry) GetTypes() []ComponentType { return []ComponentType{} }
+func (m *mockRegistry) GetTypes() []ComponentType                               { return []ComponentType{} }
 func (m *mockRegistry) Validate(ctx context.Context, component Component) error { return nil }
+

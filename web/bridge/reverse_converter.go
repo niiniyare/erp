@@ -7,415 +7,463 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	schemaui "github.com/niiniyare/erp/pkg/schema/ui"
 	"github.com/niiniyare/erp/web/components/atoms"
-	"github.com/google/uuid"
 )
 
 // ============================================================================
 // TEMPL TO SCHEMA CONVERSION
 // ============================================================================
 
-// ConvertTemplToSchema converts Templ component props to equivalent schema component
-func (b *Bridge) ConvertTemplToSchema(ctx context.Context, templComponent TemplComponent) (schemaui.Component, error) {
-	switch templComponent.Type {
-	case "Button":
-		return b.convertTemplButtonToSchema(templComponent.Props.(atoms.ButtonProps))
-	case "Input":
-		return b.convertTemplInputToSchema(templComponent.Props.(atoms.InputProps))
-	case "Textarea":
-		return b.convertTemplTextareaToSchema(templComponent.Props.(atoms.TextareaProps))
-	case "Select":
-		return b.convertTemplSelectToSchema(templComponent.Props.(atoms.SelectProps))
-	case "Checkbox":
-		return b.convertTemplCheckboxToSchema(templComponent.Props.(atoms.CheckboxProps))
-	case "Radio":
-		return b.convertTemplRadioToSchema(templComponent.Props.(atoms.RadioProps))
+// reverseConverter defines the interface for Templ to Schema conversion.
+type reverseConverter func(any) (schemaui.Component, error)
+
+// reverseConverters holds the registered reverse converters.
+var reverseConverters = map[string]reverseConverter{
+	"Button":   convertButtonToSchema,
+	"Input":    convertInputToSchema,
+	"Textarea": convertTextareaToSchema,
+	"Select":   convertSelectToSchema,
+	"Checkbox": convertCheckboxToSchema,
+	"Radio":    convertRadioToSchema,
+}
+
+// ConvertTemplToSchema converts a Templ component to its schema equivalent.
+func (b *Bridge) ConvertTemplToSchema(ctx context.Context, component TemplComponent) (schemaui.Component, error) {
+	converter, exists := reverseConverters[component.Type]
+	if !exists {
+		return schemaui.Component{}, fmt.Errorf("unsupported Templ component: %s", component.Type)
+	}
+
+	return converter(component.Props)
+}
+
+// ConvertBatchToSchema converts multiple Templ components to schema components.
+func (b *Bridge) ConvertBatchToSchema(ctx context.Context, components []TemplComponent) ([]schemaui.Component, error) {
+	result := make([]schemaui.Component, 0, len(components))
+
+	for i, component := range components {
+		converted, err := b.ConvertTemplToSchema(ctx, component)
+		if err != nil {
+			return nil, fmt.Errorf("component[%d] (type=%s): %w", i, component.Type, err)
+		}
+		result = append(result, converted)
+	}
+
+	return result, nil
+}
+
+// ============================================================================
+// BUTTON CONVERTER
+// ============================================================================
+
+func convertButtonToSchema(props any) (schemaui.Component, error) {
+	p, ok := props.(atoms.ButtonProps)
+	if !ok {
+		return schemaui.Component{}, fmt.Errorf("invalid props type for Button")
+	}
+
+	config := schemaui.ButtonConfig{
+		Text:         p.Text,
+		Icon:         p.Icon,
+		IconPosition: stringToPosition(p.IconPosition),
+		ButtonType:   stringToButtonType(p.Type),
+		Loading:      p.Loading,
+	}
+
+	return buildComponent(schemaui.ComponentButton, baseBuilder{
+		id:        p.ID,
+		label:     p.Text,
+		class:     p.Class,
+		size:      reverseConvertSize[atoms.ButtonSize](p.Size),
+		variant:   reverseConvertVariant(p.Variant),
+		disabled:  p.Disabled,
+		ariaLabel: p.AriaLabel,
+		onClick:   p.OnClick,
+	}, config)
+}
+
+// ============================================================================
+// INPUT CONVERTER
+// ============================================================================
+
+func convertInputToSchema(props any) (schemaui.Component, error) {
+	p, ok := props.(atoms.InputProps)
+	if !ok {
+		return schemaui.Component{}, fmt.Errorf("invalid props type for Input")
+	}
+
+	config := schemaui.InputConfig{
+		InputType:   stringToInputType(string(p.Type)),
+		Value:       p.Value,
+		Placeholder: p.Placeholder,
+		MaxLength:   p.MaxLength,
+		MinLength:   p.MinLength,
+		Pattern:     p.Pattern,
+	}
+
+	validator := buildValidator(p.Required, p.MinLength, p.MaxLength, p.Pattern)
+
+	return buildComponent(schemaui.ComponentInput, baseBuilder{
+		id:          p.ID,
+		name:        p.Name,
+		label:       p.Label,
+		placeholder: p.Placeholder,
+		class:       p.Class,
+		size:        reverseConvertSize[atoms.InputSize](p.Size),
+		disabled:    p.Disabled,
+		required:    p.Required,
+		readOnly:    p.ReadOnly,
+		ariaLabel:   p.AriaLabel,
+		onChange:    p.OnChange,
+		onFocus:     p.OnFocus,
+		onBlur:      p.OnBlur,
+		validator:   validator,
+	}, config)
+}
+
+// ============================================================================
+// TEXTAREA CONVERTER
+// ============================================================================
+
+func convertTextareaToSchema(props any) (schemaui.Component, error) {
+	p, ok := props.(atoms.TextareaProps)
+	if !ok {
+		return schemaui.Component{}, fmt.Errorf("invalid props type for Textarea")
+	}
+
+	config := schemaui.TextareaConfig{
+		Value:       p.Value,
+		Placeholder: p.Placeholder,
+		Rows:        p.Rows,
+		Cols:        p.Cols,
+		MaxLength:   p.MaxLength,
+		Resize:      fmt.Sprintf("%v", p.Resizable),
+	}
+
+	validator := buildValidator(p.Required, 0, p.MaxLength, "")
+
+	return buildComponent(schemaui.ComponentTextarea, baseBuilder{
+		id:          p.ID,
+		name:        p.Name,
+		label:       p.Label,
+		placeholder: p.Placeholder,
+		class:       p.Class,
+		size:        reverseConvertSize[atoms.TextareaSize](p.Size),
+		disabled:    p.Disabled,
+		required:    p.Required,
+		readOnly:    p.ReadOnly,
+		ariaLabel:   p.AriaLabel,
+		onChange:    p.OnChange,
+		onFocus:     p.OnFocus,
+		onBlur:      p.OnBlur,
+		validator:   validator,
+	}, config)
+}
+
+// ============================================================================
+// SELECT CONVERTER
+// ============================================================================
+
+func convertSelectToSchema(props any) (schemaui.Component, error) {
+	p, ok := props.(atoms.SelectProps)
+	if !ok {
+		return schemaui.Component{}, fmt.Errorf("invalid props type for Select")
+	}
+
+	options := make([]schemaui.Option, len(p.Options))
+	for i, opt := range p.Options {
+		options[i] = schemaui.Option{
+			Value:    opt.Value,
+			Label:    opt.Label,
+			Disabled: opt.Disabled,
+		}
+	}
+
+	config := schemaui.SelectConfig{
+		Options:     options,
+		Value:       p.Value,
+		Multiple:    p.Multiple,
+		Placeholder: p.Placeholder,
+	}
+
+	return buildComponent(schemaui.ComponentSelect, baseBuilder{
+		id:          p.ID,
+		name:        p.Name,
+		label:       p.Label,
+		placeholder: p.Placeholder,
+		class:       p.Class,
+		size:        reverseConvertSize[atoms.SelectSize](p.SelectSize),
+		disabled:    p.Disabled,
+		required:    p.Required,
+		ariaLabel:   p.AriaLabel,
+		onChange:    p.OnChange,
+	}, config)
+}
+
+// ============================================================================
+// CHECKBOX CONVERTER
+// ============================================================================
+
+func convertCheckboxToSchema(props any) (schemaui.Component, error) {
+	p, ok := props.(atoms.CheckboxProps)
+	if !ok {
+		return schemaui.Component{}, fmt.Errorf("invalid props type for Checkbox")
+	}
+
+	config := schemaui.CheckboxConfig{
+		Value:   p.Value == "true",
+		Label:   p.Label,
+		Checked: p.Checked,
+	}
+
+	return buildComponent(schemaui.ComponentCheckbox, baseBuilder{
+		id:        p.ID,
+		name:      p.Name,
+		label:     p.Label,
+		class:     p.Class,
+		size:      reverseConvertSize[atoms.CheckboxSize](p.Size),
+		disabled:  p.Disabled,
+		required:  p.Required,
+		ariaLabel: p.AriaLabel,
+		onChange:  p.OnChange,
+	}, config)
+}
+
+// ============================================================================
+// RADIO CONVERTER
+// ============================================================================
+
+func convertRadioToSchema(props any) (schemaui.Component, error) {
+	p, ok := props.(atoms.RadioGroupProps)
+	if !ok {
+		return schemaui.Component{}, fmt.Errorf("invalid props type for RadioGroup")
+	}
+
+	options := make([]schemaui.Option, len(p.Options))
+	for i, opt := range p.Options {
+		options[i] = schemaui.Option{
+			Value:    opt.Value,
+			Label:    opt.Label,
+			Disabled: opt.Disabled,
+		}
+	}
+
+	direction := p.Layout
+	if direction == "" {
+		direction = "vertical"
+	}
+
+	config := schemaui.RadioConfig{
+		Options:   options,
+		Value:     p.Value,
+		Direction: direction,
+	}
+
+	return buildComponent(schemaui.ComponentRadio, baseBuilder{
+		name:     p.Name,
+		label:    p.Label,
+		class:    p.Class,
+		size:     reverseConvertSize[atoms.RadioSize](p.Size),
+		disabled: p.Disabled,
+		required: p.Required,
+		onChange: p.OnChange,
+	}, config)
+}
+
+// ============================================================================
+// COMPONENT BUILDER
+// ============================================================================
+
+// baseBuilder holds common component properties for building schema components.
+type baseBuilder struct {
+	id          string
+	name        string
+	label       string
+	placeholder string
+	class       string
+	size        schemaui.Size
+	variant     schemaui.Variant
+	disabled    bool
+	required    bool
+	readOnly    bool
+	ariaLabel   string
+	onClick     string
+	onChange    string
+	onFocus     string
+	onBlur      string
+	validator   *schemaui.Validator
+}
+
+// buildComponent constructs a schema component from base properties and config.
+func buildComponent(typ schemaui.ComponentType, base baseBuilder, config any) (schemaui.Component, error) {
+	configBytes, err := json.Marshal(config)
+	if err != nil {
+		return schemaui.Component{}, fmt.Errorf("marshal config: %w", err)
+	}
+
+	id := base.id
+	if id == "" {
+		id = generateID(string(typ))
+	}
+
+	now := time.Now()
+	return schemaui.Component{
+		BaseComponent: schemaui.BaseComponent{
+			ID:          id,
+			Type:        typ,
+			Name:        base.name,
+			Label:       base.label,
+			Placeholder: base.placeholder,
+			Class:       base.class,
+			Size:        base.size,
+			Variant:     base.variant,
+			Disabled:    base.disabled,
+			Required:    base.required,
+			ReadOnly:    base.readOnly,
+			AriaLabel:   base.ariaLabel,
+			OnClick:     base.onClick,
+			OnChange:    base.onChange,
+			OnFocus:     base.onFocus,
+			OnBlur:      base.onBlur,
+			CreatedAt:   &now,
+			UpdatedAt:   &now,
+		},
+		Config:    configBytes,
+		Children:  []schemaui.Component{},
+		Validator: base.validator,
+	}, nil
+}
+
+// buildValidator creates a validator if any validation rules are present.
+func buildValidator(required bool, minLength, maxLength int, pattern string) *schemaui.Validator {
+	if !required && minLength == 0 && maxLength == 0 && pattern == "" {
+		return nil
+	}
+
+	v := &schemaui.Validator{
+		Required: required,
+		Pattern:  pattern,
+	}
+
+	if minLength > 0 {
+		v.MinLength = &minLength
+	}
+	if maxLength > 0 {
+		v.MaxLength = &maxLength
+	}
+
+	return v
+}
+
+// ============================================================================
+// REVERSE SIZE CONVERSION
+// ============================================================================
+
+// reverseConvertSize converts component-specific size types to schema size.
+func reverseConvertSize[T any](size T) schemaui.Size {
+	switch any(size).(type) {
+	case atoms.ButtonSize:
+		return reverseButtonSize(any(size).(atoms.ButtonSize))
+	case atoms.InputSize:
+		return reverseInputSize(any(size).(atoms.InputSize))
+	case atoms.TextareaSize:
+		return reverseTextareaSize(any(size).(atoms.TextareaSize))
+	case atoms.SelectSize:
+		return reverseSelectSize(any(size).(atoms.SelectSize))
+	case atoms.CheckboxSize:
+		return reverseCheckboxSize(any(size).(atoms.CheckboxSize))
+	case atoms.RadioSize:
+		return reverseRadioSize(any(size).(atoms.RadioSize))
 	default:
-		return schemaui.Component{}, fmt.Errorf("unsupported Templ component type: %s", templComponent.Type)
+		return schemaui.SizeMD
+	}
+}
+
+func reverseButtonSize(size atoms.ButtonSize) schemaui.Size {
+	switch size {
+	case atoms.ButtonSizeSM:
+		return schemaui.SizeSM
+	case atoms.ButtonSizeLG:
+		return schemaui.SizeLG
+	default:
+		return schemaui.SizeMD
+	}
+}
+
+func reverseInputSize(size atoms.InputSize) schemaui.Size {
+	switch size {
+	case atoms.InputSizeSM:
+		return schemaui.SizeSM
+	case atoms.InputSizeLG:
+		return schemaui.SizeLG
+	default:
+		return schemaui.SizeMD
+	}
+}
+
+func reverseTextareaSize(size atoms.TextareaSize) schemaui.Size {
+	switch size {
+	case atoms.TextareaSizeSM:
+		return schemaui.SizeSM
+	case atoms.TextareaSizeLG:
+		return schemaui.SizeLG
+	default:
+		return schemaui.SizeMD
+	}
+}
+
+func reverseSelectSize(size atoms.SelectSize) schemaui.Size {
+	switch size {
+	case atoms.SelectSizeSM:
+		return schemaui.SizeSM
+	case atoms.SelectSizeLG:
+		return schemaui.SizeLG
+	default:
+		return schemaui.SizeMD
+	}
+}
+
+func reverseCheckboxSize(size atoms.CheckboxSize) schemaui.Size {
+	switch size {
+	case atoms.CheckboxSizeSM:
+		return schemaui.SizeSM
+	case atoms.CheckboxSizeLG:
+		return schemaui.SizeLG
+	default:
+		return schemaui.SizeMD
+	}
+}
+
+func reverseRadioSize(size atoms.RadioSize) schemaui.Size {
+	switch size {
+	case atoms.RadioSizeSM:
+		return schemaui.SizeSM
+	case atoms.RadioSizeLG:
+		return schemaui.SizeLG
+	default:
+		return schemaui.SizeMD
 	}
 }
 
 // ============================================================================
-// BUTTON TEMPL TO SCHEMA CONVERSION
+// REVERSE VARIANT CONVERSION
 // ============================================================================
 
-// convertTemplButtonToSchema converts Templ ButtonProps to schema Component
-func (b *Bridge) convertTemplButtonToSchema(props atoms.ButtonProps) (schemaui.Component, error) {
-	// Create schema button config
-	buttonConfig := schemaui.ButtonConfig{
-		Text:         props.Text,
-		Icon:         props.Icon,
-		IconPosition: b.convertStringToPosition(props.IconPosition),
-		ButtonType:   b.convertStringToButtonType(props.Type),
-		Loading:      props.Loading,
-	}
-
-	// Marshal config to JSON
-	configBytes, err := json.Marshal(buttonConfig)
-	if err != nil {
-		return schemaui.Component{}, fmt.Errorf("failed to marshal button config: %w", err)
-	}
-
-	// Create base component
-	baseComponent := schemaui.BaseComponent{
-		ID:          props.ID,
-		Type:        schemaui.ComponentButton,
-		Name:        "",
-		Label:       props.Text,
-		Class:       props.Class,
-		Size:        b.convertButtonSizeToSchemaSize(props.Size),
-		Variant:     b.convertButtonVariantToSchemaVariant(props.Variant),
-		Disabled:    props.Disabled,
-		Required:    false,
-		AriaLabel:   props.AriaLabel,
-		OnClick:     props.OnClick,
-		CreatedAt:   &time.Time{},
-		UpdatedAt:   &time.Time{},
-	}
-
-	// If no ID provided, generate one
-	if baseComponent.ID == "" {
-		baseComponent.ID = generateComponentID("button")
-	}
-
-	// Create full component
-	return schemaui.Component{
-		BaseComponent: baseComponent,
-		Config:        configBytes,
-		Children:      []schemaui.Component{},
-	}, nil
-}
-
-// ============================================================================
-// INPUT TEMPL TO SCHEMA CONVERSION
-// ============================================================================
-
-// convertTemplInputToSchema converts Templ InputProps to schema Component
-func (b *Bridge) convertTemplInputToSchema(props atoms.InputProps) (schemaui.Component, error) {
-	// Create schema input config
-	inputConfig := schemaui.InputConfig{
-		InputType:   b.convertStringToInputType(props.Type),
-		Value:       props.Value,
-		Placeholder: props.Placeholder,
-		MaxLength:   props.MaxLength,
-		MinLength:   props.MinLength,
-		Pattern:     props.Pattern,
-	}
-
-	// Marshal config to JSON
-	configBytes, err := json.Marshal(inputConfig)
-	if err != nil {
-		return schemaui.Component{}, fmt.Errorf("failed to marshal input config: %w", err)
-	}
-
-	// Create validator from props
-	var validator *schemaui.Validator
-	if props.Required || props.MaxLength > 0 || props.MinLength > 0 || props.Pattern != "" {
-		validator = &schemaui.Validator{
-			Required: props.Required,
-			Pattern:  props.Pattern,
-		}
-		if props.MaxLength > 0 {
-			validator.MaxLength = &props.MaxLength
-		}
-		if props.MinLength > 0 {
-			validator.MinLength = &props.MinLength
-		}
-	}
-
-	// Create base component
-	baseComponent := schemaui.BaseComponent{
-		ID:          props.ID,
-		Type:        schemaui.ComponentInput,
-		Name:        props.Name,
-		Label:       props.Label,
-		Placeholder: props.Placeholder,
-		Class:       props.Class,
-		Size:        b.convertInputSizeToSchemaSize(props.Size),
-		Disabled:    props.Disabled,
-		Required:    props.Required,
-		ReadOnly:    props.ReadOnly,
-		AriaLabel:   props.AriaLabel,
-		OnChange:    props.OnChange,
-		OnFocus:     props.OnFocus,
-		OnBlur:      props.OnBlur,
-		CreatedAt:   &time.Time{},
-		UpdatedAt:   &time.Time{},
-	}
-
-	// If no ID provided, generate one
-	if baseComponent.ID == "" {
-		baseComponent.ID = generateComponentID("input")
-	}
-
-	// Create full component
-	return schemaui.Component{
-		BaseComponent: baseComponent,
-		Config:        configBytes,
-		Children:      []schemaui.Component{},
-		Validator:     validator,
-	}, nil
-}
-
-// ============================================================================
-// TEXTAREA TEMPL TO SCHEMA CONVERSION
-// ============================================================================
-
-// convertTemplTextareaToSchema converts Templ TextareaProps to schema Component
-func (b *Bridge) convertTemplTextareaToSchema(props atoms.TextareaProps) (schemaui.Component, error) {
-	// Create schema textarea config
-	textareaConfig := schemaui.TextareaConfig{
-		Value:       props.Value,
-		Placeholder: props.Placeholder,
-		Rows:        props.Rows,
-		Cols:        props.Cols,
-		MaxLength:   props.MaxLength,
-		Resize:      props.Resize,
-	}
-
-	// Marshal config to JSON
-	configBytes, err := json.Marshal(textareaConfig)
-	if err != nil {
-		return schemaui.Component{}, fmt.Errorf("failed to marshal textarea config: %w", err)
-	}
-
-	// Create validator from props
-	var validator *schemaui.Validator
-	if props.Required || props.MaxLength > 0 {
-		validator = &schemaui.Validator{
-			Required: props.Required,
-		}
-		if props.MaxLength > 0 {
-			validator.MaxLength = &props.MaxLength
-		}
-	}
-
-	// Create base component
-	baseComponent := schemaui.BaseComponent{
-		ID:          props.ID,
-		Type:        schemaui.ComponentTextarea,
-		Name:        props.Name,
-		Label:       props.Label,
-		Placeholder: props.Placeholder,
-		Class:       props.Class,
-		Size:        b.convertTextareaSizeToSchemaSize(props.Size),
-		Disabled:    props.Disabled,
-		Required:    props.Required,
-		ReadOnly:    props.ReadOnly,
-		AriaLabel:   props.AriaLabel,
-		OnChange:    props.OnChange,
-		OnFocus:     props.OnFocus,
-		OnBlur:      props.OnBlur,
-		CreatedAt:   &time.Time{},
-		UpdatedAt:   &time.Time{},
-	}
-
-	// If no ID provided, generate one
-	if baseComponent.ID == "" {
-		baseComponent.ID = generateComponentID("textarea")
-	}
-
-	// Create full component
-	return schemaui.Component{
-		BaseComponent: baseComponent,
-		Config:        configBytes,
-		Children:      []schemaui.Component{},
-		Validator:     validator,
-	}, nil
-}
-
-// ============================================================================
-// SELECT TEMPL TO SCHEMA CONVERSION
-// ============================================================================
-
-// convertTemplSelectToSchema converts Templ SelectProps to schema Component
-func (b *Bridge) convertTemplSelectToSchema(props atoms.SelectProps) (schemaui.Component, error) {
-	// Convert options
-	var schemaOptions []schemaui.Option
-	for _, option := range props.Options {
-		schemaOptions = append(schemaOptions, schemaui.Option{
-			Value:    option.Value,
-			Label:    option.Label,
-			Disabled: option.Disabled,
-			Group:    option.Group,
-		})
-	}
-
-	// Create schema select config
-	selectConfig := schemaui.SelectConfig{
-		Options:     schemaOptions,
-		Value:       props.Value,
-		Multiple:    props.Multiple,
-		Placeholder: props.Placeholder,
-	}
-
-	// Marshal config to JSON
-	configBytes, err := json.Marshal(selectConfig)
-	if err != nil {
-		return schemaui.Component{}, fmt.Errorf("failed to marshal select config: %w", err)
-	}
-
-	// Create base component
-	baseComponent := schemaui.BaseComponent{
-		ID:          props.ID,
-		Type:        schemaui.ComponentSelect,
-		Name:        props.Name,
-		Label:       props.Label,
-		Placeholder: props.Placeholder,
-		Class:       props.Class,
-		Size:        b.convertSelectSizeToSchemaSize(props.Size),
-		Disabled:    props.Disabled,
-		Required:    props.Required,
-		AriaLabel:   props.AriaLabel,
-		OnChange:    props.OnChange,
-		CreatedAt:   &time.Time{},
-		UpdatedAt:   &time.Time{},
-	}
-
-	// If no ID provided, generate one
-	if baseComponent.ID == "" {
-		baseComponent.ID = generateComponentID("select")
-	}
-
-	// Create full component
-	return schemaui.Component{
-		BaseComponent: baseComponent,
-		Config:        configBytes,
-		Children:      []schemaui.Component{},
-	}, nil
-}
-
-// ============================================================================
-// CHECKBOX TEMPL TO SCHEMA CONVERSION
-// ============================================================================
-
-// convertTemplCheckboxToSchema converts Templ CheckboxProps to schema Component
-func (b *Bridge) convertTemplCheckboxToSchema(props atoms.CheckboxProps) (schemaui.Component, error) {
-	// Create schema checkbox config
-	checkboxConfig := schemaui.CheckboxConfig{
-		Value:   props.Value,
-		Label:   props.Label,
-		Checked: props.Checked,
-	}
-
-	// Marshal config to JSON
-	configBytes, err := json.Marshal(checkboxConfig)
-	if err != nil {
-		return schemaui.Component{}, fmt.Errorf("failed to marshal checkbox config: %w", err)
-	}
-
-	// Create base component
-	baseComponent := schemaui.BaseComponent{
-		ID:        props.ID,
-		Type:      schemaui.ComponentCheckbox,
-		Name:      props.Name,
-		Label:     props.Label,
-		Class:     props.Class,
-		Size:      b.convertCheckboxSizeToSchemaSize(props.Size),
-		Disabled:  props.Disabled,
-		Required:  props.Required,
-		AriaLabel: props.AriaLabel,
-		OnChange:  props.OnChange,
-		CreatedAt: &time.Time{},
-		UpdatedAt: &time.Time{},
-	}
-
-	// If no ID provided, generate one
-	if baseComponent.ID == "" {
-		baseComponent.ID = generateComponentID("checkbox")
-	}
-
-	// Create full component
-	return schemaui.Component{
-		BaseComponent: baseComponent,
-		Config:        configBytes,
-		Children:      []schemaui.Component{},
-	}, nil
-}
-
-// ============================================================================
-// RADIO TEMPL TO SCHEMA CONVERSION
-// ============================================================================
-
-// convertTemplRadioToSchema converts Templ RadioProps to schema Component
-func (b *Bridge) convertTemplRadioToSchema(props atoms.RadioProps) (schemaui.Component, error) {
-	// Convert options
-	var schemaOptions []schemaui.Option
-	for _, option := range props.Options {
-		schemaOptions = append(schemaOptions, schemaui.Option{
-			Value:    option.Value,
-			Label:    option.Label,
-			Disabled: option.Disabled,
-		})
-	}
-
-	// Create schema radio config
-	radioConfig := schemaui.RadioConfig{
-		Options: schemaOptions,
-		Value:   props.Value,
-	}
-
-	// Set direction based on inline
-	if props.Inline {
-		radioConfig.Direction = "horizontal"
-	} else {
-		radioConfig.Direction = "vertical"
-	}
-
-	// Marshal config to JSON
-	configBytes, err := json.Marshal(radioConfig)
-	if err != nil {
-		return schemaui.Component{}, fmt.Errorf("failed to marshal radio config: %w", err)
-	}
-
-	// Create base component
-	baseComponent := schemaui.BaseComponent{
-		ID:        props.ID,
-		Type:      schemaui.ComponentRadio,
-		Name:      props.Name,
-		Label:     props.Label,
-		Class:     props.Class,
-		Size:      b.convertRadioSizeToSchemaSize(props.Size),
-		Disabled:  props.Disabled,
-		Required:  props.Required,
-		AriaLabel: props.AriaLabel,
-		OnChange:  props.OnChange,
-		CreatedAt: &time.Time{},
-		UpdatedAt: &time.Time{},
-	}
-
-	// If no ID provided, generate one
-	if baseComponent.ID == "" {
-		baseComponent.ID = generateComponentID("radio")
-	}
-
-	// Create full component
-	return schemaui.Component{
-		BaseComponent: baseComponent,
-		Config:        configBytes,
-		Children:      []schemaui.Component{},
-	}, nil
-}
-
-// ============================================================================
-// REVERSE MAPPING FUNCTIONS
-// ============================================================================
-
-// convertButtonVariantToSchemaVariant maps Templ ButtonVariant to schema Variant
-func (b *Bridge) convertButtonVariantToSchemaVariant(variant atoms.ButtonVariant) schemaui.Variant {
+func reverseConvertVariant(variant atoms.ButtonVariant) schemaui.Variant {
 	switch variant {
 	case atoms.ButtonPrimary:
 		return schemaui.VariantPrimary
 	case atoms.ButtonSecondary:
 		return schemaui.VariantSecondary
-	case atoms.ButtonSuccess, atoms.ButtonGreen:
+	case atoms.ButtonSuccess:
 		return schemaui.VariantSuccess
-	case atoms.ButtonDanger, atoms.ButtonRed:
+	case atoms.ButtonDanger:
 		return schemaui.VariantDanger
-	case atoms.ButtonWarning, atoms.ButtonYellow:
+	case atoms.ButtonWarning:
 		return schemaui.VariantWarning
-	case atoms.ButtonInfo, atoms.ButtonPurple:
+	case atoms.ButtonInfo:
 		return schemaui.VariantInfo
 	case atoms.ButtonLight:
 		return schemaui.VariantLight
@@ -426,104 +474,11 @@ func (b *Bridge) convertButtonVariantToSchemaVariant(variant atoms.ButtonVariant
 	}
 }
 
-// convertButtonSizeToSchemaSize maps Templ ButtonSize to schema Size
-func (b *Bridge) convertButtonSizeToSchemaSize(size atoms.ButtonSize) schemaui.Size {
-	switch size {
-	case atoms.ButtonSizeXS:
-		return schemaui.SizeXS
-	case atoms.ButtonSizeSM:
-		return schemaui.SizeSM
-	case atoms.ButtonSizeLG:
-		return schemaui.SizeLG
-	case atoms.ButtonSizeXL:
-		return schemaui.SizeXL
-	default:
-		return schemaui.SizeMD
-	}
-}
+// ============================================================================
+// STRING TO ENUM CONVERSIONS
+// ============================================================================
 
-// convertInputSizeToSchemaSize maps Templ InputSize to schema Size
-func (b *Bridge) convertInputSizeToSchemaSize(size atoms.InputSize) schemaui.Size {
-	switch size {
-	case atoms.InputSizeXS:
-		return schemaui.SizeXS
-	case atoms.InputSizeSM:
-		return schemaui.SizeSM
-	case atoms.InputSizeLG:
-		return schemaui.SizeLG
-	case atoms.InputSizeXL:
-		return schemaui.SizeXL
-	default:
-		return schemaui.SizeMD
-	}
-}
-
-// convertTextareaSizeToSchemaSize maps Templ TextareaSize to schema Size
-func (b *Bridge) convertTextareaSizeToSchemaSize(size atoms.TextareaSize) schemaui.Size {
-	switch size {
-	case atoms.TextareaSizeXS:
-		return schemaui.SizeXS
-	case atoms.TextareaSizeSM:
-		return schemaui.SizeSM
-	case atoms.TextareaSizeLG:
-		return schemaui.SizeLG
-	case atoms.TextareaSizeXL:
-		return schemaui.SizeXL
-	default:
-		return schemaui.SizeMD
-	}
-}
-
-// convertSelectSizeToSchemaSize maps Templ SelectSize to schema Size
-func (b *Bridge) convertSelectSizeToSchemaSize(size atoms.SelectSize) schemaui.Size {
-	switch size {
-	case atoms.SelectSizeXS:
-		return schemaui.SizeXS
-	case atoms.SelectSizeSM:
-		return schemaui.SizeSM
-	case atoms.SelectSizeLG:
-		return schemaui.SizeLG
-	case atoms.SelectSizeXL:
-		return schemaui.SizeXL
-	default:
-		return schemaui.SizeMD
-	}
-}
-
-// convertCheckboxSizeToSchemaSize maps Templ CheckboxSize to schema Size
-func (b *Bridge) convertCheckboxSizeToSchemaSize(size atoms.CheckboxSize) schemaui.Size {
-	switch size {
-	case atoms.CheckboxSizeXS:
-		return schemaui.SizeXS
-	case atoms.CheckboxSizeSM:
-		return schemaui.SizeSM
-	case atoms.CheckboxSizeLG:
-		return schemaui.SizeLG
-	case atoms.CheckboxSizeXL:
-		return schemaui.SizeXL
-	default:
-		return schemaui.SizeMD
-	}
-}
-
-// convertRadioSizeToSchemaSize maps Templ RadioSize to schema Size
-func (b *Bridge) convertRadioSizeToSchemaSize(size atoms.RadioSize) schemaui.Size {
-	switch size {
-	case atoms.RadioSizeXS:
-		return schemaui.SizeXS
-	case atoms.RadioSizeSM:
-		return schemaui.SizeSM
-	case atoms.RadioSizeLG:
-		return schemaui.SizeLG
-	case atoms.RadioSizeXL:
-		return schemaui.SizeXL
-	default:
-		return schemaui.SizeMD
-	}
-}
-
-// convertStringToPosition converts string to schema Position
-func (b *Bridge) convertStringToPosition(pos string) schemaui.Position {
+func stringToPosition(pos string) schemaui.Position {
 	switch pos {
 	case "left":
 		return schemaui.PositionLeft
@@ -540,9 +495,8 @@ func (b *Bridge) convertStringToPosition(pos string) schemaui.Position {
 	}
 }
 
-// convertStringToButtonType converts string to schema ButtonType
-func (b *Bridge) convertStringToButtonType(buttonType string) schemaui.ButtonType {
-	switch buttonType {
+func stringToButtonType(typ string) schemaui.ButtonType {
+	switch typ {
 	case "submit":
 		return schemaui.ButtonSubmit
 	case "reset":
@@ -554,9 +508,8 @@ func (b *Bridge) convertStringToButtonType(buttonType string) schemaui.ButtonTyp
 	}
 }
 
-// convertStringToInputType converts string to schema InputType
-func (b *Bridge) convertStringToInputType(inputType string) schemaui.InputType {
-	switch inputType {
+func stringToInputType(typ string) schemaui.InputType {
+	switch typ {
 	case "text":
 		return schemaui.InputText
 	case "email":
@@ -571,6 +524,14 @@ func (b *Bridge) convertStringToInputType(inputType string) schemaui.InputType {
 		return schemaui.InputURL
 	case "search":
 		return schemaui.InputSearch
+	case "date":
+		return schemaui.InputDate
+	case "time":
+		return schemaui.InputTime
+	case "datetime-local":
+		return schemaui.InputDateTimeLocal
+	case "file":
+		return schemaui.InputFile
 	case "hidden":
 		return schemaui.InputHidden
 	default:
@@ -579,34 +540,18 @@ func (b *Bridge) convertStringToInputType(inputType string) schemaui.InputType {
 }
 
 // ============================================================================
-// UTILITY FUNCTIONS
+// UTILITIES
 // ============================================================================
 
-// generateComponentID generates a unique component ID
-func generateComponentID(componentType string) string {
-	return fmt.Sprintf("%s-%s", componentType, strings.Replace(uuid.New().String()[:8], "-", "", -1))
+// generateID creates a unique component identifier.
+func generateID(typ string) string {
+	id := uuid.New().String()[:8]
+	id = strings.ReplaceAll(id, "-", "")
+	return fmt.Sprintf("%s-%s", typ, id)
 }
 
-// ConvertTemplComponentsToSchema converts multiple Templ components to schema components
-func (b *Bridge) ConvertTemplComponentsToSchema(ctx context.Context, templComponents []TemplComponent) ([]schemaui.Component, error) {
-	var schemaComponents []schemaui.Component
-	
-	for _, templComponent := range templComponents {
-		schemaComponent, err := b.ConvertTemplToSchema(ctx, templComponent)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert Templ component %s: %w", templComponent.Type, err)
-		}
-		schemaComponents = append(schemaComponents, schemaComponent)
-	}
-	
-	return schemaComponents, nil
-}
-
-// GenerateSchemaFromTemplFile analyzes a Templ file and generates schema definitions
+// GenerateSchemaFromTemplFile analyzes a Templ file and generates schema definitions.
+// Note: This requires AST parsing of .templ files and is a placeholder for future implementation.
 func (b *Bridge) GenerateSchemaFromTemplFile(ctx context.Context, templFilePath string) ([]schemaui.Component, error) {
-	// This would require parsing the Templ file and extracting component usage
-	// For now, we'll return a placeholder implementation
-	// In a full implementation, this would parse the .templ file AST
-	
-	return nil, fmt.Errorf("Templ file parsing not yet implemented - use ConvertTemplToSchema for individual components")
+	return nil, fmt.Errorf("Templ file parsing not implemented: use ConvertTemplToSchema for individual components")
 }

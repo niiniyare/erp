@@ -112,12 +112,12 @@ const (
 // Option represents a selectable option in dropdowns, radio groups, etc.
 // Reused across Select, Radio, Checkbox components
 type Option struct {
-	Value    string `json:"value" validate:"required"`    // The actual value submitted
-	Label    string `json:"label" validate:"required"`    // Display text for the option
-	Disabled bool   `json:"disabled,omitempty"`           // Whether option is disabled
-	Group    string `json:"group,omitempty"`              // Option group (for grouped selects)
-	Icon     string `json:"icon,omitempty"`               // Optional icon identifier
-	Badge    string `json:"badge,omitempty"`              // Optional badge/count display
+	Value    string `json:"value" validate:"required"` // The actual value submitted
+	Label    string `json:"label" validate:"required"` // Display text for the option
+	Disabled bool   `json:"disabled,omitempty"`        // Whether option is disabled
+	Group    string `json:"group,omitempty"`           // Option group (for grouped selects)
+	Icon     string `json:"icon,omitempty"`            // Optional icon identifier
+	Badge    string `json:"badge,omitempty"`           // Optional badge/count display
 }
 
 // Validator represents validation rules for form components
@@ -147,13 +147,13 @@ type Validator struct {
 // Action represents an actionable button or link
 // Reused in tables, cards, forms, and other interactive components
 type Action struct {
-	Key      string      `json:"key" validate:"required"`      // Unique identifier
-	Label    string      `json:"label" validate:"required"`    // Display text
-	Icon     string      `json:"icon,omitempty"`               // Icon identifier
-	Type     ActionType  `json:"type,omitempty"`               // Action type
-	Variant  Variant     `json:"variant,omitempty"`            // Visual style
-	OnClick  string      `json:"on_click,omitempty"`           // Click handler
-	Disabled string      `json:"disabled,omitempty"`           // Disable condition
+	Key      string         `json:"key" validate:"required"`   // Unique identifier
+	Label    string         `json:"label" validate:"required"` // Display text
+	Icon     string         `json:"icon,omitempty"`            // Icon identifier
+	Type     ActionType     `json:"type,omitempty"`            // Action type
+	Variant  Variant        `json:"variant,omitempty"`         // Visual style
+	OnClick  string         `json:"on_click,omitempty"`        // Click handler
+	Disabled string         `json:"disabled,omitempty"`        // Disable condition
 	Confirm  *ConfirmDialog `json:"confirm,omitempty"`         // Confirmation dialog
 }
 
@@ -227,16 +227,16 @@ type BaseComponent struct {
 // Component represents a complete UI component with configuration and children
 // This is the main component structure used throughout the system
 type Component struct {
-	BaseComponent                           // Embedded base properties
-	Config    json.RawMessage `json:"config,omitempty"`    // Component-specific configuration
-	Children  []Component     `json:"children,omitempty"`  // Child components
-	Validator *Validator      `json:"validator,omitempty"` // Validation rules
-	Styles    *css.Styles     `json:"styles,omitempty"`    // CSS styling properties
-	
+	BaseComponent                 // Embedded base properties
+	Config        json.RawMessage `json:"config,omitempty"`    // Component-specific configuration
+	Children      []Component     `json:"children,omitempty"`  // Child components
+	Validator     *Validator      `json:"validator,omitempty"` // Validation rules
+	Styles        *css.Styles     `json:"styles,omitempty"`    // CSS styling properties
+
 	// Security enhancements for military-grade multi-tenant architecture
-	metadata       map[string]string `json:"-"` // Internal metadata, never serialized
-	encrypted      bool             `json:"-"` // Encryption status
-	encryptedConfig []byte          `json:"-"` // Encrypted configuration data
+	metadata        map[string]string `json:"-"` // Internal metadata, never serialized
+	encrypted       bool              `json:"-"` // Encryption status
+	encryptedConfig []byte            `json:"-"` // Encrypted configuration data
 }
 
 // ============================================================================
@@ -416,27 +416,27 @@ type ComponentFactory interface {
 // ComponentSchema defines the structure and validation rules for a component type
 // Used for documentation, validation, and UI generation
 type ComponentSchema struct {
-	Type        ComponentType                    `json:"type"`        // Component type identifier
-	Title       string                           `json:"title"`       // Human-readable title
-	Description string                           `json:"description"` // Detailed description
-	Properties  map[string]Property              `json:"properties"`  // Configuration properties
-	Required    []string                         `json:"required"`    // Required property names
-	Examples    []map[string]any `json:"examples"`    // Usage examples
+	Type        ComponentType       `json:"type"`        // Component type identifier
+	Title       string              `json:"title"`       // Human-readable title
+	Description string              `json:"description"` // Detailed description
+	Properties  map[string]Property `json:"properties"`  // Configuration properties
+	Required    []string            `json:"required"`    // Required property names
+	Examples    []map[string]any    `json:"examples"`    // Usage examples
 }
 
 // Property defines a component configuration property
 // Describes the type, constraints, and documentation for config properties
 type Property struct {
-	Type        string      `json:"type"`                 // Property data type (string, number, boolean, etc.)
-	Format      string      `json:"format,omitempty"`     // Format specification (email, url, etc.)
-	Description string      `json:"description,omitempty"` // Property description
-	Default     any `json:"default,omitempty"`    // Default value
-	Enum        []string    `json:"enum,omitempty"`       // Allowed values (for enums)
-	MinLength   *int        `json:"min_length,omitempty"` // Minimum string length
-	MaxLength   *int        `json:"max_length,omitempty"` // Maximum string length
-	Min         *float64    `json:"min,omitempty"`        // Minimum numeric value
-	Max         *float64    `json:"max,omitempty"`        // Maximum numeric value
-	Pattern     string      `json:"pattern,omitempty"`    // Regular expression pattern
+	Type        string   `json:"type"`                  // Property data type (string, number, boolean, etc.)
+	Format      string   `json:"format,omitempty"`      // Format specification (email, url, etc.)
+	Description string   `json:"description,omitempty"` // Property description
+	Default     any      `json:"default,omitempty"`     // Default value
+	Enum        []string `json:"enum,omitempty"`        // Allowed values (for enums)
+	MinLength   *int     `json:"min_length,omitempty"`  // Minimum string length
+	MaxLength   *int     `json:"max_length,omitempty"`  // Maximum string length
+	Min         *float64 `json:"min,omitempty"`         // Minimum numeric value
+	Max         *float64 `json:"max,omitempty"`         // Maximum numeric value
+	Pattern     string   `json:"pattern,omitempty"`     // Regular expression pattern
 }
 
 // ============================================================================
@@ -456,6 +456,35 @@ const (
 	InputURL      InputType = "url"      // URL input with validation
 	InputSearch   InputType = "search"   // Search input
 	InputHidden   InputType = "hidden"   // Hidden form field
+	InputDate     InputType = "date"     // Date picker
+	InputDateTime InputType = "datetime" // Date and time picker
+	InputTime     InputType = "time"     // Time picker
+	InputMonth    InputType = "month"    // Month and year picker
+	InputWeek     InputType = "week"     // Week picker
+	InputColor    InputType = "color"    // Color picker
+	InputRange    InputType = "range"    // Slider control
+	InputFile     InputType = "file"     // File upload
+	InputCheckbox InputType = "checkbox" // Checkbox
+	InputRadio    InputType = "radio"    // Radio button
+	InputSubmit   InputType = "submit"   // Form submit button
+	InputReset    InputType = "reset"    // Form reset button
+	InputButton   InputType = "button"   // Generic button
+	InputImage    InputType = "image"    // Image submit button
+	// Additional specialized input types
+	InputDateTimeLocal InputType = "datetime-local" // Local date and time picker
+	InputTextarea      InputType = "textarea"       // Multi-line text input
+	InputSelect        InputType = "select"         // Dropdown select
+	InputMultiSelect   InputType = "multiselect"    // Multiple selection
+	InputToggle        InputType = "toggle"         // Switch toggle
+	InputCurrency      InputType = "currency"       // Currency input
+	InputPercent       InputType = "percent"        // Percentage input
+	// Modern/experimental input types
+	InputOtp     InputType = "otp"     // One-time password input
+	InputTags    InputType = "tags"    // Tag input
+	InputRating  InputType = "rating"  // Star rating input
+	InputSlider  InputType = "slider"  // Enhanced slider
+	InputCaptcha InputType = "captcha" // CAPTCHA input
+
 )
 
 // ButtonType represents HTML button types
@@ -463,9 +492,37 @@ const (
 type ButtonType string
 
 const (
+	// Standard HTML button types
 	ButtonSubmit ButtonType = "submit" // Submit form button
-	ButtonButton ButtonType = "button" // Regular button
+	ButtonButton ButtonType = "button" // Regular button with no default behavior
 	ButtonReset  ButtonType = "reset"  // Reset form button
+
+	// UI button types
+	ButtonMenu      ButtonType = "menu"      // Opens a menu (HTML5)
+	ButtonLink      ButtonType = "link"      // Button that behaves like a link
+	ButtonIcon      ButtonType = "icon"      // Icon-only button
+	ButtonLoading   ButtonType = "loading"   // Button in loading state
+	ButtonDisabled  ButtonType = "disabled"  // Disabled button state
+	ButtonOutline   ButtonType = "outline"   // Outline style button
+	ButtonGhost     ButtonType = "ghost"     // Ghost/transparent button
+	ButtonDanger    ButtonType = "danger"    // Destructive action button
+	ButtonSuccess   ButtonType = "success"   // Success state button
+	ButtonWarning   ButtonType = "warning"   // Warning state button
+	ButtonInfo      ButtonType = "info"      // Informational button
+	ButtonLight     ButtonType = "light"     // Light theme button
+	ButtonDark      ButtonType = "dark"      // Dark theme button
+	ButtonPrimary   ButtonType = "primary"   // Primary action button
+	ButtonSecondary ButtonType = "secondary" // Secondary action button
+	ButtonTertiary  ButtonType = "tertiary"  // Tertiary action button
+	ButtonText      ButtonType = "text"      // Text-only button (minimal styling)
+	ButtonFab       ButtonType = "fab"       // Floating Action Button
+	ButtonPill      ButtonType = "pill"      // Pill-shaped button
+	ButtonCircle    ButtonType = "circle"    // Circular button
+	ButtonSquare    ButtonType = "square"    // Square button
+	ButtonBlock     ButtonType = "block"     // Full-width block button
+	ButtonSmall     ButtonType = "small"     // Small size button
+	ButtonLarge     ButtonType = "large"     // Large size button
+	ButtonXLarge    ButtonType = "xlarge"    // Extra large size button
 )
 
 // DataType represents different data display types
@@ -473,6 +530,7 @@ const (
 type DataType string
 
 const (
+	// Basic Data Types
 	DataTypeText     DataType = "text"     // Plain text display
 	DataTypeNumber   DataType = "number"   // Numeric formatting
 	DataTypeDate     DataType = "date"     // Date formatting
@@ -480,10 +538,66 @@ const (
 	DataTypeBoolean  DataType = "boolean"  // Boolean checkbox/switch
 	DataTypeCurrency DataType = "currency" // Currency formatting
 	DataTypePercent  DataType = "percent"  // Percentage formatting
-	DataTypeImage    DataType = "image"    // Image display
+
+	// Media & Content Types
+	DataTypeImage  DataType = "image"  // Image display
+	DataTypeAvatar DataType = "avatar" // Avatar/circular image
+	DataTypeIcon   DataType = "icon"   // Icon display
+	DataTypeFile   DataType = "file"   // File with download link
+	DataTypeVideo  DataType = "video"  // Video embed/thumbnail
+	DataTypeAudio  DataType = "audio"  // Audio player
+
+	// Interactive Types
 	DataTypeLink     DataType = "link"     // Clickable link
+	DataTypeEmail    DataType = "email"    // Email link
+	DataTypePhone    DataType = "phone"    // Phone link
+	DataTypeButton   DataType = "button"   // Action button
+	DataTypeActions  DataType = "actions"  // Multiple action buttons
+	DataTypeCheckbox DataType = "checkbox" // Checkbox input
+	DataTypeRadio    DataType = "radio"    // Radio button
+	DataTypeSwitch   DataType = "switch"   // Toggle switch
+
+	// Status & Indicator Types
 	DataTypeBadge    DataType = "badge"    // Status badge
-	DataTypeAction   DataType = "action"   // Action buttons
+	DataTypeTag      DataType = "tag"      // Tag/chip
+	DataTypeStatus   DataType = "status"   // Status indicator
+	DataTypeProgress DataType = "progress" // Progress bar
+	DataTypeRating   DataType = "rating"   // Star rating
+
+	// Specialized Formatting
+	DataTypeCode     DataType = "code"     // Code snippet
+	DataTypeJSON     DataType = "json"     // JSON formatting
+	DataTypeHTML     DataType = "html"     // HTML content
+	DataTypeMarkdown DataType = "markdown" // Markdown content
+
+	// Time & Duration
+	DataTypeTime     DataType = "time"     // Time only formatting
+	DataTypeDuration DataType = "duration" // Duration formatting
+	DataTypeRelative DataType = "relative" // Relative time (e.g., "2 hours ago")
+
+	// Custom Components
+	DataTypeCustom DataType = "custom" // Custom render component
+	DataTypeSlot   DataType = "slot"   // Slot for custom content
+
+	// Layout & Structure
+	DataTypeEmpty    DataType = "empty"    // Empty state
+	DataTypeSkeleton DataType = "skeleton" // Loading skeleton
+	DataTypeExpand   DataType = "expand"   // Expand/collapse row
+	DataTypeSelect   DataType = "select"   // Row selection checkbox
+
+	// Additional specialized data types for specific use cases
+	DataTypeColor    DataType = "color"    // Color swatch
+	DataTypeGradient DataType = "gradient" // Gradient display
+	DataTypeQRCode   DataType = "qrcode"   // QR code display
+	DataTypeBarcode  DataType = "barcode"  // Barcode display
+	DataTypeMap      DataType = "map"      // Mini map display
+	DataTypeChart    DataType = "chart"    // Mini chart/sparkline
+	DataTypeRange    DataType = "range"    // Range slider display
+	DataTypePassword DataType = "password" // Password (masked)
+	DataTypeCopyable DataType = "copyable" // Copy-to-clipboard text
+	DataTypeEditable DataType = "editable" // Inline editable field
+	DataTypeSortable DataType = "sortable" // Sortable column
+	DataTypeFilter   DataType = "filter"   // Filterable column
 )
 
 // ============================================================================
