@@ -1,0 +1,78 @@
+{
+  "allOf": [
+    {
+      "$ref": "#/definitions/SchemaObjectGrid",
+      "patternProperties": {
+        "^(x|y|w|h|width|height|align|valign|gridClassName)$": {}
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "Starting abscissa position, starting from 1"
+        },
+        "y": {
+          "type": "number",
+          "description": "Starting vertical coordinate position, starting from 1"
+        },
+        "w": {
+          "type": "number",
+          "description": "Width, how many columns to span"
+        },
+        "h": {
+          "type": "number",
+          "description": "height, how many lines to span"
+        },
+        "width": {
+          "type": [
+            "number",
+            "string"
+          ],
+          "description": "Width will affect the width of the column corresponding to the starting position."
+        },
+        "height": {
+          "type": [
+            "number",
+            "string"
+          ],
+          "description": "Height will affect the height of the row at the starting position. If set to auto, it will be adaptive."
+        },
+        "align": {
+          "type": "string",
+          "enum": [
+            "left",
+            "right",
+            "center",
+            "auto"
+          ],
+          "description": "Horizontal display mode, used when the content width is smaller than the grid. The default is auto to automatically fill the space."
+        },
+        "valign": {
+          "type": "string",
+          "enum": [
+            "top",
+            "bottom",
+            "middle",
+            "auto"
+          ],
+          "description": "Vertical display mode, used when the content height is smaller than the grid. The default is auto to automatically fill the space."
+        },
+        "gridClassName": {
+          "type": "string",
+          "description": "The className of the outermost container of each grid"
+        }
+      },
+      "required": [
+        "h",
+        "w",
+        "x",
+        "y"
+      ]
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Grid.json"
+}

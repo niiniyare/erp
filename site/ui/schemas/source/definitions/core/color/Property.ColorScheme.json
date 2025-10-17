@@ -1,0 +1,24 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "dark"
+    },
+    {
+      "type": "string",
+      "const": "light"
+    },
+    {
+      "type": "string",
+      "const": "normal"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.ColorScheme.json"
+}

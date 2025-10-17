@@ -1,0 +1,21 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "anywhere"
+    },
+    {
+      "type": "string",
+      "const": "break-word"
+    },
+    {
+      "type": "string",
+      "const": "normal"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.OverflowWrap.json"
+}

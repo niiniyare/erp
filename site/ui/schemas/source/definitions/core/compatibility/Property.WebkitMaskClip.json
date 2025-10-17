@@ -1,0 +1,31 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "$ref": "#/definitions/DataType.Box"
+    },
+    {
+      "type": "string",
+      "const": "border"
+    },
+    {
+      "type": "string",
+      "const": "content"
+    },
+    {
+      "type": "string",
+      "const": "padding"
+    },
+    {
+      "type": "string",
+      "const": "text"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.WebkitMaskClip.json"
+}

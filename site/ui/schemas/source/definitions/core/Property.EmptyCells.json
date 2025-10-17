@@ -1,0 +1,17 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "hide"
+    },
+    {
+      "type": "string",
+      "const": "show"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.EmptyCells.json"
+}

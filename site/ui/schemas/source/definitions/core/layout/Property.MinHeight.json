@@ -1,0 +1,59 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string"
+    },
+    {
+      "type": "number"
+    },
+    {
+      "type": "string",
+      "const": "-moz-fit-content"
+    },
+    {
+      "type": "string",
+      "const": "-moz-max-content"
+    },
+    {
+      "type": "string",
+      "const": "-moz-min-content"
+    },
+    {
+      "type": "string",
+      "const": "-webkit-fit-content"
+    },
+    {
+      "type": "string",
+      "const": "-webkit-max-content"
+    },
+    {
+      "type": "string",
+      "const": "-webkit-min-content"
+    },
+    {
+      "type": "string",
+      "const": "auto"
+    },
+    {
+      "type": "string",
+      "const": "fit-content"
+    },
+    {
+      "type": "string",
+      "const": "intrinsic"
+    },
+    {
+      "type": "string",
+      "const": "max-content"
+    },
+    {
+      "type": "string",
+      "const": "min-content"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.MinHeight<(string|number)>.json"
+}

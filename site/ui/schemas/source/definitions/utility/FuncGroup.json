@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "properties": {
+    "groupName": {
+      "type": "string"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/FuncItem"
+      }
+    }
+  },
+  "required": [
+    "groupName",
+    "items"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./FuncGroup.json"
+}

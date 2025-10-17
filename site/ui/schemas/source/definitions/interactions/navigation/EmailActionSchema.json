@@ -1,0 +1,310 @@
+{
+  "type": "object",
+  "properties": {
+    "$$id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Container css class name"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "Whether to disable"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to disable expressions"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "Whether to hide"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to hide expressions"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "Whether to display"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions"
+    },
+    "id": {
+      "type": "string",
+      "description": "Mainly used to distinguish which button is used in user behavior tracking"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Event action configuration"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "Whether to display statically"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions statically"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "Static display of empty value placeholder"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display form item class name"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Label class name"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Value class name"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "Component style"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "Component behavior and usage, such as create, update, remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Component name, usually the business name for easy location"
+        },
+        "mock": {
+          "description": "Editor fake data for easy display"
+        }
+      },
+      "description": "Editor configuration, can be ignored at runtime"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "Can be used to turn off mobile style at the component level"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "button",
+        "submit",
+        "reset"
+      ],
+      "description": "Specify the button type, supporting three types: button, submit or reset."
+    },
+    "testid": {
+      "type": "string"
+    },
+    "block": {
+      "type": "boolean",
+      "description": "Whether to display in block format, the default is inline."
+    },
+    "disabledTip": {
+      "type": "string",
+      "description": "Copy hint when disabled."
+    },
+    "icon": {
+      "$ref": "#/definitions/SchemaIcon",
+      "description": "Button icon, class name of iconfont"
+    },
+    "iconClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "css class name on icon"
+    },
+    "rightIcon": {
+      "$ref": "#/definitions/SchemaIcon",
+      "description": "Right button icon, class name of iconfont"
+    },
+    "rightIconClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "css class name on the right icon"
+    },
+    "loadingClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "css class name on loading"
+    },
+    "label": {
+      "type": "string",
+      "description": "button text"
+    },
+    "level": {
+      "type": "string",
+      "enum": [
+        "info",
+        "success",
+        "warning",
+        "danger",
+        "link",
+        "primary",
+        "dark",
+        "light",
+        "secondary"
+      ],
+      "description": "button style"
+    },
+    "primary": {
+      "type": "boolean"
+    },
+    "size": {
+      "type": "string",
+      "enum": [
+        "xs",
+        "sm",
+        "md",
+        "lg"
+      ],
+      "description": "button size"
+    },
+    "tooltip": {
+      "$ref": "#/definitions/SchemaTooltip"
+    },
+    "tooltipPlacement": {
+      "type": "string",
+      "enum": [
+        "top",
+        "right",
+        "bottom",
+        "left"
+      ]
+    },
+    "confirmText": {
+      "type": "string",
+      "description": "Prompt text, configured to require user confirmation before operation."
+    },
+    "required": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "If the button is in a form, configuring this attribute will require the user to pass verification of the specified field before triggering the behavior."
+    },
+    "activeLevel": {
+      "type": "string",
+      "description": "Active style"
+    },
+    "activeClassName": {
+      "type": "string",
+      "description": "Class name when activated"
+    },
+    "close": {
+      "type": [
+        "boolean",
+        "string"
+      ],
+      "description": "If the button is in a pop-up box, you can configure whether to close the pop-up window after the action is completed, or specify to close the target pop-up box."
+    },
+    "requireSelected": {
+      "type": "boolean",
+      "description": "When the button is a batch operation button, there must be a checked element by default to be clickable. If this attribute is configured to false, the member can be clicked without clicking."
+    },
+    "mergeData": {
+      "type": "boolean",
+      "description": "Whether to merge the data in the pop-up box into the parent scope."
+    },
+    "target": {
+      "type": "string",
+      "description": "You can specify who should trigger this action."
+    },
+    "countDown": {
+      "type": "number",
+      "description": "Ban countdown after click (seconds)"
+    },
+    "countDownTpl": {
+      "type": "string",
+      "description": "Countdown text customization"
+    },
+    "badge": {
+      "$ref": "#/definitions/BadgeObject",
+      "description": "corner mark"
+    },
+    "hotKey": {
+      "type": "string",
+      "description": "keyboard shortcuts"
+    },
+    "loadingOn": {
+      "type": "string",
+      "description": "Whether to display the loading effect"
+    },
+    "onClick": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {}
+      ],
+      "description": "Custom event handler function"
+    },
+    "body": {
+      "type": "string",
+      "description": "Email text"
+    },
+    "actionType": {
+      "type": "string",
+      "const": "email",
+      "description": "Specify as open mailbox behavior"
+    },
+    "to": {
+      "type": "string",
+      "description": "Recipient email"
+    },
+    "cc": {
+      "type": "string",
+      "description": "Cc email"
+    },
+    "bcc": {
+      "type": "string",
+      "description": "Anonymous CC email"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Email subject"
+    }
+  },
+  "required": [
+    "actionType",
+    "to",
+    "type"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./EmailActionSchema.json"
+}

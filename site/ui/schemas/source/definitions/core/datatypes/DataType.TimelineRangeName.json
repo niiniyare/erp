@@ -1,0 +1,13 @@
+{
+  "type": "string",
+  "enum": [
+    "contain",
+    "cover",
+    "entry",
+    "entry-crossing",
+    "exit",
+    "exit-crossing"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.TimelineRangeName.json"
+}

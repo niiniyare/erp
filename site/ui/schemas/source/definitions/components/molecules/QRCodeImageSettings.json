@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "properties": {
+    "src": {
+      "type": "string"
+    },
+    "height": {
+      "type": "number"
+    },
+    "width": {
+      "type": "number"
+    },
+    "excavate": {
+      "type": "boolean"
+    },
+    "x": {
+      "type": "number"
+    },
+    "y": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "src",
+    "height",
+    "width",
+    "excavate"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./QRCodeImageSettings.json"
+}

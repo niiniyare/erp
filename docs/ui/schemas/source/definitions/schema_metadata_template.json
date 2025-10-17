@@ -1,0 +1,223 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Schema Metadata Template",
+  "description": "Standard metadata structure for all UI schemas in the ERP system",
+  "type": "object",
+  "properties": {
+    "meta": {
+      "type": "object",
+      "description": "Comprehensive metadata for schema documentation and discovery",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Human-readable component name",
+          "examples": ["Primary Button", "Text Input Field", "Data Table"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Clear purpose and use cases for the component",
+          "examples": ["A clickable button element for triggering actions"]
+        },
+        "category": {
+          "type": "string",
+          "enum": ["atoms", "molecules", "organisms", "templates", "core", "interactions", "utility"],
+          "description": "Atomic design category classification"
+        },
+        "subcategory": {
+          "type": "string",
+          "description": "Specific subcategory within the main category",
+          "examples": ["layout", "typography", "color", "forms", "navigation", "data"]
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of required schemas this component depends on",
+          "examples": [["ButtonSchema", "IconSchema"]]
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Paths to example usage files",
+          "examples": [["examples/button-primary.json", "examples/button-secondary.json"]]
+        },
+        "accessibility": {
+          "type": "object",
+          "description": "WCAG compliance notes and accessibility requirements",
+          "properties": {
+            "wcagLevel": {
+              "type": "string",
+              "enum": ["A", "AA", "AAA"],
+              "description": "WCAG compliance level"
+            },
+            "keyboardSupport": {
+              "type": "boolean",
+              "description": "Whether component supports keyboard navigation"
+            },
+            "screenReaderSupport": {
+              "type": "boolean", 
+              "description": "Whether component works with screen readers"
+            },
+            "ariaRequirements": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Required ARIA attributes",
+              "examples": [["aria-label", "role"]]
+            },
+            "notes": {
+              "type": "string",
+              "description": "Additional accessibility considerations"
+            }
+          }
+        },
+        "performance": {
+          "type": "object",
+          "description": "Performance considerations and optimization notes",
+          "properties": {
+            "renderCost": {
+              "type": "string",
+              "enum": ["low", "medium", "high"],
+              "description": "Rendering performance cost"
+            },
+            "memoryCost": {
+              "type": "string",
+              "enum": ["low", "medium", "high"],
+              "description": "Memory usage impact"
+            },
+            "optimizations": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Performance optimization techniques",
+              "examples": [["memoization", "lazy-loading", "virtualization"]]
+            },
+            "notes": {
+              "type": "string",
+              "description": "Additional performance considerations"
+            }
+          }
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Semantic version of the schema",
+          "examples": ["1.0.0", "2.1.3"]
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "Whether this schema is deprecated",
+          "default": false
+        },
+        "replacedBy": {
+          "type": "string",
+          "description": "Schema name that replaces this one (if deprecated)",
+          "examples": ["ButtonSchema_v2"]
+        },
+        "createdDate": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when schema was created"
+        },
+        "lastModified": {
+          "type": "string",
+          "format": "date",
+          "description": "Date when schema was last modified"
+        },
+        "author": {
+          "type": "string",
+          "description": "Author or team responsible for the schema"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Searchable tags for schema discovery",
+          "examples": [["button", "clickable", "action", "primary"]]
+        },
+        "framework": {
+          "type": "object",
+          "description": "Framework-specific integration notes",
+          "properties": {
+            "templ": {
+              "type": "object",
+              "description": "Templ-specific implementation details",
+              "properties": {
+                "componentFile": {
+                  "type": "string",
+                  "description": "Path to Templ component file"
+                },
+                "propsInterface": {
+                  "type": "string", 
+                  "description": "Go interface for component props"
+                }
+              }
+            },
+            "htmx": {
+              "type": "object",
+              "description": "HTMX integration capabilities",
+              "properties": {
+                "supported": {
+                  "type": "boolean",
+                  "description": "Whether component supports HTMX"
+                },
+                "attributes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "HTMX attributes the component can use"
+                }
+              }
+            },
+            "alpine": {
+              "type": "object",
+              "description": "Alpine.js integration details",
+              "properties": {
+                "directives": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Alpine.js directives used"
+                }
+              }
+            }
+          }
+        },
+        "testing": {
+          "type": "object",
+          "description": "Testing strategy and requirements",
+          "properties": {
+            "unitTests": {
+              "type": "string",
+              "description": "Path to unit test files"
+            },
+            "integrationTests": {
+              "type": "string",
+              "description": "Path to integration test files"
+            },
+            "visualTests": {
+              "type": "string",
+              "description": "Path to visual regression tests"
+            },
+            "testCoverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Test coverage percentage"
+            }
+          }
+        }
+      },
+      "required": ["title", "description", "category", "version"]
+    }
+  },
+  "required": ["meta"]
+}

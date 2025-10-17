@@ -1,0 +1,15 @@
+{
+  "type": "string",
+  "enum": [
+    "-ms-inline-flexbox",
+    "-ms-inline-grid",
+    "-webkit-inline-flex",
+    "inline-block",
+    "inline-flex",
+    "inline-grid",
+    "inline-list-item",
+    "inline-table"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.DisplayLegacy.json"
+}

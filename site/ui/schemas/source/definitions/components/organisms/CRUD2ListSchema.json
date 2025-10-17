@@ -1,0 +1,379 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "$ref": "#/definitions/SchemaTpl",
+      "description": "title"
+    },
+    "footer": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "bottom area"
+    },
+    "footerClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Bottom area class name"
+    },
+    "header": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "top area"
+    },
+    "headerClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Top area class name"
+    },
+    "listItem": {
+      "$ref": "#/definitions/ListItemSchema",
+      "description": "Single data display content configuration"
+    },
+    "source": {
+      "$ref": "#/definitions/SchemaTokenizeableString",
+      "description": "It is also possible to read directly from environment variables, but this is not recommended."
+    },
+    "showFooter": {
+      "type": "boolean",
+      "description": "Whether to show the bottom"
+    },
+    "showHeader": {
+      "type": "boolean",
+      "description": "Whether to display the header"
+    },
+    "placeholder": {
+      "$ref": "#/definitions/SchemaTpl",
+      "description": "No data prompt"
+    },
+    "hideCheckToggler": {
+      "type": "boolean",
+      "description": "Whether to hide the check box"
+    },
+    "affixHeader": {
+      "type": "boolean",
+      "description": "Whether to fix the top"
+    },
+    "affixFooter": {
+      "type": "boolean",
+      "description": "Is it solid?"
+    },
+    "itemCheckableOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Configure whether an item can be clicked"
+    },
+    "itemDraggableOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Configure whether an item can be sorted by drag-and-drop, provided that the drag-and-drop function is turned on"
+    },
+    "checkOnItemClick": {
+      "type": "boolean",
+      "description": "When clicking on a single row in the list, whether to select"
+    },
+    "valueField": {
+      "type": "string",
+      "description": "Fields that can be used as values"
+    },
+    "size": {
+      "type": "string",
+      "enum": [
+        "sm",
+        "base"
+      ],
+      "description": "size"
+    },
+    "itemAction": {
+      "$ref": "#/definitions/ActionSchema",
+      "description": "Click behavior on list items"
+    },
+    "testid": {
+      "type": "string"
+    },
+    "$$id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Container css class name"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "Whether to disable"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to disable expressions"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "Whether to hide"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to hide expressions"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "Whether to display"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions"
+    },
+    "id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used for log collection"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Event action configuration"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "Whether to display statically"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions statically"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "Static display of empty value placeholder"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display form item class name"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Label class name"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Value class name"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "Component style"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "Component behavior and usage, such as create, update, remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Component name, usually the business name for easy location"
+        },
+        "mock": {
+          "description": "Editor fake data for easy display"
+        }
+      },
+      "description": "Editor configuration, can be ignored at runtime"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "Can be used to turn off mobile style at the component level"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "mode": {
+      "type": "string",
+      "description": "Specifies the display mode of the content area.",
+      "const": "list"
+    },
+    "loadingConfig": {
+      "type": "object",
+      "properties": {
+        "root": {
+          "type": "string"
+        },
+        "show": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "type": {
+      "type": "string",
+      "const": "crud2",
+      "description": "Specified as a CRUD2 renderer."
+    },
+    "api": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "Initialize data API"
+    },
+    "silentPolling": {
+      "type": "boolean",
+      "description": "Silent pull"
+    },
+    "interval": {
+      "type": "number",
+      "description": "Set automatic refresh time"
+    },
+    "stopAutoRefreshWhen": {
+      "$ref": "#/definitions/SchemaExpression"
+    },
+    "loadType": {
+      "type": "string",
+      "enum": [
+        "more",
+        "pagination"
+      ],
+      "description": "Data display mode infinite loading or paging"
+    },
+    "perPage": {
+      "type": "number",
+      "description": "When loading infinitely, set the number of loads per page according to this item, which can be unlimited"
+    },
+    "loadDataOnce": {
+      "type": "boolean",
+      "description": "Whether it is front-end single loading mode, which can be used to implement front-end paging."
+    },
+    "selectable": {
+      "type": "boolean",
+      "description": "Whether it is possible to select data and external event actions"
+    },
+    "multiple": {
+      "type": "boolean",
+      "description": "Whether multiple selection of data can be performed will only take effect when selectable is true."
+    },
+    "showSelection": {
+      "type": "boolean",
+      "description": "Whether to display the selected data area, only takes effect when selectable is true"
+    },
+    "quickSaveApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "API for batch saving after quick editing"
+    },
+    "quickSaveItemApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "API used when quick editing is configured to save in real time"
+    },
+    "saveOrderApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "Save sorted api"
+    },
+    "syncLocation": {
+      "type": "boolean",
+      "description": "Whether to synchronize the parameters of filter conditions to the address bar, the default is true",
+      "default": true
+    },
+    "pageField": {
+      "type": "string",
+      "description": "Set the paging page number field name."
+    },
+    "perPageField": {
+      "type": "string",
+      "description": "Set the field names of how many pieces of data are displayed on one pagination page."
+    },
+    "name": {
+      "$ref": "#/definitions/SchemaName"
+    },
+    "hideQuickSaveBtn": {
+      "type": "boolean",
+      "description": "Whether to hide the quick edit button."
+    },
+    "autoJumpToTopOnPagerChange": {
+      "type": "boolean",
+      "description": "Whether to automatically jump to the top when splitting pages."
+    },
+    "headerToolbar": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "top area"
+    },
+    "headerToolbarClassName": {
+      "type": "string",
+      "description": "Top area CSS class name"
+    },
+    "footerToolbar": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "bottom area"
+    },
+    "footerToolbarClassName": {
+      "type": "string",
+      "description": "Bottom area CSS class name"
+    },
+    "syncResponse2Query": {
+      "type": "boolean",
+      "description": "Whether to automatically synchronize the content returned by the interface to the address bar, provided that synchronizing the address bar is enabled."
+    },
+    "keepItemSelectionOnPageChange": {
+      "type": "boolean",
+      "description": "Whether to retain the data selected by the user when turning pages"
+    },
+    "autoFillHeight": {
+      "type": "boolean",
+      "description": "The content area takes up the remaining space on the screen"
+    },
+    "primaryField": {
+      "type": "string",
+      "description": "Row identifier, default is id"
+    },
+    "parsePrimitiveQuery": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "enable": {
+              "type": "boolean"
+            },
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "boolean",
+                  "number"
+                ]
+              }
+            }
+          },
+          "required": [
+            "enable"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "Whether to enable Query information conversion. When enabled, the Query in the URL will be converted. It is enabled by default. By default, only Boolean values are converted."
+    }
+  },
+  "required": [
+    "mode",
+    "type"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./CRUD2ListSchema.json"
+}

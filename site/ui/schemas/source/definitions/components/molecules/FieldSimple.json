@@ -1,0 +1,591 @@
+{
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "text"
+        },
+        "label": {
+          "type": "string"
+        },
+        "valueTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "value",
+              "field",
+              "func"
+            ]
+          }
+        },
+        "operators": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "lable": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "values": {
+                    "type": "array",
+                    "items": {}
+                  }
+                },
+                "required": [
+                  "lable",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "funcs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaultValue": {},
+        "placeholder": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "minLength": {
+          "type": "number"
+        },
+        "maxLength": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "label",
+        "name",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "number"
+        },
+        "label": {
+          "type": "string"
+        },
+        "valueTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "value",
+              "field",
+              "func"
+            ]
+          }
+        },
+        "operators": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "lable": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "values": {
+                    "type": "array",
+                    "items": {}
+                  }
+                },
+                "required": [
+                  "lable",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "funcs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaultValue": {},
+        "placeholder": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "step": {
+          "type": "number"
+        },
+        "precision": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "label",
+        "name",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "date"
+        },
+        "label": {
+          "type": "string"
+        },
+        "valueTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "value",
+              "field",
+              "func"
+            ]
+          }
+        },
+        "operators": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "lable": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "values": {
+                    "type": "array",
+                    "items": {}
+                  }
+                },
+                "required": [
+                  "lable",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "funcs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaultValue": {},
+        "placeholder": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "inputFormat": {
+          "type": "string"
+        },
+        "minDate": {},
+        "maxDate": {}
+      },
+      "required": [
+        "label",
+        "name",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "time"
+        },
+        "label": {
+          "type": "string"
+        },
+        "valueTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "value",
+              "field",
+              "func"
+            ]
+          }
+        },
+        "operators": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "lable": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "values": {
+                    "type": "array",
+                    "items": {}
+                  }
+                },
+                "required": [
+                  "lable",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "funcs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaultValue": {},
+        "placeholder": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "minTime": {},
+        "maxTime": {},
+        "format": {
+          "type": "string"
+        },
+        "inputFormat": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "name",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "datetime"
+        },
+        "label": {
+          "type": "string"
+        },
+        "valueTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "value",
+              "field",
+              "func"
+            ]
+          }
+        },
+        "operators": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "lable": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "values": {
+                    "type": "array",
+                    "items": {}
+                  }
+                },
+                "required": [
+                  "lable",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "funcs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaultValue": {},
+        "placeholder": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string"
+        },
+        "inputFormat": {
+          "type": "string"
+        },
+        "timeFormat": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "name",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "select"
+        },
+        "label": {
+          "type": "string"
+        },
+        "valueTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "value",
+              "field",
+              "func"
+            ]
+          }
+        },
+        "operators": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "lable": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "values": {
+                    "type": "array",
+                    "items": {}
+                  }
+                },
+                "required": [
+                  "lable",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "funcs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaultValue": {},
+        "placeholder": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "multiple": {
+          "type": "boolean"
+        },
+        "options": {
+          "type": "array",
+          "items": {}
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/BaseApiObject"
+            }
+          ]
+        },
+        "searchable": {
+          "type": "boolean"
+        },
+        "maxTagCount": {
+          "type": "number"
+        },
+        "overflowTagPopover": {},
+        "autoComplete": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "$ref": "#/definitions/BaseApiObject"
+            }
+          ],
+          "description": "Auto-complete API. When entering partial text, this text can be retrieved through  and sent to the interface. The interface can return matching options to help user input."
+        }
+      },
+      "required": [
+        "label",
+        "name",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "boolean"
+        },
+        "label": {
+          "type": "string"
+        },
+        "valueTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "value",
+              "field",
+              "func"
+            ]
+          }
+        },
+        "operators": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "lable": {
+                    "type": "string"
+                  },
+                  "value": {
+                    "type": "string"
+                  },
+                  "values": {
+                    "type": "array",
+                    "items": {}
+                  }
+                },
+                "required": [
+                  "lable",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "funcs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "defaultValue": {},
+        "placeholder": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "name",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "$ref": "#/definitions/CustomField"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./FieldSimple.json"
+}

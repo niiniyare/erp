@@ -1,0 +1,20 @@
+{
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Select type Select all"
+    },
+    "text": {
+      "type": "string",
+      "description": "option display text"
+    }
+  },
+  "required": [
+    "key",
+    "text"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./RowSelectionOptionsSchema.json"
+}

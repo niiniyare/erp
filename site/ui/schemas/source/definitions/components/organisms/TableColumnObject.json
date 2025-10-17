@@ -1,0 +1,168 @@
+{
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "Column header"
+    },
+    "fixed": {
+      "type": "string",
+      "enum": [
+        "left",
+        "right",
+        "none"
+      ],
+      "description": "Configure whether to fix the current column"
+    },
+    "name": {
+      "type": "string",
+      "description": "Bind field name"
+    },
+    "popOver": {
+      "$ref": "#/definitions/SchemaPopOver",
+      "description": "Configure the view details function"
+    },
+    "quickEdit": {
+      "$ref": "#/definitions/SchemaQuickEdit",
+      "description": "Configure quick editing function"
+    },
+    "quickEditOnUpdate": {
+      "$ref": "#/definitions/SchemaQuickEdit",
+      "description": "When used as a form item, the quick editing panel during editing can be configured separately."
+    },
+    "copyable": {
+      "$ref": "#/definitions/SchemaCopyable",
+      "description": "Configure click-to-copy functionality"
+    },
+    "sortable": {
+      "type": "boolean",
+      "description": "Whether the configuration can be sorted"
+    },
+    "searchable": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        }
+      ],
+      "description": "Is it possible to search quickly?"
+    },
+    "toggled": {
+      "type": "boolean",
+      "description": "Configure whether to display by default"
+    },
+    "width": {
+      "type": [
+        "number",
+        "string"
+      ],
+      "description": "column width"
+    },
+    "align": {
+      "type": "string",
+      "enum": [
+        "left",
+        "right",
+        "center",
+        "justify"
+      ],
+      "description": "column alignment"
+    },
+    "vAlign": {
+      "type": "string",
+      "enum": [
+        "top",
+        "middle",
+        "bottom"
+      ],
+      "description": "column vertical alignment"
+    },
+    "headerAlign": {
+      "type": "string",
+      "enum": [
+        "left",
+        "right",
+        "center",
+        "justify"
+      ],
+      "description": "Title left and right alignment"
+    },
+    "className": {
+      "type": "string",
+      "description": "Column style sheet"
+    },
+    "classNameExpr": {
+      "type": "string",
+      "description": "cell style expression"
+    },
+    "labelClassName": {
+      "type": "string",
+      "description": "Column header style sheet"
+    },
+    "filterable": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "source": {
+              "type": "string"
+            },
+            "options": {
+              "type": "array",
+              "items": {}
+            }
+          },
+          "additionalProperties": false
+        }
+      ],
+      "description": "todo"
+    },
+    "breakpoint": {
+      "type": "string",
+      "enum": [
+        "*",
+        "xs",
+        "sm",
+        "md",
+        "lg"
+      ],
+      "description": "Used in conjunction with the table's footable. Fill in *, xs, sm, md, lg to specify the trigger conditions of footable. You can fill in multiple separated by spaces."
+    },
+    "remark": {
+      "$ref": "#/definitions/SchemaRemark",
+      "description": "Prompt message"
+    },
+    "value": {
+      "description": "Default value, only useful in inputTable"
+    },
+    "unique": {
+      "type": "boolean",
+      "description": "Whether it is unique or not is only useful in inputTable."
+    },
+    "canAccessSuperData": {
+      "type": "boolean",
+      "description": "Whether table column cells can obtain the parent data field value. The default is true. This configuration takes effect for cells in the current column."
+    },
+    "lazyRenderAfter": {
+      "type": "number",
+      "description": "Useful when rendering too many columns at once. The default is 100, which can be used to improve table rendering performance.",
+      "default": 100
+    },
+    "innerStyle": {
+      "type": "object",
+      "description": "Cell internal component custom style style as the configuration of cell custom style"
+    }
+  },
+  "required": [
+    "label"
+  ],
+  "additionalProperties": false,
+  "description": "Table column, if the type is not specified, it defaults to text type.",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./TableColumnObject.json"
+}
