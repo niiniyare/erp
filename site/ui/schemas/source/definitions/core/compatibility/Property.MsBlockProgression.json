@@ -1,0 +1,25 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "bt"
+    },
+    {
+      "type": "string",
+      "const": "lr"
+    },
+    {
+      "type": "string",
+      "const": "rl"
+    },
+    {
+      "type": "string",
+      "const": "tb"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.MsBlockProgression.json"
+}

@@ -1,0 +1,29 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "baseline"
+    },
+    {
+      "type": "string",
+      "const": "center"
+    },
+    {
+      "type": "string",
+      "const": "end"
+    },
+    {
+      "type": "string",
+      "const": "start"
+    },
+    {
+      "type": "string",
+      "const": "stretch"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.BoxAlign.json"
+}

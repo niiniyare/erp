@@ -1,0 +1,29 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "active"
+    },
+    {
+      "type": "string",
+      "const": "auto"
+    },
+    {
+      "type": "string",
+      "const": "disabled"
+    },
+    {
+      "type": "string",
+      "const": "inactive"
+    },
+    {
+      "type": "string",
+      "const": "normal"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.ImeMode.json"
+}

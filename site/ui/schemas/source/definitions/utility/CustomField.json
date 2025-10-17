@@ -1,0 +1,76 @@
+{
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "custom"
+    },
+    "label": {
+      "type": "string"
+    },
+    "valueTypes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "value",
+          "field",
+          "func"
+        ]
+      }
+    },
+    "operators": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "lable": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              },
+              "values": {
+                "type": "array",
+                "items": {}
+              }
+            },
+            "required": [
+              "lable",
+              "value"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "funcs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "defaultValue": {},
+    "placeholder": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "value": {}
+  },
+  "required": [
+    "label",
+    "name",
+    "type",
+    "value"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./CustomField.json"
+}

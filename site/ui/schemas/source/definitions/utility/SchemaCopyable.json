@@ -1,0 +1,12 @@
+{
+  "anyOf": [
+    {
+      "type": "boolean"
+    },
+    {
+      "$ref": "#/definitions/SchemaCopyableObject"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./SchemaCopyable.json"
+}

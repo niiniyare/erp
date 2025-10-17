@@ -1,0 +1,12 @@
+{
+  "type": "string",
+  "enum": [
+    "center",
+    "end",
+    "flex-end",
+    "flex-start",
+    "start"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.ContentPosition.json"
+}

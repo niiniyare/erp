@@ -1,0 +1,20 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "$ref": "#/definitions/DataType.FontWeightAbsolute"
+    },
+    {
+      "type": "string",
+      "const": "bolder"
+    },
+    {
+      "type": "string",
+      "const": "lighter"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.FontWeight.json"
+}

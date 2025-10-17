@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "example": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./FuncItem.json"
+}

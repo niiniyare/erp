@@ -1,0 +1,64 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "-ms-manipulation"
+    },
+    {
+      "type": "string",
+      "const": "-ms-none"
+    },
+    {
+      "type": "string",
+      "const": "-ms-pinch-zoom"
+    },
+    {
+      "type": "string",
+      "const": "auto"
+    },
+    {
+      "type": "string",
+      "const": "manipulation"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string",
+      "const": "pan-down"
+    },
+    {
+      "type": "string",
+      "const": "pan-left"
+    },
+    {
+      "type": "string",
+      "const": "pan-right"
+    },
+    {
+      "type": "string",
+      "const": "pan-up"
+    },
+    {
+      "type": "string",
+      "const": "pan-x"
+    },
+    {
+      "type": "string",
+      "const": "pan-y"
+    },
+    {
+      "type": "string",
+      "const": "pinch-zoom"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.TouchAction.json"
+}

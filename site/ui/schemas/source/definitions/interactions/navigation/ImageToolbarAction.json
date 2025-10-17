@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "enum": [
+        "ROTATE_RIGHT",
+        "ROTATE_LEFT",
+        "ZOOM_IN",
+        "ZOOM_OUT",
+        "SCALE_ORIGIN"
+      ]
+    },
+    "label": {
+      "type": "string"
+    },
+    "icon": {
+      "type": "string"
+    },
+    "iconClassName": {
+      "type": "string"
+    },
+    "disabled": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "key"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ImageToolbarAction.json"
+}

@@ -1,0 +1,12 @@
+{
+  "anyOf": [
+    {
+      "type": "boolean"
+    },
+    {
+      "$ref": "#/definitions/SchemaQuickEditObject"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./SchemaQuickEdit.json"
+}

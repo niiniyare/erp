@@ -1,0 +1,29 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "$ref": "#/definitions/DataType.Color"
+    },
+    {
+      "$ref": "#/definitions/DataType.LineStyle"
+    },
+    {
+      "$ref": "#/definitions/DataType.LineWidthStringOrNumber"
+    },
+    {
+      "type": "string",
+      "const": "auto"
+    },
+    {
+      "type": "string",
+      "const": "invert"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.Outline<(string|number)>.json"
+}

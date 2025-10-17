@@ -1,0 +1,23 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string"
+    },
+    {
+      "type": "number"
+    },
+    {
+      "type": "string",
+      "const": "auto"
+    },
+    {
+      "type": "string",
+      "const": "from-font"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.TextDecorationThickness<(string|number)>.json"
+}

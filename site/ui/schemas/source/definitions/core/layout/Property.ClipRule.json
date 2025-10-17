@@ -1,0 +1,17 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "evenodd"
+    },
+    {
+      "type": "string",
+      "const": "nonzero"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.ClipRule.json"
+}

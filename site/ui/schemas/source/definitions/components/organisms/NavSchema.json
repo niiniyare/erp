@@ -1,0 +1,300 @@
+{
+  "type": "object",
+  "properties": {
+    "$$id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Container css class name"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "Whether to disable"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to disable expressions"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "Whether to hide"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to hide expressions"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "Whether to display"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions"
+    },
+    "id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used for log collection"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Event action configuration"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "Whether to display statically"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions statically"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "Static display of empty value placeholder"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display form item class name"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Label class name"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Value class name"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "Component style"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "Component behavior and usage, such as create, update, remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Component name, usually the business name for easy location"
+        },
+        "mock": {
+          "description": "Editor fake data for easy display"
+        }
+      },
+      "description": "Editor configuration, can be ignored at runtime"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "Can be used to turn off mobile style at the component level"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "type": {
+      "type": "string",
+      "const": "nav",
+      "description": "Designated as Nav navigation renderer"
+    },
+    "testid": {
+      "type": "string"
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/NavItemSchema"
+      },
+      "description": "Link address collection"
+    },
+    "indentSize": {
+      "type": "number",
+      "default": 16
+    },
+    "source": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "Can be pulled via API."
+    },
+    "deferApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "Lazy loading api, if the reuse source interface is not configured."
+    },
+    "stacked": {
+      "type": "boolean",
+      "enum": [
+        true,
+        false
+      ],
+      "description": "true means vertical arrangement, false means horizontal arrangement like tabs."
+    },
+    "itemActions": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "More action menu lists"
+    },
+    "draggable": {
+      "type": "boolean",
+      "description": "Draggable"
+    },
+    "saveOrderApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "Save sorted api"
+    },
+    "itemBadge": {
+      "$ref": "#/definitions/BadgeObject",
+      "description": "corner mark"
+    },
+    "badge": {
+      "$ref": "#/definitions/BadgeObject",
+      "description": "corner mark"
+    },
+    "dragOnSameLevel": {
+      "type": "boolean",
+      "description": "Only dragging at the same level is allowed"
+    },
+    "overflow": {
+      "$ref": "#/definitions/NavOverflow",
+      "description": "Automatically collapse configuration during horizontal navigation"
+    },
+    "level": {
+      "type": "number",
+      "description": "How many levels can be displayed at most?"
+    },
+    "defaultOpenLevel": {
+      "type": "number",
+      "description": "The default expansion level is that all nodes less than or equal to this level are opened by default."
+    },
+    "showKey": {
+      "type": "string",
+      "description": "Controls only the submenu items under the specified key menu to be displayed"
+    },
+    "collapsed": {
+      "type": "boolean",
+      "description": "control menu shrink"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "float",
+        "inline"
+      ],
+      "description": "Vertical mode, in the unfolded state, controls how the menu is opened."
+    },
+    "expandIcon": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        }
+      ],
+      "description": "Custom expand icon"
+    },
+    "expandPosition": {
+      "type": "string",
+      "description": "Customize the expansion icon position. Default is in front before after"
+    },
+    "themeColor": {
+      "type": "string",
+      "enum": [
+        "light",
+        "dark"
+      ],
+      "description": "Theme color default light"
+    },
+    "accordion": {
+      "type": "boolean",
+      "description": "Accordion expansion is only supported in vertical inline mode"
+    },
+    "popupClassName": {
+      "type": "string",
+      "description": "Submenu item expansion floating layer style"
+    },
+    "searchable": {
+      "type": "boolean",
+      "description": "Whether to enable search"
+    },
+    "searchConfig": {
+      "type": "object",
+      "properties": {
+        "className": {
+          "type": "string",
+          "description": "Search box outer CSS style class"
+        },
+        "matchFunc": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {}
+          ],
+          "description": "Search matching function"
+        },
+        "placeholder": {
+          "type": "string",
+          "description": "placeholder"
+        },
+        "mini": {
+          "type": "boolean",
+          "description": "Whether it is Mini style."
+        },
+        "enhance": {
+          "type": "boolean",
+          "description": "Whether to enhance the style"
+        },
+        "clearable": {
+          "type": "boolean",
+          "description": "Is it purgeable?"
+        },
+        "searchImediately": {
+          "type": "boolean",
+          "description": "Whether to search immediately."
+        },
+        "valueField": {
+          "type": "string",
+          "description": "Specify a unique identification field"
+        }
+      },
+      "additionalProperties": false,
+      "description": "Search box related configurations"
+    }
+  },
+  "required": [
+    "indentSize",
+    "type"
+  ],
+  "additionalProperties": false,
+  "description": "Nav navigation renderer documentation: https://aisuda.bce.baidu.com/amis/zh-CN/components/nav",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./NavSchema.json"
+}

@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "properties": {
+    "fetchFailed": {
+      "type": "string",
+      "description": "Obtain prompts when failure"
+    },
+    "fetchSuccess": {
+      "type": "string",
+      "description": "Get a successful prompt, which is empty by default."
+    },
+    "saveFailed": {
+      "type": "string",
+      "description": "Prompt when saving fails."
+    },
+    "saveSuccess": {
+      "type": "string",
+      "description": "Prompt when saving is successful."
+    }
+  },
+  "additionalProperties": false,
+  "description": "Message copy configuration, remember that this priority is the lowest. If your interface returns msg, the interface returns priority.",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./SchemaMessage.json"
+}

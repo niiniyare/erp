@@ -1,0 +1,65 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "all"
+    },
+    {
+      "type": "string",
+      "const": "always"
+    },
+    {
+      "type": "string",
+      "const": "auto"
+    },
+    {
+      "type": "string",
+      "const": "avoid"
+    },
+    {
+      "type": "string",
+      "const": "avoid-column"
+    },
+    {
+      "type": "string",
+      "const": "avoid-page"
+    },
+    {
+      "type": "string",
+      "const": "avoid-region"
+    },
+    {
+      "type": "string",
+      "const": "column"
+    },
+    {
+      "type": "string",
+      "const": "left"
+    },
+    {
+      "type": "string",
+      "const": "page"
+    },
+    {
+      "type": "string",
+      "const": "recto"
+    },
+    {
+      "type": "string",
+      "const": "region"
+    },
+    {
+      "type": "string",
+      "const": "right"
+    },
+    {
+      "type": "string",
+      "const": "verso"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.BreakAfter.json"
+}

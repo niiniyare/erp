@@ -1,0 +1,21 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "mandatory"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string",
+      "const": "proximity"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.ScrollSnapTypeY.json"
+}

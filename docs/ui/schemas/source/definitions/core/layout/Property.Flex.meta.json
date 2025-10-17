@@ -1,0 +1,52 @@
+{
+  "$schema": "../../schema_metadata_template.json",
+  "meta": {
+    "title": "Property.Flex",
+    "description": "Core CSS property definition for layout styling",
+    "category": "core",
+    "subcategory": "layout",
+    "dependencies": [],
+    "examples": [],
+    "accessibility": {
+      "wcagLevel": "AA",
+      "keyboardSupport": true,
+      "screenReaderSupport": true,
+      "ariaRequirements": [],
+      "notes": "Standard accessibility requirements apply"
+    },
+    "performance": {
+      "renderCost": "low",
+      "memoryCost": "low",
+      "optimizations": [],
+      "notes": "Standard performance characteristics"
+    },
+    "version": "1.0.0",
+    "deprecated": false,
+    "createdDate": "2025-10-17",
+    "lastModified": "2025-10-17",
+    "author": "ERP UI Team",
+    "tags": [
+      "layout",
+      "property.flex"
+    ],
+    "framework": {
+      "templ": {
+        "componentFile": "",
+        "propsInterface": ""
+      },
+      "htmx": {
+        "supported": false,
+        "attributes": []
+      },
+      "alpine": {
+        "directives": []
+      }
+    },
+    "testing": {
+      "unitTests": "",
+      "integrationTests": "",
+      "visualTests": "",
+      "testCoverage": 0
+    }
+  }
+}

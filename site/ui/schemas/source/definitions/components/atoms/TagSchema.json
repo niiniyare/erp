@@ -1,0 +1,179 @@
+{
+  "type": "object",
+  "properties": {
+    "$$id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Class name"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "Whether to disable"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to disable expressions"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "Whether to hide"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to hide expressions"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "Whether to display"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions"
+    },
+    "id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used for log collection"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Event action configuration"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "Whether to display statically"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions statically"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "Static display of empty value placeholder"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display form item class name"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Label class name"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Value class name"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "Custom style"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "Component behavior and usage, such as create, update, remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Component name, usually the business name for easy location"
+        },
+        "mock": {
+          "description": "Editor fake data for easy display"
+        }
+      },
+      "description": "Editor configuration, can be ignored at runtime"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "Can be used to turn off mobile style at the component level"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "type": {
+      "type": "string",
+      "const": "tag"
+    },
+    "testid": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string",
+      "description": "Label color"
+    },
+    "label": {
+      "type": "string",
+      "description": "Label text content"
+    },
+    "displayMode": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "rounded",
+        "status"
+      ],
+      "description": "normal: facial label, corresponding to the background color of color rounded: linear label, corresponding to the border of color status: label with icon, the icon can be customized"
+    },
+    "icon": {
+      "$ref": "#/definitions/SchemaIcon",
+      "description": "The front icon set in status mode"
+    },
+    "closable": {
+      "type": "boolean",
+      "description": "Whether to display a close button"
+    },
+    "closeIcon": {
+      "$ref": "#/definitions/SchemaIcon",
+      "description": "close icon"
+    },
+    "checkable": {
+      "type": "boolean",
+      "description": "Whether the label is optional"
+    },
+    "checked": {
+      "type": "boolean",
+      "description": "Check or not"
+    }
+  },
+  "required": [
+    "closeIcon",
+    "label",
+    "type"
+  ],
+  "additionalProperties": false,
+  "description": "Tag",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./TagSchema.json"
+}

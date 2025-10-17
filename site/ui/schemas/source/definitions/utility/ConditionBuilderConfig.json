@@ -1,0 +1,37 @@
+{
+  "type": "object",
+  "properties": {
+    "valueTypes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "value",
+          "field",
+          "func"
+        ]
+      }
+    },
+    "fields": {
+      "$ref": "#/definitions/ConditionBuilderFields"
+    },
+    "funcs": {
+      "$ref": "#/definitions/ConditionBuilderFuncs"
+    },
+    "maxLevel": {
+      "type": "number"
+    },
+    "types": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ConditionBuilderType"
+      }
+    }
+  },
+  "required": [
+    "types"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ConditionBuilderConfig.json"
+}

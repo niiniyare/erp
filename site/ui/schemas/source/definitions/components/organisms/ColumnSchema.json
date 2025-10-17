@@ -1,0 +1,128 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Specify column unique identifier"
+    },
+    "title": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        }
+      ],
+      "description": "Specify column headers"
+    },
+    "type": {
+      "type": "string",
+      "description": "Specify column content renderer"
+    },
+    "rowSpanExpr": {
+      "type": "string",
+      "description": "Specify row merge expression"
+    },
+    "colSpanExpr": {
+      "type": "string",
+      "description": "Specify column merge expression"
+    },
+    "children": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ColumnSchema"
+      },
+      "description": "Header grouping"
+    },
+    "copyable": {
+      "type": "boolean",
+      "description": "Copyable"
+    },
+    "remark": {
+      "type": "string",
+      "description": "List header prompt"
+    },
+    "searchable": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        }
+      ],
+      "description": "Quick search"
+    },
+    "sorter": {
+      "type": "boolean",
+      "description": "Quick sort"
+    },
+    "sortable": {
+      "type": "boolean",
+      "description": "Compatible with table quick sort"
+    },
+    "filterable": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array",
+          "items": {}
+        }
+      },
+      "additionalProperties": false,
+      "description": "Compatible with table column filtering"
+    },
+    "align": {
+      "type": "string",
+      "description": "Content left, center, right"
+    },
+    "fixed": {
+      "type": [
+        "boolean",
+        "string"
+      ],
+      "description": "Is it fixed on the left/right side?"
+    },
+    "toggled": {
+      "type": "boolean",
+      "description": "Whether the current column is displayed"
+    },
+    "className": {
+      "type": "string",
+      "description": "Column style"
+    },
+    "titleClassName": {
+      "type": "string",
+      "description": "Header cell style"
+    },
+    "classNameExpr": {
+      "type": "string",
+      "description": "cell style"
+    },
+    "quickEdit": {
+      "$ref": "#/definitions/SchemaQuickEdit",
+      "description": "Configure quick editing function"
+    },
+    "width": {
+      "type": [
+        "string",
+        "number"
+      ]
+    },
+    "canAccessSuperData": {
+      "type": "boolean",
+      "description": "Whether table column cells can obtain the parent data field value. The default is true. This configuration takes effect for cells in the current column."
+    }
+  },
+  "required": [
+    "name",
+    "title"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ColumnSchema.json"
+}

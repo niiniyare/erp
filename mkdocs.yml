@@ -55,20 +55,96 @@ nav:
       - 'Performance Plan': 'performance-optimization-plan.md'
     - 'UI':
       - 'Overview': 'ui/README.md'
-      - 'Getting Started': 'ui/getting-started.md'
-      - 'UX Improvement Plan': 'ux-improvement-plan.md'
-      - 'Architecture': 'ui/fundamentals/architecture.md'
-      - 'Templ LLMs': 'ui/templ-llms.md'
-      - 'Claude': 'ui/CLAUDE.md'
-      - 'Components':
-        - 'Elements': 'ui/components/elements.md'
-        - 'Forms': 'ui/components/forms.md'
-      - 'Guides':
-        - 'Validation': 'ui/guides/validation-guide.md'
-      - 'Patterns':
-        - 'HTMX Integration': 'ui/patterns/htmx-integration.md'
+      - 'Project Status':
+        - 'Roadmap': 'ui/RoadMap.md'
+        - 'Content Inventory': 'ui/CONTENT_INVENTORY.md'
+      - 'Getting Started':
+        - 'Quick Start':
+          - 'Installation': 'ui/quick-start/installation.md'
+          - 'First Component': 'ui/quick-start/first-component.md'
+          - 'Basic Examples': 'ui/quick-start/basic-examples.md'
+        - 'Fundamentals':
+          - 'Architecture': 'ui/fundamentals/architecture.md'
+          - 'Schema System': 'ui/fundamentals/schema-system.md'
+          - 'Component Lifecycle': 'ui/fundamentals/component-lifecycle.md'
+          - 'Styling Approach': 'ui/fundamentals/styling-approach.md'
+          - 'Templ Integration': 'ui/fundamentals/templ-integration.md'
+      - 'Component Library':
+        - 'Overview': 'ui/components/README.md'
+        - 'Atomic Design':
+          - 'Atoms (Basic Elements)':
+            - 'Form Controls':
+              - 'Button': 'ui/components/atoms/button/README.md'
+              - 'Input': 'ui/components/atoms/input/README.md'
+              - 'Checkbox': 'ui/components/atoms/checkbox/README.md'
+              - 'Radio': 'ui/components/atoms/radio/README.md'
+              - 'Switch': 'ui/components/atoms/switch/README.md'
+              - 'Color Input': 'ui/components/atoms/color-input/README.md'
+              - 'Action': 'ui/components/atoms/action/README.md'
+              - 'Option': 'ui/components/atoms/option/README.md'
+              - 'Options': 'ui/components/atoms/options/README.md'
+            - 'Display Elements':
+              - 'Badge': 'ui/components/atoms/badge/README.md'
+              - 'Tag': 'ui/components/atoms/tag/README.md'
+              - 'Icon': 'ui/components/atoms/icon/README.md'
+              - 'Link': 'ui/components/atoms/link/README.md'
+              - 'Status': 'ui/components/atoms/status/README.md'
+              - 'Progress': 'ui/components/atoms/progress/README.md'
+              - 'Spinner': 'ui/components/atoms/spinner/README.md'
+              - 'Image': 'ui/components/atoms/image/README.md'
+              - 'Static': 'ui/components/atoms/static/README.md'
+            - 'Layout Elements':
+              - 'Divider': 'ui/components/atoms/divider/README.md'
+              - 'Hidden': 'ui/components/atoms/hidden/README.md'
+              - 'State': 'ui/components/atoms/state/README.md'
+              - 'UUID': 'ui/components/atoms/uuid/README.md'
+          - 'Molecules (Compound Components)':
+            - 'Content Display':
+              - 'Card': 'ui/components/molecules/card/README.md'
+              - 'Alert': 'ui/components/molecules/alert/README.md'
+            - 'Data & Media':
+              - 'Chart': 'ui/components/molecules/chart/README.md'
+              - 'Carousel': 'ui/components/molecules/carousel/README.md'
+              - 'Audio': 'ui/components/molecules/audio/README.md'
+              - 'Video': 'ui/components/molecules/video/README.md'
+            - 'Form Components':
+              - 'Search Box': 'ui/components/molecules/search-box/README.md'
+              - 'Date Range': 'ui/components/molecules/date-range/README.md'
+          - 'Organisms (Complex Components)':
+            - 'Data Tables': 'ui/components/organisms/tables/README.md'
+      - 'Development':
+        - 'Developer Guides':
+          - 'Overview': 'ui/development/README.md'
+          - 'Component Development': 'ui/development/guides/component-development-guide.md'
+          - 'Validation Patterns': 'ui/development/guides/validation-guide.md'
+          - 'Styling Guide': 'ui/development/guides/styles.md'
+          - 'Auto Generation': 'ui/development/guides/auto-generation-guide.md'
+        - 'Schema System':
+          - 'Overview': 'ui/schemas/source/README.md'
+          - 'Documentation':
+            - 'Organization Strategy': 'ui/schemas/documentation/SCHEMA_ORGANIZATION_STRATEGY.md'
+            - 'Implementation Summary': 'ui/schemas/documentation/IMPLEMENTATION_SUMMARY.md'
+            - 'Validation Process': 'ui/schemas/documentation/DOC_VALIDATION_PROCESS.md'
+        - 'Tools & Utilities':
+          - 'Overview': 'ui/tools/README.md'
+          - 'Schema Tools': 'ui/tools/schema-tools/'
+      - 'Integration & Patterns':
+        - 'Framework Integration':
+          - 'Flowbite': 'ui/integration/flowbite.md'
+          - 'HTMX': 'ui/integration/htmx.md'
+        - 'Development Patterns':
+          - 'TypeScript Hooks': 'ui/patterns/typescript-hooks.md'
       - 'Reference':
-        - 'API Reference': 'ui/reference/api-reference.md'
+        - 'API Documentation':
+          - 'API Reference': 'ui/reference/api/README.md'
+          - 'Hooks API': 'ui/reference/api/hooks.md'
+        - 'Design System':
+          - 'Overview': 'ui/reference/design/README.md'
+          - 'Page Architecture': 'ui/reference/design/Page-Architecture-Guide.md'
+          - 'UX Guide': 'ui/reference/design/UX-Guide-Index.md'
+          - 'UX Implementation': 'ui/reference/design/UX-Implementation-Guide.md'
+          - 'UX Style Guide': 'ui/reference/design/UX-Style-Guide.md'
+      - 'AI Assistant Guide': 'ui/CLAUDE.md'
     - 'Contributing':
       - 'Best Practices': 'contributing/01-best-practices.md'
       - 'Documentation Guide': 'contributing/documentation-guide.md'

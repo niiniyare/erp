@@ -1,0 +1,205 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "-apple-pay-button"
+    },
+    {
+      "type": "string",
+      "const": "button"
+    },
+    {
+      "type": "string",
+      "const": "button-bevel"
+    },
+    {
+      "type": "string",
+      "const": "caret"
+    },
+    {
+      "type": "string",
+      "const": "checkbox"
+    },
+    {
+      "type": "string",
+      "const": "default-button"
+    },
+    {
+      "type": "string",
+      "const": "inner-spin-button"
+    },
+    {
+      "type": "string",
+      "const": "listbox"
+    },
+    {
+      "type": "string",
+      "const": "listitem"
+    },
+    {
+      "type": "string",
+      "const": "media-controls-background"
+    },
+    {
+      "type": "string",
+      "const": "media-controls-fullscreen-background"
+    },
+    {
+      "type": "string",
+      "const": "media-current-time-display"
+    },
+    {
+      "type": "string",
+      "const": "media-enter-fullscreen-button"
+    },
+    {
+      "type": "string",
+      "const": "media-exit-fullscreen-button"
+    },
+    {
+      "type": "string",
+      "const": "media-fullscreen-button"
+    },
+    {
+      "type": "string",
+      "const": "media-mute-button"
+    },
+    {
+      "type": "string",
+      "const": "media-overlay-play-button"
+    },
+    {
+      "type": "string",
+      "const": "media-play-button"
+    },
+    {
+      "type": "string",
+      "const": "media-seek-back-button"
+    },
+    {
+      "type": "string",
+      "const": "media-seek-forward-button"
+    },
+    {
+      "type": "string",
+      "const": "media-slider"
+    },
+    {
+      "type": "string",
+      "const": "media-sliderthumb"
+    },
+    {
+      "type": "string",
+      "const": "media-time-remaining-display"
+    },
+    {
+      "type": "string",
+      "const": "media-toggle-closed-captions-button"
+    },
+    {
+      "type": "string",
+      "const": "media-volume-slider"
+    },
+    {
+      "type": "string",
+      "const": "media-volume-slider-container"
+    },
+    {
+      "type": "string",
+      "const": "media-volume-sliderthumb"
+    },
+    {
+      "type": "string",
+      "const": "menulist"
+    },
+    {
+      "type": "string",
+      "const": "menulist-button"
+    },
+    {
+      "type": "string",
+      "const": "menulist-text"
+    },
+    {
+      "type": "string",
+      "const": "menulist-textfield"
+    },
+    {
+      "type": "string",
+      "const": "meter"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string",
+      "const": "progress-bar"
+    },
+    {
+      "type": "string",
+      "const": "progress-bar-value"
+    },
+    {
+      "type": "string",
+      "const": "push-button"
+    },
+    {
+      "type": "string",
+      "const": "radio"
+    },
+    {
+      "type": "string",
+      "const": "searchfield"
+    },
+    {
+      "type": "string",
+      "const": "searchfield-cancel-button"
+    },
+    {
+      "type": "string",
+      "const": "searchfield-decoration"
+    },
+    {
+      "type": "string",
+      "const": "searchfield-results-button"
+    },
+    {
+      "type": "string",
+      "const": "searchfield-results-decoration"
+    },
+    {
+      "type": "string",
+      "const": "slider-horizontal"
+    },
+    {
+      "type": "string",
+      "const": "slider-vertical"
+    },
+    {
+      "type": "string",
+      "const": "sliderthumb-horizontal"
+    },
+    {
+      "type": "string",
+      "const": "sliderthumb-vertical"
+    },
+    {
+      "type": "string",
+      "const": "square-button"
+    },
+    {
+      "type": "string",
+      "const": "textarea"
+    },
+    {
+      "type": "string",
+      "const": "textfield"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.WebkitAppearance.json"
+}

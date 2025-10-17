@@ -1,0 +1,240 @@
+{
+  "type": "object",
+  "properties": {
+    "inputParams": {
+      "description": "Pop-up window parameter description, the value format is JSONSchema."
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ActionSchema"
+      },
+      "description": "By default, there is no need to fill in, and confirm and cancel buttons will be automatically created."
+    },
+    "body": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "content area"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Configure outer className"
+    },
+    "bodyClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Configure Body container className"
+    },
+    "headerClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Configuration header container className"
+    },
+    "footerClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Configuration header container className"
+    },
+    "closeOnEsc": {
+      "type": "boolean",
+      "description": "Whether to support pressing ESC to close Dialog"
+    },
+    "name": {
+      "$ref": "#/definitions/SchemaName"
+    },
+    "size": {
+      "type": "string",
+      "enum": [
+        "xs",
+        "sm",
+        "md",
+        "lg",
+        "full"
+      ],
+      "description": "Dialog size"
+    },
+    "title": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "Please set the title by configuring title"
+    },
+    "position": {
+      "type": "string",
+      "enum": [
+        "left",
+        "right",
+        "top",
+        "bottom"
+      ],
+      "description": "Where to pop up from"
+    },
+    "showCloseButton": {
+      "type": "boolean",
+      "description": "Whether to display the close button. When the value is false, closeOnOutside is enabled by default."
+    },
+    "width": {
+      "type": [
+        "number",
+        "string"
+      ],
+      "description": "The width of the drawer (effective when position is left | right)"
+    },
+    "height": {
+      "type": [
+        "number",
+        "string"
+      ],
+      "description": "The height of the drawer (effective when position is top | bottom)"
+    },
+    "header": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "head"
+    },
+    "footer": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "bottom"
+    },
+    "confirm": {
+      "type": "boolean",
+      "description": "Affects automatically generated buttons. If you configure the button yourself, this configuration is invalid."
+    },
+    "resizable": {
+      "type": "boolean",
+      "description": "Is it possible to drag the size of the pop-up window?"
+    },
+    "overlay": {
+      "type": "boolean",
+      "description": "Whether to display the mask layer"
+    },
+    "closeOnOutside": {
+      "type": "boolean",
+      "description": "Whether to close the popup when clicking outside."
+    },
+    "showErrorMsg": {
+      "type": "boolean",
+      "description": "Whether to display error messages"
+    },
+    "data": {
+      "type": "object",
+      "description": "data mapping"
+    },
+    "testid": {
+      "type": "string"
+    },
+    "$$id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "Whether to disable"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to disable expressions"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "Whether to hide"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to hide expressions"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "Whether to display"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions"
+    },
+    "id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used for log collection"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Event action configuration"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "Whether to display statically"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions statically"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "Static display of empty value placeholder"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display form item class name"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Label class name"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Value class name"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "Component style"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "Component behavior and usage, such as create, update, remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Component name, usually the business name for easy location"
+        },
+        "mock": {
+          "description": "Editor fake data for easy display"
+        }
+      },
+      "description": "Editor configuration, can be ignored at runtime"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "Can be used to turn off mobile style at the component level"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    }
+  },
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DrawerSchemaBase.json"
+}

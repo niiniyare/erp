@@ -1,0 +1,127 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "$ref": "#/definitions/DataType.EastAsianVariantValues"
+    },
+    {
+      "type": "string",
+      "const": "all-petite-caps"
+    },
+    {
+      "type": "string",
+      "const": "all-small-caps"
+    },
+    {
+      "type": "string",
+      "const": "common-ligatures"
+    },
+    {
+      "type": "string",
+      "const": "contextual"
+    },
+    {
+      "type": "string",
+      "const": "diagonal-fractions"
+    },
+    {
+      "type": "string",
+      "const": "discretionary-ligatures"
+    },
+    {
+      "type": "string",
+      "const": "full-width"
+    },
+    {
+      "type": "string",
+      "const": "historical-forms"
+    },
+    {
+      "type": "string",
+      "const": "historical-ligatures"
+    },
+    {
+      "type": "string",
+      "const": "lining-nums"
+    },
+    {
+      "type": "string",
+      "const": "no-common-ligatures"
+    },
+    {
+      "type": "string",
+      "const": "no-contextual"
+    },
+    {
+      "type": "string",
+      "const": "no-discretionary-ligatures"
+    },
+    {
+      "type": "string",
+      "const": "no-historical-ligatures"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string",
+      "const": "normal"
+    },
+    {
+      "type": "string",
+      "const": "oldstyle-nums"
+    },
+    {
+      "type": "string",
+      "const": "ordinal"
+    },
+    {
+      "type": "string",
+      "const": "petite-caps"
+    },
+    {
+      "type": "string",
+      "const": "proportional-nums"
+    },
+    {
+      "type": "string",
+      "const": "proportional-width"
+    },
+    {
+      "type": "string",
+      "const": "ruby"
+    },
+    {
+      "type": "string",
+      "const": "slashed-zero"
+    },
+    {
+      "type": "string",
+      "const": "small-caps"
+    },
+    {
+      "type": "string",
+      "const": "stacked-fractions"
+    },
+    {
+      "type": "string",
+      "const": "tabular-nums"
+    },
+    {
+      "type": "string",
+      "const": "titling-caps"
+    },
+    {
+      "type": "string",
+      "const": "unicase"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.FontVariant.json"
+}

@@ -1,0 +1,46 @@
+{
+  "allOf": [
+    {
+      "$ref": "#/definitions/SchemaObjectListBodyField",
+      "patternProperties": {
+        "^(label|labelClassName|innerClassName|name|popOver|quickEdit|copyable)$": {}
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "Column header"
+        },
+        "labelClassName": {
+          "$ref": "#/definitions/SchemaClassName",
+          "description": "label class name"
+        },
+        "innerClassName": {
+          "$ref": "#/definitions/SchemaClassName",
+          "description": "CSS class name of inner component"
+        },
+        "name": {
+          "type": "string",
+          "description": "Bind field name"
+        },
+        "popOver": {
+          "$ref": "#/definitions/SchemaPopOver",
+          "description": "Configure the view details function"
+        },
+        "quickEdit": {
+          "$ref": "#/definitions/SchemaQuickEdit",
+          "description": "Configure quick editing function"
+        },
+        "copyable": {
+          "$ref": "#/definitions/SchemaCopyable",
+          "description": "Configure click-to-copy functionality"
+        }
+      }
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ListBodyField.json"
+}

@@ -1,0 +1,28 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/DataType.Color"
+    },
+    {
+      "type": "string",
+      "const": "child"
+    },
+    {
+      "type": "string",
+      "const": "context-fill"
+    },
+    {
+      "type": "string",
+      "const": "context-stroke"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.Paint.json"
+}

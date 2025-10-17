@@ -1,0 +1,32 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/DataType.PositionStringOrNumber"
+    },
+    {
+      "$ref": "#/definitions/DataType.RepeatStyle"
+    },
+    {
+      "$ref": "#/definitions/DataType.GeometryBox"
+    },
+    {
+      "$ref": "#/definitions/DataType.CompositingOperator"
+    },
+    {
+      "$ref": "#/definitions/DataType.MaskingMode"
+    },
+    {
+      "type": "string",
+      "const": "no-clip"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.MaskLayer<(string|number)>.json"
+}

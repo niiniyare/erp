@@ -1,0 +1,21 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "read-only"
+    },
+    {
+      "type": "string",
+      "const": "read-write"
+    },
+    {
+      "type": "string",
+      "const": "read-write-plaintext-only"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.WebkitUserModify.json"
+}
