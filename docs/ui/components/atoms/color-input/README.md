@@ -9,8 +9,9 @@
 The Color Input component provides intuitive color selection and input capabilities for design systems and customization interfaces. It supports multiple color formats, preset palettes, and custom color entry while maintaining accessibility and usability standards.
 
 ### Schema Reference
-- **Primary Schema**: `InputColorControlSchema.json`
-- **Related Schemas**: `FormControlSchema.json`, `ValidationSchema.json`
+- **Primary Schema**: [InputColorControlSchema.json](../../../Schema/definitions/components/molecules/InputGroupControlSchema.json)  
+- **Related Schemas**: [FormControlSchema.json](../../../Schema/definitions/components/organisms/FormControlSchema.json) 
+ , [ValidationSchema.json](../../../Schema/definitions/) 
 - **Base Interface**: Form control element for color value management
 
 ## 🎨 JSON Schema Configuration
@@ -614,8 +615,6 @@ templ AdvancedColorPicker(props ColorInputProps) {
 
 ```templ
 
-```
-```
 templ GradientColorInput(props ColorInputProps) {
     <div class="gradient-color-input" 
          x-data={ fmt.Sprintf(`{
