@@ -222,7 +222,11 @@ templ BasicColorInput(props ColorInputProps) {
     "allowCustomColor": true,
     "clearable": true
 }
+```
 
+```
+
+```templ
 templ ColorInputWithPresets(props ColorInputProps) {
     <div class="color-input-preset-container" 
          x-data="colorInputPresets">
@@ -605,7 +609,12 @@ templ AdvancedColorPicker(props ColorInputProps) {
         "radial-gradient(circle, #ff6b6b, #4ecdc4)"
     ]
 }
+```
 
+```templ
+
+```
+```
 templ GradientColorInput(props ColorInputProps) {
     <div class="gradient-color-input" 
          x-data={ fmt.Sprintf(`{
