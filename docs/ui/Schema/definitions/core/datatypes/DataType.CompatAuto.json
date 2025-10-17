@@ -1,0 +1,19 @@
+{
+  "type": "string",
+  "enum": [
+    "button",
+    "checkbox",
+    "listbox",
+    "menulist",
+    "meter",
+    "progress-bar",
+    "push-button",
+    "radio",
+    "searchfield",
+    "slider-horizontal",
+    "square-button",
+    "textarea"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.CompatAuto.json"
+}

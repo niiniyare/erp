@@ -1,0 +1,28 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/DataType.EasingFunction"
+    },
+    {
+      "type": "string"
+    },
+    {
+      "type": "string",
+      "const": "all"
+    },
+    {
+      "type": "string",
+      "const": "allow-discrete"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string",
+      "const": "normal"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.SingleTransition<string>.json"
+}

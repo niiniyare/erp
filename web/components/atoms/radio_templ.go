@@ -5,12 +5,10 @@ package atoms
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import (
-	"strings"
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
 
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
-)
+import "strings"
 
 // RadioSize defines the size of the radio button
 type RadioSize string
@@ -33,9 +31,8 @@ const (
 // RadioProps defines the properties for the Radio component
 type RadioProps struct {
 	// Content
-	Label string `json:"label,omitempty"`
-	Value string `json:"value"`
-
+	Label     string `json:"label,omitempty"`
+	Value     string `json:"value"`
 	HelpText  string `json:"helpText,omitempty"`
 	ErrorText string `json:"errorText,omitempty"`
 
@@ -118,7 +115,7 @@ func Radio(props RadioProps) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var2 := []any{getRadioWrapperClasses(props)}
+		var templ_7745c5c3_Var2 = []any{getRadioWrapperClasses(props)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -141,7 +138,7 @@ func Radio(props RadioProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if props.LabelPosition == "left" && props.Label != "" {
-			templ_7745c5c3_Var4 := []any{getRadioLabelClasses(props, "left")}
+			var templ_7745c5c3_Var4 = []any{getRadioLabelClasses(props, "left")}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var4...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -158,7 +155,7 @@ func Radio(props RadioProps) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 95, Col: 20}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 93, Col: 44}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -189,7 +186,7 @@ func Radio(props RadioProps) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 99, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 94, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -210,7 +207,7 @@ func Radio(props RadioProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Var8 := []any{getRadioClasses(props)}
+		var templ_7745c5c3_Var8 = []any{getRadioClasses(props)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var8...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -227,7 +224,7 @@ func Radio(props RadioProps) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 109, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 101, Col: 56}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -245,7 +242,7 @@ func Radio(props RadioProps) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 111, Col: 21}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 101, Col: 78}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -258,7 +255,7 @@ func Radio(props RadioProps) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.Value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 112, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 101, Col: 100}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -307,7 +304,7 @@ func Radio(props RadioProps) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 124, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 103, Col: 62}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -326,7 +323,7 @@ func Radio(props RadioProps) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaDescribedBy)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 127, Col: 45}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 104, Col: 27}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -345,7 +342,7 @@ func Radio(props RadioProps) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 130, Col: 35}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 104, Col: 89}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -364,7 +361,7 @@ func Radio(props RadioProps) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnChange)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 133, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 105, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -383,7 +380,7 @@ func Radio(props RadioProps) templ.Component {
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnFocus)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 136, Col: 27}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 105, Col: 81}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
@@ -402,7 +399,7 @@ func Radio(props RadioProps) templ.Component {
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnBlur)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 139, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 106, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -418,7 +415,7 @@ func Radio(props RadioProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if props.LabelPosition != "left" && props.Label != "" {
-			templ_7745c5c3_Var19 := []any{getRadioLabelClasses(props, "right")}
+			var templ_7745c5c3_Var19 = []any{getRadioLabelClasses(props, "right")}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var19...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -435,7 +432,7 @@ func Radio(props RadioProps) templ.Component {
 				var templ_7745c5c3_Var20 string
 				templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 146, Col: 20}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 109, Col: 44}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 				if templ_7745c5c3_Err != nil {
@@ -466,7 +463,7 @@ func Radio(props RadioProps) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(props.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 150, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 110, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -527,7 +524,7 @@ func RadioGroup(props RadioGroupProps) templ.Component {
 			templ_7745c5c3_Var23 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var24 := []any{getRadioGroupClasses(props)}
+		var templ_7745c5c3_Var24 = []any{getRadioGroupClasses(props)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var24...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -557,7 +554,7 @@ func RadioGroup(props RadioGroupProps) templ.Component {
 			var templ_7745c5c3_Var26 string
 			templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(props.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 169, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 129, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 			if templ_7745c5c3_Err != nil {
@@ -578,7 +575,7 @@ func RadioGroup(props RadioGroupProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Var27 := []any{getRadioGroupLayoutClasses(props.Layout)}
+		var templ_7745c5c3_Var27 = []any{getRadioGroupLayoutClasses(props.Layout)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var27...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -667,7 +664,7 @@ func RadioFeedback(props RadioProps) templ.Component {
 			var templ_7745c5c3_Var30 string
 			templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(props.ErrorText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 205, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 165, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 			if templ_7745c5c3_Err != nil {
@@ -685,7 +682,7 @@ func RadioFeedback(props RadioProps) templ.Component {
 			var templ_7745c5c3_Var31 string
 			templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(props.HelpText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 209, Col: 61}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 169, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 			if templ_7745c5c3_Err != nil {
@@ -703,7 +700,7 @@ func RadioFeedback(props RadioProps) templ.Component {
 			var templ_7745c5c3_Var32 string
 			templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(props.HelpText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 213, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 173, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 			if templ_7745c5c3_Err != nil {
@@ -748,7 +745,7 @@ func RadioGroupFeedback(props RadioGroupProps) templ.Component {
 			var templ_7745c5c3_Var34 string
 			templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(props.ErrorText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 222, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 182, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 			if templ_7745c5c3_Err != nil {
@@ -766,7 +763,7 @@ func RadioGroupFeedback(props RadioGroupProps) templ.Component {
 			var templ_7745c5c3_Var35 string
 			templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(props.HelpText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 226, Col: 61}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 186, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 			if templ_7745c5c3_Err != nil {
@@ -784,7 +781,7 @@ func RadioGroupFeedback(props RadioGroupProps) templ.Component {
 			var templ_7745c5c3_Var36 string
 			templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(props.HelpText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 230, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/radio.templ`, Line: 190, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 			if templ_7745c5c3_Err != nil {

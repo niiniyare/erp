@@ -1,0 +1,41 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "conjunction": {
+      "type": "string",
+      "enum": [
+        "and",
+        "or"
+      ]
+    },
+    "not": {
+      "type": "boolean"
+    },
+    "children": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/ConditionRule"
+          },
+          {
+            "$ref": "#/definitions/ConditionGroupValue"
+          }
+        ]
+      }
+    },
+    "if": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "conjunction"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ConditionGroupValue.json"
+}

@@ -1,0 +1,10 @@
+{
+  "type": "string",
+  "enum": [
+    "block",
+    "inline",
+    "run-in"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.DisplayOutside.json"
+}

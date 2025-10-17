@@ -1,0 +1,18 @@
+{
+  "type": "string",
+  "enum": [
+    "clear",
+    "copy",
+    "destination-atop",
+    "destination-in",
+    "destination-out",
+    "destination-over",
+    "source-atop",
+    "source-in",
+    "source-out",
+    "source-over",
+    "xor"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.CompositeStyle.json"
+}

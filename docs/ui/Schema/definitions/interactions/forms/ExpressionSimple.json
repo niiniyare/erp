@@ -1,0 +1,18 @@
+{
+  "anyOf": [
+    {
+      "type": "string"
+    },
+    {
+      "type": "number"
+    },
+    {
+      "type": "object"
+    },
+    {
+      "not": {}
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ExpressionSimple.json"
+}

@@ -1,0 +1,29 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "dashed"
+    },
+    {
+      "type": "string",
+      "const": "dotted"
+    },
+    {
+      "type": "string",
+      "const": "double"
+    },
+    {
+      "type": "string",
+      "const": "solid"
+    },
+    {
+      "type": "string",
+      "const": "wavy"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.TextDecorationStyle.json"
+}

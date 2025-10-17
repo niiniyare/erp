@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "const": "field"
+    },
+    "field": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "type",
+    "field"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ExpressionField.json"
+}

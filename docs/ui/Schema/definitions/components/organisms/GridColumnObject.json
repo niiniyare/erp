@@ -1,0 +1,95 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Component unique id"
+    },
+    "xs": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "string",
+          "const": "auto"
+        }
+      ],
+      "description": "Width-to-body ratio for extremely small screens (<768px)"
+    },
+    "sm": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "string",
+          "const": "auto"
+        }
+      ],
+      "description": "Width ratio for small screen (>=768px)"
+    },
+    "md": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "string",
+          "const": "auto"
+        }
+      ],
+      "description": "Width ratio for medium screen (>=992px)"
+    },
+    "lg": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "string",
+          "const": "auto"
+        }
+      ],
+      "description": "Width ratio for large screen (>=1200px)"
+    },
+    "valign": {
+      "type": "string",
+      "enum": [
+        "top",
+        "middle",
+        "bottom",
+        "between"
+      ],
+      "description": "vertical alignment"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "inline",
+        "horizontal"
+      ],
+      "description": "Configure the default display mode of subform items."
+    },
+    "horizontal": {
+      "$ref": "#/definitions/FormHorizontal",
+      "description": "If it is horizontal typesetting, this attribute can refine the left and right width ratio of horizontal typesetting."
+    },
+    "body": {
+      "$ref": "#/definitions/SchemaCollection"
+    },
+    "columnClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Column class name"
+    },
+    "style": {
+      "description": "style"
+    },
+    "wrapperCustomStyle": {},
+    "themeCss": {}
+  },
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./GridColumnObject.json"
+}

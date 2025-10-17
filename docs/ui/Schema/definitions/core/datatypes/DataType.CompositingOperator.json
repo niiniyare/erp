@@ -1,0 +1,11 @@
+{
+  "type": "string",
+  "enum": [
+    "add",
+    "exclude",
+    "intersect",
+    "subtract"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.CompositingOperator.json"
+}

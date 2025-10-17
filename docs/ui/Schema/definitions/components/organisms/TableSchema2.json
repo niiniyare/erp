@@ -1,0 +1,340 @@
+{
+  "type": "object",
+  "properties": {
+    "$$id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Container css class name"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "Whether to disable"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to disable expressions"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "Whether to hide"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to hide expressions"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "Whether to display"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions"
+    },
+    "id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used for log collection"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Event action configuration"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "Whether to display statically"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions statically"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "Static display of empty value placeholder"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display form item class name"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Label class name"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Value class name"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "Component style"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "Component behavior and usage, such as create, update, remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Component name, usually the business name for easy location"
+        },
+        "mock": {
+          "description": "Editor fake data for easy display"
+        }
+      },
+      "description": "Editor configuration, can be ignored at runtime"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "Can be used to turn off mobile style at the component level"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "type": {
+      "type": "string",
+      "const": "table2",
+      "description": "Specify as table type"
+    },
+    "testid": {
+      "type": "string"
+    },
+    "title": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SchemaObject"
+          }
+        }
+      ],
+      "description": "table title"
+    },
+    "source": {
+      "$ref": "#/definitions/SchemaTokenizeableString",
+      "description": "tabular data source"
+    },
+    "columnsTogglable": {
+      "anyOf": [
+        {
+          "type": "string",
+          "const": "auto"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        }
+      ],
+      "description": "Table customizable columns"
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ColumnSchema"
+      },
+      "description": "Table column configuration"
+    },
+    "rowSelection": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/RowSelectionSchema"
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "Table optional configuration"
+    },
+    "expandable": {
+      "$ref": "#/definitions/ExpandableSchema",
+      "description": "Table rows can be expanded and configured"
+    },
+    "sticky": {
+      "type": "boolean",
+      "description": "sticky head"
+    },
+    "loading": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        }
+      ],
+      "description": "loading"
+    },
+    "itemBadge": {
+      "$ref": "#/definitions/BadgeObject",
+      "description": "Line subtitle content"
+    },
+    "showBadge": {
+      "type": "boolean",
+      "description": "Whether to display line headers"
+    },
+    "popOverContainer": {
+      "description": "Specify mounting dom"
+    },
+    "keyField": {
+      "type": "string",
+      "description": "ID field name for multi-select and nested expansion records Default id"
+    },
+    "childrenColumnName": {
+      "type": "string",
+      "description": "Data source nested custom field name"
+    },
+    "rowClassNameExpr": {
+      "type": "string",
+      "description": "Custom row styles"
+    },
+    "lineHeight": {
+      "type": "string",
+      "description": "Whether to fix content row height"
+    },
+    "bordered": {
+      "type": "boolean",
+      "description": "Whether to display borders"
+    },
+    "showHeader": {
+      "type": "boolean",
+      "description": "Whether to display the header"
+    },
+    "footer": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SchemaObject"
+          }
+        }
+      ],
+      "description": "Specify the end of the table"
+    },
+    "quickSaveApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "API for batch saving after quick editing"
+    },
+    "quickSaveItemApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "API used when quick editing is configured to save in real time"
+    },
+    "messages": {
+      "$ref": "#/definitions/SchemaMessage",
+      "description": "Interface error information configuration"
+    },
+    "reload": {
+      "type": "string",
+      "description": "Reloaded component name"
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ActionSchema"
+      },
+      "description": "Operation column configuration"
+    },
+    "maxKeepItemSelectionLength": {
+      "type": "number",
+      "description": "Maximum number of batch operations"
+    },
+    "keepItemSelectionOnPageChange": {
+      "type": "boolean",
+      "description": "Whether to save data when turning pages"
+    },
+    "selectable": {
+      "type": "boolean",
+      "description": "Is it selectable? The function is the same as rowSelection. It is compatible with the original CRUD attributes and is multi-selected by default."
+    },
+    "multiple": {
+      "type": "boolean",
+      "description": "Whether multiple selection is possible. The function is the same as rowSelection.type. It is compatible with the original CRUD attribute. If it is not set, it will be considered as multiple selection. It will only work if selectable is set."
+    },
+    "primaryField": {
+      "type": "string",
+      "description": "Setting the ID field name has the same function as keyFiled and is compatible with the original CURD attribute."
+    },
+    "tableLayout": {
+      "type": "string",
+      "enum": [
+        "fixed",
+        "auto"
+      ]
+    },
+    "autoFillHeight": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/AutoFillHeightObject"
+        }
+      ],
+      "description": "Table automatically calculates height"
+    },
+    "canAccessSuperData": {
+      "type": "boolean",
+      "description": "Whether the table can obtain the parent data field value, the default is false"
+    },
+    "lazyRenderAfter": {
+      "type": "number",
+      "description": "Useful when rendering too many columns at once. The default is 100, which can be used to improve table rendering performance.",
+      "default": 100
+    }
+  },
+  "required": [
+    "columns",
+    "source",
+    "type"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./TableSchema2.json"
+}

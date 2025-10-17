@@ -1,0 +1,463 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SchemaObject"
+          }
+        }
+      ],
+      "description": "table title"
+    },
+    "source": {
+      "$ref": "#/definitions/SchemaTokenizeableString",
+      "description": "It is also possible to read directly from environment variables, but this is not recommended."
+    },
+    "columnsTogglable": {
+      "anyOf": [
+        {
+          "type": "string",
+          "const": "auto"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        }
+      ],
+      "description": "Table customizable columns"
+    },
+    "columns": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ColumnSchema"
+      },
+      "description": "Table column configuration"
+    },
+    "rowSelection": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/RowSelectionSchema"
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "Table optional configuration"
+    },
+    "expandable": {
+      "$ref": "#/definitions/ExpandableSchema",
+      "description": "Table rows can be expanded and configured"
+    },
+    "sticky": {
+      "type": "boolean",
+      "description": "sticky head"
+    },
+    "loading": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        }
+      ],
+      "description": "loading"
+    },
+    "itemBadge": {
+      "$ref": "#/definitions/BadgeObject",
+      "description": "Line subtitle content"
+    },
+    "showBadge": {
+      "type": "boolean",
+      "description": "Whether to display line headers"
+    },
+    "popOverContainer": {
+      "description": "Specify mounting dom"
+    },
+    "keyField": {
+      "type": "string",
+      "description": "ID field name for multi-select and nested expansion records Default id"
+    },
+    "childrenColumnName": {
+      "type": "string",
+      "description": "Data source nested custom field name"
+    },
+    "rowClassNameExpr": {
+      "type": "string",
+      "description": "Custom row styles"
+    },
+    "lineHeight": {
+      "type": "string",
+      "description": "Whether to fix content row height"
+    },
+    "bordered": {
+      "type": "boolean",
+      "description": "Whether to display borders"
+    },
+    "showHeader": {
+      "type": "boolean",
+      "description": "Whether to display the header"
+    },
+    "footer": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "$ref": "#/definitions/SchemaObject"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SchemaObject"
+          }
+        }
+      ],
+      "description": "Specify the end of the table"
+    },
+    "quickSaveApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "API for batch saving after quick editing"
+    },
+    "quickSaveItemApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "API used when quick editing is configured to save in real time"
+    },
+    "messages": {
+      "$ref": "#/definitions/SchemaMessage",
+      "description": "Interface error information configuration"
+    },
+    "reload": {
+      "type": "string",
+      "description": "Reloaded component name"
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ActionSchema"
+      },
+      "description": "Operation column configuration"
+    },
+    "maxKeepItemSelectionLength": {
+      "type": "number",
+      "description": "Maximum number of batch operations"
+    },
+    "keepItemSelectionOnPageChange": {
+      "type": "boolean",
+      "description": "Whether to retain the data selected by the user when turning pages"
+    },
+    "selectable": {
+      "type": "boolean",
+      "description": "Whether it is possible to select data and external event actions"
+    },
+    "multiple": {
+      "type": "boolean",
+      "description": "Whether multiple selection of data can be performed will only take effect when selectable is true."
+    },
+    "primaryField": {
+      "type": "string",
+      "description": "Row identifier, default is id"
+    },
+    "tableLayout": {
+      "type": "string",
+      "enum": [
+        "fixed",
+        "auto"
+      ]
+    },
+    "autoFillHeight": {
+      "type": "boolean",
+      "description": "The content area takes up the remaining space on the screen"
+    },
+    "canAccessSuperData": {
+      "type": "boolean",
+      "description": "Whether the table can obtain the parent data field value, the default is false"
+    },
+    "lazyRenderAfter": {
+      "type": "number",
+      "description": "Useful when rendering too many columns at once. The default is 100, which can be used to improve table rendering performance.",
+      "default": 100
+    },
+    "testid": {
+      "type": "string"
+    },
+    "$$id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Container css class name"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "Whether to disable"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to disable expressions"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "Whether to hide"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to hide expressions"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "Whether to display"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions"
+    },
+    "id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used for log collection"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Event action configuration"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "Whether to display statically"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions statically"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "Static display of empty value placeholder"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display form item class name"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Label class name"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Value class name"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "Component style"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "Component behavior and usage, such as create, update, remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Component name, usually the business name for easy location"
+        },
+        "mock": {
+          "description": "Editor fake data for easy display"
+        }
+      },
+      "description": "Editor configuration, can be ignored at runtime"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "Can be used to turn off mobile style at the component level"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "mode": {
+      "type": "string",
+      "description": "Specifies the display mode of the content area.",
+      "const": "table2"
+    },
+    "loadingConfig": {
+      "type": "object",
+      "properties": {
+        "root": {
+          "type": "string"
+        },
+        "show": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "type": {
+      "type": "string",
+      "const": "crud2",
+      "description": "Specified as a CRUD2 renderer."
+    },
+    "api": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "Initialize data API"
+    },
+    "silentPolling": {
+      "type": "boolean",
+      "description": "Silent pull"
+    },
+    "interval": {
+      "type": "number",
+      "description": "Set automatic refresh time"
+    },
+    "stopAutoRefreshWhen": {
+      "$ref": "#/definitions/SchemaExpression"
+    },
+    "loadType": {
+      "type": "string",
+      "enum": [
+        "more",
+        "pagination"
+      ],
+      "description": "Data display mode infinite loading or paging"
+    },
+    "perPage": {
+      "type": "number",
+      "description": "When loading infinitely, set the number of loads per page according to this item, which can be unlimited"
+    },
+    "loadDataOnce": {
+      "type": "boolean",
+      "description": "Whether it is front-end single loading mode, which can be used to implement front-end paging."
+    },
+    "showSelection": {
+      "type": "boolean",
+      "description": "Whether to display the selected data area, only takes effect when selectable is true"
+    },
+    "saveOrderApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "Save sorted api"
+    },
+    "syncLocation": {
+      "type": "boolean",
+      "description": "Whether to synchronize the parameters of filter conditions to the address bar, the default is true",
+      "default": true
+    },
+    "pageField": {
+      "type": "string",
+      "description": "Set the paging page number field name."
+    },
+    "perPageField": {
+      "type": "string",
+      "description": "Set the field names of how many pieces of data are displayed on one pagination page."
+    },
+    "name": {
+      "$ref": "#/definitions/SchemaName"
+    },
+    "hideQuickSaveBtn": {
+      "type": "boolean",
+      "description": "Whether to hide the quick edit button."
+    },
+    "autoJumpToTopOnPagerChange": {
+      "type": "boolean",
+      "description": "Whether to automatically jump to the top when splitting pages."
+    },
+    "headerToolbar": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "top area"
+    },
+    "headerToolbarClassName": {
+      "type": "string",
+      "description": "Top area CSS class name"
+    },
+    "footerToolbar": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "bottom area"
+    },
+    "footerToolbarClassName": {
+      "type": "string",
+      "description": "Bottom area CSS class name"
+    },
+    "syncResponse2Query": {
+      "type": "boolean",
+      "description": "Whether to automatically synchronize the content returned by the interface to the address bar, provided that synchronizing the address bar is enabled."
+    },
+    "parsePrimitiveQuery": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "enable": {
+              "type": "boolean"
+            },
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "boolean",
+                  "number"
+                ]
+              }
+            }
+          },
+          "required": [
+            "enable"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "Whether to enable Query information conversion. When enabled, the Query in the URL will be converted. It is enabled by default. By default, only Boolean values are converted."
+    }
+  },
+  "required": [
+    "columns",
+    "source",
+    "type"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./CRUD2TableSchema.json"
+}
