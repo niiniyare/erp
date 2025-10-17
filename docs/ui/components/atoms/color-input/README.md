@@ -224,7 +224,6 @@ templ BasicColorInput(props ColorInputProps) {
 }
 ```
 
-```
 
 ```templ
 templ ColorInputWithPresets(props ColorInputProps) {
