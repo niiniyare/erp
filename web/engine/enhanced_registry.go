@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/a-h/templ"
 	"github.com/niiniyare/erp/web/schemas"
 )
 
@@ -14,7 +15,7 @@ import (
 // It provides seamless integration between JSON schemas and Templ components
 type EnhancedComponentRegistry struct {
 	*ComponentRegistry // Embed existing registry
-	schemaRenderer     *SchemaRenderer
+	schemaRenderer     *JSONSchemaRenderer
 	schemaFactory      *SchemaFactory
 	mu                 sync.RWMutex
 	schemaBindings     map[string]string // schemaType -> componentType mapping
@@ -24,7 +25,7 @@ type EnhancedComponentRegistry struct {
 func NewEnhancedComponentRegistry(schemaDir string) (*EnhancedComponentRegistry, error) {
 	baseRegistry := NewComponentRegistry()
 	
-	schemaRenderer, err := NewSchemaRenderer(schemaDir)
+	schemaRenderer, err := NewJSONSchemaRenderer(schemaDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create schema renderer: %w", err)
 	}
@@ -91,8 +92,15 @@ func (er *EnhancedComponentRegistry) CreateFromSchema(ctx context.Context, schem
 	// Convert TemplComponent to ComponentDefinition
 	componentDef := schemas.ComponentDefinition{
 		Type:  templComponent.Type,
-		Props: templComponent.Props,
 		Class: templComponent.CSS,
+	}
+	
+	// Handle Props conversion - it's an interface{} that we need to convert
+	if propsMap, ok := templComponent.Props.(map[string]interface{}); ok {
+		componentDef.Props = propsMap
+	} else {
+		// If it's not a map, create an empty map
+		componentDef.Props = make(map[string]interface{})
 	}
 
 	// Add component type mapping if available
@@ -209,18 +217,23 @@ func (scf *SchemaComponentFactory) Create(ctx context.Context, props map[string]
 	}
 
 	// Convert to ComponentDefinition
-	return schemas.ComponentDefinition{
+	componentDef := schemas.ComponentDefinition{
 		Type:  scf.componentType,
-		Props: templComponent.Props,
 		Class: templComponent.CSS,
-	}, nil
+	}
+	
+	// Handle Props conversion
+	if propsMap, ok := templComponent.Props.(map[string]interface{}); ok {
+		componentDef.Props = propsMap
+	} else {
+		componentDef.Props = make(map[string]interface{})
+	}
+	
+	return componentDef, nil
 }
 
 // Validate validates a component definition against the schema
 func (scf *SchemaComponentFactory) Validate(ctx context.Context, component schemas.ComponentDefinition) error {
-	// Extract props from component
-	propsMap := make(map[string]interface{})
-	
 	// This is a simplified approach - in reality, you'd need to convert
 	// the component props back to a map format for validation
 	// For now, we'll assume basic validation
@@ -245,26 +258,37 @@ func (scf *SchemaComponentFactory) GetSchema() (*JsonSchema, error) {
 func (er *EnhancedComponentRegistry) RegisterSchemaComponentFactory(schemaType, componentType string) error {
 	factory := NewSchemaComponentFactory(schemaType, componentType, er.schemaFactory)
 	
-	// Register with the base registry
-	return er.ComponentRegistry.Register(componentType, &SchemaFactoryAdapter{factory})
+	// Register with the base registry using the adapter
+	adapter := er.createSchemaFactoryAdapter(factory)
+	return er.ComponentRegistry.Register(componentType, adapter)
 }
 
-// SchemaFactoryAdapter adapts SchemaComponentFactory to schemas.ComponentFactory interface
-type SchemaFactoryAdapter struct {
-	*SchemaComponentFactory
-}
+// SchemaFactoryAdapter adapts SchemaComponentFactory to schemas.ComponentFactory function type
+func (er *EnhancedComponentRegistry) createSchemaFactoryAdapter(factory *SchemaComponentFactory) schemas.ComponentFactory {
+	return func(def *schemas.ComponentDefinition, ctx context.Context) (templ.Component, error) {
+		// Convert ComponentDefinition to our internal format and create the component
+		props := def.Props
+		if props == nil {
+			props = make(map[string]interface{})
+		}
 
-// Create adapts the SchemaComponentFactory.Create method
-func (sfa *SchemaFactoryAdapter) Create(ctx context.Context, config map[string]interface{}) (interface{}, error) {
-	return sfa.SchemaComponentFactory.Create(ctx, config)
-}
+		// Instead of using the factory.Create which returns ComponentDefinition,
+		// directly use the schema factory to get a TemplComponent and render it
+		schemaType := factory.schemaType
+		templComponent, err := factory.schemaFactory.RenderFromSchema(ctx, schemaType, props)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create component: %w", err)
+		}
 
-// Validate adapts the SchemaComponentFactory.Validate method
-func (sfa *SchemaFactoryAdapter) Validate(ctx context.Context, component interface{}) error {
-	if compDef, ok := component.(schemas.ComponentDefinition); ok {
-		return sfa.SchemaComponentFactory.Validate(ctx, compDef)
+		// Use the schema factory's Templ renderer to convert to real Templ component
+		templRenderer := NewSchemaTemplRenderer()
+		return templRenderer.RenderComponent(templComponent), nil
 	}
-	return fmt.Errorf("invalid component type for validation")
+}
+
+// RenderToTempl creates a real Templ component from schema type and props
+func (er *EnhancedComponentRegistry) RenderToTempl(ctx context.Context, schemaType string, props map[string]interface{}) (templ.Component, error) {
+	return er.schemaFactory.RenderToTempl(ctx, schemaType, props)
 }
 
 // GetComponentInfo returns information about all registered components

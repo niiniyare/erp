@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/infrastructure"
+	"github.com/niiniyare/erp/cmd/server/infrastructure"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/platform/temporal"

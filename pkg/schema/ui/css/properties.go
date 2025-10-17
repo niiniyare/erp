@@ -12,33 +12,33 @@ import (
 type ExpandedStyles struct {
 	loader *SchemaLoader
 
-	Layout        LayoutProperties        `json:",omitempty"`
-	BoxModel      BoxModelProperties      `json:",omitempty"`
-	Margin        MarginProperties        `json:",omitempty"`
-	Padding       PaddingProperties       `json:",omitempty"`
-	Border        BorderProperties        `json:",omitempty"`
-	Background    BackgroundProperties    `json:",omitempty"`
-	Typography    TypographyProperties    `json:",omitempty"`
-	Flexbox       FlexboxProperties       `json:",omitempty"`
-	Grid          GridProperties          `json:",omitempty"`
-	VisualEffects VisualEffectsProperties `json:",omitempty"`
-	Animation     AnimationProperties     `json:",omitempty"`
-	Transition    TransitionProperties    `json:",omitempty"`
-	Overflow      OverflowProperties      `json:",omitempty"`
-	Table         TableProperties         `json:",omitempty"`
-	List          ListProperties          `json:",omitempty"`
-	Interaction   InteractionProperties   `json:",omitempty"`
-	Scroll        ScrollProperties        `json:",omitempty"`
-	ModernLayout  ModernLayoutProperties  `json:",omitempty"`
-	Logical       LogicalProperties       `json:",omitempty"`
-	AdvancedTypo  AdvancedTypoProperties  `json:",omitempty"`
-	Mask          MaskProperties          `json:",omitempty"`
-	ClipPath      ClipPathProperties      `json:",omitempty"`
-	Shape         ShapeProperties         `json:",omitempty"`
-	Container     ContainerProperties     `json:",omitempty"`
+	Layout        *LayoutProperties        `json:"layout,omitempty"`
+	BoxModel      *BoxModelProperties      `json:"boxModel,omitempty"`
+	Margin        *MarginProperties        `json:"margin,omitempty"`
+	Padding       *PaddingProperties       `json:"padding,omitempty"`
+	Border        *BorderProperties        `json:"border,omitempty"`
+	Background    *BackgroundProperties    `json:"background,omitempty"`
+	Typography    *TypographyProperties    `json:"typography,omitempty"`
+	Flexbox       *FlexboxProperties       `json:"flexbox,omitempty"`
+	Grid          *GridProperties          `json:"grid,omitempty"`
+	VisualEffects *VisualEffectsProperties `json:"visualEffects,omitempty"`
+	Animation     *AnimationProperties     `json:"animation,omitempty"`
+	Transition    *TransitionProperties    `json:"transition,omitempty"`
+	Overflow      *OverflowProperties      `json:"overflow,omitempty"`
+	Table         *TableProperties         `json:"table,omitempty"`
+	List          *ListProperties          `json:"list,omitempty"`
+	Interaction   *InteractionProperties   `json:"interaction,omitempty"`
+	Scroll        *ScrollProperties        `json:"scroll,omitempty"`
+	ModernLayout  *ModernLayoutProperties  `json:"modernLayout,omitempty"`
+	Logical       *LogicalProperties       `json:"logical,omitempty"`
+	AdvancedTypo  *AdvancedTypoProperties  `json:"advancedTypo,omitempty"`
+	Mask          *MaskProperties          `json:"mask,omitempty"`
+	ClipPath      *ClipPathProperties      `json:"clipPath,omitempty"`
+	Shape         *ShapeProperties         `json:"shape,omitempty"`
+	Container     *ContainerProperties     `json:"container,omitempty"`
 
 	// Custom Properties for Templ integration
-	Custom map[string]string `json:"-"`
+	Custom map[string]string `json:"custom,omitempty"`
 
 	// Framework Integration
 	templIntegration bool `json:"-"`

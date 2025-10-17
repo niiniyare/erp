@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/a-h/templ"
 	"github.com/niiniyare/erp/pkg/schema/ui/css"
 	"github.com/niiniyare/erp/web/components/atoms"
 )
@@ -18,8 +19,8 @@ type SchemaFactory struct {
 	schemaRegistry   map[string]*JsonSchema
 	componentFactory map[string]ComponentRenderer
 	cssFactory       *css.Factory
-	templRegistry    *TemplRenderer
 	validationEngine *ValidationEngine
+	templRenderer    *SchemaTemplRenderer
 	schemaDir        string
 }
 
@@ -91,8 +92,8 @@ func NewSchemaFactory(schemaDir string) (*SchemaFactory, error) {
 		schemaRegistry:   make(map[string]*JsonSchema),
 		componentFactory: make(map[string]ComponentRenderer),
 		cssFactory:       css.NewFactory(schemaDir),
-		templRegistry:    NewTemplRenderer(),
 		validationEngine: NewValidationEngine(),
+		templRenderer:    NewSchemaTemplRenderer(),
 		schemaDir:        schemaDir,
 	}
 
@@ -216,6 +217,18 @@ func (f *SchemaFactory) RenderFromSchema(ctx context.Context, schemaType string,
 	}
 
 	return component, nil
+}
+
+// RenderToTempl creates a real Templ component from a JSON schema definition
+func (f *SchemaFactory) RenderToTempl(ctx context.Context, schemaType string, props map[string]interface{}) (templ.Component, error) {
+	// First create the TemplComponent
+	templComponent, err := f.RenderFromSchema(ctx, schemaType, props)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create TemplComponent: %w", err)
+	}
+	
+	// Convert to actual Templ component
+	return f.templRenderer.RenderComponent(templComponent), nil
 }
 
 // applyCSSToComponent applies CSS styling to a component
@@ -582,36 +595,7 @@ func (ve *ValidationEngine) validatePattern(value interface{}, pattern string) e
 // UTILITY FUNCTIONS
 // ============================================================================
 
-// // Helper functions to extract typed values from props map
-// func getStringProp(props map[string]interface{}, key, defaultValue string) string {
-// 	if value, exists := props[key]; exists {
-// 		if str, ok := value.(string); ok {
-// 			return str
-// 		}
-// 	}
-// 	return defaultValue
-// }
-//
-// func getBoolProp(props map[string]interface{}, key string, defaultValue bool) bool {
-// 	if value, exists := props[key]; exists {
-// 		if b, ok := value.(bool); ok {
-// 			return b
-// 		}
-// 	}
-// 	return defaultValue
-// }
-//
-// func getIntProp(props map[string]interface{}, key string, defaultValue int) int {
-// 	if value, exists := props[key]; exists {
-// 		if i, ok := value.(int); ok {
-// 			return i
-// 		}
-// 		if f, ok := value.(float64); ok {
-// 			return int(f)
-// 		}
-// 	}
-// 	return defaultValue
-// }
+// Helper functions to extract typed values from props map (defined in registry.go)
 
 func getArrayProp(props map[string]interface{}, key string) []interface{} {
 	if value, exists := props[key]; exists {
