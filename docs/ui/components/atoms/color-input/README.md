@@ -297,7 +297,9 @@ templ ColorInputWithPresets(props ColorInputProps) {
         "#73E3EC", "#2f54eb", "#9254de", "#ffc0cb"
     ]
 }
+```
 
+```templ
 templ AdvancedColorPicker(props ColorInputProps) {
     <div class="advanced-color-picker" 
          x-data={ fmt.Sprintf(`{
