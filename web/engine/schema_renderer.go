@@ -9,9 +9,9 @@ import (
 	"github.com/niiniyare/erp/web/components/atoms"
 )
 
-// SchemaRenderer provides a unified interface for rendering components from JSON schemas
+// JSONSchemaRenderer provides a unified interface for rendering components from JSON schemas
 // It bridges the gap between JSON schema definitions and Templ components
-type SchemaRenderer struct {
+type JSONSchemaRenderer struct {
 	factory   *SchemaFactory
 	templates map[string]TemplateFunc
 }
@@ -19,14 +19,14 @@ type SchemaRenderer struct {
 // TemplateFunc represents a function that can render a Templ component
 type TemplateFunc func(props interface{}) string
 
-// NewSchemaRenderer creates a new unified schema renderer
-func NewSchemaRenderer(schemaDir string) (*SchemaRenderer, error) {
+// NewJSONSchemaRenderer creates a new unified schema renderer
+func NewJSONSchemaRenderer(schemaDir string) (*JSONSchemaRenderer, error) {
 	factory, err := NewSchemaFactory(schemaDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create schema factory: %w", err)
 	}
 
-	renderer := &SchemaRenderer{
+	renderer := &JSONSchemaRenderer{
 		factory:   factory,
 		templates: make(map[string]TemplateFunc),
 	}
@@ -38,7 +38,7 @@ func NewSchemaRenderer(schemaDir string) (*SchemaRenderer, error) {
 }
 
 // registerTemplateRenderers registers Templ component renderers
-func (sr *SchemaRenderer) registerTemplateRenderers() {
+func (sr *JSONSchemaRenderer) registerTemplateRenderers() {
 	// Atom components
 	sr.templates["Button"] = sr.renderButton
 	sr.templates["Input"] = sr.renderInput
@@ -57,7 +57,7 @@ func (sr *SchemaRenderer) registerTemplateRenderers() {
 }
 
 // RenderComponent renders a component from JSON schema using Templ
-func (sr *SchemaRenderer) RenderComponent(ctx context.Context, schemaType string, props map[string]interface{}) (string, error) {
+func (sr *JSONSchemaRenderer) RenderComponent(ctx context.Context, schemaType string, props map[string]interface{}) (string, error) {
 	// Get component from schema factory
 	component, err := sr.factory.RenderFromSchema(ctx, schemaType, props)
 	if err != nil {
@@ -80,7 +80,7 @@ func (sr *SchemaRenderer) RenderComponent(ctx context.Context, schemaType string
 }
 
 // RenderComponentTree renders a tree of components
-func (sr *SchemaRenderer) RenderComponentTree(ctx context.Context, components []ComponentDefinition) (string, error) {
+func (sr *JSONSchemaRenderer) RenderComponentTree(ctx context.Context, components []ComponentDefinition) (string, error) {
 	var html strings.Builder
 
 	for _, comp := range components {
@@ -117,7 +117,7 @@ type RenderCondition struct {
 }
 
 // componentToProps converts ComponentDefinition to props map
-func (sr *SchemaRenderer) componentToProps(comp ComponentDefinition) map[string]interface{} {
+func (sr *JSONSchemaRenderer) componentToProps(comp ComponentDefinition) map[string]interface{} {
 	props := make(map[string]interface{})
 	
 	// Copy all props
@@ -133,7 +133,7 @@ func (sr *SchemaRenderer) componentToProps(comp ComponentDefinition) map[string]
 }
 
 // applyComponentEnhancements applies additional attributes and events to HTML
-func (sr *SchemaRenderer) applyComponentEnhancements(html string, component TemplComponent) string {
+func (sr *JSONSchemaRenderer) applyComponentEnhancements(html string, component TemplComponent) string {
 	// Apply CSS classes
 	if component.CSS != "" {
 		html = sr.addCSSClasses(html, component.CSS)
@@ -164,7 +164,7 @@ func (sr *SchemaRenderer) applyComponentEnhancements(html string, component Temp
 }
 
 // addCSSClasses adds CSS classes to HTML element
-func (sr *SchemaRenderer) addCSSClasses(html, classes string) string {
+func (sr *JSONSchemaRenderer) addCSSClasses(html, classes string) string {
 	// Simple implementation - in production, use proper HTML parsing
 	if strings.Contains(html, "class=\"") {
 		return strings.Replace(html, "class=\"", fmt.Sprintf("class=\"%s ", classes), 1)
@@ -179,7 +179,7 @@ func (sr *SchemaRenderer) addCSSClasses(html, classes string) string {
 }
 
 // addAttribute adds an attribute to HTML element
-func (sr *SchemaRenderer) addAttribute(html, attr, value string) string {
+func (sr *JSONSchemaRenderer) addAttribute(html, attr, value string) string {
 	// Simple implementation - in production, use proper HTML parsing
 	tagEnd := strings.Index(html, ">")
 	if tagEnd > 0 {
@@ -193,7 +193,7 @@ func (sr *SchemaRenderer) addAttribute(html, attr, value string) string {
 // ============================================================================
 
 // renderButton renders a Button component using atoms.Button
-func (sr *SchemaRenderer) renderButton(props interface{}) string {
+func (sr *JSONSchemaRenderer) renderButton(props interface{}) string {
 	buttonProps, ok := props.(atoms.ButtonProps)
 	if !ok {
 		return "<!-- Invalid button props -->"
@@ -210,7 +210,7 @@ func (sr *SchemaRenderer) renderButton(props interface{}) string {
 	)
 }
 
-func (sr *SchemaRenderer) renderButtonAttributes(props atoms.ButtonProps) string {
+func (sr *JSONSchemaRenderer) renderButtonAttributes(props atoms.ButtonProps) string {
 	var attrs []string
 	
 	if props.ID != "" {
@@ -230,7 +230,7 @@ func (sr *SchemaRenderer) renderButtonAttributes(props atoms.ButtonProps) string
 }
 
 // renderInput renders an Input component using atoms.Input
-func (sr *SchemaRenderer) renderInput(props interface{}) string {
+func (sr *JSONSchemaRenderer) renderInput(props interface{}) string {
 	inputProps, ok := props.(atoms.InputProps)
 	if !ok {
 		return "<!-- Invalid input props -->"
@@ -244,7 +244,7 @@ func (sr *SchemaRenderer) renderInput(props interface{}) string {
 	)
 }
 
-func (sr *SchemaRenderer) renderInputAttributes(props atoms.InputProps) string {
+func (sr *JSONSchemaRenderer) renderInputAttributes(props atoms.InputProps) string {
 	var attrs []string
 	
 	if props.ID != "" {
@@ -279,7 +279,7 @@ func (sr *SchemaRenderer) renderInputAttributes(props atoms.InputProps) string {
 }
 
 // renderTextarea renders a Textarea component
-func (sr *SchemaRenderer) renderTextarea(props interface{}) string {
+func (sr *JSONSchemaRenderer) renderTextarea(props interface{}) string {
 	textareaProps, ok := props.(atoms.TextareaProps)
 	if !ok {
 		return "<!-- Invalid textarea props -->"
@@ -291,7 +291,7 @@ func (sr *SchemaRenderer) renderTextarea(props interface{}) string {
 	)
 }
 
-func (sr *SchemaRenderer) renderTextareaAttributes(props atoms.TextareaProps) string {
+func (sr *JSONSchemaRenderer) renderTextareaAttributes(props atoms.TextareaProps) string {
 	var attrs []string
 	
 	if props.ID != "" {
@@ -329,7 +329,7 @@ func (sr *SchemaRenderer) renderTextareaAttributes(props atoms.TextareaProps) st
 }
 
 // renderSelect renders a Select component
-func (sr *SchemaRenderer) renderSelect(props interface{}) string {
+func (sr *JSONSchemaRenderer) renderSelect(props interface{}) string {
 	selectProps, ok := props.(atoms.SelectProps)
 	if !ok {
 		return "<!-- Invalid select props -->"
@@ -356,7 +356,7 @@ func (sr *SchemaRenderer) renderSelect(props interface{}) string {
 	)
 }
 
-func (sr *SchemaRenderer) renderSelectAttributes(props atoms.SelectProps) string {
+func (sr *JSONSchemaRenderer) renderSelectAttributes(props atoms.SelectProps) string {
 	var attrs []string
 	
 	if props.ID != "" {
@@ -382,7 +382,7 @@ func (sr *SchemaRenderer) renderSelectAttributes(props atoms.SelectProps) string
 }
 
 // renderCheckbox renders a Checkbox component
-func (sr *SchemaRenderer) renderCheckbox(props interface{}) string {
+func (sr *JSONSchemaRenderer) renderCheckbox(props interface{}) string {
 	checkboxProps, ok := props.(atoms.CheckboxProps)
 	if !ok {
 		return "<!-- Invalid checkbox props -->"
@@ -404,7 +404,7 @@ func (sr *SchemaRenderer) renderCheckbox(props interface{}) string {
 	)
 }
 
-func (sr *SchemaRenderer) renderCheckboxAttributes(props atoms.CheckboxProps) string {
+func (sr *JSONSchemaRenderer) renderCheckboxAttributes(props atoms.CheckboxProps) string {
 	var attrs []string
 	
 	if props.ID != "" {
@@ -427,31 +427,31 @@ func (sr *SchemaRenderer) renderCheckboxAttributes(props atoms.CheckboxProps) st
 }
 
 // renderRadio renders a Radio component
-func (sr *SchemaRenderer) renderRadio(props interface{}) string {
+func (sr *JSONSchemaRenderer) renderRadio(props interface{}) string {
 	// Placeholder implementation
 	return `<div class="radio-group"><!-- Radio component --></div>`
 }
 
 // renderCard renders a Card component
-func (sr *SchemaRenderer) renderCard(props interface{}) string {
+func (sr *JSONSchemaRenderer) renderCard(props interface{}) string {
 	// Placeholder implementation
 	return `<div class="card"><!-- Card component --></div>`
 }
 
 // renderForm renders a Form component
-func (sr *SchemaRenderer) renderForm(props interface{}) string {
+func (sr *JSONSchemaRenderer) renderForm(props interface{}) string {
 	// Placeholder implementation
 	return `<form><!-- Form component --></form>`
 }
 
 // renderTable renders a Table component
-func (sr *SchemaRenderer) renderTable(props interface{}) string {
+func (sr *JSONSchemaRenderer) renderTable(props interface{}) string {
 	// Placeholder implementation
 	return `<table class="table"><!-- Table component --></table>`
 }
 
 // renderContainer renders a Container component
-func (sr *SchemaRenderer) renderContainer(props interface{}) string {
+func (sr *JSONSchemaRenderer) renderContainer(props interface{}) string {
 	// Placeholder implementation
 	return `<div class="container"><!-- Container component --></div>`
 }
@@ -461,7 +461,7 @@ func (sr *SchemaRenderer) renderContainer(props interface{}) string {
 // ============================================================================
 
 // ConvertSchemaToComponent converts a JSON schema definition to a component tree
-func (sr *SchemaRenderer) ConvertSchemaToComponent(schemaData map[string]interface{}) (ComponentDefinition, error) {
+func (sr *JSONSchemaRenderer) ConvertSchemaToComponent(schemaData map[string]interface{}) (ComponentDefinition, error) {
 	componentType, ok := schemaData["type"].(string)
 	if !ok {
 		return ComponentDefinition{}, fmt.Errorf("component type is required")
@@ -509,7 +509,7 @@ func (sr *SchemaRenderer) ConvertSchemaToComponent(schemaData map[string]interfa
 }
 
 // RenderFromJSON renders components directly from JSON string
-func (sr *SchemaRenderer) RenderFromJSON(ctx context.Context, jsonData string) (string, error) {
+func (sr *JSONSchemaRenderer) RenderFromJSON(ctx context.Context, jsonData string) (string, error) {
 	// Parse JSON into component definition
 	var componentData map[string]interface{}
 	if err := json.Unmarshal([]byte(jsonData), &componentData); err != nil {
@@ -527,11 +527,11 @@ func (sr *SchemaRenderer) RenderFromJSON(ctx context.Context, jsonData string) (
 }
 
 // GetAvailableComponents returns all available component types
-func (sr *SchemaRenderer) GetAvailableComponents() []string {
+func (sr *JSONSchemaRenderer) GetAvailableComponents() []string {
 	return sr.factory.GetAvailableSchemas()
 }
 
 // ValidateComponent validates a component definition against its schema
-func (sr *SchemaRenderer) ValidateComponent(component ComponentDefinition) error {
+func (sr *JSONSchemaRenderer) ValidateComponent(component ComponentDefinition) error {
 	return sr.factory.ValidateAgainstSchema(component.SchemaType, component.Props)
 }

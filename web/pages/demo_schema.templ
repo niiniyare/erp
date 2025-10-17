@@ -1,0 +1,333 @@
+package pages
+
+import (
+	"context"
+	"github.com/niiniyare/erp/web/engine"
+	"github.com/niiniyare/erp/web/layouts"
+)
+
+// DemoSchemaPage demonstrates schema-driven UI components
+templ DemoSchemaPage() {
+	@layouts.Base("Schema-Driven Components Demo", "Demonstration of JSON schema-driven UI components") {
+		<div class="container mx-auto px-4 py-8">
+			<h1 class="text-3xl font-bold text-gray-900 mb-8">Schema-Driven Components Demo</h1>
+			
+			<div class="space-y-8">
+				// Demo Section 1: Buttons
+				<div class="bg-white p-6 rounded-lg shadow">
+					<h2 class="text-xl font-semibold mb-4">Button Components from Schema</h2>
+					<div class="space-y-4">
+						@RenderSchemaButton("primary", "Primary Button")
+						@RenderSchemaButton("secondary", "Secondary Button") 
+						@RenderSchemaButton("success", "Success Button")
+						@RenderSchemaButtonGroup()
+					</div>
+				</div>
+
+				// Demo Section 2: Form Components
+				<div class="bg-white p-6 rounded-lg shadow">
+					<h2 class="text-xl font-semibold mb-4">Form Components from Schema</h2>
+					<div class="space-y-4">
+						@RenderSchemaInput("text", "Username", "Enter your username")
+						@RenderSchemaInput("email", "Email", "Enter your email")
+						@RenderSchemaTextarea("Message", "Enter your message")
+						@RenderSchemaCheckbox("Subscribe", "Subscribe to newsletter")
+						@RenderSchemaSelect("Country", []string{"US", "UK", "CA"})
+					</div>
+				</div>
+
+				// Demo Section 3: Layout Components
+				<div class="bg-white p-6 rounded-lg shadow">
+					<h2 class="text-xl font-semibold mb-4">Layout Components from Schema</h2>
+					@RenderSchemaCard("Sample Card", "This card was generated from a JSON schema definition")
+					@RenderSchemaContainer()
+				</div>
+
+				// Demo Section 4: Data Components
+				<div class="bg-white p-6 rounded-lg shadow">
+					<h2 class="text-xl font-semibold mb-4">Data Components from Schema</h2>
+					@RenderSchemaTable()
+					@RenderSchemaList()
+				</div>
+			</div>
+		</div>
+	}
+}
+
+// RenderSchemaButton demonstrates button rendering from schema
+templ RenderSchemaButton(variant, text string) {
+	{{ 
+		ctx := context.Background()
+		registry, _ := engine.NewEnhancedComponentRegistry("docs/ui/Schema")
+		props := map[string]interface{}{
+			"text": text,
+			"variant": variant,
+			"size": "md",
+		}
+		component, err := registry.RenderToTempl(ctx, "ButtonGroupSchema", props)
+		if err != nil {
+			// Fallback rendering
+		}
+	}}
+	if component != nil {
+		@component
+	} else {
+		<button class={ "btn btn-" + variant }>{ text }</button>
+	}
+}
+
+// RenderSchemaButtonGroup demonstrates button group rendering
+templ RenderSchemaButtonGroup() {
+	{{ 
+		ctx := context.Background()
+		registry, _ := engine.NewEnhancedComponentRegistry("docs/ui/Schema")
+		props := map[string]interface{}{
+			"buttons": []interface{}{
+				map[string]interface{}{"text": "First", "variant": "primary"},
+				map[string]interface{}{"text": "Second", "variant": "secondary"}, 
+				map[string]interface{}{"text": "Third", "variant": "success"},
+			},
+		}
+		component, err := registry.RenderToTempl(ctx, "ButtonGroupSchema", props)
+		if err != nil {
+			// Fallback rendering
+		}
+	}}
+	if component != nil {
+		@component
+	} else {
+		<div class="btn-group">
+			<button class="btn btn-primary">First</button>
+			<button class="btn btn-secondary">Second</button>
+			<button class="btn btn-success">Third</button>
+		</div>
+	}
+}
+
+// RenderSchemaInput demonstrates input rendering from schema
+templ RenderSchemaInput(inputType, label, placeholder string) {
+	{{ 
+		ctx := context.Background()
+		registry, _ := engine.NewEnhancedComponentRegistry("docs/ui/Schema")
+		props := map[string]interface{}{
+			"type": inputType,
+			"label": label,
+			"placeholder": placeholder,
+			"required": true,
+		}
+		component, err := registry.RenderToTempl(ctx, "InputControlSchema", props)
+		if err != nil {
+			// Fallback rendering
+		}
+	}}
+	if component != nil {
+		@component
+	} else {
+		<div class="mb-3">
+			<label class="form-label">{ label }</label>
+			<input type={ inputType } class="form-control" placeholder={ placeholder } required/>
+		</div>
+	}
+}
+
+// RenderSchemaTextarea demonstrates textarea rendering from schema
+templ RenderSchemaTextarea(label, placeholder string) {
+	{{ 
+		ctx := context.Background()
+		registry, _ := engine.NewEnhancedComponentRegistry("docs/ui/Schema")
+		props := map[string]interface{}{
+			"label": label,
+			"placeholder": placeholder,
+			"rows": 4,
+		}
+		component, err := registry.RenderToTempl(ctx, "TextareaControlSchema", props)
+		if err != nil {
+			// Fallback rendering
+		}
+	}}
+	if component != nil {
+		@component
+	} else {
+		<div class="mb-3">
+			<label class="form-label">{ label }</label>
+			<textarea class="form-control" rows="4" placeholder={ placeholder }></textarea>
+		</div>
+	}
+}
+
+// RenderSchemaCheckbox demonstrates checkbox rendering from schema
+templ RenderSchemaCheckbox(label, text string) {
+	{{ 
+		ctx := context.Background()
+		registry, _ := engine.NewEnhancedComponentRegistry("docs/ui/Schema")
+		props := map[string]interface{}{
+			"label": text,
+			"value": label,
+			"checked": false,
+		}
+		component, err := registry.RenderToTempl(ctx, "CheckboxControlSchema", props)
+		if err != nil {
+			// Fallback rendering
+		}
+	}}
+	if component != nil {
+		@component
+	} else {
+		<div class="form-check mb-3">
+			<input class="form-check-input" type="checkbox" value={ label }/>
+			<label class="form-check-label">{ text }</label>
+		</div>
+	}
+}
+
+// RenderSchemaSelect demonstrates select rendering from schema
+templ RenderSchemaSelect(label string, options []string) {
+	{{ 
+		ctx := context.Background()
+		registry, _ := engine.NewEnhancedComponentRegistry("docs/ui/Schema")
+		optionsList := make([]interface{}, len(options))
+		for i, opt := range options {
+			optionsList[i] = map[string]interface{}{
+				"label": opt,
+				"value": opt,
+			}
+		}
+		props := map[string]interface{}{
+			"label": label,
+			"options": optionsList,
+		}
+		component, err := registry.RenderToTempl(ctx, "SelectControlSchema", props)
+		if err != nil {
+			// Fallback rendering
+		}
+	}}
+	if component != nil {
+		@component
+	} else {
+		<div class="mb-3">
+			<label class="form-label">{ label }</label>
+			<select class="form-select">
+				for _, option := range options {
+					<option value={ option }>{ option }</option>
+				}
+			</select>
+		</div>
+	}
+}
+
+// RenderSchemaCard demonstrates card rendering from schema
+templ RenderSchemaCard(title, content string) {
+	{{ 
+		ctx := context.Background()
+		registry, _ := engine.NewEnhancedComponentRegistry("docs/ui/Schema")
+		props := map[string]interface{}{
+			"title": title,
+			"content": content,
+		}
+		component, err := registry.RenderToTempl(ctx, "CardSchema", props)
+		if err != nil {
+			// Fallback rendering
+		}
+	}}
+	if component != nil {
+		@component
+	} else {
+		<div class="card mb-4">
+			<div class="card-body">
+				<h5 class="card-title">{ title }</h5>
+				<p class="card-text">{ content }</p>
+			</div>
+		</div>
+	}
+}
+
+// RenderSchemaContainer demonstrates container rendering from schema
+templ RenderSchemaContainer() {
+	{{ 
+		ctx := context.Background()
+		registry, _ := engine.NewEnhancedComponentRegistry("docs/ui/Schema")
+		props := map[string]interface{}{
+			"className": "container-fluid bg-light p-4",
+		}
+		component, err := registry.RenderToTempl(ctx, "ContainerSchema", props)
+		if err != nil {
+			// Fallback rendering
+		}
+	}}
+	if component != nil {
+		@component
+	} else {
+		<div class="container-fluid bg-light p-4 mb-4">
+			<p>This container was generated from a schema definition</p>
+		</div>
+	}
+}
+
+// RenderSchemaTable demonstrates table rendering from schema
+templ RenderSchemaTable() {
+	{{ 
+		ctx := context.Background()
+		registry, _ := engine.NewEnhancedComponentRegistry("docs/ui/Schema")
+		props := map[string]interface{}{
+			"columns": []interface{}{
+				map[string]interface{}{"name": "id", "label": "ID"},
+				map[string]interface{}{"name": "name", "label": "Name"},
+				map[string]interface{}{"name": "email", "label": "Email"},
+			},
+		}
+		component, err := registry.RenderToTempl(ctx, "TableSchema", props)
+		if err != nil {
+			// Fallback rendering
+		}
+	}}
+	if component != nil {
+		@component
+	} else {
+		<table class="table table-striped mb-4">
+			<thead>
+				<tr>
+					<th>ID</th>
+					<th>Name</th>
+					<th>Email</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>1</td>
+					<td>John Doe</td>
+					<td>john@example.com</td>
+					<td><button class="btn btn-sm btn-primary">Edit</button></td>
+				</tr>
+			</tbody>
+		</table>
+	}
+}
+
+// RenderSchemaList demonstrates list rendering from schema
+templ RenderSchemaList() {
+	{{ 
+		ctx := context.Background()
+		registry, _ := engine.NewEnhancedComponentRegistry("docs/ui/Schema")
+		props := map[string]interface{}{
+			"items": []interface{}{
+				"Schema-driven list item 1",
+				"Schema-driven list item 2", 
+				"Schema-driven list item 3",
+			},
+		}
+		component, err := registry.RenderToTempl(ctx, "ListSchema", props)
+		if err != nil {
+			// Fallback rendering
+		}
+	}}
+	if component != nil {
+		@component
+	} else {
+		<ul class="list-group">
+			<li class="list-group-item">Schema-driven list item 1</li>
+			<li class="list-group-item">Schema-driven list item 2</li>
+			<li class="list-group-item">Schema-driven list item 3</li>
+		</ul>
+	}
+}
