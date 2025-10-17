@@ -1,0 +1,36 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "caption"
+    },
+    {
+      "type": "string",
+      "const": "icon"
+    },
+    {
+      "type": "string",
+      "const": "menu"
+    },
+    {
+      "type": "string",
+      "const": "message-box"
+    },
+    {
+      "type": "string",
+      "const": "small-caption"
+    },
+    {
+      "type": "string",
+      "const": "status-bar"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.Font.json"
+}

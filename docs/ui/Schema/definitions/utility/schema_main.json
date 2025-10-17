@@ -1,0 +1,2742 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/RootSchema",
+  "properties": {
+    "RootSchema": {
+      "$ref": "./RootSchema.json"
+    },
+    "PageSchema": {
+      "$ref": "./PageSchema.json"
+    },
+    "SchemaClassName": {
+      "$ref": "./SchemaClassName.json"
+    },
+    "SchemaExpression": {
+      "$ref": "./SchemaExpression.json"
+    },
+    "ListenerAction": {
+      "$ref": "./ListenerAction.json"
+    },
+    "ConditionGroupValue": {
+      "$ref": "./ConditionGroupValue.json"
+    },
+    "ConditionRule": {
+      "$ref": "./ConditionRule.json"
+    },
+    "ExpressionComplex": {
+      "$ref": "./ExpressionComplex.json"
+    },
+    "ExpressionValue": {
+      "$ref": "./ExpressionValue.json"
+    },
+    "ExpressionSimple": {
+      "$ref": "./ExpressionSimple.json"
+    },
+    "ExpressionFunc": {
+      "$ref": "./ExpressionFunc.json"
+    },
+    "ExpressionField": {
+      "$ref": "./ExpressionField.json"
+    },
+    "ExpressionFormula": {
+      "$ref": "./ExpressionFormula.json"
+    },
+    "OperatorType": {
+      "$ref": "./OperatorType.json"
+    },
+    "debounceConfig": {
+      "$ref": "./debounceConfig.json"
+    },
+    "trackConfig": {
+      "$ref": "./trackConfig.json"
+    },
+    "TestIdBuilder": {
+      "$ref": "./TestIdBuilder.json"
+    },
+    "SchemaRemark": {
+      "$ref": "./SchemaRemark.json"
+    },
+    "SchemaIcon": {
+      "$ref": "./SchemaIcon.json"
+    },
+    "SchemaTpl": {
+      "$ref": "./SchemaTpl.json"
+    },
+    "SchemaCollection": {
+      "$ref": "./SchemaCollection.json"
+    },
+    "SchemaObject": {
+      "$ref": "./SchemaObject.json"
+    },
+    "FlexSchema": {
+      "$ref": "./FlexSchema.json"
+    },
+    "TplSchema": {
+      "$ref": "./TplSchema.json"
+    },
+    "BadgeObject": {
+      "$ref": "./BadgeObject.json"
+    },
+    "RemarkSchema": {
+      "$ref": "./RemarkSchema.json"
+    },
+    "ActionSchema": {
+      "$ref": "./ActionSchema.json"
+    },
+    "AjaxActionSchema": {
+      "$ref": "./AjaxActionSchema.json"
+    },
+    "SchemaTooltip": {
+      "$ref": "./SchemaTooltip.json"
+    },
+    "SchemaApi": {
+      "$ref": "./SchemaApi.json"
+    },
+    "SchemaApiObject": {
+      "$ref": "./SchemaApiObject.json"
+    },
+    "SchemaUrlPath": {
+      "$ref": "./SchemaUrlPath.json"
+    },
+    "SchemaTokenizeableString": {
+      "$ref": "./SchemaTokenizeableString.json"
+    },
+    "FeedbackDialog": {
+      "$ref": "./FeedbackDialog.json"
+    },
+    "SchemaName": {
+      "$ref": "./SchemaName.json"
+    },
+    "SchemaReload": {
+      "$ref": "./SchemaReload.json"
+    },
+    "UrlActionSchema": {
+      "$ref": "./UrlActionSchema.json"
+    },
+    "LinkActionSchema": {
+      "$ref": "./LinkActionSchema.json"
+    },
+    "DialogActionSchema": {
+      "$ref": "./DialogActionSchema.json"
+    },
+    "DialogSchemaBase": {
+      "$ref": "./DialogSchemaBase.json"
+    },
+    "DrawerActionSchema": {
+      "$ref": "./DrawerActionSchema.json"
+    },
+    "DrawerSchemaBase": {
+      "$ref": "./DrawerSchemaBase.json"
+    },
+    "ToastActionSchema": {
+      "$ref": "./ToastActionSchema.json"
+    },
+    "ToastSchemaBase": {
+      "$ref": "./ToastSchemaBase.json"
+    },
+    "SchemaType": {
+      "$ref": "./SchemaType.json"
+    },
+    "CopyActionSchema": {
+      "$ref": "./CopyActionSchema.json"
+    },
+    "ReloadActionSchema": {
+      "$ref": "./ReloadActionSchema.json"
+    },
+    "EmailActionSchema": {
+      "$ref": "./EmailActionSchema.json"
+    },
+    "OtherActionSchema": {
+      "$ref": "./OtherActionSchema.json"
+    },
+    "VanillaAction": {
+      "$ref": "./VanillaAction.json"
+    },
+    "AlertSchema": {
+      "$ref": "./AlertSchema.json"
+    },
+    "AudioSchema": {
+      "$ref": "./AudioSchema.json"
+    },
+    "AvatarSchema": {
+      "$ref": "./AvatarSchema.json"
+    },
+    "ButtonGroupSchema": {
+      "$ref": "./ButtonGroupSchema.json"
+    },
+    "ButtonToolbarSchema": {
+      "$ref": "./ButtonToolbarSchema.json"
+    },
+    "CalendarSchema": {
+      "$ref": "./CalendarSchema.json"
+    },
+    "CardSchema": {
+      "$ref": "./CardSchema.json"
+    },
+    "CardBodyField": {
+      "$ref": "./CardBodyField.json"
+    },
+    "SchemaPopOver": {
+      "$ref": "./SchemaPopOver.json"
+    },
+    "SchemaPopOverObject": {
+      "$ref": "./SchemaPopOverObject.json"
+    },
+    "SchemaQuickEdit": {
+      "$ref": "./SchemaQuickEdit.json"
+    },
+    "SchemaQuickEditObject": {
+      "$ref": "./SchemaQuickEditObject.json"
+    },
+    "SchemaCopyable": {
+      "$ref": "./SchemaCopyable.json"
+    },
+    "SchemaCopyableObject": {
+      "$ref": "./SchemaCopyableObject.json"
+    },
+    "CardsSchema": {
+      "$ref": "./CardsSchema.json"
+    },
+    "Card2Schema": {
+      "$ref": "./Card2Schema.json"
+    },
+    "CarouselSchema": {
+      "$ref": "./CarouselSchema.json"
+    },
+    "ChartSchema": {
+      "$ref": "./ChartSchema.json"
+    },
+    "SchemaFunction": {
+      "$ref": "./SchemaFunction.json"
+    },
+    "interface-1922134811-9821-11285-1922134811-0-212510": {
+      "$ref": "./interface-1922134811-9821-11285-1922134811-0-212510.json"
+    },
+    "CollapseSchema": {
+      "$ref": "./CollapseSchema.json"
+    },
+    "CollapseGroupSchema": {
+      "$ref": "./CollapseGroupSchema.json"
+    },
+    "ColorSchema": {
+      "$ref": "./ColorSchema.json"
+    },
+    "ContainerSchema": {
+      "$ref": "./ContainerSchema.json"
+    },
+    "ContainerDraggableConfig": {
+      "$ref": "./ContainerDraggableConfig.json"
+    },
+    "SwitchContainerSchema": {
+      "$ref": "./SwitchContainerSchema.json"
+    },
+    "StateSchema": {
+      "$ref": "./StateSchema.json"
+    },
+    "CRUDSchema": {
+      "$ref": "./CRUDSchema.json"
+    },
+    "CRUDCardsSchema": {
+      "$ref": "./CRUDCardsSchema.json"
+    },
+    "PlainObject": {
+      "$ref": "./PlainObject.json"
+    },
+    "CRUDBultinToolbarType": {
+      "$ref": "./CRUDBultinToolbarType.json"
+    },
+    "SchemaMessage": {
+      "$ref": "./SchemaMessage.json"
+    },
+    "AutoGenerateFilterObject": {
+      "$ref": "./AutoGenerateFilterObject.json"
+    },
+    "CRUDListSchema": {
+      "$ref": "./CRUDListSchema.json"
+    },
+    "ListItemSchema": {
+      "$ref": "./ListItemSchema.json"
+    },
+    "ListBodyField": {
+      "$ref": "./ListBodyField.json"
+    },
+    "ListBodyFieldObject": {
+      "$ref": "./ListBodyFieldObject.json"
+    },
+    "CRUDTableSchema": {
+      "$ref": "./CRUDTableSchema.json"
+    },
+    "TableColumn": {
+      "$ref": "./TableColumn.json"
+    },
+    "TableColumnWithType": {
+      "$ref": "./TableColumnWithType.json"
+    },
+    "TableColumnObject": {
+      "$ref": "./TableColumnObject.json"
+    },
+    "CRUD2Schema": {
+      "$ref": "./CRUD2Schema.json"
+    },
+    "CRUD2CardsSchema": {
+      "$ref": "./CRUD2CardsSchema.json"
+    },
+    "CRUD2ListSchema": {
+      "$ref": "./CRUD2ListSchema.json"
+    },
+    "CRUD2TableSchema": {
+      "$ref": "./CRUD2TableSchema.json"
+    },
+    "ColumnSchema": {
+      "$ref": "./ColumnSchema.json"
+    },
+    "RowSelectionSchema": {
+      "$ref": "./RowSelectionSchema.json"
+    },
+    "RowSelectionOptionsSchema": {
+      "$ref": "./RowSelectionOptionsSchema.json"
+    },
+    "ExpandableSchema": {
+      "$ref": "./ExpandableSchema.json"
+    },
+    "DateSchema": {
+      "$ref": "./DateSchema.json"
+    },
+    "DialogSchema": {
+      "$ref": "./DialogSchema.json"
+    },
+    "DividerSchema": {
+      "$ref": "./DividerSchema.json"
+    },
+    "DrawerSchema": {
+      "$ref": "./DrawerSchema.json"
+    },
+    "DropdownButtonSchema": {
+      "$ref": "./DropdownButtonSchema.json"
+    },
+    "DropdownButton": {
+      "$ref": "./DropdownButton.json"
+    },
+    "EachSchema": {
+      "$ref": "./EachSchema.json"
+    },
+    "GridSchema": {
+      "$ref": "./GridSchema.json"
+    },
+    "GridColumn": {
+      "$ref": "./GridColumn.json"
+    },
+    "GridColumnObject": {
+      "$ref": "./GridColumnObject.json"
+    },
+    "FormHorizontal": {
+      "$ref": "./FormHorizontal.json"
+    },
+    "Grid2DSchema": {
+      "$ref": "./Grid2DSchema.json"
+    },
+    "Grid": {
+      "$ref": "./Grid.json"
+    },
+    "HBoxSchema": {
+      "$ref": "./HBoxSchema.json"
+    },
+    "HBoxColumn": {
+      "$ref": "./HBoxColumn.json"
+    },
+    "HBoxColumnObject": {
+      "$ref": "./HBoxColumnObject.json"
+    },
+    "IconSchema": {
+      "$ref": "./IconSchema.json"
+    },
+    "IconCheckedSchema": {
+      "$ref": "./IconCheckedSchema.json"
+    },
+    "IFrameSchema": {
+      "$ref": "./IFrameSchema.json"
+    },
+    "ImageSchema": {
+      "$ref": "./ImageSchema.json"
+    },
+    "ImageToolbarAction": {
+      "$ref": "./ImageToolbarAction.json"
+    },
+    "ImagesSchema": {
+      "$ref": "./ImagesSchema.json"
+    },
+    "JsonSchema": {
+      "$ref": "./JsonSchema.json"
+    },
+    "LinkSchema": {
+      "$ref": "./LinkSchema.json"
+    },
+    "ListSchema": {
+      "$ref": "./ListSchema.json"
+    },
+    "MappingSchema": {
+      "$ref": "./MappingSchema.json"
+    },
+    "NavSchema": {
+      "$ref": "./NavSchema.json"
+    },
+    "NavItemSchema": {
+      "$ref": "./NavItemSchema.json"
+    },
+    "IconItemSchema": {
+      "$ref": "./IconItemSchema.json"
+    },
+    "NavOverflow": {
+      "$ref": "./NavOverflow.json"
+    },
+    "React.CSSProperties": {
+      "$ref": "./React.CSSProperties.json"
+    },
+    "Property.AlignmentBaseline": {
+      "$ref": "./Property.AlignmentBaseline.json"
+    },
+    "Globals": {
+      "$ref": "./Globals.json"
+    },
+    "Property.BaselineShift<(string|number)>": {
+      "$ref": "./Property.BaselineShift<(string|number)>.json"
+    },
+    "Property.Clip": {
+      "$ref": "./Property.Clip.json"
+    },
+    "Property.ClipPath": {
+      "$ref": "./Property.ClipPath.json"
+    },
+    "DataType.GeometryBox": {
+      "$ref": "./DataType.GeometryBox.json"
+    },
+    "DataType.Box": {
+      "$ref": "./DataType.Box.json"
+    },
+    "Property.ClipRule": {
+      "$ref": "./Property.ClipRule.json"
+    },
+    "Property.Color": {
+      "$ref": "./Property.Color.json"
+    },
+    "DataType.Color": {
+      "$ref": "./DataType.Color.json"
+    },
+    "DataType.NamedColor": {
+      "$ref": "./DataType.NamedColor.json"
+    },
+    "DataType.DeprecatedSystemColor": {
+      "$ref": "./DataType.DeprecatedSystemColor.json"
+    },
+    "Property.ColorInterpolation": {
+      "$ref": "./Property.ColorInterpolation.json"
+    },
+    "Property.ColorRendering": {
+      "$ref": "./Property.ColorRendering.json"
+    },
+    "Property.Cursor": {
+      "$ref": "./Property.Cursor.json"
+    },
+    "Property.Direction": {
+      "$ref": "./Property.Direction.json"
+    },
+    "Property.Display": {
+      "$ref": "./Property.Display.json"
+    },
+    "DataType.DisplayOutside": {
+      "$ref": "./DataType.DisplayOutside.json"
+    },
+    "DataType.DisplayInside": {
+      "$ref": "./DataType.DisplayInside.json"
+    },
+    "DataType.DisplayInternal": {
+      "$ref": "./DataType.DisplayInternal.json"
+    },
+    "DataType.DisplayLegacy": {
+      "$ref": "./DataType.DisplayLegacy.json"
+    },
+    "Property.DominantBaseline": {
+      "$ref": "./Property.DominantBaseline.json"
+    },
+    "Property.Fill": {
+      "$ref": "./Property.Fill.json"
+    },
+    "DataType.Paint": {
+      "$ref": "./DataType.Paint.json"
+    },
+    "Property.FillOpacity": {
+      "$ref": "./Property.FillOpacity.json"
+    },
+    "Property.FillRule": {
+      "$ref": "./Property.FillRule.json"
+    },
+    "Property.Filter": {
+      "$ref": "./Property.Filter.json"
+    },
+    "Property.FloodColor": {
+      "$ref": "./Property.FloodColor.json"
+    },
+    "Property.FloodOpacity": {
+      "$ref": "./Property.FloodOpacity.json"
+    },
+    "Property.Font": {
+      "$ref": "./Property.Font.json"
+    },
+    "Property.FontFamily": {
+      "$ref": "./Property.FontFamily.json"
+    },
+    "DataType.GenericFamily": {
+      "$ref": "./DataType.GenericFamily.json"
+    },
+    "Property.FontSize<(string|number)>": {
+      "$ref": "./Property.FontSize<(string|number)>.json"
+    },
+    "DataType.AbsoluteSize": {
+      "$ref": "./DataType.AbsoluteSize.json"
+    },
+    "Property.FontSizeAdjust": {
+      "$ref": "./Property.FontSizeAdjust.json"
+    },
+    "Property.FontStretch": {
+      "$ref": "./Property.FontStretch.json"
+    },
+    "DataType.FontStretchAbsolute": {
+      "$ref": "./DataType.FontStretchAbsolute.json"
+    },
+    "Property.FontStyle": {
+      "$ref": "./Property.FontStyle.json"
+    },
+    "Property.FontVariant": {
+      "$ref": "./Property.FontVariant.json"
+    },
+    "DataType.EastAsianVariantValues": {
+      "$ref": "./DataType.EastAsianVariantValues.json"
+    },
+    "Property.FontWeight": {
+      "$ref": "./Property.FontWeight.json"
+    },
+    "DataType.FontWeightAbsolute": {
+      "$ref": "./DataType.FontWeightAbsolute.json"
+    },
+    "Property.GlyphOrientationVertical": {
+      "$ref": "./Property.GlyphOrientationVertical.json"
+    },
+    "Property.ImageRendering": {
+      "$ref": "./Property.ImageRendering.json"
+    },
+    "Property.LetterSpacing<(string|number)>": {
+      "$ref": "./Property.LetterSpacing<(string|number)>.json"
+    },
+    "Property.LightingColor": {
+      "$ref": "./Property.LightingColor.json"
+    },
+    "Property.LineHeight<(string|number)>": {
+      "$ref": "./Property.LineHeight<(string|number)>.json"
+    },
+    "Property.Marker": {
+      "$ref": "./Property.Marker.json"
+    },
+    "Property.MarkerEnd": {
+      "$ref": "./Property.MarkerEnd.json"
+    },
+    "Property.MarkerMid": {
+      "$ref": "./Property.MarkerMid.json"
+    },
+    "Property.MarkerStart": {
+      "$ref": "./Property.MarkerStart.json"
+    },
+    "Property.Mask<(string|number)>": {
+      "$ref": "./Property.Mask<(string|number)>.json"
+    },
+    "DataType.MaskLayer<(string|number)>": {
+      "$ref": "./DataType.MaskLayer<(string|number)>.json"
+    },
+    "DataType.Position<(string|number)>": {
+      "$ref": "./DataType.Position<(string|number)>.json"
+    },
+    "DataType.RepeatStyle": {
+      "$ref": "./DataType.RepeatStyle.json"
+    },
+    "DataType.CompositingOperator": {
+      "$ref": "./DataType.CompositingOperator.json"
+    },
+    "DataType.MaskingMode": {
+      "$ref": "./DataType.MaskingMode.json"
+    },
+    "Property.Opacity": {
+      "$ref": "./Property.Opacity.json"
+    },
+    "Property.Overflow": {
+      "$ref": "./Property.Overflow.json"
+    },
+    "Property.PaintOrder": {
+      "$ref": "./Property.PaintOrder.json"
+    },
+    "Property.PointerEvents": {
+      "$ref": "./Property.PointerEvents.json"
+    },
+    "Property.ShapeRendering": {
+      "$ref": "./Property.ShapeRendering.json"
+    },
+    "Property.StopColor": {
+      "$ref": "./Property.StopColor.json"
+    },
+    "Property.StopOpacity": {
+      "$ref": "./Property.StopOpacity.json"
+    },
+    "Property.Stroke": {
+      "$ref": "./Property.Stroke.json"
+    },
+    "Property.StrokeDasharray<(string|number)>": {
+      "$ref": "./Property.StrokeDasharray<(string|number)>.json"
+    },
+    "DataType.Dasharray<(string|number)>": {
+      "$ref": "./DataType.Dasharray<(string|number)>.json"
+    },
+    "Property.StrokeDashoffset<(string|number)>": {
+      "$ref": "./Property.StrokeDashoffset<(string|number)>.json"
+    },
+    "Property.StrokeLinecap": {
+      "$ref": "./Property.StrokeLinecap.json"
+    },
+    "Property.StrokeLinejoin": {
+      "$ref": "./Property.StrokeLinejoin.json"
+    },
+    "Property.StrokeMiterlimit": {
+      "$ref": "./Property.StrokeMiterlimit.json"
+    },
+    "Property.StrokeOpacity": {
+      "$ref": "./Property.StrokeOpacity.json"
+    },
+    "Property.StrokeWidth<(string|number)>": {
+      "$ref": "./Property.StrokeWidth<(string|number)>.json"
+    },
+    "Property.TextAnchor": {
+      "$ref": "./Property.TextAnchor.json"
+    },
+    "Property.TextDecoration<(string|number)>": {
+      "$ref": "./Property.TextDecoration<(string|number)>.json"
+    },
+    "Property.TextRendering": {
+      "$ref": "./Property.TextRendering.json"
+    },
+    "Property.UnicodeBidi": {
+      "$ref": "./Property.UnicodeBidi.json"
+    },
+    "Property.VectorEffect": {
+      "$ref": "./Property.VectorEffect.json"
+    },
+    "Property.Visibility": {
+      "$ref": "./Property.Visibility.json"
+    },
+    "Property.WhiteSpace": {
+      "$ref": "./Property.WhiteSpace.json"
+    },
+    "Property.WordSpacing<(string|number)>": {
+      "$ref": "./Property.WordSpacing<(string|number)>.json"
+    },
+    "Property.WritingMode": {
+      "$ref": "./Property.WritingMode.json"
+    },
+    "Property.Azimuth": {
+      "$ref": "./Property.Azimuth.json"
+    },
+    "Property.BoxAlign": {
+      "$ref": "./Property.BoxAlign.json"
+    },
+    "Property.BoxDirection": {
+      "$ref": "./Property.BoxDirection.json"
+    },
+    "Property.BoxFlex": {
+      "$ref": "./Property.BoxFlex.json"
+    },
+    "Property.BoxFlexGroup": {
+      "$ref": "./Property.BoxFlexGroup.json"
+    },
+    "Property.BoxLines": {
+      "$ref": "./Property.BoxLines.json"
+    },
+    "Property.BoxOrdinalGroup": {
+      "$ref": "./Property.BoxOrdinalGroup.json"
+    },
+    "Property.BoxOrient": {
+      "$ref": "./Property.BoxOrient.json"
+    },
+    "Property.BoxPack": {
+      "$ref": "./Property.BoxPack.json"
+    },
+    "Property.GridColumnGap<(string|number)>": {
+      "$ref": "./Property.GridColumnGap<(string|number)>.json"
+    },
+    "Property.GridGap<(string|number)>": {
+      "$ref": "./Property.GridGap<(string|number)>.json"
+    },
+    "Property.GridRowGap<(string|number)>": {
+      "$ref": "./Property.GridRowGap<(string|number)>.json"
+    },
+    "Property.ImeMode": {
+      "$ref": "./Property.ImeMode.json"
+    },
+    "Property.InsetBlock<(string|number)>": {
+      "$ref": "./Property.InsetBlock<(string|number)>.json"
+    },
+    "Property.InsetBlockEnd<(string|number)>": {
+      "$ref": "./Property.InsetBlockEnd<(string|number)>.json"
+    },
+    "Property.InsetBlockStart<(string|number)>": {
+      "$ref": "./Property.InsetBlockStart<(string|number)>.json"
+    },
+    "Property.InsetInline<(string|number)>": {
+      "$ref": "./Property.InsetInline<(string|number)>.json"
+    },
+    "Property.InsetInlineEnd<(string|number)>": {
+      "$ref": "./Property.InsetInlineEnd<(string|number)>.json"
+    },
+    "Property.InsetInlineStart<(string|number)>": {
+      "$ref": "./Property.InsetInlineStart<(string|number)>.json"
+    },
+    "Property.ScrollSnapCoordinate<(string|number)>": {
+      "$ref": "./Property.ScrollSnapCoordinate<(string|number)>.json"
+    },
+    "Property.ScrollSnapDestination<(string|number)>": {
+      "$ref": "./Property.ScrollSnapDestination<(string|number)>.json"
+    },
+    "Property.ScrollSnapPointsX": {
+      "$ref": "./Property.ScrollSnapPointsX.json"
+    },
+    "Property.ScrollSnapPointsY": {
+      "$ref": "./Property.ScrollSnapPointsY.json"
+    },
+    "Property.ScrollSnapTypeX": {
+      "$ref": "./Property.ScrollSnapTypeX.json"
+    },
+    "Property.ScrollSnapTypeY": {
+      "$ref": "./Property.ScrollSnapTypeY.json"
+    },
+    "Property.LineBreak": {
+      "$ref": "./Property.LineBreak.json"
+    },
+    "Property.UserSelect": {
+      "$ref": "./Property.UserSelect.json"
+    },
+    "Property.BackfaceVisibility": {
+      "$ref": "./Property.BackfaceVisibility.json"
+    },
+    "Property.BackgroundClip": {
+      "$ref": "./Property.BackgroundClip.json"
+    },
+    "Property.BoxDecorationBreak": {
+      "$ref": "./Property.BoxDecorationBreak.json"
+    },
+    "Property.BackgroundOrigin": {
+      "$ref": "./Property.BackgroundOrigin.json"
+    },
+    "Property.BackgroundSize<(string|number)>": {
+      "$ref": "./Property.BackgroundSize<(string|number)>.json"
+    },
+    "DataType.BgSize<(string|number)>": {
+      "$ref": "./DataType.BgSize<(string|number)>.json"
+    },
+    "Property.BorderRadius<(string|number)>": {
+      "$ref": "./Property.BorderRadius<(string|number)>.json"
+    },
+    "Property.BorderBottomLeftRadius<(string|number)>": {
+      "$ref": "./Property.BorderBottomLeftRadius<(string|number)>.json"
+    },
+    "Property.BorderBottomRightRadius<(string|number)>": {
+      "$ref": "./Property.BorderBottomRightRadius<(string|number)>.json"
+    },
+    "Property.BorderTopLeftRadius<(string|number)>": {
+      "$ref": "./Property.BorderTopLeftRadius<(string|number)>.json"
+    },
+    "Property.BorderTopRightRadius<(string|number)>": {
+      "$ref": "./Property.BorderTopRightRadius<(string|number)>.json"
+    },
+    "Property.BoxShadow": {
+      "$ref": "./Property.BoxShadow.json"
+    },
+    "Property.MozFloatEdge": {
+      "$ref": "./Property.MozFloatEdge.json"
+    },
+    "Property.MozForceBrokenImageIcon": {
+      "$ref": "./Property.MozForceBrokenImageIcon.json"
+    },
+    "Property.Outline<(string|number)>": {
+      "$ref": "./Property.Outline<(string|number)>.json"
+    },
+    "DataType.LineStyle": {
+      "$ref": "./DataType.LineStyle.json"
+    },
+    "DataType.LineWidth<(string|number)>": {
+      "$ref": "./DataType.LineWidth<(string|number)>.json"
+    },
+    "Property.OutlineColor": {
+      "$ref": "./Property.OutlineColor.json"
+    },
+    "Property.OutlineStyle": {
+      "$ref": "./Property.OutlineStyle.json"
+    },
+    "Property.OutlineWidth<(string|number)>": {
+      "$ref": "./Property.OutlineWidth<(string|number)>.json"
+    },
+    "Property.Perspective<(string|number)>": {
+      "$ref": "./Property.Perspective<(string|number)>.json"
+    },
+    "Property.PerspectiveOrigin<(string|number)>": {
+      "$ref": "./Property.PerspectiveOrigin<(string|number)>.json"
+    },
+    "Property.TextAlignLast": {
+      "$ref": "./Property.TextAlignLast.json"
+    },
+    "Property.TextDecorationColor": {
+      "$ref": "./Property.TextDecorationColor.json"
+    },
+    "Property.TextDecorationLine": {
+      "$ref": "./Property.TextDecorationLine.json"
+    },
+    "Property.TextDecorationStyle": {
+      "$ref": "./Property.TextDecorationStyle.json"
+    },
+    "Property.Transform": {
+      "$ref": "./Property.Transform.json"
+    },
+    "Property.TransformOrigin<(string|number)>": {
+      "$ref": "./Property.TransformOrigin<(string|number)>.json"
+    },
+    "Property.TransformStyle": {
+      "$ref": "./Property.TransformStyle.json"
+    },
+    "Property.Transition<string>": {
+      "$ref": "./Property.Transition<string>.json"
+    },
+    "DataType.SingleTransition<string>": {
+      "$ref": "./DataType.SingleTransition<string>.json"
+    },
+    "DataType.EasingFunction": {
+      "$ref": "./DataType.EasingFunction.json"
+    },
+    "DataType.CubicBezierTimingFunction": {
+      "$ref": "./DataType.CubicBezierTimingFunction.json"
+    },
+    "DataType.StepTimingFunction": {
+      "$ref": "./DataType.StepTimingFunction.json"
+    },
+    "Property.TransitionDelay<string>": {
+      "$ref": "./Property.TransitionDelay<string>.json"
+    },
+    "Property.TransitionDuration<string>": {
+      "$ref": "./Property.TransitionDuration<string>.json"
+    },
+    "Property.TransitionProperty": {
+      "$ref": "./Property.TransitionProperty.json"
+    },
+    "Property.TransitionTimingFunction": {
+      "$ref": "./Property.TransitionTimingFunction.json"
+    },
+    "Property.MozUserInput": {
+      "$ref": "./Property.MozUserInput.json"
+    },
+    "Property.Animation<string>": {
+      "$ref": "./Property.Animation<string>.json"
+    },
+    "DataType.SingleAnimation<string>": {
+      "$ref": "./DataType.SingleAnimation<string>.json"
+    },
+    "DataType.SingleAnimationDirection": {
+      "$ref": "./DataType.SingleAnimationDirection.json"
+    },
+    "DataType.SingleAnimationFillMode": {
+      "$ref": "./DataType.SingleAnimationFillMode.json"
+    },
+    "DataType.SingleAnimationTimeline": {
+      "$ref": "./DataType.SingleAnimationTimeline.json"
+    },
+    "Property.AnimationDelay<string>": {
+      "$ref": "./Property.AnimationDelay<string>.json"
+    },
+    "Property.AnimationDirection": {
+      "$ref": "./Property.AnimationDirection.json"
+    },
+    "Property.AnimationDuration<string>": {
+      "$ref": "./Property.AnimationDuration<string>.json"
+    },
+    "Property.AnimationFillMode": {
+      "$ref": "./Property.AnimationFillMode.json"
+    },
+    "Property.AnimationIterationCount": {
+      "$ref": "./Property.AnimationIterationCount.json"
+    },
+    "Property.AnimationName": {
+      "$ref": "./Property.AnimationName.json"
+    },
+    "Property.AnimationPlayState": {
+      "$ref": "./Property.AnimationPlayState.json"
+    },
+    "Property.AnimationTimingFunction": {
+      "$ref": "./Property.AnimationTimingFunction.json"
+    },
+    "Property.BorderImage": {
+      "$ref": "./Property.BorderImage.json"
+    },
+    "Property.ObjectFit": {
+      "$ref": "./Property.ObjectFit.json"
+    },
+    "Property.ObjectPosition<(string|number)>": {
+      "$ref": "./Property.ObjectPosition<(string|number)>.json"
+    },
+    "Property.TabSize<(string|number)>": {
+      "$ref": "./Property.TabSize<(string|number)>.json"
+    },
+    "Property.TextOverflow": {
+      "$ref": "./Property.TextOverflow.json"
+    },
+    "Property.ColumnRule<(string|number)>": {
+      "$ref": "./Property.ColumnRule<(string|number)>.json"
+    },
+    "Property.Columns<(string|number)>": {
+      "$ref": "./Property.Columns<(string|number)>.json"
+    },
+    "Property.MozOutlineRadius<(string|number)>": {
+      "$ref": "./Property.MozOutlineRadius<(string|number)>.json"
+    },
+    "Property.MsContentZoomLimit": {
+      "$ref": "./Property.MsContentZoomLimit.json"
+    },
+    "Property.MsContentZoomSnap": {
+      "$ref": "./Property.MsContentZoomSnap.json"
+    },
+    "Property.Flex<(string|number)>": {
+      "$ref": "./Property.Flex<(string|number)>.json"
+    },
+    "Property.MsScrollLimit": {
+      "$ref": "./Property.MsScrollLimit.json"
+    },
+    "Property.MsScrollSnapX": {
+      "$ref": "./Property.MsScrollSnapX.json"
+    },
+    "Property.MsScrollSnapY": {
+      "$ref": "./Property.MsScrollSnapY.json"
+    },
+    "Property.WebkitBorderBefore<(string|number)>": {
+      "$ref": "./Property.WebkitBorderBefore<(string|number)>.json"
+    },
+    "Property.FlexFlow": {
+      "$ref": "./Property.FlexFlow.json"
+    },
+    "Property.WebkitMask<(string|number)>": {
+      "$ref": "./Property.WebkitMask<(string|number)>.json"
+    },
+    "Property.MaskBorder": {
+      "$ref": "./Property.MaskBorder.json"
+    },
+    "Property.TextEmphasis": {
+      "$ref": "./Property.TextEmphasis.json"
+    },
+    "Property.WebkitTextStroke<(string|number)>": {
+      "$ref": "./Property.WebkitTextStroke<(string|number)>.json"
+    },
+    "Property.MozAppearance": {
+      "$ref": "./Property.MozAppearance.json"
+    },
+    "Property.MozBinding": {
+      "$ref": "./Property.MozBinding.json"
+    },
+    "Property.MozBorderBottomColors": {
+      "$ref": "./Property.MozBorderBottomColors.json"
+    },
+    "Property.BorderInlineEndColor": {
+      "$ref": "./Property.BorderInlineEndColor.json"
+    },
+    "Property.BorderInlineEndStyle": {
+      "$ref": "./Property.BorderInlineEndStyle.json"
+    },
+    "Property.BorderInlineEndWidth<(string|number)>": {
+      "$ref": "./Property.BorderInlineEndWidth<(string|number)>.json"
+    },
+    "Property.MozBorderLeftColors": {
+      "$ref": "./Property.MozBorderLeftColors.json"
+    },
+    "Property.MozBorderRightColors": {
+      "$ref": "./Property.MozBorderRightColors.json"
+    },
+    "Property.BorderInlineStartColor": {
+      "$ref": "./Property.BorderInlineStartColor.json"
+    },
+    "Property.BorderInlineStartStyle": {
+      "$ref": "./Property.BorderInlineStartStyle.json"
+    },
+    "Property.MozBorderTopColors": {
+      "$ref": "./Property.MozBorderTopColors.json"
+    },
+    "Property.BoxSizing": {
+      "$ref": "./Property.BoxSizing.json"
+    },
+    "Property.ColumnCount": {
+      "$ref": "./Property.ColumnCount.json"
+    },
+    "Property.ColumnFill": {
+      "$ref": "./Property.ColumnFill.json"
+    },
+    "Property.ColumnRuleColor": {
+      "$ref": "./Property.ColumnRuleColor.json"
+    },
+    "Property.ColumnRuleStyle": {
+      "$ref": "./Property.ColumnRuleStyle.json"
+    },
+    "Property.ColumnRuleWidth<(string|number)>": {
+      "$ref": "./Property.ColumnRuleWidth<(string|number)>.json"
+    },
+    "Property.ColumnWidth<(string|number)>": {
+      "$ref": "./Property.ColumnWidth<(string|number)>.json"
+    },
+    "Property.MozContextProperties": {
+      "$ref": "./Property.MozContextProperties.json"
+    },
+    "Property.FontFeatureSettings": {
+      "$ref": "./Property.FontFeatureSettings.json"
+    },
+    "Property.FontLanguageOverride": {
+      "$ref": "./Property.FontLanguageOverride.json"
+    },
+    "Property.Hyphens": {
+      "$ref": "./Property.Hyphens.json"
+    },
+    "Property.MozImageRegion": {
+      "$ref": "./Property.MozImageRegion.json"
+    },
+    "Property.MarginInlineEnd<(string|number)>": {
+      "$ref": "./Property.MarginInlineEnd<(string|number)>.json"
+    },
+    "Property.MarginInlineStart<(string|number)>": {
+      "$ref": "./Property.MarginInlineStart<(string|number)>.json"
+    },
+    "Property.MozOrient": {
+      "$ref": "./Property.MozOrient.json"
+    },
+    "Property.FontSmooth<(string|number)>": {
+      "$ref": "./Property.FontSmooth<(string|number)>.json"
+    },
+    "Property.MozOutlineRadiusBottomleft<(string|number)>": {
+      "$ref": "./Property.MozOutlineRadiusBottomleft<(string|number)>.json"
+    },
+    "Property.MozOutlineRadiusBottomright<(string|number)>": {
+      "$ref": "./Property.MozOutlineRadiusBottomright<(string|number)>.json"
+    },
+    "Property.MozOutlineRadiusTopleft<(string|number)>": {
+      "$ref": "./Property.MozOutlineRadiusTopleft<(string|number)>.json"
+    },
+    "Property.MozOutlineRadiusTopright<(string|number)>": {
+      "$ref": "./Property.MozOutlineRadiusTopright<(string|number)>.json"
+    },
+    "Property.PaddingInlineEnd<(string|number)>": {
+      "$ref": "./Property.PaddingInlineEnd<(string|number)>.json"
+    },
+    "Property.PaddingInlineStart<(string|number)>": {
+      "$ref": "./Property.PaddingInlineStart<(string|number)>.json"
+    },
+    "Property.MozStackSizing": {
+      "$ref": "./Property.MozStackSizing.json"
+    },
+    "Property.MozTextBlink": {
+      "$ref": "./Property.MozTextBlink.json"
+    },
+    "Property.TextSizeAdjust": {
+      "$ref": "./Property.TextSizeAdjust.json"
+    },
+    "Property.MozUserFocus": {
+      "$ref": "./Property.MozUserFocus.json"
+    },
+    "Property.MozUserModify": {
+      "$ref": "./Property.MozUserModify.json"
+    },
+    "Property.MozWindowDragging": {
+      "$ref": "./Property.MozWindowDragging.json"
+    },
+    "Property.MozWindowShadow": {
+      "$ref": "./Property.MozWindowShadow.json"
+    },
+    "Property.MsAccelerator": {
+      "$ref": "./Property.MsAccelerator.json"
+    },
+    "Property.MsBlockProgression": {
+      "$ref": "./Property.MsBlockProgression.json"
+    },
+    "Property.MsContentZoomChaining": {
+      "$ref": "./Property.MsContentZoomChaining.json"
+    },
+    "Property.MsContentZoomLimitMax": {
+      "$ref": "./Property.MsContentZoomLimitMax.json"
+    },
+    "Property.MsContentZoomLimitMin": {
+      "$ref": "./Property.MsContentZoomLimitMin.json"
+    },
+    "Property.MsContentZoomSnapPoints": {
+      "$ref": "./Property.MsContentZoomSnapPoints.json"
+    },
+    "Property.MsContentZoomSnapType": {
+      "$ref": "./Property.MsContentZoomSnapType.json"
+    },
+    "Property.MsContentZooming": {
+      "$ref": "./Property.MsContentZooming.json"
+    },
+    "Property.MsFilter": {
+      "$ref": "./Property.MsFilter.json"
+    },
+    "Property.FlexDirection": {
+      "$ref": "./Property.FlexDirection.json"
+    },
+    "Property.FlexGrow": {
+      "$ref": "./Property.FlexGrow.json"
+    },
+    "Property.MsFlowFrom": {
+      "$ref": "./Property.MsFlowFrom.json"
+    },
+    "Property.MsFlowInto": {
+      "$ref": "./Property.MsFlowInto.json"
+    },
+    "Property.MsGridColumns<(string|number)>": {
+      "$ref": "./Property.MsGridColumns<(string|number)>.json"
+    },
+    "DataType.TrackBreadth<(string|number)>": {
+      "$ref": "./DataType.TrackBreadth<(string|number)>.json"
+    },
+    "Property.MsGridRows<(string|number)>": {
+      "$ref": "./Property.MsGridRows<(string|number)>.json"
+    },
+    "Property.MsHighContrastAdjust": {
+      "$ref": "./Property.MsHighContrastAdjust.json"
+    },
+    "Property.MsHyphenateLimitChars": {
+      "$ref": "./Property.MsHyphenateLimitChars.json"
+    },
+    "Property.MsHyphenateLimitLines": {
+      "$ref": "./Property.MsHyphenateLimitLines.json"
+    },
+    "Property.MsHyphenateLimitZone<(string|number)>": {
+      "$ref": "./Property.MsHyphenateLimitZone<(string|number)>.json"
+    },
+    "Property.MsImeAlign": {
+      "$ref": "./Property.MsImeAlign.json"
+    },
+    "Property.Order": {
+      "$ref": "./Property.Order.json"
+    },
+    "Property.MsOverflowStyle": {
+      "$ref": "./Property.MsOverflowStyle.json"
+    },
+    "Property.OverflowX": {
+      "$ref": "./Property.OverflowX.json"
+    },
+    "Property.OverflowY": {
+      "$ref": "./Property.OverflowY.json"
+    },
+    "Property.MsScrollChaining": {
+      "$ref": "./Property.MsScrollChaining.json"
+    },
+    "Property.MsScrollLimitXMax<(string|number)>": {
+      "$ref": "./Property.MsScrollLimitXMax<(string|number)>.json"
+    },
+    "Property.MsScrollLimitXMin<(string|number)>": {
+      "$ref": "./Property.MsScrollLimitXMin<(string|number)>.json"
+    },
+    "Property.MsScrollLimitYMax<(string|number)>": {
+      "$ref": "./Property.MsScrollLimitYMax<(string|number)>.json"
+    },
+    "Property.MsScrollLimitYMin<(string|number)>": {
+      "$ref": "./Property.MsScrollLimitYMin<(string|number)>.json"
+    },
+    "Property.MsScrollRails": {
+      "$ref": "./Property.MsScrollRails.json"
+    },
+    "Property.MsScrollSnapPointsX": {
+      "$ref": "./Property.MsScrollSnapPointsX.json"
+    },
+    "Property.MsScrollSnapPointsY": {
+      "$ref": "./Property.MsScrollSnapPointsY.json"
+    },
+    "Property.MsScrollSnapType": {
+      "$ref": "./Property.MsScrollSnapType.json"
+    },
+    "Property.MsScrollTranslation": {
+      "$ref": "./Property.MsScrollTranslation.json"
+    },
+    "Property.MsScrollbar3dlightColor": {
+      "$ref": "./Property.MsScrollbar3dlightColor.json"
+    },
+    "Property.MsScrollbarArrowColor": {
+      "$ref": "./Property.MsScrollbarArrowColor.json"
+    },
+    "Property.MsScrollbarBaseColor": {
+      "$ref": "./Property.MsScrollbarBaseColor.json"
+    },
+    "Property.MsScrollbarDarkshadowColor": {
+      "$ref": "./Property.MsScrollbarDarkshadowColor.json"
+    },
+    "Property.MsScrollbarFaceColor": {
+      "$ref": "./Property.MsScrollbarFaceColor.json"
+    },
+    "Property.MsScrollbarHighlightColor": {
+      "$ref": "./Property.MsScrollbarHighlightColor.json"
+    },
+    "Property.MsScrollbarShadowColor": {
+      "$ref": "./Property.MsScrollbarShadowColor.json"
+    },
+    "Property.MsScrollbarTrackColor": {
+      "$ref": "./Property.MsScrollbarTrackColor.json"
+    },
+    "Property.MsTextAutospace": {
+      "$ref": "./Property.MsTextAutospace.json"
+    },
+    "Property.TextCombineUpright": {
+      "$ref": "./Property.TextCombineUpright.json"
+    },
+    "Property.TouchAction": {
+      "$ref": "./Property.TouchAction.json"
+    },
+    "Property.MsTouchSelect": {
+      "$ref": "./Property.MsTouchSelect.json"
+    },
+    "Property.MsUserSelect": {
+      "$ref": "./Property.MsUserSelect.json"
+    },
+    "Property.WordBreak": {
+      "$ref": "./Property.WordBreak.json"
+    },
+    "Property.MsWrapFlow": {
+      "$ref": "./Property.MsWrapFlow.json"
+    },
+    "Property.MsWrapMargin<(string|number)>": {
+      "$ref": "./Property.MsWrapMargin<(string|number)>.json"
+    },
+    "Property.MsWrapThrough": {
+      "$ref": "./Property.MsWrapThrough.json"
+    },
+    "Property.AlignContent": {
+      "$ref": "./Property.AlignContent.json"
+    },
+    "DataType.ContentDistribution": {
+      "$ref": "./DataType.ContentDistribution.json"
+    },
+    "DataType.ContentPosition": {
+      "$ref": "./DataType.ContentPosition.json"
+    },
+    "Property.AlignItems": {
+      "$ref": "./Property.AlignItems.json"
+    },
+    "DataType.SelfPosition": {
+      "$ref": "./DataType.SelfPosition.json"
+    },
+    "Property.AlignSelf": {
+      "$ref": "./Property.AlignSelf.json"
+    },
+    "Property.WebkitAppearance": {
+      "$ref": "./Property.WebkitAppearance.json"
+    },
+    "Property.BackdropFilter": {
+      "$ref": "./Property.BackdropFilter.json"
+    },
+    "Property.WebkitBorderBeforeColor": {
+      "$ref": "./Property.WebkitBorderBeforeColor.json"
+    },
+    "Property.WebkitBorderBeforeStyle": {
+      "$ref": "./Property.WebkitBorderBeforeStyle.json"
+    },
+    "Property.WebkitBorderBeforeWidth<(string|number)>": {
+      "$ref": "./Property.WebkitBorderBeforeWidth<(string|number)>.json"
+    },
+    "Property.BorderImageSlice": {
+      "$ref": "./Property.BorderImageSlice.json"
+    },
+    "Property.WebkitBoxReflect<(string|number)>": {
+      "$ref": "./Property.WebkitBoxReflect<(string|number)>.json"
+    },
+    "Property.ColumnSpan": {
+      "$ref": "./Property.ColumnSpan.json"
+    },
+    "Property.FlexBasis<(string|number)>": {
+      "$ref": "./Property.FlexBasis<(string|number)>.json"
+    },
+    "Property.FlexShrink": {
+      "$ref": "./Property.FlexShrink.json"
+    },
+    "Property.FlexWrap": {
+      "$ref": "./Property.FlexWrap.json"
+    },
+    "Property.FontKerning": {
+      "$ref": "./Property.FontKerning.json"
+    },
+    "Property.FontVariantLigatures": {
+      "$ref": "./Property.FontVariantLigatures.json"
+    },
+    "Property.HyphenateCharacter": {
+      "$ref": "./Property.HyphenateCharacter.json"
+    },
+    "Property.InitialLetter": {
+      "$ref": "./Property.InitialLetter.json"
+    },
+    "Property.JustifyContent": {
+      "$ref": "./Property.JustifyContent.json"
+    },
+    "Property.WebkitLineClamp": {
+      "$ref": "./Property.WebkitLineClamp.json"
+    },
+    "Property.WebkitMaskAttachment": {
+      "$ref": "./Property.WebkitMaskAttachment.json"
+    },
+    "DataType.Attachment": {
+      "$ref": "./DataType.Attachment.json"
+    },
+    "Property.MaskBorderOutset<(string|number)>": {
+      "$ref": "./Property.MaskBorderOutset<(string|number)>.json"
+    },
+    "Property.MaskBorderRepeat": {
+      "$ref": "./Property.MaskBorderRepeat.json"
+    },
+    "Property.MaskBorderSlice": {
+      "$ref": "./Property.MaskBorderSlice.json"
+    },
+    "Property.MaskBorderSource": {
+      "$ref": "./Property.MaskBorderSource.json"
+    },
+    "Property.MaskBorderWidth<(string|number)>": {
+      "$ref": "./Property.MaskBorderWidth<(string|number)>.json"
+    },
+    "Property.WebkitMaskClip": {
+      "$ref": "./Property.WebkitMaskClip.json"
+    },
+    "Property.WebkitMaskComposite": {
+      "$ref": "./Property.WebkitMaskComposite.json"
+    },
+    "DataType.CompositeStyle": {
+      "$ref": "./DataType.CompositeStyle.json"
+    },
+    "Property.WebkitMaskImage": {
+      "$ref": "./Property.WebkitMaskImage.json"
+    },
+    "Property.WebkitMaskOrigin": {
+      "$ref": "./Property.WebkitMaskOrigin.json"
+    },
+    "Property.WebkitMaskPosition<(string|number)>": {
+      "$ref": "./Property.WebkitMaskPosition<(string|number)>.json"
+    },
+    "Property.WebkitMaskPositionX<(string|number)>": {
+      "$ref": "./Property.WebkitMaskPositionX<(string|number)>.json"
+    },
+    "Property.WebkitMaskPositionY<(string|number)>": {
+      "$ref": "./Property.WebkitMaskPositionY<(string|number)>.json"
+    },
+    "Property.WebkitMaskRepeat": {
+      "$ref": "./Property.WebkitMaskRepeat.json"
+    },
+    "Property.WebkitMaskRepeatX": {
+      "$ref": "./Property.WebkitMaskRepeatX.json"
+    },
+    "Property.WebkitMaskRepeatY": {
+      "$ref": "./Property.WebkitMaskRepeatY.json"
+    },
+    "Property.WebkitMaskSize<(string|number)>": {
+      "$ref": "./Property.WebkitMaskSize<(string|number)>.json"
+    },
+    "Property.MaxInlineSize<(string|number)>": {
+      "$ref": "./Property.MaxInlineSize<(string|number)>.json"
+    },
+    "Property.WebkitOverflowScrolling": {
+      "$ref": "./Property.WebkitOverflowScrolling.json"
+    },
+    "Property.PrintColorAdjust": {
+      "$ref": "./Property.PrintColorAdjust.json"
+    },
+    "Property.RubyPosition": {
+      "$ref": "./Property.RubyPosition.json"
+    },
+    "Property.ScrollSnapType": {
+      "$ref": "./Property.ScrollSnapType.json"
+    },
+    "Property.ShapeMargin<(string|number)>": {
+      "$ref": "./Property.ShapeMargin<(string|number)>.json"
+    },
+    "Property.WebkitTapHighlightColor": {
+      "$ref": "./Property.WebkitTapHighlightColor.json"
+    },
+    "Property.TextDecorationSkip": {
+      "$ref": "./Property.TextDecorationSkip.json"
+    },
+    "Property.TextEmphasisColor": {
+      "$ref": "./Property.TextEmphasisColor.json"
+    },
+    "Property.TextEmphasisPosition": {
+      "$ref": "./Property.TextEmphasisPosition.json"
+    },
+    "Property.TextEmphasisStyle": {
+      "$ref": "./Property.TextEmphasisStyle.json"
+    },
+    "Property.WebkitTextFillColor": {
+      "$ref": "./Property.WebkitTextFillColor.json"
+    },
+    "Property.TextOrientation": {
+      "$ref": "./Property.TextOrientation.json"
+    },
+    "Property.WebkitTextStrokeColor": {
+      "$ref": "./Property.WebkitTextStrokeColor.json"
+    },
+    "Property.WebkitTextStrokeWidth<(string|number)>": {
+      "$ref": "./Property.WebkitTextStrokeWidth<(string|number)>.json"
+    },
+    "Property.TextUnderlinePosition": {
+      "$ref": "./Property.TextUnderlinePosition.json"
+    },
+    "Property.WebkitTouchCallout": {
+      "$ref": "./Property.WebkitTouchCallout.json"
+    },
+    "Property.WebkitUserModify": {
+      "$ref": "./Property.WebkitUserModify.json"
+    },
+    "Property.All": {
+      "$ref": "./Property.All.json"
+    },
+    "Property.AnimationRange<(string|number)>": {
+      "$ref": "./Property.AnimationRange<(string|number)>.json"
+    },
+    "DataType.TimelineRangeName": {
+      "$ref": "./DataType.TimelineRangeName.json"
+    },
+    "Property.Background<(string|number)>": {
+      "$ref": "./Property.Background<(string|number)>.json"
+    },
+    "DataType.FinalBgLayer<(string|number)>": {
+      "$ref": "./DataType.FinalBgLayer<(string|number)>.json"
+    },
+    "DataType.BgPosition<(string|number)>": {
+      "$ref": "./DataType.BgPosition<(string|number)>.json"
+    },
+    "Property.BackgroundPosition<(string|number)>": {
+      "$ref": "./Property.BackgroundPosition<(string|number)>.json"
+    },
+    "Property.Border<(string|number)>": {
+      "$ref": "./Property.Border<(string|number)>.json"
+    },
+    "Property.BorderBlock<(string|number)>": {
+      "$ref": "./Property.BorderBlock<(string|number)>.json"
+    },
+    "Property.BorderBlockEnd<(string|number)>": {
+      "$ref": "./Property.BorderBlockEnd<(string|number)>.json"
+    },
+    "Property.BorderBlockStart<(string|number)>": {
+      "$ref": "./Property.BorderBlockStart<(string|number)>.json"
+    },
+    "Property.BorderBottom<(string|number)>": {
+      "$ref": "./Property.BorderBottom<(string|number)>.json"
+    },
+    "Property.BorderColor": {
+      "$ref": "./Property.BorderColor.json"
+    },
+    "Property.BorderInline<(string|number)>": {
+      "$ref": "./Property.BorderInline<(string|number)>.json"
+    },
+    "Property.BorderInlineEnd<(string|number)>": {
+      "$ref": "./Property.BorderInlineEnd<(string|number)>.json"
+    },
+    "Property.BorderInlineStart<(string|number)>": {
+      "$ref": "./Property.BorderInlineStart<(string|number)>.json"
+    },
+    "Property.BorderLeft<(string|number)>": {
+      "$ref": "./Property.BorderLeft<(string|number)>.json"
+    },
+    "Property.BorderRight<(string|number)>": {
+      "$ref": "./Property.BorderRight<(string|number)>.json"
+    },
+    "Property.BorderStyle": {
+      "$ref": "./Property.BorderStyle.json"
+    },
+    "Property.BorderTop<(string|number)>": {
+      "$ref": "./Property.BorderTop<(string|number)>.json"
+    },
+    "Property.BorderWidth<(string|number)>": {
+      "$ref": "./Property.BorderWidth<(string|number)>.json"
+    },
+    "Property.Caret": {
+      "$ref": "./Property.Caret.json"
+    },
+    "Property.ContainIntrinsicSize<(string|number)>": {
+      "$ref": "./Property.ContainIntrinsicSize<(string|number)>.json"
+    },
+    "Property.Container": {
+      "$ref": "./Property.Container.json"
+    },
+    "Property.Gap<(string|number)>": {
+      "$ref": "./Property.Gap<(string|number)>.json"
+    },
+    "Property.Grid": {
+      "$ref": "./Property.Grid.json"
+    },
+    "Property.GridArea": {
+      "$ref": "./Property.GridArea.json"
+    },
+    "DataType.GridLine": {
+      "$ref": "./DataType.GridLine.json"
+    },
+    "Property.GridColumn": {
+      "$ref": "./Property.GridColumn.json"
+    },
+    "Property.GridRow": {
+      "$ref": "./Property.GridRow.json"
+    },
+    "Property.GridTemplate": {
+      "$ref": "./Property.GridTemplate.json"
+    },
+    "Property.Inset<(string|number)>": {
+      "$ref": "./Property.Inset<(string|number)>.json"
+    },
+    "Property.LineClamp": {
+      "$ref": "./Property.LineClamp.json"
+    },
+    "Property.ListStyle": {
+      "$ref": "./Property.ListStyle.json"
+    },
+    "Property.Margin<(string|number)>": {
+      "$ref": "./Property.Margin<(string|number)>.json"
+    },
+    "Property.MarginBlock<(string|number)>": {
+      "$ref": "./Property.MarginBlock<(string|number)>.json"
+    },
+    "Property.MarginInline<(string|number)>": {
+      "$ref": "./Property.MarginInline<(string|number)>.json"
+    },
+    "Property.Offset<(string|number)>": {
+      "$ref": "./Property.Offset<(string|number)>.json"
+    },
+    "Property.OverscrollBehavior": {
+      "$ref": "./Property.OverscrollBehavior.json"
+    },
+    "Property.Padding<(string|number)>": {
+      "$ref": "./Property.Padding<(string|number)>.json"
+    },
+    "Property.PaddingBlock<(string|number)>": {
+      "$ref": "./Property.PaddingBlock<(string|number)>.json"
+    },
+    "Property.PaddingInline<(string|number)>": {
+      "$ref": "./Property.PaddingInline<(string|number)>.json"
+    },
+    "Property.PlaceContent": {
+      "$ref": "./Property.PlaceContent.json"
+    },
+    "Property.PlaceItems": {
+      "$ref": "./Property.PlaceItems.json"
+    },
+    "Property.PlaceSelf": {
+      "$ref": "./Property.PlaceSelf.json"
+    },
+    "Property.ScrollMargin<(string|number)>": {
+      "$ref": "./Property.ScrollMargin<(string|number)>.json"
+    },
+    "Property.ScrollMarginBlock<(string|number)>": {
+      "$ref": "./Property.ScrollMarginBlock<(string|number)>.json"
+    },
+    "Property.ScrollMarginInline<(string|number)>": {
+      "$ref": "./Property.ScrollMarginInline<(string|number)>.json"
+    },
+    "Property.ScrollPadding<(string|number)>": {
+      "$ref": "./Property.ScrollPadding<(string|number)>.json"
+    },
+    "Property.ScrollPaddingBlock<(string|number)>": {
+      "$ref": "./Property.ScrollPaddingBlock<(string|number)>.json"
+    },
+    "Property.ScrollPaddingInline<(string|number)>": {
+      "$ref": "./Property.ScrollPaddingInline<(string|number)>.json"
+    },
+    "Property.ScrollTimeline": {
+      "$ref": "./Property.ScrollTimeline.json"
+    },
+    "Property.ViewTimeline": {
+      "$ref": "./Property.ViewTimeline.json"
+    },
+    "Property.AccentColor": {
+      "$ref": "./Property.AccentColor.json"
+    },
+    "Property.AlignTracks": {
+      "$ref": "./Property.AlignTracks.json"
+    },
+    "Property.AnimationComposition": {
+      "$ref": "./Property.AnimationComposition.json"
+    },
+    "DataType.SingleAnimationComposition": {
+      "$ref": "./DataType.SingleAnimationComposition.json"
+    },
+    "Property.AnimationRangeEnd<(string|number)>": {
+      "$ref": "./Property.AnimationRangeEnd<(string|number)>.json"
+    },
+    "Property.AnimationRangeStart<(string|number)>": {
+      "$ref": "./Property.AnimationRangeStart<(string|number)>.json"
+    },
+    "Property.AnimationTimeline": {
+      "$ref": "./Property.AnimationTimeline.json"
+    },
+    "Property.Appearance": {
+      "$ref": "./Property.Appearance.json"
+    },
+    "DataType.CompatAuto": {
+      "$ref": "./DataType.CompatAuto.json"
+    },
+    "Property.AspectRatio": {
+      "$ref": "./Property.AspectRatio.json"
+    },
+    "Property.BackgroundAttachment": {
+      "$ref": "./Property.BackgroundAttachment.json"
+    },
+    "Property.BackgroundBlendMode": {
+      "$ref": "./Property.BackgroundBlendMode.json"
+    },
+    "DataType.BlendMode": {
+      "$ref": "./DataType.BlendMode.json"
+    },
+    "Property.BackgroundColor": {
+      "$ref": "./Property.BackgroundColor.json"
+    },
+    "Property.BackgroundImage": {
+      "$ref": "./Property.BackgroundImage.json"
+    },
+    "Property.BackgroundPositionX<(string|number)>": {
+      "$ref": "./Property.BackgroundPositionX<(string|number)>.json"
+    },
+    "Property.BackgroundPositionY<(string|number)>": {
+      "$ref": "./Property.BackgroundPositionY<(string|number)>.json"
+    },
+    "Property.BackgroundRepeat": {
+      "$ref": "./Property.BackgroundRepeat.json"
+    },
+    "Property.BlockOverflow": {
+      "$ref": "./Property.BlockOverflow.json"
+    },
+    "Property.BlockSize<(string|number)>": {
+      "$ref": "./Property.BlockSize<(string|number)>.json"
+    },
+    "Property.BorderBlockColor": {
+      "$ref": "./Property.BorderBlockColor.json"
+    },
+    "Property.BorderBlockEndColor": {
+      "$ref": "./Property.BorderBlockEndColor.json"
+    },
+    "Property.BorderBlockEndStyle": {
+      "$ref": "./Property.BorderBlockEndStyle.json"
+    },
+    "Property.BorderBlockEndWidth<(string|number)>": {
+      "$ref": "./Property.BorderBlockEndWidth<(string|number)>.json"
+    },
+    "Property.BorderBlockStartColor": {
+      "$ref": "./Property.BorderBlockStartColor.json"
+    },
+    "Property.BorderBlockStartStyle": {
+      "$ref": "./Property.BorderBlockStartStyle.json"
+    },
+    "Property.BorderBlockStartWidth<(string|number)>": {
+      "$ref": "./Property.BorderBlockStartWidth<(string|number)>.json"
+    },
+    "Property.BorderBlockStyle": {
+      "$ref": "./Property.BorderBlockStyle.json"
+    },
+    "Property.BorderBlockWidth<(string|number)>": {
+      "$ref": "./Property.BorderBlockWidth<(string|number)>.json"
+    },
+    "Property.BorderBottomColor": {
+      "$ref": "./Property.BorderBottomColor.json"
+    },
+    "Property.BorderBottomStyle": {
+      "$ref": "./Property.BorderBottomStyle.json"
+    },
+    "Property.BorderBottomWidth<(string|number)>": {
+      "$ref": "./Property.BorderBottomWidth<(string|number)>.json"
+    },
+    "Property.BorderCollapse": {
+      "$ref": "./Property.BorderCollapse.json"
+    },
+    "Property.BorderEndEndRadius<(string|number)>": {
+      "$ref": "./Property.BorderEndEndRadius<(string|number)>.json"
+    },
+    "Property.BorderEndStartRadius<(string|number)>": {
+      "$ref": "./Property.BorderEndStartRadius<(string|number)>.json"
+    },
+    "Property.BorderImageOutset<(string|number)>": {
+      "$ref": "./Property.BorderImageOutset<(string|number)>.json"
+    },
+    "Property.BorderImageRepeat": {
+      "$ref": "./Property.BorderImageRepeat.json"
+    },
+    "Property.BorderImageSource": {
+      "$ref": "./Property.BorderImageSource.json"
+    },
+    "Property.BorderImageWidth<(string|number)>": {
+      "$ref": "./Property.BorderImageWidth<(string|number)>.json"
+    },
+    "Property.BorderInlineColor": {
+      "$ref": "./Property.BorderInlineColor.json"
+    },
+    "Property.BorderInlineStartWidth<(string|number)>": {
+      "$ref": "./Property.BorderInlineStartWidth<(string|number)>.json"
+    },
+    "Property.BorderInlineStyle": {
+      "$ref": "./Property.BorderInlineStyle.json"
+    },
+    "Property.BorderInlineWidth<(string|number)>": {
+      "$ref": "./Property.BorderInlineWidth<(string|number)>.json"
+    },
+    "Property.BorderLeftColor": {
+      "$ref": "./Property.BorderLeftColor.json"
+    },
+    "Property.BorderLeftStyle": {
+      "$ref": "./Property.BorderLeftStyle.json"
+    },
+    "Property.BorderLeftWidth<(string|number)>": {
+      "$ref": "./Property.BorderLeftWidth<(string|number)>.json"
+    },
+    "Property.BorderRightColor": {
+      "$ref": "./Property.BorderRightColor.json"
+    },
+    "Property.BorderRightStyle": {
+      "$ref": "./Property.BorderRightStyle.json"
+    },
+    "Property.BorderRightWidth<(string|number)>": {
+      "$ref": "./Property.BorderRightWidth<(string|number)>.json"
+    },
+    "Property.BorderSpacing<(string|number)>": {
+      "$ref": "./Property.BorderSpacing<(string|number)>.json"
+    },
+    "Property.BorderStartEndRadius<(string|number)>": {
+      "$ref": "./Property.BorderStartEndRadius<(string|number)>.json"
+    },
+    "Property.BorderStartStartRadius<(string|number)>": {
+      "$ref": "./Property.BorderStartStartRadius<(string|number)>.json"
+    },
+    "Property.BorderTopColor": {
+      "$ref": "./Property.BorderTopColor.json"
+    },
+    "Property.BorderTopStyle": {
+      "$ref": "./Property.BorderTopStyle.json"
+    },
+    "Property.BorderTopWidth<(string|number)>": {
+      "$ref": "./Property.BorderTopWidth<(string|number)>.json"
+    },
+    "Property.Bottom<(string|number)>": {
+      "$ref": "./Property.Bottom<(string|number)>.json"
+    },
+    "Property.BreakAfter": {
+      "$ref": "./Property.BreakAfter.json"
+    },
+    "Property.BreakBefore": {
+      "$ref": "./Property.BreakBefore.json"
+    },
+    "Property.BreakInside": {
+      "$ref": "./Property.BreakInside.json"
+    },
+    "Property.CaptionSide": {
+      "$ref": "./Property.CaptionSide.json"
+    },
+    "Property.CaretColor": {
+      "$ref": "./Property.CaretColor.json"
+    },
+    "Property.CaretShape": {
+      "$ref": "./Property.CaretShape.json"
+    },
+    "Property.Clear": {
+      "$ref": "./Property.Clear.json"
+    },
+    "Property.ColorScheme": {
+      "$ref": "./Property.ColorScheme.json"
+    },
+    "Property.ColumnGap<(string|number)>": {
+      "$ref": "./Property.ColumnGap<(string|number)>.json"
+    },
+    "Property.Contain": {
+      "$ref": "./Property.Contain.json"
+    },
+    "Property.ContainIntrinsicBlockSize<(string|number)>": {
+      "$ref": "./Property.ContainIntrinsicBlockSize<(string|number)>.json"
+    },
+    "Property.ContainIntrinsicHeight<(string|number)>": {
+      "$ref": "./Property.ContainIntrinsicHeight<(string|number)>.json"
+    },
+    "Property.ContainIntrinsicInlineSize<(string|number)>": {
+      "$ref": "./Property.ContainIntrinsicInlineSize<(string|number)>.json"
+    },
+    "Property.ContainIntrinsicWidth<(string|number)>": {
+      "$ref": "./Property.ContainIntrinsicWidth<(string|number)>.json"
+    },
+    "Property.ContainerName": {
+      "$ref": "./Property.ContainerName.json"
+    },
+    "Property.ContainerType": {
+      "$ref": "./Property.ContainerType.json"
+    },
+    "Property.Content": {
+      "$ref": "./Property.Content.json"
+    },
+    "DataType.ContentList": {
+      "$ref": "./DataType.ContentList.json"
+    },
+    "DataType.Quote": {
+      "$ref": "./DataType.Quote.json"
+    },
+    "Property.ContentVisibility": {
+      "$ref": "./Property.ContentVisibility.json"
+    },
+    "Property.CounterIncrement": {
+      "$ref": "./Property.CounterIncrement.json"
+    },
+    "Property.CounterReset": {
+      "$ref": "./Property.CounterReset.json"
+    },
+    "Property.CounterSet": {
+      "$ref": "./Property.CounterSet.json"
+    },
+    "Property.EmptyCells": {
+      "$ref": "./Property.EmptyCells.json"
+    },
+    "Property.Float": {
+      "$ref": "./Property.Float.json"
+    },
+    "Property.FontOpticalSizing": {
+      "$ref": "./Property.FontOpticalSizing.json"
+    },
+    "Property.FontPalette": {
+      "$ref": "./Property.FontPalette.json"
+    },
+    "Property.FontSynthesis": {
+      "$ref": "./Property.FontSynthesis.json"
+    },
+    "Property.FontSynthesisPosition": {
+      "$ref": "./Property.FontSynthesisPosition.json"
+    },
+    "Property.FontSynthesisSmallCaps": {
+      "$ref": "./Property.FontSynthesisSmallCaps.json"
+    },
+    "Property.FontSynthesisStyle": {
+      "$ref": "./Property.FontSynthesisStyle.json"
+    },
+    "Property.FontSynthesisWeight": {
+      "$ref": "./Property.FontSynthesisWeight.json"
+    },
+    "Property.FontVariantAlternates": {
+      "$ref": "./Property.FontVariantAlternates.json"
+    },
+    "Property.FontVariantCaps": {
+      "$ref": "./Property.FontVariantCaps.json"
+    },
+    "Property.FontVariantEastAsian": {
+      "$ref": "./Property.FontVariantEastAsian.json"
+    },
+    "Property.FontVariantEmoji": {
+      "$ref": "./Property.FontVariantEmoji.json"
+    },
+    "Property.FontVariantNumeric": {
+      "$ref": "./Property.FontVariantNumeric.json"
+    },
+    "Property.FontVariantPosition": {
+      "$ref": "./Property.FontVariantPosition.json"
+    },
+    "Property.FontVariationSettings": {
+      "$ref": "./Property.FontVariationSettings.json"
+    },
+    "Property.ForcedColorAdjust": {
+      "$ref": "./Property.ForcedColorAdjust.json"
+    },
+    "Property.GridAutoColumns<(string|number)>": {
+      "$ref": "./Property.GridAutoColumns<(string|number)>.json"
+    },
+    "Property.GridAutoFlow": {
+      "$ref": "./Property.GridAutoFlow.json"
+    },
+    "Property.GridAutoRows<(string|number)>": {
+      "$ref": "./Property.GridAutoRows<(string|number)>.json"
+    },
+    "Property.GridColumnEnd": {
+      "$ref": "./Property.GridColumnEnd.json"
+    },
+    "Property.GridColumnStart": {
+      "$ref": "./Property.GridColumnStart.json"
+    },
+    "Property.GridRowEnd": {
+      "$ref": "./Property.GridRowEnd.json"
+    },
+    "Property.GridRowStart": {
+      "$ref": "./Property.GridRowStart.json"
+    },
+    "Property.GridTemplateAreas": {
+      "$ref": "./Property.GridTemplateAreas.json"
+    },
+    "Property.GridTemplateColumns<(string|number)>": {
+      "$ref": "./Property.GridTemplateColumns<(string|number)>.json"
+    },
+    "Property.GridTemplateRows<(string|number)>": {
+      "$ref": "./Property.GridTemplateRows<(string|number)>.json"
+    },
+    "Property.HangingPunctuation": {
+      "$ref": "./Property.HangingPunctuation.json"
+    },
+    "Property.Height<(string|number)>": {
+      "$ref": "./Property.Height<(string|number)>.json"
+    },
+    "Property.HyphenateLimitChars": {
+      "$ref": "./Property.HyphenateLimitChars.json"
+    },
+    "Property.ImageOrientation": {
+      "$ref": "./Property.ImageOrientation.json"
+    },
+    "Property.ImageResolution": {
+      "$ref": "./Property.ImageResolution.json"
+    },
+    "Property.InlineSize<(string|number)>": {
+      "$ref": "./Property.InlineSize<(string|number)>.json"
+    },
+    "Property.InputSecurity": {
+      "$ref": "./Property.InputSecurity.json"
+    },
+    "Property.Isolation": {
+      "$ref": "./Property.Isolation.json"
+    },
+    "Property.JustifyItems": {
+      "$ref": "./Property.JustifyItems.json"
+    },
+    "Property.JustifySelf": {
+      "$ref": "./Property.JustifySelf.json"
+    },
+    "Property.JustifyTracks": {
+      "$ref": "./Property.JustifyTracks.json"
+    },
+    "Property.Left<(string|number)>": {
+      "$ref": "./Property.Left<(string|number)>.json"
+    },
+    "Property.LineHeightStep<(string|number)>": {
+      "$ref": "./Property.LineHeightStep<(string|number)>.json"
+    },
+    "Property.ListStyleImage": {
+      "$ref": "./Property.ListStyleImage.json"
+    },
+    "Property.ListStylePosition": {
+      "$ref": "./Property.ListStylePosition.json"
+    },
+    "Property.ListStyleType": {
+      "$ref": "./Property.ListStyleType.json"
+    },
+    "Property.MarginBlockEnd<(string|number)>": {
+      "$ref": "./Property.MarginBlockEnd<(string|number)>.json"
+    },
+    "Property.MarginBlockStart<(string|number)>": {
+      "$ref": "./Property.MarginBlockStart<(string|number)>.json"
+    },
+    "Property.MarginBottom<(string|number)>": {
+      "$ref": "./Property.MarginBottom<(string|number)>.json"
+    },
+    "Property.MarginLeft<(string|number)>": {
+      "$ref": "./Property.MarginLeft<(string|number)>.json"
+    },
+    "Property.MarginRight<(string|number)>": {
+      "$ref": "./Property.MarginRight<(string|number)>.json"
+    },
+    "Property.MarginTop<(string|number)>": {
+      "$ref": "./Property.MarginTop<(string|number)>.json"
+    },
+    "Property.MarginTrim": {
+      "$ref": "./Property.MarginTrim.json"
+    },
+    "Property.MaskBorderMode": {
+      "$ref": "./Property.MaskBorderMode.json"
+    },
+    "Property.MaskClip": {
+      "$ref": "./Property.MaskClip.json"
+    },
+    "Property.MaskComposite": {
+      "$ref": "./Property.MaskComposite.json"
+    },
+    "Property.MaskImage": {
+      "$ref": "./Property.MaskImage.json"
+    },
+    "Property.MaskMode": {
+      "$ref": "./Property.MaskMode.json"
+    },
+    "Property.MaskOrigin": {
+      "$ref": "./Property.MaskOrigin.json"
+    },
+    "Property.MaskPosition<(string|number)>": {
+      "$ref": "./Property.MaskPosition<(string|number)>.json"
+    },
+    "Property.MaskRepeat": {
+      "$ref": "./Property.MaskRepeat.json"
+    },
+    "Property.MaskSize<(string|number)>": {
+      "$ref": "./Property.MaskSize<(string|number)>.json"
+    },
+    "Property.MaskType": {
+      "$ref": "./Property.MaskType.json"
+    },
+    "Property.MasonryAutoFlow": {
+      "$ref": "./Property.MasonryAutoFlow.json"
+    },
+    "Property.MathDepth": {
+      "$ref": "./Property.MathDepth.json"
+    },
+    "Property.MathShift": {
+      "$ref": "./Property.MathShift.json"
+    },
+    "Property.MathStyle": {
+      "$ref": "./Property.MathStyle.json"
+    },
+    "Property.MaxBlockSize<(string|number)>": {
+      "$ref": "./Property.MaxBlockSize<(string|number)>.json"
+    },
+    "Property.MaxHeight<(string|number)>": {
+      "$ref": "./Property.MaxHeight<(string|number)>.json"
+    },
+    "Property.MaxLines": {
+      "$ref": "./Property.MaxLines.json"
+    },
+    "Property.MaxWidth<(string|number)>": {
+      "$ref": "./Property.MaxWidth<(string|number)>.json"
+    },
+    "Property.MinBlockSize<(string|number)>": {
+      "$ref": "./Property.MinBlockSize<(string|number)>.json"
+    },
+    "Property.MinHeight<(string|number)>": {
+      "$ref": "./Property.MinHeight<(string|number)>.json"
+    },
+    "Property.MinInlineSize<(string|number)>": {
+      "$ref": "./Property.MinInlineSize<(string|number)>.json"
+    },
+    "Property.MinWidth<(string|number)>": {
+      "$ref": "./Property.MinWidth<(string|number)>.json"
+    },
+    "Property.MixBlendMode": {
+      "$ref": "./Property.MixBlendMode.json"
+    },
+    "Property.OffsetDistance<(string|number)>": {
+      "$ref": "./Property.OffsetDistance<(string|number)>.json"
+    },
+    "Property.OffsetPath": {
+      "$ref": "./Property.OffsetPath.json"
+    },
+    "Property.OffsetRotate": {
+      "$ref": "./Property.OffsetRotate.json"
+    },
+    "Property.OffsetAnchor<(string|number)>": {
+      "$ref": "./Property.OffsetAnchor<(string|number)>.json"
+    },
+    "Property.OffsetPosition<(string|number)>": {
+      "$ref": "./Property.OffsetPosition<(string|number)>.json"
+    },
+    "Property.Orphans": {
+      "$ref": "./Property.Orphans.json"
+    },
+    "Property.OutlineOffset<(string|number)>": {
+      "$ref": "./Property.OutlineOffset<(string|number)>.json"
+    },
+    "Property.OverflowAnchor": {
+      "$ref": "./Property.OverflowAnchor.json"
+    },
+    "Property.OverflowBlock": {
+      "$ref": "./Property.OverflowBlock.json"
+    },
+    "Property.OverflowClipBox": {
+      "$ref": "./Property.OverflowClipBox.json"
+    },
+    "Property.OverflowClipMargin<(string|number)>": {
+      "$ref": "./Property.OverflowClipMargin<(string|number)>.json"
+    },
+    "DataType.VisualBox": {
+      "$ref": "./DataType.VisualBox.json"
+    },
+    "Property.OverflowInline": {
+      "$ref": "./Property.OverflowInline.json"
+    },
+    "Property.OverflowWrap": {
+      "$ref": "./Property.OverflowWrap.json"
+    },
+    "Property.Overlay": {
+      "$ref": "./Property.Overlay.json"
+    },
+    "Property.OverscrollBehaviorBlock": {
+      "$ref": "./Property.OverscrollBehaviorBlock.json"
+    },
+    "Property.OverscrollBehaviorInline": {
+      "$ref": "./Property.OverscrollBehaviorInline.json"
+    },
+    "Property.OverscrollBehaviorX": {
+      "$ref": "./Property.OverscrollBehaviorX.json"
+    },
+    "Property.OverscrollBehaviorY": {
+      "$ref": "./Property.OverscrollBehaviorY.json"
+    },
+    "Property.PaddingBlockEnd<(string|number)>": {
+      "$ref": "./Property.PaddingBlockEnd<(string|number)>.json"
+    },
+    "Property.PaddingBlockStart<(string|number)>": {
+      "$ref": "./Property.PaddingBlockStart<(string|number)>.json"
+    },
+    "Property.PaddingBottom<(string|number)>": {
+      "$ref": "./Property.PaddingBottom<(string|number)>.json"
+    },
+    "Property.PaddingLeft<(string|number)>": {
+      "$ref": "./Property.PaddingLeft<(string|number)>.json"
+    },
+    "Property.PaddingRight<(string|number)>": {
+      "$ref": "./Property.PaddingRight<(string|number)>.json"
+    },
+    "Property.PaddingTop<(string|number)>": {
+      "$ref": "./Property.PaddingTop<(string|number)>.json"
+    },
+    "Property.Page": {
+      "$ref": "./Property.Page.json"
+    },
+    "Property.PageBreakAfter": {
+      "$ref": "./Property.PageBreakAfter.json"
+    },
+    "Property.PageBreakBefore": {
+      "$ref": "./Property.PageBreakBefore.json"
+    },
+    "Property.PageBreakInside": {
+      "$ref": "./Property.PageBreakInside.json"
+    },
+    "Property.Position": {
+      "$ref": "./Property.Position.json"
+    },
+    "Property.Quotes": {
+      "$ref": "./Property.Quotes.json"
+    },
+    "Property.Resize": {
+      "$ref": "./Property.Resize.json"
+    },
+    "Property.Right<(string|number)>": {
+      "$ref": "./Property.Right<(string|number)>.json"
+    },
+    "Property.Rotate": {
+      "$ref": "./Property.Rotate.json"
+    },
+    "Property.RowGap<(string|number)>": {
+      "$ref": "./Property.RowGap<(string|number)>.json"
+    },
+    "Property.RubyAlign": {
+      "$ref": "./Property.RubyAlign.json"
+    },
+    "Property.RubyMerge": {
+      "$ref": "./Property.RubyMerge.json"
+    },
+    "Property.Scale": {
+      "$ref": "./Property.Scale.json"
+    },
+    "Property.ScrollBehavior": {
+      "$ref": "./Property.ScrollBehavior.json"
+    },
+    "Property.ScrollMarginBlockEnd<(string|number)>": {
+      "$ref": "./Property.ScrollMarginBlockEnd<(string|number)>.json"
+    },
+    "Property.ScrollMarginBlockStart<(string|number)>": {
+      "$ref": "./Property.ScrollMarginBlockStart<(string|number)>.json"
+    },
+    "Property.ScrollMarginBottom<(string|number)>": {
+      "$ref": "./Property.ScrollMarginBottom<(string|number)>.json"
+    },
+    "Property.ScrollMarginInlineEnd<(string|number)>": {
+      "$ref": "./Property.ScrollMarginInlineEnd<(string|number)>.json"
+    },
+    "Property.ScrollMarginInlineStart<(string|number)>": {
+      "$ref": "./Property.ScrollMarginInlineStart<(string|number)>.json"
+    },
+    "Property.ScrollMarginLeft<(string|number)>": {
+      "$ref": "./Property.ScrollMarginLeft<(string|number)>.json"
+    },
+    "Property.ScrollMarginRight<(string|number)>": {
+      "$ref": "./Property.ScrollMarginRight<(string|number)>.json"
+    },
+    "Property.ScrollMarginTop<(string|number)>": {
+      "$ref": "./Property.ScrollMarginTop<(string|number)>.json"
+    },
+    "Property.ScrollPaddingBlockEnd<(string|number)>": {
+      "$ref": "./Property.ScrollPaddingBlockEnd<(string|number)>.json"
+    },
+    "Property.ScrollPaddingBlockStart<(string|number)>": {
+      "$ref": "./Property.ScrollPaddingBlockStart<(string|number)>.json"
+    },
+    "Property.ScrollPaddingBottom<(string|number)>": {
+      "$ref": "./Property.ScrollPaddingBottom<(string|number)>.json"
+    },
+    "Property.ScrollPaddingInlineEnd<(string|number)>": {
+      "$ref": "./Property.ScrollPaddingInlineEnd<(string|number)>.json"
+    },
+    "Property.ScrollPaddingInlineStart<(string|number)>": {
+      "$ref": "./Property.ScrollPaddingInlineStart<(string|number)>.json"
+    },
+    "Property.ScrollPaddingLeft<(string|number)>": {
+      "$ref": "./Property.ScrollPaddingLeft<(string|number)>.json"
+    },
+    "Property.ScrollPaddingRight<(string|number)>": {
+      "$ref": "./Property.ScrollPaddingRight<(string|number)>.json"
+    },
+    "Property.ScrollPaddingTop<(string|number)>": {
+      "$ref": "./Property.ScrollPaddingTop<(string|number)>.json"
+    },
+    "Property.ScrollSnapAlign": {
+      "$ref": "./Property.ScrollSnapAlign.json"
+    },
+    "Property.ScrollSnapStop": {
+      "$ref": "./Property.ScrollSnapStop.json"
+    },
+    "Property.ScrollTimelineAxis": {
+      "$ref": "./Property.ScrollTimelineAxis.json"
+    },
+    "Property.ScrollTimelineName": {
+      "$ref": "./Property.ScrollTimelineName.json"
+    },
+    "Property.ScrollbarColor": {
+      "$ref": "./Property.ScrollbarColor.json"
+    },
+    "Property.ScrollbarGutter": {
+      "$ref": "./Property.ScrollbarGutter.json"
+    },
+    "Property.ScrollbarWidth": {
+      "$ref": "./Property.ScrollbarWidth.json"
+    },
+    "Property.ShapeImageThreshold": {
+      "$ref": "./Property.ShapeImageThreshold.json"
+    },
+    "Property.ShapeOutside": {
+      "$ref": "./Property.ShapeOutside.json"
+    },
+    "Property.TableLayout": {
+      "$ref": "./Property.TableLayout.json"
+    },
+    "Property.TextAlign": {
+      "$ref": "./Property.TextAlign.json"
+    },
+    "Property.TextDecorationSkipInk": {
+      "$ref": "./Property.TextDecorationSkipInk.json"
+    },
+    "Property.TextDecorationThickness<(string|number)>": {
+      "$ref": "./Property.TextDecorationThickness<(string|number)>.json"
+    },
+    "Property.TextIndent<(string|number)>": {
+      "$ref": "./Property.TextIndent<(string|number)>.json"
+    },
+    "Property.TextJustify": {
+      "$ref": "./Property.TextJustify.json"
+    },
+    "Property.TextShadow": {
+      "$ref": "./Property.TextShadow.json"
+    },
+    "Property.TextTransform": {
+      "$ref": "./Property.TextTransform.json"
+    },
+    "Property.TextUnderlineOffset<(string|number)>": {
+      "$ref": "./Property.TextUnderlineOffset<(string|number)>.json"
+    },
+    "Property.TextWrap": {
+      "$ref": "./Property.TextWrap.json"
+    },
+    "Property.TimelineScope": {
+      "$ref": "./Property.TimelineScope.json"
+    },
+    "Property.Top<(string|number)>": {
+      "$ref": "./Property.Top<(string|number)>.json"
+    },
+    "Property.TransformBox": {
+      "$ref": "./Property.TransformBox.json"
+    },
+    "Property.TransitionBehavior": {
+      "$ref": "./Property.TransitionBehavior.json"
+    },
+    "Property.Translate<(string|number)>": {
+      "$ref": "./Property.Translate<(string|number)>.json"
+    },
+    "Property.VerticalAlign<(string|number)>": {
+      "$ref": "./Property.VerticalAlign<(string|number)>.json"
+    },
+    "Property.ViewTimelineAxis": {
+      "$ref": "./Property.ViewTimelineAxis.json"
+    },
+    "Property.ViewTimelineInset<(string|number)>": {
+      "$ref": "./Property.ViewTimelineInset<(string|number)>.json"
+    },
+    "Property.ViewTimelineName": {
+      "$ref": "./Property.ViewTimelineName.json"
+    },
+    "Property.ViewTransitionName": {
+      "$ref": "./Property.ViewTransitionName.json"
+    },
+    "Property.WhiteSpaceCollapse": {
+      "$ref": "./Property.WhiteSpaceCollapse.json"
+    },
+    "Property.WhiteSpaceTrim": {
+      "$ref": "./Property.WhiteSpaceTrim.json"
+    },
+    "Property.Widows": {
+      "$ref": "./Property.Widows.json"
+    },
+    "Property.Width<(string|number)>": {
+      "$ref": "./Property.Width<(string|number)>.json"
+    },
+    "Property.WillChange": {
+      "$ref": "./Property.WillChange.json"
+    },
+    "DataType.AnimateableFeature": {
+      "$ref": "./DataType.AnimateableFeature.json"
+    },
+    "Property.WordWrap": {
+      "$ref": "./Property.WordWrap.json"
+    },
+    "Property.ZIndex": {
+      "$ref": "./Property.ZIndex.json"
+    },
+    "Property.Zoom": {
+      "$ref": "./Property.Zoom.json"
+    },
+    "OperationSchema": {
+      "$ref": "./OperationSchema.json"
+    },
+    "PaginationSchema": {
+      "$ref": "./PaginationSchema.json"
+    },
+    "MODE_TYPE": {
+      "$ref": "./MODE_TYPE.json"
+    },
+    "PaginationWrapperSchema": {
+      "$ref": "./PaginationWrapperSchema.json"
+    },
+    "PanelSchema": {
+      "$ref": "./PanelSchema.json"
+    },
+    "PlainSchema": {
+      "$ref": "./PlainSchema.json"
+    },
+    "ProgressSchema": {
+      "$ref": "./ProgressSchema.json"
+    },
+    "ColorMapType": {
+      "$ref": "./ColorMapType.json"
+    },
+    "QRCodeSchema": {
+      "$ref": "./QRCodeSchema.json"
+    },
+    "QRCodeImageSettings": {
+      "$ref": "./QRCodeImageSettings.json"
+    },
+    "SearchBoxSchema": {
+      "$ref": "./SearchBoxSchema.json"
+    },
+    "ServiceSchema": {
+      "$ref": "./ServiceSchema.json"
+    },
+    "ComposedDataProvider": {
+      "$ref": "./ComposedDataProvider.json"
+    },
+    "DataProvider": {
+      "$ref": "./DataProvider.json"
+    },
+    "DataProviderCollection": {
+      "$ref": "./DataProviderCollection.json"
+    },
+    "SparkLineSchema": {
+      "$ref": "./SparkLineSchema.json"
+    },
+    "StatusSchema": {
+      "$ref": "./StatusSchema.json"
+    },
+    "StatusSource": {
+      "$ref": "./StatusSource.json"
+    },
+    "SpinnerSchema": {
+      "$ref": "./SpinnerSchema.json"
+    },
+    "TableSchema": {
+      "$ref": "./TableSchema.json"
+    },
+    "TableSchema2": {
+      "$ref": "./TableSchema2.json"
+    },
+    "AutoFillHeightObject": {
+      "$ref": "./AutoFillHeightObject.json"
+    },
+    "TabsSchema": {
+      "$ref": "./TabsSchema.json"
+    },
+    "TabSchema": {
+      "$ref": "./TabSchema.json"
+    },
+    "TabsMode": {
+      "$ref": "./TabsMode.json"
+    },
+    "TasksSchema": {
+      "$ref": "./TasksSchema.json"
+    },
+    "VBoxSchema": {
+      "$ref": "./VBoxSchema.json"
+    },
+    "HboxRow": {
+      "$ref": "./HboxRow.json"
+    },
+    "VideoSchema": {
+      "$ref": "./VideoSchema.json"
+    },
+    "WizardSchema": {
+      "$ref": "./WizardSchema.json"
+    },
+    "WizardStepSchema": {
+      "$ref": "./WizardStepSchema.json"
+    },
+    "BaseApiObject": {
+      "$ref": "./BaseApiObject.json"
+    },
+    "ClassName": {
+      "$ref": "./ClassName.json"
+    },
+    "LabelAlign": {
+      "$ref": "./LabelAlign.json"
+    },
+    "WrapperSchema": {
+      "$ref": "./WrapperSchema.json"
+    },
+    "TooltipWrapperSchema": {
+      "$ref": "./TooltipWrapperSchema.json"
+    },
+    "Trigger": {
+      "$ref": "./Trigger.json"
+    },
+    "FormSchema": {
+      "$ref": "./FormSchema.json"
+    },
+    "AnchorNavSchema": {
+      "$ref": "./AnchorNavSchema.json"
+    },
+    "AnchorNavSectionSchema": {
+      "$ref": "./AnchorNavSectionSchema.json"
+    },
+    "StepsSchema": {
+      "$ref": "./StepsSchema.json"
+    },
+    "StepSchema": {
+      "$ref": "./StepSchema.json"
+    },
+    "StepStatus": {
+      "$ref": "./StepStatus.json"
+    },
+    "PortletSchema": {
+      "$ref": "./PortletSchema.json"
+    },
+    "PortletTabSchema": {
+      "$ref": "./PortletTabSchema.json"
+    },
+    "TimelineSchema": {
+      "$ref": "./TimelineSchema.json"
+    },
+    "TimelineItemSchema": {
+      "$ref": "./TimelineItemSchema.json"
+    },
+    "FormControlSchema": {
+      "$ref": "./FormControlSchema.json"
+    },
+    "ArrayControlSchema": {
+      "$ref": "./ArrayControlSchema.json"
+    },
+    "ButtonGroupControlSchema": {
+      "$ref": "./ButtonGroupControlSchema.json"
+    },
+    "Option": {
+      "$ref": "./Option.json"
+    },
+    "Options": {
+      "$ref": "./Options.json"
+    },
+    "ChainedSelectControlSchema": {
+      "$ref": "./ChainedSelectControlSchema.json"
+    },
+    "CheckboxControlSchema": {
+      "$ref": "./CheckboxControlSchema.json"
+    },
+    "CheckboxesControlSchema": {
+      "$ref": "./CheckboxesControlSchema.json"
+    },
+    "InputCityControlSchema": {
+      "$ref": "./InputCityControlSchema.json"
+    },
+    "InputColorControlSchema": {
+      "$ref": "./InputColorControlSchema.json"
+    },
+    "PresetColor": {
+      "$ref": "./PresetColor.json"
+    },
+    "ComboControlSchema": {
+      "$ref": "./ComboControlSchema.json"
+    },
+    "ComboCondition": {
+      "$ref": "./ComboCondition.json"
+    },
+    "ComboSubControl": {
+      "$ref": "./ComboSubControl.json"
+    },
+    "ConditionBuilderControlSchema": {
+      "$ref": "./ConditionBuilderControlSchema.json"
+    },
+    "ConditionBuilderFuncs": {
+      "$ref": "./ConditionBuilderFuncs.json"
+    },
+    "ConditionFieldFunc": {
+      "$ref": "./ConditionFieldFunc.json"
+    },
+    "FieldTypes": {
+      "$ref": "./FieldTypes.json"
+    },
+    "ConditionBuilderFuncArg": {
+      "$ref": "./ConditionBuilderFuncArg.json"
+    },
+    "ConditionBuilderFields": {
+      "$ref": "./ConditionBuilderFields.json"
+    },
+    "ConditionBuilderField": {
+      "$ref": "./ConditionBuilderField.json"
+    },
+    "FieldSimple": {
+      "$ref": "./FieldSimple.json"
+    },
+    "CustomField": {
+      "$ref": "./CustomField.json"
+    },
+    "FieldGroup": {
+      "$ref": "./FieldGroup.json"
+    },
+    "ConditionBuilderConfig": {
+      "$ref": "./ConditionBuilderConfig.json"
+    },
+    "ConditionBuilderType": {
+      "$ref": "./ConditionBuilderType.json"
+    },
+    "VariableItem": {
+      "$ref": "./VariableItem.json"
+    },
+    "FuncGroup": {
+      "$ref": "./FuncGroup.json"
+    },
+    "FuncItem": {
+      "$ref": "./FuncItem.json"
+    },
+    "FormulaPickerInputSettings": {
+      "$ref": "./FormulaPickerInputSettings.json"
+    },
+    "FormulaPickerInputSettingType": {
+      "$ref": "./FormulaPickerInputSettingType.json"
+    },
+    "DateControlSchema": {
+      "$ref": "./DateControlSchema.json"
+    },
+    "ShortCuts": {
+      "$ref": "./ShortCuts.json"
+    },
+    "ShortCutDate": {
+      "$ref": "./ShortCutDate.json"
+    },
+    "moment.Moment": {
+      "$ref": "./moment.Moment.json"
+    },
+    "ShortCutDateRange": {
+      "$ref": "./ShortCutDateRange.json"
+    },
+    "DateTimeControlSchema": {
+      "$ref": "./DateTimeControlSchema.json"
+    },
+    "TimeControlSchema": {
+      "$ref": "./TimeControlSchema.json"
+    },
+    "MonthControlSchema": {
+      "$ref": "./MonthControlSchema.json"
+    },
+    "QuarterControlSchema": {
+      "$ref": "./QuarterControlSchema.json"
+    },
+    "YearControlSchema": {
+      "$ref": "./YearControlSchema.json"
+    },
+    "DateRangeControlSchema": {
+      "$ref": "./DateRangeControlSchema.json"
+    },
+    "DiffControlSchema": {
+      "$ref": "./DiffControlSchema.json"
+    },
+    "EditorControlSchema": {
+      "$ref": "./EditorControlSchema.json"
+    },
+    "FieldSetControlSchema": {
+      "$ref": "./FieldSetControlSchema.json"
+    },
+    "FileControlSchema": {
+      "$ref": "./FileControlSchema.json"
+    },
+    "FormulaControlSchema": {
+      "$ref": "./FormulaControlSchema.json"
+    },
+    "GroupControlSchema": {
+      "$ref": "./GroupControlSchema.json"
+    },
+    "GroupSubControl": {
+      "$ref": "./GroupSubControl.json"
+    },
+    "HiddenControlSchema": {
+      "$ref": "./HiddenControlSchema.json"
+    },
+    "IconPickerControlSchema": {
+      "$ref": "./IconPickerControlSchema.json"
+    },
+    "ImageControlSchema": {
+      "$ref": "./ImageControlSchema.json"
+    },
+    "InputGroupControlSchema": {
+      "$ref": "./InputGroupControlSchema.json"
+    },
+    "ListControlSchema": {
+      "$ref": "./ListControlSchema.json"
+    },
+    "JSONSchemaEditorControlSchema": {
+      "$ref": "./JSONSchemaEditorControlSchema.json"
+    },
+    "SchemaEditorItemPlaceholder": {
+      "$ref": "./SchemaEditorItemPlaceholder.json"
+    },
+    "InputSignatureSchema": {
+      "$ref": "./InputSignatureSchema.json"
+    },
+    "LocationControlSchema": {
+      "$ref": "./LocationControlSchema.json"
+    },
+    "UUIDControlSchema": {
+      "$ref": "./UUIDControlSchema.json"
+    },
+    "MatrixControlSchema": {
+      "$ref": "./MatrixControlSchema.json"
+    },
+    "MonthRangeControlSchema": {
+      "$ref": "./MonthRangeControlSchema.json"
+    },
+    "QuarterRangeControlSchema": {
+      "$ref": "./QuarterRangeControlSchema.json"
+    },
+    "NestedSelectControlSchema": {
+      "$ref": "./NestedSelectControlSchema.json"
+    },
+    "NumberControlSchema": {
+      "$ref": "./NumberControlSchema.json"
+    },
+    "PickerControlSchema": {
+      "$ref": "./PickerControlSchema.json"
+    },
+    "RadiosControlSchema": {
+      "$ref": "./RadiosControlSchema.json"
+    },
+    "RadioControlSchema": {
+      "$ref": "./RadioControlSchema.json"
+    },
+    "RangeControlSchema": {
+      "$ref": "./RangeControlSchema.json"
+    },
+    "Value": {
+      "$ref": "./Value.json"
+    },
+    "MultipleValue": {
+      "$ref": "./MultipleValue.json"
+    },
+    "TooltipPosType": {
+      "$ref": "./TooltipPosType.json"
+    },
+    "RatingControlSchema": {
+      "$ref": "./RatingControlSchema.json"
+    },
+    "textPositionType": {
+      "$ref": "./textPositionType.json"
+    },
+    "RichTextControlSchema": {
+      "$ref": "./RichTextControlSchema.json"
+    },
+    "RepeatControlSchema": {
+      "$ref": "./RepeatControlSchema.json"
+    },
+    "SelectControlSchema": {
+      "$ref": "./SelectControlSchema.json"
+    },
+    "SubFormControlSchema": {
+      "$ref": "./SubFormControlSchema.json"
+    },
+    "SwitchControlSchema": {
+      "$ref": "./SwitchControlSchema.json"
+    },
+    "StaticExactControlSchema": {
+      "$ref": "./StaticExactControlSchema.json"
+    },
+    "TableControlSchema": {
+      "$ref": "./TableControlSchema.json"
+    },
+    "TabsTransferControlSchema": {
+      "$ref": "./TabsTransferControlSchema.json"
+    },
+    "TagControlSchema": {
+      "$ref": "./TagControlSchema.json"
+    },
+    "TextControlSchema": {
+      "$ref": "./TextControlSchema.json"
+    },
+    "TextareaControlSchema": {
+      "$ref": "./TextareaControlSchema.json"
+    },
+    "TransferControlSchema": {
+      "$ref": "./TransferControlSchema.json"
+    },
+    "TransferPickerControlSchema": {
+      "$ref": "./TransferPickerControlSchema.json"
+    },
+    "TabsTransferPickerControlSchema": {
+      "$ref": "./TabsTransferPickerControlSchema.json"
+    },
+    "TreeControlSchema": {
+      "$ref": "./TreeControlSchema.json"
+    },
+    "TreeSelectControlSchema": {
+      "$ref": "./TreeSelectControlSchema.json"
+    },
+    "UserSelectControlSchema": {
+      "$ref": "./UserSelectControlSchema.json"
+    },
+    "DateRangeSchema": {
+      "$ref": "./DateRangeSchema.json"
+    },
+    "MultilineTextSchema": {
+      "$ref": "./MultilineTextSchema.json"
+    },
+    "PasswordSchema": {
+      "$ref": "./PasswordSchema.json"
+    },
+    "WordsSchema": {
+      "$ref": "./WordsSchema.json"
+    },
+    "TagSchema": {
+      "$ref": "./TagSchema.json"
+    },
+    "SchemaDefaultData": {
+      "$ref": "./SchemaDefaultData.json"
+    },
+    "SchemaObjectCardBodyField": {
+      "$ref": "./SchemaObjectCardBodyField.json"
+    },
+    "SchemaObjectListBodyField": {
+      "$ref": "./SchemaObjectListBodyField.json"
+    },
+    "SchemaObjectTableColumnWithType": {
+      "$ref": "./SchemaObjectTableColumnWithType.json"
+    },
+    "SchemaObjectGrid": {
+      "$ref": "./SchemaObjectGrid.json"
+    },
+    "SchemaObjectHboxRow": {
+      "$ref": "./SchemaObjectHboxRow.json"
+    },
+    "SchemaObjectComboSubControl": {
+      "$ref": "./SchemaObjectComboSubControl.json"
+    },
+    "SchemaObjectGroupSubControl": {
+      "$ref": "./SchemaObjectGroupSubControl.json"
+    },
+    "UnkownSchema": {
+      "$ref": "./UnkownSchema.json"
+    }
+  }
+}

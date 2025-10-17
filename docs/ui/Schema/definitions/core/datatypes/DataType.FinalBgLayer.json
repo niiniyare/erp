@@ -1,0 +1,28 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/DataType.Color"
+    },
+    {
+      "$ref": "#/definitions/DataType.BgPositionStringOrNumber"
+    },
+    {
+      "$ref": "#/definitions/DataType.RepeatStyle"
+    },
+    {
+      "$ref": "#/definitions/DataType.Attachment"
+    },
+    {
+      "$ref": "#/definitions/DataType.Box"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./DataType.FinalBgLayer<(string|number)>.json"
+}

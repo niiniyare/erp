@@ -1,0 +1,57 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "-moz-isolate"
+    },
+    {
+      "type": "string",
+      "const": "-moz-isolate-override"
+    },
+    {
+      "type": "string",
+      "const": "-moz-plaintext"
+    },
+    {
+      "type": "string",
+      "const": "-webkit-isolate"
+    },
+    {
+      "type": "string",
+      "const": "-webkit-isolate-override"
+    },
+    {
+      "type": "string",
+      "const": "-webkit-plaintext"
+    },
+    {
+      "type": "string",
+      "const": "bidi-override"
+    },
+    {
+      "type": "string",
+      "const": "embed"
+    },
+    {
+      "type": "string",
+      "const": "isolate"
+    },
+    {
+      "type": "string",
+      "const": "isolate-override"
+    },
+    {
+      "type": "string",
+      "const": "normal"
+    },
+    {
+      "type": "string",
+      "const": "plaintext"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.UnicodeBidi.json"
+}

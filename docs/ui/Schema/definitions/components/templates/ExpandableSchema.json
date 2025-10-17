@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "properties": {
+    "type": {
+      "type": "string",
+      "description": "Corresponding renderer type"
+    },
+    "keyField": {
+      "type": "string",
+      "description": "The key value corresponding to the data source"
+    },
+    "expandableOn": {
+      "type": "string",
+      "description": "Whether the row can expand the expression"
+    },
+    "expandedRowClassNameExpr": {
+      "type": "string",
+      "description": "Expand row custom style expression"
+    },
+    "expandedRowKeys": {
+      "type": "array",
+      "items": {
+        "type": [
+          "string",
+          "number"
+        ]
+      },
+      "description": "expanded key value"
+    },
+    "expandedRowKeysExpr": {
+      "type": "string",
+      "description": "expanded key value expression"
+    }
+  },
+  "required": [
+    "type",
+    "keyField",
+    "expandableOn",
+    "expandedRowClassNameExpr",
+    "expandedRowKeys",
+    "expandedRowKeysExpr"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ExpandableSchema.json"
+}

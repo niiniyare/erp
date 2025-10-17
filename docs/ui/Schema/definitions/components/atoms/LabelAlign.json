@@ -1,0 +1,11 @@
+{
+  "type": "string",
+  "enum": [
+    "right",
+    "left",
+    "top",
+    "inherit"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./LabelAlign.json"
+}

@@ -1,0 +1,880 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "$ref": "#/definitions/SchemaTpl",
+      "description": "title"
+    },
+    "footer": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "bottom area"
+    },
+    "footerClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Bottom area class name"
+    },
+    "header": {
+      "$ref": "#/definitions/SchemaCollection",
+      "description": "top area"
+    },
+    "headerClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Top area class name"
+    },
+    "listItem": {
+      "$ref": "#/definitions/ListItemSchema",
+      "description": "Single data display content configuration"
+    },
+    "source": {
+      "$ref": "#/definitions/SchemaTokenizeableString",
+      "description": "It is also possible to read directly from environment variables, but this is not recommended."
+    },
+    "showFooter": {
+      "type": "boolean",
+      "description": "Whether to show the bottom"
+    },
+    "showHeader": {
+      "type": "boolean",
+      "description": "Whether to display the header"
+    },
+    "placeholder": {
+      "$ref": "#/definitions/SchemaTpl",
+      "description": "No data prompt"
+    },
+    "hideCheckToggler": {
+      "type": "boolean",
+      "description": "Whether to hide the check box"
+    },
+    "affixHeader": {
+      "type": "boolean",
+      "description": "Whether to fix the top"
+    },
+    "affixFooter": {
+      "type": "boolean",
+      "description": "Is it solid?"
+    },
+    "itemCheckableOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Configure whether an item can be clicked"
+    },
+    "itemDraggableOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Configure whether an item can be sorted by drag-and-drop, provided that the drag-and-drop function is turned on"
+    },
+    "checkOnItemClick": {
+      "type": "boolean",
+      "description": "When clicking on a single row in the list, whether to select"
+    },
+    "valueField": {
+      "type": "string",
+      "description": "Fields that can be used as values"
+    },
+    "size": {
+      "type": "string",
+      "enum": [
+        "sm",
+        "base"
+      ],
+      "description": "size"
+    },
+    "itemAction": {
+      "$ref": "#/definitions/ActionSchema",
+      "description": "Click behavior on list items"
+    },
+    "testid": {
+      "type": "string"
+    },
+    "$$id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Container css class name"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "Whether to disable"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to disable expressions"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "Whether to hide"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to hide expressions"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "Whether to display"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions"
+    },
+    "id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used for log collection"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Event action configuration"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "Whether to display statically"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions statically"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "Static display of empty value placeholder"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display form item class name"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Label class name"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Value class name"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "Component style"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "Component behavior and usage, such as create, update, remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Component name, usually the business name for easy location"
+        },
+        "mock": {
+          "description": "Editor fake data for easy display"
+        }
+      },
+      "description": "Editor configuration, can be ignored at runtime"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "Can be used to turn off mobile style at the component level"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "mode": {
+      "type": "string",
+      "description": "Specifies the display mode of the content area.",
+      "const": "list"
+    },
+    "loadingConfig": {
+      "type": "object",
+      "properties": {
+        "root": {
+          "type": "string"
+        },
+        "show": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "type": {
+      "type": "string",
+      "const": "crud",
+      "description": "Specified as a CRUD renderer."
+    },
+    "api": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "Initialize data API"
+    },
+    "deferApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "Lazy loading API, when the row data is marked with defer: true, its child nodes will use this API to pull data."
+    },
+    "bulkActions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ActionSchema"
+      },
+      "description": "Batch operations"
+    },
+    "itemActions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/ActionSchema"
+      },
+      "description": "Single operation"
+    },
+    "perPage": {
+      "type": "number",
+      "description": "The number of pages per page, the default is 10, if not, please set it.",
+      "default": 10
+    },
+    "orderBy": {
+      "type": "string",
+      "description": "Default sort field"
+    },
+    "orderDir": {
+      "type": "string",
+      "enum": [
+        "asc",
+        "desc"
+      ],
+      "description": "Default sort direction"
+    },
+    "defaultParams": {
+      "$ref": "#/definitions/PlainObject",
+      "description": "Initial parameters can be given by default such as: {\\\"perPage\\\": 24}"
+    },
+    "draggable": {
+      "type": "boolean",
+      "description": "Is it possible to sort by dragging and dropping?"
+    },
+    "draggableOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether it can be sorted by dragging and configured through expressions"
+    },
+    "name": {
+      "$ref": "#/definitions/SchemaName"
+    },
+    "filter": {
+      "description": "filter form"
+    },
+    "initFetch": {
+      "type": "boolean",
+      "description": "Whether to pull initially"
+    },
+    "initFetchOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to initially pull or not is configured using an expression."
+    },
+    "innerClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Configure the className of the internal DOM"
+    },
+    "interval": {
+      "type": "number",
+      "description": "Set automatic refresh time"
+    },
+    "orderField": {
+      "type": "string",
+      "description": "Set the field name used to determine the position. After setting, the new sequence will be assigned to the field."
+    },
+    "pageField": {
+      "type": "string",
+      "description": "Set the paging page number field name."
+    },
+    "perPageField": {
+      "type": "string",
+      "description": "Set the field names of how many pieces of data are displayed on one pagination page."
+    },
+    "pageDirectionField": {
+      "type": "string",
+      "description": "Set the field name of the paging direction. When the unit is simply paged, it is clear whether to page forward or backward."
+    },
+    "quickSaveApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "API for batch saving after quick editing"
+    },
+    "quickSaveItemApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "API used when quick editing is configured to save in real time"
+    },
+    "saveOrderApi": {
+      "$ref": "#/definitions/SchemaApi",
+      "description": "Save sorted api"
+    },
+    "syncLocation": {
+      "type": "boolean",
+      "description": "Whether to synchronize the parameters of filter conditions to the address bar, the default is true",
+      "default": true
+    },
+    "headerToolbar": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/SchemaObject",
+                "patternProperties": {
+                  "^(align)$": {}
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {
+                  "align": {
+                    "type": "string",
+                    "enum": [
+                      "left",
+                      "right"
+                    ],
+                    "description": "Alignment"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "align": {
+                "type": "string",
+                "enum": [
+                  "left",
+                  "right"
+                ],
+                "description": "Alignment"
+              },
+              "testid": {
+                "type": "string"
+              },
+              "$$id": {
+                "type": "string",
+                "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
+              },
+              "className": {
+                "$ref": "#/definitions/SchemaClassName",
+                "description": "Container css class name"
+              },
+              "$ref": {
+                "type": "string",
+                "description": "Used together with definitions, an infinite loop renderer can be implemented."
+              },
+              "disabled": {
+                "type": "boolean",
+                "description": "Whether to disable"
+              },
+              "disabledOn": {
+                "$ref": "#/definitions/SchemaExpression",
+                "description": "Whether to disable expressions"
+              },
+              "hidden": {
+                "type": "boolean",
+                "description": "Whether to hide"
+              },
+              "hiddenOn": {
+                "$ref": "#/definitions/SchemaExpression",
+                "description": "Whether to hide expressions"
+              },
+              "visible": {
+                "type": "boolean",
+                "description": "Whether to display"
+              },
+              "visibleOn": {
+                "$ref": "#/definitions/SchemaExpression",
+                "description": "Whether to display expressions"
+              },
+              "id": {
+                "type": "string",
+                "description": "The unique id of the component, mainly used for log collection"
+              },
+              "onEvent": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "weight": {
+                      "type": "number"
+                    },
+                    "actions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/ListenerAction"
+                      }
+                    },
+                    "debounce": {
+                      "$ref": "#/definitions/debounceConfig"
+                    },
+                    "track": {
+                      "$ref": "#/definitions/trackConfig"
+                    }
+                  },
+                  "required": [
+                    "actions"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Event action configuration"
+              },
+              "static": {
+                "type": "boolean",
+                "description": "Whether to display statically"
+              },
+              "staticOn": {
+                "$ref": "#/definitions/SchemaExpression",
+                "description": "Whether to display expressions statically"
+              },
+              "staticPlaceholder": {
+                "type": "string",
+                "description": "Static display of empty value placeholder"
+              },
+              "staticClassName": {
+                "$ref": "#/definitions/SchemaClassName",
+                "description": "Static display form item class name"
+              },
+              "staticLabelClassName": {
+                "$ref": "#/definitions/SchemaClassName",
+                "description": "Static display of form item Label class name"
+              },
+              "staticInputClassName": {
+                "$ref": "#/definitions/SchemaClassName",
+                "description": "Static display of form item Value class name"
+              },
+              "staticSchema": {},
+              "style": {
+                "type": "object",
+                "description": "Component style"
+              },
+              "editorSetting": {
+                "type": "object",
+                "properties": {
+                  "behavior": {
+                    "type": "string",
+                    "description": "Component behavior and usage, such as create, update, remove"
+                  },
+                  "displayName": {
+                    "type": "string",
+                    "description": "Component name, usually the business name for easy location"
+                  },
+                  "mock": {
+                    "description": "Editor fake data for easy display"
+                  }
+                },
+                "description": "Editor configuration, can be ignored at runtime"
+              },
+              "useMobileUI": {
+                "type": "boolean",
+                "description": "Can be used to turn off mobile style at the component level"
+              },
+              "testIdBuilder": {
+                "$ref": "#/definitions/TestIdBuilder"
+              },
+              "type": {
+                "$ref": "#/definitions/CRUDBultinToolbarType"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          {
+            "$ref": "#/definitions/CRUDBultinToolbarType"
+          }
+        ]
+      },
+      "description": "top toolbar"
+    },
+    "footerToolbar": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/definitions/SchemaObject",
+                "patternProperties": {
+                  "^(align)$": {}
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {
+                  "align": {
+                    "type": "string",
+                    "enum": [
+                      "left",
+                      "right"
+                    ],
+                    "description": "Alignment"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "align": {
+                "type": "string",
+                "enum": [
+                  "left",
+                  "right"
+                ],
+                "description": "Alignment"
+              },
+              "testid": {
+                "type": "string"
+              },
+              "$$id": {
+                "type": "string",
+                "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
+              },
+              "className": {
+                "$ref": "#/definitions/SchemaClassName",
+                "description": "Container css class name"
+              },
+              "$ref": {
+                "type": "string",
+                "description": "Used together with definitions, an infinite loop renderer can be implemented."
+              },
+              "disabled": {
+                "type": "boolean",
+                "description": "Whether to disable"
+              },
+              "disabledOn": {
+                "$ref": "#/definitions/SchemaExpression",
+                "description": "Whether to disable expressions"
+              },
+              "hidden": {
+                "type": "boolean",
+                "description": "Whether to hide"
+              },
+              "hiddenOn": {
+                "$ref": "#/definitions/SchemaExpression",
+                "description": "Whether to hide expressions"
+              },
+              "visible": {
+                "type": "boolean",
+                "description": "Whether to display"
+              },
+              "visibleOn": {
+                "$ref": "#/definitions/SchemaExpression",
+                "description": "Whether to display expressions"
+              },
+              "id": {
+                "type": "string",
+                "description": "The unique id of the component, mainly used for log collection"
+              },
+              "onEvent": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "weight": {
+                      "type": "number"
+                    },
+                    "actions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/definitions/ListenerAction"
+                      }
+                    },
+                    "debounce": {
+                      "$ref": "#/definitions/debounceConfig"
+                    },
+                    "track": {
+                      "$ref": "#/definitions/trackConfig"
+                    }
+                  },
+                  "required": [
+                    "actions"
+                  ],
+                  "additionalProperties": false
+                },
+                "description": "Event action configuration"
+              },
+              "static": {
+                "type": "boolean",
+                "description": "Whether to display statically"
+              },
+              "staticOn": {
+                "$ref": "#/definitions/SchemaExpression",
+                "description": "Whether to display expressions statically"
+              },
+              "staticPlaceholder": {
+                "type": "string",
+                "description": "Static display of empty value placeholder"
+              },
+              "staticClassName": {
+                "$ref": "#/definitions/SchemaClassName",
+                "description": "Static display form item class name"
+              },
+              "staticLabelClassName": {
+                "$ref": "#/definitions/SchemaClassName",
+                "description": "Static display of form item Label class name"
+              },
+              "staticInputClassName": {
+                "$ref": "#/definitions/SchemaClassName",
+                "description": "Static display of form item Value class name"
+              },
+              "staticSchema": {},
+              "style": {
+                "type": "object",
+                "description": "Component style"
+              },
+              "editorSetting": {
+                "type": "object",
+                "properties": {
+                  "behavior": {
+                    "type": "string",
+                    "description": "Component behavior and usage, such as create, update, remove"
+                  },
+                  "displayName": {
+                    "type": "string",
+                    "description": "Component name, usually the business name for easy location"
+                  },
+                  "mock": {
+                    "description": "Editor fake data for easy display"
+                  }
+                },
+                "description": "Editor configuration, can be ignored at runtime"
+              },
+              "useMobileUI": {
+                "type": "boolean",
+                "description": "Can be used to turn off mobile style at the component level"
+              },
+              "testIdBuilder": {
+                "$ref": "#/definitions/TestIdBuilder"
+              },
+              "type": {
+                "$ref": "#/definitions/CRUDBultinToolbarType"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          {
+            "$ref": "#/definitions/CRUDBultinToolbarType"
+          }
+        ]
+      },
+      "description": "bottom toolbar"
+    },
+    "perPageAvailable": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "description": "The configuration of how many space members are displayed on each page is: [10, 20, 50, 100]."
+    },
+    "messages": {
+      "$ref": "#/definitions/SchemaMessage"
+    },
+    "hideQuickSaveBtn": {
+      "type": "boolean",
+      "description": "Whether to hide the quick edit button."
+    },
+    "autoJumpToTopOnPagerChange": {
+      "type": "boolean",
+      "description": "Whether to automatically jump to the top when splitting pages."
+    },
+    "silentPolling": {
+      "type": "boolean",
+      "description": "Silent pull"
+    },
+    "stopAutoRefreshWhen": {
+      "$ref": "#/definitions/SchemaExpression"
+    },
+    "stopAutoRefreshWhenModalIsOpen": {
+      "type": "boolean"
+    },
+    "filterTogglable": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string"
+            },
+            "activeLabel": {
+              "type": "string"
+            },
+            "icon": {
+              "type": "string"
+            },
+            "activeIcon": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "filterDefaultVisible": {
+      "type": "boolean"
+    },
+    "syncResponse2Query": {
+      "type": "boolean",
+      "description": "Whether to automatically synchronize the content returned by the interface to the address bar, provided that synchronizing the address bar is enabled."
+    },
+    "keepItemSelectionOnPageChange": {
+      "type": "boolean",
+      "description": "Whether to retain user selections when paginating."
+    },
+    "labelTpl": {
+      "$ref": "#/definitions/SchemaTpl",
+      "description": "Useful when configuring keepItemSelectionOnPageChange to configure the copy of the checked item."
+    },
+    "loadDataOnce": {
+      "type": "boolean",
+      "description": "Whether it is front-end single loading mode, which can be used to implement front-end paging."
+    },
+    "loadDataOnceFetchOnFilter": {
+      "type": "boolean",
+      "description": "When loadDataOnce is turned on, whether to re-request the api when filtering conditions are modified\n\nIf there is no configuration, the api will be re-requested when the query condition form is triggered. When it is triggered by column filtering or search-box, the api will not be re-requested. If configured to true, the api will be re-requested no matter what the trigger is. If configured to false, the api will not be re-requested no matter what the trigger is."
+    },
+    "matchFunc": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {}
+      ],
+      "description": "Custom search matching function, when loadDataOnce is turned on, filtering will be based on the matching results calculated by this function. It is mainly used to deal with scenarios where the column field type is relatively complex or the field value format is inconsistent with the backend return.\n\nParameter description\n\n * `items` current table data * `itemsRaw` current table data (unprocessed) * `options` configuration * `options.query` query conditions * `options.columns` column configuration * `options.matchSorter` System default sorting method"
+    },
+    "expandConfig": {
+      "type": "object",
+      "properties": {
+        "expand": {
+          "type": "string",
+          "enum": [
+            "first",
+            "all",
+            "none"
+          ],
+          "description": "The default is to expand the first one, all, or none."
+        },
+        "expandAll": {
+          "type": "boolean",
+          "description": "Whether to show all toggle button"
+        },
+        "accordion": {
+          "type": "boolean",
+          "description": "Whether it is accordion mode"
+        }
+      },
+      "additionalProperties": false,
+      "description": "If in inline mode, you can configure the default expansion options through this."
+    },
+    "alwaysShowPagination": {
+      "type": "boolean",
+      "description": "By default, it will only be displayed when the number of paging is greater than 1. If you want to always display it, please configure it."
+    },
+    "autoGenerateFilter": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/AutoGenerateFilterObject"
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "When the query area is enabled, a query condition form will be automatically generated based on the searchable attribute value of the column element."
+    },
+    "autoFillHeight": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "height": {
+              "type": "number"
+            },
+            "maxHeight": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "height",
+            "maxHeight"
+          ],
+          "additionalProperties": false
+        }
+      ],
+      "description": "The content area takes up the remaining space on the screen"
+    },
+    "parsePrimitiveQuery": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "enable": {
+              "type": "boolean"
+            },
+            "types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "boolean",
+                  "number"
+                ]
+              }
+            }
+          },
+          "required": [
+            "enable"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "Whether to enable Query information conversion. When enabled, the Query in the URL will be converted. It is enabled by default. By default, only Boolean values are converted."
+    }
+  },
+  "required": [
+    "mode",
+    "type"
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./CRUDListSchema.json"
+}

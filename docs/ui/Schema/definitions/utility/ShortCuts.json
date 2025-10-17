@@ -1,0 +1,28 @@
+{
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "$ref": "#/definitions/ShortCutDate"
+    },
+    {
+      "$ref": "#/definitions/ShortCutDateRange"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./ShortCuts.json"
+}

@@ -1,0 +1,263 @@
+{
+  "type": "object",
+  "properties": {
+    "$$id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Container css class name"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "Whether to disable"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to disable expressions"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "Whether to hide"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to hide expressions"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "Whether to display"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions"
+    },
+    "id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used for log collection"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Event action configuration"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "Whether to display statically"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions statically"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "Static display of empty value placeholder"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display form item class name"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Label class name"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Value class name"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "Component style"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "Component behavior and usage, such as create, update, remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Component name, usually the business name for easy location"
+        },
+        "mock": {
+          "description": "Editor fake data for easy display"
+        }
+      },
+      "description": "Editor configuration, can be ignored at runtime"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "Can be used to turn off mobile style at the component level"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "type": {
+      "type": "string",
+      "const": "tabs"
+    },
+    "testid": {
+      "type": "string"
+    },
+    "tabs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/TabSchema"
+      },
+      "description": "Tab members. When source is configured, tab members will be repeated based on the target data."
+    },
+    "source": {
+      "type": "string",
+      "description": "Associating existing data, tabs are repeated directly based on the target data."
+    },
+    "tabsMode": {
+      "$ref": "#/definitions/TabsMode",
+      "description": "Display form"
+    },
+    "contentClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Content class name"
+    },
+    "linksClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Link outer class name"
+    },
+    "mountOnEnter": {
+      "type": "boolean",
+      "description": "Do cards only load when clicked?"
+    },
+    "unmountOnExit": {
+      "type": "boolean",
+      "description": "Whether to destroy the card content when the card is hidden"
+    },
+    "toolbar": {
+      "$ref": "#/definitions/ActionSchema",
+      "description": "You can configure other function buttons on the right side."
+    },
+    "subFormMode": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "inline",
+        "horizontal"
+      ],
+      "description": "Configure the default display mode of subform items."
+    },
+    "subFormHorizontal": {
+      "$ref": "#/definitions/FormHorizontal",
+      "description": "If it is horizontal typesetting, this attribute can refine the left and right width ratio of horizontal typesetting."
+    },
+    "addable": {
+      "type": "boolean",
+      "description": "Whether to support new"
+    },
+    "closable": {
+      "type": "boolean",
+      "description": "Whether to support deletion"
+    },
+    "draggable": {
+      "type": "boolean",
+      "description": "Whether to support drag and drop"
+    },
+    "showTip": {
+      "type": "boolean",
+      "description": "Whether to display prompts"
+    },
+    "showTipClassName": {
+      "type": "string",
+      "description": "tooltip class name"
+    },
+    "editable": {
+      "type": "boolean",
+      "description": "Whether the tag name can be edited"
+    },
+    "scrollable": {
+      "type": "boolean",
+      "description": "Whether the navigation supports content overflow scrolling. The attribute is obsolete and will be retained for the sake of compatibility."
+    },
+    "sidePosition": {
+      "type": "string",
+      "enum": [
+        "left",
+        "right"
+      ],
+      "description": "Editor mode, side position"
+    },
+    "addBtnText": {
+      "type": "string",
+      "description": "Customize button copy"
+    },
+    "defaultKey": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SchemaExpression"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "description": "Initialize the activated tab, hash value or index value, support the use of expressions"
+    },
+    "activeKey": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SchemaExpression"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "description": "Activated tab, hash value or index value, supports the use of expressions"
+    },
+    "collapseOnExceed": {
+      "type": "number",
+      "description": "Collapse button when exceeded"
+    },
+    "collapseBtnLabel": {
+      "type": "string",
+      "description": "Collapse button text"
+    },
+    "swipeable": {
+      "type": "boolean",
+      "description": "Whether sliding switching only takes effect on mobile terminals"
+    }
+  },
+  "required": [
+    "tabs",
+    "type"
+  ],
+  "additionalProperties": false,
+  "description": "Tab control. Documentation: https://aisuda.bce.baidu.com/amis/zh-CN/components/tabs",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./TabsSchema.json"
+}

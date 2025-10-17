@@ -1,0 +1,221 @@
+{
+  "type": "object",
+  "properties": {
+    "$$id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used to locate json nodes in the page designer"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Container css class name"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "Used together with definitions, an infinite loop renderer can be implemented."
+    },
+    "disabled": {
+      "type": "boolean",
+      "description": "Whether to disable"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to disable expressions"
+    },
+    "hidden": {
+      "type": "boolean",
+      "description": "Whether to hide"
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to hide expressions"
+    },
+    "visible": {
+      "type": "boolean",
+      "description": "Whether to display"
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions"
+    },
+    "id": {
+      "type": "string",
+      "description": "The unique id of the component, mainly used for log collection"
+    },
+    "onEvent": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "number"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListenerAction"
+            }
+          },
+          "debounce": {
+            "$ref": "#/definitions/debounceConfig"
+          },
+          "track": {
+            "$ref": "#/definitions/trackConfig"
+          }
+        },
+        "required": [
+          "actions"
+        ],
+        "additionalProperties": false
+      },
+      "description": "Event action configuration"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "Whether to display statically"
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "Whether to display expressions statically"
+    },
+    "staticPlaceholder": {
+      "type": "string",
+      "description": "Static display of empty value placeholder"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display form item class name"
+    },
+    "staticLabelClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Label class name"
+    },
+    "staticInputClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Static display of form item Value class name"
+    },
+    "staticSchema": {},
+    "style": {
+      "type": "object",
+      "description": "Component style"
+    },
+    "editorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "type": "string",
+          "description": "Component behavior and usage, such as create, update, remove"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Component name, usually the business name for easy location"
+        },
+        "mock": {
+          "description": "Editor fake data for easy display"
+        }
+      },
+      "description": "Editor configuration, can be ignored at runtime"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "Can be used to turn off mobile style at the component level"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "type": {
+      "type": "string",
+      "const": "video",
+      "description": "Specify as video type"
+    },
+    "testid": {
+      "type": "string"
+    },
+    "autoPlay": {
+      "type": "boolean",
+      "description": "Whether to play automatically"
+    },
+    "columnsCount": {
+      "type": "number",
+      "description": "If frame cutting is displayed, this configuration item can control how many frames are displayed in each line."
+    },
+    "frames": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "After setting, you can display frame cuts. When you click on a frame, the video will jump to the corresponding time. \n\nframes: { '01:22': 'http://domain/xxx.jpg' }"
+    },
+    "framesClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Configure frame list container className"
+    },
+    "isLive": {
+      "type": "boolean",
+      "description": "If it is live, please mark it"
+    },
+    "jumpFrame": {
+      "type": "boolean",
+      "description": "Whether to jump to the corresponding point in the video when clicking on the frame",
+      "default": true
+    },
+    "muted": {
+      "type": "boolean",
+      "description": "Whether to initially mute"
+    },
+    "loop": {
+      "type": "boolean",
+      "description": "Whether to loop"
+    },
+    "playerClassName": {
+      "$ref": "#/definitions/SchemaClassName",
+      "description": "Configure player className"
+    },
+    "poster": {
+      "$ref": "#/definitions/SchemaUrlPath",
+      "description": "Video cover address"
+    },
+    "splitPoster": {
+      "type": "boolean",
+      "description": "Whether to display the video and cover separately"
+    },
+    "src": {
+      "$ref": "#/definitions/SchemaUrlPath",
+      "description": "Video playback address"
+    },
+    "videoType": {
+      "type": "string",
+      "description": "Video type such as: video/x-flv"
+    },
+    "aspectRatio": {
+      "type": "string",
+      "enum": [
+        "auto",
+        "4:3",
+        "16:9"
+      ],
+      "description": "video ratio"
+    },
+    "rates": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "description": "Video rate"
+    },
+    "jumpBufferDuration": {
+      "type": "number",
+      "description": "How many seconds to go forward when jumping to the frame."
+    },
+    "stopOnNextFrame": {
+      "type": "boolean",
+      "description": "By default, when the next frame is reached during playback, playback will continue and the next frame will be highlighted. If this is configured, playback will stop and wait for the user to select a new interval before playing."
+    }
+  },
+  "required": [
+    "type"
+  ],
+  "additionalProperties": false,
+  "description": "Video player documentation: https://aisuda.bce.baidu.com/amis/zh-CN/components/video",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./VideoSchema.json"
+}

@@ -1,0 +1,45 @@
+{
+  "allOf": [
+    {
+      "$ref": "#/definitions/SchemaObjectCardBodyField",
+      "patternProperties": {
+        "^(label|labelClassName|name|popOver|quickEdit|copyable)$": {}
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "label": {
+          "type": "string",
+          "description": "Column header"
+        },
+        "labelClassName": {
+          "$ref": "#/definitions/SchemaClassName",
+          "description": "label class name"
+        },
+        "name": {
+          "type": "string",
+          "description": "Bind field name"
+        },
+        "popOver": {
+          "$ref": "#/definitions/SchemaPopOver",
+          "description": "Configure the view details function"
+        },
+        "quickEdit": {
+          "$ref": "#/definitions/SchemaQuickEdit",
+          "description": "Configure quick editing function"
+        },
+        "copyable": {
+          "$ref": "#/definitions/SchemaCopyable",
+          "description": "Configure click-to-copy functionality"
+        }
+      },
+      "required": [
+        "label"
+      ]
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./CardBodyField.json"
+}

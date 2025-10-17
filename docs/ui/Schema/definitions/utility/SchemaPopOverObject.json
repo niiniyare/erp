@@ -1,0 +1,123 @@
+{
+  "type": "object",
+  "properties": {
+    "className": {
+      "type": "string",
+      "description": "Class name"
+    },
+    "popOverClassName": {
+      "type": "string",
+      "description": "Pop-up box outer class name"
+    },
+    "popOverEnableOn": {
+      "$ref": "#/definitions/SchemaExpression",
+      "description": "To configure whether the current row is started, use an expression"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "dialog",
+        "drawer",
+        "popOver"
+      ],
+      "description": "popup mode"
+    },
+    "size": {
+      "type": "string",
+      "enum": [
+        "sm",
+        "md",
+        "lg",
+        "xl"
+      ],
+      "description": "Useful when it is in the form of a pop-up window."
+    },
+    "position": {
+      "type": "string",
+      "enum": [
+        "center",
+        "left-top",
+        "left-top-left-top",
+        "left-top-left-center",
+        "left-top-left-bottom",
+        "left-top-center-top",
+        "left-top-center-center",
+        "left-top-center-bottom",
+        "left-top-right-top",
+        "left-top-right-center",
+        "left-top-right-bottom",
+        "right-top",
+        "right-top-left-top",
+        "right-top-left-center",
+        "right-top-left-bottom",
+        "right-top-center-top",
+        "right-top-center-center",
+        "right-top-center-bottom",
+        "right-top-right-top",
+        "right-top-right-center",
+        "right-top-right-bottom",
+        "left-bottom",
+        "left-bottom-left-top",
+        "left-bottom-left-center",
+        "left-bottom-left-bottom",
+        "left-bottom-center-top",
+        "left-bottom-center-center",
+        "left-bottom-center-bottom",
+        "left-bottom-right-top",
+        "left-bottom-right-center",
+        "left-bottom-right-bottom",
+        "right-bottom",
+        "right-bottom-left-top",
+        "right-bottom-left-center",
+        "right-bottom-left-bottom",
+        "right-bottom-center-top",
+        "right-bottom-center-center",
+        "right-bottom-center-bottom",
+        "right-bottom-right-top",
+        "right-bottom-right-center",
+        "right-bottom-right-bottom",
+        "fixed-center",
+        "fixed-left-top",
+        "fixed-right-top",
+        "fixed-left-bottom",
+        "fixed-right-bottom"
+      ],
+      "description": "popup location"
+    },
+    "trigger": {
+      "type": "string",
+      "enum": [
+        "click",
+        "hover"
+      ],
+      "description": "Trigger condition, default is click"
+    },
+    "showIcon": {
+      "type": "boolean",
+      "description": "Whether to display the view more icon, usually the enlarge icon."
+    },
+    "offset": {
+      "type": "object",
+      "properties": {
+        "top": {
+          "type": "number"
+        },
+        "left": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false,
+      "description": "offset"
+    },
+    "title": {
+      "type": "string",
+      "description": "title"
+    },
+    "body": {
+      "$ref": "#/definitions/SchemaCollection"
+    }
+  },
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./SchemaPopOverObject.json"
+}

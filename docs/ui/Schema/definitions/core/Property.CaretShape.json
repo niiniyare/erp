@@ -1,0 +1,25 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "auto"
+    },
+    {
+      "type": "string",
+      "const": "bar"
+    },
+    {
+      "type": "string",
+      "const": "block"
+    },
+    {
+      "type": "string",
+      "const": "underscore"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.CaretShape.json"
+}

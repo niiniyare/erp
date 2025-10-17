@@ -1,0 +1,141 @@
+{
+  "$schema": "../../schema_metadata_template.json",
+  "meta": {
+    "title": "Checkbox Control",
+    "description": "A clickable checkbox input element for boolean form data collection with validation and accessibility support",
+    "category": "atoms",
+    "subcategory": "forms",
+    "dependencies": [
+      "SchemaClassName",
+      "SchemaExpression",
+      "BadgeObject",
+      "LabelAlign",
+      "FormHorizontal",
+      "TestIdBuilder"
+    ],
+    "examples": [
+      "examples/checkbox-basic.json",
+      "examples/checkbox-required.json",
+      "examples/checkbox-validation.json"
+    ],
+    "accessibility": {
+      "wcagLevel": "AA",
+      "keyboardSupport": true,
+      "screenReaderSupport": true,
+      "ariaRequirements": [
+        "aria-label",
+        "aria-checked",
+        "aria-describedby",
+        "role"
+      ],
+      "notes": "Checkbox automatically includes proper ARIA labeling and state management. Focus management follows keyboard navigation standards."
+    },
+    "performance": {
+      "renderCost": "low",
+      "memoryCost": "low",
+      "optimizations": [
+        "event-delegation",
+        "minimal-rerender"
+      ],
+      "notes": "Lightweight component with efficient state management and minimal DOM operations."
+    },
+    "version": "2.0.0",
+    "deprecated": false,
+    "createdDate": "2024-01-15",
+    "lastModified": "2025-10-17",
+    "author": "ERP UI Team",
+    "tags": [
+      "checkbox",
+      "form",
+      "input",
+      "boolean",
+      "validation",
+      "required",
+      "accessibility"
+    ],
+    "framework": {
+      "templ": {
+        "componentFile": "web/components/atoms/checkbox.templ",
+        "propsInterface": "CheckboxProps"
+      },
+      "htmx": {
+        "supported": true,
+        "attributes": [
+          "hx-post",
+          "hx-trigger",
+          "hx-target",
+          "hx-swap"
+        ]
+      },
+      "alpine": {
+        "directives": [
+          "x-model",
+          "x-show",
+          "x-bind"
+        ]
+      }
+    },
+    "testing": {
+      "unitTests": "tests/atoms/checkbox_test.go",
+      "integrationTests": "tests/integration/forms/checkbox_integration_test.go",
+      "visualTests": "tests/visual/checkbox.spec.js",
+      "testCoverage": 95
+    },
+    "validation": {
+      "supported": true,
+      "types": [
+        "required",
+        "custom"
+      ],
+      "realTime": true,
+      "serverSide": true,
+      "clientSide": true
+    },
+    "features": {
+      "coreFeatures": [
+        "checked/unchecked states",
+        "custom true/false values",
+        "label support",
+        "validation rules",
+        "disabled state",
+        "readonly mode"
+      ],
+      "advancedFeatures": [
+        "conditional visibility",
+        "auto-fill integration",
+        "badge support",
+        "partial state",
+        "button style option"
+      ],
+      "integrations": [
+        "form submission",
+        "validation engine",
+        "event system",
+        "static display mode"
+      ]
+    },
+    "browserSupport": {
+      "chrome": "90+",
+      "firefox": "88+",
+      "safari": "14+",
+      "edge": "90+",
+      "ie": false
+    },
+    "relatedSchemas": [
+      "RadioControlSchema",
+      "SwitchControlSchema",
+      "CheckboxesControlSchema",
+      "FormControlSchema"
+    ],
+    "migration": {
+      "from": "1.x",
+      "breaking": [
+        "optionType enum values changed",
+        "validation API updated"
+      ],
+      "deprecated": [
+        "row property (use CSS instead)"
+      ]
+    }
+  }
+}

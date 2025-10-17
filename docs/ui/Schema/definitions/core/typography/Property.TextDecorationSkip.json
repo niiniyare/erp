@@ -1,0 +1,40 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "box-decoration"
+    },
+    {
+      "type": "string",
+      "const": "edges"
+    },
+    {
+      "type": "string",
+      "const": "leading-spaces"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string",
+      "const": "objects"
+    },
+    {
+      "type": "string",
+      "const": "spaces"
+    },
+    {
+      "type": "string",
+      "const": "trailing-spaces"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.TextDecorationSkip.json"
+}

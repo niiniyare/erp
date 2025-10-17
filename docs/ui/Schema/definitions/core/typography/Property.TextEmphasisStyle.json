@@ -1,0 +1,44 @@
+{
+  "anyOf": [
+    {
+      "$ref": "#/definitions/Globals"
+    },
+    {
+      "type": "string",
+      "const": "circle"
+    },
+    {
+      "type": "string",
+      "const": "dot"
+    },
+    {
+      "type": "string",
+      "const": "double-circle"
+    },
+    {
+      "type": "string",
+      "const": "filled"
+    },
+    {
+      "type": "string",
+      "const": "none"
+    },
+    {
+      "type": "string",
+      "const": "open"
+    },
+    {
+      "type": "string",
+      "const": "sesame"
+    },
+    {
+      "type": "string",
+      "const": "triangle"
+    },
+    {
+      "type": "string"
+    }
+  ],
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./Property.TextEmphasisStyle.json"
+}

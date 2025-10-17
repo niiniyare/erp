@@ -1,0 +1,57 @@
+{
+  "type": "object",
+  "properties": {
+    "left": {
+      "type": "number"
+    },
+    "right": {
+      "type": "number"
+    },
+    "leftFixed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string",
+          "const": "xs"
+        },
+        {
+          "type": "string",
+          "const": "sm"
+        },
+        {
+          "type": "string",
+          "const": "md"
+        },
+        {
+          "type": "string",
+          "const": "lg"
+        }
+      ]
+    },
+    "justify": {
+      "type": "boolean"
+    },
+    "labelAlign": {
+      "type": "string",
+      "enum": [
+        "left",
+        "right"
+      ]
+    },
+    "labelWidth": {
+      "type": [
+        "number",
+        "string"
+      ],
+      "description": "Label custom width, default unit is px"
+    }
+  },
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./FormHorizontal.json"
+}
