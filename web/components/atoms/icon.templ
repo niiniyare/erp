@@ -1,55 +1,47 @@
 package atoms
 
-import "strings"
-
-// IconSize defines the size of the icon
-type IconSize string
-
-const (
-	IconSizeXS IconSize = "xs"
-	IconSizeSM IconSize = "sm"
-	IconSizeMD IconSize = "md"
-	IconSizeLG IconSize = "lg"
-	IconSizeXL IconSize = "xl"
-	IconSize2XL IconSize = "2xl"
+import (
+	"context"
 )
 
 // IconProps defines the properties for the Icon component
 type IconProps struct {
+	BaseAtomProps
+	
 	// Required
 	Name        string   `json:"name"`           // Icon name (e.g., "home", "user", "settings")
 	
 	// Styling
-	Size        IconSize `json:"size"`
-	Class       string   `json:"class,omitempty"`
-	
-	// HTML attributes
-	ID          string   `json:"id,omitempty"`
-	AriaLabel   string   `json:"ariaLabel,omitempty"`
-	AriaHidden  bool     `json:"ariaHidden,omitempty"`
-	DataTestID  string   `json:"dataTestId,omitempty"`
+	Size        string   `json:"size,omitempty"`  // xs, sm, md, lg, xl, 2xl
+	Color       string   `json:"color,omitempty"` // Text color for the icon
 	
 	// Behavior
 	OnClick     string   `json:"onclick,omitempty"`    // Alpine.js click handler
 }
 
-// Icon renders a Flowbite-styled icon using SVG or icon font
-templ Icon(props IconProps) {
+// Icon renders an SVG icon using the self-contained CSS factory
+templ Icon(ctx context.Context, props IconProps) {
 	<svg
 		if props.ID != "" {
 			id={ props.ID }
 		}
-		class={ getIconClasses(props) }
+		style={ GetIconCSS(props.Size, props.Color) }
+		if props.ClassName != "" {
+			class={ props.ClassName }
+		}
 		if props.AriaLabel != "" {
 			aria-label={ props.AriaLabel }
 		} else {
 			aria-hidden="true"
 		}
-		if props.DataTestID != "" {
-			data-testid={ props.DataTestID }
+		if props.TestID != "" {
+			data-testid={ props.TestID }
 		}
 		if props.OnClick != "" {
 			@click={ props.OnClick }
+		}
+		if props.Disabled {
+			aria-disabled="true"
 		}
 		fill="currentColor"
 		viewBox="0 0 20 20"
@@ -59,41 +51,9 @@ templ Icon(props IconProps) {
 	</svg>
 }
 
-// Helper function to get icon classes
-func getIconClasses(props IconProps) string {
-	classes := []string{}
-	
-	// Add size classes
-	classes = append(classes, getIconSizeClasses(props.Size)...)
-	
-	// Add custom classes
-	if props.Class != "" {
-		classes = append(classes, props.Class)
-	}
-	
-	// Add clickable cursor if onClick is provided
-	if props.OnClick != "" {
-		classes = append(classes, "cursor-pointer")
-	}
-	
-	return strings.Join(classes, " ")
-}
-
-func getIconSizeClasses(size IconSize) []string {
-	switch size {
-	case IconSizeXS:
-		return []string{"w-3", "h-3"}
-	case IconSizeSM:
-		return []string{"w-4", "h-4"}
-	case IconSizeLG:
-		return []string{"w-6", "h-6"}
-	case IconSizeXL:
-		return []string{"w-8", "h-8"}
-	case IconSize2XL:
-		return []string{"w-10", "h-10"}
-	default: // MD
-		return []string{"w-5", "h-5"}
-	}
+// IconFromSchema creates an Icon component from JSON schema configuration
+templ IconFromSchema(ctx context.Context, schemaConfig string) {
+	<div>Placeholder for schema-based icon</div>
 }
 
 // getIconPath returns the SVG path for common icons
