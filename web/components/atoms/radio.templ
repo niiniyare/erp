@@ -1,342 +1,156 @@
 package atoms
 
-import "strings"
-
-// RadioSize defines the size of the radio button
-type RadioSize string
-
-const (
-RadioSizeSM RadioSize = "sm"
-RadioSizeMD RadioSize = "md"
-RadioSizeLG RadioSize = "lg"
-)
-
-// RadioState defines the validation state
-type RadioState string
-
-const (
-RadioStateDefault RadioState = "default"
-RadioStateSuccess RadioState = "success"
-RadioStateError RadioState = "error"
+import (
+	"context"
 )
 
 // RadioProps defines the properties for the Radio component
 type RadioProps struct {
-// Content
-Label string `json:"label,omitempty"`
-Value string `json:"value"`
-HelpText string `json:"helpText,omitempty"`
-ErrorText string `json:"errorText,omitempty"`
+	BaseAtomProps
 
-// Radio attributes
-Name string `json:"name"`
-Checked bool `json:"checked,omitempty"`
-Required bool `json:"required,omitempty"`
-Disabled bool `json:"disabled,omitempty"`
+	// Content
+	Label     string `json:"label,omitempty"`
+	Value     string `json:"value"`
+	HelpText  string `json:"helpText,omitempty"`
+	ErrorText string `json:"errorText,omitempty"`
 
-// Styling
-Size RadioSize `json:"size"`
-State RadioState `json:"state"`
+	// Radio attributes
+	Name     string `json:"name"`
+	Checked  bool   `json:"checked,omitempty"`
+	Required bool   `json:"required,omitempty"`
 
-// Behavior
-OnChange string `json:"onchange,omitempty"` // Alpine.js change handler
-OnFocus string `json:"onfocus,omitempty"` // Alpine.js focus handler
-OnBlur string `json:"onblur,omitempty"` // Alpine.js blur handler
+	// Styling
+	Size  string `json:"size,omitempty"`  // sm, md, lg
+	State string `json:"state,omitempty"` // default, success, error
 
-// HTML attributes
-ID string `json:"id,omitempty"`
-Class string `json:"class,omitempty"`
-AriaLabel string `json:"ariaLabel,omitempty"`
-AriaDescribedBy string `json:"ariaDescribedBy,omitempty"`
-DataTestID string `json:"dataTestId,omitempty"`
+	// Behavior
+	OnChange string `json:"onchange,omitempty"` // Alpine.js change handler
+	OnFocus  string `json:"onfocus,omitempty"`  // Alpine.js focus handler
+	OnBlur   string `json:"onblur,omitempty"`   // Alpine.js blur handler
 
-// Layout
-LabelPosition string `json:"labelPosition,omitempty"` // "right" (default), "left"
+	// Layout
+	LabelPosition string `json:"labelPosition,omitempty"` // "right" (default), "left"
 
-// Validation
-ShowValidation bool `json:"showValidation,omitempty"`
+	// Validation
+	ShowValidation bool `json:"showValidation,omitempty"`
 }
 
 // RadioOption represents a single radio option for groups
 type RadioOption struct {
-Value string `json:"value"`
-Label string `json:"label"`
-Disabled bool `json:"disabled,omitempty"`
-Checked bool `json:"checked,omitempty"`
-HelpText string `json:"helpText,omitempty"`
+	Value    string `json:"value"`
+	Label    string `json:"label"`
+	Disabled bool   `json:"disabled,omitempty"`
+	Checked  bool   `json:"checked,omitempty"`
+	HelpText string `json:"helpText,omitempty"`
 }
 
 // RadioGroupProps defines properties for radio button groups
 type RadioGroupProps struct {
-Name string `json:"name"`
-Label string `json:"label,omitempty"`
-Options []RadioOption `json:"options"`
-Value string `json:"value,omitempty"`
-Required bool `json:"required,omitempty"`
-Disabled bool `json:"disabled,omitempty"`
-Size RadioSize `json:"size"`
-State RadioState `json:"state"`
-Layout string `json:"layout,omitempty"` // "vertical" (default), "horizontal"
-HelpText string `json:"helpText,omitempty"`
-ErrorText string `json:"errorText,omitempty"`
-ShowValidation bool `json:"showValidation,omitempty"`
-OnChange string `json:"onchange,omitempty"`
-Class string `json:"class,omitempty"`
-AriaDescribedBy string `json:"ariaDescribedBy,omitempty"`
+	BaseAtomProps
+	
+	Name           string        `json:"name"`
+	Label          string        `json:"label,omitempty"`
+	Options        []RadioOption `json:"options"`
+	Value          string        `json:"value,omitempty"`
+	Required       bool          `json:"required,omitempty"`
+	Size           string        `json:"size,omitempty"`  // sm, md, lg
+	State          string        `json:"state,omitempty"` // default, success, error
+	Layout         string        `json:"layout,omitempty"` // "vertical" (default), "horizontal"
+	HelpText       string        `json:"helpText,omitempty"`
+	ErrorText      string        `json:"errorText,omitempty"`
+	ShowValidation bool          `json:"showValidation,omitempty"`
+	OnChange       string        `json:"onchange,omitempty"`
 }
 
-// Radio renders a single Flowbite-styled radio button
-templ Radio(props RadioProps) {
-<div class={ getRadioWrapperClasses(props) }>
-  <div class="flex items-center">
-    if props.LabelPosition == "left" && props.Label != "" {
-    <label if props.ID !="" { for={ props.ID } } class={ getRadioLabelClasses(props, "left" ) }>
-      { props.Label }
-      if props.Required {
-      <span class="text-red-500 ml-1">*</span>
-      }
-    </label>
-    }
+// Radio renders a radio button using the self-contained CSS factory
+templ Radio(ctx context.Context, props RadioProps) {
+	<div>
+		<input
+			type="radio"
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			style={ GetRadioCSS(props.State) }
+			if props.ClassName != "" {
+				class={ props.ClassName }
+			}
+			name={ props.Name }
+			value={ props.Value }
+			if props.Checked {
+				checked
+			}
+			if props.Required {
+				required
+			}
+			if props.Disabled {
+				disabled
+			}
+			if props.TestID != "" {
+				data-testid={ props.TestID }
+			}
+			if props.AriaLabel != "" {
+				aria-label={ props.AriaLabel }
+			}
+			if props.AriaDescribedBy != "" {
+				aria-describedby={ props.AriaDescribedBy }
+			}
+			if props.OnChange != "" {
+				@change={ props.OnChange }
+			}
+			if props.OnFocus != "" {
+				@focus={ props.OnFocus }
+			}
+			if props.OnBlur != "" {
+				@blur={ props.OnBlur }
+			}
+		/>
+		if props.Label != "" {
+			<label for={ props.ID }>{ props.Label }</label>
+		}
+		if props.HelpText != "" {
+			<div class="help-text">{ props.HelpText }</div>
+		}
+		if props.ErrorText != "" {
+			<div class="error-text">{ props.ErrorText }</div>
+		}
+	</div>
+}
 
-    <input type="radio" if props.ID !="" { id={ props.ID } } name={ props.Name } value={ props.Value } class={
-      getRadioClasses(props) } if props.Checked { checked } if props.Required { required } if props.Disabled { disabled
-      } if props.AriaLabel !="" { aria-label={ props.AriaLabel } } if props.AriaDescribedBy !="" { aria-describedby={
-      props.AriaDescribedBy } } if props.DataTestID !="" { data-testid={ props.DataTestID } } if props.OnChange !="" {
-      @change={ props.OnChange } } if props.OnFocus !="" { @focus={ props.OnFocus } } if props.OnBlur !="" { @blur={
-      props.OnBlur } } />
-
-    if props.LabelPosition != "left" && props.Label != "" {
-    <label if props.ID !="" { for={ props.ID } } class={ getRadioLabelClasses(props, "right" ) }>
-      { props.Label }
-      if props.Required {
-      <span class="text-red-500 ml-1">*</span>
-      }
-    </label>
-    }
-  </div>
-
-  if props.ShowValidation && (props.HelpText != "" || props.ErrorText != "") {
-  @RadioFeedback(props)
-  }
-</div>
+// RadioFromSchema creates a Radio component from JSON schema configuration
+templ RadioFromSchema(ctx context.Context, schemaConfig string) {
+	<div>Placeholder for schema-based radio</div>
 }
 
 // RadioGroup renders a group of related radio buttons
-templ RadioGroup(props RadioGroupProps) {
-<fieldset class={ getRadioGroupClasses(props) }>
-  if props.Label != "" {
-  <legend class="text-sm font-medium text-gray-900 dark:text-white mb-3">
-    { props.Label }
-    if props.Required {
-    <span class="text-red-500 ml-1">*</span>
-    }
-  </legend>
-  }
-
-  <div class={ getRadioGroupLayoutClasses(props.Layout) }>
-    for i, option := range props.Options {
-    @Radio(RadioProps{
-    ID: props.Name + "_" + string(rune(i)),
-    Name: props.Name,
-    Value: option.Value,
-    Label: option.Label,
-    Checked: option.Checked || option.Value == props.Value,
-    Disabled: option.Disabled || props.Disabled,
-    Required: props.Required,
-    Size: props.Size,
-    State: props.State,
-    HelpText: option.HelpText,
-    OnChange: props.OnChange,
-    ShowValidation: false, // Individual validation handled at group level
-    })
-    }
-  </div>
-
-  if props.ShowValidation && (props.HelpText != "" || props.ErrorText != "") {
-  @RadioGroupFeedback(props)
-  }
-</fieldset>
-}
-
-// RadioFeedback renders help text or error messages for individual radio buttons
-templ RadioFeedback(props RadioProps) {
-if props.State == RadioStateError && props.ErrorText != "" {
-<p class="mt-2 text-sm text-red-600 dark:text-red-500">
-  <span class="font-medium">Error:</span> { props.ErrorText }
-</p>
-} else if props.State == RadioStateSuccess && props.HelpText != "" {
-<p class="mt-2 text-sm text-green-600 dark:text-green-500">
-  <span class="font-medium">Success:</span> { props.HelpText }
-</p>
-} else if props.HelpText != "" {
-<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-  { props.HelpText }
-</p>
-}
-}
-
-// RadioGroupFeedback renders help text or error messages for radio groups
-templ RadioGroupFeedback(props RadioGroupProps) {
-if props.State == RadioStateError && props.ErrorText != "" {
-<p class="mt-2 text-sm text-red-600 dark:text-red-500">
-  <span class="font-medium">Error:</span> { props.ErrorText }
-</p>
-} else if props.State == RadioStateSuccess && props.HelpText != "" {
-<p class="mt-2 text-sm text-green-600 dark:text-green-500">
-  <span class="font-medium">Success:</span> { props.HelpText }
-</p>
-} else if props.HelpText != "" {
-<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-  { props.HelpText }
-</p>
-}
-}
-
-// Helper functions
-func getRadioWrapperClasses(props RadioProps) string {
-classes := []string{"mb-4"}
-
-if props.Class != "" {
-classes = append(classes, props.Class)
-}
-
-return strings.Join(classes, " ")
-}
-
-func getRadioGroupClasses(props RadioGroupProps) string {
-classes := []string{"mb-5"}
-
-if props.Class != "" {
-classes = append(classes, props.Class)
-}
-
-return strings.Join(classes, " ")
-}
-
-func getRadioGroupLayoutClasses(layout string) string {
-switch layout {
-case "horizontal":
-return "flex flex-wrap gap-4"
-default: // vertical
-return "space-y-2"
-}
-}
-
-func getRadioLabelClasses(props RadioProps, position string) string {
-classes := []string{
-"font-medium",
-"select-none",
-}
-
-// Add size-specific text classes
-switch props.Size {
-case RadioSizeSM:
-classes = append(classes, "text-xs")
-case RadioSizeLG:
-classes = append(classes, "text-base")
-default:
-classes = append(classes, "text-sm")
-}
-
-// Add position-specific spacing
-if position == "left" {
-classes = append(classes, "me-2")
-} else {
-classes = append(classes, "ms-2")
-}
-
-// Add state-specific colors
-switch props.State {
-case RadioStateError:
-classes = append(classes, "text-red-900", "dark:text-red-400")
-case RadioStateSuccess:
-classes = append(classes, "text-green-900", "dark:text-green-400")
-default:
-classes = append(classes, "text-gray-900", "dark:text-gray-300")
-}
-
-// Add disabled styling
-if props.Disabled {
-classes = append(classes, "opacity-50", "cursor-not-allowed")
-} else {
-classes = append(classes, "cursor-pointer")
-}
-
-return strings.Join(classes, " ")
-}
-
-func getRadioClasses(props RadioProps) string {
-classes := []string{
-"border",
-"focus:ring-2",
-"focus:outline-none",
-"transition-colors",
-"duration-200",
-"rounded-full", // Radio buttons are always circular
-}
-
-// Add size classes
-classes = append(classes, getRadioSizeClasses(props.Size)...)
-
-// Add state-specific classes
-classes = append(classes, getRadioStateClasses(props.State)...)
-
-// Add disabled classes
-if props.Disabled {
-classes = append(classes, "opacity-50", "cursor-not-allowed")
-} else {
-classes = append(classes, "cursor-pointer")
-}
-
-return strings.Join(classes, " ")
-}
-
-func getRadioSizeClasses(size RadioSize) []string {
-switch size {
-case RadioSizeSM:
-return []string{"w-3", "h-3"}
-case RadioSizeLG:
-return []string{"w-5", "h-5"}
-default: // MD
-return []string{"w-4", "h-4"}
-}
-}
-
-func getRadioStateClasses(state RadioState) []string {
-switch state {
-case RadioStateError:
-return []string{
-"bg-red-50",
-"border-red-500",
-"text-red-600",
-"focus:ring-red-300",
-"dark:bg-gray-700",
-"dark:border-red-600",
-"dark:focus:ring-red-600",
-"dark:ring-offset-gray-800",
-}
-case RadioStateSuccess:
-return []string{
-"bg-green-50",
-"border-green-500",
-"text-green-600",
-"focus:ring-green-300",
-"dark:bg-gray-700",
-"dark:border-green-600",
-"dark:focus:ring-green-600",
-"dark:ring-offset-gray-800",
-}
-default:
-return []string{
-"bg-gray-50",
-"border-gray-300",
-"text-blue-600",
-"focus:ring-blue-300",
-"dark:bg-gray-700",
-"dark:border-gray-600",
-"dark:focus:ring-blue-600",
-"dark:ring-offset-gray-800",
-"dark:focus:ring-offset-gray-800",
-}
-}
+templ RadioGroup(ctx context.Context, props RadioGroupProps) {
+	<fieldset>
+		if props.Label != "" {
+			<legend>{ props.Label }</legend>
+		}
+		<div>
+			for _, option := range props.Options {
+				@Radio(ctx, RadioProps{
+					BaseAtomProps: BaseAtomProps{
+						ID:       props.ID + "_" + option.Value,
+						Disabled: option.Disabled || props.Disabled,
+					},
+					Name:     props.Name,
+					Value:    option.Value,
+					Label:    option.Label,
+					Checked:  option.Checked || option.Value == props.Value,
+					Required: props.Required,
+					Size:     props.Size,
+					State:    props.State,
+					HelpText: option.HelpText,
+					OnChange: props.OnChange,
+				})
+			}
+		</div>
+		if props.HelpText != "" {
+			<div class="help-text">{ props.HelpText }</div>
+		}
+		if props.ErrorText != "" {
+			<div class="error-text">{ props.ErrorText }</div>
+		}
+	</fieldset>
 }
