@@ -1,85 +1,119 @@
 package atoms
 
-import "strings"
-
-// TextareaSize defines the size of the textarea
-type TextareaSize string
-
-const (
-	TextareaSizeSM TextareaSize = "sm"
-	TextareaSizeMD TextareaSize = "md"
-	TextareaSizeLG TextareaSize = "lg"
+import (
+	"strconv"
+	"strings"
 )
 
-// TextareaState defines the validation state
-type TextareaState string
+// ============================================================================
+// DESIGN RATIONALE - TEXTAREA COMPONENT
+// ============================================================================
+// Following the composition-based architecture established in checkbox.templ:
+//
+// 1. REUSABLE STRUCTS: Uses shared BaseProps, AccessibilityProps, etc.
+// 2. CONFIGURATION-DRIVEN: Size mapping, state color schemes, resize options
+// 3. ALPINE.JS INTEGRATION: Proper x-on: syntax for event handling
+// 4. VALIDATION SUPPORT: Full validation state system with feedback
+// 5. ACCESSIBILITY: Comprehensive ARIA support for textarea elements
+// 6. FLEXIBLE SIZING: Rows, columns, character limits, resize behavior
+// ============================================================================
 
-const (
-	TextareaStateDefault TextareaState = "default"
-	TextareaStateSuccess TextareaState = "success"
-	TextareaStateError   TextareaState = "error"
-)
-
-// TextareaProps defines the properties for the Textarea component
+// TextareaProps defines all properties for the Textarea component
+// Composed of shared structs plus textarea-specific fields
 type TextareaProps struct {
+	// Composition of shared property groups
+	BaseProps
+	AccessibilityProps
+	ValidationProps
+	InteractionProps
+	AlpineEventHandlers
+
 	// Content
 	Label       string `json:"label,omitempty"`
 	Value       string `json:"value,omitempty"`
 	Placeholder string `json:"placeholder,omitempty"`
-	HelpText    string `json:"helpText,omitempty"`
-	ErrorText   string `json:"errorText,omitempty"`
-	
-	// Textarea attributes
-	Name        string `json:"name,omitempty"`
-	Rows        int    `json:"rows,omitempty"`
-	Cols        int    `json:"cols,omitempty"`
-	Required    bool   `json:"required,omitempty"`
-	Disabled    bool   `json:"disabled,omitempty"`
-	ReadOnly    bool   `json:"readonly,omitempty"`
-	AutoFocus   bool   `json:"autofocus,omitempty"`
-	MinLength   int    `json:"minlength,omitempty"`
-	MaxLength   int    `json:"maxlength,omitempty"`
-	Wrap        string `json:"wrap,omitempty"` // "soft", "hard", "off"
-	
-	// Styling
-	Size        TextareaSize  `json:"size"`
-	State       TextareaState `json:"state"`
-	Resizable   bool          `json:"resizable,omitempty"`
-	
-	// Behavior
-	OnChange    string `json:"onchange,omitempty"`    // Alpine.js change handler
-	OnInput     string `json:"oninput,omitempty"`     // Alpine.js input handler
-	OnFocus     string `json:"onfocus,omitempty"`     // Alpine.js focus handler
-	OnBlur      string `json:"onblur,omitempty"`      // Alpine.js blur handler
-	
-	// HTML attributes
-	ID          string `json:"id,omitempty"`
-	Class       string `json:"class,omitempty"`
-	AriaLabel   string `json:"ariaLabel,omitempty"`
-	AriaDescribedBy string `json:"ariaDescribedBy,omitempty"`
-	DataTestID  string `json:"dataTestId,omitempty"`
-	
-	// Validation
-	ShowValidation bool `json:"showValidation,omitempty"`
+
+	// Textarea-specific attributes
+	Rows      int    `json:"rows,omitempty"`      // Number of visible text lines
+	Cols      int    `json:"cols,omitempty"`      // Visible width in characters
+	MinLength int    `json:"minLength,omitempty"` // Minimum character count
+	MaxLength int    `json:"maxLength,omitempty"` // Maximum character count
+	Wrap      string `json:"wrap,omitempty"`      // Text wrapping: "soft", "hard", "off"
+
+	// Textarea-specific styling
+	ComponentSize Size `json:"componentSize"` // Component sizing
+	Resizable     bool `json:"resizable,omitempty"` // Allow resize
+	LabelPosition LabelPosition `json:"labelPosition,omitempty"`
 }
 
-// Textarea renders a Flowbite-styled textarea with various sizes and states
+// ============================================================================
+// CONFIGURATION CONSTANTS
+// ============================================================================
+
+// Textarea-specific sizing (padding and text adjustments)
+var textareaDimensions = map[Size][]string{
+	SizeSM: {"p-2", "text-xs"},
+	SizeMD: {"p-2.5", "text-sm"},
+	SizeLG: {"p-4", "text-base"},
+}
+
+// Textarea-specific styling constants
+const (
+	textareaBaseClasses     = "block w-full border rounded-lg focus:outline-none transition-colors duration-200"
+	textareaDisabledClasses = "opacity-50 cursor-not-allowed"
+	textareaFocusClasses    = "focus:ring-3"
+	textareaResizeClasses   = "resize-y"
+	textareaNoResizeClasses = "resize-none"
+)
+
+// ============================================================================
+// CONSTRUCTOR WITH SENSIBLE DEFAULTS
+// ============================================================================
+
+// NewTextarea creates a new TextareaProps with sensible defaults
+// Example usage:
+// textarea := NewTextarea("description", "Enter description...")
+// textarea.Required = true
+// textarea.Rows = 6
+func NewTextarea(id, placeholder string) TextareaProps {
+	return TextareaProps{
+		BaseProps: BaseProps{
+			ID: id,
+		},
+		Placeholder:   placeholder,
+		ComponentSize: SizeMD,
+		Rows:          4, // Default to 4 rows
+		Resizable:     true,
+		ValidationProps: ValidationProps{
+			State: StateDefault,
+		},
+		LabelPosition: LabelTop,
+	}
+}
+
+// NewTextareaWithLabel creates a textarea with label
+func NewTextareaWithLabel(id, label, placeholder string) TextareaProps {
+	props := NewTextarea(id, placeholder)
+	props.Label = label
+	return props
+}
+
+// ============================================================================
+// TEMPLATE COMPONENTS
+// ============================================================================
+
+// Textarea renders a fully-featured textarea with Flowbite styling
+// Supports validation states, sizes, Alpine.js events, and accessibility
 templ Textarea(props TextareaProps) {
 	<div class={ getTextareaWrapperClasses(props) }>
-		if props.Label != "" {
-			<label 
-				if props.ID != "" {
-					for={ props.ID }
-				}
-				class={ getTextareaLabelClasses(props) }
-			>
-				{ props.Label }
-				if props.Required {
-					<span class="text-red-500 ml-1">*</span>
-				}
-			</label>
+		// Render label if specified and position is top
+		if props.LabelPosition != LabelNone && props.Label != "" {
+			@textareaLabel(props)
 		}
+
+		// The actual textarea element
 		<textarea
+			// Base HTML attributes
 			if props.ID != "" {
 				id={ props.ID }
 			}
@@ -89,15 +123,28 @@ templ Textarea(props TextareaProps) {
 			if props.Placeholder != "" {
 				placeholder={ props.Placeholder }
 			}
+			// Sizing attributes
 			if props.Rows > 0 {
-				rows={ string(rune(props.Rows)) }
+				rows={ strconv.Itoa(props.Rows) }
 			} else {
 				rows="4"
 			}
 			if props.Cols > 0 {
-				cols={ string(rune(props.Cols)) }
+				cols={ strconv.Itoa(props.Cols) }
 			}
+			// Character limits
+			if props.MinLength > 0 {
+				minlength={ strconv.Itoa(props.MinLength) }
+			}
+			if props.MaxLength > 0 {
+				maxlength={ strconv.Itoa(props.MaxLength) }
+			}
+			if props.Wrap != "" {
+				wrap={ props.Wrap }
+			}
+			// Styling classes
 			class={ getTextareaClasses(props) }
+			// Boolean states
 			if props.Required {
 				required
 			}
@@ -110,189 +157,217 @@ templ Textarea(props TextareaProps) {
 			if props.AutoFocus {
 				autofocus
 			}
-			if props.MinLength > 0 {
-				minlength={ string(rune(props.MinLength)) }
-			}
-			if props.MaxLength > 0 {
-				maxlength={ string(rune(props.MaxLength)) }
-			}
-			if props.Wrap != "" {
-				wrap={ props.Wrap }
-			}
+			// Accessibility attributes
 			if props.AriaLabel != "" {
 				aria-label={ props.AriaLabel }
 			}
 			if props.AriaDescribedBy != "" {
 				aria-describedby={ props.AriaDescribedBy }
 			}
+			if props.AriaRequired {
+				aria-required="true"
+			}
+			if props.AriaInvalid {
+				aria-invalid="true"
+			}
+			// Testing
 			if props.DataTestID != "" {
 				data-testid={ props.DataTestID }
 			}
+			// Alpine.js event handlers (using correct x-on: syntax)
 			if props.OnChange != "" {
-				@change={ props.OnChange }
+				x-on:change={ props.OnChange }
 			}
 			if props.OnInput != "" {
-				@input={ props.OnInput }
+				x-on:input={ props.OnInput }
 			}
 			if props.OnFocus != "" {
-				@focus={ props.OnFocus }
+				x-on:focus={ props.OnFocus }
 			}
 			if props.OnBlur != "" {
-				@blur={ props.OnBlur }
+				x-on:blur={ props.OnBlur }
+			}
+			if props.OnClick != "" {
+				x-on:click={ props.OnClick }
 			}
 		>{ props.Value }</textarea>
-		if props.ShowValidation && (props.HelpText != "" || props.ErrorText != "") {
+
+		// Show validation feedback if enabled
+		if props.ShowValidation {
 			@TextareaFeedback(props)
 		}
 	</div>
 }
 
-// TextareaFeedback renders help text or error messages
+// textareaLabel renders the label with proper styling and required indicator
+templ textareaLabel(props TextareaProps) {
+	<label
+		if props.ID != "" {
+			for={ props.ID }
+		}
+		class={ getTextareaLabelClasses(props) }
+	>
+		{ props.Label }
+		// Visual indicator for required fields
+		if props.Required {
+			<span class="text-red-500 ml-1" aria-hidden="true">*</span>
+		}
+	</label>
+}
+
+// TextareaFeedback displays contextual help text or validation messages
+// Automatically selects the appropriate message based on validation state
 templ TextareaFeedback(props TextareaProps) {
-	if props.State == TextareaStateError && props.ErrorText != "" {
-		<p class="mt-2 text-sm text-red-600 dark:text-red-500">
+	// Determine which message to show based on state priority:
+	// Error > Success > Warning > Default help text
+	if props.State == StateError && props.ErrorText != "" {
+		<p class={ getFeedbackClasses(StateError) }>
 			<span class="font-medium">Error:</span> { props.ErrorText }
 		</p>
-	} else if props.State == TextareaStateSuccess && props.HelpText != "" {
-		<p class="mt-2 text-sm text-green-600 dark:text-green-500">
-			<span class="font-medium">Success:</span> { props.HelpText }
+	} else if props.State == StateSuccess && props.SuccessText != "" {
+		<p class={ getFeedbackClasses(StateSuccess) }>
+			<span class="font-medium">Success:</span> { props.SuccessText }
+		</p>
+	} else if props.State == StateWarning && props.WarningText != "" {
+		<p class={ getFeedbackClasses(StateWarning) }>
+			<span class="font-medium">Warning:</span> { props.WarningText }
 		</p>
 	} else if props.HelpText != "" {
-		<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+		<p class={ getFeedbackClasses(StateDefault) }>
 			{ props.HelpText }
 		</p>
 	}
 }
 
-// Helper functions
+// ============================================================================
+// HELPER FUNCTIONS - Generate CSS classes based on props and state
+// ============================================================================
+
+// getTextareaWrapperClasses returns classes for the outer container
 func getTextareaWrapperClasses(props TextareaProps) string {
-	classes := []string{"mb-5"}
-	
+	classes := []string{wrapperSpacing}
+
+	// Allow custom classes to be added
 	if props.Class != "" {
 		classes = append(classes, props.Class)
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
+// getTextareaLabelClasses generates label classes based on size, state, and position
 func getTextareaLabelClasses(props TextareaProps) string {
 	classes := []string{
 		"block",
-		"mb-2",
 		"font-medium",
+		legendSpacing, // Bottom margin
 	}
-	
-	// Add size-specific text classes
-	switch props.Size {
-	case TextareaSizeSM:
-		classes = append(classes, "text-xs")
-	case TextareaSizeLG:
-		classes = append(classes, "text-base")
-	default:
-		classes = append(classes, "text-sm")
-	}
-	
-	// Add state-specific colors
-	switch props.State {
-	case TextareaStateError:
-		classes = append(classes, "text-red-900", "dark:text-red-400")
-	case TextareaStateSuccess:
-		classes = append(classes, "text-green-900", "dark:text-green-400")
-	default:
-		classes = append(classes, "text-gray-900", "dark:text-white")
-	}
-	
-	return strings.Join(classes, " ")
-}
 
-func getTextareaClasses(props TextareaProps) string {
-	classes := []string{
-		"block",
-		"w-full",
-		"border",
-		"rounded-lg",
-		"focus:outline-none",
-		"transition-colors",
-		"duration-200",
+	// Add size-appropriate text class using our configuration map
+	if textSize, ok := labelTextSizes[props.ComponentSize]; ok {
+		classes = append(classes, textSize)
 	}
-	
-	// Add size classes
-	classes = append(classes, getTextareaSizeClasses(props.Size)...)
-	
-	// Add state-specific classes
-	classes = append(classes, getTextareaStateClasses(props.State)...)
-	
-	// Add resize classes
-	if !props.Resizable {
-		classes = append(classes, "resize-none")
-	} else {
-		classes = append(classes, "resize-y")
+
+	// Add state-specific colors from configuration
+	if colors, ok := labelColorSchemes[props.State]; ok {
+		classes = append(classes, colors...)
 	}
-	
-	// Add disabled classes
+
+	// Handle disabled state styling
 	if props.Disabled {
 		classes = append(classes, "opacity-50", "cursor-not-allowed")
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
-func getTextareaSizeClasses(size TextareaSize) []string {
-	switch size {
-	case TextareaSizeSM:
-		return []string{"p-2", "text-xs"}
-	case TextareaSizeLG:
-		return []string{"p-4", "text-base"}
-	default: // MD
-		return []string{"p-2.5", "text-sm"}
+// getTextareaClasses generates the main textarea element classes
+func getTextareaClasses(props TextareaProps) string {
+	classes := []string{textareaBaseClasses, textareaFocusClasses}
+
+	// Add size-specific dimensions from configuration
+	if dimensions, ok := textareaDimensions[props.ComponentSize]; ok {
+		classes = append(classes, dimensions...)
 	}
+
+	// Add state-specific color scheme from configuration
+	if colors, ok := stateColorSchemes[props.State]; ok {
+		classes = append(classes, colors...)
+	}
+
+	// Handle resize behavior
+	if props.Resizable {
+		classes = append(classes, textareaResizeClasses)
+	} else {
+		classes = append(classes, textareaNoResizeClasses)
+	}
+
+	// Handle disabled state
+	if props.Disabled {
+		classes = append(classes, textareaDisabledClasses)
+	}
+
+	return strings.Join(classes, " ")
 }
 
-func getTextareaStateClasses(state TextareaState) []string {
-	switch state {
-	case TextareaStateError:
-		return []string{
-			"bg-red-50",
-			"border-red-500",
-			"text-red-900",
-			"placeholder-red-700",
-			"focus:ring-red-500",
-			"focus:border-red-500",
-			"dark:bg-gray-700",
-			"dark:border-red-500",
-			"dark:placeholder-red-500",
-			"dark:text-red-500",
-			"dark:focus:ring-red-500",
-			"dark:focus:border-red-500",
-		}
-	case TextareaStateSuccess:
-		return []string{
-			"bg-green-50",
-			"border-green-500",
-			"text-green-900",
-			"placeholder-green-700",
-			"focus:ring-green-500",
-			"focus:border-green-500",
-			"dark:bg-gray-700",
-			"dark:border-green-500",
-			"dark:placeholder-green-500",
-			"dark:text-green-400",
-			"dark:focus:ring-green-500",
-			"dark:focus:border-green-500",
-		}
-	default:
-		return []string{
-			"bg-gray-50",
-			"border-gray-300",
-			"text-gray-900",
-			"focus:ring-blue-500",
-			"focus:border-blue-500",
-			"dark:bg-gray-700",
-			"dark:border-gray-600",
-			"dark:placeholder-gray-400",
-			"dark:text-white",
-			"dark:focus:ring-blue-500",
-			"dark:focus:border-blue-500",
-		}
-	}
+// ============================================================================
+// UTILITY FUNCTIONS FOR COMMON PATTERNS
+// ============================================================================
+
+// WithError returns a new TextareaProps with error state set
+// Useful for form validation scenarios
+func (p TextareaProps) WithError(errorText string) TextareaProps {
+	p.State = StateError
+	p.ErrorText = errorText
+	p.ShowValidation = true
+	p.AriaInvalid = true
+	return p
+}
+
+// WithSuccess returns a new TextareaProps with success state set
+func (p TextareaProps) WithSuccess(successText string) TextareaProps {
+	p.State = StateSuccess
+	p.SuccessText = successText
+	p.ShowValidation = true
+	return p
+}
+
+// WithWarning returns a new TextareaProps with warning state set
+func (p TextareaProps) WithWarning(warningText string) TextareaProps {
+	p.State = StateWarning
+	p.WarningText = warningText
+	p.ShowValidation = true
+	return p
+}
+
+// AsDisabled returns a new TextareaProps with disabled state
+func (p TextareaProps) AsDisabled() TextareaProps {
+	p.Disabled = true
+	return p
+}
+
+// AsRequired returns a new TextareaProps with required state
+func (p TextareaProps) AsRequired() TextareaProps {
+	p.Required = true
+	p.AriaRequired = true
+	return p
+}
+
+// AsReadOnly returns a new TextareaProps with readonly state
+func (p TextareaProps) AsReadOnly() TextareaProps {
+	p.ReadOnly = true
+	return p
+}
+
+// WithRows returns a new TextareaProps with specified row count
+func (p TextareaProps) WithRows(rows int) TextareaProps {
+	p.Rows = rows
+	return p
+}
+
+// WithCharacterLimit returns a new TextareaProps with character limits
+func (p TextareaProps) WithCharacterLimit(min, max int) TextareaProps {
+	p.MinLength = min
+	p.MaxLength = max
+	return p
 }

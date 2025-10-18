@@ -1,83 +1,150 @@
 package atoms
 
-import "strings"
-
-// ToggleSize defines the size of the toggle switch
-type ToggleSize string
-
-const (
-	ToggleSizeSM ToggleSize = "sm"
-	ToggleSizeMD ToggleSize = "md"
-	ToggleSizeLG ToggleSize = "lg"
+import (
+	"strings"
 )
 
-// ToggleState defines the validation state
-type ToggleState string
+// ============================================================================
+// DESIGN RATIONALE - TOGGLE COMPONENT
+// ============================================================================
+// Following the composition-based architecture established in checkbox.templ:
+//
+// 1. REUSABLE STRUCTS: Uses shared BaseProps, AccessibilityProps, etc.
+// 2. CONFIGURATION-DRIVEN: Size mapping, state color schemes, label positioning
+// 3. ALPINE.JS INTEGRATION: Proper x-on: syntax for event handling
+// 4. VALIDATION SUPPORT: Full validation state system with feedback
+// 5. ACCESSIBILITY: Comprehensive ARIA support and semantic checkbox input
+// 6. FLEXIBLE POSITIONING: Label left/right positioning with proper spacing
+// ============================================================================
 
-const (
-	ToggleStateDefault ToggleState = "default"
-	ToggleStateSuccess ToggleState = "success"
-	ToggleStateError   ToggleState = "error"
-)
-
-// ToggleProps defines the properties for the Toggle component
+// ToggleProps defines all properties for the Toggle component
+// Composed of shared structs plus toggle-specific fields
 type ToggleProps struct {
+	// Composition of shared property groups
+	BaseProps
+	AccessibilityProps
+	ValidationProps
+	InteractionProps
+	AlpineEventHandlers
+
 	// Content
-	Label       string `json:"label,omitempty"`
-	Value       string `json:"value,omitempty"`
-	HelpText    string `json:"helpText,omitempty"`
-	ErrorText   string `json:"errorText,omitempty"`
-	
-	// Toggle attributes
-	Name        string `json:"name,omitempty"`
-	Checked     bool   `json:"checked,omitempty"`
-	Required    bool   `json:"required,omitempty"`
-	Disabled    bool   `json:"disabled,omitempty"`
-	
-	// Styling
-	Size        ToggleSize  `json:"size"`
-	State       ToggleState `json:"state"`
-	
-	// Behavior
-	OnChange    string `json:"onchange,omitempty"`    // Alpine.js change handler
-	OnFocus     string `json:"onfocus,omitempty"`     // Alpine.js focus handler
-	OnBlur      string `json:"onblur,omitempty"`      // Alpine.js blur handler
-	
-	// HTML attributes
-	ID          string `json:"id,omitempty"`
-	Class       string `json:"class,omitempty"`
-	AriaLabel   string `json:"ariaLabel,omitempty"`
-	AriaDescribedBy string `json:"ariaDescribedBy,omitempty"`
-	DataTestID  string `json:"dataTestId,omitempty"`
-	
-	// Layout
-	LabelPosition string `json:"labelPosition,omitempty"` // "right" (default), "left"
-	
-	// Validation
-	ShowValidation bool `json:"showValidation,omitempty"`
+	Label string `json:"label,omitempty"`
+	Value string `json:"value,omitempty"`
+
+	// Toggle-specific attributes
+	Checked bool `json:"checked,omitempty"` // Toggle state
+
+	// Styling (toggle-specific)
+	ComponentSize Size          `json:"componentSize"` // Component sizing
+	LabelPosition LabelPosition `json:"labelPosition,omitempty"`
 }
 
-// Toggle renders a Flowbite-styled toggle switch
+// ============================================================================
+// CONFIGURATION CONSTANTS
+// ============================================================================
+
+// Toggle size dimensions and CSS pseudo-element styling
+var toggleDimensions = map[Size][]string{
+	SizeSM: {
+		"w-9", "h-5",
+		"after:content-['']", "after:absolute", "after:top-[2px]", "after:start-[2px]",
+		"after:bg-white", "after:border-gray-300", "after:border", "after:rounded-full",
+		"after:h-4", "after:w-4", "after:transition-all", "after:duration-200", "after:ease-in-out",
+		"peer-checked:after:translate-x-full", "rtl:peer-checked:after:-translate-x-full", "peer-checked:after:border-white",
+	},
+	SizeMD: {
+		"w-11", "h-6",
+		"after:content-['']", "after:absolute", "after:top-[2px]", "after:start-[2px]",
+		"after:bg-white", "after:border-gray-300", "after:border", "after:rounded-full",
+		"after:h-5", "after:w-5", "after:transition-all", "after:duration-200", "after:ease-in-out",
+		"peer-checked:after:translate-x-full", "rtl:peer-checked:after:-translate-x-full", "peer-checked:after:border-white",
+	},
+	SizeLG: {
+		"w-14", "h-7",
+		"after:content-['']", "after:absolute", "after:top-0.5", "after:start-[4px]",
+		"after:bg-white", "after:border-gray-300", "after:border", "after:rounded-full",
+		"after:h-6", "after:w-6", "after:transition-all", "after:duration-200", "after:ease-in-out",
+		"peer-checked:after:translate-x-full", "rtl:peer-checked:after:-translate-x-full", "peer-checked:after:border-white",
+	},
+}
+
+// Toggle state color schemes
+var toggleStateColorSchemes = map[State][]string{
+	StateDefault: {
+		"bg-gray-200", "peer-focus:ring-blue-300", "dark:bg-gray-700",
+		"peer-checked:bg-blue-600", "peer-checked:peer-focus:ring-blue-300", "dark:peer-focus:ring-blue-800",
+	},
+	StateSuccess: {
+		"bg-green-200", "peer-focus:ring-green-300", "dark:bg-green-700",
+		"peer-checked:bg-green-600", "peer-checked:peer-focus:ring-green-300",
+	},
+	StateError: {
+		"bg-red-200", "peer-focus:ring-red-300", "dark:bg-red-700",
+		"peer-checked:bg-red-600", "peer-checked:peer-focus:ring-red-300",
+	},
+	StateWarning: {
+		"bg-yellow-200", "peer-focus:ring-yellow-300", "dark:bg-yellow-700",
+		"peer-checked:bg-yellow-600", "peer-checked:peer-focus:ring-yellow-300",
+	},
+}
+
+// Toggle-specific styling constants
+const (
+	toggleBaseClasses = "relative rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800"
+	toggleInputClasses = "sr-only peer"
+	toggleLabelClasses = "relative inline-flex items-center"
+	toggleDisabledClasses = "opacity-50 cursor-not-allowed"
+)
+
+// ============================================================================
+// CONSTRUCTOR WITH SENSIBLE DEFAULTS
+// ============================================================================
+
+// NewToggle creates a new ToggleProps with sensible defaults
+// Example usage:
+// toggle := NewToggle("notifications", "Enable notifications")
+// toggle.Checked = true
+// toggle.ComponentSize = SizeLG
+func NewToggle(id, label string) ToggleProps {
+	return ToggleProps{
+		BaseProps: BaseProps{
+			ID: id,
+		},
+		Label:         label,
+		ComponentSize: SizeMD,
+		ValidationProps: ValidationProps{
+			State: StateDefault,
+		},
+		LabelPosition: LabelRight, // Default position for toggles
+	}
+}
+
+// NewToggleWithValue creates a toggle with initial state
+func NewToggleWithValue(id, label string, checked bool) ToggleProps {
+	props := NewToggle(id, label)
+	props.Checked = checked
+	return props
+}
+
+// ============================================================================
+// TEMPLATE COMPONENTS
+// ============================================================================
+
+// Toggle renders a fully-featured toggle switch with Flowbite styling
+// Supports validation states, sizes, Alpine.js events, and accessibility
 templ Toggle(props ToggleProps) {
 	<div class={ getToggleWrapperClasses(props) }>
 		<div class="flex items-center">
-			if props.LabelPosition == "left" && props.Label != "" {
-				<label 
-					if props.ID != "" {
-						for={ props.ID }
-					}
-					class={ getToggleLabelClasses(props, "left") }
-				>
-					{ props.Label }
-					if props.Required {
-						<span class="text-red-500 ml-1">*</span>
-					}
-				</label>
+			// Left-positioned label
+			if props.LabelPosition == LabelLeft && props.Label != "" {
+				@toggleLabel(props, "left")
 			}
 			
+			// Toggle switch control
 			<label class={ getToggleSwitchLabelClasses(props) }>
 				<input
 					type="checkbox"
+					// Base HTML attributes
 					if props.ID != "" {
 						id={ props.ID }
 					}
@@ -87,7 +154,9 @@ templ Toggle(props ToggleProps) {
 					if props.Value != "" {
 						value={ props.Value }
 					}
-					class="sr-only peer"
+					// Styling classes
+					class={ toggleInputClasses }
+					// Boolean states
 					if props.Checked {
 						checked
 					}
@@ -97,257 +166,231 @@ templ Toggle(props ToggleProps) {
 					if props.Disabled {
 						disabled
 					}
+					// Accessibility attributes
 					if props.AriaLabel != "" {
 						aria-label={ props.AriaLabel }
 					}
 					if props.AriaDescribedBy != "" {
 						aria-describedby={ props.AriaDescribedBy }
 					}
+					if props.AriaRequired {
+						aria-required="true"
+					}
+					if props.AriaInvalid {
+						aria-invalid="true"
+					}
+					// Testing
 					if props.DataTestID != "" {
 						data-testid={ props.DataTestID }
 					}
+					// Alpine.js event handlers (using correct x-on: syntax)
 					if props.OnChange != "" {
-						@change={ props.OnChange }
+						x-on:change={ props.OnChange }
 					}
 					if props.OnFocus != "" {
-						@focus={ props.OnFocus }
+						x-on:focus={ props.OnFocus }
 					}
 					if props.OnBlur != "" {
-						@blur={ props.OnBlur }
+						x-on:blur={ props.OnBlur }
+					}
+					if props.OnClick != "" {
+						x-on:click={ props.OnClick }
 					}
 				/>
+				// Toggle track (visual slider)
 				<div class={ getToggleTrackClasses(props) }></div>
 			</label>
 			
-			if props.LabelPosition != "left" && props.Label != "" {
-				<label 
-					if props.ID != "" {
-						for={ props.ID }
-					}
-					class={ getToggleLabelClasses(props, "right") }
-				>
-					{ props.Label }
-					if props.Required {
-						<span class="text-red-500 ml-1">*</span>
-					}
-				</label>
+			// Right-positioned label (default)
+			if props.LabelPosition != LabelLeft && props.Label != "" {
+				@toggleLabel(props, "right")
 			}
 		</div>
 		
-		if props.ShowValidation && (props.HelpText != "" || props.ErrorText != "") {
+		// Show validation feedback if enabled
+		if props.ShowValidation {
 			@ToggleFeedback(props)
 		}
 	</div>
 }
 
-// ToggleFeedback renders help text or error messages
+// toggleLabel renders the label with proper styling and required indicator
+templ toggleLabel(props ToggleProps, position string) {
+	<label
+		if props.ID != "" {
+			for={ props.ID }
+		}
+		class={ getToggleLabelClasses(props, position) }
+	>
+		{ props.Label }
+		// Visual indicator for required fields
+		if props.Required {
+			<span class="text-red-500 ml-1" aria-hidden="true">*</span>
+		}
+	</label>
+}
+
+// ToggleFeedback displays contextual help text or validation messages
+// Automatically selects the appropriate message based on validation state
 templ ToggleFeedback(props ToggleProps) {
-	if props.State == ToggleStateError && props.ErrorText != "" {
-		<p class="mt-2 text-sm text-red-600 dark:text-red-500">
+	// Determine which message to show based on state priority:
+	// Error > Success > Warning > Default help text
+	if props.State == StateError && props.ErrorText != "" {
+		<p class={ getFeedbackClasses(StateError) }>
 			<span class="font-medium">Error:</span> { props.ErrorText }
 		</p>
-	} else if props.State == ToggleStateSuccess && props.HelpText != "" {
-		<p class="mt-2 text-sm text-green-600 dark:text-green-500">
-			<span class="font-medium">Success:</span> { props.HelpText }
+	} else if props.State == StateSuccess && props.SuccessText != "" {
+		<p class={ getFeedbackClasses(StateSuccess) }>
+			<span class="font-medium">Success:</span> { props.SuccessText }
+		</p>
+	} else if props.State == StateWarning && props.WarningText != "" {
+		<p class={ getFeedbackClasses(StateWarning) }>
+			<span class="font-medium">Warning:</span> { props.WarningText }
 		</p>
 	} else if props.HelpText != "" {
-		<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+		<p class={ getFeedbackClasses(StateDefault) }>
 			{ props.HelpText }
 		</p>
 	}
 }
 
-// Helper functions
+// ============================================================================
+// HELPER FUNCTIONS - Generate CSS classes based on props and state
+// ============================================================================
+
+// getToggleWrapperClasses returns classes for the outer container
 func getToggleWrapperClasses(props ToggleProps) string {
-	classes := []string{"mb-4"}
-	
+	classes := []string{wrapperSpacing}
+
+	// Allow custom classes to be added
 	if props.Class != "" {
 		classes = append(classes, props.Class)
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
+// getToggleSwitchLabelClasses returns classes for the toggle switch label container
 func getToggleSwitchLabelClasses(props ToggleProps) string {
-	classes := []string{
-		"relative",
-		"inline-flex",
-		"items-center",
-	}
-	
+	classes := []string{toggleLabelClasses}
+
+	// Handle disabled state cursor
 	if props.Disabled {
 		classes = append(classes, "cursor-not-allowed")
 	} else {
 		classes = append(classes, "cursor-pointer")
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
+// getToggleLabelClasses generates label classes based on size, state, and position
 func getToggleLabelClasses(props ToggleProps, position string) string {
 	classes := []string{
 		"font-medium",
 		"select-none",
 	}
-	
-	// Add size-specific text classes
-	switch props.Size {
-	case ToggleSizeSM:
-		classes = append(classes, "text-xs")
-	case ToggleSizeLG:
-		classes = append(classes, "text-base")
-	default:
-		classes = append(classes, "text-sm")
+
+	// Add size-appropriate text class using our configuration map
+	if textSize, ok := labelTextSizes[props.ComponentSize]; ok {
+		classes = append(classes, textSize)
 	}
-	
+
 	// Add position-specific spacing
 	if position == "left" {
 		classes = append(classes, "me-3")
 	} else {
 		classes = append(classes, "ms-3")
 	}
-	
-	// Add state-specific colors
-	switch props.State {
-	case ToggleStateError:
-		classes = append(classes, "text-red-900", "dark:text-red-400")
-	case ToggleStateSuccess:
-		classes = append(classes, "text-green-900", "dark:text-green-400")
-	default:
-		classes = append(classes, "text-gray-900", "dark:text-gray-300")
+
+	// Add state-specific colors from configuration
+	if colors, ok := labelColorSchemes[props.State]; ok {
+		classes = append(classes, colors...)
 	}
-	
-	// Add disabled styling
+
+	// Handle disabled state styling
 	if props.Disabled {
-		classes = append(classes, "opacity-50", "cursor-not-allowed")
+		classes = append(classes, toggleDisabledClasses)
 	} else {
 		classes = append(classes, "cursor-pointer")
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
+// getToggleTrackClasses generates the toggle track element classes
 func getToggleTrackClasses(props ToggleProps) string {
-	baseClasses := []string{
-		"relative",
-		"rounded-full",
-		"transition-colors",
-		"duration-200",
-		"ease-in-out",
-		"focus:outline-none",
-		"focus:ring-4",
-		"focus:ring-offset-2",
-		"focus:ring-offset-white",
-		"dark:focus:ring-offset-gray-800",
+	classes := []string{toggleBaseClasses}
+
+	// Add size-specific dimensions and pseudo-element styling from configuration
+	if dimensions, ok := toggleDimensions[props.ComponentSize]; ok {
+		classes = append(classes, dimensions...)
 	}
-	
-	// Add size-specific classes
-	sizeClasses := getToggleSizeClasses(props.Size)
-	baseClasses = append(baseClasses, sizeClasses...)
-	
-	// Add state-specific classes
-	stateClasses := getToggleStateClasses(props.State)
-	baseClasses = append(baseClasses, stateClasses...)
-	
-	// Add disabled classes
+
+	// Add state-specific color scheme from configuration
+	if colors, ok := toggleStateColorSchemes[props.State]; ok {
+		classes = append(classes, colors...)
+	}
+
+	// Handle disabled state
 	if props.Disabled {
-		baseClasses = append(baseClasses, "opacity-50", "cursor-not-allowed")
+		classes = append(classes, toggleDisabledClasses)
 	}
-	
-	return strings.Join(baseClasses, " ")
+
+	return strings.Join(classes, " ")
 }
 
-func getToggleSizeClasses(size ToggleSize) []string {
-	switch size {
-	case ToggleSizeSM:
-		return []string{
-			"w-9", "h-5",
-			"after:content-['']",
-			"after:absolute",
-			"after:top-[2px]",
-			"after:start-[2px]",
-			"after:bg-white",
-			"after:border-gray-300",
-			"after:border",
-			"after:rounded-full",
-			"after:h-4",
-			"after:w-4",
-			"after:transition-all",
-			"after:duration-200",
-			"after:ease-in-out",
-			"peer-checked:after:translate-x-full",
-			"rtl:peer-checked:after:-translate-x-full",
-			"peer-checked:after:border-white",
-		}
-	case ToggleSizeLG:
-		return []string{
-			"w-14", "h-7",
-			"after:content-['']",
-			"after:absolute",
-			"after:top-0.5",
-			"after:start-[4px]",
-			"after:bg-white",
-			"after:border-gray-300",
-			"after:border",
-			"after:rounded-full",
-			"after:h-6",
-			"after:w-6",
-			"after:transition-all",
-			"after:duration-200",
-			"after:ease-in-out",
-			"peer-checked:after:translate-x-full",
-			"rtl:peer-checked:after:-translate-x-full",
-			"peer-checked:after:border-white",
-		}
-	default: // MD
-		return []string{
-			"w-11", "h-6",
-			"after:content-['']",
-			"after:absolute",
-			"after:top-[2px]",
-			"after:start-[2px]",
-			"after:bg-white",
-			"after:border-gray-300",
-			"after:border",
-			"after:rounded-full",
-			"after:h-5",
-			"after:w-5",
-			"after:transition-all",
-			"after:duration-200",
-			"after:ease-in-out",
-			"peer-checked:after:translate-x-full",
-			"rtl:peer-checked:after:-translate-x-full",
-			"peer-checked:after:border-white",
-		}
-	}
+// ============================================================================
+// UTILITY FUNCTIONS FOR COMMON PATTERNS
+// ============================================================================
+
+// WithError returns a new ToggleProps with error state set
+// Useful for form validation scenarios
+func (p ToggleProps) WithError(errorText string) ToggleProps {
+	p.State = StateError
+	p.ErrorText = errorText
+	p.ShowValidation = true
+	p.AriaInvalid = true
+	return p
 }
 
-func getToggleStateClasses(state ToggleState) []string {
-	switch state {
-	case ToggleStateError:
-		return []string{
-			"bg-red-200",
-			"peer-focus:ring-red-300",
-			"dark:bg-red-700",
-			"peer-checked:bg-red-600",
-			"peer-checked:peer-focus:ring-red-300",
-		}
-	case ToggleStateSuccess:
-		return []string{
-			"bg-green-200",
-			"peer-focus:ring-green-300",
-			"dark:bg-green-700",
-			"peer-checked:bg-green-600",
-			"peer-checked:peer-focus:ring-green-300",
-		}
-	default:
-		return []string{
-			"bg-gray-200",
-			"peer-focus:ring-blue-300",
-			"dark:bg-gray-700",
-			"peer-checked:bg-blue-600",
-			"peer-checked:peer-focus:ring-blue-300",
-			"dark:peer-focus:ring-blue-800",
-		}
-	}
+// WithSuccess returns a new ToggleProps with success state set
+func (p ToggleProps) WithSuccess(successText string) ToggleProps {
+	p.State = StateSuccess
+	p.SuccessText = successText
+	p.ShowValidation = true
+	return p
+}
+
+// WithWarning returns a new ToggleProps with warning state set
+func (p ToggleProps) WithWarning(warningText string) ToggleProps {
+	p.State = StateWarning
+	p.WarningText = warningText
+	p.ShowValidation = true
+	return p
+}
+
+// AsDisabled returns a new ToggleProps with disabled state
+func (p ToggleProps) AsDisabled() ToggleProps {
+	p.Disabled = true
+	return p
+}
+
+// AsRequired returns a new ToggleProps with required state
+func (p ToggleProps) AsRequired() ToggleProps {
+	p.Required = true
+	p.AriaRequired = true
+	return p
+}
+
+// AsChecked returns a new ToggleProps with checked state
+func (p ToggleProps) AsChecked() ToggleProps {
+	p.Checked = true
+	return p
+}
+
+// WithLabelPosition returns a new ToggleProps with specified label position
+func (p ToggleProps) WithLabelPosition(position LabelPosition) ToggleProps {
+	p.LabelPosition = position
+	return p
 }
