@@ -1,0 +1,387 @@
+package atoms
+
+import (
+	"strings"
+)
+
+// ============================================================================
+// DESIGN RATIONALE - DIVIDER COMPONENT
+// ============================================================================
+// Following the composition-based architecture established in checkbox.templ:
+//
+// 1. REUSABLE STRUCTS: Uses shared BaseProps, AccessibilityProps, etc.
+// 2. CONFIGURATION-DRIVEN: Orientation, thickness, color schemes
+// 3. ALPINE.JS INTEGRATION: Event handling for interactive dividers
+// 4. ACCESSIBILITY: Semantic role and ARIA attributes
+// 5. FLEXIBLE VARIANTS: Horizontal, vertical, with text, different styles
+// 6. SEMANTIC USAGE: Content separation, visual hierarchy
+// ============================================================================
+
+// DividerProps defines all properties for the Divider component
+// Composed of shared structs plus divider-specific fields
+type DividerProps struct {
+	// Composition of shared property groups
+	BaseProps
+	AccessibilityProps
+	InteractionProps
+	AlpineEventHandlers
+
+	// Content
+	Text string `json:"text,omitempty"` // Optional text content in divider
+
+	// Divider-specific attributes
+	Orientation string `json:"orientation,omitempty"` // "horizontal" or "vertical"
+	Color       string `json:"color,omitempty"`       // Color scheme
+	Variant     string `json:"variant,omitempty"`     // Visual style variant
+	Thickness   string `json:"thickness,omitempty"`   // Line thickness
+
+	// Divider-specific styling
+	ComponentSize Size `json:"componentSize"` // Component sizing (affects text and spacing)
+}
+
+// ============================================================================
+// CONFIGURATION CONSTANTS
+// ============================================================================
+
+// Divider color schemes
+var dividerColorSchemes = map[string][]string{
+	"gray":    {"border-gray-200", "dark:border-gray-700"},
+	"blue":    {"border-blue-200", "dark:border-blue-700"},
+	"red":     {"border-red-200", "dark:border-red-700"},
+	"green":   {"border-green-200", "dark:border-green-700"},
+	"yellow":  {"border-yellow-200", "dark:border-yellow-700"},
+	"indigo":  {"border-indigo-200", "dark:border-indigo-700"},
+	"purple":  {"border-purple-200", "dark:border-purple-700"},
+	"pink":    {"border-pink-200", "dark:border-pink-700"},
+	"default": {"border-gray-200", "dark:border-gray-700"},
+}
+
+// Divider text color schemes
+var dividerTextColorSchemes = map[string][]string{
+	"gray":    {"text-gray-500", "dark:text-gray-400"},
+	"blue":    {"text-blue-600", "dark:text-blue-400"},
+	"red":     {"text-red-600", "dark:text-red-400"},
+	"green":   {"text-green-600", "dark:text-green-400"},
+	"yellow":  {"text-yellow-600", "dark:text-yellow-400"},
+	"indigo":  {"text-indigo-600", "dark:text-indigo-400"},
+	"purple":  {"text-purple-600", "dark:text-purple-400"},
+	"pink":    {"text-pink-600", "dark:text-pink-400"},
+	"default": {"text-gray-500", "dark:text-gray-400"},
+}
+
+// Divider thickness options
+var dividerThickness = map[string][]string{
+	"thin":    {"border-t"},
+	"normal":  {"border-t-2"},
+	"thick":   {"border-t-4"},
+	"default": {"border-t"},
+}
+
+// Divider vertical thickness options
+var dividerVerticalThickness = map[string][]string{
+	"thin":    {"border-l"},
+	"normal":  {"border-l-2"},
+	"thick":   {"border-l-4"},
+	"default": {"border-l"},
+}
+
+// Divider text size dimensions
+var dividerTextSizes = map[Size][]string{
+	SizeSM: {"text-xs"},
+	SizeMD: {"text-sm"},
+	SizeLG: {"text-base"},
+}
+
+// Divider variant styles
+var dividerVariants = map[string][]string{
+	"solid":  {},
+	"dashed": {"border-dashed"},
+	"dotted": {"border-dotted"},
+	"double": {"border-double"},
+}
+
+// Divider base classes
+const (
+	dividerHorizontalClasses = "w-full"
+	dividerVerticalClasses   = "h-full"
+	dividerTextClasses       = "relative flex items-center"
+	dividerTextBgClasses     = "px-4 bg-white dark:bg-gray-900 font-medium"
+	dividerLineClasses       = "flex-1"
+)
+
+// ============================================================================
+// CONSTRUCTOR WITH SENSIBLE DEFAULTS
+// ============================================================================
+
+// NewDivider creates a new DividerProps with sensible defaults
+// Example usage:
+// divider := NewDivider()
+// divider.Color = "gray"
+// divider.Thickness = "normal"
+func NewDivider() DividerProps {
+	return DividerProps{
+		Orientation:   "horizontal",
+		Color:         "default",
+		Variant:       "solid",
+		Thickness:     "default",
+		ComponentSize: SizeMD,
+	}
+}
+
+// NewDividerWithText creates a divider with text content
+func NewDividerWithText(text string) DividerProps {
+	props := NewDivider()
+	props.Text = text
+	return props
+}
+
+// NewVerticalDivider creates a vertical divider
+func NewVerticalDivider() DividerProps {
+	props := NewDivider()
+	props.Orientation = "vertical"
+	return props
+}
+
+// ============================================================================
+// TEMPLATE COMPONENTS
+// ============================================================================
+
+// Divider renders a fully-featured divider with Flowbite styling
+// Supports various orientations, colors, variants, and text content
+templ Divider(props DividerProps) {
+	if props.Orientation == "vertical" {
+		<div
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			class={ getVerticalDividerClasses(props) }
+			role="separator"
+			aria-orientation="vertical"
+			if props.AriaLabel != "" {
+				aria-label={ props.AriaLabel }
+			}
+			if props.AriaDescribedBy != "" {
+				aria-describedby={ props.AriaDescribedBy }
+			}
+			if props.DataTestID != "" {
+				data-testid={ props.DataTestID }
+			}
+			if props.OnClick != "" {
+				x-on:click={ props.OnClick }
+			}
+		></div>
+	} else if props.Text != "" {
+		<div
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			class={ getTextDividerWrapperClasses(props) }
+			role="separator"
+			aria-orientation="horizontal"
+			if props.AriaLabel != "" {
+				aria-label={ props.AriaLabel }
+			}
+			if props.AriaDescribedBy != "" {
+				aria-describedby={ props.AriaDescribedBy }
+			}
+			if props.DataTestID != "" {
+				data-testid={ props.DataTestID }
+			}
+			if props.OnClick != "" {
+				x-on:click={ props.OnClick }
+			}
+		>
+			<div class={ getHorizontalDividerClasses(props) + " " + dividerLineClasses }></div>
+			<span class={ getTextDividerClasses(props) }>{ props.Text }</span>
+			<div class={ getHorizontalDividerClasses(props) + " " + dividerLineClasses }></div>
+		</div>
+	} else {
+		<hr
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			class={ getHorizontalDividerClasses(props) }
+			role="separator"
+			aria-orientation="horizontal"
+			if props.AriaLabel != "" {
+				aria-label={ props.AriaLabel }
+			}
+			if props.AriaDescribedBy != "" {
+				aria-describedby={ props.AriaDescribedBy }
+			}
+			if props.DataTestID != "" {
+				data-testid={ props.DataTestID }
+			}
+			if props.OnClick != "" {
+				x-on:click={ props.OnClick }
+			}
+		/>
+	}
+}
+
+// ============================================================================
+// HELPER FUNCTIONS - Generate CSS classes based on props and state
+// ============================================================================
+
+// getHorizontalDividerClasses generates classes for horizontal dividers
+func getHorizontalDividerClasses(props DividerProps) string {
+	classes := []string{dividerHorizontalClasses}
+
+	// Add thickness from configuration
+	if thickness, ok := dividerThickness[props.Thickness]; ok {
+		classes = append(classes, thickness...)
+	} else if thickness, ok := dividerThickness["default"]; ok {
+		classes = append(classes, thickness...)
+	}
+
+	// Add variant styling from configuration
+	if variants, ok := dividerVariants[props.Variant]; ok {
+		classes = append(classes, variants...)
+	}
+
+	// Add color scheme from configuration
+	if colors, ok := dividerColorSchemes[props.Color]; ok {
+		classes = append(classes, colors...)
+	} else if colors, ok := dividerColorSchemes["default"]; ok {
+		classes = append(classes, colors...)
+	}
+
+	// Allow custom classes to be added
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// getVerticalDividerClasses generates classes for vertical dividers
+func getVerticalDividerClasses(props DividerProps) string {
+	classes := []string{dividerVerticalClasses}
+
+	// Add thickness from configuration
+	if thickness, ok := dividerVerticalThickness[props.Thickness]; ok {
+		classes = append(classes, thickness...)
+	} else if thickness, ok := dividerVerticalThickness["default"]; ok {
+		classes = append(classes, thickness...)
+	}
+
+	// Add variant styling from configuration
+	if variants, ok := dividerVariants[props.Variant]; ok {
+		classes = append(classes, variants...)
+	}
+
+	// Add color scheme from configuration
+	if colors, ok := dividerColorSchemes[props.Color]; ok {
+		classes = append(classes, colors...)
+	} else if colors, ok := dividerColorSchemes["default"]; ok {
+		classes = append(classes, colors...)
+	}
+
+	// Allow custom classes to be added
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// getTextDividerWrapperClasses generates classes for text divider wrapper
+func getTextDividerWrapperClasses(props DividerProps) string {
+	classes := []string{dividerTextClasses}
+
+	// Allow custom classes to be added
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// getTextDividerClasses generates classes for divider text content
+func getTextDividerClasses(props DividerProps) string {
+	classes := []string{dividerTextBgClasses}
+
+	// Add size-appropriate text class
+	if textSize, ok := dividerTextSizes[props.ComponentSize]; ok {
+		classes = append(classes, textSize...)
+	}
+
+	// Add text color scheme from configuration
+	if colors, ok := dividerTextColorSchemes[props.Color]; ok {
+		classes = append(classes, colors...)
+	} else if colors, ok := dividerTextColorSchemes["default"]; ok {
+		classes = append(classes, colors...)
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS FOR COMMON PATTERNS
+// ============================================================================
+
+// WithColor returns a new DividerProps with color set
+func (p DividerProps) WithColor(color string) DividerProps {
+	p.Color = color
+	return p
+}
+
+// WithVariant returns a new DividerProps with variant set
+func (p DividerProps) WithVariant(variant string) DividerProps {
+	p.Variant = variant
+	return p
+}
+
+// WithThickness returns a new DividerProps with thickness set
+func (p DividerProps) WithThickness(thickness string) DividerProps {
+	p.Thickness = thickness
+	return p
+}
+
+// WithText returns a new DividerProps with text content
+func (p DividerProps) WithText(text string) DividerProps {
+	p.Text = text
+	return p
+}
+
+// AsVertical returns a new DividerProps with vertical orientation
+func (p DividerProps) AsVertical() DividerProps {
+	p.Orientation = "vertical"
+	return p
+}
+
+// AsHorizontal returns a new DividerProps with horizontal orientation
+func (p DividerProps) AsHorizontal() DividerProps {
+	p.Orientation = "horizontal"
+	return p
+}
+
+// AsDashed returns a new DividerProps with dashed variant
+func (p DividerProps) AsDashed() DividerProps {
+	p.Variant = "dashed"
+	return p
+}
+
+// AsDotted returns a new DividerProps with dotted variant
+func (p DividerProps) AsDotted() DividerProps {
+	p.Variant = "dotted"
+	return p
+}
+
+// AsDouble returns a new DividerProps with double variant
+func (p DividerProps) AsDouble() DividerProps {
+	p.Variant = "double"
+	return p
+}
+
+// AsThick returns a new DividerProps with thick thickness
+func (p DividerProps) AsThick() DividerProps {
+	p.Thickness = "thick"
+	return p
+}
+
+// AsThin returns a new DividerProps with thin thickness
+func (p DividerProps) AsThin() DividerProps {
+	p.Thickness = "thin"
+	return p
+}

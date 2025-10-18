@@ -1,277 +1,495 @@
-// Package atoms - Atomic UI components with schema integration
-// This package contains all atom-level components, their types, utilities, and schema integration
+// Package atoms provides atomic UI components with comprehensive type safety,
+// validation, and styling capabilities following Go best practices.
+//
+// Design Principles:
+// - Single source of truth for all component types
+// - Type safety through const enums
+// - Composition over inheritance
+// - Idiomatic Go patterns (builder, options)
+// - Thread-safe operations
+// - Zero external dependencies for core types
 package atoms
 
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/niiniyare/erp/web/components/atoms/css"
+	"sync/atomic"
 )
 
+// Version of the atoms package
+const Version = "2.0.0"
+
 // ============================================================================
-// ATOM COMPONENT TYPES
+// SIZE ENUMERATION
 // ============================================================================
 
-// BaseAtomProps provides common properties for all atom components
-type BaseAtomProps struct {
-	// Common properties
-	ID        string `json:"id,omitempty"`
-	ClassName string `json:"className,omitempty"`
-	TestID    string `json:"testId,omitempty"`
-
-	// State properties
-	Disabled bool `json:"disabled,omitempty"`
-	Hidden   bool `json:"hidden,omitempty"`
-
-	// Accessibility properties
-	AriaLabel       string `json:"ariaLabel,omitempty"`
-	AriaDescribedBy string `json:"ariaDescribedBy,omitempty"`
-	Role            string `json:"role,omitempty"`
-	TabIndex        int    `json:"tabIndex,omitempty"`
-}
-
-// ButtonProps defines properties for Button atom components
-type ButtonProps struct {
-	BaseAtomProps
-
-	// Content properties
-	Text  string `json:"text,omitempty"`
-	Label string `json:"label,omitempty"` // Alternative to Text
-	Icon  string `json:"icon,omitempty"`
-
-	// Styling properties
-	Variant string `json:"variant,omitempty"` // primary, secondary, success, danger, etc.
-	Size    string `json:"size,omitempty"`    // xs, sm, md, lg, xl
-	Block   bool   `json:"block,omitempty"`   // Full width button
-
-	// State properties
-	Loading bool `json:"loading,omitempty"`
-
-	// Button-specific properties
-	Type string `json:"type,omitempty"` // button, submit, reset
-	Form string `json:"form,omitempty"` // Associated form ID
-}
-
-// ButtonSize defines the size variants for buttons
-type ButtonSize string
+// Size defines component sizing options used across all visual components.
+// Use these constants instead of string literals for type safety.
+type Size string
 
 const (
-	ButtonSizeXS ButtonSize = "xs"
-	ButtonSizeSM ButtonSize = "sm"
-	ButtonSizeMD ButtonSize = "md"
-	ButtonSizeLG ButtonSize = "lg"
-	ButtonSizeXL ButtonSize = "xl"
+	SizeXS Size = "xs" // Extra small - 12px base
+	SizeSM Size = "sm" // Small - 14px base
+	SizeMD Size = "md" // Medium - 16px base (default)
+	SizeLG Size = "lg" // Large - 18px base
+	SizeXL Size = "xl" // Extra large - 20px base
 )
 
-// IconSize defines the size variants for icons
-type IconSize string
+// String returns the string representation of Size.
+func (s Size) String() string {
+	return string(s)
+}
 
-const (
-	IconSizeXS  IconSize = "xs"
-	IconSizeSM  IconSize = "sm"
-	IconSizeMD  IconSize = "md"
-	IconSizeLG  IconSize = "lg"
-	IconSizeXL  IconSize = "xl"
-	IconSize2XL IconSize = "2xl"
-)
-
-// ============================================================================
-// ATOM COMPONENT UTILITIES
-// ============================================================================
-
-// GetAtomCSS generates CSS for an atom component using the self-contained CSS factory
-func GetAtomCSS(componentType string, variant string) (*css.Styles, error) {
-	factory := css.NewFactory()
-
-	switch componentType {
-	case "button":
-		return factory.ButtonStyles(variant), nil
-	case "input":
-		return factory.InputStyles(variant), nil
-	case "checkbox":
-		return factory.CheckboxStyles(variant), nil
-	case "radio":
-		return factory.RadioStyles(variant), nil
-	case "select":
-		return factory.SelectStyles(variant), nil
-	case "textarea":
-		return factory.TextareaStyles(variant), nil
-	case "icon":
-		return factory.IconStyles(variant), nil
-	case "spinner":
-		return factory.SpinnerStyles(variant), nil
-	case "toggle":
-		return factory.ToggleStyles(variant), nil
-	default:
-		return css.NewStyles(), fmt.Errorf("unsupported component type: %s", componentType)
+// IsValid checks if the size value is valid.
+func (s Size) IsValid() bool {
+	switch s {
+	case SizeXS, SizeSM, SizeMD, SizeLG, SizeXL:
+		return true
 	}
+	return false
 }
 
-// CreateAtomFromJSON creates atom props from JSON configuration
-func CreateAtomFromJSON[T any](jsonData []byte) (T, error) {
-	var props T
-	err := json.Unmarshal(jsonData, &props)
-	return props, err
+// AllSizes returns all valid size options.
+func AllSizes() []Size {
+	return []Size{SizeXS, SizeSM, SizeMD, SizeLG, SizeXL}
 }
 
-// FromJSON creates atom props from JSON configuration
-func FromJSON[T any](jsonData []byte) (T, error) {
-	var props T
-	err := json.Unmarshal(jsonData, &props)
-	return props, err
+// ============================================================================
+// VALIDATION STATE ENUMERATION
+// ============================================================================
+
+// ValidationState defines the validation status of a form field.
+type ValidationState string
+
+const (
+	StateDefault ValidationState = "default" // Neutral state, no validation
+	StateSuccess ValidationState = "success" // Valid input, positive feedback
+	StateError   ValidationState = "error"   // Invalid input, error feedback
+	StateWarning ValidationState = "warning" // Valid but potentially problematic
+	StateInfo    ValidationState = "info"    // Informational feedback
+)
+
+// String returns the string representation of ValidationState.
+func (v ValidationState) String() string {
+	return string(v)
 }
 
-// ToJSON converts atom props to JSON
-func ToJSON[T any](props T) ([]byte, error) {
-	return json.Marshal(props)
+// IsValid checks if the validation state is valid.
+func (v ValidationState) IsValid() bool {
+	switch v {
+	case StateDefault, StateSuccess, StateError, StateWarning, StateInfo:
+		return true
+	}
+	return false
 }
 
-// ValidateAtomProps validates atom component properties
-func ValidateAtomProps(props any) error {
-	// Basic validation - can be extended with schema validation
+// IsError returns true if the state indicates an error.
+func (v ValidationState) IsError() bool {
+	return v == StateError
+}
+
+// IsSuccess returns true if the state indicates success.
+func (v ValidationState) IsSuccess() bool {
+	return v == StateSuccess
+}
+
+// AllValidationStates returns all valid validation states.
+func AllValidationStates() []ValidationState {
+	return []ValidationState{StateDefault, StateSuccess, StateError, StateWarning, StateInfo}
+}
+
+// ============================================================================
+// LABEL POSITION ENUMERATION
+// ============================================================================
+
+// LabelPosition defines where the label appears relative to the input.
+type LabelPosition string
+
+const (
+	LabelTop    LabelPosition = "top"    // Above input (default for text inputs)
+	LabelBottom LabelPosition = "bottom" // Below input (rare)
+	LabelLeft   LabelPosition = "left"   // Left of input (for inline forms)
+	LabelRight  LabelPosition = "right"  // Right of input (default for checkboxes)
+	LabelNone   LabelPosition = "none"   // No visible label (aria-label only)
+)
+
+// String returns the string representation of LabelPosition.
+func (l LabelPosition) String() string {
+	return string(l)
+}
+
+// ============================================================================
+// INPUT TYPE ENUMERATION
+// ============================================================================
+
+// InputType defines HTML input types for form elements.
+type InputType string
+
+const (
+	InputTypeText     InputType = "text"
+	InputTypeEmail    InputType = "email"
+	InputTypePassword InputType = "password"
+	InputTypeNumber   InputType = "number"
+	InputTypeTel      InputType = "tel"
+	InputTypeURL      InputType = "url"
+	InputTypeSearch   InputType = "search"
+	InputTypeDate     InputType = "date"
+	InputTypeTime     InputType = "time"
+	InputTypeDatetime InputType = "datetime-local"
+	InputTypeMonth    InputType = "month"
+	InputTypeWeek     InputType = "week"
+	InputTypeColor    InputType = "color"
+	InputTypeFile     InputType = "file"
+	InputTypeHidden   InputType = "hidden"
+	InputTypeRange    InputType = "range"
+	InputTypeCheckbox InputType = "checkbox"
+	InputTypeRadio    InputType = "radio"
+)
+
+// String returns the string representation of InputType.
+func (i InputType) String() string {
+	return string(i)
+}
+
+// GetAriaRole returns the appropriate ARIA role for the input type.
+func (i InputType) GetAriaRole() string {
+	roles := map[InputType]string{
+		InputTypeSearch: "searchbox",
+	}
+	if role, ok := roles[i]; ok {
+		return role
+	}
+	return "" // Use native role
+}
+
+// ============================================================================
+// VARIANT ENUMERATION
+// ============================================================================
+
+// Variant defines visual style variants for components.
+type Variant string
+
+const (
+	VariantDefault    Variant = "default"    // Standard styling
+	VariantOutlined   Variant = "outlined"   // Outlined/bordered
+	VariantFilled     Variant = "filled"     // Filled background
+	VariantGhost      Variant = "ghost"      // Minimal styling
+	VariantUnderlined Variant = "underlined" // Only bottom border
+	VariantSolid      Variant = "solid"      // Solid background
+)
+
+// String returns the string representation of Variant.
+func (v Variant) String() string {
+	return string(v)
+}
+
+// ============================================================================
+// COLOR SCHEME ENUMERATION
+// ============================================================================
+
+// ColorScheme defines color themes for components.
+type ColorScheme string
+
+const (
+	ColorDefault   ColorScheme = "default"   // Blue/primary colors
+	ColorPrimary   ColorScheme = "primary"   // Primary brand color
+	ColorSecondary ColorScheme = "secondary" // Secondary brand color
+	ColorSuccess   ColorScheme = "success"   // Green - success states
+	ColorDanger    ColorScheme = "danger"    // Red - error/danger states
+	ColorWarning   ColorScheme = "warning"   // Yellow/orange - warning states
+	ColorInfo      ColorScheme = "info"      // Blue - informational states
+	ColorGray      ColorScheme = "gray"      // Neutral gray
+	ColorNeutral   ColorScheme = "neutral"   // Alias for gray
+)
+
+// String returns the string representation of ColorScheme.
+func (c ColorScheme) String() string {
+	return string(c)
+}
+
+// ============================================================================
+// ICON POSITION ENUMERATION
+// ============================================================================
+
+// IconPosition defines where an icon appears relative to content.
+type IconPosition string
+
+const (
+	IconLeft   IconPosition = "left"
+	IconRight  IconPosition = "right"
+	IconTop    IconPosition = "top"
+	IconBottom IconPosition = "bottom"
+)
+
+// String returns the string representation of IconPosition.
+func (i IconPosition) String() string {
+	return string(i)
+}
+
+// ============================================================================
+// BREAKPOINT ENUMERATION
+// ============================================================================
+
+// Breakpoint represents responsive design breakpoints.
+type Breakpoint string
+
+const (
+	BreakpointSM  Breakpoint = "sm"  // 640px
+	BreakpointMD  Breakpoint = "md"  // 768px
+	BreakpointLG  Breakpoint = "lg"  // 1024px
+	BreakpointXL  Breakpoint = "xl"  // 1280px
+	BreakpointXXL Breakpoint = "2xl" // 1536px
+)
+
+// String returns the string representation of Breakpoint.
+func (b Breakpoint) String() string {
+	return string(b)
+}
+
+// ============================================================================
+// ID GENERATOR (Thread-Safe)
+// ============================================================================
+
+var idCounter int64
+
+// GenerateID generates a unique ID with the given prefix in a thread-safe manner.
+// Uses atomic operations to ensure uniqueness in concurrent environments.
+func GenerateID(prefix string) string {
+	id := atomic.AddInt64(&idCounter, 1)
+	return fmt.Sprintf("%s-%d", prefix, id)
+}
+
+// EnsureID returns the provided ID or generates one if empty.
+func EnsureID(id, prefix string) string {
+	if id != "" {
+		return id
+	}
+	return GenerateID(prefix)
+}
+
+// ResetIDCounter resets the ID counter (useful for testing).
+// WARNING: Not thread-safe, should only be used in tests.
+func ResetIDCounter() {
+	atomic.StoreInt64(&idCounter, 0)
+}
+
+// ============================================================================
+// COMPONENT TYPE REGISTRY
+// ============================================================================
+
+// ComponentType represents the type of atomic component.
+type ComponentType string
+
+const (
+	ComponentButton   ComponentType = "button"
+	ComponentInput    ComponentType = "input"
+	ComponentCheckbox ComponentType = "checkbox"
+	ComponentRadio    ComponentType = "radio"
+	ComponentSelect   ComponentType = "select"
+	ComponentTextarea ComponentType = "textarea"
+	ComponentIcon     ComponentType = "icon"
+	ComponentSpinner  ComponentType = "spinner"
+	ComponentToggle   ComponentType = "toggle"
+	ComponentLabel    ComponentType = "label"
+	ComponentBadge    ComponentType = "badge"
+	ComponentAvatar   ComponentType = "avatar"
+)
+
+// String returns the string representation of ComponentType.
+func (c ComponentType) String() string {
+	return string(c)
+}
+
+// ============================================================================
+// DATA ATTRIBUTES
+// ============================================================================
+
+// DataAttributes manages data-* attributes for components.
+// Provides a type-safe way to add custom data attributes.
+type DataAttributes map[string]string
+
+// NewDataAttributes creates a new DataAttributes map.
+func NewDataAttributes() DataAttributes {
+	return make(DataAttributes)
+}
+
+// Set adds or updates a data attribute.
+func (da DataAttributes) Set(key, value string) DataAttributes {
+	da[key] = value
+	return da
+}
+
+// Get retrieves a data attribute value.
+func (da DataAttributes) Get(key string) string {
+	return da[key]
+}
+
+// Has checks if a data attribute exists.
+func (da DataAttributes) Has(key string) bool {
+	_, exists := da[key]
+	return exists
+}
+
+// Delete removes a data attribute.
+func (da DataAttributes) Delete(key string) {
+	delete(da, key)
+}
+
+// ToAttributes converts to map with "data-" prefix for HTML rendering.
+func (da DataAttributes) ToAttributes() map[string]string {
+	attrs := make(map[string]string, len(da))
+	for key, value := range da {
+		attrs[fmt.Sprintf("data-%s", key)] = value
+	}
+	return attrs
+}
+
+// MarshalJSON implements json.Marshaler interface.
+func (da DataAttributes) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]string(da))
+}
+
+// UnmarshalJSON implements json.Unmarshaler interface.
+func (da *DataAttributes) UnmarshalJSON(data []byte) error {
+	m := make(map[string]string)
+	if err := json.Unmarshal(data, &m); err != nil {
+		return err
+	}
+	*da = m
 	return nil
 }
 
 // ============================================================================
-// COMPONENT FACTORIES AND HELPERS
+// RESPONSIVE VALUE
 // ============================================================================
 
-// GetButtonCSS generates CSS string for button component
-func GetButtonCSS(variant string) string {
-	if variant == "" {
-		variant = "primary"
-	}
-	factory := css.NewFactory()
-	styles := factory.ButtonStyles(variant)
-	return styles.ToCSS()
+// ResponsiveValue represents a value that can change at different breakpoints.
+// Useful for responsive design patterns like "w-full md:w-1/2 lg:w-1/3".
+type ResponsiveValue struct {
+	Base string                // Default value (mobile-first)
+	At   map[Breakpoint]string // Values at specific breakpoints
 }
 
-// GetButtonDisplayText returns the appropriate display text for button
-func GetButtonDisplayText(props ButtonProps) string {
-	if props.Text != "" {
-		return props.Text
-	}
-	if props.Label != "" {
-		return props.Label
-	}
-	return ""
-}
-
-// GetIconCSS generates CSS string for icon component
-func GetIconCSS(size, color string) string {
-	if size == "" {
-		size = "md"
-	}
-	factory := css.NewFactory()
-	styles := factory.IconStyles(size)
-	
-	// Apply color if specified
-	if color != "" {
-		styles.WithColor(color)
-	}
-	
-	return styles.ToCSS()
-}
-
-// GetInputCSS generates CSS string for input component
-func GetInputCSS(state string) string {
-	if state == "" {
-		state = "default"
-	}
-	factory := css.NewFactory()
-	styles := factory.InputStyles(state)
-	return styles.ToCSS()
-}
-
-// GetRadioCSS generates CSS string for radio component
-func GetRadioCSS(state string) string {
-	if state == "" {
-		state = "default"
-	}
-	factory := css.NewFactory()
-	styles := factory.RadioStyles(state)
-	return styles.ToCSS()
-}
-
-// ButtonFromJSON creates a ButtonProps from JSON configuration
-func ButtonFromJSON(jsonData []byte) (ButtonProps, error) {
-	var props ButtonProps
-	err := json.Unmarshal(jsonData, &props)
-	return props, err
-}
-
-// CreateButtonProps creates ButtonProps from configuration
-func CreateButtonProps(id, text, variant string) ButtonProps {
-	return ButtonProps{
-		BaseAtomProps: BaseAtomProps{
-			ID: id,
-		},
-		Text:    text,
-		Variant: variant,
+// NewResponsiveValue creates a new responsive value with a base value.
+func NewResponsiveValue(base string) *ResponsiveValue {
+	return &ResponsiveValue{
+		Base: base,
+		At:   make(map[Breakpoint]string),
 	}
 }
 
-// CheckboxFromJSON creates a CheckboxProps from JSON configuration
-func CheckboxFromJSON(jsonData []byte) (CheckboxProps, error) {
-	var props CheckboxProps
-	err := json.Unmarshal(jsonData, &props)
-	return props, err
+// AtBreakpoint sets a value for a specific breakpoint.
+func (rv *ResponsiveValue) AtBreakpoint(bp Breakpoint, value string) *ResponsiveValue {
+	rv.At[bp] = value
+	return rv
 }
 
-// InputFromJSON creates a InputProps from JSON configuration
-func InputFromJSON(jsonData []byte) (InputProps, error) {
-	var props InputProps
-	err := json.Unmarshal(jsonData, &props)
-	return props, err
-}
-
-// SelectFromJSON creates a SelectProps from JSON configuration
-func SelectFromJSON(jsonData []byte) (SelectProps, error) {
-	var props SelectProps
-	err := json.Unmarshal(jsonData, &props)
-	return props, err
-}
-
-// RadioFromJSON creates a RadioProps from JSON configuration
-func RadioFromJSON(jsonData []byte) (RadioProps, error) {
-	var props RadioProps
-	err := json.Unmarshal(jsonData, &props)
-	return props, err
-}
-
-// IconFromJSON creates a IconProps from JSON configuration
-func IconFromJSON(jsonData []byte) (IconProps, error) {
-	var props IconProps
-	err := json.Unmarshal(jsonData, &props)
-	return props, err
-}
-
-// SpinnerFromJSON creates a SpinnerProps from JSON configuration
-func SpinnerFromJSON(jsonData []byte) (SpinnerProps, error) {
-	var props SpinnerProps
-	err := json.Unmarshal(jsonData, &props)
-	return props, err
-}
-
-// TextareaFromJSON creates a TextareaProps from JSON configuration
-func TextareaFromJSON(jsonData []byte) (TextareaProps, error) {
-	var props TextareaProps
-	err := json.Unmarshal(jsonData, &props)
-	return props, err
-}
-
-// ToggleFromJSON creates a ToggleProps from JSON configuration
-func ToggleFromJSON(jsonData []byte) (ToggleProps, error) {
-	var props ToggleProps
-	err := json.Unmarshal(jsonData, &props)
-	return props, err
-}
-
-// helper function to safely extract string values from config
-func getStringFromConfig(config map[string]any, key string, defaultValue string) string {
-	if val, ok := config[key].(string); ok {
-		return val
+// ToClasses converts responsive value to Tailwind-style classes.
+// Example: "w-full md:w-1/2 lg:w-1/3"
+func (rv *ResponsiveValue) ToClasses() string {
+	if rv.Base == "" && len(rv.At) == 0 {
+		return ""
 	}
-	return defaultValue
+
+	classes := []string{rv.Base}
+
+	// Apply in ascending breakpoint order
+	breakpointOrder := []Breakpoint{BreakpointSM, BreakpointMD, BreakpointLG, BreakpointXL, BreakpointXXL}
+	for _, bp := range breakpointOrder {
+		if value, ok := rv.At[bp]; ok && value != "" {
+			classes = append(classes, fmt.Sprintf("%s:%s", bp, value))
+		}
+	}
+
+	return joinStrings(classes, " ")
+}
+
+// ============================================================================
+// RESPONSIVE SIZE
+// ============================================================================
+
+// ResponsiveSize allows different sizes at different breakpoints.
+type ResponsiveSize struct {
+	Base Size
+	At   map[Breakpoint]Size
+}
+
+// NewResponsiveSize creates a responsive size configuration.
+func NewResponsiveSize(base Size) *ResponsiveSize {
+	return &ResponsiveSize{
+		Base: base,
+		At:   make(map[Breakpoint]Size),
+	}
+}
+
+// AtBreakpoint sets size for specific breakpoint.
+func (rs *ResponsiveSize) AtBreakpoint(bp Breakpoint, size Size) *ResponsiveSize {
+	rs.At[bp] = size
+	return rs
+}
+
+// GetCurrentSize returns the size for a given breakpoint (or base if not specified).
+func (rs *ResponsiveSize) GetCurrentSize(bp Breakpoint) Size {
+	if size, ok := rs.At[bp]; ok {
+		return size
+	}
+	return rs.Base
+}
+
+// ============================================================================
+// JSON HELPERS
+// ============================================================================
+
+// ToJSON converts any value to JSON bytes.
+func ToJSON(v interface{}) ([]byte, error) {
+	return json.Marshal(v)
+}
+
+// FromJSON converts JSON bytes to a value.
+func FromJSON(data []byte, v interface{}) error {
+	return json.Unmarshal(data, v)
+}
+
+// ToJSONString converts any value to a JSON string.
+func ToJSONString(v interface{}) string {
+	data, err := json.Marshal(v)
+	if err != nil {
+		return "{}"
+	}
+	return string(data)
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+// joinStrings joins non-empty strings with a separator.
+func joinStrings(parts []string, sep string) string {
+	var result []string
+	for _, part := range parts {
+		if part != "" {
+			result = append(result, part)
+		}
+	}
+	if len(result) == 0 {
+		return ""
+	}
+
+	// Manual join to avoid importing strings package
+	if len(result) == 1 {
+		return result[0]
+	}
+
+	n := len(sep) * (len(result) - 1)
+	for _, s := range result {
+		n += len(s)
+	}
+
+	b := make([]byte, n)
+	bp := copy(b, result[0])
+	for _, s := range result[1:] {
+		bp += copy(b[bp:], sep)
+		bp += copy(b[bp:], s)
+	}
+	return string(b)
 }

@@ -1,305 +1,384 @@
 package atoms
 
-import "strings"
-
-// SelectSize defines the size of the select
-type SelectSize string
-
-const (
-	SelectSizeSM SelectSize = "sm"
-	SelectSizeMD SelectSize = "md"
-	SelectSizeLG SelectSize = "lg"
+import (
+	"strconv"
+	"strings"
 )
 
-// SelectState defines the validation state
-type SelectState string
+// ============================================================================
+// DESIGN RATIONALE - SELECT COMPONENT
+// ============================================================================
+// Following the composition-based architecture established in checkbox.templ:
+//
+// 1. REUSABLE STRUCTS: Uses shared BaseProps, AccessibilityProps, etc.
+// 2. CONFIGURATION-DRIVEN: Option groups, styling maps, constants
+// 3. ALPINE.JS INTEGRATION: Proper x-on: syntax for event handling
+// 4. VALIDATION SUPPORT: Full validation state system
+// 5. ACCESSIBILITY: Comprehensive ARIA support for select elements
+// 6. FLEXIBLE OPTIONS: Support for option groups, disabled options, custom values
+// ============================================================================
 
-const (
-	SelectStateDefault SelectState = "default"
-	SelectStateSuccess SelectState = "success"
-	SelectStateError   SelectState = "error"
-)
-
-// SelectOption represents a single option in the select
-type SelectOption struct {
-	Value    string `json:"value"`
-	Label    string `json:"label"`
-	Disabled bool   `json:"disabled,omitempty"`
-	Selected bool   `json:"selected,omitempty"`
-}
-
-// SelectOptGroup represents an option group
-type SelectOptGroup struct {
-	Label   string         `json:"label"`
-	Options []SelectOption `json:"options"`
-}
-
-// SelectProps defines the properties for the Select component
+// SelectProps defines all properties for the Select component
+// Composed of shared structs plus select-specific fields
 type SelectProps struct {
+	// Composition of shared property groups
+	BaseProps
+	AccessibilityProps
+	ValidationProps
+	InteractionProps
+	AlpineEventHandlers
+
 	// Content
-	Label       string           `json:"label,omitempty"`
-	Value       string           `json:"value,omitempty"`
-	Placeholder string           `json:"placeholder,omitempty"`
-	HelpText    string           `json:"helpText,omitempty"`
-	ErrorText   string           `json:"errorText,omitempty"`
-	Options     []SelectOption   `json:"options,omitempty"`
-	OptGroups   []SelectOptGroup `json:"optGroups,omitempty"`
-	
-	// Select attributes
-	Name        string `json:"name,omitempty"`
-	Required    bool   `json:"required,omitempty"`
-	Disabled    bool   `json:"disabled,omitempty"`
-	Multiple    bool   `json:"multiple,omitempty"`
-	Size        int    `json:"size,omitempty"` // HTML size attribute for multiple
-	
-	// Styling
-	SelectSize  SelectSize  `json:"selectSize"`
-	State       SelectState `json:"state"`
-	
-	// Behavior
-	OnChange    string `json:"onchange,omitempty"`    // Alpine.js change handler
-	OnFocus     string `json:"onfocus,omitempty"`     // Alpine.js focus handler
-	OnBlur      string `json:"onblur,omitempty"`      // Alpine.js blur handler
-	
-	// HTML attributes
-	ID          string `json:"id,omitempty"`
-	Class       string `json:"class,omitempty"`
-	AriaLabel   string `json:"ariaLabel,omitempty"`
-	AriaDescribedBy string `json:"ariaDescribedBy,omitempty"`
-	DataTestID  string `json:"dataTestId,omitempty"`
-	
-	// Validation
-	ShowValidation bool `json:"showValidation,omitempty"`
+	Label       string        `json:"label,omitempty"`
+	Placeholder string        `json:"placeholder,omitempty"`
+	Options     []SelectOption `json:"options"`
+	Value       string        `json:"value,omitempty"`
+
+	// Select-specific attributes
+	Multiple bool `json:"multiple,omitempty"`
+	Size     int  `json:"size,omitempty"` // For multiple selects, how many options to show
+
+	// Styling (select-specific)
+	ComponentSize Size          `json:"componentSize"` // Component sizing
+	LabelPosition LabelPosition `json:"labelPosition,omitempty"`
 }
 
-// Select renders a Flowbite-styled select with various sizes and states
+// SelectOption represents a single option or optgroup
+type SelectOption struct {
+	Value    string         `json:"value,omitempty"`
+	Label    string         `json:"label"`
+	Disabled bool          `json:"disabled,omitempty"`
+	Selected bool          `json:"selected,omitempty"`
+	Group    string        `json:"group,omitempty"`    // For optgroup functionality
+	Children []SelectOption `json:"children,omitempty"` // For nested optgroups
+}
+
+// ============================================================================
+// CONFIGURATION CONSTANTS
+// ============================================================================
+
+// Select-specific sizing (height and padding adjustments)
+var selectDimensions = map[Size][]string{
+	SizeSM: {"py-1", "px-2", "text-xs"},
+	SizeMD: {"py-2", "px-3", "text-sm"},
+	SizeLG: {"py-3", "px-4", "text-base"},
+}
+
+// Select-specific styling constants
+const (
+	selectBaseClasses      = "block w-full border rounded-lg focus:outline-none transition-colors duration-200 bg-white dark:bg-gray-800"
+	selectDisabledClasses  = "opacity-50 cursor-not-allowed"
+	selectFocusClasses     = "focus:ring-3"
+	selectMultipleClasses  = "multiple"
+	selectArrowPadding     = "pr-8" // Space for dropdown arrow
+)
+
+// Icon for dropdown arrow (SVG)
+const selectDropdownArrow = `<svg class="w-4 h-4 ml-2 -mr-1" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>`
+
+// ============================================================================
+// CONSTRUCTOR WITH SENSIBLE DEFAULTS
+// ============================================================================
+
+// NewSelect creates a new SelectProps with sensible defaults
+// Example usage:
+// select := NewSelect("country", "Select Country", countryOptions)
+// select.Required = true
+// select.ComponentSize = SizeLG
+func NewSelect(id, label string, options []SelectOption) SelectProps {
+	return SelectProps{
+		BaseProps: BaseProps{
+			ID: id,
+		},
+		Label:   label,
+		Options: options,
+		ComponentSize: SizeMD, // Default to medium size
+		ValidationProps: ValidationProps{
+			State: StateDefault, // Default to neutral state
+		},
+		LabelPosition: LabelTop, // Conventional position for selects
+	}
+}
+
+// NewSelectWithValue is a convenience constructor that also sets the selected value
+func NewSelectWithValue(id, label string, options []SelectOption, value string) SelectProps {
+	props := NewSelect(id, label, options)
+	props.Value = value
+	return props
+}
+
+// ============================================================================
+// TEMPLATE COMPONENTS
+// ============================================================================
+
+// Select renders a fully-featured select dropdown with Flowbite styling
+// Supports validation states, sizes, Alpine.js events, and accessibility
 templ Select(props SelectProps) {
 	<div class={ getSelectWrapperClasses(props) }>
-		if props.Label != "" {
-			<label 
-				if props.ID != "" {
-					for={ props.ID }
-				}
-				class={ getSelectLabelClasses(props) }
-			>
-				{ props.Label }
-				if props.Required {
-					<span class="text-red-500 ml-1">*</span>
-				}
-			</label>
+		// Render label if specified and position is top
+		if props.LabelPosition != LabelNone && props.Label != "" {
+			@selectLabel(props)
 		}
-		<select
-			if props.ID != "" {
-				id={ props.ID }
-			}
-			if props.Name != "" {
-				name={ props.Name }
-			}
-			class={ getSelectClasses(props) }
-			if props.Required {
-				required
-			}
-			if props.Disabled {
-				disabled
-			}
-			if props.Multiple {
-				multiple
-			}
-			if props.Size > 0 && props.Multiple {
-				size={ string(rune(props.Size)) }
-			}
-			if props.AriaLabel != "" {
-				aria-label={ props.AriaLabel }
-			}
-			if props.AriaDescribedBy != "" {
-				aria-describedby={ props.AriaDescribedBy }
-			}
-			if props.DataTestID != "" {
-				data-testid={ props.DataTestID }
-			}
-			if props.OnChange != "" {
-				@change={ props.OnChange }
-			}
-			if props.OnFocus != "" {
-				@focus={ props.OnFocus }
-			}
-			if props.OnBlur != "" {
-				@blur={ props.OnBlur }
-			}
-		>
-			if props.Placeholder != "" && !props.Multiple {
-				<option value="" disabled selected>{ props.Placeholder }</option>
-			}
-			
-			if len(props.OptGroups) > 0 {
-				for _, group := range props.OptGroups {
-					<optgroup label={ group.Label }>
-						for _, option := range group.Options {
-							@SelectOptionElement(option, props.Value)
-						}
-					</optgroup>
+
+		// Container for select and dropdown arrow
+		<div class="relative">
+			<select
+				if props.ID != "" {
+					id={ props.ID }
 				}
-			} else {
-				for _, option := range props.Options {
-					@SelectOptionElement(option, props.Value)
+				if props.Name != "" {
+					name={ props.Name }
 				}
+				class={ getSelectClasses(props) }
+				if props.Required {
+					required
+				}
+				if props.Disabled {
+					disabled
+				}
+				if props.ReadOnly {
+					readonly
+				}
+				if props.Multiple {
+					multiple
+				}
+				if props.Size > 0 && props.Multiple {
+					size={ strconv.Itoa(props.Size) }
+				}
+				if props.AriaLabel != "" {
+					aria-label={ props.AriaLabel }
+				}
+				if props.AriaDescribedBy != "" {
+					aria-describedby={ props.AriaDescribedBy }
+				}
+				if props.AriaRequired {
+					aria-required="true"
+				}
+				if props.AriaInvalid {
+					aria-invalid="true"
+				}
+				if props.DataTestID != "" {
+					data-testid={ props.DataTestID }
+				}
+				if props.OnChange != "" {
+					x-on:change={ props.OnChange }
+				}
+				if props.OnFocus != "" {
+					x-on:focus={ props.OnFocus }
+				}
+				if props.OnBlur != "" {
+					x-on:blur={ props.OnBlur }
+				}
+				if props.OnClick != "" {
+					x-on:click={ props.OnClick }
+				}
+			>
+				if props.Placeholder != "" {
+					<option value="" disabled if props.Value == "" { selected }>{ props.Placeholder }</option>
+				}
+				@renderSelectOptions(props.Options, props.Value)
+			</select>
+
+			// Dropdown arrow (only for single selects)
+			if !props.Multiple {
+				<div class="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+					@templ.Raw(selectDropdownArrow)
+				</div>
 			}
-		</select>
-		if props.ShowValidation && (props.HelpText != "" || props.ErrorText != "") {
+		</div>
+
+		// Show validation feedback if enabled
+		if props.ShowValidation {
 			@SelectFeedback(props)
 		}
 	</div>
 }
 
-// SelectOptionElement renders a single option element
-templ SelectOptionElement(option SelectOption, selectedValue string) {
-	<option 
-		value={ option.Value }
-		if option.Disabled {
-			disabled
+// selectLabel renders the label with proper styling and required indicator
+templ selectLabel(props SelectProps) {
+	<label
+		if props.ID != "" {
+			for={ props.ID }
 		}
-		if option.Selected || option.Value == selectedValue {
-			selected
-		}
+		class={ getSelectLabelClasses(props) }
 	>
-		{ option.Label }
-	</option>
+		{ props.Label }
+		// Visual indicator for required fields
+		if props.Required {
+			<span class="text-red-500 ml-1" aria-hidden="true">*</span>
+		}
+	</label>
 }
 
-// SelectFeedback renders help text or error messages
+// renderSelectOptions handles both flat options and optgroups
+templ renderSelectOptions(options []SelectOption, selectedValue string) {
+	for _, option := range options {
+		if len(option.Children) > 0 {
+			// This is an optgroup
+			<optgroup label={ option.Label } if option.Disabled { disabled }>
+				@renderSelectOptions(option.Children, selectedValue)
+			</optgroup>
+		} else {
+			// This is a regular option
+			<option
+				value={ option.Value }
+				if option.Disabled {
+					disabled
+				}
+				if option.Selected || option.Value == selectedValue {
+					selected
+				}
+			>
+				{ option.Label }
+			</option>
+		}
+	}
+}
+
+// SelectFeedback displays contextual help text or validation messages
+// Automatically selects the appropriate message based on validation state
 templ SelectFeedback(props SelectProps) {
-	if props.State == SelectStateError && props.ErrorText != "" {
-		<p class="mt-2 text-sm text-red-600 dark:text-red-500">
+	// Determine which message to show based on state priority:
+	// Error > Success > Warning > Default help text
+	if props.State == StateError && props.ErrorText != "" {
+		<p class={ getFeedbackClasses(StateError) }>
 			<span class="font-medium">Error:</span> { props.ErrorText }
 		</p>
-	} else if props.State == SelectStateSuccess && props.HelpText != "" {
-		<p class="mt-2 text-sm text-green-600 dark:text-green-500">
-			<span class="font-medium">Success:</span> { props.HelpText }
+	} else if props.State == StateSuccess && props.SuccessText != "" {
+		<p class={ getFeedbackClasses(StateSuccess) }>
+			<span class="font-medium">Success:</span> { props.SuccessText }
+		</p>
+	} else if props.State == StateWarning && props.WarningText != "" {
+		<p class={ getFeedbackClasses(StateWarning) }>
+			<span class="font-medium">Warning:</span> { props.WarningText }
 		</p>
 	} else if props.HelpText != "" {
-		<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+		<p class={ getFeedbackClasses(StateDefault) }>
 			{ props.HelpText }
 		</p>
 	}
 }
 
-// Helper functions
+// ============================================================================
+// HELPER FUNCTIONS - Generate CSS classes based on props and state
+// ============================================================================
+
+// getSelectWrapperClasses returns classes for the outer container
 func getSelectWrapperClasses(props SelectProps) string {
-	classes := []string{"mb-5"}
-	
+	classes := []string{wrapperSpacing}
+
+	// Allow custom classes to be added
 	if props.Class != "" {
 		classes = append(classes, props.Class)
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
+// getSelectLabelClasses generates label classes based on size, state, and position
 func getSelectLabelClasses(props SelectProps) string {
 	classes := []string{
 		"block",
-		"mb-2",
 		"font-medium",
+		legendSpacing, // Bottom margin
 	}
-	
-	// Add size-specific text classes
-	switch props.SelectSize {
-	case SelectSizeSM:
-		classes = append(classes, "text-xs")
-	case SelectSizeLG:
-		classes = append(classes, "text-base")
-	default:
-		classes = append(classes, "text-sm")
-	}
-	
-	// Add state-specific colors
-	switch props.State {
-	case SelectStateError:
-		classes = append(classes, "text-red-900", "dark:text-red-400")
-	case SelectStateSuccess:
-		classes = append(classes, "text-green-900", "dark:text-green-400")
-	default:
-		classes = append(classes, "text-gray-900", "dark:text-white")
-	}
-	
-	return strings.Join(classes, " ")
-}
 
-func getSelectClasses(props SelectProps) string {
-	classes := []string{
-		"block",
-		"w-full",
-		"border",
-		"rounded-lg",
-		"focus:outline-none",
-		"transition-colors",
-		"duration-200",
+	// Add size-appropriate text class using our configuration map
+	if textSize, ok := labelTextSizes[props.ComponentSize]; ok {
+		classes = append(classes, textSize)
 	}
-	
-	// Add size classes
-	classes = append(classes, getSelectSizeClasses(props.SelectSize)...)
-	
-	// Add state-specific classes
-	classes = append(classes, getSelectStateClasses(props.State)...)
-	
-	// Add disabled classes
+
+	// Add state-specific colors from configuration
+	if colors, ok := labelColorSchemes[props.State]; ok {
+		classes = append(classes, colors...)
+	}
+
+	// Handle disabled state styling
 	if props.Disabled {
 		classes = append(classes, "opacity-50", "cursor-not-allowed")
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
-func getSelectSizeClasses(size SelectSize) []string {
-	switch size {
-	case SelectSizeSM:
-		return []string{"p-2", "text-xs"}
-	case SelectSizeLG:
-		return []string{"p-4", "text-base"}
-	default: // MD
-		return []string{"p-2.5", "text-sm"}
+// getSelectClasses generates the main select element classes
+func getSelectClasses(props SelectProps) string {
+	classes := []string{selectBaseClasses, selectFocusClasses}
+
+	// Add size-specific dimensions from configuration
+	if dimensions, ok := selectDimensions[props.ComponentSize]; ok {
+		classes = append(classes, dimensions...)
 	}
+
+	// Add dropdown arrow padding for single selects
+	if !props.Multiple {
+		classes = append(classes, selectArrowPadding)
+	}
+
+	// Add state-specific color scheme from configuration
+	if colors, ok := stateColorSchemes[props.State]; ok {
+		classes = append(classes, colors...)
+	}
+
+	// Handle disabled state
+	if props.Disabled {
+		classes = append(classes, selectDisabledClasses)
+	}
+
+	// Handle multiple select styling
+	if props.Multiple {
+		classes = append(classes, selectMultipleClasses)
+	}
+
+	return strings.Join(classes, " ")
 }
 
-func getSelectStateClasses(state SelectState) []string {
-	switch state {
-	case SelectStateError:
-		return []string{
-			"bg-red-50",
-			"border-red-500",
-			"text-red-900",
-			"focus:ring-red-500",
-			"focus:border-red-500",
-			"dark:bg-gray-700",
-			"dark:border-red-500",
-			"dark:text-red-500",
-			"dark:focus:ring-red-500",
-			"dark:focus:border-red-500",
-		}
-	case SelectStateSuccess:
-		return []string{
-			"bg-green-50",
-			"border-green-500",
-			"text-green-900",
-			"focus:ring-green-500",
-			"focus:border-green-500",
-			"dark:bg-gray-700",
-			"dark:border-green-500",
-			"dark:text-green-400",
-			"dark:focus:ring-green-500",
-			"dark:focus:border-green-500",
-		}
-	default:
-		return []string{
-			"bg-gray-50",
-			"border-gray-300",
-			"text-gray-900",
-			"focus:ring-blue-500",
-			"focus:border-blue-500",
-			"dark:bg-gray-700",
-			"dark:border-gray-600",
-			"dark:text-white",
-			"dark:focus:ring-blue-500",
-			"dark:focus:border-blue-500",
-		}
-	}
+// ============================================================================
+// UTILITY FUNCTIONS FOR COMMON PATTERNS
+// ============================================================================
+
+// WithError returns a new SelectProps with error state set
+// Useful for form validation scenarios
+func (p SelectProps) WithError(errorText string) SelectProps {
+	p.State = StateError
+	p.ErrorText = errorText
+	p.ShowValidation = true
+	p.AriaInvalid = true
+	return p
+}
+
+// WithSuccess returns a new SelectProps with success state set
+func (p SelectProps) WithSuccess(successText string) SelectProps {
+	p.State = StateSuccess
+	p.SuccessText = successText
+	p.ShowValidation = true
+	return p
+}
+
+// WithWarning returns a new SelectProps with warning state set
+func (p SelectProps) WithWarning(warningText string) SelectProps {
+	p.State = StateWarning
+	p.WarningText = warningText
+	p.ShowValidation = true
+	return p
+}
+
+// AsDisabled returns a new SelectProps with disabled state
+func (p SelectProps) AsDisabled() SelectProps {
+	p.Disabled = true
+	return p
+}
+
+// AsRequired returns a new SelectProps with required state
+func (p SelectProps) AsRequired() SelectProps {
+	p.Required = true
+	p.AriaRequired = true
+	return p
+}
+
+// AsMultiple returns a new SelectProps configured for multiple selection
+func (p SelectProps) AsMultiple(size int) SelectProps {
+	p.Multiple = true
+	p.Size = size
+	return p
 }
