@@ -160,29 +160,23 @@ func NewIndeterminateProgress(label string) ProgressProps {
 // Supports various colors, variants, sizes, and animation features
 templ Progress(props ProgressProps) {
 	<div
-		// Base HTML attributes
 		if props.ID != "" {
 			id={ props.ID }
 		}
-		// Styling classes
 		class={ getProgressWrapperClasses(props) }
-		// Accessibility attributes
 		if props.AriaLabel != "" {
 			aria-label={ props.AriaLabel }
 		}
 		if props.AriaDescribedBy != "" {
 			aria-describedby={ props.AriaDescribedBy }
 		}
-		// Testing
 		if props.DataTestID != "" {
 			data-testid={ props.DataTestID }
 		}
-		// Alpine.js event handlers (using correct x-on: syntax)
 		if props.OnClick != "" {
 			x-on:click={ props.OnClick }
 		}
 	>
-		// Progress label and percentage
 		if props.LabelPosition != LabelNone && (props.Label != "" || props.ShowPercent) {
 			<div class={ progressLabelClasses }>
 				if props.Label != "" {
@@ -193,8 +187,6 @@ templ Progress(props ProgressProps) {
 				}
 			</div>
 		}
-
-		// Progress bar container
 		<div
 			class={ getProgressContainerClasses(props) }
 			role="progressbar"
@@ -202,7 +194,6 @@ templ Progress(props ProgressProps) {
 			aria-valuemin={ strconv.FormatFloat(props.Min, 'f', -1, 64) }
 			aria-valuemax={ strconv.FormatFloat(props.Max, 'f', -1, 64) }
 		>
-			// Progress bar fill
 			<div
 				class={ getProgressBarClasses(props) }
 				style={ getProgressBarStyle(props) }

@@ -8,64 +8,138 @@ package atoms
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "strings"
-
-// ToggleSize defines the size of the toggle switch
-type ToggleSize string
-
-const (
-	ToggleSizeSM ToggleSize = "sm"
-	ToggleSizeMD ToggleSize = "md"
-	ToggleSizeLG ToggleSize = "lg"
+import (
+	"strings"
 )
 
-// ToggleState defines the validation state
-type ToggleState string
+// ============================================================================
+// DESIGN RATIONALE - TOGGLE COMPONENT
+// ============================================================================
+// Following the composition-based architecture established in checkbox.templ:
+//
+// 1. REUSABLE STRUCTS: Uses shared BaseProps, AccessibilityProps, etc.
+// 2. CONFIGURATION-DRIVEN: Size mapping, state color schemes, label positioning
+// 3. ALPINE.JS INTEGRATION: Proper x-on: syntax for event handling
+// 4. VALIDATION SUPPORT: Full validation state system with feedback
+// 5. ACCESSIBILITY: Comprehensive ARIA support and semantic checkbox input
+// 6. FLEXIBLE POSITIONING: Label left/right positioning with proper spacing
+// ============================================================================
 
-const (
-	ToggleStateDefault ToggleState = "default"
-	ToggleStateSuccess ToggleState = "success"
-	ToggleStateError   ToggleState = "error"
-)
-
-// ToggleProps defines the properties for the Toggle component
+// ToggleProps defines all properties for the Toggle component
+// Composed of shared structs plus toggle-specific fields
 type ToggleProps struct {
+	// Composition of shared property groups
+	BaseProps
+	AccessibilityProps
+	ValidationProps
+	InteractionProps
+	AlpineEventHandlers
+
 	// Content
-	Label     string `json:"label,omitempty"`
-	Value     string `json:"value,omitempty"`
-	HelpText  string `json:"helpText,omitempty"`
-	ErrorText string `json:"errorText,omitempty"`
+	Label string `json:"label,omitempty"`
+	Value string `json:"value,omitempty"`
 
-	// Toggle attributes
-	Name     string `json:"name,omitempty"`
-	Checked  bool   `json:"checked,omitempty"`
-	Required bool   `json:"required,omitempty"`
-	Disabled bool   `json:"disabled,omitempty"`
+	// Toggle-specific attributes
+	Checked bool `json:"checked,omitempty"` // Toggle state
 
-	// Styling
-	Size  ToggleSize  `json:"size"`
-	State ToggleState `json:"state"`
-
-	// Behavior
-	OnChange string `json:"onchange,omitempty"` // Alpine.js change handler
-	OnFocus  string `json:"onfocus,omitempty"`  // Alpine.js focus handler
-	OnBlur   string `json:"onblur,omitempty"`   // Alpine.js blur handler
-
-	// HTML attributes
-	ID              string `json:"id,omitempty"`
-	Class           string `json:"class,omitempty"`
-	AriaLabel       string `json:"ariaLabel,omitempty"`
-	AriaDescribedBy string `json:"ariaDescribedBy,omitempty"`
-	DataTestID      string `json:"dataTestId,omitempty"`
-
-	// Layout
-	LabelPosition string `json:"labelPosition,omitempty"` // "right" (default), "left"
-
-	// Validation
-	ShowValidation bool `json:"showValidation,omitempty"`
+	// Styling (toggle-specific)
+	ComponentSize Size          `json:"componentSize"` // Component sizing
+	LabelPosition LabelPosition `json:"labelPosition,omitempty"`
 }
 
-// Toggle renders a Flowbite-styled toggle switch
+// ============================================================================
+// CONFIGURATION CONSTANTS
+// ============================================================================
+
+// Toggle size dimensions and CSS pseudo-element styling
+var toggleDimensions = map[Size][]string{
+	SizeSM: {
+		"w-9", "h-5",
+		"after:content-['']", "after:absolute", "after:top-[2px]", "after:start-[2px]",
+		"after:bg-white", "after:border-gray-300", "after:border", "after:rounded-full",
+		"after:h-4", "after:w-4", "after:transition-all", "after:duration-200", "after:ease-in-out",
+		"peer-checked:after:translate-x-full", "rtl:peer-checked:after:-translate-x-full", "peer-checked:after:border-white",
+	},
+	SizeMD: {
+		"w-11", "h-6",
+		"after:content-['']", "after:absolute", "after:top-[2px]", "after:start-[2px]",
+		"after:bg-white", "after:border-gray-300", "after:border", "after:rounded-full",
+		"after:h-5", "after:w-5", "after:transition-all", "after:duration-200", "after:ease-in-out",
+		"peer-checked:after:translate-x-full", "rtl:peer-checked:after:-translate-x-full", "peer-checked:after:border-white",
+	},
+	SizeLG: {
+		"w-14", "h-7",
+		"after:content-['']", "after:absolute", "after:top-0.5", "after:start-[4px]",
+		"after:bg-white", "after:border-gray-300", "after:border", "after:rounded-full",
+		"after:h-6", "after:w-6", "after:transition-all", "after:duration-200", "after:ease-in-out",
+		"peer-checked:after:translate-x-full", "rtl:peer-checked:after:-translate-x-full", "peer-checked:after:border-white",
+	},
+}
+
+// Toggle state color schemes
+var toggleStateColorSchemes = map[ValidationState][]string{
+	StateDefault: {
+		"bg-gray-200", "peer-focus:ring-blue-300", "dark:bg-gray-700",
+		"peer-checked:bg-blue-600", "peer-checked:peer-focus:ring-blue-300", "dark:peer-focus:ring-blue-800",
+	},
+	StateSuccess: {
+		"bg-green-200", "peer-focus:ring-green-300", "dark:bg-green-700",
+		"peer-checked:bg-green-600", "peer-checked:peer-focus:ring-green-300",
+	},
+	StateError: {
+		"bg-red-200", "peer-focus:ring-red-300", "dark:bg-red-700",
+		"peer-checked:bg-red-600", "peer-checked:peer-focus:ring-red-300",
+	},
+	StateWarning: {
+		"bg-yellow-200", "peer-focus:ring-yellow-300", "dark:bg-yellow-700",
+		"peer-checked:bg-yellow-600", "peer-checked:peer-focus:ring-yellow-300",
+	},
+}
+
+// Toggle-specific styling constants
+const (
+	toggleBaseClasses     = "relative rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-4 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-800"
+	toggleInputClasses    = "sr-only peer"
+	toggleLabelClasses    = "relative inline-flex items-center"
+	toggleDisabledClasses = "opacity-50 cursor-not-allowed"
+)
+
+// ============================================================================
+// CONSTRUCTOR WITH SENSIBLE DEFAULTS
+// ============================================================================
+
+// NewToggle creates a new ToggleProps with sensible defaults
+// Example usage:
+// toggle := NewToggle("notifications", "Enable notifications")
+// toggle.Checked = true
+// toggle.ComponentSize = SizeLG
+func NewToggle(id, label string) ToggleProps {
+	return ToggleProps{
+		BaseProps: BaseProps{
+			ID: id,
+		},
+		Label:         label,
+		ComponentSize: SizeMD,
+		ValidationProps: ValidationProps{
+			State: StateDefault,
+		},
+		LabelPosition: LabelRight, // Default position for toggles
+	}
+}
+
+// NewToggleWithValue creates a toggle with initial state
+func NewToggleWithValue(id, label string, checked bool) ToggleProps {
+	props := NewToggle(id, label)
+	props.Checked = checked
+	return props
+}
+
+// ============================================================================
+// TEMPLATE COMPONENTS
+// ============================================================================
+
+// Toggle renders a fully-featured toggle switch with Flowbite styling
+// Supports validation states, sizes, Alpine.js events, and accessibility
 func Toggle(props ToggleProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -109,147 +183,146 @@ func Toggle(props ToggleProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if props.LabelPosition == "left" && props.Label != "" {
-			var templ_7745c5c3_Var4 = []any{getToggleLabelClasses(props, "left")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var4...)
+		if props.LabelPosition == LabelLeft && props.Label != "" {
+			templ_7745c5c3_Err = toggleLabel(props, "left").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<label")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if props.ID != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, " for=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var5 string
-				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 67, Col: 20}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " class=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var4).String())
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 1, Col: 0}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\">")
+		}
+		var templ_7745c5c3_Var4 = []any{getToggleSwitchLabelClasses(props)}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var4...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<label class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var5 string
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var4).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var6 = []any{toggleInputClasses}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var6...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<input type=\"checkbox\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if props.ID != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " id=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 string
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.Label)
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 71, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 147, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if props.Required {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<span class=\"text-red-500 ml-1\">*</span>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</label> ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		var templ_7745c5c3_Var8 = []any{getToggleSwitchLabelClasses(props)}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var8...)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<label class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var8).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\"><input type=\"checkbox\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if props.ID != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, " id=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var10 string
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 82, Col: 19}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		if props.Name != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, " name=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " name=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var11 string
-			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.Name)
+			var templ_7745c5c3_Var8 string
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 85, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 150, Col: 23}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		if props.Value != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, " value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, " value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var12 string
-			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.Value)
+			var templ_7745c5c3_Var9 string
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 88, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 153, Col: 25}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, " class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var10 string
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var6).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if props.Checked {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, " checked")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		if props.Required {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, " required")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		if props.Disabled {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, " disabled")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		if props.AriaLabel != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, " aria-label=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var11 string
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 166, Col: 34}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -258,37 +331,46 @@ func Toggle(props ToggleProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, " class=\"sr-only peer\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if props.Checked {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, " checked")
+		if props.AriaDescribedBy != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, " aria-describedby=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var12 string
+			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaDescribedBy)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 169, Col: 46}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.Required {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, " required")
+		if props.AriaRequired {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, " aria-required=\"true\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.Disabled {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, " disabled")
+		if props.AriaInvalid {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, " aria-invalid=\"true\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.AriaLabel != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, " aria-label=\"")
+		if props.DataTestID != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, " data-testid=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var13 string
-			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
+			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 101, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 178, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -299,15 +381,15 @@ func Toggle(props ToggleProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.AriaDescribedBy != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, " aria-describedby=\"")
+		if props.OnChange != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, " x-on:change=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var14 string
-			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaDescribedBy)
+			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnChange)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 104, Col: 46}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 181, Col: 34}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -318,15 +400,15 @@ func Toggle(props ToggleProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.DataTestID != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, " data-testid=\"")
+		if props.OnFocus != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, " x-on:focus=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var15 string
-			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
+			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnFocus)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 107, Col: 36}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 184, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -337,15 +419,15 @@ func Toggle(props ToggleProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.OnChange != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, " @change=\"")
+		if props.OnBlur != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, " x-on:blur=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var16 string
-			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnChange)
+			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnBlur)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 110, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 187, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -356,15 +438,15 @@ func Toggle(props ToggleProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.OnFocus != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, " @focus=\"")
+		if props.OnClick != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, " x-on:click=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var17 string
-			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnFocus)
+			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnClick)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 113, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 190, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
@@ -375,132 +457,49 @@ func Toggle(props ToggleProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.OnBlur != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, " @blur=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var18 string
-			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnBlur)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 116, Col: 26}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, ">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, ">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var19 = []any{getToggleTrackClasses(props)}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var19...)
+		var templ_7745c5c3_Var18 = []any{getToggleTrackClasses(props)}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var18...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<div class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<div class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var20 string
-		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var19).String())
+		var templ_7745c5c3_Var19 string
+		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var18).String())
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "\"></div></label> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\"></div></label>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if props.LabelPosition != "left" && props.Label != "" {
-			var templ_7745c5c3_Var21 = []any{getToggleLabelClasses(props, "right")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var21...)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<label")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if props.ID != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, " for=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var22 string
-				templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 125, Col: 20}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, " class=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var23 string
-			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var21).String())
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 1, Col: 0}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var24 string
-			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(props.Label)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 129, Col: 18}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, " ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if props.Required {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<span class=\"text-red-500 ml-1\">*</span>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</label>")
+		if props.LabelPosition != LabelLeft && props.Label != "" {
+			templ_7745c5c3_Err = toggleLabel(props, "right").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if props.ShowValidation && (props.HelpText != "" || props.ErrorText != "") {
+		if props.ShowValidation {
 			templ_7745c5c3_Err = ToggleFeedback(props).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -508,7 +507,98 @@ func Toggle(props ToggleProps) templ.Component {
 	})
 }
 
-// ToggleFeedback renders help text or error messages
+// toggleLabel renders the label with proper styling and required indicator
+func toggleLabel(props ToggleProps, position string) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var20 == nil {
+			templ_7745c5c3_Var20 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		var templ_7745c5c3_Var21 = []any{getToggleLabelClasses(props, position)}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var21...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<label")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if props.ID != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, " for=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var22 string
+			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 213, Col: 17}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, " class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var23 string
+		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var21).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var24 string
+		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(props.Label)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 217, Col: 15}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if props.Required {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<span class=\"text-red-500 ml-1\" aria-hidden=\"true\">*</span>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</label>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// ToggleFeedback displays contextual help text or validation messages
+// Automatically selects the appropriate message based on validation state
 func ToggleFeedback(props ToggleProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -530,57 +620,147 @@ func ToggleFeedback(props ToggleProps) templ.Component {
 			templ_7745c5c3_Var25 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		if props.State == ToggleStateError && props.ErrorText != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<p class=\"mt-2 text-sm text-red-600 dark:text-red-500\"><span class=\"font-medium\">Error:</span> ")
+		if props.State == StateError && props.ErrorText != "" {
+			var templ_7745c5c3_Var26 = []any{getFeedbackClasses(StateError)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var26...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var26 string
-			templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(props.ErrorText)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 147, Col: 60}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</p>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		} else if props.State == ToggleStateSuccess && props.HelpText != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<p class=\"mt-2 text-sm text-green-600 dark:text-green-500\"><span class=\"font-medium\">Success:</span> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<p class=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var27 string
-			templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(props.HelpText)
+			templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var26).String())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 151, Col: 61}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 1, Col: 0}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</p>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		} else if props.HelpText != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<p class=\"mt-2 text-sm text-gray-500 dark:text-gray-400\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\"><span class=\"font-medium\">Error:</span> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var28 string
-			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(props.HelpText)
+			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(props.ErrorText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 155, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 232, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else if props.State == StateSuccess && props.SuccessText != "" {
+			var templ_7745c5c3_Var29 = []any{getFeedbackClasses(StateSuccess)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var29...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<p class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var30 string
+			templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var29).String())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 1, Col: 0}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "\"><span class=\"font-medium\">Success:</span> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var31 string
+			templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(props.SuccessText)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 236, Col: 64}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else if props.State == StateWarning && props.WarningText != "" {
+			var templ_7745c5c3_Var32 = []any{getFeedbackClasses(StateWarning)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var32...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<p class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var33 string
+			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var32).String())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 1, Col: 0}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "\"><span class=\"font-medium\">Warning:</span> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var34 string
+			templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(props.WarningText)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 240, Col: 64}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else if props.HelpText != "" {
+			var templ_7745c5c3_Var35 = []any{getFeedbackClasses(StateDefault)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var35...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<p class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var36 string
+			templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var35).String())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 1, Col: 0}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var37 string
+			templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(props.HelpText)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/toggle.templ`, Line: 244, Col: 19}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -589,10 +769,15 @@ func ToggleFeedback(props ToggleProps) templ.Component {
 	})
 }
 
-// Helper functions
-func getToggleWrapperClasses(props ToggleProps) string {
-	classes := []string{"mb-4"}
+// ============================================================================
+// HELPER FUNCTIONS - Generate CSS classes based on props and state
+// ============================================================================
 
+// getToggleWrapperClasses returns classes for the outer container
+func getToggleWrapperClasses(props ToggleProps) string {
+	classes := []string{wrapperSpacing}
+
+	// Allow custom classes to be added
 	if props.Class != "" {
 		classes = append(classes, props.Class)
 	}
@@ -600,13 +785,11 @@ func getToggleWrapperClasses(props ToggleProps) string {
 	return strings.Join(classes, " ")
 }
 
+// getToggleSwitchLabelClasses returns classes for the toggle switch label container
 func getToggleSwitchLabelClasses(props ToggleProps) string {
-	classes := []string{
-		"relative",
-		"inline-flex",
-		"items-center",
-	}
+	classes := []string{toggleLabelClasses}
 
+	// Handle disabled state cursor
 	if props.Disabled {
 		classes = append(classes, "cursor-not-allowed")
 	} else {
@@ -616,20 +799,16 @@ func getToggleSwitchLabelClasses(props ToggleProps) string {
 	return strings.Join(classes, " ")
 }
 
+// getToggleLabelClasses generates label classes based on size, state, and position
 func getToggleLabelClasses(props ToggleProps, position string) string {
 	classes := []string{
 		"font-medium",
 		"select-none",
 	}
 
-	// Add size-specific text classes
-	switch props.Size {
-	case ToggleSizeSM:
-		classes = append(classes, "text-xs")
-	case ToggleSizeLG:
-		classes = append(classes, "text-base")
-	default:
-		classes = append(classes, "text-sm")
+	// Add size-appropriate text class using our configuration map
+	if textSize, ok := labelTextSizes[props.ComponentSize]; ok {
+		classes = append(classes, textSize)
 	}
 
 	// Add position-specific spacing
@@ -639,19 +818,14 @@ func getToggleLabelClasses(props ToggleProps, position string) string {
 		classes = append(classes, "ms-3")
 	}
 
-	// Add state-specific colors
-	switch props.State {
-	case ToggleStateError:
-		classes = append(classes, "text-red-900", "dark:text-red-400")
-	case ToggleStateSuccess:
-		classes = append(classes, "text-green-900", "dark:text-green-400")
-	default:
-		classes = append(classes, "text-gray-900", "dark:text-gray-300")
+	// Add state-specific colors from configuration
+	if colors, ok := labelColorSchemes[props.State]; ok {
+		classes = append(classes, colors...)
 	}
 
-	// Add disabled styling
+	// Handle disabled state styling
 	if props.Disabled {
-		classes = append(classes, "opacity-50", "cursor-not-allowed")
+		classes = append(classes, toggleDisabledClasses)
 	} else {
 		classes = append(classes, "cursor-pointer")
 	}
@@ -659,129 +833,81 @@ func getToggleLabelClasses(props ToggleProps, position string) string {
 	return strings.Join(classes, " ")
 }
 
+// getToggleTrackClasses generates the toggle track element classes
 func getToggleTrackClasses(props ToggleProps) string {
-	baseClasses := []string{
-		"relative",
-		"rounded-full",
-		"transition-colors",
-		"duration-200",
-		"ease-in-out",
-		"focus:outline-none",
-		"focus:ring-4",
-		"focus:ring-offset-2",
-		"focus:ring-offset-white",
-		"dark:focus:ring-offset-gray-800",
+	classes := []string{toggleBaseClasses}
+
+	// Add size-specific dimensions and pseudo-element styling from configuration
+	if dimensions, ok := toggleDimensions[props.ComponentSize]; ok {
+		classes = append(classes, dimensions...)
 	}
 
-	// Add size-specific classes
-	sizeClasses := getToggleSizeClasses(props.Size)
-	baseClasses = append(baseClasses, sizeClasses...)
+	// Add state-specific color scheme from configuration
+	if colors, ok := toggleStateColorSchemes[props.State]; ok {
+		classes = append(classes, colors...)
+	}
 
-	// Add state-specific classes
-	stateClasses := getToggleStateClasses(props.State)
-	baseClasses = append(baseClasses, stateClasses...)
-
-	// Add disabled classes
+	// Handle disabled state
 	if props.Disabled {
-		baseClasses = append(baseClasses, "opacity-50", "cursor-not-allowed")
+		classes = append(classes, toggleDisabledClasses)
 	}
 
-	return strings.Join(baseClasses, " ")
+	return strings.Join(classes, " ")
 }
 
-func getToggleSizeClasses(size ToggleSize) []string {
-	switch size {
-	case ToggleSizeSM:
-		return []string{
-			"w-9", "h-5",
-			"after:content-['']",
-			"after:absolute",
-			"after:top-[2px]",
-			"after:start-[2px]",
-			"after:bg-white",
-			"after:border-gray-300",
-			"after:border",
-			"after:rounded-full",
-			"after:h-4",
-			"after:w-4",
-			"after:transition-all",
-			"after:duration-200",
-			"after:ease-in-out",
-			"peer-checked:after:translate-x-full",
-			"rtl:peer-checked:after:-translate-x-full",
-			"peer-checked:after:border-white",
-		}
-	case ToggleSizeLG:
-		return []string{
-			"w-14", "h-7",
-			"after:content-['']",
-			"after:absolute",
-			"after:top-0.5",
-			"after:start-[4px]",
-			"after:bg-white",
-			"after:border-gray-300",
-			"after:border",
-			"after:rounded-full",
-			"after:h-6",
-			"after:w-6",
-			"after:transition-all",
-			"after:duration-200",
-			"after:ease-in-out",
-			"peer-checked:after:translate-x-full",
-			"rtl:peer-checked:after:-translate-x-full",
-			"peer-checked:after:border-white",
-		}
-	default: // MD
-		return []string{
-			"w-11", "h-6",
-			"after:content-['']",
-			"after:absolute",
-			"after:top-[2px]",
-			"after:start-[2px]",
-			"after:bg-white",
-			"after:border-gray-300",
-			"after:border",
-			"after:rounded-full",
-			"after:h-5",
-			"after:w-5",
-			"after:transition-all",
-			"after:duration-200",
-			"after:ease-in-out",
-			"peer-checked:after:translate-x-full",
-			"rtl:peer-checked:after:-translate-x-full",
-			"peer-checked:after:border-white",
-		}
-	}
+// ============================================================================
+// UTILITY FUNCTIONS FOR COMMON PATTERNS
+// ============================================================================
+
+// WithError returns a new ToggleProps with error state set
+// Useful for form validation scenarios
+func (p ToggleProps) WithError(errorText string) ToggleProps {
+	p.State = StateError
+	p.ErrorText = errorText
+	p.ShowValidation = true
+	p.AriaInvalid = true
+	return p
 }
 
-func getToggleStateClasses(state ToggleState) []string {
-	switch state {
-	case ToggleStateError:
-		return []string{
-			"bg-red-200",
-			"peer-focus:ring-red-300",
-			"dark:bg-red-700",
-			"peer-checked:bg-red-600",
-			"peer-checked:peer-focus:ring-red-300",
-		}
-	case ToggleStateSuccess:
-		return []string{
-			"bg-green-200",
-			"peer-focus:ring-green-300",
-			"dark:bg-green-700",
-			"peer-checked:bg-green-600",
-			"peer-checked:peer-focus:ring-green-300",
-		}
-	default:
-		return []string{
-			"bg-gray-200",
-			"peer-focus:ring-blue-300",
-			"dark:bg-gray-700",
-			"peer-checked:bg-blue-600",
-			"peer-checked:peer-focus:ring-blue-300",
-			"dark:peer-focus:ring-blue-800",
-		}
-	}
+// WithSuccess returns a new ToggleProps with success state set
+func (p ToggleProps) WithSuccess(successText string) ToggleProps {
+	p.State = StateSuccess
+	p.SuccessText = successText
+	p.ShowValidation = true
+	return p
+}
+
+// WithWarning returns a new ToggleProps with warning state set
+func (p ToggleProps) WithWarning(warningText string) ToggleProps {
+	p.State = StateWarning
+	p.WarningText = warningText
+	p.ShowValidation = true
+	return p
+}
+
+// AsDisabled returns a new ToggleProps with disabled state
+func (p ToggleProps) AsDisabled() ToggleProps {
+	p.Disabled = true
+	return p
+}
+
+// AsRequired returns a new ToggleProps with required state
+func (p ToggleProps) AsRequired() ToggleProps {
+	p.Required = true
+	p.AriaRequired = true
+	return p
+}
+
+// AsChecked returns a new ToggleProps with checked state
+func (p ToggleProps) AsChecked() ToggleProps {
+	p.Checked = true
+	return p
+}
+
+// WithLabelPosition returns a new ToggleProps with specified label position
+func (p ToggleProps) WithLabelPosition(position LabelPosition) ToggleProps {
+	p.LabelPosition = position
+	return p
 }
 
 var _ = templruntime.GeneratedTemplate

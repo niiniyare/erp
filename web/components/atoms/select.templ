@@ -1,6 +1,7 @@
 package atoms
 
 import (
+	"strconv"
 	"strings"
 )
 
@@ -121,18 +122,14 @@ templ Select(props SelectProps) {
 
 		// Container for select and dropdown arrow
 		<div class="relative">
-			// The actual select element
 			<select
-				// Base HTML attributes
 				if props.ID != "" {
 					id={ props.ID }
 				}
 				if props.Name != "" {
 					name={ props.Name }
 				}
-				// Styling classes
 				class={ getSelectClasses(props) }
-				// Boolean states
 				if props.Required {
 					required
 				}
@@ -146,9 +143,8 @@ templ Select(props SelectProps) {
 					multiple
 				}
 				if props.Size > 0 && props.Multiple {
-					size={ templ.IntToString(props.Size) }
+					size={ strconv.Itoa(props.Size) }
 				}
-				// Accessibility attributes
 				if props.AriaLabel != "" {
 					aria-label={ props.AriaLabel }
 				}
@@ -161,11 +157,9 @@ templ Select(props SelectProps) {
 				if props.AriaInvalid {
 					aria-invalid="true"
 				}
-				// Testing
 				if props.DataTestID != "" {
 					data-testid={ props.DataTestID }
 				}
-				// Alpine.js event handlers (using correct x-on: syntax)
 				if props.OnChange != "" {
 					x-on:change={ props.OnChange }
 				}
@@ -179,12 +173,9 @@ templ Select(props SelectProps) {
 					x-on:click={ props.OnClick }
 				}
 			>
-				// Placeholder option
 				if props.Placeholder != "" {
 					<option value="" disabled if props.Value == "" { selected }>{ props.Placeholder }</option>
 				}
-				
-				// Render options (supports both flat and grouped options)
 				@renderSelectOptions(props.Options, props.Value)
 			</select>
 

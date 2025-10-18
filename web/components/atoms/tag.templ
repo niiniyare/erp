@@ -137,20 +137,15 @@ func NewSelectableTag(text, color string) TagProps {
 // Supports various colors, variants, sizes, and interactive features
 templ Tag(props TagProps) {
 	if props.Selectable {
-		// Selectable tag (button)
 		<button
 			type="button"
-			// Base HTML attributes
 			if props.ID != "" {
 				id={ props.ID }
 			}
-			// Styling classes
 			class={ getTagClasses(props) }
-			// Boolean states
 			if props.Disabled {
 				disabled
 			}
-			// Accessibility attributes
 			if props.AriaLabel != "" {
 				aria-label={ props.AriaLabel }
 			}
@@ -158,19 +153,14 @@ templ Tag(props TagProps) {
 				aria-describedby={ props.AriaDescribedBy }
 			}
 			aria-pressed={ templ.Bool(props.Selected) }
-			// Testing
 			if props.DataTestID != "" {
 				data-testid={ props.DataTestID }
 			}
-			// Alpine.js event handlers (using correct x-on: syntax)
 			if props.OnClick != "" {
 				x-on:click={ props.OnClick }
 			}
 		>
-			// Tag text
 			{ props.Text }
-			
-			// Remove button
 			if props.Removable {
 				<span
 					class={ tagRemoveClasses }
@@ -185,34 +175,25 @@ templ Tag(props TagProps) {
 			}
 		</button>
 	} else {
-		// Regular tag (span)
 		<span
-			// Base HTML attributes
 			if props.ID != "" {
 				id={ props.ID }
 			}
-			// Styling classes
 			class={ getTagClasses(props) }
-			// Accessibility attributes
 			if props.AriaLabel != "" {
 				aria-label={ props.AriaLabel }
 			}
 			if props.AriaDescribedBy != "" {
 				aria-describedby={ props.AriaDescribedBy }
 			}
-			// Testing
 			if props.DataTestID != "" {
 				data-testid={ props.DataTestID }
 			}
-			// Alpine.js event handlers (using correct x-on: syntax)
 			if props.OnClick != "" {
 				x-on:click={ props.OnClick }
 			}
 		>
-			// Tag text
 			{ props.Text }
-			
-			// Remove button
 			if props.Removable {
 				<button
 					type="button"

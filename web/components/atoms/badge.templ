@@ -139,66 +139,49 @@ func NewDotBadge(color string) BadgeProps {
 // Supports various colors, variants, sizes, and interactive features
 templ Badge(props BadgeProps) {
 	if props.Dot {
-		// Dot indicator badge
 		<span
-			// Base HTML attributes
 			if props.ID != "" {
 				id={ props.ID }
 			}
-			// Styling classes
 			class={ getDotBadgeClasses(props) }
-			// Accessibility attributes
 			if props.AriaLabel != "" {
 				aria-label={ props.AriaLabel }
 			}
 			if props.AriaDescribedBy != "" {
 				aria-describedby={ props.AriaDescribedBy }
 			}
-			// Testing
 			if props.DataTestID != "" {
 				data-testid={ props.DataTestID }
 			}
-			// Alpine.js event handlers (using correct x-on: syntax)
 			if props.OnClick != "" {
 				x-on:click={ props.OnClick }
 			}
 		></span>
 	} else {
-		// Regular badge
 		<span
-			// Base HTML attributes
 			if props.ID != "" {
 				id={ props.ID }
 			}
-			// Styling classes
 			class={ getBadgeClasses(props) }
-			// Accessibility attributes
 			if props.AriaLabel != "" {
 				aria-label={ props.AriaLabel }
 			}
 			if props.AriaDescribedBy != "" {
 				aria-describedby={ props.AriaDescribedBy }
 			}
-			// Testing
 			if props.DataTestID != "" {
 				data-testid={ props.DataTestID }
 			}
-			// Alpine.js event handlers (using correct x-on: syntax)
 			if props.OnClick != "" {
 				x-on:click={ props.OnClick }
 			}
 		>
-			// Icon (if specified)
 			if props.Icon != "" {
 				<span class={ badgeIconClasses }>
 					@templ.Raw(props.Icon)
 				</span>
 			}
-			
-			// Badge text
 			{ props.Text }
-			
-			// Dismissible close button
 			if props.Dismissible {
 				<button
 					type="button"

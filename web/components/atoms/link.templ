@@ -153,7 +153,6 @@ func NewButtonLink(text, href string) LinkProps {
 // Supports various colors, variants, sizes, and accessibility features
 templ Link(props LinkProps) {
 	<a
-		// Base HTML attributes
 		if props.ID != "" {
 			id={ props.ID }
 		}
@@ -164,46 +163,34 @@ templ Link(props LinkProps) {
 		if props.Download != "" {
 			download={ props.Download }
 		}
-		// Security attributes for external links
 		if props.External {
 			rel="noopener noreferrer"
 		}
-		// Styling classes
 		class={ getLinkClasses(props) }
-		// Accessibility attributes
 		if props.AriaLabel != "" {
 			aria-label={ props.AriaLabel }
 		}
 		if props.AriaDescribedBy != "" {
 			aria-describedby={ props.AriaDescribedBy }
 		}
-		// Testing
 		if props.DataTestID != "" {
 			data-testid={ props.DataTestID }
 		}
-		// Alpine.js event handlers (using correct x-on: syntax)
 		if props.OnClick != "" {
 			x-on:click={ props.OnClick }
 		}
 	>
-		// Left icon
 		if props.Icon != "" && props.IconPosition != "right" {
 			<span class={ linkIconClasses + " " + linkIconSpacingLeft }>
 				@templ.Raw(props.Icon)
 			</span>
 		}
-		
-		// Link text
 		{ props.Text }
-		
-		// Right icon
 		if props.Icon != "" && props.IconPosition == "right" {
 			<span class={ linkIconClasses + " " + linkIconSpacingRight }>
 				@templ.Raw(props.Icon)
 			</span>
 		}
-		
-		// External link indicator
 		if props.External && props.Icon == "" {
 			@templ.Raw(externalLinkIcon)
 		}

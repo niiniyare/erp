@@ -69,7 +69,7 @@ var toggleDimensions = map[Size][]string{
 }
 
 // Toggle state color schemes
-var toggleStateColorSchemes = map[State][]string{
+var toggleStateColorSchemes = map[ValidationState][]string{
 	StateDefault: {
 		"bg-gray-200", "peer-focus:ring-blue-300", "dark:bg-gray-700",
 		"peer-checked:bg-blue-600", "peer-checked:peer-focus:ring-blue-300", "dark:peer-focus:ring-blue-800",
@@ -140,11 +140,9 @@ templ Toggle(props ToggleProps) {
 				@toggleLabel(props, "left")
 			}
 			
-			// Toggle switch control
 			<label class={ getToggleSwitchLabelClasses(props) }>
 				<input
 					type="checkbox"
-					// Base HTML attributes
 					if props.ID != "" {
 						id={ props.ID }
 					}
@@ -154,9 +152,7 @@ templ Toggle(props ToggleProps) {
 					if props.Value != "" {
 						value={ props.Value }
 					}
-					// Styling classes
 					class={ toggleInputClasses }
-					// Boolean states
 					if props.Checked {
 						checked
 					}
@@ -166,7 +162,6 @@ templ Toggle(props ToggleProps) {
 					if props.Disabled {
 						disabled
 					}
-					// Accessibility attributes
 					if props.AriaLabel != "" {
 						aria-label={ props.AriaLabel }
 					}
@@ -179,11 +174,9 @@ templ Toggle(props ToggleProps) {
 					if props.AriaInvalid {
 						aria-invalid="true"
 					}
-					// Testing
 					if props.DataTestID != "" {
 						data-testid={ props.DataTestID }
 					}
-					// Alpine.js event handlers (using correct x-on: syntax)
 					if props.OnChange != "" {
 						x-on:change={ props.OnChange }
 					}
@@ -197,7 +190,6 @@ templ Toggle(props ToggleProps) {
 						x-on:click={ props.OnClick }
 					}
 				/>
-				// Toggle track (visual slider)
 				<div class={ getToggleTrackClasses(props) }></div>
 			</label>
 			
