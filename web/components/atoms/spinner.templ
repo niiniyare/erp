@@ -17,25 +17,7 @@ import (
 // 6. SEMANTIC HTML: Proper role and status attributes
 // ============================================================================
 
-// SpinnerProps defines all properties for the Spinner component
-// Composed of shared structs plus spinner-specific fields
-type SpinnerProps struct {
-	// Composition of shared property groups
-	BaseProps
-	AccessibilityProps
-	InteractionProps
-	AlpineEventHandlers
-
-	// Content
-	Label string `json:"label,omitempty"` // Screen reader text
-
-	// Spinner-specific attributes
-	Color string `json:"color,omitempty"` // Color scheme
-	Speed string `json:"speed,omitempty"` // Animation speed
-
-	// Styling (spinner-specific)
-	ComponentSize Size `json:"componentSize"` // Component sizing
-}
+// SpinnerProps is defined in probs.go to avoid duplication
 
 // ============================================================================
 // CONFIGURATION CONSTANTS

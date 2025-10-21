@@ -17,32 +17,7 @@ import (
 // 6. SECURITY: External link protection with rel attributes
 // ============================================================================
 
-// LinkProps defines all properties for the Link component
-// Composed of shared structs plus link-specific fields
-type LinkProps struct {
-	// Composition of shared property groups
-	BaseProps
-	AccessibilityProps
-	InteractionProps
-	AlpineEventHandlers
-
-	// Content
-	Text   string `json:"text,omitempty"`   // Link text content
-	Href   string `json:"href,omitempty"`   // URL or path
-	Target string `json:"target,omitempty"` // Link target (_blank, _self, etc.)
-
-	// Link-specific attributes
-	Color    string `json:"color,omitempty"`    // Color scheme
-	Variant  string `json:"variant,omitempty"`  // Visual style variant
-	External bool   `json:"external,omitempty"` // External link (adds security attrs)
-	Download string `json:"download,omitempty"` // Download attribute
-
-	// Link-specific styling
-	ComponentSize Size `json:"componentSize"` // Component sizing
-	Underline     bool `json:"underline,omitempty"` // Show underline
-	Icon          string `json:"icon,omitempty"`     // Icon SVG
-	IconPosition  string `json:"iconPosition,omitempty"` // "left" or "right"
-}
+// LinkProps is defined in probs.go to avoid duplication
 
 // ============================================================================
 // CONFIGURATION CONSTANTS

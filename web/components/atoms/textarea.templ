@@ -18,33 +18,7 @@ import (
 // 6. FLEXIBLE SIZING: Rows, columns, character limits, resize behavior
 // ============================================================================
 
-// TextareaProps defines all properties for the Textarea component
-// Composed of shared structs plus textarea-specific fields
-type TextareaProps struct {
-	// Composition of shared property groups
-	BaseProps
-	AccessibilityProps
-	ValidationProps
-	InteractionProps
-	AlpineEventHandlers
-
-	// Content
-	Label       string `json:"label,omitempty"`
-	Value       string `json:"value,omitempty"`
-	Placeholder string `json:"placeholder,omitempty"`
-
-	// Textarea-specific attributes
-	Rows      int    `json:"rows,omitempty"`      // Number of visible text lines
-	Cols      int    `json:"cols,omitempty"`      // Visible width in characters
-	MinLength int    `json:"minLength,omitempty"` // Minimum character count
-	MaxLength int    `json:"maxLength,omitempty"` // Maximum character count
-	Wrap      string `json:"wrap,omitempty"`      // Text wrapping: "soft", "hard", "off"
-
-	// Textarea-specific styling
-	ComponentSize Size `json:"componentSize"` // Component sizing
-	Resizable     bool `json:"resizable,omitempty"` // Allow resize
-	LabelPosition LabelPosition `json:"labelPosition,omitempty"`
-}
+// TextareaProps is defined in probs.go to avoid duplication
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
@@ -212,19 +186,19 @@ templ TextareaFeedback(props TextareaProps) {
 	// Determine which message to show based on state priority:
 	// Error > Success > Warning > Default help text
 	if props.State == StateError && props.ErrorText != "" {
-		<p class={ getFeedbackClasses(StateError) }>
+		<p class={ GetFeedbackClasses(StateError) }>
 			<span class="font-medium">Error:</span> { props.ErrorText }
 		</p>
 	} else if props.State == StateSuccess && props.SuccessText != "" {
-		<p class={ getFeedbackClasses(StateSuccess) }>
+		<p class={ GetFeedbackClasses(StateSuccess) }>
 			<span class="font-medium">Success:</span> { props.SuccessText }
 		</p>
 	} else if props.State == StateWarning && props.WarningText != "" {
-		<p class={ getFeedbackClasses(StateWarning) }>
+		<p class={ GetFeedbackClasses(StateWarning) }>
 			<span class="font-medium">Warning:</span> { props.WarningText }
 		</p>
 	} else if props.HelpText != "" {
-		<p class={ getFeedbackClasses(StateDefault) }>
+		<p class={ GetFeedbackClasses(StateDefault) }>
 			{ props.HelpText }
 		</p>
 	}
@@ -236,7 +210,7 @@ templ TextareaFeedback(props TextareaProps) {
 
 // getTextareaWrapperClasses returns classes for the outer container
 func getTextareaWrapperClasses(props TextareaProps) string {
-	classes := []string{wrapperSpacing}
+	classes := []string{WrapperSpacingDefault}
 
 	// Allow custom classes to be added
 	if props.Class != "" {

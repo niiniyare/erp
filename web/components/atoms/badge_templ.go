@@ -25,28 +25,7 @@ import (
 // 6. SEMANTIC COLORS: Status-aware color schemes for different contexts
 // ============================================================================
 
-// BadgeProps defines all properties for the Badge component
-// Composed of shared structs plus badge-specific fields
-type BadgeProps struct {
-	// Composition of shared property groups
-	BaseProps
-	AccessibilityProps
-	InteractionProps
-	AlpineEventHandlers
-
-	// Content
-	Text string `json:"text,omitempty"` // Badge text content
-
-	// Badge-specific attributes
-	Color   string `json:"color,omitempty"`   // Color scheme
-	Variant string `json:"variant,omitempty"` // Visual style variant
-	Icon    string `json:"icon,omitempty"`    // Icon name/SVG
-
-	// Badge-specific styling
-	ComponentSize Size `json:"componentSize"`         // Component sizing
-	Dismissible   bool `json:"dismissible,omitempty"` // Show close button
-	Dot           bool `json:"dot,omitempty"`         // Show as dot indicator
-}
+// BadgeProps is defined in probs.go to avoid duplication
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
@@ -123,14 +102,14 @@ func NewBadge(text string) BadgeProps {
 }
 
 // NewBadgeWithColor creates a badge with specified color
-func NewBadgeWithColor(text, color string) BadgeProps {
+func NewBadgeWithColor(text string, color ColorScheme) BadgeProps {
 	props := NewBadge(text)
 	props.Color = color
 	return props
 }
 
 // NewDotBadge creates a dot indicator badge
-func NewDotBadge(color string) BadgeProps {
+func NewDotBadge(color ColorScheme) BadgeProps {
 	return BadgeProps{
 		Color:         color,
 		Variant:       "default",
@@ -184,7 +163,7 @@ func Badge(props BadgeProps) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 144, Col: 17}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 123, Col: 17}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -220,7 +199,7 @@ func Badge(props BadgeProps) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 148, Col: 32}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 127, Col: 32}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -239,7 +218,7 @@ func Badge(props BadgeProps) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaDescribedBy)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 151, Col: 44}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 130, Col: 44}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -258,7 +237,7 @@ func Badge(props BadgeProps) templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 154, Col: 34}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 133, Col: 34}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -277,7 +256,7 @@ func Badge(props BadgeProps) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnClick)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 157, Col: 30}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 136, Col: 30}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
@@ -310,7 +289,7 @@ func Badge(props BadgeProps) templ.Component {
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 163, Col: 17}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 142, Col: 17}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 				if templ_7745c5c3_Err != nil {
@@ -346,7 +325,7 @@ func Badge(props BadgeProps) templ.Component {
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 167, Col: 32}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 146, Col: 32}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -365,7 +344,7 @@ func Badge(props BadgeProps) templ.Component {
 				var templ_7745c5c3_Var13 string
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaDescribedBy)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 170, Col: 44}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 149, Col: 44}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
@@ -384,7 +363,7 @@ func Badge(props BadgeProps) templ.Component {
 				var templ_7745c5c3_Var14 string
 				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 173, Col: 34}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 152, Col: 34}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 				if templ_7745c5c3_Err != nil {
@@ -403,7 +382,7 @@ func Badge(props BadgeProps) templ.Component {
 				var templ_7745c5c3_Var15 string
 				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnClick)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 176, Col: 30}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 155, Col: 30}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 				if templ_7745c5c3_Err != nil {
@@ -453,7 +432,7 @@ func Badge(props BadgeProps) templ.Component {
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(props.Text)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 184, Col: 15}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 163, Col: 15}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -494,7 +473,7 @@ func Badge(props BadgeProps) templ.Component {
 					var templ_7745c5c3_Var21 string
 					templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs("Remove " + props.AriaLabel + " badge")
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 190, Col: 57}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 169, Col: 57}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 					if templ_7745c5c3_Err != nil {
@@ -518,7 +497,7 @@ func Badge(props BadgeProps) templ.Component {
 					var templ_7745c5c3_Var22 string
 					templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnClick)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 195, Col: 32}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/badge.templ`, Line: 174, Col: 32}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 					if templ_7745c5c3_Err != nil {
@@ -565,19 +544,19 @@ func getBadgeClasses(props BadgeProps) string {
 	}
 
 	// Add variant-specific styling from configuration
-	if variants, ok := badgeVariants[props.Variant]; ok {
+	if variants, ok := badgeVariants[string(props.Variant)]; ok {
 		classes = append(classes, variants...)
 	}
 
 	// Add color scheme based on variant
 	if props.Variant == "outlined" {
-		if colors, ok := badgeOutlinedColorSchemes[props.Color]; ok {
+		if colors, ok := badgeOutlinedColorSchemes[string(props.Color)]; ok {
 			classes = append(classes, colors...)
 		} else if colors, ok := badgeOutlinedColorSchemes["default"]; ok {
 			classes = append(classes, colors...)
 		}
 	} else {
-		if colors, ok := badgeColorSchemes[props.Color]; ok {
+		if colors, ok := badgeColorSchemes[string(props.Color)]; ok {
 			classes = append(classes, colors...)
 		} else if colors, ok := badgeColorSchemes["default"]; ok {
 			classes = append(classes, colors...)
@@ -602,7 +581,7 @@ func getDotBadgeClasses(props BadgeProps) string {
 	}
 
 	// Add color scheme (use solid colors for dots)
-	if colors, ok := badgeColorSchemes[props.Color]; ok {
+	if colors, ok := badgeColorSchemes[string(props.Color)]; ok {
 		// Extract background color from the scheme
 		for _, class := range colors {
 			if strings.HasPrefix(class, "bg-") {
@@ -625,13 +604,13 @@ func getDotBadgeClasses(props BadgeProps) string {
 // ============================================================================
 
 // WithColor returns a new BadgeProps with color set
-func (p BadgeProps) WithColor(color string) BadgeProps {
+func (p BadgeProps) WithColor(color ColorScheme) BadgeProps {
 	p.Color = color
 	return p
 }
 
 // WithVariant returns a new BadgeProps with variant set
-func (p BadgeProps) WithVariant(variant string) BadgeProps {
+func (p BadgeProps) WithVariant(variant Variant) BadgeProps {
 	p.Variant = variant
 	return p
 }
@@ -650,13 +629,13 @@ func (p BadgeProps) AsDismissible() BadgeProps {
 
 // AsPill returns a new BadgeProps with pill variant
 func (p BadgeProps) AsPill() BadgeProps {
-	p.Variant = "pill"
+	p.Variant = "pill" // Use string literal since pill is not in Variant constants
 	return p
 }
 
 // AsOutlined returns a new BadgeProps with outlined variant
 func (p BadgeProps) AsOutlined() BadgeProps {
-	p.Variant = "outlined"
+	p.Variant = VariantOutlined
 	return p
 }
 
