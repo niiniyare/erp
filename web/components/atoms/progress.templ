@@ -18,32 +18,7 @@ import (
 // 6. SEMANTIC USAGE: Progress indicators for loading, completion, steps
 // ============================================================================
 
-// ProgressProps defines all properties for the Progress component
-// Composed of shared structs plus progress-specific fields
-type ProgressProps struct {
-	// Composition of shared property groups
-	BaseProps
-	AccessibilityProps
-	InteractionProps
-	AlpineEventHandlers
-
-	// Content
-	Label string `json:"label,omitempty"` // Progress description
-
-	// Progress-specific attributes
-	Value       float64 `json:"value,omitempty"`       // Current value (0-100)
-	Max         float64 `json:"max,omitempty"`         // Maximum value (default 100)
-	Min         float64 `json:"min,omitempty"`         // Minimum value (default 0)
-	Color       string  `json:"color,omitempty"`       // Color scheme
-	Variant     string  `json:"variant,omitempty"`     // Visual style variant
-	Striped     bool    `json:"striped,omitempty"`     // Striped pattern
-	Animated    bool    `json:"animated,omitempty"`    // Animated stripes
-	ShowPercent bool    `json:"showPercent,omitempty"` // Show percentage text
-
-	// Progress-specific styling
-	ComponentSize Size `json:"componentSize"` // Component sizing
-	LabelPosition LabelPosition `json:"labelPosition,omitempty"`
-}
+// ProgressProps is defined in probs.go to avoid duplication
 
 // ============================================================================
 // CONFIGURATION CONSTANTS

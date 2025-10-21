@@ -17,27 +17,7 @@ import (
 // 6. SEMANTIC USAGE: Content separation, visual hierarchy
 // ============================================================================
 
-// DividerProps defines all properties for the Divider component
-// Composed of shared structs plus divider-specific fields
-type DividerProps struct {
-	// Composition of shared property groups
-	BaseProps
-	AccessibilityProps
-	InteractionProps
-	AlpineEventHandlers
-
-	// Content
-	Text string `json:"text,omitempty"` // Optional text content in divider
-
-	// Divider-specific attributes
-	Orientation string `json:"orientation,omitempty"` // "horizontal" or "vertical"
-	Color       string `json:"color,omitempty"`       // Color scheme
-	Variant     string `json:"variant,omitempty"`     // Visual style variant
-	Thickness   string `json:"thickness,omitempty"`   // Line thickness
-
-	// Divider-specific styling
-	ComponentSize Size `json:"componentSize"` // Component sizing (affects text and spacing)
-}
+// DividerProps is defined in probs.go to avoid duplication
 
 // ============================================================================
 // CONFIGURATION CONSTANTS

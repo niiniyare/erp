@@ -3,6 +3,8 @@ package atoms
 import (
 	"fmt"
 	"strings"
+	
+	"github.com/a-h/templ"
 )
 
 // ============================================================================
@@ -56,6 +58,7 @@ type AccessibilityProps struct {
 	AriaPlaceholder string `json:"ariaPlaceholder,omitempty"` // Accessible placeholder
 	AriaControls    string `json:"ariaControls,omitempty"`    // ID of controlled element
 	AriaExpanded    *bool  `json:"ariaExpanded,omitempty"`    // Expandable state (pointer for 3-state)
+	AriaPressed     *bool  `json:"ariaPressed,omitempty"`     // Pressed state (pointer for 3-state)
 	AriaHasPopup    string `json:"ariaHasPopup,omitempty"`    // Popup type (menu, dialog, etc.)
 	AriaLive        string `json:"ariaLive,omitempty"`        // Live region (polite, assertive)
 	AriaHidden      bool   `json:"ariaHidden,omitempty"`      // Hidden from screen readers
@@ -507,6 +510,29 @@ type RadioProps struct {
 	Size    Size   `json:"size,omitempty"`    // Radio size
 }
 
+// RadioGroupProps defines properties for Radio Group components.
+type RadioGroupProps struct {
+	BaseProps
+	AccessibilityProps
+	ValidationProps
+	InteractionProps
+
+	// Radio group content
+	Label   string       `json:"label,omitempty"`
+	Options []RadioProps `json:"options"` // Radio options in the group
+
+	// Radio group attributes
+	Name         string `json:"name,omitempty"`         // Group name
+	Value        string `json:"value,omitempty"`        // Selected value
+	Orientation  string `json:"orientation,omitempty"`  // horizontal, vertical
+	Required     bool   `json:"required,omitempty"`     // Required field
+
+	// Radio group styling
+	Size          Size          `json:"size"`          // Radio size for all options
+	LabelPosition LabelPosition `json:"labelPosition"` // Label position for all options
+	Spacing       string        `json:"spacing,omitempty"` // Spacing between options
+}
+
 // SelectProps defines properties for Select components.
 type SelectProps struct {
 	BaseProps
@@ -574,4 +600,293 @@ type SpinnerProps struct {
 	Size    Size        `json:"size,omitempty"`    // Spinner size
 	Color   ColorScheme `json:"color,omitempty"`   // Spinner color
 	Variant Variant     `json:"variant,omitempty"` // Spinner variant (border, dots, pulse)
+}
+
+// ActionProps defines properties for Action/Command components.
+type ActionProps struct {
+	BaseProps
+	AccessibilityProps
+	InteractionProps
+
+	// Action content
+	Label   string `json:"label,omitempty"`
+	Command string `json:"command,omitempty"` // JavaScript command to execute
+	URL     string `json:"url,omitempty"`     // For navigation actions
+
+	// Action behavior
+	ActionType      string `json:"actionType,omitempty"`      // click, submit, navigate, etc.
+	ExecutionMode   string `json:"executionMode,omitempty"`   // immediate, deferred, confirm
+	Element         string `json:"element,omitempty"`         // button, a, div, span
+	Type            string `json:"type,omitempty"`            // button type attribute
+	Target          string `json:"target,omitempty"`          // link target
+	Delay           int    `json:"delay,omitempty"`           // Delay in ms for deferred execution
+	ThrottleMs      int    `json:"throttleMs,omitempty"`      // Throttle execution
+	DebounceMs      int    `json:"debounceMs,omitempty"`      // Debounce execution
+	ConfirmMessage  string `json:"confirmMessage,omitempty"`  // Confirmation dialog message
+	LoadingText     string `json:"loadingText,omitempty"`     // Text during loading state
+	ApiEndpoint     string `json:"apiEndpoint,omitempty"`     // For API actions
+	ApiMethod       string `json:"apiMethod,omitempty"`       // HTTP method for API actions
+
+	// Action styling
+	Variant Variant   `json:"variant,omitempty"` // Action variant
+	Size    Size      `json:"size,omitempty"`    // Action size
+	Icon    IconProps `json:"icon,omitempty"`    // Optional icon
+
+	// Action state
+	Loading  bool `json:"loading,omitempty"`  // Loading state
+	Disabled bool `json:"disabled,omitempty"` // Disabled state
+
+	// Children for complex actions
+	Children []templ.Component `json:"-"` // Child components
+}
+
+// BadgeProps defines properties for Badge components.
+type BadgeProps struct {
+	BaseProps
+	AccessibilityProps
+	AlpineEventHandlers
+
+	// Badge content
+	Text  string `json:"text,omitempty"`
+	Value string `json:"value,omitempty"` // Numeric value for count badges
+
+	// Badge styling
+	Variant       Variant     `json:"variant,omitempty"`       // Badge variant
+	Size          Size        `json:"size,omitempty"`          // Badge size
+	ComponentSize Size        `json:"componentSize,omitempty"` // Component size (alias for Size)
+	Color         ColorScheme `json:"color,omitempty"`         // Badge color scheme
+	Rounded       bool        `json:"rounded,omitempty"`       // Rounded corners
+
+	// Badge behavior
+	Dismissible bool   `json:"dismissible,omitempty"` // Can be dismissed
+	MaxValue    int    `json:"maxValue,omitempty"`    // Max value for count display (shows 99+)
+	Icon        string `json:"icon,omitempty"`        // Optional icon name
+	Dot         bool   `json:"dot,omitempty"`         // Render as dot indicator
+}
+
+// ColorInputProps defines properties for Color Input components.
+type ColorInputProps struct {
+	BaseProps
+	AccessibilityProps
+	ValidationProps
+	InteractionProps
+
+	// Color input content
+	Label       string `json:"label,omitempty"`
+	Value       string `json:"value,omitempty"`       // Current color value
+	Placeholder string `json:"placeholder,omitempty"`
+	HelpText    string `json:"helpText,omitempty"`
+
+	// Color input behavior
+	Format        string `json:"format,omitempty"`        // hex, rgb, hsl, named
+	ShowPalette   bool   `json:"showPalette,omitempty"`   // Show color palette
+	ShowPreview   bool   `json:"showPreview,omitempty"`   // Show color preview
+	AllowAlpha    bool   `json:"allowAlpha,omitempty"`    // Allow alpha channel
+	CustomColors  []string `json:"customColors,omitempty"` // Custom color palette
+
+	// Color input styling
+	Variant Variant `json:"variant,omitempty"` // Input variant
+	Size    Size    `json:"size,omitempty"`    // Input size
+}
+
+// DividerProps defines properties for Divider components.
+type DividerProps struct {
+	BaseProps
+
+	// Divider content
+	Text string `json:"text,omitempty"` // Optional divider text
+
+	// Divider styling
+	Orientation string `json:"orientation,omitempty"` // horizontal, vertical
+	Variant     string `json:"variant,omitempty"`     // solid, dashed, dotted
+	Color       string `json:"color,omitempty"`       // Divider color
+	Thickness   string `json:"thickness,omitempty"`   // Divider thickness
+
+	// Divider spacing
+	Margin  string `json:"margin,omitempty"`  // Margin around divider
+	Padding string `json:"padding,omitempty"` // Padding around text
+}
+
+// HiddenProps defines properties for Hidden Input components.
+type HiddenProps struct {
+	BaseProps
+
+	// Hidden input attributes
+	Name  string `json:"name,omitempty"`
+	Value string `json:"value,omitempty"`
+}
+
+// ImageProps defines properties for Image components.
+type ImageProps struct {
+	BaseProps
+	AccessibilityProps
+
+	// Image attributes
+	Src    string `json:"src,omitempty"`
+	Alt    string `json:"alt,omitempty"`
+	Title  string `json:"title,omitempty"`
+	Width  string `json:"width,omitempty"`
+	Height string `json:"height,omitempty"`
+
+	// Image behavior
+	Lazy        bool   `json:"lazy,omitempty"`        // Lazy loading
+	Placeholder string `json:"placeholder,omitempty"` // Placeholder image URL
+	FallbackSrc string `json:"fallbackSrc,omitempty"` // Fallback image URL
+
+	// Image styling
+	Rounded    bool   `json:"rounded,omitempty"`    // Rounded corners
+	Shadow     bool   `json:"shadow,omitempty"`     // Drop shadow
+	Border     bool   `json:"border,omitempty"`     // Border
+	Responsive bool   `json:"responsive,omitempty"` // Responsive sizing
+	ObjectFit  string `json:"objectFit,omitempty"`  // CSS object-fit property
+
+	// Image caption
+	Caption     string `json:"caption,omitempty"`     // Image caption
+	CaptionSize Size   `json:"captionSize,omitempty"` // Caption text size
+}
+
+// LinkProps defines properties for Link components.
+type LinkProps struct {
+	BaseProps
+	AccessibilityProps
+	InteractionProps
+
+	// Link attributes
+	Href   string `json:"href,omitempty"`
+	Target string `json:"target,omitempty"` // _blank, _self, etc.
+	Rel    string `json:"rel,omitempty"`    // Link relationship
+
+	// Link content
+	Text string `json:"text,omitempty"`
+	Icon string `json:"icon,omitempty"` // Optional icon name
+
+	// Link styling
+	Variant    Variant `json:"variant,omitempty"`    // Link variant
+	Size       Size    `json:"size,omitempty"`       // Link size
+	Underline  bool    `json:"underline,omitempty"`  // Show underline
+	External   bool    `json:"external,omitempty"`   // External link styling
+	Download   string  `json:"download,omitempty"`   // Download attribute
+	NoOpener   bool    `json:"noOpener,omitempty"`   // Add rel="noopener"
+	NoReferrer bool    `json:"noReferrer,omitempty"` // Add rel="noreferrer"
+}
+
+// ProgressProps defines properties for Progress components.
+type ProgressProps struct {
+	BaseProps
+	AccessibilityProps
+
+	// Progress attributes
+	Value int `json:"value,omitempty"` // Current progress value
+	Max   int `json:"max,omitempty"`   // Maximum progress value
+	Min   int `json:"min,omitempty"`   // Minimum progress value
+
+	// Progress content
+	Label       string `json:"label,omitempty"`       // Progress label
+	Description string `json:"description,omitempty"` // Progress description
+
+	// Progress styling
+	Variant     Variant     `json:"variant,omitempty"`     // Progress variant
+	Size        Size        `json:"size,omitempty"`        // Progress size
+	Color       ColorScheme `json:"color,omitempty"`       // Progress color
+	ShowPercent bool        `json:"showPercent,omitempty"` // Show percentage text
+	ShowValue   bool        `json:"showValue,omitempty"`   // Show current value
+	Animated    bool        `json:"animated,omitempty"`    // Animated progress
+	Striped     bool        `json:"striped,omitempty"`     // Striped pattern
+}
+
+// StaticProps defines properties for Static Text components.
+type StaticProps struct {
+	BaseProps
+	AccessibilityProps
+	InteractionProps
+
+	// Static content
+	Text string `json:"text,omitempty"` // Text content
+	Html string `json:"html,omitempty"` // HTML content (use with caution)
+
+	// Static styling
+	TextStyle          string `json:"textStyle,omitempty"`          // Text style variant
+	Size               Size   `json:"size,omitempty"`               // Text size
+	Element            string `json:"element,omitempty"`            // HTML element (span, p, h1, etc.)
+	Alignment          string `json:"alignment,omitempty"`          // Text alignment
+	Truncate           bool   `json:"truncate,omitempty"`           // Truncate text
+	LineClamp          int    `json:"lineClamp,omitempty"`          // Line clamp
+	PreserveWhitespace bool   `json:"preserveWhitespace,omitempty"` // Preserve whitespace
+
+	// Static behavior
+	OnClick  string `json:"onClick,omitempty"`  // Click handler
+	For      string `json:"for,omitempty"`      // For label elements
+	Style    string `json:"style,omitempty"`    // Inline styles
+
+	// Children for complex text
+	Children []templ.Component `json:"-"` // Child components
+}
+
+// StatusProps defines properties for Status Indicator components.
+type StatusProps struct {
+	BaseProps
+	AccessibilityProps
+
+	// Status content
+	Text        string `json:"text,omitempty"`
+	Description string `json:"description,omitempty"`
+
+	// Status value
+	Status string `json:"status,omitempty"` // success, error, warning, info, pending
+
+	// Status styling
+	Variant Variant `json:"variant,omitempty"` // Status variant
+	Size    Size    `json:"size,omitempty"`    // Status size
+	Icon    string  `json:"icon,omitempty"`    // Custom icon name
+
+	// Status behavior
+	ShowIcon bool `json:"showIcon,omitempty"` // Show status icon
+	Pulsing  bool `json:"pulsing,omitempty"`  // Pulsing animation
+}
+
+// TagProps defines properties for Tag components.
+type TagProps struct {
+	BaseProps
+	AccessibilityProps
+	InteractionProps
+
+	// Tag content
+	Text  string `json:"text,omitempty"`
+	Value string `json:"value,omitempty"` // Tag value for forms
+
+	// Tag styling
+	Variant Variant     `json:"variant,omitempty"` // Tag variant
+	Size    Size        `json:"size,omitempty"`    // Tag size
+	Color   ColorScheme `json:"color,omitempty"`   // Tag color scheme
+
+	// Tag behavior
+	Removable bool   `json:"removable,omitempty"` // Can be removed
+	Selected  bool   `json:"selected,omitempty"`  // Selected state
+	OnRemove  string `json:"onRemove,omitempty"`  // Remove handler
+	Icon      string `json:"icon,omitempty"`      // Optional icon name
+}
+
+// UUIDProps defines properties for UUID components.
+type UUIDProps struct {
+	BaseProps
+	AccessibilityProps
+	ValidationProps
+	InteractionProps
+
+	// UUID content
+	Label       string `json:"label,omitempty"`
+	Value       string `json:"value,omitempty"`       // UUID value
+	Placeholder string `json:"placeholder,omitempty"`
+	HelpText    string `json:"helpText,omitempty"`
+
+	// UUID behavior
+	Editable           bool   `json:"editable,omitempty"`           // Can be edited
+	ShowCopyButton     bool   `json:"showCopyButton,omitempty"`     // Show copy button
+	ShowGenerateButton bool   `json:"showGenerateButton,omitempty"` // Show generate button
+	AutoGenerate       bool   `json:"autoGenerate,omitempty"`       // Auto-generate on create
+	DisplayFormat      string `json:"displayFormat,omitempty"`      // full, short, minimal
+
+	// UUID styling
+	Variant Variant `json:"variant,omitempty"` // UUID variant
+	Size    Size    `json:"size,omitempty"`    // UUID size
 }

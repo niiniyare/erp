@@ -17,28 +17,7 @@ import (
 // 6. SEMANTIC USAGE: Tags for categorization, filtering, and labeling
 // ============================================================================
 
-// TagProps defines all properties for the Tag component
-// Composed of shared structs plus tag-specific fields
-type TagProps struct {
-	// Composition of shared property groups
-	BaseProps
-	AccessibilityProps
-	InteractionProps
-	AlpineEventHandlers
-
-	// Content
-	Text string `json:"text,omitempty"` // Tag text content
-
-	// Tag-specific attributes
-	Color      string `json:"color,omitempty"`      // Color scheme
-	Variant    string `json:"variant,omitempty"`    // Visual style variant
-	Selectable bool   `json:"selectable,omitempty"` // Can be selected/toggled
-	Selected   bool   `json:"selected,omitempty"`   // Current selection state
-	Removable  bool   `json:"removable,omitempty"`  // Can be removed/dismissed
-
-	// Tag-specific styling
-	ComponentSize Size `json:"componentSize"` // Component sizing
-}
+// TagProps is defined in probs.go to avoid duplication
 
 // ============================================================================
 // CONFIGURATION CONSTANTS

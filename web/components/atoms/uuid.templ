@@ -1,0 +1,165 @@
+package atoms
+
+import (
+	"crypto/rand"
+	"fmt"
+	"strconv"
+	"strings"
+)
+
+// ============================================================================
+// DESIGN RATIONALE - UUID COMPONENT
+// ============================================================================
+// Following the composition-based architecture established in checkbox.templ:
+//
+// 1. REUSABLE STRUCTS: Uses shared BaseProps for consistency
+// 2. UUID GENERATION: Built-in UUID v4 generation capabilities
+// 3. DISPLAY MODES: Support for different UUID display formats
+// 4. COPY FUNCTIONALITY: Built-in copy-to-clipboard with Alpine.js
+// 5. VALIDATION: UUID format validation and visual feedback
+// 6. ACCESSIBILITY: Proper ARIA labels and keyboard navigation
+// ============================================================================
+
+// ============================================================================
+// CONFIGURATION CONSTANTS
+// ============================================================================
+
+// UUID display format configurations
+var uuidFormatClasses = map[string][]string{
+	"full": {"font-mono", "text-sm"},
+	"short": {"font-mono", "text-sm", "tracking-wide"},
+	"compact": {"font-mono", "text-xs", "tracking-tight"},
+}
+
+// UUID input variant configurations
+var uuidInputVariantClasses = map[Variant][]string{
+	VariantDefault: {
+		"bg-gray-50", "border", "border-gray-300", "text-gray-900",
+		"focus:ring-blue-500", "focus:border-blue-500",
+		"dark:bg-gray-700", "dark:border-gray-600", "dark:text-white",
+	},
+	VariantOutlined: {
+		"bg-transparent", "border", "border-gray-300", "text-gray-900",
+		"focus:ring-blue-500", "focus:border-blue-500",
+		"dark:border-gray-600", "dark:text-white",
+	},
+}
+
+// Base UUID classes
+const (
+	uuidBaseClasses = "block w-full rounded-lg text-sm transition-colors duration-200"
+	uuidDisplayClasses = "inline-flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg"
+	uuidReadOnlyClasses = "bg-gray-100 cursor-default dark:bg-gray-600"
+	uuidCopyButtonClasses = "p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+)
+
+// ============================================================================
+// UUID GENERATION FUNCTIONS
+// ============================================================================
+
+// GenerateUUIDv4 generates a new UUID v4 string
+func GenerateUUIDv4() string {
+	uuid := make([]byte, 16)
+	_, err := rand.Read(uuid)
+	if err != nil {
+		// Fallback to a simple ID if crypto/rand fails
+		return GenerateID("uuid")
+	}
+	
+	// Set version (4) and variant bits
+	uuid[6] = (uuid[6] & 0x0f) | 0x40 // Version 4
+	uuid[8] = (uuid[8] & 0x3f) | 0x80 // Variant 10
+	
+	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x",
+		uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:16])
+}
+
+// ValidateUUID checks if a string is a valid UUID format
+func ValidateUUID(uuid string) bool {
+	if len(uuid) != 36 {
+		return false
+	}
+	
+	// Check format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+	parts := strings.Split(uuid, "-")
+	if len(parts) != 5 {
+		return false
+	}
+	
+	expectedLengths := []int{8, 4, 4, 4, 12}
+	for i, part := range parts {
+		if len(part) != expectedLengths[i] {
+			return false
+		}
+		for _, char := range part {
+			if !((char >= '0' && char <= '9') || (char >= 'a' && char <= 'f') || (char >= 'A' && char <= 'F')) {
+				return false
+			}
+		}
+	}
+	
+	return true
+}
+
+// FormatUUID formats a UUID according to the specified display format
+func FormatUUID(uuid, format string) string {
+	if !ValidateUUID(uuid) {
+		return uuid
+	}
+	
+	switch format {
+	case "short":
+		// Show first 8 and last 12 characters with ellipsis
+		return uuid[:8] + "..." + uuid[24:]
+	case "compact":
+		// Show first 8 characters only
+		return uuid[:8]
+	case "no-dashes":
+		// Remove dashes
+		return strings.ReplaceAll(uuid, "-", "")
+	default: // "full"
+		return uuid
+	}
+}
+
+// ============================================================================
+// CONSTRUCTOR WITH SENSIBLE DEFAULTS
+// ============================================================================
+
+// NewUUID creates a new UUIDProps with sensible defaults
+// Example usage:
+// uuid := NewUUID("entity_id", "")
+// uuid.AutoGenerate = true
+func NewUUID(name, value string) UUIDProps {
+	return UUIDProps{
+		BaseProps: BaseProps{
+			ID: GenerateID("uuid"),
+		},
+		Name:         name,
+		Value:        value,
+		Variant:      VariantDefault,
+		Size:         SizeMD,
+		DisplayFormat: "full",
+		Editable:     true,
+	}
+}
+
+// NewUUIDDisplay creates a UUID component for display-only purposes
+func NewUUIDDisplay(uuid string) UUIDProps {
+	props := NewUUID("", uuid)
+	props.Editable = false
+	props.ShowCopyButton = true
+	return props
+}
+
+// NewUUIDGenerator creates a UUID component with auto-generation
+func NewUUIDGenerator(name string) UUIDProps {
+	props := NewUUID(name, GenerateUUIDv4())
+	props.AutoGenerate = true
+	props.ShowCopyButton = true
+	props.ShowGenerateButton = true
+	return props
+}
+
+// ============================================================================
+// TEMPLATE COMPONENTS\n// ============================================================================\n\n// UUID renders a UUID input or display component\n// Supports generation, validation, copying, and different display formats\ntempl UUID(props UUIDProps) {\n\t<div class={ getUUIDWrapperClasses(props) }>\n\t\t// Label\n\t\tif props.Label != \"\" {\n\t\t\t@uuidLabel(props)\n\t\t}\n\t\t\n\t\t<div class=\"relative\">\n\t\t\tif props.Editable {\n\t\t\t\t// Editable UUID input\n\t\t\t\t<input\n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\tid={ props.GetID(\"uuid\") }\n\t\t\t\t\tclass={ getUUIDInputClasses(props) }\n\t\t\t\t\tif props.Name != \"\" {\n\t\t\t\t\t\tname={ props.Name }\n\t\t\t\t\t}\n\t\t\t\t\tvalue={ props.Value }\n\t\t\t\t\tif props.Placeholder != \"\" {\n\t\t\t\t\t\tplaceholder={ props.Placeholder }\n\t\t\t\t\t} else {\n\t\t\t\t\t\tplaceholder=\"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"\n\t\t\t\t\t}\n\t\t\t\t\tif props.Required {\n\t\t\t\t\t\trequired\n\t\t\t\t\t}\n\t\t\t\t\tif props.ReadOnly {\n\t\t\t\t\t\treadonly\n\t\t\t\t\t}\n\t\t\t\t\tif props.Disabled {\n\t\t\t\t\t\tdisabled\n\t\t\t\t\t}\n\t\t\t\t\tpattern=\"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\"\n\t\t\t\t\tmaxlength=\"36\"\n\t\t\t\t\tif props.DataTestID != \"\" {\n\t\t\t\t\t\tdata-testid={ props.DataTestID }\n\t\t\t\t\t}\n\t\t\t\t\tif props.AriaLabel != \"\" {\n\t\t\t\t\t\taria-label={ props.AriaLabel }\n\t\t\t\t\t}\n\t\t\t\t\tif props.AriaDescribedBy != \"\" {\n\t\t\t\t\t\taria-describedby={ props.AriaDescribedBy }\n\t\t\t\t\t}\n\t\t\t\t\tif props.TabIndex != 0 {\n\t\t\t\t\t\ttabindex={ strconv.Itoa(props.TabIndex) }\n\t\t\t\t\t}\n\t\t\t\t\tif props.OnChange != \"\" {\n\t\t\t\t\t\tx-on:change={ props.OnChange }\n\t\t\t\t\t}\n\t\t\t\t\tif props.OnInput != \"\" {\n\t\t\t\t\t\tx-on:input={ props.OnInput }\n\t\t\t\t\t}\n\t\t\t\t\tx-on:input=\"$el.setCustomValidity(!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test($el.value) && $el.value !== '' ? 'Please enter a valid UUID format' : '')\"\n\t\t\t\t/>\n\t\t\t} else {\n\t\t\t\t// Display-only UUID\n\t\t\t\t<div class={ uuidDisplayClasses }>\n\t\t\t\t\t<span class={ getUUIDFormatClasses(props.DisplayFormat) }>\n\t\t\t\t\t\t{ FormatUUID(props.Value, props.DisplayFormat) }\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t}\n\t\t\t\n\t\t\t// Action buttons container\n\t\t\tif props.ShowCopyButton || props.ShowGenerateButton {\n\t\t\t\t<div class=\"absolute inset-y-0 right-0 flex items-center pr-3 gap-1\">\n\t\t\t\t\t// Copy button\n\t\t\t\t\tif props.ShowCopyButton && props.Value != \"\" {\n\t\t\t\t\t\t@uuidCopyButton(props)\n\t\t\t\t\t}\n\t\t\t\t\t\n\t\t\t\t\t// Generate button\n\t\t\t\t\tif props.ShowGenerateButton && props.Editable {\n\t\t\t\t\t\t@uuidGenerateButton(props)\n\t\t\t\t\t}\n\t\t\t\t</div>\n\t\t\t}\n\t\t</div>\n\t\t\n\t\t// Validation and help text\n\t\t@uuidValidationText(props)\n\t</div>\n}\n\n// uuidLabel renders the label for the UUID component\ntempl uuidLabel(props UUIDProps) {\n\t<label\n\t\tfor={ props.GetID(\"uuid\") }\n\t\tclass=\"block text-sm font-medium text-gray-900 dark:text-white mb-2\"\n\t>\n\t\t{ props.Label }\n\t\tif props.Required {\n\t\t\t<span class=\"text-red-500 ml-1\">*</span>\n\t\t}\n\t</label>\n}\n\n// uuidCopyButton renders the copy to clipboard button\ntempl uuidCopyButton(props UUIDProps) {\n\t<button\n\t\ttype=\"button\"\n\t\tclass={ uuidCopyButtonClasses }\n\t\ttitle=\"Copy to clipboard\"\n\t\taria-label=\"Copy UUID to clipboard\"\n\t\tx-on:click=\"navigator.clipboard.writeText($el.closest('.relative').querySelector('input, span').textContent || $el.closest('.relative').querySelector('input').value).then(() => { $el.classList.add('text-green-500'); setTimeout(() => $el.classList.remove('text-green-500'), 2000); })\"\n\t>\n\t\t@Icon(IconProps{\n\t\t\tName: \"copy\",\n\t\t\tSize: SizeSM,\n\t\t})\n\t</button>\n}\n\n// uuidGenerateButton renders the generate new UUID button\ntempl uuidGenerateButton(props UUIDProps) {\n\t<button\n\t\ttype=\"button\"\n\t\tclass={ uuidCopyButtonClasses }\n\t\ttitle=\"Generate new UUID\"\n\t\taria-label=\"Generate new UUID\"\n\t\tx-on:click=\"\n\t\t\tconst input = $el.closest('.relative').querySelector('input');\n\t\t\tif (input) {\n\t\t\t\tconst newUuid = crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {\n\t\t\t\t\tconst r = Math.random() * 16 | 0;\n\t\t\t\t\tconst v = c == 'x' ? r : (r & 0x3 | 0x8);\n\t\t\t\t\treturn v.toString(16);\n\t\t\t\t});\n\t\t\t\tinput.value = newUuid;\n\t\t\t\tinput.dispatchEvent(new Event('input', { bubbles: true }));\n\t\t\t\tinput.dispatchEvent(new Event('change', { bubbles: true }));\n\t\t\t}\n\t\t\"\n\t>\n\t\t@Icon(IconProps{\n\t\t\tName: \"refresh\",\n\t\t\tSize: SizeSM,\n\t\t})\n\t</button>\n}\n\n// uuidValidationText renders validation messages and help text\ntempl uuidValidationText(props UUIDProps) {\n\tif props.HelpText != \"\" || props.ShowValidation {\n\t\t<div class=\"mt-2 text-sm\">\n\t\t\tif props.ShowValidation && props.ErrorText != \"\" {\n\t\t\t\t<p class=\"text-red-600 dark:text-red-400\">{ props.ErrorText }</p>\n\t\t\t} else if props.HelpText != \"\" {\n\t\t\t\t<p class=\"text-gray-600 dark:text-gray-400\">{ props.HelpText }</p>\n\t\t\t}\n\t\t</div>\n\t}\n}\n\n// ============================================================================\n// HELPER FUNCTIONS\n// ============================================================================\n\n// getUUIDWrapperClasses returns classes for the UUID wrapper\nfunc getUUIDWrapperClasses(props UUIDProps) string {\n\tclasses := []string{}\n\t\n\t// Add custom wrapper classes\n\tif props.Class != \"\" {\n\t\tclasses = append(classes, props.Class)\n\t}\n\t\n\treturn JoinClasses(classes...)\n}\n\n// getUUIDInputClasses generates input classes based on props\nfunc getUUIDInputClasses(props UUIDProps) string {\n\tclasses := []string{uuidBaseClasses}\n\t\n\t// Add variant classes\n\tif variantClasses, ok := uuidInputVariantClasses[props.Variant]; ok {\n\t\tclasses = append(classes, variantClasses...)\n\t}\n\t\n\t// Add size classes\n\tclasses = append(classes, GetInputSizeClasses(props.Size)...)\n\t\n\t// Add readonly state\n\tif props.ReadOnly {\n\t\tclasses = append(classes, uuidReadOnlyClasses)\n\t}\n\t\n\t// Add padding for buttons\n\tif props.ShowCopyButton || props.ShowGenerateButton {\n\t\tclasses = append(classes, \"pr-16\")\n\t}\n\t\n\treturn JoinClasses(classes...)\n}\n\n// getUUIDFormatClasses returns classes for UUID display format\nfunc getUUIDFormatClasses(format string) string {\n\tif formatClasses, ok := uuidFormatClasses[format]; ok {\n\t\treturn JoinClasses(formatClasses...)\n\t}\n\treturn JoinClasses(uuidFormatClasses[\"full\"]...)\n}\n\n// ============================================================================\n// UTILITY FUNCTIONS FOR COMMON PATTERNS\n// ============================================================================\n\n// WithValue returns a new UUIDProps with specified value\nfunc (p UUIDProps) WithValue(value string) UUIDProps {\n\tp.Value = value\n\treturn p\n}\n\n// WithLabel returns a new UUIDProps with specified label\nfunc (p UUIDProps) WithLabel(label string) UUIDProps {\n\tp.Label = label\n\treturn p\n}\n\n// WithDisplayFormat returns a new UUIDProps with specified display format\nfunc (p UUIDProps) WithDisplayFormat(format string) UUIDProps {\n\tp.DisplayFormat = format\n\treturn p\n}\n\n// AsReadOnly returns a new UUIDProps marked as read-only\nfunc (p UUIDProps) AsReadOnly() UUIDProps {\n\tp.ReadOnly = true\n\tp.Editable = false\n\treturn p\n}\n\n// AsRequired returns a new UUIDProps marked as required\nfunc (p UUIDProps) AsRequired() UUIDProps {\n\tp.Required = true\n\treturn p\n}\n\n// WithCopyButton returns a new UUIDProps with copy button enabled\nfunc (p UUIDProps) WithCopyButton(show bool) UUIDProps {\n\tp.ShowCopyButton = show\n\treturn p\n}\n\n// WithGenerateButton returns a new UUIDProps with generate button enabled\nfunc (p UUIDProps) WithGenerateButton(show bool) UUIDProps {\n\tp.ShowGenerateButton = show\n\treturn p\n}\n\n// WithAutoGenerate returns a new UUIDProps with auto-generation enabled\nfunc (p UUIDProps) WithAutoGenerate(enable bool) UUIDProps {\n\tp.AutoGenerate = enable\n\tif enable && p.Value == \"\" {\n\t\tp.Value = GenerateUUIDv4()\n\t}\n\treturn p\n}\n\n// WithSize returns a new UUIDProps with specified size\nfunc (p UUIDProps) WithSize(size Size) UUIDProps {\n\tp.Size = size\n\treturn p\n}"

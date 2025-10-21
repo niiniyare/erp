@@ -25,27 +25,7 @@ import (
 // 6. SEMANTIC USAGE: Content separation, visual hierarchy
 // ============================================================================
 
-// DividerProps defines all properties for the Divider component
-// Composed of shared structs plus divider-specific fields
-type DividerProps struct {
-	// Composition of shared property groups
-	BaseProps
-	AccessibilityProps
-	InteractionProps
-	AlpineEventHandlers
-
-	// Content
-	Text string `json:"text,omitempty"` // Optional text content in divider
-
-	// Divider-specific attributes
-	Orientation string `json:"orientation,omitempty"` // "horizontal" or "vertical"
-	Color       string `json:"color,omitempty"`       // Color scheme
-	Variant     string `json:"variant,omitempty"`     // Visual style variant
-	Thickness   string `json:"thickness,omitempty"`   // Line thickness
-
-	// Divider-specific styling
-	ComponentSize Size `json:"componentSize"` // Component sizing (affects text and spacing)
-}
+// DividerProps is defined in probs.go to avoid duplication
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
@@ -195,7 +175,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 155, Col: 17}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 135, Col: 17}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -231,7 +211,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 161, Col: 32}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 141, Col: 32}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -250,7 +230,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaDescribedBy)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 164, Col: 44}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 144, Col: 44}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -269,7 +249,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 167, Col: 34}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 147, Col: 34}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -288,7 +268,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnClick)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 170, Col: 30}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 150, Col: 30}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
@@ -321,7 +301,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var10 string
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 176, Col: 17}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 156, Col: 17}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 				if templ_7745c5c3_Err != nil {
@@ -357,7 +337,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 182, Col: 32}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 162, Col: 32}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -376,7 +356,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var13 string
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaDescribedBy)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 185, Col: 44}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 165, Col: 44}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
@@ -395,7 +375,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var14 string
 				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 188, Col: 34}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 168, Col: 34}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 				if templ_7745c5c3_Err != nil {
@@ -414,7 +394,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var15 string
 				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnClick)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 191, Col: 30}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 171, Col: 30}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 				if templ_7745c5c3_Err != nil {
@@ -476,7 +456,7 @@ func Divider(props DividerProps) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(props.Text)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 195, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 175, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -526,7 +506,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var24 string
 				templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 201, Col: 17}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 181, Col: 17}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 				if templ_7745c5c3_Err != nil {
@@ -562,7 +542,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var26 string
 				templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 207, Col: 32}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 187, Col: 32}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 				if templ_7745c5c3_Err != nil {
@@ -581,7 +561,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var27 string
 				templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaDescribedBy)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 210, Col: 44}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 190, Col: 44}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 				if templ_7745c5c3_Err != nil {
@@ -600,7 +580,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var28 string
 				templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 213, Col: 34}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 193, Col: 34}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 				if templ_7745c5c3_Err != nil {
@@ -619,7 +599,7 @@ func Divider(props DividerProps) templ.Component {
 				var templ_7745c5c3_Var29 string
 				templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnClick)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 216, Col: 30}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/divider.templ`, Line: 196, Col: 30}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 				if templ_7745c5c3_Err != nil {

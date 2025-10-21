@@ -46,29 +46,7 @@ import (
 // CHECKBOX-SPECIFIC TYPES
 // ============================================================================
 
-// CheckboxProps defines all properties for the Checkbox component
-// Composed of shared structs plus checkbox-specific fields
-type CheckboxProps struct {
-// Composition of shared property groups
-BaseProps
-AccessibilityProps
-ValidationProps
-InteractionProps
-AlpineEventHandlers
-
-// Content
-Label string `json:"label,omitempty"`
-Value string `json:"value,omitempty"` // The value submitted when checked
-
-// Checkbox-specific attributes
-Checked bool `json:"checked,omitempty"`
-Indeterminate bool `json:"indeterminate,omitempty"` // For "partially checked" state
-
-// Styling (checkbox-specific)
-Size Size `json:"size"`
-Rounded bool `json:"rounded,omitempty"` // true = rounded corners, false = sharp
-LabelPosition LabelPosition `json:"labelPosition,omitempty"` // Where label appears
-}
+// CheckboxProps is defined in probs.go to avoid duplication
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
@@ -145,12 +123,14 @@ return CheckboxProps{
 BaseProps: BaseProps{
 ID: id,
 },
+LabelProps: LabelProps{
 Label: label,
+LabelPosition: LabelRight, // Conventional position for checkboxes
+},
 Size: SizeMD, // Default to medium size
 ValidationProps: ValidationProps{
 State: StateDefault, // Default to neutral state
 },
-LabelPosition: LabelRight, // Conventional position for checkboxes
 }
 }
 
@@ -286,19 +266,19 @@ templ CheckboxFeedback(props CheckboxProps) {
 // Determine which message to show based on state priority:
 // Error > Success > Warning > Default help text
 if props.State == StateError && props.ErrorText != "" {
-<p class={ getFeedbackClasses(StateError) }>
+<p class={ GetFeedbackClasses(StateError) }>
   <span class="font-medium">Error:</span> { props.ErrorText }
 </p>
 } else if props.State == StateSuccess && props.SuccessText != "" {
-<p class={ getFeedbackClasses(StateSuccess) }>
+<p class={ GetFeedbackClasses(StateSuccess) }>
   <span class="font-medium">Success:</span> { props.SuccessText }
 </p>
 } else if props.State == StateWarning && props.WarningText != "" {
-<p class={ getFeedbackClasses(StateWarning) }>
+<p class={ GetFeedbackClasses(StateWarning) }>
   <span class="font-medium">Warning:</span> { props.WarningText }
 </p>
 } else if props.HelpText != "" {
-<p class={ getFeedbackClasses(StateDefault) }>
+<p class={ GetFeedbackClasses(StateDefault) }>
   { props.HelpText }
 </p>
 }
@@ -310,7 +290,7 @@ if props.State == StateError && props.ErrorText != "" {
 
 // getCheckboxWrapperClasses returns classes for the outer container
 func getCheckboxWrapperClasses(props CheckboxProps) string {
-classes := []string{wrapperSpacing}
+classes := []string{WrapperSpacingDefault}
 
 // Allow custom classes to be added
 if props.Class != "" {

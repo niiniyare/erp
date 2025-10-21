@@ -1,39 +1,393 @@
 package atoms
 
 import (
-	"context"
+	"strconv"
 )
 
-// Button renders a button using the self-contained CSS factory
-templ Button(ctx context.Context, props ButtonProps) {
+// ============================================================================
+// DESIGN RATIONALE - BUTTON COMPONENT
+// ============================================================================
+// Following the composition-based architecture established in checkbox.templ:
+//
+// 1. REUSABLE STRUCTS: Uses shared BaseProps, AccessibilityProps, etc.
+// 2. CONFIGURATION-DRIVEN: Button variants, sizes, and states use maps
+// 3. ALPINE.JS INTEGRATION: Proper x-on: syntax for event handling
+// 4. LOADING STATES: Built-in loading spinner and disabled state management
+// 5. ICON SUPPORT: Flexible icon positioning with proper spacing
+// 6. ACCESSIBILITY: Full ARIA support with button-specific attributes
+// ============================================================================
+
+// ============================================================================
+// CONFIGURATION CONSTANTS
+// ============================================================================
+
+// Button variant configurations mapping to Flowbite classes
+var buttonVariantClasses = map[Variant]map[ColorScheme][]string{
+	VariantDefault: {
+		ColorPrimary: {
+			"text-white", "bg-blue-700", "hover:bg-blue-800",
+			"focus:ring-4", "focus:ring-blue-300", "focus:outline-none",
+			"dark:bg-blue-600", "dark:hover:bg-blue-700", "dark:focus:ring-blue-800",
+		},
+		ColorSecondary: {
+			"text-white", "bg-gray-800", "hover:bg-gray-900",
+			"focus:ring-4", "focus:ring-gray-300", "focus:outline-none",
+			"dark:bg-gray-800", "dark:hover:bg-gray-700", "dark:focus:ring-gray-700",
+		},
+		ColorSuccess: {
+			"text-white", "bg-green-700", "hover:bg-green-800",
+			"focus:ring-4", "focus:ring-green-300", "focus:outline-none",
+			"dark:bg-green-600", "dark:hover:bg-green-700", "dark:focus:ring-green-800",
+		},
+		ColorDanger: {
+			"text-white", "bg-red-700", "hover:bg-red-800",
+			"focus:ring-4", "focus:ring-red-300", "focus:outline-none",
+			"dark:bg-red-600", "dark:hover:bg-red-700", "dark:focus:ring-red-900",
+		},
+		ColorWarning: {
+			"text-white", "bg-yellow-400", "hover:bg-yellow-500",
+			"focus:ring-4", "focus:ring-yellow-300", "focus:outline-none",
+			"dark:focus:ring-yellow-900",
+		},
+	},
+	VariantOutlined: {
+		ColorPrimary: {
+			"text-blue-700", "border", "border-blue-700",
+			"hover:bg-blue-700", "hover:text-white",
+			"focus:ring-4", "focus:ring-blue-300", "focus:outline-none",
+			"dark:border-blue-500", "dark:text-blue-500",
+			"dark:hover:bg-blue-600", "dark:hover:text-white", "dark:focus:ring-blue-800",
+		},
+		ColorSecondary: {
+			"text-gray-700", "border", "border-gray-700",
+			"hover:bg-gray-700", "hover:text-white",
+			"focus:ring-4", "focus:ring-gray-300", "focus:outline-none",
+			"dark:border-gray-600", "dark:text-gray-400",
+			"dark:hover:bg-gray-600", "dark:hover:text-white", "dark:focus:ring-gray-800",
+		},
+		ColorSuccess: {
+			"text-green-700", "border", "border-green-700",
+			"hover:bg-green-700", "hover:text-white",
+			"focus:ring-4", "focus:ring-green-300", "focus:outline-none",
+			"dark:border-green-500", "dark:text-green-500",
+			"dark:hover:bg-green-600", "dark:hover:text-white", "dark:focus:ring-green-800",
+		},
+		ColorDanger: {
+			"text-red-700", "border", "border-red-700",
+			"hover:bg-red-700", "hover:text-white",
+			"focus:ring-4", "focus:ring-red-300", "focus:outline-none",
+			"dark:border-red-500", "dark:text-red-500",
+			"dark:hover:bg-red-600", "dark:hover:text-white", "dark:focus:ring-red-900",
+		},
+	},
+	VariantGhost: {
+		ColorDefault: {
+			"text-gray-700", "hover:bg-gray-100",
+			"focus:ring-4", "focus:ring-gray-200", "focus:outline-none",
+			"dark:text-gray-400", "dark:hover:bg-gray-700", "dark:focus:ring-gray-700",
+		},
+	},
+}
+
+// Base button classes
+const (
+	buttonBaseClasses = "font-medium transition-colors duration-200 focus:z-10 inline-flex items-center justify-center"
+	buttonDisabledClasses = "opacity-50 cursor-not-allowed pointer-events-none"
+	buttonLoadingClasses = "relative text-transparent pointer-events-none"
+	buttonFullWidthClass = "w-full"
+)
+
+// ============================================================================
+// CONSTRUCTOR WITH SENSIBLE DEFAULTS
+// ============================================================================
+
+// NewButton creates a new ButtonProps with sensible defaults
+// Example usage:
+// button := NewButton("Submit Form")
+// button.Type = "submit"
+// button.ColorScheme = ColorSuccess
+func NewButton(text string) ButtonProps {
+	return ButtonProps{
+		BaseProps: BaseProps{
+			ID: GenerateID("button"),
+		},
+		Text: text,
+		Type: "button", // Default to button type
+		Variant: VariantDefault,
+		Size: SizeMD,
+		ColorScheme: ColorPrimary,
+		Icon: IconProps{
+			Position: IconLeft,
+		},
+	}
+}
+
+// NewSubmitButton creates a button configured for form submission
+func NewSubmitButton(text string) ButtonProps {
+	props := NewButton(text)
+	props.Type = "submit"
+	props.ColorScheme = ColorSuccess
+	return props
+}
+
+// NewIconButton creates a button with an icon
+func NewIconButton(text, iconName string) ButtonProps {
+	props := NewButton(text)
+	props.Icon.Name = iconName
+	return props
+}
+
+// ============================================================================
+// TEMPLATE COMPONENTS
+// ============================================================================
+
+// Button renders a fully-featured button with Flowbite styling
+// Supports variants, sizes, loading states, icons, and full accessibility
+templ Button(props ButtonProps) {
 	<button
+		type={ getButtonType(props) }
 		if props.ID != "" {
 			id={ props.ID }
 		}
-		style={ GetButtonCSS(props.Variant) }
-		if props.ClassName != "" {
-			class={ props.ClassName }
+		if props.Name != "" {
+			name={ props.Name }
 		}
-		if props.Disabled {
+		if props.Form != "" {
+			form={ props.Form }
+		}
+		class={ getButtonClasses(props) }
+		if props.Disabled || props.Loading {
 			disabled
 		}
-		if props.TestID != "" {
-			data-testid={ props.TestID }
+		if props.AriaLabel != "" {
+			aria-label={ props.AriaLabel }
+		}
+		if props.AriaDescribedBy != "" {
+			aria-describedby={ props.AriaDescribedBy }
+		}
+		if props.AriaExpanded != nil {
+			aria-expanded={ getAriaExpanded(props.AriaExpanded) }
+		}
+		if props.AriaControls != "" {
+			aria-controls={ props.AriaControls }
+		}
+		if props.AriaHasPopup != "" {
+			aria-haspopup={ props.AriaHasPopup }
+		}
+		if props.AriaDisabled {
+			aria-disabled="true"
+		}
+		if props.DataTestID != "" {
+			data-testid={ props.DataTestID }
+		}
+		if props.TabIndex != 0 {
+			tabindex={ strconv.Itoa(props.TabIndex) }
+		}
+		if props.OnClick != "" {
+			x-on:click={ props.OnClick }
+		}
+		if props.OnFocus != "" {
+			x-on:focus={ props.OnFocus }
+		}
+		if props.OnBlur != "" {
+			x-on:blur={ props.OnBlur }
+		}
+		if props.OnMouseEnter != "" {
+			x-on:mouseenter={ props.OnMouseEnter }
+		}
+		if props.OnMouseLeave != "" {
+			x-on:mouseleave={ props.OnMouseLeave }
+		}
+		if props.OnKeyDown != "" {
+			x-on:keydown={ props.OnKeyDown }
 		}
 	>
 		if props.Loading {
-			<span class="loading-spinner"></span>
-			Loading...
+			// Loading spinner overlay
+			<span class="absolute inset-0 flex items-center justify-center">
+				@loadingSpinner(props.Size)
+			</span>
+			// Keep content for layout but make transparent
+			<span class="opacity-0">
+				@buttonContent(props)
+			</span>
 		} else {
-			if props.Icon != "" {
-				<i class={ "icon-" + props.Icon }></i>
-			}
-			{ GetButtonDisplayText(props) }
+			@buttonContent(props)
 		}
 	</button>
 }
 
-// ButtonFromSchema creates a Button component from JSON schema configuration
-templ ButtonFromSchema(ctx context.Context, schemaConfig string) {
-	<div>Placeholder for schema-based button</div>
+// buttonContent renders the inner content of the button
+templ buttonContent(props ButtonProps) {
+	// Icon on the left
+	if props.Icon.HasIcon() && props.Icon.Position == IconLeft {
+		@buttonIcon(props.Icon, props.Size)
+	}
+	
+	// Button text
+	<span>{ props.Text }</span>
+	
+	// Icon on the right
+	if props.Icon.HasIcon() && props.Icon.Position == IconRight {
+		@buttonIcon(props.Icon, props.Size)
+	}
+}
+
+// buttonIcon renders an icon with proper sizing and spacing
+templ buttonIcon(icon IconProps, buttonSize Size) {
+	<svg
+		class={ icon.GetIconClasses() }
+		fill="currentColor"
+		viewBox="0 0 24 24"
+		xmlns="http://www.w3.org/2000/svg"
+	>
+		// This is a placeholder - in real implementation, icon paths would be loaded
+		// based on the icon name from a icon library like lucide-react
+		<path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"/>
+	</svg>
+}
+
+// loadingSpinner renders a spinning loading indicator
+templ loadingSpinner(size Size) {
+	<svg
+		class={ getLoadingSpinnerClasses(size) }
+		xmlns="http://www.w3.org/2000/svg"
+		fill="none"
+		viewBox="0 0 24 24"
+	>
+		<circle
+			class="opacity-25"
+			cx="12"
+			cy="12"
+			r="10"
+			stroke="currentColor"
+			stroke-width="4"
+		></circle>
+		<path
+			class="opacity-75"
+			fill="currentColor"
+			d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+		></path>
+	</svg>
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+// getButtonType returns the button type attribute
+func getButtonType(props ButtonProps) string {
+	if props.Type != "" {
+		return props.Type
+	}
+	return "button"
+}
+
+// getButtonClasses generates all button classes based on props
+func getButtonClasses(props ButtonProps) string {
+	classes := []string{buttonBaseClasses}
+
+	// Add variant and color scheme classes
+	if variantColors, ok := buttonVariantClasses[props.Variant]; ok {
+		if colorClasses, ok := variantColors[props.ColorScheme]; ok {
+			classes = append(classes, colorClasses...)
+		}
+	}
+
+	// Add size classes
+	classes = append(classes, GetButtonSizeClasses(props.Size)...)
+
+	// Add rounding
+	classes = append(classes, GetRoundedClass(true, props.Size))
+
+	// Add full width
+	if props.FullWidth {
+		classes = append(classes, buttonFullWidthClass)
+	}
+
+	// Add disabled/loading state
+	if props.Disabled {
+		classes = append(classes, buttonDisabledClasses)
+	}
+	if props.Loading {
+		classes = append(classes, buttonLoadingClasses)
+	}
+
+	// Add custom classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+
+	return JoinClasses(classes...)
+}
+
+// getLoadingSpinnerClasses returns classes for the loading spinner
+func getLoadingSpinnerClasses(size Size) string {
+	classes := []string{"animate-spin"}
+	classes = append(classes, GetIconSizeClasses(size)...)
+	return JoinClasses(classes...)
+}
+
+// getAriaExpanded converts bool pointer to string
+func getAriaExpanded(expanded *bool) string {
+	if expanded == nil {
+		return ""
+	}
+	if *expanded {
+		return "true"
+	}
+	return "false"
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS FOR COMMON PATTERNS
+// ============================================================================
+
+// WithLoading returns a new ButtonProps with loading state
+func (p ButtonProps) WithLoading(loading bool) ButtonProps {
+	p.Loading = loading
+	return p
+}
+
+// WithIcon returns a new ButtonProps with an icon
+func (p ButtonProps) WithIcon(iconName string, position IconPosition) ButtonProps {
+	p.Icon.Name = iconName
+	p.Icon.Position = position
+	return p
+}
+
+// AsSubmit returns a new ButtonProps configured as a submit button
+func (p ButtonProps) AsSubmit() ButtonProps {
+	p.Type = "submit"
+	return p
+}
+
+// AsFullWidth returns a new ButtonProps with full width
+func (p ButtonProps) AsFullWidth() ButtonProps {
+	p.FullWidth = true
+	return p
+}
+
+// WithVariant returns a new ButtonProps with specified variant
+func (p ButtonProps) WithVariant(variant Variant) ButtonProps {
+	p.Variant = variant
+	return p
+}
+
+// WithColorScheme returns a new ButtonProps with specified color scheme
+func (p ButtonProps) WithColorScheme(scheme ColorScheme) ButtonProps {
+	p.ColorScheme = scheme
+	return p
+}
+
+// WithSize returns a new ButtonProps with specified size
+func (p ButtonProps) WithSize(size Size) ButtonProps {
+	p.Size = size
+	return p
+}
+
+// AsDisabled returns a new ButtonProps with disabled state
+func (p ButtonProps) AsDisabled() ButtonProps {
+	p.Disabled = true
+	return p
 }

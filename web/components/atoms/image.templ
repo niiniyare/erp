@@ -1,0 +1,392 @@
+package atoms
+
+import (
+	"strconv"
+)
+
+// ============================================================================
+// DESIGN RATIONALE - IMAGE COMPONENT
+// ============================================================================
+// Following the composition-based architecture established in checkbox.templ:
+//
+// 1. REUSABLE STRUCTS: Uses shared BaseProps, AccessibilityProps
+// 2. CONFIGURATION-DRIVEN: Image variants, shapes, and sizes use enums
+// 3. ALPINE.JS INTEGRATION: Proper x-on: syntax for event handling
+// 4. LOADING STATES: Built-in loading placeholders and error handling
+// 5. RESPONSIVE SUPPORT: Support for responsive image sizes
+// 6. ACCESSIBILITY: Proper alt text and ARIA attributes
+// ============================================================================
+
+// ============================================================================
+// CONFIGURATION CONSTANTS
+// ============================================================================
+
+// Image shape configurations
+var imageShapeClasses = map[string][]string{
+	"rounded": {"rounded-md"},
+	"circle":  {"rounded-full"},
+	"square":  {"rounded-none"},
+}
+
+// Image variant configurations for different use cases
+var imageVariantClasses = map[Variant][]string{
+	VariantDefault: {"object-cover"},
+	VariantFilled:  {"object-cover", "w-full", "h-full"},
+	VariantOutlined: {"object-cover", "border", "border-gray-200", "dark:border-gray-700"},
+}
+
+// Base image classes
+const (
+	imageBaseClasses = "transition-all duration-200"
+	imageLoadingClasses = "animate-pulse bg-gray-300 dark:bg-gray-700"
+	imageErrorClasses = "bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
+	imageClickableClasses = "cursor-pointer hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+)
+
+// ============================================================================
+// CONSTRUCTOR WITH SENSIBLE DEFAULTS
+// ============================================================================
+
+// NewImage creates a new ImageProps with sensible defaults
+// Example usage:
+// img := NewImage("/path/to/image.jpg", "Description")
+// img.Width = 200
+// img.Height = 200
+func NewImage(src, alt string) ImageProps {
+	return ImageProps{
+		BaseProps: BaseProps{
+			ID: GenerateID("image"),
+		},
+		AccessibilityProps: AccessibilityProps{
+			AriaLabel: alt,
+		},
+		Src:     src,
+		Alt:     alt,
+		Variant: VariantDefault,
+		Size:    SizeMD,
+		Shape:   "rounded",
+		Loading: "lazy",
+	}
+}
+
+// NewAvatar creates an image configured as an avatar
+func NewAvatar(src, alt string) ImageProps {
+	img := NewImage(src, alt)
+	img.Shape = "circle"
+	img.Variant = VariantOutlined
+	img.Size = SizeMD
+	return img
+}
+
+// NewThumbnail creates an image configured as a thumbnail
+func NewThumbnail(src, alt string) ImageProps {
+	img := NewImage(src, alt)
+	img.Shape = "rounded"
+	img.Size = SizeSM
+	return img
+}
+
+// NewHeroImage creates an image configured for hero sections
+func NewHeroImage(src, alt string) ImageProps {
+	img := NewImage(src, alt)
+	img.Variant = VariantFilled
+	img.Shape = "square"
+	img.Size = SizeXL
+	return img
+}
+
+// ============================================================================
+// TEMPLATE COMPONENTS
+// ============================================================================
+
+// Image renders an image with proper loading states, error handling, and accessibility
+// Supports different shapes, sizes, and responsive behavior
+templ Image(props ImageProps) {
+	<div class={ getImageWrapperClasses(props) }>
+		if props.ShowPlaceholder && props.Src == "" {
+			// Placeholder when no src is provided
+			@imagePlaceholder(props)
+		} else {
+			// Actual image element
+			<img
+				if props.GetID("image") != "" {
+					id={ props.GetID("image") }
+				}
+				src={ props.Src }
+				alt={ props.Alt }
+				class={ getImageClasses(props) }
+				if props.Width > 0 {
+					width={ strconv.Itoa(props.Width) }
+				}
+				if props.Height > 0 {
+					height={ strconv.Itoa(props.Height) }
+				}
+				if props.Sizes != "" {
+					sizes={ props.Sizes }
+				}
+				if props.Srcset != "" {
+					srcset={ props.Srcset }
+				}
+				if props.Loading != "" {
+					loading={ props.Loading }
+				} else {
+					loading="lazy"
+				}
+				if props.Decoding != "" {
+					decoding={ props.Decoding }
+				}
+				if props.CrossOrigin != "" {
+					crossorigin={ props.CrossOrigin }
+				}
+				if props.AriaLabel != "" {
+					aria-label={ props.AriaLabel }
+				}
+				if props.AriaDescribedBy != "" {
+					aria-describedby={ props.AriaDescribedBy }
+				}
+				if props.AriaHidden {
+					aria-hidden="true"
+				}
+				if props.DataTestID != "" {
+					data-testid={ props.DataTestID }
+				}
+				if props.TabIndex != 0 {
+					tabindex={ strconv.Itoa(props.TabIndex) }
+				}
+				if props.OnLoad != "" {
+					x-on:load={ props.OnLoad }
+				}
+				if props.OnError != "" {
+					x-on:error={ props.OnError }
+				}
+				if props.OnClick != "" {
+					x-on:click={ props.OnClick }
+				}
+				if props.OnMouseEnter != "" {
+					x-on:mouseenter={ props.OnMouseEnter }
+				}
+				if props.OnMouseLeave != "" {
+					x-on:mouseleave={ props.OnMouseLeave }
+				}
+			/>
+		}
+		
+		// Caption (if provided)
+		if props.Caption != "" {
+			@imageCaption(props)
+		}
+	</div>
+}
+
+// imagePlaceholder renders a placeholder when no image source is provided
+templ imagePlaceholder(props ImageProps) {
+	<div
+		class={ getPlaceholderClasses(props) }
+		if props.AriaLabel != "" {
+			aria-label={ props.AriaLabel }
+		} else {
+			aria-label="Image placeholder"
+		}
+		role="img"
+	>
+		// Placeholder icon
+		<div class="flex items-center justify-center h-full">
+			@Icon(IconProps{
+				Name: "image",
+				Size: getPlaceholderIconSize(props.Size),
+				Color: "text-gray-400 dark:text-gray-600",
+			})
+		</div>
+	</div>
+}
+
+// imageCaption renders the image caption
+templ imageCaption(props ImageProps) {
+	<figcaption class="mt-2 text-sm text-gray-600 dark:text-gray-400 text-center">
+		{ props.Caption }
+	</figcaption>
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+// getImageWrapperClasses returns classes for the image wrapper
+func getImageWrapperClasses(props ImageProps) string {
+	classes := []string{}
+	
+	// Add figure wrapper if caption exists
+	if props.Caption != "" {
+		classes = append(classes, "figure")
+	}
+	
+	// Add responsive classes based on size
+	if props.Responsive {
+		classes = append(classes, "relative", "overflow-hidden")
+	}
+	
+	// Add custom wrapper classes
+	if props.WrapperClass != "" {
+		classes = append(classes, props.WrapperClass)
+	}
+	
+	return JoinClasses(classes...)
+}
+
+// getImageClasses generates all image classes based on props
+func getImageClasses(props ImageProps) string {
+	classes := []string{imageBaseClasses}
+	
+	// Add variant classes
+	if variantClasses, ok := imageVariantClasses[props.Variant]; ok {
+		classes = append(classes, variantClasses...)
+	}
+	
+	// Add shape classes
+	if shapeClasses, ok := imageShapeClasses[props.Shape]; ok {
+		classes = append(classes, shapeClasses...)
+	}
+	
+	// Add size classes
+	classes = append(classes, GetImageSizeClasses(props.Size)...)
+	
+	// Add clickable classes
+	if props.OnClick != "" {
+		classes = append(classes, imageClickableClasses)
+	}
+	
+	// Add custom classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+	
+	return JoinClasses(classes...)
+}
+
+// getPlaceholderClasses returns classes for the placeholder
+func getPlaceholderClasses(props ImageProps) string {
+	classes := []string{
+		"flex", "items-center", "justify-center",
+		"bg-gray-100", "dark:bg-gray-800",
+		"border", "border-gray-200", "dark:border-gray-700",
+	}
+	
+	// Add shape classes
+	if shapeClasses, ok := imageShapeClasses[props.Shape]; ok {
+		classes = append(classes, shapeClasses...)
+	}
+	
+	// Add size classes
+	classes = append(classes, GetImageSizeClasses(props.Size)...)
+	
+	return JoinClasses(classes...)
+}
+
+// getPlaceholderIconSize returns appropriate icon size for placeholder
+func getPlaceholderIconSize(size Size) Size {
+	switch size {
+	case SizeXS:
+		return SizeXS
+	case SizeSM:
+		return SizeSM
+	case SizeLG:
+		return SizeMD
+	case SizeXL:
+		return SizeLG
+	default:
+		return SizeSM
+	}
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS FOR COMMON PATTERNS
+// ============================================================================
+
+// WithSrc returns a new ImageProps with specified source
+func (p ImageProps) WithSrc(src string) ImageProps {
+	p.Src = src
+	return p
+}
+
+// WithAlt returns a new ImageProps with specified alt text
+func (p ImageProps) WithAlt(alt string) ImageProps {
+	p.Alt = alt
+	p.AriaLabel = alt
+	return p
+}
+
+// WithDimensions returns a new ImageProps with specified width and height
+func (p ImageProps) WithDimensions(width, height int) ImageProps {
+	p.Width = width
+	p.Height = height
+	return p
+}
+
+// WithShape returns a new ImageProps with specified shape
+func (p ImageProps) WithShape(shape string) ImageProps {
+	p.Shape = shape
+	return p
+}
+
+// WithVariant returns a new ImageProps with specified variant
+func (p ImageProps) WithVariant(variant Variant) ImageProps {
+	p.Variant = variant
+	return p
+}
+
+// WithSize returns a new ImageProps with specified size
+func (p ImageProps) WithSize(size Size) ImageProps {
+	p.Size = size
+	return p
+}
+
+// WithCaption returns a new ImageProps with specified caption
+func (p ImageProps) WithCaption(caption string) ImageProps {
+	p.Caption = caption
+	return p
+}
+
+// WithSrcset returns a new ImageProps with responsive image sources
+func (p ImageProps) WithSrcset(srcset, sizes string) ImageProps {
+	p.Srcset = srcset
+	p.Sizes = sizes
+	p.Responsive = true
+	return p
+}
+
+// AsClickable returns a new ImageProps with click handler
+func (p ImageProps) AsClickable(onClick string) ImageProps {
+	p.OnClick = onClick
+	p.TabIndex = 0
+	return p
+}
+
+// AsCircle returns a new ImageProps with circular shape
+func (p ImageProps) AsCircle() ImageProps {
+	p.Shape = "circle"
+	return p
+}
+
+// AsSquare returns a new ImageProps with square shape
+func (p ImageProps) AsSquare() ImageProps {
+	p.Shape = "square"
+	return p
+}
+
+// WithPlaceholder returns a new ImageProps with placeholder enabled
+func (p ImageProps) WithPlaceholder(show bool) ImageProps {
+	p.ShowPlaceholder = show
+	return p
+}
+
+// AsEager returns a new ImageProps with eager loading
+func (p ImageProps) AsEager() ImageProps {
+	p.Loading = "eager"
+	return p
+}
+
+// AsLazy returns a new ImageProps with lazy loading
+func (p ImageProps) AsLazy() ImageProps {
+	p.Loading = "lazy"
+	return p
+}

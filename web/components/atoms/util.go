@@ -623,3 +623,21 @@ func AssertValid(condition bool, message string) {
 		panic(message)
 	}
 }
+
+// GetActionSizeClasses returns CSS classes for action component sizing.
+func GetActionSizeClasses(size Size) []string {
+	switch size {
+	case SizeXS:
+		return []string{"px-2", "py-1", "text-xs"}
+	case SizeSM:
+		return []string{"px-3", "py-1.5", "text-sm"}
+	case SizeMD:
+		return []string{"px-4", "py-2", "text-sm"}
+	case SizeLG:
+		return []string{"px-6", "py-2.5", "text-base"}
+	case SizeXL:
+		return []string{"px-8", "py-3", "text-lg"}
+	default:
+		return []string{"px-4", "py-2", "text-sm"}
+	}
+}
