@@ -1,5 +1,5 @@
 // Package components - EditorControlSchema for rich text and code editors
-// Based on JSON schema: EditorControlSchema.json  
+// Based on JSON schema: EditorControlSchema.json
 package components
 
 import (
@@ -22,12 +22,12 @@ const (
 type EditorControlType string
 
 const (
-	EditorTypeMonaco   EditorControlType = "monaco"   // Monaco Editor (VS Code)
-	EditorTypeTinyMCE  EditorControlType = "tinymce"  // TinyMCE Rich Text Editor
+	EditorTypeMonaco     EditorControlType = "monaco"     // Monaco Editor (VS Code)
+	EditorTypeTinyMCE    EditorControlType = "tinymce"    // TinyMCE Rich Text Editor
 	EditorTypeCodeMirror EditorControlType = "codemirror" // CodeMirror Editor
-	EditorTypeQuill    EditorControlType = "quill"    // Quill Rich Text Editor
-	EditorTypeAce      EditorControlType = "ace"      // Ace Editor
-	EditorTypeDefault  EditorControlType = "default"  // Default system editor
+	EditorTypeQuill      EditorControlType = "quill"      // Quill Rich Text Editor
+	EditorTypeAce        EditorControlType = "ace"        // Ace Editor
+	EditorTypeDefault    EditorControlType = "default"    // Default system editor
 )
 
 // EditorLanguage represents supported programming languages for syntax highlighting
@@ -51,7 +51,7 @@ const (
 	LanguagePython       EditorLanguage = "python"       // Python programming
 	LanguageR            EditorLanguage = "r"            // R statistical
 	LanguagePowerShell   EditorLanguage = "powershell"   // PowerShell scripting
-	
+
 	// Web Technologies
 	LanguageCSS        EditorLanguage = "css"        // CSS stylesheets
 	LanguageHTML       EditorLanguage = "html"       // HTML markup
@@ -59,14 +59,14 @@ const (
 	LanguageHandlebars EditorLanguage = "handlebars" // Handlebars templates
 	LanguagePug        EditorLanguage = "pug"        // Pug templates
 	LanguageRazor      EditorLanguage = "razor"      // Razor templates
-	
+
 	// Data Formats
 	LanguageJSON     EditorLanguage = "json"     // JSON data
 	LanguageXML      EditorLanguage = "xml"      // XML markup
 	LanguageYAML     EditorLanguage = "yaml"     // YAML data
 	LanguageINI      EditorLanguage = "ini"      // INI configuration
 	LanguageMarkdown EditorLanguage = "markdown" // Markdown text
-	
+
 	// Other
 	LanguagePlaintext EditorLanguage = "plaintext" // Plain text
 	LanguageSQL       EditorLanguage = "sql"       // SQL queries
@@ -77,80 +77,80 @@ const (
 type EditorVendor string
 
 const (
-	VendorMonaco    EditorVendor = "monaco"     // Monaco Editor
-	VendorTinyMCE   EditorVendor = "tinymce"    // TinyMCE
+	VendorMonaco     EditorVendor = "monaco"     // Monaco Editor
+	VendorTinyMCE    EditorVendor = "tinymce"    // TinyMCE
 	VendorCodeMirror EditorVendor = "codemirror" // CodeMirror
-	VendorQuill     EditorVendor = "quill"      // Quill
-	VendorAce       EditorVendor = "ace"        // Ace Editor
+	VendorQuill      EditorVendor = "quill"      // Quill
+	VendorAce        EditorVendor = "ace"        // Ace Editor
 )
 
 // EditorToolbarItem represents toolbar buttons for rich text editors
 type EditorToolbarItem string
 
 const (
-	ToolbarBold          EditorToolbarItem = "bold"          // Bold formatting
-	ToolbarItalic        EditorToolbarItem = "italic"        // Italic formatting
-	ToolbarUnderline     EditorToolbarItem = "underline"     // Underline formatting
-	ToolbarStrikethrough EditorToolbarItem = "strikethrough" // Strikethrough formatting
-	ToolbarHeading       EditorToolbarItem = "heading"       // Heading levels
-	ToolbarQuote         EditorToolbarItem = "quote"         // Block quote
-	ToolbarCode          EditorToolbarItem = "code"          // Inline code
-	ToolbarCodeBlock     EditorToolbarItem = "code-block"    // Code block
-	ToolbarUnorderedList EditorToolbarItem = "unordered-list" // Bullet list
-	ToolbarOrderedList   EditorToolbarItem = "ordered-list"  // Numbered list
-	ToolbarLink          EditorToolbarItem = "link"          // Insert link
-	ToolbarImage         EditorToolbarItem = "image"         // Insert image
-	ToolbarTable         EditorToolbarItem = "table"         // Insert table
+	ToolbarBold           EditorToolbarItem = "bold"            // Bold formatting
+	ToolbarItalic         EditorToolbarItem = "italic"          // Italic formatting
+	ToolbarUnderline      EditorToolbarItem = "underline"       // Underline formatting
+	ToolbarStrikethrough  EditorToolbarItem = "strikethrough"   // Strikethrough formatting
+	ToolbarHeading        EditorToolbarItem = "heading"         // Heading levels
+	ToolbarQuote          EditorToolbarItem = "quote"           // Block quote
+	ToolbarCode           EditorToolbarItem = "code"            // Inline code
+	ToolbarCodeBlock      EditorToolbarItem = "code-block"      // Code block
+	ToolbarUnorderedList  EditorToolbarItem = "unordered-list"  // Bullet list
+	ToolbarOrderedList    EditorToolbarItem = "ordered-list"    // Numbered list
+	ToolbarLink           EditorToolbarItem = "link"            // Insert link
+	ToolbarImage          EditorToolbarItem = "image"           // Insert image
+	ToolbarTable          EditorToolbarItem = "table"           // Insert table
 	ToolbarHorizontalRule EditorToolbarItem = "horizontal-rule" // Horizontal line
-	ToolbarUndo          EditorToolbarItem = "undo"          // Undo action
-	ToolbarRedo          EditorToolbarItem = "redo"          // Redo action
-	ToolbarFullscreen    EditorToolbarItem = "fullscreen"    // Fullscreen toggle
+	ToolbarUndo           EditorToolbarItem = "undo"            // Undo action
+	ToolbarRedo           EditorToolbarItem = "redo"            // Redo action
+	ToolbarFullscreen     EditorToolbarItem = "fullscreen"      // Fullscreen toggle
 )
 
 // EditorOptions represents configuration options for different editor types
 type EditorOptions struct {
 	// Monaco Editor Options
-	Theme                   string            `json:"theme,omitempty"`                   // Editor theme
-	WordWrap               string            `json:"wordWrap,omitempty"`               // Word wrapping: "on", "off", "wordWrapColumn", "bounded"
-	LineNumbers            string            `json:"lineNumbers,omitempty"`            // Line numbers: "on", "off", "relative", "interval"
-	MiniMap                *MinimapOptions   `json:"minimap,omitempty"`                // Minimap configuration
-	FontSize               int               `json:"fontSize,omitempty"`               // Font size in pixels
-	FontFamily             string            `json:"fontFamily,omitempty"`             // Font family
-	TabSize                int               `json:"tabSize,omitempty"`                // Tab size
-	InsertSpaces           bool              `json:"insertSpaces,omitempty"`           // Use spaces instead of tabs
-	FoldingStrategy        string            `json:"foldingStrategy,omitempty"`        // Code folding strategy
-	FormatOnPaste          bool              `json:"formatOnPaste,omitempty"`          // Format on paste
-	FormatOnType           bool              `json:"formatOnType,omitempty"`           // Format on type
-	AutoIndent             string            `json:"autoIndent,omitempty"`             // Auto indent: "none", "keep", "brackets", "advanced", "full"
-	
-	// Rich Text Editor Options  
-	MenuBar                bool              `json:"menubar,omitempty"`                // Show menu bar
-	Toolbar                interface{}       `json:"toolbar,omitempty"`                // Toolbar configuration (string or array)
-	Plugins                []string          `json:"plugins,omitempty"`                // Enabled plugins
-	StatusBar              bool              `json:"statusbar,omitempty"`              // Show status bar
-	Branding               bool              `json:"branding,omitempty"`               // Show editor branding
-	ElementPath            bool              `json:"elementpath,omitempty"`            // Show element path
-	Resize                 string            `json:"resize,omitempty"`                 // Resize behavior: "true", "false", "both"
-	
+	Theme           string          `json:"theme,omitempty"`           // Editor theme
+	WordWrap        string          `json:"wordWrap,omitempty"`        // Word wrapping: "on", "off", "wordWrapColumn", "bounded"
+	LineNumbers     string          `json:"lineNumbers,omitempty"`     // Line numbers: "on", "off", "relative", "interval"
+	MiniMap         *MinimapOptions `json:"minimap,omitempty"`         // Minimap configuration
+	FontSize        int             `json:"fontSize,omitempty"`        // Font size in pixels
+	FontFamily      string          `json:"fontFamily,omitempty"`      // Font family
+	TabSize         int             `json:"tabSize,omitempty"`         // Tab size
+	InsertSpaces    bool            `json:"insertSpaces,omitempty"`    // Use spaces instead of tabs
+	FoldingStrategy string          `json:"foldingStrategy,omitempty"` // Code folding strategy
+	FormatOnPaste   bool            `json:"formatOnPaste,omitempty"`   // Format on paste
+	FormatOnType    bool            `json:"formatOnType,omitempty"`    // Format on type
+	AutoIndent      string          `json:"autoIndent,omitempty"`      // Auto indent: "none", "keep", "brackets", "advanced", "full"
+
+	// Rich Text Editor Options
+	MenuBar     bool        `json:"menubar,omitempty"`     // Show menu bar
+	Toolbar     interface{} `json:"toolbar,omitempty"`     // Toolbar configuration (string or array)
+	Plugins     []string    `json:"plugins,omitempty"`     // Enabled plugins
+	StatusBar   bool        `json:"statusbar,omitempty"`   // Show status bar
+	Branding    bool        `json:"branding,omitempty"`    // Show editor branding
+	ElementPath bool        `json:"elementpath,omitempty"` // Show element path
+	Resize      string      `json:"resize,omitempty"`      // Resize behavior: "true", "false", "both"
+
 	// Behavior Options
-	AutoSave               bool              `json:"autoSave,omitempty"`               // Enable auto-save
-	AutoSaveInterval       int               `json:"autoSaveInterval,omitempty"`       // Auto-save interval in milliseconds
-	Placeholder            string            `json:"placeholder,omitempty"`            // Placeholder text
-	ReadOnly               bool              `json:"readOnly,omitempty"`               // Read-only mode
-	SpellCheck             bool              `json:"spellCheck,omitempty"`             // Spell checking
-	
+	AutoSave         bool   `json:"autoSave,omitempty"`         // Enable auto-save
+	AutoSaveInterval int    `json:"autoSaveInterval,omitempty"` // Auto-save interval in milliseconds
+	Placeholder      string `json:"placeholder,omitempty"`      // Placeholder text
+	ReadOnly         bool   `json:"readOnly,omitempty"`         // Read-only mode
+	SpellCheck       bool   `json:"spellCheck,omitempty"`       // Spell checking
+
 	// Advanced Options
-	CustomOptions          map[string]interface{} `json:"customOptions,omitempty"`     // Custom editor-specific options
+	CustomOptions map[string]interface{} `json:"customOptions,omitempty"` // Custom editor-specific options
 }
 
 // MinimapOptions represents Monaco Editor minimap configuration
 type MinimapOptions struct {
-	Enabled        bool   `json:"enabled"`                  // Enable minimap
-	Side           string `json:"side,omitempty"`           // Side: "left", "right"
-	ShowSlider     string `json:"showSlider,omitempty"`     // Show slider: "always", "mouseover"
-	RenderCharacters bool  `json:"renderCharacters,omitempty"` // Render actual characters
-	MaxColumn      int    `json:"maxColumn,omitempty"`      // Maximum column to render
-	Scale          int    `json:"scale,omitempty"`          // Scale factor
+	Enabled          bool   `json:"enabled"`                    // Enable minimap
+	Side             string `json:"side,omitempty"`             // Side: "left", "right"
+	ShowSlider       string `json:"showSlider,omitempty"`       // Show slider: "always", "mouseover"
+	RenderCharacters bool   `json:"renderCharacters,omitempty"` // Render actual characters
+	MaxColumn        int    `json:"maxColumn,omitempty"`        // Maximum column to render
+	Scale            int    `json:"scale,omitempty"`            // Scale factor
 }
 
 // EditorControlSchema represents a rich text or code editor control
@@ -187,102 +187,102 @@ type EditorControlSchema struct {
 	// Editor Configuration
 	// Programming language for syntax highlighting
 	Language EditorLanguage `json:"language,omitempty"`
-	
+
 	// Editor implementation to use
 	EditorType EditorControlType `json:"editorType,omitempty"`
-	
+
 	// Editor vendor/implementation
 	Vendor EditorVendor `json:"vendor,omitempty"`
-	
+
 	// Whether to allow fullscreen mode
 	AllowFullScreen bool `json:"allowFullscreen,omitempty"`
-	
+
 	// Editor-specific configuration options
 	Options *EditorOptions `json:"options,omitempty"`
 
 	// Display Configuration
 	// Height of the editor (pixels or CSS value)
 	Height any `json:"height,omitempty"` // number or string
-	
-	// Width of the editor (pixels or CSS value) 
+
+	// Width of the editor (pixels or CSS value)
 	Width any `json:"width,omitempty"` // number or string
 
 	// Code Editor Features
 	// Whether to enable word wrapping
 	WordWrap bool `json:"wordWrap,omitempty"`
-	
+
 	// Whether to show code folding gutter
 	FoldGutter bool `json:"foldGutter,omitempty"`
-	
+
 	// Whether to show line numbers
 	LineNumbers bool `json:"lineNumbers,omitempty"`
-	
+
 	// Whether to enable auto-completion
 	AutoComplete bool `json:"autoComplete,omitempty"`
-	
+
 	// Whether to show minimap (Monaco Editor)
 	MiniMap bool `json:"miniMap,omitempty"`
-	
+
 	// Whether line numbers are selectable
 	SelectOnLineNumbers bool `json:"selectOnLineNumbers,omitempty"`
-	
+
 	// Message shown in read-only mode
 	ReadOnlyMessage string `json:"readOnlyMessage,omitempty"`
-	
+
 	// Whether to allow scrolling beyond last line
 	ScrollBeyondLastLine bool `json:"scrollBeyondLastLine,omitempty"`
-	
+
 	// Whether to auto-focus editor on load
 	AutoFocus bool `json:"autoFocus,omitempty"`
 
 	// Rich Text Editor Features
 	// Toolbar buttons configuration
 	Toolbar []EditorToolbarItem `json:"toolbar,omitempty"`
-	
+
 	// Whether to show status bar
 	StatusBar bool `json:"statusBar,omitempty"`
-	
+
 	// Whether to enable spell checking
 	SpellChecker bool `json:"spellChecker,omitempty"`
-	
+
 	// Whether editor height grows with content
 	AutoGrow bool `json:"autoGrow,omitempty"`
-	
+
 	// Minimum height when auto-grow is enabled
 	AutoGrowMinHeight int `json:"autoGrowMinHeight,omitempty"`
-	
+
 	// Maximum height when auto-grow is enabled
 	AutoGrowMaxHeight int `json:"autoGrowMaxHeight,omitempty"`
 
 	// Content Validation
 	// Maximum character length
 	MaxLength int `json:"maxLength,omitempty"`
-	
+
 	// Whether to show word/character count
 	ShowWordCount bool `json:"showWordCount,omitempty"`
-	
+
 	// Allowed HTML tags for rich text (security)
 	AllowedTags []string `json:"allowedTags,omitempty"`
-	
+
 	// Whether to convert Markdown syntax automatically
 	ConvertMarkdown bool `json:"convertMarkdown,omitempty"`
 
 	// Form Integration Properties
 	// Whether to submit form when content changes
 	SubmitOnChange bool `json:"submitOnChange,omitempty"`
-	
+
 	// Whether to validate on every change
 	ValidateOnChange bool `json:"validateOnChange,omitempty"`
-	
+
 	// Whether to clear value when form item is hidden
 	ClearValueOnHidden bool `json:"clearValueOnHidden,omitempty"`
-	
+
 	// Remote validation API
 	ValidateAPI any `json:"validateApi,omitempty"`
 
 	// Auto-fill Configuration
-	AutoFill map[string]string `json:"autoFill,omitempty"`
-	InitAutoFill bool `json:"initAutoFill,omitempty"`
+	AutoFill     map[string]string `json:"autoFill,omitempty"`
+	InitAutoFill bool              `json:"initAutoFill,omitempty"`
 
 	// Advanced Properties
 	// Description content supporting HTML
@@ -295,17 +295,17 @@ type EditorControlSchema struct {
 	Validations any `json:"validations,omitempty"`
 
 	// Static Display Properties
-	Static bool `json:"static,omitempty"`
-	StaticOn string `json:"staticOn,omitempty"`
-	StaticPlaceholder string `json:"staticPlaceholder,omitempty"`
-	StaticClassName string `json:"staticClassName,omitempty"`
+	Static               bool   `json:"static,omitempty"`
+	StaticOn             string `json:"staticOn,omitempty"`
+	StaticPlaceholder    string `json:"staticPlaceholder,omitempty"`
+	StaticClassName      string `json:"staticClassName,omitempty"`
 	StaticLabelClassName string `json:"staticLabelClassName,omitempty"`
 	StaticInputClassName string `json:"staticInputClassName,omitempty"`
-	StaticSchema any `json:"staticSchema,omitempty"`
+	StaticSchema         any    `json:"staticSchema,omitempty"`
 
 	// CSS Classes for styling
-	InputClassName string `json:"inputClassName,omitempty"`
-	LabelClassName string `json:"labelClassName,omitempty"`
+	InputClassName       string `json:"inputClassName,omitempty"`
+	LabelClassName       string `json:"labelClassName,omitempty"`
 	DescriptionClassName string `json:"descriptionClassName,omitempty"`
 
 	// Callbacks
@@ -333,12 +333,12 @@ func NewCodeEditor(name string, language EditorLanguage) *EditorControlSchema {
 		AutoFocus:            false,
 		ScrollBeyondLastLine: false,
 		Options: &EditorOptions{
-			Theme:          "vs-dark",
-			TabSize:        2,
-			InsertSpaces:   true,
-			AutoIndent:     "advanced",
-			FormatOnPaste:  true,
-			FormatOnType:   true,
+			Theme:         "vs-dark",
+			TabSize:       2,
+			InsertSpaces:  true,
+			AutoIndent:    "advanced",
+			FormatOnPaste: true,
+			FormatOnType:  true,
 		},
 	}
 }
@@ -346,18 +346,18 @@ func NewCodeEditor(name string, language EditorLanguage) *EditorControlSchema {
 // Factory function to create a rich text editor
 func NewRichTextEditor(name string) *EditorControlSchema {
 	return &EditorControlSchema{
-		Type:           "editor",
-		Name:           name,
-		EditorType:     EditorTypeTinyMCE,
-		Size:           EditorControlSizeMD,
-		Height:         300,
-		AllowFullScreen: true,
-		StatusBar:      true,
-		SpellChecker:   true,
-		AutoGrow:       true,
+		Type:              "editor",
+		Name:              name,
+		EditorType:        EditorTypeTinyMCE,
+		Size:              EditorControlSizeMD,
+		Height:            300,
+		AllowFullScreen:   true,
+		StatusBar:         true,
+		SpellChecker:      true,
+		AutoGrow:          true,
 		AutoGrowMinHeight: 200,
 		AutoGrowMaxHeight: 600,
-		ShowWordCount:  true,
+		ShowWordCount:     true,
 		Toolbar: []EditorToolbarItem{
 			ToolbarBold, ToolbarItalic, ToolbarUnderline,
 			ToolbarHeading, ToolbarQuote, ToolbarCode,
@@ -463,7 +463,7 @@ func (e *EditorControlSchema) Validate() error {
 	// Validate height constraints for auto-grow
 	if e.AutoGrow && e.AutoGrowMaxHeight > 0 && e.AutoGrowMinHeight > 0 {
 		if e.AutoGrowMinHeight >= e.AutoGrowMaxHeight {
-			return fmt.Errorf("autoGrowMinHeight (%d) must be less than autoGrowMaxHeight (%d)", 
+			return fmt.Errorf("autoGrowMinHeight (%d) must be less than autoGrowMaxHeight (%d)",
 				e.AutoGrowMinHeight, e.AutoGrowMaxHeight)
 		}
 	}

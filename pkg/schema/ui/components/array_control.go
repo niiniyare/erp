@@ -20,10 +20,10 @@ const (
 type ArrayControlTabsStyle string
 
 const (
-	ArrayTabsStyleDefault ArrayControlTabsStyle = ""       // Default style
-	ArrayTabsStyleLine    ArrayControlTabsStyle = "line"   // Line-style tabs
-	ArrayTabsStyleCard    ArrayControlTabsStyle = "card"   // Card-style tabs  
-	ArrayTabsStyleRadio   ArrayControlTabsStyle = "radio"  // Radio button style tabs
+	ArrayTabsStyleDefault ArrayControlTabsStyle = ""      // Default style
+	ArrayTabsStyleLine    ArrayControlTabsStyle = "line"  // Line-style tabs
+	ArrayTabsStyleCard    ArrayControlTabsStyle = "card"  // Card-style tabs
+	ArrayTabsStyleRadio   ArrayControlTabsStyle = "radio" // Radio button style tabs
 )
 
 // ArrayControlSize represents the form item size options
@@ -300,20 +300,20 @@ type ArrayControlSchema struct {
 // Factory function to create ArrayControlSchema with sensible defaults
 func NewArrayControl(name string, items any) *ArrayControlSchema {
 	return &ArrayControlSchema{
-		Type:           "input-array",
-		Name:           name,
-		Items:          items,
-		AddButtonText:  "Add Item",
-		Addable:        true,
-		Removable:      true,
-		SubFormMode:    ArraySubFormModeNormal,
-		TabsStyle:      ArrayTabsStyleLine,
-		Size:           ArraySizeMD,
-		Mode:           ArrayModeNormal,
-		MultiLine:      false,
-		LazyLoad:       false,
-		StrictMode:     false,
-		Nullable:       false,
+		Type:          "input-array",
+		Name:          name,
+		Items:         items,
+		AddButtonText: "Add Item",
+		Addable:       true,
+		Removable:     true,
+		SubFormMode:   ArraySubFormModeNormal,
+		TabsStyle:     ArrayTabsStyleLine,
+		Size:          ArraySizeMD,
+		Mode:          ArrayModeNormal,
+		MultiLine:     false,
+		LazyLoad:      false,
+		StrictMode:    false,
+		Nullable:      false,
 	}
 }
 
@@ -328,15 +328,15 @@ func (a *ArrayControlSchema) Validate() error {
 	if a.Items == nil {
 		return fmt.Errorf("array control items configuration is required")
 	}
-	
+
 	// Validate enum values
-	if a.SubFormMode != "" && 
-		a.SubFormMode != ArraySubFormModeNormal && 
-		a.SubFormMode != ArraySubFormModeHorizontal && 
+	if a.SubFormMode != "" &&
+		a.SubFormMode != ArraySubFormModeNormal &&
+		a.SubFormMode != ArraySubFormModeHorizontal &&
 		a.SubFormMode != ArraySubFormModeInline {
 		return fmt.Errorf("invalid subFormMode: %s", a.SubFormMode)
 	}
-	
+
 	if a.TabsStyle != "" &&
 		a.TabsStyle != ArrayTabsStyleDefault &&
 		a.TabsStyle != ArrayTabsStyleLine &&
@@ -344,7 +344,7 @@ func (a *ArrayControlSchema) Validate() error {
 		a.TabsStyle != ArrayTabsStyleRadio {
 		return fmt.Errorf("invalid tabsStyle: %s", a.TabsStyle)
 	}
-	
+
 	if a.Size != "" &&
 		a.Size != ArraySizeXS &&
 		a.Size != ArraySizeSM &&
@@ -353,14 +353,14 @@ func (a *ArrayControlSchema) Validate() error {
 		a.Size != ArraySizeFull {
 		return fmt.Errorf("invalid size: %s", a.Size)
 	}
-	
+
 	if a.Mode != "" &&
 		a.Mode != ArrayModeNormal &&
 		a.Mode != ArrayModeInline &&
 		a.Mode != ArrayModeHorizontal {
 		return fmt.Errorf("invalid mode: %s", a.Mode)
 	}
-	
+
 	return nil
 }
 
@@ -369,7 +369,7 @@ func (a *ArrayControlSchema) ToJSON() (string, error) {
 	if err := a.Validate(); err != nil {
 		return "", err
 	}
-	
+
 	data, err := json.MarshalIndent(a, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal ArrayControlSchema to JSON: %w", err)
@@ -384,10 +384,10 @@ func ArrayControlFromJSON(jsonData string) (*ArrayControlSchema, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JSON to ArrayControlSchema: %w", err)
 	}
-	
+
 	if err := config.Validate(); err != nil {
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
-	
+
 	return &config, nil
 }

@@ -3,19 +3,14 @@
 
 package datatypes
 
-
-
-
 // Gridline represents the CSS DataType GridLine (union type: [string number])
 // This type accepts both strings and numbers, but uses string as the underlying type
 type Gridline string
-
 
 // Predefined constants
 const (
 	GridlineAuto = "auto"
 )
-
 
 // IsValid validates that the value is a non-empty string or valid number
 func (d Gridline) IsValid() bool {
@@ -28,5 +23,3 @@ func (d Gridline) IsValid() bool {
 func (d Gridline) String() string {
 	return string(d)
 }
-
-

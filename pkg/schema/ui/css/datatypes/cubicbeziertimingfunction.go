@@ -3,9 +3,6 @@
 
 package datatypes
 
-
-
-
 // Cubicbeziertimingfunction represents the CSS DataType CubicBezierTimingFunction
 type Cubicbeziertimingfunction string
 
@@ -17,5 +14,3 @@ func (d Cubicbeziertimingfunction) IsValid() bool {
 func (d Cubicbeziertimingfunction) String() string {
 	return string(d)
 }
-
-

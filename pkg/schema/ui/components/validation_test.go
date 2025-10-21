@@ -20,14 +20,14 @@ func TestSchemaValidatorCreation(t *testing.T) {
 // Test Validation Mode Setting
 func TestValidationModeSettings(t *testing.T) {
 	validator := NewSchemaValidator()
-	
+
 	// Test setting different modes
 	validator.SetValidationMode(ValidationModeRelaxed)
 	assert.Equal(t, ValidationModeRelaxed, validator.context.ValidationMode)
-	
+
 	validator.SetValidationMode(ValidationModeProduction)
 	assert.Equal(t, ValidationModeProduction, validator.context.ValidationMode)
-	
+
 	validator.SetValidationMode(ValidationModeStrict)
 	assert.Equal(t, ValidationModeStrict, validator.context.ValidationMode)
 }
@@ -64,7 +64,7 @@ func TestBasicComponentValidation(t *testing.T) {
 		assert.NotNil(t, result, "Result should not be nil")
 		assert.False(t, result.Valid, "CRUD with invalid mode should not be valid")
 		assert.Greater(t, len(result.Errors), 0, "Should have at least one error")
-		
+
 		// Check for specific error about invalid mode
 		found := false
 		for _, err := range result.Errors {
@@ -84,10 +84,10 @@ func TestFormComponentValidation(t *testing.T) {
 	t.Run("Valid Form", func(t *testing.T) {
 		form := &FormSchema{
 			BaseComponentProps: BaseComponentProps{ID: "test-form"},
-			Type:  "form",
-			Title: "Test Form",
-			Mode:  "horizontal",
-			Body:  []any{"input1", "input2"}, // Non-empty body
+			Type:               "form",
+			Title:              "Test Form",
+			Mode:               "horizontal",
+			Body:               []any{"input1", "input2"}, // Non-empty body
 		}
 
 		result := validator.ValidateComponent(form)
@@ -127,9 +127,9 @@ func TestTextInputAdvancedValidation(t *testing.T) {
 	t.Run("Valid Text Input", func(t *testing.T) {
 		textInput := &TextControlSchema{
 			BaseComponentProps: BaseComponentProps{ID: "username-input"},
-			Type:  "input-text",
-			Name:  "username",
-			Label: "Username",
+			Type:               "input-text",
+			Name:               "username",
+			Label:              "Username",
 		}
 
 		result := validator.ValidateComponent(textInput)
@@ -147,7 +147,7 @@ func TestTextInputAdvancedValidation(t *testing.T) {
 		result := validator.ValidateComponent(textInput)
 		assert.False(t, result.Valid, "Text input without name should not be valid")
 		assert.Greater(t, len(result.Errors), 0, "Should have errors about missing name")
-		
+
 		// Check for name required error
 		found := false
 		for _, err := range result.Errors {
@@ -228,7 +228,7 @@ func TestSelectControlValidation(t *testing.T) {
 		result := validator.ValidateComponent(selectControl)
 		assert.False(t, result.Valid, "Select without options/source should not be valid")
 		assert.Greater(t, len(result.Errors), 0, "Should have errors")
-		
+
 		// Check for specific error about missing options/source
 		found := false
 		for _, err := range result.Errors {
@@ -280,7 +280,7 @@ func TestActionComponentValidation(t *testing.T) {
 		result := validator.ValidateComponent(action)
 		// This should generate a warning, not an error (usability issue)
 		assert.Greater(t, len(result.Warnings), 0, "Should have warnings about missing label/icon")
-		
+
 		// Check for suggestions
 		found := false
 		for _, warn := range result.Warnings {
@@ -386,7 +386,7 @@ func TestCustomValidationRules(t *testing.T) {
 
 		result := validator.ValidateComponent(crud)
 		assert.False(t, result.Valid, "Should fail custom validation")
-		
+
 		// Check for custom rule error
 		found := false
 		for _, err := range result.Errors {
@@ -422,7 +422,7 @@ func TestBatchValidation(t *testing.T) {
 
 	results := validator.ValidateComponentBatch(components)
 	assert.Len(t, results, 3, "Should have 3 results")
-	
+
 	assert.True(t, results["valid_crud"].Valid, "Valid CRUD should pass")
 	assert.False(t, results["invalid_crud"].Valid, "Invalid CRUD should fail")
 	assert.True(t, results["valid_form"].Valid, "Valid form should pass")
@@ -463,7 +463,7 @@ func TestValidationResultMethods(t *testing.T) {
 	jsonStr, err := result.ToJSON()
 	require.NoError(t, err, "Should serialize to JSON")
 	assert.NotEmpty(t, jsonStr, "JSON should not be empty")
-	
+
 	// Verify it's valid JSON
 	var parsed map[string]any
 	err = json.Unmarshal([]byte(jsonStr), &parsed)
@@ -591,7 +591,7 @@ func TestValidationPerformanceMetrics(t *testing.T) {
 	}
 
 	result := validator.ValidateComponent(component)
-	
+
 	// Check that performance metrics are captured
 	assert.NotZero(t, result.Performance.RulesExecuted, "Should track rules executed")
 	assert.NotZero(t, result.Performance.FieldsValidated, "Should track fields validated")
@@ -665,10 +665,10 @@ func TestValidationEdgeCases(t *testing.T) {
 
 	t.Run("Empty Validation Result", func(t *testing.T) {
 		result := &ValidationResult{}
-		
+
 		assert.False(t, result.HasErrors(), "Empty result should not have errors")
 		assert.False(t, result.HasWarnings(), "Empty result should not have warnings")
-		
+
 		report := result.GetValidationReport()
 		assert.NotEmpty(t, report, "Should generate report for empty result")
 	})

@@ -3,41 +3,38 @@
 
 package datatypes
 
-
-
-
 // Deprecatedsystemcolor represents the CSS DataType DeprecatedSystemColor with predefined values
 type Deprecatedsystemcolor string
 
 const (
-	DeprecatedsystemcolorActiveborder Deprecatedsystemcolor = "ActiveBorder"
-	DeprecatedsystemcolorActivecaption Deprecatedsystemcolor = "ActiveCaption"
-	DeprecatedsystemcolorAppworkspace Deprecatedsystemcolor = "AppWorkspace"
-	DeprecatedsystemcolorBackground Deprecatedsystemcolor = "Background"
-	DeprecatedsystemcolorButtonface Deprecatedsystemcolor = "ButtonFace"
-	DeprecatedsystemcolorButtonhighlight Deprecatedsystemcolor = "ButtonHighlight"
-	DeprecatedsystemcolorButtonshadow Deprecatedsystemcolor = "ButtonShadow"
-	DeprecatedsystemcolorButtontext Deprecatedsystemcolor = "ButtonText"
-	DeprecatedsystemcolorCaptiontext Deprecatedsystemcolor = "CaptionText"
-	DeprecatedsystemcolorGraytext Deprecatedsystemcolor = "GrayText"
-	DeprecatedsystemcolorHighlight Deprecatedsystemcolor = "Highlight"
-	DeprecatedsystemcolorHighlighttext Deprecatedsystemcolor = "HighlightText"
-	DeprecatedsystemcolorInactiveborder Deprecatedsystemcolor = "InactiveBorder"
-	DeprecatedsystemcolorInactivecaption Deprecatedsystemcolor = "InactiveCaption"
+	DeprecatedsystemcolorActiveborder        Deprecatedsystemcolor = "ActiveBorder"
+	DeprecatedsystemcolorActivecaption       Deprecatedsystemcolor = "ActiveCaption"
+	DeprecatedsystemcolorAppworkspace        Deprecatedsystemcolor = "AppWorkspace"
+	DeprecatedsystemcolorBackground          Deprecatedsystemcolor = "Background"
+	DeprecatedsystemcolorButtonface          Deprecatedsystemcolor = "ButtonFace"
+	DeprecatedsystemcolorButtonhighlight     Deprecatedsystemcolor = "ButtonHighlight"
+	DeprecatedsystemcolorButtonshadow        Deprecatedsystemcolor = "ButtonShadow"
+	DeprecatedsystemcolorButtontext          Deprecatedsystemcolor = "ButtonText"
+	DeprecatedsystemcolorCaptiontext         Deprecatedsystemcolor = "CaptionText"
+	DeprecatedsystemcolorGraytext            Deprecatedsystemcolor = "GrayText"
+	DeprecatedsystemcolorHighlight           Deprecatedsystemcolor = "Highlight"
+	DeprecatedsystemcolorHighlighttext       Deprecatedsystemcolor = "HighlightText"
+	DeprecatedsystemcolorInactiveborder      Deprecatedsystemcolor = "InactiveBorder"
+	DeprecatedsystemcolorInactivecaption     Deprecatedsystemcolor = "InactiveCaption"
 	DeprecatedsystemcolorInactivecaptiontext Deprecatedsystemcolor = "InactiveCaptionText"
-	DeprecatedsystemcolorInfobackground Deprecatedsystemcolor = "InfoBackground"
-	DeprecatedsystemcolorInfotext Deprecatedsystemcolor = "InfoText"
-	DeprecatedsystemcolorMenu Deprecatedsystemcolor = "Menu"
-	DeprecatedsystemcolorMenutext Deprecatedsystemcolor = "MenuText"
-	DeprecatedsystemcolorScrollbar Deprecatedsystemcolor = "Scrollbar"
-	DeprecatedsystemcolorThreeddarkshadow Deprecatedsystemcolor = "ThreeDDarkShadow"
-	DeprecatedsystemcolorThreedface Deprecatedsystemcolor = "ThreeDFace"
-	DeprecatedsystemcolorThreedhighlight Deprecatedsystemcolor = "ThreeDHighlight"
-	DeprecatedsystemcolorThreedlightshadow Deprecatedsystemcolor = "ThreeDLightShadow"
-	DeprecatedsystemcolorThreedshadow Deprecatedsystemcolor = "ThreeDShadow"
-	DeprecatedsystemcolorWindow Deprecatedsystemcolor = "Window"
-	DeprecatedsystemcolorWindowframe Deprecatedsystemcolor = "WindowFrame"
-	DeprecatedsystemcolorWindowtext Deprecatedsystemcolor = "WindowText"
+	DeprecatedsystemcolorInfobackground      Deprecatedsystemcolor = "InfoBackground"
+	DeprecatedsystemcolorInfotext            Deprecatedsystemcolor = "InfoText"
+	DeprecatedsystemcolorMenu                Deprecatedsystemcolor = "Menu"
+	DeprecatedsystemcolorMenutext            Deprecatedsystemcolor = "MenuText"
+	DeprecatedsystemcolorScrollbar           Deprecatedsystemcolor = "Scrollbar"
+	DeprecatedsystemcolorThreeddarkshadow    Deprecatedsystemcolor = "ThreeDDarkShadow"
+	DeprecatedsystemcolorThreedface          Deprecatedsystemcolor = "ThreeDFace"
+	DeprecatedsystemcolorThreedhighlight     Deprecatedsystemcolor = "ThreeDHighlight"
+	DeprecatedsystemcolorThreedlightshadow   Deprecatedsystemcolor = "ThreeDLightShadow"
+	DeprecatedsystemcolorThreedshadow        Deprecatedsystemcolor = "ThreeDShadow"
+	DeprecatedsystemcolorWindow              Deprecatedsystemcolor = "Window"
+	DeprecatedsystemcolorWindowframe         Deprecatedsystemcolor = "WindowFrame"
+	DeprecatedsystemcolorWindowtext          Deprecatedsystemcolor = "WindowText"
 )
 
 func (d Deprecatedsystemcolor) IsValid() bool {
@@ -54,5 +51,3 @@ func (d Deprecatedsystemcolor) IsValid() bool {
 func (d Deprecatedsystemcolor) String() string {
 	return string(d)
 }
-
-

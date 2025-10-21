@@ -89,7 +89,7 @@ func (v *SchemaBasedValidator) validateBlendMode(value string) error {
 func (v *SchemaBasedValidator) validateColor(value string) error {
 	// CSS Color validation - accept common formats
 	value = strings.TrimSpace(strings.ToLower(value))
-	
+
 	// Named colors
 	namedColors := []string{
 		"currentcolor", "transparent", "initial", "inherit", "unset",
@@ -97,13 +97,13 @@ func (v *SchemaBasedValidator) validateColor(value string) error {
 		"gray", "grey", "silver", "maroon", "navy", "olive", "lime", "aqua",
 		"teal", "purple", "fuchsia", "orange", "brown", "pink", "gold",
 	}
-	
+
 	for _, color := range namedColors {
 		if value == color {
 			return nil
 		}
 	}
-	
+
 	// Hex colors
 	if strings.HasPrefix(value, "#") {
 		hex := value[1:]
@@ -117,43 +117,43 @@ func (v *SchemaBasedValidator) validateColor(value string) error {
 			return nil
 		}
 	}
-	
+
 	// RGB/RGBA function
 	if strings.HasPrefix(value, "rgb(") || strings.HasPrefix(value, "rgba(") {
 		return nil // Assume valid for now - full RGB validation would be complex
 	}
-	
+
 	// HSL/HSLA function
 	if strings.HasPrefix(value, "hsl(") || strings.HasPrefix(value, "hsla(") {
 		return nil // Assume valid for now - full HSL validation would be complex
 	}
-	
+
 	return fmt.Errorf("invalid color value: %s", value)
 }
 
 func (v *SchemaBasedValidator) validateBgPosition(value string) error {
 	validKeywords := []string{"top", "right", "bottom", "left", "center"}
-	
+
 	// Check for keyword values
 	for _, keyword := range validKeywords {
 		if value == keyword {
 			return nil
 		}
 	}
-	
+
 	// Check for percentage or length values
-	if strings.Contains(value, "%") || strings.Contains(value, "px") || 
-	   strings.Contains(value, "em") || strings.Contains(value, "rem") {
+	if strings.Contains(value, "%") || strings.Contains(value, "px") ||
+		strings.Contains(value, "em") || strings.Contains(value, "rem") {
 		return nil
 	}
-	
+
 	// Check for combined values like "top left", "50% 25%"
 	parts := strings.Fields(value)
 	if len(parts) == 2 {
 		// Assume valid two-part position
 		return nil
 	}
-	
+
 	return fmt.Errorf("invalid background position: %s", value)
 }
 
@@ -169,21 +169,21 @@ func (v *SchemaBasedValidator) validateLineWidth(value string) error {
 
 func (v *SchemaBasedValidator) validateFontWeightAbsolute(value string) error {
 	validValues := []string{"100", "200", "300", "400", "500", "600", "700", "800", "900"}
-	
+
 	// Check for numeric string values
 	for _, validValue := range validValues {
 		if value == validValue {
 			return nil
 		}
 	}
-	
+
 	// Check for valid integer
 	if weight, err := strconv.Atoi(value); err == nil {
 		if weight >= 100 && weight <= 900 && weight%100 == 0 {
 			return nil
 		}
 	}
-	
+
 	return fmt.Errorf("invalid font weight: %s (must be 100-900 in increments of 100)", value)
 }
 
@@ -194,27 +194,27 @@ func (v *SchemaBasedValidator) validateGenericFamily(value string) error {
 
 func (v *SchemaBasedValidator) validateEasingFunction(value string) error {
 	validValues := []string{
-		"linear", "ease", "ease-in", "ease-out", "ease-in-out", 
+		"linear", "ease", "ease-in", "ease-out", "ease-in-out",
 		"step-start", "step-end",
 	}
-	
+
 	// Check for predefined easing functions
 	for _, validValue := range validValues {
 		if value == validValue {
 			return nil
 		}
 	}
-	
+
 	// Check for cubic-bezier function
 	if strings.HasPrefix(value, "cubic-bezier(") && strings.HasSuffix(value, ")") {
 		return nil // Assume valid for now
 	}
-	
+
 	// Check for steps function
 	if strings.HasPrefix(value, "steps(") && strings.HasSuffix(value, ")") {
 		return nil // Assume valid for now
 	}
-	
+
 	return fmt.Errorf("invalid easing function: %s", value)
 }
 
@@ -237,39 +237,39 @@ func (v *SchemaBasedValidator) validateDisplayOutside(value string) error {
 
 func (v *SchemaBasedValidator) validateEnum(value string, validValues []string, typeName string) error {
 	value = strings.TrimSpace(strings.ToLower(value))
-	
+
 	for _, validValue := range validValues {
 		if value == strings.ToLower(validValue) {
 			return nil
 		}
 	}
-	
-	return fmt.Errorf("invalid %s value: %s (valid values: %s)", 
+
+	return fmt.Errorf("invalid %s value: %s (valid values: %s)",
 		typeName, value, strings.Join(validValues, ", "))
 }
 
 func (v *SchemaBasedValidator) validateEnumOrLength(value string, validValues []string, typeName string) error {
 	value = strings.TrimSpace(strings.ToLower(value))
-	
+
 	// Check enum values first
 	for _, validValue := range validValues {
 		if value == strings.ToLower(validValue) {
 			return nil
 		}
 	}
-	
+
 	// Check for length/percentage values
-	if strings.Contains(value, "px") || strings.Contains(value, "em") || 
-	   strings.Contains(value, "rem") || strings.Contains(value, "%") ||
-	   strings.Contains(value, "vw") || strings.Contains(value, "vh") {
+	if strings.Contains(value, "px") || strings.Contains(value, "em") ||
+		strings.Contains(value, "rem") || strings.Contains(value, "%") ||
+		strings.Contains(value, "vw") || strings.Contains(value, "vh") {
 		return nil
 	}
-	
+
 	// Check for numeric value (assume pixels)
 	if _, err := strconv.ParseFloat(value, 64); err == nil {
 		return nil
 	}
-	
+
 	return fmt.Errorf("invalid %s value: %s", typeName, value)
 }
 

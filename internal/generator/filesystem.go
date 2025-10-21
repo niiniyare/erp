@@ -58,34 +58,34 @@ func (fso *FileSystemOperations) CreateFile(path, content string) error {
 			fmt.Printf("Creating file: %s\n", path)
 		}
 	}
-	
+
 	if fso.dryRun {
 		return nil
 	}
-	
+
 	// Ensure directory exists
 	dir := filepath.Dir(path)
 	if err := fso.EnsureDir(dir); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", dir, err)
 	}
-	
+
 	// Check if file already exists
 	if fso.FileExists(path) {
 		return fmt.Errorf("file already exists: %s", path)
 	}
-	
+
 	// Create the file
 	file, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("failed to create file %s: %w", path, err)
 	}
 	defer file.Close()
-	
+
 	// Write content
 	if _, err := file.WriteString(content); err != nil {
 		return fmt.Errorf("failed to write content to file %s: %w", path, err)
 	}
-	
+
 	return nil
 }
 
@@ -98,32 +98,32 @@ func (fso *FileSystemOperations) UpdateFile(path, content string) error {
 			fmt.Printf("Updating file: %s\n", path)
 		}
 	}
-	
+
 	if fso.dryRun {
 		return nil
 	}
-	
+
 	// Check if file exists
 	if !fso.FileExists(path) {
 		return fmt.Errorf("file does not exist: %s", path)
 	}
-	
+
 	// Create backup if needed
 	if err := fso.createBackup(path); err != nil {
 		return fmt.Errorf("failed to create backup: %w", err)
 	}
-	
+
 	// Write new content
 	file, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("failed to open file %s for writing: %w", path, err)
 	}
 	defer file.Close()
-	
+
 	if _, err := file.WriteString(content); err != nil {
 		return fmt.Errorf("failed to write content to file %s: %w", path, err)
 	}
-	
+
 	return nil
 }
 
@@ -136,28 +136,28 @@ func (fso *FileSystemOperations) AppendToFile(path, content string) error {
 			fmt.Printf("Appending to file: %s\n", path)
 		}
 	}
-	
+
 	if fso.dryRun {
 		return nil
 	}
-	
+
 	// Check if file exists
 	if !fso.FileExists(path) {
 		return fmt.Errorf("file does not exist: %s", path)
 	}
-	
+
 	// Open file for appending
-	file, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to open file %s for appending: %w", path, err)
 	}
 	defer file.Close()
-	
+
 	// Append content
 	if _, err := file.WriteString(content); err != nil {
 		return fmt.Errorf("failed to append content to file %s: %w", path, err)
 	}
-	
+
 	return nil
 }
 
@@ -166,11 +166,11 @@ func (fso *FileSystemOperations) EnsureDir(path string) error {
 	if fso.verbose && !fso.dryRun {
 		fmt.Printf("Ensuring directory: %s\n", path)
 	}
-	
+
 	if fso.dryRun {
 		return nil
 	}
-	
+
 	// Check if directory already exists
 	if info, err := os.Stat(path); err == nil {
 		if info.IsDir() {
@@ -178,12 +178,12 @@ func (fso *FileSystemOperations) EnsureDir(path string) error {
 		}
 		return fmt.Errorf("path exists but is not a directory: %s", path)
 	}
-	
+
 	// Create directory with all parents
-	if err := os.MkdirAll(path, 0755); err != nil {
+	if err := os.MkdirAll(path, 0o755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", path, err)
 	}
-	
+
 	return nil
 }
 
@@ -217,12 +217,12 @@ func (fso *FileSystemOperations) ReadFile(path string) (string, error) {
 // ListFiles lists all files in a directory matching a pattern
 func (fso *FileSystemOperations) ListFiles(dir, pattern string) ([]string, error) {
 	var files []string
-	
+
 	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		
+
 		if !d.IsDir() {
 			matched, err := filepath.Match(pattern, filepath.Base(path))
 			if err != nil {
@@ -232,14 +232,13 @@ func (fso *FileSystemOperations) ListFiles(dir, pattern string) ([]string, error
 				files = append(files, path)
 			}
 		}
-		
+
 		return nil
 	})
-	
 	if err != nil {
 		return nil, fmt.Errorf("failed to list files in %s: %w", dir, err)
 	}
-	
+
 	return files, nil
 }
 
@@ -247,27 +246,27 @@ func (fso *FileSystemOperations) ListFiles(dir, pattern string) ([]string, error
 func (fso *FileSystemOperations) ValidateModulePath(moduleName string) error {
 	// Check for valid characters
 	for _, char := range moduleName {
-		if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || 
-			 (char >= '0' && char <= '9') || char == '_') {
+		if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') ||
+			(char >= '0' && char <= '9') || char == '_') {
 			return fmt.Errorf("module name contains invalid character: %c", char)
 		}
 	}
-	
+
 	// Check length
 	if len(moduleName) == 0 {
 		return fmt.Errorf("module name cannot be empty")
 	}
-	
+
 	if len(moduleName) > 50 {
 		return fmt.Errorf("module name too long (max 50 characters): %s", moduleName)
 	}
-	
+
 	// Check if it starts with a letter
 	firstChar := moduleName[0]
 	if !((firstChar >= 'a' && firstChar <= 'z') || (firstChar >= 'A' && firstChar <= 'Z')) {
 		return fmt.Errorf("module name must start with a letter: %s", moduleName)
 	}
-	
+
 	// Check for reserved names
 	reserved := []string{"test", "main", "internal", "cmd", "pkg", "vendor", "build", "bin"}
 	for _, reservedName := range reserved {
@@ -275,7 +274,7 @@ func (fso *FileSystemOperations) ValidateModulePath(moduleName string) error {
 			return fmt.Errorf("module name is reserved: %s", moduleName)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -310,27 +309,27 @@ func (fso *FileSystemOperations) createBackup(path string) error {
 	if !fso.FileExists(path) {
 		return nil // No backup needed if file doesn't exist
 	}
-	
+
 	backupPath := path + ".backup"
 	content, err := fso.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read original file for backup: %w", err)
 	}
-	
+
 	backupFile, err := os.Create(backupPath)
 	if err != nil {
 		return fmt.Errorf("failed to create backup file: %w", err)
 	}
 	defer backupFile.Close()
-	
+
 	if _, err := backupFile.WriteString(content); err != nil {
 		return fmt.Errorf("failed to write backup content: %w", err)
 	}
-	
+
 	if fso.verbose {
 		fmt.Printf("Created backup: %s\n", backupPath)
 	}
-	
+
 	return nil
 }
 
@@ -340,13 +339,13 @@ func (fso *FileSystemOperations) GetProjectRoot() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get current directory: %w", err)
 	}
-	
+
 	for {
 		goModPath := filepath.Join(dir, "go.mod")
 		if fso.FileExists(goModPath) {
 			return dir, nil
 		}
-		
+
 		parent := filepath.Dir(dir)
 		if parent == dir {
 			// Reached root directory
@@ -354,7 +353,7 @@ func (fso *FileSystemOperations) GetProjectRoot() (string, error) {
 		}
 		dir = parent
 	}
-	
+
 	return "", fmt.Errorf("could not find go.mod file - make sure you're in a Go project")
 }
 
@@ -369,12 +368,12 @@ func (fso *FileSystemOperations) GetRelativePath(absolutePath string) (string, e
 	if err != nil {
 		return "", err
 	}
-	
+
 	relativePath, err := filepath.Rel(projectRoot, absolutePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to get relative path: %w", err)
 	}
-	
+
 	return relativePath, nil
 }
 
@@ -383,7 +382,7 @@ func (fso *FileSystemOperations) ValidateProjectStructure() error {
 	if !fso.FileExists("go.mod") {
 		return fmt.Errorf("go.mod not found - make sure you're in a Go project root")
 	}
-	
+
 	requiredDirs := []string{
 		"internal",
 		"internal/core",
@@ -391,25 +390,25 @@ func (fso *FileSystemOperations) ValidateProjectStructure() error {
 		"db",
 		"cmd",
 	}
-	
+
 	for _, dir := range requiredDirs {
 		if !fso.DirExists(dir) {
 			return fmt.Errorf("required directory not found: %s", dir)
 		}
 	}
-	
+
 	// Check for ERP-specific files
 	erpFiles := []string{
 		"internal/api/design",
 		"db/queries",
 		"db/migration",
 	}
-	
+
 	for _, file := range erpFiles {
 		if !fso.DirExists(file) {
 			return fmt.Errorf("ERP-specific directory not found: %s", file)
 		}
 	}
-	
+
 	return nil
 }

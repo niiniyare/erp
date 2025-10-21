@@ -36,7 +36,7 @@ func run(filename string) {
 	modname := ""
 	result := `package amis
 `
-	f, err := os.OpenFile("./"+filename+".md", os.O_RDONLY, 0666)
+	f, err := os.OpenFile("./"+filename+".md", os.O_RDONLY, 0o666)
 	if err != nil {
 		panic(err)
 	}
@@ -106,8 +106,7 @@ func %s_%s(p %s) opt {
 
 	}
 
-	ioutil.WriteFile("../../"+filename+".go", []byte(result), 0666)
-
+	ioutil.WriteFile("../../"+filename+".go", []byte(result), 0o666)
 }
 
 func tn(t string) string {

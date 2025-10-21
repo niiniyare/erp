@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/suite"
 	cb "github.com/niiniyare/erp/pkg/condition"
+	"github.com/stretchr/testify/suite"
 )
 
 // EvaluatorTestSuite is the base test suite
@@ -1432,7 +1432,7 @@ func (s *ResourceLimitsTestSuite) TestTimeout() {
 		time.Sleep(100 * time.Millisecond)
 		return true, nil
 	})
-	
+
 	// Create a rule that uses a slow function
 	rule := &cb.ConditionRule{
 		ID: "timeout-test",
@@ -1449,9 +1449,9 @@ func (s *ResourceLimitsTestSuite) TestTimeout() {
 			Value: true,
 		},
 	}
-	
+
 	_, err := evaluator.Evaluate(s.ctx, rule, evalCtx)
-	
+
 	s.Error(err)
 	// Check for timeout-related error message since timeout implementation may vary
 	s.True(strings.Contains(err.Error(), "timeout") || strings.Contains(err.Error(), "context"))
@@ -1581,9 +1581,9 @@ func (s *DynamicDataTestSuite) TestEvaluateMapNodeAsGroup() {
 		"conjunction": "and",
 		"children": []any{
 			map[string]any{
-				"id":   "rule1",
-				"left": map[string]any{"type": "field", "field": "role"},
-				"op":   "equal",
+				"id":    "rule1",
+				"left":  map[string]any{"type": "field", "field": "role"},
+				"op":    "equal",
 				"right": map[string]any{"type": "value", "value": "admin"},
 			},
 		},
@@ -1601,9 +1601,9 @@ func (s *DynamicDataTestSuite) TestEvaluateMapNodeAsGroup() {
 func (s *DynamicDataTestSuite) TestEvaluateMapNodeAsRule() {
 	// Test map[string]any that represents a rule
 	ruleMap := map[string]any{
-		"id":   "test-rule",
-		"left": map[string]any{"type": "field", "field": "role"},
-		"op":   "equal",
+		"id":    "test-rule",
+		"left":  map[string]any{"type": "field", "field": "role"},
+		"op":    "equal",
 		"right": map[string]any{"type": "value", "value": "admin"},
 	}
 
@@ -1633,9 +1633,9 @@ func (s *DynamicDataTestSuite) TestEvaluateMapNodeInvalidGroup() {
 func (s *DynamicDataTestSuite) TestEvaluateMapNodeInvalidRule() {
 	// Test invalid rule structure
 	invalidRuleMap := map[string]any{
-		"id":   "test-rule",
-		"left": "invalid", // Should be object
-		"op":   "equal",
+		"id":    "test-rule",
+		"left":  "invalid", // Should be object
+		"op":    "equal",
 		"right": map[string]any{"type": "value", "value": "admin"},
 	}
 
@@ -1664,7 +1664,7 @@ func (s *TypeConversionTestSuite) TestToFloat64EdgeCases() {
 		{"invalid_string", "not_a_number", 0, false}, // Will default to 0 and pass comparison
 		{"bool_true", true, 1.0, false},
 		{"bool_false", false, 0.0, false},
-		{"nil", nil, 0, false}, // nil converts to 0 
+		{"nil", nil, 0, false},                                       // nil converts to 0
 		{"complex_object", map[string]any{"key": "value"}, 0, false}, // Object converts to 0
 	}
 
@@ -1734,11 +1734,11 @@ func (s *TypeConversionTestSuite) TestGetValueNestedFields() {
 
 func (s *TypeConversionTestSuite) TestContainsEdgeCases() {
 	tests := []struct {
-		name      string
-		haystack  any
-		needle    any
-		expected  bool
-		hasError  bool
+		name     string
+		haystack any
+		needle   any
+		expected bool
+		hasError bool
 	}{
 		{"string_in_string", "hello world", "world", true, false},
 		{"string_not_in_string", "hello world", "xyz", false, false},

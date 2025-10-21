@@ -45,12 +45,12 @@ type ComponentConfig struct {
 // NewComponentGenerator creates a new component generator
 func NewComponentGenerator() (*ComponentGenerator, error) {
 	// Load templates for components
-	tmpl, err := template.New("component").Funcs(TemplateFunctions()).ParseFS(templateFS, 
-		"templates/component/*", 
-		"templates/domain/*", 
-		"templates/service/*", 
-		"templates/repository/*", 
-		"templates/api/*", 
+	tmpl, err := template.New("component").Funcs(TemplateFunctions()).ParseFS(templateFS,
+		"templates/component/*",
+		"templates/domain/*",
+		"templates/service/*",
+		"templates/repository/*",
+		"templates/api/*",
 		"templates/test/*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse component templates: %w", err)
@@ -87,7 +87,7 @@ func (cg *ComponentGenerator) Generate(config ComponentConfig) error {
 	data := config.ToTemplateData()
 
 	if config.Verbose {
-		fmt.Printf("Generating %s component '%s' in module '%s'\n", 
+		fmt.Printf("Generating %s component '%s' in module '%s'\n",
 			config.ComponentType, config.ComponentName, config.ModuleName)
 	}
 
@@ -185,7 +185,7 @@ func (cg *ComponentGenerator) generateRepository(data TemplateData) error {
 
 func (cg *ComponentGenerator) generateHandler(data TemplateData) error {
 	handlerPath := filepath.Join("internal", "api", "handlers", ToSnakeCase(data.ModuleName))
-	
+
 	// Ensure handler directory exists
 	if err := cg.fs.EnsureDir(handlerPath); err != nil {
 		return fmt.Errorf("failed to create handler directory: %w", err)
@@ -232,7 +232,7 @@ func (cg *ComponentGenerator) generateDTO(data TemplateData) error {
 
 func (cg *ComponentGenerator) generateMiddleware(data TemplateData) error {
 	middlewarePath := filepath.Join("internal", "api", "middleware")
-	
+
 	// Ensure middleware directory exists
 	if err := cg.fs.EnsureDir(middlewarePath); err != nil {
 		return fmt.Errorf("failed to create middleware directory: %w", err)
@@ -279,7 +279,7 @@ func (cg *ComponentGenerator) generateValidator(data TemplateData) error {
 
 func (cg *ComponentGenerator) generateMapper(data TemplateData) error {
 	mapperPath := filepath.Join(data.RepositoryPath, "mappers")
-	
+
 	// Ensure mapper directory exists
 	if err := cg.fs.EnsureDir(mapperPath); err != nil {
 		return fmt.Errorf("failed to create mapper directory: %w", err)
@@ -326,7 +326,7 @@ func (cg *ComponentGenerator) generateFile(file FileTemplate) error {
 			}
 			return nil
 		}
-		
+
 		if !cg.fs.ShouldOverwrite() {
 			return fmt.Errorf("file already exists (use --overwrite to replace): %s", file.OutputPath)
 		}
@@ -355,21 +355,21 @@ func (c *ComponentConfig) Validate() error {
 	if c.ModuleName == "" {
 		return fmt.Errorf("module name cannot be empty")
 	}
-	
+
 	if c.ComponentName == "" {
 		return fmt.Errorf("component name cannot be empty")
 	}
-	
+
 	// Validate module name format
 	if !isValidIdentifier(c.ModuleName) {
 		return fmt.Errorf("module name '%s' is not a valid Go identifier", c.ModuleName)
 	}
-	
+
 	// Validate component name format
 	if !isValidIdentifier(c.ComponentName) {
 		return fmt.Errorf("component name '%s' is not a valid Go identifier", c.ComponentName)
 	}
-	
+
 	// Validate component type
 	validTypes := []ComponentType{
 		ComponentTypeEntity,
@@ -381,7 +381,7 @@ func (c *ComponentConfig) Validate() error {
 		ComponentTypeValidator,
 		ComponentTypeMapper,
 	}
-	
+
 	isValidType := false
 	for _, validType := range validTypes {
 		if c.ComponentType == validType {
@@ -389,55 +389,55 @@ func (c *ComponentConfig) Validate() error {
 			break
 		}
 	}
-	
+
 	if !isValidType {
 		return fmt.Errorf("invalid component type '%s'", c.ComponentType)
 	}
-	
+
 	// Validate mutually exclusive flags
 	if c.Overwrite && c.SkipExisting {
 		return fmt.Errorf("--overwrite and --skip-existing flags are mutually exclusive")
 	}
-	
+
 	return nil
 }
 
 // ToTemplateData converts ComponentConfig to TemplateData
 func (c *ComponentConfig) ToTemplateData() TemplateData {
 	return TemplateData{
-		ModuleName:         c.ModuleName,
-		ModuleNamePascal:   ToPascalCase(c.ModuleName),
-		ModuleNameCamel:    ToCamelCase(c.ModuleName),
-		ModuleNameSnake:    ToSnakeCase(c.ModuleName),
-		ModuleNameKebab:    ToKebabCase(c.ModuleName),
-		ModuleNamePlural:   Pluralize(c.ModuleName),
-		ModuleDescription:  fmt.Sprintf("%s management module", ToPascalCase(c.ModuleName)),
-		
-		ComponentName:      c.ComponentName,
+		ModuleName:        c.ModuleName,
+		ModuleNamePascal:  ToPascalCase(c.ModuleName),
+		ModuleNameCamel:   ToCamelCase(c.ModuleName),
+		ModuleNameSnake:   ToSnakeCase(c.ModuleName),
+		ModuleNameKebab:   ToKebabCase(c.ModuleName),
+		ModuleNamePlural:  Pluralize(c.ModuleName),
+		ModuleDescription: fmt.Sprintf("%s management module", ToPascalCase(c.ModuleName)),
+
+		ComponentName:       c.ComponentName,
 		ComponentNamePascal: ToPascalCase(c.ComponentName),
 		ComponentNameCamel:  ToCamelCase(c.ComponentName),
 		ComponentNameSnake:  ToSnakeCase(c.ComponentName),
-		
-		EntityName:         ToPascalCase(Singularize(c.ComponentName)),
-		EntityNamePascal:   ToPascalCase(Singularize(c.ComponentName)),
-		EntityNameCamel:    ToCamelCase(Singularize(c.ComponentName)),
-		EntityNameSnake:    ToSnakeCase(Singularize(c.ComponentName)),
-		EntityNamePlural:   ToPascalCase(Pluralize(c.ComponentName)),
-		
-		PackageName:        ToSnakeCase(c.ModuleName),
-		ImportPath:         fmt.Sprintf("github.com/niiniyare/erp/internal/core/%s", ToSnakeCase(c.ModuleName)),
-		
-		GeneratedAt:        time.Now(),
-		GeneratorVersion:   "0.1.0",
-		WithTests:          c.WithTests,
-		
+
+		EntityName:       ToPascalCase(Singularize(c.ComponentName)),
+		EntityNamePascal: ToPascalCase(Singularize(c.ComponentName)),
+		EntityNameCamel:  ToCamelCase(Singularize(c.ComponentName)),
+		EntityNameSnake:  ToSnakeCase(Singularize(c.ComponentName)),
+		EntityNamePlural: ToPascalCase(Pluralize(c.ComponentName)),
+
+		PackageName: ToSnakeCase(c.ModuleName),
+		ImportPath:  fmt.Sprintf("github.com/niiniyare/erp/internal/core/%s", ToSnakeCase(c.ModuleName)),
+
+		GeneratedAt:      time.Now(),
+		GeneratorVersion: "0.1.0",
+		WithTests:        c.WithTests,
+
 		RootType:           inferRootType(c.ModuleName),
 		DefaultPermissions: generateDefaultPermissions(c.ComponentName),
-		
-		DomainPath:         filepath.Join("internal", "core", ToSnakeCase(c.ModuleName), "domain"),
-		ServicePath:        filepath.Join("internal", "core", ToSnakeCase(c.ModuleName)),
-		RepositoryPath:     filepath.Join("internal", "core", ToSnakeCase(c.ModuleName), "repository"),
-		APIPath:            filepath.Join("internal", "api", "design", "services", ToSnakeCase(c.ModuleName)),
+
+		DomainPath:     filepath.Join("internal", "core", ToSnakeCase(c.ModuleName), "domain"),
+		ServicePath:    filepath.Join("internal", "core", ToSnakeCase(c.ModuleName)),
+		RepositoryPath: filepath.Join("internal", "core", ToSnakeCase(c.ModuleName), "repository"),
+		APIPath:        filepath.Join("internal", "api", "design", "services", ToSnakeCase(c.ModuleName)),
 	}
 }
 

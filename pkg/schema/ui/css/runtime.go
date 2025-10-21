@@ -46,10 +46,10 @@ type CSSKeyframe struct {
 
 // CSSFontFace represents a @font-face declaration
 type CSSFontFace struct {
-	FontFamily string
-	Src        []string
-	FontWeight string
-	FontStyle  string
+	FontFamily  string
+	Src         []string
+	FontWeight  string
+	FontStyle   string
 	FontDisplay string
 }
 
@@ -181,7 +181,7 @@ func (g *CSSGenerator) prefixSelector(selector string) string {
 	if g.config.ClassPrefix == "" {
 		return selector
 	}
-	
+
 	// Don't prefix if selector already has a prefix or is a tag/ID/pseudo selector
 	if strings.HasPrefix(selector, "."+g.config.ClassPrefix) ||
 		strings.HasPrefix(selector, "#") ||
@@ -189,39 +189,39 @@ func (g *CSSGenerator) prefixSelector(selector string) string {
 		!strings.HasPrefix(selector, ".") {
 		return selector
 	}
-	
+
 	// Add prefix to class selectors
 	if strings.HasPrefix(selector, ".") {
 		return "." + g.config.ClassPrefix + selector[1:]
 	}
-	
+
 	return selector
 }
 
 // Generate produces the final CSS string
 func (g *CSSGenerator) Generate() string {
 	var css strings.Builder
-	
+
 	// Add imports first
 	for _, imp := range g.stylesheet.Imports {
 		css.WriteString(fmt.Sprintf("@import url('%s');\n", imp))
 	}
-	
+
 	if len(g.stylesheet.Imports) > 0 {
 		css.WriteString("\n")
 	}
-	
+
 	// Add CSS variables in :root
 	if len(g.stylesheet.Variables) > 0 {
 		css.WriteString(":root {\n")
-		
+
 		// Sort variables for consistent output
 		var varNames []string
 		for name := range g.stylesheet.Variables {
 			varNames = append(varNames, name)
 		}
 		sort.Strings(varNames)
-		
+
 		for _, name := range varNames {
 			value := g.stylesheet.Variables[name]
 			if g.config.Minify {
@@ -230,29 +230,29 @@ func (g *CSSGenerator) Generate() string {
 				css.WriteString(fmt.Sprintf("%s%s: %s;\n", g.config.Indent, name, value))
 			}
 		}
-		
+
 		css.WriteString("}\n\n")
 	}
-	
+
 	// Add font faces
 	for _, fontFace := range g.stylesheet.FontFaces {
 		css.WriteString(g.generateFontFace(fontFace))
 		css.WriteString("\n")
 	}
-	
+
 	// Add keyframes
 	for name, keyframes := range g.stylesheet.Keyframes {
 		css.WriteString(g.generateKeyframes(name, keyframes))
 		css.WriteString("\n")
 	}
-	
+
 	// Process and sort rules
 	rules := g.processRules()
-	
+
 	// Group rules by media query
 	rulesByMedia := make(map[string][]CSSRule)
 	var normalRules []CSSRule
-	
+
 	for _, rule := range rules {
 		if rule.MediaQuery != "" {
 			rulesByMedia[rule.MediaQuery] = append(rulesByMedia[rule.MediaQuery], rule)
@@ -260,12 +260,12 @@ func (g *CSSGenerator) Generate() string {
 			normalRules = append(normalRules, rule)
 		}
 	}
-	
+
 	// Add normal rules first
 	for _, rule := range normalRules {
 		css.WriteString(g.generateRule(rule))
 	}
-	
+
 	// Add media query rules
 	for mediaQuery, mediaRules := range rulesByMedia {
 		css.WriteString(fmt.Sprintf("@media %s {\n", mediaQuery))
@@ -276,19 +276,19 @@ func (g *CSSGenerator) Generate() string {
 		}
 		css.WriteString("}\n\n")
 	}
-	
+
 	return strings.TrimSpace(css.String())
 }
 
 // processRules handles deduplication and sorting
 func (g *CSSGenerator) processRules() []CSSRule {
 	rules := g.stylesheet.Rules
-	
+
 	// Remove duplicates if configured
 	if g.config.RemoveDuplicates {
 		rules = g.removeDuplicateRules(rules)
 	}
-	
+
 	// Sort rules if configured
 	if g.config.SortRules {
 		sort.Slice(rules, func(i, j int) bool {
@@ -300,7 +300,7 @@ func (g *CSSGenerator) processRules() []CSSRule {
 			return rules[i].Selector < rules[j].Selector
 		})
 	}
-	
+
 	return rules
 }
 
@@ -308,7 +308,7 @@ func (g *CSSGenerator) processRules() []CSSRule {
 func (g *CSSGenerator) removeDuplicateRules(rules []CSSRule) []CSSRule {
 	seen := make(map[string]bool)
 	var unique []CSSRule
-	
+
 	for _, rule := range rules {
 		key := g.getRuleKey(rule)
 		if !seen[key] {
@@ -316,7 +316,7 @@ func (g *CSSGenerator) removeDuplicateRules(rules []CSSRule) []CSSRule {
 			unique = append(unique, rule)
 		}
 	}
-	
+
 	return unique
 }
 
@@ -328,26 +328,26 @@ func (g *CSSGenerator) getRuleKey(rule CSSRule) string {
 // generateRule generates CSS for a single rule
 func (g *CSSGenerator) generateRule(rule CSSRule) string {
 	var css strings.Builder
-	
+
 	// Build selector
 	selector := rule.Selector
 	if rule.PseudoSelector != "" {
 		selector += rule.PseudoSelector
 	}
-	
+
 	if g.config.Minify {
 		css.WriteString(fmt.Sprintf("%s{", selector))
 	} else {
 		css.WriteString(fmt.Sprintf("%s {\n", selector))
 	}
-	
+
 	// Sort declarations for consistent output
 	var properties []string
 	for prop := range rule.Declarations {
 		properties = append(properties, prop)
 	}
 	sort.Strings(properties)
-	
+
 	// Add declarations
 	for _, prop := range properties {
 		value := rule.Declarations[prop]
@@ -355,40 +355,40 @@ func (g *CSSGenerator) generateRule(rule CSSRule) string {
 		if g.config.AutoPrefix {
 			value = g.autoPrefixValue(prop, value)
 		}
-		
+
 		if g.config.Minify {
 			css.WriteString(fmt.Sprintf("%s:%s;", prop, value))
 		} else {
 			css.WriteString(fmt.Sprintf("%s%s: %s;\n", g.config.Indent, prop, value))
 		}
 	}
-	
+
 	if g.config.Minify {
 		css.WriteString("}")
 	} else {
 		css.WriteString("}\n\n")
 	}
-	
+
 	return css.String()
 }
 
 // generateFontFace generates CSS for @font-face
 func (g *CSSGenerator) generateFontFace(fontFace CSSFontFace) string {
 	var css strings.Builder
-	
+
 	if g.config.Minify {
 		css.WriteString("@font-face{")
 	} else {
 		css.WriteString("@font-face {\n")
 	}
-	
+
 	// Font family (required)
 	if g.config.Minify {
 		css.WriteString(fmt.Sprintf("font-family:'%s';", fontFace.FontFamily))
 	} else {
 		css.WriteString(fmt.Sprintf("%sfont-family: '%s';\n", g.config.Indent, fontFace.FontFamily))
 	}
-	
+
 	// Src (required)
 	if len(fontFace.Src) > 0 {
 		src := strings.Join(fontFace.Src, ", ")
@@ -398,7 +398,7 @@ func (g *CSSGenerator) generateFontFace(fontFace CSSFontFace) string {
 			css.WriteString(fmt.Sprintf("%ssrc: %s;\n", g.config.Indent, src))
 		}
 	}
-	
+
 	// Optional properties
 	if fontFace.FontWeight != "" {
 		if g.config.Minify {
@@ -407,7 +407,7 @@ func (g *CSSGenerator) generateFontFace(fontFace CSSFontFace) string {
 			css.WriteString(fmt.Sprintf("%sfont-weight: %s;\n", g.config.Indent, fontFace.FontWeight))
 		}
 	}
-	
+
 	if fontFace.FontStyle != "" {
 		if g.config.Minify {
 			css.WriteString(fmt.Sprintf("font-style:%s;", fontFace.FontStyle))
@@ -415,7 +415,7 @@ func (g *CSSGenerator) generateFontFace(fontFace CSSFontFace) string {
 			css.WriteString(fmt.Sprintf("%sfont-style: %s;\n", g.config.Indent, fontFace.FontStyle))
 		}
 	}
-	
+
 	if fontFace.FontDisplay != "" {
 		if g.config.Minify {
 			css.WriteString(fmt.Sprintf("font-display:%s;", fontFace.FontDisplay))
@@ -423,40 +423,40 @@ func (g *CSSGenerator) generateFontFace(fontFace CSSFontFace) string {
 			css.WriteString(fmt.Sprintf("%sfont-display: %s;\n", g.config.Indent, fontFace.FontDisplay))
 		}
 	}
-	
+
 	if g.config.Minify {
 		css.WriteString("}")
 	} else {
 		css.WriteString("}")
 	}
-	
+
 	return css.String()
 }
 
 // generateKeyframes generates CSS for @keyframes
 func (g *CSSGenerator) generateKeyframes(name string, keyframes []CSSKeyframe) string {
 	var css strings.Builder
-	
+
 	if g.config.Minify {
 		css.WriteString(fmt.Sprintf("@keyframes %s{", name))
 	} else {
 		css.WriteString(fmt.Sprintf("@keyframes %s {\n", name))
 	}
-	
+
 	for _, keyframe := range keyframes {
 		if g.config.Minify {
 			css.WriteString(fmt.Sprintf("%s{", keyframe.Position))
 		} else {
 			css.WriteString(fmt.Sprintf("%s%s {\n", g.config.Indent, keyframe.Position))
 		}
-		
+
 		// Sort declarations
 		var properties []string
 		for prop := range keyframe.Declarations {
 			properties = append(properties, prop)
 		}
 		sort.Strings(properties)
-		
+
 		for _, prop := range properties {
 			value := keyframe.Declarations[prop]
 			if g.config.Minify {
@@ -465,20 +465,20 @@ func (g *CSSGenerator) generateKeyframes(name string, keyframes []CSSKeyframe) s
 				css.WriteString(fmt.Sprintf("%s%s%s: %s;\n", g.config.Indent, g.config.Indent, prop, value))
 			}
 		}
-		
+
 		if g.config.Minify {
 			css.WriteString("}")
 		} else {
 			css.WriteString(fmt.Sprintf("%s}\n", g.config.Indent))
 		}
 	}
-	
+
 	if g.config.Minify {
 		css.WriteString("}")
 	} else {
 		css.WriteString("}")
 	}
-	
+
 	return css.String()
 }
 
@@ -487,23 +487,23 @@ func (g *CSSGenerator) autoPrefixValue(property, value string) string {
 	// Simple auto-prefixing for common properties
 	// In a real implementation, you'd want a more comprehensive solution
 	prefixMap := map[string][]string{
-		"transform":         {"-webkit-", "-moz-", "-ms-", ""},
-		"transition":        {"-webkit-", "-moz-", "-o-", ""},
-		"box-shadow":        {"-webkit-", "-moz-", ""},
-		"border-radius":     {"-webkit-", "-moz-", ""},
-		"user-select":       {"-webkit-", "-moz-", "-ms-", ""},
-		"appearance":        {"-webkit-", "-moz-", ""},
-		"backdrop-filter":   {"-webkit-", ""},
-		"clip-path":         {"-webkit-", ""},
+		"transform":       {"-webkit-", "-moz-", "-ms-", ""},
+		"transition":      {"-webkit-", "-moz-", "-o-", ""},
+		"box-shadow":      {"-webkit-", "-moz-", ""},
+		"border-radius":   {"-webkit-", "-moz-", ""},
+		"user-select":     {"-webkit-", "-moz-", "-ms-", ""},
+		"appearance":      {"-webkit-", "-moz-", ""},
+		"backdrop-filter": {"-webkit-", ""},
+		"clip-path":       {"-webkit-", ""},
 	}
-	
+
 	if prefixes, exists := prefixMap[property]; exists {
 		// For now, just return the standard property
 		// In a full implementation, you'd generate multiple rules
 		_ = prefixes
 		return value
 	}
-	
+
 	return value
 }
 
@@ -512,10 +512,10 @@ func (g *CSSGenerator) addIndent(content string) string {
 	if g.config.Minify {
 		return content
 	}
-	
+
 	lines := strings.Split(content, "\n")
 	var indented []string
-	
+
 	for _, line := range lines {
 		if strings.TrimSpace(line) != "" {
 			indented = append(indented, g.config.Indent+line)
@@ -523,7 +523,7 @@ func (g *CSSGenerator) addIndent(content string) string {
 			indented = append(indented, line)
 		}
 	}
-	
+
 	return strings.Join(indented, "\n")
 }
 
@@ -552,29 +552,29 @@ func (g *CSSGenerator) GetVariableCount() int {
 // Clone creates a copy of the generator
 func (g *CSSGenerator) Clone() *CSSGenerator {
 	clone := NewCSSGeneratorWithConfig(g.config)
-	
+
 	// Copy rules
 	clone.stylesheet.Rules = make([]CSSRule, len(g.stylesheet.Rules))
 	copy(clone.stylesheet.Rules, g.stylesheet.Rules)
-	
+
 	// Copy variables
 	for name, value := range g.stylesheet.Variables {
 		clone.stylesheet.Variables[name] = value
 	}
-	
+
 	// Copy keyframes
 	for name, keyframes := range g.stylesheet.Keyframes {
 		clone.stylesheet.Keyframes[name] = make([]CSSKeyframe, len(keyframes))
 		copy(clone.stylesheet.Keyframes[name], keyframes)
 	}
-	
+
 	// Copy font faces
 	clone.stylesheet.FontFaces = make([]CSSFontFace, len(g.stylesheet.FontFaces))
 	copy(clone.stylesheet.FontFaces, g.stylesheet.FontFaces)
-	
+
 	// Copy imports
 	clone.stylesheet.Imports = make([]string, len(g.stylesheet.Imports))
 	copy(clone.stylesheet.Imports, g.stylesheet.Imports)
-	
+
 	return clone
 }

@@ -1,4 +1,4 @@
-// Package components - FileControlSchema for file upload components  
+// Package components - FileControlSchema for file upload components
 // Based on JSON schema: FileControlSchema.json
 package components
 
@@ -12,7 +12,7 @@ type FileControlSize string
 
 const (
 	FileControlSizeXS   FileControlSize = "xs"   // Extra small size
-	FileControlSizeSM   FileControlSize = "sm"   // Small size  
+	FileControlSizeSM   FileControlSize = "sm"   // Small size
 	FileControlSizeMD   FileControlSize = "md"   // Medium size (default)
 	FileControlSizeLG   FileControlSize = "lg"   // Large size
 	FileControlSizeFull FileControlSize = "full" // Full width size
@@ -22,17 +22,17 @@ const (
 type FileUploadMode string
 
 const (
-	FileUploadModeNormal   FileUploadMode = "normal"   // Standard file upload to server
-	FileUploadModeBase64   FileUploadMode = "base64"   // Convert to base64 and include in form
-	FileUploadModeBlob     FileUploadMode = "blob"     // Use file data directly as form value
+	FileUploadModeNormal FileUploadMode = "normal" // Standard file upload to server
+	FileUploadModeBase64 FileUploadMode = "base64" // Convert to base64 and include in form
+	FileUploadModeBlob   FileUploadMode = "blob"   // Use file data directly as form value
 )
 
 // ChunkUploadMode represents the chunked upload behavior
 type ChunkUploadMode string
 
 const (
-	ChunkUploadAuto     ChunkUploadMode = "auto" // Automatically use chunks for large files
-	ChunkUploadEnabled  ChunkUploadMode = "true" // Always use chunked upload
+	ChunkUploadAuto     ChunkUploadMode = "auto"  // Automatically use chunks for large files
+	ChunkUploadEnabled  ChunkUploadMode = "true"  // Always use chunked upload
 	ChunkUploadDisabled ChunkUploadMode = "false" // Never use chunked upload
 )
 
@@ -60,9 +60,9 @@ const (
 type CropViewMode int
 
 const (
-	CropViewModeRestrict0 CropViewMode = 0 // No restrictions  
+	CropViewModeRestrict0 CropViewMode = 0 // No restrictions
 	CropViewModeRestrict1 CropViewMode = 1 // Restrict crop box to not exceed canvas size
-	CropViewModeRestrict2 CropViewMode = 2 // Minimum canvas size fit contained in container  
+	CropViewModeRestrict2 CropViewMode = 2 // Minimum canvas size fit contained in container
 	CropViewModeRestrict3 CropViewMode = 3 // Minimum canvas size fill fit container
 )
 
@@ -76,11 +76,11 @@ type CropConfig struct {
 	UploadCropOnly bool `json:"uploadCropOnly,omitempty"`
 	// Resize width after cropping (pixels)
 	ResizeWidth int `json:"resizeWidth,omitempty"`
-	// Resize height after cropping (pixels) 
+	// Resize height after cropping (pixels)
 	ResizeHeight int `json:"resizeHeight,omitempty"`
 	// JPEG quality for resized image (0-1)
 	ResizeQuality float64 `json:"resizeQuality,omitempty"`
-	
+
 	// Cropper.js Configuration
 	// Define the view mode of the cropper
 	ViewMode CropViewMode `json:"viewMode,omitempty"`
@@ -171,7 +171,7 @@ type FileControlSchema struct {
 	// File Selection Configuration
 	// Maximum number of files that can be selected
 	MaxLength int `json:"maxLength,omitempty"`
-	// Maximum file size allowed (bytes)  
+	// Maximum file size allowed (bytes)
 	MaxSize any `json:"maxSize,omitempty"` // number or string like "10MB"
 	// File type filter (e.g., ".jpg,.png,image/*")
 	Accept string `json:"accept,omitempty"`
@@ -273,13 +273,13 @@ type FileControlSchema struct {
 	ValidateAPI any `json:"validateApi,omitempty"`
 
 	// Static Display Properties
-	Static bool `json:"static,omitempty"`
-	StaticOn string `json:"staticOn,omitempty"`
-	StaticPlaceholder string `json:"staticPlaceholder,omitempty"`
-	StaticClassName string `json:"staticClassName,omitempty"`
+	Static               bool   `json:"static,omitempty"`
+	StaticOn             string `json:"staticOn,omitempty"`
+	StaticPlaceholder    string `json:"staticPlaceholder,omitempty"`
+	StaticClassName      string `json:"staticClassName,omitempty"`
 	StaticLabelClassName string `json:"staticLabelClassName,omitempty"`
 	StaticInputClassName string `json:"staticInputClassName,omitempty"`
-	StaticSchema any `json:"staticSchema,omitempty"`
+	StaticSchema         any    `json:"staticSchema,omitempty"`
 
 	// Advanced Properties
 	// Description content supporting HTML
@@ -291,8 +291,8 @@ type FileControlSchema struct {
 	// Validation rules configuration
 	Validations any `json:"validations,omitempty"`
 	// CSS class names for styling
-	InputClassName string `json:"inputClassName,omitempty"`
-	LabelClassName string `json:"labelClassName,omitempty"`
+	InputClassName       string `json:"inputClassName,omitempty"`
+	LabelClassName       string `json:"labelClassName,omitempty"`
 	DescriptionClassName string `json:"descriptionClassName,omitempty"`
 
 	// Design-time Configuration
@@ -302,18 +302,18 @@ type FileControlSchema struct {
 // Factory function to create FileControlSchema with sensible defaults
 func NewFileControl(name string) *FileControlSchema {
 	return &FileControlSchema{
-		Type:           "input-file",
-		Name:           name,
-		BtnLabel:       "Select File",
-		AutoUpload:     true,
-		Size:           FileControlSizeMD,
-		MaxSize:        "10MB",
-		FileField:      "file",
-		ChunkSize:      5242880, // 5MB default
-		UseChunk:       "auto",
-		Drag:           true,
-		ShowFileIcons:  true,
-		Compress:       false,
+		Type:          "input-file",
+		Name:          name,
+		BtnLabel:      "Select File",
+		AutoUpload:    true,
+		Size:          FileControlSizeMD,
+		MaxSize:       "10MB",
+		FileField:     "file",
+		ChunkSize:     5242880, // 5MB default
+		UseChunk:      "auto",
+		Drag:          true,
+		ShowFileIcons: true,
+		Compress:      false,
 	}
 }
 
@@ -352,7 +352,7 @@ func NewImageFileControl(name string, aspectRatio float64) *FileControlSchema {
 	return control
 }
 
-// Factory function to create document file control  
+// Factory function to create document file control
 func NewDocumentFileControl(name string) *FileControlSchema {
 	control := NewFileControl(name)
 	control.Accept = ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
@@ -370,7 +370,7 @@ func (f *FileControlSchema) Validate() error {
 	if f.Name == "" {
 		return fmt.Errorf("file control name is required")
 	}
-	
+
 	// Validate enum values
 	if f.Size != "" &&
 		f.Size != FileControlSizeXS &&
@@ -380,7 +380,7 @@ func (f *FileControlSchema) Validate() error {
 		f.Size != FileControlSizeFull {
 		return fmt.Errorf("invalid size: %s", f.Size)
 	}
-	
+
 	// Validate capture mode if specified
 	if f.Capture != "" &&
 		f.Capture != FileCaptureUser &&
@@ -390,7 +390,7 @@ func (f *FileControlSchema) Validate() error {
 		f.Capture != FileCaptureFile {
 		return fmt.Errorf("invalid capture mode: %s", f.Capture)
 	}
-	
+
 	// Validate crop configuration if present
 	if f.Crop != nil {
 		if f.Crop.ViewMode < CropViewModeRestrict0 || f.Crop.ViewMode > CropViewModeRestrict3 {
@@ -409,14 +409,14 @@ func (f *FileControlSchema) Validate() error {
 			return fmt.Errorf("invalid crop autoCropArea: %f, must be between 0 and 1", f.Crop.AutoCropArea)
 		}
 	}
-	
+
 	// Validate compression options if present
 	if f.CompressOptions != nil {
 		if f.CompressOptions.Quality < 0 || f.CompressOptions.Quality > 1 {
 			return fmt.Errorf("invalid compression quality: %f, must be between 0 and 1", f.CompressOptions.Quality)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -425,7 +425,7 @@ func (f *FileControlSchema) ToJSON() (string, error) {
 	if err := f.Validate(); err != nil {
 		return "", err
 	}
-	
+
 	data, err := json.MarshalIndent(f, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal FileControlSchema to JSON: %w", err)
@@ -440,10 +440,10 @@ func FileControlFromJSON(jsonData string) (*FileControlSchema, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal JSON to FileControlSchema: %w", err)
 	}
-	
+
 	if err := config.Validate(); err != nil {
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
-	
+
 	return &config, nil
 }

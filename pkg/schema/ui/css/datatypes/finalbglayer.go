@@ -3,18 +3,13 @@
 
 package datatypes
 
-
-
-
 // Finalbglayer represents the CSS DataType FinalBgLayer (union type: [])
 type Finalbglayer string
-
 
 // Predefined constants
 const (
 	FinalbglayerNone = "none"
 )
-
 
 func (d Finalbglayer) IsValid() bool {
 	return string(d) != ""
@@ -24,5 +19,3 @@ func (d Finalbglayer) IsValid() bool {
 func (d Finalbglayer) String() string {
 	return string(d)
 }
-
-

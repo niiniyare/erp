@@ -15,49 +15,49 @@ var templateFS embed.FS
 func TemplateFunctions() template.FuncMap {
 	return template.FuncMap{
 		// String case conversions
-		"camelCase":   ToCamelCase,
-		"pascalCase":  ToPascalCase,
-		"snakeCase":   ToSnakeCase,
-		"kebabCase":   ToKebabCase,
-		"lowerCase":   strings.ToLower,
-		"upperCase":   strings.ToUpper,
-		"upper":       strings.ToUpper,
-		"lower":       strings.ToLower,
-		"title":       strings.Title,
-		
+		"camelCase":  ToCamelCase,
+		"pascalCase": ToPascalCase,
+		"snakeCase":  ToSnakeCase,
+		"kebabCase":  ToKebabCase,
+		"lowerCase":  strings.ToLower,
+		"upperCase":  strings.ToUpper,
+		"upper":      strings.ToUpper,
+		"lower":      strings.ToLower,
+		"title":      strings.Title,
+
 		// Pluralization
 		"pluralize":   Pluralize,
 		"singularize": Singularize,
-		
+
 		// String utilities
-		"hasPrefix":   strings.HasPrefix,
-		"hasSuffix":   strings.HasSuffix,
-		"contains":    strings.Contains,
-		"replace":     strings.ReplaceAll,
-		"trim":        strings.TrimSpace,
-		"split":       strings.Split,
-		"join":        strings.Join,
-		
+		"hasPrefix": strings.HasPrefix,
+		"hasSuffix": strings.HasSuffix,
+		"contains":  strings.Contains,
+		"replace":   strings.ReplaceAll,
+		"trim":      strings.TrimSpace,
+		"split":     strings.Split,
+		"join":      strings.Join,
+
 		// ERP-specific helpers
-		"rootType":           inferRootType,
-		"permissions":        generateDefaultPermissions,
-		"accountType":        inferAccountType,
-		"statementSection":   inferStatementSection,
-		"cashFlowCategory":   inferCashFlowCategory,
-		
+		"rootType":         inferRootType,
+		"permissions":      generateDefaultPermissions,
+		"accountType":      inferAccountType,
+		"statementSection": inferStatementSection,
+		"cashFlowCategory": inferCashFlowCategory,
+
 		// Template utilities
-		"indent":      indent,
-		"comment":     comment,
-		"docComment":  docComment,
+		"indent":       indent,
+		"comment":      comment,
+		"docComment":   docComment,
 		"generateTODO": generateTODO,
-		
+
 		// Validation helpers
-		"validationTags":      generateValidationTags,
-		"generateDBTags":      generateDBTags,
-		"generateJSONTags":    generateJSONTags,
+		"validationTags":         generateValidationTags,
+		"generateDBTags":         generateDBTags,
+		"generateJSONTags":       generateJSONTags,
 		"generateValidationTags": generateValidationTags,
-		"dbTags":              generateDBTags,
-		"jsonTags":            generateJSONTags,
+		"dbTags":                 generateDBTags,
+		"jsonTags":               generateJSONTags,
 	}
 }
 
@@ -68,22 +68,22 @@ func ToCamelCase(s string) string {
 	if s == "" {
 		return s
 	}
-	
+
 	// Split by underscore, hyphen, or space
 	parts := strings.FieldsFunc(s, func(c rune) bool {
 		return c == '_' || c == '-' || c == ' '
 	})
-	
+
 	if len(parts) == 0 {
 		return s
 	}
-	
+
 	// First part lowercase, rest title case
 	result := strings.ToLower(parts[0])
 	for i := 1; i < len(parts); i++ {
 		result += strings.Title(strings.ToLower(parts[i]))
 	}
-	
+
 	return result
 }
 
@@ -92,23 +92,23 @@ func ToPascalCase(s string) string {
 	if s == "" {
 		return s
 	}
-	
+
 	// Split by underscore, hyphen, or space
 	parts := strings.FieldsFunc(s, func(c rune) bool {
 		return c == '_' || c == '-' || c == ' '
 	})
-	
+
 	if len(parts) == 0 {
 		return s
 	}
-	
+
 	var result strings.Builder
 	for _, part := range parts {
 		if part != "" {
 			result.WriteString(strings.Title(strings.ToLower(part)))
 		}
 	}
-	
+
 	return result.String()
 }
 
@@ -117,7 +117,7 @@ func ToSnakeCase(s string) string {
 	if s == "" {
 		return s
 	}
-	
+
 	var result strings.Builder
 	for i, r := range s {
 		if i > 0 && unicode.IsUpper(r) {
@@ -125,7 +125,7 @@ func ToSnakeCase(s string) string {
 		}
 		result.WriteRune(unicode.ToLower(r))
 	}
-	
+
 	// Handle multiple consecutive underscores
 	return strings.ReplaceAll(result.String(), "__", "_")
 }
@@ -142,9 +142,9 @@ func Pluralize(s string) string {
 	if s == "" {
 		return s
 	}
-	
+
 	lower := strings.ToLower(s)
-	
+
 	// Irregular plurals
 	irregulars := map[string]string{
 		"person":     "people",
@@ -175,7 +175,7 @@ func Pluralize(s string) string {
 		"criterion":  "criteria",
 		"datum":      "data",
 	}
-	
+
 	if plural, ok := irregulars[lower]; ok {
 		// Preserve original case pattern
 		if isAllUpper(s) {
@@ -186,12 +186,12 @@ func Pluralize(s string) string {
 		}
 		return plural
 	}
-	
+
 	// Regular pluralization rules
 	switch {
-	case strings.HasSuffix(lower, "s") || strings.HasSuffix(lower, "sh") || 
-		 strings.HasSuffix(lower, "ch") || strings.HasSuffix(lower, "x") || 
-		 strings.HasSuffix(lower, "z"):
+	case strings.HasSuffix(lower, "s") || strings.HasSuffix(lower, "sh") ||
+		strings.HasSuffix(lower, "ch") || strings.HasSuffix(lower, "x") ||
+		strings.HasSuffix(lower, "z"):
 		return s + "es"
 	case strings.HasSuffix(lower, "y") && len(s) > 1 && !isVowel(rune(lower[len(lower)-2])):
 		return s[:len(s)-1] + "ies"
@@ -211,9 +211,9 @@ func Singularize(s string) string {
 	if s == "" {
 		return s
 	}
-	
+
 	lower := strings.ToLower(s)
-	
+
 	// Irregular singulars (reverse of plurals)
 	irregulars := map[string]string{
 		"people":     "person",
@@ -244,7 +244,7 @@ func Singularize(s string) string {
 		"criteria":   "criterion",
 		"data":       "datum",
 	}
-	
+
 	if singular, ok := irregulars[lower]; ok {
 		// Preserve original case pattern
 		if isAllUpper(s) {
@@ -255,7 +255,7 @@ func Singularize(s string) string {
 		}
 		return singular
 	}
-	
+
 	// Regular singularization rules
 	switch {
 	case strings.HasSuffix(lower, "ies") && len(s) > 3:
@@ -268,9 +268,9 @@ func Singularize(s string) string {
 		// Check if it's a word that actually ends in 'es'
 		without_es := s[:len(s)-2]
 		lower_without_es := strings.ToLower(without_es)
-		if strings.HasSuffix(lower_without_es, "s") || strings.HasSuffix(lower_without_es, "sh") || 
-		   strings.HasSuffix(lower_without_es, "ch") || strings.HasSuffix(lower_without_es, "x") || 
-		   strings.HasSuffix(lower_without_es, "z") {
+		if strings.HasSuffix(lower_without_es, "s") || strings.HasSuffix(lower_without_es, "sh") ||
+			strings.HasSuffix(lower_without_es, "ch") || strings.HasSuffix(lower_without_es, "x") ||
+			strings.HasSuffix(lower_without_es, "z") {
 			return without_es
 		}
 		return s[:len(s)-1] // Just remove 's'
@@ -286,7 +286,7 @@ func Singularize(s string) string {
 // inferAccountType infers account type from module name
 func inferAccountType(moduleName string) string {
 	lowerName := strings.ToLower(moduleName)
-	
+
 	switch {
 	case strings.Contains(lowerName, "cash") || strings.Contains(lowerName, "bank"):
 		return "AccountTypeCash"
@@ -308,10 +308,10 @@ func inferAccountType(moduleName string) string {
 // inferStatementSection infers financial statement section
 func inferStatementSection(moduleName string) string {
 	lowerName := strings.ToLower(moduleName)
-	
+
 	switch {
-	case strings.Contains(lowerName, "asset") || strings.Contains(lowerName, "inventory") || 
-		 strings.Contains(lowerName, "receivable") || strings.Contains(lowerName, "cash"):
+	case strings.Contains(lowerName, "asset") || strings.Contains(lowerName, "inventory") ||
+		strings.Contains(lowerName, "receivable") || strings.Contains(lowerName, "cash"):
 		return "StatementSectionAssets"
 	case strings.Contains(lowerName, "liability") || strings.Contains(lowerName, "payable"):
 		return "StatementSectionLiabilities"
@@ -329,16 +329,16 @@ func inferStatementSection(moduleName string) string {
 // inferCashFlowCategory infers cash flow category
 func inferCashFlowCategory(moduleName string) string {
 	lowerName := strings.ToLower(moduleName)
-	
+
 	switch {
-	case strings.Contains(lowerName, "sales") || strings.Contains(lowerName, "receivable") || 
-		 strings.Contains(lowerName, "payable") || strings.Contains(lowerName, "inventory"):
+	case strings.Contains(lowerName, "sales") || strings.Contains(lowerName, "receivable") ||
+		strings.Contains(lowerName, "payable") || strings.Contains(lowerName, "inventory"):
 		return "CashFlowCategoryOperating"
-	case strings.Contains(lowerName, "asset") || strings.Contains(lowerName, "equipment") || 
-		 strings.Contains(lowerName, "property"):
+	case strings.Contains(lowerName, "asset") || strings.Contains(lowerName, "equipment") ||
+		strings.Contains(lowerName, "property"):
 		return "CashFlowCategoryInvesting"
-	case strings.Contains(lowerName, "loan") || strings.Contains(lowerName, "equity") || 
-		 strings.Contains(lowerName, "capital"):
+	case strings.Contains(lowerName, "loan") || strings.Contains(lowerName, "equity") ||
+		strings.Contains(lowerName, "capital"):
 		return "CashFlowCategoryFinancing"
 	default:
 		return "CashFlowCategoryOperating"
@@ -377,7 +377,7 @@ func generateTODO(description string) string {
 // generateValidationTags generates struct validation tags
 func generateValidationTags(fieldName, fieldType string) string {
 	lowerField := strings.ToLower(fieldName)
-	
+
 	switch {
 	case strings.Contains(lowerField, "email"):
 		return `validate:"required,email"`
@@ -407,13 +407,13 @@ func generateValidationTags(fieldName, fieldType string) string {
 // generateDBTags generates database struct tags
 func generateDBTags(fieldName string) string {
 	dbColumn := ToSnakeCase(fieldName)
-	
+
 	switch {
 	case strings.HasSuffix(strings.ToLower(fieldName), "id"):
 		return fmt.Sprintf(`db:"%s"`, dbColumn)
-	case strings.Contains(strings.ToLower(fieldName), "created") || 
-		 strings.Contains(strings.ToLower(fieldName), "updated") ||
-		 strings.Contains(strings.ToLower(fieldName), "deleted"):
+	case strings.Contains(strings.ToLower(fieldName), "created") ||
+		strings.Contains(strings.ToLower(fieldName), "updated") ||
+		strings.Contains(strings.ToLower(fieldName), "deleted"):
 		return fmt.Sprintf(`db:"%s"`, dbColumn)
 	default:
 		return fmt.Sprintf(`db:"%s"`, dbColumn)
@@ -423,12 +423,12 @@ func generateDBTags(fieldName string) string {
 // generateJSONTags generates JSON struct tags
 func generateJSONTags(fieldName string) string {
 	jsonField := ToCamelCase(fieldName)
-	
-	if strings.HasSuffix(strings.ToLower(fieldName), "id") || 
-	   strings.Contains(strings.ToLower(fieldName), "optional") {
+
+	if strings.HasSuffix(strings.ToLower(fieldName), "id") ||
+		strings.Contains(strings.ToLower(fieldName), "optional") {
 		return fmt.Sprintf(`json:"%s,omitempty"`, jsonField)
 	}
-	
+
 	return fmt.Sprintf(`json:"%s"`, jsonField)
 }
 

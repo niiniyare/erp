@@ -34,15 +34,15 @@ type TextareaConfig struct {
 
 // Select component configuration
 type SelectConfig struct {
-	Options      []Option `json:"options" validate:"required"`
-	Value        string   `json:"value,omitempty"`
-	Multiple     bool     `json:"multiple,omitempty"`
-	Searchable   bool     `json:"searchable,omitempty"`
-	Clearable    bool     `json:"clearable,omitempty"`
-	Placeholder  string   `json:"placeholder,omitempty"`
-	LoadingText  string   `json:"loading_text,omitempty"`
-	NoOptionsText string  `json:"no_options_text,omitempty"`
-	DataSource   string   `json:"data_source,omitempty"` // API endpoint for dynamic options
+	Options       []Option `json:"options" validate:"required"`
+	Value         string   `json:"value,omitempty"`
+	Multiple      bool     `json:"multiple,omitempty"`
+	Searchable    bool     `json:"searchable,omitempty"`
+	Clearable     bool     `json:"clearable,omitempty"`
+	Placeholder   string   `json:"placeholder,omitempty"`
+	LoadingText   string   `json:"loading_text,omitempty"`
+	NoOptionsText string   `json:"no_options_text,omitempty"`
+	DataSource    string   `json:"data_source,omitempty"` // API endpoint for dynamic options
 }
 
 // Option is already defined in types.go - no need to duplicate
@@ -78,15 +78,15 @@ type ButtonConfig struct {
 
 // DatePicker component configuration
 type DatePickerConfig struct {
-	Value       string     `json:"value,omitempty"`
-	Format      string     `json:"format,omitempty"`
-	MinDate     string     `json:"min_date,omitempty"`
-	MaxDate     string     `json:"max_date,omitempty"`
-	ShowTime    bool       `json:"show_time,omitempty"`
-	TimeFormat  string     `json:"time_format,omitempty"`
-	Placeholder string     `json:"placeholder,omitempty"`
-	Mode        DateMode   `json:"mode,omitempty"`
-	FirstDayOfWeek int     `json:"first_day_of_week,omitempty"`
+	Value          string   `json:"value,omitempty"`
+	Format         string   `json:"format,omitempty"`
+	MinDate        string   `json:"min_date,omitempty"`
+	MaxDate        string   `json:"max_date,omitempty"`
+	ShowTime       bool     `json:"show_time,omitempty"`
+	TimeFormat     string   `json:"time_format,omitempty"`
+	Placeholder    string   `json:"placeholder,omitempty"`
+	Mode           DateMode `json:"mode,omitempty"`
+	FirstDayOfWeek int      `json:"first_day_of_week,omitempty"`
 }
 
 // DateMode represents different date picker modes
@@ -116,16 +116,16 @@ type FileUploadConfig struct {
 
 // Form component configuration
 type FormConfig struct {
-	Method      string            `json:"method,omitempty"`
-	Action      string            `json:"action,omitempty"`
-	Enctype     string            `json:"enctype,omitempty"`
-	NoValidate  bool              `json:"no_validate,omitempty"`
-	AutoComplete string           `json:"autocomplete,omitempty"`
-	Layout      FormLayout        `json:"layout,omitempty"`
-	LabelWidth  string            `json:"label_width,omitempty"`
-	Spacing     string            `json:"spacing,omitempty"`
-	Validation  *FormValidation   `json:"validation,omitempty"`
-	Headers     map[string]string `json:"headers,omitempty"`
+	Method       string            `json:"method,omitempty"`
+	Action       string            `json:"action,omitempty"`
+	Enctype      string            `json:"enctype,omitempty"`
+	NoValidate   bool              `json:"no_validate,omitempty"`
+	AutoComplete string            `json:"autocomplete,omitempty"`
+	Layout       FormLayout        `json:"layout,omitempty"`
+	LabelWidth   string            `json:"label_width,omitempty"`
+	Spacing      string            `json:"spacing,omitempty"`
+	Validation   *FormValidation   `json:"validation,omitempty"`
+	Headers      map[string]string `json:"headers,omitempty"`
 }
 
 // FormLayout represents form layout options
@@ -148,15 +148,17 @@ type FormValidation struct {
 }
 
 // Form component factories
-type InputFactory struct{}
-type TextareaFactory struct{}
-type SelectFactory struct{}
-type CheckboxFactory struct{}
-type RadioFactory struct{}
-type ButtonFactory struct{}
-type DatePickerFactory struct{}
-type FileUploadFactory struct{}
-type FormFactory struct{}
+type (
+	InputFactory      struct{}
+	TextareaFactory   struct{}
+	SelectFactory     struct{}
+	CheckboxFactory   struct{}
+	RadioFactory      struct{}
+	ButtonFactory     struct{}
+	DatePickerFactory struct{}
+	FileUploadFactory struct{}
+	FormFactory       struct{}
+)
 
 // Input factory implementation
 func (f *InputFactory) Create(ctx context.Context, config map[string]any) (Component, error) {

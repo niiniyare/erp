@@ -3,14 +3,11 @@
 
 package datatypes
 
-
-
-
 // Box represents the CSS DataType Box with predefined values
 type Box string
 
 const (
-	BoxBorderbox Box = "border-box"
+	BoxBorderbox  Box = "border-box"
 	BoxContentbox Box = "content-box"
 	BoxPaddingbox Box = "padding-box"
 )
@@ -29,5 +26,3 @@ func (d Box) IsValid() bool {
 func (d Box) String() string {
 	return string(d)
 }
-
-

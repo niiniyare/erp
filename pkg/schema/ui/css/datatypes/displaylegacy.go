@@ -3,21 +3,18 @@
 
 package datatypes
 
-
-
-
 // Displaylegacy represents the CSS DataType DisplayLegacy with predefined values
 type Displaylegacy string
 
 const (
-	DisplaylegacyMsinlineflexbox Displaylegacy = "-ms-inline-flexbox"
-	DisplaylegacyMsinlinegrid Displaylegacy = "-ms-inline-grid"
+	DisplaylegacyMsinlineflexbox  Displaylegacy = "-ms-inline-flexbox"
+	DisplaylegacyMsinlinegrid     Displaylegacy = "-ms-inline-grid"
 	DisplaylegacyWebkitinlineflex Displaylegacy = "-webkit-inline-flex"
-	DisplaylegacyInlineblock Displaylegacy = "inline-block"
-	DisplaylegacyInlineflex Displaylegacy = "inline-flex"
-	DisplaylegacyInlinegrid Displaylegacy = "inline-grid"
-	DisplaylegacyInlinelistitem Displaylegacy = "inline-list-item"
-	DisplaylegacyInlinetable Displaylegacy = "inline-table"
+	DisplaylegacyInlineblock      Displaylegacy = "inline-block"
+	DisplaylegacyInlineflex       Displaylegacy = "inline-flex"
+	DisplaylegacyInlinegrid       Displaylegacy = "inline-grid"
+	DisplaylegacyInlinelistitem   Displaylegacy = "inline-list-item"
+	DisplaylegacyInlinetable      Displaylegacy = "inline-table"
 )
 
 func (d Displaylegacy) IsValid() bool {
@@ -34,5 +31,3 @@ func (d Displaylegacy) IsValid() bool {
 func (d Displaylegacy) String() string {
 	return string(d)
 }
-
-
