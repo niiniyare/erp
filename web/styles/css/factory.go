@@ -92,7 +92,7 @@ func (f *Factory) GenerateCSS(styles Styles) (string, error) {
 	if err := styles.Validate(); err != nil {
 		return "", fmt.Errorf("style validation failed: %w", err)
 	}
-	
+
 	// Generate CSS using the ToCSS method
 	cssOutput := styles.ToCSS()
 	return cssOutput, nil

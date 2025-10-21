@@ -23,7 +23,7 @@ import (
 // 1. REUSABLE STRUCTS: Uses shared BaseProps for consistency
 // 2. UUID GENERATION: Built-in UUID v4 generation capabilities
 // 3. DISPLAY MODES: Support for different UUID display formats
-// 4. COPY FUNCTIONALITY: Built-in copy-to-clipboard with Alpine.js
+// 4. COPY FUNCTIONALITY: Built-in copy-to-clipboard with e.js
 // 5. VALIDATION: UUID format validation and visual feedback
 // 6. ACCESSIBILITY: Proper ARIA labels and keyboard navigation
 // ============================================================================
@@ -141,9 +141,9 @@ func FormatUUID(uuid, format string) string {
 func NewUUID(name, value string) UUIDProps {
 	return UUIDProps{
 		BaseProps: BaseProps{
-			ID: GenerateID("uuid"),
+			ID:   GenerateID("uuid"),
+			Name: name,
 		},
-		Name:          name,
 		Value:         value,
 		Variant:       VariantDefault,
 		Size:          SizeMD,
@@ -170,5 +170,771 @@ func NewUUIDGenerator(name string) UUIDProps {
 }
 
 // ============================================================================
-// TEMPLATE COMPONENTS\n// ============================================================================\n\n// UUID renders a UUID input or display component\n// Supports generation, validation, copying, and different display formats\ntempl UUID(props UUIDProps) {\n\t<div class={ getUUIDWrapperClasses(props) }>\n\t\t// Label\n\t\tif props.Label != \"\" {\n\t\t\t@uuidLabel(props)\n\t\t}\n\t\t\n\t\t<div class=\"relative\">\n\t\t\tif props.Editable {\n\t\t\t\t// Editable UUID input\n\t\t\t\t<input\n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\tid={ props.GetID(\"uuid\") }\n\t\t\t\t\tclass={ getUUIDInputClasses(props) }\n\t\t\t\t\tif props.Name != \"\" {\n\t\t\t\t\t\tname={ props.Name }\n\t\t\t\t\t}\n\t\t\t\t\tvalue={ props.Value }\n\t\t\t\t\tif props.Placeholder != \"\" {\n\t\t\t\t\t\tplaceholder={ props.Placeholder }\n\t\t\t\t\t} else {\n\t\t\t\t\t\tplaceholder=\"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"\n\t\t\t\t\t}\n\t\t\t\t\tif props.Required {\n\t\t\t\t\t\trequired\n\t\t\t\t\t}\n\t\t\t\t\tif props.ReadOnly {\n\t\t\t\t\t\treadonly\n\t\t\t\t\t}\n\t\t\t\t\tif props.Disabled {\n\t\t\t\t\t\tdisabled\n\t\t\t\t\t}\n\t\t\t\t\tpattern=\"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\"\n\t\t\t\t\tmaxlength=\"36\"\n\t\t\t\t\tif props.DataTestID != \"\" {\n\t\t\t\t\t\tdata-testid={ props.DataTestID }\n\t\t\t\t\t}\n\t\t\t\t\tif props.AriaLabel != \"\" {\n\t\t\t\t\t\taria-label={ props.AriaLabel }\n\t\t\t\t\t}\n\t\t\t\t\tif props.AriaDescribedBy != \"\" {\n\t\t\t\t\t\taria-describedby={ props.AriaDescribedBy }\n\t\t\t\t\t}\n\t\t\t\t\tif props.TabIndex != 0 {\n\t\t\t\t\t\ttabindex={ strconv.Itoa(props.TabIndex) }\n\t\t\t\t\t}\n\t\t\t\t\tif props.OnChange != \"\" {\n\t\t\t\t\t\tx-on:change={ props.OnChange }\n\t\t\t\t\t}\n\t\t\t\t\tif props.OnInput != \"\" {\n\t\t\t\t\t\tx-on:input={ props.OnInput }\n\t\t\t\t\t}\n\t\t\t\t\tx-on:input=\"$el.setCustomValidity(!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test($el.value) && $el.value !== ” ? 'Please enter a valid UUID format' : ”)\"\n\t\t\t\t/>\n\t\t\t} else {\n\t\t\t\t// Display-only UUID\n\t\t\t\t<div class={ uuidDisplayClasses }>\n\t\t\t\t\t<span class={ getUUIDFormatClasses(props.DisplayFormat) }>\n\t\t\t\t\t\t{ FormatUUID(props.Value, props.DisplayFormat) }\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t}\n\t\t\t\n\t\t\t// Action buttons container\n\t\t\tif props.ShowCopyButton || props.ShowGenerateButton {\n\t\t\t\t<div class=\"absolute inset-y-0 right-0 flex items-center pr-3 gap-1\">\n\t\t\t\t\t// Copy button\n\t\t\t\t\tif props.ShowCopyButton && props.Value != \"\" {\n\t\t\t\t\t\t@uuidCopyButton(props)\n\t\t\t\t\t}\n\t\t\t\t\t\n\t\t\t\t\t// Generate button\n\t\t\t\t\tif props.ShowGenerateButton && props.Editable {\n\t\t\t\t\t\t@uuidGenerateButton(props)\n\t\t\t\t\t}\n\t\t\t\t</div>\n\t\t\t}\n\t\t</div>\n\t\t\n\t\t// Validation and help text\n\t\t@uuidValidationText(props)\n\t</div>\n}\n\n// uuidLabel renders the label for the UUID component\ntempl uuidLabel(props UUIDProps) {\n\t<label\n\t\tfor={ props.GetID(\"uuid\") }\n\t\tclass=\"block text-sm font-medium text-gray-900 dark:text-white mb-2\"\n\t>\n\t\t{ props.Label }\n\t\tif props.Required {\n\t\t\t<span class=\"text-red-500 ml-1\">*</span>\n\t\t}\n\t</label>\n}\n\n// uuidCopyButton renders the copy to clipboard button\ntempl uuidCopyButton(props UUIDProps) {\n\t<button\n\t\ttype=\"button\"\n\t\tclass={ uuidCopyButtonClasses }\n\t\ttitle=\"Copy to clipboard\"\n\t\taria-label=\"Copy UUID to clipboard\"\n\t\tx-on:click=\"navigator.clipboard.writeText($el.closest('.relative').querySelector('input, span').textContent || $el.closest('.relative').querySelector('input').value).then(() => { $el.classList.add('text-green-500'); setTimeout(() => $el.classList.remove('text-green-500'), 2000); })\"\n\t>\n\t\t@Icon(IconProps{\n\t\t\tName: \"copy\",\n\t\t\tSize: SizeSM,\n\t\t})\n\t</button>\n}\n\n// uuidGenerateButton renders the generate new UUID button\ntempl uuidGenerateButton(props UUIDProps) {\n\t<button\n\t\ttype=\"button\"\n\t\tclass={ uuidCopyButtonClasses }\n\t\ttitle=\"Generate new UUID\"\n\t\taria-label=\"Generate new UUID\"\n\t\tx-on:click=\"\n\t\t\tconst input = $el.closest('.relative').querySelector('input');\n\t\t\tif (input) {\n\t\t\t\tconst newUuid = crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {\n\t\t\t\t\tconst r = Math.random() * 16 | 0;\n\t\t\t\t\tconst v = c == 'x' ? r : (r & 0x3 | 0x8);\n\t\t\t\t\treturn v.toString(16);\n\t\t\t\t});\n\t\t\t\tinput.value = newUuid;\n\t\t\t\tinput.dispatchEvent(new Event('input', { bubbles: true }));\n\t\t\t\tinput.dispatchEvent(new Event('change', { bubbles: true }));\n\t\t\t}\n\t\t\"\n\t>\n\t\t@Icon(IconProps{\n\t\t\tName: \"refresh\",\n\t\t\tSize: SizeSM,\n\t\t})\n\t</button>\n}\n\n// uuidValidationText renders validation messages and help text\ntempl uuidValidationText(props UUIDProps) {\n\tif props.HelpText != \"\" || props.ShowValidation {\n\t\t<div class=\"mt-2 text-sm\">\n\t\t\tif props.ShowValidation && props.ErrorText != \"\" {\n\t\t\t\t<p class=\"text-red-600 dark:text-red-400\">{ props.ErrorText }</p>\n\t\t\t} else if props.HelpText != \"\" {\n\t\t\t\t<p class=\"text-gray-600 dark:text-gray-400\">{ props.HelpText }</p>\n\t\t\t}\n\t\t</div>\n\t}\n}\n\n// ============================================================================\n// HELPER FUNCTIONS\n// ============================================================================\n\n// getUUIDWrapperClasses returns classes for the UUID wrapper\nfunc getUUIDWrapperClasses(props UUIDProps) string {\n\tclasses := []string{}\n\t\n\t// Add custom wrapper classes\n\tif props.Class != \"\" {\n\t\tclasses = append(classes, props.Class)\n\t}\n\t\n\treturn JoinClasses(classes...)\n}\n\n// getUUIDInputClasses generates input classes based on props\nfunc getUUIDInputClasses(props UUIDProps) string {\n\tclasses := []string{uuidBaseClasses}\n\t\n\t// Add variant classes\n\tif variantClasses, ok := uuidInputVariantClasses[props.Variant]; ok {\n\t\tclasses = append(classes, variantClasses...)\n\t}\n\t\n\t// Add size classes\n\tclasses = append(classes, GetInputSizeClasses(props.Size)...)\n\t\n\t// Add readonly state\n\tif props.ReadOnly {\n\t\tclasses = append(classes, uuidReadOnlyClasses)\n\t}\n\t\n\t// Add padding for buttons\n\tif props.ShowCopyButton || props.ShowGenerateButton {\n\t\tclasses = append(classes, \"pr-16\")\n\t}\n\t\n\treturn JoinClasses(classes...)\n}\n\n// getUUIDFormatClasses returns classes for UUID display format\nfunc getUUIDFormatClasses(format string) string {\n\tif formatClasses, ok := uuidFormatClasses[format]; ok {\n\t\treturn JoinClasses(formatClasses...)\n\t}\n\treturn JoinClasses(uuidFormatClasses[\"full\"]...)\n}\n\n// ============================================================================\n// UTILITY FUNCTIONS FOR COMMON PATTERNS\n// ============================================================================\n\n// WithValue returns a new UUIDProps with specified value\nfunc (p UUIDProps) WithValue(value string) UUIDProps {\n\tp.Value = value\n\treturn p\n}\n\n// WithLabel returns a new UUIDProps with specified label\nfunc (p UUIDProps) WithLabel(label string) UUIDProps {\n\tp.Label = label\n\treturn p\n}\n\n// WithDisplayFormat returns a new UUIDProps with specified display format\nfunc (p UUIDProps) WithDisplayFormat(format string) UUIDProps {\n\tp.DisplayFormat = format\n\treturn p\n}\n\n// AsReadOnly returns a new UUIDProps marked as read-only\nfunc (p UUIDProps) AsReadOnly() UUIDProps {\n\tp.ReadOnly = true\n\tp.Editable = false\n\treturn p\n}\n\n// AsRequired returns a new UUIDProps marked as required\nfunc (p UUIDProps) AsRequired() UUIDProps {\n\tp.Required = true\n\treturn p\n}\n\n// WithCopyButton returns a new UUIDProps with copy button enabled\nfunc (p UUIDProps) WithCopyButton(show bool) UUIDProps {\n\tp.ShowCopyButton = show\n\treturn p\n}\n\n// WithGenerateButton returns a new UUIDProps with generate button enabled\nfunc (p UUIDProps) WithGenerateButton(show bool) UUIDProps {\n\tp.ShowGenerateButton = show\n\treturn p\n}\n\n// WithAutoGenerate returns a new UUIDProps with auto-generation enabled\nfunc (p UUIDProps) WithAutoGenerate(enable bool) UUIDProps {\n\tp.AutoGenerate = enable\n\tif enable && p.Value == \"\" {\n\t\tp.Value = GenerateUUIDv4()\n\t}\n\treturn p\n}\n\n// WithSize returns a new UUIDProps with specified size\nfunc (p UUIDProps) WithSize(size Size) UUIDProps {\n\tp.Size = size\n\treturn p\n}"
+// TEMPLATE COMPONENTS
+// ============================================================================
+
+// UUID renders a UUID input or display component
+// Supports generation, validation, copying, and different display formats
+func UUID(props UUIDProps) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var1 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var1 == nil {
+			templ_7745c5c3_Var1 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		var templ_7745c5c3_Var2 = []any{getUUIDWrapperClasses(props)}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 string
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var2).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if props.Label != "" {
+			templ_7745c5c3_Err = uuidLabel(props).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"relative\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if props.Editable {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, " ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var4 = []any{getUUIDInputClasses(props)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var4...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<input type=\"text\" id=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var5 string
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.GetID("uuid"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 182, Col: 29}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var6 string
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var4).String())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 1, Col: 0}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if props.Name != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " name=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var7 string
+				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.Name)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 185, Col: 23}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, " value=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var8 string
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.Value)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 187, Col: 24}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if props.Placeholder != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, " placeholder=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var9 string
+				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.Placeholder)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 189, Col: 37}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, " placeholder=\"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if props.Required {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, " required")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if props.ReadOnly {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, " readonly")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if props.Disabled {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, " disabled")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, " pattern=\"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\" maxlength=\"36\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if props.DataTestID != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, " data-testid=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var10 string
+				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 205, Col: 36}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if props.AriaLabel != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, " aria-label=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var11 string
+				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 208, Col: 34}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if props.AriaDescribedBy != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, " aria-describedby=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var12 string
+				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaDescribedBy)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 211, Col: 46}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if props.TabIndex != 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, " tabindex=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var13 string
+				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(props.TabIndex))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 214, Col: 45}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if props.OnChange != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, " x-on:change=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var14 string
+				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnChange)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 217, Col: 34}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if props.OnInput != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, " x-on:input=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var15 string
+				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnInput)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 220, Col: 32}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, " x-on:input=\"$el.setCustomValidity(!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test($el.value) && $el.value !== '' ? 'Please enter a valid UUID format' : '')\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, " ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var16 = []any{uuidDisplayClasses}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var16...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<div class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var17 string
+			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var16).String())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 1, Col: 0}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var18 = []any{getUUIDFormatClasses(props.DisplayFormat)}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var18...)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<span class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var19 string
+			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var18).String())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 1, Col: 0}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var20 string
+			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(FormatUUID(props.Value, props.DisplayFormat))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 228, Col: 52}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</span></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		if props.ShowCopyButton || props.ShowGenerateButton {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<div class=\"absolute inset-y-0 right-0 flex items-center pr-3 gap-1\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if props.ShowCopyButton && props.Value != "" {
+				templ_7745c5c3_Err = uuidCopyButton(props).Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if props.ShowGenerateButton && props.Editable {
+				templ_7745c5c3_Err = uuidGenerateButton(props).Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = uuidValidationText(props).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// uuidLabel renders the label for the UUID component
+func uuidLabel(props UUIDProps) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var21 == nil {
+			templ_7745c5c3_Var21 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<label for=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var22 string
+		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(props.GetID("uuid"))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 257, Col: 27}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\" class=\"block text-sm font-medium text-gray-900 dark:text-white mb-2\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var23 string
+		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(props.Label)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 260, Col: 15}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, " ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if props.Required {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<span class=\"text-red-500 ml-1\">*</span>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</label>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// uuidCopyButton renders the copy to clipboard button
+func uuidCopyButton(props UUIDProps) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var24 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var24 == nil {
+			templ_7745c5c3_Var24 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		var templ_7745c5c3_Var25 = []any{uuidCopyButtonClasses}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var25...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<button type=\"button\" class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var26 string
+		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var25).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "\" title=\"Copy to clipboard\" aria-label=\"Copy UUID to clipboard\" x-on:click=\"navigator.clipboard.writeText($el.closest('.relative').querySelector('input, span').textContent || $el.closest('.relative').querySelector('input').value).then(() => { $el.classList.add('text-green-500'); setTimeout(() => $el.classList.remove('text-green-500'), 2000); })\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = Icon(IconProps{
+			Name: "copy",
+			Size: SizeSM,
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</button>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// uuidGenerateButton renders the generate new UUID button
+func uuidGenerateButton(props UUIDProps) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var27 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var27 == nil {
+			templ_7745c5c3_Var27 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		var templ_7745c5c3_Var28 = []any{uuidCopyButtonClasses}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var28...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<button type=\"button\" class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var29 string
+		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var28).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "\" title=\"Generate new UUID\" aria-label=\"Generate new UUID\" x-on:click=\"\n\t\t\tconst input = $el.closest('.relative').querySelector('input');\n\t\t\tif (input) {\n\t\t\t\tconst newUuid = crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {\n\t\t\t\t\tconst r = Math.random() * 16 | 0;\n\t\t\t\t\tconst v = c == 'x' ? r : (r & 0x3 | 0x8);\n\t\t\t\t\treturn v.toString(16);\n\t\t\t\t});\n\t\t\t\tinput.value = newUuid;\n\t\t\t\tinput.dispatchEvent(new Event('input', { bubbles: true }));\n\t\t\t\tinput.dispatchEvent(new Event('change', { bubbles: true }));\n\t\t\t}\n\t\t\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = Icon(IconProps{
+			Name: "refresh",
+			Size: SizeSM,
+		}).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</button>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// uuidValidationText renders validation messages and help text
+func uuidValidationText(props UUIDProps) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var30 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var30 == nil {
+			templ_7745c5c3_Var30 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		if props.HelpText != "" || props.ShowValidation {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<div class=\"mt-2 text-sm\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if props.ShowValidation && props.ErrorText != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<p class=\"text-red-600 dark:text-red-400\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var31 string
+				templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(props.ErrorText)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 316, Col: 63}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else if props.HelpText != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "<p class=\"text-gray-600 dark:text-gray-400\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var32 string
+				templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(props.HelpText)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/uuid.templ`, Line: 318, Col: 64}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		return nil
+	})
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+// getUUIDWrapperClasses returns classes for the UUID wrapper
+func getUUIDWrapperClasses(props UUIDProps) string {
+	classes := []string{}
+
+	// Add custom wrapper classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+
+	return JoinClasses(classes...)
+}
+
+// getUUIDInputClasses generates input classes based on props
+func getUUIDInputClasses(props UUIDProps) string {
+	classes := []string{uuidBaseClasses}
+
+	// Add variant classes
+	if variantClasses, ok := uuidInputVariantClasses[props.Variant]; ok {
+		classes = append(classes, variantClasses...)
+	}
+
+	// Add size classes
+	classes = append(classes, GetInputSizeClasses(props.Size)...)
+
+	// Add readonly state
+	if props.ReadOnly {
+		classes = append(classes, uuidReadOnlyClasses)
+	}
+
+	// Add padding for buttons
+	if props.ShowCopyButton || props.ShowGenerateButton {
+		classes = append(classes, "pr-16")
+	}
+
+	return JoinClasses(classes...)
+}
+
+// getUUIDFormatClasses returns classes for UUID display format
+func getUUIDFormatClasses(format string) string {
+	if formatClasses, ok := uuidFormatClasses[format]; ok {
+		return JoinClasses(formatClasses...)
+	}
+	return JoinClasses(uuidFormatClasses["full"]...)
+}
+
+// ============================================================================
+// UTILITY FUNCTIONS FOR COMMON PATTERNS
+// ============================================================================
+
+// WithValue returns a new UUIDProps with specified value
+func (p UUIDProps) WithValue(value string) UUIDProps {
+	p.Value = value
+	return p
+}
+
+// WithLabel returns a new UUIDProps with specified label
+func (p UUIDProps) WithLabel(label string) UUIDProps {
+	p.Label = label
+	return p
+}
+
+// WithDisplayFormat returns a new UUIDProps with specified display format
+func (p UUIDProps) WithDisplayFormat(format string) UUIDProps {
+	p.DisplayFormat = format
+	return p
+}
+
+// AsReadOnly returns a new UUIDProps marked as read-only
+func (p UUIDProps) AsReadOnly() UUIDProps {
+	p.ReadOnly = true
+	p.Editable = false
+	return p
+}
+
+// AsRequired returns a new UUIDProps marked as required
+func (p UUIDProps) AsRequired() UUIDProps {
+	p.Required = true
+	return p
+}
+
+// WithCopyButton returns a new UUIDProps with copy button enabled
+func (p UUIDProps) WithCopyButton(show bool) UUIDProps {
+	p.ShowCopyButton = show
+	return p
+}
+
+// WithGenerateButton returns a new UUIDProps with generate button enabled
+func (p UUIDProps) WithGenerateButton(show bool) UUIDProps {
+	p.ShowGenerateButton = show
+	return p
+}
+
+// WithAutoGenerate returns a new UUIDProps with auto-generation enabled
+func (p UUIDProps) WithAutoGenerate(enable bool) UUIDProps {
+	p.AutoGenerate = enable
+	if enable && p.Value == "" {
+		p.Value = GenerateUUIDv4()
+	}
+	return p
+}
+
+// WithSize returns a new UUIDProps with specified size
+func (p UUIDProps) WithSize(size Size) UUIDProps {
+	p.Size = size
+	return p
+}
+
 var _ = templruntime.GeneratedTemplate

@@ -629,4 +629,3 @@ func parseRadioOptions(data any) []atoms.RadioOption {
 
 	return options
 }
-

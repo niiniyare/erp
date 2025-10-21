@@ -84,18 +84,20 @@ const (
 // Example usage:
 // toggle := NewToggle("notifications", "Enable notifications")
 // toggle.Checked = true
-// toggle.ComponentSize = SizeLG
+// toggle.Size = SizeLG
 func NewToggle(id, label string) ToggleProps {
 	return ToggleProps{
 		BaseProps: BaseProps{
 			ID: id,
 		},
-		Label:         label,
-		ComponentSize: SizeMD,
+		LabelProps: LabelProps{
+			Label:         label,
+			LabelPosition: LabelRight, // Default position for toggles
+		},
+		Size: SizeMD,
 		ValidationProps: ValidationProps{
 			State: StateDefault,
 		},
-		LabelPosition: LabelRight, // Default position for toggles
 	}
 }
 
@@ -111,7 +113,7 @@ func NewToggleWithValue(id, label string, checked bool) ToggleProps {
 // ============================================================================
 
 // Toggle renders a fully-featured toggle switch with Flowbite styling
-// Supports validation states, sizes, Alpine.js events, and accessibility
+// Supports validation states, sizes, e.js events, and accessibility
 templ Toggle(props ToggleProps) {
 	<div class={ getToggleWrapperClasses(props) }>
 		<div class="flex items-center">
@@ -129,9 +131,7 @@ templ Toggle(props ToggleProps) {
 					if props.Name != "" {
 						name={ props.Name }
 					}
-					if props.Value != "" {
-						value={ props.Value }
-					}
+					value="on"
 					class={ toggleInputClasses }
 					if props.Checked {
 						checked
@@ -264,7 +264,7 @@ func getToggleLabelClasses(props ToggleProps, position string) string {
 	}
 
 	// Add size-appropriate text class using our configuration map
-	if textSize, ok := labelTextSizes[props.ComponentSize]; ok {
+	if textSize, ok := labelTextSizes[props.Size]; ok {
 		classes = append(classes, textSize)
 	}
 
@@ -295,7 +295,7 @@ func getToggleTrackClasses(props ToggleProps) string {
 	classes := []string{toggleBaseClasses}
 
 	// Add size-specific dimensions and pseudo-element styling from configuration
-	if dimensions, ok := toggleDimensions[props.ComponentSize]; ok {
+	if dimensions, ok := toggleDimensions[props.Size]; ok {
 		classes = append(classes, dimensions...)
 	}
 

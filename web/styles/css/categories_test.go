@@ -31,22 +31,22 @@ func TestCategoryManager(t *testing.T) {
 
 	t.Run("Property Categorization", func(t *testing.T) {
 		tests := map[string]string{
-			"color":              "Colors",
-			"background-color":   "Background",
-			"margin":             "Spacing",
-			"padding":            "Spacing",
-			"display":            "Layout",
-			"flex-direction":     "Flexbox",
-			"grid-template":      "Grid",
-			"font-size":          "Typography",
-			"border":             "Borders",
-			"transform":          "Transforms",
-			"animation":          "Animations",
-			"transition":         "Transitions",
-			"box-shadow":         "Visual Effects",
-			"--custom-property":  "Custom Properties",
-			"-webkit-transform":  "Experimental",
-			"unknown-property":   "Other",
+			"color":             "Colors",
+			"background-color":  "Background",
+			"margin":            "Spacing",
+			"padding":           "Spacing",
+			"display":           "Layout",
+			"flex-direction":    "Flexbox",
+			"grid-template":     "Grid",
+			"font-size":         "Typography",
+			"border":            "Borders",
+			"transform":         "Transforms",
+			"animation":         "Animations",
+			"transition":        "Transitions",
+			"box-shadow":        "Visual Effects",
+			"--custom-property": "Custom Properties",
+			"-webkit-transform": "Experimental",
+			"unknown-property":  "Other",
 		}
 
 		for property, expectedCategory := range tests {

@@ -652,4 +652,3 @@ func (r *ExtendedComponentRegistry) RegisterExtended(name string, component any)
 	r.components[name] = component
 	return nil
 }
-

@@ -3,21 +3,16 @@
 
 package datatypes
 
-
-
-
 // Paint represents the CSS DataType Paint (union type: [])
 type Paint string
 
-
 // Predefined constants
 const (
-	PaintChild = "child"
-	PaintContextfill = "context-fill"
+	PaintChild         = "child"
+	PaintContextfill   = "context-fill"
 	PaintContextstroke = "context-stroke"
-	PaintNone = "none"
+	PaintNone          = "none"
 )
-
 
 func (d Paint) IsValid() bool {
 	return string(d) != ""
@@ -27,5 +22,3 @@ func (d Paint) IsValid() bool {
 func (d Paint) String() string {
 	return string(d)
 }
-
-

@@ -105,6 +105,8 @@ func getDataTableAlpineData(props DataTableProps) string {
 	return fmt.Sprintf(`{
 		selectedRows: [],
 		showFilters: false,
+		filters: {},
+		activeFilters: {},
 		sortColumn: '',
 		sortDirection: 'asc',
 		pageInfo: {
@@ -151,6 +153,36 @@ func getDataTableAlpineData(props DataTableProps) string {
 		// Filter methods
 		toggleFilters() {
 			this.showFilters = !this.showFilters;
+		},
+		
+		setFilter(column, value) {
+			if (value === '' || value === null || value === undefined) {
+				delete this.activeFilters[column];
+			} else {
+				this.activeFilters[column] = value;
+			}
+			
+			// Reset to first page when filters change
+			this.pageInfo.current = 1;
+			
+			// Trigger server-side filtering
+			this.refreshTable();
+		},
+		
+		clearFilter(column) {
+			delete this.activeFilters[column];
+			this.pageInfo.current = 1;
+			this.refreshTable();
+		},
+		
+		clearAllFilters() {
+			this.activeFilters = {};
+			this.pageInfo.current = 1;
+			this.refreshTable();
+		},
+		
+		hasActiveFilters() {
+			return Object.keys(this.activeFilters).length > 0;
 		},
 		
 		// Sorting methods
@@ -228,13 +260,24 @@ func getDataTableAlpineData(props DataTableProps) string {
 		},
 		
 		buildQueryParams() {
-			return {
+			const params = {
 				page: this.pageInfo.current,
 				pageSize: this.pageInfo.pageSize,
 				sortColumn: this.sortColumn,
-				sortDirection: this.sortDirection,
-				// TODO: Add filter parameters
+				sortDirection: this.sortDirection
 			};
+			
+			// Add filter parameters
+			if (Object.keys(this.activeFilters).length > 0) {
+				params.filters = this.activeFilters;
+				
+				// Also add individual filter parameters for backward compatibility
+				Object.keys(this.activeFilters).forEach(column => {
+					params['filter_' + column] = this.activeFilters[column];
+				});
+			}
+			
+			return params;
 		},
 		
 		// Bulk action methods

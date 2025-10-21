@@ -3,9 +3,6 @@
 
 package datatypes
 
-
-
-
 // Fontstretchabsolute represents the CSS DataType FontStretchAbsolute
 type Fontstretchabsolute string
 
@@ -17,5 +14,3 @@ func (d Fontstretchabsolute) IsValid() bool {
 func (d Fontstretchabsolute) String() string {
 	return string(d)
 }
-
-

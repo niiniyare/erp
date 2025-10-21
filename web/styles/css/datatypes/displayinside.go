@@ -3,22 +3,19 @@
 
 package datatypes
 
-
-
-
 // Displayinside represents the CSS DataType DisplayInside with predefined values
 type Displayinside string
 
 const (
-	DisplayinsideMsflexbox Displayinside = "-ms-flexbox"
-	DisplayinsideMsgrid Displayinside = "-ms-grid"
+	DisplayinsideMsflexbox  Displayinside = "-ms-flexbox"
+	DisplayinsideMsgrid     Displayinside = "-ms-grid"
 	DisplayinsideWebkitflex Displayinside = "-webkit-flex"
-	DisplayinsideFlex Displayinside = "flex"
-	DisplayinsideFlow Displayinside = "flow"
-	DisplayinsideFlowroot Displayinside = "flow-root"
-	DisplayinsideGrid Displayinside = "grid"
-	DisplayinsideRuby Displayinside = "ruby"
-	DisplayinsideTable Displayinside = "table"
+	DisplayinsideFlex       Displayinside = "flex"
+	DisplayinsideFlow       Displayinside = "flow"
+	DisplayinsideFlowroot   Displayinside = "flow-root"
+	DisplayinsideGrid       Displayinside = "grid"
+	DisplayinsideRuby       Displayinside = "ruby"
+	DisplayinsideTable      Displayinside = "table"
 )
 
 func (d Displayinside) IsValid() bool {
@@ -35,5 +32,3 @@ func (d Displayinside) IsValid() bool {
 func (d Displayinside) String() string {
 	return string(d)
 }
-
-

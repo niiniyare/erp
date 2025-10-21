@@ -24,7 +24,7 @@ type EnhancedComponentRegistry struct {
 // NewEnhancedComponentRegistry creates a registry with schema-driven capabilities
 func NewEnhancedComponentRegistry(schemaDir string) (*EnhancedComponentRegistry, error) {
 	baseRegistry := NewComponentRegistry()
-	
+
 	schemaRenderer, err := NewJSONSchemaRenderer(schemaDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create schema renderer: %w", err)
@@ -94,7 +94,7 @@ func (er *EnhancedComponentRegistry) CreateFromSchema(ctx context.Context, schem
 		Type:  templComponent.Type,
 		Class: templComponent.CSS,
 	}
-	
+
 	// Handle Props conversion - it's an interface{} that we need to convert
 	if propsMap, ok := templComponent.Props.(map[string]interface{}); ok {
 		componentDef.Props = propsMap
@@ -135,7 +135,7 @@ func (er *EnhancedComponentRegistry) GetAvailableSchemas() []string {
 func (er *EnhancedComponentRegistry) GetSchemaBinding(schemaType string) (string, bool) {
 	er.mu.RLock()
 	defer er.mu.RUnlock()
-	
+
 	componentType, exists := er.schemaBindings[schemaType]
 	return componentType, exists
 }
@@ -144,7 +144,7 @@ func (er *EnhancedComponentRegistry) GetSchemaBinding(schemaType string) (string
 func (er *EnhancedComponentRegistry) RegisterSchemaBinding(schemaType, componentType string) {
 	er.mu.Lock()
 	defer er.mu.Unlock()
-	
+
 	er.schemaBindings[schemaType] = componentType
 }
 
@@ -221,14 +221,14 @@ func (scf *SchemaComponentFactory) Create(ctx context.Context, props map[string]
 		Type:  scf.componentType,
 		Class: templComponent.CSS,
 	}
-	
+
 	// Handle Props conversion
 	if propsMap, ok := templComponent.Props.(map[string]interface{}); ok {
 		componentDef.Props = propsMap
 	} else {
 		componentDef.Props = make(map[string]interface{})
 	}
-	
+
 	return componentDef, nil
 }
 
@@ -237,7 +237,7 @@ func (scf *SchemaComponentFactory) Validate(ctx context.Context, component schem
 	// This is a simplified approach - in reality, you'd need to convert
 	// the component props back to a map format for validation
 	// For now, we'll assume basic validation
-	
+
 	if component.Type != scf.componentType {
 		return fmt.Errorf("component type mismatch: expected %s, got %s", scf.componentType, component.Type)
 	}
@@ -257,7 +257,7 @@ func (scf *SchemaComponentFactory) GetSchema() (*JsonSchema, error) {
 // RegisterSchemaComponentFactory registers a schema-driven component factory
 func (er *EnhancedComponentRegistry) RegisterSchemaComponentFactory(schemaType, componentType string) error {
 	factory := NewSchemaComponentFactory(schemaType, componentType, er.schemaFactory)
-	
+
 	// Register with the base registry using the adapter
 	adapter := er.createSchemaFactoryAdapter(factory)
 	return er.ComponentRegistry.Register(componentType, adapter)
@@ -323,7 +323,7 @@ func (er *EnhancedComponentRegistry) GetComponentInfo() map[string]ComponentInfo
 			if schema, err := er.schemaFactory.GetSchemaDefinition(schemaType); err == nil {
 				description = schema.Description
 			}
-			
+
 			info[componentType] = ComponentInfo{
 				Type:        componentType,
 				HasSchema:   true,

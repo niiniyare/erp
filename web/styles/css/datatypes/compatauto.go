@@ -3,25 +3,22 @@
 
 package datatypes
 
-
-
-
 // Compatauto represents the CSS DataType CompatAuto with predefined values
 type Compatauto string
 
 const (
-	CompatautoButton Compatauto = "button"
-	CompatautoCheckbox Compatauto = "checkbox"
-	CompatautoListbox Compatauto = "listbox"
-	CompatautoMenulist Compatauto = "menulist"
-	CompatautoMeter Compatauto = "meter"
-	CompatautoProgressbar Compatauto = "progress-bar"
-	CompatautoPushbutton Compatauto = "push-button"
-	CompatautoRadio Compatauto = "radio"
-	CompatautoSearchfield Compatauto = "searchfield"
+	CompatautoButton           Compatauto = "button"
+	CompatautoCheckbox         Compatauto = "checkbox"
+	CompatautoListbox          Compatauto = "listbox"
+	CompatautoMenulist         Compatauto = "menulist"
+	CompatautoMeter            Compatauto = "meter"
+	CompatautoProgressbar      Compatauto = "progress-bar"
+	CompatautoPushbutton       Compatauto = "push-button"
+	CompatautoRadio            Compatauto = "radio"
+	CompatautoSearchfield      Compatauto = "searchfield"
 	CompatautoSliderhorizontal Compatauto = "slider-horizontal"
-	CompatautoSquarebutton Compatauto = "square-button"
-	CompatautoTextarea Compatauto = "textarea"
+	CompatautoSquarebutton     Compatauto = "square-button"
+	CompatautoTextarea         Compatauto = "textarea"
 )
 
 func (d Compatauto) IsValid() bool {
@@ -38,5 +35,3 @@ func (d Compatauto) IsValid() bool {
 func (d Compatauto) String() string {
 	return string(d)
 }
-
-

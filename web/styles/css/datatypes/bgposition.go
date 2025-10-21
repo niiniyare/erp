@@ -3,23 +3,18 @@
 
 package datatypes
 
-
-
-
 // Bgposition represents the CSS DataType BgPosition (union type: [string number])
 // This type accepts both strings and numbers, but uses string as the underlying type
 type Bgposition string
-
 
 // Predefined constants
 const (
 	BgpositionBottom = "bottom"
 	BgpositionCenter = "center"
-	BgpositionLeft = "left"
-	BgpositionRight = "right"
-	BgpositionTop = "top"
+	BgpositionLeft   = "left"
+	BgpositionRight  = "right"
+	BgpositionTop    = "top"
 )
-
 
 // IsValid validates that the value is a non-empty string or valid number
 func (d Bgposition) IsValid() bool {
@@ -32,5 +27,3 @@ func (d Bgposition) IsValid() bool {
 func (d Bgposition) String() string {
 	return string(d)
 }
-
-

@@ -21,10 +21,10 @@ func NewSchemaTemplRenderer() *SchemaTemplRenderer {
 	renderer := &SchemaTemplRenderer{
 		componentMap: make(map[string]TemplComponentRenderer),
 	}
-	
+
 	// Register built-in component renderers
 	renderer.registerBuiltinRenderers()
-	
+
 	return renderer
 }
 
@@ -35,7 +35,7 @@ func (str *SchemaTemplRenderer) registerBuiltinRenderers() {
 	str.componentMap["button"] = str.renderButton
 	str.componentMap["ButtonGroup"] = str.renderButtonGroup
 	str.componentMap["button-group"] = str.renderButtonGroup
-	
+
 	// Layout components
 	str.componentMap["Container"] = str.renderContainer
 	str.componentMap["container"] = str.renderContainer
@@ -43,7 +43,7 @@ func (str *SchemaTemplRenderer) registerBuiltinRenderers() {
 	str.componentMap["card"] = str.renderCard
 	str.componentMap["Panel"] = str.renderPanel
 	str.componentMap["panel"] = str.renderPanel
-	
+
 	// Data components
 	str.componentMap["Table"] = str.renderTable
 	str.componentMap["table"] = str.renderTable
@@ -58,7 +58,7 @@ func (str *SchemaTemplRenderer) RenderComponent(component TemplComponent) templ.
 		// Return a fallback component for unknown types
 		return str.renderFallback(component)
 	}
-	
+
 	return renderer(component)
 }
 
@@ -72,9 +72,9 @@ func (str *SchemaTemplRenderer) renderButton(component TemplComponent) templ.Com
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		text := str.extractString(component.Props, "text", "Button")
 		variant := str.extractString(component.Props, "variant", "primary")
-		
+
 		class := fmt.Sprintf("px-4 py-2 rounded font-medium %s", str.getButtonClass(variant))
-		
+
 		html := fmt.Sprintf(`<button class="%s">%s</button>`, class, text)
 		_, err := w.Write([]byte(html))
 		return err
@@ -86,9 +86,9 @@ func (str *SchemaTemplRenderer) renderButtonGroup(component TemplComponent) temp
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		text := str.extractString(component.Props, "text", "Button")
 		variant := str.extractString(component.Props, "variant", "primary")
-		
+
 		class := fmt.Sprintf("px-4 py-2 rounded font-medium %s", str.getButtonClass(variant))
-		
+
 		html := fmt.Sprintf(`<div class="inline-flex"><button class="%s">%s</button></div>`, class, text)
 		_, err := w.Write([]byte(html))
 		return err
@@ -99,7 +99,7 @@ func (str *SchemaTemplRenderer) renderButtonGroup(component TemplComponent) temp
 func (str *SchemaTemplRenderer) renderContainer(component TemplComponent) templ.Component {
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		class := str.extractString(component.Props, "className", "container")
-		
+
 		html := fmt.Sprintf(`<div class="%s">Container Content</div>`, class)
 		_, err := w.Write([]byte(html))
 		return err
@@ -111,7 +111,7 @@ func (str *SchemaTemplRenderer) renderCard(component TemplComponent) templ.Compo
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		title := str.extractString(component.Props, "title", "Card")
 		content := str.extractString(component.Props, "content", "Card content")
-		
+
 		html := fmt.Sprintf(`
 			<div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
 				<div class="px-4 py-5 sm:p-6">
@@ -130,7 +130,7 @@ func (str *SchemaTemplRenderer) renderPanel(component TemplComponent) templ.Comp
 	return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 		title := str.extractString(component.Props, "title", "Panel")
 		content := str.extractString(component.Props, "content", "Panel content")
-		
+
 		html := fmt.Sprintf(`
 			<div class="bg-white shadow rounded-lg">
 				<div class="px-4 py-5 sm:p-6">

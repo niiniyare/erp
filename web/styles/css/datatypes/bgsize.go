@@ -3,21 +3,16 @@
 
 package datatypes
 
-
-
-
 // Bgsize represents the CSS DataType BgSize (union type: [string number])
 // This type accepts both strings and numbers, but uses string as the underlying type
 type Bgsize string
 
-
 // Predefined constants
 const (
-	BgsizeAuto = "auto"
+	BgsizeAuto    = "auto"
 	BgsizeContain = "contain"
-	BgsizeCover = "cover"
+	BgsizeCover   = "cover"
 )
-
 
 // IsValid validates that the value is a non-empty string or valid number
 func (d Bgsize) IsValid() bool {
@@ -30,5 +25,3 @@ func (d Bgsize) IsValid() bool {
 func (d Bgsize) String() string {
 	return string(d)
 }
-
-

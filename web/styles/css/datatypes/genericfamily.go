@@ -3,18 +3,15 @@
 
 package datatypes
 
-
-
-
 // Genericfamily represents the CSS DataType GenericFamily with predefined values
 type Genericfamily string
 
 const (
-	GenericfamilyCursive Genericfamily = "cursive"
-	GenericfamilyFantasy Genericfamily = "fantasy"
+	GenericfamilyCursive   Genericfamily = "cursive"
+	GenericfamilyFantasy   Genericfamily = "fantasy"
 	GenericfamilyMonospace Genericfamily = "monospace"
 	GenericfamilySansserif Genericfamily = "sans-serif"
-	GenericfamilySerif Genericfamily = "serif"
+	GenericfamilySerif     Genericfamily = "serif"
 )
 
 func (d Genericfamily) IsValid() bool {
@@ -31,5 +28,3 @@ func (d Genericfamily) IsValid() bool {
 func (d Genericfamily) String() string {
 	return string(d)
 }
-
-

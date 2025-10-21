@@ -127,9 +127,9 @@ func GetContrastTextColor(bgColor string) string {
 func NewColorInput(name, value string) ColorInputProps {
 	return ColorInputProps{
 		BaseProps: BaseProps{
-			ID: GenerateID("color-input"),
+			ID:   GenerateID("color-input"),
+			Name: name,
 		},
-		Name:        name,
 		Value:       value,
 		Variant:     VariantDefault,
 		Size:        SizeMD,
@@ -153,7 +153,7 @@ func NewColorPicker(name, value string) ColorInputProps {
 func NewColorSwatch(name, value string) ColorInputProps {
 	colorInput := NewColorInput(name, value)
 	colorInput.ShowPreview = true
-	colorInput.Readonly = true
+	colorInput.ReadOnly = true
 	colorInput.ShowPalette = true
 	return colorInput
 }
@@ -196,7 +196,7 @@ templ ColorInput(props ColorInputProps) {
 					if props.Required {
 						required
 					}
-					if props.Readonly {
+					if props.ReadOnly {
 						readonly
 					}
 					if props.Disabled {
@@ -326,11 +326,14 @@ templ colorPalette(props ColorInputProps) {
 templ colorInputValidationText(props ColorInputProps) {
 	if props.ShowValidation || props.HelpText != "" {
 		<div class="mt-2 text-sm">
-			if props.ShowValidation && props.GetValidationMessage() != "" {
-				<p class={ getValidationTextClasses(props.State) }>
-					{ props.GetValidationMessage() }
-				</p>
-			} else if props.HelpText != "" {
+			if props.ShowValidation {
+				if msg, _ := props.GetFeedbackMessage(); msg != "" {
+					<p class={ getValidationTextClasses(props.State) }>
+						{ msg }
+					</p>
+				}
+			}
+			if !props.ShowValidation && props.HelpText != "" {
 				<p class="text-gray-600 dark:text-gray-400">{ props.HelpText }</p>
 			}
 		</div>
@@ -357,16 +360,11 @@ func getColorInputWrapperClasses(props ColorInputProps) string {
 func getColorInputClasses(props ColorInputProps) string {
 	classes := []string{colorInputBaseClasses, "flex-1"}
 	
-	// Add variant classes
-	if variantClasses, ok := colorInputVariantClasses[props.Variant]; ok {
-		classes = append(classes, variantClasses...)
-	}
+	// Add variant classes with state handling
+	classes = append(classes, GetInputVariantClasses(props.Variant, props.State)...)
 	
 	// Add size classes
 	classes = append(classes, GetInputSizeClasses(props.Size)...)
-	
-	// Add validation state classes
-	classes = append(classes, GetValidationStateClasses(props.State)...)
 	
 	return JoinClasses(classes...)
 }
@@ -413,7 +411,7 @@ func (p ColorInputProps) AsRequired() ColorInputProps {
 
 // AsReadonly returns a new ColorInputProps marked as readonly
 func (p ColorInputProps) AsReadonly() ColorInputProps {
-	p.Readonly = true
+	p.ReadOnly = true
 	return p
 }
 

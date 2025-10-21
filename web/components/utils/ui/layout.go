@@ -8,69 +8,69 @@ import (
 
 // Container component configuration
 type ContainerConfig struct {
-	MaxWidth    string `json:"max_width,omitempty"`
-	Padding     string `json:"padding,omitempty"`
-	Margin      string `json:"margin,omitempty"`
-	Background  string `json:"background,omitempty"`
-	Border      string `json:"border,omitempty"`
+	MaxWidth     string `json:"max_width,omitempty"`
+	Padding      string `json:"padding,omitempty"`
+	Margin       string `json:"margin,omitempty"`
+	Background   string `json:"background,omitempty"`
+	Border       string `json:"border,omitempty"`
 	BorderRadius string `json:"border_radius,omitempty"`
-	Shadow      string `json:"shadow,omitempty"`
-	Fluid       bool   `json:"fluid,omitempty"`
+	Shadow       string `json:"shadow,omitempty"`
+	Fluid        bool   `json:"fluid,omitempty"`
 }
 
 // Card component configuration
 type CardConfig struct {
-	Header      *CardSection `json:"header,omitempty"`
-	Body        *CardSection `json:"body,omitempty"`
-	Footer      *CardSection `json:"footer,omitempty"`
-	Elevation   int          `json:"elevation,omitempty"`
-	Hoverable   bool         `json:"hoverable,omitempty"`
-	Clickable   bool         `json:"clickable,omitempty"`
-	Loading     bool         `json:"loading,omitempty"`
-	Image       *CardImage   `json:"image,omitempty"`
+	Header    *CardSection `json:"header,omitempty"`
+	Body      *CardSection `json:"body,omitempty"`
+	Footer    *CardSection `json:"footer,omitempty"`
+	Elevation int          `json:"elevation,omitempty"`
+	Hoverable bool         `json:"hoverable,omitempty"`
+	Clickable bool         `json:"clickable,omitempty"`
+	Loading   bool         `json:"loading,omitempty"`
+	Image     *CardImage   `json:"image,omitempty"`
 }
 
 // CardSection represents a section within a card
 type CardSection struct {
-	Content     string `json:"content,omitempty"`
-	Class       string `json:"class,omitempty"`
-	Padding     string `json:"padding,omitempty"`
-	Background  string `json:"background,omitempty"`
-	BorderBottom bool  `json:"border_bottom,omitempty"`
+	Content      string `json:"content,omitempty"`
+	Class        string `json:"class,omitempty"`
+	Padding      string `json:"padding,omitempty"`
+	Background   string `json:"background,omitempty"`
+	BorderBottom bool   `json:"border_bottom,omitempty"`
 }
 
 // CardImage represents an image in a card
 type CardImage struct {
-	Src      string   `json:"src" validate:"required"`
-	Alt      string   `json:"alt,omitempty"`
-	Position Position `json:"position,omitempty"`
-	Height   string   `json:"height,omitempty"`
-	ObjectFit string  `json:"object_fit,omitempty"`
+	Src       string   `json:"src" validate:"required"`
+	Alt       string   `json:"alt,omitempty"`
+	Position  Position `json:"position,omitempty"`
+	Height    string   `json:"height,omitempty"`
+	ObjectFit string   `json:"object_fit,omitempty"`
 }
 
 // Panel component configuration
 type PanelConfig struct {
-	Title       string      `json:"title,omitempty"`
-	Subtitle    string      `json:"subtitle,omitempty"`
-	Icon        string      `json:"icon,omitempty"`
-	Collapsible bool        `json:"collapsible,omitempty"`
-	Collapsed   bool        `json:"collapsed,omitempty"`
-	Closable    bool        `json:"closable,omitempty"`
+	Title         string      `json:"title,omitempty"`
+	Subtitle      string      `json:"subtitle,omitempty"`
+	Icon          string      `json:"icon,omitempty"`
+	Collapsible   bool        `json:"collapsible,omitempty"`
+	Collapsed     bool        `json:"collapsed,omitempty"`
+	Closable      bool        `json:"closable,omitempty"`
 	HeaderActions []Component `json:"header_actions,omitempty"`
 	FooterActions []Component `json:"footer_actions,omitempty"`
 }
 
 // Tabs component configuration
 type TabsConfig struct {
-	Tabs         []Tab      `json:"tabs" validate:"required"`
-	ActiveTab    string     `json:"active_tab,omitempty"`
-	Position     Position   `json:"position,omitempty"`
-	Type         TabType    `json:"type,omitempty"`
-	Size         Size       `json:"size,omitempty"`
-	Closable     bool       `json:"closable,omitempty"`
-	AddButton    bool       `json:"add_button,omitempty"`
-	ScrollButton bool       `json:"scroll_button,omitempty"`
-	LazyLoad     bool       `json:"lazy_load,omitempty"`
+	Tabs         []Tab    `json:"tabs" validate:"required"`
+	ActiveTab    string   `json:"active_tab,omitempty"`
+	Position     Position `json:"position,omitempty"`
+	Type         TabType  `json:"type,omitempty"`
+	Size         Size     `json:"size,omitempty"`
+	Closable     bool     `json:"closable,omitempty"`
+	AddButton    bool     `json:"add_button,omitempty"`
+	ScrollButton bool     `json:"scroll_button,omitempty"`
+	LazyLoad     bool     `json:"lazy_load,omitempty"`
 }
 
 // Tab represents a single tab
@@ -88,56 +88,56 @@ type Tab struct {
 type TabType string
 
 const (
-	TabTypeDefault   TabType = "default"
-	TabTypeCard      TabType = "card"
+	TabTypeDefault    TabType = "default"
+	TabTypeCard       TabType = "card"
 	TabTypeBorderless TabType = "borderless"
-	TabTypePills     TabType = "pills"
+	TabTypePills      TabType = "pills"
 )
 
 // Modal component configuration
 type ModalConfig struct {
-	Title        string     `json:"title,omitempty"`
-	Size         ModalSize  `json:"size,omitempty"`
-	Closable     bool       `json:"closable,omitempty"`
-	Backdrop     bool       `json:"backdrop,omitempty"`
-	Keyboard     bool       `json:"keyboard,omitempty"`
-	Focus        bool       `json:"focus,omitempty"`
-	Centered     bool       `json:"centered,omitempty"`
-	Scrollable   bool       `json:"scrollable,omitempty"`
-	Fullscreen   bool       `json:"fullscreen,omitempty"`
-	Animation    string     `json:"animation,omitempty"`
-	ZIndex       int        `json:"z_index,omitempty"`
-	CloseButton  bool       `json:"close_button,omitempty"`
-	Header       *Component `json:"header,omitempty"`
-	Footer       *Component `json:"footer,omitempty"`
+	Title       string     `json:"title,omitempty"`
+	Size        ModalSize  `json:"size,omitempty"`
+	Closable    bool       `json:"closable,omitempty"`
+	Backdrop    bool       `json:"backdrop,omitempty"`
+	Keyboard    bool       `json:"keyboard,omitempty"`
+	Focus       bool       `json:"focus,omitempty"`
+	Centered    bool       `json:"centered,omitempty"`
+	Scrollable  bool       `json:"scrollable,omitempty"`
+	Fullscreen  bool       `json:"fullscreen,omitempty"`
+	Animation   string     `json:"animation,omitempty"`
+	ZIndex      int        `json:"z_index,omitempty"`
+	CloseButton bool       `json:"close_button,omitempty"`
+	Header      *Component `json:"header,omitempty"`
+	Footer      *Component `json:"footer,omitempty"`
 }
 
 // ModalSize represents modal size options
 type ModalSize string
 
 const (
-	ModalSizeSM ModalSize = "sm"
-	ModalSizeMD ModalSize = "md"
-	ModalSizeLG ModalSize = "lg"
-	ModalSizeXL ModalSize = "xl"
+	ModalSizeSM   ModalSize = "sm"
+	ModalSizeMD   ModalSize = "md"
+	ModalSizeLG   ModalSize = "lg"
+	ModalSizeXL   ModalSize = "xl"
 	ModalSizeFull ModalSize = "full"
 )
 
 // Drawer component configuration
 type DrawerConfig struct {
-	Title       string       `json:"title,omitempty"`
-	Position    Position     `json:"position,omitempty"` // Position is defined in types.go
-	Width       string       `json:"width,omitempty"`
-	Height      string       `json:"height,omitempty"`
-	Closable    bool         `json:"closable,omitempty"`
-	Backdrop    bool         `json:"backdrop,omitempty"`
-	Keyboard    bool         `json:"keyboard,omitempty"`
-	Push        bool         `json:"push,omitempty"`
-	Resizable   bool         `json:"resizable,omitempty"`
-	MinWidth    string       `json:"min_width,omitempty"`
-	MaxWidth    string       `json:"max_width,omitempty"`
-	Header      *Component   `json:"header,omitempty"`
-	Footer      *Component   `json:"footer,omitempty"`
+	Title     string     `json:"title,omitempty"`
+	Position  Position   `json:"position,omitempty"` // Position is defined in types.go
+	Width     string     `json:"width,omitempty"`
+	Height    string     `json:"height,omitempty"`
+	Closable  bool       `json:"closable,omitempty"`
+	Backdrop  bool       `json:"backdrop,omitempty"`
+	Keyboard  bool       `json:"keyboard,omitempty"`
+	Push      bool       `json:"push,omitempty"`
+	Resizable bool       `json:"resizable,omitempty"`
+	MinWidth  string     `json:"min_width,omitempty"`
+	MaxWidth  string     `json:"max_width,omitempty"`
+	Header    *Component `json:"header,omitempty"`
+	Footer    *Component `json:"footer,omitempty"`
 }
 
 // Grid system configuration
@@ -174,13 +174,13 @@ type BreakpointConfig struct {
 
 // Flex container configuration
 type FlexConfig struct {
-	Direction   FlexDirection `json:"direction,omitempty"`
-	Wrap        FlexWrap      `json:"wrap,omitempty"`
-	Justify     FlexJustify   `json:"justify,omitempty"`
-	Align       FlexAlign     `json:"align,omitempty"`
+	Direction    FlexDirection    `json:"direction,omitempty"`
+	Wrap         FlexWrap         `json:"wrap,omitempty"`
+	Justify      FlexJustify      `json:"justify,omitempty"`
+	Align        FlexAlign        `json:"align,omitempty"`
 	AlignContent FlexAlignContent `json:"align_content,omitempty"`
-	Gap         string        `json:"gap,omitempty"`
-	Inline      bool          `json:"inline,omitempty"`
+	Gap          string           `json:"gap,omitempty"`
+	Inline       bool             `json:"inline,omitempty"`
 }
 
 // Flex direction options
@@ -238,12 +238,14 @@ const (
 )
 
 // Layout component factories
-type ContainerFactory struct{}
-type CardFactory struct{}
-type PanelFactory struct{}
-type TabsFactory struct{}
-type ModalFactory struct{}
-type DrawerFactory struct{}
+type (
+	ContainerFactory struct{}
+	CardFactory      struct{}
+	PanelFactory     struct{}
+	TabsFactory      struct{}
+	ModalFactory     struct{}
+	DrawerFactory    struct{}
+)
 
 // Container factory implementation
 func (f *ContainerFactory) Create(ctx context.Context, config map[string]any) (Component, error) {

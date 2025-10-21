@@ -27,7 +27,7 @@ func NewDataTypeIntegrator() *DataTypeIntegrator {
 
 	// Register all available DataType validators
 	integrator.registerAllDataTypes()
-	
+
 	return integrator
 }
 
@@ -47,10 +47,10 @@ func (di *DataTypeIntegrator) registerAllDataTypes() {
 // ValidateValue validates a CSS value against a specific DataType using generated Go types
 func (di *DataTypeIntegrator) ValidateValue(dataTypeName, value string) error {
 	normalizedName := strings.ToLower(dataTypeName)
-	
+
 	// Remove "datatype." prefix if present
 	normalizedName = strings.TrimPrefix(normalizedName, "datatype.")
-	
+
 	validator, exists := di.typeRegistry[normalizedName]
 	if !exists {
 		// If no specific validator exists, allow the value (graceful degradation)
@@ -86,7 +86,7 @@ func (di *DataTypeIntegrator) validateWithType(validator TypeValidator, value st
 	if len(results) > 0 {
 		if isValid, ok := results[0].Interface().(bool); ok {
 			if !isValid {
-				return fmt.Errorf("invalid value '%s' for DataType '%s'", value, 
+				return fmt.Errorf("invalid value '%s' for DataType '%s'", value,
 					strings.ToLower(validatorType.Name()))
 			}
 		}
@@ -128,30 +128,36 @@ func createTypeValidator(typeName string) TypeValidator {
 // These provide validation logic that mirrors the generated types
 
 type blendModeValidator struct{}
-func (v *blendModeValidator) IsValid() bool { return true }
+
+func (v *blendModeValidator) IsValid() bool  { return true }
 func (v *blendModeValidator) String() string { return "normal" }
 
 type colorValidator struct{}
-func (v *colorValidator) IsValid() bool { return true }
+
+func (v *colorValidator) IsValid() bool  { return true }
 func (v *colorValidator) String() string { return "currentcolor" }
 
 type positionValidator struct{}
-func (v *positionValidator) IsValid() bool { return true }
+
+func (v *positionValidator) IsValid() bool  { return true }
 func (v *positionValidator) String() string { return "center" }
 
 type lineWidthValidator struct{}
-func (v *lineWidthValidator) IsValid() bool { return true }
+
+func (v *lineWidthValidator) IsValid() bool  { return true }
 func (v *lineWidthValidator) String() string { return "medium" }
 
 type fontWeightValidator struct{}
-func (v *fontWeightValidator) IsValid() bool { return true }
+
+func (v *fontWeightValidator) IsValid() bool  { return true }
 func (v *fontWeightValidator) String() string { return "400" }
 
 type genericValidator struct {
 	typeName string
 	value    string
 }
-func (v *genericValidator) IsValid() bool { return v.value != "" }
+
+func (v *genericValidator) IsValid() bool  { return v.value != "" }
 func (v *genericValidator) String() string { return v.value }
 
 // Enhanced PropertyRegistry integration

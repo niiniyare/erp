@@ -46,19 +46,20 @@ const (
 // radio := NewRadio("color", "blue", "Blue")
 // radio.Checked = true
 func NewRadio(name, value, label string) RadioProps {
-	return RadioProps{
+	props := RadioProps{
 		BaseProps: BaseProps{
 			ID: GenerateID("radio"),
+			Name: name,
 		},
-		Name: name,
 		Value: value,
-		Label: label,
 		Size: SizeMD,
-		LabelPosition: LabelRight,
 		ValidationProps: ValidationProps{
 			State: StateDefault,
 		},
 	}
+	props.Label = label
+	props.LabelPosition = LabelRight
+	return props
 }
 
 // NewRadioGroup creates a new RadioGroupProps with sensible defaults
@@ -80,14 +81,7 @@ func NewRadioGroup(name, label string, options []RadioOption) RadioGroupProps {
 	}
 }
 
-// RadioOption represents a single radio option for groups
-type RadioOption struct {
-	Value    string `json:"value"`
-	Label    string `json:"label"`
-	Disabled bool   `json:"disabled,omitempty"`
-	Checked  bool   `json:"checked,omitempty"`
-	HelpText string `json:"helpText,omitempty"`
-}
+// RadioOption is defined in probs.go to avoid duplication
 
 // NewRadioOption creates a new radio option
 func NewRadioOption(value, label string) RadioOption {
@@ -251,27 +245,26 @@ templ RadioGroup(props RadioGroupProps) {
 			for _, option := range props.Options {
 				@Radio(RadioProps{
 					BaseProps: BaseProps{
-						ID: props.GetID("radio-group") + "_" + option.Value,
+						ID:   props.GetID("radio-group") + "_" + option.Value,
+						Name: props.Name,
 					},
 					AccessibilityProps: AccessibilityProps{
 						AriaDescribedBy: props.AriaDescribedBy,
 					},
-					Name:     props.Name,
-					Value:    option.Value,
-					Label:    option.Label,
-					Checked:  option.Checked || option.Value == props.Value,
-					Required: props.Required,
-					Size:     props.Size,
-					Disabled: option.Disabled || props.Disabled,
-					HelpText: option.HelpText,
+					LabelProps: LabelProps{
+						Label: option.Label,
+					},
+					InteractionProps: InteractionProps{
+						Required: props.Required,
+						Disabled: option.Disabled || props.Disabled,
+					},
 					ValidationProps: ValidationProps{
-						State: props.State,
+						State:    props.State,
+						HelpText: option.HelpText,
 					},
-					AlpineEventHandlers: AlpineEventHandlers{
-						OnChange: props.OnChange,
-						OnFocus:  props.OnFocus,
-						OnBlur:   props.OnBlur,
-					},
+					Value:   option.Value,
+					Checked: option.Checked || option.Value == props.Value,
+					Size:    props.Size,
 				})
 			}
 		</div>

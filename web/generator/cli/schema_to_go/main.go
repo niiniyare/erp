@@ -32,39 +32,39 @@ type Config struct {
 
 // JSONSchema represents a parsed JSON Schema
 type JSONSchema struct {
-	ID                   string                     `json:"$id"`
-	Schema               string                     `json:"$schema"`
-	Type                 interface{}                `json:"type"` // Can be string or []string
-	Title                string                     `json:"title"`
-	Description          string                     `json:"description"`
-	Properties           map[string]*JSONSchema     `json:"properties"`
-	Items                *JSONSchema                `json:"items"`
-	AdditionalProperties interface{}                `json:"additionalProperties"` // Can be bool or schema
-	Required             []string                   `json:"required"`
-	Enum                 []interface{}              `json:"enum"`
-	Const                interface{}                `json:"const"`
-	Ref                  string                     `json:"$ref"`
-	Definitions          map[string]*JSONSchema     `json:"definitions"`
-	AnyOf                []*JSONSchema              `json:"anyOf"`
-	OneOf                []*JSONSchema              `json:"oneOf"`
-	AllOf                []*JSONSchema              `json:"allOf"`
+	ID                   string                 `json:"$id"`
+	Schema               string                 `json:"$schema"`
+	Type                 interface{}            `json:"type"` // Can be string or []string
+	Title                string                 `json:"title"`
+	Description          string                 `json:"description"`
+	Properties           map[string]*JSONSchema `json:"properties"`
+	Items                *JSONSchema            `json:"items"`
+	AdditionalProperties interface{}            `json:"additionalProperties"` // Can be bool or schema
+	Required             []string               `json:"required"`
+	Enum                 []interface{}          `json:"enum"`
+	Const                interface{}            `json:"const"`
+	Ref                  string                 `json:"$ref"`
+	Definitions          map[string]*JSONSchema `json:"definitions"`
+	AnyOf                []*JSONSchema          `json:"anyOf"`
+	OneOf                []*JSONSchema          `json:"oneOf"`
+	AllOf                []*JSONSchema          `json:"allOf"`
 	// Custom UI-related properties
-	UIComponent          string                     `json:"ui:component"`
-	UILabel              string                     `json:"ui:label"`
-	UIRequired           bool                       `json:"ui:required"`
-	UIHidden             bool                       `json:"ui:hidden"`
+	UIComponent string `json:"ui:component"`
+	UILabel     string `json:"ui:label"`
+	UIRequired  bool   `json:"ui:required"`
+	UIHidden    bool   `json:"ui:hidden"`
 }
 
 // GoType represents a generated Go type
 type GoType struct {
-	Name        string
-	Comment     string
-	Fields      []GoField
-	SourceFile  string
-	SourcePath  string
-	IsEnum      bool
-	EnumValues  []string
-	Imports     []string
+	Name       string
+	Comment    string
+	Fields     []GoField
+	SourceFile string
+	SourcePath string
+	IsEnum     bool
+	EnumValues []string
+	Imports    []string
 }
 
 // GoField represents a Go struct field
@@ -80,26 +80,26 @@ type GoField struct {
 
 // Generator handles the conversion from JSON Schema to Go types
 type Generator struct {
-	config      Config
-	schemas     map[string]*JSONSchema
-	types       map[string]*GoType
-	processed   map[string]bool // Track processed schemas to avoid infinite recursion
-	refCache    map[string]*JSONSchema // Cache for resolved references
+	config    Config
+	schemas   map[string]*JSONSchema
+	types     map[string]*GoType
+	processed map[string]bool        // Track processed schemas to avoid infinite recursion
+	refCache  map[string]*JSONSchema // Cache for resolved references
 }
 
 func main() {
 	config := parseFlags()
-	
+
 	if config.Verbose {
 		log.Printf("Starting schema-to-go generator with config: %+v", config)
 	}
-	
+
 	generator := NewGenerator(config)
-	
+
 	if err := generator.Run(); err != nil {
 		log.Fatalf("Generation failed: %v", err)
 	}
-	
+
 	if config.Verbose {
 		log.Println("Schema-to-go generation completed successfully")
 	}
@@ -107,7 +107,7 @@ func main() {
 
 func parseFlags() Config {
 	var config Config
-	
+
 	flag.StringVar(&config.Input, "input", "", "Input file or directory (required)")
 	flag.StringVar(&config.Input, "i", "", "Input file or directory (short)")
 	flag.StringVar(&config.Output, "output", "./internal/generated", "Output directory")
@@ -118,15 +118,15 @@ func parseFlags() Config {
 	flag.BoolVar(&config.Verbose, "verbose", false, "Enable verbose logging")
 	flag.BoolVar(&config.Verbose, "v", false, "Enable verbose logging (short)")
 	flag.BoolVar(&config.DryRun, "dry-run", false, "Preview only, don't write files")
-	
+
 	flag.Parse()
-	
+
 	if config.Input == "" {
 		fmt.Fprintf(os.Stderr, "Usage: %s -input <file_or_directory> [options]\n", os.Args[0])
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	
+
 	return config
 }
 
@@ -145,20 +145,20 @@ func (g *Generator) Run() error {
 	if err := g.loadSchemas(); err != nil {
 		return fmt.Errorf("failed to load schemas: %w", err)
 	}
-	
+
 	if g.config.Verbose {
 		log.Printf("Loaded %d schema files", len(g.schemas))
 	}
-	
+
 	// Step 2: Generate Go types from schemas
 	if err := g.generateTypes(); err != nil {
 		return fmt.Errorf("failed to generate types: %w", err)
 	}
-	
+
 	if g.config.Verbose {
 		log.Printf("Generated %d Go types", len(g.types))
 	}
-	
+
 	// Step 3: Write Go files
 	if !g.config.DryRun {
 		if err := g.writeGoFiles(); err != nil {
@@ -169,7 +169,7 @@ func (g *Generator) Run() error {
 			return fmt.Errorf("failed to preview Go files: %w", err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -178,20 +178,20 @@ func (g *Generator) loadSchemas() error {
 	if err != nil {
 		return fmt.Errorf("input path error: %w", err)
 	}
-	
+
 	var files []string
-	
+
 	if info.IsDir() {
 		// Recursively find all .json files
 		err = filepath.WalkDir(g.config.Input, func(path string, d fs.DirEntry, err error) error {
 			if err != nil {
 				return err
 			}
-			
+
 			if !d.IsDir() && strings.HasSuffix(strings.ToLower(path), ".json") {
 				files = append(files, path)
 			}
-			
+
 			return nil
 		})
 		if err != nil {
@@ -200,7 +200,7 @@ func (g *Generator) loadSchemas() error {
 	} else {
 		files = []string{g.config.Input}
 	}
-	
+
 	// Load each schema file
 	for _, file := range files {
 		if err := g.loadSchemaFile(file); err != nil {
@@ -210,11 +210,11 @@ func (g *Generator) loadSchemas() error {
 			continue
 		}
 	}
-	
+
 	if len(g.schemas) == 0 {
 		return fmt.Errorf("no valid JSON Schema files found")
 	}
-	
+
 	return nil
 }
 
@@ -222,33 +222,33 @@ func (g *Generator) loadSchemaFile(filePath string) error {
 	if g.config.Verbose {
 		log.Printf("Loading schema file: %s", filePath)
 	}
-	
+
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to read file: %w", err)
 	}
-	
+
 	var schema JSONSchema
 	if err := json.Unmarshal(data, &schema); err != nil {
 		return fmt.Errorf("failed to parse JSON: %w", err)
 	}
-	
+
 	// Generate schema ID if not present
 	schemaID := schema.ID
 	if schemaID == "" {
 		schemaID = g.generateSchemaID(filePath)
 	}
-	
+
 	// Store schema with metadata
 	g.schemas[schemaID] = &schema
-	
+
 	return nil
 }
 
 func (g *Generator) generateSchemaID(filePath string) string {
 	base := filepath.Base(filePath)
 	name := strings.TrimSuffix(base, filepath.Ext(base))
-	
+
 	// Convert from snake_case or kebab-case to PascalCase
 	return g.toPascalCase(name)
 }
@@ -259,11 +259,11 @@ func (g *Generator) generateTypes() error {
 		if g.processed[schemaID] {
 			continue
 		}
-		
+
 		if g.config.Verbose {
 			log.Printf("Processing schema: %s", schemaID)
 		}
-		
+
 		goType, err := g.processSchema(schemaID, schema)
 		if err != nil {
 			if g.config.Verbose {
@@ -271,14 +271,14 @@ func (g *Generator) generateTypes() error {
 			}
 			continue
 		}
-		
+
 		if goType != nil {
 			g.types[schemaID] = goType
 		}
-		
+
 		g.processed[schemaID] = true
 	}
-	
+
 	return nil
 }
 
@@ -291,10 +291,10 @@ func (g *Generator) processSchema(name string, schema *JSONSchema) (*GoType, err
 		}
 		return g.processSchema(name, resolvedSchema)
 	}
-	
+
 	// Determine schema type
 	schemaType := g.getSchemaType(schema)
-	
+
 	switch schemaType {
 	case "object":
 		return g.processObjectSchema(name, schema)
@@ -320,10 +320,10 @@ func (g *Generator) processObjectSchema(name string, schema *JSONSchema) (*GoTyp
 		Fields:     []GoField{},
 		Imports:    []string{},
 	}
-	
+
 	// Add standard imports that might be needed
 	importsSet := make(map[string]bool)
-	
+
 	// Process properties
 	if schema.Properties != nil {
 		// Sort properties for consistent output
@@ -332,10 +332,10 @@ func (g *Generator) processObjectSchema(name string, schema *JSONSchema) (*GoTyp
 			propNames = append(propNames, propName)
 		}
 		sort.Strings(propNames)
-		
+
 		for _, propName := range propNames {
 			propSchema := schema.Properties[propName]
-			
+
 			field, err := g.processProperty(propName, propSchema, schema.Required)
 			if err != nil {
 				if g.config.Verbose {
@@ -343,22 +343,22 @@ func (g *Generator) processObjectSchema(name string, schema *JSONSchema) (*GoTyp
 				}
 				continue
 			}
-			
+
 			goType.Fields = append(goType.Fields, *field)
-			
+
 			// Collect imports needed for this field
 			for _, imp := range g.getFieldImports(field.Type) {
 				importsSet[imp] = true
 			}
 		}
 	}
-	
+
 	// Convert imports set to slice
 	for imp := range importsSet {
 		goType.Imports = append(goType.Imports, imp)
 	}
 	sort.Strings(goType.Imports)
-	
+
 	return goType, nil
 }
 
@@ -369,21 +369,21 @@ func (g *Generator) processProperty(propName string, propSchema *JSONSchema, req
 		Comment:  propSchema.Description,
 		Optional: !g.isRequired(propName, required),
 	}
-	
+
 	// Generate Go type for this property
 	goType, err := g.generateGoType(propSchema)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate Go type: %w", err)
 	}
-	
+
 	field.Type = goType
-	
+
 	// Generate UI tag from schema metadata
 	field.UITag = g.generateUITag(propSchema, propName)
-	
+
 	// Generate validation tag
 	field.ValidateTag = g.generateValidateTag(propSchema, !field.Optional)
-	
+
 	return field, nil
 }
 
@@ -395,14 +395,14 @@ func (g *Generator) processEnumSchema(name string, schema *JSONSchema) (*GoType,
 		IsEnum:     true,
 		EnumValues: []string{},
 	}
-	
+
 	// Convert enum values to strings
 	for _, value := range schema.Enum {
 		if str, ok := value.(string); ok {
 			goType.EnumValues = append(goType.EnumValues, str)
 		}
 	}
-	
+
 	return goType, nil
 }
 
@@ -412,14 +412,14 @@ func (g *Generator) generateGoType(schema *JSONSchema) (string, error) {
 		refName := g.extractRefName(schema.Ref)
 		return g.sanitizeTypeName(refName), nil
 	}
-	
+
 	// Handle anyOf/oneOf by using interface{}
 	if len(schema.AnyOf) > 0 || len(schema.OneOf) > 0 {
 		return "interface{}", nil
 	}
-	
+
 	schemaType := g.getSchemaType(schema)
-	
+
 	switch schemaType {
 	case "string":
 		if len(schema.Enum) > 0 {
@@ -427,16 +427,16 @@ func (g *Generator) generateGoType(schema *JSONSchema) (string, error) {
 			return "string", nil // For now, use string, but could be improved
 		}
 		return "string", nil
-		
+
 	case "integer":
 		return "int", nil
-		
+
 	case "number":
 		return "float64", nil
-		
+
 	case "boolean":
 		return "bool", nil
-		
+
 	case "array":
 		if schema.Items != nil {
 			itemType, err := g.generateGoType(schema.Items)
@@ -446,7 +446,7 @@ func (g *Generator) generateGoType(schema *JSONSchema) (string, error) {
 			return "[]" + itemType, nil
 		}
 		return "[]interface{}", nil
-		
+
 	case "object":
 		// Handle additionalProperties
 		if schema.AdditionalProperties != nil {
@@ -461,15 +461,15 @@ func (g *Generator) generateGoType(schema *JSONSchema) (string, error) {
 				return "map[string]" + valueType, nil
 			}
 		}
-		
+
 		// If it has properties, it should be a separate struct
 		if len(schema.Properties) > 0 {
 			// This will be handled as a separate type
 			return "map[string]interface{}", nil // Fallback
 		}
-		
+
 		return "map[string]interface{}", nil
-		
+
 	default:
 		return "interface{}", nil
 	}
@@ -477,7 +477,7 @@ func (g *Generator) generateGoType(schema *JSONSchema) (string, error) {
 
 func (g *Generator) generateUITag(schema *JSONSchema, propName string) string {
 	var parts []string
-	
+
 	// Component type
 	if schema.UIComponent != "" {
 		parts = append(parts, "component="+schema.UIComponent)
@@ -499,7 +499,7 @@ func (g *Generator) generateUITag(schema *JSONSchema, propName string) string {
 			parts = append(parts, "component=multi-select")
 		}
 	}
-	
+
 	// Label
 	label := schema.UILabel
 	if label == "" && schema.Title != "" {
@@ -511,17 +511,17 @@ func (g *Generator) generateUITag(schema *JSONSchema, propName string) string {
 	if label != "" {
 		parts = append(parts, "label="+label)
 	}
-	
+
 	// Required
 	if schema.UIRequired {
 		parts = append(parts, "required=true")
 	}
-	
+
 	// Hidden
 	if schema.UIHidden {
 		parts = append(parts, "hidden=true")
 	}
-	
+
 	// Options for enum fields
 	if len(schema.Enum) > 0 {
 		var options []string
@@ -534,21 +534,21 @@ func (g *Generator) generateUITag(schema *JSONSchema, propName string) string {
 			parts = append(parts, "options="+strings.Join(options, ","))
 		}
 	}
-	
+
 	if len(parts) > 0 {
 		return strings.Join(parts, ";")
 	}
-	
+
 	return ""
 }
 
 func (g *Generator) generateValidateTag(schema *JSONSchema, required bool) string {
 	var parts []string
-	
+
 	if required {
 		parts = append(parts, "required")
 	}
-	
+
 	schemaType := g.getSchemaType(schema)
 	switch schemaType {
 	case "string":
@@ -566,11 +566,11 @@ func (g *Generator) generateValidateTag(schema *JSONSchema, required bool) strin
 	case "integer", "number":
 		// Could add min/max validation based on schema properties
 	}
-	
+
 	if len(parts) > 0 {
 		return strings.Join(parts, ",")
 	}
-	
+
 	return ""
 }
 
@@ -581,11 +581,11 @@ func (g *Generator) resolveRef(ref string) (*JSONSchema, error) {
 	if cached, exists := g.refCache[ref]; exists {
 		return cached, nil
 	}
-	
+
 	// Simple reference resolution - assumes internal references only
 	if strings.HasPrefix(ref, "#/definitions/") {
 		defName := strings.TrimPrefix(ref, "#/definitions/")
-		
+
 		// Look for definition in any loaded schema
 		for _, schema := range g.schemas {
 			if schema.Definitions != nil {
@@ -596,7 +596,7 @@ func (g *Generator) resolveRef(ref string) (*JSONSchema, error) {
 			}
 		}
 	}
-	
+
 	return nil, fmt.Errorf("reference not found: %s", ref)
 }
 
@@ -615,7 +615,7 @@ func (g *Generator) getSchemaType(schema *JSONSchema) string {
 	if schema.Type == nil {
 		return "object" // Default to object if no type specified
 	}
-	
+
 	switch t := schema.Type.(type) {
 	case string:
 		return t
@@ -632,7 +632,7 @@ func (g *Generator) getSchemaType(schema *JSONSchema) string {
 			}
 		}
 	}
-	
+
 	return "object"
 }
 
@@ -647,7 +647,7 @@ func (g *Generator) isRequired(propName string, required []string) bool {
 
 func (g *Generator) getFieldImports(fieldType string) []string {
 	var imports []string
-	
+
 	// Check for common imports needed
 	if strings.Contains(fieldType, "time.Time") {
 		imports = append(imports, "time")
@@ -655,7 +655,7 @@ func (g *Generator) getFieldImports(fieldType string) []string {
 	if strings.Contains(fieldType, "uuid.UUID") {
 		imports = append(imports, "github.com/google/uuid")
 	}
-	
+
 	return imports
 }
 
@@ -665,7 +665,7 @@ func (g *Generator) sanitizeTypeName(name string) string {
 	name = strings.ReplaceAll(name, "/", "")
 	name = strings.ReplaceAll(name, "\\", "")
 	name = strings.ReplaceAll(name, ".", "")
-	
+
 	// Convert to PascalCase
 	return g.toPascalCase(name)
 }
@@ -681,7 +681,7 @@ func (g *Generator) sanitizeFieldName(name string) string {
 	if name == "$schema" {
 		return "Schema"
 	}
-	
+
 	// Convert to PascalCase for exported fields
 	return g.toPascalCase(name)
 }
@@ -691,16 +691,16 @@ func (g *Generator) toPascalCase(s string) string {
 	if s == "" {
 		return ""
 	}
-	
+
 	// Split on common separators
 	words := regexp.MustCompile(`[-_\s]+`).Split(s, -1)
-	
+
 	var result strings.Builder
 	for _, word := range words {
 		if word == "" {
 			continue
 		}
-		
+
 		// Capitalize first letter, lowercase the rest
 		if len(word) == 1 {
 			result.WriteString(strings.ToUpper(word))
@@ -709,14 +709,14 @@ func (g *Generator) toPascalCase(s string) string {
 			result.WriteString(strings.ToLower(word[1:]))
 		}
 	}
-	
+
 	pascalCase := result.String()
-	
+
 	// Ensure it starts with uppercase letter
 	if len(pascalCase) > 0 && pascalCase[0] >= 'a' && pascalCase[0] <= 'z' {
 		pascalCase = strings.ToUpper(string(pascalCase[0])) + pascalCase[1:]
 	}
-	
+
 	// Handle edge cases for Go naming
 	pascalCase = strings.ReplaceAll(pascalCase, "Id", "ID")
 	pascalCase = strings.ReplaceAll(pascalCase, "Url", "URL")
@@ -724,7 +724,7 @@ func (g *Generator) toPascalCase(s string) string {
 	pascalCase = strings.ReplaceAll(pascalCase, "Http", "HTTP")
 	pascalCase = strings.ReplaceAll(pascalCase, "Json", "JSON")
 	pascalCase = strings.ReplaceAll(pascalCase, "Xml", "XML")
-	
+
 	return pascalCase
 }
 
@@ -732,21 +732,21 @@ func (g *Generator) humanizeFieldName(fieldName string) string {
 	// Convert PascalCase to human readable
 	re := regexp.MustCompile(`([a-z])([A-Z])`)
 	humanized := re.ReplaceAllString(fieldName, `$1 $2`)
-	
+
 	// Capitalize first letter
 	if len(humanized) > 0 {
 		humanized = strings.ToUpper(string(humanized[0])) + humanized[1:]
 	}
-	
+
 	return humanized
 }
 
 func (g *Generator) writeGoFiles() error {
 	// Create output directory
-	if err := os.MkdirAll(g.config.Output, 0755); err != nil {
+	if err := os.MkdirAll(g.config.Output, 0o755); err != nil {
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
-	
+
 	if g.config.Single {
 		return g.writeSingleFile()
 	} else {
@@ -756,20 +756,20 @@ func (g *Generator) writeGoFiles() error {
 
 func (g *Generator) writeSingleFile() error {
 	filePath := filepath.Join(g.config.Output, "schemas.go")
-	
+
 	content, err := g.generateSingleFileContent()
 	if err != nil {
 		return fmt.Errorf("failed to generate file content: %w", err)
 	}
-	
-	if err := os.WriteFile(filePath, content, 0644); err != nil {
+
+	if err := os.WriteFile(filePath, content, 0o644); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
-	
+
 	if g.config.Verbose {
 		log.Printf("Generated: %s", filePath)
 	}
-	
+
 	return nil
 }
 
@@ -779,19 +779,19 @@ func (g *Generator) writeMultipleFiles() error {
 		if err != nil {
 			return fmt.Errorf("failed to generate content for type %s: %w", goType.Name, err)
 		}
-		
+
 		fileName := g.toSnakeCase(goType.Name) + ".go"
 		filePath := filepath.Join(g.config.Output, fileName)
-		
-		if err := os.WriteFile(filePath, content, 0644); err != nil {
+
+		if err := os.WriteFile(filePath, content, 0o644); err != nil {
 			return fmt.Errorf("failed to write file %s: %w", filePath, err)
 		}
-		
+
 		if g.config.Verbose {
 			log.Printf("Generated: %s", filePath)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -801,7 +801,7 @@ func (g *Generator) previewGoFiles() error {
 		if err != nil {
 			return err
 		}
-		
+
 		fmt.Printf("=== schemas.go ===\n")
 		fmt.Printf("%s\n", content)
 	} else {
@@ -810,20 +810,20 @@ func (g *Generator) previewGoFiles() error {
 			if err != nil {
 				return err
 			}
-			
+
 			fileName := g.toSnakeCase(goType.Name) + ".go"
 			fmt.Printf("=== %s ===\n", fileName)
 			fmt.Printf("%s\n", content)
 		}
 	}
-	
+
 	return nil
 }
 
 func (g *Generator) generateSingleFileContent() ([]byte, error) {
 	var allImports []string
 	importsSet := make(map[string]bool)
-	
+
 	// Collect all imports
 	for _, goType := range g.types {
 		for _, imp := range goType.Imports {
@@ -834,13 +834,13 @@ func (g *Generator) generateSingleFileContent() ([]byte, error) {
 		}
 	}
 	sort.Strings(allImports)
-	
+
 	tmpl := template.Must(template.New("single_file").Funcs(g.getTemplateFuncs()).Parse(singleFileTemplate))
-	
+
 	data := struct {
-		Package string
-		Imports []string
-		Types   []*GoType
+		Package   string
+		Imports   []string
+		Types     []*GoType
 		Generated string
 	}{
 		Package:   g.config.Package,
@@ -848,12 +848,12 @@ func (g *Generator) generateSingleFileContent() ([]byte, error) {
 		Types:     g.getSortedTypes(),
 		Generated: time.Now().Format(time.RFC3339),
 	}
-	
+
 	var buf strings.Builder
 	if err := tmpl.Execute(&buf, data); err != nil {
 		return nil, fmt.Errorf("failed to execute template: %w", err)
 	}
-	
+
 	// Format the generated Go code
 	formatted, err := format.Source([]byte(buf.String()))
 	if err != nil {
@@ -863,13 +863,13 @@ func (g *Generator) generateSingleFileContent() ([]byte, error) {
 		}
 		return []byte(buf.String()), nil
 	}
-	
+
 	return formatted, nil
 }
 
 func (g *Generator) generateTypeFileContent(goType *GoType) ([]byte, error) {
 	tmpl := template.Must(template.New("type_file").Funcs(g.getTemplateFuncs()).Parse(typeFileTemplate))
-	
+
 	data := struct {
 		Package   string
 		Imports   []string
@@ -881,12 +881,12 @@ func (g *Generator) generateTypeFileContent(goType *GoType) ([]byte, error) {
 		Type:      goType,
 		Generated: time.Now().Format(time.RFC3339),
 	}
-	
+
 	var buf strings.Builder
 	if err := tmpl.Execute(&buf, data); err != nil {
 		return nil, fmt.Errorf("failed to execute template: %w", err)
 	}
-	
+
 	// Format the generated Go code
 	formatted, err := format.Source([]byte(buf.String()))
 	if err != nil {
@@ -896,7 +896,7 @@ func (g *Generator) generateTypeFileContent(goType *GoType) ([]byte, error) {
 		}
 		return []byte(buf.String()), nil
 	}
-	
+
 	return formatted, nil
 }
 
@@ -905,12 +905,12 @@ func (g *Generator) getSortedTypes() []*GoType {
 	for _, goType := range g.types {
 		types = append(types, goType)
 	}
-	
+
 	// Sort by name for consistent output
 	sort.Slice(types, func(i, j int) bool {
 		return types[i].Name < types[j].Name
 	})
-	
+
 	return types
 }
 
@@ -929,10 +929,10 @@ func (g *Generator) getTemplateFuncs() template.FuncMap {
 		},
 		"hasPrefix": strings.HasPrefix,
 		"trimSpace": strings.TrimSpace,
-		"title": strings.Title,
+		"title":     strings.Title,
 		"tags": func(field GoField) string {
 			var tags []string
-			
+
 			// JSON tag
 			if field.JSONTag != "" {
 				jsonTag := field.JSONTag
@@ -941,17 +941,17 @@ func (g *Generator) getTemplateFuncs() template.FuncMap {
 				}
 				tags = append(tags, fmt.Sprintf("json:%q", jsonTag))
 			}
-			
+
 			// UI tag
 			if field.UITag != "" {
 				tags = append(tags, fmt.Sprintf("ui:%q", field.UITag))
 			}
-			
+
 			// Validate tag
 			if field.ValidateTag != "" {
 				tags = append(tags, fmt.Sprintf("validate:%q", field.ValidateTag))
 			}
-			
+
 			if len(tags) > 0 {
 				return "`" + strings.Join(tags, " ") + "`"
 			}

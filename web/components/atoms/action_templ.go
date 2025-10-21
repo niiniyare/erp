@@ -19,7 +19,7 @@ import (
 //
 // 1. REUSABLE STRUCTS: Uses shared BaseProps, AccessibilityProps
 // 2. CONFIGURATION-DRIVEN: Different action types and execution modes
-// 3. ALPINE.JS INTEGRATION: Seamless Alpine.js action handling
+// 3. ALPINE.JS INTEGRATION: Seamless e.js action handling
 // 4. COMMAND PATTERNS: Support for various command execution patterns
 // 5. ACCESSIBILITY: Proper ARIA attributes for screen readers
 // 6. SECURITY: Safe action execution with validation
@@ -37,7 +37,7 @@ const (
 	ActionTypeConfirm  = "confirm"  // Confirmation dialog
 	ActionTypeNavigate = "navigate" // Navigation action
 	ActionTypeApi      = "api"      // API call
-	ActionTypeCustom   = "custom"   // Custom Alpine.js code
+	ActionTypeCustom   = "custom"   // Custom e.js code
 )
 
 // Action execution modes
@@ -511,7 +511,7 @@ func actionAttributes(props ActionProps) templ.Attributes {
 		attrs["tabindex"] = strconv.Itoa(props.TabIndex)
 	}
 
-	// Alpine.js events
+	// e.js events
 	if props.Command != "" && !props.Disabled && !props.Loading {
 		eventHandler := getEventHandler(props)
 		attrs[getEventAttribute(props.ActionType)] = eventHandler
@@ -563,7 +563,7 @@ func getEventAttribute(actionType string) string {
 	}
 }
 
-// getEventHandler returns the Alpine.js event handler code
+// getEventHandler returns the e.js event handler code
 func getEventHandler(props ActionProps) string {
 	command := props.Command
 

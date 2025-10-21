@@ -3,21 +3,16 @@
 
 package datatypes
 
-
-
-
 // Trackbreadth represents the CSS DataType TrackBreadth (union type: [string number])
 // This type accepts both strings and numbers, but uses string as the underlying type
 type Trackbreadth string
 
-
 // Predefined constants
 const (
-	TrackbreadthAuto = "auto"
+	TrackbreadthAuto       = "auto"
 	TrackbreadthMaxcontent = "max-content"
 	TrackbreadthMincontent = "min-content"
 )
-
 
 // IsValid validates that the value is a non-empty string or valid number
 func (d Trackbreadth) IsValid() bool {
@@ -30,5 +25,3 @@ func (d Trackbreadth) IsValid() bool {
 func (d Trackbreadth) String() string {
 	return string(d)
 }
-
-

@@ -106,7 +106,7 @@ func TestFactorySchemaValidation(t *testing.T) {
 		isValid := (err == nil)
 
 		if isValid != tt.valid {
-			t.Errorf("Factory validation: expected %s='%s' valid=%v, got valid=%v", 
+			t.Errorf("Factory validation: expected %s='%s' valid=%v, got valid=%v",
 				tt.dataType, tt.value, tt.valid, isValid)
 		}
 	}
@@ -124,11 +124,11 @@ func TestDataTypeIntegration(t *testing.T) {
 
 	// Test a sample of different DataType categories
 	categoryTests := map[string][]string{
-		"color":                 {"red", "#ff0000", "currentcolor"},
-		"blendmode":            {"normal", "multiply", "screen"},
-		"fontweightabsolute":   {"400", "700", "900"},
-		"genericfamily":        {"serif", "sans-serif", "monospace"},
-		"easingfunction":       {"ease", "linear", "ease-in-out"},
+		"color":              {"red", "#ff0000", "currentcolor"},
+		"blendmode":          {"normal", "multiply", "screen"},
+		"fontweightabsolute": {"400", "700", "900"},
+		"genericfamily":      {"serif", "sans-serif", "monospace"},
+		"easingfunction":     {"ease", "linear", "ease-in-out"},
 	}
 
 	for dataType, validValues := range categoryTests {

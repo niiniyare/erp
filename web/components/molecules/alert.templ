@@ -1,8 +1,8 @@
 package molecules
 
 import (
-	"strings"
 	"github.com/niiniyare/erp/web/components/atoms"
+	"strings"
 )
 
 // AlertType defines the semantic type of the alert
@@ -27,48 +27,48 @@ const (
 // AlertProps defines properties for the Alert molecule
 type AlertProps struct {
 	// Content
-	Title       string    `json:"title,omitempty"`
-	Message     string    `json:"message"`
-	Type        AlertType `json:"type"`
-	Size        AlertSize `json:"size"`
-	
+	Title   string    `json:"title,omitempty"`
+	Message string    `json:"message"`
+	Type    AlertType `json:"type"`
+	Size    AlertSize `json:"size"`
+
 	// Behavior
-	Dismissible bool   `json:"dismissible,omitempty"`
-	AutoDismiss bool   `json:"autoDismiss,omitempty"`
-	Duration    int    `json:"duration,omitempty"` // Auto-dismiss duration in seconds
-	
+	Dismissible bool `json:"dismissible,omitempty"`
+	AutoDismiss bool `json:"autoDismiss,omitempty"`
+	Duration    int  `json:"duration,omitempty"` // Auto-dismiss duration in seconds
+
 	// Actions
-	Actions     []AlertAction `json:"actions,omitempty"`
-	
+	Actions []AlertAction `json:"actions,omitempty"`
+
 	// Styling
-	Border      bool   `json:"border,omitempty"`
-	Shadow      bool   `json:"shadow,omitempty"`
-	
+	Border bool `json:"border,omitempty"`
+	Shadow bool `json:"shadow,omitempty"`
+
 	// HTML attributes
 	ID         string `json:"id,omitempty"`
 	Class      string `json:"class,omitempty"`
 	DataTestID string `json:"dataTestId,omitempty"`
-	
+
 	// Accessibility
-	AriaLabel  string `json:"ariaLabel,omitempty"`
-	
+	AriaLabel string `json:"ariaLabel,omitempty"`
+
 	// Behavior
-	OnDismiss  string `json:"onDismiss,omitempty"` // Alpine.js dismiss handler
-	
+	OnDismiss string `json:"onDismiss,omitempty"` // Alpine.js dismiss handler
+
 	// HTMX attributes for dynamic alerts
-	HxSwapOOB  string `json:"hxSwapOOB,omitempty"`
+	HxSwapOOB string `json:"hxSwapOOB,omitempty"`
 }
 
 // AlertAction represents an action button in the alert
 type AlertAction struct {
-	Text      string `json:"text"`
-	OnClick   string `json:"onclick,omitempty"`
-	HxPost    string `json:"hxPost,omitempty"`
-	HxGet     string `json:"hxGet,omitempty"`
-	HxTarget  string `json:"hxTarget,omitempty"`
-	HxSwap    string `json:"hxSwap,omitempty"`
-	Primary   bool   `json:"primary,omitempty"`
-	Class     string `json:"class,omitempty"`
+	Text     string `json:"text"`
+	OnClick  string `json:"onclick,omitempty"`
+	HxPost   string `json:"hxPost,omitempty"`
+	HxGet    string `json:"hxGet,omitempty"`
+	HxTarget string `json:"hxTarget,omitempty"`
+	HxSwap   string `json:"hxSwap,omitempty"`
+	Primary  bool   `json:"primary,omitempty"`
+	Class    string `json:"class,omitempty"`
 }
 
 // Alert renders a Flowbite-styled alert with various types and behaviors
@@ -108,18 +108,15 @@ templ Alert(props AlertProps) {
 						Class: getAlertIconClasses(props.Type),
 					})
 				</div>
-				
 				<div class="ml-3 flex-1">
 					if props.Title != "" {
 						<h3 class={ getAlertTitleClasses(props) }>
 							{ props.Title }
 						</h3>
 					}
-					
 					<div class={ getAlertMessageClasses(props) }>
 						{ props.Message }
 					</div>
-					
 					if len(props.Actions) > 0 {
 						<div class={ getAlertActionsClasses(props) }>
 							for _, action := range props.Actions {
@@ -128,7 +125,6 @@ templ Alert(props AlertProps) {
 						</div>
 					}
 				</div>
-				
 				if props.Dismissible {
 					<div class="ml-auto pl-3">
 						<div class="-mx-1.5 -my-1.5">
@@ -183,7 +179,7 @@ templ AlertActionButton(action AlertAction, alertType AlertType, alertSize Alert
 // Helper functions
 func getAlertClasses(props AlertProps) string {
 	classes := []string{"alert"}
-	
+
 	// Add type-specific background and border classes
 	switch props.Type {
 	case AlertTypeSuccess:
@@ -207,26 +203,26 @@ func getAlertClasses(props AlertProps) string {
 			classes = append(classes, "border", "border-blue-300", "dark:border-blue-800")
 		}
 	}
-	
+
 	// Add rounded corners
 	classes = append(classes, "rounded-lg")
-	
+
 	// Add shadow if requested
 	if props.Shadow {
 		classes = append(classes, "shadow-md")
 	}
-	
+
 	// Add custom classes
 	if props.Class != "" {
 		classes = append(classes, props.Class)
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
 func getAlertContentClasses(props AlertProps) string {
 	classes := []string{}
-	
+
 	// Add size-specific padding
 	switch props.Size {
 	case AlertSizeSM:
@@ -236,13 +232,13 @@ func getAlertContentClasses(props AlertProps) string {
 	default: // MD
 		classes = append(classes, "p-4")
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
 func getAlertTitleClasses(props AlertProps) string {
 	classes := []string{"font-medium"}
-	
+
 	// Add type-specific text colors
 	switch props.Type {
 	case AlertTypeSuccess:
@@ -254,7 +250,7 @@ func getAlertTitleClasses(props AlertProps) string {
 	default: // info
 		classes = append(classes, "text-blue-800", "dark:text-blue-400")
 	}
-	
+
 	// Add size-specific text size
 	switch props.Size {
 	case AlertSizeSM:
@@ -264,13 +260,13 @@ func getAlertTitleClasses(props AlertProps) string {
 	default: // MD
 		classes = append(classes, "text-base")
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
 func getAlertMessageClasses(props AlertProps) string {
 	classes := []string{}
-	
+
 	// Add type-specific text colors
 	switch props.Type {
 	case AlertTypeSuccess:
@@ -282,7 +278,7 @@ func getAlertMessageClasses(props AlertProps) string {
 	default: // info
 		classes = append(classes, "text-blue-700", "dark:text-blue-300")
 	}
-	
+
 	// Add size-specific text size and spacing
 	switch props.Size {
 	case AlertSizeSM:
@@ -301,13 +297,13 @@ func getAlertMessageClasses(props AlertProps) string {
 			classes = append(classes, "mt-1")
 		}
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
 func getAlertActionsClasses(props AlertProps) string {
 	classes := []string{"flex", "space-x-2"}
-	
+
 	switch props.Size {
 	case AlertSizeSM:
 		classes = append(classes, "mt-2")
@@ -316,7 +312,7 @@ func getAlertActionsClasses(props AlertProps) string {
 	default: // MD
 		classes = append(classes, "mt-3")
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
@@ -331,11 +327,11 @@ func getAlertDismissClasses(props AlertProps) string {
 		"transition-colors",
 		"duration-200",
 	}
-	
+
 	// Add type-specific colors
 	switch props.Type {
 	case AlertTypeSuccess:
-		classes = append(classes, 
+		classes = append(classes,
 			"bg-green-50", "text-green-500",
 			"hover:bg-green-100", "focus:ring-green-600", "focus:ring-offset-green-50",
 			"dark:bg-green-900/20", "dark:text-green-400", "dark:hover:bg-green-900/30",
@@ -359,7 +355,7 @@ func getAlertDismissClasses(props AlertProps) string {
 			"dark:bg-blue-900/20", "dark:text-blue-400", "dark:hover:bg-blue-900/30",
 		)
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
@@ -377,7 +373,7 @@ func getAlertActionButtonClasses(action AlertAction, alertType AlertType, alertS
 		"transition-colors",
 		"duration-200",
 	}
-	
+
 	// Add size-specific classes
 	switch alertSize {
 	case AlertSizeSM:
@@ -387,7 +383,7 @@ func getAlertActionButtonClasses(action AlertAction, alertType AlertType, alertS
 	default: // MD
 		classes = append(classes, "px-3", "py-1.5", "text-sm")
 	}
-	
+
 	// Add type and style-specific colors
 	if action.Primary {
 		switch alertType {
@@ -440,12 +436,12 @@ func getAlertActionButtonClasses(action AlertAction, alertType AlertType, alertS
 			)
 		}
 	}
-	
+
 	// Add custom classes
 	if action.Class != "" {
 		classes = append(classes, action.Class)
 	}
-	
+
 	return strings.Join(classes, " ")
 }
 
@@ -499,16 +495,16 @@ func getAlertDismissIconSize(alertSize AlertSize) atoms.IconSize {
 
 func getAlertAlpineData(props AlertProps) string {
 	data := "{ visible: true"
-	
+
 	if props.AutoDismiss && props.Duration > 0 {
-		data += ", init() { setTimeout(() => this.visible = false, " + string(rune(props.Duration * 1000)) + ") }"
+		data += ", init() { setTimeout(() => this.visible = false, " + string(rune(props.Duration*1000)) + ") }"
 	}
-	
+
 	data += ", dismiss() { this.visible = false"
 	if props.OnDismiss != "" {
 		data += "; " + props.OnDismiss
 	}
 	data += " } }"
-	
+
 	return data
 }

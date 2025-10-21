@@ -135,9 +135,9 @@ func GetContrastTextColor(bgColor string) string {
 func NewColorInput(name, value string) ColorInputProps {
 	return ColorInputProps{
 		BaseProps: BaseProps{
-			ID: GenerateID("color-input"),
+			ID:   GenerateID("color-input"),
+			Name: name,
 		},
-		Name:        name,
 		Value:       value,
 		Variant:     VariantDefault,
 		Size:        SizeMD,
@@ -161,7 +161,7 @@ func NewColorPicker(name, value string) ColorInputProps {
 func NewColorSwatch(name, value string) ColorInputProps {
 	colorInput := NewColorInput(name, value)
 	colorInput.ShowPreview = true
-	colorInput.Readonly = true
+	colorInput.ReadOnly = true
 	colorInput.ShowPalette = true
 	return colorInput
 }
@@ -332,7 +332,7 @@ func ColorInput(props ColorInputProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.Readonly {
+		if props.ReadOnly {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, " readonly")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -818,43 +818,46 @@ func colorInputValidationText(props ColorInputProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if props.ShowValidation && props.GetValidationMessage() != "" {
-				var templ_7745c5c3_Var33 = []any{getValidationTextClasses(props.State)}
-				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var33...)
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
+			if props.ShowValidation {
+				if msg, _ := props.GetFeedbackMessage(); msg != "" {
+					var templ_7745c5c3_Var33 = []any{getValidationTextClasses(props.State)}
+					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var33...)
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<p class=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var34 string
+					templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var33).String())
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/color-input.templ`, Line: 1, Col: 0}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var35 string
+					templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(msg)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/color-input.templ`, Line: 332, Col: 11}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</p>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<p class=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var34 string
-				templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var33).String())
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/color-input.templ`, Line: 1, Col: 0}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var35 string
-				templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(props.GetValidationMessage())
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/color-input.templ`, Line: 331, Col: 35}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</p>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			} else if props.HelpText != "" {
+			}
+			if !props.ShowValidation && props.HelpText != "" {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "<p class=\"text-gray-600 dark:text-gray-400\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -862,7 +865,7 @@ func colorInputValidationText(props ColorInputProps) templ.Component {
 				var templ_7745c5c3_Var36 string
 				templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(props.HelpText)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/color-input.templ`, Line: 334, Col: 64}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/color-input.templ`, Line: 337, Col: 64}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
 				if templ_7745c5c3_Err != nil {
@@ -902,16 +905,11 @@ func getColorInputWrapperClasses(props ColorInputProps) string {
 func getColorInputClasses(props ColorInputProps) string {
 	classes := []string{colorInputBaseClasses, "flex-1"}
 
-	// Add variant classes
-	if variantClasses, ok := colorInputVariantClasses[props.Variant]; ok {
-		classes = append(classes, variantClasses...)
-	}
+	// Add variant classes with state handling
+	classes = append(classes, GetInputVariantClasses(props.Variant, props.State)...)
 
 	// Add size classes
 	classes = append(classes, GetInputSizeClasses(props.Size)...)
-
-	// Add validation state classes
-	classes = append(classes, GetValidationStateClasses(props.State)...)
 
 	return JoinClasses(classes...)
 }
@@ -958,7 +956,7 @@ func (p ColorInputProps) AsRequired() ColorInputProps {
 
 // AsReadonly returns a new ColorInputProps marked as readonly
 func (p ColorInputProps) AsReadonly() ColorInputProps {
-	p.Readonly = true
+	p.ReadOnly = true
 	return p
 }
 

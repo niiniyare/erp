@@ -181,12 +181,12 @@ func getLinkClasses(props LinkProps) string {
 	classes := []string{linkBaseClasses}
 
 	// Add variant-specific styling from configuration
-	if variants, ok := linkVariants[props.Variant]; ok {
+	if variants, ok := linkVariants[string(props.Variant)]; ok {
 		classes = append(classes, variants...)
 	}
 
 	// Add size-specific dimensions based on variant
-	if props.Variant == "button" || props.Variant == "outlined" || props.Variant == "ghost" {
+	if string(props.Variant) == "button" || string(props.Variant) == "outlined" || string(props.Variant) == "ghost" {
 		if dimensions, ok := linkButtonDimensions[props.ComponentSize]; ok {
 			classes = append(classes, dimensions...)
 		}
@@ -197,13 +197,13 @@ func getLinkClasses(props LinkProps) string {
 	}
 
 	// Add color scheme based on variant
-	if props.Variant == "button" {
+	if string(props.Variant) == "button" {
 		if colors, ok := linkButtonColorSchemes[props.Color]; ok {
 			classes = append(classes, colors...)
 		} else if colors, ok := linkButtonColorSchemes["default"]; ok {
 			classes = append(classes, colors...)
 		}
-	} else if props.Variant == "outlined" {
+	} else if string(props.Variant) == "outlined" {
 		// Outlined variant uses text colors for border and text
 		if colors, ok := linkColorSchemes[props.Color]; ok {
 			// Convert text colors to border colors
@@ -227,7 +227,7 @@ func getLinkClasses(props LinkProps) string {
 	// Add underline styling
 	if props.Underline {
 		classes = append(classes, linkUnderlineClasses)
-	} else if props.Variant == "default" {
+	} else if string(props.Variant) == "default" {
 		classes = append(classes, linkHoverUnderline)
 	}
 
@@ -256,7 +256,7 @@ func (p LinkProps) WithColor(color string) LinkProps {
 
 // WithVariant returns a new LinkProps with variant set
 func (p LinkProps) WithVariant(variant string) LinkProps {
-	p.Variant = variant
+	p.Variant = Variant(variant)
 	return p
 }
 
@@ -276,19 +276,19 @@ func (p LinkProps) AsExternal() LinkProps {
 
 // AsButton returns a new LinkProps with button variant
 func (p LinkProps) AsButton() LinkProps {
-	p.Variant = "button"
+	p.Variant = Variant("button")
 	return p
 }
 
 // AsOutlined returns a new LinkProps with outlined variant
 func (p LinkProps) AsOutlined() LinkProps {
-	p.Variant = "outlined"
+	p.Variant = Variant("outlined")
 	return p
 }
 
 // AsGhost returns a new LinkProps with ghost variant
 func (p LinkProps) AsGhost() LinkProps {
-	p.Variant = "ghost"
+	p.Variant = Variant("ghost")
 	return p
 }
 
