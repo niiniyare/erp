@@ -26,6 +26,7 @@ import (
 // ============================================================================
 
 // SpinnerProps is defined in probs.go to avoid duplication
+// Now includes AlpinEventHandlers for OnClick support
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
@@ -73,21 +74,24 @@ const (
 // spinner := NewSpinner("Loading data...")
 // spinner.Color = "blue"
 // spinner.ComponentSize = SizeLG
-func NewSpinner(label string) SpinnerProps {
+func NewSpinner(ariaLabel string) SpinnerProps {
 	return SpinnerProps{
-		AccessibilityProps: AccessibilityProps{
-			Role: "status",
+		BaseProps: BaseProps{
+			ID: GenerateID("spinner"),
 		},
-		Label:         label,
-		Color:         "default",
-		Speed:         "normal",
-		ComponentSize: SizeMD,
+		AccessibilityProps: AccessibilityProps{
+			Role:      "status",
+			AriaLabel: ariaLabel,
+		},
+		Size:    SizeMD,
+		Color:   ColorDefault,
+		Variant: VariantDefault,
 	}
 }
 
 // NewSpinnerWithColor creates a spinner with specified color
-func NewSpinnerWithColor(label, color string) SpinnerProps {
-	props := NewSpinner(label)
+func NewSpinnerWithColor(ariaLabel string, color ColorScheme) SpinnerProps {
+	props := NewSpinner(ariaLabel)
 	props.Color = color
 	return props
 }
@@ -136,7 +140,7 @@ func Spinner(props SpinnerProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 96, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 100, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -167,7 +171,7 @@ func Spinner(props SpinnerProps) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.Role)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 99, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 103, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -185,7 +189,7 @@ func Spinner(props SpinnerProps) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 101, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 105, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -204,7 +208,7 @@ func Spinner(props SpinnerProps) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaDescribedBy)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 104, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 108, Col: 43}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -223,7 +227,7 @@ func Spinner(props SpinnerProps) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 107, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 111, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -242,7 +246,7 @@ func Spinner(props SpinnerProps) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnClick)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 110, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 114, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -305,7 +309,7 @@ func Spinner(props SpinnerProps) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(props.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 119, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 123, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -352,9 +356,9 @@ func SpinnerOverlay(props SpinnerProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = Spinner(SpinnerProps{
-			ComponentSize: props.ComponentSize,
-			Color:         props.Color,
-			Label:         props.Label,
+			Size:  props.Size,
+			Color: props.Color,
+			Label: props.Label,
 			BaseProps: BaseProps{
 				Class: "mb-4",
 			},
@@ -370,7 +374,7 @@ func SpinnerOverlay(props SpinnerProps) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(props.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 140, Col: 73}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/spinner.templ`, Line: 144, Col: 73}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -412,9 +416,9 @@ func SpinnerButton(size Size) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = Spinner(SpinnerProps{
-			ComponentSize: size,
-			Color:         "white",
-			Label:         "Loading...",
+			Size:  size,
+			Color: ColorScheme("white"),
+			Label: "Loading...",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -432,12 +436,12 @@ func getSpinnerClasses(props SpinnerProps) string {
 	classes := []string{spinnerBaseClasses}
 
 	// Add size-specific dimensions from configuration
-	if dimensions, ok := spinnerDimensions[props.ComponentSize]; ok {
+	if dimensions, ok := spinnerDimensions[props.Size]; ok {
 		classes = append(classes, dimensions...)
 	}
 
 	// Add color scheme from configuration
-	if colors, ok := spinnerColorSchemes[props.Color]; ok {
+	if colors, ok := spinnerColorSchemes[string(props.Color)]; ok {
 		classes = append(classes, colors...)
 	} else if colors, ok := spinnerColorSchemes["default"]; ok {
 		classes = append(classes, colors...)
@@ -471,7 +475,7 @@ func getSpinnerAnimationClasses(props SpinnerProps) string {
 
 // WithColor returns a new SpinnerProps with color set
 func (p SpinnerProps) WithColor(color string) SpinnerProps {
-	p.Color = color
+	p.Color = ColorScheme(color)
 	return p
 }
 
@@ -483,15 +487,15 @@ func (p SpinnerProps) WithSpeed(speed string) SpinnerProps {
 
 // AsOverlay returns a new SpinnerProps configured for overlay display
 func (p SpinnerProps) AsOverlay() SpinnerProps {
-	p.ComponentSize = SizeLG
-	p.Color = "blue"
+	p.Size = SizeLG
+	p.Color = ColorScheme("blue")
 	return p
 }
 
 // AsButton returns a new SpinnerProps configured for button display
 func (p SpinnerProps) AsButton(buttonSize Size) SpinnerProps {
-	p.ComponentSize = buttonSize
-	p.Color = "white"
+	p.Size = buttonSize
+	p.Color = ColorScheme("white")
 	return p
 }
 

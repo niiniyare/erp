@@ -22,20 +22,20 @@ type ValidationContext struct {
 type ValidationMode int
 
 const (
-	ValidationModeStrict ValidationMode = iota // Strict validation - all rules enforced
-	ValidationModeRelaxed                      // Relaxed validation - warnings instead of errors
-	ValidationModeProduction                   // Production validation - performance optimized
+	ValidationModeStrict     ValidationMode = iota // Strict validation - all rules enforced
+	ValidationModeRelaxed                          // Relaxed validation - warnings instead of errors
+	ValidationModeProduction                       // Production validation - performance optimized
 )
 
 // ComponentValidationError represents a validation error with detailed context
 type ComponentValidationError struct {
-	Field       string            `json:"field"`
-	Value       any       `json:"value,omitempty"`
-	Rule        string            `json:"rule"`
-	Message     string            `json:"message"`
+	Field       string             `json:"field"`
+	Value       any                `json:"value,omitempty"`
+	Rule        string             `json:"rule"`
+	Message     string             `json:"message"`
 	Severity    ValidationSeverity `json:"severity"`
-	Context     map[string]any `json:"context,omitempty"`
-	Suggestions []string          `json:"suggestions,omitempty"`
+	Context     map[string]any     `json:"context,omitempty"`
+	Suggestions []string           `json:"suggestions,omitempty"`
 }
 
 // ValidationSeverity defines the severity of validation issues
@@ -62,38 +62,38 @@ func (s ValidationSeverity) String() string {
 
 // ValidationResult contains the complete validation outcome
 type ValidationResult struct {
-	Valid       bool                         `json:"valid"`
-	Errors      []ComponentValidationError   `json:"errors,omitempty"`
-	Warnings    []ComponentValidationError   `json:"warnings,omitempty"`
-	Info        []ComponentValidationError   `json:"info,omitempty"`
-	Summary     ValidationSummary            `json:"summary"`
-	Performance ValidationMetrics           `json:"performance,omitempty"`
+	Valid       bool                       `json:"valid"`
+	Errors      []ComponentValidationError `json:"errors,omitempty"`
+	Warnings    []ComponentValidationError `json:"warnings,omitempty"`
+	Info        []ComponentValidationError `json:"info,omitempty"`
+	Summary     ValidationSummary          `json:"summary"`
+	Performance ValidationMetrics          `json:"performance,omitempty"`
 }
 
 // ValidationSummary provides a high-level overview of validation results
 type ValidationSummary struct {
-	TotalIssues   int `json:"totalIssues"`
-	ErrorCount    int `json:"errorCount"`
-	WarningCount  int `json:"warningCount"`
-	InfoCount     int `json:"infoCount"`
-	ComponentType string `json:"componentType"`
+	TotalIssues    int    `json:"totalIssues"`
+	ErrorCount     int    `json:"errorCount"`
+	WarningCount   int    `json:"warningCount"`
+	InfoCount      int    `json:"infoCount"`
+	ComponentType  string `json:"componentType"`
 	ValidationMode string `json:"validationMode"`
 }
 
 // ValidationMetrics tracks performance of validation operations
 type ValidationMetrics struct {
 	ValidationTimeMs int64 `json:"validationTimeMs"`
-	RulesExecuted   int   `json:"rulesExecuted"`
-	FieldsValidated int   `json:"fieldsValidated"`
+	RulesExecuted    int   `json:"rulesExecuted"`
+	FieldsValidated  int   `json:"fieldsValidated"`
 }
 
 // SchemaValidator provides advanced schema validation capabilities
 type SchemaValidator struct {
-	context       *ValidationContext
-	rules         map[string][]ComponentValidationRule
-	customRules   map[string]ValidationFunc
-	cache         map[string]*ValidationResult
-	performance   ValidationMetrics
+	context     *ValidationContext
+	rules       map[string][]ComponentValidationRule
+	customRules map[string]ValidationFunc
+	cache       map[string]*ValidationResult
+	performance ValidationMetrics
 }
 
 // ValidationFunc represents a custom validation function
@@ -101,21 +101,21 @@ type ValidationFunc func(value any, context *ValidationContext) []ComponentValid
 
 // ComponentValidationRule represents a single validation rule with metadata
 type ComponentValidationRule struct {
-	Name        string            `json:"name"`
-	Field       string            `json:"field"`
-	Type        string            `json:"type"`
-	Required    bool              `json:"required,omitempty"`
-	Pattern     string            `json:"pattern,omitempty"`
-	MinLength   *int              `json:"minLength,omitempty"`
-	MaxLength   *int              `json:"maxLength,omitempty"`
-	MinValue    *float64          `json:"minValue,omitempty"`
-	MaxValue    *float64          `json:"maxValue,omitempty"`
-	Enum        []any     `json:"enum,omitempty"`
-	Custom      ValidationFunc    `json:"-"`
-	Message     string            `json:"message,omitempty"`
+	Name        string             `json:"name"`
+	Field       string             `json:"field"`
+	Type        string             `json:"type"`
+	Required    bool               `json:"required,omitempty"`
+	Pattern     string             `json:"pattern,omitempty"`
+	MinLength   *int               `json:"minLength,omitempty"`
+	MaxLength   *int               `json:"maxLength,omitempty"`
+	MinValue    *float64           `json:"minValue,omitempty"`
+	MaxValue    *float64           `json:"maxValue,omitempty"`
+	Enum        []any              `json:"enum,omitempty"`
+	Custom      ValidationFunc     `json:"-"`
+	Message     string             `json:"message,omitempty"`
 	Severity    ValidationSeverity `json:"severity,omitempty"`
-	Conditions  map[string]any `json:"conditions,omitempty"`
-	Description string            `json:"description,omitempty"`
+	Conditions  map[string]any     `json:"conditions,omitempty"`
+	Description string             `json:"description,omitempty"`
 }
 
 // NewSchemaValidator creates a new advanced schema validator
@@ -144,7 +144,7 @@ func (v *SchemaValidator) AddCustomRule(name string, rule ValidationFunc) {
 // ValidateComponent performs comprehensive component validation
 func (v *SchemaValidator) ValidateComponent(component any) *ValidationResult {
 	startTime := getCurrentTimeMs()
-	
+
 	result := &ValidationResult{
 		Valid:    true,
 		Errors:   make([]ComponentValidationError, 0),
@@ -155,10 +155,10 @@ func (v *SchemaValidator) ValidateComponent(component any) *ValidationResult {
 	// Determine component type
 	componentType := getComponentType(component)
 	v.context.ComponentType = componentType
-	
+
 	// Get validation rules for this component type
 	rules := v.getValidationRules(componentType)
-	
+
 	// Add custom rules if any
 	for name, customRule := range v.customRules {
 		customValidationRule := ComponentValidationRule{
@@ -169,10 +169,10 @@ func (v *SchemaValidator) ValidateComponent(component any) *ValidationResult {
 		}
 		rules = append(rules, customValidationRule)
 	}
-	
+
 	// Perform validation
 	errors := v.validateAgainstRules(component, rules)
-	
+
 	// Categorize errors by severity
 	for _, err := range errors {
 		switch err.Severity {
@@ -185,7 +185,7 @@ func (v *SchemaValidator) ValidateComponent(component any) *ValidationResult {
 			result.Info = append(result.Info, err)
 		}
 	}
-	
+
 	// Generate summary
 	result.Summary = ValidationSummary{
 		TotalIssues:    len(result.Errors) + len(result.Warnings) + len(result.Info),
@@ -195,7 +195,7 @@ func (v *SchemaValidator) ValidateComponent(component any) *ValidationResult {
 		ComponentType:  componentType,
 		ValidationMode: v.context.ValidationMode.String(),
 	}
-	
+
 	// Performance metrics
 	endTime := getCurrentTimeMs()
 	result.Performance = ValidationMetrics{
@@ -203,19 +203,19 @@ func (v *SchemaValidator) ValidateComponent(component any) *ValidationResult {
 		RulesExecuted:    len(rules),
 		FieldsValidated:  countFields(component),
 	}
-	
+
 	return result
 }
 
 // ValidateComponentBatch validates multiple components efficiently
 func (v *SchemaValidator) ValidateComponentBatch(components map[string]any) map[string]*ValidationResult {
 	results := make(map[string]*ValidationResult)
-	
+
 	for name, component := range components {
 		v.context.ComponentName = name
 		results[name] = v.ValidateComponent(component)
 	}
-	
+
 	return results
 }
 
@@ -248,13 +248,13 @@ func (v *SchemaValidator) getValidationRules(componentType string) []ComponentVa
 			Severity: SeverityWarning,
 		},
 	}
-	
+
 	// Component-specific rules
 	specificRules := v.getComponentSpecificRules(componentType)
-	
+
 	// Combine base and specific rules
 	allRules := append(baseRules, specificRules...)
-	
+
 	return allRules
 }
 
@@ -280,7 +280,7 @@ func (v *SchemaValidator) getComponentSpecificRules(componentType string) []Comp
 				Severity: SeverityInfo,
 			},
 		}
-		
+
 	case "form":
 		return []ComponentValidationRule{
 			{
@@ -300,7 +300,7 @@ func (v *SchemaValidator) getComponentSpecificRules(componentType string) []Comp
 				Severity: SeverityWarning,
 			},
 		}
-		
+
 	case "table":
 		return []ComponentValidationRule{
 			{
@@ -312,7 +312,7 @@ func (v *SchemaValidator) getComponentSpecificRules(componentType string) []Comp
 				Severity: SeverityWarning,
 			},
 		}
-		
+
 	case "input-text":
 		return []ComponentValidationRule{
 			{
@@ -332,7 +332,7 @@ func (v *SchemaValidator) getComponentSpecificRules(componentType string) []Comp
 				Severity: SeverityWarning,
 			},
 		}
-		
+
 	case "select":
 		return []ComponentValidationRule{
 			{
@@ -352,7 +352,7 @@ func (v *SchemaValidator) getComponentSpecificRules(componentType string) []Comp
 				Severity: SeverityError,
 			},
 		}
-		
+
 	case "input-date":
 		return []ComponentValidationRule{
 			{
@@ -372,7 +372,7 @@ func (v *SchemaValidator) getComponentSpecificRules(componentType string) []Comp
 				Severity: SeverityWarning,
 			},
 		}
-		
+
 	case "action":
 		return []ComponentValidationRule{
 			{
@@ -392,7 +392,7 @@ func (v *SchemaValidator) getComponentSpecificRules(componentType string) []Comp
 				Severity: SeverityError,
 			},
 		}
-		
+
 	case "dialog":
 		return []ComponentValidationRule{
 			{
@@ -412,7 +412,7 @@ func (v *SchemaValidator) getComponentSpecificRules(componentType string) []Comp
 				Severity: SeverityWarning,
 			},
 		}
-		
+
 	default:
 		return []ComponentValidationRule{}
 	}
@@ -421,44 +421,44 @@ func (v *SchemaValidator) getComponentSpecificRules(componentType string) []Comp
 // validateAgainstRules executes validation rules against a component
 func (v *SchemaValidator) validateAgainstRules(component any, rules []ComponentValidationRule) []ComponentValidationError {
 	var errors []ComponentValidationError
-	
+
 	componentValue := reflect.ValueOf(component)
 	if componentValue.Kind() == reflect.Ptr {
 		componentValue = componentValue.Elem()
 	}
-	
+
 	for _, rule := range rules {
 		ruleErrors := v.executeValidationRule(component, componentValue, rule)
 		errors = append(errors, ruleErrors...)
 	}
-	
+
 	return errors
 }
 
 // executeValidationRule executes a single validation rule
 func (v *SchemaValidator) executeValidationRule(component any, componentValue reflect.Value, rule ComponentValidationRule) []ComponentValidationError {
 	var errors []ComponentValidationError
-	
+
 	// Handle custom validation functions
 	if rule.Custom != nil {
 		customErrors := rule.Custom(component, v.context)
 		return customErrors
 	}
-	
+
 	// Handle standard field validation
 	if rule.Field != "" {
 		fieldValue := getFieldValue(componentValue, rule.Field)
 		fieldErrors := v.validateFieldValue(fieldValue, rule)
 		errors = append(errors, fieldErrors...)
 	}
-	
+
 	return errors
 }
 
 // validateFieldValue validates a single field value against a rule
 func (v *SchemaValidator) validateFieldValue(fieldValue any, rule ComponentValidationRule) []ComponentValidationError {
 	var errors []ComponentValidationError
-	
+
 	// Required field validation
 	if rule.Required && isEmptyValue(fieldValue) {
 		errors = append(errors, ComponentValidationError{
@@ -470,7 +470,7 @@ func (v *SchemaValidator) validateFieldValue(fieldValue any, rule ComponentValid
 		})
 		return errors
 	}
-	
+
 	// For warning-level validations, check empty values even if not required
 	if rule.Severity == SeverityWarning && isEmptyValue(fieldValue) {
 		errors = append(errors, ComponentValidationError{
@@ -482,12 +482,12 @@ func (v *SchemaValidator) validateFieldValue(fieldValue any, rule ComponentValid
 		})
 		return errors
 	}
-	
+
 	// Skip further validation if field is empty and not required (for non-warnings)
 	if isEmptyValue(fieldValue) {
 		return errors
 	}
-	
+
 	// Type validation
 	if rule.Type != "" && rule.Type != "custom" {
 		if !v.validateType(fieldValue, rule.Type) {
@@ -500,7 +500,7 @@ func (v *SchemaValidator) validateFieldValue(fieldValue any, rule ComponentValid
 			})
 		}
 	}
-	
+
 	// Pattern validation
 	if rule.Pattern != "" {
 		if str, ok := fieldValue.(string); ok {
@@ -516,7 +516,7 @@ func (v *SchemaValidator) validateFieldValue(fieldValue any, rule ComponentValid
 			}
 		}
 	}
-	
+
 	// Length validation
 	if rule.MinLength != nil || rule.MaxLength != nil {
 		length := getValueLength(fieldValue)
@@ -539,7 +539,7 @@ func (v *SchemaValidator) validateFieldValue(fieldValue any, rule ComponentValid
 			})
 		}
 	}
-	
+
 	// Enum validation
 	if len(rule.Enum) > 0 {
 		valid := false
@@ -551,16 +551,16 @@ func (v *SchemaValidator) validateFieldValue(fieldValue any, rule ComponentValid
 		}
 		if !valid {
 			errors = append(errors, ComponentValidationError{
-				Field:    rule.Field,
-				Value:    fieldValue,
-				Rule:     rule.Name,
-				Message:  rule.Message,
-				Severity: rule.Severity,
+				Field:       rule.Field,
+				Value:       fieldValue,
+				Rule:        rule.Name,
+				Message:     rule.Message,
+				Severity:    rule.Severity,
 				Suggestions: convertEnumToStrings(rule.Enum),
 			})
 		}
 	}
-	
+
 	return errors
 }
 
@@ -568,15 +568,15 @@ func (v *SchemaValidator) validateFieldValue(fieldValue any, rule ComponentValid
 
 func (v *SchemaValidator) validateSelectOptionsOrSource(value any, context *ValidationContext) []ComponentValidationError {
 	var errors []ComponentValidationError
-	
+
 	selectControl, ok := value.(*SelectControlSchema)
 	if !ok {
 		return errors
 	}
-	
+
 	hasOptions := len(selectControl.Options) > 0
 	hasSource := selectControl.Source != "" || selectControl.API != nil
-	
+
 	if !hasOptions && !hasSource {
 		errors = append(errors, ComponentValidationError{
 			Field:    "options/source",
@@ -590,21 +590,21 @@ func (v *SchemaValidator) validateSelectOptionsOrSource(value any, context *Vali
 			},
 		})
 	}
-	
+
 	return errors
 }
 
 func (v *SchemaValidator) validateActionLabelOrIcon(value any, context *ValidationContext) []ComponentValidationError {
 	var errors []ComponentValidationError
-	
+
 	action, ok := value.(*ActionSchema)
 	if !ok {
 		return errors
 	}
-	
+
 	hasLabel := action.Label != ""
 	hasIcon := action.Icon != ""
-	
+
 	if !hasLabel && !hasIcon {
 		errors = append(errors, ComponentValidationError{
 			Field:    "label/icon",
@@ -618,21 +618,21 @@ func (v *SchemaValidator) validateActionLabelOrIcon(value any, context *Validati
 			},
 		})
 	}
-	
+
 	return errors
 }
 
 func (v *SchemaValidator) validateDialogContent(value any, context *ValidationContext) []ComponentValidationError {
 	var errors []ComponentValidationError
-	
+
 	dialog, ok := value.(*DialogSchema)
 	if !ok {
 		return errors
 	}
-	
+
 	hasTitle := dialog.Title != ""
 	hasBody := len(dialog.Body) > 0
-	
+
 	if !hasTitle && !hasBody {
 		errors = append(errors, ComponentValidationError{
 			Field:    "title/body",
@@ -646,7 +646,7 @@ func (v *SchemaValidator) validateDialogContent(value any, context *ValidationCo
 			},
 		})
 	}
-	
+
 	return errors
 }
 
@@ -681,11 +681,11 @@ func getFieldValue(componentValue reflect.Value, fieldPath string) any {
 	if componentValue.Kind() != reflect.Struct {
 		return nil
 	}
-	
+
 	// Handle nested field paths like "config.type"
 	parts := strings.Split(fieldPath, ".")
 	currentValue := componentValue
-	
+
 	for _, part := range parts {
 		// Convert field name to proper Go struct field case
 		fieldName := strings.Title(strings.ToLower(part))
@@ -702,18 +702,18 @@ func getFieldValue(componentValue reflect.Value, fieldPath string) any {
 		} else if part == "actionType" {
 			fieldName = "ActionType"
 		}
-		
+
 		field := currentValue.FieldByName(fieldName)
 		if !field.IsValid() {
 			return nil
 		}
 		currentValue = field
 	}
-	
+
 	if !currentValue.CanInterface() {
 		return nil
 	}
-	
+
 	return currentValue.Interface()
 }
 
@@ -721,7 +721,7 @@ func isEmptyValue(value any) bool {
 	if value == nil {
 		return true
 	}
-	
+
 	switch v := value.(type) {
 	case string:
 		return v == ""
@@ -825,15 +825,15 @@ func (vm ValidationMode) String() string {
 // GetValidationReport generates a comprehensive validation report
 func (result *ValidationResult) GetValidationReport() string {
 	var report strings.Builder
-	
+
 	report.WriteString(fmt.Sprintf("=== Validation Report ===\n"))
 	report.WriteString(fmt.Sprintf("Component Type: %s\n", result.Summary.ComponentType))
 	report.WriteString(fmt.Sprintf("Validation Mode: %s\n", result.Summary.ValidationMode))
 	report.WriteString(fmt.Sprintf("Valid: %t\n", result.Valid))
 	report.WriteString(fmt.Sprintf("Total Issues: %d\n", result.Summary.TotalIssues))
-	report.WriteString(fmt.Sprintf("Errors: %d, Warnings: %d, Info: %d\n\n", 
+	report.WriteString(fmt.Sprintf("Errors: %d, Warnings: %d, Info: %d\n\n",
 		result.Summary.ErrorCount, result.Summary.WarningCount, result.Summary.InfoCount))
-	
+
 	if len(result.Errors) > 0 {
 		report.WriteString("ERRORS:\n")
 		for i, err := range result.Errors {
@@ -841,7 +841,7 @@ func (result *ValidationResult) GetValidationReport() string {
 		}
 		report.WriteString("\n")
 	}
-	
+
 	if len(result.Warnings) > 0 {
 		report.WriteString("WARNINGS:\n")
 		for i, warn := range result.Warnings {
@@ -849,7 +849,7 @@ func (result *ValidationResult) GetValidationReport() string {
 		}
 		report.WriteString("\n")
 	}
-	
+
 	return report.String()
 }
 

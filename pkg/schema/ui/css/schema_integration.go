@@ -58,7 +58,7 @@ func DefaultSchemaIntegrationConfig() *SchemaIntegrationConfig {
 		GenerateUtilities:     true,
 		IncludeThemeVariables: true,
 		GenerateResponsive:    true,
-		GenerateStates:       true,
+		GenerateStates:        true,
 		ComponentTypeMappings: map[string]string{
 			"input-text":   "input",
 			"input-email":  "input",
@@ -88,11 +88,11 @@ func DefaultSchemaIntegrationConfig() *SchemaIntegrationConfig {
 			"editor":       "editor",
 		},
 		ClassPatterns: map[string]string{
-			"button":  "btn-{variant}-{size}",
-			"input":   "input-{size}",
-			"card":    "card-{variant}",
-			"modal":   "modal-{size}",
-			"alert":   "alert-{variant}",
+			"button": "btn-{variant}-{size}",
+			"input":  "input-{size}",
+			"card":   "card-{variant}",
+			"modal":  "modal-{size}",
+			"alert":  "alert-{variant}",
 		},
 	}
 }
@@ -108,11 +108,11 @@ func NewSchemaToCSS() *SchemaToCSS {
 // NewSchemaToCSSSWithConfig creates a converter with custom configuration
 func NewSchemaToCSSSWithConfig(config *SchemaIntegrationConfig) *SchemaToCSS {
 	builder := NewComponentCSSBuilder()
-	
+
 	if config.CustomTheme != nil {
 		builder = NewComponentCSSBuilderWithTheme(config.CustomTheme)
 	}
-	
+
 	return &SchemaToCSS{
 		builder: builder,
 		config:  config,
@@ -125,7 +125,7 @@ func (s *SchemaToCSS) GenerateCSSFromSchema(schema interface{}) (string, error) 
 	if err != nil {
 		return "", fmt.Errorf("failed to extract style from schema: %w", err)
 	}
-	
+
 	return s.GenerateCSSFromStyle(style)
 }
 
@@ -135,11 +135,11 @@ func (s *SchemaToCSS) ExtractStyleFromSchema(schema interface{}) (*ComponentStyl
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
-	
+
 	if v.Kind() != reflect.Struct {
 		return nil, fmt.Errorf("schema must be a struct, got %T", schema)
 	}
-	
+
 	t := v.Type()
 	style := &ComponentStyle{
 		CustomStyles:     make(map[string]string),
@@ -147,16 +147,16 @@ func (s *SchemaToCSS) ExtractStyleFromSchema(schema interface{}) (*ComponentStyl
 		BaseClasses:      make([]string, 0),
 		StateClasses:     make([]string, 0),
 	}
-	
+
 	// Extract common fields using reflection
 	for i := 0; i < v.NumField(); i++ {
 		field := t.Field(i)
 		value := v.Field(i)
-		
+
 		if !value.IsValid() || !value.CanInterface() {
 			continue
 		}
-		
+
 		switch strings.ToLower(field.Name) {
 		case "type":
 			if str, ok := value.Interface().(string); ok && str != "" {
@@ -202,7 +202,7 @@ func (s *SchemaToCSS) ExtractStyleFromSchema(schema interface{}) (*ComponentStyl
 			}
 		}
 	}
-	
+
 	// Set defaults if not specified
 	if style.Type == "" {
 		style.Type = "generic"
@@ -213,7 +213,7 @@ func (s *SchemaToCSS) ExtractStyleFromSchema(schema interface{}) (*ComponentStyl
 	if style.Variant == "" {
 		style.Variant = "default"
 	}
-	
+
 	return style, nil
 }
 
@@ -229,18 +229,18 @@ func (s *SchemaToCSS) mapComponentType(schemaType string) string {
 func (s *SchemaToCSS) GenerateCSSFromStyle(style *ComponentStyle) (string, error) {
 	// Build the custom class name that should be used
 	className := s.buildClassName(style)
-	
+
 	// Generate component-specific CSS with custom class name
 	options := ComponentCSSOptions{
-		ComponentType: style.Type,
-		Size:         style.Size,
-		Variant:      style.Variant,
-		Disabled:     s.hasStateClass(style, "disabled"),
-		CustomClasses: style.BaseClasses,
-		Responsive:   style.ResponsiveStyles,
+		ComponentType:   style.Type,
+		Size:            style.Size,
+		Variant:         style.Variant,
+		Disabled:        s.hasStateClass(style, "disabled"),
+		CustomClasses:   style.BaseClasses,
+		Responsive:      style.ResponsiveStyles,
 		CustomClassName: className, // Pass the custom class name
 	}
-	
+
 	// Generate CSS based on component type, but use schema-based class names
 	switch style.Type {
 	case "button":
@@ -253,38 +253,38 @@ func (s *SchemaToCSS) GenerateCSSFromStyle(style *ComponentStyle) (string, error
 		// Generate generic component CSS
 		s.generateGenericComponentCSS(style, options)
 	}
-	
+
 	// Generate responsive CSS if enabled
 	if s.config.GenerateResponsive && len(style.ResponsiveStyles) > 0 {
 		s.builder.GenerateResponsiveCSS(className, style.ResponsiveStyles)
 	}
-	
+
 	// Custom styles are now merged into component-specific methods
 	// for better integration and to avoid duplicate rules
-	
+
 	// Generate utility classes if enabled
 	if s.config.GenerateUtilities {
 		s.builder.GenerateUtilityCSS()
 	}
-	
+
 	// Add theme variables if enabled
 	if s.config.IncludeThemeVariables {
 		s.builder.AddThemeVariables()
 	}
-	
+
 	return s.builder.Generate(), nil
 }
 
 // generateGenericComponentCSS generates CSS for unrecognized component types
 func (s *SchemaToCSS) generateGenericComponentCSS(style *ComponentStyle, options ComponentCSSOptions) {
 	className := s.buildClassName(style)
-	
+
 	// Base generic styles
 	baseStyles := map[string]string{
 		"box-sizing": "border-box",
 		"position":   "relative",
 	}
-	
+
 	// Add size-based styles
 	switch style.Size {
 	case "xs":
@@ -303,9 +303,9 @@ func (s *SchemaToCSS) generateGenericComponentCSS(style *ComponentStyle, options
 		baseStyles["font-size"] = "1.25rem"
 		baseStyles["padding"] = "2rem"
 	}
-	
+
 	s.builder.GetGenerator().AddRule(className, baseStyles)
-	
+
 	// Add state styles
 	if s.hasStateClass(style, "disabled") {
 		disabledStyles := map[string]string{
@@ -328,7 +328,7 @@ func (s *SchemaToCSS) buildClassName(style *ComponentStyle) string {
 		}
 		return className
 	}
-	
+
 	// Default pattern
 	if style.Variant != "default" && style.Size != "md" {
 		return fmt.Sprintf(".%s-%s-%s", style.Type, style.Variant, style.Size)
@@ -337,14 +337,14 @@ func (s *SchemaToCSS) buildClassName(style *ComponentStyle) string {
 	} else if style.Size != "md" {
 		return fmt.Sprintf(".%s-%s", style.Type, style.Size)
 	}
-	
+
 	return fmt.Sprintf(".%s", style.Type)
 }
 
 // generateSchemaButtonCSS generates button CSS using schema-based class name
 func (s *SchemaToCSS) generateSchemaButtonCSS(style *ComponentStyle, options ComponentCSSOptions) {
 	className := strings.TrimPrefix(options.CustomClassName, ".")
-	
+
 	// Base button styles using theme
 	baseStyles := map[string]string{
 		"display":         "inline-flex",
@@ -358,12 +358,12 @@ func (s *SchemaToCSS) generateSchemaButtonCSS(style *ComponentStyle, options Com
 		"outline":         "none",
 		"user-select":     "none",
 	}
-	
+
 	// Merge custom styles into base styles
 	for prop, value := range style.CustomStyles {
 		baseStyles[prop] = value
 	}
-	
+
 	// Size-specific styles
 	switch options.Size {
 	case "xs":
@@ -388,9 +388,9 @@ func (s *SchemaToCSS) generateSchemaButtonCSS(style *ComponentStyle, options Com
 		baseStyles["border-radius"] = s.builder.theme.BorderRadius["md"]
 		baseStyles["line-height"] = s.builder.theme.Typography["md"].LineHeight
 	}
-	
+
 	s.builder.GetGenerator().AddRule("."+className, baseStyles)
-	
+
 	// Focus state
 	focusStyles := map[string]string{
 		"outline":        "2px solid " + s.builder.theme.Colors["primary-500"],
@@ -402,7 +402,7 @@ func (s *SchemaToCSS) generateSchemaButtonCSS(style *ComponentStyle, options Com
 // generateSchemaInputCSS generates input CSS using schema-based class name
 func (s *SchemaToCSS) generateSchemaInputCSS(style *ComponentStyle, options ComponentCSSOptions) {
 	className := strings.TrimPrefix(options.CustomClassName, ".")
-	
+
 	// Base input styles
 	baseStyles := map[string]string{
 		"display":          "block",
@@ -413,7 +413,7 @@ func (s *SchemaToCSS) generateSchemaInputCSS(style *ComponentStyle, options Comp
 		"transition":       "all 150ms cubic-bezier(0.4, 0, 0.2, 1)",
 		"outline":          "none",
 	}
-	
+
 	// Size-specific styles
 	switch options.Size {
 	case "sm":
@@ -426,9 +426,9 @@ func (s *SchemaToCSS) generateSchemaInputCSS(style *ComponentStyle, options Comp
 		baseStyles["padding"] = s.builder.theme.Spacing["md"]
 		baseStyles["font-size"] = s.builder.theme.Typography["md"].FontSize
 	}
-	
+
 	s.builder.GetGenerator().AddRule("."+className, baseStyles)
-	
+
 	// Focus state
 	focusStyles := map[string]string{
 		"border-color": s.builder.theme.Colors["primary-500"],
@@ -440,7 +440,7 @@ func (s *SchemaToCSS) generateSchemaInputCSS(style *ComponentStyle, options Comp
 // generateSchemaCardCSS generates card CSS using schema-based class name
 func (s *SchemaToCSS) generateSchemaCardCSS(style *ComponentStyle, options ComponentCSSOptions) {
 	className := strings.TrimPrefix(options.CustomClassName, ".")
-	
+
 	// Base card styles
 	baseStyles := map[string]string{
 		"display":          "block",
@@ -450,7 +450,7 @@ func (s *SchemaToCSS) generateSchemaCardCSS(style *ComponentStyle, options Compo
 		"overflow":         "hidden",
 		"transition":       "all 150ms cubic-bezier(0.4, 0, 0.2, 1)",
 	}
-	
+
 	// Variant-specific styles
 	switch options.Variant {
 	case "elevated":
@@ -458,7 +458,7 @@ func (s *SchemaToCSS) generateSchemaCardCSS(style *ComponentStyle, options Compo
 	case "outlined":
 		baseStyles["border-width"] = "2px"
 	}
-	
+
 	s.builder.GetGenerator().AddRule("."+className, baseStyles)
 }
 
@@ -479,7 +479,7 @@ func (s *SchemaToCSS) GenerateComponentLibraryCSS(schemas map[string]interface{}
 	if s.config.CustomTheme != nil {
 		s.builder = NewComponentCSSBuilderWithTheme(s.config.CustomTheme)
 	}
-	
+
 	// Process each schema
 	var errors []string
 	for name, schema := range schemas {
@@ -488,21 +488,21 @@ func (s *SchemaToCSS) GenerateComponentLibraryCSS(schemas map[string]interface{}
 			errors = append(errors, fmt.Sprintf("%s: %v", name, err))
 		}
 	}
-	
+
 	// Generate utility classes once
 	if s.config.GenerateUtilities {
 		s.builder.GenerateUtilityCSS()
 	}
-	
+
 	// Add theme variables once
 	if s.config.IncludeThemeVariables {
 		s.builder.AddThemeVariables()
 	}
-	
+
 	if len(errors) > 0 {
 		return s.builder.Generate(), fmt.Errorf("errors processing schemas: %s", strings.Join(errors, "; "))
 	}
-	
+
 	return s.builder.Generate(), nil
 }
 
@@ -525,10 +525,10 @@ func (g *TypedComponentCSSGenerator) GenerateButtonCSS(schema interface{}) (stri
 	if err != nil {
 		return "", err
 	}
-	
+
 	// Override type to ensure proper button handling
 	style.Type = "button"
-	
+
 	return g.schemaToCSS.GenerateCSSFromStyle(style)
 }
 
@@ -538,26 +538,26 @@ func (g *TypedComponentCSSGenerator) GenerateFormCSS(schema interface{}) (string
 	if err != nil {
 		return "", err
 	}
-	
+
 	style.Type = "form"
-	
+
 	// Form-specific CSS generation
 	className := g.schemaToCSS.buildClassName(style)
-	
+
 	formStyles := map[string]string{
-		"display":        "block",
-		"max-width":      "100%",
-		"margin-bottom":  "1rem",
+		"display":       "block",
+		"max-width":     "100%",
+		"margin-bottom": "1rem",
 	}
-	
+
 	g.schemaToCSS.builder.GetGenerator().AddRule(className, formStyles)
-	
+
 	// Generate form control spacing
 	controlSpacing := map[string]string{
 		"margin-bottom": "1rem",
 	}
 	g.schemaToCSS.builder.GetGenerator().AddRule(className+" .form-control", controlSpacing)
-	
+
 	return g.schemaToCSS.builder.Generate(), nil
 }
 
@@ -567,21 +567,21 @@ func (g *TypedComponentCSSGenerator) GenerateTableCSS(schema interface{}) (strin
 	if err != nil {
 		return "", err
 	}
-	
+
 	style.Type = "table"
-	
+
 	// Table-specific CSS generation
 	className := g.schemaToCSS.buildClassName(style)
-	
+
 	tableStyles := map[string]string{
-		"width":           "100%",
-		"border-collapse": "collapse",
-		"border-spacing":  "0",
+		"width":            "100%",
+		"border-collapse":  "collapse",
+		"border-spacing":   "0",
 		"background-color": "#ffffff",
 	}
-	
+
 	g.schemaToCSS.builder.GetGenerator().AddRule(className, tableStyles)
-	
+
 	// Table header styles
 	headerStyles := map[string]string{
 		"background-color": "#f8f9fa",
@@ -590,14 +590,14 @@ func (g *TypedComponentCSSGenerator) GenerateTableCSS(schema interface{}) (strin
 		"border-bottom":    "1px solid #dee2e6",
 	}
 	g.schemaToCSS.builder.GetGenerator().AddRule(className+" th", headerStyles)
-	
+
 	// Table cell styles
 	cellStyles := map[string]string{
-		"padding":      "0.75rem",
+		"padding":       "0.75rem",
 		"border-bottom": "1px solid #dee2e6",
 	}
 	g.schemaToCSS.builder.GetGenerator().AddRule(className+" td", cellStyles)
-	
+
 	return g.schemaToCSS.builder.Generate(), nil
 }
 

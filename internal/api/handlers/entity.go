@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"goa.design/goa/v3/pkg"
+	goa "goa.design/goa/v3/pkg"
 
 	"github.com/niiniyare/erp/internal/api/gen/organization"
 	"github.com/niiniyare/erp/internal/core/entity"

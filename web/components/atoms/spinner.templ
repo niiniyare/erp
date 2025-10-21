@@ -18,6 +18,7 @@ import (
 // ============================================================================
 
 // SpinnerProps is defined in probs.go to avoid duplication
+// Now includes AlpinEventHandlers for OnClick support
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
@@ -65,21 +66,24 @@ const (
 // spinner := NewSpinner("Loading data...")
 // spinner.Color = "blue"
 // spinner.ComponentSize = SizeLG
-func NewSpinner(label string) SpinnerProps {
+func NewSpinner(ariaLabel string) SpinnerProps {
 	return SpinnerProps{
-		AccessibilityProps: AccessibilityProps{
-			Role: "status",
+		BaseProps: BaseProps{
+			ID: GenerateID("spinner"),
 		},
-		Label:         label,
-		Color:         "default",
-		Speed:         "normal",
-		ComponentSize: SizeMD,
+		AccessibilityProps: AccessibilityProps{
+			Role:      "status",
+			AriaLabel: ariaLabel,
+		},
+		Size:    SizeMD,
+		Color:   ColorDefault,
+		Variant: VariantDefault,
 	}
 }
 
 // NewSpinnerWithColor creates a spinner with specified color
-func NewSpinnerWithColor(label, color string) SpinnerProps {
-	props := NewSpinner(label)
+func NewSpinnerWithColor(ariaLabel string, color ColorScheme) SpinnerProps {
+	props := NewSpinner(ariaLabel)
 	props.Color = color
 	return props
 }
@@ -129,9 +133,9 @@ templ SpinnerOverlay(props SpinnerProps) {
 	<div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-900 bg-opacity-50">
 		<div class="bg-white rounded-lg p-6 shadow-lg dark:bg-gray-800">
 			@Spinner(SpinnerProps{
-				ComponentSize: props.ComponentSize,
-				Color:         props.Color,
-				Label:         props.Label,
+				Size:  props.Size,
+				Color: props.Color,
+				Label: props.Label,
 				BaseProps: BaseProps{
 					Class: "mb-4",
 				},
@@ -146,9 +150,9 @@ templ SpinnerOverlay(props SpinnerProps) {
 // SpinnerButton renders a spinner specifically sized for buttons
 templ SpinnerButton(size Size) {
 	@Spinner(SpinnerProps{
-		ComponentSize: size,
-		Color:         "white",
-		Label:         "Loading...",
+		Size:  size,
+		Color: ColorScheme("white"),
+		Label: "Loading...",
 	})
 }
 
@@ -161,12 +165,12 @@ func getSpinnerClasses(props SpinnerProps) string {
 	classes := []string{spinnerBaseClasses}
 
 	// Add size-specific dimensions from configuration
-	if dimensions, ok := spinnerDimensions[props.ComponentSize]; ok {
+	if dimensions, ok := spinnerDimensions[props.Size]; ok {
 		classes = append(classes, dimensions...)
 	}
 
 	// Add color scheme from configuration
-	if colors, ok := spinnerColorSchemes[props.Color]; ok {
+	if colors, ok := spinnerColorSchemes[string(props.Color)]; ok {
 		classes = append(classes, colors...)
 	} else if colors, ok := spinnerColorSchemes["default"]; ok {
 		classes = append(classes, colors...)
@@ -200,7 +204,7 @@ func getSpinnerAnimationClasses(props SpinnerProps) string {
 
 // WithColor returns a new SpinnerProps with color set
 func (p SpinnerProps) WithColor(color string) SpinnerProps {
-	p.Color = color
+	p.Color = ColorScheme(color)
 	return p
 }
 
@@ -212,14 +216,14 @@ func (p SpinnerProps) WithSpeed(speed string) SpinnerProps {
 
 // AsOverlay returns a new SpinnerProps configured for overlay display
 func (p SpinnerProps) AsOverlay() SpinnerProps {
-	p.ComponentSize = SizeLG
-	p.Color = "blue"
+	p.Size = SizeLG
+	p.Color = ColorScheme("blue")
 	return p
 }
 
 // AsButton returns a new SpinnerProps configured for button display
 func (p SpinnerProps) AsButton(buttonSize Size) SpinnerProps {
-	p.ComponentSize = buttonSize
-	p.Color = "white"
+	p.Size = buttonSize
+	p.Color = ColorScheme("white")
 	return p
 }

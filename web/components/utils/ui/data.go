@@ -10,7 +10,7 @@ import (
 type TableConfig struct {
 	Columns      []TableColumn `json:"columns" validate:"required"`
 	DataSource   string        `json:"data_source,omitempty"`
-	Data         []any `json:"data,omitempty"`
+	Data         []any         `json:"data,omitempty"`
 	Pagination   *Pagination   `json:"pagination,omitempty"`
 	Sorting      *Sorting      `json:"sorting,omitempty"`
 	Filtering    *Filtering    `json:"filtering,omitempty"`
@@ -148,16 +148,16 @@ type Search struct {
 
 // List component configuration
 type ListConfig struct {
-	DataSource   string        `json:"data_source,omitempty"`
-	Data         []any `json:"data,omitempty"`
-	ItemRender   string        `json:"item_render,omitempty"`
-	Pagination   *Pagination   `json:"pagination,omitempty"`
-	Loading      bool          `json:"loading,omitempty"`
-	Split        bool          `json:"split,omitempty"`
-	Bordered     bool          `json:"bordered,omitempty"`
-	Header       *Component    `json:"header,omitempty"`
-	Footer       *Component    `json:"footer,omitempty"`
-	EmptyMessage string        `json:"empty_message,omitempty"`
+	DataSource   string      `json:"data_source,omitempty"`
+	Data         []any       `json:"data,omitempty"`
+	ItemRender   string      `json:"item_render,omitempty"`
+	Pagination   *Pagination `json:"pagination,omitempty"`
+	Loading      bool        `json:"loading,omitempty"`
+	Split        bool        `json:"split,omitempty"`
+	Bordered     bool        `json:"bordered,omitempty"`
+	Header       *Component  `json:"header,omitempty"`
+	Footer       *Component  `json:"footer,omitempty"`
+	EmptyMessage string      `json:"empty_message,omitempty"`
 }
 
 // Tree component configuration
@@ -190,18 +190,18 @@ type TreeNode struct {
 
 // Chart component configuration
 type ChartConfig struct {
-	Type       ChartType   `json:"type" validate:"required"`
-	DataSource string      `json:"data_source,omitempty"`
-	Data       any `json:"data,omitempty"`
-	XAxis      *Axis       `json:"x_axis,omitempty"`
-	YAxis      *Axis       `json:"y_axis,omitempty"`
-	Legend     *Legend     `json:"legend,omitempty"`
-	Tooltip    *Tooltip    `json:"tooltip,omitempty"`
-	Colors     []string    `json:"colors,omitempty"`
-	Width      string      `json:"width,omitempty"`
-	Height     string      `json:"height,omitempty"`
-	Animation  bool        `json:"animation,omitempty"`
-	Responsive bool        `json:"responsive,omitempty"`
+	Type       ChartType `json:"type" validate:"required"`
+	DataSource string    `json:"data_source,omitempty"`
+	Data       any       `json:"data,omitempty"`
+	XAxis      *Axis     `json:"x_axis,omitempty"`
+	YAxis      *Axis     `json:"y_axis,omitempty"`
+	Legend     *Legend   `json:"legend,omitempty"`
+	Tooltip    *Tooltip  `json:"tooltip,omitempty"`
+	Colors     []string  `json:"colors,omitempty"`
+	Width      string    `json:"width,omitempty"`
+	Height     string    `json:"height,omitempty"`
+	Animation  bool      `json:"animation,omitempty"`
+	Responsive bool      `json:"responsive,omitempty"`
 }
 
 // ChartType represents different chart types
@@ -513,4 +513,3 @@ func (f *TagFactory) GetSchema() ComponentSchema {
 		Description: "A tag component for labeling and categorization",
 	}
 }
-

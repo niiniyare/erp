@@ -3,19 +3,16 @@
 
 package datatypes
 
-
-
-
 // Timelinerangename represents the CSS DataType TimelineRangeName with predefined values
 type Timelinerangename string
 
 const (
-	TimelinerangenameContain Timelinerangename = "contain"
-	TimelinerangenameCover Timelinerangename = "cover"
-	TimelinerangenameEntry Timelinerangename = "entry"
+	TimelinerangenameContain       Timelinerangename = "contain"
+	TimelinerangenameCover         Timelinerangename = "cover"
+	TimelinerangenameEntry         Timelinerangename = "entry"
 	TimelinerangenameEntrycrossing Timelinerangename = "entry-crossing"
-	TimelinerangenameExit Timelinerangename = "exit"
-	TimelinerangenameExitcrossing Timelinerangename = "exit-crossing"
+	TimelinerangenameExit          Timelinerangename = "exit"
+	TimelinerangenameExitcrossing  Timelinerangename = "exit-crossing"
 )
 
 func (d Timelinerangename) IsValid() bool {
@@ -32,5 +29,3 @@ func (d Timelinerangename) IsValid() bool {
 func (d Timelinerangename) String() string {
 	return string(d)
 }
-
-

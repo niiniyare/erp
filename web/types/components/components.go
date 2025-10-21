@@ -204,53 +204,53 @@ type ExpandConfig struct {
 // 3. Form Schema - Data entry forms
 type FormSchema struct {
 	BaseComponentProps
-	Type                        string           `json:"type"` // "form"
-	Title                       string           `json:"title,omitempty"`
-	Actions                     []ActionSchema   `json:"actions,omitempty"`
-	Body                        []any            `json:"body,omitempty"`
-	Data                        map[string]any   `json:"data,omitempty"`
-	InitAPI                     *APIConfig       `json:"initApi,omitempty"`
-	API                         *APIConfig       `json:"api,omitempty"`
-	AsyncAPI                    *APIConfig       `json:"asyncApi,omitempty"`
-	InitAsyncAPI                *APIConfig       `json:"initAsyncApi,omitempty"`
-	CheckInterval               int              `json:"checkInterval,omitempty"`
-	FinishedField               string           `json:"finishedField,omitempty"`
-	InitFinishedField           string           `json:"initFinishedField,omitempty"`
-	InitCheckInterval           int              `json:"initCheckInterval,omitempty"`
-	InitFetch                   bool             `json:"initFetch,omitempty"`
-	InitFetchOn                 string           `json:"initFetchOn,omitempty"`
-	Interval                    int              `json:"interval,omitempty"`
-	SilentPolling               bool             `json:"silentPolling,omitempty"`
-	StopAutoRefreshWhen         string           `json:"stopAutoRefreshWhen,omitempty"`
-	Mode                        string           `json:"mode,omitempty"` // "normal", "inline", "horizontal"
-	Horizontal                  *FormHorizontal  `json:"horizontal,omitempty"`
-	LabelAlign                  string           `json:"labelAlign,omitempty"` // "left", "center", "right"
-	LabelWidth                  any              `json:"labelWidth,omitempty"` // number or string
-	ColumnCount                 int              `json:"columnCount,omitempty"`
-	AutoFocus                   bool             `json:"autoFocus,omitempty"`
-	SubmitText                  string           `json:"submitText,omitempty"`
-	SubmitOnChange              bool             `json:"submitOnChange,omitempty"`
-	SubmitOnInit                bool             `json:"submitOnInit,omitempty"`
-	ResetAfterSubmit            bool             `json:"resetAfterSubmit,omitempty"`
-	ClearAfterSubmit            bool             `json:"clearAfterSubmit,omitempty"`
-	Target                      string           `json:"target,omitempty"`
-	Redirect                    string           `json:"redirect,omitempty"`
-	Reload                      string           `json:"reload,omitempty"`
-	Name                        string           `json:"name,omitempty"`
-	PrimaryField                string           `json:"primaryField,omitempty"`
-	Messages                    *FormMessages    `json:"messages,omitempty"`
-	WrapWithPanel               bool             `json:"wrapWithPanel,omitempty"`
-	PanelClassName              string           `json:"panelClassName,omitempty"`
-	AffixFooter                 bool             `json:"affixFooter,omitempty"`
+	Type                        string                    `json:"type"` // "form"
+	Title                       string                    `json:"title,omitempty"`
+	Actions                     []ActionSchema            `json:"actions,omitempty"`
+	Body                        []any                     `json:"body,omitempty"`
+	Data                        map[string]any            `json:"data,omitempty"`
+	InitAPI                     *APIConfig                `json:"initApi,omitempty"`
+	API                         *APIConfig                `json:"api,omitempty"`
+	AsyncAPI                    *APIConfig                `json:"asyncApi,omitempty"`
+	InitAsyncAPI                *APIConfig                `json:"initAsyncApi,omitempty"`
+	CheckInterval               int                       `json:"checkInterval,omitempty"`
+	FinishedField               string                    `json:"finishedField,omitempty"`
+	InitFinishedField           string                    `json:"initFinishedField,omitempty"`
+	InitCheckInterval           int                       `json:"initCheckInterval,omitempty"`
+	InitFetch                   bool                      `json:"initFetch,omitempty"`
+	InitFetchOn                 string                    `json:"initFetchOn,omitempty"`
+	Interval                    int                       `json:"interval,omitempty"`
+	SilentPolling               bool                      `json:"silentPolling,omitempty"`
+	StopAutoRefreshWhen         string                    `json:"stopAutoRefreshWhen,omitempty"`
+	Mode                        string                    `json:"mode,omitempty"` // "normal", "inline", "horizontal"
+	Horizontal                  *FormHorizontal           `json:"horizontal,omitempty"`
+	LabelAlign                  string                    `json:"labelAlign,omitempty"` // "left", "center", "right"
+	LabelWidth                  any                       `json:"labelWidth,omitempty"` // number or string
+	ColumnCount                 int                       `json:"columnCount,omitempty"`
+	AutoFocus                   bool                      `json:"autoFocus,omitempty"`
+	SubmitText                  string                    `json:"submitText,omitempty"`
+	SubmitOnChange              bool                      `json:"submitOnChange,omitempty"`
+	SubmitOnInit                bool                      `json:"submitOnInit,omitempty"`
+	ResetAfterSubmit            bool                      `json:"resetAfterSubmit,omitempty"`
+	ClearAfterSubmit            bool                      `json:"clearAfterSubmit,omitempty"`
+	Target                      string                    `json:"target,omitempty"`
+	Redirect                    string                    `json:"redirect,omitempty"`
+	Reload                      string                    `json:"reload,omitempty"`
+	Name                        string                    `json:"name,omitempty"`
+	PrimaryField                string                    `json:"primaryField,omitempty"`
+	Messages                    *FormMessages             `json:"messages,omitempty"`
+	WrapWithPanel               bool                      `json:"wrapWithPanel,omitempty"`
+	PanelClassName              string                    `json:"panelClassName,omitempty"`
+	AffixFooter                 bool                      `json:"affixFooter,omitempty"`
 	Rules                       []ComponentValidationRule `json:"rules,omitempty"`
-	PreventEnterSubmit          bool             `json:"preventEnterSubmit,omitempty"`
-	PromptPageLeave             bool             `json:"promptPageLeave,omitempty"`
-	PromptPageLeaveMessage      string           `json:"promptPageLeaveMessage,omitempty"`
-	PersistData                 string           `json:"persistData,omitempty"`
-	PersistDataKeys             []string         `json:"persistDataKeys,omitempty"`
-	ClearPersistDataAfterSubmit bool             `json:"clearPersistDataAfterSubmit,omitempty"`
-	Debug                       bool             `json:"debug,omitempty"`
-	DebugConfig                 *DebugConfig     `json:"debugConfig,omitempty"`
+	PreventEnterSubmit          bool                      `json:"preventEnterSubmit,omitempty"`
+	PromptPageLeave             bool                      `json:"promptPageLeave,omitempty"`
+	PromptPageLeaveMessage      string                    `json:"promptPageLeaveMessage,omitempty"`
+	PersistData                 string                    `json:"persistData,omitempty"`
+	PersistDataKeys             []string                  `json:"persistDataKeys,omitempty"`
+	ClearPersistDataAfterSubmit bool                      `json:"clearPersistDataAfterSubmit,omitempty"`
+	Debug                       bool                      `json:"debug,omitempty"`
+	DebugConfig                 *DebugConfig              `json:"debugConfig,omitempty"`
 }
 
 // FormMessages for form message configuration

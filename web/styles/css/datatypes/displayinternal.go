@@ -3,25 +3,22 @@
 
 package datatypes
 
-
-
-
 // Displayinternal represents the CSS DataType DisplayInternal with predefined values
 type Displayinternal string
 
 const (
-	DisplayinternalRubybase Displayinternal = "ruby-base"
+	DisplayinternalRubybase          Displayinternal = "ruby-base"
 	DisplayinternalRubybasecontainer Displayinternal = "ruby-base-container"
-	DisplayinternalRubytext Displayinternal = "ruby-text"
+	DisplayinternalRubytext          Displayinternal = "ruby-text"
 	DisplayinternalRubytextcontainer Displayinternal = "ruby-text-container"
-	DisplayinternalTablecaption Displayinternal = "table-caption"
-	DisplayinternalTablecell Displayinternal = "table-cell"
-	DisplayinternalTablecolumn Displayinternal = "table-column"
-	DisplayinternalTablecolumngroup Displayinternal = "table-column-group"
-	DisplayinternalTablefootergroup Displayinternal = "table-footer-group"
-	DisplayinternalTableheadergroup Displayinternal = "table-header-group"
-	DisplayinternalTablerow Displayinternal = "table-row"
-	DisplayinternalTablerowgroup Displayinternal = "table-row-group"
+	DisplayinternalTablecaption      Displayinternal = "table-caption"
+	DisplayinternalTablecell         Displayinternal = "table-cell"
+	DisplayinternalTablecolumn       Displayinternal = "table-column"
+	DisplayinternalTablecolumngroup  Displayinternal = "table-column-group"
+	DisplayinternalTablefootergroup  Displayinternal = "table-footer-group"
+	DisplayinternalTableheadergroup  Displayinternal = "table-header-group"
+	DisplayinternalTablerow          Displayinternal = "table-row"
+	DisplayinternalTablerowgroup     Displayinternal = "table-row-group"
 )
 
 func (d Displayinternal) IsValid() bool {
@@ -38,5 +35,3 @@ func (d Displayinternal) IsValid() bool {
 func (d Displayinternal) String() string {
 	return string(d)
 }
-
-

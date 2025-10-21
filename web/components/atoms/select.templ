@@ -57,13 +57,15 @@ func NewSelect(id, label string, options []SelectOption) SelectProps {
 		BaseProps: BaseProps{
 			ID: id,
 		},
-		Label:   label,
+		LabelProps: LabelProps{
+			Label:         label,
+			LabelPosition: LabelTop, // Conventional position for selects
+		},
 		Options: options,
-		ComponentSize: SizeMD, // Default to medium size
+		Size:    SizeMD, // Default to medium size
 		ValidationProps: ValidationProps{
 			State: StateDefault, // Default to neutral state
 		},
-		LabelPosition: LabelTop, // Conventional position for selects
 	}
 }
 
@@ -79,7 +81,7 @@ func NewSelectWithValue(id, label string, options []SelectOption, value string) 
 // ============================================================================
 
 // Select renders a fully-featured select dropdown with Flowbite styling
-// Supports validation states, sizes, Alpine.js events, and accessibility
+// Supports validation states, sizes, e.js events, and accessibility
 templ Select(props SelectProps) {
 	<div class={ getSelectWrapperClasses(props) }>
 		// Render label if specified and position is top
@@ -109,8 +111,8 @@ templ Select(props SelectProps) {
 				if props.Multiple {
 					multiple
 				}
-				if props.Size > 0 && props.Multiple {
-					size={ strconv.Itoa(props.Size) }
+				if props.VisibleOptions > 0 && props.Multiple {
+					size={ strconv.Itoa(props.VisibleOptions) }
 				}
 				if props.AriaLabel != "" {
 					aria-label={ props.AriaLabel }
@@ -251,7 +253,7 @@ func getSelectLabelClasses(props SelectProps) string {
 	}
 
 	// Add size-appropriate text class using our configuration map
-	if textSize, ok := labelTextSizes[props.ComponentSize]; ok {
+	if textSize, ok := labelTextSizes[props.Size]; ok {
 		classes = append(classes, textSize)
 	}
 
@@ -273,7 +275,7 @@ func getSelectClasses(props SelectProps) string {
 	classes := []string{selectBaseClasses, selectFocusClasses}
 
 	// Add size-specific dimensions from configuration
-	if dimensions, ok := selectDimensions[props.ComponentSize]; ok {
+	if dimensions, ok := selectDimensions[props.Size]; ok {
 		classes = append(classes, dimensions...)
 	}
 
@@ -344,8 +346,8 @@ func (p SelectProps) AsRequired() SelectProps {
 }
 
 // AsMultiple returns a new SelectProps configured for multiple selection
-func (p SelectProps) AsMultiple(size int) SelectProps {
+func (p SelectProps) AsMultiple(visibleOptions int) SelectProps {
 	p.Multiple = true
-	p.Size = size
+	p.VisibleOptions = visibleOptions
 	return p
 }

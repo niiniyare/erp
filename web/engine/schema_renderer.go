@@ -47,7 +47,7 @@ func (sr *JSONSchemaRenderer) registerTemplateRenderers() {
 	sr.templates["Checkbox"] = sr.renderCheckbox
 	sr.templates["Radio"] = sr.renderRadio
 
-	// Molecule components  
+	// Molecule components
 	sr.templates["Card"] = sr.renderCard
 	sr.templates["Form"] = sr.renderForm
 	sr.templates["Table"] = sr.renderTable
@@ -72,7 +72,7 @@ func (sr *JSONSchemaRenderer) RenderComponent(ctx context.Context, schemaType st
 
 	// Render using Templ
 	html := templateFunc(component.Props)
-	
+
 	// Apply additional attributes and events
 	html = sr.applyComponentEnhancements(html, component)
 
@@ -86,7 +86,7 @@ func (sr *JSONSchemaRenderer) RenderComponentTree(ctx context.Context, component
 	for _, comp := range components {
 		// Convert component definition to props
 		props := sr.componentToProps(comp)
-		
+
 		// Render component
 		componentHTML, err := sr.RenderComponent(ctx, comp.SchemaType, props)
 		if err != nil {
@@ -119,16 +119,16 @@ type RenderCondition struct {
 // componentToProps converts ComponentDefinition to props map
 func (sr *JSONSchemaRenderer) componentToProps(comp ComponentDefinition) map[string]interface{} {
 	props := make(map[string]interface{})
-	
+
 	// Copy all props
 	for key, value := range comp.Props {
 		props[key] = value
 	}
-	
+
 	// Add metadata
 	props["id"] = comp.ID
 	props["_schemaType"] = comp.SchemaType
-	
+
 	return props
 }
 
@@ -212,7 +212,7 @@ func (sr *JSONSchemaRenderer) renderButton(props interface{}) string {
 
 func (sr *JSONSchemaRenderer) renderButtonAttributes(props atoms.ButtonProps) string {
 	var attrs []string
-	
+
 	if props.ID != "" {
 		attrs = append(attrs, fmt.Sprintf(`id="%s"`, props.ID))
 	}
@@ -225,7 +225,7 @@ func (sr *JSONSchemaRenderer) renderButtonAttributes(props atoms.ButtonProps) st
 	if props.AriaLabel != "" {
 		attrs = append(attrs, fmt.Sprintf(`aria-label="%s"`, props.AriaLabel))
 	}
-	
+
 	return strings.Join(attrs, " ")
 }
 
@@ -246,7 +246,7 @@ func (sr *JSONSchemaRenderer) renderInput(props interface{}) string {
 
 func (sr *JSONSchemaRenderer) renderInputAttributes(props atoms.InputProps) string {
 	var attrs []string
-	
+
 	if props.ID != "" {
 		attrs = append(attrs, fmt.Sprintf(`id="%s"`, props.ID))
 	}
@@ -274,7 +274,7 @@ func (sr *JSONSchemaRenderer) renderInputAttributes(props atoms.InputProps) stri
 	if props.AriaLabel != "" {
 		attrs = append(attrs, fmt.Sprintf(`aria-label="%s"`, props.AriaLabel))
 	}
-	
+
 	return strings.Join(attrs, " ")
 }
 
@@ -293,7 +293,7 @@ func (sr *JSONSchemaRenderer) renderTextarea(props interface{}) string {
 
 func (sr *JSONSchemaRenderer) renderTextareaAttributes(props atoms.TextareaProps) string {
 	var attrs []string
-	
+
 	if props.ID != "" {
 		attrs = append(attrs, fmt.Sprintf(`id="%s"`, props.ID))
 	}
@@ -324,7 +324,7 @@ func (sr *JSONSchemaRenderer) renderTextareaAttributes(props atoms.TextareaProps
 	if !props.Resizable {
 		attrs = append(attrs, `style="resize: none"`)
 	}
-	
+
 	return strings.Join(attrs, " ")
 }
 
@@ -345,7 +345,7 @@ func (sr *JSONSchemaRenderer) renderSelect(props interface{}) string {
 		if option.Disabled {
 			disabled = " disabled"
 		}
-		
+
 		options.WriteString(fmt.Sprintf(`<option value="%s"%s%s>%s</option>`,
 			option.Value, selected, disabled, option.Label))
 	}
@@ -358,7 +358,7 @@ func (sr *JSONSchemaRenderer) renderSelect(props interface{}) string {
 
 func (sr *JSONSchemaRenderer) renderSelectAttributes(props atoms.SelectProps) string {
 	var attrs []string
-	
+
 	if props.ID != "" {
 		attrs = append(attrs, fmt.Sprintf(`id="%s"`, props.ID))
 	}
@@ -377,7 +377,7 @@ func (sr *JSONSchemaRenderer) renderSelectAttributes(props atoms.SelectProps) st
 	if props.AriaLabel != "" {
 		attrs = append(attrs, fmt.Sprintf(`aria-label="%s"`, props.AriaLabel))
 	}
-	
+
 	return strings.Join(attrs, " ")
 }
 
@@ -406,7 +406,7 @@ func (sr *JSONSchemaRenderer) renderCheckbox(props interface{}) string {
 
 func (sr *JSONSchemaRenderer) renderCheckboxAttributes(props atoms.CheckboxProps) string {
 	var attrs []string
-	
+
 	if props.ID != "" {
 		attrs = append(attrs, fmt.Sprintf(`id="%s"`, props.ID))
 	}
@@ -422,7 +422,7 @@ func (sr *JSONSchemaRenderer) renderCheckboxAttributes(props atoms.CheckboxProps
 	if props.AriaLabel != "" {
 		attrs = append(attrs, fmt.Sprintf(`aria-label="%s"`, props.AriaLabel))
 	}
-	
+
 	return strings.Join(attrs, " ")
 }
 

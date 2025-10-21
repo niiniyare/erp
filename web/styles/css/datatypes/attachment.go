@@ -3,15 +3,12 @@
 
 package datatypes
 
-
-
-
 // Attachment represents the CSS DataType Attachment with predefined values
 type Attachment string
 
 const (
-	AttachmentFixed Attachment = "fixed"
-	AttachmentLocal Attachment = "local"
+	AttachmentFixed  Attachment = "fixed"
+	AttachmentLocal  Attachment = "local"
 	AttachmentScroll Attachment = "scroll"
 )
 
@@ -29,5 +26,3 @@ func (d Attachment) IsValid() bool {
 func (d Attachment) String() string {
 	return string(d)
 }
-
-

@@ -3,20 +3,17 @@
 
 package datatypes
 
-
-
-
 // Selfposition represents the CSS DataType SelfPosition with predefined values
 type Selfposition string
 
 const (
-	SelfpositionCenter Selfposition = "center"
-	SelfpositionEnd Selfposition = "end"
-	SelfpositionFlexend Selfposition = "flex-end"
+	SelfpositionCenter    Selfposition = "center"
+	SelfpositionEnd       Selfposition = "end"
+	SelfpositionFlexend   Selfposition = "flex-end"
 	SelfpositionFlexstart Selfposition = "flex-start"
-	SelfpositionSelfend Selfposition = "self-end"
+	SelfpositionSelfend   Selfposition = "self-end"
 	SelfpositionSelfstart Selfposition = "self-start"
-	SelfpositionStart Selfposition = "start"
+	SelfpositionStart     Selfposition = "start"
 )
 
 func (d Selfposition) IsValid() bool {
@@ -33,5 +30,3 @@ func (d Selfposition) IsValid() bool {
 func (d Selfposition) String() string {
 	return string(d)
 }
-
-

@@ -24,10 +24,10 @@ func (suite *SecurityTestSuite) SetupSuite() {
 	suite.ctx = context.Background()
 	suite.validator = NewSecurityValidator()
 	suite.registry = NewRegistryWithSchemaDir("../../../docs/ui/Schema")
-	
+
 	// Create a high-security tenant context
 	suite.securityCtx = NewTenantSecurityContext("tenant-001", "user-001", SecurityLevelTopSecret)
-	
+
 	// Add required permissions
 	suite.securityCtx.Permissions = []Permission{
 		{
@@ -60,7 +60,7 @@ func (suite *SecurityTestSuite) SetupSuite() {
 // TestSecurityContextCreation tests creation of security contexts
 func (suite *SecurityTestSuite) TestSecurityContextCreation() {
 	secCtx := NewTenantSecurityContext("test-tenant", "test-user", SecurityLevelSecret)
-	
+
 	require.NotNil(suite.T(), secCtx, "Security context should not be nil")
 	assert.Equal(suite.T(), "test-tenant", secCtx.TenantID)
 	assert.Equal(suite.T(), "test-user", secCtx.UserID)
@@ -76,18 +76,18 @@ func (suite *SecurityTestSuite) TestSecurityContextValidation() {
 	// Test valid context
 	err := validateSecurityContext(suite.securityCtx)
 	assert.NoError(suite.T(), err, "Valid security context should pass validation")
-	
+
 	// Test nil context
 	err = validateSecurityContext(nil)
 	assert.Error(suite.T(), err, "Nil context should fail validation")
-	
+
 	// Test expired context
 	expiredCtx := NewTenantSecurityContext("tenant", "user", SecurityLevelPublic)
 	expiredCtx.ExpiresAt = time.Now().Add(-1 * time.Hour) // Expired 1 hour ago
-	
+
 	err = validateSecurityContext(expiredCtx)
 	assert.Error(suite.T(), err, "Expired context should fail validation")
-	
+
 	// Test missing tenant ID
 	invalidCtx := NewTenantSecurityContext("", "user", SecurityLevelPublic)
 	err = validateSecurityContext(invalidCtx)
@@ -101,7 +101,7 @@ func (suite *SecurityTestSuite) TestSecureComponentCreation() {
 		"text":    "Secure Button",
 		"variant": "primary",
 	}
-	
+
 	component, err := CreateSecureComponent(
 		suite.ctx,
 		suite.registry,
@@ -109,16 +109,16 @@ func (suite *SecurityTestSuite) TestSecureComponentCreation() {
 		buttonConfig,
 		suite.securityCtx,
 	)
-	
+
 	require.NoError(suite.T(), err, "Should create secure component without error")
 	assert.Equal(suite.T(), ComponentButton, component.Type)
 	assert.NotEmpty(suite.T(), component.ID)
-	
+
 	// Verify tenant isolation metadata
 	assert.Equal(suite.T(), suite.securityCtx.TenantID, component.metadata["tenant_id"])
 	assert.Equal(suite.T(), string(suite.securityCtx.SecurityLevel), component.metadata["security_level"])
 	assert.Equal(suite.T(), suite.securityCtx.UserID, component.metadata["created_by"])
-	
+
 	// Verify encryption is applied for high security levels
 	assert.True(suite.T(), component.encrypted, "Component should be encrypted for top-secret level")
 	assert.NotNil(suite.T(), component.encryptedConfig, "Encrypted config should be present")
@@ -128,12 +128,12 @@ func (suite *SecurityTestSuite) TestSecureComponentCreation() {
 func (suite *SecurityTestSuite) TestSecureComponentCreationWithInsufficientPermissions() {
 	// Create context without permissions
 	unauthorizedCtx := NewTenantSecurityContext("tenant-002", "user-002", SecurityLevelPublic)
-	
+
 	buttonConfig := map[string]any{
 		"text":    "Unauthorized Button",
 		"variant": "primary",
 	}
-	
+
 	_, err := CreateSecureComponent(
 		suite.ctx,
 		suite.registry,
@@ -141,7 +141,7 @@ func (suite *SecurityTestSuite) TestSecureComponentCreationWithInsufficientPermi
 		buttonConfig,
 		unauthorizedCtx,
 	)
-	
+
 	assert.Error(suite.T(), err, "Should fail without proper permissions")
 	assert.Contains(suite.T(), err.Error(), "insufficient permissions")
 }
@@ -152,17 +152,17 @@ func (suite *SecurityTestSuite) TestTenantIsolationValidation() {
 	component := NewComponent(ComponentCard, "test-card").
 		WithMetadata("tenant_id", suite.securityCtx.TenantID)
 	builtComponent := component.Build()
-	
+
 	violations := suite.validator.ValidateComponentSecurity(suite.ctx, builtComponent, suite.securityCtx)
-	
+
 	// Should have minimal violations for correct tenant
 	tenantViolations := filterViolationsByType(violations, ViolationTenantIsolation)
 	assert.Empty(suite.T(), tenantViolations, "Should not have tenant isolation violations for correct tenant")
-	
+
 	// Test with wrong tenant
 	wrongTenantCtx := NewTenantSecurityContext("wrong-tenant", "user-001", SecurityLevelTopSecret)
 	wrongTenantCtx.Permissions = suite.securityCtx.Permissions // Copy permissions
-	
+
 	violations = suite.validator.ValidateComponentSecurity(suite.ctx, builtComponent, wrongTenantCtx)
 	tenantViolations = filterViolationsByType(violations, ViolationTenantIsolation)
 	assert.NotEmpty(suite.T(), tenantViolations, "Should have tenant isolation violations for wrong tenant")
@@ -172,16 +172,16 @@ func (suite *SecurityTestSuite) TestTenantIsolationValidation() {
 func (suite *SecurityTestSuite) TestPermissionValidation() {
 	component := NewComponent(ComponentInput, "test-input")
 	builtComponent := component.Build()
-	
+
 	// Test with sufficient permissions
 	violations := suite.validator.ValidateComponentSecurity(suite.ctx, builtComponent, suite.securityCtx)
 	permissionViolations := filterViolationsByType(violations, ViolationInsufficientPermissions)
-	
+
 	// Should pass if we have the right permissions setup
 	if len(permissionViolations) > 0 {
 		suite.T().Logf("Permission violations found: %v", permissionViolations)
 	}
-	
+
 	// Test with insufficient permissions
 	limitedCtx := NewTenantSecurityContext("tenant-001", "user-001", SecurityLevelTopSecret)
 	limitedCtx.Permissions = []Permission{
@@ -190,7 +190,7 @@ func (suite *SecurityTestSuite) TestPermissionValidation() {
 			Action:   "read",
 		},
 	}
-	
+
 	violations = suite.validator.ValidateComponentSecurity(suite.ctx, builtComponent, limitedCtx)
 	permissionViolations = filterViolationsByType(violations, ViolationInsufficientPermissions)
 	assert.NotEmpty(suite.T(), permissionViolations, "Should have permission violations without proper permissions")
@@ -202,16 +202,16 @@ func (suite *SecurityTestSuite) TestEncryptionValidation() {
 	component := NewComponent(ComponentCard, "test-card")
 	builtComponent := component.Build()
 	// builtComponent.encrypted remains false
-	
+
 	// Test with high security level that requires encryption
 	violations := suite.validator.ValidateComponentSecurity(suite.ctx, builtComponent, suite.securityCtx)
 	encryptionViolations := filterViolationsByType(violations, ViolationEncryption)
 	assert.NotEmpty(suite.T(), encryptionViolations, "Should have encryption violations for unencrypted high-security component")
-	
+
 	// Test with encrypted component
 	encryptedComponent := builtComponent
 	encryptedComponent.encrypted = true
-	
+
 	violations = suite.validator.ValidateComponentSecurity(suite.ctx, encryptedComponent, suite.securityCtx)
 	encryptionViolations = filterViolationsByType(violations, ViolationEncryption)
 	assert.Empty(suite.T(), encryptionViolations, "Should not have encryption violations for encrypted component")
@@ -224,16 +224,16 @@ func (suite *SecurityTestSuite) TestDataClassificationValidation() {
 		WithMetadata("data_classification", "secret").
 		WithMetadata("tenant_id", suite.securityCtx.TenantID)
 	builtComponent := component.Build()
-	
+
 	// Should pass with top-secret security level
 	violations := suite.validator.ValidateComponentSecurity(suite.ctx, builtComponent, suite.securityCtx)
 	classificationViolations := filterViolationsByType(violations, ViolationDataClassification)
 	assert.Empty(suite.T(), classificationViolations, "Top-secret level should access secret data")
-	
+
 	// Test with insufficient security level
 	lowSecurityCtx := NewTenantSecurityContext("tenant-001", "user-001", SecurityLevelPublic)
 	lowSecurityCtx.Permissions = suite.securityCtx.Permissions // Copy permissions
-	
+
 	violations = suite.validator.ValidateComponentSecurity(suite.ctx, builtComponent, lowSecurityCtx)
 	classificationViolations = filterViolationsByType(violations, ViolationDataClassification)
 	assert.NotEmpty(suite.T(), classificationViolations, "Public level should not access secret data")
@@ -244,11 +244,11 @@ func (suite *SecurityTestSuite) TestPermissionChecking() {
 	// Test existing permission
 	hasButtonPermission := hasPermission(suite.securityCtx, "component:button", "create")
 	assert.True(suite.T(), hasButtonPermission, "Should have button create permission")
-	
+
 	// Test non-existent permission
 	hasNonExistentPermission := hasPermission(suite.securityCtx, "component:nonexistent", "create")
 	assert.False(suite.T(), hasNonExistentPermission, "Should not have non-existent permission")
-	
+
 	// Test expired permission
 	expiredTime := time.Now().Add(-1 * time.Hour)
 	expiredPermission := Permission{
@@ -257,7 +257,7 @@ func (suite *SecurityTestSuite) TestPermissionChecking() {
 		ExpiresAt: &expiredTime,
 	}
 	suite.securityCtx.Permissions = append(suite.securityCtx.Permissions, expiredPermission)
-	
+
 	hasExpiredPermission := hasPermission(suite.securityCtx, "component:expired", "read")
 	assert.False(suite.T(), hasExpiredPermission, "Should not have expired permission")
 }
@@ -265,7 +265,7 @@ func (suite *SecurityTestSuite) TestPermissionChecking() {
 // TestEncryptionKeyGeneration tests encryption key generation
 func (suite *SecurityTestSuite) TestEncryptionKeyGeneration() {
 	keys := generateEncryptionKeys()
-	
+
 	require.NotNil(suite.T(), keys, "Encryption keys should not be nil")
 	assert.Len(suite.T(), keys.DataEncryptionKey, 32, "DEK should be 256 bits (32 bytes)")
 	assert.Len(suite.T(), keys.KeyEncryptionKey, 32, "KEK should be 256 bits (32 bytes)")
@@ -280,13 +280,13 @@ func (suite *SecurityTestSuite) TestSecurityViolationSeverity() {
 	component := NewComponent(ComponentCard, "test-card").
 		WithMetadata("tenant_id", "wrong-tenant") // Wrong tenant
 	builtComponent := component.Build()
-	
+
 	violations := suite.validator.ValidateComponentSecurity(suite.ctx, builtComponent, suite.securityCtx)
-	
+
 	// Check that tenant isolation violations are marked as critical
 	tenantViolations := filterViolationsByType(violations, ViolationTenantIsolation)
 	if len(tenantViolations) > 0 {
-		assert.Equal(suite.T(), SecuritySeverityCritical, tenantViolations[0].Severity, 
+		assert.Equal(suite.T(), SecuritySeverityCritical, tenantViolations[0].Severity,
 			"Tenant isolation violations should be critical severity")
 	}
 }
@@ -295,7 +295,7 @@ func (suite *SecurityTestSuite) TestSecurityViolationSeverity() {
 func (suite *SecurityTestSuite) TestSecureIDGeneration() {
 	id1 := generateSecureID()
 	id2 := generateSecureID()
-	
+
 	assert.NotEmpty(suite.T(), id1, "Generated ID should not be empty")
 	assert.NotEmpty(suite.T(), id2, "Generated ID should not be empty")
 	assert.NotEqual(suite.T(), id1, id2, "Generated IDs should be unique")

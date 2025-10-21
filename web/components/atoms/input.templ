@@ -65,19 +65,20 @@ const (
 // input.Type = InputTypeEmail
 // input.Required = true
 func NewInput(id, placeholder string) InputProps {
-	return InputProps{
+	props := InputProps{
 		BaseProps: BaseProps{
 			ID: EnsureID(id, "input"),
 		},
 		Type: InputTypeText,
-		Placeholder: placeholder,
-		Variant: VariantDefault,
-		Size: SizeMD,
 		ValidationProps: ValidationProps{
 			State: StateDefault,
 		},
-		LabelPosition: LabelTop,
 	}
+	props.Placeholder = placeholder
+	props.Variant = VariantDefault
+	props.Size = SizeMD
+	props.LabelPosition = LabelTop
+	return props
 }
 
 // NewEmailInput creates an input configured for email

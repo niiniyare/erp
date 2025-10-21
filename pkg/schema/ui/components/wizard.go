@@ -1,4 +1,4 @@
-// Package components - WizardSchema for multi-step wizard forms  
+// Package components - WizardSchema for multi-step wizard forms
 // Based on JSON schema: WizardSchema.json
 package components
 
@@ -59,7 +59,7 @@ type WizardStepSchema struct {
 	// Step content configuration
 	// Array of form components and layouts for this step
 	Body []any `json:"body,omitempty"`
-	
+
 	// API Configuration for the step
 	// Main API for this step (usually for data submission)
 	API *APIConfig `json:"api,omitempty"`
@@ -81,13 +81,13 @@ type WizardStepSchema struct {
 	HiddenOn string `json:"hiddenOn,omitempty"`
 	// Expression to disable the step
 	DisabledOn string `json:"disabledOn,omitempty"`
-	
+
 	// Step validation API
 	ValidateAPI *APIConfig `json:"validateApi,omitempty"`
-	
+
 	// Step-specific actions (buttons)
 	Actions []ActionSchema `json:"actions,omitempty"`
-	
+
 	// Dialog configuration for this step
 	Dialog *DialogSchema `json:"dialog,omitempty"`
 
@@ -115,10 +115,10 @@ type WizardSchema struct {
 	// Wizard Configuration
 	// Display orientation of the wizard steps
 	Mode WizardMode `json:"mode,omitempty"`
-	
+
 	// Array of wizard steps (required)
 	Steps []WizardStepSchema `json:"steps,omitempty"`
-	
+
 	// Initial step to display (step index or value)
 	StartStep any `json:"startStep,omitempty"` // number or string
 
@@ -151,13 +151,13 @@ type WizardSchema struct {
 	Reload string `json:"reload,omitempty"`
 	// Target for form submission
 	Target string `json:"target,omitempty"`
-	
+
 	// Navigation button configuration
 	// Whether previous button is disabled
 	ActionPrevDisabled bool `json:"actionPrevDisabled,omitempty"`
-	// Whether next button is disabled  
+	// Whether next button is disabled
 	ActionNextDisabled bool `json:"actionNextDisabled,omitempty"`
-	
+
 	// Layout and styling
 	// Whether to wrap entire wizard in a panel
 	WrapWithPanel bool `json:"wrapWithPanel,omitempty"`
@@ -191,10 +191,10 @@ type WizardSchema struct {
 	BulkSubmit bool `json:"bulkSubmit,omitempty"`
 	// Field name to track individual step completion
 	StepFinishedField string `json:"stepFinishedField,omitempty"`
-	
+
 	// Form name for data binding and reference
 	Name string `json:"name,omitempty"`
-	
+
 	// Initial data for the wizard
 	Data map[string]any `json:"data,omitempty"`
 
@@ -205,17 +205,17 @@ type WizardSchema struct {
 // Factory function to create a basic horizontal wizard
 func NewWizard(steps []WizardStepSchema) *WizardSchema {
 	return &WizardSchema{
-		Type:                "wizard",
-		Mode:                WizardModeHorizontal,
-		Steps:               steps,
-		ActionFinishLabel:   "Complete",
-		ActionNextLabel:     "Next",
-		ActionPrevLabel:     "Previous",
-		WrapWithPanel:       true,
-		AffixFooter:         false,
-		BulkSubmit:          true,
-		ActionPrevDisabled:  false,
-		ActionNextDisabled:  false,
+		Type:               "wizard",
+		Mode:               WizardModeHorizontal,
+		Steps:              steps,
+		ActionFinishLabel:  "Complete",
+		ActionNextLabel:    "Next",
+		ActionPrevLabel:    "Previous",
+		WrapWithPanel:      true,
+		AffixFooter:        false,
+		BulkSubmit:         true,
+		ActionPrevDisabled: false,
+		ActionNextDisabled: false,
 	}
 }
 
@@ -272,7 +272,7 @@ func (w *WizardSchema) Validate() error {
 	if w.Type != "wizard" {
 		return fmt.Errorf("invalid wizard type: %s, must be 'wizard'", w.Type)
 	}
-	
+
 	if len(w.Steps) == 0 {
 		return fmt.Errorf("wizard must have at least one step")
 	}

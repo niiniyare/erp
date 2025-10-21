@@ -327,7 +327,7 @@ func (demo *SchemaDemoSystem) RunAllDemos(ctx context.Context) error {
 // RunDemo is a convenience function to run the complete demonstration
 func RunSchemaDemo(schemaDir string) {
 	ctx := context.Background()
-	
+
 	demo, err := NewSchemaDemoSystem(schemaDir)
 	if err != nil {
 		log.Fatalf("Failed to create demo system: %v", err)

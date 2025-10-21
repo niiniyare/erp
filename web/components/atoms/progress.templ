@@ -98,7 +98,7 @@ func NewProgress(label string, value float64) ProgressProps {
 		Min:           0,
 		Color:         "default",
 		Variant:       "default",
-		ComponentSize: SizeMD,
+		Size:          SizeMD,
 		LabelPosition: LabelTop,
 	}
 }
@@ -120,7 +120,7 @@ func NewIndeterminateProgress(label string) ProgressProps {
 		Min:           0,
 		Color:         "default",
 		Variant:       "default",
-		ComponentSize: SizeMD,
+		Size: SizeMD,
 		Striped:       true,
 		Animated:      true,
 		LabelPosition: LabelTop,
@@ -198,7 +198,7 @@ func getProgressLabelClasses(props ProgressProps) string {
 	classes := []string{"text-gray-700", "dark:text-gray-300"}
 
 	// Add size-appropriate text class
-	if textSize, ok := progressLabelSizes[props.ComponentSize]; ok {
+	if textSize, ok := progressLabelSizes[props.Size]; ok {
 		classes = append(classes, textSize...)
 	}
 
@@ -217,17 +217,17 @@ func getProgressContainerClasses(props ProgressProps) string {
 	classes := []string{progressBaseClasses}
 
 	// Add size-specific dimensions from configuration
-	if dimensions, ok := progressDimensions[props.ComponentSize]; ok {
+	if dimensions, ok := progressDimensions[props.Size]; ok {
 		classes = append(classes, dimensions...)
 	}
 
 	// Add variant-specific styling from configuration
-	if variants, ok := progressVariants[props.Variant]; ok {
+	if variants, ok := progressVariants[string(props.Variant)]; ok {
 		classes = append(classes, variants...)
 	}
 
 	// Add background color scheme
-	if colors, ok := progressBgColorSchemes[props.Color]; ok {
+	if colors, ok := progressBgColorSchemes[string(props.Color)]; ok {
 		classes = append(classes, colors...)
 	} else if colors, ok := progressBgColorSchemes["default"]; ok {
 		classes = append(classes, colors...)
@@ -241,7 +241,7 @@ func getProgressBarClasses(props ProgressProps) string {
 	classes := []string{progressBarClasses}
 
 	// Add color scheme from configuration
-	if colors, ok := progressColorSchemes[props.Color]; ok {
+	if colors, ok := progressColorSchemes[string(props.Color)]; ok {
 		classes = append(classes, colors...)
 	} else if colors, ok := progressColorSchemes["default"]; ok {
 		classes = append(classes, colors...)
@@ -295,13 +295,13 @@ func getPercentageText(props ProgressProps) string {
 
 // WithColor returns a new ProgressProps with color set
 func (p ProgressProps) WithColor(color string) ProgressProps {
-	p.Color = color
+	p.Color = ColorScheme(color)
 	return p
 }
 
 // WithVariant returns a new ProgressProps with variant set
 func (p ProgressProps) WithVariant(variant string) ProgressProps {
-	p.Variant = variant
+	p.Variant = Variant(variant)
 	return p
 }
 
@@ -332,13 +332,13 @@ func (p ProgressProps) WithPercent() ProgressProps {
 
 // AsSquare returns a new ProgressProps with square variant
 func (p ProgressProps) AsSquare() ProgressProps {
-	p.Variant = "square"
+	p.Variant = Variant("square")
 	return p
 }
 
 // AsRounded returns a new ProgressProps with rounded variant
 func (p ProgressProps) AsRounded() ProgressProps {
-	p.Variant = "rounded"
+	p.Variant = Variant("rounded")
 	return p
 }
 

@@ -3,9 +3,6 @@
 
 package datatypes
 
-
-
-
 // Animateablefeature represents the CSS DataType AnimateableFeature
 type Animateablefeature string
 
@@ -17,5 +14,3 @@ func (d Animateablefeature) IsValid() bool {
 func (d Animateablefeature) String() string {
 	return string(d)
 }
-
-

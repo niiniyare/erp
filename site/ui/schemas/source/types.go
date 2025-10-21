@@ -21,21 +21,21 @@ type SchemaObject struct {
 
 // Page root page component
 type Page struct {
-	Type        string                 `json:"type"`
-	Title       *string                `json:"title,omitempty"`
-	Description *string                `json:"description,omitempty"`
+	Type        string         `json:"type"`
+	Title       *string        `json:"title,omitempty"`
+	Description *string        `json:"description,omitempty"`
 	Body        any            `json:"body,omitempty"`
 	Toolbar     []any          `json:"toolbar,omitempty"`
 	Aside       any            `json:"aside,omitempty"`
-	ClassName   *string                `json:"className,omitempty"`
+	ClassName   *string        `json:"className,omitempty"`
 	Style       map[string]any `json:"style,omitempty"`
 }
 
 // Container flexible container
 type Container struct {
-	Type      string                 `json:"type"`
+	Type      string         `json:"type"`
 	Body      any            `json:"body,omitempty"`
-	ClassName *string                `json:"className,omitempty"`
+	ClassName *string        `json:"className,omitempty"`
 	Style     map[string]any `json:"style,omitempty"`
 }
 
@@ -50,8 +50,8 @@ type Grid struct {
 // GridColumn grid column
 type GridColumn struct {
 	Body      any            `json:"body,omitempty"`
-	Width     *string                `json:"width,omitempty"`
-	ClassName *string                `json:"className,omitempty"`
+	Width     *string        `json:"width,omitempty"`
+	ClassName *string        `json:"className,omitempty"`
 	Style     map[string]any `json:"style,omitempty"`
 }
 
@@ -65,37 +65,37 @@ type HBox struct {
 
 // HBoxColumn horizontal box column
 type HBoxColumn struct {
-	Body      any `json:"body,omitempty"`
-	Width     *string     `json:"width,omitempty"`
-	ClassName *string     `json:"className,omitempty"`
+	Body      any     `json:"body,omitempty"`
+	Width     *string `json:"width,omitempty"`
+	ClassName *string `json:"className,omitempty"`
 }
 
 // VBox vertical box layout
 type VBox struct {
-	Type      string        `json:"type"`
-	Rows      []any `json:"rows,omitempty"`
-	Gap       *string       `json:"gap,omitempty"`
-	ClassName *string       `json:"className,omitempty"`
+	Type      string  `json:"type"`
+	Rows      []any   `json:"rows,omitempty"`
+	Gap       *string `json:"gap,omitempty"`
+	ClassName *string `json:"className,omitempty"`
 }
 
 // Flex flexible layout
 type Flex struct {
-	Type           string        `json:"type"`
-	Items          []any `json:"items,omitempty"`
-	Direction      *string       `json:"direction,omitempty"`
-	JustifyContent *string       `json:"justifyContent,omitempty"`
-	AlignItems     *string       `json:"alignItems,omitempty"`
-	ClassName      *string       `json:"className,omitempty"`
+	Type           string  `json:"type"`
+	Items          []any   `json:"items,omitempty"`
+	Direction      *string `json:"direction,omitempty"`
+	JustifyContent *string `json:"justifyContent,omitempty"`
+	AlignItems     *string `json:"alignItems,omitempty"`
+	ClassName      *string `json:"className,omitempty"`
 }
 
 // Panel collapsible panel
 type Panel struct {
-	Type      string      `json:"type"`
-	Title     string      `json:"title"`
-	Body      any `json:"body,omitempty"`
-	Expanded  *bool       `json:"expanded,omitempty"`
-	ClassName *string     `json:"className,omitempty"`
-	Icon      *string     `json:"icon,omitempty"`
+	Type      string  `json:"type"`
+	Title     string  `json:"title"`
+	Body      any     `json:"body,omitempty"`
+	Expanded  *bool   `json:"expanded,omitempty"`
+	ClassName *string `json:"className,omitempty"`
+	Icon      *string `json:"icon,omitempty"`
 }
 
 // Collapse collapse group
@@ -108,31 +108,31 @@ type Collapse struct {
 
 // CollapseItem collapse panel item
 type CollapseItem struct {
-	Title string      `json:"title"`
-	Body  any `json:"body,omitempty"`
-	Icon  *string     `json:"icon,omitempty"`
+	Title string  `json:"title"`
+	Body  any     `json:"body,omitempty"`
+	Icon  *string `json:"icon,omitempty"`
 }
 
 // Card card component
 type Card struct {
-	Type     string      `json:"type"`
-	Title    *string     `json:"title,omitempty"`
-	SubTitle *string     `json:"subTitle,omitempty"`
-	Desc     *string     `json:"desc,omitempty"`
-	Body     any `json:"body,omitempty"`
-	Avatar   *string     `json:"avatar,omitempty"`
-	Image    *string     `json:"image,omitempty"`
-	Link     *string     `json:"link,omitempty"`
-	Actions  []Action    `json:"actions,omitempty"`
+	Type     string   `json:"type"`
+	Title    *string  `json:"title,omitempty"`
+	SubTitle *string  `json:"subTitle,omitempty"`
+	Desc     *string  `json:"desc,omitempty"`
+	Body     any      `json:"body,omitempty"`
+	Avatar   *string  `json:"avatar,omitempty"`
+	Image    *string  `json:"image,omitempty"`
+	Link     *string  `json:"link,omitempty"`
+	Actions  []Action `json:"actions,omitempty"`
 }
 
 // Cards card list component
 type Cards struct {
-	Type        string        `json:"type"`
-	CardOptions *CardOptions  `json:"cardOptions,omitempty"`
-	Data        []any `json:"data,omitempty"`
-	Source      *API          `json:"source,omitempty"`
-	ClassName   *string       `json:"className,omitempty"`
+	Type        string       `json:"type"`
+	CardOptions *CardOptions `json:"cardOptions,omitempty"`
+	Data        []any        `json:"data,omitempty"`
+	Source      *API         `json:"source,omitempty"`
+	ClassName   *string      `json:"className,omitempty"`
 }
 
 // CardOptions card display options
@@ -147,11 +147,11 @@ type CardOptions struct {
 
 // Carousel carousel component
 type Carousel struct {
-	Type      string        `json:"type"`
-	Items     []any `json:"items,omitempty"`
-	Auto      *bool         `json:"auto,omitempty"`
-	Duration  *int          `json:"duration,omitempty"`
-	ClassName *string       `json:"className,omitempty"`
+	Type      string  `json:"type"`
+	Items     []any   `json:"items,omitempty"`
+	Auto      *bool   `json:"auto,omitempty"`
+	Duration  *int    `json:"duration,omitempty"`
+	ClassName *string `json:"className,omitempty"`
 }
 
 // ============================================================================
@@ -168,11 +168,11 @@ type Tabs struct {
 
 // TabConfig tab configuration
 type TabConfig struct {
-	Title    string      `json:"title"`
-	Key      *string     `json:"key,omitempty"`
-	Body     any `json:"body,omitempty"`
-	Icon     *string     `json:"icon,omitempty"`
-	Closable *bool       `json:"closable,omitempty"`
+	Title    string  `json:"title"`
+	Key      *string `json:"key,omitempty"`
+	Body     any     `json:"body,omitempty"`
+	Icon     *string `json:"icon,omitempty"`
+	Closable *bool   `json:"closable,omitempty"`
 }
 
 // Steps step progress component
@@ -186,11 +186,11 @@ type Steps struct {
 
 // StepConfig step configuration
 type StepConfig struct {
-	Title       string      `json:"title"`
-	Description *string     `json:"description,omitempty"`
-	Icon        *string     `json:"icon,omitempty"`
-	Status      *string     `json:"status,omitempty"`
-	Body        any `json:"body,omitempty"`
+	Title       string  `json:"title"`
+	Description *string `json:"description,omitempty"`
+	Icon        *string `json:"icon,omitempty"`
+	Status      *string `json:"status,omitempty"`
+	Body        any     `json:"body,omitempty"`
 }
 
 // Nav navigation component
@@ -220,9 +220,9 @@ type AnchorNav struct {
 
 // AnchorLink anchor link
 type AnchorLink struct {
-	Label  string      `json:"label"`
-	Target string      `json:"target"`
-	Body   any `json:"body,omitempty"`
+	Label  string `json:"label"`
+	Target string `json:"target"`
+	Body   any    `json:"body,omitempty"`
 }
 
 // ============================================================================
@@ -233,7 +233,7 @@ type AnchorLink struct {
 type Form struct {
 	Type             string        `json:"type"`
 	Title            *string       `json:"title,omitempty"`
-	Body             any   `json:"body,omitempty"`
+	Body             any           `json:"body,omitempty"`
 	SubmitText       *string       `json:"submitText,omitempty"`
 	ResetText        *string       `json:"resetText,omitempty"`
 	Layout           *string       `json:"layout,omitempty"`
@@ -251,16 +251,16 @@ type Form struct {
 // FormControl base form field - compatible with FormControlSchema.json
 type FormControl struct {
 	// Identity & Display
-	SchemaID       *string     `json:"$id,omitempty"`
-	Type           string      `json:"type"`
-	Name           string      `json:"name"`
-	Label          any `json:"label,omitempty"` // string or false
-	LabelAlign     *string     `json:"labelAlign,omitempty"`
-	LabelWidth     any `json:"labelWidth,omitempty"` // number or string
-	LabelClassName *string     `json:"labelClassName,omitempty"`
-	Placeholder    *string     `json:"placeholder,omitempty"`
-	ClassName      *string     `json:"className,omitempty"`
-	InputClassName *string     `json:"inputClassName,omitempty"`
+	SchemaID       *string `json:"$id,omitempty"`
+	Type           string  `json:"type"`
+	Name           string  `json:"name"`
+	Label          any     `json:"label,omitempty"` // string or false
+	LabelAlign     *string `json:"labelAlign,omitempty"`
+	LabelWidth     any     `json:"labelWidth,omitempty"` // number or string
+	LabelClassName *string `json:"labelClassName,omitempty"`
+	Placeholder    *string `json:"placeholder,omitempty"`
+	ClassName      *string `json:"className,omitempty"`
+	InputClassName *string `json:"inputClassName,omitempty"`
 
 	// Values & Defaults
 	Value        any `json:"value,omitempty"`
@@ -278,33 +278,33 @@ type FormControl struct {
 	ReadOnlyOn *string `json:"readOnlyOn,omitempty"`
 
 	// Static Display
-	Static               *bool       `json:"static,omitempty"`
-	StaticOn             *string     `json:"staticOn,omitempty"`
-	StaticPlaceholder    *string     `json:"staticPlaceholder,omitempty"`
-	StaticClassName      *string     `json:"staticClassName,omitempty"`
-	StaticLabelClassName *string     `json:"staticLabelClassName,omitempty"`
-	StaticInputClassName *string     `json:"staticInputClassName,omitempty"`
-	StaticSchema         any `json:"staticSchema,omitempty"`
+	Static               *bool   `json:"static,omitempty"`
+	StaticOn             *string `json:"staticOn,omitempty"`
+	StaticPlaceholder    *string `json:"staticPlaceholder,omitempty"`
+	StaticClassName      *string `json:"staticClassName,omitempty"`
+	StaticLabelClassName *string `json:"staticLabelClassName,omitempty"`
+	StaticInputClassName *string `json:"staticInputClassName,omitempty"`
+	StaticSchema         any     `json:"staticSchema,omitempty"`
 
 	// Description & Help
-	Description          *string     `json:"description,omitempty"`
-	Desc                 *string     `json:"desc,omitempty"`
-	DescriptionClassName *string     `json:"descriptionClassName,omitempty"`
-	Remark               any `json:"remark,omitempty"` // SchemaRemark
-	LabelRemark          any `json:"labelRemark,omitempty"`
-	Hint                 *string     `json:"hint,omitempty"`
+	Description          *string `json:"description,omitempty"`
+	Desc                 *string `json:"desc,omitempty"`
+	DescriptionClassName *string `json:"descriptionClassName,omitempty"`
+	Remark               any     `json:"remark,omitempty"` // SchemaRemark
+	LabelRemark          any     `json:"labelRemark,omitempty"`
+	Hint                 *string `json:"hint,omitempty"`
 
 	// Validation
 	ValidationErrors map[string]string `json:"validationErrors,omitempty"`
-	Validations      any       `json:"validations,omitempty"` // string or object
+	Validations      any               `json:"validations,omitempty"` // string or object
 	ValidateOnChange *bool             `json:"validateOnChange,omitempty"`
-	ValidateAPI      any       `json:"validateApi,omitempty"` // API config
+	ValidateAPI      any               `json:"validateApi,omitempty"` // API config
 
 	// Layout & Display
-	Size       *string     `json:"size,omitempty"`       // xs, sm, md, lg, full
-	Mode       *string     `json:"mode,omitempty"`       // normal, inline, horizontal
-	Horizontal any `json:"horizontal,omitempty"` // FormHorizontal
-	Inline     *bool       `json:"inline,omitempty"`
+	Size       *string `json:"size,omitempty"`       // xs, sm, md, lg, full
+	Mode       *string `json:"mode,omitempty"`       // normal, inline, horizontal
+	Horizontal any     `json:"horizontal,omitempty"` // FormHorizontal
+	Inline     *bool   `json:"inline,omitempty"`
 
 	// Behavior
 	SubmitOnChange     *bool `json:"submitOnChange,omitempty"`
@@ -318,9 +318,9 @@ type FormControl struct {
 	OnEvent map[string]EventConfig `json:"onEvent,omitempty"`
 
 	// Editor & Meta
-	EditorSetting *EditorConfig          `json:"editorSetting,omitempty"`
+	EditorSetting *EditorConfig  `json:"editorSetting,omitempty"`
 	TestIDBuilder any            `json:"testIdBuilder,omitempty"`
-	UseMobileUI   *bool                  `json:"useMobileUI,omitempty"`
+	UseMobileUI   *bool          `json:"useMobileUI,omitempty"`
 	Style         map[string]any `json:"style,omitempty"`
 
 	// Extra Fields
@@ -356,34 +356,34 @@ type TrackConfig struct {
 
 // ActionConfig event action configuration
 type ActionConfig struct {
-	ActionType string      `json:"actionType"`
-	Dialog     any `json:"dialog,omitempty"`
-	Drawer     any `json:"drawer,omitempty"`
-	Toast      any `json:"toast,omitempty"`
-	API        any `json:"api,omitempty"`
-	Redirect   *string     `json:"redirect,omitempty"`
-	Reload     *string     `json:"reload,omitempty"`
+	ActionType string  `json:"actionType"`
+	Dialog     any     `json:"dialog,omitempty"`
+	Drawer     any     `json:"drawer,omitempty"`
+	Toast      any     `json:"toast,omitempty"`
+	API        any     `json:"api,omitempty"`
+	Redirect   *string `json:"redirect,omitempty"`
+	Reload     *string `json:"reload,omitempty"`
 	// Add more as needed
 }
 
 // EditorConfig editor configuration
 type EditorConfig struct {
-	Behavior    *string     `json:"behavior,omitempty"`
-	DisplayName *string     `json:"displayName,omitempty"`
-	Mock        any `json:"mock,omitempty"`
+	Behavior    *string `json:"behavior,omitempty"`
+	DisplayName *string `json:"displayName,omitempty"`
+	Mock        any     `json:"mock,omitempty"`
 }
 
 // AutoFillConfig auto-fill configuration
 type AutoFillConfig struct {
-	ShowSuggestion   *bool                  `json:"showSuggestion,omitempty"`
+	ShowSuggestion   *bool          `json:"showSuggestion,omitempty"`
 	DefaultSelection any            `json:"defaultSelection,omitempty"`
 	API              any            `json:"api,omitempty"`
-	Silent           *bool                  `json:"silent,omitempty"`
+	Silent           *bool          `json:"silent,omitempty"`
 	FillMapping      map[string]any `json:"fillMappinng,omitempty"`
-	Trigger          *string                `json:"trigger,omitempty"` // change, focus, blur
-	Mode             *string                `json:"mode,omitempty"`    // popOver, dialog, drawer
-	Position         *string                `json:"position,omitempty"`
-	Size             *string                `json:"size,omitempty"`
+	Trigger          *string        `json:"trigger,omitempty"` // change, focus, blur
+	Mode             *string        `json:"mode,omitempty"`    // popOver, dialog, drawer
+	Position         *string        `json:"position,omitempty"`
+	Size             *string        `json:"size,omitempty"`
 	Columns          []any          `json:"columns,omitempty"`
 	Filter           any            `json:"filter,omitempty"`
 }
@@ -486,7 +486,7 @@ type NestedSelect struct {
 // NestedOption nested select option
 type NestedOption struct {
 	Label    string         `json:"label"`
-	Value    any    `json:"value"`
+	Value    any            `json:"value"`
 	Children []NestedOption `json:"children,omitempty"`
 }
 
@@ -494,7 +494,7 @@ type NestedOption struct {
 type ChainedSelect struct {
 	FormControl
 	Options []any `json:"options,omitempty"`
-	Source  *API          `json:"source,omitempty"`
+	Source  *API  `json:"source,omitempty"`
 }
 
 // Checkbox checkbox field
@@ -631,7 +631,7 @@ type Table struct {
 	Type            string        `json:"type"`
 	Title           *string       `json:"title,omitempty"`
 	Columns         []TableColumn `json:"columns,omitempty"`
-	Data            []any `json:"data,omitempty"`
+	Data            []any         `json:"data,omitempty"`
 	Source          *API          `json:"source,omitempty"`
 	Selectable      *bool         `json:"selectable,omitempty"`
 	Sortable        *bool         `json:"sortable,omitempty"`
@@ -675,12 +675,12 @@ type CRUD struct {
 
 // List list component
 type List struct {
-	Type       string        `json:"type"`
-	Title      *string       `json:"title,omitempty"`
-	ListFields []ListField   `json:"listFields,omitempty"`
-	Data       []any `json:"data,omitempty"`
-	Source     *API          `json:"source,omitempty"`
-	ClassName  *string       `json:"className,omitempty"`
+	Type       string      `json:"type"`
+	Title      *string     `json:"title,omitempty"`
+	ListFields []ListField `json:"listFields,omitempty"`
+	Data       []any       `json:"data,omitempty"`
+	Source     *API        `json:"source,omitempty"`
+	ClassName  *string     `json:"className,omitempty"`
 }
 
 // ListField list item field
@@ -696,19 +696,19 @@ type ListField struct {
 
 // Action button action component
 type Action struct {
-	Type       string                 `json:"type"`
-	Label      string                 `json:"label"`
-	Level      *string                `json:"level,omitempty"`
-	Icon       *string                `json:"icon,omitempty"`
-	Disabled   *bool                  `json:"disabled,omitempty"`
-	OnClick    *string                `json:"onClick,omitempty"`
-	ActionType *string                `json:"actionType,omitempty"`
+	Type       string         `json:"type"`
+	Label      string         `json:"label"`
+	Level      *string        `json:"level,omitempty"`
+	Icon       *string        `json:"icon,omitempty"`
+	Disabled   *bool          `json:"disabled,omitempty"`
+	OnClick    *string        `json:"onClick,omitempty"`
+	ActionType *string        `json:"actionType,omitempty"`
 	Dialog     any            `json:"dialog,omitempty"`
 	Drawer     any            `json:"drawer,omitempty"`
-	Redirect   *string                `json:"redirect,omitempty"`
-	Blank      *bool                  `json:"blank,omitempty"`
-	API        *API                   `json:"api,omitempty"`
-	ClassName  *string                `json:"className,omitempty"`
+	Redirect   *string        `json:"redirect,omitempty"`
+	Blank      *bool          `json:"blank,omitempty"`
+	API        *API           `json:"api,omitempty"`
+	ClassName  *string        `json:"className,omitempty"`
 	Style      map[string]any `json:"style,omitempty"`
 }
 
@@ -733,29 +733,29 @@ type ButtonGroup struct {
 
 // ButtonToolbar button toolbar component
 type ButtonToolbar struct {
-	Type      string        `json:"type"`
-	Buttons   []any `json:"buttons,omitempty"`
-	ClassName *string       `json:"className,omitempty"`
+	Type      string  `json:"type"`
+	Buttons   []any   `json:"buttons,omitempty"`
+	ClassName *string `json:"className,omitempty"`
 }
 
 // Dialog modal dialog component
 type Dialog struct {
-	Type      string      `json:"type"`
-	Title     string      `json:"title"`
-	Body      any `json:"body,omitempty"`
-	Size      *string     `json:"size,omitempty"`
-	Actions   []Action    `json:"actions,omitempty"`
-	ClassName *string     `json:"className,omitempty"`
+	Type      string   `json:"type"`
+	Title     string   `json:"title"`
+	Body      any      `json:"body,omitempty"`
+	Size      *string  `json:"size,omitempty"`
+	Actions   []Action `json:"actions,omitempty"`
+	ClassName *string  `json:"className,omitempty"`
 }
 
 // Drawer side drawer component
 type Drawer struct {
-	Type      string      `json:"type"`
-	Title     string      `json:"title"`
-	Body      any `json:"body,omitempty"`
-	Position  *string     `json:"position,omitempty"`
-	Size      *string     `json:"size,omitempty"`
-	ClassName *string     `json:"className,omitempty"`
+	Type      string  `json:"type"`
+	Title     string  `json:"title"`
+	Body      any     `json:"body,omitempty"`
+	Position  *string `json:"position,omitempty"`
+	Size      *string `json:"size,omitempty"`
+	ClassName *string `json:"className,omitempty"`
 }
 
 // ============================================================================
@@ -791,13 +791,13 @@ type Divider struct {
 
 // Image image component
 type Image struct {
-	Type      string                 `json:"type"`
-	Src       string                 `json:"src"`
-	Title     *string                `json:"title,omitempty"`
-	Alt       *string                `json:"alt,omitempty"`
-	Width     *string                `json:"width,omitempty"`
-	Height    *string                `json:"height,omitempty"`
-	ClassName *string                `json:"className,omitempty"`
+	Type      string         `json:"type"`
+	Src       string         `json:"src"`
+	Title     *string        `json:"title,omitempty"`
+	Alt       *string        `json:"alt,omitempty"`
+	Width     *string        `json:"width,omitempty"`
+	Height    *string        `json:"height,omitempty"`
+	ClassName *string        `json:"className,omitempty"`
 	Style     map[string]any `json:"style,omitempty"`
 }
 
@@ -853,10 +853,10 @@ type Icon struct {
 
 // Badge badge component
 type Badge struct {
-	Type      string      `json:"type"`
-	Badge     any `json:"badge,omitempty"`
-	Text      *string     `json:"text,omitempty"`
-	ClassName *string     `json:"className,omitempty"`
+	Type      string  `json:"type"`
+	Badge     any     `json:"badge,omitempty"`
+	Text      *string `json:"text,omitempty"`
+	ClassName *string `json:"className,omitempty"`
 }
 
 // Tag tag component
@@ -870,10 +870,10 @@ type Tag struct {
 
 // Status status component
 type Status struct {
-	Type      string      `json:"type"`
-	Value     any `json:"value,omitempty"`
-	Text      *string     `json:"text,omitempty"`
-	ClassName *string     `json:"className,omitempty"`
+	Type      string  `json:"type"`
+	Value     any     `json:"value,omitempty"`
+	Text      *string `json:"text,omitempty"`
+	ClassName *string `json:"className,omitempty"`
 }
 
 // ============================================================================
@@ -882,11 +882,11 @@ type Status struct {
 
 // Chart chart component
 type Chart struct {
-	Type      string                 `json:"type"`
+	Type      string         `json:"type"`
 	Config    map[string]any `json:"config,omitempty"`
-	Width     *string                `json:"width,omitempty"`
-	Height    *string                `json:"height,omitempty"`
-	ClassName *string                `json:"className,omitempty"`
+	Width     *string        `json:"width,omitempty"`
+	Height    *string        `json:"height,omitempty"`
+	ClassName *string        `json:"className,omitempty"`
 }
 
 // Calendar calendar component
@@ -913,9 +913,9 @@ type Timeline struct {
 
 // TimelineItem timeline item
 type TimelineItem struct {
-	Title  string      `json:"title"`
-	Time   string      `json:"time"`
-	Detail any `json:"detail,omitempty"`
+	Title  string `json:"title"`
+	Time   string `json:"time"`
+	Detail any    `json:"detail,omitempty"`
 }
 
 // ============================================================================
@@ -924,19 +924,19 @@ type TimelineItem struct {
 
 // Option generic option for select components
 type Option struct {
-	Label string      `json:"label"`
-	Value any `json:"value"`
-	Icon  *string     `json:"icon,omitempty"`
-	Desc  *string     `json:"desc,omitempty"`
+	Label string  `json:"label"`
+	Value any     `json:"value"`
+	Icon  *string `json:"icon,omitempty"`
+	Desc  *string `json:"desc,omitempty"`
 }
 
 // API API configuration
 type API struct {
-	URL     string                 `json:"url"`
-	Method  *string                `json:"method,omitempty"`
-	Headers map[string]string      `json:"headers,omitempty"`
-	Data    map[string]any `json:"data,omitempty"`
-	Cache   *int                   `json:"cache,omitempty"`
+	URL     string            `json:"url"`
+	Method  *string           `json:"method,omitempty"`
+	Headers map[string]string `json:"headers,omitempty"`
+	Data    map[string]any    `json:"data,omitempty"`
+	Cache   *int              `json:"cache,omitempty"`
 }
 
 // Expression expression for conditionals

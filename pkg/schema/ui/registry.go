@@ -18,7 +18,6 @@ func wrapWithCategory(err error, category errors.Category, message string) *erro
 		WithDetail("underlying_error", err.Error())
 }
 
-
 // DefaultRegistry implements ComponentRegistry with built-in factories and CSS integration
 type DefaultRegistry struct {
 	factories  map[ComponentType]ComponentFactory
@@ -74,7 +73,7 @@ func (r *DefaultRegistry) registerAllFactories() {
 	r.Register(ComponentChart, &ChartFactory{})
 	r.Register(ComponentBadge, &BadgeFactory{})
 	r.Register(ComponentTag, &TagFactory{})
-	
+
 	// Register additional components with generic factories
 	r.Register(ComponentBreadcrumb, NewGenericFactory(ComponentBreadcrumb, r.cssFactory))
 	r.Register(ComponentPagination, NewGenericFactory(ComponentPagination, r.cssFactory))
@@ -325,14 +324,14 @@ func (f *GenericFactory) Create(ctx context.Context, config map[string]any) (Com
 			Type: f.componentType,
 		},
 	}
-	
+
 	if id, ok := config["id"].(string); ok {
 		component.ID = id
 	}
 	if label, ok := config["label"].(string); ok {
 		component.Label = label
 	}
-	
+
 	// Apply default styling based on component type
 	switch f.componentType {
 	case ComponentContainer:
@@ -342,7 +341,7 @@ func (f *GenericFactory) Create(ctx context.Context, config map[string]any) (Com
 	default:
 		component.Styles = css.NewStyles(f.cssFactory.GetSchemaDir())
 	}
-	
+
 	return component, nil
 }
 
@@ -393,7 +392,7 @@ func (r *DefaultRegistry) IsRegistered(componentType ComponentType) bool {
 func (r *DefaultRegistry) Unregister(componentType ComponentType) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	if _, exists := r.factories[componentType]; !exists {
 		return errors.NewBusinessError("FACTORY_NOT_FOUND", "Cannot unregister non-existent factory").
 			WithCategory(errors.CategorySystem).
@@ -401,7 +400,7 @@ func (r *DefaultRegistry) Unregister(componentType ComponentType) error {
 			WithDetail("component_type", string(componentType)).
 			WithSuggestion("Check if the component type is spelled correctly")
 	}
-	
+
 	delete(r.factories, componentType)
 	return nil
 }
@@ -410,7 +409,7 @@ func (r *DefaultRegistry) Unregister(componentType ComponentType) error {
 func (r *DefaultRegistry) RegisterBatch(factories map[ComponentType]ComponentFactory) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	// Validate all factories first
 	for componentType, factory := range factories {
 		if factory == nil {
@@ -421,12 +420,12 @@ func (r *DefaultRegistry) RegisterBatch(factories map[ComponentType]ComponentFac
 				WithSuggestion("Provide a valid factory implementation")
 		}
 	}
-	
+
 	// Register all factories
 	for componentType, factory := range factories {
 		r.factories[componentType] = factory
 	}
-	
+
 	return nil
 }
 
@@ -434,14 +433,14 @@ func (r *DefaultRegistry) RegisterBatch(factories map[ComponentType]ComponentFac
 func (r *DefaultRegistry) ValidateRegistration(requiredTypes []ComponentType) []ComponentType {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	var missing []ComponentType
 	for _, componentType := range requiredTypes {
 		if _, exists := r.factories[componentType]; !exists {
 			missing = append(missing, componentType)
 		}
 	}
-	
+
 	return missing
 }
 
@@ -458,10 +457,10 @@ func (r *DefaultRegistry) CreateComponent(ctx context.Context, componentType Com
 			WithDetail("component_type", string(componentType)).
 			WithDetail("config", config)
 	}
-	
+
 	// Initialize lifecycle metadata
 	component.initializeLifecycle()
-	
+
 	// Apply CSS styling if configuration includes styling
 	if styleConfig, exists := config["styles"]; exists {
 		if styleMap, ok := styleConfig.(map[string]any); ok {
@@ -473,14 +472,14 @@ func (r *DefaultRegistry) CreateComponent(ctx context.Context, componentType Com
 			}
 		}
 	}
-	
+
 	// Validate final component
 	if err := r.Validate(ctx, component); err != nil {
 		return Component{}, wrapWithCategory(err, errors.CategoryValidation, "Component failed final validation").
 			WithDetail("component_type", string(componentType)).
 			WithDetail("component_id", component.ID)
 	}
-	
+
 	return component, nil
 }
 
@@ -488,7 +487,7 @@ func (r *DefaultRegistry) CreateComponent(ctx context.Context, componentType Com
 func (r *DefaultRegistry) UpdateComponent(ctx context.Context, component Component, updates map[string]any) (Component, error) {
 	// Update component properties
 	updatedComponent := component
-	
+
 	// Apply configuration updates
 	if configUpdates, exists := updates["config"]; exists {
 		if configMap, ok := configUpdates.(map[string]any); ok {
@@ -496,20 +495,20 @@ func (r *DefaultRegistry) UpdateComponent(ctx context.Context, component Compone
 			if !exists {
 				return Component{}, fmt.Errorf("no factory registered for component type: %s", component.Type)
 			}
-			
+
 			// Recreate component with new config
 			newComponent, err := factory.Create(ctx, configMap)
 			if err != nil {
 				return Component{}, fmt.Errorf("failed to update component: %w", err)
 			}
-			
+
 			// Preserve existing metadata
 			newComponent.ID = component.ID
 			newComponent.CreatedAt = component.CreatedAt
 			updatedComponent = newComponent
 		}
 	}
-	
+
 	// Apply style updates
 	if styleUpdates, exists := updates["styles"]; exists {
 		if styleMap, ok := styleUpdates.(map[string]any); ok {
@@ -518,15 +517,15 @@ func (r *DefaultRegistry) UpdateComponent(ctx context.Context, component Compone
 			}
 		}
 	}
-	
+
 	// Update lifecycle metadata
 	updatedComponent.updateLifecycle()
-	
+
 	// Validate updated component
 	if err := r.Validate(ctx, updatedComponent); err != nil {
 		return Component{}, fmt.Errorf("updated component failed validation: %w", err)
 	}
-	
+
 	return updatedComponent, nil
 }
 
@@ -544,10 +543,10 @@ func (r *DefaultRegistry) DisposeComponent(ctx context.Context, component Compon
 			return fmt.Errorf("failed to dispose child component %s: %w", child.ID, err)
 		}
 	}
-	
+
 	// Mark component as disposed in lifecycle metadata
 	component.markDisposed()
-	
+
 	return nil
 }
 
@@ -556,7 +555,7 @@ func (r *DefaultRegistry) CloneComponent(ctx context.Context, component Componen
 	// Create base clone
 	clone := component
 	clone.ID = generateComponentID() // Generate new unique ID
-	
+
 	// Clone children recursively
 	if len(component.Children) > 0 {
 		clonedChildren := make([]Component, 0, len(component.Children))
@@ -569,17 +568,17 @@ func (r *DefaultRegistry) CloneComponent(ctx context.Context, component Componen
 		}
 		clone.Children = clonedChildren
 	}
-	
+
 	// Initialize lifecycle for cloned component
 	clone.initializeLifecycle()
-	
+
 	return clone, nil
 }
 
 // ValidateComponentTree validates a component and all its children
 func (r *DefaultRegistry) ValidateComponentTree(ctx context.Context, component Component) []ValidationError {
 	var errors []ValidationError
-	
+
 	// Validate current component
 	if err := r.Validate(ctx, component); err != nil {
 		errors = append(errors, ValidationError{
@@ -588,7 +587,7 @@ func (r *DefaultRegistry) ValidateComponentTree(ctx context.Context, component C
 			Message:   err.Error(),
 		})
 	}
-	
+
 	// Validate children recursively
 	for i, child := range component.Children {
 		childErrors := r.ValidateComponentTree(ctx, child)
@@ -600,7 +599,7 @@ func (r *DefaultRegistry) ValidateComponentTree(ctx context.Context, component C
 			})
 		}
 	}
-	
+
 	return errors
 }
 
@@ -613,14 +612,14 @@ func (r *DefaultRegistry) applyStyles(component *Component, styleConfig map[stri
 	if component.Styles == nil {
 		component.Styles = css.NewStyles(r.schemaDir)
 	}
-	
+
 	// Apply individual style properties
 	for property, value := range styleConfig {
 		if strValue, ok := value.(string); ok {
 			component.Styles.WithCustomProperty(property, strValue)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -635,12 +634,12 @@ func generateComponentID() string {
 
 // CompositionRule represents a rule for component composition
 type CompositionRule struct {
-	ParentType    ComponentType   `json:"parent_type"`    // Parent component type
-	AllowedChildren []ComponentType `json:"allowed_children"` // Allowed child component types
+	ParentType       ComponentType   `json:"parent_type"`                 // Parent component type
+	AllowedChildren  []ComponentType `json:"allowed_children"`            // Allowed child component types
 	RequiredChildren []ComponentType `json:"required_children,omitempty"` // Required child component types
-	MaxChildren   *int            `json:"max_children,omitempty"`   // Maximum number of children
-	MinChildren   *int            `json:"min_children,omitempty"`   // Minimum number of children
-	Exclusive     bool            `json:"exclusive,omitempty"`      // Whether children must be of only allowed types
+	MaxChildren      *int            `json:"max_children,omitempty"`      // Maximum number of children
+	MinChildren      *int            `json:"min_children,omitempty"`      // Minimum number of children
+	Exclusive        bool            `json:"exclusive,omitempty"`         // Whether children must be of only allowed types
 }
 
 // CompositionValidator validates component nesting and composition rules
@@ -653,7 +652,7 @@ func NewCompositionValidator() *CompositionValidator {
 	validator := &CompositionValidator{
 		rules: make(map[ComponentType]CompositionRule),
 	}
-	
+
 	validator.loadDefaultRules()
 	return validator
 }
@@ -671,7 +670,7 @@ func (cv *CompositionValidator) loadDefaultRules() {
 		MinChildren: intPtr(1),
 		Exclusive:   true,
 	}
-	
+
 	// Container component rules
 	cv.rules[ComponentContainer] = CompositionRule{
 		ParentType: ComponentContainer,
@@ -682,7 +681,7 @@ func (cv *CompositionValidator) loadDefaultRules() {
 		},
 		Exclusive: false, // Containers can hold any component
 	}
-	
+
 	// Card component rules
 	cv.rules[ComponentCard] = CompositionRule{
 		ParentType: ComponentCard,
@@ -693,7 +692,7 @@ func (cv *CompositionValidator) loadDefaultRules() {
 		MaxChildren: intPtr(10), // Reasonable limit for card content
 		Exclusive:   false,
 	}
-	
+
 	// Table component rules
 	cv.rules[ComponentTable] = CompositionRule{
 		ParentType:      ComponentTable,
@@ -701,7 +700,7 @@ func (cv *CompositionValidator) loadDefaultRules() {
 		MaxChildren:     intPtr(0),
 		Exclusive:       true,
 	}
-	
+
 	// Input components shouldn't have children
 	inputTypes := []ComponentType{
 		ComponentInput, ComponentTextarea, ComponentSelect,
@@ -715,7 +714,7 @@ func (cv *CompositionValidator) loadDefaultRules() {
 			Exclusive:       true,
 		}
 	}
-	
+
 	// Modal and Panel rules
 	cv.rules[ComponentModal] = CompositionRule{
 		ParentType: ComponentModal,
@@ -727,7 +726,7 @@ func (cv *CompositionValidator) loadDefaultRules() {
 		MaxChildren: intPtr(5), // Reasonable limit for modal content
 		Exclusive:   true,
 	}
-	
+
 	cv.rules[ComponentPanel] = CompositionRule{
 		ParentType: ComponentPanel,
 		AllowedChildren: []ComponentType{
@@ -742,17 +741,17 @@ func (cv *CompositionValidator) loadDefaultRules() {
 // ValidateComposition validates that a component's children follow composition rules
 func (cv *CompositionValidator) ValidateComposition(component Component) []ValidationError {
 	var errors []ValidationError
-	
+
 	// Check if there's a rule for this component type
 	rule, hasRule := cv.rules[component.Type]
 	if !hasRule {
 		// No specific rules - allow any composition (default permissive behavior)
 		return errors
 	}
-	
+
 	// Validate number of children constraints
 	childCount := len(component.Children)
-	
+
 	if rule.MinChildren != nil && childCount < *rule.MinChildren {
 		errors = append(errors, ValidationError{
 			Component: component.ID,
@@ -760,7 +759,7 @@ func (cv *CompositionValidator) ValidateComposition(component Component) []Valid
 			Message:   fmt.Sprintf("component %s requires at least %d children, got %d", component.Type, *rule.MinChildren, childCount),
 		})
 	}
-	
+
 	if rule.MaxChildren != nil && childCount > *rule.MaxChildren {
 		errors = append(errors, ValidationError{
 			Component: component.ID,
@@ -768,13 +767,13 @@ func (cv *CompositionValidator) ValidateComposition(component Component) []Valid
 			Message:   fmt.Sprintf("component %s allows at most %d children, got %d", component.Type, *rule.MaxChildren, childCount),
 		})
 	}
-	
+
 	// Validate child types
 	allowedTypes := make(map[ComponentType]bool)
 	for _, allowedType := range rule.AllowedChildren {
 		allowedTypes[allowedType] = true
 	}
-	
+
 	for i, child := range component.Children {
 		if rule.Exclusive && !allowedTypes[child.Type] {
 			errors = append(errors, ValidationError{
@@ -784,19 +783,19 @@ func (cv *CompositionValidator) ValidateComposition(component Component) []Valid
 			})
 		}
 	}
-	
+
 	// Validate required children
 	if len(rule.RequiredChildren) > 0 {
 		requiredTypes := make(map[ComponentType]bool)
 		for _, requiredType := range rule.RequiredChildren {
 			requiredTypes[requiredType] = true
 		}
-		
+
 		presentTypes := make(map[ComponentType]bool)
 		for _, child := range component.Children {
 			presentTypes[child.Type] = true
 		}
-		
+
 		for requiredType := range requiredTypes {
 			if !presentTypes[requiredType] {
 				errors = append(errors, ValidationError{
@@ -807,7 +806,7 @@ func (cv *CompositionValidator) ValidateComposition(component Component) []Valid
 			}
 		}
 	}
-	
+
 	// Recursively validate children
 	for i, child := range component.Children {
 		childErrors := cv.ValidateComposition(child)
@@ -819,7 +818,7 @@ func (cv *CompositionValidator) ValidateComposition(component Component) []Valid
 			})
 		}
 	}
-	
+
 	return errors
 }
 
@@ -855,12 +854,12 @@ func (cv *CompositionValidator) CanAddChild(parent Component, childType Componen
 	if !hasRule {
 		return true, nil // Permissive by default
 	}
-	
+
 	// Check max children constraint
 	if rule.MaxChildren != nil && len(parent.Children) >= *rule.MaxChildren {
 		return false, fmt.Errorf("parent component %s has reached maximum children limit (%d)", parent.Type, *rule.MaxChildren)
 	}
-	
+
 	// Check if child type is allowed
 	if rule.Exclusive {
 		allowed := false
@@ -874,7 +873,7 @@ func (cv *CompositionValidator) CanAddChild(parent Component, childType Componen
 			return false, fmt.Errorf("parent component %s does not allow children of type %s", parent.Type, childType)
 		}
 	}
-	
+
 	return true, nil
 }
 
@@ -883,16 +882,16 @@ func (cv *CompositionValidator) CanAddChild(parent Component, childType Componen
 // ValidateComponentWithComposition validates a component including composition rules
 func (r *DefaultRegistry) ValidateComponentWithComposition(ctx context.Context, component Component) []ValidationError {
 	var errors []ValidationError
-	
+
 	// Standard component validation
 	componentErrors := r.ValidateComponentTree(ctx, component)
 	errors = append(errors, componentErrors...)
-	
+
 	// Composition validation
 	compositionValidator := NewCompositionValidator()
 	compositionErrors := compositionValidator.ValidateComposition(component)
 	errors = append(errors, compositionErrors...)
-	
+
 	return errors
 }
 
@@ -904,10 +903,10 @@ func (r *DefaultRegistry) CreateComponentWithChildren(ctx context.Context, compo
 		return Component{}, wrapWithCategory(err, errors.CategorySystem, "Failed to create parent component").
 			WithDetail("component_type", string(componentType))
 	}
-	
+
 	// Add children
 	component.Children = children
-	
+
 	// Validate composition
 	validationErrors := r.ValidateComponentWithComposition(ctx, component)
 	if len(validationErrors) > 0 {
@@ -919,14 +918,14 @@ func (r *DefaultRegistry) CreateComponentWithChildren(ctx context.Context, compo
 			WithDetail("validation_errors", validationErrors).
 			WithSuggestion("Check parent-child relationships and composition rules")
 	}
-	
+
 	return component, nil
 }
 
 // AddChildComponent adds a child component to a parent with composition validation
 func (r *DefaultRegistry) AddChildComponent(ctx context.Context, parent Component, child Component) (Component, error) {
 	compositionValidator := NewCompositionValidator()
-	
+
 	// Check if child can be added
 	canAdd, err := compositionValidator.CanAddChild(parent, child.Type)
 	if err != nil {
@@ -947,11 +946,11 @@ func (r *DefaultRegistry) AddChildComponent(ctx context.Context, parent Componen
 			WithSuggestion("Check composition rules for this component type").
 			WithSuggestion("Verify that the child component is allowed within the parent")
 	}
-	
+
 	// Add the child
 	updatedParent := parent
 	updatedParent.Children = append(updatedParent.Children, child)
-	
+
 	// Validate final composition
 	validationErrors := r.ValidateComponentWithComposition(ctx, updatedParent)
 	if len(validationErrors) > 0 {
@@ -963,10 +962,10 @@ func (r *DefaultRegistry) AddChildComponent(ctx context.Context, parent Componen
 			WithDetail("validation_errors", validationErrors).
 			WithSuggestion("Review composition rules and child component configuration")
 	}
-	
+
 	// Update lifecycle
 	updatedParent.updateLifecycle()
-	
+
 	return updatedParent, nil
 }
 

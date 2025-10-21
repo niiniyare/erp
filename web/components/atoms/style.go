@@ -418,6 +418,37 @@ func GetFeedbackClasses(state ValidationState) string {
 	return JoinClasses(classes...)
 }
 
+// GetValidationStateClasses returns validation state classes for form inputs.
+func GetValidationStateClasses(state ValidationState) []string {
+	switch state {
+	case StateError:
+		return []string{
+			"border-red-500", "dark:border-red-500",
+			"focus:ring-red-500", "focus:border-red-500",
+		}
+	case StateSuccess:
+		return []string{
+			"border-green-500", "dark:border-green-500",
+			"focus:ring-green-500", "focus:border-green-500",
+		}
+	case StateWarning:
+		return []string{
+			"border-yellow-500", "dark:border-yellow-500",
+			"focus:ring-yellow-500", "focus:border-yellow-500",
+		}
+	case StateInfo:
+		return []string{
+			"border-blue-500", "dark:border-blue-500",
+			"focus:ring-blue-500", "focus:border-blue-500",
+		}
+	default:
+		return []string{
+			"border-gray-300", "dark:border-gray-600",
+			"focus:ring-blue-500", "focus:border-blue-500",
+		}
+	}
+}
+
 // ============================================================================
 // SIZE-SPECIFIC CLASS MAPPINGS
 // ============================================================================
@@ -483,6 +514,22 @@ func GetIconSizeClasses(size Size) []string {
 		return []string{"w-8", "h-8"}
 	default: // SizeMD
 		return []string{"w-5", "h-5"}
+	}
+}
+
+// GetImageSizeClasses returns dimension classes for images.
+func GetImageSizeClasses(size Size) []string {
+	switch size {
+	case SizeXS:
+		return []string{"w-8", "h-8"}
+	case SizeSM:
+		return []string{"w-12", "h-12"}
+	case SizeLG:
+		return []string{"w-24", "h-24"}
+	case SizeXL:
+		return []string{"w-32", "h-32"}
+	default: // SizeMD
+		return []string{"w-16", "h-16"}
 	}
 }
 

@@ -16,7 +16,7 @@ import (
 func CreateStyledButton(id, text, variant string, schemaDir string) *ComponentBuilder {
 	factory := css.NewFactory(schemaDir)
 	styles := factory.ButtonStyles(variant)
-	
+
 	return NewComponent(ComponentButton, id).
 		WithLabel(text).
 		WithStyles(styles).
@@ -29,7 +29,7 @@ func CreateStyledButton(id, text, variant string, schemaDir string) *ComponentBu
 func CreateStyledInput(id, inputType, state string, schemaDir string) *ComponentBuilder {
 	factory := css.NewFactory(schemaDir)
 	styles := factory.InputStyles(state)
-	
+
 	return NewComponent(ComponentInput, id).
 		WithStyles(styles).
 		WithConfig(InputConfig{
@@ -41,7 +41,7 @@ func CreateStyledInput(id, inputType, state string, schemaDir string) *Component
 func CreateStyledCard(id, elevation string, schemaDir string) *ComponentBuilder {
 	factory := css.NewFactory(schemaDir)
 	styles := factory.CardStyles(elevation)
-	
+
 	return NewComponent(ComponentCard, id).
 		WithStyles(styles)
 }
@@ -50,7 +50,7 @@ func CreateStyledCard(id, elevation string, schemaDir string) *ComponentBuilder 
 func CreateStyledContainer(id, maxWidth string, schemaDir string) *ComponentBuilder {
 	factory := css.NewFactory(schemaDir)
 	styles := factory.ContainerStyles(maxWidth)
-	
+
 	return NewComponent(ComponentContainer, id).
 		WithStyles(styles)
 }
@@ -59,7 +59,7 @@ func CreateStyledContainer(id, maxWidth string, schemaDir string) *ComponentBuil
 func CreateStyledTable(id string, columns []TableColumn, variant string, schemaDir string) *ComponentBuilder {
 	factory := css.NewFactory(schemaDir)
 	styles := factory.TableStyles(variant)
-	
+
 	return NewComponent(ComponentTable, id).
 		WithStyles(styles).
 		WithConfig(TableConfig{
@@ -74,9 +74,9 @@ func CreateStyledTable(id string, columns []TableColumn, variant string, schemaD
 // WithStyledVariant applies predefined styling variant to component
 func (b *ComponentBuilder) WithStyledVariant(variant, schemaDir string) *ComponentBuilder {
 	factory := css.NewFactory(schemaDir)
-	
+
 	var styles *css.Styles
-	
+
 	switch b.component.Type {
 	case ComponentButton:
 		styles = factory.ButtonStyles(variant)
@@ -92,7 +92,7 @@ func (b *ComponentBuilder) WithStyledVariant(variant, schemaDir string) *Compone
 		// For unknown components, create basic styles
 		styles = css.NewStyles(schemaDir)
 	}
-	
+
 	return b.WithStyles(styles)
 }
 
@@ -101,7 +101,7 @@ func (b *ComponentBuilder) WithCustomCSS(property, value string) *ComponentBuild
 	if b.component.Styles == nil {
 		b.component.Styles = css.NewStyles("")
 	}
-	
+
 	b.component.Styles.WithCustomProperty(property, value)
 	return b
 }
@@ -110,9 +110,9 @@ func (b *ComponentBuilder) WithCustomCSS(property, value string) *ComponentBuild
 func (b *ComponentBuilder) WithResponsiveStyles(schemaDir string, configurator func(*css.ResponsiveStyleBuilder)) *ComponentBuilder {
 	factory := css.NewFactory(schemaDir)
 	builder := factory.ResponsiveStyles()
-	
+
 	configurator(builder)
-	
+
 	return b.WithStyles(builder.Build())
 }
 
@@ -120,9 +120,9 @@ func (b *ComponentBuilder) WithResponsiveStyles(schemaDir string, configurator f
 func (b *ComponentBuilder) WithThemeStyles(theme, schemaDir string, configurator func(*css.ThemeStyleBuilder)) *ComponentBuilder {
 	factory := css.NewFactory(schemaDir)
 	builder := factory.ThemeStyles(theme)
-	
+
 	configurator(builder)
-	
+
 	return b.WithStyles(builder.Build())
 }
 
@@ -133,7 +133,7 @@ func (b *ComponentBuilder) WithThemeStyles(theme, schemaDir string, configurator
 // ValidateComponentWithStyles validates both component structure and CSS styles
 func ValidateComponentWithStyles(ctx context.Context, registry ComponentRegistry, component Component, schemaDir string) []ValidationError {
 	var errors []ValidationError
-	
+
 	// Validate component structure
 	if err := registry.Validate(ctx, component); err != nil {
 		errors = append(errors, ValidationError{
@@ -142,12 +142,12 @@ func ValidateComponentWithStyles(ctx context.Context, registry ComponentRegistry
 			Message:   err.Error(),
 		})
 	}
-	
+
 	// Validate CSS styles if present
 	if component.Styles != nil {
 		validator := css.NewValidator(schemaDir)
 		cssErrors := validator.ValidateStyles(component.Styles)
-		
+
 		for _, cssErr := range cssErrors {
 			errors = append(errors, ValidationError{
 				Component: component.ID,
@@ -156,13 +156,13 @@ func ValidateComponentWithStyles(ctx context.Context, registry ComponentRegistry
 			})
 		}
 	}
-	
+
 	// Recursively validate children
 	for _, child := range component.Children {
 		childErrors := ValidateComponentWithStyles(ctx, registry, child, schemaDir)
 		errors = append(errors, childErrors...)
 	}
-	
+
 	return errors
 }
 
@@ -203,13 +203,13 @@ func (r *ComponentRenderer) RenderComponent(component Component) (RenderedCompon
 		Class:    component.Class,
 		Children: make([]RenderedComponent, 0, len(component.Children)),
 	}
-	
+
 	// Add CSS styles if present
 	if component.Styles != nil {
 		rendered.CSS = component.Styles.ToCSS()
 		rendered.CSSClass = component.Styles.ToCSSClass(fmt.Sprintf("component-%s", component.ID))
 	}
-	
+
 	// Add custom class if specified
 	if component.Class != "" {
 		if rendered.CSS != "" {
@@ -218,7 +218,7 @@ func (r *ComponentRenderer) RenderComponent(component Component) (RenderedCompon
 			rendered.CSS = component.Class
 		}
 	}
-	
+
 	// Parse component configuration
 	if len(component.Config) > 0 {
 		var config map[string]any
@@ -227,7 +227,7 @@ func (r *ComponentRenderer) RenderComponent(component Component) (RenderedCompon
 		}
 		rendered.Config = config
 	}
-	
+
 	// Recursively render children
 	for _, child := range component.Children {
 		childRendered, err := r.RenderComponent(child)
@@ -236,20 +236,20 @@ func (r *ComponentRenderer) RenderComponent(component Component) (RenderedCompon
 		}
 		rendered.Children = append(rendered.Children, childRendered)
 	}
-	
+
 	return rendered, nil
 }
 
 // RenderedComponent represents a component ready for template rendering
 type RenderedComponent struct {
-	ID       string                 `json:"id"`
-	Type     string                 `json:"type"`
-	Label    string                 `json:"label"`
-	Class    string                 `json:"class"`
-	CSS      string                 `json:"css"`
-	CSSClass string                 `json:"css_class"`
-	Config   map[string]any `json:"config"`
-	Children []RenderedComponent    `json:"children"`
+	ID       string              `json:"id"`
+	Type     string              `json:"type"`
+	Label    string              `json:"label"`
+	Class    string              `json:"class"`
+	CSS      string              `json:"css"`
+	CSSClass string              `json:"css_class"`
+	Config   map[string]any      `json:"config"`
+	Children []RenderedComponent `json:"children"`
 }
 
 // ============================================================================
@@ -259,12 +259,12 @@ type RenderedComponent struct {
 // MergeStyles merges multiple CSS styles objects
 func MergeStyles(schemaDir string, styles ...*css.Styles) *css.Styles {
 	merged := css.NewStyles(schemaDir)
-	
+
 	for _, style := range styles {
 		if style == nil {
 			continue
 		}
-		
+
 		// Merge all properties
 		properties := style.GetAllProperties()
 		for prop, value := range properties {
@@ -274,20 +274,20 @@ func MergeStyles(schemaDir string, styles ...*css.Styles) *css.Styles {
 				merged.WithCustomProperty(prop, value)
 			}
 		}
-		
+
 		// Merge custom properties
 		for prop, value := range style.Custom {
 			merged.WithCustomProperty(prop, value)
 		}
 	}
-	
+
 	return merged
 }
 
 // GenerateStylesheet generates a complete CSS stylesheet from components
 func GenerateStylesheet(components []Component) string {
 	var cssRules []string
-	
+
 	for _, component := range components {
 		if component.Styles != nil {
 			cssClass := component.Styles.ToCSSClass(fmt.Sprintf("component-%s", component.ID))
@@ -295,7 +295,7 @@ func GenerateStylesheet(components []Component) string {
 				cssRules = append(cssRules, cssClass)
 			}
 		}
-		
+
 		// Recursively process children
 		if len(component.Children) > 0 {
 			childStylesheet := GenerateStylesheet(component.Children)
@@ -304,12 +304,12 @@ func GenerateStylesheet(components []Component) string {
 			}
 		}
 	}
-	
+
 	if len(cssRules) == 0 {
 		return ""
 	}
-	
-	return fmt.Sprintf("/* Generated Component Styles */\n%s", 
+
+	return fmt.Sprintf("/* Generated Component Styles */\n%s",
 		fmt.Sprintf("%s\n", cssRules))
 }
 
@@ -317,14 +317,14 @@ func GenerateStylesheet(components []Component) string {
 func ExtractInlineStyles(components []Component) (map[string]string, []Component) {
 	inlineStyles := make(map[string]string)
 	cleanedComponents := make([]Component, 0, len(components))
-	
+
 	for _, component := range components {
 		cleaned := component
-		
+
 		if component.Styles != nil && component.Styles.ToCSS() != "" {
 			className := fmt.Sprintf("component-%s", component.ID)
 			inlineStyles[className] = component.Styles.ToCSS()
-			
+
 			// Remove inline styles and add class name
 			cleaned.Styles = nil
 			if cleaned.Class == "" {
@@ -333,7 +333,7 @@ func ExtractInlineStyles(components []Component) (map[string]string, []Component
 				cleaned.Class = fmt.Sprintf("%s %s", cleaned.Class, className)
 			}
 		}
-		
+
 		// Recursively process children
 		if len(component.Children) > 0 {
 			childStyles, cleanedChildren := ExtractInlineStyles(component.Children)
@@ -342,10 +342,10 @@ func ExtractInlineStyles(components []Component) (map[string]string, []Component
 			}
 			cleaned.Children = cleanedChildren
 		}
-		
+
 		cleanedComponents = append(cleanedComponents, cleaned)
 	}
-	
+
 	return inlineStyles, cleanedComponents
 }
 
@@ -372,19 +372,19 @@ func ExampleCreateStyledForm(schemaDir string) Component {
 				WithName("first_name").
 				Required().
 				Build(),
-			
+
 			CreateStyledInput("email", "email", "default", schemaDir).
 				WithLabel("Email Address").
 				WithName("email").
 				Required().
 				Build(),
-			
+
 			// Styled submit button
 			CreateStyledButton("submit", "Create Account", "primary", schemaDir).
 				WithCustomCSS("margin-top", "1rem").
 				Build(),
 		).
 		Build()
-	
+
 	return form
 }

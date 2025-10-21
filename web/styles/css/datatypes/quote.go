@@ -3,17 +3,14 @@
 
 package datatypes
 
-
-
-
 // Quote represents the CSS DataType Quote with predefined values
 type Quote string
 
 const (
-	QuoteClosequote Quote = "close-quote"
+	QuoteClosequote   Quote = "close-quote"
 	QuoteNoclosequote Quote = "no-close-quote"
-	QuoteNoopenquote Quote = "no-open-quote"
-	QuoteOpenquote Quote = "open-quote"
+	QuoteNoopenquote  Quote = "no-open-quote"
+	QuoteOpenquote    Quote = "open-quote"
 )
 
 func (d Quote) IsValid() bool {
@@ -30,5 +27,3 @@ func (d Quote) IsValid() bool {
 func (d Quote) String() string {
 	return string(d)
 }
-
-

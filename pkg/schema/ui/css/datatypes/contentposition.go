@@ -3,18 +3,15 @@
 
 package datatypes
 
-
-
-
 // Contentposition represents the CSS DataType ContentPosition with predefined values
 type Contentposition string
 
 const (
-	ContentpositionCenter Contentposition = "center"
-	ContentpositionEnd Contentposition = "end"
-	ContentpositionFlexend Contentposition = "flex-end"
+	ContentpositionCenter    Contentposition = "center"
+	ContentpositionEnd       Contentposition = "end"
+	ContentpositionFlexend   Contentposition = "flex-end"
 	ContentpositionFlexstart Contentposition = "flex-start"
-	ContentpositionStart Contentposition = "start"
+	ContentpositionStart     Contentposition = "start"
 )
 
 func (d Contentposition) IsValid() bool {
@@ -31,5 +28,3 @@ func (d Contentposition) IsValid() bool {
 func (d Contentposition) String() string {
 	return string(d)
 }
-
-

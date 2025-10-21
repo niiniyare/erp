@@ -19,7 +19,7 @@ func NewDocsGenerator() (*DocsGenerator, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse documentation templates: %w", err)
 	}
-	
+
 	return &DocsGenerator{
 		tmpl: tmpl,
 	}, nil
@@ -29,18 +29,18 @@ func NewDocsGenerator() (*DocsGenerator, error) {
 func (g *DocsGenerator) Generate(config DocsConfig) error {
 	// Initialize file system operations
 	g.fs = NewFileSystemOperations(config.DryRun, config.Verbose)
-	
+
 	if err := config.Validate(); err != nil {
 		return fmt.Errorf("invalid configuration: %w", err)
 	}
-	
+
 	// Validate project structure
 	if err := g.fs.ValidateProjectStructure(); err != nil {
 		return fmt.Errorf("invalid project structure: %w", err)
 	}
-	
+
 	templateData := config.ToTemplateData()
-	
+
 	// Define the documentation files to generate
 	docFiles := []FileTemplate{
 		{
@@ -49,7 +49,7 @@ func (g *DocsGenerator) Generate(config DocsConfig) error {
 			Data:         templateData,
 		},
 		{
-			TemplatePath: "api-reference.md.tmpl", 
+			TemplatePath: "api-reference.md.tmpl",
 			OutputPath:   filepath.Join("docs", "reference", "modules", templateData.ModuleNameSnake, "api-reference.md"),
 			Data:         templateData,
 		},
@@ -64,24 +64,24 @@ func (g *DocsGenerator) Generate(config DocsConfig) error {
 			Data:         templateData,
 		},
 	}
-	
+
 	if config.Verbose {
 		fmt.Printf("Generating documentation for module: %s\n", templateData.ModuleNamePascal)
 	}
-	
+
 	// Generate each documentation file
 	for _, docFile := range docFiles {
 		if err := g.generateFile(docFile); err != nil {
 			return fmt.Errorf("failed to generate file %s: %w", docFile.OutputPath, err)
 		}
 	}
-	
+
 	if config.DryRun {
 		fmt.Printf("🔍 Dry run completed - no files were created\n")
 	} else {
 		fmt.Printf("📚 Documentation generation completed successfully\n")
 	}
-	
+
 	return nil
 }
 

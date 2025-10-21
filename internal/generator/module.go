@@ -130,10 +130,10 @@ func (mg *ModuleGenerator) generateModuleStructure(data TemplateData) error {
 // createModuleDirectories creates the module directory structure
 func (mg *ModuleGenerator) createModuleDirectories(data TemplateData) error {
 	directories := []string{
-		data.DomainPath,                               // Domain subdirectory
-		data.ServicePath,                              // Service files in module root
-		data.RepositoryPath,                           // Repository subdirectory
-		data.APIPath,                                  // API design directory
+		data.DomainPath,     // Domain subdirectory
+		data.ServicePath,    // Service files in module root
+		data.RepositoryPath, // Repository subdirectory
+		data.APIPath,        // API design directory
 		filepath.Join(data.ServicePath, "activities"), // Temporal activities
 		filepath.Join(data.ServicePath, "workflows"),  // Temporal workflows
 		filepath.Join(data.RepositoryPath, "mappers"), // SQLC mappers
@@ -141,8 +141,8 @@ func (mg *ModuleGenerator) createModuleDirectories(data TemplateData) error {
 
 	if data.WithTests {
 		directories = append(directories, []string{
-			filepath.Join(data.ServicePath, "test"),        // Test directory in module root
-			filepath.Join(data.DomainPath, "..", "test"),   // Alternative test location
+			filepath.Join(data.ServicePath, "test"),      // Test directory in module root
+			filepath.Join(data.DomainPath, "..", "test"), // Alternative test location
 		}...)
 	}
 
@@ -450,4 +450,3 @@ func (fg *FeatureGenerator) generateFeatureFile(file FileTemplate) error {
 
 	return nil
 }
-

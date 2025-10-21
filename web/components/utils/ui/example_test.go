@@ -91,11 +91,11 @@ func TestFormCreation(t *testing.T) {
 func TestTableCreation(t *testing.T) {
 	columns := []ui.TableColumn{
 		{
-			Key:        "id",
-			Title:      "ID",
-			DataType:   ui.DataTypeNumber,
-			Sortable:   true,
-			Width:      "80px",
+			Key:      "id",
+			Title:    "ID",
+			DataType: ui.DataTypeNumber,
+			Sortable: true,
+			Width:    "80px",
 		},
 		{
 			Key:        "name",

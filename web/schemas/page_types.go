@@ -108,10 +108,10 @@ type ComponentDefinition struct {
 	Dialog *DialogConfig `json:"dialog,omitempty"` // For type="dialog"
 	Drawer *DrawerConfig `json:"drawer,omitempty"` // For type="drawer"
 	Wizard *WizardConfig `json:"wizard,omitempty"` // For type="wizard"
-	
+
 	// Styling
-	Class string `json:"class,omitempty"` // Additional CSS classes
-	Disabled bool `json:"disabled,omitempty"` // Disabled state
+	Class    string `json:"class,omitempty"`    // Additional CSS classes
+	Disabled bool   `json:"disabled,omitempty"` // Disabled state
 }
 
 // APIDefinition describes an API endpoint configuration
@@ -605,16 +605,16 @@ func (e *SchemaError) Error() string {
 
 // Common error codes for schema processing
 const (
-	ErrCodeComponentNotFound   = "COMPONENT_NOT_FOUND"
-	ErrCodeMissingComponent    = "MISSING_COMPONENT"
-	ErrCodeInvalidProps        = "INVALID_PROPS"
-	ErrCodePermissionDenied    = "PERMISSION_DENIED"
-	ErrCodeDataSourceError     = "DATA_SOURCE_ERROR"
-	ErrCodeLayoutError         = "LAYOUT_ERROR"
-	ErrCodeValidationError     = "VALIDATION_ERROR"
-	ErrCodeRenderError         = "RENDER_ERROR"
-	ErrCodeExpressionError     = "EXPRESSION_ERROR"
-	ErrCodeAPIError            = "API_ERROR"
+	ErrCodeComponentNotFound = "COMPONENT_NOT_FOUND"
+	ErrCodeMissingComponent  = "MISSING_COMPONENT"
+	ErrCodeInvalidProps      = "INVALID_PROPS"
+	ErrCodePermissionDenied  = "PERMISSION_DENIED"
+	ErrCodeDataSourceError   = "DATA_SOURCE_ERROR"
+	ErrCodeLayoutError       = "LAYOUT_ERROR"
+	ErrCodeValidationError   = "VALIDATION_ERROR"
+	ErrCodeRenderError       = "RENDER_ERROR"
+	ErrCodeExpressionError   = "EXPRESSION_ERROR"
+	ErrCodeAPIError          = "API_ERROR"
 )
 
 // NewSchemaError creates a new schema error

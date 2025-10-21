@@ -32,29 +32,29 @@ import (
 // ============================================================================
 
 // Tag color schemes (slightly different from badges - more muted)
-var tagColorSchemes = map[string][]string{
-	"blue":    {"bg-blue-50", "text-blue-700", "border-blue-200", "dark:bg-blue-900/20", "dark:text-blue-300", "dark:border-blue-800"},
-	"gray":    {"bg-gray-50", "text-gray-700", "border-gray-200", "dark:bg-gray-800", "dark:text-gray-300", "dark:border-gray-600"},
-	"red":     {"bg-red-50", "text-red-700", "border-red-200", "dark:bg-red-900/20", "dark:text-red-300", "dark:border-red-800"},
-	"green":   {"bg-green-50", "text-green-700", "border-green-200", "dark:bg-green-900/20", "dark:text-green-300", "dark:border-green-800"},
-	"yellow":  {"bg-yellow-50", "text-yellow-700", "border-yellow-200", "dark:bg-yellow-900/20", "dark:text-yellow-300", "dark:border-yellow-800"},
-	"indigo":  {"bg-indigo-50", "text-indigo-700", "border-indigo-200", "dark:bg-indigo-900/20", "dark:text-indigo-300", "dark:border-indigo-800"},
-	"purple":  {"bg-purple-50", "text-purple-700", "border-purple-200", "dark:bg-purple-900/20", "dark:text-purple-300", "dark:border-purple-800"},
-	"pink":    {"bg-pink-50", "text-pink-700", "border-pink-200", "dark:bg-pink-900/20", "dark:text-pink-300", "dark:border-pink-800"},
-	"default": {"bg-gray-50", "text-gray-700", "border-gray-200", "dark:bg-gray-800", "dark:text-gray-300", "dark:border-gray-600"},
+var tagColorSchemes = map[ColorScheme][]string{
+	ColorInfo:      {"bg-blue-50", "text-blue-700", "border-blue-200", "dark:bg-blue-900/20", "dark:text-blue-300", "dark:border-blue-800"},
+	ColorGray:      {"bg-gray-50", "text-gray-700", "border-gray-200", "dark:bg-gray-800", "dark:text-gray-300", "dark:border-gray-600"},
+	ColorDanger:    {"bg-red-50", "text-red-700", "border-red-200", "dark:bg-red-900/20", "dark:text-red-300", "dark:border-red-800"},
+	ColorSuccess:   {"bg-green-50", "text-green-700", "border-green-200", "dark:bg-green-900/20", "dark:text-green-300", "dark:border-green-800"},
+	ColorWarning:   {"bg-yellow-50", "text-yellow-700", "border-yellow-200", "dark:bg-yellow-900/20", "dark:text-yellow-300", "dark:border-yellow-800"},
+	ColorPrimary:   {"bg-indigo-50", "text-indigo-700", "border-indigo-200", "dark:bg-indigo-900/20", "dark:text-indigo-300", "dark:border-indigo-800"},
+	ColorSecondary: {"bg-purple-50", "text-purple-700", "border-purple-200", "dark:bg-purple-900/20", "dark:text-purple-300", "dark:border-purple-800"},
+	ColorNeutral:   {"bg-pink-50", "text-pink-700", "border-pink-200", "dark:bg-pink-900/20", "dark:text-pink-300", "dark:border-pink-800"},
+	ColorDefault:   {"bg-gray-50", "text-gray-700", "border-gray-200", "dark:bg-gray-800", "dark:text-gray-300", "dark:border-gray-600"},
 }
 
 // Tag selected state color schemes
-var tagSelectedColorSchemes = map[string][]string{
-	"blue":    {"bg-blue-500", "text-white", "border-blue-500"},
-	"gray":    {"bg-gray-500", "text-white", "border-gray-500"},
-	"red":     {"bg-red-500", "text-white", "border-red-500"},
-	"green":   {"bg-green-500", "text-white", "border-green-500"},
-	"yellow":  {"bg-yellow-500", "text-white", "border-yellow-500"},
-	"indigo":  {"bg-indigo-500", "text-white", "border-indigo-500"},
-	"purple":  {"bg-purple-500", "text-white", "border-purple-500"},
-	"pink":    {"bg-pink-500", "text-white", "border-pink-500"},
-	"default": {"bg-gray-500", "text-white", "border-gray-500"},
+var tagSelectedColorSchemes = map[ColorScheme][]string{
+	ColorInfo:      {"bg-blue-500", "text-white", "border-blue-500"},
+	ColorGray:      {"bg-gray-500", "text-white", "border-gray-500"},
+	ColorDanger:    {"bg-red-500", "text-white", "border-red-500"},
+	ColorSuccess:   {"bg-green-500", "text-white", "border-green-500"},
+	ColorWarning:   {"bg-yellow-500", "text-white", "border-yellow-500"},
+	ColorPrimary:   {"bg-indigo-500", "text-white", "border-indigo-500"},
+	ColorSecondary: {"bg-purple-500", "text-white", "border-purple-500"},
+	ColorNeutral:   {"bg-pink-500", "text-white", "border-pink-500"},
+	ColorDefault:   {"bg-gray-500", "text-white", "border-gray-500"},
 }
 
 // Tag size dimensions
@@ -65,11 +65,11 @@ var tagDimensions = map[Size][]string{
 }
 
 // Tag variant styles
-var tagVariants = map[string][]string{
-	"default":  {"rounded-md", "border"},
-	"pill":     {"rounded-full", "border"},
-	"outlined": {"border-2", "bg-transparent"},
-	"solid":    {"border-0"},
+var tagVariants = map[Variant][]string{
+	VariantDefault:  {"rounded-md", "border"},
+	VariantOutlined: {"border-2", "bg-transparent"},
+	VariantFilled:   {"rounded-full", "border"},
+	VariantSolid:    {"border-0"},
 }
 
 // Tag base classes
@@ -94,25 +94,25 @@ const tagRemoveIcon = `<svg class="w-3 h-3" aria-hidden="true" xmlns="http://www
 // tag.Selectable = true
 func NewTag(text string) TagProps {
 	return TagProps{
-		Text:          text,
-		Color:         "default",
-		Variant:       "default",
-		ComponentSize: SizeSM,
+		Text:    text,
+		Color:   ColorDefault,
+		Variant: VariantDefault,
+		Size:    SizeSM,
 	}
 }
 
 // NewTagWithColor creates a tag with specified color
-func NewTagWithColor(text, color string) TagProps {
+func NewTagWithColor(text string, color ColorScheme) TagProps {
 	props := NewTag(text)
 	props.Color = color
 	return props
 }
 
 // NewSelectableTag creates a selectable tag
-func NewSelectableTag(text, color string) TagProps {
+func NewSelectableTag(text string, color ColorScheme) TagProps {
 	props := NewTag(text)
 	props.Color = color
-	props.Selectable = true
+	props.Selected = true
 	return props
 }
 
@@ -605,7 +605,7 @@ func getTagClasses(props TagProps) string {
 	classes := []string{tagBaseClasses}
 
 	// Add size-specific dimensions from configuration
-	if dimensions, ok := tagDimensions[props.ComponentSize]; ok {
+	if dimensions, ok := tagDimensions[props.Size]; ok {
 		classes = append(classes, dimensions...)
 	}
 
@@ -623,13 +623,13 @@ func getTagClasses(props TagProps) string {
 	if props.Selected && props.Selectable {
 		if colors, ok := tagSelectedColorSchemes[props.Color]; ok {
 			classes = append(classes, colors...)
-		} else if colors, ok := tagSelectedColorSchemes["default"]; ok {
+		} else if colors, ok := tagSelectedColorSchemes[ColorDefault]; ok {
 			classes = append(classes, colors...)
 		}
 	} else {
 		if colors, ok := tagColorSchemes[props.Color]; ok {
 			classes = append(classes, colors...)
-		} else if colors, ok := tagColorSchemes["default"]; ok {
+		} else if colors, ok := tagColorSchemes[ColorDefault]; ok {
 			classes = append(classes, colors...)
 		}
 	}
@@ -652,13 +652,13 @@ func getTagClasses(props TagProps) string {
 // ============================================================================
 
 // WithColor returns a new TagProps with color set
-func (p TagProps) WithColor(color string) TagProps {
+func (p TagProps) WithColor(color ColorScheme) TagProps {
 	p.Color = color
 	return p
 }
 
 // WithVariant returns a new TagProps with variant set
-func (p TagProps) WithVariant(variant string) TagProps {
+func (p TagProps) WithVariant(variant Variant) TagProps {
 	p.Variant = variant
 	return p
 }
@@ -683,19 +683,19 @@ func (p TagProps) AsRemovable() TagProps {
 
 // AsPill returns a new TagProps with pill variant
 func (p TagProps) AsPill() TagProps {
-	p.Variant = "pill"
+	p.Variant = VariantFilled
 	return p
 }
 
 // AsOutlined returns a new TagProps with outlined variant
 func (p TagProps) AsOutlined() TagProps {
-	p.Variant = "outlined"
+	p.Variant = VariantOutlined
 	return p
 }
 
 // AsSolid returns a new TagProps with solid variant
 func (p TagProps) AsSolid() TagProps {
-	p.Variant = "solid"
+	p.Variant = VariantSolid
 	return p
 }
 

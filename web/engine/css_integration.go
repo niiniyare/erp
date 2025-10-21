@@ -199,7 +199,7 @@ func (cie *CSSIntegrationEngine) ApplyStylesToComponent(component *TemplComponen
 		}
 	}
 
-	// Generate CSS classes using the factory  
+	// Generate CSS classes using the factory
 	cssClasses, err := cie.cssFactory.GenerateCSS(*styles)
 	if err != nil {
 		return fmt.Errorf("failed to generate CSS: %w", err)
@@ -221,7 +221,7 @@ func (cie *CSSIntegrationEngine) convertPropsToStyles(styleProps *StyleProps) *c
 	}
 
 	styles := css.NewStyles(cie.cssFactory.GetSchemaDir())
-	
+
 	// Set layout and box model properties
 	if styleProps.Display != "" {
 		styles.Display = styleProps.Display
@@ -247,7 +247,7 @@ func (cie *CSSIntegrationEngine) convertPropsToStyles(styleProps *StyleProps) *c
 	if styleProps.MaxHeight != "" {
 		styles.MaxHeight = styleProps.MaxHeight
 	}
-	
+
 	// Set typography properties
 	if styleProps.FontSize != "" {
 		styles.FontSize = styleProps.FontSize
@@ -267,12 +267,12 @@ func (cie *CSSIntegrationEngine) convertPropsToStyles(styleProps *StyleProps) *c
 	if styleProps.Color != "" {
 		styles.Color = styleProps.Color
 	}
-	
+
 	// Set background properties
 	if styleProps.BackgroundColor != "" {
 		styles.BackgroundColor = styleProps.BackgroundColor
 	}
-	
+
 	// Set margin properties
 	if styleProps.Margin != "" {
 		styles.Margin = styleProps.Margin
@@ -289,7 +289,7 @@ func (cie *CSSIntegrationEngine) convertPropsToStyles(styleProps *StyleProps) *c
 	if styleProps.MarginRight != "" {
 		styles.MarginRight = styleProps.MarginRight
 	}
-	
+
 	// Set padding properties
 	if styleProps.Padding != "" {
 		styles.Padding = styleProps.Padding
@@ -306,7 +306,7 @@ func (cie *CSSIntegrationEngine) convertPropsToStyles(styleProps *StyleProps) *c
 	if styleProps.PaddingRight != "" {
 		styles.PaddingRight = styleProps.PaddingRight
 	}
-	
+
 	// Set border properties
 	if styleProps.Border != "" {
 		styles.Border = styleProps.Border
@@ -323,7 +323,7 @@ func (cie *CSSIntegrationEngine) convertPropsToStyles(styleProps *StyleProps) *c
 	if styleProps.BorderColor != "" {
 		styles.BorderColor = styleProps.BorderColor
 	}
-	
+
 	// Set flexbox properties
 	if styleProps.FlexDirection != "" {
 		styles.FlexDirection = styleProps.FlexDirection
@@ -340,7 +340,7 @@ func (cie *CSSIntegrationEngine) convertPropsToStyles(styleProps *StyleProps) *c
 	if styleProps.Flex != "" {
 		styles.Flex = styleProps.Flex
 	}
-	
+
 	// Set grid properties
 	if styleProps.GridTemplateColumns != "" {
 		styles.GridTemplateColumns = styleProps.GridTemplateColumns
@@ -351,7 +351,7 @@ func (cie *CSSIntegrationEngine) convertPropsToStyles(styleProps *StyleProps) *c
 	if styleProps.GridGap != "" {
 		styles.GridGap = styleProps.GridGap
 	}
-	
+
 	// Set visual effects
 	if styleProps.BoxShadow != "" {
 		styles.BoxShadow = styleProps.BoxShadow
@@ -362,12 +362,12 @@ func (cie *CSSIntegrationEngine) convertPropsToStyles(styleProps *StyleProps) *c
 	if styleProps.Transform != "" {
 		styles.Transform = styleProps.Transform
 	}
-	
+
 	// Set animation properties
 	if styleProps.Animation != "" {
 		styles.Animation = styleProps.Animation
 	}
-	
+
 	// Set transition properties
 	if styleProps.Transition != "" {
 		styles.Transition = styleProps.Transition
@@ -520,7 +520,7 @@ func (cie *CSSIntegrationEngine) ValidateStyles(styles *css.Styles) error {
 	if styles == nil {
 		return fmt.Errorf("styles cannot be nil")
 	}
-	
+
 	// The validator returns []ValidationError, convert to a single error
 	errors := cie.validator.ValidateStyles(styles)
 	if len(errors) > 0 {
@@ -691,4 +691,3 @@ type UtilityClassOptions struct {
 	IncludeTransitions bool
 	CustomClasses      string
 }
-

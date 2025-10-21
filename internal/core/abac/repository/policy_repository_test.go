@@ -5,8 +5,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
-	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -19,7 +17,6 @@ import (
 	"github.com/niiniyare/erp/internal/core/abac/models"
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"

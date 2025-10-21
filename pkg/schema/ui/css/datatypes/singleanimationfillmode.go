@@ -3,17 +3,14 @@
 
 package datatypes
 
-
-
-
 // Singleanimationfillmode represents the CSS DataType SingleAnimationFillMode with predefined values
 type Singleanimationfillmode string
 
 const (
 	SingleanimationfillmodeBackwards Singleanimationfillmode = "backwards"
-	SingleanimationfillmodeBoth Singleanimationfillmode = "both"
-	SingleanimationfillmodeForwards Singleanimationfillmode = "forwards"
-	SingleanimationfillmodeNone Singleanimationfillmode = "none"
+	SingleanimationfillmodeBoth      Singleanimationfillmode = "both"
+	SingleanimationfillmodeForwards  Singleanimationfillmode = "forwards"
+	SingleanimationfillmodeNone      Singleanimationfillmode = "none"
 )
 
 func (d Singleanimationfillmode) IsValid() bool {
@@ -30,5 +27,3 @@ func (d Singleanimationfillmode) IsValid() bool {
 func (d Singleanimationfillmode) String() string {
 	return string(d)
 }
-
-

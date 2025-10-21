@@ -3,17 +3,14 @@
 
 package datatypes
 
-
-
-
 // Compositingoperator represents the CSS DataType CompositingOperator with predefined values
 type Compositingoperator string
 
 const (
-	CompositingoperatorAdd Compositingoperator = "add"
-	CompositingoperatorExclude Compositingoperator = "exclude"
+	CompositingoperatorAdd       Compositingoperator = "add"
+	CompositingoperatorExclude   Compositingoperator = "exclude"
 	CompositingoperatorIntersect Compositingoperator = "intersect"
-	CompositingoperatorSubtract Compositingoperator = "subtract"
+	CompositingoperatorSubtract  Compositingoperator = "subtract"
 )
 
 func (d Compositingoperator) IsValid() bool {
@@ -30,5 +27,3 @@ func (d Compositingoperator) IsValid() bool {
 func (d Compositingoperator) String() string {
 	return string(d)
 }
-
-

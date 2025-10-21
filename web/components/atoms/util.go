@@ -641,3 +641,21 @@ func GetActionSizeClasses(size Size) []string {
 		return []string{"px-4", "py-2", "text-sm"}
 	}
 }
+
+// GetStatusSizeClasses returns CSS classes for status component sizing.
+func GetStatusSizeClasses(size Size) []string {
+	switch size {
+	case SizeXS:
+		return []string{"px-1.5", "py-0.5", "text-xs"}
+	case SizeSM:
+		return []string{"px-2", "py-0.5", "text-xs"}
+	case SizeMD:
+		return []string{"px-2.5", "py-0.5", "text-xs"}
+	case SizeLG:
+		return []string{"px-3", "py-1", "text-sm"}
+	case SizeXL:
+		return []string{"px-4", "py-1.5", "text-sm"}
+	default:
+		return []string{"px-2.5", "py-0.5", "text-xs"}
+	}
+}

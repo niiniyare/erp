@@ -24,8 +24,8 @@ type converterFunc func(schemaui.Component) (TemplComponent, error)
 
 // TemplComponent represents a converted Templ component with its props.
 type TemplComponent struct {
-	Type  string      `json:"type"`
-	Props any `json:"props"`
+	Type  string `json:"type"`
+	Props any    `json:"props"`
 }
 
 // NewBridge creates a new bridge instance with the conversion registry initialized.
@@ -453,4 +453,3 @@ func convertVariant[T any](variant schemaui.Variant) T {
 		return primary
 	}
 }
-

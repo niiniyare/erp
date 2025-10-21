@@ -8,6 +8,10 @@ package atoms
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+import (
+	"fmt"
+)
+
 // ============================================================================
 // DESIGN RATIONALE - STATIC COMPONENT
 // ============================================================================
@@ -593,7 +597,7 @@ func staticContent(props StaticProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.Text)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/static.templ`, Line: 245, Col: 14}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/static.templ`, Line: 248, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {

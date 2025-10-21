@@ -1,0 +1,341 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "card.json",
+  "title": "Card Component Schema",
+  "description": "Schema for reusable card components with header, body, media, and actions",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique identifier for the card component"
+    },
+    "className": {
+      "type": "string",
+      "description": "CSS classes for the card container"
+    },
+    "variant": {
+      "type": "string",
+      "enum": ["default", "bordered", "shadow", "elevated", "outlined"],
+      "default": "default",
+      "description": "Visual variant of the card"
+    },
+    "size": {
+      "type": "string",
+      "enum": ["sm", "md", "lg", "xl"],
+      "default": "md",
+      "description": "Size variant of the card"
+    },
+    "disabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the card is disabled"
+    },
+    "clickable": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the card is clickable"
+    },
+    "href": {
+      "type": "string",
+      "description": "Link URL if the card should be a link"
+    },
+    "target": {
+      "type": "string",
+      "enum": ["_self", "_blank", "_parent", "_top"],
+      "default": "_self",
+      "description": "Link target attribute"
+    },
+    "header": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Main title of the card"
+        },
+        "titleClassName": {
+          "type": "string",
+          "description": "CSS classes for the title"
+        },
+        "subtitle": {
+          "type": "string",
+          "description": "Subtitle or description"
+        },
+        "subtitleClassName": {
+          "type": "string",
+          "description": "CSS classes for the subtitle"
+        },
+        "avatar": {
+          "type": "object",
+          "properties": {
+            "src": {
+              "type": "string",
+              "description": "Avatar image URL"
+            },
+            "alt": {
+              "type": "string",
+              "description": "Avatar image alt text"
+            },
+            "size": {
+              "type": "string",
+              "enum": ["xs", "sm", "md", "lg", "xl"],
+              "default": "md",
+              "description": "Avatar size"
+            },
+            "className": {
+              "type": "string",
+              "description": "CSS classes for the avatar"
+            }
+          }
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ActionButton"
+          },
+          "description": "Header action buttons"
+        },
+        "className": {
+          "type": "string",
+          "description": "CSS classes for the header"
+        }
+      }
+    },
+    "media": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["image", "video"],
+          "description": "Type of media content"
+        },
+        "src": {
+          "type": "string",
+          "description": "Media source URL"
+        },
+        "alt": {
+          "type": "string",
+          "description": "Alternative text for images"
+        },
+        "position": {
+          "type": "string",
+          "enum": ["top", "bottom", "left", "right"],
+          "default": "top",
+          "description": "Position of media relative to content"
+        },
+        "aspectRatio": {
+          "type": "string",
+          "enum": ["square", "video", "wide", "auto"],
+          "default": "auto",
+          "description": "Aspect ratio of the media"
+        },
+        "className": {
+          "type": "string",
+          "description": "CSS classes for the media container"
+        }
+      }
+    },
+    "body": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "description": "Main body content"
+        },
+        "html": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether content should be rendered as HTML"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "description": "Field label"
+              },
+              "value": {
+                "type": "string",
+                "description": "Field value"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["text", "html", "badge", "progress", "rating"],
+                "default": "text",
+                "description": "Field display type"
+              },
+              "className": {
+                "type": "string",
+                "description": "CSS classes for the field"
+              }
+            },
+            "required": ["label", "value"]
+          },
+          "description": "Structured field data"
+        },
+        "className": {
+          "type": "string",
+          "description": "CSS classes for the body"
+        }
+      }
+    },
+    "footer": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "type": "string",
+          "description": "Footer content"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ActionButton"
+          },
+          "description": "Footer action buttons"
+        },
+        "className": {
+          "type": "string",
+          "description": "CSS classes for the footer"
+        }
+      }
+    },
+    "badge": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "description": "Badge text"
+        },
+        "variant": {
+          "type": "string",
+          "enum": ["default", "primary", "secondary", "success", "warning", "error"],
+          "default": "default",
+          "description": "Badge color variant"
+        },
+        "position": {
+          "type": "string",
+          "enum": ["top-left", "top-right", "bottom-left", "bottom-right"],
+          "default": "top-right",
+          "description": "Badge position"
+        },
+        "className": {
+          "type": "string",
+          "description": "CSS classes for the badge"
+        }
+      }
+    },
+    "loading": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether the card is in loading state"
+    },
+    "loadingText": {
+      "type": "string",
+      "default": "Loading...",
+      "description": "Loading state text"
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "description": "Error message"
+        },
+        "retry": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to show retry option"
+        },
+        "retryText": {
+          "type": "string",
+          "default": "Retry",
+          "description": "Retry button text"
+        }
+      }
+    },
+    "testId": {
+      "type": "string",
+      "description": "Test identifier for automated testing"
+    }
+  },
+  "definitions": {
+    "ActionButton": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the action"
+        },
+        "label": {
+          "type": "string",
+          "description": "Button label"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon class or name"
+        },
+        "variant": {
+          "type": "string",
+          "enum": ["default", "primary", "secondary", "ghost", "outline"],
+          "default": "default",
+          "description": "Button variant"
+        },
+        "size": {
+          "type": "string",
+          "enum": ["xs", "sm", "md", "lg"],
+          "default": "sm",
+          "description": "Button size"
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the button is disabled"
+        },
+        "href": {
+          "type": "string",
+          "description": "Link URL for the action"
+        },
+        "onClick": {
+          "type": "string",
+          "description": "Alpine.js click handler"
+        },
+        "htmx": {
+          "type": "object",
+          "properties": {
+            "method": {
+              "type": "string",
+              "enum": ["get", "post", "put", "patch", "delete"],
+              "description": "HTTP method for HTMX request"
+            },
+            "url": {
+              "type": "string",
+              "description": "HTMX request URL"
+            },
+            "target": {
+              "type": "string",
+              "description": "HTMX target selector"
+            },
+            "swap": {
+              "type": "string",
+              "enum": ["innerHTML", "outerHTML", "beforebegin", "afterbegin", "beforeend", "afterend"],
+              "default": "innerHTML",
+              "description": "HTMX swap strategy"
+            },
+            "confirm": {
+              "type": "string",
+              "description": "Confirmation message before action"
+            }
+          }
+        },
+        "className": {
+          "type": "string",
+          "description": "CSS classes for the button"
+        }
+      },
+      "required": ["label"]
+    }
+  },
+  "required": [],
+  "additionalProperties": false
+}

@@ -3,21 +3,16 @@
 
 package datatypes
 
-
-
-
 // Linewidth represents the CSS DataType LineWidth (union type: [string number])
 // This type accepts both strings and numbers, but uses string as the underlying type
 type Linewidth string
 
-
 // Predefined constants
 const (
 	LinewidthMedium = "medium"
-	LinewidthThick = "thick"
-	LinewidthThin = "thin"
+	LinewidthThick  = "thick"
+	LinewidthThin   = "thin"
 )
-
 
 // IsValid validates that the value is a non-empty string or valid number
 func (d Linewidth) IsValid() bool {
@@ -30,5 +25,3 @@ func (d Linewidth) IsValid() bool {
 func (d Linewidth) String() string {
 	return string(d)
 }
-
-

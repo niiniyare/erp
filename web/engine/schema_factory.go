@@ -226,7 +226,7 @@ func (f *SchemaFactory) RenderToTempl(ctx context.Context, schemaType string, pr
 	if err != nil {
 		return nil, fmt.Errorf("failed to create TemplComponent: %w", err)
 	}
-	
+
 	// Convert to actual Templ component
 	return f.templRenderer.RenderComponent(templComponent), nil
 }
@@ -605,4 +605,3 @@ func getArrayProp(props map[string]interface{}, key string) []interface{} {
 	}
 	return nil
 }
-

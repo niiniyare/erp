@@ -3,9 +3,6 @@
 
 package datatypes
 
-
-
-
 // Singleanimationtimeline represents the CSS DataType SingleAnimationTimeline
 type Singleanimationtimeline string
 
@@ -17,5 +14,3 @@ func (d Singleanimationtimeline) IsValid() bool {
 func (d Singleanimationtimeline) String() string {
 	return string(d)
 }
-
-

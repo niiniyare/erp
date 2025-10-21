@@ -23,38 +23,38 @@ const (
 
 // TenantSecurityContext provides military-grade tenant isolation
 type TenantSecurityContext struct {
-	TenantID        string            `json:"tenant_id" validate:"required"`
-	UserID          string            `json:"user_id" validate:"required"`
-	SessionID       string            `json:"session_id" validate:"required"`
-	SecurityLevel   SecurityLevel     `json:"security_level"`
-	Permissions     []Permission      `json:"permissions"`
-	AccessControls  []AccessControl   `json:"access_controls"`
-	AuditContext    *AuditContext     `json:"audit_context,omitempty"`
-	EncryptionKeys  *EncryptionKeys   `json:"-"` // Never serialize keys
-	CreatedAt       time.Time         `json:"created_at"`
-	ExpiresAt       time.Time         `json:"expires_at"`
-	metadata        map[string]string // Private metadata
-	mu              sync.RWMutex      // Thread safety
+	TenantID       string            `json:"tenant_id" validate:"required"`
+	UserID         string            `json:"user_id" validate:"required"`
+	SessionID      string            `json:"session_id" validate:"required"`
+	SecurityLevel  SecurityLevel     `json:"security_level"`
+	Permissions    []Permission      `json:"permissions"`
+	AccessControls []AccessControl   `json:"access_controls"`
+	AuditContext   *AuditContext     `json:"audit_context,omitempty"`
+	EncryptionKeys *EncryptionKeys   `json:"-"` // Never serialize keys
+	CreatedAt      time.Time         `json:"created_at"`
+	ExpiresAt      time.Time         `json:"expires_at"`
+	metadata       map[string]string // Private metadata
+	mu             sync.RWMutex      // Thread safety
 }
 
 // Permission represents a granular security permission
 type Permission struct {
-	Resource    string          `json:"resource" validate:"required"`
-	Action      string          `json:"action" validate:"required"`
-	Conditions  []Condition     `json:"conditions,omitempty"`
-	Constraints []Constraint    `json:"constraints,omitempty"`
-	ExpiresAt   *time.Time      `json:"expires_at,omitempty"`
+	Resource    string       `json:"resource" validate:"required"`
+	Action      string       `json:"action" validate:"required"`
+	Conditions  []Condition  `json:"conditions,omitempty"`
+	Constraints []Constraint `json:"constraints,omitempty"`
+	ExpiresAt   *time.Time   `json:"expires_at,omitempty"`
 }
 
 // AccessControl defines access control rules
 type AccessControl struct {
-	Type        AccessControlType `json:"type" validate:"required"`
-	Subject     string           `json:"subject" validate:"required"`
-	Object      string           `json:"object" validate:"required"`
-	Action      string           `json:"action" validate:"required"`
-	Effect      EffectType       `json:"effect" validate:"required"`
-	Conditions  []Condition      `json:"conditions,omitempty"`
-	Priority    int              `json:"priority"`
+	Type       AccessControlType `json:"type" validate:"required"`
+	Subject    string            `json:"subject" validate:"required"`
+	Object     string            `json:"object" validate:"required"`
+	Action     string            `json:"action" validate:"required"`
+	Effect     EffectType        `json:"effect" validate:"required"`
+	Conditions []Condition       `json:"conditions,omitempty"`
+	Priority   int               `json:"priority"`
 }
 
 // AccessControlType represents different types of access controls
@@ -77,58 +77,58 @@ const (
 
 // Condition represents a security condition
 type Condition struct {
-	Attribute string      `json:"attribute" validate:"required"`
-	Operator  string      `json:"operator" validate:"required"`
-	Value     any `json:"value" validate:"required"`
+	Attribute string `json:"attribute" validate:"required"`
+	Operator  string `json:"operator" validate:"required"`
+	Value     any    `json:"value" validate:"required"`
 }
 
 // Constraint represents a security constraint
 type Constraint struct {
-	Type        string      `json:"type" validate:"required"`
+	Type        string         `json:"type" validate:"required"`
 	Parameters  map[string]any `json:"parameters,omitempty"`
-	Description string      `json:"description,omitempty"`
+	Description string         `json:"description,omitempty"`
 }
 
 // AuditContext tracks security audit information
 type AuditContext struct {
-	RequestID    string            `json:"request_id" validate:"required"`
-	UserAgent    string            `json:"user_agent,omitempty"`
-	IPAddress    string            `json:"ip_address,omitempty"`
-	GeoLocation  *GeoLocation      `json:"geo_location,omitempty"`
-	DeviceInfo   *DeviceInfo       `json:"device_info,omitempty"`
-	Tags         map[string]string `json:"tags,omitempty"`
-	Timestamp    time.Time         `json:"timestamp"`
+	RequestID   string            `json:"request_id" validate:"required"`
+	UserAgent   string            `json:"user_agent,omitempty"`
+	IPAddress   string            `json:"ip_address,omitempty"`
+	GeoLocation *GeoLocation      `json:"geo_location,omitempty"`
+	DeviceInfo  *DeviceInfo       `json:"device_info,omitempty"`
+	Tags        map[string]string `json:"tags,omitempty"`
+	Timestamp   time.Time         `json:"timestamp"`
 }
 
 // GeoLocation tracks geographical location for security
 type GeoLocation struct {
-	Country     string  `json:"country,omitempty"`
-	Region      string  `json:"region,omitempty"`
-	City        string  `json:"city,omitempty"`
-	Latitude    float64 `json:"latitude,omitempty"`
-	Longitude   float64 `json:"longitude,omitempty"`
-	Accuracy    int     `json:"accuracy,omitempty"`
+	Country   string  `json:"country,omitempty"`
+	Region    string  `json:"region,omitempty"`
+	City      string  `json:"city,omitempty"`
+	Latitude  float64 `json:"latitude,omitempty"`
+	Longitude float64 `json:"longitude,omitempty"`
+	Accuracy  int     `json:"accuracy,omitempty"`
 }
 
 // DeviceInfo tracks device information for security
 type DeviceInfo struct {
-	DeviceID     string `json:"device_id,omitempty"`
-	DeviceType   string `json:"device_type,omitempty"`
-	OS           string `json:"os,omitempty"`
-	OSVersion    string `json:"os_version,omitempty"`
-	Browser      string `json:"browser,omitempty"`
+	DeviceID       string `json:"device_id,omitempty"`
+	DeviceType     string `json:"device_type,omitempty"`
+	OS             string `json:"os,omitempty"`
+	OSVersion      string `json:"os_version,omitempty"`
+	Browser        string `json:"browser,omitempty"`
 	BrowserVersion string `json:"browser_version,omitempty"`
-	Fingerprint  string `json:"fingerprint,omitempty"`
+	Fingerprint    string `json:"fingerprint,omitempty"`
 }
 
 // EncryptionKeys holds encryption keys for tenant data
 type EncryptionKeys struct {
-	DataEncryptionKey    []byte `json:"-"`
-	KeyEncryptionKey     []byte `json:"-"`
-	SigningKey           []byte `json:"-"`
-	RotationSchedule     time.Duration
-	LastRotated          time.Time
-	NextRotation         time.Time
+	DataEncryptionKey []byte `json:"-"`
+	KeyEncryptionKey  []byte `json:"-"`
+	SigningKey        []byte `json:"-"`
+	RotationSchedule  time.Duration
+	LastRotated       time.Time
+	NextRotation      time.Time
 }
 
 // SecurityValidator provides military-grade security validation
@@ -136,19 +136,19 @@ type SecurityValidator struct {
 	securityPolicies map[SecurityLevel]*SecurityPolicy
 	encryptionSuite  *EncryptionSuite
 	auditLogger      AuditLogger
-	mu              sync.RWMutex
+	mu               sync.RWMutex
 }
 
 // SecurityPolicy defines security requirements for each level
 type SecurityPolicy struct {
-	RequiredPermissions    []string          `json:"required_permissions"`
-	AllowedOperations      []string          `json:"allowed_operations"`
-	EncryptionRequired     bool              `json:"encryption_required"`
-	AuditLevel            AuditLevel        `json:"audit_level"`
-	SessionTimeout        time.Duration     `json:"session_timeout"`
-	MaxConcurrentSessions int               `json:"max_concurrent_sessions"`
-	IPWhitelist           []string          `json:"ip_whitelist,omitempty"`
-	GeoRestrictions       []GeoRestriction  `json:"geo_restrictions,omitempty"`
+	RequiredPermissions   []string           `json:"required_permissions"`
+	AllowedOperations     []string           `json:"allowed_operations"`
+	EncryptionRequired    bool               `json:"encryption_required"`
+	AuditLevel            AuditLevel         `json:"audit_level"`
+	SessionTimeout        time.Duration      `json:"session_timeout"`
+	MaxConcurrentSessions int                `json:"max_concurrent_sessions"`
+	IPWhitelist           []string           `json:"ip_whitelist,omitempty"`
+	GeoRestrictions       []GeoRestriction   `json:"geo_restrictions,omitempty"`
 	DataClassification    DataClassification `json:"data_classification"`
 }
 
@@ -156,10 +156,10 @@ type SecurityPolicy struct {
 type AuditLevel string
 
 const (
-	AuditLevelNone    AuditLevel = "none"
-	AuditLevelBasic   AuditLevel = "basic"
+	AuditLevelNone     AuditLevel = "none"
+	AuditLevelBasic    AuditLevel = "basic"
 	AuditLevelDetailed AuditLevel = "detailed"
-	AuditLevelFull    AuditLevel = "full"
+	AuditLevelFull     AuditLevel = "full"
 )
 
 // GeoRestriction defines geographical restrictions
@@ -179,10 +179,10 @@ const (
 
 // DataClassification defines data classification levels
 type DataClassification struct {
-	Level                string   `json:"level"`
-	HandlingRequirements []string `json:"handling_requirements"`
+	Level                string        `json:"level"`
+	HandlingRequirements []string      `json:"handling_requirements"`
 	RetentionPeriod      time.Duration `json:"retention_period"`
-	DisposalMethod       string   `json:"disposal_method"`
+	DisposalMethod       string        `json:"disposal_method"`
 }
 
 // EncryptionSuite provides military-grade encryption
@@ -203,16 +203,16 @@ type AuditLogger interface {
 
 // SecurityEvent represents a security-related event
 type SecurityEvent struct {
-	ID             string                 `json:"id"`
-	Type           SecurityEventType      `json:"type"`
-	Severity       SecuritySeverity       `json:"severity"`
-	TenantID       string                 `json:"tenant_id"`
-	UserID         string                 `json:"user_id"`
-	SessionID      string                 `json:"session_id"`
-	Description    string                 `json:"description"`
-	Details        map[string]any `json:"details,omitempty"`
-	Timestamp      time.Time              `json:"timestamp"`
-	AuditContext   *AuditContext          `json:"audit_context,omitempty"`
+	ID           string            `json:"id"`
+	Type         SecurityEventType `json:"type"`
+	Severity     SecuritySeverity  `json:"severity"`
+	TenantID     string            `json:"tenant_id"`
+	UserID       string            `json:"user_id"`
+	SessionID    string            `json:"session_id"`
+	Description  string            `json:"description"`
+	Details      map[string]any    `json:"details,omitempty"`
+	Timestamp    time.Time         `json:"timestamp"`
+	AuditContext *AuditContext     `json:"audit_context,omitempty"`
 }
 
 // SecurityEventType defines types of security events
@@ -265,18 +265,18 @@ const (
 
 // DataAccess represents a data access event
 type DataAccess struct {
-	ID               string                 `json:"id"`
-	TenantID         string                 `json:"tenant_id"`
-	UserID           string                 `json:"user_id"`
-	DataType         string                 `json:"data_type"`
-	DataID           string                 `json:"data_id,omitempty"`
-	Operation        string                 `json:"operation"`
-	SecurityLevel    SecurityLevel          `json:"security_level"`
-	EncryptionStatus bool                   `json:"encryption_status"`
-	DataHash         string                 `json:"data_hash,omitempty"`
+	ID               string         `json:"id"`
+	TenantID         string         `json:"tenant_id"`
+	UserID           string         `json:"user_id"`
+	DataType         string         `json:"data_type"`
+	DataID           string         `json:"data_id,omitempty"`
+	Operation        string         `json:"operation"`
+	SecurityLevel    SecurityLevel  `json:"security_level"`
+	EncryptionStatus bool           `json:"encryption_status"`
+	DataHash         string         `json:"data_hash,omitempty"`
 	Metadata         map[string]any `json:"metadata,omitempty"`
-	Timestamp        time.Time              `json:"timestamp"`
-	AuditContext     *AuditContext          `json:"audit_context,omitempty"`
+	Timestamp        time.Time      `json:"timestamp"`
+	AuditContext     *AuditContext  `json:"audit_context,omitempty"`
 }
 
 // NewSecurityValidator creates a new military-grade security validator
@@ -344,7 +344,7 @@ type SecurityViolation struct {
 	Severity    SecuritySeverity `json:"severity"`
 	Description string           `json:"description"`
 	Component   string           `json:"component"`
-	Details     map[string]any `json:"details,omitempty"`
+	Details     map[string]any   `json:"details,omitempty"`
 	Timestamp   time.Time        `json:"timestamp"`
 }
 
@@ -357,25 +357,25 @@ const (
 	ViolationDataClassification      ViolationType = "data_classification"
 	ViolationEncryption              ViolationType = "encryption"
 	ViolationAccessControl           ViolationType = "access_control"
-	ViolationAuditFailure           ViolationType = "audit_failure"
+	ViolationAuditFailure            ViolationType = "audit_failure"
 )
 
 // NewTenantSecurityContext creates a new tenant security context
 func NewTenantSecurityContext(tenantID, userID string, securityLevel SecurityLevel) *TenantSecurityContext {
 	sessionID := generateSecureID()
 	now := time.Now()
-	
+
 	return &TenantSecurityContext{
-		TenantID:      tenantID,
-		UserID:        userID,
-		SessionID:     sessionID,
-		SecurityLevel: securityLevel,
-		Permissions:   []Permission{},
+		TenantID:       tenantID,
+		UserID:         userID,
+		SessionID:      sessionID,
+		SecurityLevel:  securityLevel,
+		Permissions:    []Permission{},
 		AccessControls: []AccessControl{},
 		EncryptionKeys: generateEncryptionKeys(),
-		CreatedAt:     now,
-		ExpiresAt:     now.Add(24 * time.Hour), // Default 24-hour session
-		metadata:      make(map[string]string),
+		CreatedAt:      now,
+		ExpiresAt:      now.Add(24 * time.Hour), // Default 24-hour session
+		metadata:       make(map[string]string),
 	}
 }
 
@@ -429,7 +429,7 @@ func (sv *SecurityValidator) validateDataClassification(component Component, sec
 	sv.mu.RLock()
 	policy, exists := sv.securityPolicies[securityCtx.SecurityLevel]
 	sv.mu.RUnlock()
-	
+
 	if !exists {
 		return false
 	}
@@ -443,7 +443,7 @@ func (sv *SecurityValidator) validateEncryption(component Component, securityCtx
 	sv.mu.RLock()
 	policy, exists := sv.securityPolicies[securityCtx.SecurityLevel]
 	sv.mu.RUnlock()
-	
+
 	if !exists {
 		return false
 	}
@@ -451,7 +451,7 @@ func (sv *SecurityValidator) validateEncryption(component Component, securityCtx
 	if policy.EncryptionRequired {
 		return componentHasEncryption(component)
 	}
-	
+
 	return true
 }
 
@@ -490,14 +490,14 @@ func generateSecureID() string {
 }
 
 func generateEncryptionKeys() *EncryptionKeys {
-	dek := make([]byte, 32) // 256-bit key
-	kek := make([]byte, 32) // 256-bit key  
+	dek := make([]byte, 32)     // 256-bit key
+	kek := make([]byte, 32)     // 256-bit key
 	signing := make([]byte, 32) // 256-bit key
-	
+
 	rand.Read(dek)
 	rand.Read(kek)
 	rand.Read(signing)
-	
+
 	now := time.Now()
 	return &EncryptionKeys{
 		DataEncryptionKey: dek,
@@ -513,23 +513,23 @@ func validateSecurityContext(securityCtx *TenantSecurityContext) error {
 	if securityCtx == nil {
 		return fmt.Errorf("security context is nil")
 	}
-	
+
 	if securityCtx.TenantID == "" {
 		return fmt.Errorf("tenant ID is required")
 	}
-	
+
 	if securityCtx.UserID == "" {
 		return fmt.Errorf("user ID is required")
 	}
-	
+
 	if securityCtx.SessionID == "" {
 		return fmt.Errorf("session ID is required")
 	}
-	
+
 	if time.Now().After(securityCtx.ExpiresAt) {
 		return fmt.Errorf("security context has expired")
 	}
-	
+
 	return nil
 }
 
@@ -553,7 +553,7 @@ func applyTenantIsolation(component Component, securityCtx *TenantSecurityContex
 	component.metadata["security_level"] = string(securityCtx.SecurityLevel)
 	component.metadata["created_by"] = securityCtx.UserID
 	component.metadata["session_id"] = securityCtx.SessionID
-	
+
 	return component
 }
 
@@ -603,10 +603,10 @@ func isClassificationAllowed(componentClass string, policyClass DataClassificati
 		"secret":       4,
 		"top-secret":   5,
 	}
-	
+
 	componentLevel := classificationLevels[componentClass]
 	policyLevel := classificationLevels[policyClass.Level]
-	
+
 	return componentLevel <= policyLevel
 }
 
@@ -625,9 +625,9 @@ func encryptData(data any, key []byte) ([]byte, error) {
 func initDefaultSecurityPolicies() map[SecurityLevel]*SecurityPolicy {
 	return map[SecurityLevel]*SecurityPolicy{
 		SecurityLevelPublic: {
-			RequiredPermissions:    []string{"read"},
-			AllowedOperations:      []string{"read"},
-			EncryptionRequired:     false,
+			RequiredPermissions:   []string{"read"},
+			AllowedOperations:     []string{"read"},
+			EncryptionRequired:    false,
 			AuditLevel:            AuditLevelBasic,
 			SessionTimeout:        2 * time.Hour,
 			MaxConcurrentSessions: 10,
@@ -642,8 +642,8 @@ func initDefaultSecurityPolicies() map[SecurityLevel]*SecurityPolicy {
 			RequiredPermissions:   []string{"read", "write", "delete", "admin"},
 			AllowedOperations:     []string{"read", "write", "delete"},
 			EncryptionRequired:    true,
-			AuditLevel:           AuditLevelFull,
-			SessionTimeout:       30 * time.Minute,
+			AuditLevel:            AuditLevelFull,
+			SessionTimeout:        30 * time.Minute,
 			MaxConcurrentSessions: 1,
 			DataClassification: DataClassification{
 				Level:                "top-secret",

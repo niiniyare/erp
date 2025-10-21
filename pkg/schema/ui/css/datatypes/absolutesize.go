@@ -3,20 +3,17 @@
 
 package datatypes
 
-
-
-
 // Absolutesize represents the CSS DataType AbsoluteSize with predefined values
 type Absolutesize string
 
 const (
-	AbsolutesizeLarge Absolutesize = "large"
-	AbsolutesizeMedium Absolutesize = "medium"
-	AbsolutesizeSmall Absolutesize = "small"
-	AbsolutesizeXlarge Absolutesize = "x-large"
-	AbsolutesizeXsmall Absolutesize = "x-small"
-	AbsolutesizeXxlarge Absolutesize = "xx-large"
-	AbsolutesizeXxsmall Absolutesize = "xx-small"
+	AbsolutesizeLarge    Absolutesize = "large"
+	AbsolutesizeMedium   Absolutesize = "medium"
+	AbsolutesizeSmall    Absolutesize = "small"
+	AbsolutesizeXlarge   Absolutesize = "x-large"
+	AbsolutesizeXsmall   Absolutesize = "x-small"
+	AbsolutesizeXxlarge  Absolutesize = "xx-large"
+	AbsolutesizeXxsmall  Absolutesize = "xx-small"
 	AbsolutesizeXxxlarge Absolutesize = "xxx-large"
 )
 
@@ -34,5 +31,3 @@ func (d Absolutesize) IsValid() bool {
 func (d Absolutesize) String() string {
 	return string(d)
 }
-
-

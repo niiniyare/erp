@@ -11,21 +11,21 @@ type PropertyCategory struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Properties  []string `json:"properties"`
-	Icon        string   `json:"icon,omitempty"`        // For UI representation
-	Color       string   `json:"color,omitempty"`       // For UI theming
-	Priority    int      `json:"priority,omitempty"`    // Display order
+	Icon        string   `json:"icon,omitempty"`     // For UI representation
+	Color       string   `json:"color,omitempty"`    // For UI theming
+	Priority    int      `json:"priority,omitempty"` // Display order
 }
 
 // CategoryManager manages CSS property categorization
 type CategoryManager struct {
-	categories map[string]*PropertyCategory
+	categories         map[string]*PropertyCategory
 	propertyToCategory map[string]string
 }
 
 // NewCategoryManager creates a new CSS property category manager
 func NewCategoryManager() *CategoryManager {
 	manager := &CategoryManager{
-		categories: make(map[string]*PropertyCategory),
+		categories:         make(map[string]*PropertyCategory),
 		propertyToCategory: make(map[string]string),
 	}
 
@@ -313,7 +313,7 @@ func (cm *CategoryManager) GetCategoryNames() []string {
 func (cm *CategoryManager) GetPropertyCategory(propertyName string) string {
 	// Normalize property name
 	normalized := strings.ToLower(strings.TrimSpace(propertyName))
-	
+
 	// Check for exact match first
 	if category, exists := cm.propertyToCategory[normalized]; exists {
 		return category
@@ -381,7 +381,7 @@ func (cm *CategoryManager) AddPropertyToCategory(propertyName, categoryName stri
 				return true // Already exists
 			}
 		}
-		
+
 		// Add the property
 		category.Properties = append(category.Properties, propertyName)
 		cm.propertyToCategory[propertyName] = categoryName
@@ -393,7 +393,7 @@ func (cm *CategoryManager) AddPropertyToCategory(propertyName, categoryName stri
 // GetCategoryStats returns statistics about each category
 func (cm *CategoryManager) GetCategoryStats() map[string]CategoryStats {
 	stats := make(map[string]CategoryStats)
-	
+
 	for name, category := range cm.categories {
 		stats[name] = CategoryStats{
 			Name:          name,
@@ -404,7 +404,7 @@ func (cm *CategoryManager) GetCategoryStats() map[string]CategoryStats {
 			Color:         category.Color,
 		}
 	}
-	
+
 	return stats
 }
 
@@ -426,7 +426,7 @@ func (cm *CategoryManager) SearchProperties(query string) map[string][]string {
 	}
 
 	results := make(map[string][]string)
-	
+
 	for categoryName, category := range cm.categories {
 		var matches []string
 		for _, property := range category.Properties {
@@ -439,7 +439,7 @@ func (cm *CategoryManager) SearchProperties(query string) map[string][]string {
 			results[categoryName] = matches
 		}
 	}
-	
+
 	return results
 }
 
@@ -449,12 +449,12 @@ func (cm *CategoryManager) GetRelatedProperties(propertyName string) []string {
 	if categoryName == "Other" {
 		return nil
 	}
-	
+
 	properties := cm.GetPropertiesByCategory(categoryName)
 	if properties == nil {
 		return nil
 	}
-	
+
 	// Remove the original property from the results
 	var related []string
 	normalized := strings.ToLower(propertyName)
@@ -463,40 +463,40 @@ func (cm *CategoryManager) GetRelatedProperties(propertyName string) []string {
 			related = append(related, prop)
 		}
 	}
-	
+
 	return related
 }
 
 // ValidateCategoryStructure validates that all categories have required fields
 func (cm *CategoryManager) ValidateCategoryStructure() []string {
 	var issues []string
-	
+
 	for name, category := range cm.categories {
 		if category.Name != name {
 			issues = append(issues, fmt.Sprintf("Category %s has mismatched name field", name))
 		}
-		
+
 		if category.Description == "" {
 			issues = append(issues, fmt.Sprintf("Category %s missing description", name))
 		}
-		
+
 		if len(category.Properties) == 0 {
 			issues = append(issues, fmt.Sprintf("Category %s has no properties", name))
 		}
-		
+
 		if category.Priority == 0 {
 			issues = append(issues, fmt.Sprintf("Category %s has no priority set", name))
 		}
 	}
-	
+
 	return issues
 }
 
 // ExportCategoriesJSON exports all categories as JSON-serializable data
 func (cm *CategoryManager) ExportCategoriesJSON() map[string]any {
 	return map[string]any{
-		"categories": cm.GetAllCategories(),
-		"stats": cm.GetCategoryStats(),
+		"categories":       cm.GetAllCategories(),
+		"stats":            cm.GetCategoryStats(),
 		"total_categories": len(cm.categories),
 		"total_properties": len(cm.propertyToCategory),
 	}

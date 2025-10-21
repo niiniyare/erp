@@ -99,7 +99,7 @@ func (d *Demo) demoSchemaToTempl(ctx context.Context) error {
 
 	fmt.Printf("\n🔄 Converted to Templ component:\n")
 	fmt.Printf("   - Type: %s\n", templComponent.Type)
-	
+
 	if props, ok := templComponent.Props.(atoms.ButtonProps); ok {
 		fmt.Printf("   - Text: %s\n", props.Text)
 		fmt.Printf("   - Icon: %s\n", props.Icon)
@@ -182,54 +182,54 @@ func (d *Demo) demoUnifiedRegistry(ctx context.Context) error {
 
 	// Method 1: Create via schema system
 	fmt.Println("📋 Creating component via Schema System:")
-	
+
 	// TODO: Implement when registry method is available
 	/*
-	schemaComponent, err := d.registry.CreateSchemaComponent(ctx, schemaui.ComponentSelect, map[string]any{
-		"name":        "user_role",
-		"placeholder": "Select User Role",
-		"required":    true,
-		"options": []map[string]any{
-			{"value": "admin", "label": "Administrator"},
-			{"value": "manager", "label": "Manager"},
-			{"value": "user", "label": "Regular User"},
-			{"value": "viewer", "label": "Read-Only Viewer"},
-		},
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create schema component: %w", err)
-	}
+		schemaComponent, err := d.registry.CreateSchemaComponent(ctx, schemaui.ComponentSelect, map[string]any{
+			"name":        "user_role",
+			"placeholder": "Select User Role",
+			"required":    true,
+			"options": []map[string]any{
+				{"value": "admin", "label": "Administrator"},
+				{"value": "manager", "label": "Manager"},
+				{"value": "user", "label": "Regular User"},
+				{"value": "viewer", "label": "Read-Only Viewer"},
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create schema component: %w", err)
+		}
 
-	fmt.Printf("   - Created schema select with ID: %s\n", schemaComponent.ID)
+		fmt.Printf("   - Created schema select with ID: %s\n", schemaComponent.ID)
 
-	// Convert to Templ
-	templFromSchema, err := d.bridge.ConvertToTempl(ctx, schemaComponent)
-	if err != nil {
-		return fmt.Errorf("failed to convert to templ: %w", err)
-	}
+		// Convert to Templ
+		templFromSchema, err := d.bridge.ConvertToTempl(ctx, schemaComponent)
+		if err != nil {
+			return fmt.Errorf("failed to convert to templ: %w", err)
+		}
 
-	if selectProps, ok := templFromSchema.Props.(atoms.SelectProps); ok {
-		fmt.Printf("   - Converted to Templ with %d options\n", len(selectProps.Options))
-	}
+		if selectProps, ok := templFromSchema.Props.(atoms.SelectProps); ok {
+			fmt.Printf("   - Converted to Templ with %d options\n", len(selectProps.Options))
+		}
 
-	// Method 2: Create via Templ system and convert
-	fmt.Println("\n🎯 Creating component via Templ System:")
-	
-	templComponent, err := d.registry.CreateTemplComponent(ctx, schemaui.ComponentCheckbox, map[string]any{
-		"name":     "terms_accepted",
-		"label":    "I accept the Terms and Conditions",
-		"required": true,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to create templ component: %w", err)
-	}
+		// Method 2: Create via Templ system and convert
+		fmt.Println("\n🎯 Creating component via Templ System:")
 
-	fmt.Printf("   - Created Templ checkbox: %s\n", templComponent.Type)
+		templComponent, err := d.registry.CreateTemplComponent(ctx, schemaui.ComponentCheckbox, map[string]any{
+			"name":     "terms_accepted",
+			"label":    "I accept the Terms and Conditions",
+			"required": true,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create templ component: %w", err)
+		}
 
-	if checkboxProps, ok := templComponent.Props.(atoms.CheckboxProps); ok {
-		fmt.Printf("   - Label: %s\n", checkboxProps.Label)
-		fmt.Printf("   - Required: %t\n", checkboxProps.Required)
-	}
+		fmt.Printf("   - Created Templ checkbox: %s\n", templComponent.Type)
+
+		if checkboxProps, ok := templComponent.Props.(atoms.CheckboxProps); ok {
+			fmt.Printf("   - Label: %s\n", checkboxProps.Label)
+			fmt.Printf("   - Required: %t\n", checkboxProps.Required)
+		}
 	*/
 
 	fmt.Println("   - Registry methods not yet implemented - demo skipped")
@@ -248,7 +248,7 @@ func (d *Demo) demoTemplateCreation(ctx context.Context) error {
 
 	// Create login form template
 	fmt.Println("📋 Creating login form template:")
-	
+
 	templComponents, schemaComponents, err := d.registry.CreateFromTemplate(ctx, "login-form", map[string]any{})
 	if err != nil {
 		return fmt.Errorf("failed to create login form template: %w", err)
@@ -264,7 +264,7 @@ func (d *Demo) demoTemplateCreation(ctx context.Context) error {
 
 	// Create user form template
 	fmt.Println("\n🎯 Creating user registration form template:")
-	
+
 	userTemplComponents, userSchemaComponents, err := d.registry.CreateFromTemplate(ctx, "user-form", map[string]any{})
 	if err != nil {
 		return fmt.Errorf("failed to create user form template: %w", err)
@@ -296,7 +296,7 @@ func (d *Demo) demoCSSIntegration(ctx context.Context) error {
 
 	// This would require the CSS system to be properly integrated
 	// For demonstration, we'll show the concept
-	
+
 	customButton := schemaui.NewComponent(schemaui.ComponentButton, "custom-styled-button").
 		WithLabel("Custom Styled Button").
 		WithVariant(schemaui.VariantPrimary).

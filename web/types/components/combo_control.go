@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-// ComboControlSize represents the size options for combo controls  
+// ComboControlSize represents the size options for combo controls
 type ComboControlSize string
 
 const (
@@ -31,10 +31,10 @@ const (
 type ComboTabsStyle string
 
 const (
-	ComboTabsStyleDefault ComboTabsStyle = ""       // Default style
-	ComboTabsStyleLine    ComboTabsStyle = "line"   // Line-style tabs
-	ComboTabsStyleCard    ComboTabsStyle = "card"   // Card-style tabs
-	ComboTabsStyleRadio   ComboTabsStyle = "radio"  // Radio button style tabs
+	ComboTabsStyleDefault ComboTabsStyle = ""      // Default style
+	ComboTabsStyleLine    ComboTabsStyle = "line"  // Line-style tabs
+	ComboTabsStyleCard    ComboTabsStyle = "card"  // Card-style tabs
+	ComboTabsStyleRadio   ComboTabsStyle = "radio" // Radio button style tabs
 )
 
 // ComboMode represents the display mode for the combo control
@@ -253,40 +253,40 @@ type ComboControlSchema struct {
 	Row int `json:"row,omitempty"`
 
 	// Static Display Properties
-	Static bool `json:"static,omitempty"`
-	StaticOn string `json:"staticOn,omitempty"`
-	StaticPlaceholder string `json:"staticPlaceholder,omitempty"`
-	StaticClassName string `json:"staticClassName,omitempty"`
+	Static               bool   `json:"static,omitempty"`
+	StaticOn             string `json:"staticOn,omitempty"`
+	StaticPlaceholder    string `json:"staticPlaceholder,omitempty"`
+	StaticClassName      string `json:"staticClassName,omitempty"`
 	StaticLabelClassName string `json:"staticLabelClassName,omitempty"`
 	StaticInputClassName string `json:"staticInputClassName,omitempty"`
-	StaticSchema any `json:"staticSchema,omitempty"`
+	StaticSchema         any    `json:"staticSchema,omitempty"`
 
 	// Design and Testing Properties
-	TestIdBuilder any `json:"testIdBuilder,omitempty"`
-	UpdatePristineAfterStoreDataReInit bool `json:"updatePristineAfterStoreDataReInit,omitempty"`
-	Remark any `json:"remark,omitempty"`
-	LabelRemark any `json:"labelRemark,omitempty"`
-	EditorSetting *EditorSetting `json:"editorSetting,omitempty"`
+	TestIdBuilder                      any            `json:"testIdBuilder,omitempty"`
+	UpdatePristineAfterStoreDataReInit bool           `json:"updatePristineAfterStoreDataReInit,omitempty"`
+	Remark                             any            `json:"remark,omitempty"`
+	LabelRemark                        any            `json:"labelRemark,omitempty"`
+	EditorSetting                      *EditorSetting `json:"editorSetting,omitempty"`
 }
 
 // Factory function to create a basic combo control
 func NewComboControl(name string, items []ComboSubControl) *ComboControlSchema {
 	return &ComboControlSchema{
-		Type:           "combo",
-		Name:           name,
-		Items:          items,
-		Size:           ComboControlSizeMD,
-		SubFormMode:    ComboSubFormModeNormal,
-		TabsStyle:      ComboTabsStyleLine,
-		Mode:           ComboModeNormal,
-		AddButtonText:  "Add",
-		Addable:        true,
-		Removable:      true,
-		Flat:           true,
-		Multiple:       false,
-		LazyLoad:       false,
-		StrictMode:     false,
-		Nullable:       false,
+		Type:          "combo",
+		Name:          name,
+		Items:         items,
+		Size:          ComboControlSizeMD,
+		SubFormMode:   ComboSubFormModeNormal,
+		TabsStyle:     ComboTabsStyleLine,
+		Mode:          ComboModeNormal,
+		AddButtonText: "Add",
+		Addable:       true,
+		Removable:     true,
+		Flat:          true,
+		Multiple:      false,
+		LazyLoad:      false,
+		StrictMode:    false,
+		Nullable:      false,
 	}
 }
 

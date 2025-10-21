@@ -3,17 +3,14 @@
 
 package datatypes
 
-
-
-
 // Singleanimationdirection represents the CSS DataType SingleAnimationDirection with predefined values
 type Singleanimationdirection string
 
 const (
-	SingleanimationdirectionAlternate Singleanimationdirection = "alternate"
+	SingleanimationdirectionAlternate        Singleanimationdirection = "alternate"
 	SingleanimationdirectionAlternatereverse Singleanimationdirection = "alternate-reverse"
-	SingleanimationdirectionNormal Singleanimationdirection = "normal"
-	SingleanimationdirectionReverse Singleanimationdirection = "reverse"
+	SingleanimationdirectionNormal           Singleanimationdirection = "normal"
+	SingleanimationdirectionReverse          Singleanimationdirection = "reverse"
 )
 
 func (d Singleanimationdirection) IsValid() bool {
@@ -30,5 +27,3 @@ func (d Singleanimationdirection) IsValid() bool {
 func (d Singleanimationdirection) String() string {
 	return string(d)
 }
-
-
