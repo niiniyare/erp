@@ -1,281 +1,231 @@
-# CLAUDE.md - UI Documentation Guide
+# CLAUDE.md - AI Assistant Guide
 
-This file provides guidance to Claude Code and other AI assistants when working with the ERP UI documentation and components in this repository.
+This file provides guidance to Claude Code and other AI assistants when working with the AWO ERP UI documentation and components.
 
-## Documentation Overview
+## 📋 Quick Navigation for AI Assistants
 
-This UI documentation system is designed to be **LLM-friendly** and provides comprehensive guidance for building ERP interfaces using **Templ + HTMX + Alpine.js + Flowbite**.
+### Essential Files
+- **[README.md](README.md)** - Main documentation entry point
+- **[getting-started.md](getting-started.md)** - Setup and basic examples
+- **[Schema-Driven-Architecture.md](Schema-Driven-Architecture.md)** - Core system architecture
+- **[templ-llms.md](templ-llms.md)** - Advanced Templ features and optimization
 
-### Documentation Structure
+### Component Documentation
+- **[components/](components/)** - Complete component library (140+ components)
+- **[schema/definitions/](schema/definitions/)** - JSON schema specifications (900+ schemas)
+- **[guides/](guides/)** - ERP workflow patterns and integration examples
 
+## 🏗️ System Architecture Overview
+
+### Technology Stack
 ```
-docs/ui/
-├── README.md                     # 🎯 LLM-optimized entry point and navigation
-├── getting-started.md            # 🚀 Complete setup and installation guide
-├── CLAUDE.md                     # 🤖 This file - AI assistant guidance
-├── templ-llms.md                 # 📚 Advanced Templ features reference
-├── flowbite-llms-full.txt        # 🎨 Complete Flowbite styling reference
-├── fundamentals/
-│   └── architecture.md           # 🏗️ Core system architecture and design principles
-├── components/
-│   ├── elements.md               # 🧱 Foundational UI elements (buttons, inputs, cards)
-│   └── forms.md                  # 📝 Form components and interactive patterns
-├── patterns/
-│   └── htmx-integration.md       # 🔄 Server interaction patterns and HTMX implementation
-├── guides/
-│   └── validation-guide.md       # ✅ Complete validation system implementation
-└── reference/
-    └── api-reference.md          # 📖 Complete API documentation and type definitions
+Go Templ (Templates) + HTMX (Interactions) + Alpine.js (State) + Flowbite (Styling)
+                                    ↓
+                        JSON Schema-Driven UI System
+                                    ↓
+                     Pattern Renderer + Visual Builder
 ```
 
-## Key Technologies
-
-### Core Stack
-- **[Templ](https://templ.guide)** - Type-safe Go templating language that compiles to Go code (PRIMARY FRAMEWORK)
-- **[HTMX](https://htmx.org)** - Server-driven UI interactions without complex JavaScript
-- **[Alpine.js](https://alpinejs.dev)** - Lightweight reactive JavaScript framework for client state
-- **[Flowbite](https://flowbite.com)** - UI component library built on TailwindCSS
+### Key Technologies
+- **[Templ](https://templ.guide)** - Type-safe Go templating language (PRIMARY)
+- **[HTMX](https://htmx.org)** - Server-driven UI interactions
+- **[Alpine.js](https://alpinejs.dev)** - Lightweight client-side reactivity
+- **[Flowbite](https://flowbite.com)** - Production-ready UI components
 - **[TailwindCSS](https://tailwindcss.com)** - Utility-first CSS framework
 
-### Architecture Pattern
-- **Server-First** - Business logic and validation on the Go server
-- **Progressive Enhancement** - Works without JavaScript, enhanced with Alpine.js
-- **Component-Based** - Atomic design with reusable Templ components
-- **Type-Safe** - Leverages Go's type system for templates and props
-- **Multi-Tenant** - Built-in tenant isolation and context management
+## 🧩 Component Architecture
 
-## Navigation Guide for AI Assistants
-
-### 🎯 Quick Start Locations
-
-1. **New to the system?** → Start with `README.md` for overview and navigation
-2. **Setting up a project?** → Go to `getting-started.md` for complete setup instructions
-3. **Building components?** → Use `components/elements.md` for foundational UI elements
-4. **Creating forms?** → Reference `components/forms.md` for form patterns
-5. **Server integration?** → Check `patterns/htmx-integration.md` for HTMX patterns
-6. **Implementation details?** → Use `guides/validation-guide.md` for complete validation system
-7. **API reference needed?** → Consult `reference/api-reference.md` for complete type definitions
-
-### 🔍 LLM Navigation Markers
-
-All documentation files include semantic markers for AI navigation:
-
-```html
-**FILE PURPOSE**: Brief description of file purpose
-**SCOPE**: What this file covers
-**TARGET AUDIENCE**: Who should use this file
-
-Content organized by semantic sections...
+### Atomic Design Hierarchy
+```
+Templates/    - Application layouts (Root, Page, Service, Operation, Each, Switch)
+Organisms/    - Complex business components (CRUD, Forms, Navigation, Modals)
+Molecules/    - Composite UI components (Cards, Fields, Alerts, Dropdowns)
+Atoms/        - Basic UI elements (Buttons, Inputs, Icons, Text)
 ```
 
-These markers help AI assistants quickly locate relevant information.
+### Schema Integration
+The system uses JSON schemas to define UI components:
+- **Schema definitions** in `schema/definitions/`
+- **Pattern Renderer** interprets schemas and generates UI
+- **Go models** automatically generate UI schemas
+- **Visual Builder** provides drag-and-drop interface creation
 
-## Common AI Assistant Tasks
+## 📝 Writing Code with AWO ERP UI
 
-### 1. Component Implementation
-**When asked to create UI components:**
-1. Start with `components/elements.md` for foundational patterns
-2. Reference `components/forms.md` for interactive elements
-3. Check `reference/api-reference.md` for exact type definitions
-4. Use `templ-llms.md` for advanced Templ features
-
-### 2. Server Integration
-**When implementing HTMX interactions:**
-1. Use `patterns/htmx-integration.md` for request/response patterns
-2. Reference `guides/validation-guide.md` for server-side validation
-3. Check `fundamentals/architecture.md` for system design principles
-
-### 3. Form Development
-**When building forms and validation:**
-1. Start with `components/forms.md` for component patterns
-2. Use `guides/validation-guide.md` for complete validation implementation
-3. Reference `patterns/htmx-integration.md` for server communication
-4. Check `reference/api-reference.md` for validation types
-
-### 4. Styling and Design
-**When applying styling and design:**
-1. Reference `flowbite-llms-full.txt` for complete component styling
-2. Use `components/elements.md` for design system patterns
-3. Check `fundamentals/architecture.md` for design principles
-
-## Code Patterns to Follow
-
-### 1. Templ Component Structure
+### Basic Templ Component Pattern
 ```go
-// Always follow this pattern for components
+// Component with props
 templ ComponentName(props ComponentProps) {
-    <element class={ getComponentClasses(props) }>
+    <div class={ getComponentClasses(props) }>
         if props.ShowLabel {
             <label>{ props.Label }</label>
         }
         { children... }
-    </element>
+    </div>
 }
-```
 
-### 2. Props Pattern
-```go
-// Consistent props structure across all components
+// Props structure
 type ComponentProps struct {
-    // Content properties
+    // Content
     Text        string
     Value       string
     
-    // Styling properties
+    // Styling  
     Variant     string
     Size        string
     
-    // Behavior properties
+    // Behavior
     Disabled    bool
     OnClick     string
     
-    // HTML properties
+    // HTML
     ID          string
     Class       string
     AriaLabel   string
 }
 ```
 
-### 3. HTMX Integration Pattern
+### HTMX Integration Pattern
 ```html
-<!-- Follow this pattern for server interactions -->
 <form 
     hx-post="/api/endpoint"
-    hx-target="#results"
+    hx-target="#results" 
     hx-swap="innerHTML"
     hx-on::after-request="handleResponse(event)">
     <!-- Form content -->
 </form>
 ```
 
-## Important Implementation Notes
+### Alpine.js State Management
+```html
+<div x-data="{ 
+    open: false, 
+    loading: false,
+    data: []
+}">
+    <button @click="open = !open">Toggle</button>
+    <div x-show="open" x-transition>Content</div>
+</div>
+```
+
+## 🎯 AI Assistant Guidelines
+
+### When Creating Components
+1. **Check existing components first** - Browse `components/` directory
+2. **Follow atomic design** - Use appropriate component level
+3. **Reference schemas** - Check `schema/definitions/` for specifications
+4. **Use Flowbite patterns** - Leverage existing Flowbite components
+5. **Ensure accessibility** - Include ARIA labels and keyboard navigation
+
+### When Implementing Business Logic
+1. **Server-first approach** - Business logic stays on Go backend
+2. **Progressive enhancement** - Core functionality works without JavaScript
+3. **HTMX for interactions** - Use server-driven UI updates
+4. **Alpine.js for state** - Handle client-side reactive state only
+5. **Type safety** - Leverage Go's type system throughout
+
+### Code Examples to Reference
+- **Basic components** - See `components/atoms/` for foundational patterns
+- **Complex components** - See `components/organisms/` for business logic
+- **Real-world workflows** - See `guides/erp-workflow-patterns.md`
+- **Integration patterns** - See `guides/component-integration-guide.md`
+
+## 📚 Common AI Assistant Tasks
+
+### 1. Component Creation
+**For new UI components:**
+1. Check `components/` for existing similar components
+2. Reference appropriate schema in `schema/definitions/`
+3. Follow atomic design principles
+4. Use Templ best practices from `templ-llms.md`
+
+### 2. ERP Workflow Implementation
+**For business process implementation:**
+1. Start with `guides/erp-workflow-patterns.md`
+2. Use organism-level components for complex business logic
+3. Reference `guides/component-integration-guide.md` for composition
+4. Follow multi-step form patterns in `components/organisms/`
+
+### 3. Schema Integration
+**For JSON schema work:**
+1. Reference existing schemas in `schema/definitions/`
+2. Follow schema patterns established in documentation
+3. Ensure schema-component alignment
+4. Test with Pattern Renderer system
+
+### 4. Performance Optimization
+**For performance concerns:**
+1. Reference `templ-llms.md` for advanced optimization
+2. Maintain JavaScript bundle under 50KB (currently 37.1KB)
+3. Use server-side rendering for core functionality
+4. Implement progressive enhancement patterns
+
+## 🚨 Important Constraints
 
 ### Security Requirements
-- **Always validate inputs server-side** - Never trust client data
-- **Include CSRF protection** for state-changing requests
-- **Sanitize HTML output** to prevent XSS attacks
-- **Use proper HTTP status codes** for different error scenarios
+- **Server-side validation** - Never trust client-side data
+- **CSRF protection** - Include tokens in state-changing requests
+- **XSS prevention** - Sanitize all user-generated content
+- **Access control** - Check permissions before rendering components
 
-### Performance Considerations
-- **Debounce rapid requests** like search with `delay:300ms`
-- **Use lazy loading** for expensive content with `intersect once`
-- **Return minimal HTML** from server endpoints
-- **Cache responses** when appropriate with ETags
+### Performance Requirements
+- **JavaScript bundle** - Must stay under 50KB (currently 37.1KB)
+- **Server-first** - Core functionality without JavaScript
+- **Progressive enhancement** - Layer interactive features
+- **Type safety** - Leverage Go's type system
 
 ### Accessibility Requirements
-- **Include proper ARIA labels** for all interactive elements
-- **Ensure keyboard navigation** works for all components
-- **Provide meaningful error messages** for form validation
-- **Use semantic HTML** structure throughout
+- **WCAG 2.1 AA compliance** - All components must be accessible
+- **Keyboard navigation** - Full keyboard access to all functionality
+- **Screen reader support** - Proper ARIA labels and structure
+- **Color contrast** - Meet accessibility color requirements
 
-## File-Specific Guidance
+## 🔧 Development Workflow
 
-### `README.md`
-- **Purpose**: Main entry point with comprehensive navigation
-- **Use when**: AI needs overview or navigation assistance
-- **Contains**: Project overview, quick start, technology explanations
+### Essential Commands
+```bash
+# Template development
+templ generate --watch           # Hot reload
+templ fmt                       # Format templates
+templ generate                  # One-time generation
 
-### `getting-started.md`
-- **Purpose**: Complete setup and project initialization
-- **Use when**: AI needs to help users set up new projects
-- **Contains**: Installation, configuration, project structure, examples
+# Server development
+go run ./cmd/server            # Start server
+go test ./...                  # Run tests
+go build                       # Build application
 
-### `components/elements.md`
-- **Purpose**: Foundational UI element reference
-- **Use when**: AI needs to create basic components (buttons, inputs, cards)
-- **Contains**: Component props, usage patterns, accessibility features
+# Frontend development
+npm run build:css              # Build TailwindCSS
+npm run watch:css              # Watch CSS changes
+```
 
-### `components/forms.md`
-- **Purpose**: Form component patterns and interactions
-- **Use when**: AI needs to build forms or interactive elements
-- **Contains**: Form components, validation patterns, multi-step forms
+### File Structure to Follow
+```
+web/components/
+├── atoms/          # Basic elements (button, input, icon)
+├── molecules/      # Composite components (card, field, alert)
+├── organisms/      # Complex components (table, form, modal)
+└── templates/      # Layout templates (page, service, operation)
 
-### `patterns/htmx-integration.md`
-- **Purpose**: Server interaction patterns and HTMX implementation
-- **Use when**: AI needs to implement server-client communication
-- **Contains**: Request patterns, response handling, error management
+docs/ui/
+├── components/     # Component documentation
+├── guides/         # Implementation guides
+├── schema/         # Schema definitions
+└── reference/      # API and design reference
+```
 
-### `guides/validation-guide.md`
-- **Purpose**: Complete validation system implementation
-- **Use when**: AI needs to implement form validation or server-side validation
-- **Contains**: Validation architecture, server implementation, client integration
+## 📖 External References
 
-### `reference/api-reference.md`
-- **Purpose**: Complete API documentation and type definitions
-- **Use when**: AI needs exact function signatures or type information
-- **Contains**: Component APIs, handler patterns, type definitions
+### Advanced Features
+- **`templ-llms.md`** - Streaming, suspense, optimization patterns
+- **`Design-Pattern-Reference-Guide.md`** - Complete UI pattern catalog
 
-## External Reference Files
-
-### `templ-llms.md`
-- **Purpose**: Advanced Templ features and optimization patterns
-- **Use when**: AI needs advanced templating features
-- **Contains**: Streaming, suspense, performance optimization
-
-### `flowbite-llms-full.txt`
-- **Purpose**: Complete Flowbite component catalog and styling reference
-- **Use when**: AI needs specific styling or component examples
-- **Contains**: Full Flowbite documentation and examples
-
-## Best Practices for AI Assistants
-
-### 1. Always Start with Documentation
-- Read relevant documentation files before implementing
-- Use the navigation markers to find specific information quickly
-- Reference multiple files for complete understanding
-
-### 2. Follow Established Patterns
-- Use the props patterns consistently across components
-- Follow the HTMX integration patterns for server communication
-- Implement validation using the three-layer approach
-
-### 3. Provide Complete Solutions
-- Include proper error handling in all implementations
-- Add accessibility features to all components
-- Implement security measures (CSRF, validation, sanitization)
-
-### 4. Reference External Resources
-- Point users to `templ-llms.md` for advanced Templ features
-- Reference `flowbite-llms-full.txt` for styling questions
-- Include links to official documentation
-
-## Troubleshooting Common Issues
-
-### Component Not Rendering
-1. Check Templ syntax in the component file
-2. Verify props are being passed correctly
-3. Ensure `templ generate` has been run
-4. Check for compilation errors in Go code
-
-### HTMX Not Working
-1. Verify HTMX is loaded in the page
-2. Check server endpoints are returning proper HTML
-3. Validate HTMX attributes are correct
-4. Check browser network tab for request/response
-
-### Styling Issues
-1. Verify Flowbite CSS is loaded
-2. Check class names match Flowbite documentation
-3. Ensure TailwindCSS is properly configured
-4. Reference `flowbite-llms-full.txt` `` for examples
-
-### Validation Problems
-1. Check server-side validation logic
-2. Verify client-side Alpine.js validation
-3. Ensure proper error message display
-4. Reference `guides/validation-guide.md` for complete patterns
-
-## Version and Compatibility
-
-This documentation is designed for:
-- **Templ**: Latest version (1.0+)
-- **HTMX**: Version 1.9+
-- **Alpine.js**: Version 3.13+
-- **Flowbite**: Version 2.0+
-- **Go**: Version 1.21+
-
-Always check the official documentation for the latest features and compatibility information.
+### Official Documentation
+- [Templ Guide](https://templ.guide) - Template language documentation
+- [HTMX Docs](https://htmx.org/docs/) - Server interaction patterns
+- [Alpine.js Guide](https://alpinejs.dev/start-here) - Reactive framework
+- [Flowbite Components](https://flowbite.com/docs/components/) - UI library
 
 ---
 
-**For AI Assistants**: This documentation system is designed to provide comprehensive, LLM-friendly guidance for building robust ERP interfaces. Use the semantic markers and structured navigation to quickly find relevant information and provide accurate, complete solutions to users.
+**For AI Assistants**: This system prioritizes type safety, performance, and accessibility. Always check existing components before creating new ones, and ensure all implementations follow the established patterns and constraints.

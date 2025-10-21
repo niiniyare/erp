@@ -1,249 +1,220 @@
-# ERP UI Component System Documentation
+# AWO ERP UI Component System
 
-<!-- LLM-NAVIGATION-START -->
-## 📋 Quick Navigation for AI Assistants
+**FILE PURPOSE**: Main entry point for the AWO ERP UI component documentation system  
+**SCOPE**: Complete guide to building enterprise ERP interfaces with JSON-driven architecture  
+**TARGET AUDIENCE**: Go developers, frontend engineers, AI assistants, and system architects
 
-**DOCUMENTATION MAP:**
-- 🚀 [Getting Started](getting-started.md) - Setup, installation, first component
-- 🏗️ [Fundamentals](fundamentals/) - Architecture, styling, accessibility  
-- 🧩 [Components](components/) - UI component library (basic to advanced)
-- 🔧 [Patterns](patterns/) - Implementation patterns and best practices
-- 📚 [Guides](guides/) - Step-by-step tutorials for complex features
-- 📖 [Reference](reference/) - Complete API docs and examples
+## 🎯 Quick Navigation
 
-**TECH STACK:** `Templ + HTMX + Alpine.js + Flowbite + TailwindCSS`
-**ARCHITECTURE:** Server-side rendered Go templates with progressive enhancement
-**USE CASE:** Building modern ERP admin interfaces
-**EXTERNAL REFS:** `templ-llms.md` (streaming), `flowbite-llms-full.txt` (components)
-<!-- LLM-NAVIGATION-END -->
+### For Developers
+- 🚀 **[Getting Started](getting-started.md)** - Setup, installation, and first component
+- 🏗️ **[Architecture](Schema-Driven-Architecture.md)** - JSON-driven UI system design
+- 🧩 **[Components](components/)** - Atomic design component library (140+ components)
+- 📋 **[Schema Definitions](schema/)** - JSON schema specifications (900+ schemas)
+- 📚 **[Guides](guides/)** - ERP workflow patterns and practical implementation
 
-## Overview
+### For AI Assistants
+- 📖 **[Schema Reference](schema/definitions/)** - Component schema definitions for code generation
+- 🔧 **[Templ Advanced Features](templ-llms.md)** - Streaming, suspense, and optimization patterns
+- 🎨 **[Design Patterns](Design-Pattern-Reference-Guide.md)** - Complete UI pattern reference
+- 💼 **[Business Workflows](guides/erp-workflow-patterns.md)** - Real-world ERP implementation patterns
 
-This documentation provides a complete UI component system for building ERP applications using:
+## 🏗️ System Architecture
 
-- **[Templ](https://templ.guide)** - Type-safe Go templating that compiles to Go code (PRIMARY)
-- **[HTMX](https://htmx.org)** - Hypermedia-driven interactions without complex JavaScript
-- **[Alpine.js](https://alpinejs.dev)** - Lightweight reactive framework for client-side state
-- **[Flowbite](https://flowbite.com)** - Production-ready components built on TailwindCSS
-- **[TailwindCSS](https://tailwindcss.com)** - Utility-first CSS framework for styling
-
-## Quick Start Paths
-
-<!-- LLM-QUICK-PATHS-START -->
-**FOR NEW DEVELOPERS:**
-1. Read [Getting Started](getting-started.md) for complete setup
-2. Learn [Basic Components](components/elements.md) 
-3. Study [Architecture](fundamentals/architecture.md)
-4. Practice with [Examples](reference/examples/)
-
-**FOR EXPERIENCED DEVELOPERS:**
-1. Review [Architecture](fundamentals/architecture.md) for system design
-2. Jump to [Advanced Components](components/advanced.md)
-3. Explore [Composition Patterns](patterns/composition.md)
-4. Check [API Reference](reference/api-reference.md)
-
-**FOR AI ASSISTANTS:**
-- Use section markers: `<!-- LLM-SECTION-NAME-START -->` to `<!-- LLM-SECTION-NAME-END -->`
-- Reference `templ-llms.md` for advanced Templ features
-- Reference `flowbite-llms-full.txt` for complete Flowbite component catalog
-- Check `api-reference.md` for technical specifications
-<!-- LLM-QUICK-PATHS-END -->
-
-## Documentation Structure
-
+### Core Technology Stack
 ```
-docs/ui/
-├── README.md                    # 👈 YOU ARE HERE
-├── getting-started.md           # Complete setup guide
-├── fundamentals/
-│   ├── architecture.md          # State management, performance
-│   ├── styling.md               # Theming, responsive design
-│   └── accessibility.md         # WCAG compliance, screen readers
-├── components/
-│   ├── elements.md              # Buttons, inputs, cards, alerts
-│   ├── forms.md                 # Forms with real-time validation
-│   ├── layout.md                # Navigation, containers, grids
-│   └── advanced.md              # Tables, modals, wizards
-├── patterns/
-│   ├── composition.md           # Building complex UIs
-│   ├── state-management.md     # Alpine.js patterns
-│   └── htmx-integration.md     # Server interaction patterns
-├── guides/
-│   ├── validation-guide.md     # Complete validation system
-│   ├── deployment.md           # Production deployment
-│   └── testing.md              # Testing strategies
-└── reference/
-    ├── api-reference.md        # Complete API documentation
-    ├── examples/               # Working code examples
-    └── migration.md            # Version migration guides
+┌─────────────────┬─────────────────┬─────────────────┐
+│   Templates     │   Interaction   │    Styling      │
+├─────────────────┼─────────────────┼─────────────────┤
+│ Go Templ        │ HTMX            │ Flowbite        │
+│ Type-safe HTML  │ Server-driven   │ Component lib   │
+│ Hot reload      │ No JavaScript   │ TailwindCSS     │
+└─────────────────┴─────────────────┴─────────────────┘
+                          │
+                          ▼
+               ┌─────────────────────┐
+               │   Alpine.js Store   │
+               │   Client State      │
+               │   Reactive UI       │
+               └─────────────────────┘
 ```
 
-## Key Features
+### JSON-Driven UI System
+The AWO ERP uses a sophisticated **schema-driven architecture** where:
+- **JSON schemas** define UI component structure and behavior
+- **Pattern Renderer** interprets schemas and generates live UI
+- **Go models** automatically generate UI schemas via reflection
+- **Visual Builder** provides drag-and-drop interface creation
 
-<!-- LLM-FEATURES-START -->
-**COMPONENT CAPABILITIES:**
-- ✅ Type-safe Go templating with hot reload (Templ)
-- ✅ Server-side rendering with progressive enhancement (Go + HTMX)
-- ✅ Real-time form validation (Alpine.js + server validation)
-- ✅ Responsive design with mobile support (TailwindCSS)
-- ✅ Accessibility compliance (WCAG 2.1 AA)
-- ✅ Multi-tenant state management (Alpine.js stores)
-- ✅ Feature flag integration (Go backend + Alpine.js)
-- ✅ ABAC (Attribute-Based Access Control) UI components
+## 📋 Component Library Structure
 
-**DEVELOPER EXPERIENCE:**
-- Hot reload: `templ generate --watch`
-- Server-first architecture with client enhancement
-- Component composition patterns (atomic design)
-- Progressive complexity (basic → advanced)
-- Production deployment strategies
-- Type safety across Go templates and data
-<!-- LLM-FEATURES-END -->
+### Atomic Design Hierarchy
+```
+Templates/       - Application layout and page structure
+  ├── Root       - Application container and global configuration
+  ├── Page       - Basic page layouts with sidebars and toolbars  
+  ├── Service    - Data fetching and orchestration
+  ├── Operation  - Action grouping and button toolbars
+  ├── Each       - Dynamic list rendering and iteration
+  └── Switch     - Conditional rendering based on state
 
-## Architecture Overview
+Organisms/       - Complex business components
+  ├── CRUD       - Data tables with full CRUD operations
+  ├── Forms      - Multi-step forms with validation
+  ├── Navigation - Sidebars, breadcrumbs, and menus
+  └── Modals     - Dialog boxes and overlay components
 
-```mermaid
-graph TB
-    subgraph "Frontend Layer"
-        A[Templ Templates] --> B[HTMX Interactions]
-        B --> C[Alpine.js State]
-        C --> D[Flowbite Styling]
-    end
-    
-    subgraph "Backend Layer" 
-        E[Go Handlers] --> F[Business Logic]
-        F --> G[Database]
-    end
-    
-    subgraph "Integration"
-        H[Validation System] --> E
-        I[Feature Flags] --> E
-        J[ABAC System] --> E
-    end
-    
-    A --> E
-    D --> K[User Interface]
+Molecules/       - Composite UI components  
+  ├── Cards      - Content containers with headers/actions
+  ├── Fields     - Form inputs with labels and validation
+  ├── Alerts     - Notifications and status messages
+  └── Dropdowns  - Selection and action menus
+
+Atoms/          - Basic UI elements
+  ├── Buttons    - Actions in multiple variants and states
+  ├── Inputs     - Text fields, checkboxes, radios
+  ├── Icons      - SVG icon system with size variants
+  └── Text       - Typography and content display
 ```
 
-## Component Categories
+## 🎯 Key Features
 
-<!-- LLM-COMPONENT-MAP-START -->
-**BASIC ELEMENTS** (`components/elements.md`):
-- Buttons (variants, sizes, states)
-- Inputs (text, email, password, validation)
-- Cards (content containers)
-- Alerts (notifications, messages)
-- Badges (status indicators)
+### Enterprise-Grade Capabilities
+- ✅ **Multi-tenant architecture** with tenant isolation
+- ✅ **Role-based access control** with UI component permissions  
+- ✅ **Real-time form validation** with server-side logic
+- ✅ **Responsive design** optimized for desktop and mobile
+- ✅ **Accessibility compliance** (WCAG 2.1 AA)
+- ✅ **International localization** with Go i18n integration
+- ✅ **Performance optimization** with 37.1KB JavaScript bundle
 
-**FORM COMPONENTS** (`components/forms.md`):
-- Form layouts and structure
-- Real-time validation system
-- File upload components
-- Multi-step forms
-- Dynamic field groups
+### Developer Experience
+- 🔥 **Hot reload development** with `templ generate --watch`
+- 🛡️ **Type safety** across Go templates and data structures
+- 📦 **Component composition** following atomic design principles
+- 🧪 **Testing strategies** for template and integration testing
+- 📊 **Schema validation** preventing UI/backend misalignment
+- 🎨 **Visual debugging** with component inspection tools
 
-**LAYOUT COMPONENTS** (`components/layout.md`):
-- Navigation (sidebar, breadcrumbs)
-- Containers and grids
-- Modal dialogs
-- Page layouts
+## 🚀 Quick Start
 
-**ADVANCED COMPONENTS** (`components/advanced.md`):
-- Data tables (sorting, filtering, pagination)
-- Charts and visualizations
-- Rich text editors
-- Calendar/date pickers
-- Complex wizards
-<!-- LLM-COMPONENT-MAP-END -->
-
-## Development Workflow
-
-<!-- LLM-WORKFLOW-START -->
-**TYPICAL DEVELOPMENT FLOW:**
-1. **Design Phase**: Plan component structure using [patterns](patterns/)
-2. **Build Phase**: Create Templ components using [elements](components/) as building blocks
-3. **Enhance Phase**: Add HTMX interactions and Alpine.js state management
-4. **Validate Phase**: Implement validation using [forms guide](components/forms.md)
-5. **Test Phase**: Follow [testing strategies](guides/testing.md)
-6. **Deploy Phase**: Use [deployment guide](guides/deployment.md)
-
-**KEY COMMANDS:**
+### 1. Prerequisites
 ```bash
-# Hot reload during development (Templ)
+# Install required tools
+go install github.com/a-h/templ/cmd/templ@latest
+
+# Verify installation
+go version  # Requires Go 1.21+
+templ --help
+```
+
+### 2. Basic Component Example
+```go
+// hello.templ
+package components
+
+templ HelloWorld(name string) {
+    <div class="p-4 bg-blue-50 rounded-lg">
+        <h1 class="text-xl font-bold text-blue-900">
+            Hello, { name }!
+        </h1>
+    </div>
+}
+```
+
+### 3. Development Workflow
+```bash
+# Start hot reload
 templ generate --watch
 
-# Generate components after changes
-templ generate
+# In another terminal, run server
+go run main.go
 
-# Run ERP server with UI
-make run
-
-# Run tests
-go test ./...
-
-# Build for production
-go build -o server ./cmd/server
+# Open browser to see live updates
+open http://localhost:8080
 ```
-<!-- LLM-WORKFLOW-END -->
 
-## External References
+## 📚 Documentation Structure
 
-<!-- LLM-EXTERNAL-REFS-START -->
-**INCLUDED REFERENCE FILES:**
-- `templ-llms.md` - Advanced Templ features (streaming, suspense, declarative shadow DOM)
-- `flowbite-llms-full.txt` - Complete Flowbite component library with all variants
+### Essential Reading Order
+1. **[Getting Started](getting-started.md)** - Set up development environment
+2. **[Schema-Driven Architecture](Schema-Driven-Architecture.md)** - Understand the JSON-UI system
+3. **[Component Fundamentals](components/atoms/)** - Learn basic building blocks
+4. **[ERP Workflow Patterns](guides/erp-workflow-patterns.md)** - Implement business processes
+5. **[Component Integration](guides/component-integration-guide.md)** - Build complete applications
 
-**OFFICIAL DOCUMENTATION:**
-- [Templ Guide](https://templ.guide) - Official templating language docs
-- [HTMX Documentation](https://htmx.org/docs/) - Hypermedia interactions
+### Advanced Topics
+- **[Templ Advanced Features](templ-llms.md)** - Streaming, optimization, and performance
+- **[Design Pattern Reference](Design-Pattern-Reference-Guide.md)** - Complete UI pattern catalog
+- **[Schema Definitions](schema/definitions/)** - Component specification reference
+
+## 🔧 Development Commands
+
+```bash
+# Component development
+templ generate                    # Generate templates
+templ generate --watch           # Hot reload development
+templ fmt                        # Format templates
+
+# Application development  
+go run ./cmd/server              # Start ERP server
+go test ./...                    # Run tests
+go build -o bin/server ./cmd/server  # Build for production
+
+# UI development
+npm run build:css               # Build TailwindCSS
+npm run watch:css               # Watch CSS changes
+```
+
+## 🏢 Real-World Usage
+
+### ERP Module Examples
+The component system supports complete ERP workflows:
+
+- **Customer Management** - Lead capture, customer profiles, relationship tracking
+- **Order Processing** - Quote generation, order fulfillment, shipping management  
+- **Financial Management** - Invoicing, payment processing, financial reporting
+- **Inventory Control** - Stock management, reorder automation, warehouse operations
+- **Manufacturing** - Production planning, quality control, maintenance scheduling
+
+### Integration Capabilities
+- 🔌 **REST API integration** via HTMX and Go handlers
+- 🔄 **Real-time updates** with WebSocket and Server-Sent Events
+- 📊 **Data visualization** with Chart.js and custom components
+- 📄 **PDF generation** for reports and documents
+- 📧 **Email integration** for notifications and workflows
+
+## 📖 External References
+
+### Official Documentation
+- [Templ Guide](https://templ.guide) - Official templating language documentation
+- [HTMX Documentation](https://htmx.org/docs/) - Hypermedia-driven interactions
 - [Alpine.js Guide](https://alpinejs.dev/start-here) - Reactive JavaScript framework
 - [Flowbite Components](https://flowbite.com/docs/components/) - UI component library
 - [TailwindCSS](https://tailwindcss.com/docs) - Utility-first CSS framework
 
-**COMMUNITY RESOURCES:**
-- [Templ Examples](https://github.com/a-h/templ/tree/main/examples)
+### Community Resources
+- [Go Templates Best Practices](https://golang.org/pkg/html/template/)
 - [HTMX Examples](https://htmx.org/examples/)
-- [Alpine.js Examples](https://alpinejs.dev/start-here)
-<!-- LLM-EXTERNAL-REFS-END -->
+- [Alpine.js Patterns](https://alpinejs.dev/start-here)
 
-## Migration from Existing UI
+## 🤝 Contributing
 
-If you're migrating from other UI frameworks:
+### Documentation Standards
+- **LLM-Friendly**: Clear section markers and semantic structure
+- **Progressive Complexity**: Basic → Intermediate → Advanced learning paths
+- **Practical Examples**: Working code snippets and real-world scenarios
+- **Cross-Referenced**: Consistent linking between related sections
 
-- **From React/Vue SPA**: See [migration guide](reference/migration.md#from-spa-frameworks) - Learn server-first approach
-- **From traditional server-side**: See [migration guide](reference/migration.md#from-traditional-ssr) - Add progressive enhancement
-- **From basic Templ**: See [migration guide](reference/migration.md#from-basic-templ) - Add HTMX and Alpine.js
-- **From PHP/Django templates**: See [migration guide](reference/migration.md#from-template-engines) - Adopt Go type safety
+### Code Standards
+- **Type Safety**: All templates must compile without errors
+- **Performance**: JavaScript bundle maintained under 50KB (currently 37.1KB)
+- **Accessibility**: WCAG 2.1 AA compliance required
+- **Testing**: Unit tests for components and integration tests for workflows
 
-## Contributing & Maintenance
+---
 
-<!-- LLM-CONTRIBUTING-START -->
-**DOCUMENTATION PRINCIPLES:**
-- **LLM-Friendly**: Clear section markers, semantic structure
-- **Progressive Complexity**: Basic → Intermediate → Advanced
-- **Practical Examples**: Working code, not just theory
-- **Cross-Referenced**: Consistent linking between sections
-
-**KEEPING DOCS UPDATED:**
-- Update examples when APIs change
-- Add new patterns as they emerge
-- Include performance benchmarks
-- Document breaking changes clearly
-<!-- LLM-CONTRIBUTING-END -->
-
-## Support & Issues
-
-- **Documentation Issues**: File issues with specific file/section references
-- **Code Examples**: Include minimal reproducible examples
-- **Feature Requests**: Describe use case and expected behavior
-- **Performance Issues**: Include profiling data when possible
-
-<!-- LLM-METADATA-START -->
-**METADATA FOR AI ASSISTANTS:**
-- Documentation Version: 2024.1
-- Last Updated: December 2024  
-- Target Audience: Go developers, AI coding assistants
-- Complexity Range: Beginner to Expert
-- Prerequisites: Go 1.21+, HTML/CSS basics
-- License: MIT
-<!-- LLM-METADATA-END -->
+**VERSION**: 2024.3  
+**LAST UPDATED**: December 2024  
+**MAINTAINER**: AWO ERP Development Team  
+**LICENSE**: Proprietary - AWO Enterprise Solutions
