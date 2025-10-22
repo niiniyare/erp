@@ -1,0 +1,1566 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "./HierarchicalTreeViewSchema.json",
+  "title": "Hierarchical Tree View Component",
+  "description": "A customizable tree view component for displaying hierarchical data with aggregated values, multi-column support, and rich interactions",
+  "type": "object",
+  "category": "organisms",
+  
+  "atomDependencies": [
+    "ButtonSchema",
+    "IconSchema",
+    "CheckboxControlSchema",
+    "SpinnerSchema",
+    "TextControlSchema"
+  ],
+  "moleculeDependencies": [
+    "SearchBoxSchema",
+    "TooltipSchema",
+    "AlertSchema"
+  ],
+  
+  "properties": {
+    "type": {
+      "const": "hierarchical-tree",
+      "description": "Component type identifier"
+    },
+    
+    "dataSource": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": ["api", "static"],
+          "description": "Data source type"
+        },
+        "api": {
+          "$ref": "#/definitions/BaseApiObject",
+          "description": "API configuration for fetching tree data"
+        },
+        "data": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/TreeNode"},
+          "description": "Static tree data"
+        },
+        "lazyLoad": {
+          "type": "boolean",
+          "default": false,
+          "description": "Load children on demand"
+        },
+        "lazyLoadUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Endpoint for lazy loading. Use {nodeId} placeholder"
+        },
+        "hxGet": {
+          "type": "string",
+          "description": "HTMX GET endpoint for tree data"
+        },
+        "hxPost": {
+          "type": "string",
+          "description": "HTMX POST endpoint for tree operations"
+        },
+        "hxTarget": {
+          "type": "string",
+          "description": "HTMX target element selector"
+        },
+        "hxSwap": {
+          "type": "string",
+          "enum": ["innerHTML", "outerHTML", "beforebegin", "afterbegin", "beforeend", "afterend", "delete", "none"],
+          "default": "innerHTML",
+          "description": "HTMX swap strategy"
+        },
+        "hxTrigger": {
+          "type": "string",
+          "description": "HTMX trigger events"
+        },
+        "hxIndicator": {
+          "type": "string",
+          "description": "HTMX loading indicator selector"
+        }
+      },
+      "required": ["type"],
+      "oneOf": [
+        {
+          "properties": {"type": {"const": "api"}},
+          "required": ["api"]
+        },
+        {
+          "properties": {"type": {"const": "static"}},
+          "required": ["data"]
+        }
+      ]
+    },
+
+    "hierarchy": {
+      "type": "object",
+      "properties": {
+        "nodeIdField": {
+          "type": "string",
+          "default": "id"
+        },
+        "parentIdField": {
+          "type": "string",
+          "default": "parentId"
+        },
+        "labelField": {
+          "type": "string",
+          "default": "label"
+        },
+        "childrenField": {
+          "type": "string",
+          "default": "children"
+        },
+        "hasChildrenField": {
+          "type": "string",
+          "default": "hasChildren",
+          "description": "For lazy loading"
+        },
+        "maxDepth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "rootValue": {
+          "oneOf": [
+            {"type": "string"},
+            {"type": "number"},
+            {"type": "null"}
+          ],
+          "default": null
+        },
+        "enableNodePath": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable node path mode"
+        },
+        "pathSeparator": {
+          "type": "string",
+          "default": "/",
+          "description": "Delimiter for node path"
+        }
+      }
+    },
+
+    "display": {
+      "type": "object",
+      "properties": {
+        "showRoot": {
+          "type": "boolean",
+          "default": true,
+          "description": "Display artificial root node"
+        },
+        "hideRoot": {
+          "type": "boolean",
+          "default": false,
+          "description": "Alias for !showRoot"
+        },
+        "rootLabel": {
+          "type": "string",
+          "default": "All"
+        },
+        "showLines": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show connection lines"
+        },
+        "showOutline": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show expansion lines"
+        },
+        "showIcon": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show node icons"
+        },
+        "enableDefaultIcon": {
+          "type": "boolean",
+          "default": true,
+          "description": "Add default icons for nodes"
+        },
+        "showTooltips": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show node tooltips"
+        },
+        "showBadges": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show node badges"
+        },
+        "defaultExpanded": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Expand to this level (0 = all collapsed)"
+            },
+            {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {"type": "string"},
+                  {"type": "number"}
+                ]
+              },
+              "description": "Array of node IDs to expand"
+            },
+            {
+              "const": "all",
+              "description": "Expand all nodes"
+            }
+          ],
+          "default": 1
+        },
+        "expandAll": {
+          "type": "boolean",
+          "default": false,
+          "description": "Initially expand all nodes"
+        },
+        "collapseAll": {
+          "type": "boolean",
+          "default": false,
+          "description": "Initially collapse all nodes"
+        },
+        "nodeHeight": {
+          "oneOf": [
+            {"type": "integer", "minimum": 24},
+            {"type": "string"}
+          ],
+          "default": 32,
+          "description": "Height of each node in px or CSS value"
+        },
+        "indent": {
+          "oneOf": [
+            {"type": "integer", "minimum": 8},
+            {"type": "string"}
+          ],
+          "default": 24,
+          "description": "Indentation per level in px or CSS value"
+        },
+        "maxHeight": {
+          "type": "string",
+          "description": "Maximum tree height (e.g., '400px')"
+        },
+        "heightAuto": {
+          "type": "boolean",
+          "default": false,
+          "description": "Auto-grow height"
+        }
+      }
+    },
+
+    "columns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "width": {
+            "oneOf": [
+              {"type": "integer"},
+              {"type": "string"}
+            ],
+            "description": "px, %, or auto"
+          },
+          "minWidth": {
+            "type": "integer"
+          },
+          "align": {
+            "enum": ["left", "center", "right"],
+            "default": "left"
+          },
+          "type": {
+            "enum": ["text", "number", "currency", "percentage", "date", "boolean", "custom"],
+            "default": "text"
+          },
+          "format": {
+            "type": "string",
+            "description": "Format pattern: '0,0.00' for numbers, 'YYYY-MM-DD' for dates, '$0,0.00' for currency"
+          },
+          "aggregation": {
+            "oneOf": [
+              {
+                "enum": ["sum", "average", "count", "min", "max"],
+                "description": "Built-in aggregation method"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "method": {
+                    "enum": ["sum", "average", "count", "min", "max", "custom"]
+                  },
+                  "customFunction": {
+                    "type": "string",
+                    "description": "JS function: (children, field) => value"
+                  },
+                  "excludeParentValue": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "displayFormat": {
+                    "type": "string",
+                    "description": "Template: 'Total: {value}' or '{value} ({count} items)'"
+                  },
+                  "showOnlyForParents": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                },
+                "required": ["method"]
+              }
+            ]
+          },
+          "render": {
+            "type": "string",
+            "description": "Custom template. Variables: {value}, {node}, {level}, {aggregated}"
+          },
+          "className": {
+            "$ref": "#/definitions/SchemaClassName"
+          },
+          "sortable": {
+            "type": "boolean",
+            "default": false
+          },
+          "visible": {
+            "type": "boolean",
+            "default": true
+          },
+          "visibleOn": {
+            "$ref": "#/definitions/SchemaExpression"
+          }
+        },
+        "required": ["field", "label"]
+      },
+      "minItems": 1,
+      "description": "Column definitions for tree view. First column typically contains tree structure."
+    },
+
+    "styling": {
+      "type": "object",
+      "properties": {
+        "variant": {
+          "enum": ["default", "dark", "light", "minimal"],
+          "default": "default",
+          "description": "Tree color scheme"
+        },
+        "size": {
+          "enum": ["xs", "sm", "md", "lg", "xl"],
+          "default": "md",
+          "description": "Tree size preset"
+        },
+        "rounded": {
+          "type": "boolean",
+          "default": true,
+          "description": "Rounded node corners"
+        },
+        "shadow": {
+          "type": "boolean",
+          "default": false,
+          "description": "Node shadow effects"
+        },
+        "bordered": {
+          "type": "boolean",
+          "default": false,
+          "description": "Tree borders"
+        },
+        "striped": {
+          "type": "boolean",
+          "default": false,
+          "description": "Alternating node backgrounds"
+        },
+        "hover": {
+          "type": "boolean",
+          "default": true,
+          "description": "Node hover effects"
+        },
+        "icons": {
+          "type": "object",
+          "properties": {
+            "folder": {
+              "type": "string",
+              "default": "fa fa-folder"
+            },
+            "folderOpen": {
+              "type": "string",
+              "default": "fa fa-folder-open"
+            },
+            "file": {
+              "type": "string",
+              "default": "fa fa-file"
+            },
+            "custom": {
+              "type": "object",
+              "additionalProperties": {"type": "string"},
+              "description": "Map node properties to icons"
+            }
+          }
+        },
+        "nodeClasses": {
+          "type": "object",
+          "properties": {
+            "byLevel": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "CSS classes by depth: [level0, level1, ...]"
+            },
+            "byProperty": {
+              "type": "object",
+              "additionalProperties": {"type": "string"},
+              "description": "Map node property values to classes"
+            },
+            "custom": {
+              "$ref": "#/definitions/SchemaExpression",
+              "description": "Expression returning class name"
+            }
+          }
+        },
+        "tooltip": {
+          "oneOf": [
+            {"type": "boolean"},
+            {
+              "type": "object",
+              "properties": {
+                "field": {"type": "string"},
+                "template": {"type": "string"}
+              }
+            }
+          ],
+          "default": false
+        },
+        "highlightTxt": {
+          "type": "string",
+          "description": "Text to highlight in nodes"
+        }
+      }
+    },
+
+    "interaction": {
+      "type": "object",
+      "properties": {
+        "selection": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable node selection"
+            },
+            "selectable": {
+              "type": "boolean",
+              "description": "Alias for enabled"
+            },
+            "mode": {
+              "enum": ["single", "multiple", "none"],
+              "default": "single"
+            },
+            "multiSelect": {
+              "type": "boolean",
+              "description": "Alias for mode=multiple"
+            },
+            "checkboxes": {
+              "type": "boolean",
+              "default": false,
+              "description": "Show checkboxes for selection"
+            },
+            "selectableNodes": {
+              "enum": ["all", "leafOnly", "parentOnly"],
+              "default": "all"
+            },
+            "onlyLeaf": {
+              "type": "boolean",
+              "default": false,
+              "description": "Only allow leaf node selection"
+            },
+            "cascade": {
+              "type": "boolean",
+              "default": false,
+              "description": "Auto-select/deselect children"
+            },
+            "checkParentWhenAllChildrenSelected": {
+              "type": "boolean",
+              "default": false
+            },
+            "withChildren": {
+              "type": "boolean",
+              "default": false,
+              "description": "Include child values when selecting parent"
+            },
+            "onlyChildren": {
+              "type": "boolean",
+              "default": false,
+              "description": "Only include child values"
+            },
+            "autoCancelParent": {
+              "type": "boolean",
+              "default": false,
+              "description": "Auto-cancel parent when child deselected"
+            },
+            "defaultSelected": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {"type": "string"},
+                  {"type": "number"}
+                ]
+              },
+              "description": "Array of node IDs to select by default"
+            }
+          }
+        },
+        "expansion": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": true
+            },
+            "expandable": {
+              "type": "boolean",
+              "description": "Alias for enabled"
+            },
+            "trigger": {
+              "enum": ["icon", "row", "doubleClick"],
+              "default": "icon"
+            },
+            "nodeBehavior": {
+              "type": "array",
+              "items": {
+                "enum": ["unfold", "check"]
+              },
+              "description": "Node click behavior"
+            },
+            "accordion": {
+              "type": "boolean",
+              "default": false,
+              "description": "Only one branch expanded at a time"
+            },
+            "animate": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        },
+        "dragDrop": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "draggable": {
+              "type": "boolean",
+              "description": "Alias for enabled"
+            },
+            "allowDropOn": {
+              "$ref": "#/definitions/SchemaExpression",
+              "description": "Expression: (dragNode, targetNode) => boolean"
+            },
+            "onDrop": {
+              "type": "string",
+              "description": "Callback after drop"
+            },
+            "saveApi": {
+              "$ref": "#/definitions/SchemaApi"
+            }
+          }
+        },
+        "sortable": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable node sorting"
+        }
+      }
+    },
+
+    "search": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "searchable": {
+          "type": "boolean",
+          "description": "Alias for enabled"
+        },
+        "placeholder": {
+          "type": "string",
+          "default": "Search..."
+        },
+        "fields": {
+          "type": "array",
+          "items": {"type": "string"},
+          "default": ["label"],
+          "description": "Fields to search"
+        },
+        "mode": {
+          "enum": ["contains", "startsWith", "exact", "regex"],
+          "default": "contains"
+        },
+        "caseSensitive": {
+          "type": "boolean",
+          "default": false
+        },
+        "highlightMatches": {
+          "type": "boolean",
+          "default": true
+        },
+        "expandMatches": {
+          "type": "boolean",
+          "default": true
+        },
+        "showPathToMatch": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show parent nodes even if they don't match"
+        },
+        "debounce": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 300
+        },
+        "minLength": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Minimum characters before search"
+        },
+        "clearable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show clear button"
+        },
+        "api": {
+          "$ref": "#/definitions/SchemaApi",
+          "description": "Server-side search. Use {searchTerm} placeholder"
+        },
+        "searchApi": {
+          "$ref": "#/definitions/SchemaApi",
+          "description": "Alias for api"
+        },
+        "searchUrl": {
+          "type": "string",
+          "description": "HTMX endpoint for search"
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "className": {
+              "$ref": "#/definitions/SchemaClassName"
+            },
+            "placeholder": {
+              "type": "string"
+            },
+            "mini": {
+              "type": "boolean"
+            },
+            "enhance": {
+              "type": "boolean"
+            },
+            "clearable": {
+              "type": "boolean"
+            },
+            "searchImediately": {
+              "type": "boolean"
+            },
+            "sticky": {
+              "type": "boolean",
+              "description": "Sticky search box"
+            }
+          }
+        }
+      }
+    },
+
+    "filtering": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "filterable": {
+          "type": "boolean",
+          "description": "Alias for enabled"
+        },
+        "filters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "field": {"type": "string"},
+              "label": {"type": "string"},
+              "type": {
+                "enum": ["select", "multiSelect", "range", "dateRange", "text"]
+              },
+              "options": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/Option"
+                }
+              },
+              "operator": {
+                "enum": ["equals", "notEquals", "contains", "gt", "lt", "between", "in"],
+                "default": "equals"
+              }
+            },
+            "required": ["field", "label", "type"]
+          }
+        },
+        "hideEmptyBranches": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+
+    "actions": {
+      "type": "object",
+      "properties": {
+        "toolbar": {
+          "type": "array",
+          "description": "Tree-level toolbar actions",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {"type": "string"},
+              "icon": {"type": "string"},
+              "variant": {
+                "enum": ["primary", "secondary", "light", "dark", "red", "green", "yellow", "purple"],
+                "default": "primary"
+              },
+              "size": {
+                "enum": ["xs", "sm", "md", "lg", "xl"],
+                "default": "sm"
+              },
+              "position": {
+                "enum": ["left", "right"],
+                "default": "right"
+              },
+              "onclick": {"type": "string"},
+              "hxPost": {"type": "string"},
+              "hxGet": {"type": "string"},
+              "hxTarget": {"type": "string"},
+              "hxSwap": {"type": "string"},
+              "tooltip": {"type": "string"},
+              "disabled": {"type": "boolean"},
+              "disabledOn": {"$ref": "#/definitions/SchemaExpression"}
+            },
+            "required": ["text"]
+          }
+        },
+        "nodeActions": {
+          "type": "array",
+          "description": "Actions for individual nodes",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "text": {"type": "string"},
+              "icon": {"type": "string"},
+              "variant": {
+                "enum": ["primary", "secondary", "light", "dark", "red", "green", "yellow", "purple"],
+                "default": "light"
+              },
+              "size": {
+                "enum": ["xs", "sm", "md"],
+                "default": "xs"
+              },
+              "visibleOn": {
+                "enum": ["hover", "always", "selected"],
+                "default": "hover"
+              },
+              "showWhen": {
+                "$ref": "#/definitions/SchemaExpression",
+                "description": "Conditional display based on node data"
+              },
+              "onclick": {"type": "string"},
+              "hxPost": {"type": "string"},
+              "hxGet": {"type": "string"},
+              "hxDelete": {"type": "string"},
+              "hxPut": {"type": "string"},
+              "hxTarget": {"type": "string"},
+              "hxSwap": {"type": "string"},
+              "hxConfirm": {"type": "string"},
+              "tooltip": {"type": "string"},
+              "disabled": {"type": "boolean"},
+              "disabledOn": {"$ref": "#/definitions/SchemaExpression"}
+            },
+            "required": ["text"]
+          }
+        },
+        "itemActions": {
+          "$ref": "#/definitions/SchemaCollection",
+          "description": "Customize node action bar (legacy)"
+        },
+        "create": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean", "default": false},
+            "creatable": {"type": "boolean"},
+            "rootCreatable": {"type": "boolean"},
+            "allowedLevels": {
+              "type": "array",
+              "items": {"type": "integer"}
+            },
+            "api": {"$ref": "#/definitions/SchemaApi"},
+            "addApi": {"$ref": "#/definitions/SchemaApi"},
+            "formSchema": {"$ref": "#/definitions/PlainObject"},
+            "addControls": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/PlainObject"}
+            },
+            "addDialog": {"$ref": "#/definitions/PlainObject"},
+            "label": {"type": "string", "default": "Create"},
+            "createBtnLabel": {"type": "string"}
+          }
+        },
+        "update": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean", "default": false},
+            "editable": {"type": "boolean"},
+            "api": {"$ref": "#/definitions/SchemaApi"},
+            "editApi": {"$ref": "#/definitions/SchemaApi"},
+            "formSchema": {"$ref": "#/definitions/PlainObject"},
+            "editControls": {
+              "type": "array",
+              "items": {"$ref": "#/definitions/PlainObject"}
+            },
+            "editDialog": {"$ref": "#/definitions/PlainObject"},
+            "editableFields": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "label": {"type": "string", "default": "Edit"}
+          }
+        },
+        "delete": {
+          "type": "object",
+          "properties": {
+            "enabled": {"type": "boolean", "default": false},
+            "removable": {"type": "boolean"},
+            "api": {"$ref": "#/definitions/SchemaApi"},
+            "deleteApi": {"$ref": "#/definitions/SchemaApi"},
+            "confirmMessage": {
+              "type": "string",
+              "default": "Delete this node?"
+            },
+            "deleteConfirmText": {"type": "string"},
+            "cascadeDelete": {
+              "type": "boolean",
+              "default": false
+            },
+            "label": {"type": "string", "default": "Delete"}
+          }
+        },
+        "contextMenu": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show actions in right-click menu"
+        },
+        "permissions": {
+          "type": "object",
+          "properties": {
+            "create": {"$ref": "#/definitions/SchemaExpression"},
+            "update": {"$ref": "#/definitions/SchemaExpression"},
+            "delete": {"$ref": "#/definitions/SchemaExpression"}
+          }
+        }
+      }
+    },
+
+    "output": {
+      "type": "object",
+      "properties": {
+        "joinValues": {
+          "type": "boolean",
+          "default": true,
+          "description": "Join multiple values with delimiter vs array"
+        },
+        "delimiter": {
+          "type": "string",
+          "default": ",",
+          "description": "Separator for joined values"
+        },
+        "extractValue": {
+          "type": "boolean",
+          "default": true,
+          "description": "Extract only value vs full option object"
+        }
+      }
+    },
+
+    "export": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "enum": ["csv", "excel", "json", "pdf"]
+          },
+          "default": ["csv", "excel"]
+        },
+        "includeAggregates": {
+          "type": "boolean",
+          "default": true
+        },
+        "flattenHierarchy": {
+          "type": "boolean",
+          "default": false
+        },
+        "filename": {
+          "type": "string"
+        }
+      }
+    },
+
+    "performance": {
+      "type": "object",
+      "properties": {
+        "virtualScroll": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable for large trees (1000+ nodes)"
+        },
+        "virtual": {
+          "type": "boolean",
+          "description": "Alias for virtualScroll"
+        },
+        "bufferSize": {
+          "type": "integer",
+          "minimum": 10,
+          "default": 50
+        },
+        "lazyRender": {
+          "type": "boolean",
+          "default": true
+        },
+        "cacheState": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+
+    "loading": {
+      "type": "object",
+      "properties": {
+        "show": {
+          "type": "boolean",
+          "default": false
+        },
+        "text": {
+          "type": "string",
+          "default": "Loading tree..."
+        },
+        "skeleton": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show skeleton nodes while loading"
+        },
+        "skeletonCount": {
+          "type": "integer",
+          "default": 5,
+          "minimum": 1
+        },
+        "spinner": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show spinner (uses SpinnerSchema)"
+        }
+      }
+    },
+
+    "empty": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "default": "No data available"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Empty state icon"
+        },
+        "showCreateButton": {
+          "type": "boolean",
+          "default": false
+        },
+        "createText": {
+          "type": "string",
+          "default": "Add Root Node"
+        },
+        "createAction": {
+          "type": "string"
+        }
+      }
+    },
+
+    "validation": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "default": false
+        },
+        "minSelection": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxSelection": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "message": {
+          "type": "string"
+        },
+        "validations": {
+          "$ref": "#/definitions/SchemaValidation"
+        },
+        "validationErrors": {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        }
+      }
+    },
+
+    "events": {
+      "type": "object",
+      "properties": {
+        "onLoad": {"type": "string"},
+        "onNodeClick": {"type": "string"},
+        "onNodeSelect": {"type": "string"},
+        "onNodeExpand": {"type": "string"},
+        "onNodeCollapse": {"type": "string"},
+        "onSearch": {"type": "string"},
+        "onFilter": {"type": "string"},
+        "onChange": {"type": "string"},
+        "onAction": {"type": "string"},
+        "onDrop": {"type": "string"}
+      }
+    },
+
+    "onEvent": {
+      "$ref": "#/definitions/SchemaEventListeners"
+    },
+
+    "title": {
+      "type": "string",
+      "description": "Tree title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Tree description"
+    },
+    "label": {
+      "anyOf": [
+        {"type": "string"},
+        {"type": "boolean", "const": false}
+      ]
+    },
+    "labelRemark": {
+      "$ref": "#/definitions/SchemaRemark"
+    },
+    "remark": {
+      "$ref": "#/definitions/SchemaRemark"
+    },
+    "hint": {
+      "type": "string",
+      "description": "Input hint displayed on focus"
+    },
+    "placeholder": {
+      "type": "string",
+      "description": "Placeholder text"
+    },
+    "inline": {
+      "type": "boolean",
+      "description": "Inline form control"
+    },
+    "submitOnChange": {
+      "type": "boolean",
+      "description": "Submit form on value change"
+    },
+    "validateOnChange": {
+      "type": "boolean",
+      "description": "Validate on every change"
+    },
+    "clearable": {
+      "type": "boolean",
+      "default": false,
+      "description": "Can be cleared"
+    },
+    "resetValue": {
+      "type": "string",
+      "default": "",
+      "description": "Value when cleared"
+    },
+    "autoFill": {
+      "$ref": "#/definitions/SchemaAutoFill"
+    },
+    "initAutoFill": {
+      "anyOf": [
+        {"type": "boolean"},
+        {"const": "fillIfNotSet"}
+      ]
+    },
+
+    "id": {
+      "type": "string",
+      "description": "HTML element ID"
+    },
+    "$id": {
+      "type": "string",
+      "description": "Design-time unique ID"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "Reference to schema definition"
+    },
+    "name": {
+      "type": "string",
+      "description": "Field name for form submission"
+    },
+    "value": {
+      "description": "Default value (static only)"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName"
+    },
+    "style": {
+      "type": "object",
+      "description": "Inline styles"
+    },
+    "ariaLabel": {
+      "type": "string",
+      "description": "ARIA label"
+    },
+    "dataTestId": {
+      "type": "string",
+      "description": "Test automation identifier"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "disabled": {
+      "type": "boolean",
+      "default": false
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression"
+    },
+    "hidden": {
+      "type": "boolean",
+      "default": false
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression"
+    },
+    "visible": {
+      "type": "boolean",
+      "default": true
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression"
+    },
+    "readOnly": {
+      "type": "boolean",
+      "default": false
+    },
+    "readOnlyOn": {
+      "$ref": "#/definitions/SchemaExpression"
+    },
+    "static": {
+      "type": "boolean",
+      "default": false
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression"
+    },
+    "staticPlaceholder": {
+      "type": "string"
+    },
+    "staticClassName": {
+      "$ref": "#/definitions/SchemaClassName"
+    },
+    "useMobileUI": {
+      "type": "boolean"
+    },
+    "editorSetting": {
+      "$ref": "#/definitions/EditorSetting"
+    }
+  },
+
+  "required": ["type", "dataSource", "columns"],
+
+  "definitions": {
+    "TreeNode": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "oneOf": [
+            {"type": "string"},
+            {"type": "number"}
+          ],
+          "description": "Unique node identifier"
+        },
+        "parentId": {
+          "oneOf": [
+            {"type": "string"},
+            {"type": "number"},
+            {"type": "null"}
+          ],
+          "description": "Parent node identifier"
+        },
+        "label": {
+          "type": "string",
+          "description": "Display text"
+        },
+        "value": {
+          "description": "Node value for selection"
+        },
+        "children": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/TreeNode"},
+          "description": "Child nodes"
+        },
+        "hasChildren": {
+          "type": "boolean",
+          "description": "Has children (for lazy loading)"
+        },
+        "isLeaf": {
+          "type": "boolean",
+          "description": "Is leaf node (auto-calculated)"
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Node depth (auto-calculated)"
+        },
+        "path": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Path from root (auto-calculated)"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Node icon"
+        },
+        "expandedIcon": {
+          "type": "string",
+          "description": "Icon when expanded"
+        },
+        "collapsedIcon": {
+          "type": "string",
+          "description": "Icon when collapsed"
+        },
+        "badge": {
+          "type": "string",
+          "description": "Badge text (e.g., count)"
+        },
+        "description": {
+          "type": "string",
+          "description": "Node tooltip/description"
+        },
+        "url": {
+          "type": "string",
+          "description": "Navigation URL"
+        },
+        "expanded": {
+          "type": "boolean",
+          "default": false,
+          "description": "Initial expanded state"
+        },
+        "selected": {
+          "type": "boolean",
+          "default": false,
+          "description": "Initial selected state"
+        },
+        "disabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "hidden": {
+          "type": "boolean",
+          "default": false
+        },
+        "selectable": {
+          "type": "boolean",
+          "description": "Override selectable for this node"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Additional node data"
+        }
+      },
+      "required": ["id", "label"],
+      "additionalProperties": true,
+      "description": "Additional fields become column values"
+    },
+
+    "BaseApiObject": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "method": {
+          "enum": ["GET", "POST", "PUT", "DELETE", "PATCH"],
+          "default": "GET"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        },
+        "data": {
+          "type": "object"
+        },
+        "requestMapping": {
+          "type": "object"
+        },
+        "responseMapping": {
+          "type": "string"
+        }
+      },
+      "required": ["url"]
+    },
+
+    "SchemaApi": {
+      "anyOf": [
+        {"type": "string", "format": "uri"},
+        {"$ref": "#/definitions/BaseApiObject"}
+      ]
+    },
+
+    "Option": {
+      "type": "object",
+      "properties": {
+        "label": {"type": "string"},
+        "value": {
+          "oneOf": [
+            {"type": "string"},
+            {"type": "number"},
+            {"type": "boolean"}
+          ]
+        },
+        "disabled": {"type": "boolean"},
+        "children": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/Option"}
+        }
+      },
+      "required": ["label", "value"]
+    },
+
+    "PlainObject": {
+      "type": "object",
+      "additionalProperties": true
+    },
+
+    "SchemaClassName": {
+      "anyOf": [
+        {"type": "string"},
+        {
+          "type": "object",
+          "additionalProperties": {"type": "boolean"}
+        }
+      ]
+    },
+
+    "SchemaExpression": {
+      "anyOf": [
+        {"type": "string"},
+        {"type": "boolean"},
+        {
+          "type": "object",
+          "properties": {
+            "static": {"type": "boolean"},
+            "expression": {"type": "string"}
+          }
+        }
+      ],
+      "description": "Expression string or boolean for conditional logic"
+    },
+
+    "SchemaCollection": {
+      "anyOf": [
+        {"type": "string"},
+        {"type": "array"},
+        {"type": "object"}
+      ]
+    },
+
+    "SchemaRemark": {
+      "anyOf": [
+        {"type": "string"},
+        {
+          "type": "object",
+          "properties": {
+            "title": {"type": "string"},
+            "content": {"type": "string"},
+            "icon": {"type": "string"},
+            "placement": {
+              "enum": ["top", "right", "bottom", "left"]
+            }
+          }
+        }
+      ]
+    },
+
+    "SchemaValidation": {
+      "anyOf": [
+        {"type": "string"},
+        {
+          "type": "object",
+          "properties": {
+            "isRequired": {"type": "boolean"},
+            "isEmail": {"type": "boolean"},
+            "isUrl": {"type": "boolean"},
+            "isNumeric": {"type": "boolean"},
+            "isAlpha": {"type": "boolean"},
+            "isAlphanumeric": {"type": "boolean"},
+            "isInt": {"type": "boolean"},
+            "isFloat": {"type": "boolean"},
+            "isJson": {"type": "boolean"},
+            "isLength": {"type": "number"},
+            "minLength": {"type": "number"},
+            "maxLength": {"type": "number"},
+            "minimum": {"type": "number"},
+            "maximum": {"type": "number"},
+            "matchRegexp": {"type": "string"},
+            "matchRegexp1": {"type": "string"},
+            "matchRegexp2": {"type": "string"},
+            "matchRegexp3": {"type": "string"},
+            "matchRegexp4": {"type": "string"},
+            "matchRegexp5": {"type": "string"}
+          }
+        }
+      ]
+    },
+
+    "SchemaAutoFill": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": {"type": "string"}
+        },
+        {
+          "type": "object",
+          "properties": {
+            "showSuggestion": {"type": "boolean"},
+            "defaultSelection": {},
+            "api": {"$ref": "#/definitions/SchemaApi"},
+            "silent": {"type": "boolean", "default": true},
+            "fillMapping": {"type": "object"},
+            "trigger": {
+              "enum": ["change", "focus", "blur"],
+              "default": "change"
+            },
+            "mode": {
+              "enum": ["popOver", "dialog", "drawer"]
+            },
+            "position": {"type": "string"},
+            "size": {"type": "string"},
+            "columns": {"type": "array"},
+            "filter": {}
+          }
+        }
+      ]
+    },
+
+    "SchemaEventListeners": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {"type": "number"},
+          "actions": {
+            "type": "array",
+            "items": {"$ref": "#/definitions/ListenerAction"}
+          },
+          "debounce": {"$ref": "#/definitions/DebounceConfig"},
+          "track": {"$ref": "#/definitions/TrackConfig"}
+        },
+        "required": ["actions"]
+      }
+    },
+
+    "ListenerAction": {
+      "type": "object",
+      "properties": {
+        "actionType": {"type": "string"},
+        "args": {"type": "object"},
+        "preventDefault": {"type": "boolean"},
+        "stopPropagation": {"type": "boolean"},
+        "expression": {"type": "string"},
+        "script": {"type": "string"}
+      }
+    },
+
+    "DebounceConfig": {
+      "anyOf": [
+        {"type": "number"},
+        {
+          "type": "object",
+          "properties": {
+            "wait": {"type": "number"},
+            "leading": {"type": "boolean"},
+            "trailing": {"type": "boolean"},
+            "maxWait": {"type": "number"}
+          }
+        }
+      ]
+    },
+
+    "TrackConfig": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "data": {"type": "object"}
+      }
+    },
+
+    "TestIdBuilder": {
+      "anyOf": [
+        {"type": "string"},
+        {
+          "type": "object",
+          "properties": {
+            "prefix": {"type": "string"},
+            "suffix": {"type": "string"}
+          }
+        }
+      ]
+    },
+
+    "EditorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "enum": ["create", "update", "remove"],
+          "description": "Component behavior"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Component display name"
+        },
+        "mock": {
+          "description": "Mock data for editor preview"
+        }
+      }
+    }
+  }
+}

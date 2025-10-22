@@ -170,11 +170,11 @@ func getSidebarBadgeClasses(color string) string {
 }
 
 // getSidebarIconSize returns appropriate icon size based on item level
-func getSidebarIconSize(level int) atoms.IconSize {
+func getSidebarIconSize(level int) atoms.Size {
 	if level > 0 {
-		return atoms.IconSizeXS
+		return atoms.SizeXS
 	}
-	return atoms.IconSizeSM
+	return atoms.SizeSM
 }
 
 // getSidebarIconClasses returns CSS classes for icons

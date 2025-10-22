@@ -832,16 +832,20 @@ func SidebarFooterActionsFull(actions []SidebarAction) templ.Component {
 		}
 		for _, action := range actions {
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+				BaseProps: atoms.BaseProps{
+					ID:    action.ID,
+					Class: "w-full justify-start",
+				},
+				AlpinEventHandlers: atoms.AlpinEventHandlers{
+					OnClick: action.OnClick,
+				},
 				Text:     action.Text,
-				Icon:     action.Icon,
+				Icon:     atoms.IconProps{Name: action.Icon},
 				Variant:  action.Variant,
 				Size:     action.Size,
-				OnClick:  action.OnClick,
 				HxPost:   action.HxPost,
 				HxGet:    action.HxGet,
 				HxTarget: action.HxTarget,
-				ID:       action.ID,
-				Class:    "w-full justify-start",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -882,16 +886,22 @@ func SidebarFooterActionsCompact(actions []SidebarAction) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		for _, action := range actions {
-			templ_7745c5c3_Err = atoms.IconButton(atoms.ButtonProps{
-				Icon:      action.Icon,
-				Variant:   action.Variant,
-				Size:      action.Size,
-				OnClick:   action.OnClick,
-				HxPost:    action.HxPost,
-				HxGet:     action.HxGet,
-				HxTarget:  action.HxTarget,
-				AriaLabel: action.Tooltip,
-				ID:        action.ID,
+			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+				BaseProps: atoms.BaseProps{
+					ID: action.ID,
+				},
+				AccessibilityProps: atoms.AccessibilityProps{
+					AriaLabel: action.Tooltip,
+				},
+				AlpinEventHandlers: atoms.AlpinEventHandlers{
+					OnClick: action.OnClick,
+				},
+				Icon:     atoms.IconProps{Name: action.Icon},
+				Variant:  action.Variant,
+				Size:     action.Size,
+				HxPost:   action.HxPost,
+				HxGet:    action.HxGet,
+				HxTarget: action.HxTarget,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -939,7 +949,7 @@ func SidebarFooterText(text string, copyright string, compact bool) templ.Compon
 			var templ_7745c5c3_Var37 string
 			templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(text)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/sidebar/footer.templ`, Line: 254, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/sidebar/footer.templ`, Line: 264, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 			if templ_7745c5c3_Err != nil {
@@ -958,7 +968,7 @@ func SidebarFooterText(text string, copyright string, compact bool) templ.Compon
 			var templ_7745c5c3_Var38 string
 			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(copyright)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/sidebar/footer.templ`, Line: 258, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/sidebar/footer.templ`, Line: 268, Col: 37}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 			if templ_7745c5c3_Err != nil {
@@ -1008,12 +1018,16 @@ func SidebarThemeToggle(compact bool) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = atoms.IconButton(atoms.ButtonProps{
-				Icon:      "palette",
-				Variant:   atoms.ButtonLight,
-				Size:      atoms.ButtonSizeSM,
-				OnClick:   "$store.theme.toggle()",
-				AriaLabel: "Toggle theme",
+			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+				AccessibilityProps: atoms.AccessibilityProps{
+					AriaLabel: "Toggle theme",
+				},
+				AlpinEventHandlers: atoms.AlpinEventHandlers{
+					OnClick: "$store.theme.toggle()",
+				},
+				Icon:    atoms.IconProps{Name: "palette"},
+				Variant: atoms.ButtonLight,
+				Size:    atoms.ButtonSizeSM,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

@@ -180,7 +180,7 @@ func ExportTypeCard(exportType ExportType) templ.Component {
 			}
 			templ_7745c5c3_Err = atoms.Icon(atoms.IconProps{
 				Name:  exportType.Icon,
-				Size:  atoms.IconSizeMD,
+				Size:  atoms.IconSizeLG,
 				Class: "text-blue-600 dark:text-blue-400",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
@@ -280,7 +280,7 @@ func ExportTypeCard(exportType ExportType) templ.Component {
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 			Text:     "Export",
 			Variant:  atoms.ButtonPrimary,
-			Size:     atoms.ButtonSizeSM,
+			Size:     atoms.SizeSM,
 			HxGet:    "/data-management/export/" + exportType.ID,
 			HxTarget: "#main-modal",
 		}).Render(ctx, templ_7745c5c3_Buffer)

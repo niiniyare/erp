@@ -125,7 +125,7 @@ templ SecuritySettings(props SecuritySettingsProps) {
 							Text:    "Update Password",
 							Type:    "submit",
 							Variant: atoms.ButtonPrimary,
-							Size:    atoms.ButtonSizeMD,
+							Size:    atoms.SizeMD,
 						})
 					</div>
 				</form>
@@ -158,8 +158,8 @@ templ SecuritySettings(props SecuritySettingsProps) {
 						if props.TwoFactorEnabled {
 							@atoms.Button(atoms.ButtonProps{
 								Text:    "Disable",
-								Variant: atoms.ButtonSecondary,
-								Size:    atoms.ButtonSizeSM,
+								Variant: atoms.VariantSecondary,
+								Size:    atoms.SizeSM,
 								HxPost:  "/settings/security/2fa/disable",
 								HxTarget: "#security-settings",
 							})
@@ -167,7 +167,7 @@ templ SecuritySettings(props SecuritySettingsProps) {
 							@atoms.Button(atoms.ButtonProps{
 								Text:    "Enable",
 								Variant: atoms.ButtonPrimary,
-								Size:    atoms.ButtonSizeSM,
+								Size:    atoms.SizeSM,
 								HxGet:   "/settings/security/2fa/setup",
 								HxTarget: "#main-modal",
 							})
@@ -249,7 +249,7 @@ templ SecuritySettings(props SecuritySettingsProps) {
 							Text:    "Save Preferences",
 							Type:    "submit",
 							Variant: atoms.ButtonPrimary,
-							Size:    atoms.ButtonSizeMD,
+							Size:    atoms.SizeMD,
 						})
 					</div>
 				</form>
@@ -310,8 +310,8 @@ templ SecuritySettings(props SecuritySettingsProps) {
 						<div>
 							@atoms.Button(atoms.ButtonProps{
 								Text:    "View Full History",
-								Variant: atoms.ButtonSecondary,
-								Size:    atoms.ButtonSizeSM,
+								Variant: atoms.VariantSecondary,
+								Size:    atoms.SizeSM,
 								HxGet:   "/settings/security/login-history",
 								HxTarget: "#main-modal",
 							})
@@ -330,7 +330,7 @@ templ SessionItem(session SessionInfo) {
 			<div class="flex-shrink-0">
 				@atoms.Icon(atoms.IconProps{
 					Name:  getDeviceIcon(session.Device),
-					Size:  atoms.IconSizeMD,
+					Size:  atoms.IconSizeLG,
 					Class: "text-gray-600 dark:text-gray-400",
 				})
 			</div>

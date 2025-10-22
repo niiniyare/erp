@@ -123,6 +123,15 @@ func (r *DefaultRegistry) GetTypes() []ComponentType {
 	return types
 }
 
+// IsRegistered checks if a component type is registered
+func (r *DefaultRegistry) IsRegistered(componentType ComponentType) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	_, exists := r.factories[componentType]
+	return exists
+}
+
 // Validate validates a component using its registered factory
 func (r *DefaultRegistry) Validate(ctx context.Context, component Component) error {
 	r.mu.RLock()
@@ -378,14 +387,6 @@ func (r *DefaultRegistry) GetFactoryCount() int {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	return len(r.factories)
-}
-
-// IsRegistered checks if a component type has a registered factory
-func (r *DefaultRegistry) IsRegistered(componentType ComponentType) bool {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	_, exists := r.factories[componentType]
-	return exists
 }
 
 // Unregister removes a factory for a component type

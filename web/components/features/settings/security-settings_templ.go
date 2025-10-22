@@ -210,7 +210,7 @@ func SecuritySettings(props SecuritySettingsProps) templ.Component {
 			Text:    "Update Password",
 			Type:    "submit",
 			Variant: atoms.ButtonPrimary,
-			Size:    atoms.ButtonSizeMD,
+			Size:    atoms.SizeMD,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -247,8 +247,8 @@ func SecuritySettings(props SecuritySettingsProps) templ.Component {
 		if props.TwoFactorEnabled {
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 				Text:     "Disable",
-				Variant:  atoms.ButtonSecondary,
-				Size:     atoms.ButtonSizeSM,
+				Variant:  atoms.VariantSecondary,
+				Size:     atoms.SizeSM,
 				HxPost:   "/settings/security/2fa/disable",
 				HxTarget: "#security-settings",
 			}).Render(ctx, templ_7745c5c3_Buffer)
@@ -259,7 +259,7 @@ func SecuritySettings(props SecuritySettingsProps) templ.Component {
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 				Text:     "Enable",
 				Variant:  atoms.ButtonPrimary,
-				Size:     atoms.ButtonSizeSM,
+				Size:     atoms.SizeSM,
 				HxGet:    "/settings/security/2fa/setup",
 				HxTarget: "#main-modal",
 			}).Render(ctx, templ_7745c5c3_Buffer)
@@ -323,7 +323,7 @@ func SecuritySettings(props SecuritySettingsProps) templ.Component {
 			Text:    "Save Preferences",
 			Type:    "submit",
 			Variant: atoms.ButtonPrimary,
-			Size:    atoms.ButtonSizeMD,
+			Size:    atoms.SizeMD,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -380,8 +380,8 @@ func SecuritySettings(props SecuritySettingsProps) templ.Component {
 		}
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 			Text:     "View Full History",
-			Variant:  atoms.ButtonSecondary,
-			Size:     atoms.ButtonSizeSM,
+			Variant:  atoms.VariantSecondary,
+			Size:     atoms.SizeSM,
 			HxGet:    "/settings/security/login-history",
 			HxTarget: "#main-modal",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -424,7 +424,7 @@ func SessionItem(session SessionInfo) templ.Component {
 		}
 		templ_7745c5c3_Err = atoms.Icon(atoms.IconProps{
 			Name:  getDeviceIcon(session.Device),
-			Size:  atoms.IconSizeMD,
+			Size:  atoms.IconSizeLG,
 			Class: "text-gray-600 dark:text-gray-400",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {

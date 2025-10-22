@@ -85,14 +85,14 @@ type HeaderUserMenu struct {
 
 // HeaderAction defines action buttons in the header
 type HeaderAction struct {
-	Text       string              `json:"text,omitempty"`
-	Icon       string              `json:"icon"`
-	Variant    atoms.ButtonVariant `json:"variant"`
-	Size       atoms.ButtonSize    `json:"size"`
-	Badge      string              `json:"badge,omitempty"`
-	BadgeColor string              `json:"badgeColor,omitempty"`
-	Tooltip    string              `json:"tooltip,omitempty"`
-	OnClick    string              `json:"onclick,omitempty"`
+	Text       string        `json:"text,omitempty"`
+	Icon       string        `json:"icon"`
+	Variant    atoms.Variant `json:"variant"`
+	Size       atoms.Size    `json:"size"`
+	Badge      string        `json:"badge,omitempty"`
+	BadgeColor string        `json:"badgeColor,omitempty"`
+	Tooltip    string        `json:"tooltip,omitempty"`
+	OnClick    string        `json:"onclick,omitempty"`
 
 	// HTMX attributes
 	HxPost   string `json:"hxPost,omitempty"`

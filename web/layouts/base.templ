@@ -189,8 +189,8 @@ templ BaseScripts(props BaseLayoutProps) {
 <!-- Flowbite -->
 <script src="/static/js/flowbite.min.js" if props.CSPNonce !="" { nonce={ props.CSPNonce } }></script>
 
-<!-- Application core JavaScript -->
-<script src="/static/js/app.js" if props.CSPNonce !="" { nonce={ props.CSPNonce } }></script>
+<!-- Optimized Application Bundle (37.1KB - includes all Alpine stores and utilities) -->
+<script src="/static/js/dist/app-bundle.js" if props.CSPNonce !="" { nonce={ props.CSPNonce } }></script>
 
 <!-- Custom JavaScript files -->
 for _, jsFile := range props.CustomJS {

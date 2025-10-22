@@ -735,22 +735,28 @@ func ModalActionButton(action ModalAction) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+			BaseProps: atoms.BaseProps{
+				ID:    action.ID,
+				Class: action.Class,
+			},
+			InteractionProps: atoms.InteractionProps{
+				Disabled:  action.Disabled,
+				AutoFocus: action.AutoFocus,
+			},
+			AlpinEventHandlers: atoms.AlpinEventHandlers{
+				OnClick: action.OnClick,
+			},
 			Text:      action.Text,
-			Icon:      action.Icon,
+			Icon:      atoms.IconProps{Name: action.Icon},
 			Variant:   action.Variant,
 			Size:      action.Size,
 			Type:      action.Type,
-			OnClick:   action.OnClick,
 			HxPost:    action.HxPost,
 			HxGet:     action.HxGet,
 			HxTarget:  action.HxTarget,
 			HxSwap:    action.HxSwap,
 			HxConfirm: action.HxConfirm,
 			Form:      action.Form,
-			Disabled:  action.Disabled,
-			AutoFocus: action.AutoFocus,
-			ID:        action.ID,
-			Class:     action.Class,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -883,7 +889,7 @@ func ConfirmModal(props ConfirmModalProps) templ.Component {
 		var templ_7745c5c3_Var37 string
 		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 302, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 308, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 		if templ_7745c5c3_Err != nil {
@@ -901,7 +907,7 @@ func ConfirmModal(props ConfirmModalProps) templ.Component {
 			var templ_7745c5c3_Var38 string
 			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(props.Message)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 307, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 313, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 			if templ_7745c5c3_Err != nil {
@@ -918,18 +924,24 @@ func ConfirmModal(props ConfirmModalProps) templ.Component {
 		}
 		_, buttonVariant := getConfirmVariantClasses(props.Variant)
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
-			Text:      props.ConfirmText,
-			Variant:   getButtonVariantFromString(buttonVariant),
-			OnClick:   props.OnConfirm + "; open = false",
-			AutoFocus: true,
+			InteractionProps: atoms.InteractionProps{
+				AutoFocus: true,
+			},
+			AlpinEventHandlers: atoms.AlpinEventHandlers{
+				OnClick: props.OnConfirm + "; open = false",
+			},
+			Text:    props.ConfirmText,
+			Variant: getButtonVariantFromString(buttonVariant),
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+			AlpinEventHandlers: atoms.AlpinEventHandlers{
+				OnClick: props.OnCancel + "; open = false",
+			},
 			Text:    props.CancelText,
 			Variant: atoms.ButtonLight,
-			OnClick: props.OnCancel + "; open = false",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -971,7 +983,7 @@ func FormModal(props FormModalProps) templ.Component {
 		var templ_7745c5c3_Var40 string
 		templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(generateFormAlpineData(props))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 336, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 348, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 		if templ_7745c5c3_Err != nil {
@@ -1006,7 +1018,7 @@ func FormModal(props FormModalProps) templ.Component {
 		var templ_7745c5c3_Var43 string
 		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 367, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 379, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 		if templ_7745c5c3_Err != nil {
@@ -1035,7 +1047,7 @@ func FormModal(props FormModalProps) templ.Component {
 			var templ_7745c5c3_Var44 string
 			templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(props.FormID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 384, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 396, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 			if templ_7745c5c3_Err != nil {
@@ -1054,7 +1066,7 @@ func FormModal(props FormModalProps) templ.Component {
 			var templ_7745c5c3_Var45 templ.SafeURL
 			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinURLErrs(props.FormAction)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 387, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 399, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
 			if templ_7745c5c3_Err != nil {
@@ -1073,7 +1085,7 @@ func FormModal(props FormModalProps) templ.Component {
 			var templ_7745c5c3_Var46 string
 			templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(props.FormMethod)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 390, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 402, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 			if templ_7745c5c3_Err != nil {
@@ -1092,7 +1104,7 @@ func FormModal(props FormModalProps) templ.Component {
 			var templ_7745c5c3_Var47 string
 			templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxPost)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 393, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 405, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 			if templ_7745c5c3_Err != nil {
@@ -1111,7 +1123,7 @@ func FormModal(props FormModalProps) templ.Component {
 			var templ_7745c5c3_Var48 string
 			templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxTarget)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 396, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 408, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
 			if templ_7745c5c3_Err != nil {
@@ -1130,7 +1142,7 @@ func FormModal(props FormModalProps) templ.Component {
 			var templ_7745c5c3_Var49 string
 			templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(props.HxSwap)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 399, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/modal/modal.templ`, Line: 411, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
 			if templ_7745c5c3_Err != nil {
@@ -1165,11 +1177,15 @@ func FormModal(props FormModalProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
-			Text:     props.SubmitText,
-			Variant:  atoms.ButtonPrimary,
-			Type:     "submit",
-			Disabled: false,
-			Class:    "min-w-[100px]",
+			BaseProps: atoms.BaseProps{
+				Class: "min-w-[100px]",
+			},
+			InteractionProps: atoms.InteractionProps{
+				Disabled: false,
+			},
+			Text:    props.SubmitText,
+			Variant: atoms.ButtonPrimary,
+			Type:    "submit",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err

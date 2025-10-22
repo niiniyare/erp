@@ -86,15 +86,15 @@ templ ProfileSettings(props ProfileSettingsProps) {
 						<div class="mt-2 flex space-x-3">
 							@atoms.Button(atoms.ButtonProps{
 								Text:    "Change",
-								Variant: atoms.ButtonSecondary,
-								Size:    atoms.ButtonSizeSM,
+								Variant: atoms.VariantSecondary,
+								Size:    atoms.SizeSM,
 								OnClick: "openAvatarUpload()",
 							})
 							if props.User.Avatar != "" {
 								@atoms.Button(atoms.ButtonProps{
 									Text:    "Remove",
 									Variant: atoms.ButtonLight,
-									Size:    atoms.ButtonSizeSM,
+									Size:    atoms.SizeSM,
 									OnClick: "removeAvatar()",
 								})
 							}

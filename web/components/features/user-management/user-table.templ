@@ -238,7 +238,7 @@ templ UserDataTable(props UserTableProps) {
 			{
 				Text:     "Export Selected",
 				Icon:     "download",
-				Variant:  atoms.ButtonSecondary,
+				Variant:  atoms.VariantSecondary,
 				HxPost:   "/admin/users/export",
 				HxTarget: "#download-link",
 				HxSwap:   "innerHTML",
@@ -322,7 +322,7 @@ templ UserTableHeader(props UserTableProps) {
 			@atoms.Button(atoms.ButtonProps{
 				Text:     "Export All",
 				Icon:     "download",
-				Variant:  atoms.ButtonSecondary,
+				Variant:  atoms.VariantSecondary,
 				HxPost:   "/admin/users/export-all",
 				HxTarget: "#download-link",
 			})

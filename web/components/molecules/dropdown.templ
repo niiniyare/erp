@@ -40,10 +40,10 @@ type DropdownItem struct {
 // DropdownProps defines properties for the Dropdown molecule
 type DropdownProps struct {
 	// Trigger configuration
-	TriggerText    string               `json:"triggerText,omitempty"`
-	TriggerIcon    string               `json:"triggerIcon,omitempty"`
-	TriggerVariant atoms.ButtonVariant  `json:"triggerVariant"`
-	TriggerSize    atoms.ButtonSize     `json:"triggerSize"`
+	TriggerText    string        `json:"triggerText,omitempty"`
+	TriggerIcon    string        `json:"triggerIcon,omitempty"`
+	TriggerVariant atoms.Variant `json:"triggerVariant"`
+	TriggerSize    atoms.Size    `json:"triggerSize"`
 	
 	// Dropdown configuration
 	Items         []DropdownItem     `json:"items"`
@@ -435,18 +435,18 @@ func getDropdownItemClasses(item DropdownItem) string {
 	return strings.Join(classes, " ")
 }
 
-func getTriggerIconSize(buttonSize atoms.ButtonSize) atoms.IconSize {
+func getTriggerIconSize(buttonSize atoms.Size) atoms.Size {
 	switch buttonSize {
-	case atoms.ButtonSizeXS:
-		return atoms.IconSizeXS
-	case atoms.ButtonSizeSM:
-		return atoms.IconSizeSM
-	case atoms.ButtonSizeLG:
-		return atoms.IconSizeMD
-	case atoms.ButtonSizeXL:
-		return atoms.IconSizeLG
+	case atoms.SizeXS:
+		return atoms.SizeXS
+	case atoms.SizeSM:
+		return atoms.SizeSM
+	case atoms.SizeLG:
+		return atoms.SizeMD
+	case atoms.SizeXL:
+		return atoms.SizeLG
 	default:
-		return atoms.IconSizeSM
+		return atoms.SizeSM
 	}
 }
 

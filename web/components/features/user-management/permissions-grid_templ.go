@@ -109,8 +109,8 @@ func PermissionsGrid(props PermissionsGridProps) templ.Component {
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 				Text:    "Grant All",
 				Icon:    "check-circle",
-				Variant: atoms.ButtonSecondary,
-				Size:    atoms.ButtonSizeSM,
+				Variant: atoms.VariantSecondary,
+				Size:    atoms.SizeSM,
 				OnClick: "grantAllPermissions()",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
@@ -120,7 +120,7 @@ func PermissionsGrid(props PermissionsGridProps) templ.Component {
 				Text:    "Revoke All",
 				Icon:    "x-circle",
 				Variant: atoms.ButtonLight,
-				Size:    atoms.ButtonSizeSM,
+				Size:    atoms.SizeSM,
 				OnClick: "revokeAllPermissions()",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
@@ -130,7 +130,7 @@ func PermissionsGrid(props PermissionsGridProps) templ.Component {
 				Text:    "Reset to Role",
 				Icon:    "refresh",
 				Variant: atoms.ButtonLight,
-				Size:    atoms.ButtonSizeSM,
+				Size:    atoms.SizeSM,
 				OnClick: "resetToRolePermissions()",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
@@ -144,7 +144,7 @@ func PermissionsGrid(props PermissionsGridProps) templ.Component {
 				Text:     "Save Changes",
 				Icon:     "save",
 				Variant:  atoms.ButtonPrimary,
-				Size:     atoms.ButtonSizeSM,
+				Size:     atoms.SizeSM,
 				HxPost:   props.HxPost,
 				HxTarget: props.HxTarget,
 				OnClick:  "savePermissions()",

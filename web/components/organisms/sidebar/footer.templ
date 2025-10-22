@@ -210,16 +210,20 @@ templ SidebarFooterActionsFull(actions []SidebarAction) {
 	>
 		for _, action := range actions {
 			@atoms.Button(atoms.ButtonProps{
+				BaseProps: atoms.BaseProps{
+					ID:    action.ID,
+					Class: "w-full justify-start",
+				},
+				AlpinEventHandlers: atoms.AlpinEventHandlers{
+					OnClick: action.OnClick,
+				},
 				Text:     action.Text,
-				Icon:     action.Icon,
+				Icon:     atoms.IconProps{Name: action.Icon},
 				Variant:  action.Variant,
 				Size:     action.Size,
-				OnClick:  action.OnClick,
 				HxPost:   action.HxPost,
 				HxGet:    action.HxGet,
 				HxTarget: action.HxTarget,
-				ID:       action.ID,
-				Class:    "w-full justify-start",
 			})
 		}
 	</div>
@@ -229,16 +233,22 @@ templ SidebarFooterActionsFull(actions []SidebarAction) {
 templ SidebarFooterActionsCompact(actions []SidebarAction) {
 	<div class="flex justify-center space-x-1">
 		for _, action := range actions {
-			@atoms.IconButton(atoms.ButtonProps{
-				Icon:      action.Icon,
+			@atoms.Button(atoms.ButtonProps{
+				BaseProps: atoms.BaseProps{
+					ID: action.ID,
+				},
+				AccessibilityProps: atoms.AccessibilityProps{
+					AriaLabel: action.Tooltip,
+				},
+				AlpinEventHandlers: atoms.AlpinEventHandlers{
+					OnClick: action.OnClick,
+				},
+				Icon:      atoms.IconProps{Name: action.Icon},
 				Variant:   action.Variant,
 				Size:      action.Size,
-				OnClick:   action.OnClick,
 				HxPost:    action.HxPost,
 				HxGet:     action.HxGet,
 				HxTarget:  action.HxTarget,
-				AriaLabel: action.Tooltip,
-				ID:        action.ID,
 			})
 		}
 	</div>
@@ -265,12 +275,16 @@ templ SidebarThemeToggle(compact bool) {
 	<div class="mb-4">
 		if compact {
 			<div class="flex justify-center">
-				@atoms.IconButton(atoms.ButtonProps{
-					Icon:      "palette",
+				@atoms.Button(atoms.ButtonProps{
+					AccessibilityProps: atoms.AccessibilityProps{
+						AriaLabel: "Toggle theme",
+					},
+					AlpinEventHandlers: atoms.AlpinEventHandlers{
+						OnClick: "$store.theme.toggle()",
+					},
+					Icon:      atoms.IconProps{Name: "palette"},
 					Variant:   atoms.ButtonLight,
 					Size:      atoms.ButtonSizeSM,
-					OnClick:   "$store.theme.toggle()",
-					AriaLabel: "Toggle theme",
 				})
 			</div>
 		} else {

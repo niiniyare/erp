@@ -123,15 +123,20 @@ func (d *Demo) demoTemplToSchema(ctx context.Context) error {
 
 	// Create a Templ input component
 	inputProps := atoms.InputProps{
-		Type:        "email",
-		Name:        "user_email",
-		Placeholder: "Enter your email address",
-		Required:    true,
-		Size:        atoms.InputSizeLG,
-		ID:          "email-input",
-		Label:       "Email Address",
-		MaxLength:   100,
-		Pattern:     `^[^\s@]+@[^\s@]+\.[^\s@]+$`,
+		BaseProps: atoms.BaseProps{
+			ID:   "email-input",
+			Name: "user_email",
+		},
+		InteractionProps: atoms.InteractionProps{
+			Required: true,
+		},
+		PlaceholderProps: atoms.PlaceholderProps{
+			Placeholder: "Enter your email address",
+		},
+		Type:      atoms.InputTypeEmail,
+		Size:      atoms.SizeLG,
+		MaxLength: 100,
+		Pattern:   `^[^\s@]+@[^\s@]+\.[^\s@]+$`,
 	}
 
 	templComponent := TemplComponent{
@@ -141,9 +146,9 @@ func (d *Demo) demoTemplToSchema(ctx context.Context) error {
 
 	fmt.Printf("🎯 Created Templ input component:\n")
 	fmt.Printf("   - Type: %s\n", templComponent.Type)
-	fmt.Printf("   - Name: %s\n", inputProps.Name)
-	fmt.Printf("   - Placeholder: %s\n", inputProps.Placeholder)
-	fmt.Printf("   - Required: %t\n", inputProps.Required)
+	fmt.Printf("   - Name: %s\n", inputProps.BaseProps.Name)
+	fmt.Printf("   - Placeholder: %s\n", inputProps.PlaceholderProps.Placeholder)
+	fmt.Printf("   - Required: %t\n", inputProps.InteractionProps.Required)
 	fmt.Printf("   - Size: %s\n", inputProps.Size)
 
 	// Convert to schema component

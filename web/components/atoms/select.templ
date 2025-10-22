@@ -171,7 +171,7 @@ templ selectLabel(props SelectProps) {
 		}
 		class={ getSelectLabelClasses(props) }
 	>
-		{ props.Label }
+		{ props.GetLabelText() }
 		// Visual indicator for required fields
 		if props.Required {
 			<span class="text-red-500 ml-1" aria-hidden="true">*</span>

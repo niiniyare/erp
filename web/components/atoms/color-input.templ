@@ -254,7 +254,7 @@ templ colorInputLabel(props ColorInputProps) {
 		for={ props.GetID("color-input") }
 		class="block text-sm font-medium text-gray-900 dark:text-white mb-2"
 	>
-		{ props.Label }
+		{ props.GetLabelText() }
 		if props.Required {
 			<span class="text-red-500 ml-1">*</span>
 		}

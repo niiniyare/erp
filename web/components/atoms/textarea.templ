@@ -177,7 +177,7 @@ templ textareaLabel(props TextareaProps) {
 		}
 		class={ getTextareaLabelClasses(props) }
 	>
-		{ props.Label }
+		{ props.GetLabelText() }
 		// Visual indicator for required fields
 		if props.Required {
 			<span class="text-red-500 ml-1" aria-hidden="true">*</span>

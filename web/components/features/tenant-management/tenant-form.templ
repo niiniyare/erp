@@ -638,8 +638,8 @@ templ TenantFormMetadataSection(props TenantFormProps) {
 				@atoms.Button(atoms.ButtonProps{
 					Text:    "Add Field",
 					Icon:    "plus",
-					Variant: atoms.ButtonSecondary,
-					Size:    atoms.ButtonSizeSM,
+					Variant: atoms.VariantSecondary,
+					Size:    atoms.SizeSM,
 					OnClick: "addMetadataField()",
 				})
 			</div>
@@ -668,7 +668,7 @@ templ TenantFormMetadataSection(props TenantFormProps) {
 							@atoms.Button(atoms.ButtonProps{
 								Icon:    "trash",
 								Variant: atoms.ButtonDanger,
-								Size:    atoms.ButtonSizeSM,
+								Size:    atoms.SizeSM,
 								OnClick: "removeMetadataField(index)",
 								Class:   "px-3",
 							})
@@ -698,8 +698,8 @@ templ TenantFormActions(props TenantFormProps) {
 			if props.CancelUrl != "" || props.CancelText != "" {
 				@atoms.Button(atoms.ButtonProps{
 					Text:    getTenantFormCancelText(props.CancelText),
-					Variant: atoms.ButtonSecondary,
-					Size:    atoms.ButtonSizeMD,
+					Variant: atoms.VariantSecondary,
+					Size:    atoms.SizeMD,
 					OnClick: "cancelForm()",
 				})
 			}
@@ -711,8 +711,8 @@ templ TenantFormActions(props TenantFormProps) {
 				@atoms.Button(atoms.ButtonProps{
 					Text:    "Save Draft",
 					Icon:    "document",
-					Variant: atoms.ButtonSecondary,
-					Size:    atoms.ButtonSizeMD,
+					Variant: atoms.VariantSecondary,
+					Size:    atoms.SizeMD,
 					OnClick: "saveDraft()",
 				})
 			}
@@ -722,7 +722,7 @@ templ TenantFormActions(props TenantFormProps) {
 				Text:    getTenantFormSubmitText(props),
 				Icon:    getTenantFormSubmitIcon(props.Mode),
 				Variant: atoms.ButtonPrimary,
-				Size:    atoms.ButtonSizeMD,
+				Size:    atoms.SizeMD,
 				Type:    "submit",
 				Loading: props.IsLoading,
 			})
