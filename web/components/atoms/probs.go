@@ -8,18 +8,46 @@ import (
 )
 
 // ============================================================================
-// BASE PROPERTIES
+// BASE PROPERTIES - SCHEMA ALIGNED
 // ============================================================================
 
 // BaseProps contains fundamental HTML attributes shared by all components.
-// Every interactive component should embed this struct for consistency.
+// Enhanced with schema-aligned properties for consistency.
 type BaseProps struct {
+	// Core HTML attributes
 	ID         string `json:"id,omitempty"`         // HTML id attribute
 	Name       string `json:"name,omitempty"`       // Form field name
-	Class      string `json:"class,omitempty"`      // Custom CSS classes
-	Style      string `json:"style,omitempty"`      // Inline styles (use sparingly)
+	Class      string `json:"className,omitempty"`  // Custom CSS classes (aligned with schema)
+	Style      interface{} `json:"style,omitempty"` // Inline styles (object or string)
 	DataTestID string `json:"dataTestId,omitempty"` // For testing frameworks
 	TabIndex   int    `json:"tabIndex,omitempty"`   // Custom tab order (0=default, -1=not focusable)
+	
+	// Schema-aligned properties
+	SchemaID   string `json:"$$id,omitempty"`       // Schema designer unique ID
+	Ref        string `json:"$ref,omitempty"`       // Schema reference for definitions
+	UseMobileUI *bool `json:"useMobileUI,omitempty"` // Mobile UI override
+	
+	// Conditional display (disabled is handled by InteractionProps)
+	DisabledOn *SchemaExpression  `json:"disabledOn,omitempty"` // Dynamic disabled condition
+	Hidden     bool               `json:"hidden,omitempty"`     // Static hidden state
+	HiddenOn   *SchemaExpression  `json:"hiddenOn,omitempty"`   // Dynamic hidden condition
+	Visible    bool               `json:"visible,omitempty"`    // Static visible state
+	VisibleOn  *SchemaExpression  `json:"visibleOn,omitempty"`  // Dynamic visible condition
+	
+	// Static display mode
+	Static              bool               `json:"static,omitempty"`              // Enable static display mode
+	StaticOn            *SchemaExpression  `json:"staticOn,omitempty"`            // Dynamic static condition
+	StaticPlaceholder   string             `json:"staticPlaceholder,omitempty"`   // Static mode placeholder
+	StaticClassName     string             `json:"staticClassName,omitempty"`     // Static mode CSS classes
+	StaticLabelClassName string            `json:"staticLabelClassName,omitempty"` // Static label CSS classes
+	StaticInputClassName string            `json:"staticInputClassName,omitempty"` // Static input CSS classes
+	StaticSchema        interface{}        `json:"staticSchema,omitempty"`        // Static display schema
+	
+	// Event configuration
+	OnEvent     EventConfiguration `json:"onEvent,omitempty"`     // Event listeners configuration
+	
+	// Editor metadata
+	EditorSetting *EditorSetting `json:"editorSetting,omitempty"` // Visual editor configuration
 }
 
 // HasID checks if the component has an ID set.
@@ -40,6 +68,79 @@ func (b BaseProps) GetClasses(additionalClasses ...string) string {
 	}
 	classes = append(classes, additionalClasses...)
 	return JoinClasses(classes...)
+}
+
+// IsDisabledByExpression checks if the component should be disabled by dynamic condition.
+func (b BaseProps) IsDisabledByExpression() bool {
+	if b.DisabledOn != nil {
+		return b.DisabledOn.IsTrue()
+	}
+	return false
+}
+
+// IsHidden checks if the component should be hidden (static or dynamic).
+func (b BaseProps) IsHidden() bool {
+	if b.Hidden {
+		return true
+	}
+	if b.HiddenOn != nil {
+		return b.HiddenOn.IsTrue()
+	}
+	return false
+}
+
+// IsVisible checks if the component should be visible (considering all visibility rules).
+func (b BaseProps) IsVisible() bool {
+	// If explicitly hidden, not visible
+	if b.IsHidden() {
+		return false
+	}
+	
+	// If visible is explicitly set to false, not visible
+	if !b.Visible && b.VisibleOn == nil {
+		return true // Default to visible if not specified
+	}
+	
+	// Check dynamic visibility
+	if b.VisibleOn != nil {
+		return b.VisibleOn.IsTrue()
+	}
+	
+	return b.Visible
+}
+
+// IsStaticMode checks if the component should render in static mode.
+func (b BaseProps) IsStaticMode() bool {
+	if b.Static {
+		return true
+	}
+	if b.StaticOn != nil {
+		return b.StaticOn.IsTrue()
+	}
+	return false
+}
+
+// GetStyleAttribute returns the style attribute as a string for HTML rendering.
+func (b BaseProps) GetStyleAttribute() string {
+	if b.Style == nil {
+		return ""
+	}
+	
+	switch v := b.Style.(type) {
+	case string:
+		return v
+	case map[string]interface{}:
+		// Convert object-style styles to CSS string
+		var styles []string
+		for prop, value := range v {
+			if valueStr, ok := value.(string); ok {
+				styles = append(styles, fmt.Sprintf("%s: %s", prop, valueStr))
+			}
+		}
+		return strings.Join(styles, "; ")
+	default:
+		return ""
+	}
 }
 
 // ============================================================================
@@ -119,12 +220,13 @@ func (a AccessibilityProps) HasAriaLabel() bool {
 }
 
 // ============================================================================
-// VALIDATION PROPERTIES
+// VALIDATION PROPERTIES - SCHEMA ALIGNED
 // ============================================================================
 
 // ValidationProps handles validation state and feedback messages.
-// Supports multiple message types for different validation states.
+// Enhanced with schema-aligned validation capabilities.
 type ValidationProps struct {
+	// Basic validation state
 	State            ValidationState `json:"state,omitempty"`            // Current validation state
 	HelpText         string          `json:"helpText,omitempty"`         // General guidance text
 	ErrorText        string          `json:"errorText,omitempty"`        // Error message
@@ -134,6 +236,13 @@ type ValidationProps struct {
 	ShowValidation   bool            `json:"showValidation,omitempty"`   // Whether to show validation UI
 	ValidateOnBlur   bool            `json:"validateOnBlur,omitempty"`   // Trigger validation on blur
 	ValidateOnChange bool            `json:"validateOnChange,omitempty"` // Trigger validation on change
+	
+	// Schema-aligned validation
+	Rules            *ValidationRules  `json:"validations,omitempty"`      // Validation rules configuration
+	ErrorMessages    *ValidationErrors `json:"validationErrors,omitempty"` // Custom error messages
+	ValidateAPI      *APIObject        `json:"validateApi,omitempty"`      // Remote validation API
+	AutoFill         *AutoFillConfig   `json:"autoFill,omitempty"`         // Autofill configuration
+	InitAutoFill     interface{}       `json:"initAutoFill,omitempty"`     // Initial autofill behavior
 }
 
 // GetFeedbackMessage returns the appropriate message based on current state.
@@ -235,6 +344,10 @@ func (i InteractionProps) GetInteractionAttrs() map[string]string {
 // ALPINE.JS EVENT HANDLERS
 // ============================================================================
 
+// EventProps contains event handling properties for components.
+// Alias for AlpinEventHandlers for backward compatibility.
+type EventProps = AlpinEventHandlers
+
 // AlpinEventHandlers contains Alpine.js event handling directives.
 // These will be rendered as x-on:* attributes.
 type AlpinEventHandlers struct {
@@ -302,21 +415,94 @@ func (a AlpinEventHandlers) HasEventHandlers() bool {
 }
 
 // ============================================================================
-// LABEL PROPERTIES
+// LABEL PROPERTIES - SCHEMA ALIGNED
 // ============================================================================
 
 // LabelProps contains label-specific properties.
-// Used by components that display labels.
+// Enhanced with schema-aligned label configuration.
 type LabelProps struct {
-	Label         string        `json:"label,omitempty"`         // Label text
+	// Basic label properties
+	Label         interface{}   `json:"label,omitempty"`         // Label text (string or false to hide)
 	LabelPosition LabelPosition `json:"labelPosition,omitempty"` // Label position
-	LabelClass    string        `json:"labelClass,omitempty"`    // Custom label classes
+	LabelClass    string        `json:"labelClassName,omitempty"` // Custom label classes (aligned with schema)
 	HideLabel     bool          `json:"hideLabel,omitempty"`     // Visually hide label (keep for a11y)
+	
+	// Schema-aligned label properties
+	LabelAlign    string        `json:"labelAlign,omitempty"`    // Label alignment (left, right, center)
+	LabelWidth    interface{}   `json:"labelWidth,omitempty"`    // Label width (number or string)
+	LabelRemark   interface{}   `json:"labelRemark,omitempty"`   // Label remark/tooltip
+}
+
+// FormLayoutProps contains form layout configuration
+// Aligned with schema form layout properties
+type FormLayoutProps struct {
+	Mode         DisplayMode     `json:"mode,omitempty"`         // Form layout mode
+	Inline       bool            `json:"inline,omitempty"`       // Inline form control
+	Horizontal   interface{}     `json:"horizontal,omitempty"`   // Horizontal layout configuration
+	Size         Size            `json:"size,omitempty"`         // Form item size
+	ExtraName    string          `json:"extraName,omitempty"`    // Additional field name for range components
+	Row          int             `json:"row,omitempty"`          // Row position in grid layouts
+}
+
+// FieldProps contains comprehensive field configuration
+// Combines validation, interaction, and display properties for form fields
+type FieldProps struct {
+	BaseProps
+	AccessibilityProps
+	ValidationProps
+	InteractionProps
+	LabelProps
+	PlaceholderProps
+	FormLayoutProps
+	AlpinEventHandlers
+	
+	// Field-specific properties
+	Description           string             `json:"description,omitempty"`           // Field description
+	Desc                  string             `json:"desc,omitempty"`                  // Alias for description
+	DescriptionClassName  string             `json:"descriptionClassName,omitempty"`  // Description CSS classes
+	Hint                  string             `json:"hint,omitempty"`                  // Input hint (focus tooltip)
+	Remark                interface{}        `json:"remark,omitempty"`                // Field remark/tooltip
+	SubmitOnChange        bool               `json:"submitOnChange,omitempty"`        // Submit form on field change
+	ClearValueOnHidden    bool               `json:"clearValueOnHidden,omitempty"`    // Clear value when hidden
+	InputClassName        string             `json:"inputClassName,omitempty"`        // Input-specific CSS classes
+	
+	// Default value
+	Value                 interface{}        `json:"value,omitempty"`                 // Default field value
 }
 
 // HasLabel checks if a label should be rendered.
 func (l LabelProps) HasLabel() bool {
-	return strings.TrimSpace(l.Label) != ""
+	if l.Label == nil {
+		return false
+	}
+	
+	switch v := l.Label.(type) {
+	case string:
+		return strings.TrimSpace(v) != ""
+	case bool:
+		return v // true means show, false means hide
+	default:
+		return false
+	}
+}
+
+// GetLabelText returns the label text as a string.
+func (l LabelProps) GetLabelText() string {
+	if l.Label == nil {
+		return ""
+	}
+	
+	switch v := l.Label.(type) {
+	case string:
+		return v
+	case bool:
+		if v {
+			return "" // Has label but no text specified
+		}
+		return ""
+	default:
+		return ""
+	}
 }
 
 // ShouldRenderLabel checks if label should be visible.
@@ -449,13 +635,17 @@ type ButtonProps struct {
 	AlpinEventHandlers
 
 	// Content
-	Text string    `json:"text,omitempty"` // Button text
-	Icon IconProps `json:"icon,omitempty"` // Icon configuration
+	Text         string       `json:"text,omitempty"`         // Button text
+	Icon         IconProps    `json:"icon,omitempty"`         // Icon configuration
+	IconName     string       `json:"iconName,omitempty"`     // Simple icon name (for backward compatibility)
+	IconOnly     bool         `json:"iconOnly,omitempty"`     // Icon-only button
+	IconPosition IconPosition `json:"iconPosition,omitempty"` // Icon position (left, right, top, bottom)
 
 	// Styling
 	Variant     Variant     `json:"variant,omitempty"`     // Visual variant
 	Size        Size        `json:"size,omitempty"`        // Button size
 	ColorScheme ColorScheme `json:"colorScheme,omitempty"` // Color theme
+	Color       string      `json:"color,omitempty"`       // Color (simple string for backward compatibility)
 	FullWidth   bool        `json:"fullWidth,omitempty"`   // Full width button
 
 	// State
@@ -465,6 +655,26 @@ type ButtonProps struct {
 	// Button-specific
 	Type string `json:"type,omitempty"` // button, submit, reset
 	Form string `json:"form,omitempty"` // Associated form ID
+
+	// HTMX attributes
+	HxGet     string `json:"hxGet,omitempty"`     // HTMX GET request
+	HxPost    string `json:"hxPost,omitempty"`    // HTMX POST request
+	HxPut     string `json:"hxPut,omitempty"`     // HTMX PUT request
+	HxPatch   string `json:"hxPatch,omitempty"`   // HTMX PATCH request
+	HxDelete  string `json:"hxDelete,omitempty"`  // HTMX DELETE request
+	HxTarget  string `json:"hxTarget,omitempty"`  // HTMX target selector
+	HxSwap    string `json:"hxSwap,omitempty"`    // HTMX swap strategy
+	HxTrigger string `json:"hxTrigger,omitempty"` // HTMX trigger event
+	HxConfirm string `json:"hxConfirm,omitempty"` // HTMX confirmation message
+
+	// Navigation
+	Href   string `json:"href,omitempty"`   // Link URL
+	Target string `json:"target,omitempty"` // Link target
+	
+	// Additional commonly used fields (for template compatibility)
+	OnClick    string            `json:"onClick,omitempty"`    // Click handler (also available via embedded AlpinEventHandlers)
+	AriaLabel  string            `json:"ariaLabel,omitempty"`  // Accessible label (also available via embedded AccessibilityProps)
+	EventProps AlpinEventHandlers `json:"eventProps,omitempty"` // Event handlers (also available via embedded AlpinEventHandlers)
 }
 
 // InputProps defines properties for Input components.
@@ -493,6 +703,9 @@ type InputProps struct {
 	// Icons
 	LeftIcon  IconProps `json:"leftIcon,omitempty"`  // Icon on left
 	RightIcon IconProps `json:"rightIcon,omitempty"` // Icon on right
+	
+	// Additional commonly used fields (for template compatibility)
+	EventProps AlpinEventHandlers `json:"eventProps,omitempty"` // Event handlers (also available via embedded AlpinEventHandlers)
 }
 
 // CheckboxProps defines properties for Checkbox components.
@@ -558,6 +771,11 @@ type RadioGroupProps struct {
 	Size          Size          `json:"size"`              // Radio size for all options
 	LabelPosition LabelPosition `json:"labelPosition"`     // Label position for all options
 	Spacing       string        `json:"spacing,omitempty"` // Spacing between options
+}
+
+// GetLabelText returns the label text for the radio group.
+func (r RadioGroupProps) GetLabelText() string {
+	return r.Label
 }
 
 // SelectProps defines properties for Select components.
@@ -724,6 +942,11 @@ type ColorInputProps struct {
 	// Color input styling
 	Variant Variant `json:"variant,omitempty"` // Input variant
 	Size    Size    `json:"size,omitempty"`    // Input size
+}
+
+// GetLabelText returns the label text for the color input.
+func (c ColorInputProps) GetLabelText() string {
+	return c.Label
 }
 
 // DividerProps defines properties for Divider components.
@@ -957,4 +1180,9 @@ type UUIDProps struct {
 	// UUID styling
 	Variant Variant `json:"variant,omitempty"` // UUID variant
 	Size    Size    `json:"size,omitempty"`    // UUID size
+}
+
+// GetLabelText returns the label text for the UUID component.
+func (u UUIDProps) GetLabelText() string {
+	return u.Label
 }

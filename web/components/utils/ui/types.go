@@ -396,6 +396,9 @@ type ComponentRegistry interface {
 	// Get all registered component types
 	GetTypes() []ComponentType
 
+	// Check if a component type is registered
+	IsRegistered(componentType ComponentType) bool
+
 	// Validate a component using its factory
 	Validate(ctx context.Context, component Component) error
 }

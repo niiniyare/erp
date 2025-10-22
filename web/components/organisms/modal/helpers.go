@@ -247,29 +247,21 @@ func generateFormAlpineData(props FormModalProps) string {
 	}`)
 }
 
-// getButtonVariantFromString converts string to ButtonVariant
-func getButtonVariantFromString(variant string) atoms.ButtonVariant {
+// getButtonVariantFromString converts string to Variant
+func getButtonVariantFromString(variant string) atoms.Variant {
 	switch variant {
-	case "primary":
-		return atoms.ButtonPrimary
-	case "secondary":
-		return atoms.ButtonSecondary
-	case "success":
-		return atoms.ButtonSuccess
-	case "danger":
-		return atoms.ButtonDanger
-	case "warning":
-		return atoms.ButtonWarning
-	case "info":
-		return atoms.ButtonInfo
-	case "light":
-		return atoms.ButtonLight
-	case "dark":
-		return atoms.ButtonDark
+	case "outlined":
+		return atoms.VariantOutlined
+	case "filled":
+		return atoms.VariantFilled
 	case "ghost":
-		return atoms.ButtonGhost
+		return atoms.VariantGhost
+	case "underlined":
+		return atoms.VariantUnderlined
+	case "solid":
+		return atoms.VariantSolid
 	default:
-		return atoms.ButtonSecondary
+		return atoms.VariantDefault
 	}
 }
 

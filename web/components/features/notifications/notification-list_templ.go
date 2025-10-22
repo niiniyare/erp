@@ -124,8 +124,8 @@ func NotificationList(props NotificationListProps) templ.Component {
 				if props.MarkAllReadURL != "" {
 					templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 						Text:     "Mark all read",
-						Variant:  atoms.ButtonSecondary,
-						Size:     atoms.ButtonSizeSM,
+						Variant:  atoms.VariantSecondary,
+						Size:     atoms.SizeSM,
 						HxPost:   props.MarkAllReadURL,
 						HxTarget: "#notification-list",
 						HxSwap:   "outerHTML",
@@ -137,8 +137,8 @@ func NotificationList(props NotificationListProps) templ.Component {
 				if props.ClearAllURL != "" {
 					templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 						Text:      "Clear all",
-						Variant:   atoms.ButtonSecondary,
-						Size:      atoms.ButtonSizeSM,
+						Variant:   atoms.VariantSecondary,
+						Size:      atoms.SizeSM,
 						HxDelete:  props.ClearAllURL,
 						HxTarget:  "#notification-list",
 						HxSwap:    "outerHTML",
@@ -188,8 +188,8 @@ func NotificationList(props NotificationListProps) templ.Component {
 			}
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 				Text:     "Load more notifications",
-				Variant:  atoms.ButtonSecondary,
-				Size:     atoms.ButtonSizeMD,
+				Variant:  atoms.VariantSecondary,
+				Size:     atoms.SizeMD,
 				HxGet:    props.LoadMoreURL,
 				HxTarget: "#notification-list",
 				HxSwap:   "beforeend",

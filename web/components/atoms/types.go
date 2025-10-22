@@ -35,6 +35,62 @@ const (
 	SizeXL Size = "xl" // Extra large - 20px base
 )
 
+// InputSize defines input-specific sizing options.
+type InputSize = Size
+
+const (
+	InputSizeXS = SizeXS
+	InputSizeSM = SizeSM
+	InputSizeMD = SizeMD
+	InputSizeLG = SizeLG
+	InputSizeXL = SizeXL
+)
+
+// IconSize defines icon-specific sizing options.
+type IconSize = Size
+
+const (
+	IconSizeXS   = SizeXS
+	IconSizeSM   = SizeSM
+	IconSizeMD   = SizeMD
+	IconSizeLG   = SizeLG
+	IconSizeXL   = SizeXL
+	IconSize2XL  Size = "2xl" // Extra large for special cases
+)
+
+// SpinnerSize defines spinner-specific sizing options.
+type SpinnerSize = Size
+
+const (
+	SpinnerSizeXS = SizeXS
+	SpinnerSizeSM = SizeSM
+	SpinnerSizeMD = SizeMD
+	SpinnerSizeLG = SizeLG
+	SpinnerSizeXL = SizeXL
+)
+
+// Button-specific size constants for backward compatibility
+const (
+	ButtonSizeXS = SizeXS
+	ButtonSizeSM = SizeSM
+	ButtonSizeMD = SizeMD
+	ButtonSizeLG = SizeLG
+	ButtonSizeXL = SizeXL
+)
+
+// Additional size types for specific components
+type ButtonSize = Size
+type TextareaSize = Size
+type SelectSize = Size
+type CheckboxSize = Size
+type RadioSize = Size
+
+// Component variant aliases
+type ButtonVariant = Variant
+
+// IconButton is an alias for ButtonProps with icon-focused configuration
+type IconButton = ButtonProps
+
 // String returns the string representation of Size.
 func (s Size) String() string {
 	return string(s)
@@ -146,6 +202,16 @@ const (
 	InputTypeRadio    InputType = "radio"
 )
 
+// Input type aliases for backward compatibility
+const (
+	InputText     = InputTypeText
+	InputPassword = InputTypePassword
+	InputEmail    = InputTypeEmail
+	InputNumber   = InputTypeNumber
+	InputTel      = InputTypeTel
+	InputURL      = InputTypeURL
+)
+
 // String returns the string representation of InputType.
 func (i InputType) String() string {
 	return string(i)
@@ -176,6 +242,21 @@ const (
 	VariantGhost      Variant = "ghost"      // Minimal styling
 	VariantUnderlined Variant = "underlined" // Only bottom border
 	VariantSolid      Variant = "solid"      // Solid background
+	VariantSecondary  Variant = "secondary"  // Secondary styling
+	VariantPrimary    Variant = "primary"    // Primary styling
+	VariantLight      Variant = "light"      // Light styling
+	VariantWarning    Variant = "warning"    // Warning styling
+	VariantDark       Variant = "dark"       // Dark styling
+)
+
+// Button-specific variants for backward compatibility
+const (
+	ButtonPrimary   = VariantPrimary
+	ButtonSecondary = VariantSecondary
+	ButtonDanger    = ColorDanger
+	ButtonWarning   = VariantWarning
+	ButtonLight     = VariantLight
+	ButtonGhost     = VariantGhost
 )
 
 // String returns the string representation of Variant.
@@ -274,26 +355,243 @@ func ResetIDCounter() {
 }
 
 // ============================================================================
-// COMPONENT TYPE REGISTRY
+// COMPONENT TYPE REGISTRY & SCHEMA ALIGNMENT
 // ============================================================================
 
 // ComponentType represents the type of atomic component.
+// Aligned with schema definitions in docs/ui/schema/definitions/components/atoms/
 type ComponentType string
 
 const (
-	ComponentButton   ComponentType = "button"
-	ComponentInput    ComponentType = "input"
-	ComponentCheckbox ComponentType = "checkbox"
-	ComponentRadio    ComponentType = "radio"
-	ComponentSelect   ComponentType = "select"
-	ComponentTextarea ComponentType = "textarea"
-	ComponentIcon     ComponentType = "icon"
-	ComponentSpinner  ComponentType = "spinner"
-	ComponentToggle   ComponentType = "toggle"
-	ComponentLabel    ComponentType = "label"
-	ComponentBadge    ComponentType = "badge"
-	ComponentAvatar   ComponentType = "avatar"
+	ComponentButton      ComponentType = "button"
+	ComponentInput       ComponentType = "input"
+	ComponentCheckbox    ComponentType = "checkbox"
+	ComponentRadio       ComponentType = "radio"
+	ComponentSelect      ComponentType = "select"
+	ComponentTextarea    ComponentType = "textarea"
+	ComponentIcon        ComponentType = "icon"
+	ComponentSpinner     ComponentType = "spinner"
+	ComponentToggle      ComponentType = "toggle"
+	ComponentLabel       ComponentType = "label"
+	ComponentBadge       ComponentType = "badge"
+	ComponentAvatar      ComponentType = "avatar"
+	ComponentAction      ComponentType = "action"
+	ComponentDivider     ComponentType = "divider"
+	ComponentHidden      ComponentType = "hidden"
+	ComponentImage       ComponentType = "image"
+	ComponentLink        ComponentType = "link"
+	ComponentProgress    ComponentType = "progress"
+	ComponentStatic      ComponentType = "static"
+	ComponentStatus      ComponentType = "status"
+	ComponentTag         ComponentType = "tag"
+	ComponentUUID        ComponentType = "uuid"
+	ComponentColorInput  ComponentType = "color-input"
 )
+
+// ============================================================================
+// SCHEMA EXPRESSION SUPPORT
+// ============================================================================
+
+// SchemaExpression represents conditional expressions used in schemas
+// Supports both static boolean values and dynamic expressions
+type SchemaExpression struct {
+	Static    *bool   `json:"static,omitempty"`    // Direct boolean value
+	Expression string `json:"expression,omitempty"` // Dynamic expression string
+}
+
+// NewStaticExpression creates a static boolean expression
+func NewStaticExpression(value bool) *SchemaExpression {
+	return &SchemaExpression{Static: &value}
+}
+
+// NewDynamicExpression creates a dynamic expression
+func NewDynamicExpression(expr string) *SchemaExpression {
+	return &SchemaExpression{Expression: expr}
+}
+
+// IsTrue evaluates the expression to determine if it's true
+func (se *SchemaExpression) IsTrue() bool {
+	if se == nil {
+		return false
+	}
+	if se.Static != nil {
+		return *se.Static
+	}
+	// For dynamic expressions, we'd need context evaluation
+	// For now, return false as safe default
+	return false
+}
+
+// ============================================================================
+// EDITOR CONFIGURATION
+// ============================================================================
+
+// EditorSetting contains metadata for visual editor integration
+// Maps to schema editorSetting property
+type EditorSetting struct {
+	Behavior    string      `json:"behavior,omitempty"`    // create, update, remove
+	DisplayName string      `json:"displayName,omitempty"` // Business-friendly name
+	Mock        interface{} `json:"mock,omitempty"`        // Editor mock data
+}
+
+// ============================================================================
+// VALIDATION RULES EXTENSION
+// ============================================================================
+
+// ValidationRules provides comprehensive validation configuration
+// Aligned with schema validation properties
+type ValidationRules struct {
+	// Basic validation
+	Required  bool   `json:"isRequired,omitempty"`
+	Email     bool   `json:"isEmail,omitempty"`
+	URL       bool   `json:"isUrl,omitempty"`
+	Numeric   bool   `json:"isNumeric,omitempty"`
+	Integer   bool   `json:"isInt,omitempty"`
+	Float     bool   `json:"isFloat,omitempty"`
+	Alpha     bool   `json:"isAlpha,omitempty"`
+	Alphanumeric bool `json:"isAlphanumeric,omitempty"`
+	JSON      bool   `json:"isJson,omitempty"`
+	
+	// Length validation
+	Length    *int `json:"isLength,omitempty"`
+	MinLength *int `json:"minLength,omitempty"`
+	MaxLength *int `json:"maxLength,omitempty"`
+	Minimum   *float64 `json:"minimum,omitempty"`
+	Maximum   *float64 `json:"maximum,omitempty"`
+	
+	// Pattern matching
+	Regex1 string `json:"matchRegexp,omitempty"`
+	Regex2 string `json:"matchRegexp2,omitempty"`
+	Regex3 string `json:"matchRegexp3,omitempty"`
+	Regex4 string `json:"matchRegexp4,omitempty"`
+	Regex5 string `json:"matchRegexp5,omitempty"`
+	
+	// Date/time validation
+	DateTimeSame          []string `json:"isDateTimeSame,omitempty"`
+	DateTimeBefore        []string `json:"isDateTimeBefore,omitempty"`
+	DateTimeAfter         []string `json:"isDateTimeAfter,omitempty"`
+	DateTimeSameOrBefore  []string `json:"isDateTimeSameOrBefore,omitempty"`
+	DateTimeSameOrAfter   []string `json:"isDateTimeSameOrAfter,omitempty"`
+	DateTimeBetween       []string `json:"isDateTimeBetween,omitempty"`
+	
+	// Time validation
+	TimeSame          []string `json:"isTimeSame,omitempty"`
+	TimeBefore        []string `json:"isTimeBefore,omitempty"`
+	TimeAfter         []string `json:"isTimeAfter,omitempty"`
+	TimeSameOrBefore  []string `json:"isTimeSameOrBefore,omitempty"`
+	TimeSameOrAfter   []string `json:"isTimeSameOrAfter,omitempty"`
+	TimeBetween       []string `json:"isTimeBetween,omitempty"`
+}
+
+// ValidationErrors provides custom error messages for validation failures
+type ValidationErrors struct {
+	Required       string `json:"isRequired,omitempty"`
+	Email          string `json:"isEmail,omitempty"`
+	URL            string `json:"isUrl,omitempty"`
+	Numeric        string `json:"isNumeric,omitempty"`
+	Integer        string `json:"isInt,omitempty"`
+	Float          string `json:"isFloat,omitempty"`
+	Alpha          string `json:"isAlpha,omitempty"`
+	Alphanumeric   string `json:"isAlphanumeric,omitempty"`
+	JSON           string `json:"isJson,omitempty"`
+	Length         string `json:"isLength,omitempty"`
+	MinLength      string `json:"minLength,omitempty"`
+	MaxLength      string `json:"maxLength,omitempty"`
+	Minimum        string `json:"minimum,omitempty"`
+	Maximum        string `json:"maximum,omitempty"`
+	Regex1         string `json:"matchRegexp,omitempty"`
+	Regex2         string `json:"matchRegexp2,omitempty"`
+	Regex3         string `json:"matchRegexp3,omitempty"`
+	Regex4         string `json:"matchRegexp4,omitempty"`
+	Regex5         string `json:"matchRegexp5,omitempty"`
+	DateTimeSame   string `json:"isDateTimeSame,omitempty"`
+	DateTimeBefore string `json:"isDateTimeBefore,omitempty"`
+	DateTimeAfter  string `json:"isDateTimeAfter,omitempty"`
+	TimeSame       string `json:"isTimeSame,omitempty"`
+	TimeBefore     string `json:"isTimeBefore,omitempty"`
+	TimeAfter      string `json:"isTimeAfter,omitempty"`
+}
+
+// ============================================================================
+// REMOTE VALIDATION & AUTOFILL
+// ============================================================================
+
+// APIObject represents API configuration for remote operations
+type APIObject struct {
+	URL     string                 `json:"url"`
+	Method  string                 `json:"method,omitempty"`
+	Headers map[string]string      `json:"headers,omitempty"`
+	Data    map[string]interface{} `json:"data,omitempty"`
+	Silent  bool                   `json:"silent,omitempty"`
+}
+
+// AutoFillConfig provides autofill/autocomplete functionality
+type AutoFillConfig struct {
+	API              *APIObject             `json:"api,omitempty"`
+	ShowSuggestion   bool                   `json:"showSuggestion,omitempty"`
+	DefaultSelection interface{}            `json:"defaultSelection,omitempty"`
+	FillMapping      map[string]string      `json:"fillMapping,omitempty"`
+	Trigger          string                 `json:"trigger,omitempty"` // change, focus, blur
+	Mode             string                 `json:"mode,omitempty"`    // popOver, dialog, drawer
+	Position         string                 `json:"position,omitempty"`
+	Size             string                 `json:"size,omitempty"`
+	Columns          []interface{}          `json:"columns,omitempty"`
+	Filter           interface{}            `json:"filter,omitempty"`
+	Silent           bool                   `json:"silent,omitempty"`
+}
+
+// ============================================================================
+// EVENT SYSTEM ENHANCEMENT
+// ============================================================================
+
+// EventAction represents an action in the event system
+type EventAction struct {
+	ActionType string                 `json:"actionType"`
+	Args       map[string]interface{} `json:"args,omitempty"`
+}
+
+// DebounceConfig controls event debouncing
+type DebounceConfig struct {
+	Wait    int  `json:"wait"`    // milliseconds
+	Leading bool `json:"leading,omitempty"`
+	Trailing bool `json:"trailing,omitempty"`
+}
+
+// TrackConfig controls event tracking
+type TrackConfig struct {
+	Enable bool                   `json:"enable"`
+	Data   map[string]interface{} `json:"data,omitempty"`
+}
+
+// EventListener represents a single event listener configuration
+type EventListener struct {
+	Weight   int             `json:"weight,omitempty"`
+	Actions  []EventAction   `json:"actions"`
+	Debounce *DebounceConfig `json:"debounce,omitempty"`
+	Track    *TrackConfig    `json:"track,omitempty"`
+}
+
+// EventConfiguration maps event names to their listeners
+type EventConfiguration map[string]EventListener
+
+// ============================================================================
+// DISPLAY MODE ENUMERATION
+// ============================================================================
+
+// DisplayMode defines how components render in different contexts
+type DisplayMode string
+
+const (
+	DisplayModeNormal     DisplayMode = "normal"     // Standard interactive mode
+	DisplayModeStatic     DisplayMode = "static"     // Static display only
+	DisplayModeInline     DisplayMode = "inline"     // Inline layout
+	DisplayModeHorizontal DisplayMode = "horizontal" // Horizontal form layout
+)
+
+// String returns the string representation of DisplayMode
+func (d DisplayMode) String() string {
+	return string(d)
+}
 
 // String returns the string representation of ComponentType.
 func (c ComponentType) String() string {
@@ -457,6 +755,20 @@ func ToJSONString(v interface{}) string {
 		return "{}"
 	}
 	return string(data)
+}
+
+// ============================================================================
+// BUSINESS DOMAIN TYPES
+// ============================================================================
+
+// Permission represents a system permission for user management
+type Permission struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	DisplayName string `json:"displayName"`
+	Description string `json:"description,omitempty"`
+	Category    string `json:"category,omitempty"`
+	Actions     []string `json:"actions,omitempty"` // create, read, update, delete
 }
 
 // ============================================================================

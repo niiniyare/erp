@@ -234,7 +234,7 @@ templ inputLabel(props InputProps) {
 		for={ props.GetID("input") }
 		class={ getInputLabelClasses(props) }
 	>
-		{ props.Label }
+		{ props.GetLabelText() }
 		if props.Required {
 			<span class="text-red-500 ml-1">*</span>
 		}

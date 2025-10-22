@@ -238,11 +238,11 @@ func (cli *CLI) generateTemplCode(templComponent TemplComponent) (string, error)
 		builder.WriteString(fmt.Sprintf("\t\tText: \"%s\",\n", props.Text))
 		builder.WriteString(fmt.Sprintf("\t\tVariant: atoms.%s,\n", props.Variant))
 		builder.WriteString(fmt.Sprintf("\t\tSize: atoms.%s,\n", props.Size))
-		if props.Icon != "" {
-			builder.WriteString(fmt.Sprintf("\t\tIcon: \"%s\",\n", props.Icon))
+		if props.Icon.Name != "" {
+			builder.WriteString(fmt.Sprintf("\t\tIcon: atoms.IconProps{Name: \"%s\"},\n", props.Icon.Name))
 		}
-		if props.Disabled {
-			builder.WriteString("\t\tDisabled: true,\n")
+		if props.InteractionProps.Disabled {
+			builder.WriteString("\t\tInteractionProps: atoms.InteractionProps{Disabled: true},\n")
 		}
 		builder.WriteString("\t})\n")
 

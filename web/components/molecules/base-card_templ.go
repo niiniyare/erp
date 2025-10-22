@@ -52,18 +52,18 @@ type CardFooterProps struct {
 
 // CardAction represents an action button in header/footer
 type CardAction struct {
-	Text      string              `json:"text"`
-	Icon      string              `json:"icon,omitempty"`
-	Variant   atoms.ButtonVariant `json:"variant,omitempty"`
-	Size      atoms.ButtonSize    `json:"size,omitempty"`
-	OnClick   string              `json:"onclick,omitempty"`
-	HxPost    string              `json:"hxPost,omitempty"`
-	HxGet     string              `json:"hxGet,omitempty"`
-	HxTarget  string              `json:"hxTarget,omitempty"`
-	HxSwap    string              `json:"hxSwap,omitempty"`
-	HxConfirm string              `json:"hxConfirm,omitempty"`
-	Disabled  bool                `json:"disabled,omitempty"`
-	Class     string              `json:"class,omitempty"`
+	Text      string        `json:"text"`
+	Icon      string        `json:"icon,omitempty"`
+	Variant   atoms.Variant `json:"variant,omitempty"`
+	Size      atoms.Size    `json:"size,omitempty"`
+	OnClick   string        `json:"onclick,omitempty"`
+	HxPost    string        `json:"hxPost,omitempty"`
+	HxGet     string        `json:"hxGet,omitempty"`
+	HxTarget  string        `json:"hxTarget,omitempty"`
+	HxSwap    string        `json:"hxSwap,omitempty"`
+	HxConfirm string        `json:"hxConfirm,omitempty"`
+	Disabled  bool          `json:"disabled,omitempty"`
+	Class     string        `json:"class,omitempty"`
 }
 
 // BaseCardProps defines properties for the BaseCard molecule
@@ -842,14 +842,20 @@ func CardActionButton(action CardAction, size atoms.ButtonSize) templ.Component 
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
-			Text:     action.Text,
-			Variant:  getActionVariant(action.Variant),
-			Size:     size,
-			OnClick:  action.OnClick,
-			HxPost:   action.HxPost,
-			HxGet:    action.HxGet,
-			Disabled: action.Disabled,
-			Class:    action.Class,
+			BaseProps: atoms.BaseProps{
+				Class: action.Class,
+			},
+			InteractionProps: atoms.InteractionProps{
+				Disabled: action.Disabled,
+			},
+			AlpinEventHandlers: atoms.AlpinEventHandlers{
+				OnClick: action.OnClick,
+			},
+			Text:    action.Text,
+			Variant: getCardActionVariant(action.Variant),
+			Size:    size,
+			HxPost:  action.HxPost,
+			HxGet:   action.HxGet,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -1054,48 +1060,48 @@ func getFooterTextClasses(size CardSize) string {
 	return strings.Join(classes, " ")
 }
 
-func getHeaderIconSize(size CardSize) atoms.IconSize {
+func getHeaderIconSize(size CardSize) atoms.Size {
 	switch size {
 	case CardSizeSM:
-		return atoms.IconSizeSM
+		return atoms.SizeSM
 	case CardSizeLG:
-		return atoms.IconSizeLG
+		return atoms.SizeLG
 	case CardSizeXL:
-		return atoms.IconSizeXL
+		return atoms.SizeXL
 	default:
-		return atoms.IconSizeMD
+		return atoms.SizeMD
 	}
 }
 
-func getHeaderActionSize(size CardSize) atoms.ButtonSize {
+func getHeaderActionSize(size CardSize) atoms.Size {
 	switch size {
 	case CardSizeSM:
-		return atoms.ButtonSizeXS
+		return atoms.SizeXS
 	case CardSizeLG:
-		return atoms.ButtonSizeMD
+		return atoms.SizeMD
 	case CardSizeXL:
-		return atoms.ButtonSizeLG
+		return atoms.SizeLG
 	default:
-		return atoms.ButtonSizeSM
+		return atoms.SizeSM
 	}
 }
 
-func getFooterActionSize(size CardSize) atoms.ButtonSize {
+func getFooterActionSize(size CardSize) atoms.Size {
 	switch size {
 	case CardSizeSM:
-		return atoms.ButtonSizeXS
+		return atoms.SizeXS
 	case CardSizeLG:
-		return atoms.ButtonSizeMD
+		return atoms.SizeMD
 	case CardSizeXL:
-		return atoms.ButtonSizeLG
+		return atoms.SizeLG
 	default:
-		return atoms.ButtonSizeSM
+		return atoms.SizeSM
 	}
 }
 
-func getActionVariant(variant atoms.ButtonVariant) atoms.ButtonVariant {
+func getCardActionVariant(variant atoms.Variant) atoms.Variant {
 	if variant == "" {
-		return atoms.ButtonSecondary
+		return atoms.VariantDefault
 	}
 	return variant
 }

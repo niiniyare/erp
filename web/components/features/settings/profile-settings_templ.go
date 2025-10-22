@@ -151,8 +151,8 @@ func ProfileSettings(props ProfileSettingsProps) templ.Component {
 			}
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 				Text:    "Change",
-				Variant: atoms.ButtonSecondary,
-				Size:    atoms.ButtonSizeSM,
+				Variant: atoms.VariantSecondary,
+				Size:    atoms.SizeSM,
 				OnClick: "openAvatarUpload()",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
@@ -162,7 +162,7 @@ func ProfileSettings(props ProfileSettingsProps) templ.Component {
 				templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 					Text:    "Remove",
 					Variant: atoms.ButtonLight,
-					Size:    atoms.ButtonSizeSM,
+					Size:    atoms.SizeSM,
 					OnClick: "removeAvatar()",
 				}).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {

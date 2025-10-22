@@ -1,0 +1,794 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "organisms/ModalSchema",
+  "title": "Modal Organism Schema",
+  "description": "Comprehensive dialog system for overlaying content with HTMX integration, Alpine.js state management, and rich composition",
+  "type": "object",
+  "category": "organisms",
+  
+  "atomDependencies": [
+    "ButtonSchema",
+    "IconSchema",
+    "SpinnerSchema",
+    "BadgeSchema"
+  ],
+  "moleculeDependencies": [
+    "AlertSchema"
+  ],
+  "templateSupport": true,
+  "htmxIntegration": true,
+  "alpineIntegration": true,
+  
+  "properties": {
+    "type": {
+      "const": "modal",
+      "description": "Component type identifier"
+    },
+
+    "size": {
+      "enum": ["xs", "sm", "md", "lg", "xl", "2xl", "full"],
+      "default": "md",
+      "description": "Modal size variant"
+    },
+
+    "variant": {
+      "enum": ["default", "success", "warning", "danger", "info"],
+      "default": "default",
+      "description": "Visual style variant for semantic context"
+    },
+
+    "modalType": {
+      "enum": ["default", "form", "confirm", "alert", "drawer"],
+      "default": "default",
+      "description": "Modal behavior and layout type"
+    },
+
+    "open": {
+      "type": "boolean",
+      "default": false,
+      "description": "Initial open state"
+    },
+
+    "header": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Main header title"
+        },
+        "subtitle": {
+          "type": "string",
+          "description": "Optional subtitle text"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Header icon (references IconSchema)"
+        },
+        "iconVariant": {
+          "enum": ["default", "success", "warning", "danger", "info"],
+          "description": "Icon color variant"
+        },
+        "badge": {
+          "type": "object",
+          "properties": {
+            "text": {"type": "string"},
+            "variant": {
+              "enum": ["primary", "secondary", "success", "warning", "danger", "info"]
+            }
+          },
+          "description": "Header badge (references BadgeSchema)"
+        },
+        "closable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show close button"
+        },
+        "closeButton": {
+          "type": "object",
+          "properties": {
+            "icon": {
+              "type": "string",
+              "default": "x"
+            },
+            "variant": {
+              "enum": ["primary", "secondary", "light", "dark"],
+              "default": "light"
+            },
+            "size": {
+              "enum": ["xs", "sm", "md"],
+              "default": "sm"
+            },
+            "ariaLabel": {
+              "type": "string",
+              "default": "Close"
+            }
+          },
+          "description": "Close button configuration (references ButtonSchema)"
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "default": 2,
+          "description": "Heading level for accessibility"
+        },
+        "className": {
+          "$ref": "#/definitions/SchemaClassName"
+        },
+        "sticky": {
+          "type": "boolean",
+          "default": false,
+          "description": "Sticky header on scroll"
+        },
+        "customContent": {
+          "anyOf": [
+            {"type": "string"},
+            {"$ref": "#/definitions/ComponentSchema"}
+          ],
+          "description": "Custom header content (HTML or component schema)"
+        }
+      }
+    },
+
+    "body": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "anyOf": [
+            {
+              "type": "string",
+              "description": "Text content"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "html": {
+                  "type": "string",
+                  "description": "Raw HTML content"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "$ref": "#/definitions/ComponentSchema",
+                  "description": "Nested component schema"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "properties": {
+                "components": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/ComponentSchema"
+                  },
+                  "description": "Multiple nested components"
+                }
+              }
+            }
+          ],
+          "description": "Modal body content"
+        },
+        "scrollable": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable vertical scrolling"
+        },
+        "maxHeight": {
+          "type": "string",
+          "description": "Maximum body height (e.g., '400px', '70vh')"
+        },
+        "padding": {
+          "type": "string",
+          "description": "Custom padding CSS classes"
+        },
+        "className": {
+          "$ref": "#/definitions/SchemaClassName"
+        },
+        "formId": {
+          "type": "string",
+          "description": "Associated form element ID"
+        }
+      },
+      "required": ["content"]
+    },
+
+    "footer": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "description": "Footer action buttons",
+          "items": {
+            "allOf": [
+              {"$ref": "#/definitions/ButtonSchema"},
+              {
+                "type": "object",
+                "properties": {
+                  "closes": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Close modal after action"
+                  },
+                  "position": {
+                    "enum": ["left", "right"],
+                    "default": "right",
+                    "description": "Button position in footer"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "alignment": {
+          "enum": ["left", "center", "right", "between", "around"],
+          "default": "right",
+          "description": "Footer button alignment"
+        },
+        "compact": {
+          "type": "boolean",
+          "default": false,
+          "description": "Reduce spacing between buttons"
+        },
+        "sticky": {
+          "type": "boolean",
+          "default": false,
+          "description": "Sticky footer on scroll"
+        },
+        "className": {
+          "$ref": "#/definitions/SchemaClassName"
+        },
+        "customContent": {
+          "anyOf": [
+            {"type": "string"},
+            {"$ref": "#/definitions/ComponentSchema"}
+          ],
+          "description": "Custom footer content"
+        }
+      }
+    },
+
+    "behavior": {
+      "type": "object",
+      "properties": {
+        "closable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Can be closed by user"
+        },
+        "persistent": {
+          "type": "boolean",
+          "default": false,
+          "description": "Cannot be closed (critical alerts)"
+        },
+        "closeOnBackdrop": {
+          "type": "boolean",
+          "default": true,
+          "description": "Close when clicking backdrop"
+        },
+        "closeOnEscape": {
+          "type": "boolean",
+          "default": true,
+          "description": "Close on ESC key press"
+        },
+        "closeDelay": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "Delay before closing (ms)"
+        },
+        "preventScroll": {
+          "type": "boolean",
+          "default": true,
+          "description": "Prevent body scroll when open"
+        },
+        "returnFocus": {
+          "type": "boolean",
+          "default": true,
+          "description": "Return focus to trigger element on close"
+        },
+        "focusTrap": {
+          "type": "boolean",
+          "default": true,
+          "description": "Trap focus within modal"
+        },
+        "autoFocus": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto focus first focusable element"
+        },
+        "autoFocusSelector": {
+          "type": "string",
+          "description": "CSS selector for element to auto focus"
+        }
+      }
+    },
+
+    "layout": {
+      "type": "object",
+      "properties": {
+        "position": {
+          "enum": ["center", "top", "bottom", "left", "right"],
+          "default": "center",
+          "description": "Modal positioning"
+        },
+        "fullscreen": {
+          "type": "boolean",
+          "default": false,
+          "description": "Fullscreen mode"
+        },
+        "fullscreenBreakpoint": {
+          "enum": ["sm", "md", "lg", "xl", "2xl"],
+          "description": "Breakpoint below which modal becomes fullscreen"
+        },
+        "backdrop": {
+          "enum": ["blur", "dark", "light", "none"],
+          "default": "blur",
+          "description": "Backdrop styling variant"
+        },
+        "backdropClassName": {
+          "$ref": "#/definitions/SchemaClassName"
+        },
+        "zIndex": {
+          "oneOf": [
+            {"type": "integer"},
+            {"type": "string"}
+          ],
+          "default": 50,
+          "description": "Z-index value or CSS class"
+        },
+        "stackable": {
+          "type": "boolean",
+          "default": false,
+          "description": "Allow multiple modals to stack"
+        },
+        "stackPriority": {
+          "type": "integer",
+          "description": "Stack order priority (higher = on top)"
+        }
+      }
+    },
+
+    "transitions": {
+      "type": "object",
+      "properties": {
+        "preset": {
+          "enum": ["fade", "scale", "slide-up", "slide-down", "slide-left", "slide-right", "zoom", "none"],
+          "default": "scale",
+          "description": "Preset animation type"
+        },
+        "duration": {
+          "type": "integer",
+          "default": 300,
+          "minimum": 0,
+          "description": "Animation duration in ms"
+        },
+        "custom": {
+          "type": "object",
+          "properties": {
+            "enter": {
+              "type": "string",
+              "description": "Enter transition classes (e.g., 'ease-out duration-300')"
+            },
+            "enterFrom": {
+              "type": "string",
+              "description": "Enter from state (e.g., 'opacity-0 scale-95')"
+            },
+            "enterTo": {
+              "type": "string",
+              "description": "Enter to state (e.g., 'opacity-100 scale-100')"
+            },
+            "leave": {
+              "type": "string",
+              "description": "Leave transition classes"
+            },
+            "leaveFrom": {
+              "type": "string",
+              "description": "Leave from state"
+            },
+            "leaveTo": {
+              "type": "string",
+              "description": "Leave to state"
+            }
+          },
+          "description": "Custom transition configuration (overrides preset)"
+        }
+      }
+    },
+
+    "loading": {
+      "type": "object",
+      "properties": {
+        "show": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show loading state"
+        },
+        "text": {
+          "type": "string",
+          "default": "Loading...",
+          "description": "Loading message"
+        },
+        "spinner": {
+          "type": "object",
+          "properties": {
+            "size": {
+              "enum": ["xs", "sm", "md", "lg", "xl"],
+              "default": "md"
+            },
+            "variant": {
+              "enum": ["primary", "secondary", "light", "dark"],
+              "default": "primary"
+            }
+          },
+          "description": "Spinner configuration (references SpinnerSchema)"
+        },
+        "overlay": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show loading overlay on top of content"
+        },
+        "disableInteraction": {
+          "type": "boolean",
+          "default": true,
+          "description": "Disable user interaction while loading"
+        }
+      }
+    },
+
+    "dataSource": {
+      "type": "object",
+      "properties": {
+        "hxGet": {
+          "type": "string",
+          "description": "HTMX GET endpoint for dynamic content"
+        },
+        "hxPost": {
+          "type": "string",
+          "description": "HTMX POST endpoint for form submission"
+        },
+        "hxPut": {
+          "type": "string",
+          "description": "HTMX PUT endpoint"
+        },
+        "hxDelete": {
+          "type": "string",
+          "description": "HTMX DELETE endpoint"
+        },
+        "hxTarget": {
+          "type": "string",
+          "description": "HTMX target element selector"
+        },
+        "hxSwap": {
+          "enum": ["innerHTML", "outerHTML", "beforebegin", "afterbegin", "beforeend", "afterend", "delete", "none"],
+          "default": "innerHTML",
+          "description": "HTMX swap strategy"
+        },
+        "hxTrigger": {
+          "type": "string",
+          "description": "HTMX trigger events (e.g., 'shown', 'load', 'click')"
+        },
+        "hxIndicator": {
+          "type": "string",
+          "description": "HTMX loading indicator selector"
+        },
+        "hxConfirm": {
+          "type": "string",
+          "description": "Confirmation message before submission"
+        },
+        "hxHeaders": {
+          "type": "object",
+          "additionalProperties": {"type": "string"},
+          "description": "Custom HTTP headers"
+        }
+      }
+    },
+
+    "events": {
+      "type": "object",
+      "properties": {
+        "onOpen": {
+          "type": "string",
+          "description": "Callback when modal opens"
+        },
+        "onClose": {
+          "type": "string",
+          "description": "Callback when modal closes"
+        },
+        "onBeforeOpen": {
+          "type": "string",
+          "description": "Callback before opening (can prevent open)"
+        },
+        "onBeforeClose": {
+          "type": "string",
+          "description": "Callback before closing (can prevent close)"
+        },
+        "onConfirm": {
+          "type": "string",
+          "description": "Callback for primary action"
+        },
+        "onCancel": {
+          "type": "string",
+          "description": "Callback for cancel action"
+        },
+        "onBackdropClick": {
+          "type": "string",
+          "description": "Callback when backdrop is clicked"
+        },
+        "onEscape": {
+          "type": "string",
+          "description": "Callback when ESC is pressed"
+        },
+        "onLoad": {
+          "type": "string",
+          "description": "Callback when content is loaded"
+        },
+        "onError": {
+          "type": "string",
+          "description": "Callback on error"
+        }
+      }
+    },
+
+    "onEvent": {
+      "$ref": "#/definitions/SchemaEventListeners",
+      "description": "Advanced event listener configuration"
+    },
+
+    "accessibility": {
+      "type": "object",
+      "properties": {
+        "ariaLabel": {
+          "type": "string",
+          "description": "Accessibility label"
+        },
+        "ariaLabelledBy": {
+          "type": "string",
+          "description": "ID of element labeling the modal"
+        },
+        "ariaDescribedBy": {
+          "type": "string",
+          "description": "ID of element describing the modal"
+        },
+        "role": {
+          "enum": ["dialog", "alertdialog"],
+          "default": "dialog",
+          "description": "ARIA role"
+        },
+        "live": {
+          "enum": ["off", "polite", "assertive"],
+          "description": "ARIA live region behavior"
+        }
+      }
+    },
+
+    "id": {
+      "type": "string",
+      "description": "HTML element ID"
+    },
+    "$$id": {
+      "type": "string",
+      "description": "Design-time unique ID"
+    },
+    "$ref": {
+      "type": "string",
+      "description": "Reference to schema definition"
+    },
+    "name": {
+      "type": "string",
+      "description": "Modal name for tracking/analytics"
+    },
+    "className": {
+      "$ref": "#/definitions/SchemaClassName"
+    },
+    "style": {
+      "type": "object",
+      "description": "Inline styles"
+    },
+    "dataTestId": {
+      "type": "string",
+      "description": "Test automation identifier"
+    },
+    "testIdBuilder": {
+      "$ref": "#/definitions/TestIdBuilder"
+    },
+    "hidden": {
+      "type": "boolean",
+      "default": false
+    },
+    "hiddenOn": {
+      "$ref": "#/definitions/SchemaExpression"
+    },
+    "visible": {
+      "type": "boolean",
+      "default": true
+    },
+    "visibleOn": {
+      "$ref": "#/definitions/SchemaExpression"
+    },
+    "disabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Disable modal interactions"
+    },
+    "disabledOn": {
+      "$ref": "#/definitions/SchemaExpression"
+    },
+    "static": {
+      "type": "boolean",
+      "default": false
+    },
+    "staticOn": {
+      "$ref": "#/definitions/SchemaExpression"
+    },
+    "useMobileUI": {
+      "type": "boolean",
+      "description": "Enable mobile UI optimization"
+    },
+    "editorSetting": {
+      "$ref": "#/definitions/EditorSetting"
+    }
+  },
+
+  "required": ["type", "body"],
+
+  "definitions": {
+    "ButtonSchema": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string"},
+        "text": {"type": "string"},
+        "icon": {"type": "string"},
+        "variant": {
+          "enum": ["primary", "secondary", "light", "dark", "red", "green", "yellow", "purple"],
+          "default": "primary"
+        },
+        "size": {
+          "enum": ["xs", "sm", "md", "lg", "xl"],
+          "default": "md"
+        },
+        "type": {
+          "enum": ["button", "submit", "reset"],
+          "default": "button"
+        },
+        "onclick": {"type": "string"},
+        "hxPost": {"type": "string"},
+        "hxGet": {"type": "string"},
+        "hxPut": {"type": "string"},
+        "hxDelete": {"type": "string"},
+        "hxTarget": {"type": "string"},
+        "hxSwap": {"type": "string"},
+        "hxConfirm": {"type": "string"},
+        "form": {"type": "string"},
+        "disabled": {"type": "boolean", "default": false},
+        "disabledOn": {"$ref": "#/definitions/SchemaExpression"},
+        "autoFocus": {"type": "boolean", "default": false},
+        "className": {"$ref": "#/definitions/SchemaClassName"},
+        "tooltip": {"type": "string"},
+        "loading": {"type": "boolean", "default": false},
+        "badge": {
+          "type": "object",
+          "properties": {
+            "text": {"type": "string"},
+            "variant": {"type": "string"}
+          }
+        }
+      },
+      "required": ["text"]
+    },
+
+    "ComponentSchema": {
+      "type": "object",
+      "properties": {
+        "type": {"type": "string"},
+        "id": {"type": "string"}
+      },
+      "additionalProperties": true,
+      "description": "Generic component schema reference"
+    },
+
+    "SchemaClassName": {
+      "anyOf": [
+        {"type": "string"},
+        {
+          "type": "object",
+          "additionalProperties": {"type": "boolean"}
+        }
+      ]
+    },
+
+    "SchemaExpression": {
+      "anyOf": [
+        {"type": "string"},
+        {"type": "boolean"},
+        {
+          "type": "object",
+          "properties": {
+            "static": {"type": "boolean"},
+            "expression": {"type": "string"}
+          }
+        }
+      ]
+    },
+
+    "SchemaEventListeners": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "weight": {"type": "number"},
+          "actions": {
+            "type": "array",
+            "items": {"$ref": "#/definitions/ListenerAction"}
+          },
+          "debounce": {"$ref": "#/definitions/DebounceConfig"},
+          "track": {"$ref": "#/definitions/TrackConfig"}
+        },
+        "required": ["actions"]
+      }
+    },
+
+    "ListenerAction": {
+      "type": "object",
+      "properties": {
+        "actionType": {"type": "string"},
+        "args": {"type": "object"},
+        "preventDefault": {"type": "boolean"},
+        "stopPropagation": {"type": "boolean"},
+        "expression": {"type": "string"},
+        "script": {"type": "string"}
+      }
+    },
+
+    "DebounceConfig": {
+      "anyOf": [
+        {"type": "number"},
+        {
+          "type": "object",
+          "properties": {
+            "wait": {"type": "number"},
+            "leading": {"type": "boolean"},
+            "trailing": {"type": "boolean"},
+            "maxWait": {"type": "number"}
+          }
+        }
+      ]
+    },
+
+    "TrackConfig": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "data": {"type": "object"}
+      }
+    },
+
+    "TestIdBuilder": {
+      "anyOf": [
+        {"type": "string"},
+        {
+          "type": "object",
+          "properties": {
+            "prefix": {"type": "string"},
+            "suffix": {"type": "string"}
+          }
+        }
+      ]
+    },
+
+    "EditorSetting": {
+      "type": "object",
+      "properties": {
+        "behavior": {
+          "enum": ["create", "update", "remove"]
+        },
+        "displayName": {"type": "string"},
+        "mock": {}
+      }
+    }
+  }
+}

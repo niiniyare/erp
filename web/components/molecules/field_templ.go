@@ -13,6 +13,19 @@ import (
 	"strings"
 )
 
+// ============================================================================
+// DESIGN RATIONALE - FIELD MOLECULE
+// ============================================================================
+// Following the composition-based architecture established in atoms:
+//
+// 1. COMPOSITION OVER INHERITANCE: Uses shared atoms.BaseProps, atoms.ValidationProps
+// 2. ATOMIC INTEGRATION: Delegates to atomic components with proper type mapping
+// 3. LAYOUT FLEXIBILITY: Supports vertical/horizontal layouts with consistent spacing
+// 4. VALIDATION COORDINATION: Centralized validation feedback at field level
+// 5. ACCESSIBILITY: ARIA relationships and proper labeling patterns
+// 6. SCHEMA COMPLIANCE: Aligned with FieldSimple and FieldGroup schema patterns
+// ============================================================================
+
 // FieldType determines which atomic component to use
 type FieldType string
 
@@ -23,61 +36,50 @@ const (
 	FieldTypeCheckbox FieldType = "checkbox"
 	FieldTypeRadio    FieldType = "radio"
 	FieldTypeToggle   FieldType = "toggle"
+	FieldTypeTag      FieldType = "tag"
+	FieldTypeUUID     FieldType = "uuid"
 )
 
-// FieldProps defines the properties for the Field molecule
+// FieldProps defines the properties for the Field molecule using composition
 type FieldProps struct {
-	// Field configuration
+	// Composition from atoms - reuse shared types
+	atoms.BaseProps
+	atoms.ValidationProps
+	atoms.AccessibilityProps
+	atoms.AlpinEventHandlers
+
+	// Field-specific configuration
 	Type        FieldType `json:"type"`
 	Label       string    `json:"label,omitempty"`
 	Name        string    `json:"name"`
 	Value       string    `json:"value,omitempty"`
 	Placeholder string    `json:"placeholder,omitempty"`
 	HelpText    string    `json:"helpText,omitempty"`
-	ErrorText   string    `json:"errorText,omitempty"`
 
-	// Input-specific properties
-	InputType  atoms.InputType  `json:"inputType,omitempty"`
-	InputSize  atoms.InputSize  `json:"inputSize,omitempty"`
-	InputState atoms.InputState `json:"inputState,omitempty"`
+	// Atomic component properties
+	InputType atoms.InputType `json:"inputType,omitempty"`
+	Variant   atoms.Variant   `json:"variant,omitempty"`
+	Size      atoms.Size      `json:"size,omitempty"`
 
 	// Select-specific properties
-	Options   []atoms.SelectOption   `json:"options,omitempty"`
-	OptGroups []atoms.SelectOptGroup `json:"optGroups,omitempty"`
-	Multiple  bool                   `json:"multiple,omitempty"`
+	Options  []atoms.SelectOption `json:"options,omitempty"`
+	Multiple bool                 `json:"multiple,omitempty"`
 
 	// Textarea-specific properties
 	Rows      int  `json:"rows,omitempty"`
 	Resizable bool `json:"resizable,omitempty"`
 
-	// Validation and state
-	Required   bool `json:"required,omitempty"`
-	Disabled   bool `json:"disabled,omitempty"`
-	ReadOnly   bool `json:"readonly,omitempty"`
-	HasError   bool `json:"hasError,omitempty"`
-	HasSuccess bool `json:"hasSuccess,omitempty"`
+	// Control flags
+	Required bool `json:"required,omitempty"`
+	Disabled bool `json:"disabled,omitempty"`
+	ReadOnly bool `json:"readonly,omitempty"`
 
-	// HTML attributes
-	ID              string `json:"id,omitempty"`
-	Class           string `json:"class,omitempty"`
-	AriaDescribedBy string `json:"ariaDescribedBy,omitempty"`
-	DataTestID      string `json:"dataTestId,omitempty"`
+	// Layout configuration
+	LabelPosition atoms.LabelPosition `json:"labelPosition,omitempty"`
+	FieldLayout   string              `json:"fieldLayout,omitempty"` // "vertical" (default), "horizontal"
 
-	// Behavior
-	OnChange string `json:"onchange,omitempty"`
-	OnInput  string `json:"oninput,omitempty"`
-	OnFocus  string `json:"onfocus,omitempty"`
-	OnBlur   string `json:"onblur,omitempty"`
-
-	// HTMX attributes
-	HxPost    string `json:"hxPost,omitempty"`
-	HxGet     string `json:"hxGet,omitempty"`
-	HxTarget  string `json:"hxTarget,omitempty"`
-	HxSwap    string `json:"hxSwap,omitempty"`
-	HxTrigger string `json:"hxTrigger,omitempty"`
-
-	// Layout
-	FieldLayout string `json:"fieldLayout,omitempty"` // "vertical" (default), "horizontal"
+	// Backward compatibility
+	Message string `json:"message,omitempty"` // Generic message field
 }
 
 // Field renders a complete form field with label, input, and feedback
@@ -183,7 +185,7 @@ func VerticalField(props FieldProps) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 91, Col: 18}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 93, Col: 18}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -214,7 +216,7 @@ func VerticalField(props FieldProps) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 95, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 97, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -305,7 +307,7 @@ func HorizontalField(props FieldProps) templ.Component {
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 118, Col: 20}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 120, Col: 20}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
@@ -336,7 +338,7 @@ func HorizontalField(props FieldProps) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(props.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 122, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 124, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -422,82 +424,113 @@ func renderFieldInput(props FieldProps) templ.Component {
 		switch props.Type {
 		case FieldTypeInput:
 			templ_7745c5c3_Err = atoms.Input(atoms.InputProps{
-				Type:        props.InputType,
-				ID:          props.ID,
-				Name:        props.Name,
-				Value:       props.Value,
-				Placeholder: props.Placeholder,
-				Size:        props.InputSize,
-				State:       getInputState(props),
-				Required:    props.Required,
-				Disabled:    props.Disabled,
+				BaseProps: atoms.BaseProps{
+					ID:    props.ID,
+					Name:  props.Name,
+					Class: props.Class,
+				},
+				ValidationProps: atoms.ValidationProps{
+					State:     props.State,
+					ErrorText: props.Message,
+				},
+				InteractionProps: atoms.InteractionProps{
+					Required: props.Required,
+					Disabled: props.Disabled,
+					ReadOnly: props.ReadOnly,
+				},
+				PlaceholderProps: atoms.PlaceholderProps{
+					Placeholder: props.Placeholder,
+				},
+				AccessibilityProps: props.AccessibilityProps,
+				AlpinEventHandlers: props.AlpinEventHandlers,
+				Type:               props.InputType,
+				Value:              props.Value,
+				Variant:            props.Variant,
+				Size:               props.Size,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case FieldTypeTextarea:
 			templ_7745c5c3_Err = atoms.Textarea(atoms.TextareaProps{
-				ID:              props.ID,
-				Name:            props.Name,
-				Value:           props.Value,
-				Placeholder:     props.Placeholder,
-				Rows:            props.Rows,
-				Size:            getTextareaSize(props.InputSize),
-				State:           getTextareaState(props),
-				Required:        props.Required,
-				Disabled:        props.Disabled,
-				ReadOnly:        props.ReadOnly,
-				Resizable:       props.Resizable,
-				OnChange:        props.OnChange,
-				OnInput:         props.OnInput,
-				OnFocus:         props.OnFocus,
-				OnBlur:          props.OnBlur,
-				AriaDescribedBy: getAriaDescribedBy(props),
-				DataTestID:      props.DataTestID,
-				ShowValidation:  false, // Handled at field level
+				BaseProps: atoms.BaseProps{
+					ID:    props.ID,
+					Name:  props.Name,
+					Class: props.Class,
+				},
+				ValidationProps: atoms.ValidationProps{
+					State:     props.State,
+					ErrorText: props.Message,
+				},
+				PlaceholderProps: atoms.PlaceholderProps{
+					Placeholder: props.Placeholder,
+				},
+				AccessibilityProps: props.AccessibilityProps,
+				AlpinEventHandlers: props.AlpinEventHandlers,
+				Value:              props.Value,
+				InteractionProps: atoms.InteractionProps{
+					Required: props.Required,
+					Disabled: props.Disabled,
+					ReadOnly: props.ReadOnly,
+				},
+				Rows:          props.Rows,
+				ComponentSize: props.Size,
+				Resizable:     props.Resizable,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case FieldTypeSelect:
 			templ_7745c5c3_Err = atoms.Select(atoms.SelectProps{
-				ID:              props.ID,
-				Name:            props.Name,
-				Value:           props.Value,
-				Placeholder:     props.Placeholder,
-				Options:         props.Options,
-				OptGroups:       props.OptGroups,
-				Multiple:        props.Multiple,
-				SelectSize:      getSelectSize(props.InputSize),
-				State:           getSelectState(props),
-				Required:        props.Required,
-				Disabled:        props.Disabled,
-				OnChange:        props.OnChange,
-				OnFocus:         props.OnFocus,
-				OnBlur:          props.OnBlur,
-				AriaDescribedBy: getAriaDescribedBy(props),
-				DataTestID:      props.DataTestID,
-				ShowValidation:  false, // Handled at field level
+				BaseProps: atoms.BaseProps{
+					ID:    props.ID,
+					Name:  props.Name,
+					Class: props.Class,
+				},
+				ValidationProps: atoms.ValidationProps{
+					State:     props.State,
+					ErrorText: props.Message,
+				},
+				InteractionProps: atoms.InteractionProps{
+					Required: props.Required,
+					Disabled: props.Disabled,
+				},
+				PlaceholderProps: atoms.PlaceholderProps{
+					Placeholder: props.Placeholder,
+				},
+				AccessibilityProps: props.AccessibilityProps,
+				AlpinEventHandlers: props.AlpinEventHandlers,
+				Value:              props.Value,
+				Options:            props.Options,
+				Multiple:           props.Multiple,
+				Size:               props.Size,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case FieldTypeCheckbox:
 			templ_7745c5c3_Err = atoms.Checkbox(atoms.CheckboxProps{
-				ID:              props.ID,
-				Name:            props.Name,
-				Value:           props.Value,
-				Label:           props.Label,
-				Size:            getCheckboxSize(props.InputSize),
-				State:           getCheckboxState(props),
-				Required:        props.Required,
-				Disabled:        props.Disabled,
-				OnChange:        props.OnChange,
-				OnFocus:         props.OnFocus,
-				OnBlur:          props.OnBlur,
-				AriaDescribedBy: getAriaDescribedBy(props),
-				DataTestID:      props.DataTestID,
-				ShowValidation:  false, // Handled at field level
+				BaseProps: atoms.BaseProps{
+					ID:    props.ID,
+					Name:  props.Name,
+					Class: props.Class,
+				},
+				ValidationProps: atoms.ValidationProps{
+					State:     props.State,
+					ErrorText: props.Message,
+				},
+				InteractionProps: atoms.InteractionProps{
+					Required: props.Required,
+					Disabled: props.Disabled,
+				},
+				LabelProps: atoms.LabelProps{
+					Label:         props.Label,
+					LabelPosition: props.LabelPosition,
+				},
+				AccessibilityProps: props.AccessibilityProps,
+				AlpinEventHandlers: props.AlpinEventHandlers,
+				Value:              props.Value,
+				Size:               props.Size,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -508,40 +541,76 @@ func renderFieldInput(props FieldProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = atoms.Radio(atoms.RadioProps{
-				ID:              props.ID,
-				Name:            props.Name,
-				Value:           props.Value,
-				Label:           props.Label,
-				Size:            getRadioSize(props.InputSize),
-				State:           getRadioState(props),
-				Required:        props.Required,
-				Disabled:        props.Disabled,
-				OnChange:        props.OnChange,
-				OnFocus:         props.OnFocus,
-				OnBlur:          props.OnBlur,
-				AriaDescribedBy: getAriaDescribedBy(props),
-				DataTestID:      props.DataTestID,
-				ShowValidation:  false, // Handled at field level
+				BaseProps: atoms.BaseProps{
+					ID:    props.ID,
+					Name:  props.Name,
+					Class: props.Class,
+				},
+				ValidationProps: atoms.ValidationProps{
+					State:     props.State,
+					ErrorText: props.Message,
+				},
+				InteractionProps: atoms.InteractionProps{
+					Required: props.Required,
+					Disabled: props.Disabled,
+				},
+				LabelProps: atoms.LabelProps{
+					Label:         props.Label,
+					LabelPosition: props.LabelPosition,
+				},
+				AccessibilityProps: props.AccessibilityProps,
+				AlpinEventHandlers: props.AlpinEventHandlers,
+				Value:              props.Value,
+				Size:               props.Size,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case FieldTypeToggle:
 			templ_7745c5c3_Err = atoms.Toggle(atoms.ToggleProps{
-				ID:              props.ID,
-				Name:            props.Name,
-				Value:           props.Value,
-				Label:           props.Label,
-				Size:            getToggleSize(props.InputSize),
-				State:           getToggleState(props),
-				Required:        props.Required,
-				Disabled:        props.Disabled,
-				OnChange:        props.OnChange,
-				OnFocus:         props.OnFocus,
-				OnBlur:          props.OnBlur,
-				AriaDescribedBy: getAriaDescribedBy(props),
-				DataTestID:      props.DataTestID,
-				ShowValidation:  false, // Handled at field level
+				BaseProps: atoms.BaseProps{
+					ID:    props.ID,
+					Name:  props.Name,
+					Class: props.Class,
+				},
+				ValidationProps: atoms.ValidationProps{
+					State:     props.State,
+					ErrorText: props.Message,
+				},
+				InteractionProps: atoms.InteractionProps{
+					Required: props.Required,
+					Disabled: props.Disabled,
+				},
+				LabelProps: atoms.LabelProps{
+					Label:         props.Label,
+					LabelPosition: props.LabelPosition,
+				},
+				AccessibilityProps: props.AccessibilityProps,
+				AlpinEventHandlers: props.AlpinEventHandlers,
+				Size:               props.Size,
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		case FieldTypeTag:
+			templ_7745c5c3_Err = atoms.Tag(atoms.TagProps{
+				Text:    props.Value,
+				Color:   atoms.ColorDefault,
+				Variant: props.Variant,
+				Size:    props.Size,
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		case FieldTypeUUID:
+			templ_7745c5c3_Err = atoms.UUID(atoms.UUIDProps{
+				BaseProps: atoms.BaseProps{
+					ID:    props.ID,
+					Class: props.Class,
+				},
+				Value:          props.Value,
+				Editable:       !props.ReadOnly,
+				ShowCopyButton: true,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -573,7 +642,7 @@ func FieldFeedback(props FieldProps) templ.Component {
 			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		if props.HasError && props.ErrorText != "" {
+		if props.State == atoms.StateError && props.Message != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<p id=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -581,7 +650,7 @@ func FieldFeedback(props FieldProps) templ.Component {
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(getFeedbackID(props, "error"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 254, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 317, Col: 37}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -591,7 +660,11 @@ func FieldFeedback(props FieldProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = atoms.Icon(atoms.IconProps{Name: "error", Size: atoms.IconSizeXS, Class: "inline mr-1"}).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = atoms.Icon(atoms.IconProps{
+				BaseProps: atoms.BaseProps{Class: "inline mr-1"},
+				Name:      "error",
+				Size:      atoms.IconSizeSM,
+			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -600,9 +673,9 @@ func FieldFeedback(props FieldProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var19 string
-			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(props.ErrorText)
+			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(props.Message)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 260, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 327, Col: 58}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
@@ -612,7 +685,7 @@ func FieldFeedback(props FieldProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-		} else if props.HasSuccess && props.HelpText != "" {
+		} else if props.State == atoms.StateSuccess && props.HelpText != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<p id=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -620,7 +693,7 @@ func FieldFeedback(props FieldProps) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(getFeedbackID(props, "success"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 264, Col: 39}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 331, Col: 39}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -630,7 +703,11 @@ func FieldFeedback(props FieldProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = atoms.Icon(atoms.IconProps{Name: "check", Size: atoms.IconSizeXS, Class: "inline mr-1"}).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = atoms.Icon(atoms.IconProps{
+				BaseProps: atoms.BaseProps{Class: "inline mr-1"},
+				Name:      "check",
+				Size:      atoms.IconSizeSM,
+			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -641,7 +718,7 @@ func FieldFeedback(props FieldProps) templ.Component {
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(props.HelpText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 269, Col: 61}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 340, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
@@ -659,7 +736,7 @@ func FieldFeedback(props FieldProps) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(getFeedbackID(props, "help"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 273, Col: 36}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 344, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -672,7 +749,7 @@ func FieldFeedback(props FieldProps) templ.Component {
 			var templ_7745c5c3_Var23 string
 			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(props.HelpText)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 276, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/molecules/field.templ`, Line: 347, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 			if templ_7745c5c3_Err != nil {
@@ -699,10 +776,13 @@ func getFieldWrapperClasses(props FieldProps) string {
 	}
 
 	// Add state classes
-	if props.HasError {
+	switch props.State {
+	case atoms.StateError:
 		classes = append(classes, "field-error")
-	} else if props.HasSuccess {
+	case atoms.StateSuccess:
 		classes = append(classes, "field-success")
+	case atoms.StateWarning:
+		classes = append(classes, "field-warning")
 	}
 
 	// Add custom classes
@@ -722,11 +802,14 @@ func getFieldLabelClasses(props FieldProps) string {
 	}
 
 	// Add state-specific colors
-	if props.HasError {
+	switch props.State {
+	case atoms.StateError:
 		classes = append(classes, "text-red-900", "dark:text-red-400")
-	} else if props.HasSuccess {
+	case atoms.StateSuccess:
 		classes = append(classes, "text-green-900", "dark:text-green-400")
-	} else {
+	case atoms.StateWarning:
+		classes = append(classes, "text-yellow-900", "dark:text-yellow-400")
+	default:
 		classes = append(classes, "text-gray-900", "dark:text-white")
 	}
 
@@ -741,9 +824,10 @@ func getHorizontalInputColClasses(props FieldProps) string {
 }
 
 func shouldShowFeedback(props FieldProps) bool {
-	return (props.HasError && props.ErrorText != "") ||
-		(props.HasSuccess && props.HelpText != "") ||
-		(props.HelpText != "")
+	return (props.State == atoms.StateError && props.Message != "") ||
+		(props.State == atoms.StateSuccess && props.HelpText != "") ||
+		(props.HelpText != "") ||
+		(props.State == atoms.StateWarning && props.Message != "")
 }
 
 func getAriaDescribedBy(props FieldProps) string {
@@ -754,12 +838,23 @@ func getAriaDescribedBy(props FieldProps) string {
 	}
 
 	if shouldShowFeedback(props) {
-		if props.HasError && props.ErrorText != "" {
-			describedBy = append(describedBy, getFeedbackID(props, "error"))
-		} else if props.HasSuccess && props.HelpText != "" {
-			describedBy = append(describedBy, getFeedbackID(props, "success"))
-		} else if props.HelpText != "" {
-			describedBy = append(describedBy, getFeedbackID(props, "help"))
+		switch props.State {
+		case atoms.StateError:
+			if props.Message != "" {
+				describedBy = append(describedBy, getFeedbackID(props, "error"))
+			}
+		case atoms.StateSuccess:
+			if props.HelpText != "" {
+				describedBy = append(describedBy, getFeedbackID(props, "success"))
+			}
+		case atoms.StateWarning:
+			if props.Message != "" {
+				describedBy = append(describedBy, getFeedbackID(props, "warning"))
+			}
+		default:
+			if props.HelpText != "" {
+				describedBy = append(describedBy, getFeedbackID(props, "help"))
+			}
 		}
 	}
 
@@ -776,115 +871,71 @@ func getFeedbackID(props FieldProps, feedbackType string) string {
 	return "field-" + feedbackType
 }
 
-// State conversion functions
-func getInputState(props FieldProps) atoms.InputState {
-	if props.HasError {
-		return atoms.InputStateError
-	} else if props.HasSuccess {
-		return atoms.InputStateSuccess
-	}
-	return atoms.InputStateDefault
-}
+// ============================================================================
+// CONSTRUCTOR WITH SENSIBLE DEFAULTS
+// ============================================================================
 
-func getTextareaState(props FieldProps) atoms.TextareaState {
-	if props.HasError {
-		return atoms.TextareaStateError
-	} else if props.HasSuccess {
-		return atoms.TextareaStateSuccess
-	}
-	return atoms.TextareaStateDefault
-}
-
-func getSelectState(props FieldProps) atoms.SelectState {
-	if props.HasError {
-		return atoms.SelectStateError
-	} else if props.HasSuccess {
-		return atoms.SelectStateSuccess
-	}
-	return atoms.SelectStateDefault
-}
-
-func getCheckboxState(props FieldProps) atoms.CheckboxState {
-	if props.HasError {
-		return atoms.CheckboxStateError
-	} else if props.HasSuccess {
-		return atoms.CheckboxStateSuccess
-	}
-	return atoms.CheckboxStateDefault
-}
-
-func getRadioState(props FieldProps) atoms.RadioState {
-	if props.HasError {
-		return atoms.RadioStateError
-	} else if props.HasSuccess {
-		return atoms.RadioStateSuccess
-	}
-	return atoms.RadioStateDefault
-}
-
-func getToggleState(props FieldProps) atoms.ToggleState {
-	if props.HasError {
-		return atoms.ToggleStateError
-	} else if props.HasSuccess {
-		return atoms.ToggleStateSuccess
-	}
-	return atoms.ToggleStateDefault
-}
-
-// Size conversion functions
-func getTextareaSize(inputSize atoms.InputSize) atoms.TextareaSize {
-	switch inputSize {
-	case atoms.InputSizeSM:
-		return atoms.TextareaSizeSM
-	case atoms.InputSizeLG:
-		return atoms.TextareaSizeLG
-	default:
-		return atoms.TextareaSizeMD
+// NewField creates a new FieldProps with sensible defaults
+// Example usage:
+// field := NewField(FieldTypeInput, "email", "Enter your email")
+// field.InputType = atoms.InputTypeEmail
+// field.Required = true
+func NewField(fieldType FieldType, name, label string) FieldProps {
+	return FieldProps{
+		BaseProps: atoms.BaseProps{
+			ID: atoms.EnsureID(name, "field"),
+		},
+		ValidationProps: atoms.ValidationProps{
+			State: atoms.StateDefault,
+		},
+		Type:          fieldType,
+		Name:          name,
+		Label:         label,
+		Variant:       atoms.VariantDefault,
+		Size:          atoms.SizeMD,
+		LabelPosition: atoms.LabelTop,
+		FieldLayout:   "vertical",
 	}
 }
 
-func getSelectSize(inputSize atoms.InputSize) atoms.SelectSize {
-	switch inputSize {
-	case atoms.InputSizeSM:
-		return atoms.SelectSizeSM
-	case atoms.InputSizeLG:
-		return atoms.SelectSizeLG
-	default:
-		return atoms.SelectSizeMD
-	}
+// NewInputField creates a field configured for text input
+func NewInputField(name, label, placeholder string) FieldProps {
+	field := NewField(FieldTypeInput, name, label)
+	field.Placeholder = placeholder
+	field.InputType = atoms.InputTypeText
+	return field
 }
 
-func getCheckboxSize(inputSize atoms.InputSize) atoms.CheckboxSize {
-	switch inputSize {
-	case atoms.InputSizeSM:
-		return atoms.CheckboxSizeSM
-	case atoms.InputSizeLG:
-		return atoms.CheckboxSizeLG
-	default:
-		return atoms.CheckboxSizeMD
-	}
+// NewEmailField creates a field configured for email input
+func NewEmailField(name, label string) FieldProps {
+	field := NewField(FieldTypeInput, name, label)
+	field.InputType = atoms.InputTypeEmail
+	field.Placeholder = "Enter your email"
+	return field
 }
 
-func getRadioSize(inputSize atoms.InputSize) atoms.RadioSize {
-	switch inputSize {
-	case atoms.InputSizeSM:
-		return atoms.RadioSizeSM
-	case atoms.InputSizeLG:
-		return atoms.RadioSizeLG
-	default:
-		return atoms.RadioSizeMD
-	}
+// NewPasswordField creates a field configured for password input
+func NewPasswordField(name, label string) FieldProps {
+	field := NewField(FieldTypeInput, name, label)
+	field.InputType = atoms.InputTypePassword
+	field.Placeholder = "Enter your password"
+	return field
 }
 
-func getToggleSize(inputSize atoms.InputSize) atoms.ToggleSize {
-	switch inputSize {
-	case atoms.InputSizeSM:
-		return atoms.ToggleSizeSM
-	case atoms.InputSizeLG:
-		return atoms.ToggleSizeLG
-	default:
-		return atoms.ToggleSizeMD
-	}
+// NewSelectField creates a field configured for select input
+func NewSelectField(name, label string, options []atoms.SelectOption) FieldProps {
+	field := NewField(FieldTypeSelect, name, label)
+	field.Options = options
+	field.Placeholder = "Choose an option"
+	return field
+}
+
+// NewTextareaField creates a field configured for textarea input
+func NewTextareaField(name, label string, rows int) FieldProps {
+	field := NewField(FieldTypeTextarea, name, label)
+	field.Rows = rows
+	field.Placeholder = "Enter your text"
+	return field
 }
 
 var _ = templruntime.GeneratedTemplate

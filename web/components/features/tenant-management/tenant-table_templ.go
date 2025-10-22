@@ -200,7 +200,7 @@ func TenantTable(props TenantTableProps) templ.Component {
 				Text:     getCreateButtonText(props.CreateButtonText),
 				Icon:     "plus",
 				Variant:  atoms.ButtonPrimary,
-				Size:     atoms.ButtonSizeMD,
+				Size:     atoms.SizeMD,
 				HxGet:    props.CreateUrl,
 				HxTarget: "#modal-container",
 				HxSwap:   "innerHTML",
@@ -216,8 +216,8 @@ func TenantTable(props TenantTableProps) templ.Component {
 		}
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 			Icon:      "refresh",
-			Variant:   atoms.ButtonSecondary,
-			Size:      atoms.ButtonSizeMD,
+			Variant:   atoms.VariantSecondary,
+			Size:      atoms.SizeMD,
 			HxGet:     props.DataUrl,
 			HxTarget:  "#tenant-table-body",
 			HxSwap:    "outerHTML",
@@ -800,7 +800,7 @@ func TenantRowActions(tenant TenantListItem, props TenantTableProps) templ.Compo
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 				Icon:      "eye",
 				Variant:   atoms.ButtonGhost,
-				Size:      atoms.ButtonSizeSM,
+				Size:      atoms.SizeSM,
 				HxGet:     props.EditUrl + "/" + tenant.ID + "?mode=view",
 				HxTarget:  "#modal-container",
 				HxSwap:    "innerHTML",
@@ -819,7 +819,7 @@ func TenantRowActions(tenant TenantListItem, props TenantTableProps) templ.Compo
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 				Icon:      "pencil",
 				Variant:   atoms.ButtonGhost,
-				Size:      atoms.ButtonSizeSM,
+				Size:      atoms.SizeSM,
 				HxGet:     props.EditUrl + "/" + tenant.ID,
 				HxTarget:  "#modal-container",
 				HxSwap:    "innerHTML",
@@ -838,7 +838,7 @@ func TenantRowActions(tenant TenantListItem, props TenantTableProps) templ.Compo
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 				Icon:      "trash",
 				Variant:   atoms.ButtonDanger,
-				Size:      atoms.ButtonSizeSM,
+				Size:      atoms.SizeSM,
 				HxDelete:  props.DeleteUrl + "/" + tenant.ID,
 				HxConfirm: "Are you sure you want to delete this tenant? This action cannot be undone.",
 				HxTarget:  "#tenant-table-body",
@@ -949,8 +949,8 @@ func TenantTableFilters(filters []TenantFilter) templ.Component {
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 			Text:    "Filters",
 			Icon:    "filter",
-			Variant: atoms.ButtonSecondary,
-			Size:    atoms.ButtonSizeSM,
+			Variant: atoms.VariantSecondary,
+			Size:    atoms.SizeSM,
 			OnClick: "showFilters = !showFilters",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -1042,8 +1042,8 @@ func TenantBulkActions() templ.Component {
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 			Text:    "Export",
 			Icon:    "download",
-			Variant: atoms.ButtonSecondary,
-			Size:    atoms.ButtonSizeSM,
+			Variant: atoms.VariantSecondary,
+			Size:    atoms.SizeSM,
 			OnClick: "exportSelected()",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -1053,7 +1053,7 @@ func TenantBulkActions() templ.Component {
 			Text:    "Deactivate",
 			Icon:    "pause",
 			Variant: atoms.ButtonWarning,
-			Size:    atoms.ButtonSizeSM,
+			Size:    atoms.SizeSM,
 			OnClick: "bulkDeactivate()",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -1177,8 +1177,8 @@ func TenantTablePagination(pagination PaginationInfo, dataUrl string) templ.Comp
 		if pagination.HasPrev {
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 				Icon:      "chevron-left",
-				Variant:   atoms.ButtonSecondary,
-				Size:      atoms.ButtonSizeSM,
+				Variant:   atoms.VariantSecondary,
+				Size:      atoms.SizeSM,
 				HxGet:     dataUrl + "?page=" + formatNumber(pagination.CurrentPage-1),
 				HxTarget:  "#tenant-table-body",
 				HxSwap:    "outerHTML",
@@ -1191,8 +1191,8 @@ func TenantTablePagination(pagination PaginationInfo, dataUrl string) templ.Comp
 		} else {
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 				Icon:     "chevron-left",
-				Variant:  atoms.ButtonSecondary,
-				Size:     atoms.ButtonSizeSM,
+				Variant:  atoms.VariantSecondary,
+				Size:     atoms.SizeSM,
 				Disabled: true,
 				Class:    "px-3",
 			}).Render(ctx, templ_7745c5c3_Buffer)
@@ -1226,8 +1226,8 @@ func TenantTablePagination(pagination PaginationInfo, dataUrl string) templ.Comp
 			} else {
 				templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 					Text:     formatNumber(i),
-					Variant:  atoms.ButtonSecondary,
-					Size:     atoms.ButtonSizeSM,
+					Variant:  atoms.VariantSecondary,
+					Size:     atoms.SizeSM,
 					HxGet:    dataUrl + "?page=" + formatNumber(i),
 					HxTarget: "#tenant-table-body",
 					HxSwap:   "outerHTML",
@@ -1245,8 +1245,8 @@ func TenantTablePagination(pagination PaginationInfo, dataUrl string) templ.Comp
 		if pagination.HasNext {
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 				Icon:      "chevron-right",
-				Variant:   atoms.ButtonSecondary,
-				Size:      atoms.ButtonSizeSM,
+				Variant:   atoms.VariantSecondary,
+				Size:      atoms.SizeSM,
 				HxGet:     dataUrl + "?page=" + formatNumber(pagination.CurrentPage+1),
 				HxTarget:  "#tenant-table-body",
 				HxSwap:    "outerHTML",
@@ -1259,8 +1259,8 @@ func TenantTablePagination(pagination PaginationInfo, dataUrl string) templ.Comp
 		} else {
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 				Icon:     "chevron-right",
-				Variant:  atoms.ButtonSecondary,
-				Size:     atoms.ButtonSizeSM,
+				Variant:  atoms.VariantSecondary,
+				Size:     atoms.SizeSM,
 				Disabled: true,
 				Class:    "px-3",
 			}).Render(ctx, templ_7745c5c3_Buffer)

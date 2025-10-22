@@ -9,6 +9,7 @@ import (
 	schemaui "github.com/niiniyare/erp/pkg/schema/ui"
 	"github.com/niiniyare/erp/pkg/schema/ui/css"
 	"github.com/niiniyare/erp/web/components/atoms"
+	"github.com/niiniyare/erp/web/components/organisms/tree"
 )
 
 // Bridge connects the schema system with Templ components.
@@ -47,6 +48,7 @@ func (b *Bridge) registerConverters() {
 	b.converters[schemaui.ComponentSelect] = b.convertSelect
 	b.converters[schemaui.ComponentCheckbox] = b.convertCheckbox
 	b.converters[schemaui.ComponentRadio] = b.convertRadio
+	b.converters[schemaui.ComponentTree] = b.convertTree
 }
 
 // ConvertToTempl converts a schema component to its Templ equivalent.
@@ -110,18 +112,26 @@ func (b *Bridge) convertButton(component schemaui.Component) (TemplComponent, er
 	}
 
 	props := atoms.ButtonProps{
+		BaseProps: atoms.BaseProps{
+			ID:    component.ID,
+			Class: b.buildClass(component),
+		},
+		InteractionProps: atoms.InteractionProps{
+			Disabled: component.Disabled,
+		},
+		AccessibilityProps: atoms.AccessibilityProps{
+			AriaLabel: component.AriaLabel,
+		},
+		AlpinEventHandlers: atoms.AlpinEventHandlers{
+			OnClick: component.OnClick,
+		},
 		Text:         config.Text,
-		Icon:         config.Icon,
-		IconPosition: string(config.IconPosition),
+		Icon:         atoms.IconProps{Name: config.Icon, Position: atoms.IconPosition(config.IconPosition)},
+		IconPosition: atoms.IconPosition(config.IconPosition),
 		Type:         convertButtonType(config.ButtonType),
 		Variant:      convertVariant[atoms.ButtonVariant](component.Variant),
 		Size:         convertSize[atoms.ButtonSize](component.Size),
 		Loading:      config.Loading,
-		Disabled:     component.Disabled,
-		ID:           component.ID,
-		Class:        b.buildClass(component),
-		AriaLabel:    component.AriaLabel,
-		OnClick:      component.OnClick,
 	}
 
 	return TemplComponent{Type: "Button", Props: props}, nil
@@ -160,7 +170,7 @@ func convertInputType(it schemaui.InputType) atoms.InputType {
 	case schemaui.InputURL:
 		return atoms.InputURL
 	case schemaui.InputSearch:
-		return atoms.InputSearch
+		return atoms.InputTypeSearch
 	case schemaui.InputHidden:
 		return atoms.InputText // Map hidden to text since InputHidden doesn't exist
 	default:
@@ -179,22 +189,30 @@ func (b *Bridge) convertInput(component schemaui.Component) (TemplComponent, err
 	}
 
 	props := atoms.InputProps{
-		Type:        convertInputType(config.InputType),
-		Value:       config.Value,
-		Placeholder: config.Placeholder,
-		Size:        convertSize[atoms.InputSize](component.Size),
-		Required:    component.Required,
-		Disabled:    component.Disabled,
-		ReadOnly:    component.ReadOnly,
-		ID:          component.ID,
-		Name:        component.Name,
-		Class:       b.buildClass(component),
-		AriaLabel:   component.AriaLabel,
+		BaseProps: atoms.BaseProps{
+			ID:    component.ID,
+			Name:  component.Name,
+			Class: b.buildClass(component),
+		},
+		AccessibilityProps: atoms.AccessibilityProps{
+			AriaLabel: component.AriaLabel,
+		},
+		InteractionProps: atoms.InteractionProps{
+			Required: component.Required,
+			Disabled: component.Disabled,
+			ReadOnly: component.ReadOnly,
+		},
+		PlaceholderProps: atoms.PlaceholderProps{
+			Placeholder: config.Placeholder,
+		},
+		Type:  convertInputType(config.InputType),
+		Value: config.Value,
+		Size:  convertSize[atoms.InputSize](component.Size),
 	}
 
 	// Apply validation rules
 	if v := component.Validator; v != nil {
-		props.Required = v.Required
+		props.InteractionProps.Required = v.Required
 		if v.MaxLength != nil {
 			props.MaxLength = *v.MaxLength
 		}
@@ -218,20 +236,28 @@ func (b *Bridge) convertTextarea(component schemaui.Component) (TemplComponent, 
 	}
 
 	props := atoms.TextareaProps{
-		Value:       config.Value,
-		Placeholder: config.Placeholder,
-		Rows:        config.Rows,
-		Cols:        config.Cols,
-		Resizable:   config.Resize != "none",
-		MaxLength:   config.MaxLength,
-		Size:        convertSize[atoms.TextareaSize](component.Size),
-		Required:    component.Required,
-		Disabled:    component.Disabled,
-		ReadOnly:    component.ReadOnly,
-		ID:          component.ID,
-		Name:        component.Name,
-		Class:       b.buildClass(component),
-		AriaLabel:   component.AriaLabel,
+		BaseProps: atoms.BaseProps{
+			ID:    component.ID,
+			Name:  component.Name,
+			Class: b.buildClass(component),
+		},
+		AccessibilityProps: atoms.AccessibilityProps{
+			AriaLabel: component.AriaLabel,
+		},
+		InteractionProps: atoms.InteractionProps{
+			Required: component.Required,
+			Disabled: component.Disabled,
+			ReadOnly: component.ReadOnly,
+		},
+		PlaceholderProps: atoms.PlaceholderProps{
+			Placeholder: config.Placeholder,
+		},
+		Value:         config.Value,
+		Rows:          config.Rows,
+		Cols:          config.Cols,
+		Resizable:     config.Resize != "none",
+		MaxLength:     config.MaxLength,
+		ComponentSize: convertSize[atoms.TextareaSize](component.Size),
 	}
 
 	return TemplComponent{Type: "Textarea", Props: props}, nil
@@ -257,17 +283,25 @@ func (b *Bridge) convertSelect(component schemaui.Component) (TemplComponent, er
 	}
 
 	props := atoms.SelectProps{
-		Options:     options,
-		Value:       config.Value,
-		Multiple:    config.Multiple,
-		Placeholder: config.Placeholder,
-		SelectSize:  convertSize[atoms.SelectSize](component.Size),
-		Required:    component.Required,
-		Disabled:    component.Disabled,
-		ID:          component.ID,
-		Name:        component.Name,
-		Class:       b.buildClass(component),
-		AriaLabel:   component.AriaLabel,
+		BaseProps: atoms.BaseProps{
+			ID:    component.ID,
+			Name:  component.Name,
+			Class: b.buildClass(component),
+		},
+		AccessibilityProps: atoms.AccessibilityProps{
+			AriaLabel: component.AriaLabel,
+		},
+		InteractionProps: atoms.InteractionProps{
+			Required: component.Required,
+			Disabled: component.Disabled,
+		},
+		PlaceholderProps: atoms.PlaceholderProps{
+			Placeholder: config.Placeholder,
+		},
+		Options:  options,
+		Value:    config.Value,
+		Multiple: config.Multiple,
+		Size:     convertSize[atoms.SelectSize](component.Size),
 	}
 
 	return TemplComponent{Type: "Select", Props: props}, nil
@@ -289,16 +323,24 @@ func (b *Bridge) convertCheckbox(component schemaui.Component) (TemplComponent, 
 	}
 
 	props := atoms.CheckboxProps{
-		Label:     label,
+		BaseProps: atoms.BaseProps{
+			ID:    component.ID,
+			Name:  component.Name,
+			Class: b.buildClass(component),
+		},
+		AccessibilityProps: atoms.AccessibilityProps{
+			AriaLabel: component.AriaLabel,
+		},
+		InteractionProps: atoms.InteractionProps{
+			Required: component.Required,
+			Disabled: component.Disabled,
+		},
+		LabelProps: atoms.LabelProps{
+			Label: label,
+		},
 		Checked:   config.Checked,
 		Value:     fmt.Sprintf("%v", config.Value),
 		Size:      convertSize[atoms.CheckboxSize](component.Size),
-		Required:  component.Required,
-		Disabled:  component.Disabled,
-		ID:        component.ID,
-		Name:      component.Name,
-		Class:     b.buildClass(component),
-		AriaLabel: component.AriaLabel,
 	}
 
 	return TemplComponent{Type: "Checkbox", Props: props}, nil
@@ -324,19 +366,118 @@ func (b *Bridge) convertRadio(component schemaui.Component) (TemplComponent, err
 	}
 
 	props := atoms.RadioGroupProps{
+		BaseProps: atoms.BaseProps{
+			Name:  component.Name,
+			Class: b.buildClass(component),
+		},
+		InteractionProps: atoms.InteractionProps{
+			Required: component.Required,
+			Disabled: component.Disabled,
+		},
 		Options:  options,
 		Value:    config.Value,
 		Layout:   getRadioLayout(config.Direction),
-		Size:     convertSize[atoms.RadioSize](component.Size),
-		Required: component.Required,
-		Disabled: component.Disabled,
-		Name:     component.Name,
-		Class:    b.buildClass(component),
 		Label:    component.Label,
 	}
 
 	return TemplComponent{Type: "RadioGroup", Props: props}, nil
 }
+
+// ============================================================================
+// TREE CONVERTER
+// ============================================================================
+
+func (b *Bridge) convertTree(component schemaui.Component) (TemplComponent, error) {
+	var config schemaui.TreeConfig
+	if err := unmarshalConfig(component.Config, &config); err != nil {
+		return TemplComponent{}, err
+	}
+
+	// Convert schema nodes to tree nodes
+	treeNodes := make([]tree.TreeNode, len(config.Data))
+	for i, node := range config.Data {
+		treeNodes[i] = convertSchemaNodeToTreeNode(node)
+	}
+
+	props := tree.TreeProps{
+		BaseProps: atoms.BaseProps{
+			ID:    component.ID,
+			Class: b.buildClass(component),
+		},
+		AccessibilityProps: atoms.AccessibilityProps{
+			AriaLabel: component.AriaLabel,
+		},
+		Data: treeNodes,
+		Config: tree.TreeConfig{
+			Selectable:   config.Selectable,
+			MultiSelect:  config.Multiple,
+			Checkboxes:   config.Checkable,
+			Expandable:   config.Expandable,
+			ShowLines:    config.ShowLine,
+			ShowIcons:    config.ShowIcon,
+			Draggable:    config.Draggable,
+			Virtual:      config.VirtualScroll,
+			MaxHeight:    config.Height,
+			// Set sensible defaults for missing schema fields
+			Cascade:      true,
+			Accordion:    false,
+			ShowRoot:     true,
+			ShowTooltips: false,
+			Sortable:     false,
+			Searchable:   false,
+			Filterable:   false,
+			LazyLoad:     false,
+			Indent:       "1.5rem",
+			NodeHeight:   "2.5rem",
+			ShowHeaders:  false, // Simple tree doesn't have columns/headers
+		},
+		Title:       component.Label,
+		Description: component.Description,
+		Styling: tree.TreeStyling{
+			Variant:  convertVariant[atoms.Variant](component.Variant),
+			Size:     convertSize[atoms.Size](component.Size),
+			Rounded:  true,
+			Shadow:   false,
+			Bordered: false,
+			Striped:  false,
+			Hover:    true,
+		},
+	}
+
+	// Set default expanded nodes if provided
+	if len(config.DefaultExpanded) > 0 {
+		props.Config.DefaultExpanded = config.DefaultExpanded
+	}
+
+	return TemplComponent{Type: "Tree", Props: props}, nil
+}
+
+// convertSchemaNodeToTreeNode converts a schema tree node to a tree component node
+func convertSchemaNodeToTreeNode(node schemaui.TreeNode) tree.TreeNode {
+	// Convert children recursively
+	children := make([]tree.TreeNode, len(node.Children))
+	for i, child := range node.Children {
+		children[i] = convertSchemaNodeToTreeNode(child)
+	}
+
+	return tree.TreeNode{
+		ID:          node.Key,    // Map Key to ID
+		Label:       node.Title,  // Map Title to Label
+		Children:    children,
+		Disabled:    node.Disabled,
+		Selected:    false, // Not available in schema
+		HasChildren: len(children) > 0,
+		IsLeaf:      node.IsLeaf,
+		Icon:        node.Icon,
+		// Set defaults for fields not in schema
+		Level:       0, // Will be calculated by tree component
+		Expanded:    false,
+		Hidden:      false,
+		Data:        make(map[string]interface{}),
+		Metadata:    make(map[string]interface{}),
+	}
+}
+
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -382,74 +523,40 @@ func joinClasses(classes ...string) string {
 
 // convertSize is a generic size converter for all component types.
 func convertSize[T any](size schemaui.Size) T {
-	// Size constants mapping
-	var (
-		sm, md, lg T
-	)
-
-	// Use type assertion to get proper size constants
-	switch any(sm).(type) {
-	case atoms.ButtonSize:
-		sm, md, lg = any(atoms.ButtonSizeSM).(T), any(atoms.ButtonSizeMD).(T), any(atoms.ButtonSizeLG).(T)
-	case atoms.InputSize:
-		sm, md, lg = any(atoms.InputSizeSM).(T), any(atoms.InputSizeMD).(T), any(atoms.InputSizeLG).(T)
-	case atoms.TextareaSize:
-		sm, md, lg = any(atoms.TextareaSizeSM).(T), any(atoms.TextareaSizeMD).(T), any(atoms.TextareaSizeLG).(T)
-	case atoms.SelectSize:
-		sm, md, lg = any(atoms.SelectSizeSM).(T), any(atoms.SelectSizeMD).(T), any(atoms.SelectSizeLG).(T)
-	case atoms.CheckboxSize:
-		sm, md, lg = any(atoms.CheckboxSizeSM).(T), any(atoms.CheckboxSizeMD).(T), any(atoms.CheckboxSizeLG).(T)
-	case atoms.RadioSize:
-		sm, md, lg = any(atoms.RadioSizeSM).(T), any(atoms.RadioSizeMD).(T), any(atoms.RadioSizeLG).(T)
-	}
-
+	// All size types are aliases for atoms.Size, so we can directly convert
 	switch size {
 	case schemaui.SizeXS, schemaui.SizeSM:
-		return sm
+		return any(atoms.SizeSM).(T)
 	case schemaui.SizeLG:
-		return lg
+		return any(atoms.SizeLG).(T)
 	case schemaui.SizeXL:
-		return lg // Map XL to LG since XL doesn't exist
+		return any(atoms.SizeXL).(T)
 	default:
-		return md
+		return any(atoms.SizeMD).(T)
 	}
 }
 
 // convertVariant converts schema variant to component-specific variant type.
 func convertVariant[T any](variant schemaui.Variant) T {
-	var primary, secondary, success, danger, warning, info, light, dark T
-
-	// Use type assertion to get proper variant constants
-	switch any(primary).(type) {
-	case atoms.ButtonVariant:
-		primary = any(atoms.ButtonPrimary).(T)
-		secondary = any(atoms.ButtonSecondary).(T)
-		success = any(atoms.ButtonSuccess).(T)
-		danger = any(atoms.ButtonDanger).(T)
-		warning = any(atoms.ButtonWarning).(T)
-		info = any(atoms.ButtonInfo).(T)
-		light = any(atoms.ButtonLight).(T)
-		dark = any(atoms.ButtonDark).(T)
-	}
-
+	// For atoms components, all variants are just atoms.Variant
 	switch variant {
 	case schemaui.VariantPrimary:
-		return primary
+		return any(atoms.VariantPrimary).(T)
 	case schemaui.VariantSecondary:
-		return secondary
+		return any(atoms.VariantSecondary).(T)
 	case schemaui.VariantSuccess:
-		return success
+		return any(atoms.VariantDefault).(T) // Map to default as success doesn't exist
 	case schemaui.VariantDanger:
-		return danger
+		return any(atoms.VariantDefault).(T) // Map to default as danger doesn't exist
 	case schemaui.VariantWarning:
-		return warning
+		return any(atoms.VariantWarning).(T)
 	case schemaui.VariantInfo:
-		return info
+		return any(atoms.VariantDefault).(T) // Map to default as info doesn't exist
 	case schemaui.VariantLight:
-		return light
+		return any(atoms.VariantLight).(T)
 	case schemaui.VariantDark:
-		return dark
+		return any(atoms.VariantDark).(T)
 	default:
-		return primary
+		return any(atoms.VariantPrimary).(T)
 	}
 }

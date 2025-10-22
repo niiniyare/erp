@@ -1118,8 +1118,8 @@ func TenantFormMetadataSection(props TenantFormProps) templ.Component {
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 			Text:    "Add Field",
 			Icon:    "plus",
-			Variant: atoms.ButtonSecondary,
-			Size:    atoms.ButtonSizeSM,
+			Variant: atoms.VariantSecondary,
+			Size:    atoms.SizeSM,
 			OnClick: "addMetadataField()",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
@@ -1132,7 +1132,7 @@ func TenantFormMetadataSection(props TenantFormProps) templ.Component {
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 			Icon:    "trash",
 			Variant: atoms.ButtonDanger,
-			Size:    atoms.ButtonSizeSM,
+			Size:    atoms.SizeSM,
 			OnClick: "removeMetadataField(index)",
 			Class:   "px-3",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -1237,8 +1237,8 @@ func TenantFormActions(props TenantFormProps) templ.Component {
 		if props.CancelUrl != "" || props.CancelText != "" {
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 				Text:    getTenantFormCancelText(props.CancelText),
-				Variant: atoms.ButtonSecondary,
-				Size:    atoms.ButtonSizeMD,
+				Variant: atoms.VariantSecondary,
+				Size:    atoms.SizeMD,
 				OnClick: "cancelForm()",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
@@ -1253,8 +1253,8 @@ func TenantFormActions(props TenantFormProps) templ.Component {
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 				Text:    "Save Draft",
 				Icon:    "document",
-				Variant: atoms.ButtonSecondary,
-				Size:    atoms.ButtonSizeMD,
+				Variant: atoms.VariantSecondary,
+				Size:    atoms.SizeMD,
 				OnClick: "saveDraft()",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
@@ -1269,7 +1269,7 @@ func TenantFormActions(props TenantFormProps) templ.Component {
 			Text:    getTenantFormSubmitText(props),
 			Icon:    getTenantFormSubmitIcon(props.Mode),
 			Variant: atoms.ButtonPrimary,
-			Size:    atoms.ButtonSizeMD,
+			Size:    atoms.SizeMD,
 			Type:    "submit",
 			Loading: props.IsLoading,
 		}).Render(ctx, templ_7745c5c3_Buffer)

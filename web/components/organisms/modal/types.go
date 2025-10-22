@@ -28,11 +28,11 @@ const (
 
 // ModalAction represents an action button in the modal
 type ModalAction struct {
-	Text    string              `json:"text"`
-	Icon    string              `json:"icon,omitempty"`
-	Variant atoms.ButtonVariant `json:"variant"`
-	Size    atoms.ButtonSize    `json:"size"`
-	OnClick string              `json:"onclick,omitempty"`
+	Text    string        `json:"text"`
+	Icon    string        `json:"icon,omitempty"`
+	Variant atoms.Variant `json:"variant"`
+	Size    atoms.Size    `json:"size"`
+	OnClick string        `json:"onclick,omitempty"`
 
 	// HTMX attributes
 	HxPost    string `json:"hxPost,omitempty"`

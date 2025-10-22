@@ -366,4 +366,5 @@ func (m *mockRegistry) Create(ctx context.Context, componentType ComponentType, 
 	return Component{}, nil
 }
 func (m *mockRegistry) GetTypes() []ComponentType                               { return []ComponentType{} }
+func (m *mockRegistry) IsRegistered(componentType ComponentType) bool          { return false }
 func (m *mockRegistry) Validate(ctx context.Context, component Component) error { return nil }

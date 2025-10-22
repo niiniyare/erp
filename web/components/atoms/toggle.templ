@@ -194,7 +194,7 @@ templ toggleLabel(props ToggleProps, position string) {
 		}
 		class={ getToggleLabelClasses(props, position) }
 	>
-		{ props.Label }
+		{ props.GetLabelText() }
 		// Visual indicator for required fields
 		if props.Required {
 			<span class="text-red-500 ml-1" aria-hidden="true">*</span>

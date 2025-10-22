@@ -244,7 +244,7 @@ templ Checkbox(props CheckboxProps) {
 // Extracted as separate template for reusability and clarity
 templ checkboxLabel(props CheckboxProps, position LabelPosition) {
 <label if props.ID !="" { for={ props.ID } } class={ getLabelClasses(props, position) }>
-  { props.Label }
+  { props.GetLabelText() }
   // Visual indicator for required fields
   if props.Required {
   <span class="text-red-500 ml-1" aria-hidden="true">*</span>

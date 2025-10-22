@@ -324,7 +324,7 @@ func UserDataTable(props UserTableProps) templ.Component {
 				{
 					Text:     "Export Selected",
 					Icon:     "download",
-					Variant:  atoms.ButtonSecondary,
+					Variant:  atoms.VariantSecondary,
 					HxPost:   "/admin/users/export",
 					HxTarget: "#download-link",
 					HxSwap:   "innerHTML",
@@ -425,7 +425,7 @@ func UserTableHeader(props UserTableProps) templ.Component {
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 			Text:     "Export All",
 			Icon:     "download",
-			Variant:  atoms.ButtonSecondary,
+			Variant:  atoms.VariantSecondary,
 			HxPost:   "/admin/users/export-all",
 			HxTarget: "#download-link",
 		}).Render(ctx, templ_7745c5c3_Buffer)

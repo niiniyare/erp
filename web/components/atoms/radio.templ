@@ -187,7 +187,7 @@ templ radioLabel(props RadioProps) {
 		for={ props.GetID("radio") }
 		class={ radioLabelClasses }
 	>
-		{ props.Label }
+		{ props.GetLabelText() }
 		if props.Required {
 			<span class="text-red-500 ml-1">*</span>
 		}
@@ -233,7 +233,7 @@ templ RadioGroup(props RadioGroupProps) {
 		// Legend (acts as label for the group)
 		if props.Label != "" {
 			<legend class="sr-only sm:not-sr-only text-sm font-medium text-gray-900 dark:text-white mb-3">
-				{ props.Label }
+				{ props.GetLabelText() }
 				if props.Required {
 					<span class="text-red-500 ml-1">*</span>
 				}

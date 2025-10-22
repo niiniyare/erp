@@ -190,7 +190,7 @@ func RoleSelector(props RoleSelectorProps) templ.Component {
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
 			Text:    "Cancel",
 			Variant: atoms.ButtonLight,
-			Size:    atoms.ButtonSizeSM,
+			Size:    atoms.SizeSM,
 			Type:    "button",
 			OnClick: "resetSelection()",
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -205,7 +205,7 @@ func RoleSelector(props RoleSelectorProps) templ.Component {
 			Text:    "Apply Role Change",
 			Icon:    "check",
 			Variant: atoms.ButtonPrimary,
-			Size:    atoms.ButtonSizeSM,
+			Size:    atoms.SizeSM,
 			Type:    "submit",
 			Loading: false,
 		}).Render(ctx, templ_7745c5c3_Buffer)

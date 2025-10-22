@@ -200,22 +200,28 @@ templ ModalFooterSection(footer ModalFooter) {
 // ModalActionButton renders a single action button
 templ ModalActionButton(action ModalAction) {
 	@atoms.Button(atoms.ButtonProps{
+		BaseProps: atoms.BaseProps{
+			ID:    action.ID,
+			Class: action.Class,
+		},
+		InteractionProps: atoms.InteractionProps{
+			Disabled:  action.Disabled,
+			AutoFocus: action.AutoFocus,
+		},
+		AlpinEventHandlers: atoms.AlpinEventHandlers{
+			OnClick: action.OnClick,
+		},
 		Text:      action.Text,
-		Icon:      action.Icon,
+		Icon:      atoms.IconProps{Name: action.Icon},
 		Variant:   action.Variant,
 		Size:      action.Size,
 		Type:      action.Type,
-		OnClick:   action.OnClick,
 		HxPost:    action.HxPost,
 		HxGet:     action.HxGet,
 		HxTarget:  action.HxTarget,
 		HxSwap:    action.HxSwap,
 		HxConfirm: action.HxConfirm,
 		Form:      action.Form,
-		Disabled:  action.Disabled,
-		AutoFocus: action.AutoFocus,
-		ID:        action.ID,
-		Class:     action.Class,
 	})
 }
 
@@ -311,16 +317,22 @@ templ ConfirmModal(props ConfirmModalProps) {
 					<div class="flex justify-center gap-4">
 						{{ _, buttonVariant := getConfirmVariantClasses(props.Variant) }}
 						@atoms.Button(atoms.ButtonProps{
+							InteractionProps: atoms.InteractionProps{
+								AutoFocus: true,
+							},
+							AlpinEventHandlers: atoms.AlpinEventHandlers{
+								OnClick: props.OnConfirm + "; open = false",
+							},
 							Text:    props.ConfirmText,
 							Variant: getButtonVariantFromString(buttonVariant),
-							OnClick: props.OnConfirm + "; open = false",
-							AutoFocus: true,
 						})
 						
 						@atoms.Button(atoms.ButtonProps{
+							AlpinEventHandlers: atoms.AlpinEventHandlers{
+								OnClick: props.OnCancel + "; open = false",
+							},
 							Text:    props.CancelText,
 							Variant: atoms.ButtonLight,
-							OnClick: props.OnCancel + "; open = false",
 						})
 					</div>
 				</div>
@@ -417,11 +429,15 @@ templ FormModal(props FormModalProps) {
 						})
 						
 						@atoms.Button(atoms.ButtonProps{
+							BaseProps: atoms.BaseProps{
+								Class: "min-w-[100px]",
+							},
+							InteractionProps: atoms.InteractionProps{
+								Disabled: false,
+							},
 							Text:     props.SubmitText,
 							Variant:  atoms.ButtonPrimary,
 							Type:     "submit",
-							Disabled: false,
-							Class:    "min-w-[100px]",
 						})
 					</div>
 				</form>

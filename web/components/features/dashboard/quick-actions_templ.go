@@ -1542,7 +1542,7 @@ func getActionIconSize(size string) atoms.IconSize {
 	case "lg":
 		return atoms.IconSizeLG
 	default:
-		return atoms.IconSizeMD
+		return atoms.IconSizeLG
 	}
 }
 
