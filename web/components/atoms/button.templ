@@ -298,70 +298,28 @@ return props
 
 // Button renders a Flowbite-styled button with full feature support
 templ Button(props ButtonProps) {
-	<button 
-		type={ getButtonType(props) }
-		if props.BaseProps.ID != "" {
-			id={ props.BaseProps.ID }
-		}
-		if props.BaseProps.Name != "" {
-			name={ props.BaseProps.Name }
-		}
-		if props.Form != "" {
-			form={ props.Form }
-		}
-		class={ getButtonClasses(props) }
-		if props.InteractionProps.Disabled || props.Loading {
-			disabled
-		}
-		if props.AccessibilityProps.AriaLabel != "" {
-			aria-label={ props.AccessibilityProps.AriaLabel }
-		}
-		if props.AccessibilityProps.AriaDescribedBy != "" {
-			aria-describedby={ props.AccessibilityProps.AriaDescribedBy }
-		}
-		if props.AccessibilityProps.AriaExpanded != nil {
-			aria-expanded={ getAriaExpanded(props.AccessibilityProps.AriaExpanded) }
-		}
-		if props.AccessibilityProps.AriaControls != "" {
-			aria-controls={ props.AccessibilityProps.AriaControls }
-		}
-		if props.AccessibilityProps.AriaHasPopup != "" {
-			aria-haspopup={ props.AccessibilityProps.AriaHasPopup }
-		}
-		if props.AccessibilityProps.AriaDisabled {
-			aria-disabled="true"
-		}
-		if props.BaseProps.DataTestID != "" {
-			data-testid={ props.BaseProps.DataTestID }
-		}
-		if props.TabIndex != 0 {
-			tabindex={ strconv.Itoa(props.TabIndex) }
-		}
-		if props.AlpinEventHandlers.OnClick != "" {
-			x-on:click={ props.AlpinEventHandlers.OnClick }
-		}
-		if props.AlpinEventHandlers.OnFocus != "" {
-			x-on:focus={ props.AlpinEventHandlers.OnFocus }
-		}
-		if props.AlpinEventHandlers.OnBlur != "" {
-			x-on:blur={ props.AlpinEventHandlers.OnBlur }
-		}
-		if props.AlpinEventHandlers.OnMouseEnter != "" {
-			x-on:mouseenter={ props.AlpinEventHandlers.OnMouseEnter }
-		}
-		if props.AlpinEventHandlers.OnMouseLeave != "" {
-			x-on:mouseleave={ props.AlpinEventHandlers.OnMouseLeave }
-		}
-		if props.AlpinEventHandlers.OnKeyDown != "" {
-			x-on:keydown={ props.AlpinEventHandlers.OnKeyDown }
-		}
-	>
-		if props.Loading {
-			@buttonLoadingState(props)
-		} else {
-			@buttonContent(props)
-		}
-	</button>
+<button type={ getButtonType(props) } if props.BaseProps.ID !="" { id={ props.BaseProps.ID } } if props.BaseProps.Name
+  !="" { name={ props.BaseProps.Name } } if props.Form !="" { form={ props.Form } } class={ getButtonClasses(props) } if
+  props.InteractionProps.Disabled || props.Loading { disabled } if props.AccessibilityProps.AriaLabel !="" {
+  aria-label={ props.AccessibilityProps.AriaLabel } } if props.AccessibilityProps.AriaDescribedBy !="" {
+  aria-describedby={ props.AccessibilityProps.AriaDescribedBy } } if props.AccessibilityProps.AriaExpanded !=nil {
+  aria-expanded={ getAriaExpanded(props.AccessibilityProps.AriaExpanded) } } if props.AccessibilityProps.AriaControls
+  !="" { aria-controls={ props.AccessibilityProps.AriaControls } } if props.AccessibilityProps.AriaHasPopup !="" {
+  aria-haspopup={ props.AccessibilityProps.AriaHasPopup } } if props.AccessibilityProps.AriaDisabled {
+  aria-disabled="true" } if props.BaseProps.DataTestID !="" { data-testid={ props.BaseProps.DataTestID } } if
+  props.TabIndex !=0 { tabindex={ strconv.Itoa(props.TabIndex) } } if props.AlpinEventHandlers.OnClick !="" {
+  x-on:click={ props.AlpinEventHandlers.OnClick } } if props.AlpinEventHandlers.OnFocus !="" { x-on:focus={
+  props.AlpinEventHandlers.OnFocus } } if props.AlpinEventHandlers.OnBlur !="" { x-on:blur={
+  props.AlpinEventHandlers.OnBlur } } if props.AlpinEventHandlers.OnMouseEnter !="" { x-on:mouseenter={
+  props.AlpinEventHandlers.OnMouseEnter } } if props.AlpinEventHandlers.OnMouseLeave !="" { x-on:mouseleave={
+  props.AlpinEventHandlers.OnMouseLeave } } if props.AlpinEventHandlers.OnKeyDown !="" { x-on:keydown={
+  props.AlpinEventHandlers.OnKeyDown } }>
+  if props.Loading {
+  @buttonLoadingState(props)
+  } else {
+  @buttonContent(props)
+  }
+</button>
 }
 
 // buttonLoadingState renders loading spinner overlay
