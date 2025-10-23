@@ -129,15 +129,19 @@ func HeaderActionButton(action HeaderAction) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+			BaseProps: atoms.BaseProps{
+				ID: action.ID,
+			},
+			AlpinEventHandlers: atoms.AlpinEventHandlers{
+				OnClick: action.OnClick,
+			},
 			Text:     action.Text,
-			Icon:     action.Icon,
+			Icon:     atoms.IconProps{Name: action.Icon},
 			Variant:  action.Variant,
 			Size:     action.Size,
-			OnClick:  action.OnClick,
 			HxPost:   action.HxPost,
 			HxGet:    action.HxGet,
 			HxTarget: action.HxTarget,
-			ID:       action.ID,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -168,16 +172,22 @@ func HeaderActionIconButton(action HeaderAction) templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = atoms.IconButton(atoms.ButtonProps{
-			Icon:      action.Icon,
-			Variant:   action.Variant,
-			Size:      action.Size,
-			OnClick:   action.OnClick,
-			HxPost:    action.HxPost,
-			HxGet:     action.HxGet,
-			HxTarget:  action.HxTarget,
-			AriaLabel: action.Tooltip,
-			ID:        action.ID,
+		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+			BaseProps: atoms.BaseProps{
+				ID: action.ID,
+			},
+			AccessibilityProps: atoms.AccessibilityProps{
+				AriaLabel: action.Tooltip,
+			},
+			AlpinEventHandlers: atoms.AlpinEventHandlers{
+				OnClick: action.OnClick,
+			},
+			Icon:     atoms.IconProps{Name: action.Icon},
+			Variant:  action.Variant,
+			Size:     action.Size,
+			HxPost:   action.HxPost,
+			HxGet:    action.HxGet,
+			HxTarget: action.HxTarget,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -233,7 +243,7 @@ func HeaderActionBadge(badge string, color string) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(badge)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 67, Col: 9}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 77, Col: 9}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -281,7 +291,7 @@ func HeaderNotificationsBell(notifications HeaderNotifications) templ.Component 
 			var templ_7745c5c3_Var10 templ.SafeURL
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(notifications.Href)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 76, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 86, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -316,7 +326,7 @@ func HeaderNotificationsBell(notifications HeaderNotifications) templ.Component 
 				var templ_7745c5c3_Var11 string
 				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(notifications.OnClick)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 87, Col: 35}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 97, Col: 35}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
@@ -335,7 +345,7 @@ func HeaderNotificationsBell(notifications HeaderNotifications) templ.Component 
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(notifications.HxGet)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 90, Col: 33}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 100, Col: 33}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -354,7 +364,7 @@ func HeaderNotificationsBell(notifications HeaderNotifications) templ.Component 
 				var templ_7745c5c3_Var13 string
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(notifications.HxTarget)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 93, Col: 39}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 103, Col: 39}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
@@ -373,7 +383,7 @@ func HeaderNotificationsBell(notifications HeaderNotifications) templ.Component 
 				var templ_7745c5c3_Var14 string
 				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(notifications.HxTrigger)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 96, Col: 41}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 106, Col: 41}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 				if templ_7745c5c3_Err != nil {
@@ -472,7 +482,7 @@ func HeaderNotificationBadge(count int, maxCount int) templ.Component {
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(getNotificationCountText(count, maxCount))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 119, Col: 46}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 129, Col: 46}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
@@ -563,7 +573,7 @@ func HeaderQuickAction(action HeaderAction) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(action.OnClick)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 141, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 151, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -582,7 +592,7 @@ func HeaderQuickAction(action HeaderAction) templ.Component {
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(action.HxPost)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 144, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 154, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
@@ -601,7 +611,7 @@ func HeaderQuickAction(action HeaderAction) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(action.HxGet)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 147, Col: 24}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 157, Col: 24}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -620,7 +630,7 @@ func HeaderQuickAction(action HeaderAction) templ.Component {
 			var templ_7745c5c3_Var23 string
 			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(action.HxTarget)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 150, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 160, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 			if templ_7745c5c3_Err != nil {
@@ -639,7 +649,7 @@ func HeaderQuickAction(action HeaderAction) templ.Component {
 			var templ_7745c5c3_Var24 string
 			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(action.Tooltip)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 153, Col: 25}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 163, Col: 25}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
@@ -658,7 +668,7 @@ func HeaderQuickAction(action HeaderAction) templ.Component {
 			var templ_7745c5c3_Var25 string
 			templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(action.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 156, Col: 17}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 166, Col: 17}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 			if templ_7745c5c3_Err != nil {
@@ -786,7 +796,7 @@ func HeaderLanguageSelector(currentLang string, languages []LanguageOption) temp
 		var templ_7745c5c3_Var28 string
 		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(currentLang)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 217, Col: 65}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 227, Col: 65}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
@@ -876,7 +886,7 @@ func HeaderLanguageOption(lang LanguageOption, currentLang string) templ.Compone
 		var templ_7745c5c3_Var32 string
 		templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs("$store.app.setLanguage('" + lang.Code + "'); open = false")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 257, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 267, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 		if templ_7745c5c3_Err != nil {
@@ -894,7 +904,7 @@ func HeaderLanguageOption(lang LanguageOption, currentLang string) templ.Compone
 			var templ_7745c5c3_Var33 string
 			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(lang.Flag)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 260, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 270, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 			if templ_7745c5c3_Err != nil {
@@ -912,7 +922,7 @@ func HeaderLanguageOption(lang LanguageOption, currentLang string) templ.Compone
 		var templ_7745c5c3_Var34 string
 		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(lang.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 262, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/siteheader/actions.templ`, Line: 272, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {

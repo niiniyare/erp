@@ -225,7 +225,7 @@ goa: ## 🎯 Generate Goa code
 
 .PHONY: interface2any
 interface2any: ## 🔄 Convert interfaces to any
-	@find . -type f -name '*.go' | xargs sed -i 's/interface{}/any/g'
+	@./scripts/interface_any.sh
 
 # ============================================================================
 # 🧪 Testing Framework

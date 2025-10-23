@@ -130,12 +130,16 @@ templ FilterPanelHeader(props FilterPanelProps) {
 			<!-- Clear All Button -->
 			if props.ClearAll {
 				@atoms.Button(atoms.ButtonProps{
+					BaseProps: atoms.BaseProps{
+						Class: "text-xs",
+					},
+					AlpinEventHandlers: atoms.AlpinEventHandlers{
+						OnClick: "clearAllFilters()",
+					},
 					Text:    "Clear All",
-					Icon:    "x",
-					Variant: atoms.ButtonLight,
+					Icon:    atoms.IconProps{Name: "x"},
+					Variant: atoms.VariantLight,
 					Size:    atoms.ButtonSizeSM,
-					OnClick: "clearAllFilters()",
-					Class:   "text-xs",
 				})
 			}
 
@@ -248,6 +252,13 @@ templ FilterFieldComponent(field FilterField, columns int) {
 // FilterInputField renders basic input fields
 templ FilterInputField(field FilterField) {
 	@molecules.Field(molecules.FieldProps{
+		BaseProps: atoms.BaseProps{
+			ID:    field.Name,
+			Class: field.Class + " w-full",
+		},
+		AlpinEventHandlers: atoms.AlpinEventHandlers{
+			OnChange: "onFieldChange('" + field.Name + "', $event.target.value)",
+		},
 		Type:        molecules.FieldTypeInput,
 		Label:       field.Label,
 		Name:        field.Name,
@@ -256,13 +267,6 @@ templ FilterInputField(field FilterField) {
 		HelpText:    field.Help,
 		Required:    field.Required,
 		InputType:   getInputTypeForFilter(field.Type),
-		ID:          field.Name,
-		Class:       field.Class + " w-full",
-		OnChange:    "onFieldChange('" + field.Name + "', $event.target.value)",
-		HxGet:       field.HxGet,
-		HxPost:      field.HxPost,
-		HxTarget:    field.HxTarget,
-		HxTrigger:   field.HxTrigger,
 	})
 }
 
@@ -283,16 +287,20 @@ templ FilterSearchField(field FilterField) {
 // FilterSelectField renders select dropdown
 templ FilterSelectField(field FilterField) {
 	@molecules.Field(molecules.FieldProps{
+		BaseProps: atoms.BaseProps{
+			ID:    field.Name,
+			Class: field.Class + " w-full",
+		},
+		AlpinEventHandlers: atoms.AlpinEventHandlers{
+			OnChange: "onFieldChange('" + field.Name + "', $event.target.value)",
+		},
 		Type:        molecules.FieldTypeSelect,
 		Label:       field.Label,
 		Name:        field.Name,
 		Required:    field.Required,
 		HelpText:    field.Help,
-		ID:          field.Name,
-		Class:       field.Class + " w-full",
 		Multiple:    field.Multiple,
 		Options:     convertToSelectOptions(field.Options),
-		OnChange:    "onFieldChange('" + field.Name + "', $event.target.value)",
 	})
 }
 
@@ -310,13 +318,21 @@ templ FilterCheckboxField(field FilterField) {
 		<div class="space-y-2">
 			for _, option := range field.Options {
 				@atoms.Checkbox(atoms.CheckboxProps{
-					ID:       field.Name + "_" + option.Value,
-					Name:     field.Name + "[]",
-					Value:    option.Value,
-					Label:    option.Label,
-					Checked:  option.Selected,
-					Disabled: option.Disabled,
-					OnChange: "onFieldChange('" + field.Name + "', getCheckboxValues('" + field.Name + "'))",
+					BaseProps: atoms.BaseProps{
+						ID:   field.Name + "_" + option.Value,
+						Name: field.Name + "[]",
+					},
+					LabelProps: atoms.LabelProps{
+						Label: option.Label,
+					},
+					InteractionProps: atoms.InteractionProps{
+						Disabled: option.Disabled,
+					},
+					AlpinEventHandlers: atoms.AlpinEventHandlers{
+						OnChange: "onFieldChange('" + field.Name + "', getCheckboxValues('" + field.Name + "'))",
+					},
+					Value:   option.Value,
+					Checked: option.Selected,
 				})
 			}
 		</div>
@@ -340,13 +356,21 @@ templ FilterRadioField(field FilterField) {
 		<div class="space-y-2">
 			for _, option := range field.Options {
 				@atoms.Radio(atoms.RadioProps{
-					ID:       field.Name + "_" + option.Value,
-					Name:     field.Name,
-					Value:    option.Value,
-					Label:    option.Label,
-					Checked:  option.Selected,
-					Disabled: option.Disabled,
-					OnChange: "onFieldChange('" + field.Name + "', $event.target.value)",
+					BaseProps: atoms.BaseProps{
+						ID:   field.Name + "_" + option.Value,
+						Name: field.Name,
+					},
+					LabelProps: atoms.LabelProps{
+						Label: option.Label,
+					},
+					InteractionProps: atoms.InteractionProps{
+						Disabled: option.Disabled,
+					},
+					AlpinEventHandlers: atoms.AlpinEventHandlers{
+						OnChange: "onFieldChange('" + field.Name + "', $event.target.value)",
+					},
+					Value:   option.Value,
+					Checked: option.Selected,
 				})
 			}
 		</div>
@@ -362,22 +386,30 @@ templ FilterDateRangeField(field FilterField) {
 		Title:       field.Label,
 		Fields: []molecules.FieldProps{
 			{
+				BaseProps: atoms.BaseProps{
+					ID: field.Name + "_start",
+				},
+				AlpinEventHandlers: atoms.AlpinEventHandlers{
+					OnChange: "onFieldChange('" + field.Name + "_start', $event.target.value)",
+				},
 				Type:        molecules.FieldTypeInput,
 				Label:       "Start Date",
 				Name:        field.Name + "[start]",
-				ID:          field.Name + "_start",
-				InputType:   atoms.InputDate,
+				InputType:   atoms.InputTypeDate,
 				Placeholder: "Start date",
-				OnChange:    "onFieldChange('" + field.Name + "_start', $event.target.value)",
 			},
 			{
+				BaseProps: atoms.BaseProps{
+					ID: field.Name + "_end",
+				},
+				AlpinEventHandlers: atoms.AlpinEventHandlers{
+					OnChange: "onFieldChange('" + field.Name + "_end', $event.target.value)",
+				},
 				Type:        molecules.FieldTypeInput,
 				Label:       "End Date",
 				Name:        field.Name + "[end]",
-				ID:          field.Name + "_end",
-				InputType:   atoms.InputDate,
+				InputType:   atoms.InputTypeDate,
 				Placeholder: "End date",
-				OnChange:    "onFieldChange('" + field.Name + "_end', $event.target.value)",
 			},
 		},
 	})
@@ -399,11 +431,13 @@ templ FilterPanelActions(props FilterPanelProps) {
 			<!-- Save Preset -->
 			if props.ShowSave {
 				@atoms.Button(atoms.ButtonProps{
+					AlpinEventHandlers: atoms.AlpinEventHandlers{
+						OnClick: "savePreset(prompt('Preset name:'), prompt('Description (optional):'))",
+					},
 					Text:    "Save",
-					Icon:    "bookmark",
-					Variant: atoms.ButtonLight,
+					Icon:    atoms.IconProps{Name: "bookmark"},
+					Variant: atoms.VariantLight,
 					Size:    atoms.ButtonSizeSM,
-					OnClick: "savePreset(prompt('Preset name:'), prompt('Description (optional):'))",
 				})
 			}
 
@@ -411,8 +445,8 @@ templ FilterPanelActions(props FilterPanelProps) {
 			if props.ShowReset {
 				@atoms.Button(atoms.ButtonProps{
 					Text:    "Reset",
-					Icon:    "refresh",
-					Variant: atoms.ButtonLight,
+					Icon:    atoms.IconProps{Name: "refresh"},
+					Variant: atoms.VariantLight,
 					Size:    atoms.ButtonSizeSM,
 					Type:    "reset",
 					OnClick: "resetFilters()",
@@ -422,13 +456,15 @@ templ FilterPanelActions(props FilterPanelProps) {
 			<!-- Apply -->
 			if props.ShowApply {
 				@atoms.Button(atoms.ButtonProps{
+					BaseProps: atoms.BaseProps{
+						Class: "min-w-[120px]",
+					},
 					Text:    "Apply Filters",
-					Icon:    "search",
-					Variant: atoms.ButtonPrimary,
+					Icon:    atoms.IconProps{Name: "search"},
+					Variant: atoms.VariantPrimary,
 					Size:    atoms.ButtonSizeSM,
 					Type:    "submit",
 					Loading: false,
-					Class:   "min-w-[120px]",
 				})
 			}
 
@@ -445,20 +481,26 @@ templ FilterPanelActions(props FilterPanelProps) {
 // FilterActionButton renders a custom action button
 templ FilterActionButton(action FilterAction) {
 	@atoms.Button(atoms.ButtonProps{
+		AlpinEventHandlers: atoms.AlpinEventHandlers{
+			OnClick: action.OnClick,
+		},
 		Text:      action.Text,
-		Icon:      action.Icon,
+		Icon:      atoms.IconProps{Name: action.Icon},
 		Variant:   action.Variant,
 		Size:      action.Size,
 		Type:      action.Type,
-		OnClick:   action.OnClick,
 		HxPost:    action.HxPost,
 		HxGet:     action.HxGet,
 		HxTarget:  action.HxTarget,
+		BaseProps: atoms.BaseProps{
+			ID:    action.ID,
+			Class: action.Class,
+		},
+		InteractionProps: atoms.InteractionProps{
+			Disabled: action.Disabled,
+		},
 		HxSwap:    action.HxSwap,
-		AutoFocus: action.AutoFocus,
-		Disabled:  action.Disabled,
-		ID:        action.ID,
-		Class:     action.Class,
+		// Note: AutoFocus not supported in ButtonProps
 	})
 }
 
@@ -554,8 +596,8 @@ templ QuickFilter(props QuickFilterProps) {
 				<div class="flex-shrink-0">
 					@atoms.Button(atoms.ButtonProps{
 						Text:    "Filter",
-						Icon:    "search",
-						Variant: atoms.ButtonPrimary,
+						Icon:    atoms.IconProps{Name: "search"},
+						Variant: atoms.VariantPrimary,
 						Size:    atoms.ButtonSizeSM,
 						Type:    "submit",
 					})
