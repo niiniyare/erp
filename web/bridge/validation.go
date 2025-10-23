@@ -28,6 +28,11 @@ func (v *BaseValidator) SetNext(next Validator) {
 	v.next = next
 }
 
+// Validate provides default implementation that calls next validator
+func (v *BaseValidator) Validate(ctx context.Context, component any) error {
+	return v.callNext(ctx, component)
+}
+
 func (v *BaseValidator) callNext(ctx context.Context, component any) error {
 	if v.next != nil {
 		return v.next.Validate(ctx, component)
@@ -43,26 +48,26 @@ type RequiredFieldsValidator struct {
 func (v *RequiredFieldsValidator) Validate(ctx context.Context, component any) error {
 	switch c := component.(type) {
 	case atoms.ButtonProps:
-		if c.Text == "" && c.Icon == "" {
+		if c.Text == "" && c.Icon.Name == "" {
 			return fmt.Errorf("button must have text or icon")
 		}
 	case atoms.InputProps:
-		if c.Name == "" {
+		if c.BaseProps.Name == "" {
 			return fmt.Errorf("input must have name attribute")
 		}
 	case atoms.SelectProps:
-		if c.Name == "" {
+		if c.BaseProps.Name == "" {
 			return fmt.Errorf("select must have name attribute")
 		}
 		if len(c.Options) == 0 {
 			return fmt.Errorf("select must have at least one option")
 		}
 	case atoms.CheckboxProps:
-		if c.Name == "" {
+		if c.BaseProps.Name == "" {
 			return fmt.Errorf("checkbox must have name attribute")
 		}
-	case atoms.RadioProps:
-		if c.Name == "" {
+	case atoms.RadioGroupProps:
+		if c.BaseProps.Name == "" {
 			return fmt.Errorf("radio must have name attribute")
 		}
 		// if len(c.Options) == 0 {
@@ -167,7 +172,7 @@ func (c *ValidationChain) AddValidator(v Validator) {
 // STEP 2: ENHANCE BRIDGE WITH VALIDATION
 // ============================================================================
 
-// Update Bridge to include validation
+// ConvertToTemplWithValidation converts and validates a component
 func (b *Bridge) ConvertToTemplWithValidation(ctx context.Context, component schemaui.Component) (TemplComponent, error) {
 	// Convert
 	templComponent, err := b.ConvertToTempl(ctx, component)
@@ -175,11 +180,10 @@ func (b *Bridge) ConvertToTemplWithValidation(ctx context.Context, component sch
 		return TemplComponent{}, err
 	}
 
-	// Validate
-	if b.validators != nil {
-		if err := b.validators.Validate(ctx, templComponent.Props); err != nil {
-			return TemplComponent{}, fmt.Errorf("validation failed: %w", err)
-		}
+	// Create and use validation chain
+	validator := NewValidationChain()
+	if err := validator.Validate(ctx, templComponent.Props); err != nil {
+		return TemplComponent{}, fmt.Errorf("validation failed: %w", err)
 	}
 
 	return templComponent, nil
@@ -187,10 +191,9 @@ func (b *Bridge) ConvertToTemplWithValidation(ctx context.Context, component sch
 
 func (b *Bridge) ConvertToSchemaWithValidation(ctx context.Context, component TemplComponent) (schemaui.Component, error) {
 	// Validate first
-	if b.validators != nil {
-		if err := b.validators.Validate(ctx, component.Props); err != nil {
-			return schemaui.Component{}, fmt.Errorf("validation failed: %w", err)
-		}
+	validator := NewValidationChain()
+	if err := validator.Validate(ctx, component.Props); err != nil {
+		return schemaui.Component{}, fmt.Errorf("validation failed: %w", err)
 	}
 
 	// Convert
@@ -375,7 +378,7 @@ func (v *AccessibilityAuditVisitor) VisitButton(ctx context.Context, props atoms
 	v.mu.Lock()
 	defer v.mu.Unlock()
 
-	if props.Icon != "" && props.Text == "" && props.AriaLabel == "" {
+	if props.Icon.Name != "" && props.Text == "" && props.AccessibilityProps.AriaLabel == "" {
 		v.issues = append(v.issues, "Icon-only button missing aria-label")
 	}
 	return nil
@@ -478,7 +481,9 @@ func ExampleConvertWithValidation(b *Bridge) {
 	ctx := context.Background()
 
 	schemaComponent := schemaui.Component{
-		Type: schemaui.ComponentButton,
+		BaseComponent: schemaui.BaseComponent{
+			Type: schemaui.ComponentButton,
+		},
 		// ... other fields
 	}
 
@@ -565,10 +570,7 @@ func ExampleMiddlewareUsage(b *Bridge) {
 
 // Update NewBridge to include validation
 func NewBridgeWithValidation() *Bridge {
-	return &Bridge{
-		registry:   schemaui.NewRegistry(),
-		cssFactory: nil, // Initialize as needed
-		converters: make(map[schemaui.ComponentType]converterFunc),
-		validators: NewValidationChain(),
-	}
+	bridge := NewBridge()
+	// Validation is created on-demand in validation methods
+	return bridge
 }

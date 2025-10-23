@@ -52,10 +52,12 @@ func DataTableHeader(props DataTableProps) templ.Component {
 		if len(props.Actions) > 0 {
 			for _, action := range props.Actions {
 				templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+					AlpinEventHandlers: atoms.AlpinEventHandlers{
+						OnClick: action.OnClick,
+					},
 					Text:     action.Text,
-					Icon:     action.Icon,
+					Icon:     atoms.IconProps{Name: action.Icon},
 					Variant:  action.Variant,
-					OnClick:  action.OnClick,
 					HxPost:   action.HxPost,
 					HxGet:    action.HxGet,
 					HxTarget: action.HxTarget,
@@ -67,10 +69,12 @@ func DataTableHeader(props DataTableProps) templ.Component {
 		}
 		if props.ShowFilters {
 			templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+				AlpinEventHandlers: atoms.AlpinEventHandlers{
+					OnClick: "toggleFilters()",
+				},
 				Text:    "Filters",
-				Icon:    "filter",
-				Variant: atoms.ButtonSecondary,
-				OnClick: "toggleFilters()",
+				Icon:    atoms.IconProps{Name: "filter"},
+				Variant: atoms.VariantSecondary,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -111,9 +115,13 @@ func DataTableHead(columns []DataTableColumn, sortable bool) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = atoms.Checkbox(atoms.CheckboxProps{
-			ID:       "select-all",
-			OnChange: "toggleSelectAll()",
-			Class:    "text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600",
+			BaseProps: atoms.BaseProps{
+				ID:    "select-all",
+				Class: "text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600",
+			},
+			AlpinEventHandlers: atoms.AlpinEventHandlers{
+				OnChange: "toggleSelectAll()",
+			},
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -190,7 +198,7 @@ func DataTableHeaderCell(column DataTableColumn, sortable bool) templ.Component 
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("width: " + column.Width)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/header.templ`, Line: 78, Col: 35}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/header.templ`, Line: 86, Col: 35}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -209,7 +217,7 @@ func DataTableHeaderCell(column DataTableColumn, sortable bool) templ.Component 
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs("sortBy('" + column.Key + "')")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/header.templ`, Line: 81, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/header.templ`, Line: 89, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -222,7 +230,7 @@ func DataTableHeaderCell(column DataTableColumn, sortable bool) templ.Component 
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs("sortBy('" + column.Key + "')")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/header.templ`, Line: 84, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/header.templ`, Line: 92, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -235,7 +243,7 @@ func DataTableHeaderCell(column DataTableColumn, sortable bool) templ.Component 
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs("sortBy('" + column.Key + "')")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/header.templ`, Line: 85, Col: 58}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/header.templ`, Line: 93, Col: 58}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -253,7 +261,7 @@ func DataTableHeaderCell(column DataTableColumn, sortable bool) templ.Component 
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(column.Label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/header.templ`, Line: 89, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/header.templ`, Line: 97, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -271,7 +279,7 @@ func DataTableHeaderCell(column DataTableColumn, sortable bool) templ.Component 
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs("{ 'opacity-100': sortColumn === '" + column.Key + "' && sortDirection === 'asc', 'opacity-30': sortColumn !== '" + column.Key + "' || sortDirection !== 'asc' }")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/header.templ`, Line: 94, Col: 176}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/header.templ`, Line: 102, Col: 176}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -296,7 +304,7 @@ func DataTableHeaderCell(column DataTableColumn, sortable bool) templ.Component 
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs("{ 'opacity-100': sortColumn === '" + column.Key + "' && sortDirection === 'desc', 'opacity-30': sortColumn !== '" + column.Key + "' || sortDirection !== 'desc' }")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/header.templ`, Line: 104, Col: 178}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/header.templ`, Line: 112, Col: 178}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {

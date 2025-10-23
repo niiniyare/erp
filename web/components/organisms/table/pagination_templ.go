@@ -156,13 +156,19 @@ func DataTablePaginationPrevious() templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = atoms.IconButton(atoms.ButtonProps{
-			Icon:      "chevron-left",
-			Variant:   atoms.ButtonLight,
-			Size:      atoms.ButtonSizeSM,
-			OnClick:   "goToPage(pageInfo.current - 1)",
-			Disabled:  true, // TODO: Bind to actual pagination state
-			AriaLabel: "Go to previous page",
+		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+			AccessibilityProps: atoms.AccessibilityProps{
+				AriaLabel: "Go to previous page",
+			},
+			InteractionProps: atoms.InteractionProps{
+				Disabled: true, // TODO: Bind to actual pagination state
+			},
+			AlpinEventHandlers: atoms.AlpinEventHandlers{
+				OnClick: "goToPage(pageInfo.current - 1)",
+			},
+			Icon:    atoms.IconProps{Name: "chevron-left"},
+			Variant: atoms.VariantLight,
+			Size:    atoms.ButtonSizeSM,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -193,13 +199,19 @@ func DataTablePaginationNext() templ.Component {
 			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = atoms.IconButton(atoms.ButtonProps{
-			Icon:      "chevron-right",
-			Variant:   atoms.ButtonLight,
-			Size:      atoms.ButtonSizeSM,
-			OnClick:   "goToPage(pageInfo.current + 1)",
-			Disabled:  true, // TODO: Bind to actual pagination state
-			AriaLabel: "Go to next page",
+		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+			AccessibilityProps: atoms.AccessibilityProps{
+				AriaLabel: "Go to next page",
+			},
+			InteractionProps: atoms.InteractionProps{
+				Disabled: true, // TODO: Bind to actual pagination state
+			},
+			AlpinEventHandlers: atoms.AlpinEventHandlers{
+				OnClick: "goToPage(pageInfo.current + 1)",
+			},
+			Icon:    atoms.IconProps{Name: "chevron-right"},
+			Variant: atoms.VariantLight,
+			Size:    atoms.ButtonSizeSM,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err

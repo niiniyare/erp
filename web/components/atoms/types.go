@@ -247,6 +247,7 @@ const (
 	VariantLight      Variant = "light"      // Light styling
 	VariantWarning    Variant = "warning"    // Warning styling
 	VariantDark       Variant = "dark"       // Dark styling
+	VariantGradient   Variant = "gradient"   // Gradient styling
 )
 
 // Button-specific variants for backward compatibility
@@ -272,15 +273,19 @@ func (v Variant) String() string {
 type ColorScheme string
 
 const (
-	ColorDefault   ColorScheme = "default"   // Blue/primary colors
-	ColorPrimary   ColorScheme = "primary"   // Primary brand color
-	ColorSecondary ColorScheme = "secondary" // Secondary brand color
-	ColorSuccess   ColorScheme = "success"   // Green - success states
-	ColorDanger    ColorScheme = "danger"    // Red - error/danger states
-	ColorWarning   ColorScheme = "warning"   // Yellow/orange - warning states
-	ColorInfo      ColorScheme = "info"      // Blue - informational states
-	ColorGray      ColorScheme = "gray"      // Neutral gray
-	ColorNeutral   ColorScheme = "neutral"   // Alias for gray
+	ColorDefault     ColorScheme = "default"     // Blue/primary colors
+	ColorPrimary     ColorScheme = "primary"     // Primary brand color
+	ColorSecondary   ColorScheme = "secondary"   // Secondary brand color
+	ColorSuccess     ColorScheme = "success"     // Green - success states
+	ColorDanger      ColorScheme = "danger"      // Red - error/danger states
+	ColorWarning     ColorScheme = "warning"     // Yellow/orange - warning states
+	ColorInfo        ColorScheme = "info"        // Blue - informational states
+	ColorGray        ColorScheme = "gray"        // Neutral gray
+	ColorNeutral     ColorScheme = "neutral"     // Alias for gray
+	ColorLight       ColorScheme = "light"       // Light colors
+	ColorDark        ColorScheme = "dark"        // Dark colors
+	ColorPurple      ColorScheme = "purple"      // Purple colors
+	ColorAlternative ColorScheme = "alternative" // Alternative color scheme
 )
 
 // String returns the string representation of ColorScheme.

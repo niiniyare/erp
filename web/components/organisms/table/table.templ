@@ -36,8 +36,10 @@ templ DataTable(props DataTableProps) {
 				}
 			>
 				@atoms.Spinner(atoms.SpinnerProps{
+					BaseProps: atoms.BaseProps{
+						Class: "text-blue-600",
+					},
 					Size: atoms.SpinnerSizeLG,
-					Class: "text-blue-600",
 				})
 			</div>
 			

@@ -353,11 +353,16 @@ type buttonFactory struct{}
 
 func (f *buttonFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
 	props := atoms.ButtonProps{
+		BaseProps: atoms.BaseProps{
+			Name: getString(config, "name"),
+		},
+		InteractionProps: atoms.InteractionProps{
+			Disabled: getBool(config, "disabled"),
+		},
 		Text:     getString(config, "text"),
-		Icon:     getString(config, "icon"),
+		Icon:     atoms.IconProps{Name: getString(config, "icon")},
 		Variant:  atoms.ButtonVariant(getString(config, "variant")),
 		Size:     atoms.ButtonSize(getString(config, "size")),
-		Disabled: getBool(config, "disabled"),
 	}
 
 	return TemplComponent{Type: "Button", Props: props}, nil
@@ -373,7 +378,7 @@ func (f *buttonFactory) Validate(ctx context.Context, component TemplComponent) 
 		return fmt.Errorf("invalid props type")
 	}
 
-	if props.Text == "" && props.Icon == "" {
+	if props.Text == "" && props.Icon.Name == "" {
 		return fmt.Errorf("button requires text or icon")
 	}
 
@@ -384,11 +389,17 @@ type inputFactory struct{}
 
 func (f *inputFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
 	props := atoms.InputProps{
-		Type:        stringToAtomsInputType(getString(config, "type")),
-		Name:        getString(config, "name"),
-		Placeholder: getString(config, "placeholder"),
-		Required:    getBool(config, "required"),
-		Disabled:    getBool(config, "disabled"),
+		BaseProps: atoms.BaseProps{
+			Name: getString(config, "name"),
+		},
+		InteractionProps: atoms.InteractionProps{
+			Required: getBool(config, "required"),
+			Disabled: getBool(config, "disabled"),
+		},
+		PlaceholderProps: atoms.PlaceholderProps{
+			Placeholder: getString(config, "placeholder"),
+		},
+		Type: stringToAtomsInputType(getString(config, "type")),
 	}
 
 	return TemplComponent{Type: "Input", Props: props}, nil
@@ -404,7 +415,7 @@ func (f *inputFactory) Validate(ctx context.Context, component TemplComponent) e
 		return fmt.Errorf("invalid props type")
 	}
 
-	if props.Name == "" {
+	if props.BaseProps.Name == "" {
 		return fmt.Errorf("input requires name")
 	}
 
@@ -415,11 +426,17 @@ type textareaFactory struct{}
 
 func (f *textareaFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
 	props := atoms.TextareaProps{
-		Name:        getString(config, "name"),
-		Placeholder: getString(config, "placeholder"),
-		Rows:        getInt(config, "rows"),
-		Required:    getBool(config, "required"),
-		Disabled:    getBool(config, "disabled"),
+		BaseProps: atoms.BaseProps{
+			Name: getString(config, "name"),
+		},
+		InteractionProps: atoms.InteractionProps{
+			Required: getBool(config, "required"),
+			Disabled: getBool(config, "disabled"),
+		},
+		PlaceholderProps: atoms.PlaceholderProps{
+			Placeholder: getString(config, "placeholder"),
+		},
+		Rows: getInt(config, "rows"),
 	}
 
 	return TemplComponent{Type: "Textarea", Props: props}, nil
@@ -435,7 +452,7 @@ func (f *textareaFactory) Validate(ctx context.Context, component TemplComponent
 		return fmt.Errorf("invalid props type")
 	}
 
-	if props.Name == "" {
+	if props.BaseProps.Name == "" {
 		return fmt.Errorf("textarea requires name")
 	}
 
@@ -446,12 +463,18 @@ type selectFactory struct{}
 
 func (f *selectFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
 	props := atoms.SelectProps{
-		Name:        getString(config, "name"),
-		Placeholder: getString(config, "placeholder"),
-		Multiple:    getBool(config, "multiple"),
-		Required:    getBool(config, "required"),
-		Disabled:    getBool(config, "disabled"),
-		Options:     parseSelectOptions(config["options"]),
+		BaseProps: atoms.BaseProps{
+			Name: getString(config, "name"),
+		},
+		InteractionProps: atoms.InteractionProps{
+			Required: getBool(config, "required"),
+			Disabled: getBool(config, "disabled"),
+		},
+		PlaceholderProps: atoms.PlaceholderProps{
+			Placeholder: getString(config, "placeholder"),
+		},
+		Multiple: getBool(config, "multiple"),
+		Options:  parseSelectOptions(config["options"]),
 	}
 
 	return TemplComponent{Type: "Select", Props: props}, nil
@@ -467,7 +490,7 @@ func (f *selectFactory) Validate(ctx context.Context, component TemplComponent) 
 		return fmt.Errorf("invalid props type")
 	}
 
-	if props.Name == "" {
+	if props.BaseProps.Name == "" {
 		return fmt.Errorf("select requires name")
 	}
 
@@ -482,11 +505,17 @@ type checkboxFactory struct{}
 
 func (f *checkboxFactory) Create(ctx context.Context, config map[string]any) (TemplComponent, error) {
 	props := atoms.CheckboxProps{
-		Name:     getString(config, "name"),
-		Label:    getString(config, "label"),
-		Checked:  getBool(config, "checked"),
-		Required: getBool(config, "required"),
-		Disabled: getBool(config, "disabled"),
+		BaseProps: atoms.BaseProps{
+			Name: getString(config, "name"),
+		},
+		InteractionProps: atoms.InteractionProps{
+			Required: getBool(config, "required"),
+			Disabled: getBool(config, "disabled"),
+		},
+		LabelProps: atoms.LabelProps{
+			Label: getString(config, "label"),
+		},
+		Checked: getBool(config, "checked"),
 	}
 
 	return TemplComponent{Type: "Checkbox", Props: props}, nil
@@ -502,7 +531,7 @@ func (f *checkboxFactory) Validate(ctx context.Context, component TemplComponent
 		return fmt.Errorf("invalid props type")
 	}
 
-	if props.Name == "" {
+	if props.BaseProps.Name == "" {
 		return fmt.Errorf("checkbox requires name")
 	}
 
@@ -518,12 +547,16 @@ func (f *radioFactory) Create(ctx context.Context, config map[string]any) (Templ
 	}
 
 	props := atoms.RadioGroupProps{
-		Name:     getString(config, "name"),
-		Value:    getString(config, "value"),
-		Layout:   layout,
-		Required: getBool(config, "required"),
-		Disabled: getBool(config, "disabled"),
-		Options:  parseRadioOptions(config["options"]),
+		BaseProps: atoms.BaseProps{
+			Name: getString(config, "name"),
+		},
+		InteractionProps: atoms.InteractionProps{
+			Required: getBool(config, "required"),
+			Disabled: getBool(config, "disabled"),
+		},
+		Value:   getString(config, "value"),
+		Layout:  layout,
+		Options: parseRadioOptions(config["options"]),
 	}
 
 	return TemplComponent{Type: "RadioGroup", Props: props}, nil
@@ -539,7 +572,7 @@ func (f *radioFactory) Validate(ctx context.Context, component TemplComponent) e
 		return fmt.Errorf("invalid props type")
 	}
 
-	if props.Name == "" {
+	if props.BaseProps.Name == "" {
 		return fmt.Errorf("radio requires name")
 	}
 
@@ -567,7 +600,7 @@ func stringToAtomsInputType(inputType string) atoms.InputType {
 	case "url":
 		return atoms.InputURL
 	case "search":
-		return atoms.InputSearch
+		return atoms.InputTypeSearch
 	default:
 		return atoms.InputText
 	}

@@ -144,8 +144,10 @@ func DataTable(props DataTableProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = atoms.Spinner(atoms.SpinnerProps{
-			Size:  atoms.SpinnerSizeLG,
-			Class: "text-blue-600",
+			BaseProps: atoms.BaseProps{
+				Class: "text-blue-600",
+			},
+			Size: atoms.SpinnerSizeLG,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -171,7 +173,7 @@ func DataTable(props DataTableProps) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/table.templ`, Line: 48, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/table.templ`, Line: 50, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -207,7 +209,7 @@ func DataTable(props DataTableProps) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/table.templ`, Line: 52, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/table.templ`, Line: 54, Col: 34}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -226,7 +228,7 @@ func DataTable(props DataTableProps) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/table.templ`, Line: 55, Col: 36}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/table.templ`, Line: 57, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -245,7 +247,7 @@ func DataTable(props DataTableProps) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataUrl)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/table.templ`, Line: 58, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/table.templ`, Line: 60, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -258,7 +260,7 @@ func DataTable(props DataTableProps) templ.Component {
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs("closest .overflow-x-auto")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/table.templ`, Line: 60, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/table.templ`, Line: 62, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -271,7 +273,7 @@ func DataTable(props DataTableProps) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs("#" + props.ID + "-loading")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/table.templ`, Line: 62, Col: 48}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/table.templ`, Line: 64, Col: 48}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -294,7 +296,7 @@ func DataTable(props DataTableProps) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(props.Caption)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/table.templ`, Line: 66, Col: 46}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/table.templ`, Line: 68, Col: 46}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {

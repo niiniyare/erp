@@ -158,9 +158,13 @@ func DataTableRowCheckbox(index int) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = atoms.Checkbox(atoms.CheckboxProps{
-			ID:       "checkbox-table-" + strconv.Itoa(index),
-			OnChange: "toggleRow(" + strconv.Itoa(index) + ")",
-			Class:    "text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600",
+			BaseProps: atoms.BaseProps{
+				ID:    "checkbox-table-" + strconv.Itoa(index),
+				Class: "text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600",
+			},
+			AlpinEventHandlers: atoms.AlpinEventHandlers{
+				OnChange: "toggleRow(" + strconv.Itoa(index) + ")",
+			},
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -172,7 +176,7 @@ func DataTableRowCheckbox(index int) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs("checkbox-table-" + strconv.Itoa(index))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 51, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 55, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -185,7 +189,7 @@ func DataTableRowCheckbox(index int) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(index + 1))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 51, Col: 110}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 55, Col: 110}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -297,7 +301,7 @@ func DataTableCellContent(value interface{}, column DataTableColumn) templ.Compo
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(formatCellValue(value, column.Type, column.Formatter))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 75, Col: 58}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 79, Col: 58}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -315,7 +319,7 @@ func DataTableCellContent(value interface{}, column DataTableColumn) templ.Compo
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(formatCellValue(value, column.Type, column.Formatter))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 79, Col: 58}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 83, Col: 58}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -333,7 +337,7 @@ func DataTableCellContent(value interface{}, column DataTableColumn) templ.Compo
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(formatCellValue(value, "datetime", ""))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 82, Col: 83}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 86, Col: 83}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -346,7 +350,7 @@ func DataTableCellContent(value interface{}, column DataTableColumn) templ.Compo
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(formatCellValue(value, column.Type, column.Formatter))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 83, Col: 58}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 87, Col: 58}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -374,7 +378,7 @@ func DataTableCellContent(value interface{}, column DataTableColumn) templ.Compo
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(formatCellValue(value, column.Type, column.Formatter))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 91, Col: 58}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 95, Col: 58}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -418,7 +422,7 @@ func DataTableCellBadge(value interface{}) templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(formatCellValue(value, "text", ""))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 99, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 103, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -461,7 +465,7 @@ func DataTableCellStatus(value interface{}) templ.Component {
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(formatCellValue(value, "text", ""))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 109, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 113, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -503,16 +507,20 @@ func DataTableRowActions(actions []DataTableAction, index int) templ.Component {
 		}
 		for _, action := range actions {
 			if action.Single {
-				templ_7745c5c3_Err = atoms.IconButton(atoms.ButtonProps{
-					Icon:      action.Icon,
-					Variant:   atoms.ButtonLight,
+				templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+					AccessibilityProps: atoms.AccessibilityProps{
+						AriaLabel: action.Text + " for row " + strconv.Itoa(index+1),
+					},
+					AlpinEventHandlers: atoms.AlpinEventHandlers{
+						OnClick: action.OnClick,
+					},
+					Icon:      atoms.IconProps{Name: action.Icon},
+					Variant:   atoms.VariantLight,
 					Size:      atoms.ButtonSizeSM,
-					OnClick:   action.OnClick,
 					HxPost:    action.HxPost,
 					HxGet:     action.HxGet,
 					HxTarget:  action.HxTarget,
 					HxConfirm: action.HxConfirm,
-					AriaLabel: action.Text + " for row " + strconv.Itoa(index+1),
 				}).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -556,7 +564,7 @@ func DataTableEmptyState(colCount int) templ.Component {
 		var templ_7745c5c3_Var22 string
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(colCount + 2))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 140, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/rows.templ`, Line: 148, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {

@@ -647,6 +647,7 @@ type ButtonProps struct {
 	ColorScheme ColorScheme `json:"colorScheme,omitempty"` // Color theme
 	Color       string      `json:"color,omitempty"`       // Color (simple string for backward compatibility)
 	FullWidth   bool        `json:"fullWidth,omitempty"`   // Full width button
+	Pill        bool        `json:"pill,omitempty"`        // Pill-shaped (rounded-full) button
 
 	// State
 	Loading bool `json:"loading,omitempty"` // Loading state

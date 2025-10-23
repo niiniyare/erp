@@ -18,10 +18,12 @@ templ DataTableHeader(props DataTableProps) {
 			if len(props.Actions) > 0 {
 				for _, action := range props.Actions {
 					@atoms.Button(atoms.ButtonProps{
+						AlpinEventHandlers: atoms.AlpinEventHandlers{
+							OnClick: action.OnClick,
+						},
 						Text:     action.Text,
-						Icon:     action.Icon,
+						Icon:     atoms.IconProps{Name: action.Icon},
 						Variant:  action.Variant,
-						OnClick:  action.OnClick,
 						HxPost:   action.HxPost,
 						HxGet:    action.HxGet,
 						HxTarget: action.HxTarget,
@@ -31,10 +33,12 @@ templ DataTableHeader(props DataTableProps) {
 			
 			if props.ShowFilters {
 				@atoms.Button(atoms.ButtonProps{
+					AlpinEventHandlers: atoms.AlpinEventHandlers{
+						OnClick: "toggleFilters()",
+					},
 					Text:    "Filters",
-					Icon:    "filter",
-					Variant: atoms.ButtonSecondary,
-					OnClick: "toggleFilters()",
+					Icon:    atoms.IconProps{Name: "filter"},
+					Variant: atoms.VariantSecondary,
 				})
 			}
 		</div>
@@ -48,9 +52,13 @@ templ DataTableHead(columns []DataTableColumn, sortable bool) {
 			<th scope="col" class="p-4">
 				<div class="flex items-center">
 					@atoms.Checkbox(atoms.CheckboxProps{
-						ID:      "select-all",
-						OnChange: "toggleSelectAll()",
-						Class:   "text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600",
+						BaseProps: atoms.BaseProps{
+							ID:    "select-all",
+							Class: "text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600",
+						},
+						AlpinEventHandlers: atoms.AlpinEventHandlers{
+							OnChange: "toggleSelectAll()",
+						},
 					})
 					<label for="select-all" class="sr-only">Select all</label>
 				</div>

@@ -25,10 +25,12 @@ templ DataTableBulkActions(actions []DataTableAction) {
 			@DataTableBulkActionButtons(actions)
 			
 			@atoms.Button(atoms.ButtonProps{
+				AlpinEventHandlers: atoms.AlpinEventHandlers{
+					OnClick: "clearSelection()",
+				},
 				Text:    "Cancel",
-				Variant: atoms.ButtonLight,
+				Variant: atoms.VariantLight,
 				Size:    atoms.ButtonSizeSM,
-				OnClick: "clearSelection()",
 			})
 		</div>
 	</div>
@@ -46,11 +48,19 @@ templ DataTableBulkActionButtons(actions []DataTableAction) {
 // DataTableBulkActionButton renders a single bulk action button
 templ DataTableBulkActionButton(action DataTableAction) {
 	@atoms.Button(atoms.ButtonProps{
+		BaseProps: atoms.BaseProps{
+			Class: getActionClasses(action),
+		},
+		InteractionProps: atoms.InteractionProps{
+			Disabled: action.Disabled,
+		},
+		AlpinEventHandlers: atoms.AlpinEventHandlers{
+			OnClick: buildBulkActionClick(action),
+		},
 		Text:      action.Text,
-		Icon:      action.Icon,
+		Icon:      atoms.IconProps{Name: action.Icon},
 		Variant:   action.Variant,
 		Size:      atoms.ButtonSizeSM,
-		OnClick:   buildBulkActionClick(action),
 		HxPost:    action.HxPost,
 		HxConfirm: getBulkActionConfirm(action),
 	})
@@ -59,12 +69,16 @@ templ DataTableBulkActionButton(action DataTableAction) {
 // DataTableActionsDropdown renders a dropdown for multiple actions
 templ DataTableActionsDropdown(actions []DataTableAction, rowIndex int) {
 	<div class="relative" x-data="{ open: false }">
-		@atoms.IconButton(atoms.ButtonProps{
-			Icon:      "dots-vertical",
-			Variant:   atoms.ButtonLight,
+		@atoms.Button(atoms.ButtonProps{
+			AccessibilityProps: atoms.AccessibilityProps{
+				AriaLabel: "Row actions for item " + strconv.Itoa(rowIndex + 1),
+			},
+			AlpinEventHandlers: atoms.AlpinEventHandlers{
+				OnClick: "open = !open",
+			},
+			Icon:      atoms.IconProps{Name: "dots-vertical"},
+			Variant:   atoms.VariantLight,
 			Size:      atoms.ButtonSizeSM,
-			OnClick:   "open = !open",
-			AriaLabel: "Row actions for item " + strconv.Itoa(rowIndex + 1),
 		})
 		
 		<!-- Dropdown menu -->
@@ -129,16 +143,20 @@ templ DataTableQuickActions(actions []DataTableAction, rowIndex int) {
 	<div class="flex items-center space-x-1">
 		for i, action := range actions {
 			if action.Single && i < 3 {
-				@atoms.IconButton(atoms.ButtonProps{
-					Icon:      action.Icon,
-					Variant:   atoms.ButtonLight,
+				@atoms.Button(atoms.ButtonProps{
+					AccessibilityProps: atoms.AccessibilityProps{
+						AriaLabel: action.Text + " for row " + strconv.Itoa(rowIndex + 1),
+					},
+					AlpinEventHandlers: atoms.AlpinEventHandlers{
+						OnClick: action.OnClick,
+					},
+					Icon:      atoms.IconProps{Name: action.Icon},
+					Variant:   atoms.VariantLight,
 					Size:      atoms.ButtonSizeSM,
-					OnClick:   action.OnClick,
 					HxPost:    action.HxPost,
 					HxGet:     action.HxGet,
 					HxTarget:  action.HxTarget,
 					HxConfirm: action.HxConfirm,
-					AriaLabel: action.Text + " for row " + strconv.Itoa(rowIndex + 1),
 				})
 			}
 		}
@@ -166,7 +184,7 @@ func getBulkActionConfirm(action DataTableAction) string {
 	}
 	
 	// Default confirmation for bulk actions
-	if action.Variant == atoms.ButtonRed {
+	if action.Variant == atoms.VariantDefault { // TODO: Use proper danger variant
 		return "Are you sure you want to " + action.Text + " the selected items?"
 	}
 	
