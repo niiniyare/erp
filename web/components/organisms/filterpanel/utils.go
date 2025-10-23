@@ -10,13 +10,13 @@ import (
 func getInputTypeForFilter(filterType FilterType) atoms.InputType {
 	switch filterType {
 	case FilterTypeNumber:
-		return atoms.InputNumber
+		return atoms.InputTypeNumber
 	case FilterTypeDate:
-		return atoms.InputDate
+		return atoms.InputTypeDate
 	case FilterTypeSearch:
-		return atoms.InputSearch
+		return atoms.InputTypeSearch
 	default:
-		return atoms.InputText
+		return atoms.InputTypeText
 	}
 }
 

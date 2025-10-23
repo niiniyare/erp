@@ -1354,15 +1354,19 @@ func HeaderMobileActions(actions []HeaderAction) templ.Component {
 		for _, action := range actions {
 			if !action.MobileHidden {
 				templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+					BaseProps: atoms.BaseProps{
+						Class: "w-full justify-center",
+					},
+					AlpinEventHandlers: atoms.AlpinEventHandlers{
+						OnClick: action.OnClick,
+					},
 					Text:     action.Text,
-					Icon:     action.Icon,
+					Icon:     atoms.IconProps{Name: action.Icon},
 					Variant:  action.Variant,
 					Size:     atoms.ButtonSizeSM,
-					OnClick:  action.OnClick,
 					HxPost:   action.HxPost,
 					HxGet:    action.HxGet,
 					HxTarget: action.HxTarget,
-					Class:    "w-full justify-center",
 				}).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err

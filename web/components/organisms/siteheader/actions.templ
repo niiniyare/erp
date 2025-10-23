@@ -34,30 +34,40 @@ templ HeaderActionItem(action HeaderAction) {
 // HeaderActionButton renders an action button with text
 templ HeaderActionButton(action HeaderAction) {
 	@atoms.Button(atoms.ButtonProps{
+		BaseProps: atoms.BaseProps{
+			ID: action.ID,
+		},
+		AlpinEventHandlers: atoms.AlpinEventHandlers{
+			OnClick: action.OnClick,
+		},
 		Text:     action.Text,
-		Icon:     action.Icon,
+		Icon:     atoms.IconProps{Name: action.Icon},
 		Variant:  action.Variant,
 		Size:     action.Size,
-		OnClick:  action.OnClick,
 		HxPost:   action.HxPost,
 		HxGet:    action.HxGet,
 		HxTarget: action.HxTarget,
-		ID:       action.ID,
 	})
 }
 
 // HeaderActionIconButton renders an icon-only action button
 templ HeaderActionIconButton(action HeaderAction) {
-	@atoms.IconButton(atoms.ButtonProps{
-		Icon:      action.Icon,
-		Variant:   action.Variant,
-		Size:      action.Size,
-		OnClick:   action.OnClick,
-		HxPost:    action.HxPost,
-		HxGet:     action.HxGet,
-		HxTarget:  action.HxTarget,
-		AriaLabel: action.Tooltip,
-		ID:        action.ID,
+	@atoms.Button(atoms.ButtonProps{
+		BaseProps: atoms.BaseProps{
+			ID: action.ID,
+		},
+		AccessibilityProps: atoms.AccessibilityProps{
+			AriaLabel: action.Tooltip,
+		},
+		AlpinEventHandlers: atoms.AlpinEventHandlers{
+			OnClick: action.OnClick,
+		},
+		Icon:     atoms.IconProps{Name: action.Icon},
+		Variant:  action.Variant,
+		Size:     action.Size,
+		HxPost:   action.HxPost,
+		HxGet:    action.HxGet,
+		HxTarget: action.HxTarget,
 	})
 }
 
