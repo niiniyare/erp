@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/niiniyare/erp/internal/shared/format"
+	"github.com/niiniyare/erp/web/components/atoms"
 )
 
 // getDataTableWrapperClasses returns CSS classes for the table wrapper
@@ -850,4 +851,23 @@ func generateFormatterJS(colType, format string) string {
 	default:
 		return ""
 	}
+}
+
+// getActionClasses returns CSS classes for action buttons
+func getActionClasses(action DataTableAction) string {
+	classes := []string{"action-button"}
+	
+	// Add variant-specific classes
+	switch action.Variant {
+	case atoms.VariantPrimary:
+		classes = append(classes, "btn-primary")
+	case atoms.VariantSecondary:
+		classes = append(classes, "btn-secondary")
+	case atoms.VariantLight:
+		classes = append(classes, "btn-light")
+	default:
+		classes = append(classes, "btn-default")
+	}
+	
+	return strings.Join(classes, " ")
 }

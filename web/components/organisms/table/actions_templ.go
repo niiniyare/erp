@@ -44,10 +44,12 @@ func DataTableBulkActions(actions []DataTableAction) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+			AlpinEventHandlers: atoms.AlpinEventHandlers{
+				OnClick: "clearSelection()",
+			},
 			Text:    "Cancel",
-			Variant: atoms.ButtonLight,
+			Variant: atoms.VariantLight,
 			Size:    atoms.ButtonSizeSM,
-			OnClick: "clearSelection()",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -117,11 +119,19 @@ func DataTableBulkActionButton(action DataTableAction) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+			BaseProps: atoms.BaseProps{
+				Class: getActionClasses(action),
+			},
+			InteractionProps: atoms.InteractionProps{
+				Disabled: action.Disabled,
+			},
+			AlpinEventHandlers: atoms.AlpinEventHandlers{
+				OnClick: buildBulkActionClick(action),
+			},
 			Text:      action.Text,
-			Icon:      action.Icon,
+			Icon:      atoms.IconProps{Name: action.Icon},
 			Variant:   action.Variant,
 			Size:      atoms.ButtonSizeSM,
-			OnClick:   buildBulkActionClick(action),
 			HxPost:    action.HxPost,
 			HxConfirm: getBulkActionConfirm(action),
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -158,12 +168,16 @@ func DataTableActionsDropdown(actions []DataTableAction, rowIndex int) templ.Com
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = atoms.IconButton(atoms.ButtonProps{
-			Icon:      "dots-vertical",
-			Variant:   atoms.ButtonLight,
-			Size:      atoms.ButtonSizeSM,
-			OnClick:   "open = !open",
-			AriaLabel: "Row actions for item " + strconv.Itoa(rowIndex+1),
+		templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+			AccessibilityProps: atoms.AccessibilityProps{
+				AriaLabel: "Row actions for item " + strconv.Itoa(rowIndex+1),
+			},
+			AlpinEventHandlers: atoms.AlpinEventHandlers{
+				OnClick: "open = !open",
+			},
+			Icon:    atoms.IconProps{Name: "dots-vertical"},
+			Variant: atoms.VariantLight,
+			Size:    atoms.ButtonSizeSM,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -222,7 +236,7 @@ func DataTableActionMenuItem(action DataTableAction, rowIndex int) templ.Compone
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(action.OnClick + "; open = false")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/actions.templ`, Line: 98, Col: 45}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/actions.templ`, Line: 112, Col: 45}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -241,7 +255,7 @@ func DataTableActionMenuItem(action DataTableAction, rowIndex int) templ.Compone
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(action.HxPost)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/actions.templ`, Line: 101, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/actions.templ`, Line: 115, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -260,7 +274,7 @@ func DataTableActionMenuItem(action DataTableAction, rowIndex int) templ.Compone
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(action.HxGet)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/actions.templ`, Line: 105, Col: 24}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/actions.templ`, Line: 119, Col: 24}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -279,7 +293,7 @@ func DataTableActionMenuItem(action DataTableAction, rowIndex int) templ.Compone
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(action.HxTarget)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/actions.templ`, Line: 109, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/actions.templ`, Line: 123, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -298,7 +312,7 @@ func DataTableActionMenuItem(action DataTableAction, rowIndex int) templ.Compone
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(action.HxConfirm)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/actions.templ`, Line: 112, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/actions.templ`, Line: 126, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -326,7 +340,7 @@ func DataTableActionMenuItem(action DataTableAction, rowIndex int) templ.Compone
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(action.Text)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/actions.templ`, Line: 123, Col: 15}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/organisms/table/actions.templ`, Line: 137, Col: 15}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -368,16 +382,20 @@ func DataTableQuickActions(actions []DataTableAction, rowIndex int) templ.Compon
 		}
 		for i, action := range actions {
 			if action.Single && i < 3 {
-				templ_7745c5c3_Err = atoms.IconButton(atoms.ButtonProps{
-					Icon:      action.Icon,
-					Variant:   atoms.ButtonLight,
+				templ_7745c5c3_Err = atoms.Button(atoms.ButtonProps{
+					AccessibilityProps: atoms.AccessibilityProps{
+						AriaLabel: action.Text + " for row " + strconv.Itoa(rowIndex+1),
+					},
+					AlpinEventHandlers: atoms.AlpinEventHandlers{
+						OnClick: action.OnClick,
+					},
+					Icon:      atoms.IconProps{Name: action.Icon},
+					Variant:   atoms.VariantLight,
 					Size:      atoms.ButtonSizeSM,
-					OnClick:   action.OnClick,
 					HxPost:    action.HxPost,
 					HxGet:     action.HxGet,
 					HxTarget:  action.HxTarget,
 					HxConfirm: action.HxConfirm,
-					AriaLabel: action.Text + " for row " + strconv.Itoa(rowIndex+1),
 				}).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
@@ -409,7 +427,7 @@ func getBulkActionConfirm(action DataTableAction) string {
 	}
 
 	// Default confirmation for bulk actions
-	if action.Variant == atoms.ButtonRed {
+	if action.Variant == atoms.VariantDefault { // TODO: Use proper danger variant
 		return "Are you sure you want to " + action.Text + " the selected items?"
 	}
 

@@ -66,21 +66,21 @@ func convertButtonToSchema(props any) (schemaui.Component, error) {
 
 	config := schemaui.ButtonConfig{
 		Text:         p.Text,
-		Icon:         p.Icon,
-		IconPosition: stringToPosition(p.IconPosition),
+		Icon:         p.Icon.Name,
+		IconPosition: stringToPosition(string(p.IconPosition)),
 		ButtonType:   stringToButtonType(p.Type),
 		Loading:      p.Loading,
 	}
 
 	return buildComponent(schemaui.ComponentButton, baseBuilder{
-		id:        p.ID,
+		id:        p.BaseProps.ID,
 		label:     p.Text,
-		class:     p.Class,
+		class:     p.BaseProps.Class,
 		size:      reverseConvertSize[atoms.ButtonSize](p.Size),
 		variant:   reverseConvertVariant(p.Variant),
-		disabled:  p.Disabled,
-		ariaLabel: p.AriaLabel,
-		onClick:   p.OnClick,
+		disabled:  p.InteractionProps.Disabled,
+		ariaLabel: p.AccessibilityProps.AriaLabel,
+		onClick:   p.AlpinEventHandlers.OnClick,
 	}, config)
 }
 
@@ -97,28 +97,28 @@ func convertInputToSchema(props any) (schemaui.Component, error) {
 	config := schemaui.InputConfig{
 		InputType:   stringToInputType(string(p.Type)),
 		Value:       p.Value,
-		Placeholder: p.Placeholder,
+		Placeholder: p.PlaceholderProps.Placeholder,
 		MaxLength:   p.MaxLength,
 		MinLength:   p.MinLength,
 		Pattern:     p.Pattern,
 	}
 
-	validator := buildValidator(p.Required, p.MinLength, p.MaxLength, p.Pattern)
+	validator := buildValidator(p.InteractionProps.Required, p.MinLength, p.MaxLength, p.Pattern)
 
 	return buildComponent(schemaui.ComponentInput, baseBuilder{
-		id:          p.ID,
-		name:        p.Name,
-		label:       p.Label,
-		placeholder: p.Placeholder,
-		class:       p.Class,
+		id:          p.BaseProps.ID,
+		name:        p.BaseProps.Name,
+		label:       "", // Input doesn't have direct label field
+		placeholder: p.PlaceholderProps.Placeholder,
+		class:       p.BaseProps.Class,
 		size:        reverseConvertSize[atoms.InputSize](p.Size),
-		disabled:    p.Disabled,
-		required:    p.Required,
-		readOnly:    p.ReadOnly,
-		ariaLabel:   p.AriaLabel,
-		onChange:    p.OnChange,
-		onFocus:     p.OnFocus,
-		onBlur:      p.OnBlur,
+		disabled:    p.InteractionProps.Disabled,
+		required:    p.InteractionProps.Required,
+		readOnly:    p.InteractionProps.ReadOnly,
+		ariaLabel:   p.AccessibilityProps.AriaLabel,
+		onChange:    p.AlpinEventHandlers.OnChange,
+		onFocus:     p.AlpinEventHandlers.OnFocus,
+		onBlur:      p.AlpinEventHandlers.OnBlur,
 		validator:   validator,
 	}, config)
 }
@@ -135,29 +135,29 @@ func convertTextareaToSchema(props any) (schemaui.Component, error) {
 
 	config := schemaui.TextareaConfig{
 		Value:       p.Value,
-		Placeholder: p.Placeholder,
+		Placeholder: p.PlaceholderProps.Placeholder,
 		Rows:        p.Rows,
 		Cols:        p.Cols,
 		MaxLength:   p.MaxLength,
 		Resize:      fmt.Sprintf("%v", p.Resizable),
 	}
 
-	validator := buildValidator(p.Required, 0, p.MaxLength, "")
+	validator := buildValidator(p.InteractionProps.Required, 0, p.MaxLength, "")
 
 	return buildComponent(schemaui.ComponentTextarea, baseBuilder{
-		id:          p.ID,
-		name:        p.Name,
-		label:       p.Label,
-		placeholder: p.Placeholder,
-		class:       p.Class,
-		size:        reverseConvertSize[atoms.TextareaSize](p.Size),
-		disabled:    p.Disabled,
-		required:    p.Required,
-		readOnly:    p.ReadOnly,
-		ariaLabel:   p.AriaLabel,
-		onChange:    p.OnChange,
-		onFocus:     p.OnFocus,
-		onBlur:      p.OnBlur,
+		id:          p.BaseProps.ID,
+		name:        p.BaseProps.Name,
+		label:       "", // Textarea doesn't have direct label field
+		placeholder: p.PlaceholderProps.Placeholder,
+		class:       p.BaseProps.Class,
+		size:        reverseConvertSize[atoms.TextareaSize](p.ComponentSize),
+		disabled:    p.InteractionProps.Disabled,
+		required:    p.InteractionProps.Required,
+		readOnly:    p.InteractionProps.ReadOnly,
+		ariaLabel:   p.AccessibilityProps.AriaLabel,
+		onChange:    p.AlpinEventHandlers.OnChange,
+		onFocus:     p.AlpinEventHandlers.OnFocus,
+		onBlur:      p.AlpinEventHandlers.OnBlur,
 		validator:   validator,
 	}, config)
 }
@@ -185,20 +185,20 @@ func convertSelectToSchema(props any) (schemaui.Component, error) {
 		Options:     options,
 		Value:       p.Value,
 		Multiple:    p.Multiple,
-		Placeholder: p.Placeholder,
+		Placeholder: p.PlaceholderProps.Placeholder,
 	}
 
 	return buildComponent(schemaui.ComponentSelect, baseBuilder{
-		id:          p.ID,
-		name:        p.Name,
-		label:       p.Label,
-		placeholder: p.Placeholder,
-		class:       p.Class,
-		size:        reverseConvertSize[atoms.SelectSize](p.SelectSize),
-		disabled:    p.Disabled,
-		required:    p.Required,
-		ariaLabel:   p.AriaLabel,
-		onChange:    p.OnChange,
+		id:          p.BaseProps.ID,
+		name:        p.BaseProps.Name,
+		label:       "", // Select doesn't have direct label field
+		placeholder: p.PlaceholderProps.Placeholder,
+		class:       p.BaseProps.Class,
+		size:        reverseConvertSize[atoms.SelectSize](p.Size),
+		disabled:    p.InteractionProps.Disabled,
+		required:    p.InteractionProps.Required,
+		ariaLabel:   p.AccessibilityProps.AriaLabel,
+		onChange:    p.AlpinEventHandlers.OnChange,
 	}, config)
 }
 
@@ -214,20 +214,20 @@ func convertCheckboxToSchema(props any) (schemaui.Component, error) {
 
 	config := schemaui.CheckboxConfig{
 		Value:   p.Value == "true",
-		Label:   p.Label,
+		Label:   getLabelString(p.LabelProps.Label),
 		Checked: p.Checked,
 	}
 
 	return buildComponent(schemaui.ComponentCheckbox, baseBuilder{
-		id:        p.ID,
-		name:      p.Name,
-		label:     p.Label,
-		class:     p.Class,
+		id:        p.BaseProps.ID,
+		name:      p.BaseProps.Name,
+		label:     getLabelString(p.LabelProps.Label),
+		class:     p.BaseProps.Class,
 		size:      reverseConvertSize[atoms.CheckboxSize](p.Size),
-		disabled:  p.Disabled,
-		required:  p.Required,
-		ariaLabel: p.AriaLabel,
-		onChange:  p.OnChange,
+		disabled:  p.InteractionProps.Disabled,
+		required:  p.InteractionProps.Required,
+		ariaLabel: p.AccessibilityProps.AriaLabel,
+		onChange:  p.AlpinEventHandlers.OnChange,
 	}, config)
 }
 
@@ -262,13 +262,13 @@ func convertRadioToSchema(props any) (schemaui.Component, error) {
 	}
 
 	return buildComponent(schemaui.ComponentRadio, baseBuilder{
-		name:     p.Name,
+		name:     p.BaseProps.Name,
 		label:    p.Label,
-		class:    p.Class,
-		size:     reverseConvertSize[atoms.RadioSize](p.Size),
-		disabled: p.Disabled,
-		required: p.Required,
-		onChange: p.OnChange,
+		class:    p.BaseProps.Class,
+		size:     reverseConvertSize[atoms.RadioSize](atoms.Size("md")), // Default size since RadioGroupProps doesn't have Size
+		disabled: p.InteractionProps.Disabled,
+		required: p.InteractionProps.Required,
+		onChange: "", // RadioGroupProps doesn't have AlpinEventHandlers
 	}, config)
 }
 
@@ -362,90 +362,38 @@ func buildValidator(required bool, minLength, maxLength int, pattern string) *sc
 // ============================================================================
 
 // reverseConvertSize converts component-specific size types to schema size.
+// Since all size types are aliases for atoms.Size, we can convert them directly
 func reverseConvertSize[T any](size T) schemaui.Size {
-	switch any(size).(type) {
-	case atoms.ButtonSize:
-		return reverseButtonSize(any(size).(atoms.ButtonSize))
-	case atoms.InputSize:
-		return reverseInputSize(any(size).(atoms.InputSize))
-	case atoms.TextareaSize:
-		return reverseTextareaSize(any(size).(atoms.TextareaSize))
-	case atoms.SelectSize:
-		return reverseSelectSize(any(size).(atoms.SelectSize))
-	case atoms.CheckboxSize:
-		return reverseCheckboxSize(any(size).(atoms.CheckboxSize))
-	case atoms.RadioSize:
-		return reverseRadioSize(any(size).(atoms.RadioSize))
+	// Convert to atoms.Size since all size types are aliases
+	atomsSize := atoms.Size(fmt.Sprintf("%v", size))
+	return reverseAtomSize(atomsSize)
+}
+
+func reverseAtomSize(size atoms.Size) schemaui.Size {
+	switch size {
+	case atoms.SizeXS, atoms.SizeSM:
+		return schemaui.SizeSM
+	case atoms.SizeLG:
+		return schemaui.SizeLG
+	case atoms.SizeXL:
+		return schemaui.SizeXL
 	default:
 		return schemaui.SizeMD
 	}
 }
 
-func reverseButtonSize(size atoms.ButtonSize) schemaui.Size {
-	switch size {
-	case atoms.ButtonSizeSM:
-		return schemaui.SizeSM
-	case atoms.ButtonSizeLG:
-		return schemaui.SizeLG
-	default:
-		return schemaui.SizeMD
+
+// getLabelString safely converts interface{} label to string
+func getLabelString(label interface{}) string {
+	if label == nil {
+		return ""
 	}
+	if str, ok := label.(string); ok {
+		return str
+	}
+	return fmt.Sprintf("%v", label)
 }
 
-func reverseInputSize(size atoms.InputSize) schemaui.Size {
-	switch size {
-	case atoms.InputSizeSM:
-		return schemaui.SizeSM
-	case atoms.InputSizeLG:
-		return schemaui.SizeLG
-	default:
-		return schemaui.SizeMD
-	}
-}
-
-func reverseTextareaSize(size atoms.TextareaSize) schemaui.Size {
-	switch size {
-	case atoms.TextareaSizeSM:
-		return schemaui.SizeSM
-	case atoms.TextareaSizeLG:
-		return schemaui.SizeLG
-	default:
-		return schemaui.SizeMD
-	}
-}
-
-func reverseSelectSize(size atoms.SelectSize) schemaui.Size {
-	switch size {
-	case atoms.SelectSizeSM:
-		return schemaui.SizeSM
-	case atoms.SelectSizeLG:
-		return schemaui.SizeLG
-	default:
-		return schemaui.SizeMD
-	}
-}
-
-func reverseCheckboxSize(size atoms.CheckboxSize) schemaui.Size {
-	switch size {
-	case atoms.CheckboxSizeSM:
-		return schemaui.SizeSM
-	case atoms.CheckboxSizeLG:
-		return schemaui.SizeLG
-	default:
-		return schemaui.SizeMD
-	}
-}
-
-func reverseRadioSize(size atoms.RadioSize) schemaui.Size {
-	switch size {
-	case atoms.RadioSizeSM:
-		return schemaui.SizeSM
-	case atoms.RadioSizeLG:
-		return schemaui.SizeLG
-	default:
-		return schemaui.SizeMD
-	}
-}
 
 // ============================================================================
 // REVERSE VARIANT CONVERSION
@@ -453,21 +401,15 @@ func reverseRadioSize(size atoms.RadioSize) schemaui.Size {
 
 func reverseConvertVariant(variant atoms.ButtonVariant) schemaui.Variant {
 	switch variant {
-	case atoms.ButtonPrimary:
+	case atoms.VariantPrimary:
 		return schemaui.VariantPrimary
-	case atoms.ButtonSecondary:
+	case atoms.VariantSecondary:
 		return schemaui.VariantSecondary
-	case atoms.ButtonSuccess:
-		return schemaui.VariantSuccess
-	case atoms.ButtonDanger:
-		return schemaui.VariantDanger
-	case atoms.ButtonWarning:
+	case atoms.VariantWarning:
 		return schemaui.VariantWarning
-	case atoms.ButtonInfo:
-		return schemaui.VariantInfo
-	case atoms.ButtonLight:
+	case atoms.VariantLight:
 		return schemaui.VariantLight
-	case atoms.ButtonDark:
+	case atoms.VariantDark:
 		return schemaui.VariantDark
 	default:
 		return schemaui.VariantPrimary

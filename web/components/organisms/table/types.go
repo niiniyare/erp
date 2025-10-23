@@ -36,10 +36,11 @@ type DataTableColumn struct {
 // Enhanced with atoms architecture alignment
 type DataTableAction struct {
 	// Core action properties
-	Text    string        `json:"text"`
-	Icon    string        `json:"icon"`
-	Variant atoms.Variant `json:"variant"`
-	Size    atoms.Size    `json:"size"`
+	Text     string        `json:"text"`
+	Icon     string        `json:"icon"`
+	Variant  atoms.Variant `json:"variant"`
+	Size     atoms.Size    `json:"size"`
+	Disabled bool          `json:"disabled,omitempty"`
 	
 	// Event handling
 	OnClick string `json:"onclick,omitempty"`
@@ -56,7 +57,6 @@ type DataTableAction struct {
 	Bulk      bool                    `json:"bulk,omitempty"`      // For bulk actions
 	Single    bool                    `json:"single,omitempty"`    // For single row actions
 	ShowWhen  *atoms.SchemaExpression `json:"showWhen,omitempty"`  // Conditional display
-	Disabled  bool                    `json:"disabled,omitempty"`  // Action disabled state
 	
 	// Styling and accessibility
 	Tooltip   string `json:"tooltip,omitempty"`   // Tooltip text
@@ -137,6 +137,12 @@ type DataTableProps struct {
 	// HTMX attributes
 	HxGet     string `json:"hxGet,omitempty"`     // HTMX GET endpoint
 	HxPost    string `json:"hxPost,omitempty"`    // HTMX POST endpoint
+	
+	// Visual styling properties
+	Striped   bool `json:"striped,omitempty"`   // Striped rows
+	Bordered  bool `json:"bordered,omitempty"`  // Table borders
+	Hover     bool `json:"hover,omitempty"`     // Row hover effects
+	Compact   bool `json:"compact,omitempty"`   // Compact layout
 	HxTarget  string `json:"hxTarget,omitempty"`  // HTMX target selector
 	HxSwap    string `json:"hxSwap,omitempty"`    // HTMX swap strategy
 	HxTrigger string `json:"hxTrigger,omitempty"` // HTMX trigger events

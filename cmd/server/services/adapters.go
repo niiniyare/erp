@@ -186,7 +186,7 @@ func (c *Core) initializeServices() error {
 // initializeFinanceServices creates finance-specific services
 func (c *Core) initializeFinanceServices() error {
 	// Placeholder for finance services initialization
-	// This will be populated when we integrate the finance module
+	// TODO:This will be populated when we integrate the finance module
 	c.financeServices = &FinanceServices{}
 
 	logger.Info("Finance services initialized (placeholder)", logger.Fields{

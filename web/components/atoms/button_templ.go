@@ -15,21 +15,21 @@ import (
 // ============================================================================
 // DESIGN RATIONALE - BUTTON COMPONENT
 // ============================================================================
-// Following the composition-based architecture established in checkbox.templ:
+// Following Flowbite's official button design system:
 //
-// 1. REUSABLE STRUCTS: Uses shared BaseProps, AccessibilityProps, etc.
-// 2. CONFIGURATION-DRIVEN: Button variants, sizes, and states use maps
-// 3. ALPINE.JS INTEGRATION: Proper x-on: syntax for event handling
-// 4. LOADING STATES: Built-in loading spinner and disabled state management
-// 5. ICON SUPPORT: Flexible icon positioning with proper spacing
-// 6. ACCESSIBILITY: Full ARIA support with button-specific attributes
+// 1. EXACT FLOWBITE CLASSES: Uses precise padding, text sizes, and spacing
+// 2. COMPLETE VARIANT SUPPORT: Default, outlined, ghost, pill, gradient styles
+// 3. ICON INTEGRATION: Proper sizing with 'me' (margin-end) for RTL support
+// 4. LOADING STATES: Built-in spinner overlay maintaining button dimensions
+// 5. ACCESSIBILITY: Full ARIA support with button-specific attributes
+// 6. ALPINE.JS READY: Proper x-on: syntax for interactive behaviors
 // ============================================================================
 
 // ============================================================================
 // CONFIGURATION CONSTANTS
 // ============================================================================
 
-// Button variant configurations mapping to Flowbite classes
+// Button variant configurations using exact Flowbite classes
 var buttonVariantClasses = map[Variant]map[ColorScheme][]string{
 	VariantDefault: {
 		ColorPrimary: {
@@ -41,6 +41,14 @@ var buttonVariantClasses = map[Variant]map[ColorScheme][]string{
 			"text-white", "bg-gray-800", "hover:bg-gray-900",
 			"focus:ring-4", "focus:ring-gray-300", "focus:outline-none",
 			"dark:bg-gray-800", "dark:hover:bg-gray-700", "dark:focus:ring-gray-700",
+			"dark:border-gray-700",
+		},
+		ColorAlternative: {
+			"text-gray-900", "bg-white", "border", "border-gray-200",
+			"hover:bg-gray-100", "hover:text-blue-700",
+			"focus:z-10", "focus:ring-4", "focus:ring-gray-100", "focus:outline-none",
+			"dark:bg-gray-800", "dark:text-gray-400", "dark:border-gray-600",
+			"dark:hover:text-white", "dark:hover:bg-gray-700", "dark:focus:ring-gray-700",
 		},
 		ColorSuccess: {
 			"text-white", "bg-green-700", "hover:bg-green-800",
@@ -57,35 +65,67 @@ var buttonVariantClasses = map[Variant]map[ColorScheme][]string{
 			"focus:ring-4", "focus:ring-yellow-300", "focus:outline-none",
 			"dark:focus:ring-yellow-900",
 		},
+		ColorDark: {
+			"text-white", "bg-gray-800", "hover:bg-gray-900",
+			"focus:ring-4", "focus:ring-gray-300", "focus:outline-none",
+			"dark:bg-gray-800", "dark:hover:bg-gray-700", "dark:focus:ring-gray-700",
+			"dark:border-gray-700",
+		},
+		ColorLight: {
+			"text-gray-900", "bg-white", "border", "border-gray-300",
+			"hover:bg-gray-100",
+			"focus:ring-4", "focus:ring-gray-100", "focus:outline-none",
+			"dark:bg-gray-800", "dark:text-white", "dark:border-gray-600",
+			"dark:hover:bg-gray-700", "dark:hover:border-gray-600", "dark:focus:ring-gray-700",
+		},
+		ColorPurple: {
+			"text-white", "bg-purple-700", "hover:bg-purple-800",
+			"focus:ring-4", "focus:ring-purple-300", "focus:outline-none",
+			"dark:bg-purple-600", "dark:hover:bg-purple-700", "dark:focus:ring-purple-900",
+		},
 	},
 	VariantOutlined: {
 		ColorPrimary: {
 			"text-blue-700", "border", "border-blue-700",
-			"hover:bg-blue-700", "hover:text-white",
+			"hover:bg-blue-800", "hover:text-white",
 			"focus:ring-4", "focus:ring-blue-300", "focus:outline-none",
 			"dark:border-blue-500", "dark:text-blue-500",
-			"dark:hover:bg-blue-600", "dark:hover:text-white", "dark:focus:ring-blue-800",
+			"dark:hover:text-white", "dark:hover:bg-blue-500", "dark:focus:ring-blue-800",
 		},
 		ColorSecondary: {
-			"text-gray-700", "border", "border-gray-700",
-			"hover:bg-gray-700", "hover:text-white",
+			"text-gray-900", "border", "border-gray-800",
+			"hover:bg-gray-900", "hover:text-white",
 			"focus:ring-4", "focus:ring-gray-300", "focus:outline-none",
 			"dark:border-gray-600", "dark:text-gray-400",
-			"dark:hover:bg-gray-600", "dark:hover:text-white", "dark:focus:ring-gray-800",
+			"dark:hover:text-white", "dark:hover:bg-gray-600", "dark:focus:ring-gray-800",
 		},
 		ColorSuccess: {
 			"text-green-700", "border", "border-green-700",
-			"hover:bg-green-700", "hover:text-white",
+			"hover:bg-green-800", "hover:text-white",
 			"focus:ring-4", "focus:ring-green-300", "focus:outline-none",
 			"dark:border-green-500", "dark:text-green-500",
-			"dark:hover:bg-green-600", "dark:hover:text-white", "dark:focus:ring-green-800",
+			"dark:hover:text-white", "dark:hover:bg-green-600", "dark:focus:ring-green-800",
 		},
 		ColorDanger: {
 			"text-red-700", "border", "border-red-700",
-			"hover:bg-red-700", "hover:text-white",
+			"hover:bg-red-800", "hover:text-white",
 			"focus:ring-4", "focus:ring-red-300", "focus:outline-none",
 			"dark:border-red-500", "dark:text-red-500",
-			"dark:hover:bg-red-600", "dark:hover:text-white", "dark:focus:ring-red-900",
+			"dark:hover:text-white", "dark:hover:bg-red-600", "dark:focus:ring-red-900",
+		},
+		ColorWarning: {
+			"text-yellow-400", "border", "border-yellow-400",
+			"hover:bg-yellow-500", "hover:text-white",
+			"focus:ring-4", "focus:ring-yellow-300", "focus:outline-none",
+			"dark:border-yellow-300", "dark:text-yellow-300",
+			"dark:hover:text-white", "dark:hover:bg-yellow-400", "dark:focus:ring-yellow-900",
+		},
+		ColorPurple: {
+			"text-purple-700", "border", "border-purple-700",
+			"hover:bg-purple-800", "hover:text-white",
+			"focus:ring-4", "focus:ring-purple-300", "focus:outline-none",
+			"dark:border-purple-400", "dark:text-purple-400",
+			"dark:hover:text-white", "dark:hover:bg-purple-500", "dark:focus:ring-purple-900",
 		},
 	},
 	VariantGhost: {
@@ -94,25 +134,94 @@ var buttonVariantClasses = map[Variant]map[ColorScheme][]string{
 			"focus:ring-4", "focus:ring-gray-200", "focus:outline-none",
 			"dark:text-gray-400", "dark:hover:bg-gray-700", "dark:focus:ring-gray-700",
 		},
+		ColorPrimary: {
+			"text-blue-700", "hover:bg-blue-50",
+			"focus:ring-4", "focus:ring-blue-200", "focus:outline-none",
+			"dark:text-blue-400", "dark:hover:bg-blue-900/20", "dark:focus:ring-blue-800",
+		},
+		ColorSuccess: {
+			"text-green-700", "hover:bg-green-50",
+			"focus:ring-4", "focus:ring-green-200", "focus:outline-none",
+			"dark:text-green-400", "dark:hover:bg-green-900/20", "dark:focus:ring-green-800",
+		},
+		ColorDanger: {
+			"text-red-700", "hover:bg-red-50",
+			"focus:ring-4", "focus:ring-red-200", "focus:outline-none",
+			"dark:text-red-400", "dark:hover:bg-red-900/20", "dark:focus:ring-red-900",
+		},
 	},
+	// Gradient variants use special background patterns
+	VariantGradient: {
+		ColorPrimary: {
+			"text-white", "bg-gradient-to-r", "from-blue-500", "via-blue-600", "to-blue-700",
+			"hover:bg-gradient-to-br",
+			"focus:ring-4", "focus:ring-blue-300", "focus:outline-none",
+			"dark:focus:ring-blue-800",
+		},
+		ColorSuccess: {
+			"text-white", "bg-gradient-to-r", "from-green-400", "via-green-500", "to-green-600",
+			"hover:bg-gradient-to-br",
+			"focus:ring-4", "focus:ring-green-300", "focus:outline-none",
+			"dark:focus:ring-green-800",
+		},
+		ColorDanger: {
+			"text-white", "bg-gradient-to-r", "from-red-400", "via-red-500", "to-red-600",
+			"hover:bg-gradient-to-br",
+			"focus:ring-4", "focus:ring-red-300", "focus:outline-none",
+			"dark:focus:ring-red-800",
+		},
+		ColorPurple: {
+			"text-white", "bg-gradient-to-r", "from-purple-500", "via-purple-600", "to-purple-700",
+			"hover:bg-gradient-to-br",
+			"focus:ring-4", "focus:ring-purple-300", "focus:outline-none",
+			"dark:focus:ring-purple-800",
+		},
+	},
+}
+
+// Exact Flowbite button size classes (padding + text size)
+var buttonSizeClasses = map[Size][]string{
+	SizeXS: {"px-3", "py-2", "text-xs"},
+	SizeSM: {"px-3", "py-2", "text-sm"},
+	SizeMD: {"px-5", "py-2.5", "text-sm"}, // Base/default size
+	SizeLG: {"px-5", "py-3", "text-base"},
+	SizeXL: {"px-6", "py-3.5", "text-base"},
+}
+
+// Flowbite icon sizes by button size
+var iconSizeClasses = map[Size][]string{
+	SizeXS: {"w-3", "h-3"},
+	SizeSM: {"w-3", "h-3"},
+	SizeMD: {"w-3.5", "h-3.5"},
+	SizeLG: {"w-4", "h-4"},
+	SizeXL: {"w-4", "h-4"},
 }
 
 // Base button classes
 const (
-	buttonBaseClasses     = "font-medium transition-colors duration-200 focus:z-10 inline-flex items-center justify-center"
-	buttonDisabledClasses = "opacity-50 cursor-not-allowed pointer-events-none"
-	buttonLoadingClasses  = "relative text-transparent pointer-events-none"
+	buttonBaseClasses     = "font-medium rounded-lg text-center inline-flex items-center"
+	buttonPillClasses     = "font-medium rounded-full text-center inline-flex items-center"
+	buttonDisabledClasses = "opacity-50 cursor-not-allowed"
+	buttonLoadingClasses  = "relative"
 	buttonFullWidthClass  = "w-full"
+)
+
+// Button type constants for type safety
+const (
+	ButtonTypeButton = "button"
+	ButtonTypeSubmit = "submit"
+	ButtonTypeReset  = "reset"
 )
 
 // ============================================================================
 // CONSTRUCTOR WITH SENSIBLE DEFAULTS
 // ============================================================================
 
-// NewButton creates a new ButtonProps with sensible defaults
+// NewButton creates a new ButtonProps with Flowbite defaults
 // Example usage:
+//
 // button := NewButton("Submit Form")
-// button.Type = "submit"
+// button.Type = ButtonTypeSubmit
 // button.ColorScheme = ColorSuccess
 func NewButton(text string) ButtonProps {
 	return ButtonProps{
@@ -120,9 +229,9 @@ func NewButton(text string) ButtonProps {
 			ID: GenerateID("button"),
 		},
 		Text:        text,
-		Type:        "button", // Default to button type
+		Type:        ButtonTypeButton,
 		Variant:     VariantDefault,
-		Size:        SizeMD,
+		Size:        SizeMD, // Flowbite's base size
 		ColorScheme: ColorPrimary,
 		Icon: IconProps{
 			Position: IconLeft,
@@ -130,11 +239,19 @@ func NewButton(text string) ButtonProps {
 	}
 }
 
-// NewSubmitButton creates a button configured for form submission
+// NewSubmitButton creates a submit button with success color
 func NewSubmitButton(text string) ButtonProps {
 	props := NewButton(text)
-	props.Type = "submit"
+	props.Type = ButtonTypeSubmit
 	props.ColorScheme = ColorSuccess
+	return props
+}
+
+// NewResetButton creates a reset button with secondary color
+func NewResetButton(text string) ButtonProps {
+	props := NewButton(text)
+	props.Type = ButtonTypeReset
+	props.ColorScheme = ColorSecondary
 	return props
 }
 
@@ -145,12 +262,49 @@ func NewIconButton(text, iconName string) ButtonProps {
 	return props
 }
 
+// NewIconOnlyButton creates an icon-only button
+// Requires aria-label for accessibility
+func NewIconOnlyButton(iconName, ariaLabel string) ButtonProps {
+	props := NewButton("")
+	props.Icon.Name = iconName
+	props.AriaLabel = ariaLabel
+	return props
+}
+
+// NewPillButton creates a pill-shaped button (rounded-full)
+func NewPillButton(text string) ButtonProps {
+	props := NewButton(text)
+	props.Pill = true
+	return props
+}
+
+// NewGradientButton creates a gradient button
+func NewGradientButton(text string) ButtonProps {
+	props := NewButton(text)
+	props.Variant = VariantGradient
+	return props
+}
+
+// NewOutlinedButton creates an outlined button
+func NewOutlinedButton(text string) ButtonProps {
+	props := NewButton(text)
+	props.Variant = VariantOutlined
+	return props
+}
+
+// NewGhostButton creates a ghost/text button
+func NewGhostButton(text string) ButtonProps {
+	props := NewButton(text)
+	props.Variant = VariantGhost
+	props.ColorScheme = ColorDefault
+	return props
+}
+
 // ============================================================================
 // TEMPLATE COMPONENTS
 // ============================================================================
 
-// Button renders a fully-featured button with Flowbite styling
-// Supports variants, sizes, loading states, icons, and full accessibility
+// Button renders a Flowbite-styled button with full feature support
 func Button(props ButtonProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -184,7 +338,7 @@ func Button(props ButtonProps) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(getButtonType(props))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 148, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 302, Col: 29}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -194,15 +348,15 @@ func Button(props ButtonProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if props.ID != "" {
+		if props.BaseProps.ID != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, " id=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.BaseProps.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 150, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 304, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -213,15 +367,15 @@ func Button(props ButtonProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.Name != "" {
+		if props.BaseProps.Name != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, " name=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.Name)
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.BaseProps.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 153, Col: 20}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 307, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -240,7 +394,7 @@ func Button(props ButtonProps) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.Form)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 156, Col: 20}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 310, Col: 20}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -268,21 +422,21 @@ func Button(props ButtonProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if props.Disabled || props.Loading {
+		if props.InteractionProps.Disabled || props.Loading {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, " disabled")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.AriaLabel != "" {
+		if props.AccessibilityProps.AriaLabel != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, " aria-label=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var8 string
-			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.AccessibilityProps.AriaLabel)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 163, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 317, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -293,15 +447,15 @@ func Button(props ButtonProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.AriaDescribedBy != "" {
+		if props.AccessibilityProps.AriaDescribedBy != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, " aria-describedby=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaDescribedBy)
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.AccessibilityProps.AriaDescribedBy)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 166, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 320, Col: 62}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -312,15 +466,15 @@ func Button(props ButtonProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.AriaExpanded != nil {
+		if props.AccessibilityProps.AriaExpanded != nil {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, " aria-expanded=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var10 string
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(getAriaExpanded(props.AriaExpanded))
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(getAriaExpanded(props.AccessibilityProps.AriaExpanded))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 169, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 323, Col: 73}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -331,15 +485,15 @@ func Button(props ButtonProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.AriaControls != "" {
+		if props.AccessibilityProps.AriaControls != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, " aria-controls=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var11 string
-			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaControls)
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.AccessibilityProps.AriaControls)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 172, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 326, Col: 56}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -350,15 +504,15 @@ func Button(props ButtonProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.AriaHasPopup != "" {
+		if props.AccessibilityProps.AriaHasPopup != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, " aria-haspopup=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var12 string
-			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaHasPopup)
+			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.AccessibilityProps.AriaHasPopup)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 175, Col: 37}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 329, Col: 56}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -369,21 +523,21 @@ func Button(props ButtonProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.AriaDisabled {
+		if props.AccessibilityProps.AriaDisabled {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, " aria-disabled=\"true\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.DataTestID != "" {
+		if props.BaseProps.DataTestID != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, " data-testid=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var13 string
-			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
+			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(props.BaseProps.DataTestID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 181, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 335, Col: 43}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -402,7 +556,7 @@ func Button(props ButtonProps) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(props.TabIndex))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 184, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 338, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -413,15 +567,15 @@ func Button(props ButtonProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.OnClick != "" {
+		if props.AlpinEventHandlers.OnClick != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, " x-on:click=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var15 string
-			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnClick)
+			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(props.AlpinEventHandlers.OnClick)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 187, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 341, Col: 48}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -432,15 +586,15 @@ func Button(props ButtonProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.OnFocus != "" {
+		if props.AlpinEventHandlers.OnFocus != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, " x-on:focus=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var16 string
-			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnFocus)
+			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(props.AlpinEventHandlers.OnFocus)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 190, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 344, Col: 48}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -451,15 +605,15 @@ func Button(props ButtonProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.OnBlur != "" {
+		if props.AlpinEventHandlers.OnBlur != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, " x-on:blur=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var17 string
-			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnBlur)
+			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(props.AlpinEventHandlers.OnBlur)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 193, Col: 27}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 347, Col: 46}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
@@ -470,15 +624,15 @@ func Button(props ButtonProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.OnMouseEnter != "" {
+		if props.AlpinEventHandlers.OnMouseEnter != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, " x-on:mouseenter=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var18 string
-			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnMouseEnter)
+			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(props.AlpinEventHandlers.OnMouseEnter)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 196, Col: 39}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 350, Col: 58}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -489,15 +643,15 @@ func Button(props ButtonProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.OnMouseLeave != "" {
+		if props.AlpinEventHandlers.OnMouseLeave != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, " x-on:mouseleave=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var19 string
-			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnMouseLeave)
+			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(props.AlpinEventHandlers.OnMouseLeave)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 199, Col: 39}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 353, Col: 58}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
@@ -508,15 +662,15 @@ func Button(props ButtonProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		if props.OnKeyDown != "" {
+		if props.AlpinEventHandlers.OnKeyDown != "" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, " x-on:keydown=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var20 string
-			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnKeyDown)
+			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(props.AlpinEventHandlers.OnKeyDown)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 202, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 356, Col: 52}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -532,23 +686,7 @@ func Button(props ButtonProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if props.Loading {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, " <span class=\"absolute inset-0 flex items-center justify-center\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = loadingSpinner(props.Size).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</span> <span class=\"opacity-0\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = buttonContent(props).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</span>")
+			templ_7745c5c3_Err = buttonLoadingState(props).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -558,7 +696,7 @@ func Button(props ButtonProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</button>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</button>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -566,8 +704,8 @@ func Button(props ButtonProps) templ.Component {
 	})
 }
 
-// buttonContent renders the inner content of the button
-func buttonContent(props ButtonProps) templ.Component {
+// buttonLoadingState renders loading spinner overlay
+func buttonLoadingState(props ButtonProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -588,41 +726,32 @@ func buttonContent(props ButtonProps) templ.Component {
 			templ_7745c5c3_Var21 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		if props.Icon.HasIcon() && props.Icon.Position == IconLeft {
-			templ_7745c5c3_Err = buttonIcon(props.Icon, props.Size).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<div class=\"absolute inset-0 flex items-center justify-center\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var22 string
-		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(props.Text)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 228, Col: 19}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+		templ_7745c5c3_Err = loadingSpinner(props.Size).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div><span class=\"invisible\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if props.Icon.HasIcon() && props.Icon.Position == IconRight {
-			templ_7745c5c3_Err = buttonIcon(props.Icon, props.Size).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
+		templ_7745c5c3_Err = buttonContent(props).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</span>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
 		}
 		return nil
 	})
 }
 
-// buttonIcon renders an icon with proper sizing and spacing
-func buttonIcon(icon IconProps, buttonSize Size) templ.Component {
+// buttonContent renders button inner content
+func buttonContent(props ButtonProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -638,38 +767,47 @@ func buttonIcon(icon IconProps, buttonSize Size) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var23 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var23 == nil {
-			templ_7745c5c3_Var23 = templ.NopComponent
+		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var22 == nil {
+			templ_7745c5c3_Var22 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var24 = []any{icon.GetIconClasses()}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var24...)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		if props.Icon.HasIcon() && props.Icon.Position == IconLeft {
+			templ_7745c5c3_Err = Icon(getButtonIconProps(props.Icon, props.Size, props.Text != "", IconLeft)).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "<svg class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		if props.Text != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<span>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var23 string
+			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(props.Text)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 387, Col: 18}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</span>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		var templ_7745c5c3_Var25 string
-		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var24).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\" fill=\"currentColor\" viewBox=\"0 0 24 24\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z\"></path></svg>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		if props.Icon.HasIcon() && props.Icon.Position == IconRight {
+			templ_7745c5c3_Err = Icon(getButtonIconProps(props.Icon, props.Size, props.Text != "", IconRight)).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		return nil
 	})
 }
 
-// loadingSpinner renders a spinning loading indicator
+// loadingSpinner renders Flowbite-style loading spinner
 func loadingSpinner(size Size) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -686,30 +824,30 @@ func loadingSpinner(size Size) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var26 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var26 == nil {
-			templ_7745c5c3_Var26 = templ.NopComponent
+		templ_7745c5c3_Var24 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var24 == nil {
+			templ_7745c5c3_Var24 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var27 = []any{getLoadingSpinnerClasses(size)}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var27...)
+		var templ_7745c5c3_Var25 = []any{getLoadingSpinnerClasses(size)}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var25...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<svg class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "<svg class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var28 string
-		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var27).String())
+		var templ_7745c5c3_Var26 string
+		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var25).String())
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/button.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle> <path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle> <path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -726,40 +864,48 @@ func getButtonType(props ButtonProps) string {
 	if props.Type != "" {
 		return props.Type
 	}
-	return "button"
+	return ButtonTypeButton
 }
 
-// getButtonClasses generates all button classes based on props
+// getButtonClasses generates all button classes following Flowbite patterns
 func getButtonClasses(props ButtonProps) string {
-	classes := []string{buttonBaseClasses}
+	var classes []string
 
-	// Add variant and color scheme classes
+	// Base classes (includes rounded)
+	if props.Pill {
+		classes = append(classes, buttonPillClasses)
+	} else {
+		classes = append(classes, buttonBaseClasses)
+	}
+
+	// Size classes (padding + text size)
+	if sizeClasses, ok := buttonSizeClasses[props.Size]; ok {
+		classes = append(classes, sizeClasses...)
+	}
+
+	// Variant and color scheme classes
 	if variantColors, ok := buttonVariantClasses[props.Variant]; ok {
 		if colorClasses, ok := variantColors[props.ColorScheme]; ok {
 			classes = append(classes, colorClasses...)
 		}
 	}
 
-	// Add size classes
-	classes = append(classes, GetButtonSizeClasses(props.Size)...)
-
-	// Add rounding
-	classes = append(classes, GetRoundedClass(true, props.Size))
-
-	// Add full width
+	// Full width
 	if props.FullWidth {
 		classes = append(classes, buttonFullWidthClass)
 	}
 
-	// Add disabled/loading state
+	// Disabled state
 	if props.Disabled {
 		classes = append(classes, buttonDisabledClasses)
 	}
+
+	// Loading state
 	if props.Loading {
 		classes = append(classes, buttonLoadingClasses)
 	}
 
-	// Add custom classes
+	// Custom classes (last so they can override)
 	if props.Class != "" {
 		classes = append(classes, props.Class)
 	}
@@ -767,10 +913,47 @@ func getButtonClasses(props ButtonProps) string {
 	return JoinClasses(classes...)
 }
 
-// getLoadingSpinnerClasses returns classes for the loading spinner
+// getButtonIconProps configures icon for button context
+// Applies proper sizing and Flowbite spacing (me-2/ms-2)
+func getButtonIconProps(icon IconProps, buttonSize Size, hasText bool, position IconPosition) IconProps {
+	iconProps := icon
+
+	// Set icon size based on button size
+	iconProps.Size = buttonSize
+
+	// Build icon classes
+	var iconClasses []string
+
+	// Add Flowbite icon size
+	if sizes, ok := iconSizeClasses[buttonSize]; ok {
+		iconClasses = append(iconClasses, sizes...)
+	}
+
+	// Add Flowbite spacing (me for left, ms for right)
+	if hasText {
+		if position == IconLeft {
+			iconClasses = append(iconClasses, "me-2") // margin-end (RTL-friendly)
+		} else {
+			iconClasses = append(iconClasses, "ms-2") // margin-start
+		}
+	}
+
+	// Preserve any existing custom classes
+	if icon.Class != "" {
+		iconClasses = append(iconClasses, icon.Class)
+	}
+
+	iconProps.Class = JoinClasses(iconClasses...)
+
+	return iconProps
+}
+
+// getLoadingSpinnerClasses returns classes for loading spinner
 func getLoadingSpinnerClasses(size Size) string {
 	classes := []string{"animate-spin"}
-	classes = append(classes, GetIconSizeClasses(size)...)
+	if sizes, ok := iconSizeClasses[size]; ok {
+		classes = append(classes, sizes...)
+	}
 	return JoinClasses(classes...)
 }
 
@@ -786,56 +969,138 @@ func getAriaExpanded(expanded *bool) string {
 }
 
 // ============================================================================
-// UTILITY FUNCTIONS FOR COMMON PATTERNS
+// FLUENT API FOR CHAINABLE CONFIGURATION
 // ============================================================================
 
-// WithLoading returns a new ButtonProps with loading state
+// WithLoading returns button with loading state
 func (p ButtonProps) WithLoading(loading bool) ButtonProps {
 	p.Loading = loading
 	return p
 }
 
-// WithIcon returns a new ButtonProps with an icon
+// WithIcon returns button with icon
 func (p ButtonProps) WithIcon(iconName string, position IconPosition) ButtonProps {
 	p.Icon.Name = iconName
 	p.Icon.Position = position
 	return p
 }
 
-// AsSubmit returns a new ButtonProps configured as a submit button
+// WithLeftIcon returns button with left-positioned icon
+func (p ButtonProps) WithLeftIcon(iconName string) ButtonProps {
+	return p.WithIcon(iconName, IconLeft)
+}
+
+// WithRightIcon returns button with right-positioned icon
+func (p ButtonProps) WithRightIcon(iconName string) ButtonProps {
+	return p.WithIcon(iconName, IconRight)
+}
+
+// AsSubmit configures button as submit type
 func (p ButtonProps) AsSubmit() ButtonProps {
-	p.Type = "submit"
+	p.Type = ButtonTypeSubmit
 	return p
 }
 
-// AsFullWidth returns a new ButtonProps with full width
+// AsReset configures button as reset type
+func (p ButtonProps) AsReset() ButtonProps {
+	p.Type = ButtonTypeReset
+	return p
+}
+
+// AsFullWidth makes button full width
 func (p ButtonProps) AsFullWidth() ButtonProps {
 	p.FullWidth = true
 	return p
 }
 
-// WithVariant returns a new ButtonProps with specified variant
+// AsPill makes button pill-shaped (rounded-full)
+func (p ButtonProps) AsPill() ButtonProps {
+	p.Pill = true
+	return p
+}
+
+// WithVariant sets button variant
 func (p ButtonProps) WithVariant(variant Variant) ButtonProps {
 	p.Variant = variant
 	return p
 }
 
-// WithColorScheme returns a new ButtonProps with specified color scheme
+// WithColorScheme sets button color scheme
 func (p ButtonProps) WithColorScheme(scheme ColorScheme) ButtonProps {
 	p.ColorScheme = scheme
 	return p
 }
 
-// WithSize returns a new ButtonProps with specified size
+// WithSize sets button size
 func (p ButtonProps) WithSize(size Size) ButtonProps {
 	p.Size = size
 	return p
 }
 
-// AsDisabled returns a new ButtonProps with disabled state
+// AsDisabled makes button disabled
 func (p ButtonProps) AsDisabled() ButtonProps {
 	p.Disabled = true
 	return p
+}
+
+// WithAriaLabel sets aria-label
+func (p ButtonProps) WithAriaLabel(label string) ButtonProps {
+	p.AriaLabel = label
+	return p
+}
+
+// WithAriaControls sets aria-controls
+func (p ButtonProps) WithAriaControls(controls string) ButtonProps {
+	p.AriaControls = controls
+	return p
+}
+
+// WithOnClick sets click handler
+func (p ButtonProps) WithOnClick(handler string) ButtonProps {
+	p.OnClick = handler
+	return p
+}
+
+// WithForm associates button with form
+func (p ButtonProps) WithForm(formID string) ButtonProps {
+	p.Form = formID
+	return p
+}
+
+// WithClass adds custom CSS classes
+func (p ButtonProps) WithClass(class string) ButtonProps {
+	p.Class = class
+	return p
+}
+
+// ============================================================================
+// VALIDATION
+// ============================================================================
+
+// Validate checks button configuration
+func (p ButtonProps) Validate() error {
+	if p.Text == "" && !p.Icon.HasIcon() {
+		return ErrButtonNoContent
+	}
+	if p.Text == "" && p.Icon.HasIcon() && p.AriaLabel == "" {
+		return ErrIconOnlyButtonNoAriaLabel
+	}
+	return nil
+}
+
+// Validation errors
+var (
+	ErrButtonNoContent           = ValidationError{Message: "button must have either text or icon"}
+	ErrIconOnlyButtonNoAriaLabel = ValidationError{Message: "icon-only button must have aria-label for accessibility"}
+)
+
+// ValidationError represents a validation error
+type ValidationError struct {
+	Message string
+}
+
+func (e ValidationError) Error() string {
+	return e.Message
 }
 
 var _ = templruntime.GeneratedTemplate

@@ -37,25 +37,37 @@ templ DataTablePaginationControls(props DataTableProps) {
 
 // DataTablePaginationPrevious renders the previous page button
 templ DataTablePaginationPrevious() {
-	@atoms.IconButton(atoms.ButtonProps{
-		Icon:     "chevron-left",
-		Variant:  atoms.ButtonLight,
+	@atoms.Button(atoms.ButtonProps{
+		AccessibilityProps: atoms.AccessibilityProps{
+			AriaLabel: "Go to previous page",
+		},
+		InteractionProps: atoms.InteractionProps{
+			Disabled: true, // TODO: Bind to actual pagination state
+		},
+		AlpinEventHandlers: atoms.AlpinEventHandlers{
+			OnClick: "goToPage(pageInfo.current - 1)",
+		},
+		Icon:     atoms.IconProps{Name: "chevron-left"},
+		Variant:  atoms.VariantLight,
 		Size:     atoms.ButtonSizeSM,
-		OnClick:  "goToPage(pageInfo.current - 1)",
-		Disabled: true, // TODO: Bind to actual pagination state
-		AriaLabel: "Go to previous page",
 	})
 }
 
 // DataTablePaginationNext renders the next page button
 templ DataTablePaginationNext() {
-	@atoms.IconButton(atoms.ButtonProps{
-		Icon:     "chevron-right",
-		Variant:  atoms.ButtonLight,
+	@atoms.Button(atoms.ButtonProps{
+		AccessibilityProps: atoms.AccessibilityProps{
+			AriaLabel: "Go to next page",
+		},
+		InteractionProps: atoms.InteractionProps{
+			Disabled: true, // TODO: Bind to actual pagination state
+		},
+		AlpinEventHandlers: atoms.AlpinEventHandlers{
+			OnClick: "goToPage(pageInfo.current + 1)",
+		},
+		Icon:     atoms.IconProps{Name: "chevron-right"},
+		Variant:  atoms.VariantLight,
 		Size:     atoms.ButtonSizeSM,
-		OnClick:  "goToPage(pageInfo.current + 1)",
-		Disabled: true, // TODO: Bind to actual pagination state
-		AriaLabel: "Go to next page",
 	})
 }
 
