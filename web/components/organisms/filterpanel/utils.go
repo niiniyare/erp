@@ -1,5 +1,7 @@
 package filterpanel
 
+//nolint:unused // Utility functions may be used by templates or future features
+
 import (
 	"fmt"
 

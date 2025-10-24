@@ -18,13 +18,13 @@ const (
 	URLRegex            = `^https?://[^\s/$.?#].[^\s]*$`
 	PhoneRegex          = `^\+?[1-9]\d{1,14}$` // E.164 format
 	ZipCodeUSRegex      = `^\d{5}(-\d{4})?$`
-	StrongPasswordRegex = `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$`
+	StrongPasswordRegex = `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$` //nolint:gosec // This is a regex pattern, not credentials
 	AlphanumericRegex   = `^[a-zA-Z0-9]+$`
 	AlphaRegex          = `^[a-zA-Z]+$`
 	NumericRegex        = `^\d+$`
 	HexColorRegex       = `^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$`
 	IPv4Regex           = `^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$`
-	CreditCardRegex     = `^(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})$`
+	CreditCardRegex     = `^(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})$` //nolint:gosec // This is a regex pattern, not credentials
 )
 
 // ============================================================================
@@ -74,7 +74,7 @@ func ClearRegexCache() {
 // Validator defines the interface for all validators.
 // All validators must implement these two methods.
 type Validator interface {
-	Validate(value interface{}) error
+	Validate(value any) error
 	ErrorMessage() string
 }
 
@@ -88,33 +88,40 @@ type RequiredValidator struct {
 }
 
 // Validate checks if the value is not empty.
-func (v RequiredValidator) Validate(value interface{}) error {
-	switch val := value.(type) {
-	case string:
-		if len(val) == 0 || len(val) == len(val)-len(val) {
-			// Check for whitespace-only strings
-			trimmed := ""
-			for _, r := range val {
-				if r != ' ' && r != '\t' && r != '\n' && r != '\r' {
-					trimmed += string(r)
-				}
-			}
-			if trimmed == "" {
-				return errors.New(v.ErrorMessage())
-			}
-		}
-	case nil:
+func (v RequiredValidator) Validate(value any) error {
+	if isEmpty(value) {
 		return errors.New(v.ErrorMessage())
-	case []interface{}:
-		if len(val) == 0 {
-			return errors.New(v.ErrorMessage())
-		}
-	case map[string]interface{}:
-		if len(val) == 0 {
-			return errors.New(v.ErrorMessage())
-		}
 	}
 	return nil
+}
+
+// isEmpty checks if a value is considered empty for validation purposes.
+func isEmpty(value any) bool {
+	switch val := value.(type) {
+	case nil:
+		return true
+	case string:
+		return isEmptyString(val)
+	case []any:
+		return len(val) == 0
+	case map[string]any:
+		return len(val) == 0
+	}
+	return false
+}
+
+// isEmptyString checks if a string is empty or contains only whitespace.
+func isEmptyString(s string) bool {
+	if len(s) == 0 {
+		return true
+	}
+	// Check for whitespace-only strings
+	for _, r := range s {
+		if r != ' ' && r != '\t' && r != '\n' && r != '\r' {
+			return false
+		}
+	}
+	return true
 }
 
 // ErrorMessage returns the error message.
@@ -136,7 +143,7 @@ type MinLengthValidator struct {
 }
 
 // Validate checks if the string meets minimum length.
-func (v MinLengthValidator) Validate(value interface{}) error {
+func (v MinLengthValidator) Validate(value any) error {
 	str, ok := value.(string)
 	if !ok {
 		return fmt.Errorf("value must be a string")
@@ -167,7 +174,7 @@ type MaxLengthValidator struct {
 }
 
 // Validate checks if the string is within maximum length.
-func (v MaxLengthValidator) Validate(value interface{}) error {
+func (v MaxLengthValidator) Validate(value any) error {
 	str, ok := value.(string)
 	if !ok {
 		return fmt.Errorf("value must be a string")
@@ -198,7 +205,7 @@ type PatternValidator struct {
 }
 
 // Validate checks if the value matches the pattern.
-func (v PatternValidator) Validate(value interface{}) error {
+func (v PatternValidator) Validate(value any) error {
 	str, ok := value.(string)
 	if !ok {
 		return fmt.Errorf("value must be a string")
@@ -233,7 +240,7 @@ type EmailValidator struct {
 }
 
 // Validate checks if the value is a valid email.
-func (v EmailValidator) Validate(value interface{}) error {
+func (v EmailValidator) Validate(value any) error {
 	str, ok := value.(string)
 	if !ok {
 		return fmt.Errorf("value must be a string")
@@ -268,7 +275,7 @@ type URLValidator struct {
 }
 
 // Validate checks if the value is a valid URL.
-func (v URLValidator) Validate(value interface{}) error {
+func (v URLValidator) Validate(value any) error {
 	str, ok := value.(string)
 	if !ok {
 		return fmt.Errorf("value must be a string")
@@ -305,7 +312,7 @@ type RangeValidator struct {
 }
 
 // Validate checks if the value is within the specified range.
-func (v RangeValidator) Validate(value interface{}) error {
+func (v RangeValidator) Validate(value any) error {
 	var num float64
 
 	switch val := value.(type) {
@@ -349,12 +356,12 @@ func (v RangeValidator) ErrorMessage() string {
 
 // CustomValidator allows custom validation logic.
 type CustomValidator struct {
-	ValidateFunc func(value interface{}) error
+	ValidateFunc func(value any) error
 	Message      string
 }
 
 // Validate runs the custom validation function.
-func (v CustomValidator) Validate(value interface{}) error {
+func (v CustomValidator) Validate(value any) error {
 	if v.ValidateFunc == nil {
 		return nil
 	}
@@ -379,7 +386,7 @@ type ValidationChain struct {
 }
 
 // Validate runs all validators and returns the first error encountered.
-func (vc ValidationChain) Validate(value interface{}) error {
+func (vc ValidationChain) Validate(value any) error {
 	for _, validator := range vc.Validators {
 		if err := validator.Validate(value); err != nil {
 			return err
@@ -389,7 +396,7 @@ func (vc ValidationChain) Validate(value interface{}) error {
 }
 
 // ValidateAll runs all validators and returns all errors.
-func (vc ValidationChain) ValidateAll(value interface{}) []error {
+func (vc ValidationChain) ValidateAll(value any) []error {
 	var errors []error
 	for _, validator := range vc.Validators {
 		if err := validator.Validate(value); err != nil {
@@ -414,7 +421,7 @@ func (vc ValidationChain) ErrorMessage() string {
 // FieldState represents the state of a single form field.
 type FieldState struct {
 	Name       string      // Field identifier
-	Value      interface{} // Current value
+	Value      any         // Current value
 	IsDirty    bool        // Has been modified
 	IsTouched  bool        // Has been focused
 	IsValid    bool        // Passes validation
@@ -464,7 +471,7 @@ func (fs *FieldState) MarkAsDirty() {
 }
 
 // SetValue updates the field value and marks as dirty.
-func (fs *FieldState) SetValue(value interface{}) {
+func (fs *FieldState) SetValue(value any) {
 	fs.Value = value
 	fs.MarkAsDirty()
 }
@@ -508,7 +515,7 @@ func (fs *FormState) RegisterField(name string, validators ...Validator) {
 }
 
 // SetFieldValue updates a field's value.
-func (fs *FormState) SetFieldValue(name string, value interface{}) {
+func (fs *FormState) SetFieldValue(name string, value any) {
 	fs.mu.Lock()
 	defer fs.mu.Unlock()
 
@@ -613,11 +620,11 @@ func (fs *FormState) ToJSON() ([]byte, error) {
 	defer fs.mu.RUnlock()
 
 	type exportField struct {
-		Value     interface{} `json:"value"`
-		IsDirty   bool        `json:"isDirty"`
-		IsTouched bool        `json:"isTouched"`
-		IsValid   bool        `json:"isValid"`
-		Errors    []string    `json:"errors,omitempty"`
+		Value     any      `json:"value"`
+		IsDirty   bool     `json:"isDirty"`
+		IsTouched bool     `json:"isTouched"`
+		IsValid   bool     `json:"isValid"`
+		Errors    []string `json:"errors,omitempty"`
 	}
 
 	export := make(map[string]exportField)
@@ -637,9 +644,9 @@ func (fs *FormState) ToJSON() ([]byte, error) {
 // FromJSON deserializes form state from JSON.
 func (fs *FormState) FromJSON(data []byte) error {
 	type importField struct {
-		Value     interface{} `json:"value"`
-		IsDirty   bool        `json:"isDirty"`
-		IsTouched bool        `json:"isTouched"`
+		Value     any  `json:"value"`
+		IsDirty   bool `json:"isDirty"`
+		IsTouched bool `json:"isTouched"`
 	}
 
 	imported := make(map[string]importField)
@@ -660,6 +667,84 @@ func (fs *FormState) FromJSON(data []byte) error {
 	}
 
 	return nil
+}
+
+// ============================================================================
+// VALIDATION PROPERTIES - SCHEMA ALIGNED
+// ============================================================================
+
+// ValidationProps handles validation state and feedback messages.
+// Enhanced with schema-aligned validation capabilities.
+type ValidationProps struct {
+	// Basic validation state
+	State            ValidationState `json:"state,omitempty"`            // Current validation state
+	HelpText         string          `json:"helpText,omitempty"`         // General guidance text
+	ErrorText        string          `json:"errorText,omitempty"`        // Error message
+	SuccessText      string          `json:"successText,omitempty"`      // Success message
+	WarningText      string          `json:"warningText,omitempty"`      // Warning message
+	InfoText         string          `json:"infoText,omitempty"`         // Info message
+	ShowValidation   bool            `json:"showValidation,omitempty"`   // Whether to show validation UI
+	ValidateOnBlur   bool            `json:"validateOnBlur,omitempty"`   // Trigger validation on blur
+	ValidateOnChange bool            `json:"validateOnChange,omitempty"` // Trigger validation on change
+
+	// Schema-aligned validation
+	Rules         *ValidationRules  `json:"validations,omitempty"`      // Validation rules configuration
+	ErrorMessages *ValidationErrors `json:"validationErrors,omitempty"` // Custom error messages
+	ValidateAPI   *APIObject        `json:"validateApi,omitempty"`      // Remote validation API
+	AutoFill      *AutoFillConfig   `json:"autoFill,omitempty"`         // Autofill configuration
+	InitAutoFill  any               `json:"initAutoFill,omitempty"`     // Initial autofill behavior
+}
+
+// GetFeedbackMessage returns the appropriate message based on current state.
+// Priority: Error > Success > Warning > Info > HelpText
+func (v ValidationProps) GetFeedbackMessage() (string, ValidationState) {
+	switch v.State {
+	case StateError:
+		if v.ErrorText != "" {
+			return v.ErrorText, StateError
+		}
+	case StateSuccess:
+		if v.SuccessText != "" {
+			return v.SuccessText, StateSuccess
+		}
+	case StateWarning:
+		if v.WarningText != "" {
+			return v.WarningText, StateWarning
+		}
+	case StateInfo:
+		if v.InfoText != "" {
+			return v.InfoText, StateInfo
+		}
+	}
+
+	// Fallback to help text with default state
+	if v.HelpText != "" {
+		return v.HelpText, StateDefault
+	}
+
+	return "", StateDefault
+}
+
+// GetValidationMessage returns just the message string for validation display.
+func (v ValidationProps) GetValidationMessage() string {
+	msg, _ := v.GetFeedbackMessage()
+	return msg
+}
+
+// HasFeedback checks if there's any feedback message to display.
+func (v ValidationProps) HasFeedback() bool {
+	msg, _ := v.GetFeedbackMessage()
+	return msg != ""
+}
+
+// IsValid checks if the current state indicates a valid input.
+func (v ValidationProps) IsValid() bool {
+	return v.State == StateSuccess || v.State == StateDefault
+}
+
+// IsInvalid checks if the current state indicates an invalid input.
+func (v ValidationProps) IsInvalid() bool {
+	return v.State == StateError
 }
 
 // ============================================================================

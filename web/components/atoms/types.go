@@ -436,7 +436,7 @@ func (se *SchemaExpression) IsTrue() bool {
 type EditorSetting struct {
 	Behavior    string      `json:"behavior,omitempty"`    // create, update, remove
 	DisplayName string      `json:"displayName,omitempty"` // Business-friendly name
-	Mock        interface{} `json:"mock,omitempty"`        // Editor mock data
+	Mock        any `json:"mock,omitempty"`        // Editor mock data
 }
 
 // ============================================================================
@@ -526,7 +526,7 @@ type APIObject struct {
 	URL     string                 `json:"url"`
 	Method  string                 `json:"method,omitempty"`
 	Headers map[string]string      `json:"headers,omitempty"`
-	Data    map[string]interface{} `json:"data,omitempty"`
+	Data    map[string]any `json:"data,omitempty"`
 	Silent  bool                   `json:"silent,omitempty"`
 }
 
@@ -534,14 +534,14 @@ type APIObject struct {
 type AutoFillConfig struct {
 	API              *APIObject             `json:"api,omitempty"`
 	ShowSuggestion   bool                   `json:"showSuggestion,omitempty"`
-	DefaultSelection interface{}            `json:"defaultSelection,omitempty"`
+	DefaultSelection any            `json:"defaultSelection,omitempty"`
 	FillMapping      map[string]string      `json:"fillMapping,omitempty"`
 	Trigger          string                 `json:"trigger,omitempty"` // change, focus, blur
 	Mode             string                 `json:"mode,omitempty"`    // popOver, dialog, drawer
 	Position         string                 `json:"position,omitempty"`
 	Size             string                 `json:"size,omitempty"`
-	Columns          []interface{}          `json:"columns,omitempty"`
-	Filter           interface{}            `json:"filter,omitempty"`
+	Columns          []any          `json:"columns,omitempty"`
+	Filter           any            `json:"filter,omitempty"`
 	Silent           bool                   `json:"silent,omitempty"`
 }
 
@@ -552,7 +552,7 @@ type AutoFillConfig struct {
 // EventAction represents an action in the event system
 type EventAction struct {
 	ActionType string                 `json:"actionType"`
-	Args       map[string]interface{} `json:"args,omitempty"`
+	Args       map[string]any `json:"args,omitempty"`
 }
 
 // DebounceConfig controls event debouncing
@@ -565,7 +565,7 @@ type DebounceConfig struct {
 // TrackConfig controls event tracking
 type TrackConfig struct {
 	Enable bool                   `json:"enable"`
-	Data   map[string]interface{} `json:"data,omitempty"`
+	Data   map[string]any `json:"data,omitempty"`
 }
 
 // EventListener represents a single event listener configuration
@@ -744,17 +744,17 @@ func (rs *ResponsiveSize) GetCurrentSize(bp Breakpoint) Size {
 // ============================================================================
 
 // ToJSON converts any value to JSON bytes.
-func ToJSON(v interface{}) ([]byte, error) {
+func ToJSON(v any) ([]byte, error) {
 	return json.Marshal(v)
 }
 
 // FromJSON converts JSON bytes to a value.
-func FromJSON(data []byte, v interface{}) error {
+func FromJSON(data []byte, v any) error {
 	return json.Unmarshal(data, v)
 }
 
 // ToJSONString converts any value to a JSON string.
-func ToJSONString(v interface{}) string {
+func ToJSONString(v any) string {
 	data, err := json.Marshal(v)
 	if err != nil {
 		return "{}"

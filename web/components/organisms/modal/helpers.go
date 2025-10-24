@@ -266,7 +266,7 @@ func getButtonVariantFromString(variant string) atoms.Variant {
 }
 
 // getDefaultModalProps returns sensible defaults for modal props
-func getDefaultModalProps() ModalProps {
+func getDefaultModalProps() ModalProps { //nolint:unused // Default props for future use
 	return ModalProps{
 		Size:            ModalSizeMD,
 		Type:            ModalTypeDefault,

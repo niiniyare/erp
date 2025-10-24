@@ -87,6 +87,34 @@ var textAlignments = map[string][]string{
 	"justify": {"text-justify"},
 }
 
+// StaticProps defines properties for Static Text components.
+type StaticProps struct {
+	BaseProps
+	AccessibilityProps
+	InteractionProps
+
+	// Static content
+	Text string `json:"text,omitempty"` // Text content
+	Html string `json:"html,omitempty"` // HTML content (use with caution)
+
+	// Static styling
+	TextStyle          string `json:"textStyle,omitempty"`          // Text style variant
+	Size               Size   `json:"size,omitempty"`               // Text size
+	Element            string `json:"element,omitempty"`            // HTML element (span, p, h1, etc.)
+	Alignment          string `json:"alignment,omitempty"`          // Text alignment
+	Truncate           bool   `json:"truncate,omitempty"`           // Truncate text
+	LineClamp          int    `json:"lineClamp,omitempty"`          // Line clamp
+	PreserveWhitespace bool   `json:"preserveWhitespace,omitempty"` // Preserve whitespace
+
+	// Static behavior
+	OnClick string `json:"onClick,omitempty"` // Click handler
+	For     string `json:"for,omitempty"`     // For label elements
+	Style   string `json:"style,omitempty"`   // Inline styles
+
+	// Children for complex text
+	Children []templ.Component `json:"-"` // Child components
+}
+
 // ============================================================================
 // CONSTRUCTOR WITH SENSIBLE DEFAULTS
 // ============================================================================
@@ -597,7 +625,7 @@ func staticContent(props StaticProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.Text)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/static.templ`, Line: 248, Col: 12}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/static.templ`, Line: 278, Col: 12}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {

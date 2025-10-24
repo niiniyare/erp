@@ -1,7 +1,7 @@
 package atoms
 
 import (
-	"strings"
+"strings"
 )
 
 // ============================================================================
@@ -25,65 +25,104 @@ import (
 
 // Link color schemes
 var linkColorSchemes = map[string][]string{
-	"blue":    {"text-blue-600", "hover:text-blue-800", "dark:text-blue-400", "dark:hover:text-blue-300"},
-	"gray":    {"text-gray-600", "hover:text-gray-800", "dark:text-gray-400", "dark:hover:text-gray-300"},
-	"red":     {"text-red-600", "hover:text-red-800", "dark:text-red-400", "dark:hover:text-red-300"},
-	"green":   {"text-green-600", "hover:text-green-800", "dark:text-green-400", "dark:hover:text-green-300"},
-	"yellow":  {"text-yellow-600", "hover:text-yellow-800", "dark:text-yellow-400", "dark:hover:text-yellow-300"},
-	"indigo":  {"text-indigo-600", "hover:text-indigo-800", "dark:text-indigo-400", "dark:hover:text-indigo-300"},
-	"purple":  {"text-purple-600", "hover:text-purple-800", "dark:text-purple-400", "dark:hover:text-purple-300"},
-	"pink":    {"text-pink-600", "hover:text-pink-800", "dark:text-pink-400", "dark:hover:text-pink-300"},
-	"default": {"text-blue-600", "hover:text-blue-800", "dark:text-blue-400", "dark:hover:text-blue-300"},
+"blue": {"text-blue-600", "hover:text-blue-800", "dark:text-blue-400", "dark:hover:text-blue-300"},
+"gray": {"text-gray-600", "hover:text-gray-800", "dark:text-gray-400", "dark:hover:text-gray-300"},
+"red": {"text-red-600", "hover:text-red-800", "dark:text-red-400", "dark:hover:text-red-300"},
+"green": {"text-green-600", "hover:text-green-800", "dark:text-green-400", "dark:hover:text-green-300"},
+"yellow": {"text-yellow-600", "hover:text-yellow-800", "dark:text-yellow-400", "dark:hover:text-yellow-300"},
+"indigo": {"text-indigo-600", "hover:text-indigo-800", "dark:text-indigo-400", "dark:hover:text-indigo-300"},
+"purple": {"text-purple-600", "hover:text-purple-800", "dark:text-purple-400", "dark:hover:text-purple-300"},
+"pink": {"text-pink-600", "hover:text-pink-800", "dark:text-pink-400", "dark:hover:text-pink-300"},
+"default": {"text-blue-600", "hover:text-blue-800", "dark:text-blue-400", "dark:hover:text-blue-300"},
 }
 
 // Link button variant color schemes
 var linkButtonColorSchemes = map[string][]string{
-	"blue":    {"bg-blue-600", "hover:bg-blue-700", "text-white", "focus:ring-blue-300"},
-	"gray":    {"bg-gray-600", "hover:bg-gray-700", "text-white", "focus:ring-gray-300"},
-	"red":     {"bg-red-600", "hover:bg-red-700", "text-white", "focus:ring-red-300"},
-	"green":   {"bg-green-600", "hover:bg-green-700", "text-white", "focus:ring-green-300"},
-	"yellow":  {"bg-yellow-600", "hover:bg-yellow-700", "text-white", "focus:ring-yellow-300"},
-	"indigo":  {"bg-indigo-600", "hover:bg-indigo-700", "text-white", "focus:ring-indigo-300"},
-	"purple":  {"bg-purple-600", "hover:bg-purple-700", "text-white", "focus:ring-purple-300"},
-	"pink":    {"bg-pink-600", "hover:bg-pink-700", "text-white", "focus:ring-pink-300"},
-	"default": {"bg-blue-600", "hover:bg-blue-700", "text-white", "focus:ring-blue-300"},
+"blue": {"bg-blue-600", "hover:bg-blue-700", "text-white", "focus:ring-blue-300"},
+"gray": {"bg-gray-600", "hover:bg-gray-700", "text-white", "focus:ring-gray-300"},
+"red": {"bg-red-600", "hover:bg-red-700", "text-white", "focus:ring-red-300"},
+"green": {"bg-green-600", "hover:bg-green-700", "text-white", "focus:ring-green-300"},
+"yellow": {"bg-yellow-600", "hover:bg-yellow-700", "text-white", "focus:ring-yellow-300"},
+"indigo": {"bg-indigo-600", "hover:bg-indigo-700", "text-white", "focus:ring-indigo-300"},
+"purple": {"bg-purple-600", "hover:bg-purple-700", "text-white", "focus:ring-purple-300"},
+"pink": {"bg-pink-600", "hover:bg-pink-700", "text-white", "focus:ring-pink-300"},
+"default": {"bg-blue-600", "hover:bg-blue-700", "text-white", "focus:ring-blue-300"},
 }
 
 // Link size dimensions
 var linkDimensions = map[Size][]string{
-	SizeSM: {"text-sm"},
-	SizeMD: {"text-base"},
-	SizeLG: {"text-lg"},
+SizeSM: {"text-sm"},
+SizeMD: {"text-base"},
+SizeLG: {"text-lg"},
 }
 
 // Link button size dimensions
 var linkButtonDimensions = map[Size][]string{
-	SizeSM: {"px-3", "py-2", "text-sm"},
-	SizeMD: {"px-4", "py-2.5", "text-base"},
-	SizeLG: {"px-5", "py-3", "text-lg"},
+SizeSM: {"px-3", "py-2", "text-sm"},
+SizeMD: {"px-4", "py-2.5", "text-base"},
+SizeLG: {"px-5", "py-3", "text-lg"},
 }
 
 // Link variant styles
 var linkVariants = map[string][]string{
-	"default":  {"transition-colors", "duration-200"},
-	"button":   {"inline-flex", "items-center", "justify-center", "rounded-lg", "font-medium", "transition-all", "duration-200", "focus:outline-none", "focus:ring-4"},
-	"outlined": {"inline-flex", "items-center", "justify-center", "rounded-lg", "font-medium", "border-2", "transition-all", "duration-200", "focus:outline-none", "focus:ring-4"},
-	"ghost":    {"inline-flex", "items-center", "justify-center", "rounded-lg", "font-medium", "transition-colors", "duration-200", "hover:bg-gray-100", "dark:hover:bg-gray-800"},
+"default": {"transition-colors", "duration-200"},
+"button": {"inline-flex", "items-center", "justify-center", "rounded-lg", "font-medium", "transition-all",
+"duration-200", "focus:outline-none", "focus:ring-4"},
+"outlined": {"inline-flex", "items-center", "justify-center", "rounded-lg", "font-medium", "border-2", "transition-all",
+"duration-200", "focus:outline-none", "focus:ring-4"},
+"ghost": {"inline-flex", "items-center", "justify-center", "rounded-lg", "font-medium", "transition-colors",
+"duration-200", "hover:bg-gray-100", "dark:hover:bg-gray-800"},
 }
 
 // Link base classes
 const (
-	linkBaseClasses        = "transition-colors duration-200 focus:outline-none"
-	linkUnderlineClasses   = "underline decoration-2 underline-offset-2"
-	linkHoverUnderline     = "hover:underline"
-	linkIconClasses        = "w-4 h-4"
-	linkIconSpacingLeft    = "me-2"
-	linkIconSpacingRight   = "ms-2"
-	linkDisabledClasses    = "opacity-50 cursor-not-allowed pointer-events-none"
+linkBaseClasses = "transition-colors duration-200 focus:outline-none"
+linkUnderlineClasses = "underline decoration-2 underline-offset-2"
+linkHoverUnderline = "hover:underline"
+linkIconClasses = "w-4 h-4"
+linkIconSpacingLeft = "me-2"
+linkIconSpacingRight = "ms-2"
+linkDisabledClasses = "opacity-50 cursor-not-allowed pointer-events-none"
 )
 
 // External link icon
-const externalLinkIcon = `<svg class="w-3 h-3 ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11v4.833A1.166 1.166 0 0 1 13.833 17H2.167A1.167 1.167 0 0 1 1 15.833V4.167A1.166 1.166 0 0 1 2.167 3h4.618m4.447-2H17v5.768M9.111 8.889l7.778-7.778"/></svg>`
+const externalLinkIcon = `<svg class="w-3 h-3 ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+  viewBox="0 0 18 18">
+  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+    d="M15 11v4.833A1.166 1.166 0 0 1 13.833 17H2.167A1.167 1.167 0 0 1 1 15.833V4.167A1.166 1.166 0 0 1 2.167 3h4.618m4.447-2H17v5.768M9.111 8.889l7.778-7.778" />
+</svg>`
+
+
+// LinkProps defines properties for Link components.
+type LinkProps struct {
+BaseProps
+AccessibilityProps
+InteractionProps
+AlpinEventHandlers
+
+// Link attributes
+Href string `json:"href,omitempty"`
+Target string `json:"target,omitempty"` // _blank, _self, etc.
+Rel string `json:"rel,omitempty"` // Link relationship
+
+// Link content
+Text string `json:"text,omitempty"`
+Icon string `json:"icon,omitempty"` // Optional icon name
+IconPosition string `json:"iconPosition,omitempty"` // Icon position (left, right)
+
+// Link styling
+Variant Variant `json:"variant,omitempty"` // Link variant
+Size Size `json:"size,omitempty"` // Link size
+ComponentSize Size `json:"componentSize,omitempty"` // Component size
+Color string `json:"color,omitempty"` // Link color
+Underline bool `json:"underline,omitempty"` // Show underline
+External bool `json:"external,omitempty"` // External link styling
+Download string `json:"download,omitempty"` // Download attribute
+NoOpener bool `json:"noOpener,omitempty"` // Add rel="noopener"
+NoReferrer bool `json:"noReferrer,omitempty"` // Add rel="noreferrer"
+}
+
+
 
 // ============================================================================
 // CONSTRUCTOR WITH SENSIBLE DEFAULTS
@@ -95,29 +134,29 @@ const externalLinkIcon = `<svg class="w-3 h-3 ms-1" aria-hidden="true" xmlns="ht
 // link.Color = "blue"
 // link.Underline = true
 func NewLink(text, href string) LinkProps {
-	return LinkProps{
-		Text:          text,
-		Href:          href,
-		Color:         "default",
-		Variant:       "default",
-		ComponentSize: SizeMD,
-		Target:        "_self",
-	}
+return LinkProps{
+Text: text,
+Href: href,
+Color: "default",
+Variant: "default",
+ComponentSize: SizeMD,
+Target: "_self",
+}
 }
 
 // NewExternalLink creates an external link with security attributes
 func NewExternalLink(text, href string) LinkProps {
-	props := NewLink(text, href)
-	props.External = true
-	props.Target = "_blank"
-	return props
+props := NewLink(text, href)
+props.External = true
+props.Target = "_blank"
+return props
 }
 
 // NewButtonLink creates a button-style link
 func NewButtonLink(text, href string) LinkProps {
-	props := NewLink(text, href)
-	props.Variant = "button"
-	return props
+props := NewLink(text, href)
+props.Variant = "button"
+return props
 }
 
 // ============================================================================
@@ -178,70 +217,70 @@ templ Link(props LinkProps) {
 
 // getLinkClasses generates the main link element classes
 func getLinkClasses(props LinkProps) string {
-	classes := []string{linkBaseClasses}
+classes := []string{linkBaseClasses}
 
-	// Add variant-specific styling from configuration
-	if variants, ok := linkVariants[string(props.Variant)]; ok {
-		classes = append(classes, variants...)
-	}
+// Add variant-specific styling from configuration
+if variants, ok := linkVariants[string(props.Variant)]; ok {
+classes = append(classes, variants...)
+}
 
-	// Add size-specific dimensions based on variant
-	if string(props.Variant) == "button" || string(props.Variant) == "outlined" || string(props.Variant) == "ghost" {
-		if dimensions, ok := linkButtonDimensions[props.ComponentSize]; ok {
-			classes = append(classes, dimensions...)
-		}
-	} else {
-		if dimensions, ok := linkDimensions[props.ComponentSize]; ok {
-			classes = append(classes, dimensions...)
-		}
-	}
+// Add size-specific dimensions based on variant
+if string(props.Variant) == "button" || string(props.Variant) == "outlined" || string(props.Variant) == "ghost" {
+if dimensions, ok := linkButtonDimensions[props.ComponentSize]; ok {
+classes = append(classes, dimensions...)
+}
+} else {
+if dimensions, ok := linkDimensions[props.ComponentSize]; ok {
+classes = append(classes, dimensions...)
+}
+}
 
-	// Add color scheme based on variant
-	if string(props.Variant) == "button" {
-		if colors, ok := linkButtonColorSchemes[props.Color]; ok {
-			classes = append(classes, colors...)
-		} else if colors, ok := linkButtonColorSchemes["default"]; ok {
-			classes = append(classes, colors...)
-		}
-	} else if string(props.Variant) == "outlined" {
-		// Outlined variant uses text colors for border and text
-		if colors, ok := linkColorSchemes[props.Color]; ok {
-			// Convert text colors to border colors
-			for _, class := range colors {
-				if strings.HasPrefix(class, "text-") {
-					borderClass := strings.Replace(class, "text-", "border-", 1)
-					classes = append(classes, borderClass)
-				}
-				classes = append(classes, class)
-			}
-		}
-		classes = append(classes, "bg-transparent", "hover:bg-opacity-10")
-	} else {
-		if colors, ok := linkColorSchemes[props.Color]; ok {
-			classes = append(classes, colors...)
-		} else if colors, ok := linkColorSchemes["default"]; ok {
-			classes = append(classes, colors...)
-		}
-	}
+// Add color scheme based on variant
+if string(props.Variant) == "button" {
+if colors, ok := linkButtonColorSchemes[props.Color]; ok {
+classes = append(classes, colors...)
+} else if colors, ok := linkButtonColorSchemes["default"]; ok {
+classes = append(classes, colors...)
+}
+} else if string(props.Variant) == "outlined" {
+// Outlined variant uses text colors for border and text
+if colors, ok := linkColorSchemes[props.Color]; ok {
+// Convert text colors to border colors
+for _, class := range colors {
+if strings.HasPrefix(class, "text-") {
+borderClass := strings.Replace(class, "text-", "border-", 1)
+classes = append(classes, borderClass)
+}
+classes = append(classes, class)
+}
+}
+classes = append(classes, "bg-transparent", "hover:bg-opacity-10")
+} else {
+if colors, ok := linkColorSchemes[props.Color]; ok {
+classes = append(classes, colors...)
+} else if colors, ok := linkColorSchemes["default"]; ok {
+classes = append(classes, colors...)
+}
+}
 
-	// Add underline styling
-	if props.Underline {
-		classes = append(classes, linkUnderlineClasses)
-	} else if string(props.Variant) == "default" {
-		classes = append(classes, linkHoverUnderline)
-	}
+// Add underline styling
+if props.Underline {
+classes = append(classes, linkUnderlineClasses)
+} else if string(props.Variant) == "default" {
+classes = append(classes, linkHoverUnderline)
+}
 
-	// Handle disabled state
-	if props.Disabled {
-		classes = append(classes, linkDisabledClasses)
-	}
+// Handle disabled state
+if props.Disabled {
+classes = append(classes, linkDisabledClasses)
+}
 
-	// Allow custom classes to be added
-	if props.Class != "" {
-		classes = append(classes, props.Class)
-	}
+// Allow custom classes to be added
+if props.Class != "" {
+classes = append(classes, props.Class)
+}
 
-	return strings.Join(classes, " ")
+return strings.Join(classes, " ")
 }
 
 // ============================================================================
@@ -250,62 +289,62 @@ func getLinkClasses(props LinkProps) string {
 
 // WithColor returns a new LinkProps with color set
 func (p LinkProps) WithColor(color string) LinkProps {
-	p.Color = color
-	return p
+p.Color = color
+return p
 }
 
 // WithVariant returns a new LinkProps with variant set
 func (p LinkProps) WithVariant(variant string) LinkProps {
-	p.Variant = Variant(variant)
-	return p
+p.Variant = Variant(variant)
+return p
 }
 
 // WithIcon returns a new LinkProps with icon set
 func (p LinkProps) WithIcon(iconSVG string, position string) LinkProps {
-	p.Icon = iconSVG
-	p.IconPosition = position
-	return p
+p.Icon = iconSVG
+p.IconPosition = position
+return p
 }
 
 // AsExternal returns a new LinkProps configured for external links
 func (p LinkProps) AsExternal() LinkProps {
-	p.External = true
-	p.Target = "_blank"
-	return p
+p.External = true
+p.Target = "_blank"
+return p
 }
 
 // AsButton returns a new LinkProps with button variant
 func (p LinkProps) AsButton() LinkProps {
-	p.Variant = Variant("button")
-	return p
+p.Variant = Variant("button")
+return p
 }
 
 // AsOutlined returns a new LinkProps with outlined variant
 func (p LinkProps) AsOutlined() LinkProps {
-	p.Variant = Variant("outlined")
-	return p
+p.Variant = Variant("outlined")
+return p
 }
 
 // AsGhost returns a new LinkProps with ghost variant
 func (p LinkProps) AsGhost() LinkProps {
-	p.Variant = Variant("ghost")
-	return p
+p.Variant = Variant("ghost")
+return p
 }
 
 // WithUnderline returns a new LinkProps with underline enabled
 func (p LinkProps) WithUnderline() LinkProps {
-	p.Underline = true
-	return p
+p.Underline = true
+return p
 }
 
 // AsDownload returns a new LinkProps configured for file download
 func (p LinkProps) AsDownload(filename string) LinkProps {
-	p.Download = filename
-	return p
+p.Download = filename
+return p
 }
 
 // AsDisabled returns a new LinkProps with disabled state
 func (p LinkProps) AsDisabled() LinkProps {
-	p.Disabled = true
-	return p
+p.Disabled = true
+return p
 }

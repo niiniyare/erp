@@ -10,14 +10,9 @@
 - 🚀 **[Getting Started](getting-started.md)** - Setup, installation, and first component
 - 🏗️ **[Architecture](Schema-Driven-Architecture.md)** - JSON-driven UI system design
 - 🧩 **[Components](components/)** - Atomic design component library (140+ components)
-- 📋 **[Schema Definitions](schema/)** - JSON schema specifications (900+ schemas)
+- 📋 **[Schema Definitions](./schema/definitions/)** - JSON schema specifications (900+ schemas)
 - 📚 **[Guides](guides/)** - ERP workflow patterns and practical implementation
 
-### For AI Assistants
-- 📖 **[Schema Reference](schema/definitions/)** - Component schema definitions for code generation
-- 🔧 **[Templ Advanced Features](templ-llms.md)** - Streaming, suspense, and optimization patterns
-- 🎨 **[Design Patterns](Design-Pattern-Reference-Guide.md)** - Complete UI pattern reference
-- 💼 **[Business Workflows](guides/erp-workflow-patterns.md)** - Real-world ERP implementation patterns
 
 ## 🏗️ System Architecture
 

@@ -66,9 +66,9 @@ var progressLabelSizes = map[Size][]string{
 
 // Progress variant styles
 var progressVariants = map[string][]string{
-	"default":  {"rounded-full"},
-	"square":   {"rounded-none"},
-	"rounded":  {"rounded-lg"},
+	"default": {"rounded-full"},
+	"square":  {"rounded-none"},
+	"rounded": {"rounded-lg"},
 }
 
 // Progress base classes
@@ -80,6 +80,32 @@ const (
 	progressLabelClasses    = "flex justify-between items-center mb-1 font-medium"
 	progressPercentClasses  = "text-sm font-medium"
 )
+
+// ProgressProps defines properties for Progress components.
+type ProgressProps struct {
+	BaseProps
+	AccessibilityProps
+	AlpinEventHandlers
+
+	// Progress attributes
+	Value float64 `json:"value,omitempty"` // Current progress value
+	Max   float64 `json:"max,omitempty"`   // Maximum progress value
+	Min   float64 `json:"min,omitempty"`   // Minimum progress value
+
+	// Progress content
+	Label       string `json:"label,omitempty"`       // Progress label
+	Description string `json:"description,omitempty"` // Progress description
+
+	// Progress styling
+	Variant       Variant       `json:"variant,omitempty"`       // Progress variant
+	Size          Size          `json:"size,omitempty"`          // Progress size
+	Color         ColorScheme   `json:"color,omitempty"`         // Progress color
+	LabelPosition LabelPosition `json:"labelPosition,omitempty"` // Label position
+	ShowPercent   bool          `json:"showPercent,omitempty"`   // Show percentage text
+	ShowValue     bool          `json:"showValue,omitempty"`     // Show current value
+	Animated      bool          `json:"animated,omitempty"`      // Animated progress
+	Striped       bool          `json:"striped,omitempty"`       // Striped pattern
+}
 
 // ============================================================================
 // CONSTRUCTOR WITH SENSIBLE DEFAULTS
@@ -120,7 +146,7 @@ func NewIndeterminateProgress(label string) ProgressProps {
 		Min:           0,
 		Color:         "default",
 		Variant:       "default",
-		Size: SizeMD,
+		Size:          SizeMD,
 		Striped:       true,
 		Animated:      true,
 		LabelPosition: LabelTop,
@@ -169,10 +195,7 @@ templ Progress(props ProgressProps) {
 			aria-valuemin={ strconv.FormatFloat(props.Min, 'f', -1, 64) }
 			aria-valuemax={ strconv.FormatFloat(props.Max, 'f', -1, 64) }
 		>
-			<div
-				class={ getProgressBarClasses(props) }
-				style={ getProgressBarStyle(props) }
-			></div>
+			<div class={ getProgressBarClasses(props) } style={ getProgressBarStyle(props) }></div>
 		</div>
 	</div>
 }
@@ -264,28 +287,28 @@ func getProgressBarClasses(props ProgressProps) string {
 func getProgressBarStyle(props ProgressProps) string {
 	// Calculate percentage
 	percentage := ((props.Value - props.Min) / (props.Max - props.Min)) * 100
-	
+
 	// Clamp between 0 and 100
 	if percentage < 0 {
 		percentage = 0
 	} else if percentage > 100 {
 		percentage = 100
 	}
-	
+
 	return "width: " + strconv.FormatFloat(percentage, 'f', 1, 64) + "%"
 }
 
 // getPercentageText returns formatted percentage text
 func getPercentageText(props ProgressProps) string {
 	percentage := ((props.Value - props.Min) / (props.Max - props.Min)) * 100
-	
+
 	// Clamp between 0 and 100
 	if percentage < 0 {
 		percentage = 0
 	} else if percentage > 100 {
 		percentage = 100
 	}
-	
+
 	return strconv.FormatFloat(percentage, 'f', 0, 64) + "%"
 }
 

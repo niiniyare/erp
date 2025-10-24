@@ -288,15 +288,15 @@ func TestRequiredValidator(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		value   interface{}
+		value   any
 		wantErr bool
 	}{
 		{"valid string", "hello", false},
 		{"empty string", "", true},
 		{"whitespace only", "   ", true},
 		{"nil value", nil, true},
-		{"empty slice", []interface{}{}, true},
-		{"non-empty slice", []interface{}{1}, false},
+		{"empty slice", []any{}, true},
+		{"non-empty slice", []any{1}, false},
 	}
 
 	for _, tt := range tests {
@@ -314,7 +314,7 @@ func TestMinLengthValidator(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		value   interface{}
+		value   any
 		wantErr bool
 	}{
 		{"valid length", "hello world", false},
@@ -392,7 +392,7 @@ func TestRangeValidator(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		value   interface{}
+		value   any
 		wantErr bool
 	}{
 		{"valid int", 50, false},

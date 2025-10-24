@@ -1,5 +1,7 @@
 package table
 
+//nolint:unused // Helper functions may be used by templates or future features
+
 import (
 	"fmt"
 	"strconv"

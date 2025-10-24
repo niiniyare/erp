@@ -463,7 +463,7 @@ func NormalizeHexColor(color string) string {
 type DebugInfo struct {
 	ComponentType   ComponentType
 	ComponentID     string
-	Props           map[string]interface{}
+	Props           map[string]any
 	ComputedClasses string
 	ValidationState ValidationState
 	Errors          []string
@@ -474,13 +474,13 @@ func NewDebugInfo(componentType ComponentType, id string) *DebugInfo {
 	return &DebugInfo{
 		ComponentType: componentType,
 		ComponentID:   id,
-		Props:         make(map[string]interface{}),
+		Props:         make(map[string]any),
 		Errors:        []string{},
 	}
 }
 
 // AddProp adds a property to debug info.
-func (di *DebugInfo) AddProp(key string, value interface{}) *DebugInfo {
+func (di *DebugInfo) AddProp(key string, value any) *DebugInfo {
 	di.Props[key] = value
 	return di
 }
@@ -492,8 +492,8 @@ func (di *DebugInfo) AddError(err string) *DebugInfo {
 }
 
 // ToMap converts debug info to a map for JSON serialization.
-func (di *DebugInfo) ToMap() map[string]interface{} {
-	return map[string]interface{}{
+func (di *DebugInfo) ToMap() map[string]any {
+	return map[string]any{
 		"componentType":   di.ComponentType.String(),
 		"componentId":     di.ComponentID,
 		"props":           di.Props,
@@ -597,8 +597,8 @@ func IgnoreError[T any](value T, _ error) T {
 // ============================================================================
 
 // MockProps creates mock component props for testing.
-func MockProps(componentType ComponentType) map[string]interface{} {
-	return map[string]interface{}{
+func MockProps(componentType ComponentType) map[string]any {
+	return map[string]any{
 		"id":          GenerateID(string(componentType)),
 		"name":        fmt.Sprintf("test-%s", componentType),
 		"dataTestId":  fmt.Sprintf("%s-test", componentType),

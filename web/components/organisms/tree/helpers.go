@@ -1,5 +1,7 @@
 package tree
 
+//nolint:unused // Helper functions may be used by templates or future features
+
 import (
 	"encoding/json"
 	"fmt"
@@ -408,7 +410,7 @@ func getColumnHeaderClasses(column TreeColumn) string {
 // ============================================================================
 
 // formatColumnValue formats a value based on column type and format
-func formatColumnValue(value interface{}, column TreeColumn) string {
+func formatColumnValue(value interface{}, column TreeColumn) string { //nolint:revive // Formatting requires multiple type checks
 	if value == nil {
 		return "-"
 	}
@@ -473,7 +475,7 @@ func formatNumber(value float64, format string) string {
 }
 
 // formatNumberWithCommas adds thousand separators to numbers
-func formatNumberWithCommas(value float64) string {
+func formatNumberWithCommas(value float64) string { //nolint:unused // Utility function for future use
 	// Handle negative numbers
 	negative := value < 0
 	if negative {

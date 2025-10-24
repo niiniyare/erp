@@ -73,10 +73,13 @@ var linkButtonDimensions = map[Size][]string{
 
 // Link variant styles
 var linkVariants = map[string][]string{
-	"default":  {"transition-colors", "duration-200"},
-	"button":   {"inline-flex", "items-center", "justify-center", "rounded-lg", "font-medium", "transition-all", "duration-200", "focus:outline-none", "focus:ring-4"},
-	"outlined": {"inline-flex", "items-center", "justify-center", "rounded-lg", "font-medium", "border-2", "transition-all", "duration-200", "focus:outline-none", "focus:ring-4"},
-	"ghost":    {"inline-flex", "items-center", "justify-center", "rounded-lg", "font-medium", "transition-colors", "duration-200", "hover:bg-gray-100", "dark:hover:bg-gray-800"},
+	"default": {"transition-colors", "duration-200"},
+	"button": {"inline-flex", "items-center", "justify-center", "rounded-lg", "font-medium", "transition-all",
+		"duration-200", "focus:outline-none", "focus:ring-4"},
+	"outlined": {"inline-flex", "items-center", "justify-center", "rounded-lg", "font-medium", "border-2", "transition-all",
+		"duration-200", "focus:outline-none", "focus:ring-4"},
+	"ghost": {"inline-flex", "items-center", "justify-center", "rounded-lg", "font-medium", "transition-colors",
+		"duration-200", "hover:bg-gray-100", "dark:hover:bg-gray-800"},
 }
 
 // Link base classes
@@ -91,7 +94,40 @@ const (
 )
 
 // External link icon
-const externalLinkIcon = `<svg class="w-3 h-3 ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11v4.833A1.166 1.166 0 0 1 13.833 17H2.167A1.167 1.167 0 0 1 1 15.833V4.167A1.166 1.166 0 0 1 2.167 3h4.618m4.447-2H17v5.768M9.111 8.889l7.778-7.778"/></svg>`
+const externalLinkIcon = `<svg class="w-3 h-3 ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+  viewBox="0 0 18 18">
+  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+    d="M15 11v4.833A1.166 1.166 0 0 1 13.833 17H2.167A1.167 1.167 0 0 1 1 15.833V4.167A1.166 1.166 0 0 1 2.167 3h4.618m4.447-2H17v5.768M9.111 8.889l7.778-7.778" />
+</svg>`
+
+// LinkProps defines properties for Link components.
+type LinkProps struct {
+	BaseProps
+	AccessibilityProps
+	InteractionProps
+	AlpinEventHandlers
+
+	// Link attributes
+	Href   string `json:"href,omitempty"`
+	Target string `json:"target,omitempty"` // _blank, _self, etc.
+	Rel    string `json:"rel,omitempty"`    // Link relationship
+
+	// Link content
+	Text         string `json:"text,omitempty"`
+	Icon         string `json:"icon,omitempty"`         // Optional icon name
+	IconPosition string `json:"iconPosition,omitempty"` // Icon position (left, right)
+
+	// Link styling
+	Variant       Variant `json:"variant,omitempty"`       // Link variant
+	Size          Size    `json:"size,omitempty"`          // Link size
+	ComponentSize Size    `json:"componentSize,omitempty"` // Component size
+	Color         string  `json:"color,omitempty"`         // Link color
+	Underline     bool    `json:"underline,omitempty"`     // Show underline
+	External      bool    `json:"external,omitempty"`      // External link styling
+	Download      string  `json:"download,omitempty"`      // Download attribute
+	NoOpener      bool    `json:"noOpener,omitempty"`      // Add rel="noopener"
+	NoReferrer    bool    `json:"noReferrer,omitempty"`    // Add rel="noreferrer"
+}
 
 // ============================================================================
 // CONSTRUCTOR WITH SENSIBLE DEFAULTS
@@ -172,7 +208,7 @@ func Link(props LinkProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 132, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 171, Col: 16}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -190,7 +226,7 @@ func Link(props LinkProps) templ.Component {
 		var templ_7745c5c3_Var4 templ.SafeURL
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(props.Href)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 134, Col: 19}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 173, Col: 19}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -208,7 +244,7 @@ func Link(props LinkProps) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.Target)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 136, Col: 24}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 175, Col: 24}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -227,7 +263,7 @@ func Link(props LinkProps) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.Download)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 139, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 178, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -269,7 +305,7 @@ func Link(props LinkProps) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaLabel)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 146, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 185, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -288,7 +324,7 @@ func Link(props LinkProps) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.AriaDescribedBy)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 149, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 188, Col: 43}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -307,7 +343,7 @@ func Link(props LinkProps) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.DataTestID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 152, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 191, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -326,7 +362,7 @@ func Link(props LinkProps) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.OnClick)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 155, Col: 29}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 194, Col: 29}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -376,7 +412,7 @@ func Link(props LinkProps) templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(props.Text)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 163, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/components/atoms/link.templ`, Line: 202, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {

@@ -298,68 +298,111 @@ return props
 
 // Button renders a Flowbite-styled button with full feature support
 templ Button(props ButtonProps) {
-<button type={ getButtonType(props) } if props.BaseProps.ID !="" { id={ props.BaseProps.ID } } if props.BaseProps.Name
-  !="" { name={ props.BaseProps.Name } } if props.Form !="" { form={ props.Form } } class={ getButtonClasses(props) } if
-  props.InteractionProps.Disabled || props.Loading { disabled } if props.AccessibilityProps.AriaLabel !="" {
-  aria-label={ props.AccessibilityProps.AriaLabel } } if props.AccessibilityProps.AriaDescribedBy !="" {
-  aria-describedby={ props.AccessibilityProps.AriaDescribedBy } } if props.AccessibilityProps.AriaExpanded !=nil {
-  aria-expanded={ getAriaExpanded(props.AccessibilityProps.AriaExpanded) } } if props.AccessibilityProps.AriaControls
-  !="" { aria-controls={ props.AccessibilityProps.AriaControls } } if props.AccessibilityProps.AriaHasPopup !="" {
-  aria-haspopup={ props.AccessibilityProps.AriaHasPopup } } if props.AccessibilityProps.AriaDisabled {
-  aria-disabled="true" } if props.BaseProps.DataTestID !="" { data-testid={ props.BaseProps.DataTestID } } if
-  props.TabIndex !=0 { tabindex={ strconv.Itoa(props.TabIndex) } } if props.AlpinEventHandlers.OnClick !="" {
-  x-on:click={ props.AlpinEventHandlers.OnClick } } if props.AlpinEventHandlers.OnFocus !="" { x-on:focus={
-  props.AlpinEventHandlers.OnFocus } } if props.AlpinEventHandlers.OnBlur !="" { x-on:blur={
-  props.AlpinEventHandlers.OnBlur } } if props.AlpinEventHandlers.OnMouseEnter !="" { x-on:mouseenter={
-  props.AlpinEventHandlers.OnMouseEnter } } if props.AlpinEventHandlers.OnMouseLeave !="" { x-on:mouseleave={
-  props.AlpinEventHandlers.OnMouseLeave } } if props.AlpinEventHandlers.OnKeyDown !="" { x-on:keydown={
-  props.AlpinEventHandlers.OnKeyDown } }>
-  if props.Loading {
-  @buttonLoadingState(props)
-  } else {
-  @buttonContent(props)
-  }
-</button>
+	<button
+		type={ getButtonType(props) }
+		if props.BaseProps.ID != "" {
+			id={ props.BaseProps.ID }
+		}
+		if props.BaseProps.Name != "" {
+			name={ props.BaseProps.Name }
+		}
+		if props.Form != "" {
+			form={ props.Form }
+		}
+		class={ getButtonClasses(props) }
+		if props.InteractionProps.Disabled || props.Loading {
+			disabled
+		}
+		if props.AccessibilityProps.AriaLabel != "" {
+			aria-label={ props.AccessibilityProps.AriaLabel }
+		}
+		if props.AccessibilityProps.AriaDescribedBy != "" {
+			aria-describedby={ props.AccessibilityProps.AriaDescribedBy }
+		}
+		if props.AccessibilityProps.AriaExpanded != nil {
+			aria-expanded={ getAriaExpanded(props.AccessibilityProps.AriaExpanded) }
+		}
+		if props.AccessibilityProps.AriaControls != "" {
+			aria-controls={ props.AccessibilityProps.AriaControls }
+		}
+		if props.AccessibilityProps.AriaHasPopup != "" {
+			aria-haspopup={ props.AccessibilityProps.AriaHasPopup }
+		}
+		if props.AccessibilityProps.AriaDisabled {
+			aria-disabled="true"
+		}
+		if props.BaseProps.DataTestID != "" {
+			data-testid={ props.BaseProps.DataTestID }
+		}
+		if props.TabIndex != 0 {
+			tabindex={ strconv.Itoa(props.TabIndex) }
+		}
+		if props.AlpinEventHandlers.OnClick != "" {
+			x-on:click={ props.AlpinEventHandlers.OnClick }
+		}
+		if props.AlpinEventHandlers.OnFocus != "" {
+			x-on:focus={ props.AlpinEventHandlers.OnFocus }
+		}
+		if props.AlpinEventHandlers.OnBlur != "" {
+			x-on:blur={ props.AlpinEventHandlers.OnBlur }
+		}
+		if props.AlpinEventHandlers.OnMouseEnter != "" {
+			x-on:mouseenter={ props.AlpinEventHandlers.OnMouseEnter }
+		}
+		if props.AlpinEventHandlers.OnMouseLeave != "" {
+			x-on:mouseleave={ props.AlpinEventHandlers.OnMouseLeave }
+		}
+		if props.AlpinEventHandlers.OnKeyDown != "" {
+			x-on:keydown={ props.AlpinEventHandlers.OnKeyDown }
+		}
+	>
+		if props.Loading {
+			@buttonLoadingState(props)
+		} else {
+			@buttonContent(props)
+		}
+	</button>
 }
 
 // buttonLoadingState renders loading spinner overlay
 templ buttonLoadingState(props ButtonProps) {
-// Spinner overlay (visible)
-<div class="absolute inset-0 flex items-center justify-center">
-  @loadingSpinner(props.Size)
-</div>
-// Content (invisible but maintains layout)
-<span class="invisible">
-  @buttonContent(props)
-</span>
+	// Spinner overlay (visible)
+	<div class="absolute inset-0 flex items-center justify-center">
+		@loadingSpinner(props.Size)
+	</div>
+	// Content (invisible but maintains layout)
+	<span class="invisible">
+		@buttonContent(props)
+	</span>
 }
 
 // buttonContent renders button inner content
 templ buttonContent(props ButtonProps) {
-// Left icon
-if props.Icon.HasIcon() && props.Icon.Position == IconLeft {
-@Icon(getButtonIconProps(props.Icon, props.Size, props.Text != "", IconLeft))
-}
-// Button text
-if props.Text != "" {
-<span>{ props.Text }</span>
-}
-// Right icon
-if props.Icon.HasIcon() && props.Icon.Position == IconRight {
-@Icon(getButtonIconProps(props.Icon, props.Size, props.Text != "", IconRight))
-}
+	// Left icon
+	if props.Icon.HasIcon() && props.Icon.Position == IconLeft {
+		@Icon(getButtonIconProps(props.Icon, props.Size, props.Text != "", IconLeft))
+	}
+	// Button text
+	if props.Text != "" {
+		<span>{ props.Text }</span>
+	}
+	// Right icon
+	if props.Icon.HasIcon() && props.Icon.Position == IconRight {
+		@Icon(getButtonIconProps(props.Icon, props.Size, props.Text != "", IconRight))
+	}
 }
 
 // loadingSpinner renders Flowbite-style loading spinner
 templ loadingSpinner(size Size) {
-<svg class={ getLoadingSpinnerClasses(size) } xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-  <path class="opacity-75" fill="currentColor"
-    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-  </path>
-</svg>
+	<svg class={ getLoadingSpinnerClasses(size) } xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+		<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+		<path
+			class="opacity-75"
+			fill="currentColor"
+			d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+		></path>
+	</svg>
 }
-
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================

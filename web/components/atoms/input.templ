@@ -1,7 +1,7 @@
 package atoms
 
 import (
-	"strconv"
+"strconv"
 )
 
 // ============================================================================
@@ -23,37 +23,68 @@ import (
 
 // Input base classes for different variants
 var inputVariantClasses = map[Variant][]string{
-	VariantDefault: {
-		"bg-gray-50", "border", "border-gray-300", "text-gray-900",
-		"focus:ring-blue-500", "focus:border-blue-500",
-		"dark:bg-gray-700", "dark:border-gray-600", "dark:placeholder-gray-400",
-		"dark:text-white", "dark:focus:ring-blue-500", "dark:focus:border-blue-500",
-	},
-	VariantOutlined: {
-		"bg-transparent", "border", "border-gray-300", "text-gray-900",
-		"focus:ring-blue-500", "focus:border-blue-500",
-		"dark:border-gray-600", "dark:text-white",
-		"dark:focus:ring-blue-500", "dark:focus:border-blue-500",
-	},
-	VariantFilled: {
-		"bg-gray-100", "border", "border-gray-300", "text-gray-900",
-		"focus:ring-blue-500", "focus:border-blue-500",
-		"dark:bg-gray-600", "dark:border-gray-500", "dark:text-white",
-		"dark:focus:ring-blue-500", "dark:focus:border-blue-500",
-	},
-	VariantUnderlined: {
-		"bg-transparent", "border-0", "border-b-2", "border-gray-300",
-		"text-gray-900", "focus:outline-none", "focus:ring-0", "focus:border-blue-600",
-		"dark:border-gray-600", "dark:text-white", "dark:focus:border-blue-500",
-	},
+VariantDefault: {
+"bg-gray-50", "border", "border-gray-300", "text-gray-900",
+"focus:ring-blue-500", "focus:border-blue-500",
+"dark:bg-gray-700", "dark:border-gray-600", "dark:placeholder-gray-400",
+"dark:text-white", "dark:focus:ring-blue-500", "dark:focus:border-blue-500",
+},
+VariantOutlined: {
+"bg-transparent", "border", "border-gray-300", "text-gray-900",
+"focus:ring-blue-500", "focus:border-blue-500",
+"dark:border-gray-600", "dark:text-white",
+"dark:focus:ring-blue-500", "dark:focus:border-blue-500",
+},
+VariantFilled: {
+"bg-gray-100", "border", "border-gray-300", "text-gray-900",
+"focus:ring-blue-500", "focus:border-blue-500",
+"dark:bg-gray-600", "dark:border-gray-500", "dark:text-white",
+"dark:focus:ring-blue-500", "dark:focus:border-blue-500",
+},
+VariantUnderlined: {
+"bg-transparent", "border-0", "border-b-2", "border-gray-300",
+"text-gray-900", "focus:outline-none", "focus:ring-0", "focus:border-blue-600",
+"dark:border-gray-600", "dark:text-white", "dark:focus:border-blue-500",
+},
 }
 
 // Base input classes
 const (
-	inputBaseClasses = "block w-full rounded-lg text-sm transition-colors duration-200"
-	inputDisabledClasses = "opacity-50 cursor-not-allowed"
-	inputReadOnlyClasses = "bg-gray-100 cursor-default dark:bg-gray-600"
+inputBaseClasses = "block w-full rounded-lg text-sm transition-colors duration-200"
+inputDisabledClasses = "opacity-50 cursor-not-allowed"
+inputReadOnlyClasses = "bg-gray-100 cursor-default dark:bg-gray-600"
 )
+// InputProps defines properties for Input components.
+type InputProps struct {
+  BaseProps
+  AccessibilityProps
+  ValidationProps
+  InteractionProps
+  LabelProps
+PlaceholderProps
+AlpinEventHandlers
+
+// Input-specific
+Type InputType `json:"type,omitempty"` // Input type
+Value string `json:"value,omitempty"` // Input value
+Variant Variant `json:"variant,omitempty"` // Input variant
+Size Size `json:"size,omitempty"` // Input size
+AutoComplete string `json:"autoComplete,omitempty"` // Autocomplete attribute
+MaxLength int `json:"maxLength,omitempty"` // Maximum length
+MinLength int `json:"minLength,omitempty"` // Minimum length
+Pattern string `json:"pattern,omitempty"` // Validation pattern
+Min string `json:"min,omitempty"` // Min value (for number/date)
+Max string `json:"max,omitempty"` // Max value (for number/date)
+Step string `json:"step,omitempty"` // Step value (for number)
+
+// Icons
+LeftIcon IconProps `json:"leftIcon,omitempty"` // Icon on left
+RightIcon IconProps `json:"rightIcon,omitempty"` // Icon on right
+
+// Additional commonly used fields (for template compatibility)
+EventProps AlpinEventHandlers `json:"eventProps,omitempty"` // Event handlers (also available via embedded
+}
+
 
 // ============================================================================
 // CONSTRUCTOR WITH SENSIBLE DEFAULTS
@@ -116,7 +147,6 @@ templ Input(props InputProps) {
 		if props.Label != "" && props.LabelPosition == LabelTop {
 			@inputLabel(props)
 		}
-		
 		<div class="relative">
 			// Left icon
 			if props.LeftIcon.Name != "" {
@@ -124,7 +154,6 @@ templ Input(props InputProps) {
 					@Icon(props.LeftIcon.WithSize(getIconSizeForInput(props.Size)).WithColor("text-gray-500 dark:text-gray-400"))
 				</div>
 			}
-			
 			// Input element
 			<input
 				id={ props.GetID("input") }
@@ -209,7 +238,6 @@ templ Input(props InputProps) {
 					x-on:keyup={ props.OnKeyUp }
 				}
 			/>
-			
 			// Right icon
 			if props.RightIcon.Name != "" {
 				<div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -217,12 +245,10 @@ templ Input(props InputProps) {
 				</div>
 			}
 		</div>
-		
 		// Label (right position - for inline layouts)
 		if props.Label != "" && props.LabelPosition == LabelRight {
 			@inputLabel(props)
 		}
-		
 		// Validation and help text
 		@inputValidationText(props)
 	</div>
@@ -230,10 +256,7 @@ templ Input(props InputProps) {
 
 // inputLabel renders the label with proper styling and association
 templ inputLabel(props InputProps) {
-	<label
-		for={ props.GetID("input") }
-		class={ getInputLabelClasses(props) }
-	>
+	<label for={ props.GetID("input") } class={ getInputLabelClasses(props) }>
 		{ props.GetLabelText() }
 		if props.Required {
 			<span class="text-red-500 ml-1">*</span>
@@ -262,106 +285,106 @@ templ inputValidationText(props InputProps) {
 
 // getInputType returns the input type, defaulting to text
 func getInputType(inputType InputType) string {
-	if inputType != "" {
-		return string(inputType)
-	}
-	return string(InputTypeText)
+if inputType != "" {
+return string(inputType)
+}
+return string(InputTypeText)
 }
 
 // getInputWrapperClasses returns classes for the input wrapper
 func getInputWrapperClasses(props InputProps) string {
-	classes := []string{}
-	
-	// Add spacing for label position
-	switch props.LabelPosition {
-	case LabelLeft, LabelRight:
-		classes = append(classes, "flex", "items-center", "gap-3")
-	default:
-		classes = append(classes, "space-y-2")
-	}
-	
-	// Add custom wrapper classes
-	if props.Class != "" {
-		classes = append(classes, props.Class)
-	}
-	
-	return JoinClasses(classes...)
+classes := []string{}
+
+// Add spacing for label position
+switch props.LabelPosition {
+case LabelLeft, LabelRight:
+classes = append(classes, "flex", "items-center", "gap-3")
+default:
+classes = append(classes, "space-y-2")
+}
+
+// Add custom wrapper classes
+if props.Class != "" {
+classes = append(classes, props.Class)
+}
+
+return JoinClasses(classes...)
 }
 
 // getInputLabelClasses returns classes for the input label
 func getInputLabelClasses(props InputProps) string {
-	classes := []string{
-		"text-sm", "font-medium", "text-gray-900", "dark:text-white",
-	}
-	
-	// Add flex shrink for inline layouts
-	if props.LabelPosition == LabelLeft || props.LabelPosition == LabelRight {
-		classes = append(classes, "flex-shrink-0")
-	}
-	
-	return JoinClasses(classes...)
+classes := []string{
+"text-sm", "font-medium", "text-gray-900", "dark:text-white",
+}
+
+// Add flex shrink for inline layouts
+if props.LabelPosition == LabelLeft || props.LabelPosition == LabelRight {
+classes = append(classes, "flex-shrink-0")
+}
+
+return JoinClasses(classes...)
 }
 
 // getInputClasses generates all input classes based on props
 func getInputClasses(props InputProps) string {
-	classes := []string{inputBaseClasses}
-	
-	// Add variant classes
-	if variantClasses, ok := inputVariantClasses[props.Variant]; ok {
-		classes = append(classes, variantClasses...)
-	}
-	
-	// Add size classes
-	classes = append(classes, GetInputSizeClasses(props.Size)...)
-	
-	// Add validation state classes
-	classes = append(classes, GetValidationStateClasses(props.State)...)
-	
-	// Add padding for icons
-	if props.LeftIcon.Name != "" {
-		classes = append(classes, "pl-10")
-	}
-	if props.RightIcon.Name != "" {
-		classes = append(classes, "pr-10")
-	}
-	
-	// Add disabled/readonly state
-	if props.Disabled {
-		classes = append(classes, inputDisabledClasses)
-	}
-	if props.ReadOnly {
-		classes = append(classes, inputReadOnlyClasses)
-	}
-	
-	return JoinClasses(classes...)
+classes := []string{inputBaseClasses}
+
+// Add variant classes
+if variantClasses, ok := inputVariantClasses[props.Variant]; ok {
+classes = append(classes, variantClasses...)
+}
+
+// Add size classes
+classes = append(classes, GetInputSizeClasses(props.Size)...)
+
+// Add validation state classes
+classes = append(classes, GetValidationStateClasses(props.State)...)
+
+// Add padding for icons
+if props.LeftIcon.Name != "" {
+classes = append(classes, "pl-10")
+}
+if props.RightIcon.Name != "" {
+classes = append(classes, "pr-10")
+}
+
+// Add disabled/readonly state
+if props.Disabled {
+classes = append(classes, inputDisabledClasses)
+}
+if props.ReadOnly {
+classes = append(classes, inputReadOnlyClasses)
+}
+
+return JoinClasses(classes...)
 }
 
 // getIconSizeForInput returns appropriate icon size for input size
 func getIconSizeForInput(size Size) Size {
-	switch size {
-	case SizeXS, SizeSM:
-		return SizeSM
-	case SizeLG, SizeXL:
-		return SizeMD
-	default:
-		return SizeSM
-	}
+switch size {
+case SizeXS, SizeSM:
+return SizeSM
+case SizeLG, SizeXL:
+return SizeMD
+default:
+return SizeSM
+}
 }
 
 // getValidationTextClasses returns classes for validation text
 func getValidationTextClasses(state ValidationState) string {
-	switch state {
-	case StateError:
-		return "text-red-600 dark:text-red-400"
-	case StateSuccess:
-		return "text-green-600 dark:text-green-400"
-	case StateWarning:
-		return "text-yellow-600 dark:text-yellow-400"
-	case StateInfo:
-		return "text-blue-600 dark:text-blue-400"
-	default:
-		return "text-gray-600 dark:text-gray-400"
-	}
+switch state {
+case StateError:
+return "text-red-600 dark:text-red-400"
+case StateSuccess:
+return "text-green-600 dark:text-green-400"
+case StateWarning:
+return "text-yellow-600 dark:text-yellow-400"
+case StateInfo:
+return "text-blue-600 dark:text-blue-400"
+default:
+return "text-gray-600 dark:text-gray-400"
+}
 }
 
 // ============================================================================
@@ -370,78 +393,78 @@ func getValidationTextClasses(state ValidationState) string {
 
 // WithType returns a new InputProps with specified type
 func (p InputProps) WithType(inputType InputType) InputProps {
-	p.Type = inputType
-	return p
+p.Type = inputType
+return p
 }
 
 // WithValue returns a new InputProps with specified value
 func (p InputProps) WithValue(value string) InputProps {
-	p.Value = value
-	return p
+p.Value = value
+return p
 }
 
 // WithPlaceholder returns a new InputProps with specified placeholder
 func (p InputProps) WithPlaceholder(placeholder string) InputProps {
-	p.Placeholder = placeholder
-	return p
+p.Placeholder = placeholder
+return p
 }
 
 // WithLabel returns a new InputProps with specified label
 func (p InputProps) WithLabel(label string) InputProps {
-	p.Label = label
-	return p
+p.Label = label
+return p
 }
 
 // WithLeftIcon returns a new InputProps with a left icon
 func (p InputProps) WithLeftIcon(iconName string) InputProps {
-	p.LeftIcon = NewIcon(iconName)
-	return p
+p.LeftIcon = NewIcon(iconName)
+return p
 }
 
 // WithRightIcon returns a new InputProps with a right icon
 func (p InputProps) WithRightIcon(iconName string) InputProps {
-	p.RightIcon = NewIcon(iconName)
-	return p
+p.RightIcon = NewIcon(iconName)
+return p
 }
 
 // AsRequired returns a new InputProps marked as required
 func (p InputProps) AsRequired() InputProps {
-	p.Required = true
-	p.AriaRequired = true
-	return p
+p.Required = true
+p.AriaRequired = true
+return p
 }
 
 // AsReadOnly returns a new InputProps marked as read-only
 func (p InputProps) AsReadOnly() InputProps {
-	p.ReadOnly = true
-	return p
+p.ReadOnly = true
+return p
 }
 
 // WithVariant returns a new InputProps with specified variant
 func (p InputProps) WithVariant(variant Variant) InputProps {
-	p.Variant = variant
-	return p
+p.Variant = variant
+return p
 }
 
 // WithSize returns a new InputProps with specified size
 func (p InputProps) WithSize(size Size) InputProps {
-	p.Size = size
-	return p
+p.Size = size
+return p
 }
 
 // WithValidation returns a new InputProps with validation state
 func (p InputProps) WithValidation(state ValidationState, message string) InputProps {
-	p.ValidationProps = NewValidationProps().WithState(state).Build()
-	switch state {
-	case StateError:
-		p.ErrorText = message
-	case StateSuccess:
-		p.SuccessText = message
-	case StateWarning:
-		p.WarningText = message
-	case StateInfo:
-		p.InfoText = message
-	}
-	p.ShowValidation = true
-	return p
+p.ValidationProps = NewValidationProps().WithState(state).Build()
+switch state {
+case StateError:
+p.ErrorText = message
+case StateSuccess:
+p.SuccessText = message
+case StateWarning:
+p.WarningText = message
+case StateInfo:
+p.InfoText = message
+}
+p.ShowValidation = true
+return p
 }

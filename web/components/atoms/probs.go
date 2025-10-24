@@ -147,272 +147,25 @@ func (b BaseProps) GetStyleAttribute() string {
 // ACCESSIBILITY PROPERTIES
 // ============================================================================
 
-// AccessibilityProps contains ARIA and accessibility-related attributes.
-// These improve screen reader support and overall accessibility compliance.
-type AccessibilityProps struct {
-	AriaLabel       string `json:"ariaLabel,omitempty"`       // Accessible name
-	AriaDescribedBy string `json:"ariaDescribedBy,omitempty"` // ID of describing element
-	AriaLabelledBy  string `json:"ariaLabelledBy,omitempty"`  // ID of labeling element
-	AriaRequired    bool   `json:"ariaRequired,omitempty"`    // Marks field as required
-	AriaInvalid     bool   `json:"ariaInvalid,omitempty"`     // Marks field as invalid
-	AriaDisabled    bool   `json:"ariaDisabled,omitempty"`    // Marks field as disabled
-	AriaPlaceholder string `json:"ariaPlaceholder,omitempty"` // Accessible placeholder
-	AriaControls    string `json:"ariaControls,omitempty"`    // ID of controlled element
-	AriaExpanded    *bool  `json:"ariaExpanded,omitempty"`    // Expandable state (pointer for 3-state)
-	AriaPressed     *bool  `json:"ariaPressed,omitempty"`     // Pressed state (pointer for 3-state)
-	AriaHasPopup    string `json:"ariaHasPopup,omitempty"`    // Popup type (menu, dialog, etc.)
-	AriaLive        string `json:"ariaLive,omitempty"`        // Live region (polite, assertive)
-	AriaHidden      bool   `json:"ariaHidden,omitempty"`      // Hidden from screen readers
-	Role            string `json:"role,omitempty"`            // ARIA role override
-}
-
-// GetAriaAttributes returns a map of aria attributes for rendering.
-// Returns only non-empty values to keep HTML clean.
-func (a AccessibilityProps) GetAriaAttributes() map[string]string {
-	attrs := make(map[string]string)
-
-	if a.AriaLabel != "" {
-		attrs["aria-label"] = a.AriaLabel
-	}
-	if a.AriaDescribedBy != "" {
-		attrs["aria-describedby"] = a.AriaDescribedBy
-	}
-	if a.AriaLabelledBy != "" {
-		attrs["aria-labelledby"] = a.AriaLabelledBy
-	}
-	if a.AriaRequired {
-		attrs["aria-required"] = "true"
-	}
-	if a.AriaInvalid {
-		attrs["aria-invalid"] = "true"
-	}
-	if a.AriaDisabled {
-		attrs["aria-disabled"] = "true"
-	}
-	if a.AriaPlaceholder != "" {
-		attrs["aria-placeholder"] = a.AriaPlaceholder
-	}
-	if a.AriaControls != "" {
-		attrs["aria-controls"] = a.AriaControls
-	}
-	if a.AriaExpanded != nil {
-		attrs["aria-expanded"] = fmt.Sprintf("%t", *a.AriaExpanded)
-	}
-	if a.AriaHasPopup != "" {
-		attrs["aria-haspopup"] = a.AriaHasPopup
-	}
-	if a.AriaLive != "" {
-		attrs["aria-live"] = a.AriaLive
-	}
-	if a.AriaHidden {
-		attrs["aria-hidden"] = "true"
-	}
-	if a.Role != "" {
-		attrs["role"] = a.Role
-	}
-
-	return attrs
-}
-
-// HasAriaLabel checks if any form of ARIA label is set.
-func (a AccessibilityProps) HasAriaLabel() bool {
-	return a.AriaLabel != "" || a.AriaLabelledBy != ""
-}
+// AccessibilityProps is defined in accessibility.go
 
 // ============================================================================
 // VALIDATION PROPERTIES - SCHEMA ALIGNED
 // ============================================================================
 
-// ValidationProps handles validation state and feedback messages.
-// Enhanced with schema-aligned validation capabilities.
-type ValidationProps struct {
-	// Basic validation state
-	State            ValidationState `json:"state,omitempty"`            // Current validation state
-	HelpText         string          `json:"helpText,omitempty"`         // General guidance text
-	ErrorText        string          `json:"errorText,omitempty"`        // Error message
-	SuccessText      string          `json:"successText,omitempty"`      // Success message
-	WarningText      string          `json:"warningText,omitempty"`      // Warning message
-	InfoText         string          `json:"infoText,omitempty"`         // Info message
-	ShowValidation   bool            `json:"showValidation,omitempty"`   // Whether to show validation UI
-	ValidateOnBlur   bool            `json:"validateOnBlur,omitempty"`   // Trigger validation on blur
-	ValidateOnChange bool            `json:"validateOnChange,omitempty"` // Trigger validation on change
-	
-	// Schema-aligned validation
-	Rules            *ValidationRules  `json:"validations,omitempty"`      // Validation rules configuration
-	ErrorMessages    *ValidationErrors `json:"validationErrors,omitempty"` // Custom error messages
-	ValidateAPI      *APIObject        `json:"validateApi,omitempty"`      // Remote validation API
-	AutoFill         *AutoFillConfig   `json:"autoFill,omitempty"`         // Autofill configuration
-	InitAutoFill     interface{}       `json:"initAutoFill,omitempty"`     // Initial autofill behavior
-}
-
-// GetFeedbackMessage returns the appropriate message based on current state.
-// Priority: Error > Success > Warning > Info > HelpText
-func (v ValidationProps) GetFeedbackMessage() (string, ValidationState) {
-	switch v.State {
-	case StateError:
-		if v.ErrorText != "" {
-			return v.ErrorText, StateError
-		}
-	case StateSuccess:
-		if v.SuccessText != "" {
-			return v.SuccessText, StateSuccess
-		}
-	case StateWarning:
-		if v.WarningText != "" {
-			return v.WarningText, StateWarning
-		}
-	case StateInfo:
-		if v.InfoText != "" {
-			return v.InfoText, StateInfo
-		}
-	}
-
-	// Fallback to help text with default state
-	if v.HelpText != "" {
-		return v.HelpText, StateDefault
-	}
-
-	return "", StateDefault
-}
-
-// GetValidationMessage returns just the message string for validation display.
-func (v ValidationProps) GetValidationMessage() string {
-	msg, _ := v.GetFeedbackMessage()
-	return msg
-}
-
-// HasFeedback checks if there's any feedback message to display.
-func (v ValidationProps) HasFeedback() bool {
-	msg, _ := v.GetFeedbackMessage()
-	return msg != ""
-}
-
-// IsValid checks if the current state indicates a valid input.
-func (v ValidationProps) IsValid() bool {
-	return v.State == StateSuccess || v.State == StateDefault
-}
-
-// IsInvalid checks if the current state indicates an invalid input.
-func (v ValidationProps) IsInvalid() bool {
-	return v.State == StateError
-}
+// ValidationProps is defined in validation.go
 
 // ============================================================================
 // INTERACTION PROPERTIES
 // ============================================================================
 
-// InteractionProps handles user interaction states.
-// Controls how users can interact with the component.
-type InteractionProps struct {
-	Disabled  bool `json:"disabled,omitempty"`  // Component is disabled
-	Required  bool `json:"required,omitempty"`  // Field is required
-	ReadOnly  bool `json:"readonly,omitempty"`  // Field is read-only
-	AutoFocus bool `json:"autofocus,omitempty"` // Auto-focus on page load
-}
-
-// IsInteractive checks if the component accepts user input.
-func (i InteractionProps) IsInteractive() bool {
-	return !i.Disabled && !i.ReadOnly
-}
-
-// ShouldShowRequired checks if required indicator should be shown.
-func (i InteractionProps) ShouldShowRequired() bool {
-	return i.Required && !i.Disabled
-}
-
-// GetInteractionAttrs returns HTML attributes for interaction state.
-func (i InteractionProps) GetInteractionAttrs() map[string]string {
-	attrs := make(map[string]string)
-
-	if i.Disabled {
-		attrs["disabled"] = "disabled"
-	}
-	if i.Required {
-		attrs["required"] = "required"
-	}
-	if i.ReadOnly {
-		attrs["readonly"] = "readonly"
-	}
-	if i.AutoFocus {
-		attrs["autofocus"] = "autofocus"
-	}
-
-	return attrs
-}
+// InteractionProps is defined in states.go
 
 // ============================================================================
 // ALPINE.JS EVENT HANDLERS
 // ============================================================================
 
-// EventProps contains event handling properties for components.
-// Alias for AlpinEventHandlers for backward compatibility.
-type EventProps = AlpinEventHandlers
-
-// AlpinEventHandlers contains Alpine.js event handling directives.
-// These will be rendered as x-on:* attributes.
-type AlpinEventHandlers struct {
-	OnChange     string `json:"onChange,omitempty"`     // x-on:change
-	OnInput      string `json:"onInput,omitempty"`      // x-on:input
-	OnFocus      string `json:"onFocus,omitempty"`      // x-on:focus
-	OnBlur       string `json:"onBlur,omitempty"`       // x-on:blur
-	OnClick      string `json:"onClick,omitempty"`      // x-on:click
-	OnKeyDown    string `json:"onKeyDown,omitempty"`    // x-on:keydown
-	OnKeyUp      string `json:"onKeyUp,omitempty"`      // x-on:keyup
-	OnMouseEnter string `json:"onMouseEnter,omitempty"` // x-on:mouseenter
-	OnMouseLeave string `json:"onMouseLeave,omitempty"` // x-on:mouseleave
-	OnSubmit     string `json:"onSubmit,omitempty"`     // x-on:submit
-	OnLoad       string `json:"onLoad,omitempty"`       // x-on:load
-}
-
-// GetEventAttributes returns a map of Alpine.js event attributes.
-// Automatically prefixes with x-on: for Alpine.js.
-func (a AlpinEventHandlers) GetEventAttributes() map[string]string {
-	attrs := make(map[string]string)
-
-	if a.OnChange != "" {
-		attrs["x-on:change"] = a.OnChange
-	}
-	if a.OnInput != "" {
-		attrs["x-on:input"] = a.OnInput
-	}
-	if a.OnFocus != "" {
-		attrs["x-on:focus"] = a.OnFocus
-	}
-	if a.OnBlur != "" {
-		attrs["x-on:blur"] = a.OnBlur
-	}
-	if a.OnClick != "" {
-		attrs["x-on:click"] = a.OnClick
-	}
-	if a.OnKeyDown != "" {
-		attrs["x-on:keydown"] = a.OnKeyDown
-	}
-	if a.OnKeyUp != "" {
-		attrs["x-on:keyup"] = a.OnKeyUp
-	}
-	if a.OnMouseEnter != "" {
-		attrs["x-on:mouseenter"] = a.OnMouseEnter
-	}
-	if a.OnMouseLeave != "" {
-		attrs["x-on:mouseleave"] = a.OnMouseLeave
-	}
-	if a.OnSubmit != "" {
-		attrs["x-on:submit"] = a.OnSubmit
-	}
-	if a.OnLoad != "" {
-		attrs["x-on:load"] = a.OnLoad
-	}
-
-	return attrs
-}
-
-// HasEventHandlers checks if any event handlers are defined.
-func (a AlpinEventHandlers) HasEventHandlers() bool {
-	return a.OnChange != "" || a.OnInput != "" || a.OnFocus != "" ||
-		a.OnBlur != "" || a.OnClick != "" || a.OnKeyDown != "" ||
-		a.OnKeyUp != "" || a.OnMouseEnter != "" || a.OnMouseLeave != "" ||
-		a.OnSubmit != "" || a.OnLoad != ""
-}
+// EventProps and AlpinEventHandlers are defined in event.go
 
 // ============================================================================
 // LABEL PROPERTIES - SCHEMA ALIGNED
@@ -678,36 +431,7 @@ type ButtonProps struct {
 	EventProps AlpinEventHandlers `json:"eventProps,omitempty"` // Event handlers (also available via embedded AlpinEventHandlers)
 }
 
-// InputProps defines properties for Input components.
-type InputProps struct {
-	BaseProps
-	AccessibilityProps
-	ValidationProps
-	InteractionProps
-	LabelProps
-	PlaceholderProps
-	AlpinEventHandlers
-
-	// Input-specific
-	Type         InputType `json:"type,omitempty"`         // Input type
-	Value        string    `json:"value,omitempty"`        // Input value
-	Variant      Variant   `json:"variant,omitempty"`      // Input variant
-	Size         Size      `json:"size,omitempty"`         // Input size
-	AutoComplete string    `json:"autoComplete,omitempty"` // Autocomplete attribute
-	MaxLength    int       `json:"maxLength,omitempty"`    // Maximum length
-	MinLength    int       `json:"minLength,omitempty"`    // Minimum length
-	Pattern      string    `json:"pattern,omitempty"`      // Validation pattern
-	Min          string    `json:"min,omitempty"`          // Min value (for number/date)
-	Max          string    `json:"max,omitempty"`          // Max value (for number/date)
-	Step         string    `json:"step,omitempty"`         // Step value (for number)
-
-	// Icons
-	LeftIcon  IconProps `json:"leftIcon,omitempty"`  // Icon on left
-	RightIcon IconProps `json:"rightIcon,omitempty"` // Icon on right
-	
-	// Additional commonly used fields (for template compatibility)
-	EventProps AlpinEventHandlers `json:"eventProps,omitempty"` // Event handlers (also available via embedded AlpinEventHandlers)
-}
+// InputProps is defined in input_templ.go to avoid duplication
 
 // CheckboxProps defines properties for Checkbox components.
 type CheckboxProps struct {
@@ -1025,88 +749,11 @@ type ImageProps struct {
 	WrapperClass string `json:"wrapperClass,omitempty"` // Custom wrapper classes
 }
 
-// LinkProps defines properties for Link components.
-type LinkProps struct {
-	BaseProps
-	AccessibilityProps
-	InteractionProps
-	AlpinEventHandlers
+// LinkProps is defined in link_templ.go
 
-	// Link attributes
-	Href   string `json:"href,omitempty"`
-	Target string `json:"target,omitempty"` // _blank, _self, etc.
-	Rel    string `json:"rel,omitempty"`    // Link relationship
+// ProgressProps is defined in progress_templ.go
 
-	// Link content
-	Text         string `json:"text,omitempty"`
-	Icon         string `json:"icon,omitempty"`         // Optional icon name
-	IconPosition string `json:"iconPosition,omitempty"` // Icon position (left, right)
-
-	// Link styling
-	Variant       Variant `json:"variant,omitempty"`       // Link variant
-	Size          Size    `json:"size,omitempty"`          // Link size
-	ComponentSize Size    `json:"componentSize,omitempty"` // Component size
-	Color         string  `json:"color,omitempty"`         // Link color
-	Underline     bool    `json:"underline,omitempty"`     // Show underline
-	External      bool    `json:"external,omitempty"`      // External link styling
-	Download      string  `json:"download,omitempty"`      // Download attribute
-	NoOpener      bool    `json:"noOpener,omitempty"`      // Add rel="noopener"
-	NoReferrer    bool    `json:"noReferrer,omitempty"`    // Add rel="noreferrer"
-}
-
-// ProgressProps defines properties for Progress components.
-type ProgressProps struct {
-	BaseProps
-	AccessibilityProps
-	AlpinEventHandlers
-
-	// Progress attributes
-	Value float64 `json:"value,omitempty"` // Current progress value
-	Max   float64 `json:"max,omitempty"`   // Maximum progress value
-	Min   float64 `json:"min,omitempty"`   // Minimum progress value
-
-	// Progress content
-	Label       string `json:"label,omitempty"`       // Progress label
-	Description string `json:"description,omitempty"` // Progress description
-
-	// Progress styling
-	Variant       Variant       `json:"variant,omitempty"`       // Progress variant
-	Size          Size          `json:"size,omitempty"`          // Progress size
-	Color         ColorScheme   `json:"color,omitempty"`         // Progress color
-	LabelPosition LabelPosition `json:"labelPosition,omitempty"` // Label position
-	ShowPercent   bool          `json:"showPercent,omitempty"`   // Show percentage text
-	ShowValue     bool          `json:"showValue,omitempty"`     // Show current value
-	Animated      bool          `json:"animated,omitempty"`      // Animated progress
-	Striped       bool          `json:"striped,omitempty"`       // Striped pattern
-}
-
-// StaticProps defines properties for Static Text components.
-type StaticProps struct {
-	BaseProps
-	AccessibilityProps
-	InteractionProps
-
-	// Static content
-	Text string `json:"text,omitempty"` // Text content
-	Html string `json:"html,omitempty"` // HTML content (use with caution)
-
-	// Static styling
-	TextStyle          string `json:"textStyle,omitempty"`          // Text style variant
-	Size               Size   `json:"size,omitempty"`               // Text size
-	Element            string `json:"element,omitempty"`            // HTML element (span, p, h1, etc.)
-	Alignment          string `json:"alignment,omitempty"`          // Text alignment
-	Truncate           bool   `json:"truncate,omitempty"`           // Truncate text
-	LineClamp          int    `json:"lineClamp,omitempty"`          // Line clamp
-	PreserveWhitespace bool   `json:"preserveWhitespace,omitempty"` // Preserve whitespace
-
-	// Static behavior
-	OnClick string `json:"onClick,omitempty"` // Click handler
-	For     string `json:"for,omitempty"`     // For label elements
-	Style   string `json:"style,omitempty"`   // Inline styles
-
-	// Children for complex text
-	Children []templ.Component `json:"-"` // Child components
-}
+// StaticProps is defined in static_templ.go
 
 // StatusProps defines properties for Status Indicator components.
 type StatusProps struct {
