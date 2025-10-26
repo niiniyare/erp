@@ -45,7 +45,7 @@ func NewFiberMiddleware(
 		[]string{"POST /api/v1/auth/login", "POST /api/v1/auth/refresh", "GET /api/v1/version"},
 	)
 	if err != nil {
-		logger.Warn("Failed to create endpoint whitelist, using default", map[string]interface{}{"error": err.Error()})
+		logger.Warn("Failed to create endpoint whitelist, using default", map[string]any{"error": err.Error()})
 		whitelist = DefaultWhitelist()
 	}
 
@@ -484,7 +484,7 @@ func GetTenantIDFromFiber(c *fiber.Ctx) (uuid.UUID, bool) {
 	return uuid.Nil, false
 }
 
-func GetUserFromFiber(c *fiber.Ctx) (interface{}, bool) {
+func GetUserFromFiber(c *fiber.Ctx) (any, bool) {
 	if user := c.Locals("user"); user != nil {
 		return user, true
 	}

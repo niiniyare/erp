@@ -25,14 +25,14 @@ type AssignUserRoleParams struct {
 	PAssignedBy uuid.UUID `json:"p_assigned_by"`
 }
 
-func (q *Queries) AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (interface{}, error) {
+func (q *Queries) AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (any, error) {
 	row := q.db.QueryRow(ctx, assignUserRole,
 		arg.PUserID,
 		arg.PRoleID,
 		arg.PEntityID,
 		arg.PAssignedBy,
 	)
-	var assign_user_role interface{}
+	var assign_user_role any
 	err := row.Scan(&assign_user_role)
 	return assign_user_role, err
 }

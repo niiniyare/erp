@@ -1164,9 +1164,9 @@ WHERE
   tenant_id = current_tenant_id()
 `
 
-func (q *Queries) GetSpecificSetting(ctx context.Context, key string) (interface{}, error) {
+func (q *Queries) GetSpecificSetting(ctx context.Context, key string) (any, error) {
 	row := q.db.QueryRow(ctx, getSpecificSetting, key)
-	var value interface{}
+	var value any
 	err := row.Scan(&value)
 	return value, err
 }
@@ -2237,7 +2237,7 @@ WHERE
 
 type UpdateSpecificSettingParams struct {
 	Key   *string     `json:"key"`
-	Value interface{} `json:"value"`
+	Value any `json:"value"`
 }
 
 func (q *Queries) UpdateSpecificSetting(ctx context.Context, arg UpdateSpecificSettingParams) error {

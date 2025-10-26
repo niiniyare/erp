@@ -60,7 +60,7 @@ func run(filename string) {
 			}
 			result += fmt.Sprintf(`
 // %s
-func %s(opts ...opt) map[string]interface{} {
+func %s(opts ...opt) map[string]any {
 	return newCompent("%s", opts...)
 }
 
@@ -96,7 +96,7 @@ func %s(opts ...opt) map[string]interface{} {
 
 // %s
 func %s_%s(p %s) opt {
-	return func(o map[string]interface{}) {
+	return func(o map[string]any) {
 		o["%s"] = p
 	}
 } `, strings.Trim(datas[4], " "), modname, fieldname, tn(strings.Trim(datas[2], " ")), fieldname)
@@ -115,5 +115,5 @@ func tn(t string) string {
 	} else if t == "`boolean`" {
 		return "bool"
 	}
-	return "interface{}"
+	return "any"
 }

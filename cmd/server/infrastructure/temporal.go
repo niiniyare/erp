@@ -30,3 +30,8 @@ func (t *Temporal) Shutdown(ctx context.Context) error {
 	}
 	return nil
 }
+
+// GetPlatform returns the Temporal platform
+func (t *Temporal) GetPlatform() *temporal.Platform {
+	return t.Platform
+}

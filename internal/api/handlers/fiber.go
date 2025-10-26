@@ -179,16 +179,20 @@ func setupRoutes(
 	// API v1 routes
 	v1 := app.Group("/api/v1")
 
+	// FIXME:it will come back
+	//
 	// Create unified handlers that serve both HTML and JSON
-	authHandler := NewAuthUnifiedHandler(coreServices, tracingService, metricsService)
+	// authHandler := NewAuthUnifiedHandler(coreServices, tracingService, metricsService)
 	tenantHandler := NewTenantUnifiedHandler(coreServices, tracingService, metricsService)
 
 	// Setup unified route groups (handle both HTML and JSON responses)
-	SetupAuthUnifiedRoutes(app, authHandler)     // Root level for UI routes
+	// FIXME:it will come back
+	// SetupAuthUnifiedRoutes(app, authHandler)     // Root level for UI routes
 	SetupTenantUnifiedRoutes(app, tenantHandler) // Root level for UI routes
 
 	// API v1 routes (explicit JSON endpoints)
-	SetupAuthUnifiedRoutes(v1, authHandler)     // API endpoints
+	// FIXME:it will come back
+	// SetupAuthUnifiedRoutes(v1, authHandler)     // API endpoints
 	SetupTenantUnifiedRoutes(v1, tenantHandler) // API endpoints
 
 	// TODO: Implement other route groups with proper handlers

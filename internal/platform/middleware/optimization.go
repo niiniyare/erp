@@ -96,9 +96,9 @@ type SimplifiedMiddlewareStack struct {
 	Metrics *metrics.MetricsService
 	// NOTE: Using interfaces to avoid circular dependencies
 	// Production implementation should inject these via dependency injection
-	TenantService interface{} // Use tenant.Service interface from internal/core/tenant
-	Store         interface{} // Use db.Store interface from db/sqlc
-	Cache         interface{} // Use cache.Service interface from internal/platform/cache
+	TenantService any // Use tenant.Service interface from internal/core/tenant
+	Store         any // Use db.Store interface from db/sqlc
+	Cache         any // Use cache.Service interface from internal/platform/cache
 }
 
 // ApplyBasicMiddlewareChain applies essential middlewares without full stack dependencies

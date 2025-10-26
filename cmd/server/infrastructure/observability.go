@@ -60,3 +60,18 @@ func InitializeObservability(cfg *config.Config) (*Observability, error) {
 func (o *Observability) Shutdown(ctx context.Context) error {
 	return o.Tracing.Shutdown(ctx)
 }
+
+// GetLogger returns the logger
+func (o *Observability) GetLogger() logger.Logger {
+	return o.Logger
+}
+
+// GetMetrics returns the metrics service
+func (o *Observability) GetMetrics() *metrics.MetricsService {
+	return o.Metrics
+}
+
+// GetTracing returns the tracing service
+func (o *Observability) GetTracing() tracing.TracingService {
+	return o.Tracing
+}

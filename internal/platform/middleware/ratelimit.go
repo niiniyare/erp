@@ -608,7 +608,7 @@ func (m *RateLimitMiddleware) getUserID(c *fiber.Ctx) string {
 	// Try JWT claims if available
 	// NOTE: This integrates with the JWT middleware implemented in jwt_auth.go
 	if claims := c.Locals("claims"); claims != nil {
-		if claimsMap, ok := claims.(map[string]interface{}); ok {
+		if claimsMap, ok := claims.(map[string]any); ok {
 			if userID, ok := claimsMap["user_id"].(string); ok {
 				return userID
 			}
@@ -857,8 +857,8 @@ func (m *RateLimitMiddlewareCompat) FiberMiddleware() fiber.Handler {
 }
 
 // GetStats returns current rate limit statistics
-func (m *RateLimitMiddlewareCompat) GetStats() map[string]interface{} {
-	return map[string]interface{}{
+func (m *RateLimitMiddlewareCompat) GetStats() map[string]any {
+	return map[string]any{
 		"circuit_breaker_state": m.inner.cacheCircuitBreaker.state.Load(),
 		"cache_failures":        m.inner.cacheCircuitBreaker.failures.Load(),
 		"config":                m.inner.config,
@@ -925,7 +925,7 @@ func NewRateLimitMonitor(middleware *RateLimitMiddleware, logger logger.Logger) 
 }
 
 // GetCircuitBreakerStatus returns circuit breaker status
-func (m *RateLimitMonitor) GetCircuitBreakerStatus() map[string]interface{} {
+func (m *RateLimitMonitor) GetCircuitBreakerStatus() map[string]any {
 	cb := m.middleware.cacheCircuitBreaker
 
 	stateNames := map[int32]string{
@@ -934,7 +934,7 @@ func (m *RateLimitMonitor) GetCircuitBreakerStatus() map[string]interface{} {
 		2: "half-open",
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"state":             stateNames[cb.state.Load()],
 		"total_failures":    cb.failures.Load(),
 		"consecutive_fails": cb.consecutiveFail.Load(),
@@ -944,7 +944,7 @@ func (m *RateLimitMonitor) GetCircuitBreakerStatus() map[string]interface{} {
 
 // GetBucketStats returns token bucket statistics for a specific key
 // NOTE: This is for debugging - don't use in production hot path
-func (m *RateLimitMonitor) GetBucketStats(ctx context.Context, limitType, key string) (map[string]interface{}, error) {
+func (m *RateLimitMonitor) GetBucketStats(ctx context.Context, limitType, key string) (map[string]any, error) {
 	cacheKey := fmt.Sprintf("rate_limit:bucket:%s:%s", limitType, key)
 
 	var data TokenBucketData
@@ -953,7 +953,7 @@ func (m *RateLimitMonitor) GetBucketStats(ctx context.Context, limitType, key st
 		return nil, fmt.Errorf("failed to get bucket stats: %w", err)
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"tokens":      data.Tokens,
 		"capacity":    data.Capacity,
 		"rate":        data.Rate,

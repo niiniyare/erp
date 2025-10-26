@@ -42,7 +42,7 @@ type CountAccountEntriesParams struct {
 	AccountID         uuid.UUID   `json:"account_id"`
 	DateFrom          time.Time   `json:"date_from"`
 	DateTo            time.Time   `json:"date_to"`
-	TransactionStatus interface{} `json:"transaction_status"`
+	TransactionStatus any `json:"transaction_status"`
 }
 
 func (q *Queries) CountAccountEntries(ctx context.Context, arg CountAccountEntriesParams) (int64, error) {
@@ -239,7 +239,7 @@ type GetAccountEntriesParams struct {
 	AccountID         uuid.UUID   `json:"account_id"`
 	DateFrom          time.Time   `json:"date_from"`
 	DateTo            time.Time   `json:"date_to"`
-	TransactionStatus interface{} `json:"transaction_status"`
+	TransactionStatus any `json:"transaction_status"`
 	Offset            int32       `json:"offset"`
 	Limit             int32       `json:"limit"`
 }
@@ -1041,7 +1041,7 @@ ORDER BY
 
 type GetTrialBalanceParams struct {
 	AsOfDate            time.Time   `json:"as_of_date"`
-	IncludeZeroBalances interface{} `json:"include_zero_balances"`
+	IncludeZeroBalances any `json:"include_zero_balances"`
 }
 
 type GetTrialBalanceRow struct {
@@ -1051,9 +1051,9 @@ type GetTrialBalanceRow struct {
 	RootType      string      `json:"root_type"`
 	AccountType   string      `json:"account_type"`
 	NormalBalance string      `json:"normal_balance"`
-	TotalDebits   interface{} `json:"total_debits"`
-	TotalCredits  interface{} `json:"total_credits"`
-	NetBalance    interface{} `json:"net_balance"`
+	TotalDebits   any `json:"total_debits"`
+	TotalCredits  any `json:"total_credits"`
+	NetBalance    any `json:"net_balance"`
 }
 
 func (q *Queries) GetTrialBalance(ctx context.Context, arg GetTrialBalanceParams) ([]*GetTrialBalanceRow, error) {
