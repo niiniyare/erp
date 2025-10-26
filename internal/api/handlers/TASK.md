@@ -7,6 +7,50 @@
 
 ---
 
+## 🏗️ ESTABLISHED DESIGN PATTERNS (MUST FOLLOW)
+
+### Enterprise Router Pattern (Task 3) ⭐ **MANDATORY TEMPLATE**
+```go
+// Dependencies struct with validation
+type Dependencies struct {
+    Logger  logger.Logger
+    Metrics metrics.MetricsProvider
+    Tracer  tracing.TracingService
+    // Add module-specific dependencies here
+}
+
+// Validation with BusinessError
+func (d *Dependencies) Validate() error {
+    return errors.NewBusinessError("CODE", "message").
+        WithCategory(errors.CategorySystem).
+        WithSeverity(errors.SeverityCritical).
+        WithSuggestion("helpful suggestion")
+}
+
+// Router with module registration
+type Router struct {
+    registry *routes.RouteRegistry
+    deps     *Dependencies
+}
+
+// Module registration pattern
+func (r *Router) registerModule(app *fiber.App) error {
+    handler := module.NewHandler(r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
+    return r.registry.RegisterModuleWithMiddleware(app, ModuleName, "/path", 
+        []string{"cors", "auth"}, setupFunc)
+}
+```
+
+### Key Patterns to Follow:
+- 🔹 **Dependencies**: Always use validated `Dependencies` struct
+- 🔹 **BusinessError**: Structured errors with categories/severity/suggestions  
+- 🔹 **Module Constants**: Use const declarations for module names
+- 🔹 **Testing**: Comprehensive suites with mocks, benchmarks, edge cases
+- 🔹 **TDD**: RED → GREEN → REFACTOR → COMMIT cycle
+- 🔹 **Observability**: Logging, metrics, tracing in all handlers
+
+---
+
 ## Test-Driven Development Process
 
 Each task follows strict TDD methodology:
@@ -123,18 +167,35 @@ Each task follows strict TDD methodology:
   - [x] Implement middleware chain setup
   - [x] Implement route grouping by module
   - [x] Implement path validation
-- [x] **Centralized Route Management**: `internal/api/handlers/routes.go`
-  - [x] Central `RegisterAllRoutes` function with dependency validation
-  - [x] Health routes registered with CORS middleware
-  - [x] Comprehensive test suite with integration tests
-  - [x] Route centralization completed with test migration
-- **Notes**: Route registry system working with comprehensive testing, health routes centralized, all tests passing
-- **Commit Message**: ✅ `feat: implement central route registration with middleware support and centralize health routes`
+- [x] **Enterprise Router Pattern**: `internal/api/handlers/routes.go` ⭐ **DESIGN TEMPLATE**
+  - [x] `Router` struct wrapping route registry with enhanced capabilities
+  - [x] `Dependencies` struct with comprehensive validation and BusinessError integration
+  - [x] Module constants for consistency (ModuleHealth, ModuleTenant, etc.)
+  - [x] Structured module registration with ordered execution
+  - [x] Dependency injection pattern with validation
+  - [x] Health checking and operational monitoring
+  - [x] Route listing and debugging utilities
+  - [x] Future-ready architecture with commented examples
+- [x] **Comprehensive Testing**: `internal/api/handlers/routes_test.go`
+  - [x] Router creation and dependency validation tests
+  - [x] Module registration flow tests with error scenarios
+  - [x] Concurrent access safety tests
+  - [x] Performance benchmarking (BenchmarkRouterCreation, BenchmarkRouteRegistration)
+  - [x] Content negotiation and middleware validation
+  - [x] BusinessError integration testing with proper categories/severity
+- **Design Pattern Reference**: 
+  - 🔹 **Dependencies Pattern**: All handlers use `Dependencies` struct with validation
+  - 🔹 **Router Pattern**: Central `Router` with module registration methods
+  - 🔹 **Error Handling**: BusinessError with categories, severity, and suggestions
+  - 🔹 **Testing Pattern**: Comprehensive test suites with mocks, benchmarks, and edge cases
+  - 🔹 **Module Constants**: Consistent naming with const declarations
+- **Notes**: Enterprise-grade router pattern established, all future handlers MUST follow this design
+- **Commit Message**: ✅ `feat: implement enterprise router pattern with comprehensive dependency validation and testing`
 
 ### Phase 2: Core Business Handlers
 
-#### Task 4: Tenant Handler Implementation
-- [ ] **Test Case**: `TestTenantHandler_CRUD`
+#### Task 4: Tenant Handler Implementation 🏗️ **FOLLOW DESIGN PATTERNS**
+- [ ] **Test Case**: `TestTenantHandler_CRUD` (Follow Task 3 testing pattern)
   - [ ] Test Create tenant with validation
   - [ ] Test Get tenant with authorization
   - [ ] Test List tenants with pagination
@@ -149,12 +210,23 @@ Each task follows strict TDD methodology:
   - [ ] Test tenant isolation enforcement
   - [ ] Test tenant provisioning workflow
 - [ ] **Implementation**: `internal/api/handlers/tenant/handler.go`
+  - [ ] Use `Dependencies` struct pattern from Task 3
   - [ ] Implement TenantHandler struct with dependencies
   - [ ] Implement CRUD operations following 5-step pattern
-  - [ ] Implement business rule validation
+  - [ ] Implement business rule validation with BusinessError
   - [ ] Implement Goa type mapping
-- [ ] **Route Setup**: `internal/api/handlers/tenant/routes.go`
-- **Commit Message**: `feat: implement tenant handler with full CRUD and business rules`
+- [ ] **Router Integration**: Update `internal/api/handlers/routes.go`
+  - [ ] Add `ModuleTenant` constant
+  - [ ] Implement `registerTenant` method following established pattern
+  - [ ] Add tenant module to `RegisterAll` modules slice
+  - [ ] Use proper middleware chain: `[]string{"cors", "auth", "tenant", "ratelimit"}`
+- **Design Requirements**: 
+  - ✅ Use established `Dependencies` pattern
+  - ✅ Follow BusinessError structure for all errors
+  - ✅ Implement comprehensive test suite with benchmarks
+  - ✅ Add performance and concurrency tests
+  - ✅ Follow TDD: RED → GREEN → REFACTOR → COMMIT
+- **Commit Message**: `feat: implement tenant handler following enterprise router pattern with comprehensive validation`
 
 #### Task 5: User Handler Implementation
 - [ ] **Test Case**: `TestUserHandler_Authentication`

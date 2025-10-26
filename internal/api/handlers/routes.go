@@ -27,6 +27,7 @@ type Dependencies struct {
 	Logger  logger.Logger
 	Metrics metrics.MetricsProvider
 	Tracer  tracing.TracingService
+	conf    *health.Config
 }
 
 // Validate ensures all required dependencies are present.
@@ -114,7 +115,8 @@ func (r *Router) RegisterAll(app *fiber.App) error {
 
 // registerHealth registers health check routes.
 func (r *Router) registerHealth(app *fiber.App) error {
-	handler := health.NewHealthHandler(r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
+	// FIXME:pass real system Config here
+	handler := health.NewHealthHandler(r.deps.Logger, r.deps.Metrics, r.deps.Tracer, nil)
 
 	return r.registry.RegisterModuleWithMiddleware(
 		app,
