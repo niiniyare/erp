@@ -104,3 +104,13 @@ func (d *Database) Close() error {
 	}
 	return nil
 }
+
+// GetStore returns the database store
+func (d *Database) GetStore() db.Store {
+	return d.Store
+}
+
+// GetClient returns the Redis client
+func (d *Database) GetClient() cache.Service {
+	return d.RedisClient
+}

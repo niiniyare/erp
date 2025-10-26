@@ -280,8 +280,8 @@ func IsTenantError(err error) bool {
 // ─── DEBUGGING HELPERS ─────────────────────────────────────────────
 
 // GetErrorSummary returns a structured summary of an error for debugging
-func GetErrorSummary(err error) map[string]interface{} {
-	summary := map[string]interface{}{
+func GetErrorSummary(err error) map[string]any {
+	summary := map[string]any{
 		"type":    fmt.Sprintf("%T", err),
 		"message": err.Error(),
 		"code":    GetErrorCode(err),

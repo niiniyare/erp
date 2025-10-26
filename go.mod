@@ -47,6 +47,7 @@ require (
 
 require (
 	cel.dev/expr v0.24.0 // indirect
+	github.com/Oudwins/tailwind-merge-go v0.2.1 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/aws/smithy-go v1.22.5 // indirect

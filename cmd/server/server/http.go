@@ -54,12 +54,12 @@ import (
 	goahttp "goa.design/goa/v3/http"
 )
 
-type GOAServer struct {
+type Server struct {
 	Handler http.Handler
 	Mux     goahttp.Muxer
 }
 
-func InitializeGOAServer(coreServices *services.CoreServices, financeServices *financeService.Services, store db.Store, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*GOAServer, error) {
+func InitializeServer(coreServices *services.CoreServices, financeServices *financeService.Services, store db.Store, cacheService cache.Service, metricsService *metrics.MetricsService, tracingService tracing.TracingService) (*Server, error) {
 	// Initialize GOA services
 	var (
 		abacSvc             abacGen.Service
@@ -77,8 +77,8 @@ func InitializeGOAServer(coreServices *services.CoreServices, financeServices *f
 
 	abacSvc = handlers.NewABACGoaHandler(coreServices.ABACService, metricsService, tracingService, logger.WithFields(logger.Fields{}))
 	accessRequestSvc = handlers.NewAccessRequestGoaHandler(coreServices.AccessRequestService, coreServices.ConditionalAccessService, coreServices.AnalyticsService, tracingService, metricsService)
-	adminFeatureFlagSvc = handlers.NewAdminFeatureFlagService(coreServices.AdminFeatureFlagService, coreServices.ABACService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
-	authSvc = handlers.NewAuthHandlerWithIdentity(coreServices.IdentityService, coreServices.TenantService, tracingService, metricsService)
+	// adminFeatureFlagSvc = handlers.NewAdminFeatureFlagService(coreServices.AdminFeatureFlagService, coreServices.ABACService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
+	// authSvc = handlers.NewAuthHandlerWithIdentity(coreServices.IdentityService, coreServices.TenantService, tracingService, metricsService)
 	featureFlagSvc = handlers.NewFeatureFlagService(coreServices.FeatureFlagService, logger.WithFields(logger.Fields{}), metricsService, tracingService)
 
 	// Initialize finance service only if finance services are available
@@ -101,7 +101,7 @@ func InitializeGOAServer(coreServices *services.CoreServices, financeServices *f
 		tracingService,
 		metricsService,
 	)
-	userSvc = handlers.NewUserGoaHandler(coreServices.IdentityService, coreServices.AccessRequestService, coreServices.ConditionalAccessService, coreServices.AnalyticsService, tracingService, metricsService)
+	// userSvc = handlers.NewUserGoaHandler(coreServices.IdentityService, coreServices.AccessRequestService, coreServices.ConditionalAccessService, coreServices.AnalyticsService, tracingService, metricsService)
 	openapiSvc = handlers.NewOpenapiHandler()
 
 	// Create GOA endpoints
@@ -271,7 +271,7 @@ func InitializeGOAServer(coreServices *services.CoreServices, financeServices *f
 	logMountedEndpoints(userServer.Mounts, "User")
 	logMountedEndpoints(openapiServer.Mounts, "OpenAPI")
 
-	return &GOAServer{
+	return &Server{
 		Handler: handler,
 		Mux:     mux,
 	}, nil

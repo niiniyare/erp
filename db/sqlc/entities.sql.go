@@ -187,9 +187,9 @@ WHERE
 `
 
 type CountEntitiesWithFiltersParams struct {
-	Type     interface{} `json:"type"`
-	IsActive interface{} `json:"is_active"`
-	Hidden   interface{} `json:"hidden"`
+	Type     any `json:"type"`
+	IsActive any `json:"is_active"`
+	Hidden   any `json:"hidden"`
 }
 
 func (q *Queries) CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error) {
@@ -989,9 +989,9 @@ WHERE
   AND ancestor_id = $1
 `
 
-func (q *Queries) GetEntityDepth(ctx context.Context, ancestorID uuid.UUID) (interface{}, error) {
+func (q *Queries) GetEntityDepth(ctx context.Context, ancestorID uuid.UUID) (any, error) {
 	row := q.db.QueryRow(ctx, getEntityDepth, ancestorID)
-	var depth interface{}
+	var depth any
 	err := row.Scan(&depth)
 	return depth, err
 }
@@ -1179,7 +1179,7 @@ WHERE
 type GetEntityHierarchyStatsRow struct {
 	TotalEntities        int64       `json:"total_entities"`
 	RootEntities         int64       `json:"root_entities"`
-	MaxDepth             interface{} `json:"max_depth"`
+	MaxDepth             any `json:"max_depth"`
 	AvgDepth             float64     `json:"avg_depth"`
 	EntitiesWithChildren int64       `json:"entities_with_children"`
 }
@@ -1207,9 +1207,9 @@ WHERE
   AND hp.descendant_id = $1
 `
 
-func (q *Queries) GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (interface{}, error) {
+func (q *Queries) GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (any, error) {
 	row := q.db.QueryRow(ctx, getEntityLevel, descendantID)
-	var level interface{}
+	var level any
 	err := row.Scan(&level)
 	return level, err
 }
@@ -1643,9 +1643,9 @@ LIMIT
 `
 
 type GetEntityStatesWithPagingParams struct {
-	EntityID   interface{} `json:"entity_id"`
-	Key        interface{} `json:"key"`
-	FiscalYear interface{} `json:"fiscal_year"`
+	EntityID   any `json:"entity_id"`
+	Key        any `json:"key"`
+	FiscalYear any `json:"fiscal_year"`
 	PageOffset int32       `json:"page_offset"`
 	PageSize   int32       `json:"page_size"`
 }
@@ -1997,7 +1997,7 @@ type GetEntityWithHierarchyInfoRow struct {
 	CreatedAt         time.Time    `json:"created_at"`
 	UpdatedAt         time.Time    `json:"updated_at"`
 	DeletedAt         sql.NullTime `json:"deleted_at"`
-	Level             interface{}  `json:"level"`
+	Level             any  `json:"level"`
 	ChildCount        int64        `json:"child_count"`
 	ParentName        *string      `json:"parent_name"`
 }
@@ -2106,9 +2106,9 @@ type GetMaxSequenceByEntityAndKeyParams struct {
 	FiscalYear *int16    `json:"fiscal_year"`
 }
 
-func (q *Queries) GetMaxSequenceByEntityAndKey(ctx context.Context, arg GetMaxSequenceByEntityAndKeyParams) (interface{}, error) {
+func (q *Queries) GetMaxSequenceByEntityAndKey(ctx context.Context, arg GetMaxSequenceByEntityAndKeyParams) (any, error) {
 	row := q.db.QueryRow(ctx, getMaxSequenceByEntityAndKey, arg.EntityID, arg.Key, arg.FiscalYear)
-	var max_sequence interface{}
+	var max_sequence any
 	err := row.Scan(&max_sequence)
 	return max_sequence, err
 }
@@ -2896,9 +2896,9 @@ LIMIT
 `
 
 type ListEntitiesWithPaginationParams struct {
-	Type     interface{} `json:"type"`
-	IsActive interface{} `json:"is_active"`
-	Hidden   interface{} `json:"hidden"`
+	Type     any `json:"type"`
+	IsActive any `json:"is_active"`
+	Hidden   any `json:"hidden"`
 	Offset   int32       `json:"offset"`
 	Limit    int32       `json:"limit"`
 }

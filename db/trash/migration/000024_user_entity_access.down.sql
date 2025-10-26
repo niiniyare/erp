@@ -1,1 +1,0 @@
--- User entity access is handled by the entity_id in the user_roles table.

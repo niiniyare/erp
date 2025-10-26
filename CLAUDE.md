@@ -23,4 +23,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Current Implementation**: Hybrid architecture combining **Fiber v2** (HTTP routing/middleware) with **Goa v3** (type generation/OpenAPI).
 
+### Development Notes
+- UI implementation is at @web/ for now, so we will use that package
+
 [... rest of the existing content remains unchanged ...]
