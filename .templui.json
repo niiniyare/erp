@@ -1,0 +1,7 @@
+{
+  "componentsDir": "web/component",
+  "utilsDir": "web/utils",
+  "moduleName": "github.com/niiniyare/erp",
+  "jsDir": "web/assets/js",
+  "jsPublicPath": "web/assets/js"
+}
