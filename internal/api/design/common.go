@@ -110,24 +110,24 @@ var PaginationMeta = Type("PaginationMeta", func() {
 	Required("current_page", "page_size", "total_items", "total_pages", "has_next", "has_prev")
 })
 
-// SearchFilter provides common search/filter parameters
-var SearchFilter = Type("SearchFilter", func() {
-	Description("Common search and filter parameters")
-	Attribute("q", String, "Search query", func() {
-		MaxLength(500)
-		Example("john doe")
-	})
-	Attribute("filters", MapOf(String, Any), "Field-specific filters", func() {
-		Example(map[string]any{
-			"status":        "active",
-			"created_after": "2023-01-01T00:00:00Z",
-		})
-	})
-	Attribute("facets", ArrayOf(String), "Fields to include facet counts for", func() {
-		Example([]string{"status", "category"})
-	})
-})
-
+// // SearchFilter provides common search/filter parameters
+// var SearchFilter = Type("SearchFilter", func() {
+// 	Description("Common search and filter parameters")
+// 	Attribute("q", String, "Search query", func() {
+// 		MaxLength(500)
+// 		Example("john doe")
+// 	})
+// 	Attribute("filters", MapOf(String, Any), "Field-specific filters", func() {
+// 		Example(map[string]any{
+// 			"status":        "active",
+// 			"created_after": "2023-01-01T00:00:00Z",
+// 		})
+// 	})
+// 	Attribute("facets", ArrayOf(String), "Fields to include facet counts for", func() {
+// 		Example([]string{"status", "category"})
+// 	})
+// })
+//
 // ============================================================================
 // AUDIT & TIMESTAMPS
 // ============================================================================

@@ -1,6 +1,4 @@
-// Package design serves as a centralized repository for common and domain-specific types
-// that can be reused across the entire API ecosystem.
-//
+// Package design serves as a centralized repository for common and domain-specific types that can be reused across the entire API ecosystem.
 // Key responsibilities include:
 //
 //   - Common Validation Patterns: Standard regex patterns for UUID, email, phone,
