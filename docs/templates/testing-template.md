@@ -157,7 +157,7 @@ Then:
   - Response contains created entity
 ```
 - [ ] **Status:** Not Implemented
-- **Location:** `internal/core/{module}/service/entity_service_test.go`
+- **Location:** `internal/core/{module}/service_test.go`
 - **Framework:** testify/suite with mocked dependencies
 
 #### Test Case: Authorization Integration
@@ -174,7 +174,7 @@ Then:
   - Service state remains unchanged
 ```
 - [ ] **Status:** Not Implemented
-- **Location:** `internal/core/{module}/service/entity_service_test.go`
+- **Location:** `internal/core/{module}/service_test.go`
 
 #### Test Case: Transaction Management
 ```
@@ -190,7 +190,7 @@ Then:
   - Cleanup operations execute
 ```
 - [ ] **Status:** Not Implemented
-- **Location:** `internal/core/{module}/service/entity_service_test.go`
+- **Location:** `internal/core/{module}/service_test.go`
 
 ### Service Error Handling Tests
 
@@ -212,7 +212,7 @@ Then:
   - Recovery is automatic when possible
 ```
 - [ ] **Status:** Not Implemented
-- **Location:** `internal/core/{module}/service/entity_service_test.go`
+- **Location:** `internal/core/{module}/service_test.go`
 
 ---
 
@@ -234,7 +234,7 @@ Then:
   - Transactions work correctly
 ```
 - [ ] **Status:** Not Implemented
-- **Location:** `internal/core/{module}/repository/entity_repository_integration_test.go`
+- **Location:** `internal/core/{module}/repository/repository_integration_test.go`
 - **Framework:** testcontainers with PostgreSQL
 
 #### Test Case: Query Performance
@@ -250,7 +250,7 @@ Then:
   - Connection pooling works efficiently
 ```
 - [ ] **Status:** Not Implemented
-- **Location:** `internal/core/{module}/repository/entity_repository_integration_test.go`
+- **Location:** `internal/core/{module}/repository/repository_integration_test.go`
 
 ### Multi-tenancy Integration Tests
 
@@ -268,7 +268,7 @@ Then:
   - Tenant context is validated
 ```
 - [ ] **Status:** Not Implemented
-- **Location:** `internal/core/{module}/repository/entity_repository_integration_test.go`
+- **Location:** `internal/core/{module}/repository/repository_integration_test.go`
 
 #### Test Case: Tenant Context Validation
 ```
@@ -283,7 +283,7 @@ Then:
   - Security violations are logged
 ```
 - [ ] **Status:** Not Implemented
-- **Location:** `internal/core/{module}/repository/entity_repository_integration_test.go`
+- **Location:** `internal/core/{module}/repository/repository_integration_test.go`
 
 ---
 
@@ -306,7 +306,7 @@ Then:
   - Response formats are consistent
 ```
 - [ ] **Status:** Not Implemented
-- **Location:** `internal/api/handlers/{module}/entity_handler_test.go`
+- **Location:** `internal/api/handlers/{module}/handler_test.go`
 
 #### Test Case: Request Validation
 ```
@@ -325,7 +325,7 @@ Then:
   - Security validation is applied
 ```
 - [ ] **Status:** Not Implemented
-- **Location:** `internal/api/handlers/{module}/entity_handler_test.go`
+- **Location:** `internal/api/handlers/{module}/handler_test.go`
 
 #### Test Case: Authentication and Authorization
 ```
@@ -341,7 +341,7 @@ Then:
   - ABAC policies are enforced
 ```
 - [ ] **Status:** Not Implemented
-- **Location:** `internal/api/handlers/{module}/entity_handler_test.go`
+- **Location:** `internal/api/handlers/{module}/handler_test.go`
 
 ### Error Response Tests
 
@@ -359,7 +359,7 @@ Then:
   - Correlation IDs are included
 ```
 - [ ] **Status:** Not Implemented
-- **Location:** `internal/api/handlers/{module}/entity_handler_test.go`
+- **Location:** `internal/api/handlers/{module}/handler_test.go`
 
 ---
 
@@ -471,7 +471,7 @@ Then:
   - Performance regressions are detected
 ```
 - [ ] **Status:** Not Implemented
-- **Location:** `internal/core/{module}/service/benchmark_test.go`
+- **Location:** `internal/core/{module}/benchmark_test.go`
 
 ---
 

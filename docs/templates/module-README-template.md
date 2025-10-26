@@ -4,21 +4,13 @@
 
 Brief description of the module's purpose, core business domain, and main functionality within the AWO ERP system.
 
-## Quick Start
-
-### Prerequisites
-- Go 1.21+
-- PostgreSQL 15+
-- Redis (for caching)
-- Make (for build automation)
-
 ### Database Setup
 ```bash
 # Create migration files for this module
 make migrateup
 
-# Generate SQLC code
-make sqlc
+# Generate All Generatable code
+make genAll
 ```
 
 ### Development Setup
@@ -47,7 +39,7 @@ Brief description of core entities and value objects in this module.
 
 ### Service Layer
 ```go
-type ModuleService interface {
+type Service interface {
     // Core operations
     CreateEntity(ctx context.Context, cmd CreateEntityCommand) (*Entity, error)
     GetEntity(ctx context.Context, tenantID tenant.ID, id EntityID) (*Entity, error)
@@ -133,7 +125,7 @@ erDiagram
 - ✅ **Domain Layer** (100%): Entities and business rules
 - ✅ **Repository Layer** (100%): SQLC integration complete
 - ✅ **Service Layer** (100%): Business logic implementation
-- 🚧 **API Layer** (80%): Goa handlers in progress
+- 🚧 **API Layer** (80%): fiber handlers using Goa Generated types in progress
 - 📋 **Integration** (0%): Service wiring pending
 
 ### Code Metrics
@@ -227,29 +219,6 @@ REDIS_URL=redis://...
 - [Contributing Guidelines](../../contributing/01-best-practices.md)
 - [Code Examples](examples/)
 - [API Reference](api-reference.md)
-
-## Troubleshooting
-
-### Common Issues
-
-#### Database Connection Issues
-```bash
-# Check database connectivity
-make createdb
-psql $DATABASE_URL -c "SELECT 1;"
-```
-
-#### Code Generation Issues
-```bash
-# Regenerate all code
-make clean
-make proto sqlc goa mock
-```
-
-### Support Channels
-- **GitHub Issues**: Bug reports and feature requests
-- **Documentation**: This module's docs
-- **Team Chat**: #backend-development
 
 ---
 
