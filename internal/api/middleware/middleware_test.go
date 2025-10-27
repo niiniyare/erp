@@ -85,7 +85,7 @@ func TestTenantSubdomainValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.subdomain, func(t *testing.T) {
 			result := isValidTenantSubdomain(tt.subdomain)
-			assert.Equal(t, tt.valid, result, 
+			assert.Equal(t, tt.valid, result,
 				"Validation result for subdomain '%s' should be %v", tt.subdomain, tt.valid)
 		})
 	}
@@ -110,7 +110,7 @@ func TestAlphanumericCheck(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(string(tt.char), func(t *testing.T) {
 			result := isAlphanumeric(tt.char)
-			assert.Equal(t, tt.expected, result, 
+			assert.Equal(t, tt.expected, result,
 				"Character '%c' should return %v", tt.char, tt.expected)
 		})
 	}
@@ -120,26 +120,26 @@ func TestAlphanumericCheck(t *testing.T) {
 func TestTenantCache(t *testing.T) {
 	// Create a cache with 1 second TTL for quick testing
 	cache := NewTenantCache(1 * time.Second)
-	
+
 	// Test setting and getting
 	tenantID := "test-tenant-123"
 	tenant := &tenant.Tenant{
 		ID:   uuid.New(),
 		Name: "Test Tenant",
 	}
-	
+
 	// Initially should not exist
 	_, found := cache.Get(tenantID)
 	assert.False(t, found, "Cache should be empty initially")
-	
+
 	// Set the tenant
 	cache.Set(tenantID, tenant)
-	
+
 	// Should now exist
 	cached, found := cache.Get(tenantID)
 	assert.True(t, found, "Tenant should be found in cache")
 	assert.Equal(t, tenant.Name, cached.Name, "Cached tenant should match original")
-	
+
 	// Test invalidation
 	cache.Invalidate(tenantID)
 	_, found = cache.Get(tenantID)
@@ -154,10 +154,9 @@ func TestErrorResponse(t *testing.T) {
 		RequestID: "req-123",
 		Timestamp: "2023-01-01T00:00:00Z",
 	}
-	
+
 	assert.Equal(t, "Test error", response.Error)
 	assert.Equal(t, 400, response.Status)
 	assert.Equal(t, "req-123", response.RequestID)
 	assert.Equal(t, "2023-01-01T00:00:00Z", response.Timestamp)
 }
-

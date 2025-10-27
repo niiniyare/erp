@@ -6,13 +6,41 @@ import (
 	"strings"
 	"time"
 
+	"github.com/a-h/templ"
 	"github.com/gofiber/fiber/v2"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
+
+// Custom error types for HTTP handling
+type ValidationError struct {
+	Field   string
+	Message string
+}
+
+func NewValidationError(f, m string) *ValidationError {
+	return &ValidationError{
+		Field:   f,
+		Message: m,
+	}
+}
+
+func (e ValidationError) Error() string {
+	return e.Message
+}
+
+type NotFoundError struct {
+	Resource string
+	ID       string
+}
+
+func (e NotFoundError) Error() string {
+	return fmt.Sprintf("%s not found", e.Resource)
+}
 
 // HandlerHelper provides common functionality for all API handlers
 type HandlerHelper struct {
@@ -30,33 +58,89 @@ func NewHandlerHelper(logger logger.Logger, metrics metrics.MetricsProvider, tra
 	}
 }
 
-// Respond handles content negotiation and sends appropriate response
-func (h *HandlerHelper) Respond(c *fiber.Ctx, statusCode int, data interface{}) error {
-	acceptHeader := c.Get("Accept")
-
-	// Determine response format based on Accept header
-	if strings.Contains(acceptHeader, "text/html") {
-		// For HTML responses, render component if data is string, otherwise convert to simple HTML
-		if componentName, ok := data.(string); ok {
-			return h.RenderComponent(c, componentName, nil)
-		}
-		// Simple HTML response for non-string data
-		c.Set("Content-Type", "text/html; charset=utf-8")
-		c.Status(statusCode)
-		return c.SendString(fmt.Sprintf("<html><body><pre>%+v</pre></body></html>", data))
-	}
-
-	// Default to JSON response
-	c.Set("Content-Type", "application/json; charset=utf-8")
-	c.Status(statusCode)
-	return c.JSON(data)
+func NewNotFoundError(resource, id string) NotFoundError {
+	return NotFoundError{Resource: resource, ID: id}
 }
 
-// RenderComponent renders a TemplUI component with data
+// Respond handles content negotiation and sends appropriate response
+func (h *HandlerHelper) Respond(c *fiber.Ctx, statusCode int, data interface{}) error {
+	return h.RespondWithComponent(c, statusCode, data, nil)
+}
+
+// RespondWithComponent handles content negotiation with optional component override
+func (h *HandlerHelper) RespondWithComponent(c *fiber.Ctx, statusCode int, data interface{}, component templ.Component) error {
+	// Check for content type preferences
+	acceptHeader := c.Get("Accept")
+	contentType := c.Get("Content-Type")
+	isHTMX := c.Get("HX-Request") == "true"
+	
+	// Record response metrics
+	h.metrics.IncrementCounter("handler_responses_total", metrics.Fields{
+		"status_code": fmt.Sprintf("%d", statusCode),
+		"content_type": h.getResponseContentType(acceptHeader, contentType, isHTMX),
+	})
+
+	// Determine if client wants JSON
+	wantsJSON := strings.Contains(acceptHeader, "application/json") ||
+		strings.Contains(contentType, "application/json") ||
+		(!strings.Contains(acceptHeader, "text/html") && !isHTMX && acceptHeader != "")
+
+	if wantsJSON {
+		// Return JSON response
+		c.Set("Content-Type", "application/json; charset=utf-8")
+		c.Status(statusCode)
+		return c.JSON(data)
+	}
+
+	// Return HTML response using TemplUI component
+	if component != nil {
+		return h.RenderTemplComponent(c, statusCode, component)
+	}
+
+	// Fallback to simple HTML if no component provided
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	c.Status(statusCode)
+	return c.SendString(fmt.Sprintf(`
+		<!DOCTYPE html>
+		<html>
+		<head><title>Response</title></head>
+		<body>
+			<div class="container mx-auto p-4">
+				<pre class="bg-gray-100 p-4 rounded">%+v</pre>
+			</div>
+		</body>
+		</html>
+	`, data))
+}
+
+// getResponseContentType determines the response content type for metrics
+func (h *HandlerHelper) getResponseContentType(accept, contentType string, isHTMX bool) string {
+	if strings.Contains(accept, "application/json") || strings.Contains(contentType, "application/json") {
+		return "json"
+	}
+	if isHTMX {
+		return "htmx"
+	}
+	if strings.Contains(accept, "text/html") {
+		return "html"
+	}
+	return "unknown"
+}
+
+// RenderTemplComponent renders a templ.Component
+func (h *HandlerHelper) RenderTemplComponent(c *fiber.Ctx, statusCode int, component templ.Component) error {
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	c.Status(statusCode)
+	
+	// Render the templ component to the response writer
+	return component.Render(c.Context(), c.Response().BodyWriter())
+}
+
+// RenderComponent renders a TemplUI component with data (legacy method)
 func (h *HandlerHelper) RenderComponent(c *fiber.Ctx, component string, data interface{}) error {
 	c.Set("Content-Type", "text/html; charset=utf-8")
 	c.Status(200)
-	
+
 	// Simple component rendering - in real implementation this would use TemplUI
 	if data != nil {
 		return c.SendString(fmt.Sprintf("<div class='%s'>%+v</div>", component, data))
@@ -67,47 +151,43 @@ func (h *HandlerHelper) RenderComponent(c *fiber.Ctx, component string, data int
 // HandleError processes errors and returns appropriate responses
 func (h *HandlerHelper) HandleError(c *fiber.Ctx, err error) error {
 	ctx := c.Context()
-	
+
 	// Log the error
 	h.logger.ErrorContext(ctx, "Handler error occurred", logger.Fields{
-		"error": err.Error(),
-		"path":  c.Path(),
+		"error":  err.Error(),
+		"path":   c.Path(),
 		"method": c.Method(),
 	})
 
-	// Determine status code based on error type
-	var statusCode int
-	var message string
+	// Convert to HTTPError for consistent response format
+	httpErr := errors.ToHTTPError(err)
 
+	// Handle legacy custom error types
 	switch e := err.(type) {
 	case ValidationError:
-		statusCode = 400
-		message = e.Error()
+		httpErr.Status = 400
+		httpErr.Code = "VALIDATION_ERROR"
+		httpErr.Message = e.Error()
+		httpErr.Details["field"] = e.Field
 	case NotFoundError:
-		statusCode = 404
-		message = e.Error()
-	default:
-		statusCode = 500
-		message = "Internal server error"
-		// Don't expose internal errors to clients
-		if strings.Contains(err.Error(), "database") || strings.Contains(err.Error(), "connection") {
-			message = "Service temporarily unavailable"
+		httpErr.Status = 404
+		httpErr.Code = "NOT_FOUND"
+		httpErr.Message = e.Error()
+		httpErr.Details["resource"] = e.Resource
+		if e.ID != "" {
+			httpErr.Details["id"] = e.ID
 		}
 	}
 
 	// Record error metrics
 	h.metrics.IncrementCounter("handler_errors_total", metrics.Fields{
-		"status_code": fmt.Sprintf("%d", statusCode),
+		"status_code": fmt.Sprintf("%d", httpErr.Status),
 		"error_type":  fmt.Sprintf("%T", err),
+		"error_code":  httpErr.Code,
 	})
 
-	// Return error response
-	return h.Respond(c, statusCode, map[string]interface{}{
-		"error":   message,
-		"status":  statusCode,
-		"path":    c.Path(),
-		"method":  c.Method(),
-	})
+	// Return error response using HTTPError format
+	return h.Respond(c, httpErr.Status, httpErr)
 }
 
 // BadRequest returns a 400 Bad Request response

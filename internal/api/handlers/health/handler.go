@@ -352,4 +352,3 @@ func parseHealthTemplate() *template.Template {
 
 	return template.Must(template.New("health").Parse(tmpl))
 }
-

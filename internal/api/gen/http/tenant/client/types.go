@@ -18,852 +18,249 @@ import (
 // CreateRequestBody is the type of the "tenant" service "create" endpoint HTTP
 // request body.
 type CreateRequestBody struct {
-	// Tenant display name
+	// Tenant name
 	Name string `form:"name" json:"name" xml:"name"`
-	// Tenant unique slug
-	Slug *string `form:"slug,omitempty" json:"slug,omitempty" xml:"slug,omitempty"`
-	// Primary email of the tenant
+	// Tenant slug
+	Slug string `form:"slug" json:"slug" xml:"slug"`
+	// Contact email
 	Email string `form:"email" json:"email" xml:"email"`
-	// Desired subdomain (optional)
-	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
-	// Tenant status
-	Status string `form:"status" json:"status" xml:"status"`
-	// Subscription plan type
-	PlanType string `form:"plan_type" json:"plan_type" xml:"plan_type"`
-	// Industry of the tenant
-	Industry *string `form:"industry,omitempty" json:"industry,omitempty" xml:"industry,omitempty"`
-	// Size of the company
-	CompanySize *string `form:"company_size,omitempty" json:"company_size,omitempty" xml:"company_size,omitempty"`
-	// Tax Identification Number
-	TaxID *string `form:"tax_id,omitempty" json:"tax_id,omitempty" xml:"tax_id,omitempty"`
-	// Company registration number
-	RegistrationNumber *string `form:"registration_number,omitempty" json:"registration_number,omitempty" xml:"registration_number,omitempty"`
-	// Legal entity type
-	LegalEntityType *string `form:"legal_entity_type,omitempty" json:"legal_entity_type,omitempty" xml:"legal_entity_type,omitempty"`
-	// Primary contact information
-	Contact *ContactInfoRequestBody `form:"contact,omitempty" json:"contact,omitempty" xml:"contact,omitempty"`
-	// Initial tenant settings
-	Settings *TenantSettingsRequestBody `form:"settings,omitempty" json:"settings,omitempty" xml:"settings,omitempty"`
-	// ISO 3166-1 alpha-2 country code
-	CountryCode string `form:"country_code" json:"country_code" xml:"country_code"`
-	// ISO 4217 currency code
-	CurrencyCode string `form:"currency_code" json:"currency_code" xml:"currency_code"`
 }
 
 // UpdateRequestBody is the type of the "tenant" service "update" endpoint HTTP
 // request body.
 type UpdateRequestBody struct {
-	// Tenant display name
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// Tenant description
-	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
-	// Tenant status
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Subscription plan type
-	PlanType *string `form:"plan_type,omitempty" json:"plan_type,omitempty" xml:"plan_type,omitempty"`
-	// Primary contact information
-	Contact *ContactInfoRequestBody `form:"contact,omitempty" json:"contact,omitempty" xml:"contact,omitempty"`
-	// Tenant settings
-	Settings *TenantSettingsRequestBody `form:"settings,omitempty" json:"settings,omitempty" xml:"settings,omitempty"`
-}
-
-// ProvisionRequestBody is the type of the "tenant" service "provision"
-// endpoint HTTP request body.
-type ProvisionRequestBody struct {
 	// Tenant name
-	Name string `form:"name" json:"name" xml:"name"`
-	// Subdomain for tenant access
-	Subdomain string `form:"subdomain" json:"subdomain" xml:"subdomain"`
-	// Primary contact email
-	ContactEmail string `form:"contact_email" json:"contact_email" xml:"contact_email"`
-	// Initial admin user email
-	AdminEmail string `form:"admin_email" json:"admin_email" xml:"admin_email"`
-	// Admin first name
-	AdminFirstName string `form:"admin_first_name" json:"admin_first_name" xml:"admin_first_name"`
-	// Admin last name
-	AdminLastName string `form:"admin_last_name" json:"admin_last_name" xml:"admin_last_name"`
+	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
+	// Contact email
+	Email *string `form:"email,omitempty" json:"email,omitempty" xml:"email,omitempty"`
 }
 
-// SuspendRequestBody is the type of the "tenant" service "suspend" endpoint
-// HTTP request body.
-type SuspendRequestBody struct {
-	// Reason for suspension
-	Reason string `form:"reason" json:"reason" xml:"reason"`
-}
-
-// ReactivateRequestBody is the type of the "tenant" service "reactivate"
-// endpoint HTTP request body.
-type ReactivateRequestBody struct {
-	// Reason for reactivation
-	Reason string `form:"reason" json:"reason" xml:"reason"`
-}
-
-// UpdateConfigurationRequestBody is the type of the "tenant" service
-// "update_configuration" endpoint HTTP request body.
-type UpdateConfigurationRequestBody struct {
-	// Maximum number of users
-	MaxUsers *uint `form:"max_users,omitempty" json:"max_users,omitempty" xml:"max_users,omitempty"`
-	// Maximum storage in MB
-	MaxStorageMb *uint64 `form:"max_storage_mb,omitempty" json:"max_storage_mb,omitempty" xml:"max_storage_mb,omitempty"`
-	// Maximum API calls per hour
-	MaxAPICallsPerHour *uint `form:"max_api_calls_per_hour,omitempty" json:"max_api_calls_per_hour,omitempty" xml:"max_api_calls_per_hour,omitempty"`
-	// Reason for configuration change
-	Reason string `form:"reason" json:"reason" xml:"reason"`
-}
-
-// CreateResponseBody is the type of the "tenant" service "create" endpoint
-// HTTP response body.
-type CreateResponseBody struct {
-	// Created tenant information
-	Tenant *TenantResponseBody `form:"tenant,omitempty" json:"tenant,omitempty" xml:"tenant,omitempty"`
-	// Status of the creation operation
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Detailed message about the operation
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-}
+// ListResponseBody is the type of the "tenant" service "list" endpoint HTTP
+// response body.
+type ListResponseBody []*TenantResponse
 
 // GetResponseBody is the type of the "tenant" service "get" endpoint HTTP
 // response body.
 type GetResponseBody struct {
 	// Unique tenant identifier
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Tenant display name
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// Tenant URL slug
-	Slug *string `form:"slug,omitempty" json:"slug,omitempty" xml:"slug,omitempty"`
-	// Subdomain for tenant
-	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
-	// Tenant status
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Subscription plan
-	PlanType *string `form:"plan_type,omitempty" json:"plan_type,omitempty" xml:"plan_type,omitempty"`
-	// Tenant description
-	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
-	// Tenant-specific settings
-	Settings *TenantSettingsResponseBody `form:"settings,omitempty" json:"settings,omitempty" xml:"settings,omitempty"`
-	// Subscription information
-	Subscription *SubscriptionInfoResponseBody `form:"subscription,omitempty" json:"subscription,omitempty" xml:"subscription,omitempty"`
-	// Primary contact information
-	Contact *ContactInfoResponseBody `form:"contact,omitempty" json:"contact,omitempty" xml:"contact,omitempty"`
+	ID *string `db:"id,omitempty" json:"id"`
+	// Used in URLs and subdomain routing. Must be globally unique.
+	Slug *string `db:"slug,omitempty" json:"slug"`
+	// Display name shown in UI
+	Name *string `db:"name,omitempty" json:"name"`
+	// Used for administrative communications
+	Email *string `db:"email,omitempty" json:"email"`
+	// Separate billing contact for financial operations
+	BillingEmail *string `db:"billing_email,omitempty" json:"billing_email,omitempty"`
+	// Custom subdomain (e.g., acme.erp.com). Must be globally unique.
+	Subdomain *string `db:"subdomain,omitempty" json:"subdomain,omitempty"`
+	// Controls tenant access and billing
+	Status *string `db:"status,omitempty" json:"status"`
+	// Required when status is SUSPENDED
+	SuspensionReason *string `db:"suspension_reason,omitempty" json:"suspension_reason,omitempty"`
+	// IANA timezone identifier
+	Timezone *string `db:"timezone,omitempty" json:"timezone"`
+	// ISO 4217 currency code for UI display
+	CurrencyCode *string `db:"currency_code,omitempty" json:"currency_code"`
+	// Used for industry-specific features and compliance
+	Industry *string `db:"industry,omitempty" json:"industry,omitempty"`
+	// Affects feature availability and pricing tiers
+	CompanySize *string `db:"company_size,omitempty" json:"company_size,omitempty"`
+	// Determines feature access and limits
+	Plan *string `db:"plan,omitempty" json:"plan"`
+	// Required when status is TRIAL
+	TrialEndsAt *string `db:"trial_ends_at,omitempty" json:"trial_ends_at,omitempty"`
+	// Enables multi-tenant enterprise structures
+	ParentTenantID *string `db:"parent_tenant_id,omitempty" json:"parent_tenant_id,omitempty"`
+	// Visual customization settings
+	Branding any `db:"branding,omitempty" json:"branding,omitempty"`
+	// Additional contact details
+	ContactInfo any `db:"contact_info,omitempty" json:"contact_info,omitempty"`
+	// Flexible key-value pairs for tenant-specific data
+	CustomFields any `db:"custom_fields,omitempty" json:"custom_fields,omitempty"`
 	// Creation timestamp
-	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	CreatedAt *string `db:"created_at,omitempty" json:"created_at"`
 	// Last update timestamp
-	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	UpdatedAt *string `db:"updated_at,omitempty" json:"updated_at,omitempty"`
 	// ID of user who created the record
-	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	CreatedBy *string `db:"created_by,omitempty" json:"created_by,omitempty"`
 	// ID of user who last updated the record
-	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
+	UpdatedBy *string `db:"updated_by,omitempty" json:"updated_by,omitempty"`
 }
 
-// ListResponseBody is the type of the "tenant" service "list" endpoint HTTP
-// response body.
-type ListResponseBody struct {
-	// The data items
-	Data []*TenantResponseBody `form:"data,omitempty" json:"data,omitempty" xml:"data,omitempty"`
-	// Pagination metadata
-	Pagination *PaginationMetaResponseBody `form:"pagination,omitempty" json:"pagination,omitempty" xml:"pagination,omitempty"`
+// CreateResponseBody is the type of the "tenant" service "create" endpoint
+// HTTP response body.
+type CreateResponseBody struct {
+	// Unique tenant identifier
+	ID *string `db:"id,omitempty" json:"id"`
+	// Used in URLs and subdomain routing. Must be globally unique.
+	Slug *string `db:"slug,omitempty" json:"slug"`
+	// Display name shown in UI
+	Name *string `db:"name,omitempty" json:"name"`
+	// Used for administrative communications
+	Email *string `db:"email,omitempty" json:"email"`
+	// Separate billing contact for financial operations
+	BillingEmail *string `db:"billing_email,omitempty" json:"billing_email,omitempty"`
+	// Custom subdomain (e.g., acme.erp.com). Must be globally unique.
+	Subdomain *string `db:"subdomain,omitempty" json:"subdomain,omitempty"`
+	// Controls tenant access and billing
+	Status *string `db:"status,omitempty" json:"status"`
+	// Required when status is SUSPENDED
+	SuspensionReason *string `db:"suspension_reason,omitempty" json:"suspension_reason,omitempty"`
+	// IANA timezone identifier
+	Timezone *string `db:"timezone,omitempty" json:"timezone"`
+	// ISO 4217 currency code for UI display
+	CurrencyCode *string `db:"currency_code,omitempty" json:"currency_code"`
+	// Used for industry-specific features and compliance
+	Industry *string `db:"industry,omitempty" json:"industry,omitempty"`
+	// Affects feature availability and pricing tiers
+	CompanySize *string `db:"company_size,omitempty" json:"company_size,omitempty"`
+	// Determines feature access and limits
+	Plan *string `db:"plan,omitempty" json:"plan"`
+	// Required when status is TRIAL
+	TrialEndsAt *string `db:"trial_ends_at,omitempty" json:"trial_ends_at,omitempty"`
+	// Enables multi-tenant enterprise structures
+	ParentTenantID *string `db:"parent_tenant_id,omitempty" json:"parent_tenant_id,omitempty"`
+	// Visual customization settings
+	Branding any `db:"branding,omitempty" json:"branding,omitempty"`
+	// Additional contact details
+	ContactInfo any `db:"contact_info,omitempty" json:"contact_info,omitempty"`
+	// Flexible key-value pairs for tenant-specific data
+	CustomFields any `db:"custom_fields,omitempty" json:"custom_fields,omitempty"`
+	// Creation timestamp
+	CreatedAt *string `db:"created_at,omitempty" json:"created_at"`
+	// Last update timestamp
+	UpdatedAt *string `db:"updated_at,omitempty" json:"updated_at,omitempty"`
+	// ID of user who created the record
+	CreatedBy *string `db:"created_by,omitempty" json:"created_by,omitempty"`
+	// ID of user who last updated the record
+	UpdatedBy *string `db:"updated_by,omitempty" json:"updated_by,omitempty"`
 }
 
 // UpdateResponseBody is the type of the "tenant" service "update" endpoint
 // HTTP response body.
 type UpdateResponseBody struct {
 	// Unique tenant identifier
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Tenant display name
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// Tenant URL slug
-	Slug *string `form:"slug,omitempty" json:"slug,omitempty" xml:"slug,omitempty"`
-	// Subdomain for tenant
-	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
-	// Tenant status
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Subscription plan
-	PlanType *string `form:"plan_type,omitempty" json:"plan_type,omitempty" xml:"plan_type,omitempty"`
-	// Tenant description
-	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
-	// Tenant-specific settings
-	Settings *TenantSettingsResponseBody `form:"settings,omitempty" json:"settings,omitempty" xml:"settings,omitempty"`
-	// Subscription information
-	Subscription *SubscriptionInfoResponseBody `form:"subscription,omitempty" json:"subscription,omitempty" xml:"subscription,omitempty"`
-	// Primary contact information
-	Contact *ContactInfoResponseBody `form:"contact,omitempty" json:"contact,omitempty" xml:"contact,omitempty"`
+	ID *string `db:"id,omitempty" json:"id"`
+	// Used in URLs and subdomain routing. Must be globally unique.
+	Slug *string `db:"slug,omitempty" json:"slug"`
+	// Display name shown in UI
+	Name *string `db:"name,omitempty" json:"name"`
+	// Used for administrative communications
+	Email *string `db:"email,omitempty" json:"email"`
+	// Separate billing contact for financial operations
+	BillingEmail *string `db:"billing_email,omitempty" json:"billing_email,omitempty"`
+	// Custom subdomain (e.g., acme.erp.com). Must be globally unique.
+	Subdomain *string `db:"subdomain,omitempty" json:"subdomain,omitempty"`
+	// Controls tenant access and billing
+	Status *string `db:"status,omitempty" json:"status"`
+	// Required when status is SUSPENDED
+	SuspensionReason *string `db:"suspension_reason,omitempty" json:"suspension_reason,omitempty"`
+	// IANA timezone identifier
+	Timezone *string `db:"timezone,omitempty" json:"timezone"`
+	// ISO 4217 currency code for UI display
+	CurrencyCode *string `db:"currency_code,omitempty" json:"currency_code"`
+	// Used for industry-specific features and compliance
+	Industry *string `db:"industry,omitempty" json:"industry,omitempty"`
+	// Affects feature availability and pricing tiers
+	CompanySize *string `db:"company_size,omitempty" json:"company_size,omitempty"`
+	// Determines feature access and limits
+	Plan *string `db:"plan,omitempty" json:"plan"`
+	// Required when status is TRIAL
+	TrialEndsAt *string `db:"trial_ends_at,omitempty" json:"trial_ends_at,omitempty"`
+	// Enables multi-tenant enterprise structures
+	ParentTenantID *string `db:"parent_tenant_id,omitempty" json:"parent_tenant_id,omitempty"`
+	// Visual customization settings
+	Branding any `db:"branding,omitempty" json:"branding,omitempty"`
+	// Additional contact details
+	ContactInfo any `db:"contact_info,omitempty" json:"contact_info,omitempty"`
+	// Flexible key-value pairs for tenant-specific data
+	CustomFields any `db:"custom_fields,omitempty" json:"custom_fields,omitempty"`
 	// Creation timestamp
-	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	CreatedAt *string `db:"created_at,omitempty" json:"created_at"`
 	// Last update timestamp
-	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	UpdatedAt *string `db:"updated_at,omitempty" json:"updated_at,omitempty"`
 	// ID of user who created the record
-	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	CreatedBy *string `db:"created_by,omitempty" json:"created_by,omitempty"`
 	// ID of user who last updated the record
-	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
+	UpdatedBy *string `db:"updated_by,omitempty" json:"updated_by,omitempty"`
 }
 
-// HealthResponseBody is the type of the "tenant" service "health" endpoint
-// HTTP response body.
-type HealthResponseBody struct {
-	// Service status
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Check timestamp
-	Timestamp *string `form:"timestamp,omitempty" json:"timestamp,omitempty" xml:"timestamp,omitempty"`
-	// Service version
-	Version *string `form:"version,omitempty" json:"version,omitempty" xml:"version,omitempty"`
-}
-
-// ProvisionResponseBody is the type of the "tenant" service "provision"
-// endpoint HTTP response body.
-type ProvisionResponseBody struct {
-	// Created tenant ID
-	TenantID *string `form:"tenant_id,omitempty" json:"tenant_id,omitempty" xml:"tenant_id,omitempty"`
-	// Provisioning status
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Status message
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-}
-
-// SuspendResponseBody is the type of the "tenant" service "suspend" endpoint
-// HTTP response body.
-type SuspendResponseBody struct {
-	// Tenant ID
-	TenantID *string `form:"tenant_id,omitempty" json:"tenant_id,omitempty" xml:"tenant_id,omitempty"`
-	// Action performed
-	Action *string `form:"action,omitempty" json:"action,omitempty" xml:"action,omitempty"`
-	// Action status
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Result message
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-}
-
-// ReactivateResponseBody is the type of the "tenant" service "reactivate"
-// endpoint HTTP response body.
-type ReactivateResponseBody struct {
-	// Tenant ID
-	TenantID *string `form:"tenant_id,omitempty" json:"tenant_id,omitempty" xml:"tenant_id,omitempty"`
-	// Action performed
-	Action *string `form:"action,omitempty" json:"action,omitempty" xml:"action,omitempty"`
-	// Action status
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Result message
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-}
-
-// UpdateConfigurationResponseBody is the type of the "tenant" service
-// "update_configuration" endpoint HTTP response body.
-type UpdateConfigurationResponseBody struct {
-	// Tenant ID
-	TenantID *string `form:"tenant_id,omitempty" json:"tenant_id,omitempty" xml:"tenant_id,omitempty"`
-	// Update status
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Result message
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-}
-
-// GetUsageAnalyticsResponseBody is the type of the "tenant" service
-// "get_usage_analytics" endpoint HTTP response body.
-type GetUsageAnalyticsResponseBody struct {
-	// Tenant ID
-	TenantID *string `form:"tenant_id,omitempty" json:"tenant_id,omitempty" xml:"tenant_id,omitempty"`
-	// Analysis period
-	Period *string `form:"period,omitempty" json:"period,omitempty" xml:"period,omitempty"`
-	// Number of active users
-	UserCount *uint `form:"user_count,omitempty" json:"user_count,omitempty" xml:"user_count,omitempty"`
-	// Storage used in MB
-	StorageUsedMb *uint64 `form:"storage_used_mb,omitempty" json:"storage_used_mb,omitempty" xml:"storage_used_mb,omitempty"`
-	// Total API calls
-	APICalls *uint64 `form:"api_calls,omitempty" json:"api_calls,omitempty" xml:"api_calls,omitempty"`
-}
-
-// CreateBadRequestResponseBody is the type of the "tenant" service "create"
-// endpoint HTTP response body for the "bad_request" error.
-type CreateBadRequestResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// CreateConflictResponseBody is the type of the "tenant" service "create"
-// endpoint HTTP response body for the "conflict" error.
-type CreateConflictResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// CreateUnauthorizedResponseBody is the type of the "tenant" service "create"
-// endpoint HTTP response body for the "unauthorized" error.
-type CreateUnauthorizedResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// CreateUnprocessableEntityResponseBody is the type of the "tenant" service
-// "create" endpoint HTTP response body for the "unprocessable_entity" error.
-type CreateUnprocessableEntityResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// GetNotFoundResponseBody is the type of the "tenant" service "get" endpoint
-// HTTP response body for the "not_found" error.
-type GetNotFoundResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// GetUnauthorizedResponseBody is the type of the "tenant" service "get"
-// endpoint HTTP response body for the "unauthorized" error.
-type GetUnauthorizedResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// ListBadRequestResponseBody is the type of the "tenant" service "list"
-// endpoint HTTP response body for the "bad_request" error.
-type ListBadRequestResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// ListUnauthorizedResponseBody is the type of the "tenant" service "list"
-// endpoint HTTP response body for the "unauthorized" error.
-type ListUnauthorizedResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// UpdateBadRequestResponseBody is the type of the "tenant" service "update"
-// endpoint HTTP response body for the "bad_request" error.
-type UpdateBadRequestResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// UpdateNotFoundResponseBody is the type of the "tenant" service "update"
-// endpoint HTTP response body for the "not_found" error.
-type UpdateNotFoundResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// UpdateConflictResponseBody is the type of the "tenant" service "update"
-// endpoint HTTP response body for the "conflict" error.
-type UpdateConflictResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// UpdateUnauthorizedResponseBody is the type of the "tenant" service "update"
-// endpoint HTTP response body for the "unauthorized" error.
-type UpdateUnauthorizedResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// UpdateUnprocessableEntityResponseBody is the type of the "tenant" service
-// "update" endpoint HTTP response body for the "unprocessable_entity" error.
-type UpdateUnprocessableEntityResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// DeleteNotFoundResponseBody is the type of the "tenant" service "delete"
-// endpoint HTTP response body for the "not_found" error.
-type DeleteNotFoundResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// DeleteUnauthorizedResponseBody is the type of the "tenant" service "delete"
-// endpoint HTTP response body for the "unauthorized" error.
-type DeleteUnauthorizedResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// DeleteConflictResponseBody is the type of the "tenant" service "delete"
-// endpoint HTTP response body for the "conflict" error.
-type DeleteConflictResponseBody struct {
-	// Name is the name of this class of errors.
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// ID is a unique identifier for this particular occurrence of the problem.
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Message is a human-readable explanation specific to this occurrence of the
-	// problem.
-	Message *string `form:"message,omitempty" json:"message,omitempty" xml:"message,omitempty"`
-	// Is the error temporary?
-	Temporary *bool `form:"temporary,omitempty" json:"temporary,omitempty" xml:"temporary,omitempty"`
-	// Is the error a timeout?
-	Timeout *bool `form:"timeout,omitempty" json:"timeout,omitempty" xml:"timeout,omitempty"`
-	// Is the error a server-side fault?
-	Fault *bool `form:"fault,omitempty" json:"fault,omitempty" xml:"fault,omitempty"`
-}
-
-// ContactInfoRequestBody is used to define fields on request body types.
-type ContactInfoRequestBody struct {
-	// Contact person name
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// Contact email
-	Email *string `form:"email,omitempty" json:"email,omitempty" xml:"email,omitempty"`
-	// Contact phone number
-	Phone *string `form:"phone,omitempty" json:"phone,omitempty" xml:"phone,omitempty"`
-	// Job title
-	Title *string `form:"title,omitempty" json:"title,omitempty" xml:"title,omitempty"`
-}
-
-// TenantSettingsRequestBody is used to define fields on request body types.
-type TenantSettingsRequestBody struct {
-	// Default timezone
-	Timezone string `form:"timezone" json:"timezone" xml:"timezone"`
-	// Default currency code
-	Currency string `form:"currency" json:"currency" xml:"currency"`
-	// Preferred date format
-	DateFormat string `form:"date_format" json:"date_format" xml:"date_format"`
-	// Default language
-	Language string `form:"language" json:"language" xml:"language"`
-	// Enabled features
-	Features []string `form:"features,omitempty" json:"features,omitempty" xml:"features,omitempty"`
-	// Usage limits
-	Limits *TenantLimitsRequestBody `form:"limits,omitempty" json:"limits,omitempty" xml:"limits,omitempty"`
-}
-
-// TenantLimitsRequestBody is used to define fields on request body types.
-type TenantLimitsRequestBody struct {
-	// Maximum number of users
-	MaxUsers *uint `form:"max_users,omitempty" json:"max_users,omitempty" xml:"max_users,omitempty"`
-	// Maximum storage in MB
-	MaxStorageMb *uint `form:"max_storage_mb,omitempty" json:"max_storage_mb,omitempty" xml:"max_storage_mb,omitempty"`
-	// API rate limit per hour
-	MaxAPICallsPerHour *uint `form:"max_api_calls_per_hour,omitempty" json:"max_api_calls_per_hour,omitempty" xml:"max_api_calls_per_hour,omitempty"`
-}
-
-// TenantResponseBody is used to define fields on response body types.
-type TenantResponseBody struct {
+// TenantResponse is used to define fields on response body types.
+type TenantResponse struct {
 	// Unique tenant identifier
-	ID *string `form:"id,omitempty" json:"id,omitempty" xml:"id,omitempty"`
-	// Tenant display name
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// Tenant URL slug
-	Slug *string `form:"slug,omitempty" json:"slug,omitempty" xml:"slug,omitempty"`
-	// Subdomain for tenant
-	Subdomain *string `form:"subdomain,omitempty" json:"subdomain,omitempty" xml:"subdomain,omitempty"`
-	// Tenant status
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Subscription plan
-	PlanType *string `form:"plan_type,omitempty" json:"plan_type,omitempty" xml:"plan_type,omitempty"`
-	// Tenant description
-	Description *string `form:"description,omitempty" json:"description,omitempty" xml:"description,omitempty"`
-	// Tenant-specific settings
-	Settings *TenantSettingsResponseBody `form:"settings,omitempty" json:"settings,omitempty" xml:"settings,omitempty"`
-	// Subscription information
-	Subscription *SubscriptionInfoResponseBody `form:"subscription,omitempty" json:"subscription,omitempty" xml:"subscription,omitempty"`
-	// Primary contact information
-	Contact *ContactInfoResponseBody `form:"contact,omitempty" json:"contact,omitempty" xml:"contact,omitempty"`
+	ID *string `db:"id,omitempty" json:"id"`
+	// Used in URLs and subdomain routing. Must be globally unique.
+	Slug *string `db:"slug,omitempty" json:"slug"`
+	// Display name shown in UI
+	Name *string `db:"name,omitempty" json:"name"`
+	// Used for administrative communications
+	Email *string `db:"email,omitempty" json:"email"`
+	// Separate billing contact for financial operations
+	BillingEmail *string `db:"billing_email,omitempty" json:"billing_email,omitempty"`
+	// Custom subdomain (e.g., acme.erp.com). Must be globally unique.
+	Subdomain *string `db:"subdomain,omitempty" json:"subdomain,omitempty"`
+	// Controls tenant access and billing
+	Status *string `db:"status,omitempty" json:"status"`
+	// Required when status is SUSPENDED
+	SuspensionReason *string `db:"suspension_reason,omitempty" json:"suspension_reason,omitempty"`
+	// IANA timezone identifier
+	Timezone *string `db:"timezone,omitempty" json:"timezone"`
+	// ISO 4217 currency code for UI display
+	CurrencyCode *string `db:"currency_code,omitempty" json:"currency_code"`
+	// Used for industry-specific features and compliance
+	Industry *string `db:"industry,omitempty" json:"industry,omitempty"`
+	// Affects feature availability and pricing tiers
+	CompanySize *string `db:"company_size,omitempty" json:"company_size,omitempty"`
+	// Determines feature access and limits
+	Plan *string `db:"plan,omitempty" json:"plan"`
+	// Required when status is TRIAL
+	TrialEndsAt *string `db:"trial_ends_at,omitempty" json:"trial_ends_at,omitempty"`
+	// Enables multi-tenant enterprise structures
+	ParentTenantID *string `db:"parent_tenant_id,omitempty" json:"parent_tenant_id,omitempty"`
+	// Visual customization settings
+	Branding any `db:"branding,omitempty" json:"branding,omitempty"`
+	// Additional contact details
+	ContactInfo any `db:"contact_info,omitempty" json:"contact_info,omitempty"`
+	// Flexible key-value pairs for tenant-specific data
+	CustomFields any `db:"custom_fields,omitempty" json:"custom_fields,omitempty"`
 	// Creation timestamp
-	CreatedAt *string `form:"created_at,omitempty" json:"created_at,omitempty" xml:"created_at,omitempty"`
+	CreatedAt *string `db:"created_at,omitempty" json:"created_at"`
 	// Last update timestamp
-	UpdatedAt *string `form:"updated_at,omitempty" json:"updated_at,omitempty" xml:"updated_at,omitempty"`
+	UpdatedAt *string `db:"updated_at,omitempty" json:"updated_at,omitempty"`
 	// ID of user who created the record
-	CreatedBy *string `form:"created_by,omitempty" json:"created_by,omitempty" xml:"created_by,omitempty"`
+	CreatedBy *string `db:"created_by,omitempty" json:"created_by,omitempty"`
 	// ID of user who last updated the record
-	UpdatedBy *string `form:"updated_by,omitempty" json:"updated_by,omitempty" xml:"updated_by,omitempty"`
-}
-
-// TenantSettingsResponseBody is used to define fields on response body types.
-type TenantSettingsResponseBody struct {
-	// Default timezone
-	Timezone *string `form:"timezone,omitempty" json:"timezone,omitempty" xml:"timezone,omitempty"`
-	// Default currency code
-	Currency *string `form:"currency,omitempty" json:"currency,omitempty" xml:"currency,omitempty"`
-	// Preferred date format
-	DateFormat *string `form:"date_format,omitempty" json:"date_format,omitempty" xml:"date_format,omitempty"`
-	// Default language
-	Language *string `form:"language,omitempty" json:"language,omitempty" xml:"language,omitempty"`
-	// Enabled features
-	Features []string `form:"features,omitempty" json:"features,omitempty" xml:"features,omitempty"`
-	// Usage limits
-	Limits *TenantLimitsResponseBody `form:"limits,omitempty" json:"limits,omitempty" xml:"limits,omitempty"`
-}
-
-// TenantLimitsResponseBody is used to define fields on response body types.
-type TenantLimitsResponseBody struct {
-	// Maximum number of users
-	MaxUsers *uint `form:"max_users,omitempty" json:"max_users,omitempty" xml:"max_users,omitempty"`
-	// Maximum storage in MB
-	MaxStorageMb *uint `form:"max_storage_mb,omitempty" json:"max_storage_mb,omitempty" xml:"max_storage_mb,omitempty"`
-	// API rate limit per hour
-	MaxAPICallsPerHour *uint `form:"max_api_calls_per_hour,omitempty" json:"max_api_calls_per_hour,omitempty" xml:"max_api_calls_per_hour,omitempty"`
-}
-
-// SubscriptionInfoResponseBody is used to define fields on response body types.
-type SubscriptionInfoResponseBody struct {
-	// Subscription plan
-	Plan *string `form:"plan,omitempty" json:"plan,omitempty" xml:"plan,omitempty"`
-	// Subscription status
-	Status *string `form:"status,omitempty" json:"status,omitempty" xml:"status,omitempty"`
-	// Billing cycle
-	BillingCycle *string `form:"billing_cycle,omitempty" json:"billing_cycle,omitempty" xml:"billing_cycle,omitempty"`
-	// Next billing date
-	NextBillingDate *string `form:"next_billing_date,omitempty" json:"next_billing_date,omitempty" xml:"next_billing_date,omitempty"`
-	// Trial end date
-	TrialEndsAt *string `form:"trial_ends_at,omitempty" json:"trial_ends_at,omitempty" xml:"trial_ends_at,omitempty"`
-}
-
-// ContactInfoResponseBody is used to define fields on response body types.
-type ContactInfoResponseBody struct {
-	// Contact person name
-	Name *string `form:"name,omitempty" json:"name,omitempty" xml:"name,omitempty"`
-	// Contact email
-	Email *string `form:"email,omitempty" json:"email,omitempty" xml:"email,omitempty"`
-	// Contact phone number
-	Phone *string `form:"phone,omitempty" json:"phone,omitempty" xml:"phone,omitempty"`
-	// Job title
-	Title *string `form:"title,omitempty" json:"title,omitempty" xml:"title,omitempty"`
-}
-
-// PaginationMetaResponseBody is used to define fields on response body types.
-type PaginationMetaResponseBody struct {
-	// Current page number
-	CurrentPage *uint `form:"current_page,omitempty" json:"current_page,omitempty" xml:"current_page,omitempty"`
-	// Items per page
-	PageSize *uint `form:"page_size,omitempty" json:"page_size,omitempty" xml:"page_size,omitempty"`
-	// Total number of items
-	TotalItems *uint `form:"total_items,omitempty" json:"total_items,omitempty" xml:"total_items,omitempty"`
-	// Total number of pages
-	TotalPages *uint `form:"total_pages,omitempty" json:"total_pages,omitempty" xml:"total_pages,omitempty"`
-	// Whether there is a next page
-	HasNext *bool `form:"has_next,omitempty" json:"has_next,omitempty" xml:"has_next,omitempty"`
-	// Whether there is a previous page
-	HasPrev *bool `form:"has_prev,omitempty" json:"has_prev,omitempty" xml:"has_prev,omitempty"`
+	UpdatedBy *string `db:"updated_by,omitempty" json:"updated_by,omitempty"`
 }
 
 // NewCreateRequestBody builds the HTTP request body from the payload of the
 // "create" endpoint of the "tenant" service.
-func NewCreateRequestBody(p *tenant.CreateTenantPayload) *CreateRequestBody {
+func NewCreateRequestBody(p *tenant.CreatePayload) *CreateRequestBody {
 	body := &CreateRequestBody{
-		Name:               p.Name,
-		Slug:               p.Slug,
-		Email:              p.Email,
-		Subdomain:          p.Subdomain,
-		Status:             p.Status,
-		PlanType:           p.PlanType,
-		Industry:           p.Industry,
-		CompanySize:        p.CompanySize,
-		TaxID:              p.TaxID,
-		RegistrationNumber: p.RegistrationNumber,
-		LegalEntityType:    p.LegalEntityType,
-		CountryCode:        p.CountryCode,
-		CurrencyCode:       p.CurrencyCode,
-	}
-	{
-		var zero string
-		if body.Status == zero {
-			body.Status = "ACTIVE"
-		}
-	}
-	{
-		var zero string
-		if body.PlanType == zero {
-			body.PlanType = "starter"
-		}
-	}
-	if p.Contact != nil {
-		body.Contact = marshalTenantContactInfoToContactInfoRequestBody(p.Contact)
-	}
-	if p.Settings != nil {
-		body.Settings = marshalTenantTenantSettingsToTenantSettingsRequestBody(p.Settings)
+		Name:  p.Name,
+		Slug:  p.Slug,
+		Email: p.Email,
 	}
 	return body
 }
 
 // NewUpdateRequestBody builds the HTTP request body from the payload of the
 // "update" endpoint of the "tenant" service.
-func NewUpdateRequestBody(p *tenant.UpdateTenantPayload) *UpdateRequestBody {
+func NewUpdateRequestBody(p *tenant.UpdatePayload) *UpdateRequestBody {
 	body := &UpdateRequestBody{
-		Name:        p.Name,
-		Description: p.Description,
-		Status:      p.Status,
-		PlanType:    p.PlanType,
-	}
-	if p.Contact != nil {
-		body.Contact = marshalTenantContactInfoToContactInfoRequestBody(p.Contact)
-	}
-	if p.Settings != nil {
-		body.Settings = marshalTenantTenantSettingsToTenantSettingsRequestBody(p.Settings)
+		Name:  p.Name,
+		Email: p.Email,
 	}
 	return body
 }
 
-// NewProvisionRequestBody builds the HTTP request body from the payload of the
-// "provision" endpoint of the "tenant" service.
-func NewProvisionRequestBody(p *tenant.ProvisionPayload) *ProvisionRequestBody {
-	body := &ProvisionRequestBody{
-		Name:           p.Name,
-		Subdomain:      p.Subdomain,
-		ContactEmail:   p.ContactEmail,
-		AdminEmail:     p.AdminEmail,
-		AdminFirstName: p.AdminFirstName,
-		AdminLastName:  p.AdminLastName,
-	}
-	return body
-}
-
-// NewSuspendRequestBody builds the HTTP request body from the payload of the
-// "suspend" endpoint of the "tenant" service.
-func NewSuspendRequestBody(p *tenant.SuspendPayload) *SuspendRequestBody {
-	body := &SuspendRequestBody{
-		Reason: p.Reason,
-	}
-	return body
-}
-
-// NewReactivateRequestBody builds the HTTP request body from the payload of
-// the "reactivate" endpoint of the "tenant" service.
-func NewReactivateRequestBody(p *tenant.ReactivatePayload) *ReactivateRequestBody {
-	body := &ReactivateRequestBody{
-		Reason: p.Reason,
-	}
-	return body
-}
-
-// NewUpdateConfigurationRequestBody builds the HTTP request body from the
-// payload of the "update_configuration" endpoint of the "tenant" service.
-func NewUpdateConfigurationRequestBody(p *tenant.UpdateConfigurationPayload) *UpdateConfigurationRequestBody {
-	body := &UpdateConfigurationRequestBody{
-		MaxUsers:           p.MaxUsers,
-		MaxStorageMb:       p.MaxStorageMb,
-		MaxAPICallsPerHour: p.MaxAPICallsPerHour,
-		Reason:             p.Reason,
-	}
-	return body
-}
-
-// NewCreateTenantResultViewCreated builds a "tenant" service "create" endpoint
-// result from a HTTP "Created" response.
-func NewCreateTenantResultViewCreated(body *CreateResponseBody) *tenantviews.CreateTenantResultView {
-	v := &tenantviews.CreateTenantResultView{
-		Status:  body.Status,
-		Message: body.Message,
-	}
-	v.Tenant = unmarshalTenantResponseBodyToTenantviewsTenantView(body.Tenant)
-
-	return v
-}
-
-// NewCreateBadRequest builds a tenant service create endpoint bad_request
-// error.
-func NewCreateBadRequest(body *CreateBadRequestResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
-	}
-
-	return v
-}
-
-// NewCreateConflict builds a tenant service create endpoint conflict error.
-func NewCreateConflict(body *CreateConflictResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
-	}
-
-	return v
-}
-
-// NewCreateUnauthorized builds a tenant service create endpoint unauthorized
-// error.
-func NewCreateUnauthorized(body *CreateUnauthorizedResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
-	}
-
-	return v
-}
-
-// NewCreateUnprocessableEntity builds a tenant service create endpoint
-// unprocessable_entity error.
-func NewCreateUnprocessableEntity(body *CreateUnprocessableEntityResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
+// NewListTenantOK builds a "tenant" service "list" endpoint result from a HTTP
+// "OK" response.
+func NewListTenantOK(body []*TenantResponse) []*tenant.Tenant {
+	v := make([]*tenant.Tenant, len(body))
+	for i, val := range body {
+		v[i] = unmarshalTenantResponseToTenantTenant(val)
 	}
 
 	return v
@@ -873,95 +270,59 @@ func NewCreateUnprocessableEntity(body *CreateUnprocessableEntityResponseBody) *
 // "OK" response.
 func NewGetTenantOK(body *GetResponseBody) *tenantviews.TenantView {
 	v := &tenantviews.TenantView{
-		ID:          body.ID,
-		Name:        body.Name,
-		Slug:        body.Slug,
-		Subdomain:   body.Subdomain,
-		Status:      body.Status,
-		PlanType:    body.PlanType,
-		Description: body.Description,
-		CreatedAt:   body.CreatedAt,
-		UpdatedAt:   body.UpdatedAt,
-		CreatedBy:   body.CreatedBy,
-		UpdatedBy:   body.UpdatedBy,
-	}
-	if body.Settings != nil {
-		v.Settings = unmarshalTenantSettingsResponseBodyToTenantviewsTenantSettingsView(body.Settings)
-	}
-	if body.Subscription != nil {
-		v.Subscription = unmarshalSubscriptionInfoResponseBodyToTenantviewsSubscriptionInfoView(body.Subscription)
-	}
-	if body.Contact != nil {
-		v.Contact = unmarshalContactInfoResponseBodyToTenantviewsContactInfoView(body.Contact)
-	}
-
-	return v
-}
-
-// NewGetNotFound builds a tenant service get endpoint not_found error.
-func NewGetNotFound(body *GetNotFoundResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
+		ID:               body.ID,
+		Slug:             body.Slug,
+		Name:             body.Name,
+		Email:            body.Email,
+		BillingEmail:     body.BillingEmail,
+		Subdomain:        body.Subdomain,
+		Status:           body.Status,
+		SuspensionReason: body.SuspensionReason,
+		Timezone:         body.Timezone,
+		CurrencyCode:     body.CurrencyCode,
+		Industry:         body.Industry,
+		CompanySize:      body.CompanySize,
+		Plan:             body.Plan,
+		TrialEndsAt:      body.TrialEndsAt,
+		ParentTenantID:   body.ParentTenantID,
+		Branding:         body.Branding,
+		ContactInfo:      body.ContactInfo,
+		CustomFields:     body.CustomFields,
+		CreatedAt:        body.CreatedAt,
+		UpdatedAt:        body.UpdatedAt,
+		CreatedBy:        body.CreatedBy,
+		UpdatedBy:        body.UpdatedBy,
 	}
 
 	return v
 }
 
-// NewGetUnauthorized builds a tenant service get endpoint unauthorized error.
-func NewGetUnauthorized(body *GetUnauthorizedResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
-	}
-
-	return v
-}
-
-// NewListResultOK builds a "tenant" service "list" endpoint result from a HTTP
-// "OK" response.
-func NewListResultOK(body *ListResponseBody) *tenant.ListResult {
-	v := &tenant.ListResult{}
-	v.Data = make([]*tenant.Tenant, len(body.Data))
-	for i, val := range body.Data {
-		v.Data[i] = unmarshalTenantResponseBodyToTenantTenant(val)
-	}
-	v.Pagination = unmarshalPaginationMetaResponseBodyToTenantPaginationMeta(body.Pagination)
-
-	return v
-}
-
-// NewListBadRequest builds a tenant service list endpoint bad_request error.
-func NewListBadRequest(body *ListBadRequestResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
-	}
-
-	return v
-}
-
-// NewListUnauthorized builds a tenant service list endpoint unauthorized error.
-func NewListUnauthorized(body *ListUnauthorizedResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
+// NewCreateTenantCreated builds a "tenant" service "create" endpoint result
+// from a HTTP "Created" response.
+func NewCreateTenantCreated(body *CreateResponseBody) *tenantviews.TenantView {
+	v := &tenantviews.TenantView{
+		ID:               body.ID,
+		Slug:             body.Slug,
+		Name:             body.Name,
+		Email:            body.Email,
+		BillingEmail:     body.BillingEmail,
+		Subdomain:        body.Subdomain,
+		Status:           body.Status,
+		SuspensionReason: body.SuspensionReason,
+		Timezone:         body.Timezone,
+		CurrencyCode:     body.CurrencyCode,
+		Industry:         body.Industry,
+		CompanySize:      body.CompanySize,
+		Plan:             body.Plan,
+		TrialEndsAt:      body.TrialEndsAt,
+		ParentTenantID:   body.ParentTenantID,
+		Branding:         body.Branding,
+		ContactInfo:      body.ContactInfo,
+		CustomFields:     body.CustomFields,
+		CreatedAt:        body.CreatedAt,
+		UpdatedAt:        body.UpdatedAt,
+		CreatedBy:        body.CreatedBy,
+		UpdatedBy:        body.UpdatedBy,
 	}
 
 	return v
@@ -971,970 +332,64 @@ func NewListUnauthorized(body *ListUnauthorizedResponseBody) *goa.ServiceError {
 // HTTP "OK" response.
 func NewUpdateTenantOK(body *UpdateResponseBody) *tenantviews.TenantView {
 	v := &tenantviews.TenantView{
-		ID:          body.ID,
-		Name:        body.Name,
-		Slug:        body.Slug,
-		Subdomain:   body.Subdomain,
-		Status:      body.Status,
-		PlanType:    body.PlanType,
-		Description: body.Description,
-		CreatedAt:   body.CreatedAt,
-		UpdatedAt:   body.UpdatedAt,
-		CreatedBy:   body.CreatedBy,
-		UpdatedBy:   body.UpdatedBy,
-	}
-	if body.Settings != nil {
-		v.Settings = unmarshalTenantSettingsResponseBodyToTenantviewsTenantSettingsView(body.Settings)
-	}
-	if body.Subscription != nil {
-		v.Subscription = unmarshalSubscriptionInfoResponseBodyToTenantviewsSubscriptionInfoView(body.Subscription)
-	}
-	if body.Contact != nil {
-		v.Contact = unmarshalContactInfoResponseBodyToTenantviewsContactInfoView(body.Contact)
-	}
-
-	return v
-}
-
-// NewUpdateBadRequest builds a tenant service update endpoint bad_request
-// error.
-func NewUpdateBadRequest(body *UpdateBadRequestResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
+		ID:               body.ID,
+		Slug:             body.Slug,
+		Name:             body.Name,
+		Email:            body.Email,
+		BillingEmail:     body.BillingEmail,
+		Subdomain:        body.Subdomain,
+		Status:           body.Status,
+		SuspensionReason: body.SuspensionReason,
+		Timezone:         body.Timezone,
+		CurrencyCode:     body.CurrencyCode,
+		Industry:         body.Industry,
+		CompanySize:      body.CompanySize,
+		Plan:             body.Plan,
+		TrialEndsAt:      body.TrialEndsAt,
+		ParentTenantID:   body.ParentTenantID,
+		Branding:         body.Branding,
+		ContactInfo:      body.ContactInfo,
+		CustomFields:     body.CustomFields,
+		CreatedAt:        body.CreatedAt,
+		UpdatedAt:        body.UpdatedAt,
+		CreatedBy:        body.CreatedBy,
+		UpdatedBy:        body.UpdatedBy,
 	}
 
 	return v
 }
 
-// NewUpdateNotFound builds a tenant service update endpoint not_found error.
-func NewUpdateNotFound(body *UpdateNotFoundResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
-	}
-
-	return v
-}
-
-// NewUpdateConflict builds a tenant service update endpoint conflict error.
-func NewUpdateConflict(body *UpdateConflictResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
-	}
-
-	return v
-}
-
-// NewUpdateUnauthorized builds a tenant service update endpoint unauthorized
-// error.
-func NewUpdateUnauthorized(body *UpdateUnauthorizedResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
-	}
-
-	return v
-}
-
-// NewUpdateUnprocessableEntity builds a tenant service update endpoint
-// unprocessable_entity error.
-func NewUpdateUnprocessableEntity(body *UpdateUnprocessableEntityResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
-	}
-
-	return v
-}
-
-// NewDeleteNotFound builds a tenant service delete endpoint not_found error.
-func NewDeleteNotFound(body *DeleteNotFoundResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
-	}
-
-	return v
-}
-
-// NewDeleteUnauthorized builds a tenant service delete endpoint unauthorized
-// error.
-func NewDeleteUnauthorized(body *DeleteUnauthorizedResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
-	}
-
-	return v
-}
-
-// NewDeleteConflict builds a tenant service delete endpoint conflict error.
-func NewDeleteConflict(body *DeleteConflictResponseBody) *goa.ServiceError {
-	v := &goa.ServiceError{
-		Name:      *body.Name,
-		ID:        *body.ID,
-		Message:   *body.Message,
-		Temporary: *body.Temporary,
-		Timeout:   *body.Timeout,
-		Fault:     *body.Fault,
-	}
-
-	return v
-}
-
-// NewHealthResultOK builds a "tenant" service "health" endpoint result from a
-// HTTP "OK" response.
-func NewHealthResultOK(body *HealthResponseBody) *tenant.HealthResult {
-	v := &tenant.HealthResult{
-		Status:    *body.Status,
-		Timestamp: *body.Timestamp,
-		Version:   *body.Version,
-	}
-
-	return v
-}
-
-// NewProvisionResultCreated builds a "tenant" service "provision" endpoint
-// result from a HTTP "Created" response.
-func NewProvisionResultCreated(body *ProvisionResponseBody) *tenant.ProvisionResult {
-	v := &tenant.ProvisionResult{
-		TenantID: *body.TenantID,
-		Status:   *body.Status,
-		Message:  *body.Message,
-	}
-
-	return v
-}
-
-// NewProvisionBadRequest builds a tenant service provision endpoint
-// bad_request error.
-func NewProvisionBadRequest(body string) tenant.BadRequest {
-	v := tenant.BadRequest(body)
-
-	return v
-}
-
-// NewProvisionInternalError builds a tenant service provision endpoint
-// internal_error error.
-func NewProvisionInternalError(body string) tenant.InternalError {
-	v := tenant.InternalError(body)
-
-	return v
-}
-
-// NewSuspendResultOK builds a "tenant" service "suspend" endpoint result from
-// a HTTP "OK" response.
-func NewSuspendResultOK(body *SuspendResponseBody) *tenant.SuspendResult {
-	v := &tenant.SuspendResult{
-		TenantID: *body.TenantID,
-		Action:   *body.Action,
-		Status:   *body.Status,
-		Message:  *body.Message,
-	}
-
-	return v
-}
-
-// NewSuspendBadRequest builds a tenant service suspend endpoint bad_request
-// error.
-func NewSuspendBadRequest(body string) tenant.BadRequest {
-	v := tenant.BadRequest(body)
-
-	return v
-}
-
-// NewSuspendInternalError builds a tenant service suspend endpoint
-// internal_error error.
-func NewSuspendInternalError(body string) tenant.InternalError {
-	v := tenant.InternalError(body)
-
-	return v
-}
-
-// NewSuspendNotFound builds a tenant service suspend endpoint not_found error.
-func NewSuspendNotFound(body string) tenant.NotFound {
-	v := tenant.NotFound(body)
-
-	return v
-}
-
-// NewReactivateResultOK builds a "tenant" service "reactivate" endpoint result
-// from a HTTP "OK" response.
-func NewReactivateResultOK(body *ReactivateResponseBody) *tenant.ReactivateResult {
-	v := &tenant.ReactivateResult{
-		TenantID: *body.TenantID,
-		Action:   *body.Action,
-		Status:   *body.Status,
-		Message:  *body.Message,
-	}
-
-	return v
-}
-
-// NewReactivateBadRequest builds a tenant service reactivate endpoint
-// bad_request error.
-func NewReactivateBadRequest(body string) tenant.BadRequest {
-	v := tenant.BadRequest(body)
-
-	return v
-}
-
-// NewReactivateInternalError builds a tenant service reactivate endpoint
-// internal_error error.
-func NewReactivateInternalError(body string) tenant.InternalError {
-	v := tenant.InternalError(body)
-
-	return v
-}
-
-// NewReactivateNotFound builds a tenant service reactivate endpoint not_found
-// error.
-func NewReactivateNotFound(body string) tenant.NotFound {
-	v := tenant.NotFound(body)
-
-	return v
-}
-
-// NewUpdateConfigurationResultOK builds a "tenant" service
-// "update_configuration" endpoint result from a HTTP "OK" response.
-func NewUpdateConfigurationResultOK(body *UpdateConfigurationResponseBody) *tenant.UpdateConfigurationResult {
-	v := &tenant.UpdateConfigurationResult{
-		TenantID: *body.TenantID,
-		Status:   *body.Status,
-		Message:  *body.Message,
-	}
-
-	return v
-}
-
-// NewUpdateConfigurationBadRequest builds a tenant service
-// update_configuration endpoint bad_request error.
-func NewUpdateConfigurationBadRequest(body string) tenant.BadRequest {
-	v := tenant.BadRequest(body)
-
-	return v
-}
-
-// NewUpdateConfigurationInternalError builds a tenant service
-// update_configuration endpoint internal_error error.
-func NewUpdateConfigurationInternalError(body string) tenant.InternalError {
-	v := tenant.InternalError(body)
-
-	return v
-}
-
-// NewUpdateConfigurationNotFound builds a tenant service update_configuration
-// endpoint not_found error.
-func NewUpdateConfigurationNotFound(body string) tenant.NotFound {
-	v := tenant.NotFound(body)
-
-	return v
-}
-
-// NewGetUsageAnalyticsResultOK builds a "tenant" service "get_usage_analytics"
-// endpoint result from a HTTP "OK" response.
-func NewGetUsageAnalyticsResultOK(body *GetUsageAnalyticsResponseBody) *tenant.GetUsageAnalyticsResult {
-	v := &tenant.GetUsageAnalyticsResult{
-		TenantID:      *body.TenantID,
-		Period:        *body.Period,
-		UserCount:     body.UserCount,
-		StorageUsedMb: body.StorageUsedMb,
-		APICalls:      body.APICalls,
-	}
-
-	return v
-}
-
-// NewGetUsageAnalyticsInternalError builds a tenant service
-// get_usage_analytics endpoint internal_error error.
-func NewGetUsageAnalyticsInternalError(body string) tenant.InternalError {
-	v := tenant.InternalError(body)
-
-	return v
-}
-
-// NewGetUsageAnalyticsNotFound builds a tenant service get_usage_analytics
-// endpoint not_found error.
-func NewGetUsageAnalyticsNotFound(body string) tenant.NotFound {
-	v := tenant.NotFound(body)
-
-	return v
-}
-
-// ValidateListResponseBody runs the validations defined on ListResponseBody
-func ValidateListResponseBody(body *ListResponseBody) (err error) {
-	if body.Data == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("data", "body"))
-	}
-	if body.Pagination == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("pagination", "body"))
-	}
-	for _, e := range body.Data {
-		if e != nil {
-			if err2 := ValidateTenantResponseBody(e); err2 != nil {
-				err = goa.MergeErrors(err, err2)
-			}
-		}
-	}
-	if body.Pagination != nil {
-		if err2 := ValidatePaginationMetaResponseBody(body.Pagination); err2 != nil {
-			err = goa.MergeErrors(err, err2)
-		}
-	}
-	return
-}
-
-// ValidateHealthResponseBody runs the validations defined on HealthResponseBody
-func ValidateHealthResponseBody(body *HealthResponseBody) (err error) {
-	if body.Status == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
-	}
-	if body.Timestamp == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timestamp", "body"))
-	}
-	if body.Version == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("version", "body"))
-	}
-	if body.Status != nil {
-		if !(*body.Status == "healthy" || *body.Status == "degraded" || *body.Status == "unhealthy") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"healthy", "degraded", "unhealthy"}))
-		}
-	}
-	if body.Timestamp != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.timestamp", *body.Timestamp, goa.FormatDateTime))
-	}
-	return
-}
-
-// ValidateProvisionResponseBody runs the validations defined on
-// ProvisionResponseBody
-func ValidateProvisionResponseBody(body *ProvisionResponseBody) (err error) {
-	if body.TenantID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("tenant_id", "body"))
-	}
-	if body.Status == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.TenantID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
-	}
-	if body.Status != nil {
-		if !(*body.Status == "SUCCESS" || *body.Status == "PARTIAL" || *body.Status == "FAILED") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"SUCCESS", "PARTIAL", "FAILED"}))
-		}
-	}
-	return
-}
-
-// ValidateSuspendResponseBody runs the validations defined on
-// SuspendResponseBody
-func ValidateSuspendResponseBody(body *SuspendResponseBody) (err error) {
-	if body.TenantID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("tenant_id", "body"))
-	}
-	if body.Action == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("action", "body"))
-	}
-	if body.Status == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.TenantID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
-	}
-	if body.Status != nil {
-		if !(*body.Status == "COMPLETED" || *body.Status == "FAILED") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"COMPLETED", "FAILED"}))
-		}
-	}
-	return
-}
-
-// ValidateReactivateResponseBody runs the validations defined on
-// ReactivateResponseBody
-func ValidateReactivateResponseBody(body *ReactivateResponseBody) (err error) {
-	if body.TenantID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("tenant_id", "body"))
-	}
-	if body.Action == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("action", "body"))
-	}
-	if body.Status == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.TenantID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
-	}
-	if body.Status != nil {
-		if !(*body.Status == "COMPLETED" || *body.Status == "FAILED") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"COMPLETED", "FAILED"}))
-		}
-	}
-	return
-}
-
-// ValidateUpdateConfigurationResponseBody runs the validations defined on
-// update_configuration_response_body
-func ValidateUpdateConfigurationResponseBody(body *UpdateConfigurationResponseBody) (err error) {
-	if body.TenantID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("tenant_id", "body"))
-	}
-	if body.Status == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.TenantID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
-	}
-	if body.Status != nil {
-		if !(*body.Status == "SUCCESS" || *body.Status == "FAILED") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"SUCCESS", "FAILED"}))
-		}
-	}
-	return
-}
-
-// ValidateGetUsageAnalyticsResponseBody runs the validations defined on
-// get_usage_analytics_response_body
-func ValidateGetUsageAnalyticsResponseBody(body *GetUsageAnalyticsResponseBody) (err error) {
-	if body.TenantID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("tenant_id", "body"))
-	}
-	if body.Period == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("period", "body"))
-	}
-	if body.TenantID != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.tenant_id", *body.TenantID, goa.FormatUUID))
-	}
-	return
-}
-
-// ValidateCreateBadRequestResponseBody runs the validations defined on
-// create_bad_request_response_body
-func ValidateCreateBadRequestResponseBody(body *CreateBadRequestResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
+// ValidateTenantResponse runs the validations defined on TenantResponse
+func ValidateTenantResponse(body *TenantResponse) (err error) {
 	if body.ID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateCreateConflictResponseBody runs the validations defined on
-// create_conflict_response_body
-func ValidateCreateConflictResponseBody(body *CreateConflictResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateCreateUnauthorizedResponseBody runs the validations defined on
-// create_unauthorized_response_body
-func ValidateCreateUnauthorizedResponseBody(body *CreateUnauthorizedResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateCreateUnprocessableEntityResponseBody runs the validations defined
-// on create_unprocessable_entity_response_body
-func ValidateCreateUnprocessableEntityResponseBody(body *CreateUnprocessableEntityResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateGetNotFoundResponseBody runs the validations defined on
-// get_not_found_response_body
-func ValidateGetNotFoundResponseBody(body *GetNotFoundResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateGetUnauthorizedResponseBody runs the validations defined on
-// get_unauthorized_response_body
-func ValidateGetUnauthorizedResponseBody(body *GetUnauthorizedResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateListBadRequestResponseBody runs the validations defined on
-// list_bad_request_response_body
-func ValidateListBadRequestResponseBody(body *ListBadRequestResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateListUnauthorizedResponseBody runs the validations defined on
-// list_unauthorized_response_body
-func ValidateListUnauthorizedResponseBody(body *ListUnauthorizedResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateUpdateBadRequestResponseBody runs the validations defined on
-// update_bad_request_response_body
-func ValidateUpdateBadRequestResponseBody(body *UpdateBadRequestResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateUpdateNotFoundResponseBody runs the validations defined on
-// update_not_found_response_body
-func ValidateUpdateNotFoundResponseBody(body *UpdateNotFoundResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateUpdateConflictResponseBody runs the validations defined on
-// update_conflict_response_body
-func ValidateUpdateConflictResponseBody(body *UpdateConflictResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateUpdateUnauthorizedResponseBody runs the validations defined on
-// update_unauthorized_response_body
-func ValidateUpdateUnauthorizedResponseBody(body *UpdateUnauthorizedResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateUpdateUnprocessableEntityResponseBody runs the validations defined
-// on update_unprocessable_entity_response_body
-func ValidateUpdateUnprocessableEntityResponseBody(body *UpdateUnprocessableEntityResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateDeleteNotFoundResponseBody runs the validations defined on
-// delete_not_found_response_body
-func ValidateDeleteNotFoundResponseBody(body *DeleteNotFoundResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateDeleteUnauthorizedResponseBody runs the validations defined on
-// delete_unauthorized_response_body
-func ValidateDeleteUnauthorizedResponseBody(body *DeleteUnauthorizedResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateDeleteConflictResponseBody runs the validations defined on
-// delete_conflict_response_body
-func ValidateDeleteConflictResponseBody(body *DeleteConflictResponseBody) (err error) {
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
-	}
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "body"))
-	}
-	if body.Temporary == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("temporary", "body"))
-	}
-	if body.Timeout == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("timeout", "body"))
-	}
-	if body.Fault == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("fault", "body"))
-	}
-	return
-}
-
-// ValidateContactInfoRequestBody runs the validations defined on
-// ContactInfoRequestBody
-func ValidateContactInfoRequestBody(body *ContactInfoRequestBody) (err error) {
-	if body.Name != nil {
-		if utf8.RuneCountInString(*body.Name) < 1 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 1, true))
-		}
-	}
-	if body.Name != nil {
-		if utf8.RuneCountInString(*body.Name) > 100 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
-		}
-	}
-	if body.Email != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.email", *body.Email, goa.FormatEmail))
-	}
-	if body.Phone != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("body.phone", *body.Phone, "^\\+?[1-9]\\d{1,14}$"))
-	}
-	if body.Title != nil {
-		if utf8.RuneCountInString(*body.Title) > 100 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.title", *body.Title, utf8.RuneCountInString(*body.Title), 100, false))
-		}
-	}
-	return
-}
-
-// ValidateTenantSettingsRequestBody runs the validations defined on
-// TenantSettingsRequestBody
-func ValidateTenantSettingsRequestBody(body *TenantSettingsRequestBody) (err error) {
-	err = goa.MergeErrors(err, goa.ValidatePattern("body.currency", body.Currency, "^[A-Z]{3}$"))
-	if !(body.DateFormat == "MM/DD/YYYY" || body.DateFormat == "DD/MM/YYYY" || body.DateFormat == "YYYY-MM-DD") {
-		err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.date_format", body.DateFormat, []any{"MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"}))
-	}
-	err = goa.MergeErrors(err, goa.ValidatePattern("body.language", body.Language, "^[a-z]{2}$"))
-	if body.Limits != nil {
-		if err2 := ValidateTenantLimitsRequestBody(body.Limits); err2 != nil {
-			err = goa.MergeErrors(err, err2)
-		}
-	}
-	return
-}
-
-// ValidateTenantLimitsRequestBody runs the validations defined on
-// TenantLimitsRequestBody
-func ValidateTenantLimitsRequestBody(body *TenantLimitsRequestBody) (err error) {
-	if body.MaxUsers != nil {
-		if *body.MaxUsers < 1 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("body.max_users", *body.MaxUsers, 1, true))
-		}
-	}
-	if body.MaxStorageMb != nil {
-		if *body.MaxStorageMb < 100 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("body.max_storage_mb", *body.MaxStorageMb, 100, true))
-		}
-	}
-	if body.MaxAPICallsPerHour != nil {
-		if *body.MaxAPICallsPerHour < 100 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("body.max_api_calls_per_hour", *body.MaxAPICallsPerHour, 100, true))
-		}
-	}
-	return
-}
-
-// ValidateTenantResponseBody runs the validations defined on TenantResponseBody
-func ValidateTenantResponseBody(body *TenantResponseBody) (err error) {
-	if body.ID == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("id", "body"))
-	}
-	if body.Name == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
 	}
 	if body.Slug == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("slug", "body"))
 	}
+	if body.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "body"))
+	}
+	if body.Email == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("email", "body"))
+	}
 	if body.Status == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("status", "body"))
 	}
-	if body.PlanType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("plan_type", "body"))
+	if body.Timezone == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("timezone", "body"))
+	}
+	if body.CurrencyCode == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("currency_code", "body"))
 	}
 	if body.CreatedAt == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("created_at", "body"))
 	}
-	if body.UpdatedAt == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("updated_at", "body"))
-	}
 	if body.ID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.id", *body.ID, goa.FormatUUID))
 	}
-	if body.Name != nil {
-		if utf8.RuneCountInString(*body.Name) < 1 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 1, true))
-		}
-	}
-	if body.Name != nil {
-		if utf8.RuneCountInString(*body.Name) > 100 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
-		}
-	}
 	if body.Slug != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("body.slug", *body.Slug, "^[a-z0-9-]+$"))
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.slug", *body.Slug, "^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$"))
 	}
 	if body.Slug != nil {
 		if utf8.RuneCountInString(*body.Slug) < 3 {
@@ -1946,8 +401,24 @@ func ValidateTenantResponseBody(body *TenantResponseBody) (err error) {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("body.slug", *body.Slug, utf8.RuneCountInString(*body.Slug), 50, false))
 		}
 	}
+	if body.Name != nil {
+		if utf8.RuneCountInString(*body.Name) < 2 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 2, true))
+		}
+	}
+	if body.Name != nil {
+		if utf8.RuneCountInString(*body.Name) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
+		}
+	}
+	if body.Email != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.email", *body.Email, goa.FormatEmail))
+	}
+	if body.BillingEmail != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.billing_email", *body.BillingEmail, goa.FormatEmail))
+	}
 	if body.Subdomain != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("body.subdomain", *body.Subdomain, "^[a-z0-9-]+$"))
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.subdomain", *body.Subdomain, "^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$"))
 	}
 	if body.Subdomain != nil {
 		if utf8.RuneCountInString(*body.Subdomain) < 3 {
@@ -1955,39 +426,46 @@ func ValidateTenantResponseBody(body *TenantResponseBody) (err error) {
 		}
 	}
 	if body.Subdomain != nil {
-		if utf8.RuneCountInString(*body.Subdomain) > 50 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.subdomain", *body.Subdomain, utf8.RuneCountInString(*body.Subdomain), 50, false))
+		if utf8.RuneCountInString(*body.Subdomain) > 63 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.subdomain", *body.Subdomain, utf8.RuneCountInString(*body.Subdomain), 63, false))
 		}
 	}
 	if body.Status != nil {
-		if !(*body.Status == "ACTIVE" || *body.Status == "SUSPENDED" || *body.Status == "PENDING" || *body.Status == "ARCHIVED") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED"}))
+		if !(*body.Status == "ACTIVE" || *body.Status == "SUSPENDED" || *body.Status == "TRIAL" || *body.Status == "ARCHIVED" || *body.Status == "PENDING_SETUP") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"ACTIVE", "SUSPENDED", "TRIAL", "ARCHIVED", "PENDING_SETUP"}))
 		}
 	}
-	if body.PlanType != nil {
-		if !(*body.PlanType == "starter" || *body.PlanType == "professional" || *body.PlanType == "enterprise") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.plan_type", *body.PlanType, []any{"starter", "professional", "enterprise"}))
+	if body.SuspensionReason != nil {
+		if utf8.RuneCountInString(*body.SuspensionReason) > 500 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.suspension_reason", *body.SuspensionReason, utf8.RuneCountInString(*body.SuspensionReason), 500, false))
 		}
 	}
-	if body.Description != nil {
-		if utf8.RuneCountInString(*body.Description) > 500 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.description", *body.Description, utf8.RuneCountInString(*body.Description), 500, false))
+	if body.Timezone != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.timezone", *body.Timezone, "^[A-Za-z_]+/[A-Za-z_]+$"))
+	}
+	if body.CurrencyCode != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("body.currency_code", *body.CurrencyCode, "^[A-Z]{3}$"))
+	}
+	if body.Industry != nil {
+		if utf8.RuneCountInString(*body.Industry) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("body.industry", *body.Industry, utf8.RuneCountInString(*body.Industry), 100, false))
 		}
 	}
-	if body.Settings != nil {
-		if err2 := ValidateTenantSettingsResponseBody(body.Settings); err2 != nil {
-			err = goa.MergeErrors(err, err2)
+	if body.CompanySize != nil {
+		if !(*body.CompanySize == "STARTUP" || *body.CompanySize == "SMALL" || *body.CompanySize == "MEDIUM" || *body.CompanySize == "LARGE" || *body.CompanySize == "ENTERPRISE") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.company_size", *body.CompanySize, []any{"STARTUP", "SMALL", "MEDIUM", "LARGE", "ENTERPRISE"}))
 		}
 	}
-	if body.Subscription != nil {
-		if err2 := ValidateSubscriptionInfoResponseBody(body.Subscription); err2 != nil {
-			err = goa.MergeErrors(err, err2)
+	if body.Plan != nil {
+		if !(*body.Plan == "FREE" || *body.Plan == "STARTER" || *body.Plan == "PROFESSIONAL" || *body.Plan == "ENTERPRISE" || *body.Plan == "CUSTOM") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.plan", *body.Plan, []any{"FREE", "STARTER", "PROFESSIONAL", "ENTERPRISE", "CUSTOM"}))
 		}
 	}
-	if body.Contact != nil {
-		if err2 := ValidateContactInfoResponseBody(body.Contact); err2 != nil {
-			err = goa.MergeErrors(err, err2)
-		}
+	if body.TrialEndsAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.trial_ends_at", *body.TrialEndsAt, goa.FormatDateTime))
+	}
+	if body.ParentTenantID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("body.parent_tenant_id", *body.ParentTenantID, goa.FormatUUID))
 	}
 	if body.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.created_at", *body.CreatedAt, goa.FormatDateTime))
@@ -2000,127 +478,6 @@ func ValidateTenantResponseBody(body *TenantResponseBody) (err error) {
 	}
 	if body.UpdatedBy != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("body.updated_by", *body.UpdatedBy, goa.FormatUUID))
-	}
-	return
-}
-
-// ValidateTenantSettingsResponseBody runs the validations defined on
-// TenantSettingsResponseBody
-func ValidateTenantSettingsResponseBody(body *TenantSettingsResponseBody) (err error) {
-	if body.Currency != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("body.currency", *body.Currency, "^[A-Z]{3}$"))
-	}
-	if body.DateFormat != nil {
-		if !(*body.DateFormat == "MM/DD/YYYY" || *body.DateFormat == "DD/MM/YYYY" || *body.DateFormat == "YYYY-MM-DD") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.date_format", *body.DateFormat, []any{"MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"}))
-		}
-	}
-	if body.Language != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("body.language", *body.Language, "^[a-z]{2}$"))
-	}
-	if body.Limits != nil {
-		if err2 := ValidateTenantLimitsResponseBody(body.Limits); err2 != nil {
-			err = goa.MergeErrors(err, err2)
-		}
-	}
-	return
-}
-
-// ValidateTenantLimitsResponseBody runs the validations defined on
-// TenantLimitsResponseBody
-func ValidateTenantLimitsResponseBody(body *TenantLimitsResponseBody) (err error) {
-	if body.MaxUsers != nil {
-		if *body.MaxUsers < 1 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("body.max_users", *body.MaxUsers, 1, true))
-		}
-	}
-	if body.MaxStorageMb != nil {
-		if *body.MaxStorageMb < 100 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("body.max_storage_mb", *body.MaxStorageMb, 100, true))
-		}
-	}
-	if body.MaxAPICallsPerHour != nil {
-		if *body.MaxAPICallsPerHour < 100 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("body.max_api_calls_per_hour", *body.MaxAPICallsPerHour, 100, true))
-		}
-	}
-	return
-}
-
-// ValidateSubscriptionInfoResponseBody runs the validations defined on
-// SubscriptionInfoResponseBody
-func ValidateSubscriptionInfoResponseBody(body *SubscriptionInfoResponseBody) (err error) {
-	if body.Plan != nil {
-		if !(*body.Plan == "starter" || *body.Plan == "professional" || *body.Plan == "enterprise") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.plan", *body.Plan, []any{"starter", "professional", "enterprise"}))
-		}
-	}
-	if body.Status != nil {
-		if !(*body.Status == "active" || *body.Status == "past_due" || *body.Status == "canceled" || *body.Status == "trialing") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"active", "past_due", "canceled", "trialing"}))
-		}
-	}
-	if body.BillingCycle != nil {
-		if !(*body.BillingCycle == "monthly" || *body.BillingCycle == "yearly") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.billing_cycle", *body.BillingCycle, []any{"monthly", "yearly"}))
-		}
-	}
-	if body.NextBillingDate != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.next_billing_date", *body.NextBillingDate, goa.FormatDate))
-	}
-	if body.TrialEndsAt != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.trial_ends_at", *body.TrialEndsAt, goa.FormatDate))
-	}
-	return
-}
-
-// ValidateContactInfoResponseBody runs the validations defined on
-// ContactInfoResponseBody
-func ValidateContactInfoResponseBody(body *ContactInfoResponseBody) (err error) {
-	if body.Name != nil {
-		if utf8.RuneCountInString(*body.Name) < 1 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 1, true))
-		}
-	}
-	if body.Name != nil {
-		if utf8.RuneCountInString(*body.Name) > 100 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
-		}
-	}
-	if body.Email != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.email", *body.Email, goa.FormatEmail))
-	}
-	if body.Phone != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("body.phone", *body.Phone, "^\\+?[1-9]\\d{1,14}$"))
-	}
-	if body.Title != nil {
-		if utf8.RuneCountInString(*body.Title) > 100 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.title", *body.Title, utf8.RuneCountInString(*body.Title), 100, false))
-		}
-	}
-	return
-}
-
-// ValidatePaginationMetaResponseBody runs the validations defined on
-// PaginationMetaResponseBody
-func ValidatePaginationMetaResponseBody(body *PaginationMetaResponseBody) (err error) {
-	if body.CurrentPage == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("current_page", "body"))
-	}
-	if body.PageSize == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("page_size", "body"))
-	}
-	if body.TotalItems == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("total_items", "body"))
-	}
-	if body.TotalPages == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("total_pages", "body"))
-	}
-	if body.HasNext == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("has_next", "body"))
-	}
-	if body.HasPrev == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("has_prev", "body"))
 	}
 	return
 }

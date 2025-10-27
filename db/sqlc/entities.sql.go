@@ -1177,11 +1177,11 @@ WHERE
 `
 
 type GetEntityHierarchyStatsRow struct {
-	TotalEntities        int64       `json:"total_entities"`
-	RootEntities         int64       `json:"root_entities"`
-	MaxDepth             any `json:"max_depth"`
-	AvgDepth             float64     `json:"avg_depth"`
-	EntitiesWithChildren int64       `json:"entities_with_children"`
+	TotalEntities        int64   `json:"total_entities"`
+	RootEntities         int64   `json:"root_entities"`
+	MaxDepth             any     `json:"max_depth"`
+	AvgDepth             float64 `json:"avg_depth"`
+	EntitiesWithChildren int64   `json:"entities_with_children"`
 }
 
 func (q *Queries) GetEntityHierarchyStats(ctx context.Context) (*GetEntityHierarchyStatsRow, error) {
@@ -1643,11 +1643,11 @@ LIMIT
 `
 
 type GetEntityStatesWithPagingParams struct {
-	EntityID   any `json:"entity_id"`
-	Key        any `json:"key"`
-	FiscalYear any `json:"fiscal_year"`
-	PageOffset int32       `json:"page_offset"`
-	PageSize   int32       `json:"page_size"`
+	EntityID   any   `json:"entity_id"`
+	Key        any   `json:"key"`
+	FiscalYear any   `json:"fiscal_year"`
+	PageOffset int32 `json:"page_offset"`
+	PageSize   int32 `json:"page_size"`
 }
 
 func (q *Queries) GetEntityStatesWithPaging(ctx context.Context, arg GetEntityStatesWithPagingParams) ([]*Entitystate, error) {
@@ -1997,7 +1997,7 @@ type GetEntityWithHierarchyInfoRow struct {
 	CreatedAt         time.Time    `json:"created_at"`
 	UpdatedAt         time.Time    `json:"updated_at"`
 	DeletedAt         sql.NullTime `json:"deleted_at"`
-	Level             any  `json:"level"`
+	Level             any          `json:"level"`
 	ChildCount        int64        `json:"child_count"`
 	ParentName        *string      `json:"parent_name"`
 }
@@ -2896,11 +2896,11 @@ LIMIT
 `
 
 type ListEntitiesWithPaginationParams struct {
-	Type     any `json:"type"`
-	IsActive any `json:"is_active"`
-	Hidden   any `json:"hidden"`
-	Offset   int32       `json:"offset"`
-	Limit    int32       `json:"limit"`
+	Type     any   `json:"type"`
+	IsActive any   `json:"is_active"`
+	Hidden   any   `json:"hidden"`
+	Offset   int32 `json:"offset"`
+	Limit    int32 `json:"limit"`
 }
 
 func (q *Queries) ListEntitiesWithPagination(ctx context.Context, arg ListEntitiesWithPaginationParams) ([]*Entity, error) {

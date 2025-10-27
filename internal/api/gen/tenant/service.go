@@ -11,43 +11,39 @@ import (
 	"context"
 
 	tenantviews "github.com/niiniyare/erp/internal/api/gen/tenant/views"
-	goa "goa.design/goa/v3/pkg"
 )
 
-// Tenant management service for multi-tenant ERP system
+// Tenant management service
 type Service interface {
-	// Create a new tenant
-	Create(context.Context, *CreateTenantPayload) (res *CreateTenantResult, err error)
+	// List all tenants
+	List(context.Context) (res []*Tenant, err error)
 	// Get tenant by ID
 	// The "view" return value must have one of the following views
-	//	- "default"
-	//	- "minimal"
+	//	- "default": Standard tenant view for listings and general operations
+	//	- "detailed": Complete tenant view with all configuration details
+	//	- "public": Public tenant information for branding and subdomain resolution
+	//	- "summary": Minimal tenant info for dropdowns and references
 	Get(context.Context, *GetPayload) (res *Tenant, view string, err error)
-	// List tenants with pagination and filtering
-	List(context.Context, *ListPayload) (res *ListResult, err error)
-	// Update an existing tenant
+	// Create a new tenant
 	// The "view" return value must have one of the following views
-	//	- "default"
-	//	- "minimal"
-	Update(context.Context, *UpdateTenantPayload) (res *Tenant, view string, err error)
-	// Delete a tenant (soft delete)
+	//	- "default": Standard tenant view for listings and general operations
+	//	- "detailed": Complete tenant view with all configuration details
+	//	- "public": Public tenant information for branding and subdomain resolution
+	//	- "summary": Minimal tenant info for dropdowns and references
+	Create(context.Context, *CreatePayload) (res *Tenant, view string, err error)
+	// Update tenant
+	// The "view" return value must have one of the following views
+	//	- "default": Standard tenant view for listings and general operations
+	//	- "detailed": Complete tenant view with all configuration details
+	//	- "public": Public tenant information for branding and subdomain resolution
+	//	- "summary": Minimal tenant info for dropdowns and references
+	Update(context.Context, *UpdatePayload) (res *Tenant, view string, err error)
+	// Delete tenant
 	Delete(context.Context, *DeletePayload) (err error)
-	// Health check for tenant service
-	Health(context.Context) (res *HealthResult, err error)
-	// Provision a new tenant with complete setup
-	Provision(context.Context, *ProvisionPayload) (res *ProvisionResult, err error)
-	// Suspend a tenant
-	Suspend(context.Context, *SuspendPayload) (res *SuspendResult, err error)
-	// Reactivate a suspended tenant
-	Reactivate(context.Context, *ReactivatePayload) (res *ReactivateResult, err error)
-	// Update tenant configuration and limits
-	UpdateConfiguration(context.Context, *UpdateConfigurationPayload) (res *UpdateConfigurationResult, err error)
-	// Get tenant usage analytics
-	GetUsageAnalytics(context.Context, *GetUsageAnalyticsPayload) (res *GetUsageAnalyticsResult, err error)
 }
 
 // APIName is the name of the API as defined in the design.
-const APIName = "Awo"
+const APIName = "erp"
 
 // APIVersion is the version of the API as defined in the design.
 const APIVersion = "1.0.0"
@@ -60,62 +56,16 @@ const ServiceName = "tenant"
 // MethodNames lists the service method names as defined in the design. These
 // are the same values that are set in the endpoint request contexts under the
 // MethodKey key.
-var MethodNames = [11]string{"create", "get", "list", "update", "delete", "health", "provision", "suspend", "reactivate", "update_configuration", "get_usage_analytics"}
+var MethodNames = [5]string{"list", "get", "create", "update", "delete"}
 
-// Contact information
-type ContactInfo struct {
-	// Contact person name
-	Name *string
-	// Contact email
-	Email *string
-	// Contact phone number
-	Phone *string
-	// Job title
-	Title *string
-}
-
-// CreateTenantPayload is the payload type of the tenant service create method.
-type CreateTenantPayload struct {
-	// Tenant display name
+// CreatePayload is the payload type of the tenant service create method.
+type CreatePayload struct {
+	// Tenant name
 	Name string
-	// Tenant unique slug
-	Slug *string
-	// Primary email of the tenant
+	// Tenant slug
+	Slug string
+	// Contact email
 	Email string
-	// Desired subdomain (optional)
-	Subdomain *string
-	// Tenant status
-	Status string
-	// Subscription plan type
-	PlanType string
-	// Industry of the tenant
-	Industry *string
-	// Size of the company
-	CompanySize *string
-	// Tax Identification Number
-	TaxID *string
-	// Company registration number
-	RegistrationNumber *string
-	// Legal entity type
-	LegalEntityType *string
-	// Primary contact information
-	Contact *ContactInfo
-	// Initial tenant settings
-	Settings *TenantSettings
-	// ISO 3166-1 alpha-2 country code
-	CountryCode string
-	// ISO 4217 currency code
-	CurrencyCode string
-}
-
-// CreateTenantResult is the result type of the tenant service create method.
-type CreateTenantResult struct {
-	// Created tenant information
-	Tenant *Tenant
-	// Status of the creation operation
-	Status string
-	// Detailed message about the operation
-	Message string
 }
 
 // DeletePayload is the payload type of the tenant service delete method.
@@ -130,359 +80,62 @@ type GetPayload struct {
 	ID string
 }
 
-// GetUsageAnalyticsPayload is the payload type of the tenant service
-// get_usage_analytics method.
-type GetUsageAnalyticsPayload struct {
-	// Tenant ID
-	ID string
-	// Time period for analytics
-	Period string
-}
-
-// GetUsageAnalyticsResult is the result type of the tenant service
-// get_usage_analytics method.
-type GetUsageAnalyticsResult struct {
-	// Tenant ID
-	TenantID string
-	// Analysis period
-	Period string
-	// Number of active users
-	UserCount *uint
-	// Storage used in MB
-	StorageUsedMb *uint64
-	// Total API calls
-	APICalls *uint64
-}
-
-// HealthResult is the result type of the tenant service health method.
-type HealthResult struct {
-	// Service status
-	Status string
-	// Check timestamp
-	Timestamp string
-	// Service version
-	Version string
-}
-
-// ListPayload is the payload type of the tenant service list method.
-type ListPayload struct {
-	// Filter by tenant name
-	NameFilter *string
-	// Filter by status
-	StatusFilter *string
-	// Page number (1-based)
-	Page uint
-	// Number of items per page
-	PageSize uint
-	// Field to sort by
-	SortBy *string
-	// Sort order
-	SortOrder string
-}
-
-// ListResult is the result type of the tenant service list method.
-type ListResult struct {
-	// The data items
-	Data []*Tenant
-	// Pagination metadata
-	Pagination *PaginationMeta
-}
-
-// Pagination metadata
-type PaginationMeta struct {
-	// Current page number
-	CurrentPage uint
-	// Items per page
-	PageSize uint
-	// Total number of items
-	TotalItems uint
-	// Total number of pages
-	TotalPages uint
-	// Whether there is a next page
-	HasNext bool
-	// Whether there is a previous page
-	HasPrev bool
-}
-
-// ProvisionPayload is the payload type of the tenant service provision method.
-type ProvisionPayload struct {
-	// Tenant name
-	Name string
-	// Subdomain for tenant access
-	Subdomain string
-	// Primary contact email
-	ContactEmail string
-	// Initial admin user email
-	AdminEmail string
-	// Admin first name
-	AdminFirstName string
-	// Admin last name
-	AdminLastName string
-}
-
-// ProvisionResult is the result type of the tenant service provision method.
-type ProvisionResult struct {
-	// Created tenant ID
-	TenantID string
-	// Provisioning status
-	Status string
-	// Status message
-	Message string
-}
-
-// ReactivatePayload is the payload type of the tenant service reactivate
-// method.
-type ReactivatePayload struct {
-	// Tenant ID
-	ID string
-	// Reason for reactivation
-	Reason string
-}
-
-// ReactivateResult is the result type of the tenant service reactivate method.
-type ReactivateResult struct {
-	// Tenant ID
-	TenantID string
-	// Action performed
-	Action string
-	// Action status
-	Status string
-	// Result message
-	Message string
-}
-
-// Tenant subscription information
-type SubscriptionInfo struct {
-	// Subscription plan
-	Plan *string
-	// Subscription status
-	Status *string
-	// Billing cycle
-	BillingCycle *string
-	// Next billing date
-	NextBillingDate *string
-	// Trial end date
-	TrialEndsAt *string
-}
-
-// SuspendPayload is the payload type of the tenant service suspend method.
-type SuspendPayload struct {
-	// Tenant ID
-	ID string
-	// Reason for suspension
-	Reason string
-}
-
-// SuspendResult is the result type of the tenant service suspend method.
-type SuspendResult struct {
-	// Tenant ID
-	TenantID string
-	// Action performed
-	Action string
-	// Action status
-	Status string
-	// Result message
-	Message string
-}
-
 // Tenant is the result type of the tenant service get method.
 type Tenant struct {
 	// Unique tenant identifier
-	ID string
-	// Tenant display name
-	Name string
-	// Tenant URL slug
-	Slug string
-	// Subdomain for tenant
-	Subdomain *string
-	// Tenant status
-	Status string
-	// Subscription plan
-	PlanType string
-	// Tenant description
-	Description *string
-	// Tenant-specific settings
-	Settings *TenantSettings
-	// Subscription information
-	Subscription *SubscriptionInfo
-	// Primary contact information
-	Contact *ContactInfo
+	ID string `db:"id,omitempty" json:"id"`
+	// Used in URLs and subdomain routing. Must be globally unique.
+	Slug string `db:"slug,omitempty" json:"slug"`
+	// Display name shown in UI
+	Name string `db:"name,omitempty" json:"name"`
+	// Used for administrative communications
+	Email string `db:"email,omitempty" json:"email"`
+	// Separate billing contact for financial operations
+	BillingEmail *string `db:"billing_email,omitempty" json:"billing_email,omitempty"`
+	// Custom subdomain (e.g., acme.erp.com). Must be globally unique.
+	Subdomain *string `db:"subdomain,omitempty" json:"subdomain,omitempty"`
+	// Controls tenant access and billing
+	Status string `db:"status,omitempty" json:"status"`
+	// Required when status is SUSPENDED
+	SuspensionReason *string `db:"suspension_reason,omitempty" json:"suspension_reason,omitempty"`
+	// IANA timezone identifier
+	Timezone string `db:"timezone,omitempty" json:"timezone"`
+	// ISO 4217 currency code for UI display
+	CurrencyCode string `db:"currency_code,omitempty" json:"currency_code"`
+	// Used for industry-specific features and compliance
+	Industry *string `db:"industry,omitempty" json:"industry,omitempty"`
+	// Affects feature availability and pricing tiers
+	CompanySize *string `db:"company_size,omitempty" json:"company_size,omitempty"`
+	// Determines feature access and limits
+	Plan string `db:"plan,omitempty" json:"plan"`
+	// Required when status is TRIAL
+	TrialEndsAt *string `db:"trial_ends_at,omitempty" json:"trial_ends_at,omitempty"`
+	// Enables multi-tenant enterprise structures
+	ParentTenantID *string `db:"parent_tenant_id,omitempty" json:"parent_tenant_id,omitempty"`
+	// Visual customization settings
+	Branding any `db:"branding,omitempty" json:"branding,omitempty"`
+	// Additional contact details
+	ContactInfo any `db:"contact_info,omitempty" json:"contact_info,omitempty"`
+	// Flexible key-value pairs for tenant-specific data
+	CustomFields any `db:"custom_fields,omitempty" json:"custom_fields,omitempty"`
 	// Creation timestamp
-	CreatedAt string
+	CreatedAt string `db:"created_at,omitempty" json:"created_at"`
 	// Last update timestamp
-	UpdatedAt string
+	UpdatedAt *string `db:"updated_at,omitempty" json:"updated_at,omitempty"`
 	// ID of user who created the record
-	CreatedBy *string
+	CreatedBy *string `db:"created_by,omitempty" json:"created_by,omitempty"`
 	// ID of user who last updated the record
-	UpdatedBy *string
+	UpdatedBy *string `db:"updated_by,omitempty" json:"updated_by,omitempty"`
 }
 
-// Usage limits for tenant
-type TenantLimits struct {
-	// Maximum number of users
-	MaxUsers *uint
-	// Maximum storage in MB
-	MaxStorageMb *uint
-	// API rate limit per hour
-	MaxAPICallsPerHour *uint
-}
-
-// Tenant-specific settings and configuration
-type TenantSettings struct {
-	// Default timezone
-	Timezone string
-	// Default currency code
-	Currency string
-	// Preferred date format
-	DateFormat string
-	// Default language
-	Language string
-	// Enabled features
-	Features []string
-	// Usage limits
-	Limits *TenantLimits
-}
-
-// UpdateConfigurationPayload is the payload type of the tenant service
-// update_configuration method.
-type UpdateConfigurationPayload struct {
+// UpdatePayload is the payload type of the tenant service update method.
+type UpdatePayload struct {
 	// Tenant ID
 	ID string
-	// Maximum number of users
-	MaxUsers *uint
-	// Maximum storage in MB
-	MaxStorageMb *uint64
-	// Maximum API calls per hour
-	MaxAPICallsPerHour *uint
-	// Reason for configuration change
-	Reason string
-}
-
-// UpdateConfigurationResult is the result type of the tenant service
-// update_configuration method.
-type UpdateConfigurationResult struct {
-	// Tenant ID
-	TenantID string
-	// Update status
-	Status string
-	// Result message
-	Message string
-}
-
-// UpdateTenantPayload is the payload type of the tenant service update method.
-type UpdateTenantPayload struct {
-	// Tenant ID
-	ID string
-	// Tenant display name
+	// Tenant name
 	Name *string
-	// Tenant description
-	Description *string
-	// Tenant status
-	Status *string
-	// Subscription plan type
-	PlanType *string
-	// Primary contact information
-	Contact *ContactInfo
-	// Tenant settings
-	Settings *TenantSettings
-}
-
-// Invalid request
-type BadRequest string
-
-// Internal server error
-type InternalError string
-
-// Tenant not found
-type NotFound string
-
-// Error returns an error description.
-func (e BadRequest) Error() string {
-	return "Invalid request"
-}
-
-// ErrorName returns "bad_request".
-//
-// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
-func (e BadRequest) ErrorName() string {
-	return e.GoaErrorName()
-}
-
-// GoaErrorName returns "bad_request".
-func (e BadRequest) GoaErrorName() string {
-	return "bad_request"
-}
-
-// Error returns an error description.
-func (e InternalError) Error() string {
-	return "Internal server error"
-}
-
-// ErrorName returns "internal_error".
-//
-// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
-func (e InternalError) ErrorName() string {
-	return e.GoaErrorName()
-}
-
-// GoaErrorName returns "internal_error".
-func (e InternalError) GoaErrorName() string {
-	return "internal_error"
-}
-
-// Error returns an error description.
-func (e NotFound) Error() string {
-	return "Tenant not found"
-}
-
-// ErrorName returns "not_found".
-//
-// Deprecated: Use GoaErrorName - https://github.com/goadesign/goa/issues/3105
-func (e NotFound) ErrorName() string {
-	return e.GoaErrorName()
-}
-
-// GoaErrorName returns "not_found".
-func (e NotFound) GoaErrorName() string {
-	return "not_found"
-}
-
-// MakeBadRequest builds a goa.ServiceError from an error.
-func MakeBadRequest(err error) *goa.ServiceError {
-	return goa.NewServiceError(err, "bad_request", false, false, false)
-}
-
-// MakeConflict builds a goa.ServiceError from an error.
-func MakeConflict(err error) *goa.ServiceError {
-	return goa.NewServiceError(err, "conflict", false, false, false)
-}
-
-// MakeUnauthorized builds a goa.ServiceError from an error.
-func MakeUnauthorized(err error) *goa.ServiceError {
-	return goa.NewServiceError(err, "unauthorized", false, false, false)
-}
-
-// MakeUnprocessableEntity builds a goa.ServiceError from an error.
-func MakeUnprocessableEntity(err error) *goa.ServiceError {
-	return goa.NewServiceError(err, "unprocessable_entity", false, false, false)
-}
-
-// MakeNotFound builds a goa.ServiceError from an error.
-func MakeNotFound(err error) *goa.ServiceError {
-	return goa.NewServiceError(err, "not_found", false, false, false)
-}
-
-// NewCreateTenantResult initializes result type CreateTenantResult from viewed
-// result type CreateTenantResult.
-func NewCreateTenantResult(vres *tenantviews.CreateTenantResult) *CreateTenantResult {
-	return newCreateTenantResult(vres.Projected)
-}
-
-// NewViewedCreateTenantResult initializes viewed result type
-// CreateTenantResult from result type CreateTenantResult using the given view.
-func NewViewedCreateTenantResult(res *CreateTenantResult, view string) *tenantviews.CreateTenantResult {
-	p := newCreateTenantResultView(res)
-	return &tenantviews.CreateTenantResult{Projected: p, View: "default"}
+	// Contact email
+	Email *string
 }
 
 // NewTenant initializes result type Tenant from viewed result type Tenant.
@@ -491,8 +144,12 @@ func NewTenant(vres *tenantviews.Tenant) *Tenant {
 	switch vres.View {
 	case "default", "":
 		res = newTenant(vres.Projected)
-	case "minimal":
-		res = newTenantMinimal(vres.Projected)
+	case "detailed":
+		res = newTenantDetailed(vres.Projected)
+	case "public":
+		res = newTenantPublic(vres.Projected)
+	case "summary":
+		res = newTenantSummary(vres.Projected)
 	}
 	return res
 }
@@ -505,38 +162,15 @@ func NewViewedTenant(res *Tenant, view string) *tenantviews.Tenant {
 	case "default", "":
 		p := newTenantView(res)
 		vres = &tenantviews.Tenant{Projected: p, View: "default"}
-	case "minimal":
-		p := newTenantViewMinimal(res)
-		vres = &tenantviews.Tenant{Projected: p, View: "minimal"}
-	}
-	return vres
-}
-
-// newCreateTenantResult converts projected type CreateTenantResult to service
-// type CreateTenantResult.
-func newCreateTenantResult(vres *tenantviews.CreateTenantResultView) *CreateTenantResult {
-	res := &CreateTenantResult{}
-	if vres.Status != nil {
-		res.Status = *vres.Status
-	}
-	if vres.Message != nil {
-		res.Message = *vres.Message
-	}
-	if vres.Tenant != nil {
-		res.Tenant = newTenant(vres.Tenant)
-	}
-	return res
-}
-
-// newCreateTenantResultView projects result type CreateTenantResult to
-// projected type CreateTenantResultView using the "default" view.
-func newCreateTenantResultView(res *CreateTenantResult) *tenantviews.CreateTenantResultView {
-	vres := &tenantviews.CreateTenantResultView{
-		Status:  &res.Status,
-		Message: &res.Message,
-	}
-	if res.Tenant != nil {
-		vres.Tenant = newTenantView(res.Tenant)
+	case "detailed":
+		p := newTenantViewDetailed(res)
+		vres = &tenantviews.Tenant{Projected: p, View: "detailed"}
+	case "public":
+		p := newTenantViewPublic(res)
+		vres = &tenantviews.Tenant{Projected: p, View: "public"}
+	case "summary":
+		p := newTenantViewSummary(res)
+		vres = &tenantviews.Tenant{Projected: p, View: "summary"}
 	}
 	return vres
 }
@@ -544,57 +178,141 @@ func newCreateTenantResultView(res *CreateTenantResult) *tenantviews.CreateTenan
 // newTenant converts projected type Tenant to service type Tenant.
 func newTenant(vres *tenantviews.TenantView) *Tenant {
 	res := &Tenant{
-		Subdomain:   vres.Subdomain,
-		Description: vres.Description,
-		CreatedBy:   vres.CreatedBy,
-		UpdatedBy:   vres.UpdatedBy,
+		UpdatedAt: vres.UpdatedAt,
 	}
 	if vres.ID != nil {
 		res.ID = *vres.ID
-	}
-	if vres.Name != nil {
-		res.Name = *vres.Name
 	}
 	if vres.Slug != nil {
 		res.Slug = *vres.Slug
 	}
+	if vres.Name != nil {
+		res.Name = *vres.Name
+	}
+	if vres.Email != nil {
+		res.Email = *vres.Email
+	}
 	if vres.Status != nil {
 		res.Status = *vres.Status
 	}
-	if vres.PlanType != nil {
-		res.PlanType = *vres.PlanType
+	if vres.Timezone != nil {
+		res.Timezone = *vres.Timezone
+	}
+	if vres.CurrencyCode != nil {
+		res.CurrencyCode = *vres.CurrencyCode
+	}
+	if vres.Plan != nil {
+		res.Plan = *vres.Plan
 	}
 	if vres.CreatedAt != nil {
 		res.CreatedAt = *vres.CreatedAt
 	}
-	if vres.UpdatedAt != nil {
-		res.UpdatedAt = *vres.UpdatedAt
+	if vres.Status == nil {
+		res.Status = "TRIAL"
 	}
-	if vres.Settings != nil {
-		res.Settings = transformTenantviewsTenantSettingsViewToTenantSettings(vres.Settings)
+	if vres.Timezone == nil {
+		res.Timezone = "UTC"
 	}
-	if vres.Subscription != nil {
-		res.Subscription = transformTenantviewsSubscriptionInfoViewToSubscriptionInfo(vres.Subscription)
+	if vres.CurrencyCode == nil {
+		res.CurrencyCode = "USD"
 	}
-	if vres.Contact != nil {
-		res.Contact = transformTenantviewsContactInfoViewToContactInfo(vres.Contact)
+	if vres.Plan == nil {
+		res.Plan = "FREE"
 	}
 	return res
 }
 
-// newTenantMinimal converts projected type Tenant to service type Tenant.
-func newTenantMinimal(vres *tenantviews.TenantView) *Tenant {
+// newTenantDetailed converts projected type Tenant to service type Tenant.
+func newTenantDetailed(vres *tenantviews.TenantView) *Tenant {
 	res := &Tenant{
-		Subdomain: vres.Subdomain,
+		BillingEmail:     vres.BillingEmail,
+		Subdomain:        vres.Subdomain,
+		SuspensionReason: vres.SuspensionReason,
+		Industry:         vres.Industry,
+		CompanySize:      vres.CompanySize,
+		TrialEndsAt:      vres.TrialEndsAt,
+		ParentTenantID:   vres.ParentTenantID,
+		Branding:         vres.Branding,
+		ContactInfo:      vres.ContactInfo,
+		CustomFields:     vres.CustomFields,
+		UpdatedAt:        vres.UpdatedAt,
+		CreatedBy:        vres.CreatedBy,
+		UpdatedBy:        vres.UpdatedBy,
 	}
 	if vres.ID != nil {
 		res.ID = *vres.ID
+	}
+	if vres.Slug != nil {
+		res.Slug = *vres.Slug
+	}
+	if vres.Name != nil {
+		res.Name = *vres.Name
+	}
+	if vres.Email != nil {
+		res.Email = *vres.Email
+	}
+	if vres.Status != nil {
+		res.Status = *vres.Status
+	}
+	if vres.Timezone != nil {
+		res.Timezone = *vres.Timezone
+	}
+	if vres.CurrencyCode != nil {
+		res.CurrencyCode = *vres.CurrencyCode
+	}
+	if vres.Plan != nil {
+		res.Plan = *vres.Plan
+	}
+	if vres.CreatedAt != nil {
+		res.CreatedAt = *vres.CreatedAt
+	}
+	if vres.Status == nil {
+		res.Status = "TRIAL"
+	}
+	if vres.Timezone == nil {
+		res.Timezone = "UTC"
+	}
+	if vres.CurrencyCode == nil {
+		res.CurrencyCode = "USD"
+	}
+	if vres.Plan == nil {
+		res.Plan = "FREE"
+	}
+	return res
+}
+
+// newTenantPublic converts projected type Tenant to service type Tenant.
+func newTenantPublic(vres *tenantviews.TenantView) *Tenant {
+	res := &Tenant{
+		Subdomain: vres.Subdomain,
+		Branding:  vres.Branding,
+	}
+	if vres.Slug != nil {
+		res.Slug = *vres.Slug
+	}
+	if vres.Name != nil {
+		res.Name = *vres.Name
+	}
+	return res
+}
+
+// newTenantSummary converts projected type Tenant to service type Tenant.
+func newTenantSummary(vres *tenantviews.TenantView) *Tenant {
+	res := &Tenant{}
+	if vres.ID != nil {
+		res.ID = *vres.ID
+	}
+	if vres.Slug != nil {
+		res.Slug = *vres.Slug
 	}
 	if vres.Name != nil {
 		res.Name = *vres.Name
 	}
 	if vres.Status != nil {
 		res.Status = *vres.Status
+	}
+	if vres.Status == nil {
+		res.Status = "TRIAL"
 	}
 	return res
 }
@@ -603,205 +321,70 @@ func newTenantMinimal(vres *tenantviews.TenantView) *Tenant {
 // the "default" view.
 func newTenantView(res *Tenant) *tenantviews.TenantView {
 	vres := &tenantviews.TenantView{
-		ID:          &res.ID,
-		Name:        &res.Name,
-		Slug:        &res.Slug,
-		Subdomain:   res.Subdomain,
-		Status:      &res.Status,
-		PlanType:    &res.PlanType,
-		Description: res.Description,
-		CreatedAt:   &res.CreatedAt,
-		UpdatedAt:   &res.UpdatedAt,
-		CreatedBy:   res.CreatedBy,
-		UpdatedBy:   res.UpdatedBy,
-	}
-	if res.Settings != nil {
-		vres.Settings = transformTenantSettingsToTenantviewsTenantSettingsView(res.Settings)
-	}
-	if res.Subscription != nil {
-		vres.Subscription = transformSubscriptionInfoToTenantviewsSubscriptionInfoView(res.Subscription)
-	}
-	if res.Contact != nil {
-		vres.Contact = transformContactInfoToTenantviewsContactInfoView(res.Contact)
+		ID:           &res.ID,
+		Slug:         &res.Slug,
+		Name:         &res.Name,
+		Email:        &res.Email,
+		Status:       &res.Status,
+		Timezone:     &res.Timezone,
+		CurrencyCode: &res.CurrencyCode,
+		Plan:         &res.Plan,
+		CreatedAt:    &res.CreatedAt,
+		UpdatedAt:    res.UpdatedAt,
 	}
 	return vres
 }
 
-// newTenantViewMinimal projects result type Tenant to projected type
-// TenantView using the "minimal" view.
-func newTenantViewMinimal(res *Tenant) *tenantviews.TenantView {
+// newTenantViewDetailed projects result type Tenant to projected type
+// TenantView using the "detailed" view.
+func newTenantViewDetailed(res *Tenant) *tenantviews.TenantView {
 	vres := &tenantviews.TenantView{
-		ID:        &res.ID,
+		ID:               &res.ID,
+		Slug:             &res.Slug,
+		Name:             &res.Name,
+		Email:            &res.Email,
+		BillingEmail:     res.BillingEmail,
+		Subdomain:        res.Subdomain,
+		Status:           &res.Status,
+		SuspensionReason: res.SuspensionReason,
+		Timezone:         &res.Timezone,
+		CurrencyCode:     &res.CurrencyCode,
+		Industry:         res.Industry,
+		CompanySize:      res.CompanySize,
+		Plan:             &res.Plan,
+		TrialEndsAt:      res.TrialEndsAt,
+		ParentTenantID:   res.ParentTenantID,
+		Branding:         res.Branding,
+		ContactInfo:      res.ContactInfo,
+		CustomFields:     res.CustomFields,
+		CreatedAt:        &res.CreatedAt,
+		UpdatedAt:        res.UpdatedAt,
+		CreatedBy:        res.CreatedBy,
+		UpdatedBy:        res.UpdatedBy,
+	}
+	return vres
+}
+
+// newTenantViewPublic projects result type Tenant to projected type TenantView
+// using the "public" view.
+func newTenantViewPublic(res *Tenant) *tenantviews.TenantView {
+	vres := &tenantviews.TenantView{
+		Slug:      &res.Slug,
 		Name:      &res.Name,
 		Subdomain: res.Subdomain,
-		Status:    &res.Status,
+		Branding:  res.Branding,
 	}
 	return vres
 }
 
-// transformTenantviewsTenantSettingsViewToTenantSettings builds a value of
-// type *TenantSettings from a value of type *tenantviews.TenantSettingsView.
-func transformTenantviewsTenantSettingsViewToTenantSettings(v *tenantviews.TenantSettingsView) *TenantSettings {
-	if v == nil {
-		return nil
+// newTenantViewSummary projects result type Tenant to projected type
+// TenantView using the "summary" view.
+func newTenantViewSummary(res *Tenant) *tenantviews.TenantView {
+	vres := &tenantviews.TenantView{
+		ID:     &res.ID,
+		Slug:   &res.Slug,
+		Name:   &res.Name,
+		Status: &res.Status,
 	}
-	res := &TenantSettings{}
-	if v.Timezone != nil {
-		res.Timezone = *v.Timezone
-	}
-	if v.Currency != nil {
-		res.Currency = *v.Currency
-	}
-	if v.DateFormat != nil {
-		res.DateFormat = *v.DateFormat
-	}
-	if v.Language != nil {
-		res.Language = *v.Language
-	}
-	if v.Timezone == nil {
-		res.Timezone = "UTC"
-	}
-	if v.Currency == nil {
-		res.Currency = "USD"
-	}
-	if v.DateFormat == nil {
-		res.DateFormat = "MM/DD/YYYY"
-	}
-	if v.Language == nil {
-		res.Language = "en"
-	}
-	if v.Features != nil {
-		res.Features = make([]string, len(v.Features))
-		for i, val := range v.Features {
-			res.Features[i] = val
-		}
-	}
-	if v.Limits != nil {
-		res.Limits = transformTenantviewsTenantLimitsViewToTenantLimits(v.Limits)
-	}
-
-	return res
-}
-
-// transformTenantviewsTenantLimitsViewToTenantLimits builds a value of type
-// *TenantLimits from a value of type *tenantviews.TenantLimitsView.
-func transformTenantviewsTenantLimitsViewToTenantLimits(v *tenantviews.TenantLimitsView) *TenantLimits {
-	if v == nil {
-		return nil
-	}
-	res := &TenantLimits{
-		MaxUsers:           v.MaxUsers,
-		MaxStorageMb:       v.MaxStorageMb,
-		MaxAPICallsPerHour: v.MaxAPICallsPerHour,
-	}
-
-	return res
-}
-
-// transformTenantviewsSubscriptionInfoViewToSubscriptionInfo builds a value of
-// type *SubscriptionInfo from a value of type
-// *tenantviews.SubscriptionInfoView.
-func transformTenantviewsSubscriptionInfoViewToSubscriptionInfo(v *tenantviews.SubscriptionInfoView) *SubscriptionInfo {
-	if v == nil {
-		return nil
-	}
-	res := &SubscriptionInfo{
-		Plan:            v.Plan,
-		Status:          v.Status,
-		BillingCycle:    v.BillingCycle,
-		NextBillingDate: v.NextBillingDate,
-		TrialEndsAt:     v.TrialEndsAt,
-	}
-
-	return res
-}
-
-// transformTenantviewsContactInfoViewToContactInfo builds a value of type
-// *ContactInfo from a value of type *tenantviews.ContactInfoView.
-func transformTenantviewsContactInfoViewToContactInfo(v *tenantviews.ContactInfoView) *ContactInfo {
-	if v == nil {
-		return nil
-	}
-	res := &ContactInfo{
-		Name:  v.Name,
-		Email: v.Email,
-		Phone: v.Phone,
-		Title: v.Title,
-	}
-
-	return res
-}
-
-// transformTenantSettingsToTenantviewsTenantSettingsView builds a value of
-// type *tenantviews.TenantSettingsView from a value of type *TenantSettings.
-func transformTenantSettingsToTenantviewsTenantSettingsView(v *TenantSettings) *tenantviews.TenantSettingsView {
-	if v == nil {
-		return nil
-	}
-	res := &tenantviews.TenantSettingsView{
-		Timezone:   &v.Timezone,
-		Currency:   &v.Currency,
-		DateFormat: &v.DateFormat,
-		Language:   &v.Language,
-	}
-	if v.Features != nil {
-		res.Features = make([]string, len(v.Features))
-		for i, val := range v.Features {
-			res.Features[i] = val
-		}
-	}
-	if v.Limits != nil {
-		res.Limits = transformTenantLimitsToTenantviewsTenantLimitsView(v.Limits)
-	}
-
-	return res
-}
-
-// transformTenantLimitsToTenantviewsTenantLimitsView builds a value of type
-// *tenantviews.TenantLimitsView from a value of type *TenantLimits.
-func transformTenantLimitsToTenantviewsTenantLimitsView(v *TenantLimits) *tenantviews.TenantLimitsView {
-	if v == nil {
-		return nil
-	}
-	res := &tenantviews.TenantLimitsView{
-		MaxUsers:           v.MaxUsers,
-		MaxStorageMb:       v.MaxStorageMb,
-		MaxAPICallsPerHour: v.MaxAPICallsPerHour,
-	}
-
-	return res
-}
-
-// transformSubscriptionInfoToTenantviewsSubscriptionInfoView builds a value of
-// type *tenantviews.SubscriptionInfoView from a value of type
-// *SubscriptionInfo.
-func transformSubscriptionInfoToTenantviewsSubscriptionInfoView(v *SubscriptionInfo) *tenantviews.SubscriptionInfoView {
-	if v == nil {
-		return nil
-	}
-	res := &tenantviews.SubscriptionInfoView{
-		Plan:            v.Plan,
-		Status:          v.Status,
-		BillingCycle:    v.BillingCycle,
-		NextBillingDate: v.NextBillingDate,
-		TrialEndsAt:     v.TrialEndsAt,
-	}
-
-	return res
-}
-
-// transformContactInfoToTenantviewsContactInfoView builds a value of type
-// *tenantviews.ContactInfoView from a value of type *ContactInfo.
-func transformContactInfoToTenantviewsContactInfoView(v *ContactInfo) *tenantviews.ContactInfoView {
-	if v == nil {
-		return nil
-	}
-	res := &tenantviews.ContactInfoView{
-		Name:  v.Name,
-		Email: v.Email,
-		Phone: v.Phone,
-		Title: v.Title,
-	}
-
-	return res
+	return vres
 }

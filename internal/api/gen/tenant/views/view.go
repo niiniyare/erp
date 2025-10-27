@@ -13,15 +13,6 @@ import (
 	goa "goa.design/goa/v3/pkg"
 )
 
-// CreateTenantResult is the viewed result type that is projected based on a
-// view.
-type CreateTenantResult struct {
-	// Type to project
-	Projected *CreateTenantResultView
-	// View to render
-	View string
-}
-
 // Tenant is the viewed result type that is projected based on a view.
 type Tenant struct {
 	// Type to project
@@ -30,196 +21,121 @@ type Tenant struct {
 	View string
 }
 
-// CreateTenantResultView is a type that runs validations on a projected type.
-type CreateTenantResultView struct {
-	// Created tenant information
-	Tenant *TenantView
-	// Status of the creation operation
-	Status *string
-	// Detailed message about the operation
-	Message *string
-}
-
 // TenantView is a type that runs validations on a projected type.
 type TenantView struct {
 	// Unique tenant identifier
-	ID *string
-	// Tenant display name
-	Name *string
-	// Tenant URL slug
-	Slug *string
-	// Subdomain for tenant
-	Subdomain *string
-	// Tenant status
-	Status *string
-	// Subscription plan
-	PlanType *string
-	// Tenant description
-	Description *string
-	// Tenant-specific settings
-	Settings *TenantSettingsView
-	// Subscription information
-	Subscription *SubscriptionInfoView
-	// Primary contact information
-	Contact *ContactInfoView
+	ID *string `db:"id,omitempty" json:"id"`
+	// Used in URLs and subdomain routing. Must be globally unique.
+	Slug *string `db:"slug,omitempty" json:"slug"`
+	// Display name shown in UI
+	Name *string `db:"name,omitempty" json:"name"`
+	// Used for administrative communications
+	Email *string `db:"email,omitempty" json:"email"`
+	// Separate billing contact for financial operations
+	BillingEmail *string `db:"billing_email,omitempty" json:"billing_email,omitempty"`
+	// Custom subdomain (e.g., acme.erp.com). Must be globally unique.
+	Subdomain *string `db:"subdomain,omitempty" json:"subdomain,omitempty"`
+	// Controls tenant access and billing
+	Status *string `db:"status,omitempty" json:"status"`
+	// Required when status is SUSPENDED
+	SuspensionReason *string `db:"suspension_reason,omitempty" json:"suspension_reason,omitempty"`
+	// IANA timezone identifier
+	Timezone *string `db:"timezone,omitempty" json:"timezone"`
+	// ISO 4217 currency code for UI display
+	CurrencyCode *string `db:"currency_code,omitempty" json:"currency_code"`
+	// Used for industry-specific features and compliance
+	Industry *string `db:"industry,omitempty" json:"industry,omitempty"`
+	// Affects feature availability and pricing tiers
+	CompanySize *string `db:"company_size,omitempty" json:"company_size,omitempty"`
+	// Determines feature access and limits
+	Plan *string `db:"plan,omitempty" json:"plan"`
+	// Required when status is TRIAL
+	TrialEndsAt *string `db:"trial_ends_at,omitempty" json:"trial_ends_at,omitempty"`
+	// Enables multi-tenant enterprise structures
+	ParentTenantID *string `db:"parent_tenant_id,omitempty" json:"parent_tenant_id,omitempty"`
+	// Visual customization settings
+	Branding any `db:"branding,omitempty" json:"branding,omitempty"`
+	// Additional contact details
+	ContactInfo any `db:"contact_info,omitempty" json:"contact_info,omitempty"`
+	// Flexible key-value pairs for tenant-specific data
+	CustomFields any `db:"custom_fields,omitempty" json:"custom_fields,omitempty"`
 	// Creation timestamp
-	CreatedAt *string
+	CreatedAt *string `db:"created_at,omitempty" json:"created_at"`
 	// Last update timestamp
-	UpdatedAt *string
+	UpdatedAt *string `db:"updated_at,omitempty" json:"updated_at,omitempty"`
 	// ID of user who created the record
-	CreatedBy *string
+	CreatedBy *string `db:"created_by,omitempty" json:"created_by,omitempty"`
 	// ID of user who last updated the record
-	UpdatedBy *string
-}
-
-// TenantSettingsView is a type that runs validations on a projected type.
-type TenantSettingsView struct {
-	// Default timezone
-	Timezone *string
-	// Default currency code
-	Currency *string
-	// Preferred date format
-	DateFormat *string
-	// Default language
-	Language *string
-	// Enabled features
-	Features []string
-	// Usage limits
-	Limits *TenantLimitsView
-}
-
-// TenantLimitsView is a type that runs validations on a projected type.
-type TenantLimitsView struct {
-	// Maximum number of users
-	MaxUsers *uint
-	// Maximum storage in MB
-	MaxStorageMb *uint
-	// API rate limit per hour
-	MaxAPICallsPerHour *uint
-}
-
-// SubscriptionInfoView is a type that runs validations on a projected type.
-type SubscriptionInfoView struct {
-	// Subscription plan
-	Plan *string
-	// Subscription status
-	Status *string
-	// Billing cycle
-	BillingCycle *string
-	// Next billing date
-	NextBillingDate *string
-	// Trial end date
-	TrialEndsAt *string
-}
-
-// ContactInfoView is a type that runs validations on a projected type.
-type ContactInfoView struct {
-	// Contact person name
-	Name *string
-	// Contact email
-	Email *string
-	// Contact phone number
-	Phone *string
-	// Job title
-	Title *string
-}
-
-// PaginationMetaView is a type that runs validations on a projected type.
-type PaginationMetaView struct {
-	// Current page number
-	CurrentPage *uint
-	// Items per page
-	PageSize *uint
-	// Total number of items
-	TotalItems *uint
-	// Total number of pages
-	TotalPages *uint
-	// Whether there is a next page
-	HasNext *bool
-	// Whether there is a previous page
-	HasPrev *bool
+	UpdatedBy *string `db:"updated_by,omitempty" json:"updated_by,omitempty"`
 }
 
 var (
-	// CreateTenantResultMap is a map indexing the attribute names of
-	// CreateTenantResult by view name.
-	CreateTenantResultMap = map[string][]string{
-		"default": {
-			"tenant",
-			"status",
-			"message",
-		},
-	}
 	// TenantMap is a map indexing the attribute names of Tenant by view name.
 	TenantMap = map[string][]string{
 		"default": {
 			"id",
-			"name",
 			"slug",
+			"name",
+			"email",
+			"status",
+			"timezone",
+			"currency_code",
+			"plan",
+			"created_at",
+			"updated_at",
+		},
+		"detailed": {
+			"id",
+			"slug",
+			"name",
+			"email",
+			"billing_email",
 			"subdomain",
 			"status",
-			"plan_type",
-			"description",
-			"settings",
-			"subscription",
-			"contact",
+			"suspension_reason",
+			"timezone",
+			"currency_code",
+			"industry",
+			"company_size",
+			"plan",
+			"trial_ends_at",
+			"parent_tenant_id",
+			"branding",
+			"contact_info",
+			"custom_fields",
 			"created_at",
 			"updated_at",
 			"created_by",
 			"updated_by",
 		},
-		"minimal": {
-			"id",
+		"public": {
+			"slug",
 			"name",
 			"subdomain",
+			"branding",
+		},
+		"summary": {
+			"id",
+			"slug",
+			"name",
 			"status",
 		},
 	}
 )
-
-// ValidateCreateTenantResult runs the validations defined on the viewed result
-// type CreateTenantResult.
-func ValidateCreateTenantResult(result *CreateTenantResult) (err error) {
-	switch result.View {
-	case "default", "":
-		err = ValidateCreateTenantResultView(result.Projected)
-	default:
-		err = goa.InvalidEnumValueError("view", result.View, []any{"default"})
-	}
-	return
-}
 
 // ValidateTenant runs the validations defined on the viewed result type Tenant.
 func ValidateTenant(result *Tenant) (err error) {
 	switch result.View {
 	case "default", "":
 		err = ValidateTenantView(result.Projected)
-	case "minimal":
-		err = ValidateTenantViewMinimal(result.Projected)
+	case "detailed":
+		err = ValidateTenantViewDetailed(result.Projected)
+	case "public":
+		err = ValidateTenantViewPublic(result.Projected)
+	case "summary":
+		err = ValidateTenantViewSummary(result.Projected)
 	default:
-		err = goa.InvalidEnumValueError("view", result.View, []any{"default", "minimal"})
-	}
-	return
-}
-
-// ValidateCreateTenantResultView runs the validations defined on
-// CreateTenantResultView using the "default" view.
-func ValidateCreateTenantResultView(result *CreateTenantResultView) (err error) {
-	if result.Status == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("status", "result"))
-	}
-	if result.Message == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("message", "result"))
-	}
-	if result.Status != nil {
-		if !(*result.Status == "SUCCESS" || *result.Status == "FAILED") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"SUCCESS", "FAILED"}))
-		}
-	}
-	if result.Tenant != nil {
-		if err2 := ValidateTenantView(result.Tenant); err2 != nil {
-			err = goa.MergeErrors(err, err2)
-		}
+		err = goa.InvalidEnumValueError("view", result.View, []any{"default", "detailed", "public", "summary"})
 	}
 	return
 }
@@ -230,39 +146,32 @@ func ValidateTenantView(result *TenantView) (err error) {
 	if result.ID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("id", "result"))
 	}
+	if result.Slug == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("slug", "result"))
+	}
 	if result.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "result"))
 	}
-	if result.Slug == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("slug", "result"))
+	if result.Email == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("email", "result"))
 	}
 	if result.Status == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("status", "result"))
 	}
-	if result.PlanType == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("plan_type", "result"))
+	if result.Timezone == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("timezone", "result"))
+	}
+	if result.CurrencyCode == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("currency_code", "result"))
 	}
 	if result.CreatedAt == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("created_at", "result"))
 	}
-	if result.UpdatedAt == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("updated_at", "result"))
-	}
 	if result.ID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("result.id", *result.ID, goa.FormatUUID))
 	}
-	if result.Name != nil {
-		if utf8.RuneCountInString(*result.Name) < 1 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 1, true))
-		}
-	}
-	if result.Name != nil {
-		if utf8.RuneCountInString(*result.Name) > 100 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 100, false))
-		}
-	}
 	if result.Slug != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("result.slug", *result.Slug, "^[a-z0-9-]+$"))
+		err = goa.MergeErrors(err, goa.ValidatePattern("result.slug", *result.Slug, "^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$"))
 	}
 	if result.Slug != nil {
 		if utf8.RuneCountInString(*result.Slug) < 3 {
@@ -274,8 +183,105 @@ func ValidateTenantView(result *TenantView) (err error) {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("result.slug", *result.Slug, utf8.RuneCountInString(*result.Slug), 50, false))
 		}
 	}
+	if result.Name != nil {
+		if utf8.RuneCountInString(*result.Name) < 2 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 2, true))
+		}
+	}
+	if result.Name != nil {
+		if utf8.RuneCountInString(*result.Name) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 100, false))
+		}
+	}
+	if result.Email != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.email", *result.Email, goa.FormatEmail))
+	}
+	if result.Status != nil {
+		if !(*result.Status == "ACTIVE" || *result.Status == "SUSPENDED" || *result.Status == "TRIAL" || *result.Status == "ARCHIVED" || *result.Status == "PENDING_SETUP") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"ACTIVE", "SUSPENDED", "TRIAL", "ARCHIVED", "PENDING_SETUP"}))
+		}
+	}
+	if result.Timezone != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("result.timezone", *result.Timezone, "^[A-Za-z_]+/[A-Za-z_]+$"))
+	}
+	if result.CurrencyCode != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("result.currency_code", *result.CurrencyCode, "^[A-Z]{3}$"))
+	}
+	if result.Plan != nil {
+		if !(*result.Plan == "FREE" || *result.Plan == "STARTER" || *result.Plan == "PROFESSIONAL" || *result.Plan == "ENTERPRISE" || *result.Plan == "CUSTOM") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.plan", *result.Plan, []any{"FREE", "STARTER", "PROFESSIONAL", "ENTERPRISE", "CUSTOM"}))
+		}
+	}
+	if result.CreatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.created_at", *result.CreatedAt, goa.FormatDateTime))
+	}
+	if result.UpdatedAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.updated_at", *result.UpdatedAt, goa.FormatDateTime))
+	}
+	return
+}
+
+// ValidateTenantViewDetailed runs the validations defined on TenantView using
+// the "detailed" view.
+func ValidateTenantViewDetailed(result *TenantView) (err error) {
+	if result.ID == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("id", "result"))
+	}
+	if result.Slug == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("slug", "result"))
+	}
+	if result.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "result"))
+	}
+	if result.Email == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("email", "result"))
+	}
+	if result.Status == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("status", "result"))
+	}
+	if result.Timezone == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("timezone", "result"))
+	}
+	if result.CurrencyCode == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("currency_code", "result"))
+	}
+	if result.CreatedAt == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("created_at", "result"))
+	}
+	if result.ID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.id", *result.ID, goa.FormatUUID))
+	}
+	if result.Slug != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("result.slug", *result.Slug, "^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$"))
+	}
+	if result.Slug != nil {
+		if utf8.RuneCountInString(*result.Slug) < 3 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.slug", *result.Slug, utf8.RuneCountInString(*result.Slug), 3, true))
+		}
+	}
+	if result.Slug != nil {
+		if utf8.RuneCountInString(*result.Slug) > 50 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.slug", *result.Slug, utf8.RuneCountInString(*result.Slug), 50, false))
+		}
+	}
+	if result.Name != nil {
+		if utf8.RuneCountInString(*result.Name) < 2 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 2, true))
+		}
+	}
+	if result.Name != nil {
+		if utf8.RuneCountInString(*result.Name) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 100, false))
+		}
+	}
+	if result.Email != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.email", *result.Email, goa.FormatEmail))
+	}
+	if result.BillingEmail != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.billing_email", *result.BillingEmail, goa.FormatEmail))
+	}
 	if result.Subdomain != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("result.subdomain", *result.Subdomain, "^[a-z0-9-]+$"))
+		err = goa.MergeErrors(err, goa.ValidatePattern("result.subdomain", *result.Subdomain, "^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$"))
 	}
 	if result.Subdomain != nil {
 		if utf8.RuneCountInString(*result.Subdomain) < 3 {
@@ -283,39 +289,46 @@ func ValidateTenantView(result *TenantView) (err error) {
 		}
 	}
 	if result.Subdomain != nil {
-		if utf8.RuneCountInString(*result.Subdomain) > 50 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("result.subdomain", *result.Subdomain, utf8.RuneCountInString(*result.Subdomain), 50, false))
+		if utf8.RuneCountInString(*result.Subdomain) > 63 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.subdomain", *result.Subdomain, utf8.RuneCountInString(*result.Subdomain), 63, false))
 		}
 	}
 	if result.Status != nil {
-		if !(*result.Status == "ACTIVE" || *result.Status == "SUSPENDED" || *result.Status == "PENDING" || *result.Status == "ARCHIVED") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED"}))
+		if !(*result.Status == "ACTIVE" || *result.Status == "SUSPENDED" || *result.Status == "TRIAL" || *result.Status == "ARCHIVED" || *result.Status == "PENDING_SETUP") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"ACTIVE", "SUSPENDED", "TRIAL", "ARCHIVED", "PENDING_SETUP"}))
 		}
 	}
-	if result.PlanType != nil {
-		if !(*result.PlanType == "starter" || *result.PlanType == "professional" || *result.PlanType == "enterprise") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.plan_type", *result.PlanType, []any{"starter", "professional", "enterprise"}))
+	if result.SuspensionReason != nil {
+		if utf8.RuneCountInString(*result.SuspensionReason) > 500 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.suspension_reason", *result.SuspensionReason, utf8.RuneCountInString(*result.SuspensionReason), 500, false))
 		}
 	}
-	if result.Description != nil {
-		if utf8.RuneCountInString(*result.Description) > 500 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("result.description", *result.Description, utf8.RuneCountInString(*result.Description), 500, false))
+	if result.Timezone != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("result.timezone", *result.Timezone, "^[A-Za-z_]+/[A-Za-z_]+$"))
+	}
+	if result.CurrencyCode != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("result.currency_code", *result.CurrencyCode, "^[A-Z]{3}$"))
+	}
+	if result.Industry != nil {
+		if utf8.RuneCountInString(*result.Industry) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.industry", *result.Industry, utf8.RuneCountInString(*result.Industry), 100, false))
 		}
 	}
-	if result.Settings != nil {
-		if err2 := ValidateTenantSettingsView(result.Settings); err2 != nil {
-			err = goa.MergeErrors(err, err2)
+	if result.CompanySize != nil {
+		if !(*result.CompanySize == "STARTUP" || *result.CompanySize == "SMALL" || *result.CompanySize == "MEDIUM" || *result.CompanySize == "LARGE" || *result.CompanySize == "ENTERPRISE") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.company_size", *result.CompanySize, []any{"STARTUP", "SMALL", "MEDIUM", "LARGE", "ENTERPRISE"}))
 		}
 	}
-	if result.Subscription != nil {
-		if err2 := ValidateSubscriptionInfoView(result.Subscription); err2 != nil {
-			err = goa.MergeErrors(err, err2)
+	if result.Plan != nil {
+		if !(*result.Plan == "FREE" || *result.Plan == "STARTER" || *result.Plan == "PROFESSIONAL" || *result.Plan == "ENTERPRISE" || *result.Plan == "CUSTOM") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.plan", *result.Plan, []any{"FREE", "STARTER", "PROFESSIONAL", "ENTERPRISE", "CUSTOM"}))
 		}
 	}
-	if result.Contact != nil {
-		if err2 := ValidateContactInfoView(result.Contact); err2 != nil {
-			err = goa.MergeErrors(err, err2)
-		}
+	if result.TrialEndsAt != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.trial_ends_at", *result.TrialEndsAt, goa.FormatDateTime))
+	}
+	if result.ParentTenantID != nil {
+		err = goa.MergeErrors(err, goa.ValidateFormat("result.parent_tenant_id", *result.ParentTenantID, goa.FormatUUID))
 	}
 	if result.CreatedAt != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("result.created_at", *result.CreatedAt, goa.FormatDateTime))
@@ -332,11 +345,62 @@ func ValidateTenantView(result *TenantView) (err error) {
 	return
 }
 
-// ValidateTenantViewMinimal runs the validations defined on TenantView using
-// the "minimal" view.
-func ValidateTenantViewMinimal(result *TenantView) (err error) {
+// ValidateTenantViewPublic runs the validations defined on TenantView using
+// the "public" view.
+func ValidateTenantViewPublic(result *TenantView) (err error) {
+	if result.Slug == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("slug", "result"))
+	}
+	if result.Name == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("name", "result"))
+	}
+	if result.Slug != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("result.slug", *result.Slug, "^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$"))
+	}
+	if result.Slug != nil {
+		if utf8.RuneCountInString(*result.Slug) < 3 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.slug", *result.Slug, utf8.RuneCountInString(*result.Slug), 3, true))
+		}
+	}
+	if result.Slug != nil {
+		if utf8.RuneCountInString(*result.Slug) > 50 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.slug", *result.Slug, utf8.RuneCountInString(*result.Slug), 50, false))
+		}
+	}
+	if result.Name != nil {
+		if utf8.RuneCountInString(*result.Name) < 2 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 2, true))
+		}
+	}
+	if result.Name != nil {
+		if utf8.RuneCountInString(*result.Name) > 100 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 100, false))
+		}
+	}
+	if result.Subdomain != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("result.subdomain", *result.Subdomain, "^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$"))
+	}
+	if result.Subdomain != nil {
+		if utf8.RuneCountInString(*result.Subdomain) < 3 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.subdomain", *result.Subdomain, utf8.RuneCountInString(*result.Subdomain), 3, true))
+		}
+	}
+	if result.Subdomain != nil {
+		if utf8.RuneCountInString(*result.Subdomain) > 63 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.subdomain", *result.Subdomain, utf8.RuneCountInString(*result.Subdomain), 63, false))
+		}
+	}
+	return
+}
+
+// ValidateTenantViewSummary runs the validations defined on TenantView using
+// the "summary" view.
+func ValidateTenantViewSummary(result *TenantView) (err error) {
 	if result.ID == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("id", "result"))
+	}
+	if result.Slug == nil {
+		err = goa.MergeErrors(err, goa.MissingFieldError("slug", "result"))
 	}
 	if result.Name == nil {
 		err = goa.MergeErrors(err, goa.MissingFieldError("name", "result"))
@@ -347,111 +411,22 @@ func ValidateTenantViewMinimal(result *TenantView) (err error) {
 	if result.ID != nil {
 		err = goa.MergeErrors(err, goa.ValidateFormat("result.id", *result.ID, goa.FormatUUID))
 	}
-	if result.Name != nil {
-		if utf8.RuneCountInString(*result.Name) < 1 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 1, true))
+	if result.Slug != nil {
+		err = goa.MergeErrors(err, goa.ValidatePattern("result.slug", *result.Slug, "^[a-z0-9][a-z0-9-]{1,48}[a-z0-9]$"))
+	}
+	if result.Slug != nil {
+		if utf8.RuneCountInString(*result.Slug) < 3 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.slug", *result.Slug, utf8.RuneCountInString(*result.Slug), 3, true))
+		}
+	}
+	if result.Slug != nil {
+		if utf8.RuneCountInString(*result.Slug) > 50 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.slug", *result.Slug, utf8.RuneCountInString(*result.Slug), 50, false))
 		}
 	}
 	if result.Name != nil {
-		if utf8.RuneCountInString(*result.Name) > 100 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 100, false))
-		}
-	}
-	if result.Subdomain != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("result.subdomain", *result.Subdomain, "^[a-z0-9-]+$"))
-	}
-	if result.Subdomain != nil {
-		if utf8.RuneCountInString(*result.Subdomain) < 3 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("result.subdomain", *result.Subdomain, utf8.RuneCountInString(*result.Subdomain), 3, true))
-		}
-	}
-	if result.Subdomain != nil {
-		if utf8.RuneCountInString(*result.Subdomain) > 50 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("result.subdomain", *result.Subdomain, utf8.RuneCountInString(*result.Subdomain), 50, false))
-		}
-	}
-	if result.Status != nil {
-		if !(*result.Status == "ACTIVE" || *result.Status == "SUSPENDED" || *result.Status == "PENDING" || *result.Status == "ARCHIVED") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED"}))
-		}
-	}
-	return
-}
-
-// ValidateTenantSettingsView runs the validations defined on
-// TenantSettingsView.
-func ValidateTenantSettingsView(result *TenantSettingsView) (err error) {
-	if result.Currency != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("result.currency", *result.Currency, "^[A-Z]{3}$"))
-	}
-	if result.DateFormat != nil {
-		if !(*result.DateFormat == "MM/DD/YYYY" || *result.DateFormat == "DD/MM/YYYY" || *result.DateFormat == "YYYY-MM-DD") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.date_format", *result.DateFormat, []any{"MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"}))
-		}
-	}
-	if result.Language != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("result.language", *result.Language, "^[a-z]{2}$"))
-	}
-	if result.Limits != nil {
-		if err2 := ValidateTenantLimitsView(result.Limits); err2 != nil {
-			err = goa.MergeErrors(err, err2)
-		}
-	}
-	return
-}
-
-// ValidateTenantLimitsView runs the validations defined on TenantLimitsView.
-func ValidateTenantLimitsView(result *TenantLimitsView) (err error) {
-	if result.MaxUsers != nil {
-		if *result.MaxUsers < 1 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("result.max_users", *result.MaxUsers, 1, true))
-		}
-	}
-	if result.MaxStorageMb != nil {
-		if *result.MaxStorageMb < 100 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("result.max_storage_mb", *result.MaxStorageMb, 100, true))
-		}
-	}
-	if result.MaxAPICallsPerHour != nil {
-		if *result.MaxAPICallsPerHour < 100 {
-			err = goa.MergeErrors(err, goa.InvalidRangeError("result.max_api_calls_per_hour", *result.MaxAPICallsPerHour, 100, true))
-		}
-	}
-	return
-}
-
-// ValidateSubscriptionInfoView runs the validations defined on
-// SubscriptionInfoView.
-func ValidateSubscriptionInfoView(result *SubscriptionInfoView) (err error) {
-	if result.Plan != nil {
-		if !(*result.Plan == "starter" || *result.Plan == "professional" || *result.Plan == "enterprise") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.plan", *result.Plan, []any{"starter", "professional", "enterprise"}))
-		}
-	}
-	if result.Status != nil {
-		if !(*result.Status == "active" || *result.Status == "past_due" || *result.Status == "canceled" || *result.Status == "trialing") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"active", "past_due", "canceled", "trialing"}))
-		}
-	}
-	if result.BillingCycle != nil {
-		if !(*result.BillingCycle == "monthly" || *result.BillingCycle == "yearly") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.billing_cycle", *result.BillingCycle, []any{"monthly", "yearly"}))
-		}
-	}
-	if result.NextBillingDate != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("result.next_billing_date", *result.NextBillingDate, goa.FormatDate))
-	}
-	if result.TrialEndsAt != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("result.trial_ends_at", *result.TrialEndsAt, goa.FormatDate))
-	}
-	return
-}
-
-// ValidateContactInfoView runs the validations defined on ContactInfoView.
-func ValidateContactInfoView(result *ContactInfoView) (err error) {
-	if result.Name != nil {
-		if utf8.RuneCountInString(*result.Name) < 1 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 1, true))
+		if utf8.RuneCountInString(*result.Name) < 2 {
+			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 2, true))
 		}
 	}
 	if result.Name != nil {
@@ -459,40 +434,10 @@ func ValidateContactInfoView(result *ContactInfoView) (err error) {
 			err = goa.MergeErrors(err, goa.InvalidLengthError("result.name", *result.Name, utf8.RuneCountInString(*result.Name), 100, false))
 		}
 	}
-	if result.Email != nil {
-		err = goa.MergeErrors(err, goa.ValidateFormat("result.email", *result.Email, goa.FormatEmail))
-	}
-	if result.Phone != nil {
-		err = goa.MergeErrors(err, goa.ValidatePattern("result.phone", *result.Phone, "^\\+?[1-9]\\d{1,14}$"))
-	}
-	if result.Title != nil {
-		if utf8.RuneCountInString(*result.Title) > 100 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("result.title", *result.Title, utf8.RuneCountInString(*result.Title), 100, false))
+	if result.Status != nil {
+		if !(*result.Status == "ACTIVE" || *result.Status == "SUSPENDED" || *result.Status == "TRIAL" || *result.Status == "ARCHIVED" || *result.Status == "PENDING_SETUP") {
+			err = goa.MergeErrors(err, goa.InvalidEnumValueError("result.status", *result.Status, []any{"ACTIVE", "SUSPENDED", "TRIAL", "ARCHIVED", "PENDING_SETUP"}))
 		}
-	}
-	return
-}
-
-// ValidatePaginationMetaView runs the validations defined on
-// PaginationMetaView.
-func ValidatePaginationMetaView(result *PaginationMetaView) (err error) {
-	if result.CurrentPage == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("current_page", "result"))
-	}
-	if result.PageSize == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("page_size", "result"))
-	}
-	if result.TotalItems == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("total_items", "result"))
-	}
-	if result.TotalPages == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("total_pages", "result"))
-	}
-	if result.HasNext == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("has_next", "result"))
-	}
-	if result.HasPrev == nil {
-		err = goa.MergeErrors(err, goa.MissingFieldError("has_prev", "result"))
 	}
 	return
 }

@@ -25,12 +25,7 @@ var _ = API("erp", func() {
 	})
 
 	// Global security schemes
-	JWTSecurity("jwt", func() {
-		Description("JWT-based authentication")
-		Scope("api:read", "Read access to API resources")
-		Scope("api:write", "Write access to API resources")
-		Scope("admin", "Administrative access")
-	})
+	// JWTSecurity("jwt")
 
 	// Global error responses
 	Error("internal_error", ErrorResponse, "Internal server error")

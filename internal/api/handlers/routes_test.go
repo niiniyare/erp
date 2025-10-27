@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
+	"github.com/niiniyare/erp/internal/core/tenant"
+	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -30,6 +32,8 @@ type RouterTestSuite struct {
 	mockMetrics *metrics.MockMetricsProvider
 	mockTracer  *tracing.MockTracingService
 	mockSpan    *tracing.MockSpan
+	mockRepo    *tenant.MockRepository
+	mockCache   *cache.MockService
 }
 
 func (suite *RouterTestSuite) SetupTest() {
@@ -41,15 +45,21 @@ func (suite *RouterTestSuite) SetupTest() {
 	suite.mockMetrics = metrics.NewMockMetricsProvider(suite.ctrl)
 	suite.mockTracer = tracing.NewMockTracingService(suite.ctrl)
 	suite.mockSpan = tracing.NewMockSpan(suite.ctrl)
+	suite.mockRepo = tenant.NewMockRepository(suite.ctrl)
+	suite.mockCache = cache.NewMockService(suite.ctrl)
 
 	// Setup default mock expectations for common operations
 	suite.setupDefaultMockExpectations()
 
+	// Create tenant service for testing
+	tenantService := tenant.NewService(suite.mockRepo, suite.mockCache, suite.mockTracer)
+	
 	// Create dependencies
 	suite.deps = &Dependencies{
-		Logger:  suite.mockLogger,
-		Metrics: suite.mockMetrics,
-		Tracer:  suite.mockTracer,
+		Logger:        suite.mockLogger,
+		Metrics:       suite.mockMetrics,
+		Tracer:        suite.mockTracer,
+		TenantService: tenantService,
 	}
 
 	// Create Fiber app with proper error handler

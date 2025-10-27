@@ -11,57 +11,27 @@ import (
 	"fmt"
 )
 
-// CreateTenantPath returns the URL path to the tenant service create HTTP endpoint.
-func CreateTenantPath() string {
-	return "/api/v1/tenants"
+// ListTenantPath returns the URL path to the tenant service list HTTP endpoint.
+func ListTenantPath() string {
+	return "/tenants"
 }
 
 // GetTenantPath returns the URL path to the tenant service get HTTP endpoint.
 func GetTenantPath(id string) string {
-	return fmt.Sprintf("/api/v1/tenants/%v", id)
+	return fmt.Sprintf("/tenants/%v", id)
 }
 
-// ListTenantPath returns the URL path to the tenant service list HTTP endpoint.
-func ListTenantPath() string {
-	return "/api/v1/tenants"
+// CreateTenantPath returns the URL path to the tenant service create HTTP endpoint.
+func CreateTenantPath() string {
+	return "/tenants"
 }
 
 // UpdateTenantPath returns the URL path to the tenant service update HTTP endpoint.
 func UpdateTenantPath(id string) string {
-	return fmt.Sprintf("/api/v1/tenants/%v", id)
+	return fmt.Sprintf("/tenants/%v", id)
 }
 
 // DeleteTenantPath returns the URL path to the tenant service delete HTTP endpoint.
 func DeleteTenantPath(id string) string {
-	return fmt.Sprintf("/api/v1/tenants/%v", id)
-}
-
-// HealthTenantPath returns the URL path to the tenant service health HTTP endpoint.
-func HealthTenantPath() string {
-	return "/api/v1/tenants/health"
-}
-
-// ProvisionTenantPath returns the URL path to the tenant service provision HTTP endpoint.
-func ProvisionTenantPath() string {
-	return "/api/v1/tenants/provision"
-}
-
-// SuspendTenantPath returns the URL path to the tenant service suspend HTTP endpoint.
-func SuspendTenantPath(id string) string {
-	return fmt.Sprintf("/api/v1/tenants/%v/suspend", id)
-}
-
-// ReactivateTenantPath returns the URL path to the tenant service reactivate HTTP endpoint.
-func ReactivateTenantPath(id string) string {
-	return fmt.Sprintf("/api/v1/tenants/%v/reactivate", id)
-}
-
-// UpdateConfigurationTenantPath returns the URL path to the tenant service update_configuration HTTP endpoint.
-func UpdateConfigurationTenantPath(id string) string {
-	return fmt.Sprintf("/api/v1/tenants/%v/configuration", id)
-}
-
-// GetUsageAnalyticsTenantPath returns the URL path to the tenant service get_usage_analytics HTTP endpoint.
-func GetUsageAnalyticsTenantPath(id string) string {
-	return fmt.Sprintf("/api/v1/tenants/%v/analytics", id)
+	return fmt.Sprintf("/tenants/%v", id)
 }

@@ -471,4 +471,3 @@ func (sc *ServiceContainer) Health(ctx context.Context) error {
 	// For now, just check if we're initialized
 	return nil
 }
-

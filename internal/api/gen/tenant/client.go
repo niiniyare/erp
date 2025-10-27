@@ -15,57 +15,35 @@ import (
 
 // Client is the "tenant" service client.
 type Client struct {
-	CreateEndpoint              goa.Endpoint
-	GetEndpoint                 goa.Endpoint
-	ListEndpoint                goa.Endpoint
-	UpdateEndpoint              goa.Endpoint
-	DeleteEndpoint              goa.Endpoint
-	HealthEndpoint              goa.Endpoint
-	ProvisionEndpoint           goa.Endpoint
-	SuspendEndpoint             goa.Endpoint
-	ReactivateEndpoint          goa.Endpoint
-	UpdateConfigurationEndpoint goa.Endpoint
-	GetUsageAnalyticsEndpoint   goa.Endpoint
+	ListEndpoint   goa.Endpoint
+	GetEndpoint    goa.Endpoint
+	CreateEndpoint goa.Endpoint
+	UpdateEndpoint goa.Endpoint
+	DeleteEndpoint goa.Endpoint
 }
 
 // NewClient initializes a "tenant" service client given the endpoints.
-func NewClient(create, get, list, update, delete_, health, provision, suspend, reactivate, updateConfiguration, getUsageAnalytics goa.Endpoint) *Client {
+func NewClient(list, get, create, update, delete_ goa.Endpoint) *Client {
 	return &Client{
-		CreateEndpoint:              create,
-		GetEndpoint:                 get,
-		ListEndpoint:                list,
-		UpdateEndpoint:              update,
-		DeleteEndpoint:              delete_,
-		HealthEndpoint:              health,
-		ProvisionEndpoint:           provision,
-		SuspendEndpoint:             suspend,
-		ReactivateEndpoint:          reactivate,
-		UpdateConfigurationEndpoint: updateConfiguration,
-		GetUsageAnalyticsEndpoint:   getUsageAnalytics,
+		ListEndpoint:   list,
+		GetEndpoint:    get,
+		CreateEndpoint: create,
+		UpdateEndpoint: update,
+		DeleteEndpoint: delete_,
 	}
 }
 
-// Create calls the "create" endpoint of the "tenant" service.
-// Create may return the following errors:
-//   - "bad_request" (type *goa.ServiceError)
-//   - "conflict" (type *goa.ServiceError)
-//   - "unauthorized" (type *goa.ServiceError)
-//   - "unprocessable_entity" (type *goa.ServiceError)
-//   - error: internal error
-func (c *Client) Create(ctx context.Context, p *CreateTenantPayload) (res *CreateTenantResult, err error) {
+// List calls the "list" endpoint of the "tenant" service.
+func (c *Client) List(ctx context.Context) (res []*Tenant, err error) {
 	var ires any
-	ires, err = c.CreateEndpoint(ctx, p)
+	ires, err = c.ListEndpoint(ctx, nil)
 	if err != nil {
 		return
 	}
-	return ires.(*CreateTenantResult), nil
+	return ires.([]*Tenant), nil
 }
 
 // Get calls the "get" endpoint of the "tenant" service.
-// Get may return the following errors:
-//   - "not_found" (type *goa.ServiceError)
-//   - "unauthorized" (type *goa.ServiceError)
-//   - error: internal error
 func (c *Client) Get(ctx context.Context, p *GetPayload) (res *Tenant, err error) {
 	var ires any
 	ires, err = c.GetEndpoint(ctx, p)
@@ -75,29 +53,18 @@ func (c *Client) Get(ctx context.Context, p *GetPayload) (res *Tenant, err error
 	return ires.(*Tenant), nil
 }
 
-// List calls the "list" endpoint of the "tenant" service.
-// List may return the following errors:
-//   - "bad_request" (type *goa.ServiceError)
-//   - "unauthorized" (type *goa.ServiceError)
-//   - error: internal error
-func (c *Client) List(ctx context.Context, p *ListPayload) (res *ListResult, err error) {
+// Create calls the "create" endpoint of the "tenant" service.
+func (c *Client) Create(ctx context.Context, p *CreatePayload) (res *Tenant, err error) {
 	var ires any
-	ires, err = c.ListEndpoint(ctx, p)
+	ires, err = c.CreateEndpoint(ctx, p)
 	if err != nil {
 		return
 	}
-	return ires.(*ListResult), nil
+	return ires.(*Tenant), nil
 }
 
 // Update calls the "update" endpoint of the "tenant" service.
-// Update may return the following errors:
-//   - "bad_request" (type *goa.ServiceError)
-//   - "not_found" (type *goa.ServiceError)
-//   - "conflict" (type *goa.ServiceError)
-//   - "unauthorized" (type *goa.ServiceError)
-//   - "unprocessable_entity" (type *goa.ServiceError)
-//   - error: internal error
-func (c *Client) Update(ctx context.Context, p *UpdateTenantPayload) (res *Tenant, err error) {
+func (c *Client) Update(ctx context.Context, p *UpdatePayload) (res *Tenant, err error) {
 	var ires any
 	ires, err = c.UpdateEndpoint(ctx, p)
 	if err != nil {
@@ -107,97 +74,7 @@ func (c *Client) Update(ctx context.Context, p *UpdateTenantPayload) (res *Tenan
 }
 
 // Delete calls the "delete" endpoint of the "tenant" service.
-// Delete may return the following errors:
-//   - "not_found" (type *goa.ServiceError)
-//   - "unauthorized" (type *goa.ServiceError)
-//   - "conflict" (type *goa.ServiceError)
-//   - error: internal error
 func (c *Client) Delete(ctx context.Context, p *DeletePayload) (err error) {
 	_, err = c.DeleteEndpoint(ctx, p)
 	return
-}
-
-// Health calls the "health" endpoint of the "tenant" service.
-func (c *Client) Health(ctx context.Context) (res *HealthResult, err error) {
-	var ires any
-	ires, err = c.HealthEndpoint(ctx, nil)
-	if err != nil {
-		return
-	}
-	return ires.(*HealthResult), nil
-}
-
-// Provision calls the "provision" endpoint of the "tenant" service.
-// Provision may return the following errors:
-//   - "bad_request" (type BadRequest)
-//   - "internal_error" (type InternalError)
-//   - error: internal error
-func (c *Client) Provision(ctx context.Context, p *ProvisionPayload) (res *ProvisionResult, err error) {
-	var ires any
-	ires, err = c.ProvisionEndpoint(ctx, p)
-	if err != nil {
-		return
-	}
-	return ires.(*ProvisionResult), nil
-}
-
-// Suspend calls the "suspend" endpoint of the "tenant" service.
-// Suspend may return the following errors:
-//   - "not_found" (type NotFound)
-//   - "bad_request" (type BadRequest)
-//   - "internal_error" (type InternalError)
-//   - error: internal error
-func (c *Client) Suspend(ctx context.Context, p *SuspendPayload) (res *SuspendResult, err error) {
-	var ires any
-	ires, err = c.SuspendEndpoint(ctx, p)
-	if err != nil {
-		return
-	}
-	return ires.(*SuspendResult), nil
-}
-
-// Reactivate calls the "reactivate" endpoint of the "tenant" service.
-// Reactivate may return the following errors:
-//   - "not_found" (type NotFound)
-//   - "bad_request" (type BadRequest)
-//   - "internal_error" (type InternalError)
-//   - error: internal error
-func (c *Client) Reactivate(ctx context.Context, p *ReactivatePayload) (res *ReactivateResult, err error) {
-	var ires any
-	ires, err = c.ReactivateEndpoint(ctx, p)
-	if err != nil {
-		return
-	}
-	return ires.(*ReactivateResult), nil
-}
-
-// UpdateConfiguration calls the "update_configuration" endpoint of the
-// "tenant" service.
-// UpdateConfiguration may return the following errors:
-//   - "not_found" (type NotFound)
-//   - "bad_request" (type BadRequest)
-//   - "internal_error" (type InternalError)
-//   - error: internal error
-func (c *Client) UpdateConfiguration(ctx context.Context, p *UpdateConfigurationPayload) (res *UpdateConfigurationResult, err error) {
-	var ires any
-	ires, err = c.UpdateConfigurationEndpoint(ctx, p)
-	if err != nil {
-		return
-	}
-	return ires.(*UpdateConfigurationResult), nil
-}
-
-// GetUsageAnalytics calls the "get_usage_analytics" endpoint of the "tenant"
-// service.
-// GetUsageAnalytics may return the following errors:
-//   - "not_found" (type NotFound)
-//   - "internal_error" (type InternalError)
-//   - error: internal error
-func (c *Client) GetUsageAnalytics(ctx context.Context, p *GetUsageAnalyticsPayload) (res *GetUsageAnalyticsResult, err error) {
-	var ires any
-	ires, err = c.GetUsageAnalyticsEndpoint(ctx, p)
-	if err != nil {
-		return
-	}
-	return ires.(*GetUsageAnalyticsResult), nil
 }

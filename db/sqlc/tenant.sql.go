@@ -2236,8 +2236,8 @@ WHERE
 `
 
 type UpdateSpecificSettingParams struct {
-	Key   *string     `json:"key"`
-	Value any `json:"value"`
+	Key   *string `json:"key"`
+	Value any     `json:"value"`
 }
 
 func (q *Queries) UpdateSpecificSetting(ctx context.Context, arg UpdateSpecificSettingParams) error {

@@ -1,28 +1,133 @@
 package middleware
 
 import (
+	"context"
+	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/shared/logger"
 )
 
-// CORSConfig defines CORS configuration for the middleware
+// CORSConfig defines CORS configuration for the middleware.
 type CORSConfig struct {
-	AllowedOrigins   []string `json:"allowed_origins"`
-	AllowedMethods   []string `json:"allowed_methods"`
-	AllowedHeaders   []string `json:"allowed_headers"`
+	AllowedOrigins   []string `json:"allowed_origins" validate:"required,min=1"`
+	AllowedMethods   []string `json:"allowed_methods" validate:"required,min=1"`
+	AllowedHeaders   []string `json:"allowed_headers" validate:"required"`
 	ExposedHeaders   []string `json:"exposed_headers"`
 	AllowCredentials bool     `json:"allow_credentials"`
-	MaxAge           int      `json:"max_age"`
+	MaxAge           int      `json:"max_age" validate:"min=0,max=86400"`
 }
 
-// DefaultCORSConfig returns a default CORS configuration
+// TenantCORSProvider defines an interface for retrieving tenant-specific CORS configuration.
+type TenantCORSProvider interface {
+	GetCORSConfig(ctx context.Context, tenantID uuid.UUID) (*CORSConfig, error)
+}
+
+// CORSOptions defines optional configuration for CORS middleware.
+type CORSOptions struct {
+	// Environment specifies the deployment environment (development, staging, production)
+	Environment string
+
+	// TenantProvider supplies tenant-specific CORS configurations
+	TenantProvider TenantCORSProvider
+
+	// CacheTTL defines how long to cache tenant CORS configs (default: 5 minutes)
+	CacheTTL time.Duration
+
+	// Logger provides structured logging capability
+	Logger logger.Logger
+
+	// AllowLocalhostPorts specifies which localhost ports to allow in development
+	AllowLocalhostPorts []int
+}
+
+// tenantCORSCache provides thread-safe caching of tenant CORS configurations.
+type tenantCORSCache struct {
+	mu     sync.RWMutex
+	cache  map[uuid.UUID]*cacheEntry
+	ttl    time.Duration
+	logger logger.Logger
+}
+
+type cacheEntry struct {
+	config    *CORSConfig
+	expiresAt time.Time
+}
+
+// NewCORSMiddleware creates a standard CORS middleware with the provided configuration.
+func NewCORSMiddleware(config *CORSConfig) fiber.Handler {
+	if config == nil {
+		config = DefaultCORSConfig()
+	}
+
+	if err := validateCORSConfig(config); err != nil {
+		panic(fmt.Sprintf("invalid CORS configuration: %v", err))
+	}
+
+	return cors.New(adaptCORSConfig(config))
+}
+
+// NewMultiTenantCORSMiddleware creates a tenant-aware CORS middleware.
+func NewMultiTenantCORSMiddleware(baseConfig *CORSConfig, opts *CORSOptions) fiber.Handler {
+	if baseConfig == nil {
+		baseConfig = DefaultCORSConfig()
+	}
+
+	if opts == nil {
+		opts = &CORSOptions{}
+	}
+
+	if err := validateCORSConfig(baseConfig); err != nil {
+		panic(fmt.Sprintf("invalid base CORS configuration: %v", err))
+	}
+
+	// Set defaults
+	if opts.CacheTTL == 0 {
+		opts.CacheTTL = 5 * time.Minute
+	}
+	if opts.Environment == "" {
+		opts.Environment = "production"
+	}
+
+	cache := &tenantCORSCache{
+		cache:  make(map[uuid.UUID]*cacheEntry),
+		ttl:    opts.CacheTTL,
+		logger: opts.Logger,
+	}
+
+	// Use dynamic origin validation for better performance
+	return cors.New(cors.Config{
+		AllowOriginsFunc: func(origin string) bool {
+			return cache.validateOrigin(origin, baseConfig, opts)
+		},
+		AllowMethods:     strings.Join(baseConfig.AllowedMethods, ","),
+		AllowHeaders:     strings.Join(baseConfig.AllowedHeaders, ","),
+		ExposeHeaders:    strings.Join(baseConfig.ExposedHeaders, ","),
+		AllowCredentials: baseConfig.AllowCredentials,
+		MaxAge:           baseConfig.MaxAge,
+	})
+}
+
+// DefaultCORSConfig returns a secure default CORS configuration.
 func DefaultCORSConfig() *CORSConfig {
 	return &CORSConfig{
-		AllowedOrigins: []string{"*"},
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowedOrigins: []string{
+			"https://app.example.com",
+			"https://api.example.com",
+		},
+		AllowedMethods: []string{
+			fiber.MethodGet,
+			fiber.MethodPost,
+			fiber.MethodPut,
+			fiber.MethodPatch,
+			fiber.MethodDelete,
+			fiber.MethodOptions,
+		},
 		AllowedHeaders: []string{
 			"Origin",
 			"Content-Type",
@@ -31,130 +136,220 @@ func DefaultCORSConfig() *CORSConfig {
 			"X-Tenant-ID",
 			"X-Request-ID",
 			"X-API-Key",
+			"X-CSRF-Token",
 		},
 		ExposedHeaders: []string{
 			"X-Request-ID",
 			"X-Total-Count",
+			"X-Page-Count",
+			"Link",
 		},
 		AllowCredentials: true,
-		MaxAge:           86400, // 24 hours
+		MaxAge:           3600, // 1 hour (conservative default)
 	}
 }
 
-// CORSMiddleware returns a Fiber CORS middleware with the given configuration
-func CORSMiddleware(config *CORSConfig) fiber.Handler {
-	if config == nil {
-		config = DefaultCORSConfig()
+// DevelopmentCORSConfig returns a permissive CORS configuration for development.
+// WARNING: Never use this in production environments.
+func DevelopmentCORSConfig(localhostPorts []int) *CORSConfig {
+	origins := []string{
+		"http://localhost:3000",
+		"http://localhost:8080",
+		"http://127.0.0.1:3000",
+		"http://127.0.0.1:8080",
 	}
 
-	return cors.New(cors.Config{
-		AllowOrigins:     joinStrings(config.AllowedOrigins),
-		AllowMethods:     joinStrings(config.AllowedMethods),
-		AllowHeaders:     joinStrings(config.AllowedHeaders),
-		ExposeHeaders:    joinStrings(config.ExposedHeaders),
-		AllowCredentials: config.AllowCredentials,
-		MaxAge:           config.MaxAge,
-	})
+	// Add custom localhost ports
+	for _, port := range localhostPorts {
+		origins = append(origins,
+			fmt.Sprintf("http://localhost:%d", port),
+			fmt.Sprintf("http://127.0.0.1:%d", port),
+		)
+	}
+
+	config := DefaultCORSConfig()
+	config.AllowedOrigins = origins
+	return config
 }
 
-// MultiTenantCORSMiddleware provides tenant-aware CORS configuration
-func MultiTenantCORSMiddleware(baseConfig *CORSConfig) fiber.Handler {
-	if baseConfig == nil {
-		baseConfig = DefaultCORSConfig()
+// validateOrigin checks if an origin is allowed based on configuration and context.
+func (c *tenantCORSCache) validateOrigin(origin string, baseConfig *CORSConfig, opts *CORSOptions) bool {
+	if origin == "" {
+		return false
 	}
 
-	return func(c *fiber.Ctx) error {
-		// Get tenant-specific configuration if available
-		effectiveConfig := baseConfig
+	// Check base allowed origins
+	if isOriginAllowed(origin, baseConfig.AllowedOrigins) {
+		return true
+	}
 
-		// Try to extract tenant ID from context
-		if tenantID, err := GetTenantID(c); err == nil {
-			// NOTE: This implementation provides a foundation for tenant-specific CORS configuration.
-			// Production implementation should:
-			// 1. Add tenant.Service.GetCORSConfig(ctx, tenantID) method to tenant service
-			// 2. Implement configuration caching with reasonable TTL (5-15 minutes)
-			// 3. Add fallback to base config if tenant config lookup fails
-			// 4. Support tenant-specific allowed origins for custom domains
-			// 5. Allow per-tenant restriction of methods and headers
+	// In development, allow localhost
+	if opts.Environment == "development" {
+		if isLocalhostOrigin(origin, opts.AllowLocalhostPorts) {
+			return true
+		}
+	}
 
-			// For now, create tenant-aware configuration with subdomain support
-			tenantConfig := createTenantAwareCORSConfig(baseConfig, tenantID, c.Hostname())
-			effectiveConfig = tenantConfig
+	// TODO: Implement tenant-specific origin validation
+	// This would require extracting tenant context from the request
+	// and checking against tenant-specific allowed origins
+
+	return false
+}
+
+// isOriginAllowed checks if an origin matches any of the allowed patterns.
+func isOriginAllowed(origin string, allowedOrigins []string) bool {
+	for _, allowed := range allowedOrigins {
+		if allowed == "*" || allowed == origin {
+			return true
 		}
 
-		corsHandler := cors.New(cors.Config{
-			AllowOrigins:     joinStrings(effectiveConfig.AllowedOrigins),
-			AllowMethods:     joinStrings(effectiveConfig.AllowedMethods),
-			AllowHeaders:     joinStrings(effectiveConfig.AllowedHeaders),
-			ExposeHeaders:    joinStrings(effectiveConfig.ExposedHeaders),
-			AllowCredentials: effectiveConfig.AllowCredentials,
-			MaxAge:           effectiveConfig.MaxAge,
-		})
+		// Support wildcard subdomains (e.g., "https://*.example.com")
+		if strings.Contains(allowed, "*") {
+			if matchWildcardOrigin(origin, allowed) {
+				return true
+			}
+		}
+	}
+	return false
+}
 
-		return corsHandler(c)
+// matchWildcardOrigin matches an origin against a wildcard pattern.
+func matchWildcardOrigin(origin, pattern string) bool {
+	// Simple wildcard matching for subdomains
+	// e.g., "https://*.example.com" matches "https://tenant1.example.com"
+	pattern = strings.ReplaceAll(pattern, "*", "")
+	return strings.HasSuffix(origin, pattern)
+}
+
+// isLocalhostOrigin checks if an origin is a localhost origin.
+func isLocalhostOrigin(origin string, allowedPorts []int) bool {
+	if !strings.HasPrefix(origin, "http://localhost:") &&
+		!strings.HasPrefix(origin, "http://127.0.0.1:") {
+		return false
+	}
+
+	// If no specific ports are configured, allow common development ports
+	if len(allowedPorts) == 0 {
+		allowedPorts = []int{3000, 3001, 8080, 8081, 5173, 4200}
+	}
+
+	for _, port := range allowedPorts {
+		if strings.HasSuffix(origin, fmt.Sprintf(":%d", port)) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// getCachedConfig retrieves a cached tenant CORS configuration if valid.
+func (c *tenantCORSCache) getCachedConfig(tenantID uuid.UUID) (*CORSConfig, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	entry, exists := c.cache[tenantID]
+	if !exists {
+		return nil, false
+	}
+
+	if time.Now().After(entry.expiresAt) {
+		return nil, false
+	}
+
+	return entry.config, true
+}
+
+// setCachedConfig stores a tenant CORS configuration in cache.
+func (c *tenantCORSCache) setCachedConfig(tenantID uuid.UUID, config *CORSConfig) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.cache[tenantID] = &cacheEntry{
+		config:    config,
+		expiresAt: time.Now().Add(c.ttl),
+	}
+
+	// Simple cache size management
+	if len(c.cache) > 1000 {
+		c.evictExpired()
 	}
 }
 
-// AdaptCORSConfig adapts CORSConfig to Fiber's cors.Config format
-func AdaptCORSConfig(config *CORSConfig) cors.Config {
-	if config == nil {
-		config = DefaultCORSConfig()
+// evictExpired removes expired entries from the cache (must be called with lock held).
+func (c *tenantCORSCache) evictExpired() {
+	now := time.Now()
+	for tenantID, entry := range c.cache {
+		if now.After(entry.expiresAt) {
+			delete(c.cache, tenantID)
+		}
 	}
+}
 
+// adaptCORSConfig converts CORSConfig to Fiber's cors.Config.
+func adaptCORSConfig(config *CORSConfig) cors.Config {
 	return cors.Config{
-		AllowOrigins:     joinStrings(config.AllowedOrigins),
-		AllowMethods:     joinStrings(config.AllowedMethods),
-		AllowHeaders:     joinStrings(config.AllowedHeaders),
-		ExposeHeaders:    joinStrings(config.ExposedHeaders),
+		AllowOrigins:     strings.Join(config.AllowedOrigins, ","),
+		AllowMethods:     strings.Join(config.AllowedMethods, ","),
+		AllowHeaders:     strings.Join(config.AllowedHeaders, ","),
+		ExposeHeaders:    strings.Join(config.ExposedHeaders, ","),
 		AllowCredentials: config.AllowCredentials,
 		MaxAge:           config.MaxAge,
 	}
 }
 
-// createTenantAwareCORSConfig creates a tenant-specific CORS configuration
-// This is a basic implementation that can be extended with full tenant service integration
-func createTenantAwareCORSConfig(baseConfig *CORSConfig, tenantID uuid.UUID, hostname string) *CORSConfig {
-	// Create a copy of base configuration
-	tenantConfig := &CORSConfig{
-		AllowedOrigins:   make([]string, len(baseConfig.AllowedOrigins)),
-		AllowedMethods:   make([]string, len(baseConfig.AllowedMethods)),
-		AllowedHeaders:   make([]string, len(baseConfig.AllowedHeaders)),
-		ExposedHeaders:   make([]string, len(baseConfig.ExposedHeaders)),
-		AllowCredentials: baseConfig.AllowCredentials,
-		MaxAge:           baseConfig.MaxAge,
+// validateCORSConfig ensures the CORS configuration is valid and secure.
+func validateCORSConfig(config *CORSConfig) error {
+	if len(config.AllowedOrigins) == 0 {
+		return fmt.Errorf("at least one allowed origin must be specified")
 	}
 
-	// Copy arrays
-	copy(tenantConfig.AllowedOrigins, baseConfig.AllowedOrigins)
-	copy(tenantConfig.AllowedMethods, baseConfig.AllowedMethods)
-	copy(tenantConfig.AllowedHeaders, baseConfig.AllowedHeaders)
-	copy(tenantConfig.ExposedHeaders, baseConfig.ExposedHeaders)
+	if len(config.AllowedMethods) == 0 {
+		return fmt.Errorf("at least one allowed method must be specified")
+	}
 
-	// Add tenant-specific allowed origins based on subdomain
-	if hostname != "" && hostname != "localhost" {
-		// Add the current hostname as an allowed origin
-		tenantOrigin := "https://" + hostname
-		tenantConfig.AllowedOrigins = append(tenantConfig.AllowedOrigins, tenantOrigin)
-
-		// Also allow HTTP for development environments
-		if !strings.Contains(hostname, "prod") && !strings.Contains(hostname, "production") {
-			devOrigin := "http://" + hostname
-			tenantConfig.AllowedOrigins = append(tenantConfig.AllowedOrigins, devOrigin)
+	// Security check: wildcard origins with credentials is not allowed
+	if config.AllowCredentials {
+		for _, origin := range config.AllowedOrigins {
+			if origin == "*" {
+				return fmt.Errorf("wildcard origin '*' cannot be used with credentials enabled")
+			}
 		}
 	}
 
-	return tenantConfig
+	if config.MaxAge < 0 || config.MaxAge > 86400 {
+		return fmt.Errorf("max age must be between 0 and 86400 seconds")
+	}
+
+	return nil
 }
 
-// joinStrings joins a slice of strings with commas
-func joinStrings(strs []string) string {
-	if len(strs) == 0 {
-		return ""
+// Clone creates a deep copy of the CORS configuration.
+func (c *CORSConfig) Clone() *CORSConfig {
+	if c == nil {
+		return nil
 	}
 
-	result := strs[0]
-	for i := 1; i < len(strs); i++ {
-		result += "," + strs[i]
+	return &CORSConfig{
+		AllowedOrigins:   append([]string(nil), c.AllowedOrigins...),
+		AllowedMethods:   append([]string(nil), c.AllowedMethods...),
+		AllowedHeaders:   append([]string(nil), c.AllowedHeaders...),
+		ExposedHeaders:   append([]string(nil), c.ExposedHeaders...),
+		AllowCredentials: c.AllowCredentials,
+		MaxAge:           c.MaxAge,
 	}
-	return result
+}
+
+// WithOrigins returns a new config with additional allowed origins.
+func (c *CORSConfig) WithOrigins(origins ...string) *CORSConfig {
+	config := c.Clone()
+	config.AllowedOrigins = append(config.AllowedOrigins, origins...)
+	return config
+}
+
+// WithCredentials returns a new config with credentials setting.
+func (c *CORSConfig) WithCredentials(allow bool) *CORSConfig {
+	config := c.Clone()
+	config.AllowCredentials = allow
+	return config
 }

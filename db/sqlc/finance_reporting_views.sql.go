@@ -714,13 +714,13 @@ type GetGroupBalanceSummaryParams struct {
 }
 
 type GetGroupBalanceSummaryRow struct {
-	GroupCode                 string      `json:"group_code"`
-	GroupName                 string      `json:"group_name"`
-	FinancialStatementSection *string     `json:"financial_statement_section"`
-	AccountCount              int64       `json:"account_count"`
-	ActiveAccountCount        int64       `json:"active_account_count"`
-	GroupBalance              any `json:"group_balance"`
-	ActivePercentage          any `json:"active_percentage"`
+	GroupCode                 string  `json:"group_code"`
+	GroupName                 string  `json:"group_name"`
+	FinancialStatementSection *string `json:"financial_statement_section"`
+	AccountCount              int64   `json:"account_count"`
+	ActiveAccountCount        int64   `json:"active_account_count"`
+	GroupBalance              any     `json:"group_balance"`
+	ActivePercentage          any     `json:"active_percentage"`
 }
 
 func (q *Queries) GetGroupBalanceSummary(ctx context.Context, arg GetGroupBalanceSummaryParams) ([]*GetGroupBalanceSummaryRow, error) {

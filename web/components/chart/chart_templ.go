@@ -26,8 +26,8 @@ type Dataset struct {
 	Label           string      `json:"label"`
 	Data            []float64   `json:"data"`
 	BorderWidth     int         `json:"borderWidth,omitempty"`
-	BorderColor     any `json:"borderColor,omitempty"`
-	BackgroundColor any `json:"backgroundColor,omitempty"`
+	BorderColor     interface{} `json:"borderColor,omitempty"`
+	BackgroundColor interface{} `json:"backgroundColor,omitempty"`
 	Tension         float64     `json:"tension,omitempty"`
 	Fill            bool        `json:"fill,omitempty"`
 	Stepped         bool        `json:"stepped,omitempty"`

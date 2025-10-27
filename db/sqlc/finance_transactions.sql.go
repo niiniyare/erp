@@ -31,9 +31,9 @@ WHERE
 `
 
 type AddTransactionAttachmentParams struct {
-	AttachmentID  any `json:"attachment_id"`
-	UpdatedBy     *uuid.UUID  `json:"updated_by"`
-	TransactionID uuid.UUID   `json:"transaction_id"`
+	AttachmentID  any        `json:"attachment_id"`
+	UpdatedBy     *uuid.UUID `json:"updated_by"`
+	TransactionID uuid.UUID  `json:"transaction_id"`
 }
 
 func (q *Queries) AddTransactionAttachment(ctx context.Context, arg AddTransactionAttachmentParams) error {
@@ -56,9 +56,9 @@ WHERE
 `
 
 type AddTransactionTagParams struct {
-	Tag           any `json:"tag"`
-	UpdatedBy     *uuid.UUID  `json:"updated_by"`
-	TransactionID uuid.UUID   `json:"transaction_id"`
+	Tag           any        `json:"tag"`
+	UpdatedBy     *uuid.UUID `json:"updated_by"`
+	TransactionID uuid.UUID  `json:"transaction_id"`
 }
 
 func (q *Queries) AddTransactionTag(ctx context.Context, arg AddTransactionTagParams) error {
@@ -977,8 +977,8 @@ ORDER BY
 `
 
 type GetTransactionCountByTagRow struct {
-	Tag              any `json:"tag"`
-	TransactionCount int64       `json:"transaction_count"`
+	Tag              any   `json:"tag"`
+	TransactionCount int64 `json:"transaction_count"`
 }
 
 func (q *Queries) GetTransactionCountByTag(ctx context.Context) ([]*GetTransactionCountByTagRow, error) {
@@ -2088,9 +2088,9 @@ WHERE
 `
 
 type RemoveTransactionAttachmentParams struct {
-	AttachmentID  any `json:"attachment_id"`
-	UpdatedBy     *uuid.UUID  `json:"updated_by"`
-	TransactionID uuid.UUID   `json:"transaction_id"`
+	AttachmentID  any        `json:"attachment_id"`
+	UpdatedBy     *uuid.UUID `json:"updated_by"`
+	TransactionID uuid.UUID  `json:"transaction_id"`
 }
 
 func (q *Queries) RemoveTransactionAttachment(ctx context.Context, arg RemoveTransactionAttachmentParams) error {
@@ -2112,9 +2112,9 @@ WHERE
 `
 
 type RemoveTransactionTagParams struct {
-	Tag           any `json:"tag"`
-	UpdatedBy     *uuid.UUID  `json:"updated_by"`
-	TransactionID uuid.UUID   `json:"transaction_id"`
+	Tag           any        `json:"tag"`
+	UpdatedBy     *uuid.UUID `json:"updated_by"`
+	TransactionID uuid.UUID  `json:"transaction_id"`
 }
 
 func (q *Queries) RemoveTransactionTag(ctx context.Context, arg RemoveTransactionTagParams) error {

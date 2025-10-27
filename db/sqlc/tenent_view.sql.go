@@ -55,9 +55,9 @@ type GetFeatureFlagStatusAdminParams struct {
 }
 
 type GetFeatureFlagStatusAdminRow struct {
-	FeatureFlagName   string      `json:"feature_flag_name"`
-	Enabled           any `json:"enabled"`
-	RolloutPercentage *int32      `json:"rollout_percentage"`
+	FeatureFlagName   string `json:"feature_flag_name"`
+	Enabled           any    `json:"enabled"`
+	RolloutPercentage *int32 `json:"rollout_percentage"`
 }
 
 // =====================================================================
@@ -81,9 +81,9 @@ WHERE tenant_id = current_tenant_id()
 `
 
 type GetFeatureFlagStatusUserRow struct {
-	FeatureFlagName   string      `json:"feature_flag_name"`
-	Enabled           any `json:"enabled"`
-	RolloutPercentage *int32      `json:"rollout_percentage"`
+	FeatureFlagName   string `json:"feature_flag_name"`
+	Enabled           any    `json:"enabled"`
+	RolloutPercentage *int32 `json:"rollout_percentage"`
 }
 
 func (q *Queries) GetFeatureFlagStatusUser(ctx context.Context, featureFlagName string) (*GetFeatureFlagStatusUserRow, error) {
@@ -490,11 +490,11 @@ WHERE tenant_id = $1
 `
 
 type GetTenantFeatureFlagsCacheAdminRow struct {
-	TenantID          uuid.UUID   `json:"tenant_id"`
-	FeatureFlagName   string      `json:"feature_flag_name"`
-	Enabled           any `json:"enabled"`
-	RolloutPercentage *int32      `json:"rollout_percentage"`
-	CacheTimestamp    any `json:"cache_timestamp"`
+	TenantID          uuid.UUID `json:"tenant_id"`
+	FeatureFlagName   string    `json:"feature_flag_name"`
+	Enabled           any       `json:"enabled"`
+	RolloutPercentage *int32    `json:"rollout_percentage"`
+	CacheTimestamp    any       `json:"cache_timestamp"`
 }
 
 func (q *Queries) GetTenantFeatureFlagsCacheAdmin(ctx context.Context, tenantID uuid.UUID) ([]*GetTenantFeatureFlagsCacheAdminRow, error) {
@@ -535,11 +535,11 @@ WHERE tenant_id = current_tenant_id()
 `
 
 type GetTenantFeatureFlagsCacheUserRow struct {
-	TenantID          uuid.UUID   `json:"tenant_id"`
-	FeatureFlagName   string      `json:"feature_flag_name"`
-	Enabled           any `json:"enabled"`
-	RolloutPercentage *int32      `json:"rollout_percentage"`
-	CacheTimestamp    any `json:"cache_timestamp"`
+	TenantID          uuid.UUID `json:"tenant_id"`
+	FeatureFlagName   string    `json:"feature_flag_name"`
+	Enabled           any       `json:"enabled"`
+	RolloutPercentage *int32    `json:"rollout_percentage"`
+	CacheTimestamp    any       `json:"cache_timestamp"`
 }
 
 func (q *Queries) GetTenantFeatureFlagsCacheUser(ctx context.Context) ([]*GetTenantFeatureFlagsCacheUserRow, error) {
@@ -793,10 +793,10 @@ ORDER BY feature_flag_name
 `
 
 type ListActiveFeatureFlagsAdminRow struct {
-	FeatureFlagName   string      `json:"feature_flag_name"`
-	Enabled           any `json:"enabled"`
-	RolloutPercentage *int32      `json:"rollout_percentage"`
-	CacheTimestamp    any `json:"cache_timestamp"`
+	FeatureFlagName   string `json:"feature_flag_name"`
+	Enabled           any    `json:"enabled"`
+	RolloutPercentage *int32 `json:"rollout_percentage"`
+	CacheTimestamp    any    `json:"cache_timestamp"`
 }
 
 func (q *Queries) ListActiveFeatureFlagsAdmin(ctx context.Context, tenantID uuid.UUID) ([]*ListActiveFeatureFlagsAdminRow, error) {
@@ -837,10 +837,10 @@ ORDER BY feature_flag_name
 `
 
 type ListActiveFeatureFlagsUserRow struct {
-	FeatureFlagName   string      `json:"feature_flag_name"`
-	Enabled           any `json:"enabled"`
-	RolloutPercentage *int32      `json:"rollout_percentage"`
-	CacheTimestamp    any `json:"cache_timestamp"`
+	FeatureFlagName   string `json:"feature_flag_name"`
+	Enabled           any    `json:"enabled"`
+	RolloutPercentage *int32 `json:"rollout_percentage"`
+	CacheTimestamp    any    `json:"cache_timestamp"`
 }
 
 func (q *Queries) ListActiveFeatureFlagsUser(ctx context.Context) ([]*ListActiveFeatureFlagsUserRow, error) {

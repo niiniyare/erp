@@ -466,7 +466,7 @@ type GetAnomalousUserBehaviorParams struct {
 	Limit              int32        `json:"limit"`
 	BaselineStart      sql.NullTime `json:"baseline_start"`
 	BaselineEnd        sql.NullTime `json:"baseline_end"`
-	MinBaselineEvents  any  `json:"min_baseline_events"`
+	MinBaselineEvents  any          `json:"min_baseline_events"`
 }
 
 type GetAnomalousUserBehaviorRow struct {
@@ -1012,12 +1012,12 @@ type GetAuditStatsByCategoryParams struct {
 }
 
 type GetAuditStatsByCategoryRow struct {
-	EventCategory *string     `json:"event_category"`
-	EventCount    int64       `json:"event_count"`
-	DeniedCount   int64       `json:"denied_count"`
-	AvgRiskScore  float64     `json:"avg_risk_score"`
-	MaxRiskScore  any `json:"max_risk_score"`
-	UniqueUsers   int64       `json:"unique_users"`
+	EventCategory *string `json:"event_category"`
+	EventCount    int64   `json:"event_count"`
+	DeniedCount   int64   `json:"denied_count"`
+	AvgRiskScore  float64 `json:"avg_risk_score"`
+	MaxRiskScore  any     `json:"max_risk_score"`
+	UniqueUsers   int64   `json:"unique_users"`
 }
 
 // ================================================================================================
@@ -1147,16 +1147,16 @@ WHERE
 `
 
 type GetAuditStorageStatsRow struct {
-	TotalEvents      int64       `json:"total_events"`
-	UniqueUsers      int64       `json:"unique_users"`
-	UniqueIps        int64       `json:"unique_ips"`
-	UniqueEventTypes int64       `json:"unique_event_types"`
-	TableSize        string      `json:"table_size"`
-	OldestEvent      any `json:"oldest_event"`
-	NewestEvent      any `json:"newest_event"`
-	EventsLast24h    int64       `json:"events_last_24h"`
-	EventsLast7d     int64       `json:"events_last_7d"`
-	EventsLast30d    int64       `json:"events_last_30d"`
+	TotalEvents      int64  `json:"total_events"`
+	UniqueUsers      int64  `json:"unique_users"`
+	UniqueIps        int64  `json:"unique_ips"`
+	UniqueEventTypes int64  `json:"unique_event_types"`
+	TableSize        string `json:"table_size"`
+	OldestEvent      any    `json:"oldest_event"`
+	NewestEvent      any    `json:"newest_event"`
+	EventsLast24h    int64  `json:"events_last_24h"`
+	EventsLast7d     int64  `json:"events_last_7d"`
+	EventsLast30d    int64  `json:"events_last_30d"`
 }
 
 // Get audit log storage statistics and metrics
@@ -1301,7 +1301,7 @@ LIMIT
 type GetDuplicateEventAnalysisParams struct {
 	StartTime         sql.NullTime `json:"start_time"`
 	EndTime           sql.NullTime `json:"end_time"`
-	MinDuplicateCount any  `json:"min_duplicate_count"`
+	MinDuplicateCount any          `json:"min_duplicate_count"`
 	Limit             int32        `json:"limit"`
 }
 
@@ -1312,9 +1312,9 @@ type GetDuplicateEventAnalysisRow struct {
 	IpAddress       *netip.Addr     `json:"ip_address"`
 	TimeBucket      pgtype.Interval `json:"time_bucket"`
 	DuplicateCount  int64           `json:"duplicate_count"`
-	EventIds        any     `json:"event_ids"`
-	FirstOccurrence any     `json:"first_occurrence"`
-	LastOccurrence  any     `json:"last_occurrence"`
+	EventIds        any             `json:"event_ids"`
+	FirstOccurrence any             `json:"first_occurrence"`
+	LastOccurrence  any             `json:"last_occurrence"`
 }
 
 // Identify potential duplicate events for cleanup
@@ -1415,8 +1415,8 @@ type GetEventTimelineForUserRow struct {
 	UserAgent        *string        `json:"user_agent"`
 	SessionID        *uuid.UUID     `json:"session_id"`
 	CreatedAt        sql.NullTime   `json:"created_at"`
-	PrevEventTime    any    `json:"prev_event_time"`
-	NextEventTime    any    `json:"next_event_time"`
+	PrevEventTime    any            `json:"prev_event_time"`
+	NextEventTime    any            `json:"next_event_time"`
 	SecondsSincePrev pgtype.Numeric `json:"seconds_since_prev"`
 }
 
@@ -1561,20 +1561,20 @@ type GetEventTypeDistributionParams struct {
 	StartTime      sql.NullTime `json:"start_time"`
 	EndTime        sql.NullTime `json:"end_time"`
 	EventCategory  *string      `json:"event_category"`
-	MinOccurrences any  `json:"min_occurrences"`
+	MinOccurrences any          `json:"min_occurrences"`
 	Limit          int32        `json:"limit"`
 }
 
 type GetEventTypeDistributionRow struct {
-	EventType         string      `json:"event_type"`
-	EventCategory     *string     `json:"event_category"`
-	EventCount        int64       `json:"event_count"`
-	UniqueUsers       int64       `json:"unique_users"`
-	AvgRiskScore      float64     `json:"avg_risk_score"`
-	DeniedCount       int64       `json:"denied_count"`
-	HighSeverityCount int64       `json:"high_severity_count"`
-	FirstOccurrence   any `json:"first_occurrence"`
-	LastOccurrence    any `json:"last_occurrence"`
+	EventType         string  `json:"event_type"`
+	EventCategory     *string `json:"event_category"`
+	EventCount        int64   `json:"event_count"`
+	UniqueUsers       int64   `json:"unique_users"`
+	AvgRiskScore      float64 `json:"avg_risk_score"`
+	DeniedCount       int64   `json:"denied_count"`
+	HighSeverityCount int64   `json:"high_severity_count"`
+	FirstOccurrence   any     `json:"first_occurrence"`
+	LastOccurrence    any     `json:"last_occurrence"`
 }
 
 // Get event type distribution for analysis
@@ -2342,20 +2342,20 @@ LIMIT
 type GetUserAgentAnalysisParams struct {
 	StartTime sql.NullTime `json:"start_time"`
 	EndTime   sql.NullTime `json:"end_time"`
-	MinEvents any  `json:"min_events"`
+	MinEvents any          `json:"min_events"`
 	Limit     int32        `json:"limit"`
 }
 
 type GetUserAgentAnalysisRow struct {
-	UserAgent     *string     `json:"user_agent"`
-	EventCount    int64       `json:"event_count"`
-	UniqueUsers   int64       `json:"unique_users"`
-	UniqueIps     int64       `json:"unique_ips"`
-	AvgRiskScore  float64     `json:"avg_risk_score"`
-	DeniedCount   int64       `json:"denied_count"`
-	FirstSeen     any `json:"first_seen"`
-	LastSeen      any `json:"last_seen"`
-	AgentCategory string      `json:"agent_category"`
+	UserAgent     *string `json:"user_agent"`
+	EventCount    int64   `json:"event_count"`
+	UniqueUsers   int64   `json:"unique_users"`
+	UniqueIps     int64   `json:"unique_ips"`
+	AvgRiskScore  float64 `json:"avg_risk_score"`
+	DeniedCount   int64   `json:"denied_count"`
+	FirstSeen     any     `json:"first_seen"`
+	LastSeen      any     `json:"last_seen"`
+	AgentCategory string  `json:"agent_category"`
 }
 
 // Analyze user agent patterns for security insights
@@ -2535,18 +2535,18 @@ type GetUserRiskProfileParams struct {
 }
 
 type GetUserRiskProfileRow struct {
-	UserID             *uuid.UUID  `json:"user_id"`
-	TotalEvents        int64       `json:"total_events"`
-	AvgRiskScore       float64     `json:"avg_risk_score"`
-	MaxRiskScore       any `json:"max_risk_score"`
-	FailedAttempts     int64       `json:"failed_attempts"`
-	HighSeverityEvents int64       `json:"high_severity_events"`
-	UniqueIps          int64       `json:"unique_ips"`
-	UniqueCategories   int64       `json:"unique_categories"`
-	FirstEvent         any `json:"first_event"`
-	LastEvent          any `json:"last_event"`
-	EventsLast24h      int64       `json:"events_last_24h"`
-	EventsLast7d       int64       `json:"events_last_7d"`
+	UserID             *uuid.UUID `json:"user_id"`
+	TotalEvents        int64      `json:"total_events"`
+	AvgRiskScore       float64    `json:"avg_risk_score"`
+	MaxRiskScore       any        `json:"max_risk_score"`
+	FailedAttempts     int64      `json:"failed_attempts"`
+	HighSeverityEvents int64      `json:"high_severity_events"`
+	UniqueIps          int64      `json:"unique_ips"`
+	UniqueCategories   int64      `json:"unique_categories"`
+	FirstEvent         any        `json:"first_event"`
+	LastEvent          any        `json:"last_event"`
+	EventsLast24h      int64      `json:"events_last_24h"`
+	EventsLast7d       int64      `json:"events_last_7d"`
 }
 
 // Get risk profile for a user

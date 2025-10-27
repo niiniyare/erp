@@ -39,10 +39,10 @@ WHERE
 `
 
 type CountAccountEntriesParams struct {
-	AccountID         uuid.UUID   `json:"account_id"`
-	DateFrom          time.Time   `json:"date_from"`
-	DateTo            time.Time   `json:"date_to"`
-	TransactionStatus any `json:"transaction_status"`
+	AccountID         uuid.UUID `json:"account_id"`
+	DateFrom          time.Time `json:"date_from"`
+	DateTo            time.Time `json:"date_to"`
+	TransactionStatus any       `json:"transaction_status"`
 }
 
 func (q *Queries) CountAccountEntries(ctx context.Context, arg CountAccountEntriesParams) (int64, error) {
@@ -236,12 +236,12 @@ LIMIT
 `
 
 type GetAccountEntriesParams struct {
-	AccountID         uuid.UUID   `json:"account_id"`
-	DateFrom          time.Time   `json:"date_from"`
-	DateTo            time.Time   `json:"date_to"`
-	TransactionStatus any `json:"transaction_status"`
-	Offset            int32       `json:"offset"`
-	Limit             int32       `json:"limit"`
+	AccountID         uuid.UUID `json:"account_id"`
+	DateFrom          time.Time `json:"date_from"`
+	DateTo            time.Time `json:"date_to"`
+	TransactionStatus any       `json:"transaction_status"`
+	Offset            int32     `json:"offset"`
+	Limit             int32     `json:"limit"`
 }
 
 type GetAccountEntriesRow struct {
@@ -1040,20 +1040,20 @@ ORDER BY
 `
 
 type GetTrialBalanceParams struct {
-	AsOfDate            time.Time   `json:"as_of_date"`
-	IncludeZeroBalances any `json:"include_zero_balances"`
+	AsOfDate            time.Time `json:"as_of_date"`
+	IncludeZeroBalances any       `json:"include_zero_balances"`
 }
 
 type GetTrialBalanceRow struct {
-	ID            uuid.UUID   `json:"id"`
-	AccountCode   string      `json:"account_code"`
-	AccountName   string      `json:"account_name"`
-	RootType      string      `json:"root_type"`
-	AccountType   string      `json:"account_type"`
-	NormalBalance string      `json:"normal_balance"`
-	TotalDebits   any `json:"total_debits"`
-	TotalCredits  any `json:"total_credits"`
-	NetBalance    any `json:"net_balance"`
+	ID            uuid.UUID `json:"id"`
+	AccountCode   string    `json:"account_code"`
+	AccountName   string    `json:"account_name"`
+	RootType      string    `json:"root_type"`
+	AccountType   string    `json:"account_type"`
+	NormalBalance string    `json:"normal_balance"`
+	TotalDebits   any       `json:"total_debits"`
+	TotalCredits  any       `json:"total_credits"`
+	NetBalance    any       `json:"net_balance"`
 }
 
 func (q *Queries) GetTrialBalance(ctx context.Context, arg GetTrialBalanceParams) ([]*GetTrialBalanceRow, error) {

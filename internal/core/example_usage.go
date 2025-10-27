@@ -19,12 +19,12 @@ func ExampleUsage() {
 
 	// Mock dependencies (in real usage, these would be properly initialized)
 	var (
-		store          db.Store                  = nil // Initialize from database connection
-		cache          cache.Service             = nil // Initialize Redis cache
-		logger         logger.Logger             = nil // Initialize logger
-		metrics        metrics.MetricsProvider   = nil // Initialize metrics service
-		tracing        tracing.TracingService    = nil // Initialize tracing
-		temporal       *temporal.Platform        = nil // Initialize Temporal platform
+		store    db.Store                = nil // Initialize from database connection
+		cache    cache.Service           = nil // Initialize Redis cache
+		logger   logger.Logger           = nil // Initialize logger
+		metrics  metrics.MetricsProvider = nil // Initialize metrics service
+		tracing  tracing.TracingService  = nil // Initialize tracing
+		temporal *temporal.Platform      = nil // Initialize Temporal platform
 	)
 
 	// Create dependencies
@@ -52,7 +52,7 @@ func ExampleUsage() {
 	tenantService := serviceContainer.GetTenantService()
 	abacService := serviceContainer.GetABACService()
 	financeService := serviceContainer.GetFinanceService()
-	
+
 	// Services are now ready for use
 	_ = tenantService
 	_ = abacService
@@ -70,7 +70,7 @@ func ExampleUsage() {
 //
 // OLD WAY (cmd/server/services/core.go):
 //   services, err := InitializeCoreServices(store, redisClient, logger, metricsService, tracingService)
-//   
+//
 // NEW WAY (internal/core/service.go):
 //   deps := core.Dependencies{
 //       Store: store,

@@ -15,62 +15,38 @@ import (
 
 // Endpoints wraps the "tenant" service endpoints.
 type Endpoints struct {
-	Create              goa.Endpoint
-	Get                 goa.Endpoint
-	List                goa.Endpoint
-	Update              goa.Endpoint
-	Delete              goa.Endpoint
-	Health              goa.Endpoint
-	Provision           goa.Endpoint
-	Suspend             goa.Endpoint
-	Reactivate          goa.Endpoint
-	UpdateConfiguration goa.Endpoint
-	GetUsageAnalytics   goa.Endpoint
+	List   goa.Endpoint
+	Get    goa.Endpoint
+	Create goa.Endpoint
+	Update goa.Endpoint
+	Delete goa.Endpoint
 }
 
 // NewEndpoints wraps the methods of the "tenant" service with endpoints.
 func NewEndpoints(s Service) *Endpoints {
 	return &Endpoints{
-		Create:              NewCreateEndpoint(s),
-		Get:                 NewGetEndpoint(s),
-		List:                NewListEndpoint(s),
-		Update:              NewUpdateEndpoint(s),
-		Delete:              NewDeleteEndpoint(s),
-		Health:              NewHealthEndpoint(s),
-		Provision:           NewProvisionEndpoint(s),
-		Suspend:             NewSuspendEndpoint(s),
-		Reactivate:          NewReactivateEndpoint(s),
-		UpdateConfiguration: NewUpdateConfigurationEndpoint(s),
-		GetUsageAnalytics:   NewGetUsageAnalyticsEndpoint(s),
+		List:   NewListEndpoint(s),
+		Get:    NewGetEndpoint(s),
+		Create: NewCreateEndpoint(s),
+		Update: NewUpdateEndpoint(s),
+		Delete: NewDeleteEndpoint(s),
 	}
 }
 
 // Use applies the given middleware to all the "tenant" service endpoints.
 func (e *Endpoints) Use(m func(goa.Endpoint) goa.Endpoint) {
-	e.Create = m(e.Create)
-	e.Get = m(e.Get)
 	e.List = m(e.List)
+	e.Get = m(e.Get)
+	e.Create = m(e.Create)
 	e.Update = m(e.Update)
 	e.Delete = m(e.Delete)
-	e.Health = m(e.Health)
-	e.Provision = m(e.Provision)
-	e.Suspend = m(e.Suspend)
-	e.Reactivate = m(e.Reactivate)
-	e.UpdateConfiguration = m(e.UpdateConfiguration)
-	e.GetUsageAnalytics = m(e.GetUsageAnalytics)
 }
 
-// NewCreateEndpoint returns an endpoint function that calls the method
-// "create" of service "tenant".
-func NewCreateEndpoint(s Service) goa.Endpoint {
+// NewListEndpoint returns an endpoint function that calls the method "list" of
+// service "tenant".
+func NewListEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*CreateTenantPayload)
-		res, err := s.Create(ctx, p)
-		if err != nil {
-			return nil, err
-		}
-		vres := NewViewedCreateTenantResult(res, "default")
-		return vres, nil
+		return s.List(ctx)
 	}
 }
 
@@ -88,12 +64,17 @@ func NewGetEndpoint(s Service) goa.Endpoint {
 	}
 }
 
-// NewListEndpoint returns an endpoint function that calls the method "list" of
-// service "tenant".
-func NewListEndpoint(s Service) goa.Endpoint {
+// NewCreateEndpoint returns an endpoint function that calls the method
+// "create" of service "tenant".
+func NewCreateEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*ListPayload)
-		return s.List(ctx, p)
+		p := req.(*CreatePayload)
+		res, view, err := s.Create(ctx, p)
+		if err != nil {
+			return nil, err
+		}
+		vres := NewViewedTenant(res, view)
+		return vres, nil
 	}
 }
 
@@ -101,7 +82,7 @@ func NewListEndpoint(s Service) goa.Endpoint {
 // "update" of service "tenant".
 func NewUpdateEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*UpdateTenantPayload)
+		p := req.(*UpdatePayload)
 		res, view, err := s.Update(ctx, p)
 		if err != nil {
 			return nil, err
@@ -117,58 +98,5 @@ func NewDeleteEndpoint(s Service) goa.Endpoint {
 	return func(ctx context.Context, req any) (any, error) {
 		p := req.(*DeletePayload)
 		return nil, s.Delete(ctx, p)
-	}
-}
-
-// NewHealthEndpoint returns an endpoint function that calls the method
-// "health" of service "tenant".
-func NewHealthEndpoint(s Service) goa.Endpoint {
-	return func(ctx context.Context, req any) (any, error) {
-		return s.Health(ctx)
-	}
-}
-
-// NewProvisionEndpoint returns an endpoint function that calls the method
-// "provision" of service "tenant".
-func NewProvisionEndpoint(s Service) goa.Endpoint {
-	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*ProvisionPayload)
-		return s.Provision(ctx, p)
-	}
-}
-
-// NewSuspendEndpoint returns an endpoint function that calls the method
-// "suspend" of service "tenant".
-func NewSuspendEndpoint(s Service) goa.Endpoint {
-	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*SuspendPayload)
-		return s.Suspend(ctx, p)
-	}
-}
-
-// NewReactivateEndpoint returns an endpoint function that calls the method
-// "reactivate" of service "tenant".
-func NewReactivateEndpoint(s Service) goa.Endpoint {
-	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*ReactivatePayload)
-		return s.Reactivate(ctx, p)
-	}
-}
-
-// NewUpdateConfigurationEndpoint returns an endpoint function that calls the
-// method "update_configuration" of service "tenant".
-func NewUpdateConfigurationEndpoint(s Service) goa.Endpoint {
-	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*UpdateConfigurationPayload)
-		return s.UpdateConfiguration(ctx, p)
-	}
-}
-
-// NewGetUsageAnalyticsEndpoint returns an endpoint function that calls the
-// method "get_usage_analytics" of service "tenant".
-func NewGetUsageAnalyticsEndpoint(s Service) goa.Endpoint {
-	return func(ctx context.Context, req any) (any, error) {
-		p := req.(*GetUsageAnalyticsPayload)
-		return s.GetUsageAnalytics(ctx, p)
 	}
 }

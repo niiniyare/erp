@@ -10,108 +10,10 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
-	"unicode/utf8"
 
 	tenant "github.com/niiniyare/erp/internal/api/gen/tenant"
 	goa "goa.design/goa/v3/pkg"
 )
-
-// BuildCreatePayload builds the payload for the tenant create endpoint from
-// CLI flags.
-func BuildCreatePayload(tenantCreateBody string) (*tenant.CreateTenantPayload, error) {
-	var err error
-	var body CreateRequestBody
-	{
-		err = json.Unmarshal([]byte(tenantCreateBody), &body)
-		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"company_size\": \"Medium\",\n      \"contact\": {\n         \"email\": \"john.doe@acme.com\",\n         \"name\": \"John Doe\",\n         \"phone\": \"+1-555-123-4567\",\n         \"title\": \"Chief Technology Officer\"\n      },\n      \"country_code\": \"US\",\n      \"currency_code\": \"USD\",\n      \"email\": \"admin@acme.com\",\n      \"industry\": \"Technology\",\n      \"legal_entity_type\": \"LLC\",\n      \"name\": \"Acme Corporation\",\n      \"plan_type\": \"professional\",\n      \"registration_number\": \"REG-987654321\",\n      \"settings\": {\n         \"currency\": \"USD\",\n         \"date_format\": \"MM/DD/YYYY\",\n         \"features\": [\n            \"inventory\",\n            \"financial\",\n            \"hr\"\n         ],\n         \"language\": \"en\",\n         \"limits\": {\n            \"max_api_calls_per_hour\": 10000,\n            \"max_storage_mb\": 10240,\n            \"max_users\": 100\n         },\n         \"timezone\": \"America/New_York\"\n      },\n      \"slug\": \"acme-corp\",\n      \"status\": \"ACTIVE\",\n      \"subdomain\": \"acme\",\n      \"tax_id\": \"123-45-6789\"\n   }'")
-		}
-		if utf8.RuneCountInString(body.Name) < 2 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", body.Name, utf8.RuneCountInString(body.Name), 2, true))
-		}
-		if utf8.RuneCountInString(body.Name) > 100 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", body.Name, utf8.RuneCountInString(body.Name), 100, false))
-		}
-		if body.Slug != nil {
-			err = goa.MergeErrors(err, goa.ValidatePattern("body.slug", *body.Slug, "^[a-z0-9-]+$"))
-		}
-		if body.Subdomain != nil {
-			err = goa.MergeErrors(err, goa.ValidatePattern("body.subdomain", *body.Subdomain, "^[a-z0-9-]+$"))
-		}
-		if body.Subdomain != nil {
-			if utf8.RuneCountInString(*body.Subdomain) < 3 {
-				err = goa.MergeErrors(err, goa.InvalidLengthError("body.subdomain", *body.Subdomain, utf8.RuneCountInString(*body.Subdomain), 3, true))
-			}
-		}
-		if body.Subdomain != nil {
-			if utf8.RuneCountInString(*body.Subdomain) > 50 {
-				err = goa.MergeErrors(err, goa.InvalidLengthError("body.subdomain", *body.Subdomain, utf8.RuneCountInString(*body.Subdomain), 50, false))
-			}
-		}
-		if !(body.Status == "ACTIVE" || body.Status == "SUSPENDED" || body.Status == "PENDING" || body.Status == "ARCHIVED") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", body.Status, []any{"ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED"}))
-		}
-		if !(body.PlanType == "starter" || body.PlanType == "professional" || body.PlanType == "enterprise") {
-			err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.plan_type", body.PlanType, []any{"starter", "professional", "enterprise"}))
-		}
-		if body.CompanySize != nil {
-			if !(*body.CompanySize == "Startup" || *body.CompanySize == "Small" || *body.CompanySize == "Medium" || *body.CompanySize == "Large" || *body.CompanySize == "Enterprise") {
-				err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.company_size", *body.CompanySize, []any{"Startup", "Small", "Medium", "Large", "Enterprise"}))
-			}
-		}
-		if body.Contact != nil {
-			if err2 := ValidateContactInfoRequestBody(body.Contact); err2 != nil {
-				err = goa.MergeErrors(err, err2)
-			}
-		}
-		if body.Settings != nil {
-			if err2 := ValidateTenantSettingsRequestBody(body.Settings); err2 != nil {
-				err = goa.MergeErrors(err, err2)
-			}
-		}
-		err = goa.MergeErrors(err, goa.ValidatePattern("body.country_code", body.CountryCode, "^[A-Z]{2}$"))
-		err = goa.MergeErrors(err, goa.ValidatePattern("body.currency_code", body.CurrencyCode, "^[A-Z]{3}$"))
-		if err != nil {
-			return nil, err
-		}
-	}
-	v := &tenant.CreateTenantPayload{
-		Name:               body.Name,
-		Slug:               body.Slug,
-		Email:              body.Email,
-		Subdomain:          body.Subdomain,
-		Status:             body.Status,
-		PlanType:           body.PlanType,
-		Industry:           body.Industry,
-		CompanySize:        body.CompanySize,
-		TaxID:              body.TaxID,
-		RegistrationNumber: body.RegistrationNumber,
-		LegalEntityType:    body.LegalEntityType,
-		CountryCode:        body.CountryCode,
-		CurrencyCode:       body.CurrencyCode,
-	}
-	{
-		var zero string
-		if v.Status == zero {
-			v.Status = "ACTIVE"
-		}
-	}
-	{
-		var zero string
-		if v.PlanType == zero {
-			v.PlanType = "starter"
-		}
-	}
-	if body.Contact != nil {
-		v.Contact = marshalContactInfoRequestBodyToTenantContactInfo(body.Contact)
-	}
-	if body.Settings != nil {
-		v.Settings = marshalTenantSettingsRequestBodyToTenantTenantSettings(body.Settings)
-	}
-
-	return v, nil
-}
 
 // BuildGetPayload builds the payload for the tenant get endpoint from CLI
 // flags.
@@ -131,141 +33,35 @@ func BuildGetPayload(tenantGetID string) (*tenant.GetPayload, error) {
 	return v, nil
 }
 
-// BuildListPayload builds the payload for the tenant list endpoint from CLI
-// flags.
-func BuildListPayload(tenantListPage string, tenantListPageSize string, tenantListSortBy string, tenantListSortOrder string, tenantListNameFilter string, tenantListStatusFilter string) (*tenant.ListPayload, error) {
+// BuildCreatePayload builds the payload for the tenant create endpoint from
+// CLI flags.
+func BuildCreatePayload(tenantCreateBody string) (*tenant.CreatePayload, error) {
 	var err error
-	var page uint
+	var body CreateRequestBody
 	{
-		if tenantListPage != "" {
-			var v uint64
-			v, err = strconv.ParseUint(tenantListPage, 10, strconv.IntSize)
-			page = uint(v)
-			if err != nil {
-				return nil, fmt.Errorf("invalid value for page, must be UINT")
-			}
-			if page < 1 {
-				err = goa.MergeErrors(err, goa.InvalidRangeError("page", page, 1, true))
-			}
-			if err != nil {
-				return nil, err
-			}
+		err = json.Unmarshal([]byte(tenantCreateBody), &body)
+		if err != nil {
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Rerum in.\",\n      \"name\": \"Enim et sed enim.\",\n      \"slug\": \"Ab ex dolor cumque labore.\"\n   }'")
 		}
 	}
-	var pageSize uint
-	{
-		if tenantListPageSize != "" {
-			var v uint64
-			v, err = strconv.ParseUint(tenantListPageSize, 10, strconv.IntSize)
-			pageSize = uint(v)
-			if err != nil {
-				return nil, fmt.Errorf("invalid value for pageSize, must be UINT")
-			}
-			if pageSize < 1 {
-				err = goa.MergeErrors(err, goa.InvalidRangeError("page_size", pageSize, 1, true))
-			}
-			if pageSize > 100 {
-				err = goa.MergeErrors(err, goa.InvalidRangeError("page_size", pageSize, 100, false))
-			}
-			if err != nil {
-				return nil, err
-			}
-		}
+	v := &tenant.CreatePayload{
+		Name:  body.Name,
+		Slug:  body.Slug,
+		Email: body.Email,
 	}
-	var sortBy *string
-	{
-		if tenantListSortBy != "" {
-			sortBy = &tenantListSortBy
-		}
-	}
-	var sortOrder string
-	{
-		if tenantListSortOrder != "" {
-			sortOrder = tenantListSortOrder
-			if !(sortOrder == "asc" || sortOrder == "desc") {
-				err = goa.MergeErrors(err, goa.InvalidEnumValueError("sort_order", sortOrder, []any{"asc", "desc"}))
-			}
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	var nameFilter *string
-	{
-		if tenantListNameFilter != "" {
-			nameFilter = &tenantListNameFilter
-		}
-	}
-	var statusFilter *string
-	{
-		if tenantListStatusFilter != "" {
-			statusFilter = &tenantListStatusFilter
-			if !(*statusFilter == "ACTIVE" || *statusFilter == "SUSPENDED" || *statusFilter == "PENDING" || *statusFilter == "ARCHIVED") {
-				err = goa.MergeErrors(err, goa.InvalidEnumValueError("status_filter", *statusFilter, []any{"ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED"}))
-			}
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	v := &tenant.ListPayload{}
-	v.Page = page
-	v.PageSize = pageSize
-	v.SortBy = sortBy
-	v.SortOrder = sortOrder
-	v.NameFilter = nameFilter
-	v.StatusFilter = statusFilter
 
 	return v, nil
 }
 
 // BuildUpdatePayload builds the payload for the tenant update endpoint from
 // CLI flags.
-func BuildUpdatePayload(tenantUpdateBody string, tenantUpdateID string) (*tenant.UpdateTenantPayload, error) {
+func BuildUpdatePayload(tenantUpdateBody string, tenantUpdateID string) (*tenant.UpdatePayload, error) {
 	var err error
 	var body UpdateRequestBody
 	{
 		err = json.Unmarshal([]byte(tenantUpdateBody), &body)
 		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"contact\": {\n         \"email\": \"john.doe@acme.com\",\n         \"name\": \"John Doe\",\n         \"phone\": \"+1-555-123-4567\",\n         \"title\": \"Chief Technology Officer\"\n      },\n      \"description\": \"Updated description\",\n      \"name\": \"Acme Corporation Updated\",\n      \"plan_type\": \"professional\",\n      \"settings\": {\n         \"currency\": \"USD\",\n         \"date_format\": \"MM/DD/YYYY\",\n         \"features\": [\n            \"inventory\",\n            \"financial\",\n            \"hr\"\n         ],\n         \"language\": \"en\",\n         \"limits\": {\n            \"max_api_calls_per_hour\": 10000,\n            \"max_storage_mb\": 10240,\n            \"max_users\": 100\n         },\n         \"timezone\": \"America/New_York\"\n      },\n      \"status\": \"ACTIVE\"\n   }'")
-		}
-		if body.Name != nil {
-			if utf8.RuneCountInString(*body.Name) < 1 {
-				err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 1, true))
-			}
-		}
-		if body.Name != nil {
-			if utf8.RuneCountInString(*body.Name) > 100 {
-				err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", *body.Name, utf8.RuneCountInString(*body.Name), 100, false))
-			}
-		}
-		if body.Description != nil {
-			if utf8.RuneCountInString(*body.Description) > 500 {
-				err = goa.MergeErrors(err, goa.InvalidLengthError("body.description", *body.Description, utf8.RuneCountInString(*body.Description), 500, false))
-			}
-		}
-		if body.Status != nil {
-			if !(*body.Status == "ACTIVE" || *body.Status == "SUSPENDED" || *body.Status == "PENDING" || *body.Status == "ARCHIVED") {
-				err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.status", *body.Status, []any{"ACTIVE", "SUSPENDED", "PENDING", "ARCHIVED"}))
-			}
-		}
-		if body.PlanType != nil {
-			if !(*body.PlanType == "starter" || *body.PlanType == "professional" || *body.PlanType == "enterprise") {
-				err = goa.MergeErrors(err, goa.InvalidEnumValueError("body.plan_type", *body.PlanType, []any{"starter", "professional", "enterprise"}))
-			}
-		}
-		if body.Contact != nil {
-			if err2 := ValidateContactInfoRequestBody(body.Contact); err2 != nil {
-				err = goa.MergeErrors(err, err2)
-			}
-		}
-		if body.Settings != nil {
-			if err2 := ValidateTenantSettingsRequestBody(body.Settings); err2 != nil {
-				err = goa.MergeErrors(err, err2)
-			}
-		}
-		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"email\": \"Omnis similique et saepe aut omnis aperiam.\",\n      \"name\": \"Distinctio minima autem tempora sapiente qui.\"\n   }'")
 		}
 	}
 	var id string
@@ -276,17 +72,9 @@ func BuildUpdatePayload(tenantUpdateBody string, tenantUpdateID string) (*tenant
 			return nil, err
 		}
 	}
-	v := &tenant.UpdateTenantPayload{
-		Name:        body.Name,
-		Description: body.Description,
-		Status:      body.Status,
-		PlanType:    body.PlanType,
-	}
-	if body.Contact != nil {
-		v.Contact = marshalContactInfoRequestBodyToTenantContactInfo(body.Contact)
-	}
-	if body.Settings != nil {
-		v.Settings = marshalTenantSettingsRequestBodyToTenantTenantSettings(body.Settings)
+	v := &tenant.UpdatePayload{
+		Name:  body.Name,
+		Email: body.Email,
 	}
 	v.ID = id
 
@@ -307,189 +95,6 @@ func BuildDeletePayload(tenantDeleteID string) (*tenant.DeletePayload, error) {
 	}
 	v := &tenant.DeletePayload{}
 	v.ID = id
-
-	return v, nil
-}
-
-// BuildProvisionPayload builds the payload for the tenant provision endpoint
-// from CLI flags.
-func BuildProvisionPayload(tenantProvisionBody string) (*tenant.ProvisionPayload, error) {
-	var err error
-	var body ProvisionRequestBody
-	{
-		err = json.Unmarshal([]byte(tenantProvisionBody), &body)
-		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"admin_email\": \"john.smith@acme.com\",\n      \"admin_first_name\": \"John\",\n      \"admin_last_name\": \"Smith\",\n      \"contact_email\": \"admin@acme.com\",\n      \"name\": \"Acme Corporation\",\n      \"subdomain\": \"acme-corp\"\n   }'")
-		}
-		if utf8.RuneCountInString(body.Name) < 2 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", body.Name, utf8.RuneCountInString(body.Name), 2, true))
-		}
-		if utf8.RuneCountInString(body.Name) > 255 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.name", body.Name, utf8.RuneCountInString(body.Name), 255, false))
-		}
-		err = goa.MergeErrors(err, goa.ValidatePattern("body.subdomain", body.Subdomain, "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"))
-		if utf8.RuneCountInString(body.Subdomain) < 2 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.subdomain", body.Subdomain, utf8.RuneCountInString(body.Subdomain), 2, true))
-		}
-		if utf8.RuneCountInString(body.Subdomain) > 63 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.subdomain", body.Subdomain, utf8.RuneCountInString(body.Subdomain), 63, false))
-		}
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.contact_email", body.ContactEmail, goa.FormatEmail))
-		err = goa.MergeErrors(err, goa.ValidateFormat("body.admin_email", body.AdminEmail, goa.FormatEmail))
-		if err != nil {
-			return nil, err
-		}
-	}
-	v := &tenant.ProvisionPayload{
-		Name:           body.Name,
-		Subdomain:      body.Subdomain,
-		ContactEmail:   body.ContactEmail,
-		AdminEmail:     body.AdminEmail,
-		AdminFirstName: body.AdminFirstName,
-		AdminLastName:  body.AdminLastName,
-	}
-
-	return v, nil
-}
-
-// BuildSuspendPayload builds the payload for the tenant suspend endpoint from
-// CLI flags.
-func BuildSuspendPayload(tenantSuspendBody string, tenantSuspendID string) (*tenant.SuspendPayload, error) {
-	var err error
-	var body SuspendRequestBody
-	{
-		err = json.Unmarshal([]byte(tenantSuspendBody), &body)
-		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"reason\": \"Non-payment of subscription fees\"\n   }'")
-		}
-		if utf8.RuneCountInString(body.Reason) < 10 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", body.Reason, utf8.RuneCountInString(body.Reason), 10, true))
-		}
-		if utf8.RuneCountInString(body.Reason) > 500 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", body.Reason, utf8.RuneCountInString(body.Reason), 500, false))
-		}
-		if err != nil {
-			return nil, err
-		}
-	}
-	var id string
-	{
-		id = tenantSuspendID
-		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
-		if err != nil {
-			return nil, err
-		}
-	}
-	v := &tenant.SuspendPayload{
-		Reason: body.Reason,
-	}
-	v.ID = id
-
-	return v, nil
-}
-
-// BuildReactivatePayload builds the payload for the tenant reactivate endpoint
-// from CLI flags.
-func BuildReactivatePayload(tenantReactivateBody string, tenantReactivateID string) (*tenant.ReactivatePayload, error) {
-	var err error
-	var body ReactivateRequestBody
-	{
-		err = json.Unmarshal([]byte(tenantReactivateBody), &body)
-		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"reason\": \"Payment received\"\n   }'")
-		}
-		if utf8.RuneCountInString(body.Reason) < 5 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", body.Reason, utf8.RuneCountInString(body.Reason), 5, true))
-		}
-		if utf8.RuneCountInString(body.Reason) > 500 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", body.Reason, utf8.RuneCountInString(body.Reason), 500, false))
-		}
-		if err != nil {
-			return nil, err
-		}
-	}
-	var id string
-	{
-		id = tenantReactivateID
-		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
-		if err != nil {
-			return nil, err
-		}
-	}
-	v := &tenant.ReactivatePayload{
-		Reason: body.Reason,
-	}
-	v.ID = id
-
-	return v, nil
-}
-
-// BuildUpdateConfigurationPayload builds the payload for the tenant
-// update_configuration endpoint from CLI flags.
-func BuildUpdateConfigurationPayload(tenantUpdateConfigurationBody string, tenantUpdateConfigurationID string) (*tenant.UpdateConfigurationPayload, error) {
-	var err error
-	var body UpdateConfigurationRequestBody
-	{
-		err = json.Unmarshal([]byte(tenantUpdateConfigurationBody), &body)
-		if err != nil {
-			return nil, fmt.Errorf("invalid JSON for body, \nerror: %s, \nexample of valid JSON:\n%s", err, "'{\n      \"max_api_calls_per_hour\": 5000,\n      \"max_storage_mb\": 10240,\n      \"max_users\": 100,\n      \"reason\": \"Upgrading to professional plan\"\n   }'")
-		}
-		if utf8.RuneCountInString(body.Reason) < 5 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", body.Reason, utf8.RuneCountInString(body.Reason), 5, true))
-		}
-		if utf8.RuneCountInString(body.Reason) > 500 {
-			err = goa.MergeErrors(err, goa.InvalidLengthError("body.reason", body.Reason, utf8.RuneCountInString(body.Reason), 500, false))
-		}
-		if err != nil {
-			return nil, err
-		}
-	}
-	var id string
-	{
-		id = tenantUpdateConfigurationID
-		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
-		if err != nil {
-			return nil, err
-		}
-	}
-	v := &tenant.UpdateConfigurationPayload{
-		MaxUsers:           body.MaxUsers,
-		MaxStorageMb:       body.MaxStorageMb,
-		MaxAPICallsPerHour: body.MaxAPICallsPerHour,
-		Reason:             body.Reason,
-	}
-	v.ID = id
-
-	return v, nil
-}
-
-// BuildGetUsageAnalyticsPayload builds the payload for the tenant
-// get_usage_analytics endpoint from CLI flags.
-func BuildGetUsageAnalyticsPayload(tenantGetUsageAnalyticsID string, tenantGetUsageAnalyticsPeriod string) (*tenant.GetUsageAnalyticsPayload, error) {
-	var err error
-	var id string
-	{
-		id = tenantGetUsageAnalyticsID
-		err = goa.MergeErrors(err, goa.ValidateFormat("id", id, goa.FormatUUID))
-		if err != nil {
-			return nil, err
-		}
-	}
-	var period string
-	{
-		if tenantGetUsageAnalyticsPeriod != "" {
-			period = tenantGetUsageAnalyticsPeriod
-			if !(period == "current_month" || period == "last_month" || period == "last_3_months" || period == "last_year") {
-				err = goa.MergeErrors(err, goa.InvalidEnumValueError("period", period, []any{"current_month", "last_month", "last_3_months", "last_year"}))
-			}
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	v := &tenant.GetUsageAnalyticsPayload{}
-	v.ID = id
-	v.Period = period
 
 	return v, nil
 }

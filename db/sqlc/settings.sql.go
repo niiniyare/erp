@@ -861,11 +861,11 @@ type ListTenantEffectiveConfigurationsParams struct {
 }
 
 type ListTenantEffectiveConfigurationsRow struct {
-	ConfigFullKey any `json:"config_full_key"`
-	ModuleName    string      `json:"module_name"`
-	ConfigKey     string      `json:"config_key"`
-	Value         any `json:"value"`
-	Source        string      `json:"source"`
+	ConfigFullKey any    `json:"config_full_key"`
+	ModuleName    string `json:"module_name"`
+	ConfigKey     string `json:"config_key"`
+	Value         any    `json:"value"`
+	Source        string `json:"source"`
 }
 
 func (q *Queries) ListTenantEffectiveConfigurations(ctx context.Context, arg ListTenantEffectiveConfigurationsParams) ([]*ListTenantEffectiveConfigurationsRow, error) {
@@ -968,22 +968,22 @@ type SearchConfigurationsParams struct {
 	SearchTerm     *string      `json:"search_term"`
 	SourcesFilter  []string     `json:"sources_filter"`
 	UpdatedAfter   sql.NullTime `json:"updated_after"`
-	SortBy         any  `json:"sort_by"`
+	SortBy         any          `json:"sort_by"`
 	OffsetCount    int32        `json:"offset_count"`
 	LimitCount     int32        `json:"limit_count"`
 	EntityIDFilter *uuid.UUID   `json:"entity_id_filter"`
 }
 
 type SearchConfigurationsRow struct {
-	ModuleName string      `json:"module_name"`
-	ConfigKey  string      `json:"config_key"`
-	FullKey    any `json:"full_key"`
-	Value      []byte      `json:"value"`
-	Source     string      `json:"source"`
-	TenantID   *uuid.UUID  `json:"tenant_id"`
-	EntityID   *uuid.UUID  `json:"entity_id"`
-	DataType   string      `json:"data_type"`
-	UpdatedAt  time.Time   `json:"updated_at"`
+	ModuleName string     `json:"module_name"`
+	ConfigKey  string     `json:"config_key"`
+	FullKey    any        `json:"full_key"`
+	Value      []byte     `json:"value"`
+	Source     string     `json:"source"`
+	TenantID   *uuid.UUID `json:"tenant_id"`
+	EntityID   *uuid.UUID `json:"entity_id"`
+	DataType   string     `json:"data_type"`
+	UpdatedAt  time.Time  `json:"updated_at"`
 }
 
 // ==========================================
