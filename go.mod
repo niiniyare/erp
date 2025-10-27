@@ -8,6 +8,7 @@ require (
 	github.com/exaring/otelpgx v0.9.3
 	github.com/expr-lang/expr v1.17.6
 	github.com/go-playground/validator/v10 v10.27.0
+	github.com/google/wire v0.6.0
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gofiber/fiber/v2 v2.52.9
 	github.com/golang-jwt/jwt/v5 v5.3.0

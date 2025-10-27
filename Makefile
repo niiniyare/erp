@@ -102,7 +102,7 @@ status: ## 📊 Show project status and configuration
 # ============================================================================
 
 .PHONY: generate
-generate: sqlc mock ## 🔄 Generate all code (SQLC, Mocks)
+generate: sqlc mock wire ## 🔄 Generate all code (SQLC, Mocks, Wire)
 
 # ============================================================================
 # 🏗️ Scaffolding & Code Generation
@@ -214,6 +214,24 @@ mock: ## 🎭 Generate mocks for interfaces
 	@echo "$(BLUE)Generating mocks...$(NC)"
 	@go generate ./...
 	@echo "$(GREEN)✅ Mocks generated$(NC)"
+
+.PHONY: wire-install
+wire-install: ## 📦 Install Google Wire
+	@echo "$(BLUE)Installing Google Wire...$(NC)"
+	@go install github.com/google/wire/cmd/wire@latest
+	@echo "$(GREEN)✅ Wire installed$(NC)"
+
+.PHONY: wire
+wire: ## ⚡ Generate Wire dependency injection code
+	@echo "$(BLUE)Generating Wire code...$(NC)"
+	@./scripts/generate-wire.sh
+	@echo "$(GREEN)✅ Wire generation complete$(NC)"
+
+.PHONY: wire-check
+wire-check: ## 🔍 Check if Wire files are up to date
+	@echo "$(BLUE)Checking Wire files...$(NC)"
+	@cd cmd/server && wire check
+	@echo "$(GREEN)✅ Wire files are up to date$(NC)"
 
 .PHONY: goa
 goa: ## 🎯 Generate Goa code
