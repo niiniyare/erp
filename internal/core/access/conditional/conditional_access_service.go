@@ -285,7 +285,7 @@ type ConditionalAccessService interface {
 
 // conditionalAccessService implements ConditionalAccessService
 type conditionalAccessService struct {
-	tracing      tracing.TracingService
+	tracing      tracing.Service
 	metrics      metrics.MetricsProvider
 	auditService AuditService
 	// TODO: Add conditional access repository when implemented
@@ -294,7 +294,7 @@ type conditionalAccessService struct {
 
 // NewConditionalAccessService creates a new conditional access service
 func NewConditionalAccessService(
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	auditService AuditService,
 ) ConditionalAccessService {

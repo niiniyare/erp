@@ -25,14 +25,14 @@ type SecurityValidationResult struct {
 type SecurityValidator struct {
 	logger  logger.Logger
 	metrics *metrics.MetricsService
-	tracing tracing.TracingService
+	tracing tracing.Service
 }
 
 // NewSecurityValidator creates a new security validation service
 func NewSecurityValidator(
 	logger logger.Logger,
 	metrics *metrics.MetricsService,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 ) *SecurityValidator {
 	return &SecurityValidator{
 		logger:  logger,

@@ -43,7 +43,7 @@ type financeService struct {
 	// Shared infrastructure
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewService creates a new unified Finance service instance
@@ -57,7 +57,7 @@ func NewService(
 	temporalClient client.Client,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) Service {
 	return &financeService{
 		accountService:          services.Account,

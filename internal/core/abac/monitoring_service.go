@@ -61,7 +61,7 @@ type monitoringService struct {
 
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewMonitoringService creates a new monitoring service instance
@@ -71,7 +71,7 @@ func NewMonitoringService(
 	attributeRepo repository.AttributeRepository,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) MonitoringService {
 	return &monitoringService{
 		policyRepo:      policyRepo,

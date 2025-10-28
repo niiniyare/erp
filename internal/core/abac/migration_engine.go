@@ -40,7 +40,7 @@ type migrationEngine struct {
 	attributeRepo repository.AttributeRepository
 	logger        logger.Logger
 	metrics       metrics.MetricsProvider
-	tracer        tracing.TracingService
+	tracer        tracing.Service
 }
 
 // NewMigrationEngine creates a new migration engine instance
@@ -49,7 +49,7 @@ func NewMigrationEngine(
 	attributeRepo repository.AttributeRepository,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) MigrationEngine {
 	return &migrationEngine{
 		policyRepo:    policyRepo,

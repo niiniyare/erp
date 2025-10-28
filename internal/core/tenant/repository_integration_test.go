@@ -20,53 +20,53 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-// MockTracingService implements the tracing.TracingService interface for testing
-type MockTracingService struct {
+// MockService implements the tracing.Service interface for testing
+type MockService struct {
 	mock.Mock
 }
 
-func (m *MockTracingService) StartSpan(ctx context.Context, name string, opts ...tracing.SpanOption) (context.Context, tracing.Span) {
+func (m *MockService) StartSpan(ctx context.Context, name string, opts ...tracing.SpanOption) (context.Context, tracing.Span) {
 	args := m.Called(ctx, name, opts)
 	return args.Get(0).(context.Context), args.Get(1).(tracing.Span)
 }
 
-func (m *MockTracingService) SpanFromContext(ctx context.Context) tracing.Span {
+func (m *MockService) SpanFromContext(ctx context.Context) tracing.Span {
 	args := m.Called(ctx)
 	return args.Get(0).(tracing.Span)
 }
 
-func (m *MockTracingService) InjectHTTPHeaders(ctx context.Context, headers http.Header) {
+func (m *MockService) InjectHTTPHeaders(ctx context.Context, headers http.Header) {
 	m.Called(ctx, headers)
 }
 
-func (m *MockTracingService) ExtractHTTPHeaders(ctx context.Context, headers http.Header) context.Context {
+func (m *MockService) ExtractHTTPHeaders(ctx context.Context, headers http.Header) context.Context {
 	args := m.Called(ctx, headers)
 	return args.Get(0).(context.Context)
 }
 
-func (m *MockTracingService) RecordError(ctx context.Context, err error, opts ...tracing.ErrorOption) {
+func (m *MockService) RecordError(ctx context.Context, err error, opts ...tracing.ErrorOption) {
 	m.Called(ctx, err, opts)
 }
 
-func (m *MockTracingService) AddEvent(ctx context.Context, name string, attrs ...attribute.KeyValue) {
+func (m *MockService) AddEvent(ctx context.Context, name string, attrs ...attribute.KeyValue) {
 	m.Called(ctx, name, attrs)
 }
 
-func (m *MockTracingService) SetAttributes(ctx context.Context, attrs ...attribute.KeyValue) {
+func (m *MockService) SetAttributes(ctx context.Context, attrs ...attribute.KeyValue) {
 	m.Called(ctx, attrs)
 }
 
-func (m *MockTracingService) GetTraceID(ctx context.Context) string {
+func (m *MockService) GetTraceID(ctx context.Context) string {
 	args := m.Called(ctx)
 	return args.String(0)
 }
 
-func (m *MockTracingService) GetSpanID(ctx context.Context) string {
+func (m *MockService) GetSpanID(ctx context.Context) string {
 	args := m.Called(ctx)
 	return args.String(0)
 }
 
-func (m *MockTracingService) Shutdown(ctx context.Context) error {
+func (m *MockService) Shutdown(ctx context.Context) error {
 	args := m.Called(ctx)
 	return args.Error(0)
 }
@@ -120,7 +120,7 @@ func TestRepositoryCompilation(t *testing.T) {
 	mockStore := db.NewMockStore(ctrl)
 
 	// Create a mock tracer for testing
-	mockTracer := new(MockTracingService)
+	mockTracer := new(MockService)
 	mockSpan := new(MockSpan)
 
 	// Setup basic mock expectations

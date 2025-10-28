@@ -240,7 +240,7 @@ type EntryConversionDetail struct {
 
 // exchangeRateEngine implements ExchangeRateEngine
 type exchangeRateEngine struct {
-	tracing              tracing.TracingService
+	tracing              tracing.Service
 	rateCache            *RateCache
 	externalProvider     ExternalRateProvider
 	defaultDecimalPlaces int32
@@ -250,7 +250,7 @@ type exchangeRateEngine struct {
 
 // ExchangeRateEngineDeps represents dependencies for the exchange rate engine
 type ExchangeRateEngineDeps struct {
-	Tracing              tracing.TracingService
+	Tracing              tracing.Service
 	ExternalProvider     ExternalRateProvider
 	DefaultDecimalPlaces *int32
 	DefaultRoundingMode  *RoundingMode

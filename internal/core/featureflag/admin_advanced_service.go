@@ -389,7 +389,7 @@ type adminAdvancedService struct {
 	// Infrastructure
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracing tracing.TracingService
+	tracing tracing.Service
 
 	// TODO: Add repositories for complex rules, experiments, etc.
 	// complexRuleRepository     ComplexRuleRepository
@@ -404,7 +404,7 @@ func NewAdminAdvancedService(
 	conditionalAccessService conditional.ConditionalAccessService,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 ) AdminAdvancedService {
 	return &adminAdvancedService{
 		adminService:             adminService,

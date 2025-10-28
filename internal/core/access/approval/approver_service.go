@@ -46,7 +46,7 @@ type ApproverService interface {
 // approverService implements ApproverService
 type approverService struct {
 	userService UserService
-	tracing     tracing.TracingService
+	tracing     tracing.Service
 	metrics     metrics.MetricsProvider
 	// TODO: Add approval rules repository when implemented
 	// approvalRulesRepo ApprovalRulesRepository
@@ -55,7 +55,7 @@ type approverService struct {
 // NewApproverService creates a new approver service
 func NewApproverService(
 	userService UserService,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 ) ApproverService {
 	return &approverService{

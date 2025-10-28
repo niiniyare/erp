@@ -49,7 +49,7 @@ type adminServiceImpl struct {
 	auditService audit.Service
 	logger       logger.Logger
 	metrics      *metrics.MetricsService
-	tracing      tracing.TracingService
+	tracing      tracing.Service
 	cacheWarmup  *CacheWarmer
 }
 
@@ -59,7 +59,7 @@ func NewAdminService(
 	auditService audit.Service,
 	logger logger.Logger,
 	metrics *metrics.MetricsService,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	cacheWarmup *CacheWarmer,
 ) AdminService {
 	return &adminServiceImpl{

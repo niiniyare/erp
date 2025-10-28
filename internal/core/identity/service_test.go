@@ -28,7 +28,7 @@ type IdentityServiceTestSuite struct {
 	service    Service
 	mockRepo   *MockRepository
 	mockCache  *cache.MockService
-	mockTracer *tracing.MockTracingService
+	mockTracer *tracing.MockService
 	mockMetric *metrics.MockMetricsService
 }
 
@@ -36,7 +36,7 @@ func (s *IdentityServiceTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.mockRepo = NewMockRepository(s.ctrl)
 	s.mockCache = cache.NewMockService(s.ctrl)
-	s.mockTracer = tracing.NewMockTracingService()
+	s.mockTracer = tracing.NewMockService()
 	s.mockMetric = metrics.NewMockMetricsService()
 
 	s.service = NewService(s.mockRepo, s.mockCache, s.mockTracer, s.mockMetric)

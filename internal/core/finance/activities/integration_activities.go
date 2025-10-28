@@ -30,7 +30,7 @@ type IntegrationActivities struct {
 	cacheService       cache.Service
 	logger             logger.Logger
 	metrics            metrics.MetricsProvider
-	tracer             tracing.TracingService
+	tracer             tracing.Service
 }
 
 // IntegrationActivityDeps contains dependencies for integration activities
@@ -42,7 +42,7 @@ type IntegrationActivityDeps struct {
 	CacheService       cache.Service
 	Logger             logger.Logger
 	Metrics            metrics.MetricsProvider
-	Tracer             tracing.TracingService
+	Tracer             tracing.Service
 }
 
 // NewIntegrationActivities creates a new integration activities instance

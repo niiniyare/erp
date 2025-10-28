@@ -45,7 +45,7 @@ type configurationService struct {
 	repo         repository.ConfigurationRepository
 	auditService audit.Service
 	logger       logger.Logger
-	tracing      tracing.TracingService
+	tracing      tracing.Service
 	metrics      metrics.MetricsProvider
 }
 
@@ -54,7 +54,7 @@ func NewConfigurationService(
 	repo repository.ConfigurationRepository,
 	auditService audit.Service,
 	logger logger.Logger,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 ) ConfigurationService {
 	return &configurationService{

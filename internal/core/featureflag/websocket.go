@@ -95,7 +95,7 @@ type ConnectionStats struct {
 // webSocketService implements WebSocketService
 type webSocketService struct {
 	store       db.Store
-	tracing     tracing.TracingService
+	tracing     tracing.Service
 	metrics     metrics.MetricsProvider
 	connections map[uuid.UUID]*WebSocketConnection
 	tenantConns map[uuid.UUID][]*WebSocketConnection
@@ -111,7 +111,7 @@ type webSocketService struct {
 // NewWebSocketService creates a new WebSocket service
 func NewWebSocketService(
 	store db.Store,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 ) WebSocketService {
 	return &webSocketService{

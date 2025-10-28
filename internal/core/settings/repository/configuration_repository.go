@@ -65,7 +65,7 @@ type ConfigurationRepository interface {
 type configurationRepository struct {
 	store   db.Store
 	cache   cache.Service
-	tracing tracing.TracingService
+	tracing tracing.Service
 	metrics metrics.MetricsProvider
 }
 
@@ -73,7 +73,7 @@ type configurationRepository struct {
 func NewConfigurationRepository(
 	store db.Store,
 	cache cache.Service,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 ) ConfigurationRepository {
 	return &configurationRepository{

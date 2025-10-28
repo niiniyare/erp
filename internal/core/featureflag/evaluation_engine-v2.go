@@ -129,7 +129,7 @@ type TimeContext struct {
 // 	simpleService            Service
 // 	logger                   logger.Logger
 // 	metrics                  metrics.MetricsProvider
-// 	tracing                  tracing.TracingService
+// 	tracing                  tracing.Service
 // }
 
 // evaluateRule placeholder - implement this method based on your actual logic
@@ -693,7 +693,7 @@ func NewEnhancedAdvancedEvaluationEngine(
 	simpleService Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	defaultEngine EngineType,
 ) (*EnhancedAdvancedEvaluationEngine, error) {
 	// Create original implementation

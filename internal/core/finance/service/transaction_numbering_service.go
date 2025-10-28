@@ -95,12 +95,12 @@ type transactionNumberingService struct {
 	rules        map[string]*NumberingRule // In-memory storage for demo
 	reservations map[string]*NumberReservation
 	mutex        sync.RWMutex
-	tracing      tracing.TracingService
+	tracing      tracing.Service
 }
 
 // Dependencies for TransactionNumberingService
 type TransactionNumberingServiceDeps struct {
-	Tracing tracing.TracingService
+	Tracing tracing.Service
 	// In production, add:
 	// NumberingRuleRepository domain.NumberingRuleRepository
 	// ReservationRepository domain.ReservationRepository

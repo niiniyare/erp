@@ -411,13 +411,13 @@ type NextAction struct {
 // transactionWorkflowEngine implements TransactionWorkflowEngine
 type transactionWorkflowEngine struct {
 	transactionRepository domain.TransactionRepository
-	tracing               tracing.TracingService
+	tracing               tracing.Service
 }
 
 // TransactionWorkflowEngineDeps represents dependencies for the workflow engine
 type TransactionWorkflowEngineDeps struct {
 	TransactionRepository domain.TransactionRepository
-	Tracing               tracing.TracingService
+	Tracing               tracing.Service
 }
 
 // NewTransactionWorkflowEngine creates a new transaction workflow engine

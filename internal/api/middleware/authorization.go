@@ -69,7 +69,7 @@ type AuthorizationMiddleware struct {
 	config     AuthorizationConfig
 	logger     logger.Logger
 	metrics    metrics.MetricsProvider
-	tracer     tracing.TracingService
+	tracer     tracing.Service
 }
 
 // NewAuthorizationMiddleware creates a new authorization middleware
@@ -78,7 +78,7 @@ func NewAuthorizationMiddleware(
 	config AuthorizationConfig,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) *AuthorizationMiddleware {
 	return &AuthorizationMiddleware{
 		iamService: iamService,

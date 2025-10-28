@@ -199,7 +199,7 @@ type externalAttributeSourceManager struct {
 
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 	mutex   sync.RWMutex
 }
 
@@ -208,7 +208,7 @@ func NewExternalAttributeSourceManager(
 	sourceRepo repository.AttributeSourceRepository,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) ExternalAttributeSourceManager {
 	return &externalAttributeSourceManager{
 		sourceRepo:        sourceRepo,

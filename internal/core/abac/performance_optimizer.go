@@ -66,7 +66,7 @@ type performanceOptimizer struct {
 
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewPerformanceOptimizer creates a new performance optimizer instance
@@ -76,7 +76,7 @@ func NewPerformanceOptimizer(
 	attributeRepo repository.AttributeRepository,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) PerformanceOptimizer {
 	return &performanceOptimizer{
 		policyRepo:       policyRepo,

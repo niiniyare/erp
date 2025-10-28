@@ -35,7 +35,7 @@ type TransactionActivities struct {
 	cacheService            cache.Service
 	logger                  logger.Logger
 	metrics                 metrics.MetricsProvider
-	tracer                  tracing.TracingService
+	tracer                  tracing.Service
 }
 
 // TransactionActivityDeps contains dependencies for transaction activities
@@ -50,7 +50,7 @@ type TransactionActivityDeps struct {
 	CacheService            cache.Service
 	Logger                  logger.Logger
 	Metrics                 metrics.MetricsProvider
-	Tracer                  tracing.TracingService
+	Tracer                  tracing.Service
 }
 
 // NewTransactionActivities creates a new transaction activities instance

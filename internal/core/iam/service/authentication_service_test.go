@@ -29,7 +29,7 @@ type AuthenticationServiceTestSuite struct {
 	mockPersons *repo.MockPersonRepository
 	mockLogger  *logger.MockLogger
 	mockMetrics *metrics.MockMetricsProvider
-	mockTracer  *tracing.MockTracingService
+	mockTracer  *tracing.MockService
 	service     authn.Service
 	tenantID    uuid.UUID
 	userID      uuid.UUID
@@ -45,7 +45,7 @@ func (s *AuthenticationServiceTestSuite) SetupTest() {
 	s.mockPersons = repo.NewMockPersonRepository(s.ctrl)
 	s.mockLogger = logger.NewMockLogger(s.ctrl)
 	s.mockMetrics = metrics.NewMockMetricsProvider(s.ctrl)
-	s.mockTracer = tracing.NewMockTracingService(s.ctrl)
+	s.mockTracer = tracing.NewMockService(s.ctrl)
 	s.tenantID = uuid.New()
 	s.userID = uuid.New()
 	s.personID = uuid.New()

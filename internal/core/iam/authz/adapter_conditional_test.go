@@ -24,7 +24,7 @@ type ConditionalAccessTestSuite struct {
 	mockAccess   *access.MockService
 	mockLogger   *logger.MockLogger
 	mockMetrics  *metrics.MockMetricsProvider
-	mockTracer   *tracing.MockTracingService
+	mockTracer   *tracing.MockService
 	mockSpan     *tracing.MockSpan
 	adapter      Service
 	ctx          context.Context
@@ -41,7 +41,7 @@ func (s *ConditionalAccessTestSuite) SetupTest() {
 	s.mockAccess = access.NewMockService(s.ctrl)
 	s.mockLogger = logger.NewMockLogger(s.ctrl)
 	s.mockMetrics = metrics.NewMockMetricsProvider(s.ctrl)
-	s.mockTracer = tracing.NewMockTracingService(s.ctrl)
+	s.mockTracer = tracing.NewMockService(s.ctrl)
 	s.mockSpan = tracing.NewMockSpan(s.ctrl)
 
 	// Setup common mock expectations

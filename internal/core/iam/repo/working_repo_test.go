@@ -26,7 +26,7 @@ type WorkingRepositoryTestSuite struct {
 	mockStore   *db.MockStore
 	mockLogger  *logger.MockLogger
 	mockMetrics *metrics.MockMetricsProvider
-	mockTracer  *tracing.MockTracingService
+	mockTracer  *tracing.MockService
 	repository  IAMRepository
 }
 
@@ -37,7 +37,7 @@ func (s *WorkingRepositoryTestSuite) SetupTest() {
 	s.mockStore = db.NewMockStore(s.ctrl)
 	s.mockLogger = logger.NewMockLogger(s.ctrl)
 	s.mockMetrics = metrics.NewMockMetricsProvider(s.ctrl)
-	s.mockTracer = tracing.NewMockTracingService(s.ctrl)
+	s.mockTracer = tracing.NewMockService(s.ctrl)
 
 	// Set up tracing mocks to prevent panics
 	mockSpan := tracing.NewMockSpan(s.ctrl)

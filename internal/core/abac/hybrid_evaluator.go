@@ -26,7 +26,7 @@ type hybridEvaluator struct {
 	evaluationRepo repository.PolicyEvaluationRepository
 	logger         logger.Logger
 	metrics        metrics.MetricsProvider
-	tracer         tracing.TracingService
+	tracer         tracing.Service
 }
 
 // NewHybridEvaluator creates a new hybrid evaluator instance
@@ -36,7 +36,7 @@ func NewHybridEvaluator(
 	evaluationRepo repository.PolicyEvaluationRepository,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) HybridEvaluator {
 	return &hybridEvaluator{
 		policyRepo:     policyRepo,

@@ -29,7 +29,7 @@ func TestNewAdapter(t *testing.T) {
 	mockAccess := access.NewMockService(ctrl)
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 
 	// Test adapter creation
 	adapter := NewAdapter(mockABAC, mockAccess, mockLogger, mockMetrics, mockTracer)
@@ -45,7 +45,7 @@ func TestEvaluatePermission_Success(t *testing.T) {
 	mockAccess := access.NewMockService(ctrl)
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 
 	// Setup common mock expectations
 	mockSpan := tracing.NewMockSpan(ctrl)
@@ -113,7 +113,7 @@ func TestEvaluatePermission_Error(t *testing.T) {
 	mockAccess := access.NewMockService(ctrl)
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 
 	// Setup common mock expectations
 	mockSpan := tracing.NewMockSpan(ctrl)
@@ -161,7 +161,7 @@ func TestGetUserEffectivePermissions_Success(t *testing.T) {
 	mockAccess := access.NewMockService(ctrl)
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 
 	// Setup common mock expectations
 	mockSpan := tracing.NewMockSpan(ctrl)
@@ -215,7 +215,7 @@ func TestInvalidateUserCache_Success(t *testing.T) {
 	mockAccess := access.NewMockService(ctrl)
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 
 	// Setup common mock expectations
 	mockSpan := tracing.NewMockSpan(ctrl)

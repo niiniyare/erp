@@ -19,11 +19,11 @@ import (
 type PermissionCacheService struct {
 	cache   cache.Service
 	metrics metrics.MetricsProvider
-	tracing tracing.TracingService
+	tracing tracing.Service
 }
 
 // NewPermissionCacheService creates a new permission cache service
-func NewPermissionCacheService(cache cache.Service, metrics metrics.MetricsProvider, tracing tracing.TracingService) *PermissionCacheService {
+func NewPermissionCacheService(cache cache.Service, metrics metrics.MetricsProvider, tracing tracing.Service) *PermissionCacheService {
 	return &PermissionCacheService{
 		cache:   cache,
 		metrics: metrics,

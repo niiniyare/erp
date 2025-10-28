@@ -27,7 +27,7 @@ type adapter struct {
 	// Infrastructure
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewAdapter creates a new authorization service adapter
@@ -36,7 +36,7 @@ func NewAdapter(
 	accessService access.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) Service {
 	return &adapter{
 		abacService:   abacService,

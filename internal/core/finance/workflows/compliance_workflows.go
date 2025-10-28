@@ -34,7 +34,7 @@ type ComplianceWorkflowDeps struct {
 	CacheService        cache.Service
 	Logger              loggerPkg.Logger
 	Metrics             metrics.MetricsProvider
-	Tracer              tracing.TracingService
+	Tracer              tracing.Service
 }
 
 // NewComplianceWorkflows creates new compliance workflows

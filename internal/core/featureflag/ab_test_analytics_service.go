@@ -442,7 +442,7 @@ type abTestAnalyticsService struct {
 	auditService audit.Service
 	logger       logger.Logger
 	metrics      metrics.MetricsProvider
-	tracing      tracing.TracingService
+	tracing      tracing.Service
 }
 
 // NewABTestAnalyticsService creates a new A/B test analytics service
@@ -450,7 +450,7 @@ func NewABTestAnalyticsService(
 	auditService audit.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 ) ABTestAnalyticsService {
 	return &abTestAnalyticsService{
 		auditService: auditService,

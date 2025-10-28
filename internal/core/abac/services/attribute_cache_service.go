@@ -115,7 +115,7 @@ func NewCacheKeyBuilder(tenantID uuid.UUID) *CacheKeyBuilder {
 // attributeCacheService implements AttributeCacheService
 type attributeCacheService struct {
 	cache   cache.Service
-	tracing tracing.TracingService
+	tracing tracing.Service
 	metrics metrics.MetricsProvider
 	logger  logger.Logger
 }
@@ -123,7 +123,7 @@ type attributeCacheService struct {
 // NewAttributeCacheService creates a new attribute cache service
 func NewAttributeCacheService(
 	cache cache.Service,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	logger logger.Logger,
 ) AttributeCacheService {

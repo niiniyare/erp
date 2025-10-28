@@ -14,7 +14,7 @@ type iamRepository struct {
 	store   db.Store
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 
 	// Repository implementations
 	userRepo        UserRepository
@@ -39,7 +39,7 @@ func NewIAMRepository(
 	store db.Store,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) IAMRepository {
 	repo := &iamRepository{
 		store:   store,

@@ -54,7 +54,7 @@ type attributeCollector struct {
 	healthMonitor *SourceHealthMonitor
 	logger        logger.Logger
 	metrics       metrics.MetricsProvider
-	tracer        tracing.TracingService
+	tracer        tracing.Service
 	mutex         sync.RWMutex
 }
 
@@ -64,7 +64,7 @@ func NewAttributeCollector(
 	sourceRepo repository.AttributeSourceRepository,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) AttributeCollector {
 	return &attributeCollector{
 		attributeRepo: attributeRepo,

@@ -21,7 +21,7 @@ type CachedFeatureFlagService struct {
 	cache   cache.Service
 	logger  logger.Logger
 	metrics *metrics.MetricsService
-	tracing tracing.TracingService
+	tracing tracing.Service
 }
 
 // NewCachedFeatureFlagService creates a new cached feature flag service
@@ -30,7 +30,7 @@ func NewCachedFeatureFlagService(
 	cache cache.Service,
 	logger logger.Logger,
 	metrics *metrics.MetricsService,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 ) Service {
 	return &CachedFeatureFlagService{
 		service: service,

@@ -70,7 +70,7 @@ type attributeCollectionService struct {
 	attrRepo     repository.AttributeRepository
 	identityRepo identity.Repository
 	cache        cache.Service
-	tracing      tracing.TracingService
+	tracing      tracing.Service
 	metrics      metrics.MetricsProvider
 	logger       logger.Logger
 }
@@ -81,7 +81,7 @@ func NewAttributeCollectionService(
 	attrRepo repository.AttributeRepository,
 	identityRepo identity.Repository,
 	cache cache.Service,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	logger logger.Logger,
 ) AttributeCollectionService {

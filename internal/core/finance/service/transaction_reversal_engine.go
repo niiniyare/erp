@@ -196,7 +196,7 @@ type transactionReversalEngine struct {
 	numberingService      TransactionNumberingService
 	postingEngine         TransactionPostingEngine
 	validator             DoubleEntryValidator
-	tracing               tracing.TracingService
+	tracing               tracing.Service
 }
 
 // TransactionReversalEngineDeps represents dependencies for the reversal engine
@@ -205,7 +205,7 @@ type TransactionReversalEngineDeps struct {
 	NumberingService      TransactionNumberingService
 	PostingEngine         TransactionPostingEngine
 	Validator             DoubleEntryValidator
-	Tracing               tracing.TracingService
+	Tracing               tracing.Service
 }
 
 // NewTransactionReversalEngine creates a new transaction reversal engine

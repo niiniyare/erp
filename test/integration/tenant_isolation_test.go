@@ -33,7 +33,7 @@ func TestTenantIsolation(t *testing.T) {
 
 	// Create test dependencies
 	store := db.NewStore(pool)
-	tracer := tracing.NewNoOpTracingService()
+	tracer := tracing.NewNoOpService()
 	cacheService := cache.NewMockService(nil)
 	
 	repo := tenant.NewRepository(store, tracer)

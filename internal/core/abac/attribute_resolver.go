@@ -64,7 +64,7 @@ type attributeResolver struct {
 
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewAttributeResolver creates a new attribute resolver instance
@@ -73,7 +73,7 @@ func NewAttributeResolver(
 	collectionService AttributeCollector,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) AttributeResolver {
 	return &attributeResolver{
 		attributeRepo:     attributeRepo,

@@ -40,7 +40,7 @@ type service struct {
 	// Shared infrastructure
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewService creates a new unified IAM service instance
@@ -55,7 +55,7 @@ func NewService(
 	cache cache.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) Service {
 	return &service{
 		authnService:       authnService,

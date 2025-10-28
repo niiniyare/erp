@@ -18,10 +18,10 @@ import (
 
 type transactionRepository struct {
 	store   db.Store
-	tracing tracing.TracingService
+	tracing tracing.Service
 }
 
-func NewTransactionRepository(store db.Store, tracing tracing.TracingService) domain.TransactionRepository {
+func NewTransactionRepository(store db.Store, tracing tracing.Service) domain.TransactionRepository {
 	return &transactionRepository{
 		store:   store,
 		tracing: tracing,

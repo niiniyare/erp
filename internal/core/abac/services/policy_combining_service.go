@@ -203,14 +203,14 @@ const (
 
 // policyCombiningService implements PolicyCombiningService
 type policyCombiningService struct {
-	tracing tracing.TracingService
+	tracing tracing.Service
 	metrics metrics.MetricsProvider
 	logger  logger.Logger
 }
 
 // NewPolicyCombiningService creates a new policy combining service
 func NewPolicyCombiningService(
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	logger logger.Logger,
 ) PolicyCombiningService {

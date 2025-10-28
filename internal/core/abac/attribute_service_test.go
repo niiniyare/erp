@@ -42,7 +42,7 @@ func TestAttributeService(t *testing.T) {
 		mockRepo := repository.NewMockAttributeRepository(ctrl)
 		mockLogger := logger.WithFields(logger.Fields{})
 		mockMetrics := &metrics.MetricsService{}
-		mockTracer := tracing.NewMockTracingService(ctrl)
+		mockTracer := tracing.NewMockService(ctrl)
 
 		mockTracer.EXPECT().StartSpan(gomock.Any(), "abac.attribute_service.CreateAttributeDefinition").Return(context.Background(), &NoOpSpan{}).AnyTimes()
 
@@ -123,7 +123,7 @@ func TestAttributeService(t *testing.T) {
 		mockRepo := repository.NewMockAttributeRepository(ctrl)
 		mockLogger := logger.WithFields(logger.Fields{})
 		mockMetrics := &metrics.MetricsService{}
-		mockTracer := tracing.NewMockTracingService(ctrl)
+		mockTracer := tracing.NewMockService(ctrl)
 
 		mockTracer.EXPECT().StartSpan(gomock.Any(), "abac.attribute_service.CreateAttributeDefinition").Return(context.Background(), &NoOpSpan{}).AnyTimes()
 
@@ -160,7 +160,7 @@ func TestAttributeService(t *testing.T) {
 		mockRepo := repository.NewMockAttributeRepository(ctrl)
 		mockLogger := logger.WithFields(logger.Fields{})
 		mockMetrics := &metrics.MetricsService{}
-		mockTracer := tracing.NewMockTracingService(ctrl)
+		mockTracer := tracing.NewMockService(ctrl)
 
 		mockTracer.EXPECT().StartSpan(gomock.Any(), "abac.attribute_service.ValidateAttributeValue").Return(context.Background(), &NoOpSpan{}).AnyTimes()
 
@@ -197,7 +197,7 @@ func TestAttributeService(t *testing.T) {
 		mockRepo := repository.NewMockAttributeRepository(ctrl)
 		mockLogger := logger.WithFields(logger.Fields{})
 		mockMetrics := &metrics.MetricsService{}
-		mockTracer := tracing.NewMockTracingService(ctrl)
+		mockTracer := tracing.NewMockService(ctrl)
 
 		mockTracer.EXPECT().StartSpan(gomock.Any(), "abac.attribute_service.ValidateAttributeValue").Return(context.Background(), &NoOpSpan{}).AnyTimes()
 

@@ -77,7 +77,7 @@ type ValidationContext struct {
 // attributeValidationService implements AttributeValidationService
 type attributeValidationService struct {
 	attrDefRepo repository.AttributeDefinitionRepository
-	tracing     tracing.TracingService
+	tracing     tracing.Service
 	metrics     metrics.MetricsProvider
 	logger      logger.Logger
 }
@@ -85,7 +85,7 @@ type attributeValidationService struct {
 // NewAttributeValidationService creates a new attribute validation service
 func NewAttributeValidationService(
 	attrDefRepo repository.AttributeDefinitionRepository,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	logger logger.Logger,
 ) AttributeValidationService {

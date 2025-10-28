@@ -25,7 +25,7 @@ type ValidationActivities struct {
 	settingsService    settingsService.ConfigurationService
 	logger             logger.Logger
 	metrics            metrics.MetricsProvider
-	tracer             tracing.TracingService
+	tracer             tracing.Service
 }
 
 // ValidationActivityDeps contains dependencies for validation activities
@@ -36,7 +36,7 @@ type ValidationActivityDeps struct {
 	SettingsService    settingsService.ConfigurationService
 	Logger             logger.Logger
 	Metrics            metrics.MetricsProvider
-	Tracer             tracing.TracingService
+	Tracer             tracing.Service
 }
 
 // NewValidationActivities creates a new validation activities instance

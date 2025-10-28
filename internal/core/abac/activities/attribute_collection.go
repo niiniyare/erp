@@ -27,7 +27,7 @@ type AttributeCollectionActivities struct {
 	tenantService   tenant.Service
 	logger          logger.Logger
 	metrics         metrics.MetricsProvider
-	tracer          tracing.TracingService
+	tracer          tracing.Service
 }
 
 // NewAttributeCollectionActivities creates a new AttributeCollectionActivities instance
@@ -37,7 +37,7 @@ func NewAttributeCollectionActivities(
 	tenantService tenant.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) *AttributeCollectionActivities {
 	return &AttributeCollectionActivities{
 		attributeRepo:   attributeRepo,

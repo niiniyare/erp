@@ -569,7 +569,7 @@ func (s *provisioningService) notifyTenantUsers(ctx context.Context, tenantID uu
 	return nil
 }
 
-func (s *provisioningService) getTracer() tracing.TracingService {
+func (s *provisioningService) getTracer() tracing.Service {
 	// This assumes the embedded Service has access to the tracer
 	// You may need to adjust this based on your actual service structure
 	if basicService, ok := s.Service.(*service); ok {

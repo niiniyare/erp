@@ -149,6 +149,18 @@ const (
 	ProtocolStdout Protocol = "stdout"
 )
 
+// ExporterType specifies the type of trace exporter.
+type ExporterType string
+
+const (
+	// GRPCExporter uses gRPC for trace export.
+	GRPCExporter ExporterType = "grpc"
+	// HTTPExporter uses HTTP/protobuf for trace export.
+	HTTPExporter ExporterType = "http"
+	// StdoutExporter writes traces to stdout (useful for development).
+	StdoutExporter ExporterType = "stdout"
+)
+
 // Config holds configuration for the tracing service.
 type Config struct {
 	// ServiceName identifies the service in traces (required).
@@ -166,6 +178,9 @@ type Config struct {
 	// Protocol specifies the transport protocol (grpc, http, stdout).
 	Protocol Protocol
 
+	// ExporterType specifies the type of trace exporter.
+	ExporterType ExporterType
+
 	// Insecure disables TLS for the connection.
 	Insecure bool
 
@@ -174,6 +189,9 @@ type Config struct {
 
 	// SamplingRate determines the percentage of traces to sample (0.0 to 1.0).
 	SamplingRate float64
+
+	// SamplingRatio is an alias for SamplingRate for backward compatibility.
+	SamplingRatio float64
 
 	// Enabled controls whether tracing is active.
 	// When false, all operations become no-ops.
@@ -199,7 +217,8 @@ func (c *Config) Validate() error {
 		return ErrEmptyServiceName
 	}
 
-	if c.SamplingRate < 0.0 || c.SamplingRate > 1.0 {
+	samplingRate := c.getSamplingRate()
+	if samplingRate < 0.0 || samplingRate > 1.0 {
 		return ErrInvalidSamplingRate
 	}
 
@@ -220,6 +239,14 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
+}
+
+// getSamplingRate returns the effective sampling rate, preferring SamplingRatio over SamplingRate for backward compatibility.
+func (c *Config) getSamplingRate() float64 {
+	if c.SamplingRatio > 0 {
+		return c.SamplingRatio
+	}
+	return c.SamplingRate
 }
 
 // DefaultConfig returns a configuration with sensible defaults.
@@ -270,7 +297,7 @@ func NewService(cfg Config) (Service, error) {
 
 	provider := sdktrace.NewTracerProvider(
 		sdktrace.WithResource(res),
-		sdktrace.WithSampler(sdktrace.TraceIDRatioBased(cfg.SamplingRate)),
+		sdktrace.WithSampler(sdktrace.TraceIDRatioBased(cfg.getSamplingRate())),
 		sdktrace.WithBatcher(
 			exporter,
 			sdktrace.WithBatchTimeout(cfg.BatchTimeout),
@@ -718,21 +745,29 @@ func createResource(cfg Config) (*resource.Resource, error) {
 	)
 }
 
-// createExporter creates an OpenTelemetry span exporter based on the protocol.
+// createExporter creates an OpenTelemetry span exporter based on the protocol or exporter type.
 func createExporter(cfg Config) (sdktrace.SpanExporter, error) {
-	switch cfg.Protocol {
-	case ProtocolGRPC:
+	// Use ExporterType if provided, otherwise fall back to Protocol
+	var exporterType string
+	if cfg.ExporterType != "" {
+		exporterType = string(cfg.ExporterType)
+	} else {
+		exporterType = string(cfg.Protocol)
+	}
+
+	switch exporterType {
+	case "grpc":
 		return createGRPCExporter(cfg)
-	case ProtocolHTTP:
+	case "http":
 		return createHTTPExporter(cfg)
-	case ProtocolStdout:
+	case "stdout":
 		// Check if we should suppress output for integration tests
 		if os.Getenv("INTEGRATION_TEST_QUIET") == "true" {
 			return stdouttrace.New(stdouttrace.WithWriter(io.Discard))
 		}
 		return stdouttrace.New(stdouttrace.WithPrettyPrint())
 	default:
-		return nil, fmt.Errorf("%w: %s", ErrUnsupportedProtocol, cfg.Protocol)
+		return nil, fmt.Errorf("%w: %s", ErrUnsupportedProtocol, exporterType)
 	}
 }
 

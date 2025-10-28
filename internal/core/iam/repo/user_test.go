@@ -35,7 +35,7 @@ func (s *UserRepositoryTestSuite) SetupTest() {
 	ctrl := gomock.NewController(s.T())
 	logger := logger.NewMockLogger(ctrl)
 	metric := metrics.NewMockMetricsProvider(ctrl)
-	tracing := tracing.NewMockTracingService(ctrl)
+	tracing := tracing.NewMockService(ctrl)
 	s.repo = NewUserRepository(s.store, logger, metric, tracing)
 }
 

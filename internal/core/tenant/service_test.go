@@ -20,7 +20,7 @@ type ServiceTestSuite struct {
 	service Service
 	repo    *MockRepository
 	cache   *cache.MockService // Corrected mock name
-	tracer  *tracing.MockTracingService
+	tracer  *tracing.MockService
 	ctx     context.Context
 }
 
@@ -29,7 +29,7 @@ func (s *ServiceTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.repo = NewMockRepository(s.ctrl)
 	s.cache = cache.NewMockService(s.ctrl) // Corrected constructor
-	s.tracer = tracing.NewMockTracingService(s.ctrl)
+	s.tracer = tracing.NewMockService(s.ctrl)
 
 	// Mock the tracer to return a mock span
 	mockSpan := tracing.NewMockSpan(s.ctrl)

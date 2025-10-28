@@ -41,7 +41,7 @@ type ActivityDependencies struct {
 	// Infrastructure
 	Logger  logger.Logger
 	Metrics metrics.MetricsProvider
-	Tracer  tracing.TracingService
+	Tracer  tracing.Service
 }
 
 // NewActivityRegistry creates a new activity registry with all dependencies

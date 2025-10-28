@@ -44,7 +44,7 @@ type temporalService struct {
 	workflowClient *worker.WorkflowClient
 	logger         logger.Logger
 	metrics        metrics.MetricsProvider
-	tracer         tracing.TracingService
+	tracer         tracing.Service
 }
 
 // NewTemporalService creates a new ABAC service with Temporal capabilities
@@ -53,7 +53,7 @@ func NewTemporalService(
 	workflowClient *worker.WorkflowClient,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) TemporalService {
 	return &temporalService{
 		Service:        baseService,

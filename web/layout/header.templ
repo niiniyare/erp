@@ -378,12 +378,14 @@ templ HeaderUserMenu(user User, menuItems []HeaderAction) {
 				Class:   "h-auto p-2",
 			}) {
 				<div class="flex items-center space-x-2">
-					@avatar.Avatar(avatar.Props{
-						Src: user.Avatar,
-						Alt: user.Name,
-						Size: avatar.SizeSm,
-					}) {
-						{ string(rune(user.Name[0])) }
+					@avatar.Avatar() {
+						@avatar.Image(avatar.ImageProps{
+							Src: user.Avatar,
+							Alt: user.Name,
+						})
+						@avatar.Fallback() {
+							{ string(rune(user.Name[0])) }
+						}
 					}
 					<div class="hidden md:block text-left">
 						<p class="text-sm font-medium">{ user.Name }</p>

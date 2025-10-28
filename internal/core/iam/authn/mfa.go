@@ -63,7 +63,7 @@ type mfaService struct {
 	// Infrastructure
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewMFAService creates a new MFA service instance with authentication support
@@ -75,7 +75,7 @@ func NewMFAService(
 	issuerName, accountName string,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) MFAService {
 	return &mfaService{
 		userRepo:        userRepo,

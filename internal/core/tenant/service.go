@@ -11,6 +11,7 @@ import (
 	"github.com/niiniyare/erp/internal/platform/cache"
 	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
+	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -56,11 +57,11 @@ type Service interface {
 type service struct {
 	repo   Repository
 	cache  cache.Service
-	tracer tracing.TracingService
+	tracer tracing.Service
 }
 
 // NewService creates a new tenant service
-func NewService(repo Repository, cache cache.Service, tracer tracing.TracingService) Service {
+func NewService(repo Repository, cache cache.Service, tracer tracing.Service) Service {
 	return &service{
 		repo:   repo,
 		cache:  cache,

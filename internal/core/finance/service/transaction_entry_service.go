@@ -36,14 +36,14 @@ type TransactionEntryService interface {
 type transactionEntryService struct {
 	repo        domain.TransactionRepository
 	accountRepo domain.AccountsRepository
-	tracing     tracing.TracingService
+	tracing     tracing.Service
 	metrics     metrics.MetricsProvider
 }
 
 func NewTransactionEntryService(
 	repo domain.TransactionRepository,
 	accountRepo domain.AccountsRepository,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 ) TransactionEntryService {
 	return &transactionEntryService{

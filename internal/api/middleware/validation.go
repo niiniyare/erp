@@ -61,7 +61,7 @@ type ValidationMiddleware struct {
 	config  ValidationConfig
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 
 	// Compiled regex patterns for performance
 	sqlInjectionPatterns []*regexp.Regexp
@@ -74,7 +74,7 @@ func NewValidationMiddleware(
 	config ValidationConfig,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) *ValidationMiddleware {
 	m := &ValidationMiddleware{
 		config:  config,

@@ -109,10 +109,10 @@ func NewCacheService(cfg *config.Config) (cache.Service, error) {
 // NewLogger creates a new logger based on configuration
 func NewLogger(cfg *config.Config) (logger.Logger, error) {
 	factory := &logger.LoggerFactory{}
-	
+
 	// Convert the config properly using the ToLoggerConfig method
 	loggerConfig := cfg.Logger.ToLoggerConfig(&cfg.App)
-	
+
 	return factory.NewLogger(logger.Config{
 		Type:        logger.LoggerType(loggerConfig.Type),
 		Level:       logger.LogLevel(loggerConfig.Level),
@@ -135,13 +135,13 @@ func NewMetricsProvider(cfg *config.Config, log logger.Logger) (*metrics.Metrics
 }
 
 // NewTracingService creates a new tracing service
-func NewTracingService(cfg *config.Config, log logger.Logger) (tracing.TracingService, error) {
-	return tracing.NewTracingService(tracing.TracingConfig{
+func NewTracingService(cfg *config.Config, log logger.Logger) (tracing.Service, error) {
+	return tracing.NewService(tracing.Config{
 		ServiceName:    cfg.App.Name,
 		ServiceVersion: cfg.App.Version,
 		Environment:    cfg.App.Environment,
 		ExporterType:   tracing.StdoutExporter, // Configure based on your tracing backend
-		SamplingRatio:  1.0, // Adjust based on environment
+		SamplingRatio:  1.0,                    // Adjust based on environment
 		Enabled:        true,
 	})
 }
@@ -158,3 +158,4 @@ func NewTemporalClient(cfg *config.Config, log logger.Logger) (temporalclient.Cl
 	}
 	return clientManager.GetClient(), nil
 }
+

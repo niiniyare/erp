@@ -50,11 +50,11 @@ type Repository interface {
 // repository implements Repository interface
 type repository struct {
 	store  db.Store
-	tracer tracing.TracingService
+	tracer tracing.Service
 }
 
 // NewRepository creates a new tenant repository
-func NewRepository(store db.Store, tracer tracing.TracingService) Repository {
+func NewRepository(store db.Store, tracer tracing.Service) Repository {
 	return &repository{store: store, tracer: tracer}
 }
 

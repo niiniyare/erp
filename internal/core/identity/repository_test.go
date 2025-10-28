@@ -23,14 +23,14 @@ type RepositoryTestSuite struct {
 	ctrl       *gomock.Controller
 	repo       Repository
 	mockStore  *db.MockStore
-	mockTracer *tracing.MockTracingService
+	mockTracer *tracing.MockService
 	mockMetric *metrics.MockMetricsService
 }
 
 func (s *RepositoryTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.mockStore = db.NewMockStore(s.ctrl)
-	s.mockTracer = tracing.NewMockTracingService()
+	s.mockTracer = tracing.NewMockService()
 	s.mockMetric = metrics.NewMockMetricsService()
 
 	s.repo = NewRepository(s.mockStore, s.mockTracer, s.mockMetric)

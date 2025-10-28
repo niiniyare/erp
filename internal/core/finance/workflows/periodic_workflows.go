@@ -34,7 +34,7 @@ type PeriodicWorkflowDeps struct {
 	CacheService        cache.Service
 	Logger              loggerPkg.Logger
 	Metrics             metrics.MetricsProvider
-	Tracer              tracing.TracingService
+	Tracer              tracing.Service
 }
 
 // NewPeriodicWorkflows creates new periodic workflows

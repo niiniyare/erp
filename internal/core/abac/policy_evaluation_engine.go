@@ -214,7 +214,7 @@ type policyEvaluationEngine struct {
 
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewPolicyEvaluationEngine creates a new policy evaluation engine
@@ -224,7 +224,7 @@ func NewPolicyEvaluationEngine(
 	externalSources ExternalAttributeSourceManager,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) PolicyEvaluationEngine {
 	return &policyEvaluationEngine{
 		policyRepo:         policyRepo,

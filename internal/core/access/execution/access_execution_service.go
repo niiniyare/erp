@@ -81,7 +81,7 @@ type AccessExecutionService interface {
 type accessExecutionService struct {
 	userRepo    identity.Repository
 	userService identity.Service
-	tracing     tracing.TracingService
+	tracing     tracing.Service
 	metrics     metrics.MetricsProvider
 	// TODO: Add temporary access repository when implemented
 	// temporaryAccessRepo TemporaryAccessRepository
@@ -91,7 +91,7 @@ type accessExecutionService struct {
 func NewAccessExecutionService(
 	userRepo identity.Repository,
 	userService identity.Service,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 ) AccessExecutionService {
 	return &accessExecutionService{

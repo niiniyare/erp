@@ -234,7 +234,7 @@ type policyDecisionService struct {
 	policyEvalService PolicyEvaluationService
 	auditRepo         repository.PolicyEvaluationRepository
 	cache             cache.Service
-	tracing           tracing.TracingService
+	tracing           tracing.Service
 	metrics           metrics.MetricsProvider
 	logger            logger.Logger
 }
@@ -244,7 +244,7 @@ func NewPolicyDecisionService(
 	policyEvalService PolicyEvaluationService,
 	auditRepo repository.PolicyEvaluationRepository,
 	cache cache.Service,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	logger logger.Logger,
 ) PolicyDecisionService {

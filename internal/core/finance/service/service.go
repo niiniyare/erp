@@ -24,7 +24,7 @@ type Dependencies struct {
 	AccountGroupRepo domain.AccountGroupRepository
 	TransactionRepo  domain.TransactionRepository
 	// TransactionEntryRepo domain.TransactionRepository // TODO: Create separate entry repository
-	Tracing            tracing.TracingService
+	Tracing            tracing.Service
 	Metrics            metrics.MetricsProvider
 	IAMService         iam.Service
 	FeatureFlagService featureflag.Service

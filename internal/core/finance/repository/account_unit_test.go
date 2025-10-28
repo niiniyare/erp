@@ -24,7 +24,7 @@ type AccountsRepositoryUnitTestSuite struct {
 	suite.Suite
 	ctrl       *gomock.Controller
 	mockStore  *db.MockStore
-	mockTracer *tracing.MockTracingService
+	mockTracer *tracing.MockService
 	repo       *chartOfAccountsRepository
 	ctx        context.Context
 	tenantID   uuid.UUID
@@ -34,7 +34,7 @@ type AccountsRepositoryUnitTestSuite struct {
 func (s *AccountsRepositoryUnitTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.mockStore = db.NewMockStore(s.ctrl)
-	s.mockTracer = tracing.NewMockTracingService(s.ctrl)
+	s.mockTracer = tracing.NewMockService(s.ctrl)
 	s.repo = NewAccountRepository(s.mockStore, s.mockTracer)
 	s.tenantID = uuid.New()
 	s.ctx = shared.WithTenantID(context.Background(), s.tenantID)

@@ -53,7 +53,7 @@ type attributeService struct {
 	encryptionKey []byte
 	logger        logger.Logger
 	metrics       metrics.MetricsProvider
-	tracer        tracing.TracingService
+	tracer        tracing.Service
 }
 
 // NewAttributeService creates a new attribute service instance
@@ -62,7 +62,7 @@ func NewAttributeService(
 	encryptionKey []byte,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) AttributeService {
 	return &attributeService{
 		attributeRepo: attributeRepo,

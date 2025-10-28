@@ -95,6 +95,14 @@ func (r *RouteRegistry) RegisterModuleWithMiddleware(
 	// Apply middleware instances based on middleware names
 	for _, middlewareName := range middleware {
 		switch middlewareName {
+		case "observability":
+			// Apply comprehensive observability middleware
+			observabilityConfig := middlewarePkg.DefaultObservabilityConfig()
+			observabilityConfig.ServiceName = "erp-api"
+			observabilityConfig.DetailedLogging = true
+			observabilityMiddleware := middlewarePkg.CreateObservabilityMiddleware(
+				r.logger, r.metrics, r.tracer, &observabilityConfig)
+			router.Use(observabilityMiddleware)
 		case "cors":
 			// Use development CORS config for tests
 			corsConfig := middlewarePkg.DevelopmentCORSConfig([]int{3000, 8080})
@@ -274,7 +282,7 @@ func (r *Router) registerHealth(app *fiber.App) error {
 		app,
 		ModuleHealth,
 		"/health",
-		[]string{"cors"}, // Minimal middleware for health checks
+		[]string{"cors"}, // Minimal middleware for health checks - no observability for health endpoints
 		func(router fiber.Router) {
 			router.Get("/", handler.Get)
 
@@ -303,7 +311,7 @@ func (r *Router) registerTenant(app *fiber.App) error {
 		app,
 		ModuleTenant,
 		"/api/v1/tenants",
-		[]string{"cors", "tenant", "auth"}, // Include tenant middleware for RLS
+		[]string{"observability", "cors", "tenant", "auth"}, // Full observability for API endpoints
 		func(router fiber.Router) {
 			router.Get("/", handler.List)         // GET /api/v1/tenants - List tenants with pagination
 			router.Post("/", handler.Create)      // POST /api/v1/tenants - Create new tenant
@@ -331,7 +339,7 @@ func (r *Router) registerUser(app *fiber.App) error {
 		app,
 		ModuleUser,
 		"/api/v1/users",
-		[]string{"cors", "tenant", "auth"}, // Include tenant middleware for RLS and auth
+		[]string{"observability", "cors", "tenant", "auth"}, // Full observability for API endpoints
 		func(router fiber.Router) {
 			router.Get("/", handler.List)                            // GET /api/v1/users - List users with pagination
 			router.Post("/", handler.Create)                         // POST /api/v1/users - Create new user

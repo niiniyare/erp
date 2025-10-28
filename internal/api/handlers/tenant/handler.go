@@ -22,7 +22,7 @@ type TenantHandler struct {
 	service    coreTenant.Service
 	logger     logger.Logger
 	metrics    metrics.MetricsProvider
-	tracer     tracing.TracingService
+	tracer     tracing.Service
 	validator  *validator.Validate
 	encryption encryption.EncryptionService
 }
@@ -32,7 +32,7 @@ func NewTenantHandler(
 	tenantService coreTenant.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) *TenantHandler {
 	validator := validator.New()
 	

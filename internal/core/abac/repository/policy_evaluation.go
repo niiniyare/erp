@@ -27,7 +27,7 @@ type policyEvaluationRepository struct {
 	cache   cache.Service
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewPolicyEvaluationRepository creates a new policy evaluation repository implementation
@@ -36,7 +36,7 @@ func NewPolicyEvaluationRepository(
 	cache cache.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) PolicyEvaluationRepository {
 	return &policyEvaluationRepository{
 		store:   store,

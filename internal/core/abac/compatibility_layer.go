@@ -47,7 +47,7 @@ type compatibilityLayer struct {
 	hybridEvaluator HybridEvaluator
 	logger          logger.Logger
 	metrics         metrics.MetricsProvider
-	tracer          tracing.TracingService
+	tracer          tracing.Service
 }
 
 // NewCompatibilityLayer creates a new compatibility layer instance
@@ -57,7 +57,7 @@ func NewCompatibilityLayer(
 	hybridEvaluator HybridEvaluator,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) CompatibilityLayer {
 	return &compatibilityLayer{
 		policyRepo:      policyRepo,

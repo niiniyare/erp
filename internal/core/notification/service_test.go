@@ -21,7 +21,7 @@ import (
 type NotificationServiceTestSuite struct {
 	suite.Suite
 	ctrl        *gomock.Controller
-	mockTracing *tracing.MockTracingService
+	mockTracing *tracing.MockService
 	mockMetrics metrics.MetricsProvider
 	mockEmail   *MockEmailService
 	mockSlack   *MockSlackService
@@ -32,7 +32,7 @@ type NotificationServiceTestSuite struct {
 // SetupTest runs before each test
 func (suite *NotificationServiceTestSuite) SetupTest() {
 	suite.ctrl = gomock.NewController(suite.T())
-	suite.mockTracing = tracing.NewMockTracingService(suite.ctrl)
+	suite.mockTracing = tracing.NewMockService(suite.ctrl)
 
 	var err error
 	suite.mockMetrics, err = metrics.NewMetricsService(metrics.MetricsConfig{Enabled: false})
@@ -406,7 +406,7 @@ func (suite *NotificationServiceTestSuite) TestUpdateUserNotificationPreferences
 func (suite *NotificationServiceTestSuite) TestNewNotificationService() {
 	testCases := []struct {
 		name         string
-		tracing      tracing.TracingService
+		tracing      tracing.Service
 		metrics      metrics.MetricsProvider
 		emailService EmailService
 		slackService SlackService

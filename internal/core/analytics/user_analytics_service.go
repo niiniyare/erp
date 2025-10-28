@@ -521,7 +521,7 @@ type BenchmarkMetrics struct {
 
 // userAnalyticsService implements UserAnalyticsService
 type userAnalyticsService struct {
-	tracing      tracing.TracingService
+	tracing      tracing.Service
 	metrics      metrics.MetricsProvider
 	auditService AuditService
 	// TODO: Add analytics repository when implemented
@@ -530,7 +530,7 @@ type userAnalyticsService struct {
 
 // NewUserAnalyticsService creates a new user analytics service
 func NewUserAnalyticsService(
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	auditService AuditService,
 ) UserAnalyticsService {

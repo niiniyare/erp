@@ -82,7 +82,7 @@ type securityComplianceManager struct {
 
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewSecurityComplianceManager creates a new security compliance manager
@@ -91,7 +91,7 @@ func NewSecurityComplianceManager(
 	encryptionKey []byte,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) SecurityComplianceManager {
 	return &securityComplianceManager{
 		auditRepo:         auditRepo,

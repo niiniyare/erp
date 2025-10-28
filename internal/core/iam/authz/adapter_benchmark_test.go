@@ -27,7 +27,7 @@ func BenchmarkEvaluatePermission(b *testing.B) {
 	mockAccess := access.NewMockService(ctrl)
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
 
 	// Setup lenient mock expectations for benchmarking
@@ -99,7 +99,7 @@ func BenchmarkBulkEvaluatePermissions(b *testing.B) {
 	mockAccess := access.NewMockService(ctrl)
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
 
 	// Setup lenient mock expectations
@@ -191,7 +191,7 @@ func BenchmarkConcurrentPermissionEvaluation(b *testing.B) {
 	mockAccess := access.NewMockService(ctrl)
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
 
 	// Extremely permissive mocks for concurrent benchmarking
@@ -253,7 +253,7 @@ func BenchmarkCacheOperations(b *testing.B) {
 	mockAccess := access.NewMockService(ctrl)
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
 
 	mockSpan.EXPECT().End().AnyTimes()
@@ -307,7 +307,7 @@ func BenchmarkAccessRequestOperations(b *testing.B) {
 	mockAccess := access.NewMockService(ctrl)
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
 
 	mockSpan.EXPECT().End().AnyTimes()
@@ -398,7 +398,7 @@ func BenchmarkMemoryUsage(b *testing.B) {
 	mockAccess := access.NewMockService(ctrl)
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
 
 	mockSpan.EXPECT().End().AnyTimes()

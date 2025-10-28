@@ -17,7 +17,7 @@ type service struct {
 	repo    Repository
 	cache   cache.Service
 	logger  logger.Logger
-	tracing tracing.TracingService
+	tracing tracing.Service
 	metrics metrics.MetricsProvider
 }
 
@@ -26,7 +26,7 @@ func NewService(
 	repo Repository,
 	cache cache.Service,
 	logger logger.Logger,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 ) Service {
 	return &service{

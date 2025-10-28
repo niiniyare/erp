@@ -29,7 +29,7 @@ func TestRecord(t *testing.T) {
 	mockRepo := NewMockRepository(ctrl)
 	mockCache := cache.NewMockService(ctrl)
 	mockLogger := logger.NewMockLogger(ctrl)
-	mockTracing := tracing.NewMockTracingService(ctrl)
+	mockTracing := tracing.NewMockService(ctrl)
 	mockMetrics, _ := metrics.NewMetricsService(metrics.MetricsConfig{Enabled: false})
 
 	auditService := NewService(mockRepo, mockCache, mockLogger, mockTracing, mockMetrics)

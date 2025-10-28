@@ -30,7 +30,7 @@ type AccountActivities struct {
 	cacheService       cache.Service
 	logger             logger.Logger
 	metrics            metrics.MetricsProvider
-	tracer             tracing.TracingService
+	tracer             tracing.Service
 }
 
 // ActivityDeps contains dependencies for account activities
@@ -43,7 +43,7 @@ type ActivityDeps struct {
 	CacheService       cache.Service
 	Logger             logger.Logger
 	Metrics            metrics.MetricsProvider
-	Tracer             tracing.TracingService
+	Tracer             tracing.Service
 }
 
 // NewAccountActivities creates a new account activities instance

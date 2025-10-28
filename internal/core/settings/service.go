@@ -29,7 +29,7 @@ func NewSettingsService(
 	repo repository.ConfigurationRepository,
 	auditService audit.Service,
 	logger logger.Logger,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 ) SettingsService {
 	// Create individual services
@@ -58,7 +58,7 @@ func NewSettingsService(
 // 	repo repository.ConfigurationRepository,
 // 	auditService audit.Service,
 // 	logger logger.Logger,
-// 	tracing tracing.TracingService,
+// 	tracing tracing.Service,
 // 	metrics metrics.MetricsProvider,
 // ) *SettingsServiceWithMethods {
 // 	return &SettingsServiceWithMethods{

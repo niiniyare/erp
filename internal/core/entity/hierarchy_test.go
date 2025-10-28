@@ -23,7 +23,7 @@ type OrganizationHierarchyTestSuite struct {
 	dbRunner *tenant.DatabaseTestRunner
 	service  Service
 	repo     Repository
-	tracing  *tracing.MockTracingService
+	tracing  *tracing.MockService
 	metrics  *metrics.MockMetricsProvider
 	ctx      context.Context
 
@@ -47,7 +47,7 @@ func (s *OrganizationHierarchyTestSuite) SetupSuite() {
 
 	// Initialize controller and mocks
 	s.ctrl = gomock.NewController(s.T())
-	s.tracing = tracing.NewMockTracingService(s.ctrl)
+	s.tracing = tracing.NewMockService(s.ctrl)
 	s.metrics = metrics.NewMockMetricsProvider(s.ctrl)
 
 	// Setup tracing expectations

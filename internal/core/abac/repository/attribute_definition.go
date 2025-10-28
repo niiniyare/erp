@@ -28,7 +28,7 @@ import (
 type attributeDefinitionRepository struct {
 	store   db.Store
 	cache   cache.Service
-	tracing tracing.TracingService
+	tracing tracing.Service
 	metrics metrics.MetricsProvider
 	logger  logger.Logger
 }
@@ -37,7 +37,7 @@ type attributeDefinitionRepository struct {
 func NewAttributeDefinitionRepository(
 	store db.Store,
 	cache cache.Service,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	logger logger.Logger,
 ) AttributeDefinitionRepository {

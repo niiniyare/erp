@@ -214,7 +214,7 @@ type advancedEvaluationEngine struct {
 	simpleService            Service
 	logger                   logger.Logger
 	metrics                  metrics.MetricsProvider
-	tracing                  tracing.TracingService
+	tracing                  tracing.Service
 }
 
 // NewAdvancedEvaluationEngine creates a new advanced evaluation engine
@@ -223,7 +223,7 @@ func NewAdvancedEvaluationEngine(
 	simpleService Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 ) AdvancedEvaluationEngine {
 	return &advancedEvaluationEngine{
 		conditionalAccessService: conditionalAccessService,

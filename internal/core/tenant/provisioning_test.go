@@ -24,7 +24,7 @@ type ProvisioningTestSuite struct {
 	service   Service
 	repo      *MockRepository
 	cache     *cache.MockService
-	tracer    *tracing.MockTracingService
+	tracer    *tracing.MockService
 	ctx       context.Context
 	cleanupID uuid.UUID // To track the ID for cleanup
 }
@@ -34,7 +34,7 @@ func (s *ProvisioningTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.repo = NewMockRepository(s.ctrl)
 	s.cache = cache.NewMockService(s.ctrl)
-	s.tracer = tracing.NewMockTracingService(s.ctrl)
+	s.tracer = tracing.NewMockService(s.ctrl)
 	s.cleanupID = uuid.Nil // Reset cleanup ID for each test
 
 	// Mock the tracer to return a mock span

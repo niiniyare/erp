@@ -137,11 +137,11 @@ func (m *MockCache) Exists(ctx context.Context, key string) (bool, error) {
 	return args.Bool(0), args.Error(1)
 }
 
-type MockTracingService struct {
+type MockService struct {
 	mock.Mock
 }
 
-func (m *MockTracingService) StartSpan(ctx context.Context, name string, opts ...tracing.SpanOption) (context.Context, tracing.Span) {
+func (m *MockService) StartSpan(ctx context.Context, name string, opts ...tracing.SpanOption) (context.Context, tracing.Span) {
 	args := m.Called(ctx, name, opts)
 	return args.Get(0).(context.Context), args.Get(1).(tracing.Span)
 }
@@ -243,7 +243,7 @@ type AccessRequestServiceTestSuite struct {
 	service           AccessRequestService
 	mockRepo          *MockAccessRequestRepository
 	mockCache         *MockCache
-	mockTracing       *MockTracingService
+	mockTracing       *MockService
 	mockSpan          *MockSpan
 	mockMetrics       *MockMetricsProvider
 	mockUserService   *MockUserService
@@ -289,7 +289,7 @@ func (suite *AccessRequestServiceTestSuite) SetupTest() {
 	// Test-level setup
 	suite.mockRepo = new(MockAccessRequestRepository)
 	suite.mockCache = new(MockCache)
-	suite.mockTracing = new(MockTracingService)
+	suite.mockTracing = new(MockService)
 	suite.mockSpan = new(MockSpan)
 	suite.mockMetrics = new(MockMetricsProvider)
 	suite.mockUserService = new(MockUserService)

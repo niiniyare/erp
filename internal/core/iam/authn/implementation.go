@@ -40,7 +40,7 @@ type service struct {
 	// Shared infrastructure
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewService creates a new authentication service instance
@@ -52,7 +52,7 @@ func NewService(
 	cache cache.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) Service {
 	// NOTE: JWT secrets should come from configuration/environment variables
 	// TODO: Implement proper configuration management for JWT secrets

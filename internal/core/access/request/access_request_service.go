@@ -70,7 +70,7 @@ type AccessRequestService interface {
 type accessRequestService struct {
 	repo    AccessRequestRepository
 	cache   cache.Service
-	tracing tracing.TracingService
+	tracing tracing.Service
 	metrics metrics.MetricsProvider
 	// Integration with main user service for executing approved requests
 	userService UserService
@@ -88,7 +88,7 @@ type accessRequestService struct {
 func NewAccessRequestService(
 	repo AccessRequestRepository,
 	cache cache.Service,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	userService UserService,
 	notificationService notification.NotificationService,

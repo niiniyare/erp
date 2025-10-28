@@ -134,7 +134,7 @@ func NewTenantMiddleware(config middleware.TenantMiddlewareConfig) fiber.Handler
 func NewHandlerDependencies(
 	log logger.Logger,
 	metrics *metrics.MetricsService,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 	tenantService tenant.Service,
 	tenantMiddleware fiber.Handler,
 ) *handlers.Dependencies {

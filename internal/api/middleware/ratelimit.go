@@ -67,7 +67,7 @@ type RateLimitMiddleware struct {
 	config  RateLimitConfig
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 
 	// Circuit breaker for cache failures
 	cacheCircuitBreaker *CacheCircuitBreaker
@@ -108,7 +108,7 @@ func NewRateLimitMiddleware(
 	config RateLimitConfig,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) *RateLimitMiddleware {
 	// Set defaults
 	if config.ViolationTTL == 0 {
@@ -813,7 +813,7 @@ func CreateRateLimitMiddleware(
 	// metricsProvider := serviceContainer.GetMetrics()
 	// tracingService := serviceContainer.GetTracing()
 	var metricsProvider metrics.MetricsProvider
-	var tracingService tracing.TracingService
+	var tracingService tracing.Service
 
 	middleware := NewRateLimitMiddleware(
 		cache,
@@ -844,7 +844,7 @@ func NewRateLimitMiddlewareCompat(
 	config RateLimitConfig,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) *RateLimitMiddlewareCompat {
 	return &RateLimitMiddlewareCompat{
 		inner: NewRateLimitMiddleware(cache, config, logger, metrics, tracer),

@@ -19,12 +19,12 @@ import (
 type repository struct {
 	store   db.Store
 	logger  logger.Logger
-	tracing tracing.TracingService
+	tracing tracing.Service
 	metrics metrics.MetricsProvider
 }
 
 // NewRepository creates a new audit repository.
-func NewRepository(store db.Store, logger logger.Logger, tracing tracing.TracingService, metrics metrics.MetricsProvider) Repository {
+func NewRepository(store db.Store, logger logger.Logger, tracing tracing.Service, metrics metrics.MetricsProvider) Repository {
 	return &repository{
 		store:   store,
 		logger:  logger,

@@ -24,7 +24,7 @@ type PolicyEvaluationActivities struct {
 	policyEvaluationRepo repository.PolicyEvaluationRepository
 	logger               logger.Logger
 	metrics              metrics.MetricsProvider
-	tracer               tracing.TracingService
+	tracer               tracing.Service
 }
 
 // NewPolicyEvaluationActivities creates a new PolicyEvaluationActivities instance
@@ -33,7 +33,7 @@ func NewPolicyEvaluationActivities(
 	policyEvaluationRepo repository.PolicyEvaluationRepository,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) *PolicyEvaluationActivities {
 	return &PolicyEvaluationActivities{
 		policyRepo:           policyRepo,

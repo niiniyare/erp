@@ -35,7 +35,7 @@ type Dependencies struct {
 	Cache    cache.Service
 	Logger   logger.Logger
 	Metrics  metrics.MetricsProvider
-	Tracing  tracing.TracingService
+	Tracing  tracing.Service
 	Temporal *temporal.Platform
 }
 

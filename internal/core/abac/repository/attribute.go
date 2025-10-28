@@ -27,7 +27,7 @@ type attributeRepository struct {
 	cache   cache.Service
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewAttributeRepository creates a new attribute repository implementation
@@ -36,7 +36,7 @@ func NewAttributeRepository(
 	cache cache.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) *attributeRepository {
 	return &attributeRepository{
 		store:   store,

@@ -26,7 +26,7 @@ type FiberMiddleware struct {
 	store         db.Store
 	logger        logger.Logger
 	metrics       *metrics.MetricsService
-	tracing       tracing.TracingService
+	tracing       tracing.Service
 	whitelist     *EndpointWhitelist
 }
 
@@ -38,7 +38,7 @@ func NewFiberMiddleware(
 	store db.Store,
 	logger logger.Logger,
 	metrics *metrics.MetricsService,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 ) *FiberMiddleware {
 	whitelist, err := NewEndpointWhitelist(
 		[]string{"GET /health*", "GET /api/v1/health*", "GET /static/*", "POST /api/v1/tenants", "GET /admin/*"},

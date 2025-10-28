@@ -46,7 +46,7 @@ type TemporalIntegrationConfig struct {
 	TemporalClient client.Client
 	Logger         loggerPkg.Logger
 	Metrics        metrics.MetricsProvider
-	Tracer         tracing.TracingService
+	Tracer         tracing.Service
 }
 
 // NewTemporalIntegration creates a new Temporal integration for the finance module

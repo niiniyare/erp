@@ -18,7 +18,7 @@ type permissionRepository struct {
 	store   db.Store
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewPermissionRepository creates a new permission repository implementation
@@ -26,7 +26,7 @@ func NewPermissionRepository(
 	store db.Store,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) PermissionRepository {
 	return &permissionRepository{
 		store:   store,

@@ -161,7 +161,7 @@ type policyManager struct {
 	cache                cache.Service
 	logger               logger.Logger
 	metrics              metrics.MetricsProvider
-	tracer               tracing.TracingService
+	tracer               tracing.Service
 }
 
 // NewPolicyManager creates a new policy manager instance
@@ -172,7 +172,7 @@ func NewPolicyManager(
 	cache cache.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) PolicyManager {
 	return &policyManager{
 		policyRepo:           policyRepo,

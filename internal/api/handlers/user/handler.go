@@ -179,7 +179,7 @@ func (h *UserHandler) List(c *fiber.Ctx) error {
 	c.SetUserContext(ctx)
 
 	// Step 2: Extract pagination parameters and filters
-	offset, limit := h.ExtractPaginationParams(c)
+	_, _ = h.ExtractPaginationParams(c)
 
 	// Note: For now, we'll use basic listing. In a real implementation,
 	// we would add filtering parameters to the service interface
@@ -585,52 +585,35 @@ func (h *UserHandler) userToAPIResponse(userEntity *model.User) *User {
 	apiUser := &User{
 		ID:            userEntity.ID.String(),
 		Email:         userEntity.Email,
-		UserType:      string(userEntity.UserType),
-		Status:        string(userEntity.Status),
-		IsActive:      userEntity.IsActive,
+		UserType:      "user", // Default user type
+		Status:        string(userEntity.AccountStatus),
+		IsActive:      userEntity.IsActive(),
 		EmailVerified: userEntity.EmailVerified,
 		CreatedAt:     userEntity.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 
 	// Optional fields
-	if userEntity.TenantID != nil {
-		apiUser.TenantID = userEntity.TenantID.String()
-	}
-	if userEntity.EntityID != nil {
-		apiUser.EntityID = userEntity.EntityID.String()
-	}
+	apiUser.TenantID = userEntity.TenantID.String()
+	apiUser.EntityID = userEntity.EntityID.String()
 	if userEntity.PersonID != nil {
 		apiUser.PersonID = userEntity.PersonID.String()
 	}
 	if userEntity.EmployeeID != nil {
 		apiUser.EmployeeID = userEntity.EmployeeID.String()
 	}
-	if userEntity.Username != nil {
-		apiUser.Username = *userEntity.Username
-	}
-	if userEntity.Phone != nil {
-		apiUser.Phone = *userEntity.Phone
+	if userEntity.PhoneNumber != nil {
+		apiUser.Phone = *userEntity.PhoneNumber
 		apiUser.PhoneVerified = userEntity.PhoneVerified
 	}
 	if userEntity.LastLoginAt != nil {
 		lastLoginStr := userEntity.LastLoginAt.Format("2006-01-02T15:04:05Z07:00")
 		apiUser.LastLoginAt = &lastLoginStr
 	}
-	if userEntity.LastLoginIP != nil {
-		apiUser.LastLoginIP = *userEntity.LastLoginIP
-	}
-	if userEntity.Timezone != nil {
-		apiUser.Timezone = *userEntity.Timezone
-	}
-	if userEntity.Language != nil {
-		apiUser.Language = *userEntity.Language
-	}
+	// Note: LastLoginIP, Timezone, Language fields removed from model
 	if userEntity.Metadata != nil {
 		apiUser.Metadata = userEntity.Metadata
 	}
-	if userEntity.Preferences != nil {
-		apiUser.Preferences = userEntity.Preferences
-	}
+	// Note: Preferences field removed from model
 
 	updatedAtStr := userEntity.UpdatedAt.Format("2006-01-02T15:04:05Z07:00")
 	apiUser.UpdatedAt = &updatedAtStr

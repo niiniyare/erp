@@ -30,7 +30,7 @@ type RaceConditionTestSuite struct {
 	mockAccess  *access.MockService
 	mockLogger  *logger.MockLogger
 	mockMetrics *metrics.MockMetricsProvider
-	mockTracer  *tracing.MockTracingService
+	mockTracer  *tracing.MockService
 	mockSpan    *tracing.MockSpan
 	adapter     Service
 	ctx         context.Context
@@ -50,7 +50,7 @@ func (s *RaceConditionTestSuite) SetupTest() {
 	s.mockAccess = access.NewMockService(s.ctrl)
 	s.mockLogger = logger.NewMockLogger(s.ctrl)
 	s.mockMetrics = metrics.NewMockMetricsProvider(s.ctrl)
-	s.mockTracer = tracing.NewMockTracingService(s.ctrl)
+	s.mockTracer = tracing.NewMockService(s.ctrl)
 	s.mockSpan = tracing.NewMockSpan(s.ctrl)
 
 	// Setup very permissive mock expectations to avoid race conditions with call counting
@@ -697,7 +697,7 @@ func TestRaceDetection(t *testing.T) {
 	mockAccess := access.NewMockService(ctrl)
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
 
 	// Permissive mock setup

@@ -23,7 +23,7 @@ type CacheActivities struct {
 	attributeRepo        repository.AttributeRepository
 	logger               logger.Logger
 	metrics              metrics.MetricsProvider
-	tracer               tracing.TracingService
+	tracer               tracing.Service
 }
 
 // NewCacheActivities creates a new CacheActivities instance
@@ -32,7 +32,7 @@ func NewCacheActivities(
 	attributeRepo repository.AttributeRepository,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) *CacheActivities {
 	return &CacheActivities{
 		policyEvaluationRepo: policyEvaluationRepo,

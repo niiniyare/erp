@@ -24,7 +24,7 @@ type JWTAuthMiddleware struct {
 	iamService iam.Service
 	logger     logger.Logger
 	metrics    metrics.MetricsProvider
-	tracer     tracing.TracingService
+	tracer     tracing.Service
 }
 
 // NewJWTAuthMiddleware creates a new JWT authentication middleware
@@ -32,7 +32,7 @@ func NewJWTAuthMiddleware(
 	iamService iam.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) *JWTAuthMiddleware {
 	return &JWTAuthMiddleware{
 		iamService: iamService,

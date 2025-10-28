@@ -32,7 +32,7 @@ type DependencyChecker interface {
 type HealthHandler struct {
 	logger       logger.Logger
 	metrics      metrics.MetricsProvider
-	tracer       tracing.TracingService
+	tracer       tracing.Service
 	startTime    time.Time
 	version      string
 	buildTime    string
@@ -51,7 +51,7 @@ type Config struct {
 func NewHealthHandler(
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 	cfg *Config,
 ) *HealthHandler {
 	if cfg == nil {

@@ -22,7 +22,7 @@ type personRepository struct {
 	store   db.Store
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewPersonRepository creates a new person repository
@@ -30,7 +30,7 @@ func NewPersonRepository(
 	store db.Store,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) PersonRepository {
 	return &personRepository{
 		store:   store,

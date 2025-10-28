@@ -27,7 +27,7 @@ type PermissionRepositoryTestSuite struct {
 	ctrl     *gomock.Controller
 	logger   *logger.MockLogger
 	metrics  *metrics.MockMetricsProvider
-	tracing  *tracing.MockTracingService
+	tracing  *tracing.MockService
 	tenantID uuid.UUID
 	entityID uuid.UUID
 	userID   uuid.UUID
@@ -40,7 +40,7 @@ func (s *PermissionRepositoryTestSuite) SetupTest() {
 	s.store = db.NewMockStore(s.ctrl)
 	s.logger = logger.NewMockLogger(s.ctrl)
 	s.metrics = metrics.NewMockMetricsProvider(s.ctrl)
-	s.tracing = tracing.NewMockTracingService(s.ctrl)
+	s.tracing = tracing.NewMockService(s.ctrl)
 	s.tenantID = uuid.New()
 	s.entityID = uuid.New()
 	s.userID = uuid.New()

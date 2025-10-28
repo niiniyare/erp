@@ -38,7 +38,7 @@ type SlackService interface {
 
 // notificationService implements the NotificationService.
 type notificationService struct {
-	tracing      tracing.TracingService
+	tracing      tracing.Service
 	metrics      metrics.MetricsProvider
 	emailService EmailService // Can be nil
 	slackService SlackService // Can be nil
@@ -48,7 +48,7 @@ type notificationService struct {
 // NewNotificationService creates a new notification service.
 // External services like email or slack can be nil if not configured.
 func NewNotificationService(
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	emailService EmailService,
 	slackService SlackService,

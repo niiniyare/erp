@@ -27,7 +27,7 @@ type AttributeServiceTestSuite struct {
 	ctrl          *gomock.Controller
 	mockLogger    logger.Logger
 	mockMetrics   metrics.MetricsProvider
-	mockTracer    *tracing.MockTracingService
+	mockTracer    *tracing.MockService
 	encryptionKey []byte
 }
 
@@ -40,7 +40,7 @@ func (s *AttributeServiceTestSuite) SetupTest() {
 	s.mockRepo = repository.NewMockAttributeRepository(s.ctrl)
 	s.mockLogger = logger.WithFields(logger.Fields{})
 	s.mockMetrics = &metrics.MetricsService{}
-	s.mockTracer = tracing.NewMockTracingService(s.ctrl)
+	s.mockTracer = tracing.NewMockService(s.ctrl)
 
 	// Setup encryption key
 	s.encryptionKey = []byte("test-key-for-encryption-32-byte")

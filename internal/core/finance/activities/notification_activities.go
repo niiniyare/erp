@@ -24,7 +24,7 @@ type NotificationActivities struct {
 	settingsService     settingsService.ConfigurationService
 	logger              logger.Logger
 	metrics             metrics.MetricsProvider
-	tracer              tracing.TracingService
+	tracer              tracing.Service
 }
 
 // NotificationActivityDeps contains dependencies for notification activities
@@ -34,7 +34,7 @@ type NotificationActivityDeps struct {
 	SettingsService     settingsService.ConfigurationService
 	Logger              logger.Logger
 	Metrics             metrics.MetricsProvider
-	Tracer              tracing.TracingService
+	Tracer              tracing.Service
 }
 
 // NewNotificationActivities creates a new notification activities instance

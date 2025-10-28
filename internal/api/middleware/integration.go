@@ -30,7 +30,7 @@ type MiddlewareStack struct {
 	// Infrastructure
 	logger  loggerPkg.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // MiddlewareConfig consolidates all middleware configurations
@@ -60,7 +60,7 @@ func NewMiddlewareStack(
 	config MiddlewareConfig,
 	logger loggerPkg.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) (*MiddlewareStack, error) {
 	stack := &MiddlewareStack{
 		Config:  config,

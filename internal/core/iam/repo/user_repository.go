@@ -23,7 +23,7 @@ type userRepository struct {
 	store   db.Store
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewUserRepository creates a new user repository
@@ -31,7 +31,7 @@ func NewUserRepository(
 	store db.Store,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) UserRepository {
 	return &userRepository{
 		store:   store,

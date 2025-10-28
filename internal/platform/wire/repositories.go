@@ -16,7 +16,7 @@ import (
 // NewTenantRepository creates a new tenant repository
 func NewTenantRepository(
 	store db.Store,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) tenant.Repository {
 	return tenant.NewRepository(store, tracer)
 }

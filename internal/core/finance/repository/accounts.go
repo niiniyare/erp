@@ -23,10 +23,10 @@ type accountsRepository struct {
 	store db.Store
 	cache cache.Service
 
-	tracing tracing.TracingService
+	tracing tracing.Service
 }
 
-func NewAccountsRepository(store db.Store, cache cache.Service, tracing tracing.TracingService) domain.AccountsRepository {
+func NewAccountsRepository(store db.Store, cache cache.Service, tracing tracing.Service) domain.AccountsRepository {
 	return &accountsRepository{
 		store:   store,
 		cache:   cache,
@@ -35,7 +35,7 @@ func NewAccountsRepository(store db.Store, cache cache.Service, tracing tracing.
 }
 
 // NewAccountRepository is an alias for NewAccountsRepository for test compatibility
-func NewAccountRepository(store db.Store, cache cache.Service, tracing tracing.TracingService) domain.AccountsRepository {
+func NewAccountRepository(store db.Store, cache cache.Service, tracing tracing.Service) domain.AccountsRepository {
 	return NewAccountsRepository(store, cache, tracing)
 }
 

@@ -113,13 +113,13 @@ type AccountValidationResult struct {
 
 // doubleEntryValidator implements DoubleEntryValidator
 type doubleEntryValidator struct {
-	tracing   tracing.TracingService
+	tracing   tracing.Service
 	tolerance decimal.Decimal // Tolerance for balance validation (e.g., 0.01)
 }
 
 // DoubleEntryValidatorDeps represents dependencies for the validator
 type DoubleEntryValidatorDeps struct {
-	Tracing   tracing.TracingService
+	Tracing   tracing.Service
 	Tolerance *decimal.Decimal // Optional tolerance for balance validation
 }
 

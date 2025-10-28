@@ -47,12 +47,12 @@ type AccessRequestRepository interface {
 // accessRequestRepository implements AccessRequestRepository
 type accessRequestRepository struct {
 	db      db.Store
-	tracing tracing.TracingService
+	tracing tracing.Service
 	metrics metrics.MetricsProvider
 }
 
 // NewAccessRequestRepository creates a new access request repository
-func NewAccessRequestRepository(database db.Store, tracing tracing.TracingService, metrics metrics.MetricsProvider) AccessRequestRepository {
+func NewAccessRequestRepository(database db.Store, tracing tracing.Service, metrics metrics.MetricsProvider) AccessRequestRepository {
 	return &accessRequestRepository{
 		db:      database,
 		tracing: tracing,

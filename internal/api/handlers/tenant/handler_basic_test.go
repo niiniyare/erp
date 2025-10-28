@@ -31,7 +31,7 @@ func TestTenantHandler_CreateBasic(t *testing.T) {
 	// Setup mocks
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
 	mockRepo := tenant.NewMockRepository(ctrl)
 	mockCache := cache.NewMockService(ctrl)
@@ -112,7 +112,7 @@ func TestTenantHandler_ListBasic(t *testing.T) {
 	// Setup mocks
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
 	mockRepo := tenant.NewMockRepository(ctrl)
 	mockCache := cache.NewMockService(ctrl)

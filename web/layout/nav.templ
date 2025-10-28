@@ -200,12 +200,9 @@ templ NavItemComponent(props NavItemComponentProps) {
 								}
 							}
 						</div>
-						@icon.Icon("chevron-down")(icon.Props{
-							Class: "transition-transform duration-200",
-							Attributes: templ.Attributes{
-								"x-bind:class": "expanded ? 'rotate-180' : ''",
-							},
-						})
+						<div x-bind:class="expanded ? 'rotate-180' : ''" class="transition-transform duration-200">
+							@icon.Icon("chevron-down")()
+						</div>
 					</div>
 				}
 				

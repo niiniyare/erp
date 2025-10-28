@@ -26,10 +26,10 @@ const (
 type a countsRepository struct {
 	store   db.Store
 	cache   cache.Service
-	tracing tracing.TracingService
+	tracing tracing.Service
 }
 
-func NewaccountsRepository(store db.Store, cache cache.Service, tracing tracing.TracingService) domain.accountsRepository {
+func NewaccountsRepository(store db.Store, cache cache.Service, tracing tracing.Service) domain.accountsRepository {
 	return &accountsRepository{
 		store:   store,
 		cache:   cache,

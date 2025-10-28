@@ -153,7 +153,7 @@ type transactionPostingEngine struct {
 	validator             DoubleEntryValidator
 	stateMachine          func(*domain.Transaction) *domain.TransactionStateMachine
 	workflowEngine        func(*domain.Transaction) *domain.TransactionWorkflowEngine
-	tracing               tracing.TracingService
+	tracing               tracing.Service
 }
 
 // TransactionPostingEngineDeps represents dependencies for the posting engine
@@ -161,7 +161,7 @@ type TransactionPostingEngineDeps struct {
 	AccountRepository     domain.AccountsRepository
 	TransactionRepository domain.TransactionRepository
 	Validator             DoubleEntryValidator
-	Tracing               tracing.TracingService
+	Tracing               tracing.Service
 }
 
 // NewTransactionPostingEngine creates a new transaction posting engine

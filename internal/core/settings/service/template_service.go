@@ -39,7 +39,7 @@ type templateService struct {
 	repo         repository.ConfigurationRepository
 	auditService audit.Service
 	logger       logger.Logger
-	tracing      tracing.TracingService
+	tracing      tracing.Service
 	metrics      metrics.MetricsProvider
 }
 
@@ -48,7 +48,7 @@ func NewTemplateService(
 	repo repository.ConfigurationRepository,
 	auditService audit.Service,
 	logger logger.Logger,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 ) TemplateService {
 	return &templateService{

@@ -21,7 +21,7 @@ type adapter struct {
 	identityService identity.Service
 	logger          logger.Logger
 	metrics         metrics.MetricsProvider
-	tracer          tracing.TracingService
+	tracer          tracing.Service
 }
 
 // NewAdapterService creates a new authentication service that wraps the existing identity service
@@ -29,7 +29,7 @@ func NewAdapterService(
 	identityService identity.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) Service {
 	return &adapter{
 		identityService: identityService,

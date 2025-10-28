@@ -43,7 +43,7 @@ func NewABACWorker(
 	tenantService tenant.Service,
 	logger loggerPkg.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) *ABACWorker {
 	// Set default task queue if not provided
 	if config.TaskQueue == "" {

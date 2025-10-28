@@ -61,7 +61,7 @@ type service struct {
 	// Infrastructure
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewService creates a new ABAC service instance
@@ -73,7 +73,7 @@ func NewService(
 	tenantService tenant.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) Service {
 	// Create activities
 	policyEvaluationActivities := activities.NewPolicyEvaluationActivities(

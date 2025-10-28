@@ -46,11 +46,11 @@ func (e NotFoundError) Error() string {
 type HandlerHelper struct {
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewHandlerHelper creates a new handler helper with dependencies
-func NewHandlerHelper(logger logger.Logger, metrics metrics.MetricsProvider, tracer tracing.TracingService) *HandlerHelper {
+func NewHandlerHelper(logger logger.Logger, metrics metrics.MetricsProvider, tracer tracing.Service) *HandlerHelper {
 	return &HandlerHelper{
 		logger:  logger,
 		metrics: metrics,

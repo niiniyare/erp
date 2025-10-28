@@ -17,7 +17,7 @@ import (
 func NewTenantService(
 	repo tenant.Repository,
 	cache cache.Service,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) tenant.Service {
 	return tenant.NewService(repo, cache, tracer)
 }

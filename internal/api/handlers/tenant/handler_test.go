@@ -33,7 +33,7 @@ type TenantHandlerTestSuite struct {
 	handler       *TenantHandler
 	mockLogger    *logger.MockLogger
 	mockMetrics   *metrics.MockMetricsProvider
-	mockTracer    *tracing.MockTracingService
+	mockTracer    *tracing.MockService
 	mockSpan      *tracing.MockSpan
 	tenantService tenant.Service
 	mockRepo      *tenant.MockRepository
@@ -51,7 +51,7 @@ func (suite *TenantHandlerTestSuite) SetupTest() {
 	// Initialize generated mocks
 	suite.mockLogger = logger.NewMockLogger(suite.ctrl)
 	suite.mockMetrics = metrics.NewMockMetricsProvider(suite.ctrl)
-	suite.mockTracer = tracing.NewMockTracingService(suite.ctrl)
+	suite.mockTracer = tracing.NewMockService(suite.ctrl)
 	suite.mockSpan = tracing.NewMockSpan(suite.ctrl)
 	suite.mockRepo = tenant.NewMockRepository(suite.ctrl)
 	suite.mockCache = cache.NewMockService(suite.ctrl)
@@ -904,7 +904,7 @@ func BenchmarkTenantHandler_Create(b *testing.B) {
 
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
 
 	// Setup expectations
@@ -947,7 +947,7 @@ func BenchmarkTenantHandler_List(b *testing.B) {
 
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
-	mockTracer := tracing.NewMockTracingService(ctrl)
+	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
 
 	// Setup expectations

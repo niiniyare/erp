@@ -81,7 +81,7 @@ type AccountService interface {
 type accountService struct {
 	accountRepo        domain.AccountsRepository
 	accountGroupRepo   domain.AccountGroupRepository
-	tracing            tracing.TracingService
+	tracing            tracing.Service
 	metrics            metrics.MetricsProvider
 	settingsHelper     *SettingsHelper
 	iamService         iam.Service
@@ -91,7 +91,7 @@ type accountService struct {
 func NewAccountService(
 	accountRepo domain.AccountsRepository,
 	accountGroupRepo domain.AccountGroupRepository,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	iamService iam.Service,
 	featureFlagService featureflag.Service,

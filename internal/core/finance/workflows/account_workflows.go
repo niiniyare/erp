@@ -34,7 +34,7 @@ type AccountWorkflowDeps struct {
 	CacheService        cache.Service
 	Logger              loggerPkg.Logger
 	Metrics             metrics.MetricsProvider
-	Tracer              tracing.TracingService
+	Tracer              tracing.Service
 }
 
 // NewAccountWorkflows creates new account workflows

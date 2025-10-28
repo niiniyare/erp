@@ -37,7 +37,7 @@ type WorkflowDependencies struct {
 	// Infrastructure
 	Logger  loggerPkg.Logger
 	Metrics metrics.MetricsProvider
-	Tracer  tracing.TracingService
+	Tracer  tracing.Service
 }
 
 // NewWorkflowRegistry creates a new workflow registry with all dependencies

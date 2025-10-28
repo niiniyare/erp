@@ -22,8 +22,9 @@ import (
 // Flag to control JSON output
 //
 // Usage:
-//   go test -run TestIntegrationTestSuite                        # Run quietly (no JSON output)
-//   go test -run TestIntegrationTestSuite -verbose-tracing       # Run with JSON output
+//
+//	go test -run TestIntegrationTestSuite                        # Run quietly (no JSON output)
+//	go test -run TestIntegrationTestSuite -verbose-tracing       # Run with JSON output
 var verboseTracing = flag.Bool("verbose-tracing", false, "Enable verbose JSON output for trace spans")
 
 // IntegrationTestSuite tests integration scenarios

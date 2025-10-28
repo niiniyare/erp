@@ -142,7 +142,7 @@ type policyEvaluationService struct {
 	attrValidService AttributeValidationService
 	attrCacheService AttributeCacheService
 	cache            cache.Service
-	tracing          tracing.TracingService
+	tracing          tracing.Service
 	metrics          metrics.MetricsProvider
 	logger           logger.Logger
 }
@@ -154,7 +154,7 @@ func NewPolicyEvaluationService(
 	attrValidService AttributeValidationService,
 	attrCacheService AttributeCacheService,
 	cache cache.Service,
-	tracing tracing.TracingService,
+	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	logger logger.Logger,
 ) PolicyEvaluationService {

@@ -25,7 +25,7 @@ type HandlerHelpersTestSuite struct {
 	helper      *HandlerHelper
 	mockLogger  *logger.MockLogger
 	mockMetrics *metrics.MockMetricsProvider
-	mockTracer  *tracing.MockTracingService
+	mockTracer  *tracing.MockService
 	mockSpan    *tracing.MockSpan
 }
 
@@ -37,7 +37,7 @@ func (suite *HandlerHelpersTestSuite) SetupTest() {
 	// Initialize mocks using generated mocks
 	suite.mockLogger = logger.NewMockLogger(suite.ctrl)
 	suite.mockMetrics = metrics.NewMockMetricsProvider(suite.ctrl)
-	suite.mockTracer = tracing.NewMockTracingService(suite.ctrl)
+	suite.mockTracer = tracing.NewMockService(suite.ctrl)
 	suite.mockSpan = tracing.NewMockSpan(suite.ctrl)
 
 	// Setup basic mock expectations

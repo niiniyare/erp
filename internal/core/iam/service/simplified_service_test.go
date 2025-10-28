@@ -28,7 +28,7 @@ type SimplifiedServiceTestSuite struct {
 	ctrl          *gomock.Controller
 	mockLogger    *logger.MockLogger
 	mockMetrics   *metrics.MockMetricsProvider
-	mockTracer    *tracing.MockTracingService
+	mockTracer    *tracing.MockService
 	policyService policy.Service
 	tenantID      uuid.UUID
 	userID        uuid.UUID
@@ -40,7 +40,7 @@ func (s *SimplifiedServiceTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.mockLogger = logger.NewMockLogger(s.ctrl)
 	s.mockMetrics = metrics.NewMockMetricsProvider(s.ctrl)
-	s.mockTracer = tracing.NewMockTracingService(s.ctrl)
+	s.mockTracer = tracing.NewMockService(s.ctrl)
 	s.tenantID = uuid.New()
 	s.userID = uuid.New()
 

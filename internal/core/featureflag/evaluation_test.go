@@ -31,7 +31,7 @@ func (s *FeatureFlagTestSuite) SetupTest() {
 		simpleService:            nil, // NOTE: Would be injected in real usage
 		logger:                   logger.NewMockLogger(ctrl),
 		metrics:                  metrics.NewMockMetricsProvider(ctrl),
-		tracing:                  tracing.NewMockTracingService(ctrl),
+		tracing:                  tracing.NewMockService(ctrl),
 	}
 	s.ctx = context.Background()
 	s.userID = uuid.New()

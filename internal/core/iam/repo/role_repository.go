@@ -20,7 +20,7 @@ type roleRepository struct {
 	store   db.Store
 	logger  logger.Logger
 	metrics metrics.MetricsProvider
-	tracer  tracing.TracingService
+	tracer  tracing.Service
 }
 
 // NewRoleRepository creates a new role repository
@@ -28,7 +28,7 @@ func NewRoleRepository(
 	store db.Store,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
-	tracer tracing.TracingService,
+	tracer tracing.Service,
 ) RoleRepository {
 	return &roleRepository{
 		store:   store,
