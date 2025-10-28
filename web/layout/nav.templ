@@ -1,0 +1,262 @@
+// templui layout nav - version: v0.98.0 created for awo-erp
+package layout
+
+import (
+	"github.com/niiniyare/erp/web/components/button"
+	"github.com/niiniyare/erp/web/components/icon"
+	"github.com/niiniyare/erp/web/components/badge"
+	"github.com/niiniyare/erp/web/utils"
+)
+
+type NavItem struct {
+	Label       string
+	Href        string
+	Icon        string
+	Badge       string
+	BadgeVariant badge.Variant
+	Active      bool
+	Disabled    bool
+	Children    []NavItem
+	Permission  string
+}
+
+type NavProps struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	
+	// Navigation items
+	Items       []NavItem
+	
+	// Branding
+	Logo        string
+	LogoAlt     string
+	BrandText   string
+	BrandHref   string
+	
+	// Behavior
+	Collapsible bool
+	Collapsed   bool
+	Position    string // "sidebar", "top", "bottom"
+	
+	// Styling
+	Variant     string // "default", "minimal", "compact"
+	ShowIcons   bool
+	ShowBadges  bool
+}
+
+templ Nav(props ...NavProps) {
+	{{ var p NavProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	
+	// Set defaults
+	if p.Position == "" {
+		{{ p.Position = "sidebar" }}
+	}
+	if p.Variant == "" {
+		{{ p.Variant = "default" }}
+	}
+	{{ p.ShowIcons = true }}
+	{{ p.ShowBadges = true }}
+	
+	<nav
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={
+			utils.TwMerge(
+				p.getNavClasses(),
+				p.Class,
+			)
+		}
+		{ p.Attributes... }
+		if p.Collapsible {
+			x-data="{ collapsed: false }"
+			x-init="collapsed = window.innerWidth < 768"
+			@resize.window="collapsed = window.innerWidth < 768"
+		}
+	>
+		<!-- Brand/Logo Section -->
+		if p.Logo != "" || p.BrandText != "" {
+			<div class="flex items-center justify-between p-4 border-b border-border">
+				if p.BrandHref != "" {
+					<a href={ p.BrandHref } class="flex items-center space-x-3">
+						if p.Logo != "" {
+							<img src={ p.Logo } alt={ p.LogoAlt } class="h-8 w-auto">
+						}
+						if p.BrandText != "" {
+							<span class="text-lg font-semibold text-foreground">{ p.BrandText }</span>
+						}
+					</a>
+				} else {
+					<div class="flex items-center space-x-3">
+						if p.Logo != "" {
+							<img src={ p.Logo } alt={ p.LogoAlt } class="h-8 w-auto">
+						}
+						if p.BrandText != "" {
+							<span class="text-lg font-semibold text-foreground">{ p.BrandText }</span>
+						}
+					</div>
+				}
+				
+				if p.Collapsible {
+					@button.Button(button.Props{
+						Variant: button.VariantGhost,
+						Size:    button.SizeIcon,
+						Class:   "md:hidden",
+					}) {
+						@icon.Icon("menu")()
+					}
+				}
+			</div>
+		}
+		
+		<!-- Navigation Items -->
+		<div 
+			class={
+				utils.TwMerge(
+					"flex-1 overflow-y-auto",
+					utils.If(p.Collapsible, "x-show='!collapsed' md:block"),
+				)
+			}
+		>
+			if len(p.Items) > 0 {
+				@NavItems(NavItemsProps{
+					Items:     p.Items,
+					ShowIcons: p.ShowIcons,
+					ShowBadges: p.ShowBadges,
+					Variant:   p.Variant,
+				})
+			}
+		</div>
+	</nav>
+}
+
+type NavItemsProps struct {
+	Items      []NavItem
+	ShowIcons  bool
+	ShowBadges bool
+	Variant    string
+	Level      int
+}
+
+templ NavItems(props NavItemsProps) {
+	<ul class={ 
+		utils.TwMerge(
+			"space-y-1 p-2",
+			utils.If(props.Level > 0, "ml-4 border-l border-border pl-4"),
+		)
+	}>
+		for _, item := range props.Items {
+			@NavItemComponent(NavItemComponentProps{
+				Item:       item,
+				ShowIcons:  props.ShowIcons,
+				ShowBadges: props.ShowBadges,
+				Variant:    props.Variant,
+				Level:      props.Level,
+			})
+		}
+	</ul>
+}
+
+type NavItemComponentProps struct {
+	Item       NavItem
+	ShowIcons  bool
+	ShowBadges bool
+	Variant    string
+	Level      int
+}
+
+templ NavItemComponent(props NavItemComponentProps) {
+	<li>
+		if len(props.Item.Children) > 0 {
+			<!-- Item with children (expandable) -->
+			<div 
+				x-data="{ expanded: false }"
+				class="space-y-1"
+			>
+				@button.Button(button.Props{
+					Variant:   utils.IfElse(props.Item.Active, button.VariantDefault, button.VariantGhost),
+					FullWidth: true,
+					Disabled:  props.Item.Disabled,
+					Class:     "justify-start h-10",
+					Attributes: templ.Attributes{
+						"@click": "expanded = !expanded",
+					},
+				}) {
+					<div class="flex items-center justify-between w-full">
+						<div class="flex items-center space-x-3">
+							if props.ShowIcons && props.Item.Icon != "" {
+								@icon.Icon(props.Item.Icon)()
+							}
+							<span>{ props.Item.Label }</span>
+							if props.ShowBadges && props.Item.Badge != "" {
+								@badge.Badge(badge.Props{
+									Variant: props.Item.BadgeVariant,
+								}) {
+									{ props.Item.Badge }
+								}
+							}
+						</div>
+						@icon.Icon("chevron-down")(icon.Props{
+							Class: "transition-transform duration-200",
+							Attributes: templ.Attributes{
+								"x-bind:class": "expanded ? 'rotate-180' : ''",
+							},
+						})
+					</div>
+				}
+				
+				<div x-show="expanded" x-transition>
+					@NavItems(NavItemsProps{
+						Items:      props.Item.Children,
+						ShowIcons:  props.ShowIcons,
+						ShowBadges: props.ShowBadges,
+						Variant:    props.Variant,
+						Level:      props.Level + 1,
+					})
+				</div>
+			</div>
+		} else {
+			<!-- Simple nav item -->
+			@button.Button(button.Props{
+				Href:      props.Item.Href,
+				Variant:   utils.IfElse(props.Item.Active, button.VariantDefault, button.VariantGhost),
+				FullWidth: true,
+				Disabled:  props.Item.Disabled,
+				Class:     "justify-start h-10",
+			}) {
+				<div class="flex items-center justify-between w-full">
+					<div class="flex items-center space-x-3">
+						if props.ShowIcons && props.Item.Icon != "" {
+							@icon.Icon(props.Item.Icon)()
+						}
+						<span>{ props.Item.Label }</span>
+					</div>
+					if props.ShowBadges && props.Item.Badge != "" {
+						@badge.Badge(badge.Props{
+							Variant: props.Item.BadgeVariant,
+						}) {
+							{ props.Item.Badge }
+						}
+					}
+				</div>
+			}
+		}
+	</li>
+}
+
+func (p NavProps) getNavClasses() string {
+	base := "flex flex-col bg-card border-r border-border"
+	
+	switch p.Position {
+	case "top":
+		return utils.TwMerge(base, "flex-row h-16 border-r-0 border-b")
+	case "bottom":
+		return utils.TwMerge(base, "flex-row h-16 border-r-0 border-t")
+	default: // sidebar
+		return utils.TwMerge(base, "h-screen w-64")
+	}
+}

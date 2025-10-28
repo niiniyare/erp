@@ -9,7 +9,9 @@ import (
 	"github.com/niiniyare/erp/internal/api/handlers/health"
 	middlewarePkg "github.com/niiniyare/erp/internal/api/middleware"
 	tenantHandler "github.com/niiniyare/erp/internal/api/handlers/tenant"
+	userHandler "github.com/niiniyare/erp/internal/api/handlers/user"
 	coreTenant "github.com/niiniyare/erp/internal/core/tenant"
+	"github.com/niiniyare/erp/internal/core/iam/authn"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -20,7 +22,7 @@ import (
 const (
 	ModuleHealth = "health"
 	ModuleTenant = "tenant"
-	// ModuleUser    = "user"
+	ModuleUser   = "user"
 	// ModuleFinance = "finance"
 )
 
@@ -42,14 +44,14 @@ type ModuleInfo struct {
 type RouteRegistry struct {
 	logger            logger.Logger
 	metrics           metrics.MetricsProvider
-	tracer            tracing.TracingService
+	tracer            tracing.Service
 	registeredModules map[string]*ModuleInfo
 	registeredPaths   map[string]bool
 	mu                sync.RWMutex
 }
 
 // NewRouteRegistry creates a new route registry
-func NewRouteRegistry(logger logger.Logger, metrics metrics.MetricsProvider, tracer tracing.TracingService) *RouteRegistry {
+func NewRouteRegistry(logger logger.Logger, metrics metrics.MetricsProvider, tracer tracing.Service) *RouteRegistry {
 	return &RouteRegistry{
 		logger:            logger,
 		metrics:           metrics,
@@ -101,8 +103,9 @@ func (r *RouteRegistry) RegisterModuleWithMiddleware(
 			// TODO: Apply auth middleware when available
 			// router.Use(middleware.AuthMiddleware())
 		case "ratelimit":
-			// TODO: Apply rate limiting middleware when available
-			// router.Use(middleware.RateLimitMiddleware())
+			// Apply rate limiting middleware using existing system
+			// TODO: Configure rate limiting with proper config
+			// router.Use(middlewarePkg.RateLimitMiddleware(config, logger))
 		case "tenant":
 			// Apply tenant middleware for RLS context
 			if deps != nil && deps.TenantMiddleware != nil {
@@ -172,9 +175,10 @@ func (r *RouteRegistry) ListRoutes() map[string]*ModuleInfo {
 type Dependencies struct {
 	Logger           logger.Logger
 	Metrics          metrics.MetricsProvider
-	Tracer           tracing.TracingService
+	Tracer           tracing.Service
 	conf             *health.Config
 	TenantService    coreTenant.Service
+	UserService      authn.Service
 	TenantMiddleware fiber.Handler
 }
 
@@ -238,8 +242,8 @@ func (r *Router) RegisterAll(app *fiber.App) error {
 	}{
 		{ModuleHealth, r.registerHealth},
 		{ModuleTenant, r.registerTenant},
+		{ModuleUser, r.registerUser},
 		// Add future modules here:
-		// {ModuleUser, r.registerUser},
 		// {ModuleFinance, r.registerFinance},
 	}
 
@@ -299,7 +303,7 @@ func (r *Router) registerTenant(app *fiber.App) error {
 		app,
 		ModuleTenant,
 		"/api/v1/tenants",
-		[]string{"cors", "tenant", "auth", "ratelimit"}, // Include tenant middleware for RLS
+		[]string{"cors", "tenant", "auth"}, // Include tenant middleware for RLS
 		func(router fiber.Router) {
 			router.Get("/", handler.List)         // GET /api/v1/tenants - List tenants with pagination
 			router.Post("/", handler.Create)      // POST /api/v1/tenants - Create new tenant
@@ -311,23 +315,50 @@ func (r *Router) registerTenant(app *fiber.App) error {
 	)
 }
 
+// registerUser registers user management routes.
+func (r *Router) registerUser(app *fiber.App) error {
+	// Use existing user service
+	if r.deps.UserService == nil {
+		return errors.NewBusinessError("MISSING_USER_SERVICE", "User service is required").
+			WithCategory(errors.CategorySystem).
+			WithSeverity(errors.SeverityCritical).
+			WithSuggestion("Ensure user service is initialized before creating router")
+	}
+
+	handler := userHandler.NewUserHandler(r.deps.UserService, r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
+
+	return r.registry.RegisterModuleWithMiddleware(
+		app,
+		ModuleUser,
+		"/api/v1/users",
+		[]string{"cors", "tenant", "auth"}, // Include tenant middleware for RLS and auth
+		func(router fiber.Router) {
+			router.Get("/", handler.List)                            // GET /api/v1/users - List users with pagination
+			router.Post("/", handler.Create)                         // POST /api/v1/users - Create new user
+			router.Get("/:id", handler.Get)                          // GET /api/v1/users/:id - Get user by ID
+			router.Put("/:id", handler.Update)                       // PUT /api/v1/users/:id - Update user
+			router.Delete("/:id", handler.Delete)                    // DELETE /api/v1/users/:id - Delete user
+			router.Post("/authenticate", handler.Authenticate)       // POST /api/v1/users/authenticate - User authentication
+			router.Post("/:id/change-password", handler.ChangePassword) // POST /api/v1/users/:id/change-password - Change password
+		},
+		r.deps,
+	)
+}
+
 // Future module registration examples:
 //
-// func (r *Router) registerUser(app *fiber.App) error {
-// 	handler := user.NewHandler(r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
+// func (r *Router) registerFinance(app *fiber.App) error {
+// 	handler := finance.NewHandler(r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
 //
 // 	return r.registry.RegisterModuleWithMiddleware(
 // 		app,
-// 		ModuleUser,
-// 		"/api/v1/users",
+// 		ModuleFinance,
+// 		"/api/v1/finance",
 // 		[]string{"cors", "auth", "ratelimit"},
 // 		func(router fiber.Router) {
-// 			router.Get("/", handler.List)
-// 			router.Post("/", handler.Create)
-// 			router.Get("/:id", handler.GetByID)
-// 			router.Put("/:id", handler.Update)
-// 			router.Delete("/:id", handler.Delete)
-// 			router.Post("/:id/reset-password", handler.ResetPassword)
+// 			router.Get("/accounts", handler.ListAccounts)
+// 			router.Post("/transactions", handler.CreateTransaction)
+// 			router.Get("/reports", handler.GetReports)
 // 		},
 // 	)
 // }

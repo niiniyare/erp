@@ -1,0 +1,465 @@
+// templui layout header - version: v0.98.0 created for awo-erp
+package layout
+
+import (
+	"github.com/niiniyare/erp/web/components/button"
+	"github.com/niiniyare/erp/web/components/icon"
+	"github.com/niiniyare/erp/web/components/badge"
+	"github.com/niiniyare/erp/web/components/avatar"
+	"github.com/niiniyare/erp/web/components/dropdown"
+	"github.com/niiniyare/erp/web/components/input"
+	"github.com/niiniyare/erp/web/utils"
+)
+
+type User struct {
+	Name      string
+	Email     string
+	Avatar    string
+	Role      string
+	Company   string
+}
+
+type Notification struct {
+	ID       string
+	Title    string
+	Message  string
+	Time     string
+	Read     bool
+	Type     string // "info", "warning", "error", "success"
+	Icon     string
+	Href     string
+}
+
+type HeaderAction struct {
+	Label      string
+	Icon       string
+	Href       string
+	Badge      string
+	BadgeVariant badge.Variant
+	OnClick    string
+	Disabled   bool
+}
+
+type HeaderProps struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	
+	// Content
+	Title       string
+	Subtitle    string
+	Breadcrumbs []BreadcrumbItem
+	
+	// User
+	User        *User
+	UserMenu    []HeaderAction
+	
+	// Actions
+	Actions     []HeaderAction
+	
+	// Search
+	ShowSearch  bool
+	SearchPlaceholder string
+	SearchAction string
+	
+	// Notifications
+	Notifications []Notification
+	ShowNotifications bool
+	
+	// Settings
+	ShowSettings bool
+	ShowThemeToggle bool
+	
+	// Layout
+	Sticky      bool
+	Transparent bool
+	Compact     bool
+}
+
+type BreadcrumbItem struct {
+	Label string
+	Href  string
+	Icon  string
+	Active bool
+}
+
+templ Header(props ...HeaderProps) {
+	{{ var p HeaderProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	
+	// Set defaults
+	if p.SearchPlaceholder == "" {
+		{{ p.SearchPlaceholder = "Search..." }}
+	}
+	
+	<header
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={
+			utils.TwMerge(
+				p.getHeaderClasses(),
+				p.Class,
+			)
+		}
+		{ p.Attributes... }
+	>
+		<div class="flex items-center justify-between w-full px-4 py-3">
+			<!-- Left Section -->
+			<div class="flex items-center space-x-4 flex-1">
+				<!-- Title and Breadcrumbs -->
+				<div class="flex flex-col">
+					if p.Title != "" {
+						<h1 class={
+							utils.TwMerge(
+								"text-lg font-semibold text-foreground",
+								utils.If(p.Compact, "text-base"),
+							)
+						}>
+							{ p.Title }
+						</h1>
+					}
+					
+					if p.Subtitle != "" {
+						<p class="text-sm text-muted-foreground">{ p.Subtitle }</p>
+					}
+					
+					if len(p.Breadcrumbs) > 0 {
+						@HeaderBreadcrumbs(p.Breadcrumbs)
+					}
+				</div>
+			</div>
+			
+			<!-- Center Section (Search) -->
+			if p.ShowSearch {
+				<div class="hidden md:flex flex-1 max-w-md mx-4">
+					@input.Input(input.Props{
+						Type:        input.TypeSearch,
+						Placeholder: p.SearchPlaceholder,
+						Class:       "w-full",
+						Attributes: templ.Attributes{
+							"hx-get":     p.SearchAction,
+							"hx-trigger": "keyup changed delay:300ms",
+							"hx-target":  "#search-results",
+						},
+					})
+				</div>
+			}
+			
+			<!-- Right Section -->
+			<div class="flex items-center space-x-2">
+				<!-- Custom Actions -->
+				for _, action := range p.Actions {
+					@HeaderActionButton(action)
+				}
+				
+				<!-- Theme Toggle -->
+				if p.ShowThemeToggle {
+					@button.Button(button.Props{
+						Variant: button.VariantGhost,
+						Size:    button.SizeIcon,
+						Attributes: templ.Attributes{
+							"@click": "toggleTheme()",
+							"title":  "Toggle theme",
+						},
+					}) {
+						@icon.Icon("sun")(icon.Props{
+							Class: "dark:hidden",
+						})
+						@icon.Icon("moon")(icon.Props{
+							Class: "hidden dark:block",
+						})
+					}
+				}
+				
+				<!-- Notifications -->
+				if p.ShowNotifications {
+					@HeaderNotifications(p.Notifications)
+				}
+				
+				<!-- Settings -->
+				if p.ShowSettings {
+					@button.Button(button.Props{
+						Variant: button.VariantGhost,
+						Size:    button.SizeIcon,
+						Href:    "/settings",
+					}) {
+						@icon.Icon("settings")()
+					}
+				}
+				
+				<!-- User Menu -->
+				if p.User != nil {
+					@HeaderUserMenu(*p.User, p.UserMenu)
+				}
+			</div>
+		</div>
+	</header>
+}
+
+templ HeaderBreadcrumbs(items []BreadcrumbItem) {
+	<nav class="flex items-center space-x-1 text-sm text-muted-foreground">
+		for i, item := range items {
+			if i > 0 {
+				@icon.Icon("chevron-right")(icon.Props{
+					Size: 16,
+				})
+			}
+			
+			if item.Href != "" && !item.Active {
+				<a href={ item.Href } class="hover:text-foreground transition-colors">
+					if item.Icon != "" {
+						@icon.Icon(item.Icon)(icon.Props{Size: 16})
+					}
+					{ item.Label }
+				</a>
+			} else {
+				<span class={
+					utils.TwMerge(
+						"flex items-center space-x-1",
+						utils.If(item.Active, "text-foreground font-medium"),
+					)
+				}>
+					if item.Icon != "" {
+						@icon.Icon(item.Icon)(icon.Props{Size: 16})
+					}
+					<span>{ item.Label }</span>
+				</span>
+			}
+		}
+	</nav>
+}
+
+templ HeaderActionButton(action HeaderAction) {
+	@button.Button(button.Props{
+		Variant:  button.VariantGhost,
+		Size:     button.SizeIcon,
+		Href:     action.Href,
+		Disabled: action.Disabled,
+		Attributes: templ.Attributes{
+			"onclick": action.OnClick,
+			"title":   action.Label,
+		},
+	}) {
+		<div class="relative">
+			@icon.Icon(action.Icon)()
+			if action.Badge != "" {
+				<div class="absolute -top-2 -right-2">
+					@badge.Badge(badge.Props{
+						Variant: action.BadgeVariant,
+						Class:   "text-xs h-5 min-w-5 rounded-full",
+					}) {
+						{ action.Badge }
+					}
+				</div>
+			}
+		</div>
+	}
+}
+
+templ HeaderNotifications(notifications []Notification) {
+	{{ unreadCount := 0 }}
+	for _, notif := range notifications {
+		if !notif.Read {
+			{{ unreadCount++ }}
+		}
+	}
+	
+	@dropdown.Dropdown() {
+		@dropdown.Trigger() {
+			@button.Button(button.Props{
+				Variant: button.VariantGhost,
+				Size:    button.SizeIcon,
+			}) {
+				<div class="relative">
+					@icon.Icon("bell")()
+					if unreadCount > 0 {
+						<div class="absolute -top-2 -right-2">
+							@badge.Badge(badge.Props{
+								Variant: badge.VariantDestructive,
+								Class:   "text-xs h-5 min-w-5 rounded-full",
+							}) {
+								{ utils.IfElse(unreadCount > 99, "99+", string(rune(unreadCount + 48))) }
+							}
+						</div>
+					}
+				</div>
+			}
+		}
+		
+		@dropdown.Content(dropdown.ContentProps{
+			Placement: dropdown.PlacementBottomEnd,
+		}) {
+			<div class="w-80">
+				<div class="px-4 py-3 border-b border-border">
+					<h3 class="font-semibold">Notifications</h3>
+				</div>
+				
+				<div class="max-h-96 overflow-y-auto">
+					if len(notifications) == 0 {
+						<div class="px-4 py-8 text-center text-muted-foreground">
+							@icon.Icon("bell-off")(icon.Props{Size: 48, Class: "mx-auto mb-2"})
+							<p>No notifications</p>
+						</div>
+					} else {
+						for _, notif := range notifications {
+							@HeaderNotificationItem(notif)
+						}
+					}
+				</div>
+				
+				if len(notifications) > 0 {
+					<div class="px-4 py-3 border-t border-border">
+						@button.Button(button.Props{
+							Variant:   button.VariantGhost,
+							FullWidth: true,
+							Href:      "/notifications",
+						}) {
+							View all notifications
+						}
+					</div>
+				}
+			</div>
+		}
+	}
+}
+
+templ HeaderNotificationItem(notif Notification) {
+	<div class={
+		utils.TwMerge(
+			"px-4 py-3 border-b border-border last:border-b-0 hover:bg-muted/50 transition-colors",
+			utils.If(!notif.Read, "bg-primary/5"),
+		)
+	}>
+		if notif.Href != "" {
+			<a href={ notif.Href } class="block">
+				@NotificationContent(notif)
+			</a>
+		} else {
+			@NotificationContent(notif)
+		}
+	</div>
+}
+
+templ NotificationContent(notif Notification) {
+	<div class="flex items-start space-x-3">
+		if notif.Icon != "" {
+			@icon.Icon(notif.Icon)(icon.Props{
+				Size: 20,
+				Class: utils.IfElse(notif.Type == "error", "text-red-500",
+					utils.IfElse(notif.Type == "warning", "text-yellow-500",
+						utils.IfElse(notif.Type == "success", "text-green-500", "text-blue-500"))),
+			})
+		}
+		
+		<div class="flex-1 min-w-0">
+			<p class="text-sm font-medium text-foreground">{ notif.Title }</p>
+			if notif.Message != "" {
+				<p class="text-sm text-muted-foreground">{ notif.Message }</p>
+			}
+			if notif.Time != "" {
+				<p class="text-xs text-muted-foreground mt-1">{ notif.Time }</p>
+			}
+		</div>
+		
+		if !notif.Read {
+			<div class="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2"></div>
+		}
+	</div>
+}
+
+templ HeaderUserMenu(user User, menuItems []HeaderAction) {
+	@dropdown.Dropdown() {
+		@dropdown.Trigger() {
+			@button.Button(button.Props{
+				Variant: button.VariantGhost,
+				Class:   "h-auto p-2",
+			}) {
+				<div class="flex items-center space-x-2">
+					@avatar.Avatar(avatar.Props{
+						Src: user.Avatar,
+						Alt: user.Name,
+						Size: avatar.SizeSm,
+					}) {
+						{ string(rune(user.Name[0])) }
+					}
+					<div class="hidden md:block text-left">
+						<p class="text-sm font-medium">{ user.Name }</p>
+						if user.Role != "" {
+							<p class="text-xs text-muted-foreground">{ user.Role }</p>
+						}
+					</div>
+					@icon.Icon("chevron-down")(icon.Props{Size: 16})
+				</div>
+			}
+		}
+		
+		@dropdown.Content(dropdown.ContentProps{
+			Placement: dropdown.PlacementBottomEnd,
+		}) {
+			<div class="w-56">
+				<!-- User Info -->
+				<div class="px-3 py-2 border-b border-border">
+					<p class="font-medium">{ user.Name }</p>
+					<p class="text-sm text-muted-foreground">{ user.Email }</p>
+					if user.Company != "" {
+						<p class="text-xs text-muted-foreground">{ user.Company }</p>
+					}
+				</div>
+				
+				<!-- Menu Items -->
+				<div class="py-1">
+					for _, item := range menuItems {
+						@dropdown.Item() {
+							if item.Href != "" {
+								<a href={ item.Href } class="flex items-center w-full px-3 py-2 text-sm hover:bg-muted">
+									if item.Icon != "" {
+										@icon.Icon(item.Icon)(icon.Props{Size: 16, Class: "mr-2"})
+									}
+									{ item.Label }
+								</a>
+							} else {
+								@button.Button(button.Props{
+									Variant:   button.VariantGhost,
+									FullWidth: true,
+									Class:     "justify-start h-auto px-3 py-2",
+									Disabled:  item.Disabled,
+									Attributes: templ.Attributes{
+										"onclick": item.OnClick,
+									},
+								}) {
+									if item.Icon != "" {
+										@icon.Icon(item.Icon)(icon.Props{Size: 16, Class: "mr-2"})
+									}
+									{ item.Label }
+								}
+							}
+						}
+					}
+				</div>
+			</div>
+		}
+	}
+}
+
+func (p HeaderProps) getHeaderClasses() string {
+	base := "bg-background border-b border-border"
+	
+	if p.Sticky {
+		base = utils.TwMerge(base, "sticky top-0 z-40")
+	}
+	
+	if p.Transparent {
+		base = utils.TwMerge(base, "bg-background/80 backdrop-blur-sm")
+	}
+	
+	if p.Compact {
+		base = utils.TwMerge(base, "h-12")
+	} else {
+		base = utils.TwMerge(base, "h-16")
+	}
+	
+	return base
+}

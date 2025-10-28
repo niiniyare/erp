@@ -1,0 +1,264 @@
+// templui layout base - version: v0.98.0 created for awo-erp
+package layout
+
+import (
+	"github.com/niiniyare/erp/web/utils"
+)
+
+type BaseProps struct {
+	// Document metadata
+	Title       string
+	Description string
+	Keywords    string
+	Author      string
+	
+	// Open Graph / Social metadata
+	OGTitle       string
+	OGDescription string
+	OGImage       string
+	OGType        string
+	
+	// Technical metadata
+	Charset     string
+	Language    string
+	Viewport    string
+	
+	// Security
+	CSPNonce    string
+	
+	// Styling and behavior
+	Theme       string // "light", "dark", "system"
+	Direction   string // "ltr", "rtl"
+	Class       string
+	BodyClass   string
+	
+	// Assets
+	CSS         []string
+	JS          []string
+	PreloadURLs []string
+	
+	// Custom head content
+	CustomHead  templ.Component
+	
+	// Layout options
+	NoIndex     bool
+	NoFollow    bool
+	Canonical   string
+}
+
+templ Base(props ...BaseProps) {
+	{{ var p BaseProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	
+	// Set defaults
+	if p.Charset == "" {
+		{{ p.Charset = "UTF-8" }}
+	}
+	if p.Language == "" {
+		{{ p.Language = "en" }}
+	}
+	if p.Viewport == "" {
+		{{ p.Viewport = "width=device-width, initial-scale=1.0" }}
+	}
+	if p.Theme == "" {
+		{{ p.Theme = "system" }}
+	}
+	if p.Direction == "" {
+		{{ p.Direction = "ltr" }}
+	}
+	if p.OGType == "" {
+		{{ p.OGType = "website" }}
+	}
+	
+	<!DOCTYPE html>
+	<html 
+		lang={ p.Language } 
+		dir={ p.Direction }
+		class={
+			utils.TwMerge(
+				"scroll-smooth",
+				utils.IfElse(p.Theme == "dark", "dark", ""),
+				p.Class,
+			)
+		}
+		if p.Theme == "system" {
+			x-data="{ theme: localStorage.getItem('theme') || 'system' }"
+			x-init="
+				if (theme === 'system') {
+					theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+				}
+				$el.classList.toggle('dark', theme === 'dark');
+				
+				window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+					if (localStorage.getItem('theme') === 'system' || !localStorage.getItem('theme')) {
+						$el.classList.toggle('dark', e.matches);
+					}
+				});
+			"
+		}
+	>
+		<head>
+			<!-- Basic metadata -->
+			<meta charset={ p.Charset }>
+			<meta name="viewport" content={ p.Viewport }>
+			
+			if p.Title != "" {
+				<title>{ p.Title }</title>
+			}
+			
+			if p.Description != "" {
+				<meta name="description" content={ p.Description }>
+			}
+			
+			if p.Keywords != "" {
+				<meta name="keywords" content={ p.Keywords }>
+			}
+			
+			if p.Author != "" {
+				<meta name="author" content={ p.Author }>
+			}
+			
+			<!-- SEO and indexing -->
+			if p.NoIndex || p.NoFollow {
+				<meta name="robots" content={
+					utils.IfElse(p.NoIndex && p.NoFollow, "noindex, nofollow",
+						utils.IfElse(p.NoIndex, "noindex",
+							utils.IfElse(p.NoFollow, "nofollow", "index, follow")))
+				}>
+			}
+			
+			if p.Canonical != "" {
+				<link rel="canonical" href={ p.Canonical }>
+			}
+			
+			<!-- Open Graph metadata -->
+			if p.OGTitle != "" {
+				<meta property="og:title" content={ p.OGTitle }>
+			} else if p.Title != "" {
+				<meta property="og:title" content={ p.Title }>
+			}
+			
+			if p.OGDescription != "" {
+				<meta property="og:description" content={ p.OGDescription }>
+			} else if p.Description != "" {
+				<meta property="og:description" content={ p.Description }>
+			}
+			
+			if p.OGImage != "" {
+				<meta property="og:image" content={ p.OGImage }>
+			}
+			
+			<meta property="og:type" content={ p.OGType }>
+			
+			<!-- Twitter Card metadata -->
+			<meta name="twitter:card" content="summary_large_image">
+			if p.OGTitle != "" {
+				<meta name="twitter:title" content={ p.OGTitle }>
+			} else if p.Title != "" {
+				<meta name="twitter:title" content={ p.Title }>
+			}
+			
+			if p.OGDescription != "" {
+				<meta name="twitter:description" content={ p.OGDescription }>
+			} else if p.Description != "" {
+				<meta name="twitter:description" content={ p.Description }>
+			}
+			
+			if p.OGImage != "" {
+				<meta name="twitter:image" content={ p.OGImage }>
+			}
+			
+			<!-- Security headers -->
+			<meta http-equiv="X-Content-Type-Options" content="nosniff">
+			<meta http-equiv="X-Frame-Options" content="DENY">
+			<meta http-equiv="X-XSS-Protection" content="1; mode=block">
+			<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+			
+			<!-- Preload critical resources -->
+			for _, url := range p.PreloadURLs {
+				<link rel="preload" href={ url } as="style">
+			}
+			
+			<!-- Favicon and app icons -->
+			<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+			<link rel="icon" type="image/png" href="/favicon.png">
+			<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+			<link rel="manifest" href="/manifest.json">
+			
+			<!-- CSS Assets -->
+			<!-- TailwindCSS -->
+			<link rel="stylesheet" href={ "/assets/css/tailwind.css?v=" + utils.ScriptVersion }>
+			
+			<!-- Additional CSS -->
+			for _, cssFile := range p.CSS {
+				<link rel="stylesheet" href={ cssFile + "?v=" + utils.ScriptVersion }>
+			}
+			
+			<!-- Custom head content -->
+			if p.CustomHead != nil {
+				@p.CustomHead
+			}
+		</head>
+		
+		<body 
+			class={
+				utils.TwMerge(
+					"min-h-screen bg-background font-sans antialiased",
+					"selection:bg-primary/20 selection:text-primary-foreground",
+					p.BodyClass,
+				)
+			}
+		>
+			<!-- Main content -->
+			{ children... }
+			
+			<!-- JavaScript Assets -->
+			<!-- Alpine.js (for reactive components) -->
+			<script 
+				defer 
+				src={ "/assets/js/alpine.min.js?v=" + utils.ScriptVersion }
+				if p.CSPNonce != "" {
+					nonce={ p.CSPNonce }
+				}
+			></script>
+			
+			<!-- HTMX (for server interactions) -->
+			<script 
+				defer 
+				src={ "/assets/js/htmx.min.js?v=" + utils.ScriptVersion }
+				if p.CSPNonce != "" {
+					nonce={ p.CSPNonce }
+				}
+			></script>
+			
+			<!-- Component-specific JavaScript -->
+			for _, jsFile := range p.JS {
+				<script 
+					defer 
+					src={ jsFile + "?v=" + utils.ScriptVersion }
+					if p.CSPNonce != "" {
+						nonce={ p.CSPNonce }
+					}
+				></script>
+			}
+			
+			<!-- Theme persistence script -->
+			<script 
+				if p.CSPNonce != "" {
+					nonce={ p.CSPNonce }
+				}
+			>
+				// Prevent flash of unstyled content (FOUC)
+				(function() {
+					const theme = localStorage.getItem('theme') || 'system';
+					const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+					if (isDark) {
+						document.documentElement.classList.add('dark');
+					}
+				})();
+			</script>
+		</body>
+	</html>
+}

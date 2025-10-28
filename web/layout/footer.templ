@@ -1,0 +1,334 @@
+// templui layout footer - version: v0.98.0 created for awo-erp
+package layout
+
+import (
+	"github.com/niiniyare/erp/web/components/button"
+	"github.com/niiniyare/erp/web/components/icon"
+	"github.com/niiniyare/erp/web/components/separator"
+	"github.com/niiniyare/erp/web/utils"
+	"time"
+)
+
+type FooterLink struct {
+	Label    string
+	Href     string
+	Icon     string
+	External bool
+	Disabled bool
+}
+
+type FooterSection struct {
+	Title string
+	Links []FooterLink
+}
+
+type SocialLink struct {
+	Platform string
+	Href     string
+	Icon     string
+}
+
+type FooterProps struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	
+	// Company info
+	CompanyName    string
+	CompanyLogo    string
+	CompanyTagline string
+	Copyright      string
+	
+	// Links and sections
+	Sections       []FooterSection
+	QuickLinks     []FooterLink
+	LegalLinks     []FooterLink
+	SocialLinks    []SocialLink
+	
+	// Contact info
+	Email          string
+	Phone          string
+	Address        string
+	
+	// Layout options
+	Variant        string // "default", "minimal", "compact"
+	ShowSeparator  bool
+	ShowBackToTop  bool
+	
+	// Customization
+	CustomContent  templ.Component
+}
+
+templ Footer(props ...FooterProps) {
+	{{ var p FooterProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	
+	// Set defaults
+	if p.Variant == "" {
+		{{ p.Variant = "default" }}
+	}
+	if p.Copyright == "" && p.CompanyName != "" {
+		{{ p.Copyright = "© " + string(rune(time.Now().Year())) + " " + p.CompanyName + ". All rights reserved." }}
+	}
+	{{ p.ShowSeparator = true }}
+	{{ p.ShowBackToTop = true }}
+	
+	if p.ShowSeparator {
+		@separator.Separator()
+	}
+	
+	<footer
+		if p.ID != "" {
+			id={ p.ID }
+		}
+		class={
+			utils.TwMerge(
+				p.getFooterClasses(),
+				p.Class,
+			)
+		}
+		{ p.Attributes... }
+	>
+		if p.Variant == "minimal" {
+			@FooterMinimal(p)
+		} else if p.Variant == "compact" {
+			@FooterCompact(p)
+		} else {
+			@FooterDefault(p)
+		}
+		
+		<!-- Back to Top Button -->
+		if p.ShowBackToTop {
+			@button.Button(button.Props{
+				Variant: button.VariantOutline,
+				Size:    button.SizeIcon,
+				Class:   "fixed bottom-6 right-6 shadow-lg",
+				Attributes: templ.Attributes{
+					"@click":   "window.scrollTo({top: 0, behavior: 'smooth'})",
+					"x-show":   "window.pageYOffset > 300",
+					"x-transition": "",
+				},
+			}) {
+				@icon.Icon("arrow-up")()
+			}
+		}
+	</footer>
+}
+
+templ FooterDefault(props FooterProps) {
+	<div class="container mx-auto px-4 py-12">
+		<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+			<!-- Company Info -->
+			<div class="lg:col-span-1">
+				if props.CompanyLogo != "" || props.CompanyName != "" {
+					<div class="flex items-center space-x-3 mb-4">
+						if props.CompanyLogo != "" {
+							<img src={ props.CompanyLogo } alt={ props.CompanyName } class="h-8 w-auto">
+						}
+						if props.CompanyName != "" {
+							<span class="text-lg font-semibold">{ props.CompanyName }</span>
+						}
+					</div>
+				}
+				
+				if props.CompanyTagline != "" {
+					<p class="text-muted-foreground mb-4">{ props.CompanyTagline }</p>
+				}
+				
+				<!-- Contact Info -->
+				if props.Email != "" || props.Phone != "" || props.Address != "" {
+					<div class="space-y-2 text-sm text-muted-foreground">
+						if props.Email != "" {
+							<div class="flex items-center space-x-2">
+								@icon.Icon("mail")(icon.Props{Size: 16})
+								<a href={ "mailto:" + props.Email } class="hover:text-foreground">{ props.Email }</a>
+							</div>
+						}
+						
+						if props.Phone != "" {
+							<div class="flex items-center space-x-2">
+								@icon.Icon("phone")(icon.Props{Size: 16})
+								<a href={ "tel:" + props.Phone } class="hover:text-foreground">{ props.Phone }</a>
+							</div>
+						}
+						
+						if props.Address != "" {
+							<div class="flex items-start space-x-2">
+								@icon.Icon("map-pin")(icon.Props{Size: 16, Class: "mt-0.5"})
+								<span>{ props.Address }</span>
+							</div>
+						}
+					</div>
+				}
+				
+				<!-- Social Links -->
+				if len(props.SocialLinks) > 0 {
+					<div class="flex space-x-2 mt-6">
+						for _, social := range props.SocialLinks {
+							@button.Button(button.Props{
+								Variant: button.VariantGhost,
+								Size:    button.SizeIcon,
+								Href:    social.Href,
+								Target:  "_blank",
+								Class:   "hover:scale-110 transition-transform",
+							}) {
+								@icon.Icon(social.Icon)()
+							}
+						}
+					</div>
+				}
+			</div>
+			
+			<!-- Footer Sections -->
+			for _, section := range props.Sections {
+				<div>
+					<h3 class="font-semibold mb-4">{ section.Title }</h3>
+					<ul class="space-y-2">
+						for _, link := range section.Links {
+							<li>
+								@FooterLinkComponent(link)
+							</li>
+						}
+					</ul>
+				</div>
+			}
+		</div>
+		
+		<!-- Custom Content -->
+		if props.CustomContent != nil {
+			<div class="mt-8 pt-8 border-t border-border">
+				@props.CustomContent
+			</div>
+		}
+		
+		<!-- Bottom Section -->
+		<div class="mt-8 pt-8 border-t border-border">
+			<div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+				<!-- Copyright -->
+				if props.Copyright != "" {
+					<p class="text-sm text-muted-foreground">{ props.Copyright }</p>
+				}
+				
+				<!-- Legal Links -->
+				if len(props.LegalLinks) > 0 {
+					<div class="flex items-center space-x-4">
+						for i, link := range props.LegalLinks {
+							if i > 0 {
+								<span class="text-muted-foreground">•</span>
+							}
+							@FooterLinkComponent(link)
+						}
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+templ FooterCompact(props FooterProps) {
+	<div class="container mx-auto px-4 py-6">
+		<div class="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+			<!-- Left: Company info -->
+			<div class="flex items-center space-x-4">
+				if props.CompanyLogo != "" {
+					<img src={ props.CompanyLogo } alt={ props.CompanyName } class="h-6 w-auto">
+				}
+				if props.CompanyName != "" {
+					<span class="font-semibold">{ props.CompanyName }</span>
+				}
+				if props.Copyright != "" {
+					<span class="text-sm text-muted-foreground hidden md:inline">{ props.Copyright }</span>
+				}
+			</div>
+			
+			<!-- Right: Quick links and social -->
+			<div class="flex items-center space-x-4">
+				<!-- Quick Links -->
+				for _, link := range props.QuickLinks {
+					@FooterLinkComponent(link)
+				}
+				
+				<!-- Social Links -->
+				if len(props.SocialLinks) > 0 {
+					<div class="flex space-x-1 ml-4">
+						for _, social := range props.SocialLinks {
+							@button.Button(button.Props{
+								Variant: button.VariantGhost,
+								Size:    button.SizeIcon,
+								Href:    social.Href,
+								Target:  "_blank",
+								Class:   "h-8 w-8",
+							}) {
+								@icon.Icon(social.Icon)(icon.Props{Size: 16})
+							}
+						}
+					</div>
+				}
+			</div>
+		</div>
+		
+		<!-- Copyright on mobile -->
+		if props.Copyright != "" {
+			<div class="text-center md:hidden mt-4">
+				<p class="text-sm text-muted-foreground">{ props.Copyright }</p>
+			</div>
+		}
+	</div>
+}
+
+templ FooterMinimal(props FooterProps) {
+	<div class="container mx-auto px-4 py-4">
+		<div class="text-center">
+			if props.Copyright != "" {
+				<p class="text-sm text-muted-foreground">{ props.Copyright }</p>
+			}
+			
+			<!-- Legal Links -->
+			if len(props.LegalLinks) > 0 {
+				<div class="flex items-center justify-center space-x-4 mt-2">
+					for i, link := range props.LegalLinks {
+						if i > 0 {
+							<span class="text-muted-foreground">•</span>
+						}
+						@FooterLinkComponent(link)
+					}
+				</div>
+			}
+		</div>
+	</div>
+}
+
+templ FooterLinkComponent(link FooterLink) {
+	@button.Button(button.Props{
+		Variant:  button.VariantLink,
+		Href:     link.Href,
+		Target:   utils.If(link.External, "_blank"),
+		Disabled: link.Disabled,
+		Class:    "text-sm h-auto p-0",
+	}) {
+		<div class="flex items-center space-x-1">
+			if link.Icon != "" {
+				@icon.Icon(link.Icon)(icon.Props{Size: 16})
+			}
+			<span>{ link.Label }</span>
+			if link.External {
+				@icon.Icon("external-link")(icon.Props{Size: 12})
+			}
+		</div>
+	}
+}
+
+func (p FooterProps) getFooterClasses() string {
+	base := "bg-card border-t border-border"
+	
+	switch p.Variant {
+	case "minimal":
+		return utils.TwMerge(base, "py-4")
+	case "compact":
+		return utils.TwMerge(base, "py-6")
+	default:
+		return utils.TwMerge(base, "py-12")
+	}
+}

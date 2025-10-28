@@ -1,0 +1,153 @@
+// templui layout app - version: v0.98.0 created for awo-erp
+package layout
+
+import (
+	"github.com/niiniyare/erp/web/utils"
+)
+
+type AppLayoutProps struct {
+	ID         string
+	Class      string
+	Attributes templ.Attributes
+	
+	// Base layout props
+	Base       BaseProps
+	
+	// Layout components
+	Navigation *NavProps
+	Header     *HeaderProps
+	Footer     *FooterProps
+	
+	// Layout options
+	Layout     string // "sidebar", "topnav", "minimal"
+	FullWidth  bool
+	NoNav      bool
+	NoHeader   bool
+	NoFooter   bool
+	
+	// Main content props
+	MainClass  string
+	MainAttrs  templ.Attributes
+}
+
+templ AppLayout(props ...AppLayoutProps) {
+	{{ var p AppLayoutProps }}
+	if len(props) > 0 {
+		{{ p = props[0] }}
+	}
+	
+	// Set defaults
+	if p.Layout == "" {
+		{{ p.Layout = "sidebar" }}
+	}
+	
+	@Base(p.Base) {
+		<div 
+			if p.ID != "" {
+				id={ p.ID }
+			}
+			class={
+				utils.TwMerge(
+					"min-h-screen flex",
+					p.getLayoutClasses(),
+					p.Class,
+				)
+			}
+			{ p.Attributes... }
+		>
+			<!-- Navigation Sidebar (for sidebar layout) -->
+			if !p.NoNav && p.Navigation != nil && p.Layout == "sidebar" {
+				@Nav(*p.Navigation)
+			}
+			
+			<!-- Main Content Area -->
+			<div class="flex-1 flex flex-col min-w-0">
+				<!-- Top Navigation (for topnav layout) -->
+				if !p.NoNav && p.Navigation != nil && p.Layout == "topnav" {
+					@Nav(*p.Navigation)
+				}
+				
+				<!-- Header -->
+				if !p.NoHeader && p.Header != nil {
+					@Header(*p.Header)
+				}
+				
+				<!-- Main Content -->
+				<main 
+					class={
+						utils.TwMerge(
+							"flex-1",
+							p.getMainClasses(),
+							p.MainClass,
+						)
+					}
+					{ p.MainAttrs... }
+				>
+					if p.FullWidth {
+						{ children... }
+					} else {
+						<div class="container mx-auto px-4 py-6">
+							{ children... }
+						</div>
+					}
+				</main>
+				
+				<!-- Footer -->
+				if !p.NoFooter && p.Footer != nil {
+					@Footer(*p.Footer)
+				}
+			</div>
+		</div>
+	}
+}
+
+// Simplified layouts for specific use cases
+templ SidebarLayout(props AppLayoutProps) {
+	{{ props.Layout = "sidebar" }}
+	@AppLayout(props) {
+		{ children... }
+	}
+}
+
+templ TopNavLayout(props AppLayoutProps) {
+	{{ props.Layout = "topnav" }}
+	@AppLayout(props) {
+		{ children... }
+	}
+}
+
+templ MinimalLayout(props AppLayoutProps) {
+	{{ props.Layout = "minimal" }}
+	{{ props.NoNav = true }}
+	@AppLayout(props) {
+		{ children... }
+	}
+}
+
+templ FullWidthLayout(props AppLayoutProps) {
+	{{ props.FullWidth = true }}
+	@AppLayout(props) {
+		{ children... }
+	}
+}
+
+func (p AppLayoutProps) getLayoutClasses() string {
+	switch p.Layout {
+	case "topnav":
+		return "flex-col"
+	case "minimal":
+		return "flex-col"
+	default: // sidebar
+		return "flex-row"
+	}
+}
+
+func (p AppLayoutProps) getMainClasses() string {
+	base := "bg-background"
+	
+	if p.FullWidth {
+		return base
+	}
+	
+	return utils.TwMerge(base, "overflow-x-auto")
+}
