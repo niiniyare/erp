@@ -60,6 +60,10 @@ var APIProviderSet = wire.NewSet(
 	// Fiber app
 	NewFiberApp,
 	
+	// Middleware components
+	NewTenantMiddlewareConfig,
+	NewTenantMiddleware,
+	
 	// Handler dependencies
 	NewHandlerDependencies,
 	NewRouter,

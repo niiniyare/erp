@@ -66,6 +66,7 @@ func (r *RouteRegistry) RegisterModuleWithMiddleware(
 	basePath string,
 	middleware []string,
 	setupRoutes func(fiber.Router),
+	deps *Dependencies,
 ) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -103,8 +104,10 @@ func (r *RouteRegistry) RegisterModuleWithMiddleware(
 			// TODO: Apply rate limiting middleware when available
 			// router.Use(middleware.RateLimitMiddleware())
 		case "tenant":
-			// TODO: Apply tenant middleware when available
-			// router.Use(middleware.TenantMiddleware())
+			// Apply tenant middleware for RLS context
+			if deps != nil && deps.TenantMiddleware != nil {
+				router.Use(deps.TenantMiddleware)
+			}
 		default:
 			// Log unknown middleware but don't fail
 			r.logger.Info(fmt.Sprintf("unknown middleware: %s", middlewareName))
@@ -167,11 +170,12 @@ func (r *RouteRegistry) ListRoutes() map[string]*ModuleInfo {
 // Dependencies contains all required dependencies for handlers.
 // All fields are required and must be non-nil.
 type Dependencies struct {
-	Logger        logger.Logger
-	Metrics       metrics.MetricsProvider
-	Tracer        tracing.TracingService
-	conf          *health.Config
-	TenantService coreTenant.Service
+	Logger           logger.Logger
+	Metrics          metrics.MetricsProvider
+	Tracer           tracing.TracingService
+	conf             *health.Config
+	TenantService    coreTenant.Service
+	TenantMiddleware fiber.Handler
 }
 
 // Validate ensures all required dependencies are present.
@@ -275,6 +279,7 @@ func (r *Router) registerHealth(app *fiber.App) error {
 			// router.Get("/live", handler.Live)     // Liveness probe
 			// router.Get("/startup", handler.Startup) // Startup probe
 		},
+		r.deps,
 	)
 }
 
@@ -294,7 +299,7 @@ func (r *Router) registerTenant(app *fiber.App) error {
 		app,
 		ModuleTenant,
 		"/api/v1/tenants",
-		[]string{"cors", "auth", "ratelimit"}, // Standard middleware for tenant operations
+		[]string{"cors", "tenant", "auth", "ratelimit"}, // Include tenant middleware for RLS
 		func(router fiber.Router) {
 			router.Get("/", handler.List)         // GET /api/v1/tenants - List tenants with pagination
 			router.Post("/", handler.Create)      // POST /api/v1/tenants - Create new tenant
@@ -302,6 +307,7 @@ func (r *Router) registerTenant(app *fiber.App) error {
 			router.Put("/:id", handler.Update)    // PUT /api/v1/tenants/:id - Update tenant
 			router.Delete("/:id", handler.Delete) // DELETE /api/v1/tenants/:id - Delete tenant
 		},
+		r.deps,
 	)
 }
 

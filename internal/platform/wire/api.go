@@ -2,6 +2,8 @@
 package wire
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -10,7 +12,9 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 
 	"github.com/niiniyare/erp/internal/api/handlers"
+	"github.com/niiniyare/erp/internal/api/middleware"
 	"github.com/niiniyare/erp/internal/core/tenant"
+	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -90,6 +94,39 @@ func setupGlobalMiddleware(app *fiber.App, cfg *config.Config, log logger.Logger
 }
 
 // ============================================================================
+// MIDDLEWARE PROVIDERS
+// ============================================================================
+
+// NewTenantMiddlewareConfig creates tenant middleware configuration
+func NewTenantMiddlewareConfig(
+	tenantService tenant.Service,
+	store db.Store,
+) middleware.TenantMiddlewareConfig {
+	// Create default whitelist for public endpoints
+	whitelist := middleware.DefaultWhitelist()
+
+	return middleware.TenantMiddlewareConfig{
+		TenantService: tenantService,
+		Store:         store,
+		Whitelist:     whitelist,
+		CacheTTL:      5 * time.Minute,
+		EnableCache:   true,
+		SkipPaths: []string{
+			"/health",
+			"/api/v1/health",
+			"/openapi",
+			"/swagger-ui",
+			"/debug",
+		},
+	}
+}
+
+// NewTenantMiddleware creates the tenant middleware instance
+func NewTenantMiddleware(config middleware.TenantMiddlewareConfig) fiber.Handler {
+	return middleware.TenantMiddleware(config)
+}
+
+// ============================================================================
 // HANDLER PROVIDERS
 // ============================================================================
 
@@ -99,12 +136,14 @@ func NewHandlerDependencies(
 	metrics *metrics.MetricsService,
 	tracer tracing.TracingService,
 	tenantService tenant.Service,
+	tenantMiddleware fiber.Handler,
 ) *handlers.Dependencies {
 	return &handlers.Dependencies{
-		Logger:        log,
-		Metrics:       metrics,
-		Tracer:        tracer,
-		TenantService: tenantService,
+		Logger:          log,
+		Metrics:         metrics,
+		Tracer:          tracer,
+		TenantService:   tenantService,
+		TenantMiddleware: tenantMiddleware,
 	}
 }
 

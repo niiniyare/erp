@@ -293,10 +293,11 @@ func (s *SQLStore) resetTenantContext(ctx context.Context) error {
 
 // setTenantContext is a helper method to set tenant context
 func (s *SQLStore) setTenantContext(ctx context.Context, exec DBTX, tenantID uuid.UUID, isTransaction bool) error {
-	query := "SELECT set_config('app.current_tenant_id', $1, $2)"
-	_, err := exec.Exec(ctx, query, tenantID.String(), isTransaction)
+	// First try to use the set_tenant_context stored procedure
+	query := "SELECT set_tenant_context($1)"
+	_, err := exec.Exec(ctx, query, tenantID)
 	if err != nil {
-		s.logger.ErrorContext(ctx, "Failed to set tenant context",
+		s.logger.ErrorContext(ctx, "Failed to set tenant context using stored procedure",
 			logger.Fields{
 				"tenant_id":      tenantID.String(),
 				"is_transaction": isTransaction,
@@ -489,7 +490,7 @@ func (s *SQLStore) beginTxWithTenant(ctx context.Context, tenantID uuid.UUID, op
 
 // trySetTenantContextStoredProc attempts to use stored procedure for setting tenant context
 func (s *SQLStore) trySetTenantContextStoredProc(ctx context.Context, tx pgx.Tx, tenantID uuid.UUID) error {
-	_, err := tx.Exec(ctx, "SELECT set_tenant_context($1)", tenantID.String())
+	_, err := tx.Exec(ctx, "SELECT set_tenant_context($1)", tenantID)
 	if err != nil {
 		s.logger.DebugContext(ctx, "Stored procedure set_tenant_context not available, using fallback",
 			logger.Fields{
