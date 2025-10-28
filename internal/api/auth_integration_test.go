@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/api/gen/auth"
+	// "github.com/niiniyare/erp/internal/api/gen/auth"
 	"github.com/niiniyare/erp/internal/api/handlers"
 	"github.com/niiniyare/erp/internal/core/iam/authn"
 	"github.com/niiniyare/erp/internal/core/iam/model"

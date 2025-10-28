@@ -11,15 +11,15 @@ echo "🔧 Generating Wire dependency injection code..."
 cd "$(dirname "$0")/.."
 
 # Install Wire if not present
-if ! command -v wire &> /dev/null; then
-    echo "📦 Installing Wire..."
-    go install github.com/google/wire/cmd/wire@latest
+if ! command -v wire &>/dev/null; then
+  echo "📦 Installing Wire..."
+  go install github.com/google/wire/cmd/wire@latest
 fi
 
 # Generate Wire code for the main server
 echo "⚡ Generating Wire code for cmd/server..."
 cd cmd/server
-wire generate
+wire
 cd ../..
 
 # Generate Wire code for any other injectors (if they exist)
@@ -42,3 +42,4 @@ echo "Next steps:"
 echo "1. Review the generated wire_gen.go files"
 echo "2. Test the application: go run ./cmd/server/"
 echo "3. Run tests: go test ./..."
+

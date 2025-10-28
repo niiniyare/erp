@@ -31,9 +31,9 @@ WHERE
 `
 
 type AddTransactionAttachmentParams struct {
-	AttachmentID  any        `json:"attachment_id"`
-	UpdatedBy     *uuid.UUID `json:"updated_by"`
-	TransactionID uuid.UUID  `json:"transaction_id"`
+	AttachmentID  interface{} `json:"attachment_id"`
+	UpdatedBy     *uuid.UUID  `json:"updated_by"`
+	TransactionID uuid.UUID   `json:"transaction_id"`
 }
 
 func (q *Queries) AddTransactionAttachment(ctx context.Context, arg AddTransactionAttachmentParams) error {
@@ -56,9 +56,9 @@ WHERE
 `
 
 type AddTransactionTagParams struct {
-	Tag           any        `json:"tag"`
-	UpdatedBy     *uuid.UUID `json:"updated_by"`
-	TransactionID uuid.UUID  `json:"transaction_id"`
+	Tag           interface{} `json:"tag"`
+	UpdatedBy     *uuid.UUID  `json:"updated_by"`
+	TransactionID uuid.UUID   `json:"transaction_id"`
 }
 
 func (q *Queries) AddTransactionTag(ctx context.Context, arg AddTransactionTagParams) error {
@@ -508,15 +508,15 @@ ORDER BY
   tag
 `
 
-func (q *Queries) GetAllTransactionTags(ctx context.Context) ([]any, error) {
+func (q *Queries) GetAllTransactionTags(ctx context.Context) ([]interface{}, error) {
 	rows, err := q.db.Query(ctx, getAllTransactionTags)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []any{}
+	items := []interface{}{}
 	for rows.Next() {
-		var tag any
+		var tag interface{}
 		if err := rows.Scan(&tag); err != nil {
 			return nil, err
 		}
@@ -977,8 +977,8 @@ ORDER BY
 `
 
 type GetTransactionCountByTagRow struct {
-	Tag              any   `json:"tag"`
-	TransactionCount int64 `json:"transaction_count"`
+	Tag              interface{} `json:"tag"`
+	TransactionCount int64       `json:"transaction_count"`
 }
 
 func (q *Queries) GetTransactionCountByTag(ctx context.Context) ([]*GetTransactionCountByTagRow, error) {
@@ -2088,9 +2088,9 @@ WHERE
 `
 
 type RemoveTransactionAttachmentParams struct {
-	AttachmentID  any        `json:"attachment_id"`
-	UpdatedBy     *uuid.UUID `json:"updated_by"`
-	TransactionID uuid.UUID  `json:"transaction_id"`
+	AttachmentID  interface{} `json:"attachment_id"`
+	UpdatedBy     *uuid.UUID  `json:"updated_by"`
+	TransactionID uuid.UUID   `json:"transaction_id"`
 }
 
 func (q *Queries) RemoveTransactionAttachment(ctx context.Context, arg RemoveTransactionAttachmentParams) error {
@@ -2112,9 +2112,9 @@ WHERE
 `
 
 type RemoveTransactionTagParams struct {
-	Tag           any        `json:"tag"`
-	UpdatedBy     *uuid.UUID `json:"updated_by"`
-	TransactionID uuid.UUID  `json:"transaction_id"`
+	Tag           interface{} `json:"tag"`
+	UpdatedBy     *uuid.UUID  `json:"updated_by"`
+	TransactionID uuid.UUID   `json:"transaction_id"`
 }
 
 func (q *Queries) RemoveTransactionTag(ctx context.Context, arg RemoveTransactionTagParams) error {

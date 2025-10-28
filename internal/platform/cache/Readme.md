@@ -653,4 +653,162 @@ func TestCacheCompatibility(t *testing.T) {
 }
 ```
 
-This  Redis cache provides powerful multi-tenant capabilities while maintaining complete backward compatibility with your existing code. The automatic tenant isolation, compression, circuit breaker, and monitoring features make it production-ready for large-scale multi-tenant applications.
+## Overview
+
+This cache service is **multi-tenant native** - every operation automatically uses tenant context without manual `WithTenant()` calls everywhere. Simply set up middleware once, and all cache operations become tenant-aware.
+
+## Quick Start
+
+### 1. Setup (One Time)
+
+```go
+package main
+
+import (
+    "github.com/niiniyare/erp/internal/platform/cache"
+    "github.com/niiniyare/erp/internal/platform/config"
+    "github.com/niiniyare/erp/middleware"
+)
+
+func main() {
+    // Initialize cache
+    cfg := cache.DefaultRedisConfig(&config.RedisConfig{
+        Host: "localhost",
+        Port: 6379,
+    })
+    
+    cacheService, err := cache.NewRedisClient(cfg)
+    if err != nil {
+        log.Fatal(err)
+    }
+    defer cacheService.Close()
+    
+    // Setup router with tenant middleware
+    r := chi.NewRouter()
+    
+    // THIS IS THE KEY - Set up tenant middleware once
+    r.Use(middleware.TenantContextMiddleware())
+    
+    // Now all your handlers automatically have tenant context!
+    r.Get("/users/{id}", getUserHandler(cacheService))
+    
+    http.ListenAndServe(":8080", r)
+}
+```
+
+### 2. Use Cache Everywhere (No WithTenant Needed!)
+
+```go
+func getUserHandler(cache cache.Service) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        ctx := r.Context() // Already has tenant context from middleware!
+        
+        userID := chi.URLParam(r, "id")
+        var user User
+        
+        // Just use cache normally - tenant isolation is automatic!
+        err := cache.Get(ctx, "user:"+userID, &user)
+        if err != nil {
+            if errors.Is(err, cache.ErrCacheMiss) {
+                // Fetch from DB and cache it
+                user = fetchUserFromDB(userID)
+                cache.Set(ctx, "user:"+userID, user, 1*time.Hour)
+            } else {
+                http.Error(w, err.Error(), http.StatusInternalServerError)
+                return
+            }
+        }
+        
+        json.NewEncoder(w).Encode(user)
+    }
+}
+```
+
+## Configuration
+
+### Multi-Tenant Settings
+
+```go
+cfg := cache.DefaultRedisConfig(baseCfg)
+
+// Tenant enforcement (default: true)
+cfg.RequireTenantContext = true   // Require tenant context on all operations
+cfg.AllowGlobalOperations = false // Disallow operations without tenant context
+
+// When true: All cache operations MUST have tenant_id, tenant_slug, or tenant_subdomain
+// When false: Operations without tenant context are allowed (uses global keyspace)
+```
+
+### Memory Cache (for Formulas & Shared Data)
+
+```go
+cfg.EnableMemoryCache = true
+cfg.MemoryCacheMaxSize = 1000              // Max items in memory
+cfg.MemoryCacheDefaultTTL = 5 * time.Minute
+cfg.MemoryCacheCleanupInterval = 1 * time.Minute
+```
+
+## Tenant Context Methods
+
+### Automatic (Recommended)
+
+Use middleware - set tenant context once, use everywhere:
+
+```go
+// Setup middleware
+r.Use(middleware.TenantContextMiddleware())
+
+// That's it! All cache operations are now tenant-aware
+```
+
+### Manual (When Needed)
+
+```go
+// Add tenant ID to context
+ctx = cache.WithTenantID(ctx, tenantID)
+
+// Add tenant slug to context
+ctx = cache.WithTenantSlug(ctx, "acme-corp")
+
+// Add tenant subdomain to context
+ctx = cache.WithTenantSubdomain(ctx, "acme")
+
+// Cache operations use whatever is available (priority: ID > slug > subdomain)
+```
+
+## Core Operations
+
+All operations are **automatically tenant-aware** when middleware is configured:
+
+```go
+// Get
+var user User
+err := cache.Get(ctx, "user:123", &user)
+
+// Set
+err := cache.Set(ctx, "user:123", user, 1*time.Hour)
+
+// Delete
+err := cache.Delete(ctx, "user:123")
+
+// Flush (only flushes current tenant's cache)
+err := cache.Flush(ctx)
+
+// Exists
+exists, err := cache.Exists(ctx, "user:123")
+
+// TTL
+ttl, err := cache.TTL(ctx, "user:123")
+
+// Expire
+err := cache.Expire(ctx, "user:123", 2*time.Hour)
+```
+
+## Bulk Operations
+
+```go
+// MGet - Get multiple keys
+results, err := cache.MGet(ctx, []string{"user:1", "user:2", "user:3"})
+for _, result := range results {
+    if result.Err == nil {
+        // Use result.

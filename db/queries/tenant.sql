@@ -706,7 +706,7 @@ SELECT
 FROM
   tenants
 WHERE
-  STATUS = 'active'
+  STATUS = 'ACTIVE'
   AND deleted_at IS NULL
 ORDER BY
   name;

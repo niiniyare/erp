@@ -24,7 +24,7 @@ type Querier interface {
 	// Usage: Soft delete or archive old entity states
 	// Use case: Long-term data archival while maintaining referential integrity
 	ArchiveOldEntityStates(ctx context.Context, fiscalYear *int16) error
-	AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (any, error)
+	AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (interface{}, error)
 	BatchSoftDeleteEntities(ctx context.Context, uuids []uuid.UUID) error
 	// ===============================================
 	// Batch Operations
@@ -345,7 +345,7 @@ type Querier interface {
 	GetAllTenantsRevenueAnalytics(ctx context.Context, arg GetAllTenantsRevenueAnalyticsParams) ([]*GetAllTenantsRevenueAnalyticsRow, error)
 	// Admin-level storage analytics (cross-tenant view)
 	GetAllTenantsStorageAnalytics(ctx context.Context) ([]*GetAllTenantsStorageAnalyticsRow, error)
-	GetAllTransactionTags(ctx context.Context) ([]any, error)
+	GetAllTransactionTags(ctx context.Context) ([]interface{}, error)
 	// Detect anomalous user behavior patterns
 	GetAnomalousUserBehavior(ctx context.Context, arg GetAnomalousUserBehaviorParams) ([]*GetAnomalousUserBehaviorRow, error)
 	GetApplicablePolicies(ctx context.Context, arg GetApplicablePoliciesParams) ([]*Policy, error)
@@ -447,11 +447,11 @@ type Querier interface {
 	// 6. PERFORMANCE AND ANALYTICS QUERIES
 	// =====================================================================
 	GetEntityCountByType(ctx context.Context) ([]*GetEntityCountByTypeRow, error)
-	GetEntityDepth(ctx context.Context, ancestorID uuid.UUID) (any, error)
+	GetEntityDepth(ctx context.Context, ancestorID uuid.UUID) (interface{}, error)
 	GetEntityDescendants(ctx context.Context, ancestorID uuid.UUID) ([]*GetEntityDescendantsRow, error)
 	GetEntityHealthCheck(ctx context.Context) (*GetEntityHealthCheckRow, error)
 	GetEntityHierarchyStats(ctx context.Context) (*GetEntityHierarchyStatsRow, error)
-	GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (any, error)
+	GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (interface{}, error)
 	GetEntityParent(ctx context.Context, descendantID uuid.UUID) (*Entity, error)
 	GetEntityPath(ctx context.Context, descendantID uuid.UUID) ([]*GetEntityPathRow, error)
 	GetEntityRoots(ctx context.Context) ([]*Entity, error)
@@ -658,7 +658,7 @@ type Querier interface {
 	GetHighRiskEvents(ctx context.Context, arg GetHighRiskEventsParams) ([]*GetHighRiskEventsRow, error)
 	// Usage: Gets the highest sequence number for a specific entity/key/fiscal year combination
 	// Use case: Finding the current maximum sequence before manual adjustments
-	GetHighestSequenceNumber(ctx context.Context, arg GetHighestSequenceNumberParams) (any, error)
+	GetHighestSequenceNumber(ctx context.Context, arg GetHighestSequenceNumberParams) (interface{}, error)
 	// Get hourly event rates for capacity planning
 	GetHourlyEventRates(ctx context.Context, arg GetHourlyEventRatesParams) ([]*GetHourlyEventRatesRow, error)
 	GetInactiveAccounts(ctx context.Context, arg GetInactiveAccountsParams) ([]*GetInactiveAccountsRow, error)
@@ -670,7 +670,7 @@ type Querier interface {
 	GetLeafAccountsWithGroups(ctx context.Context, arg GetLeafAccountsWithGroupsParams) ([]*VFinanceAccountsWithGroup, error)
 	// Get metadata about materialized views
 	GetMaterializedViewMetadata(ctx context.Context) ([]*GetMaterializedViewMetadataRow, error)
-	GetMaxSequenceByEntityAndKey(ctx context.Context, arg GetMaxSequenceByEntityAndKeyParams) (any, error)
+	GetMaxSequenceByEntityAndKey(ctx context.Context, arg GetMaxSequenceByEntityAndKeyParams) (interface{}, error)
 	// Ensures positive sequence number
 	// =====================================================================
 	//  BULK OPERATIONS QUERIES
@@ -777,7 +777,7 @@ type Querier interface {
 	GetSequenceGaps(ctx context.Context, arg GetSequenceGapsParams) ([]pgtype.Numeric, error)
 	// Find similar incident patterns for threat intelligence
 	GetSimilarIncidentPatterns(ctx context.Context, arg GetSimilarIncidentPatternsParams) ([]*GetSimilarIncidentPatternsRow, error)
-	GetSpecificSetting(ctx context.Context, key string) (any, error)
+	GetSpecificSetting(ctx context.Context, key string) (interface{}, error)
 	GetStaleAccountBalances(ctx context.Context, arg GetStaleAccountBalancesParams) ([]*GetStaleAccountBalancesRow, error)
 	// Usage: Finds entity states that haven't been updated recently
 	// Use case: Identifying inactive sequences, cleanup candidate identification

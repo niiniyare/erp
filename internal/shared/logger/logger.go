@@ -38,6 +38,24 @@ func (l LogLevel) String() string {
 	}
 }
 
+// ParseLogLevel converts a string to LogLevel
+func ParseLogLevel(level string) LogLevel {
+	switch strings.ToLower(level) {
+	case "debug":
+		return DebugLevel
+	case "info":
+		return InfoLevel
+	case "warn", "warning":
+		return WarnLevel
+	case "error":
+		return ErrorLevel
+	case "fatal":
+		return FatalLevel
+	default:
+		return InfoLevel // Default fallback
+	}
+}
+
 // Fields represents structured logging fields
 type Fields map[string]any
 
@@ -133,18 +151,7 @@ func InitializeFromEnv() error {
 	}
 
 	if logLevel := os.Getenv("LOG_LEVEL"); logLevel != "" {
-		switch strings.ToLower(logLevel) {
-		case "debug":
-			config.Level = DebugLevel
-		case "info":
-			config.Level = InfoLevel
-		case "warn", "warning":
-			config.Level = WarnLevel
-		case "error":
-			config.Level = ErrorLevel
-		case "fatal":
-			config.Level = FatalLevel
-		}
+		config.Level = ParseLogLevel(logLevel)
 	}
 
 	if logFormat := os.Getenv("LOG_FORMAT"); logFormat != "" {
@@ -166,7 +173,7 @@ func InitializeFromEnv() error {
 	return Initialize(config)
 }
 
-// Global logging functions
+// Debug Global logging functions
 func Debug(msg string, fields ...Fields) {
 	if globalLogger != nil {
 		globalLogger.Debug(msg, fields...)

@@ -268,7 +268,22 @@ func (w *CacheWarmer) ClearCache(ctx context.Context, tenantID uuid.UUID) error 
 // GetCacheStats returns cache statistics
 func (w *CacheWarmer) GetCacheStats() *CacheStats {
 	if w.service.cache != nil {
-		return w.service.cache.Stats()
+		stats := w.service.cache.Stats()
+		return &CacheStats{
+			Hits:              stats.Hits,
+			Misses:            stats.Misses,
+			Sets:              stats.Sets,
+			Deletes:           stats.Deletes,
+			Errors:            stats.Errors,
+			HitRatio:          stats.HitRatio,
+			AverageLatency:    stats.AverageLatency,
+			ConnectionsActive: stats.ConnectionsActive,
+			ConnectionsIdle:   stats.ConnectionsIdle,
+			MemoryCacheSize:   stats.MemoryCacheSize,
+			GlobalCacheSize:   stats.GlobalCacheSize,
+			LastError:         stats.LastError,
+			LastErrorTime:     stats.LastErrorTime,
+		}
 	}
 	return nil
 }

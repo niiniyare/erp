@@ -11,7 +11,6 @@ import (
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
-	"github.com/niiniyare/erp/web/components/tenant"
 )
 
 // TenantHandler handles tenant-related HTTP requests following the 5-step handler pattern
@@ -72,14 +71,8 @@ func (h *TenantHandler) Create(c *fiber.Ctx) error {
 	// Convert tenant to API response
 	response := h.tenantToAPIResponse(createdTenant)
 
-	// Step 5: Return Response with content negotiation
-	// For HTML responses, render tenant card component
-	component := tenant.TenantCard(tenant.TenantCardProps{
-		Tenant:   response,
-		ShowEdit: true,
-	})
-	
-	return h.helper.RespondWithComponent(c, fiber.StatusCreated, response, component)
+	// Step 5: Return Response
+	return h.helper.Respond(c, fiber.StatusCreated, response)
 }
 
 // Get handles tenant retrieval by ID (GET /api/v1/tenants/:id)
@@ -133,16 +126,13 @@ func (h *TenantHandler) Get(c *fiber.Ctx) error {
 		}
 	}
 
-	// Step 5: Return Response with content negotiation
+	// Step 5: Return Response
 	h.metrics.IncrementCounter("tenant_retrieved_total", metrics.Fields{
 		"status": "success",
 		"view":   view,
 	})
 
-	// For HTML responses, render tenant detail component
-	component := tenant.TenantDetail(response)
-	
-	return h.helper.RespondWithComponent(c, fiber.StatusOK, response, component)
+	return h.helper.Respond(c, fiber.StatusOK, response)
 }
 
 // List handles tenant listing with pagination (GET /api/v1/tenants)
@@ -193,14 +183,6 @@ func (h *TenantHandler) List(c *fiber.Ctx) error {
 		totalPages = page + 1 // Simple estimation
 	}
 
-	// Create pagination response
-	paginationResponse := &tenant.PaginationInfo{
-		Page:       page,
-		PerPage:    pageSize,
-		Total:      len(tenants),
-		TotalPages: totalPages,
-	}
-
 	response := map[string]interface{}{
 		"data": apiTenants,
 		"pagination": map[string]interface{}{
@@ -211,19 +193,13 @@ func (h *TenantHandler) List(c *fiber.Ctx) error {
 		},
 	}
 
-	// Step 5: Return Response with content negotiation
+	// Step 5: Return Response
 	h.metrics.IncrementCounter("tenant_listed_total", metrics.Fields{
 		"status": "success",
 		"count":  len(apiTenants),
 	})
 
-	// For HTML responses, render tenant list component
-	component := tenant.TenantList(tenant.TenantListProps{
-		Tenants:    apiTenants,
-		Pagination: paginationResponse,
-	})
-	
-	return h.helper.RespondWithComponent(c, fiber.StatusOK, response, component)
+	return h.helper.Respond(c, fiber.StatusOK, response)
 }
 
 
@@ -321,13 +297,13 @@ func (h *TenantHandler) NewForm(c *fiber.Ctx) error {
 		"path":   c.Path(),
 	})
 
-	// Render the tenant form component for creation
-	component := tenant.TenantForm(tenant.TenantFormProps{
-		Action:    "create",
-		ActionURL: "/api/v1/tenants",
-	})
+	// Return form data for creation
+	formData := map[string]interface{}{
+		"action":     "create",
+		"action_url": "/api/v1/tenants",
+	}
 
-	return h.helper.RenderTemplComponent(c, fiber.StatusOK, component)
+	return h.helper.Respond(c, fiber.StatusOK, formData)
 }
 
 // EditForm handles GET requests for the edit tenant form
@@ -359,14 +335,14 @@ func (h *TenantHandler) EditForm(c *fiber.Ctx) error {
 	// Convert to API response
 	tenantResponse := h.tenantToAPIResponse(tenantEntity)
 
-	// Render the tenant form component for editing
-	component := tenant.TenantForm(tenant.TenantFormProps{
-		Tenant:    tenantResponse,
-		Action:    "edit",
-		ActionURL: "/api/v1/tenants/" + tenantID,
-	})
+	// Return form data for editing
+	formData := map[string]interface{}{
+		"tenant":     tenantResponse,
+		"action":     "edit",
+		"action_url": "/api/v1/tenants/" + tenantID,
+	}
 
-	return h.helper.RenderTemplComponent(c, fiber.StatusOK, component)
+	return h.helper.Respond(c, fiber.StatusOK, formData)
 }
 
 // ============================================================================

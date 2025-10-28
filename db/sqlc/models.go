@@ -664,32 +664,32 @@ type Module struct {
 }
 
 type MvTenantFeatureFlagsCache struct {
-	TenantID          uuid.UUID `json:"tenant_id"`
-	FeatureFlagID     uuid.UUID `json:"feature_flag_id"`
-	FeatureFlagName   string    `json:"feature_flag_name"`
-	FlagType          string    `json:"flag_type"`
-	Enabled           any       `json:"enabled"`
-	Value             []byte    `json:"value"`
-	EvaluationSource  string    `json:"evaluation_source"`
-	DefaultValue      bool      `json:"default_value"`
-	RolloutPercentage *int32    `json:"rollout_percentage"`
-	TargetAudience    []byte    `json:"target_audience"`
-	Metadata          []byte    `json:"metadata"`
-	OverrideEnabled   *bool     `json:"override_enabled"`
-	OverrideValue     []byte    `json:"override_value"`
-	OverrideReason    *string   `json:"override_reason"`
-	CacheTimestamp    any       `json:"cache_timestamp"`
-	CacheCreatedAt    any       `json:"cache_created_at"`
+	TenantID          uuid.UUID   `json:"tenant_id"`
+	FeatureFlagID     uuid.UUID   `json:"feature_flag_id"`
+	FeatureFlagName   string      `json:"feature_flag_name"`
+	FlagType          string      `json:"flag_type"`
+	Enabled           interface{} `json:"enabled"`
+	Value             []byte      `json:"value"`
+	EvaluationSource  string      `json:"evaluation_source"`
+	DefaultValue      bool        `json:"default_value"`
+	RolloutPercentage *int32      `json:"rollout_percentage"`
+	TargetAudience    []byte      `json:"target_audience"`
+	Metadata          []byte      `json:"metadata"`
+	OverrideEnabled   *bool       `json:"override_enabled"`
+	OverrideValue     []byte      `json:"override_value"`
+	OverrideReason    *string     `json:"override_reason"`
+	CacheTimestamp    interface{} `json:"cache_timestamp"`
+	CacheCreatedAt    interface{} `json:"cache_created_at"`
 }
 
 type MvUserEffectivePermission struct {
-	UserID              uuid.UUID `json:"user_id"`
-	TenantID            uuid.UUID `json:"tenant_id"`
-	ResourceID          uuid.UUID `json:"resource_id"`
-	ActionID            uuid.UUID `json:"action_id"`
-	AllowFlag           any       `json:"allow_flag"`
-	RolePermissionIds   any       `json:"role_permission_ids"`
-	DirectPermissionIds any       `json:"direct_permission_ids"`
+	UserID              uuid.UUID   `json:"user_id"`
+	TenantID            uuid.UUID   `json:"tenant_id"`
+	ResourceID          uuid.UUID   `json:"resource_id"`
+	ActionID            uuid.UUID   `json:"action_id"`
+	AllowFlag           interface{} `json:"allow_flag"`
+	RolePermissionIds   interface{} `json:"role_permission_ids"`
+	DirectPermissionIds interface{} `json:"direct_permission_ids"`
 }
 
 // Stores user notification preferences.
@@ -1099,7 +1099,7 @@ type User struct {
 	Username string `json:"username"`
 	// Hashed password for authentication
 	PasswordHash *string `json:"password_hash"`
-	// Classification of user account: INTERNAL, CUSTOMER, VENDOR, PARTNER, API, SERVICE, ADMIN
+	// Classification of user account: INTERNAL, CUSTOMER, VENDOR, PARTNER, API, SERVICE, SYSADMIN
 	UserType string `json:"user_type"`
 	// Current account status affecting login ability
 	AccountStatus *string `json:"account_status"`
@@ -1264,7 +1264,7 @@ type VAuditSummaryView struct {
 	EventCount      int64           `json:"event_count"`
 	UniqueUsers     int64           `json:"unique_users"`
 	AvgRiskScore    float64         `json:"avg_risk_score"`
-	MaxRiskScore    any             `json:"max_risk_score"`
+	MaxRiskScore    interface{}     `json:"max_risk_score"`
 	DeniedAttempts  int64           `json:"denied_attempts"`
 	AllowedAttempts int64           `json:"allowed_attempts"`
 }
@@ -1474,47 +1474,47 @@ type VFinancialStatementBuilder struct {
 
 // Financial statement structure with account groups, hierarchies, and balances
 type VFinancialStatementStructure struct {
-	ID                        uuid.UUID  `json:"id"`
-	TenantID                  uuid.UUID  `json:"tenant_id"`
-	GroupCode                 string     `json:"group_code"`
-	GroupName                 string     `json:"group_name"`
-	RootType                  string     `json:"root_type"`
-	FinancialStatementSection *string    `json:"financial_statement_section"`
-	StatementOrder            *int32     `json:"statement_order"`
-	GroupLevel                int32      `json:"group_level"`
-	ParentGroupID             *uuid.UUID `json:"parent_group_id"`
-	ShowInSummary             *bool      `json:"show_in_summary"`
-	GroupPath                 *string    `json:"group_path"`
-	AccountCount              int64      `json:"account_count"`
-	ActiveAccountCount        int64      `json:"active_account_count"`
-	GroupBalance              any        `json:"group_balance"`
+	ID                        uuid.UUID   `json:"id"`
+	TenantID                  uuid.UUID   `json:"tenant_id"`
+	GroupCode                 string      `json:"group_code"`
+	GroupName                 string      `json:"group_name"`
+	RootType                  string      `json:"root_type"`
+	FinancialStatementSection *string     `json:"financial_statement_section"`
+	StatementOrder            *int32      `json:"statement_order"`
+	GroupLevel                int32       `json:"group_level"`
+	ParentGroupID             *uuid.UUID  `json:"parent_group_id"`
+	ShowInSummary             *bool       `json:"show_in_summary"`
+	GroupPath                 *string     `json:"group_path"`
+	AccountCount              int64       `json:"account_count"`
+	ActiveAccountCount        int64       `json:"active_account_count"`
+	GroupBalance              interface{} `json:"group_balance"`
 }
 
 // Summary view of roles with their permissions, resources, actions, and user assignment counts for role management and analysis.
 type VRolePermissionsSummary struct {
-	TenantID          uuid.UUID  `json:"tenant_id"`
-	RoleID            uuid.UUID  `json:"role_id"`
-	RoleName          string     `json:"role_name"`
-	RoleDisplayName   *string    `json:"role_display_name"`
-	RoleType          *string    `json:"role_type"`
-	HierarchyLevel    *int32     `json:"hierarchy_level"`
-	ModuleID          *uuid.UUID `json:"module_id"`
-	ModuleName        *string    `json:"module_name"`
-	ResourceNames     any        `json:"resource_names"`
-	ActionNames       any        `json:"action_names"`
-	PermissionCount   int64      `json:"permission_count"`
-	AssignedUserCount int64      `json:"assigned_user_count"`
+	TenantID          uuid.UUID   `json:"tenant_id"`
+	RoleID            uuid.UUID   `json:"role_id"`
+	RoleName          string      `json:"role_name"`
+	RoleDisplayName   *string     `json:"role_display_name"`
+	RoleType          *string     `json:"role_type"`
+	HierarchyLevel    *int32      `json:"hierarchy_level"`
+	ModuleID          *uuid.UUID  `json:"module_id"`
+	ModuleName        *string     `json:"module_name"`
+	ResourceNames     interface{} `json:"resource_names"`
+	ActionNames       interface{} `json:"action_names"`
+	PermissionCount   int64       `json:"permission_count"`
+	AssignedUserCount int64       `json:"assigned_user_count"`
 }
 
 // Identifies potential security threats through session anomalies and audit patterns
 type VSecurityThreatDashboard struct {
-	UserID                 uuid.UUID `json:"user_id"`
-	Username               string    `json:"username"`
-	Email                  string    `json:"email"`
-	HighRiskSessions       int64     `json:"high_risk_sessions"`
-	MaxRiskScore           any       `json:"max_risk_score"`
-	CriticalEvents         int64     `json:"critical_events"`
-	LastSuspiciousActivity any       `json:"last_suspicious_activity"`
+	UserID                 uuid.UUID   `json:"user_id"`
+	Username               string      `json:"username"`
+	Email                  string      `json:"email"`
+	HighRiskSessions       int64       `json:"high_risk_sessions"`
+	MaxRiskScore           interface{} `json:"max_risk_score"`
+	CriticalEvents         int64       `json:"critical_events"`
+	LastSuspiciousActivity interface{} `json:"last_suspicious_activity"`
 }
 
 type VTenantEntitySummary struct {
@@ -1541,16 +1541,16 @@ type VTenantHierarchy struct {
 }
 
 type VTenantResourceUtilization struct {
-	TenantID           uuid.UUID `json:"tenant_id"`
-	TenantName         string    `json:"tenant_name"`
-	TenantStatus       string    `json:"tenant_status"`
-	TotalEntities      int64     `json:"total_entities"`
-	ActiveEntities     int64     `json:"active_entities"`
-	NonDeletedEntities int64     `json:"non_deleted_entities"`
-	SequenceStates     int64     `json:"sequence_states"`
-	DocumentTypes      int64     `json:"document_types"`
-	LastEntityCreated  any       `json:"last_entity_created"`
-	LastEntityUpdated  any       `json:"last_entity_updated"`
+	TenantID           uuid.UUID   `json:"tenant_id"`
+	TenantName         string      `json:"tenant_name"`
+	TenantStatus       string      `json:"tenant_status"`
+	TotalEntities      int64       `json:"total_entities"`
+	ActiveEntities     int64       `json:"active_entities"`
+	NonDeletedEntities int64       `json:"non_deleted_entities"`
+	SequenceStates     int64       `json:"sequence_states"`
+	DocumentTypes      int64       `json:"document_types"`
+	LastEntityCreated  interface{} `json:"last_entity_created"`
+	LastEntityUpdated  interface{} `json:"last_entity_updated"`
 }
 
 // view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.
@@ -1576,8 +1576,8 @@ type VUserCompleteView struct {
 	DepartmentID       *uuid.UUID   `json:"department_id"`
 	EmploymentStatus   *string      `json:"employment_status"`
 	SecurityLevel      *int32       `json:"security_level"`
-	CombinedAttributes any          `json:"combined_attributes"`
-	RoleNames          any          `json:"role_names"`
-	RoleIds            any          `json:"role_ids"`
+	CombinedAttributes interface{}  `json:"combined_attributes"`
+	RoleNames          interface{}  `json:"role_names"`
+	RoleIds            interface{}  `json:"role_ids"`
 	ActiveRoleCount    int64        `json:"active_role_count"`
 }
