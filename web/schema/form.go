@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 )
 
 // FormSchema provides a specialized interface for form-specific operations
@@ -24,7 +23,7 @@ type FormRenderer interface {
 // NewFormSchema creates a new form schema with basic field support
 func NewFormSchema(id, title string) *FormSchema {
 	schema := NewSchema(id, TypeForm, title)
-	
+
 	// Set form-specific defaults
 	if schema.Config == nil {
 		schema.Config = &Config{
@@ -33,7 +32,7 @@ func NewFormSchema(id, title string) *FormSchema {
 			Timeout:  30000,
 		}
 	}
-	
+
 	if schema.Layout == nil {
 		schema.Layout = &Layout{
 			Type:       LayoutGrid,
@@ -43,7 +42,7 @@ func NewFormSchema(id, title string) *FormSchema {
 			Responsive: true,
 		}
 	}
-	
+
 	return &FormSchema{
 		Schema: schema,
 	}
@@ -57,14 +56,14 @@ func (fs *FormSchema) AddBasicField(name string, fieldType FieldType, label stri
 		Label:    label,
 		Required: required,
 	}
-	
+
 	// Add basic validation if required
 	if required {
 		field.Validation = &FieldValidation{
 			Required: true,
 		}
 	}
-	
+
 	fs.AddField(field)
 	return fs
 }
@@ -78,13 +77,13 @@ func (fs *FormSchema) AddTextField(name, label, placeholder string, required boo
 		Placeholder: placeholder,
 		Required:    required,
 	}
-	
+
 	if required {
 		field.Validation = &FieldValidation{
 			Required: true,
 		}
 	}
-	
+
 	fs.AddField(field)
 	return fs
 }
@@ -102,7 +101,7 @@ func (fs *FormSchema) AddEmailField(name, label string, required bool) *FormSche
 			Email:    true,
 		},
 	}
-	
+
 	fs.AddField(field)
 	return fs
 }
@@ -120,7 +119,7 @@ func (fs *FormSchema) AddNumberField(name, label string, required bool, min, max
 			Max:      max,
 		},
 	}
-	
+
 	fs.AddField(field)
 	return fs
 }
@@ -134,13 +133,13 @@ func (fs *FormSchema) AddSelectField(name, label string, required bool, options 
 		Required: required,
 		Options:  options,
 	}
-	
+
 	if required {
 		field.Validation = &FieldValidation{
 			Required: true,
 		}
 	}
-	
+
 	fs.AddField(field)
 	return fs
 }
@@ -158,7 +157,7 @@ func (fs *FormSchema) AddTextareaField(name, label string, required bool, minLen
 			MaxLength: maxLength,
 		},
 	}
-	
+
 	fs.AddField(field)
 	return fs
 }
@@ -171,13 +170,13 @@ func (fs *FormSchema) AddDateField(name, label string, required bool) *FormSchem
 		Label:    label,
 		Required: required,
 	}
-	
+
 	if required {
 		field.Validation = &FieldValidation{
 			Required: true,
 		}
 	}
-	
+
 	fs.AddField(field)
 	return fs
 }
@@ -190,13 +189,13 @@ func (fs *FormSchema) AddCheckboxField(name, label string, required bool) *FormS
 		Label:    label,
 		Required: required,
 	}
-	
+
 	if required {
 		field.Validation = &FieldValidation{
 			Required: true,
 		}
 	}
-	
+
 	fs.AddField(field)
 	return fs
 }
@@ -209,7 +208,7 @@ func (fs *FormSchema) AddSubmitAction(text string, variant string) *FormSchema {
 		Text:    text,
 		Variant: variant,
 	}
-	
+
 	fs.AddAction(action)
 	return fs
 }
@@ -222,7 +221,7 @@ func (fs *FormSchema) AddResetAction(text string) *FormSchema {
 		Text:    text,
 		Variant: "outline",
 	}
-	
+
 	fs.AddAction(action)
 	return fs
 }
@@ -232,10 +231,10 @@ func (fs *FormSchema) SetFormAction(url, method string) *FormSchema {
 	if fs.Config == nil {
 		fs.Config = &Config{}
 	}
-	
+
 	fs.Config.Action = url
 	fs.Config.Method = method
-	
+
 	return fs
 }
 
@@ -244,10 +243,10 @@ func (fs *FormSchema) SetLayout(layoutType LayoutType, columns int) *FormSchema 
 	if fs.Layout == nil {
 		fs.Layout = &Layout{}
 	}
-	
+
 	fs.Layout.Type = layoutType
 	fs.Layout.Columns = columns
-	
+
 	return fs
 }
 
@@ -258,13 +257,13 @@ func (fs *FormSchema) AddSection(id, title string, fieldNames []string) *FormSch
 		Title:  title,
 		Fields: fieldNames,
 	}
-	
+
 	if fs.Layout == nil {
 		fs.Layout = &Layout{
 			Type: LayoutSections,
 		}
 	}
-	
+
 	fs.Layout.Sections = append(fs.Layout.Sections, section)
 	return fs
 }
@@ -276,7 +275,7 @@ func (fs *FormSchema) EnableHTMX(target, swap string) *FormSchema {
 		Target:  target,
 		Swap:    swap,
 	}
-	
+
 	return fs
 }
 
@@ -286,7 +285,7 @@ func (fs *FormSchema) EnableAlpine(xData string) *FormSchema {
 		Enabled: true,
 		XData:   xData,
 	}
-	
+
 	return fs
 }
 
@@ -295,12 +294,12 @@ func (fs *FormSchema) SetCSRFProtection(tokenField string) *FormSchema {
 	if fs.Security == nil {
 		fs.Security = &Security{}
 	}
-	
+
 	fs.Security.CSRF = &CSRF{
 		Enabled:    true,
 		TokenField: tokenField,
 	}
-	
+
 	return fs
 }
 
@@ -309,7 +308,7 @@ func (fs *FormSchema) SetValidationMode(mode ValidationMode) *FormSchema {
 	if fs.Validation == nil {
 		fs.Validation = &Validation{}
 	}
-	
+
 	fs.Validation.Mode = mode
 	return fs
 }
@@ -340,12 +339,12 @@ func (fs *FormSchema) ValidateForm(ctx context.Context) error {
 	if err := fs.Validate(); err != nil {
 		return err
 	}
-	
+
 	// Form-specific validations
 	if len(fs.Fields) == 0 {
 		return NewValidationError("no_fields", "form must have at least one field")
 	}
-	
+
 	// Validate that form has at least one submit action
 	hasSubmit := false
 	for _, action := range fs.Actions {
@@ -354,11 +353,11 @@ func (fs *FormSchema) ValidateForm(ctx context.Context) error {
 			break
 		}
 	}
-	
+
 	if !hasSubmit {
 		return NewValidationError("no_submit_action", "form must have at least one submit action")
 	}
-	
+
 	return nil
 }
 
@@ -389,7 +388,7 @@ func (fs *FormSchema) Render(ctx context.Context, data map[string]interface{}) (
 	if fs.renderer == nil {
 		return "", NewRenderError("no_renderer", "form renderer not set")
 	}
-	
+
 	return fs.renderer.RenderForm(ctx, fs.Schema, data)
 }
 
@@ -398,12 +397,12 @@ func (fs *FormSchema) RenderField(ctx context.Context, fieldName string, value i
 	if fs.renderer == nil {
 		return "", NewRenderError("no_renderer", "form renderer not set")
 	}
-	
+
 	field, err := fs.GetFieldByName(fieldName)
 	if err != nil {
 		return "", NewNotFoundError("field", err.Error())
 	}
-	
+
 	return fs.renderer.RenderField(ctx, field, value)
 }
 
@@ -420,18 +419,18 @@ func (fs *FormSchema) Clone() *FormSchema {
 // GetFormStatistics returns basic form statistics
 func (fs *FormSchema) GetFormStatistics() map[string]interface{} {
 	stats := make(map[string]interface{})
-	
+
 	// Field counts
 	fieldCounts := make(map[FieldType]int)
 	requiredFields := 0
-	
+
 	for _, field := range fs.Fields {
 		fieldCounts[field.Type]++
 		if field.Required {
 			requiredFields++
 		}
 	}
-	
+
 	stats["total_fields"] = len(fs.Fields)
 	stats["required_fields"] = requiredFields
 	stats["field_types"] = fieldCounts
@@ -442,12 +441,12 @@ func (fs *FormSchema) GetFormStatistics() map[string]interface{} {
 	stats["has_alpine"] = fs.HasAlpine()
 	stats["has_security"] = fs.Security != nil
 	stats["is_multi_tenant"] = fs.HasMultiTenant()
-	
+
 	if fs.Meta != nil {
 		stats["created_at"] = fs.Meta.CreatedAt
 		stats["updated_at"] = fs.Meta.UpdatedAt
 	}
-	
+
 	return stats
 }
 
@@ -456,7 +455,7 @@ func (fs *FormSchema) GetFormStatistics() map[string]interface{} {
 // NewContactForm creates a basic contact form
 func NewContactForm() *FormSchema {
 	fs := NewFormSchema("contact-form", "Contact Us")
-	
+
 	return fs.
 		AddTextField("name", "Full Name", "Enter your full name", true).
 		AddEmailField("email", "Email Address", true).
@@ -470,7 +469,7 @@ func NewContactForm() *FormSchema {
 // NewUserRegistrationForm creates a user registration form
 func NewUserRegistrationForm() *FormSchema {
 	fs := NewFormSchema("user-registration", "Create Account")
-	
+
 	return fs.
 		AddTextField("firstName", "First Name", "Enter first name", true).
 		AddTextField("lastName", "Last Name", "Enter last name", true).
@@ -493,9 +492,9 @@ func NewProductForm() *FormSchema {
 		{Value: "books", Label: "Books"},
 		{Value: "home", Label: "Home & Garden"},
 	}
-	
+
 	fs := NewFormSchema("product-form", "Add Product")
-	
+
 	return fs.
 		AddTextField("name", "Product Name", "Enter product name", true).
 		AddTextareaField("description", "Description", false, IntPtr(10), IntPtr(500)).

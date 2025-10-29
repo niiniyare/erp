@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -14,45 +15,45 @@ var (
 	ErrInvalidSchemaTitle = NewValidationError("schema_title", "schema title is required")
 	ErrSchemaNotFound     = NewNotFoundError("schema", "schema not found")
 	ErrSchemaDuplicate    = NewConflictError("schema", "schema already exists")
-	
+
 	// Field validation errors
 	ErrInvalidFieldName  = NewValidationError("field_name", "field name is required and must be valid")
 	ErrInvalidFieldType  = NewValidationError("field_type", "field type is required and must be valid")
 	ErrInvalidFieldLabel = NewValidationError("field_label", "field label is required")
 	ErrFieldNotFound     = NewNotFoundError("field", "field not found")
 	ErrFieldDuplicate    = NewConflictError("field", "field name already exists")
-	
+
 	// Validation specific errors
 	ErrValidationFailed    = NewValidationError("validation", "validation failed")
 	ErrRequiredField       = NewValidationError("required", "field is required")
 	ErrInvalidValue        = NewValidationError("invalid_value", "field value is invalid")
 	ErrAsyncValidationFail = NewValidationError("async_validation", "async validation failed")
-	
+
 	// Permission and security errors
 	ErrPermissionDenied = NewPermissionError("access_denied", "permission denied")
 	ErrUnauthorized     = NewPermissionError("unauthorized", "user not authorized")
 	ErrForbidden        = NewPermissionError("forbidden", "action forbidden")
-	
+
 	// Data source errors
-	ErrDataSourceFailed    = NewDataSourceError("data_source_failed", "data source request failed")
-	ErrDataSourceTimeout   = NewDataSourceError("data_source_timeout", "data source request timeout")
-	ErrDataSourceNotFound  = NewNotFoundError("data_source", "data source not found")
-	
+	ErrDataSourceFailed   = NewDataSourceError("data_source_failed", "data source request failed")
+	ErrDataSourceTimeout  = NewDataSourceError("data_source_timeout", "data source request timeout")
+	ErrDataSourceNotFound = NewNotFoundError("data_source", "data source not found")
+
 	// Rendering errors
-	ErrRenderingFailed = NewRenderError("rendering_failed", "template rendering failed")
+	ErrRenderingFailed  = NewRenderError("rendering_failed", "template rendering failed")
 	ErrTemplateNotFound = NewNotFoundError("template", "template not found")
-	
+
 	// Workflow errors
-	ErrWorkflowFailed    = NewWorkflowError("workflow_failed", "workflow execution failed")
-	ErrApprovalRequired  = NewWorkflowError("approval_required", "approval required")
-	ErrWorkflowNotFound  = NewNotFoundError("workflow", "workflow not found")
-	
+	ErrWorkflowFailed   = NewWorkflowError("workflow_failed", "workflow execution failed")
+	ErrApprovalRequired = NewWorkflowError("approval_required", "approval required")
+	ErrWorkflowNotFound = NewNotFoundError("workflow", "workflow not found")
+
 	// Multi-tenancy errors
 	ErrTenantMismatch = NewTenantError("tenant_mismatch", "tenant mismatch")
 	ErrTenantNotFound = NewNotFoundError("tenant", "tenant not found")
-	
+
 	// General errors
-	ErrInternalError = NewInternalError("internal_error", "internal server error")
+	ErrInternalError  = NewInternalError("internal_error", "internal server error")
 	ErrInvalidRequest = NewValidationError("invalid_request", "invalid request")
 )
 
@@ -71,15 +72,15 @@ type SchemaError interface {
 type ErrorType string
 
 const (
-	ErrorTypeValidation  ErrorType = "validation"
-	ErrorTypeNotFound    ErrorType = "not_found"
-	ErrorTypeConflict    ErrorType = "conflict"
-	ErrorTypePermission  ErrorType = "permission"
-	ErrorTypeDataSource  ErrorType = "data_source"
-	ErrorTypeRender      ErrorType = "render"
-	ErrorTypeWorkflow    ErrorType = "workflow"
-	ErrorTypeTenant      ErrorType = "tenant"
-	ErrorTypeInternal    ErrorType = "internal"
+	ErrorTypeValidation ErrorType = "validation"
+	ErrorTypeNotFound   ErrorType = "not_found"
+	ErrorTypeConflict   ErrorType = "conflict"
+	ErrorTypePermission ErrorType = "permission"
+	ErrorTypeDataSource ErrorType = "data_source"
+	ErrorTypeRender     ErrorType = "render"
+	ErrorTypeWorkflow   ErrorType = "workflow"
+	ErrorTypeTenant     ErrorType = "tenant"
+	ErrorTypeInternal   ErrorType = "internal"
 )
 
 // BaseError implements the SchemaError interface
@@ -253,33 +254,33 @@ func (vec *ValidationErrorCollection) Error() string {
 	if len(vec.errors) == 0 {
 		return "no validation errors"
 	}
-	
+
 	var messages []string
 	for _, err := range vec.errors {
 		messages = append(messages, err.Error())
 	}
-	
-	return fmt.Sprintf("validation failed with %d errors: %s", 
-		len(vec.errors), 
+
+	return fmt.Sprintf("validation failed with %d errors: %s",
+		len(vec.errors),
 		strings.Join(messages, "; "))
 }
 
 func (vec *ValidationErrorCollection) ErrorsByField() map[string][]string {
 	fieldErrors := make(map[string][]string)
-	
+
 	for _, err := range vec.errors {
 		field := err.Field()
 		if field == "" {
 			field = "general"
 		}
-		
+
 		if _, exists := fieldErrors[field]; !exists {
 			fieldErrors[field] = make([]string, 0)
 		}
-		
+
 		fieldErrors[field] = append(fieldErrors[field], err.Error())
 	}
-	
+
 	return fieldErrors
 }
 
@@ -319,7 +320,7 @@ func WrapError(err error, code, message string) SchemaError {
 	if schemaErr, ok := err.(SchemaError); ok {
 		return schemaErr
 	}
-	
+
 	return &BaseError{
 		code:    code,
 		message: fmt.Sprintf("%s: %v", message, err),
@@ -411,7 +412,7 @@ func ToErrorResponse(err error) *ErrorResponse {
 			Details: schemaErr.Details(),
 		}
 	}
-	
+
 	return &ErrorResponse{
 		Error: err.Error(),
 		Code:  "unknown_error",
@@ -421,10 +422,10 @@ func ToErrorResponse(err error) *ErrorResponse {
 
 // Multiple error response for validation collections
 type MultiErrorResponse struct {
-	Errors      []ErrorResponse            `json:"errors"`
-	Count       int                        `json:"count"`
-	FieldErrors map[string][]string        `json:"fieldErrors"`
-	Summary     string                     `json:"summary"`
+	Errors      []ErrorResponse     `json:"errors"`
+	Count       int                 `json:"count"`
+	FieldErrors map[string][]string `json:"fieldErrors"`
+	Summary     string              `json:"summary"`
 }
 
 func ToMultiErrorResponse(err *ValidationErrorCollection) *MultiErrorResponse {
@@ -436,12 +437,12 @@ func ToMultiErrorResponse(err *ValidationErrorCollection) *MultiErrorResponse {
 			Summary:     "no errors",
 		}
 	}
-	
+
 	var errorResponses []ErrorResponse
 	for _, schemaErr := range err.Errors() {
 		errorResponses = append(errorResponses, *ToErrorResponse(schemaErr))
 	}
-	
+
 	return &MultiErrorResponse{
 		Errors:      errorResponses,
 		Count:       err.Count(),
@@ -474,7 +475,7 @@ func (eh *ErrorHandler) HandleError(err error) SchemaError {
 	if err == nil {
 		return nil
 	}
-	
+
 	// Log the error
 	if eh.logger != nil {
 		eh.logger.Error("schema error occurred", map[string]interface{}{
@@ -482,12 +483,12 @@ func (eh *ErrorHandler) HandleError(err error) SchemaError {
 			"type":  fmt.Sprintf("%T", err),
 		})
 	}
-	
+
 	// Convert to SchemaError if needed
 	if schemaErr, ok := err.(SchemaError); ok {
 		return schemaErr
 	}
-	
+
 	// Handle specific Go error types
 	switch {
 	case errors.Is(err, context.DeadlineExceeded):

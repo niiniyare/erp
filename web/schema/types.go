@@ -10,16 +10,16 @@ import (
 
 // Section represents a logical grouping of fields
 type Section struct {
-	ID          string                    `json:"id" validate:"required" example:"customer-info"`
-	Title       string                    `json:"title" validate:"required" example:"Customer Information"`
-	Description string                    `json:"description,omitempty" validate:"max=500"`
-	Fields      []string                  `json:"fields" validate:"required,dive,fieldname"`
-	Icon        string                    `json:"icon,omitempty" validate:"icon_name"`
-	Collapsible bool                      `json:"collapsible,omitempty"`
-	Collapsed   bool                      `json:"collapsed,omitempty"`
-	Order       int                       `json:"order,omitempty"`
-	Conditional *Conditional              `json:"conditional,omitempty"`
-	Permissions *SectionPermissions       `json:"permissions,omitempty"`
+	ID          string              `json:"id" validate:"required" example:"customer-info"`
+	Title       string              `json:"title" validate:"required" example:"Customer Information"`
+	Description string              `json:"description,omitempty" validate:"max=500"`
+	Fields      []string            `json:"fields" validate:"required,dive,fieldname"`
+	Icon        string              `json:"icon,omitempty" validate:"icon_name"`
+	Collapsible bool                `json:"collapsible,omitempty"`
+	Collapsed   bool                `json:"collapsed,omitempty"`
+	Order       int                 `json:"order,omitempty"`
+	Conditional *Conditional        `json:"conditional,omitempty"`
+	Permissions *SectionPermissions `json:"permissions,omitempty"`
 }
 
 // Group represents a visual grouping of fields
@@ -35,28 +35,28 @@ type Group struct {
 
 // Tab represents a tab in tabbed layouts
 type Tab struct {
-	ID          string                    `json:"id" validate:"required" example:"basic-tab"`
-	Title       string                    `json:"title" validate:"required" example:"Basic Info"`
-	Icon        string                    `json:"icon,omitempty" validate:"icon_name"`
-	Fields      []string                  `json:"fields,omitempty" validate:"dive,fieldname"`
-	Sections    []string                  `json:"sections,omitempty" validate:"dive,fieldname"`
-	Badge       string                    `json:"badge,omitempty"`
-	Disabled    bool                      `json:"disabled,omitempty"`
-	Order       int                       `json:"order,omitempty"`
-	Conditional *Conditional              `json:"conditional,omitempty"`
+	ID          string       `json:"id" validate:"required" example:"basic-tab"`
+	Title       string       `json:"title" validate:"required" example:"Basic Info"`
+	Icon        string       `json:"icon,omitempty" validate:"icon_name"`
+	Fields      []string     `json:"fields,omitempty" validate:"dive,fieldname"`
+	Sections    []string     `json:"sections,omitempty" validate:"dive,fieldname"`
+	Badge       string       `json:"badge,omitempty"`
+	Disabled    bool         `json:"disabled,omitempty"`
+	Order       int          `json:"order,omitempty"`
+	Conditional *Conditional `json:"conditional,omitempty"`
 }
 
 // Step represents a step in multi-step forms
 type Step struct {
-	ID          string                    `json:"id" validate:"required" example:"step-1"`
-	Title       string                    `json:"title" validate:"required" example:"Basic Information"`
-	Description string                    `json:"description,omitempty" validate:"max=500"`
-	Fields      []string                  `json:"fields,omitempty" validate:"dive,fieldname"`
-	Sections    []string                  `json:"sections,omitempty" validate:"dive,fieldname"`
-	Optional    bool                      `json:"optional,omitempty"`
-	Order       int                       `json:"order,omitempty"`
-	Validation  *StepValidation           `json:"validation,omitempty"`
-	Conditional *Conditional              `json:"conditional,omitempty"`
+	ID          string          `json:"id" validate:"required" example:"step-1"`
+	Title       string          `json:"title" validate:"required" example:"Basic Information"`
+	Description string          `json:"description,omitempty" validate:"max=500"`
+	Fields      []string        `json:"fields,omitempty" validate:"dive,fieldname"`
+	Sections    []string        `json:"sections,omitempty" validate:"dive,fieldname"`
+	Optional    bool            `json:"optional,omitempty"`
+	Order       int             `json:"order,omitempty"`
+	Validation  *StepValidation `json:"validation,omitempty"`
+	Conditional *Conditional    `json:"conditional,omitempty"`
 }
 
 // Breakpoints defines responsive breakpoints
@@ -103,21 +103,21 @@ type Style struct {
 
 // FieldValidation defines field-level validation rules
 type FieldValidation struct {
-	Required    bool                      `json:"required,omitempty"`
-	MinLength   *int                      `json:"minLength,omitempty" validate:"min=0"`
-	MaxLength   *int                      `json:"maxLength,omitempty" validate:"min=0"`
-	Min         *float64                  `json:"min,omitempty"`
-	Max         *float64                  `json:"max,omitempty"`
-	Pattern     string                    `json:"pattern,omitempty" validate:"regexp"`
-	Email       bool                      `json:"email,omitempty"`
-	URL         bool                      `json:"url,omitempty"`
-	Unique      bool                      `json:"unique,omitempty"`
-	Custom      []string                  `json:"custom,omitempty"`
-	CrossField  []CrossFieldRule          `json:"crossField,omitempty" validate:"dive"`
-	Async       *AsyncValidation          `json:"async,omitempty"`
-	Conditions  *condition.ConditionGroup `json:"conditions,omitempty"`
-	Formula     string                    `json:"formula,omitempty" validate:"js_expression"`
-	Messages    map[string]string         `json:"messages,omitempty"`
+	Required   bool                      `json:"required,omitempty"`
+	MinLength  *int                      `json:"minLength,omitempty" validate:"min=0"`
+	MaxLength  *int                      `json:"maxLength,omitempty" validate:"min=0"`
+	Min        *float64                  `json:"min,omitempty"`
+	Max        *float64                  `json:"max,omitempty"`
+	Pattern    string                    `json:"pattern,omitempty" validate:"regexp"`
+	Email      bool                      `json:"email,omitempty"`
+	URL        bool                      `json:"url,omitempty"`
+	Unique     bool                      `json:"unique,omitempty"`
+	Custom     []string                  `json:"custom,omitempty"`
+	CrossField []CrossFieldRule          `json:"crossField,omitempty" validate:"dive"`
+	Async      *AsyncValidation          `json:"async,omitempty"`
+	Conditions *condition.ConditionGroup `json:"conditions,omitempty"`
+	Formula    string                    `json:"formula,omitempty" validate:"js_expression"`
+	Messages   map[string]string         `json:"messages,omitempty"`
 }
 
 // Transform defines data transformation
@@ -158,7 +158,7 @@ type Conditional struct {
 	Enable  *condition.ConditionGroup `json:"enable,omitempty"`
 	Disable *condition.ConditionGroup `json:"disable,omitempty"`
 	Require *condition.ConditionGroup `json:"require,omitempty"`
-	
+
 	// Formula-based conditions (simplified expressions)
 	ShowIf     string `json:"showIf,omitempty" validate:"js_expression"`
 	HideIf     string `json:"hideIf,omitempty" validate:"js_expression"`
@@ -245,18 +245,18 @@ type ActionPermissions struct {
 
 // Action configuration types
 type ActionConfig struct {
-	URL         string            `json:"url,omitempty" validate:"url"`
-	Method      string            `json:"method,omitempty" validate:"oneof=GET POST PUT PATCH DELETE"`
-	Target      string            `json:"target,omitempty" validate:"css_selector"`
-	Redirect    string            `json:"redirect,omitempty" validate:"url"`
-	Download    bool              `json:"download,omitempty"`
-	NewWindow   bool              `json:"newWindow,omitempty"`
-	Headers     map[string]string `json:"headers,omitempty"`
-	Payload     interface{}       `json:"payload,omitempty"`
-	Transform   string            `json:"transform,omitempty" validate:"js_function"`
-	OnSuccess   string            `json:"onSuccess,omitempty" validate:"js_function"`
-	OnError     string            `json:"onError,omitempty" validate:"js_function"`
-	Timeout     int               `json:"timeout,omitempty" validate:"min=0,max=300000"`
+	URL       string            `json:"url,omitempty" validate:"url"`
+	Method    string            `json:"method,omitempty" validate:"oneof=GET POST PUT PATCH DELETE"`
+	Target    string            `json:"target,omitempty" validate:"css_selector"`
+	Redirect  string            `json:"redirect,omitempty" validate:"url"`
+	Download  bool              `json:"download,omitempty"`
+	NewWindow bool              `json:"newWindow,omitempty"`
+	Headers   map[string]string `json:"headers,omitempty"`
+	Payload   interface{}       `json:"payload,omitempty"`
+	Transform string            `json:"transform,omitempty" validate:"js_function"`
+	OnSuccess string            `json:"onSuccess,omitempty" validate:"js_function"`
+	OnError   string            `json:"onError,omitempty" validate:"js_function"`
+	Timeout   int               `json:"timeout,omitempty" validate:"min=0,max=300000"`
 }
 
 type Confirm struct {
@@ -356,15 +356,15 @@ type EscalationConfig struct {
 
 // Validation types
 type Validation struct {
-	Mode            ValidationMode     `json:"mode" validate:"oneof=onChange onBlur onSubmit all"`
-	RevalidateMode  ValidationMode     `json:"revalidateMode" validate:"oneof=onChange onBlur onSubmit all"`
-	ShowErrors      string             `json:"showErrors" validate:"oneof=all touched submitted"`
-	FocusOnError    bool               `json:"focusOnError,omitempty"`
-	ScrollToError   bool               `json:"scrollToError,omitempty"`
-	CrossFieldRules []CrossFieldRule   `json:"crossFieldRules,omitempty" validate:"dive"`
-	CustomRules     []CustomRule       `json:"customRules,omitempty" validate:"dive"`
-	AsyncRules      []AsyncValidation  `json:"asyncRules,omitempty" validate:"dive"`
-	OnValidate      string             `json:"onValidate,omitempty" validate:"js_function"`
+	Mode            ValidationMode    `json:"mode" validate:"oneof=onChange onBlur onSubmit all"`
+	RevalidateMode  ValidationMode    `json:"revalidateMode" validate:"oneof=onChange onBlur onSubmit all"`
+	ShowErrors      string            `json:"showErrors" validate:"oneof=all touched submitted"`
+	FocusOnError    bool              `json:"focusOnError,omitempty"`
+	ScrollToError   bool              `json:"scrollToError,omitempty"`
+	CrossFieldRules []CrossFieldRule  `json:"crossFieldRules,omitempty" validate:"dive"`
+	CustomRules     []CustomRule      `json:"customRules,omitempty" validate:"dive"`
+	AsyncRules      []AsyncValidation `json:"asyncRules,omitempty" validate:"dive"`
+	OnValidate      string            `json:"onValidate,omitempty" validate:"js_function"`
 }
 
 type ValidationMode string

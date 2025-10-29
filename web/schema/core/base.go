@@ -74,9 +74,9 @@ type ConditionGroup struct {
 
 // Condition represents a single condition
 type Condition struct {
-	Field    string      `json:"field"`
-	Operator string      `json:"operator"`
-	Value    interface{} `json:"value"`
+	Field    string        `json:"field"`
+	Operator string        `json:"operator"`
+	Value    interface{}   `json:"value"`
 	Values   []interface{} `json:"values,omitempty"`
 }
 
