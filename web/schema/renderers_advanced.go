@@ -16,7 +16,7 @@ func NewTreeSelectRenderer(base *BaseRenderer) *TreeSelectRenderer {
 	return &TreeSelectRenderer{BaseRenderer: base}
 }
 
-func (tsr *TreeSelectRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (tsr *TreeSelectRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := tsr.buildInputAttributes(field, value)
 	attrs["data-component"] = "tree-select"
 
@@ -84,7 +84,7 @@ func NewCascaderRenderer(base *BaseRenderer) *CascaderRenderer {
 	return &CascaderRenderer{BaseRenderer: base}
 }
 
-func (csr *CascaderRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (csr *CascaderRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := csr.buildInputAttributes(field, value)
 	attrs["data-component"] = "cascader"
 
@@ -127,14 +127,14 @@ func NewTransferRenderer(base *BaseRenderer) *TransferRenderer {
 	return &TransferRenderer{BaseRenderer: base}
 }
 
-func (tr *TransferRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (tr *TransferRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	// Parse selected values
 	var selectedValues []string
 	if value != nil {
 		switch v := value.(type) {
 		case []string:
 			selectedValues = v
-		case []interface{}:
+		case []any:
 			for _, val := range v {
 				selectedValues = append(selectedValues, fmt.Sprintf("%v", val))
 			}
@@ -213,7 +213,7 @@ func NewAutoCompleteRenderer(base *BaseRenderer) *AutoCompleteRenderer {
 	return &AutoCompleteRenderer{BaseRenderer: base}
 }
 
-func (acr *AutoCompleteRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (acr *AutoCompleteRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := acr.buildInputAttributes(field, value)
 	attrs["type"] = "text"
 	attrs["autocomplete"] = "off"
@@ -279,14 +279,14 @@ func NewTagsRenderer(base *BaseRenderer) *TagsRenderer {
 	return &TagsRenderer{BaseRenderer: base}
 }
 
-func (tr *TagsRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (tr *TagsRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	// Parse existing tags
 	var tags []string
 	if value != nil {
 		switch v := value.(type) {
 		case []string:
 			tags = v
-		case []interface{}:
+		case []any:
 			for _, tag := range v {
 				tags = append(tags, fmt.Sprintf("%v", tag))
 			}
@@ -379,7 +379,7 @@ func NewColorRenderer(base *BaseRenderer) *ColorRenderer {
 	return &ColorRenderer{BaseRenderer: base}
 }
 
-func (cr *ColorRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (cr *ColorRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := cr.buildInputAttributes(field, value)
 	attrs["type"] = "color"
 

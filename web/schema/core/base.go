@@ -44,7 +44,7 @@ type Metadata struct {
 	Order        int                    `json:"order,omitempty"`
 	Deprecated   bool                   `json:"deprecated"`
 	Experimental bool                   `json:"experimental"`
-	CustomData   map[string]interface{} `json:"customData,omitempty"`
+	CustomData   map[string]any `json:"customData,omitempty"`
 }
 
 // SchemaReference represents a reference to another schema
@@ -69,15 +69,15 @@ type ConditionGroup struct {
 	Conjunction string                 `json:"conjunction"` // "and", "or"
 	Conditions  []Condition            `json:"conditions"`
 	Groups      []ConditionGroup       `json:"groups,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
 // Condition represents a single condition
 type Condition struct {
 	Field    string        `json:"field"`
 	Operator string        `json:"operator"`
-	Value    interface{}   `json:"value"`
-	Values   []interface{} `json:"values,omitempty"`
+	Value    any   `json:"value"`
+	Values   []any `json:"values,omitempty"`
 }
 
 // PermissionSchema defines access control
@@ -115,7 +115,7 @@ type I18nSchema struct {
 
 // EvaluationContext provides context for condition evaluation
 type EvaluationContext struct {
-	Data        map[string]interface{} `json:"data"`
+	Data        map[string]any `json:"data"`
 	User        *UserContext           `json:"user,omitempty"`
 	Tenant      *TenantContext         `json:"tenant,omitempty"`
 	Request     *RequestContext        `json:"request,omitempty"`
@@ -166,19 +166,19 @@ type SchemaRegistry interface {
 
 // Renderer interface for schema rendering
 type Renderer interface {
-	Render(ctx context.Context, schema BaseSchema, data interface{}) (string, error)
+	Render(ctx context.Context, schema BaseSchema, data any) (string, error)
 	CanRender(schemaType SchemaType) bool
 }
 
 // Transformer interface for data transformation
 type Transformer interface {
-	Transform(ctx context.Context, input interface{}, config map[string]interface{}) (interface{}, error)
+	Transform(ctx context.Context, input any, config map[string]any) (any, error)
 }
 
 // Validator interface for schema validation
 type Validator interface {
 	Validate(ctx context.Context, schema BaseSchema) error
-	ValidateData(ctx context.Context, schema BaseSchema, data interface{}) error
+	ValidateData(ctx context.Context, schema BaseSchema, data any) error
 }
 
 // Helper functions for schema creation
@@ -192,7 +192,7 @@ func NewMetadata(id string, schemaType SchemaType) *Metadata {
 	}
 }
 
-func NewEvaluationContext(data map[string]interface{}) *EvaluationContext {
+func NewEvaluationContext(data map[string]any) *EvaluationContext {
 	return &EvaluationContext{
 		Data:      data,
 		Timestamp: time.Now(),

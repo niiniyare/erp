@@ -1,0 +1,421 @@
+package schema
+
+import (
+	"context"
+)
+
+// AlpineStoreScript renders Alpine.js global store and configuration
+templ AlpineStoreScript(ctx context.Context) {
+	<script defer nonce={ getCSPNonce(ctx) }>
+		// Alpine.js Form Store
+		document.addEventListener('alpine:init', () => {
+			// Global form store
+			Alpine.store('form', {
+				loading: false,
+				errors: {},
+				touched: new Set(),
+				
+				setLoading(state) {
+					this.loading = state;
+				},
+				
+				addError(field, error) {
+					if (!this.errors[field]) {
+						this.errors[field] = [];
+					}
+					this.errors[field].push(error);
+				},
+				
+				clearErrors(field = null) {
+					if (field) {
+						delete this.errors[field];
+					} else {
+						this.errors = {};
+					}
+				},
+				
+				markTouched(field) {
+					this.touched.add(field);
+				},
+				
+				isTouched(field) {
+					return this.touched.has(field);
+				},
+				
+				reset() {
+					this.loading = false;
+					this.errors = {};
+					this.touched = new Set();
+				}
+			});
+			
+			// Auto-save magic
+			Alpine.magic('autosave', (el) => {
+				return (key, debounce = 1000) => {
+					let timeout;
+					return (value) => {
+						clearTimeout(timeout);
+						timeout = setTimeout(() => {
+							try {
+								const data = JSON.parse(localStorage.getItem('form_autosave') || '{}');
+								data[key] = value;
+								data._timestamp = Date.now();
+								localStorage.setItem('form_autosave', JSON.stringify(data));
+								
+								// Dispatch event
+								el.dispatchEvent(new CustomEvent('autosave', {
+									detail: { key, value },
+									bubbles: true
+								}));
+							} catch (e) {
+								console.warn('Auto-save failed:', e);
+							}
+						}, debounce);
+					};
+				};
+			});
+			
+			// Validation helper
+			Alpine.magic('validate', (el) => {
+				return (field) => {
+					const input = el.querySelector(`[name="${field}"]`);
+					if (!input) return false;
+					
+					const isValid = input.checkValidity();
+					if (!isValid) {
+						Alpine.store('form').addError(field, input.validationMessage);
+					} else {
+						Alpine.store('form').clearErrors(field);
+					}
+					return isValid;
+				};
+			});
+		});
+		
+		// HTMX Configuration and Event Handlers
+		document.body.addEventListener('htmx:configRequest', (event) => {
+			// Add CSRF token to all requests
+			const token = document.querySelector('[data-csrf-token]')?.value;
+			if (token) {
+				event.detail.headers['X-CSRF-Token'] = token;
+			}
+			
+			// Add JSON content type for API requests
+			if (event.detail.path.startsWith('/api/')) {
+				event.detail.headers['Content-Type'] = 'application/json';
+			}
+			
+			// Set loading state
+			Alpine.store('form').setLoading(true);
+		});
+		
+		document.body.addEventListener('htmx:beforeRequest', (event) => {
+			// Clear errors before new request
+			Alpine.store('form').clearErrors();
+			
+			// Validate form if it's a submit
+			const form = event.target.closest('form');
+			if (form && !form.checkValidity()) {
+				event.preventDefault();
+				form.reportValidity();
+				Alpine.store('form').setLoading(false);
+				return false;
+			}
+		});
+		
+		document.body.addEventListener('htmx:afterRequest', (event) => {
+			Alpine.store('form').setLoading(false);
+			
+			// Handle validation errors from server
+			if (event.detail.xhr.status === 422) {
+				try {
+					const errors = JSON.parse(event.detail.xhr.responseText);
+					if (errors.errors) {
+						Object.entries(errors.errors).forEach(([field, messages]) => {
+							messages.forEach(msg => {
+								Alpine.store('form').addError(field, msg);
+							});
+						});
+					}
+				} catch (e) {
+					console.error('Failed to parse error response:', e);
+				}
+			}
+		});
+		
+		document.body.addEventListener('htmx:responseError', (event) => {
+			Alpine.store('form').setLoading(false);
+			
+			// Show generic error message
+			Alpine.store('form').addError('_form', 'An error occurred. Please try again.');
+			
+			// Optionally show browser notification
+			if ('Notification' in window && Notification.permission === 'granted') {
+				new Notification('Form Error', {
+					body: 'There was a problem submitting the form',
+					icon: '/icons/error.svg'
+				});
+			}
+		});
+		
+		document.body.addEventListener('htmx:timeout', (event) => {
+			Alpine.store('form').setLoading(false);
+			Alpine.store('form').addError('_form', 'Request timed out. Please try again.');
+		});
+		
+		// Auto-restore saved form data on page load
+		window.addEventListener('DOMContentLoaded', () => {
+			try {
+				const saved = JSON.parse(localStorage.getItem('form_autosave') || '{}');
+				const timestamp = saved._timestamp;
+				
+				// Only restore if less than 24 hours old
+				if (timestamp && (Date.now() - timestamp) < 24 * 60 * 60 * 1000) {
+					delete saved._timestamp;
+					
+					// Ask user if they want to restore
+					if (Object.keys(saved).length > 0 && confirm('Restore previously saved form data?')) {
+						Object.entries(saved).forEach(([name, value]) => {
+							const input = document.querySelector(`[name="${name}"]`);
+							if (input) {
+								if (input.type === 'checkbox') {
+									input.checked = value === true;
+								} else if (input.type === 'radio') {
+									const radio = document.querySelector(`[name="${name}"][value="${value}"]`);
+									if (radio) radio.checked = true;
+								} else {
+									input.value = value;
+									// Trigger change event for Alpine reactivity
+									input.dispatchEvent(new Event('input', { bubbles: true }));
+								}
+							}
+						});
+						
+						// Show notification
+						const notification = document.createElement('div');
+						notification.className = 'alert alert--success';
+						notification.innerHTML = `
+							<svg class="alert__icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+								<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+							</svg>
+							<span class="alert__message">Form data restored</span>
+						`;
+						document.querySelector('form')?.insertBefore(notification, document.querySelector('form').firstChild);
+						setTimeout(() => notification.remove(), 3000);
+					}
+				} else {
+					// Clear old data
+					localStorage.removeItem('form_autosave');
+				}
+			} catch (e) {
+				console.warn('Failed to restore auto-save:', e);
+			}
+		});
+		
+		// Form validation helpers
+		window.FormValidation = {
+			// Validate a single field
+			validateField(fieldName) {
+				const field = document.querySelector(`[name="${fieldName}"]`);
+				if (!field) return true;
+				
+				const isValid = field.checkValidity();
+				const wrapper = field.closest('.form-field');
+				
+				if (!isValid) {
+					wrapper?.classList.add('form-field--error');
+					field.setAttribute('aria-invalid', 'true');
+					Alpine.store('form').addError(fieldName, field.validationMessage);
+				} else {
+					wrapper?.classList.remove('form-field--error');
+					field.removeAttribute('aria-invalid');
+					Alpine.store('form').clearErrors(fieldName);
+				}
+				
+				return isValid;
+			},
+			
+			// Validate entire form
+			validateForm(formId) {
+				const form = document.getElementById(formId);
+				if (!form) return false;
+				
+				let isValid = true;
+				const fields = form.querySelectorAll('input, select, textarea');
+				
+				fields.forEach(field => {
+					if (!this.validateField(field.name)) {
+						isValid = false;
+					}
+				});
+				
+				return isValid;
+			},
+			
+			// Custom validation rules
+			addRule(fieldName, validator, message) {
+				const field = document.querySelector(`[name="${fieldName}"]`);
+				if (!field) return;
+				
+				field.addEventListener('blur', () => {
+					const value = field.value;
+					if (!validator(value)) {
+						Alpine.store('form').addError(fieldName, message);
+						field.setCustomValidity(message);
+					} else {
+						Alpine.store('form').clearErrors(fieldName);
+						field.setCustomValidity('');
+					}
+				});
+			}
+		};
+		
+		// Keyboard navigation helpers
+		window.FormKeyboard = {
+			// Move focus to next field
+			focusNext(currentElement) {
+				const form = currentElement.closest('form');
+				if (!form) return;
+				
+				const focusable = Array.from(form.querySelectorAll(
+					'input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])'
+				));
+				
+				const currentIndex = focusable.indexOf(currentElement);
+				const nextElement = focusable[currentIndex + 1];
+				
+				if (nextElement) {
+					nextElement.focus();
+				}
+			},
+			
+			// Move focus to previous field
+			focusPrevious(currentElement) {
+				const form = currentElement.closest('form');
+				if (!form) return;
+				
+				const focusable = Array.from(form.querySelectorAll(
+					'input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])'
+				));
+				
+				const currentIndex = focusable.indexOf(currentElement);
+				const previousElement = focusable[currentIndex - 1];
+				
+				if (previousElement) {
+					previousElement.focus();
+				}
+			}
+		};
+		
+		// Global keyboard shortcuts
+		document.addEventListener('keydown', (e) => {
+			// Ctrl/Cmd + Enter to submit form
+			if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+				const activeElement = document.activeElement;
+				const form = activeElement?.closest('form');
+				
+				if (form && !activeElement.matches('textarea')) {
+					e.preventDefault();
+					form.requestSubmit();
+				}
+			}
+			
+			// Escape to clear focus
+			if (e.key === 'Escape') {
+				document.activeElement?.blur();
+			}
+		});
+		
+		// Performance monitoring
+		if (window.performance && window.performance.mark) {
+			// Mark form initialization
+			document.addEventListener('DOMContentLoaded', () => {
+				performance.mark('form-init-start');
+			});
+			
+			// Mark form ready
+			window.addEventListener('load', () => {
+				performance.mark('form-init-end');
+				performance.measure('form-initialization', 'form-init-start', 'form-init-end');
+				
+				const measure = performance.getEntriesByName('form-initialization')[0];
+				console.log(`Form initialized in ${measure.duration.toFixed(2)}ms`);
+			});
+		}
+	</script>
+}
+
+// HTMXConfigScript renders HTMX configuration
+templ HTMXConfigScript(ctx context.Context) {
+	<script defer nonce={ getCSPNonce(ctx) }>
+		// HTMX Global Configuration
+		htmx.config.globalViewTransitions = true;
+		htmx.config.useTemplateFragments = true;
+		htmx.config.scrollBehavior = 'smooth';
+		htmx.config.defaultSwapStyle = 'innerHTML';
+		htmx.config.defaultSwapDelay = 0;
+		htmx.config.defaultSettleDelay = 20;
+		htmx.config.timeout = 30000; // 30 second timeout
+		htmx.config.historyCacheSize = 10;
+		htmx.config.refreshOnHistoryMiss = false;
+		htmx.config.allowEval = false; // Security: disable eval
+		htmx.config.allowScriptTags = false; // Security: disable script tags
+		htmx.config.inlineScriptNonce = document.querySelector('script[nonce]')?.nonce || '';
+		
+		// Custom HTMX extensions
+		htmx.defineExtension('json-form', {
+			onEvent: function(name, evt) {
+				if (name === 'htmx:configRequest') {
+					const form = evt.target;
+					if (form.tagName === 'FORM') {
+						const formData = new FormData(form);
+						const json = {};
+						
+						formData.forEach((value, key) => {
+							// Handle multiple values (checkboxes, multi-select)
+							if (json[key]) {
+								if (!Array.isArray(json[key])) {
+									json[key] = [json[key]];
+								}
+								json[key].push(value);
+							} else {
+								json[key] = value;
+							}
+						});
+						
+						evt.detail.parameters = json;
+						evt.detail.headers['Content-Type'] = 'application/json';
+					}
+				}
+			}
+		});
+		
+		// Rate limiting extension
+		htmx.defineExtension('rate-limit', {
+			onEvent: function(name, evt) {
+				if (name === 'htmx:beforeRequest') {
+					const element = evt.target;
+					const lastRequest = element.dataset.lastRequest;
+					const minInterval = parseInt(element.dataset.rateLimitMs || '1000');
+					
+					if (lastRequest) {
+						const timeSinceLastRequest = Date.now() - parseInt(lastRequest);
+						if (timeSinceLastRequest < minInterval) {
+							evt.preventDefault();
+							console.warn('Request rate limited');
+							return false;
+						}
+					}
+					
+					element.dataset.lastRequest = Date.now().toString();
+				}
+			}
+		});
+	</script>
+}
+
+// FormScriptsBundle renders all required scripts
+templ FormScriptsBundle(ctx context.Context) {
+	@AlpineStoreScript(ctx)
+	@HTMXConfigScript(ctx)
+}

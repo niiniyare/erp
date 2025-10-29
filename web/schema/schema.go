@@ -120,8 +120,8 @@ type Field struct {
 	Hidden   bool `json:"hidden,omitempty"`
 
 	// Values and options
-	Value   interface{} `json:"value,omitempty"`
-	Default interface{} `json:"default,omitempty"`
+	Value   any `json:"value,omitempty"`
+	Default any `json:"default,omitempty"`
 	Options []Option    `json:"options,omitempty" validate:"dive"`
 
 	// Validation and constraints
@@ -134,7 +134,7 @@ type Field struct {
 	Style  *Style       `json:"style,omitempty"`
 
 	// Behavior and interaction
-	Config      map[string]interface{} `json:"config,omitempty"`
+	Config      map[string]any `json:"config,omitempty"`
 	Events      *FieldEvents           `json:"events,omitempty"`
 	Conditional *Conditional           `json:"conditional,omitempty"`
 	DataSource  *DataSource            `json:"dataSource,omitempty"`
@@ -266,7 +266,7 @@ type Option struct {
 	Disabled    bool        `json:"disabled,omitempty"`
 	Selected    bool        `json:"selected,omitempty"`
 	Children    []Option    `json:"children,omitempty" validate:"dive"`
-	Meta        interface{} `json:"meta,omitempty"`
+	Meta        any `json:"meta,omitempty"`
 }
 
 // Security defines security and access control
@@ -366,12 +366,12 @@ type Meta struct {
 	Deprecated   bool                   `json:"deprecated,omitempty"`
 	Experimental bool                   `json:"experimental,omitempty"`
 	Changelog    []ChangelogEntry       `json:"changelog,omitempty" validate:"dive"`
-	CustomData   map[string]interface{} `json:"customData,omitempty"`
+	CustomData   map[string]any `json:"customData,omitempty"`
 }
 
 // State represents runtime state
 type State struct {
-	Values      map[string]interface{} `json:"values,omitempty"`
+	Values      map[string]any `json:"values,omitempty"`
 	Errors      map[string]string      `json:"errors,omitempty"`
 	Touched     map[string]bool        `json:"touched,omitempty"`
 	Dirty       map[string]bool        `json:"dirty,omitempty"`
@@ -397,7 +397,7 @@ type Context struct {
 	Roles       []string               `json:"roles,omitempty"`
 	Environment string                 `json:"environment,omitempty" validate:"oneof=development staging production"`
 	Debug       bool                   `json:"debug,omitempty"`
-	Data        map[string]interface{} `json:"data,omitempty"`
+	Data        map[string]any `json:"data,omitempty"`
 }
 
 // Core interfaces for the schema system
@@ -405,27 +405,27 @@ type (
 	// SchemaValidator validates schema structure and data
 	SchemaValidator interface {
 		ValidateSchema(ctx context.Context, schema *Schema) error
-		ValidateData(ctx context.Context, schema *Schema, data map[string]interface{}) error
+		ValidateData(ctx context.Context, schema *Schema, data map[string]any) error
 	}
 
 	// SchemaRenderer renders schema to HTML/templates
 	SchemaRenderer interface {
-		Render(ctx context.Context, schema *Schema, data map[string]interface{}) (string, error)
-		RenderField(ctx context.Context, field *Field, value interface{}) (string, error)
+		Render(ctx context.Context, schema *Schema, data map[string]any) (string, error)
+		RenderField(ctx context.Context, field *Field, value any) (string, error)
 	}
 
 	// SchemaRegistry manages schema storage and retrieval
 	SchemaRegistry interface {
 		Register(ctx context.Context, schema *Schema) error
 		Get(ctx context.Context, id string) (*Schema, error)
-		List(ctx context.Context, filter map[string]interface{}) ([]*Schema, error)
+		List(ctx context.Context, filter map[string]any) ([]*Schema, error)
 		Update(ctx context.Context, schema *Schema) error
 		Delete(ctx context.Context, id string) error
 	}
 
 	// ConditionEvaluator evaluates conditional logic
 	ConditionEvaluator interface {
-		Evaluate(ctx context.Context, condition *condition.ConditionGroup, data map[string]interface{}) (bool, error)
+		Evaluate(ctx context.Context, condition *condition.ConditionGroup, data map[string]any) (bool, error)
 	}
 
 	// DataSourceResolver resolves dynamic data sources
@@ -474,7 +474,7 @@ func NewSchema(id string, schemaType Type, title string) *Schema {
 			UpdatedAt: now,
 		},
 		State: &State{
-			Values:      make(map[string]interface{}),
+			Values:      make(map[string]any),
 			Errors:      make(map[string]string),
 			Touched:     make(map[string]bool),
 			Dirty:       make(map[string]bool),
@@ -508,7 +508,7 @@ func (s *Schema) updateTimestamp() {
 }
 
 // Validation helpers
-func (f *Field) IsVisible(data map[string]interface{}) bool {
+func (f *Field) IsVisible(data map[string]any) bool {
 	if f.Hidden {
 		return false
 	}
@@ -519,7 +519,7 @@ func (f *Field) IsVisible(data map[string]interface{}) bool {
 	return true
 }
 
-func (f *Field) IsRequired(data map[string]interface{}) bool {
+func (f *Field) IsRequired(data map[string]any) bool {
 	if f.Required {
 		return true
 	}

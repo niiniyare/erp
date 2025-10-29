@@ -16,7 +16,7 @@ func NewSelectRenderer(base *BaseRenderer) *SelectRenderer {
 	return &SelectRenderer{BaseRenderer: base}
 }
 
-func (sr *SelectRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (sr *SelectRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := sr.buildInputAttributes(field, value)
 	delete(attrs, "value") // Value is handled in options
 	delete(attrs, "placeholder") // Placeholder is handled as first option
@@ -91,7 +91,7 @@ func NewMultiSelectRenderer(base *BaseRenderer) *MultiSelectRenderer {
 	return &MultiSelectRenderer{BaseRenderer: base}
 }
 
-func (msr *MultiSelectRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (msr *MultiSelectRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := msr.buildInputAttributes(field, value)
 	attrs["multiple"] = "multiple"
 	delete(attrs, "value") // Value is handled in options
@@ -102,7 +102,7 @@ func (msr *MultiSelectRenderer) Render(ctx context.Context, field *Field, value 
 		switch v := value.(type) {
 		case []string:
 			selectedValues = v
-		case []interface{}:
+		case []any:
 			for _, val := range v {
 				selectedValues = append(selectedValues, fmt.Sprintf("%v", val))
 			}
@@ -158,7 +158,7 @@ func NewRadioRenderer(base *BaseRenderer) *RadioRenderer {
 	return &RadioRenderer{BaseRenderer: base}
 }
 
-func (rr *RadioRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (rr *RadioRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	selectedValue := ""
 	if value != nil {
 		selectedValue = fmt.Sprintf("%v", value)
@@ -224,14 +224,14 @@ func NewCheckboxRenderer(base *BaseRenderer) *CheckboxRenderer {
 	return &CheckboxRenderer{BaseRenderer: base}
 }
 
-func (cr *CheckboxRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (cr *CheckboxRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	// Parse selected values
 	var selectedValues []string
 	if value != nil {
 		switch v := value.(type) {
 		case []string:
 			selectedValues = v
-		case []interface{}:
+		case []any:
 			for _, val := range v {
 				selectedValues = append(selectedValues, fmt.Sprintf("%v", val))
 			}
@@ -341,7 +341,7 @@ func NewSwitchRenderer(base *BaseRenderer) *SwitchRenderer {
 	return &SwitchRenderer{BaseRenderer: base}
 }
 
-func (sr *SwitchRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (sr *SwitchRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	checked := false
 	if value != nil {
 		switch v := value.(type) {

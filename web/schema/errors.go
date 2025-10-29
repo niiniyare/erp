@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/niiniyare/erp/internal/shared/logger"
 )
 
 // Core error types for schema validation and processing
@@ -63,9 +65,9 @@ type SchemaError interface {
 	Code() string
 	Type() ErrorType
 	Field() string
-	Details() map[string]interface{}
+	Details() map[string]any
 	WithField(field string) SchemaError
-	WithDetail(key string, value interface{}) SchemaError
+	WithDetail(key string, value any) SchemaError
 }
 
 // ErrorType categorizes errors for better handling
@@ -89,7 +91,7 @@ type BaseError struct {
 	message string
 	errType ErrorType
 	field   string
-	details map[string]interface{}
+	details map[string]any
 }
 
 func (e *BaseError) Error() string {
@@ -111,9 +113,9 @@ func (e *BaseError) Field() string {
 	return e.field
 }
 
-func (e *BaseError) Details() map[string]interface{} {
+func (e *BaseError) Details() map[string]any {
 	if e.details == nil {
-		e.details = make(map[string]interface{})
+		e.details = make(map[string]any)
 	}
 	return e.details
 }
@@ -124,10 +126,10 @@ func (e *BaseError) WithField(field string) SchemaError {
 	return &newErr
 }
 
-func (e *BaseError) WithDetail(key string, value interface{}) SchemaError {
+func (e *BaseError) WithDetail(key string, value any) SchemaError {
 	newErr := *e
 	if newErr.details == nil {
-		newErr.details = make(map[string]interface{})
+		newErr.details = make(map[string]any)
 	}
 	newErr.details[key] = value
 	return &newErr
@@ -139,7 +141,7 @@ func NewValidationError(code, message string) SchemaError {
 		code:    code,
 		message: message,
 		errType: ErrorTypeValidation,
-		details: make(map[string]interface{}),
+		details: make(map[string]any),
 	}
 }
 
@@ -148,7 +150,7 @@ func NewNotFoundError(resource, message string) SchemaError {
 		code:    fmt.Sprintf("%s_not_found", resource),
 		message: message,
 		errType: ErrorTypeNotFound,
-		details: map[string]interface{}{
+		details: map[string]any{
 			"resource": resource,
 		},
 	}
@@ -159,7 +161,7 @@ func NewConflictError(resource, message string) SchemaError {
 		code:    fmt.Sprintf("%s_conflict", resource),
 		message: message,
 		errType: ErrorTypeConflict,
-		details: map[string]interface{}{
+		details: map[string]any{
 			"resource": resource,
 		},
 	}
@@ -170,7 +172,7 @@ func NewPermissionError(code, message string) SchemaError {
 		code:    code,
 		message: message,
 		errType: ErrorTypePermission,
-		details: make(map[string]interface{}),
+		details: make(map[string]any),
 	}
 }
 
@@ -179,7 +181,7 @@ func NewDataSourceError(code, message string) SchemaError {
 		code:    code,
 		message: message,
 		errType: ErrorTypeDataSource,
-		details: make(map[string]interface{}),
+		details: make(map[string]any),
 	}
 }
 
@@ -188,7 +190,7 @@ func NewRenderError(code, message string) SchemaError {
 		code:    code,
 		message: message,
 		errType: ErrorTypeRender,
-		details: make(map[string]interface{}),
+		details: make(map[string]any),
 	}
 }
 
@@ -197,7 +199,7 @@ func NewWorkflowError(code, message string) SchemaError {
 		code:    code,
 		message: message,
 		errType: ErrorTypeWorkflow,
-		details: make(map[string]interface{}),
+		details: make(map[string]any),
 	}
 }
 
@@ -206,7 +208,7 @@ func NewTenantError(code, message string) SchemaError {
 		code:    code,
 		message: message,
 		errType: ErrorTypeTenant,
-		details: make(map[string]interface{}),
+		details: make(map[string]any),
 	}
 }
 
@@ -215,7 +217,7 @@ func NewInternalError(code, message string) SchemaError {
 		code:    code,
 		message: message,
 		errType: ErrorTypeInternal,
-		details: make(map[string]interface{}),
+		details: make(map[string]any),
 	}
 }
 
@@ -325,7 +327,7 @@ func WrapError(err error, code, message string) SchemaError {
 		code:    code,
 		message: fmt.Sprintf("%s: %v", message, err),
 		errType: ErrorTypeInternal,
-		details: map[string]interface{}{
+		details: map[string]any{
 			"original_error": err.Error(),
 		},
 	}
@@ -357,11 +359,11 @@ func GetErrorCode(err error) string {
 	return "unknown_error"
 }
 
-func GetErrorDetails(err error) map[string]interface{} {
+func GetErrorDetails(err error) map[string]any {
 	if schemaErr, ok := err.(SchemaError); ok {
 		return schemaErr.Details()
 	}
-	return map[string]interface{}{
+	return map[string]any{
 		"error": err.Error(),
 	}
 }
@@ -395,11 +397,11 @@ func GetHTTPStatusCode(err error) int {
 
 // Error response structure for API responses
 type ErrorResponse struct {
-	Error   string                 `json:"error"`
-	Code    string                 `json:"code"`
-	Type    string                 `json:"type"`
-	Field   string                 `json:"field,omitempty"`
-	Details map[string]interface{} `json:"details,omitempty"`
+	Error   string         `json:"error"`
+	Code    string         `json:"code"`
+	Type    string         `json:"type"`
+	Field   string         `json:"field,omitempty"`
+	Details map[string]any `json:"details,omitempty"`
 }
 
 func ToErrorResponse(err error) *ErrorResponse {
@@ -464,10 +466,10 @@ func RecoverSchemaError() SchemaError {
 
 // Error middleware for consistent error handling
 type ErrorHandler struct {
-	logger Logger // Assume Logger interface exists
+	logger logger.Logger // Assume Logger interface exists
 }
 
-func NewErrorHandler(logger Logger) *ErrorHandler {
+func NewErrorHandler(logger logger.Logger) *ErrorHandler {
 	return &ErrorHandler{logger: logger}
 }
 
@@ -478,7 +480,7 @@ func (eh *ErrorHandler) HandleError(err error) SchemaError {
 
 	// Log the error
 	if eh.logger != nil {
-		eh.logger.Error("schema error occurred", map[string]interface{}{
+		eh.logger.Error("schema error occurred", map[string]any{
 			"error": err.Error(),
 			"type":  fmt.Sprintf("%T", err),
 		})
@@ -500,10 +502,10 @@ func (eh *ErrorHandler) HandleError(err error) SchemaError {
 	}
 }
 
-// Logger interface for error handling
-type Logger interface {
-	Error(message string, fields map[string]interface{})
-	Warn(message string, fields map[string]interface{})
-	Info(message string, fields map[string]interface{})
-	Debug(message string, fields map[string]interface{})
+type ErrRendererNotFound struct {
+	Type string
+}
+
+func (e ErrRendererNotFound) Error() string {
+	return fmt.Sprintf("renderer not found for type: %s", e.Type)
 }

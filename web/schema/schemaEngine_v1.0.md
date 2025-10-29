@@ -482,7 +482,7 @@ type Field struct {
     HelpText    string `json:"help_text,omitempty"`
     
     // Behavior
-    Default     interface{}      `json:"default,omitempty"`
+    Default     any      `json:"default,omitempty"`
     Disabled    bool             `json:"disabled,omitempty"`
     ReadOnly    bool             `json:"read_only,omitempty"`
     Hidden      bool             `json:"hidden,omitempty"`
@@ -1509,12 +1509,12 @@ type SplitLayout struct {
 
 ```go
 type ResponsiveConfig struct {
-    Default interface{} `json:"default"` // Base (mobile) styles
-    SM      interface{} `json:"sm,omitempty"`
-    MD      interface{} `json:"md,omitempty"`
-    LG      interface{} `json:"lg,omitempty"`
-    XL      interface{} `json:"xl,omitempty"`
-    XL2     interface{} `json:"2xl,omitempty"`
+    Default any `json:"default"` // Base (mobile) styles
+    SM      any `json:"sm,omitempty"`
+    MD      any `json:"md,omitempty"`
+    LG      any `json:"lg,omitempty"`
+    XL      any `json:"xl,omitempty"`
+    XL2     any `json:"2xl,omitempty"`
 }
 
 type ResponsiveVisibility struct {
@@ -1672,7 +1672,7 @@ type Transition struct {
 type Condition struct {
     Field    string      `json:"field" validate:"required"`
     Operator string      `json:"operator" validate:"required,oneof=equals not_equals greater less contains"`
-    Value    interface{} `json:"value"`
+    Value    any `json:"value"`
 }
 ```
 
@@ -1749,7 +1749,7 @@ type Condition struct {
 type WorkflowState struct {
     CurrentStep string                 `json:"current_step"`
     Completed   []string               `json:"completed"`
-    Data        map[string]interface{} `json:"data"`
+    Data        map[string]any `json:"data"`
     CanGoBack   bool                   `json:"can_go_back"`
     CanGoNext   bool                   `json:"can_go_next"`
 }
@@ -1950,7 +1950,7 @@ type EventHandler struct {
     ID       string                 `json:"id" validate:"required,uuid"`
     Trigger  EventTrigger           `json:"trigger" validate:"required"`
     Action   ActionType             `json:"action" validate:"required"`
-    Payload  map[string]interface{} `json:"payload,omitempty"`
+    Payload  map[string]any `json:"payload,omitempty"`
     Condition *Condition            `json:"condition,omitempty"`
     Debounce int                    `json:"debounce,omitempty"`
 }
@@ -2083,7 +2083,7 @@ type APICallPayload struct {
     Endpoint  string            `json:"endpoint" validate:"required"`
     Method    string            `json:"method" validate:"required,oneof=GET POST PUT PATCH DELETE"`
     Headers   map[string]string `json:"headers,omitempty"`
-    Body      interface{}       `json:"body,omitempty"`
+    Body      any       `json:"body,omitempty"`
     OnSuccess *Action           `json:"on_success,omitempty"`
     OnError   *Action           `json:"on_error,omitempty"`
     Timeout   int               `json:"timeout,omitempty"`
@@ -2173,7 +2173,7 @@ The Schema Engine backend serializes JSON + context data. A frontend adapter rea
 ```go
 type UIComponent interface {
     Render(ctx *UIContext, node *SchemaNode) ([]byte, error)
-    Validate(ctx *UIContext, value interface{}) error
+    Validate(ctx *UIContext, value any) error
     GetMetadata() ComponentMetadata
 }
 
@@ -2902,7 +2902,7 @@ func TestTextInputComponent(t *testing.T) {
     ctx := &UIContext{
         Schema: &Schema{},
         State: &State{
-            Values: map[string]interface{}{
+            Values: map[string]any{
                 "username": "john_doe",
             },
         },
@@ -2959,7 +2959,7 @@ type Context struct {
     Features map[string]bool `json:"features,omitempty"`
     
     // Custom Context
-    Custom map[string]interface{} `json:"custom,omitempty"`
+    Custom map[string]any `json:"custom,omitempty"`
 }
 ```
 
@@ -2968,7 +2968,7 @@ type Context struct {
 ```go
 type State struct {
     // Field Values
-    Values map[string]interface{} `json:"values"`
+    Values map[string]any `json:"values"`
     
     // Field States
     Touched map[string]bool `json:"touched"`
@@ -2984,7 +2984,7 @@ type State struct {
     Completed   []string `json:"completed,omitempty"`
     
     // Custom State
-    Variables map[string]interface{} `json:"variables,omitempty"`
+    Variables map[string]any `json:"variables,omitempty"`
 }
 ```
 
@@ -3056,7 +3056,7 @@ type SchemaError interface {
     Code() string
     Field() string
     Type() string
-    Details() map[string]interface{}
+    Details() map[string]any
     Severity() Severity
 }
 
@@ -3077,7 +3077,7 @@ type schemaError struct {
     field    string
     errType  string
     message  string
-    details  map[string]interface{}
+    details  map[string]any
     severity Severity
 }
 
@@ -3088,7 +3088,7 @@ func (e *schemaError) Error() string {
 func (e *schemaError) Code() string { return e.code }
 func (e *schemaError) Field() string { return e.field }
 func (e *schemaError) Type() string { return e.errType }
-func (e *schemaError) Details() map[string]interface{} { return e.details }
+func (e *schemaError) Details() map[string]any { return e.details }
 func (e *schemaError) Severity() Severity { return e.severity }
 ```
 
@@ -3396,7 +3396,7 @@ func BenchmarkValidate(b *testing.B) {
 type JSONSchemaGenerator struct{}
 
 func (g *JSONSchemaGenerator) Generate(schema *Schema) ([]byte, error) {
-    jsonSchema := map[string]interface{}{
+    jsonSchema := map[string]any{
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type":    "object",
         "properties": g.generateProperties(schema.Fields),
@@ -3511,7 +3511,7 @@ type EditorConfig struct {
     Preview  bool                   `json:"preview"`
     Plugins  []string               `json:"plugins"`
     Theme    string                 `json:"theme"`
-    Custom   map[string]interface{} `json:"custom"`
+    Custom   map[string]any `json:"custom"`
 }
 
 func GenerateEditorConfig(schema *Schema) *EditorConfig {
@@ -3966,7 +3966,7 @@ type AuditLog struct {
     UserID    string                 `json:"user_id"`
     Action    string                 `json:"action"`
     SchemaID  string                 `json:"schema_id"`
-    Changes   map[string]interface{} `json:"changes"`
+    Changes   map[string]any `json:"changes"`
 }
 
 func LogSchemaChange(schema *Schema, user string, action string) {

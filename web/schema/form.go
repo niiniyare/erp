@@ -15,8 +15,8 @@ type FormSchema struct {
 
 // FormRenderer interface for rendering form-specific templates
 type FormRenderer interface {
-	RenderForm(ctx context.Context, schema *Schema, data map[string]interface{}) (string, error)
-	RenderField(ctx context.Context, field *Field, value interface{}) (string, error)
+	RenderForm(ctx context.Context, schema *Schema, data map[string]any) (string, error)
+	RenderField(ctx context.Context, field *Field, value any) (string, error)
 	RenderAction(ctx context.Context, action *Action) (string, error)
 }
 
@@ -106,6 +106,25 @@ func (fs *FormSchema) AddEmailField(name, label string, required bool) *FormSche
 	return fs
 }
 
+// AddPasswordField adds a password input field
+func (fs *FormSchema) AddPasswordField(name, label string, required bool) *FormSchema {
+	field := Field{
+		Name:     name,
+		Type:     FieldPassword,
+		Label:    label,
+		Required: required,
+	}
+
+	if required {
+		field.Validation = &FieldValidation{
+			Required: true,
+		}
+	}
+
+	fs.AddField(field)
+	return fs
+}
+
 // AddNumberField adds a number input field with optional range validation
 func (fs *FormSchema) AddNumberField(name, label string, required bool, min, max *float64) *FormSchema {
 	field := Field{
@@ -144,8 +163,27 @@ func (fs *FormSchema) AddSelectField(name, label string, required bool, options 
 	return fs
 }
 
-// AddTextareaField adds a textarea field with optional length validation
-func (fs *FormSchema) AddTextareaField(name, label string, required bool, minLength, maxLength *int) *FormSchema {
+// AddTextareaField adds a textarea field with required boolean
+func (fs *FormSchema) AddTextareaField(name, label string, required bool) *FormSchema {
+	field := Field{
+		Name:     name,
+		Type:     FieldTextarea,
+		Label:    label,
+		Required: required,
+	}
+
+	if required {
+		field.Validation = &FieldValidation{
+			Required: true,
+		}
+	}
+
+	fs.AddField(field)
+	return fs
+}
+
+// AddTextareaFieldWithLength adds a textarea field with length validation
+func (fs *FormSchema) AddTextareaFieldWithLength(name, label string, required bool, minLength, maxLength *int) *FormSchema {
 	field := Field{
 		Name:     name,
 		Type:     FieldTextarea,
@@ -235,6 +273,12 @@ func (fs *FormSchema) SetFormAction(url, method string) *FormSchema {
 	fs.Config.Action = url
 	fs.Config.Method = method
 
+	return fs
+}
+
+// SetDescription sets the form description
+func (fs *FormSchema) SetDescription(description string) *FormSchema {
+	fs.Description = description
 	return fs
 }
 
@@ -362,7 +406,7 @@ func (fs *FormSchema) ValidateForm(ctx context.Context) error {
 }
 
 // ValidateFormData validates form submission data
-func (fs *FormSchema) ValidateFormData(ctx context.Context, data map[string]interface{}) (*ValidationResult, error) {
+func (fs *FormSchema) ValidateFormData(ctx context.Context, data map[string]any) (*ValidationResult, error) {
 	// Use the comprehensive validation system from validation.go
 	validator := NewValidator()
 	return validator.ValidateData(ctx, fs.Schema, data), nil
@@ -384,7 +428,7 @@ func (fs *FormSchema) SetRenderer(renderer FormRenderer) {
 }
 
 // Render renders the complete form
-func (fs *FormSchema) Render(ctx context.Context, data map[string]interface{}) (string, error) {
+func (fs *FormSchema) Render(ctx context.Context, data map[string]any) (string, error) {
 	if fs.renderer == nil {
 		return "", NewRenderError("no_renderer", "form renderer not set")
 	}
@@ -393,7 +437,7 @@ func (fs *FormSchema) Render(ctx context.Context, data map[string]interface{}) (
 }
 
 // RenderField renders a specific field
-func (fs *FormSchema) RenderField(ctx context.Context, fieldName string, value interface{}) (string, error) {
+func (fs *FormSchema) RenderField(ctx context.Context, fieldName string, value any) (string, error) {
 	if fs.renderer == nil {
 		return "", NewRenderError("no_renderer", "form renderer not set")
 	}
@@ -417,8 +461,8 @@ func (fs *FormSchema) Clone() *FormSchema {
 }
 
 // GetFormStatistics returns basic form statistics
-func (fs *FormSchema) GetFormStatistics() map[string]interface{} {
-	stats := make(map[string]interface{})
+func (fs *FormSchema) GetFormStatistics() map[string]any {
+	stats := make(map[string]any)
 
 	// Field counts
 	fieldCounts := make(map[FieldType]int)
@@ -460,7 +504,7 @@ func NewContactForm() *FormSchema {
 		AddTextField("name", "Full Name", "Enter your full name", true).
 		AddEmailField("email", "Email Address", true).
 		AddTextField("subject", "Subject", "Enter subject", true).
-		AddTextareaField("message", "Message", true, IntPtr(10), IntPtr(1000)).
+		AddTextareaFieldWithLength("message", "Message", true, IntPtr(10), IntPtr(1000)).
 		AddSubmitAction("Send Message", "primary").
 		SetFormAction("/api/contact", "POST").
 		SetValidationMode(ValidationOnChange)
@@ -497,7 +541,7 @@ func NewProductForm() *FormSchema {
 
 	return fs.
 		AddTextField("name", "Product Name", "Enter product name", true).
-		AddTextareaField("description", "Description", false, IntPtr(10), IntPtr(500)).
+		AddTextareaFieldWithLength("description", "Description", false, IntPtr(10), IntPtr(500)).
 		AddSelectField("category", "Category", true, categories).
 		AddNumberField("price", "Price", true, Float64Ptr(0), nil).
 		AddNumberField("stock", "Stock Quantity", true, Float64Ptr(0), Float64Ptr(10000)).

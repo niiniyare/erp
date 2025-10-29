@@ -16,7 +16,7 @@ func NewDateRenderer(base *BaseRenderer) *DateRenderer {
 	return &DateRenderer{BaseRenderer: base}
 }
 
-func (dr *DateRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (dr *DateRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := dr.buildInputAttributes(field, value)
 	attrs["type"] = "date"
 
@@ -41,7 +41,7 @@ func NewTimeRenderer(base *BaseRenderer) *TimeRenderer {
 	return &TimeRenderer{BaseRenderer: base}
 }
 
-func (tr *TimeRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (tr *TimeRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := tr.buildInputAttributes(field, value)
 	attrs["type"] = "time"
 
@@ -66,7 +66,7 @@ func NewDateTimeRenderer(base *BaseRenderer) *DateTimeRenderer {
 	return &DateTimeRenderer{BaseRenderer: base}
 }
 
-func (dtr *DateTimeRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (dtr *DateTimeRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := dtr.buildInputAttributes(field, value)
 	attrs["type"] = "datetime-local"
 
@@ -91,12 +91,12 @@ func NewDateRangeRenderer(base *BaseRenderer) *DateRangeRenderer {
 	return &DateRangeRenderer{BaseRenderer: base}
 }
 
-func (drr *DateRangeRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (drr *DateRangeRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	// Parse date range value
 	var startDate, endDate string
 	if value != nil {
 		switch v := value.(type) {
-		case map[string]interface{}:
+		case map[string]any:
 			if start, exists := v["start"]; exists {
 				startDate = fmt.Sprintf("%v", start)
 			}
@@ -170,7 +170,7 @@ func NewFileRenderer(base *BaseRenderer) *FileRenderer {
 	return &FileRenderer{BaseRenderer: base}
 }
 
-func (fr *FileRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (fr *FileRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := fr.buildInputAttributes(field, value)
 	attrs["type"] = "file"
 	delete(attrs, "value") // File inputs don't have values
@@ -232,7 +232,7 @@ func NewImageRenderer(base *BaseRenderer) *ImageRenderer {
 	return &ImageRenderer{BaseRenderer: base}
 }
 
-func (ir *ImageRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (ir *ImageRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := ir.buildInputAttributes(field, value)
 	attrs["type"] = "file"
 	attrs["accept"] = "image/*"
@@ -288,7 +288,7 @@ func NewRichTextRenderer(base *BaseRenderer) *RichTextRenderer {
 	return &RichTextRenderer{BaseRenderer: base}
 }
 
-func (rtr *RichTextRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (rtr *RichTextRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	// Get the value to put inside textarea
 	var textValue string
 	if value != nil {
@@ -348,7 +348,7 @@ func NewCodeRenderer(base *BaseRenderer) *CodeRenderer {
 	return &CodeRenderer{BaseRenderer: base}
 }
 
-func (cr *CodeRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (cr *CodeRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	// Get the value to put inside textarea
 	var textValue string
 	if value != nil {
@@ -415,7 +415,7 @@ func NewJSONRenderer(base *BaseRenderer) *JSONRenderer {
 	return &JSONRenderer{BaseRenderer: base}
 }
 
-func (jr *JSONRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (jr *JSONRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	// Get the value to put inside textarea
 	var textValue string
 	if value != nil {
@@ -489,28 +489,28 @@ func NewDisplayRenderer(base *BaseRenderer) *DisplayRenderer       { return &Dis
 func NewDividerRenderer(base *BaseRenderer) *DividerRenderer       { return &DividerRenderer{base} }
 func NewHTMLRenderer(base *BaseRenderer) *HTMLRenderer             { return &HTMLRenderer{base} }
 
-func (sr *SignatureRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (sr *SignatureRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	inputHTML := fmt.Sprintf(`<div class="signature-pad" data-field="%s">Signature field - implementation needed</div>`, field.Name)
 	return sr.RenderContainer(field, inputHTML, errors), nil
 }
 func (sr *SignatureRenderer) SupportsFieldType(fieldType FieldType) bool { return fieldType == FieldSignature }
 func (sr *SignatureRenderer) GetRequiredAssets() []string { return []string{"css/signature.css", "js/signature.js"} }
 
-func (lr *LocationRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (lr *LocationRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	inputHTML := fmt.Sprintf(`<div class="location-picker" data-field="%s">Location picker - implementation needed</div>`, field.Name)
 	return lr.RenderContainer(field, inputHTML, errors), nil
 }
 func (lr *LocationRenderer) SupportsFieldType(fieldType FieldType) bool { return fieldType == FieldLocation }
 func (lr *LocationRenderer) GetRequiredAssets() []string { return []string{"css/location.css", "js/location.js"} }
 
-func (rr *RelationRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (rr *RelationRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	inputHTML := fmt.Sprintf(`<div class="relation-picker" data-field="%s">Relation picker - implementation needed</div>`, field.Name)
 	return rr.RenderContainer(field, inputHTML, errors), nil
 }
 func (rr *RelationRenderer) SupportsFieldType(fieldType FieldType) bool { return fieldType == FieldRelation }
 func (rr *RelationRenderer) GetRequiredAssets() []string { return []string{"css/relation.css", "js/relation.js"} }
 
-func (dr *DisplayRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (dr *DisplayRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	displayValue := ""
 	if value != nil {
 		displayValue = fmt.Sprintf("%v", value)
@@ -520,13 +520,13 @@ func (dr *DisplayRenderer) Render(ctx context.Context, field *Field, value inter
 func (dr *DisplayRenderer) SupportsFieldType(fieldType FieldType) bool { return fieldType == FieldDisplay }
 func (dr *DisplayRenderer) GetRequiredAssets() []string { return []string{"css/display.css"} }
 
-func (dr *DividerRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (dr *DividerRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	return `<hr class="field-divider">`, nil
 }
 func (dr *DividerRenderer) SupportsFieldType(fieldType FieldType) bool { return fieldType == FieldDivider }
 func (dr *DividerRenderer) GetRequiredAssets() []string { return []string{"css/divider.css"} }
 
-func (hr *HTMLRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (hr *HTMLRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	htmlContent := ""
 	if field.Default != nil {
 		htmlContent = fmt.Sprintf("%v", field.Default)

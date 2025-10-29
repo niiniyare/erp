@@ -21,10 +21,10 @@ type Validator struct {
 }
 
 // CustomValidatorFunc defines custom validation function signature
-type CustomValidatorFunc func(ctx context.Context, value interface{}, params map[string]interface{}) error
+type CustomValidatorFunc func(ctx context.Context, value any, params map[string]any) error
 
 // AsyncValidatorFunc defines async validation function signature
-type AsyncValidatorFunc func(ctx context.Context, value interface{}, params map[string]interface{}) error
+type AsyncValidatorFunc func(ctx context.Context, value any, params map[string]any) error
 
 // ValidationResult holds validation results
 type ValidationResult struct {
@@ -32,7 +32,7 @@ type ValidationResult struct {
 	Errors      []SchemaError          `json:"errors,omitempty"`
 	FieldErrors map[string][]string    `json:"fieldErrors,omitempty"`
 	Warnings    []string               `json:"warnings,omitempty"`
-	Context     map[string]interface{} `json:"context,omitempty"`
+	Context     map[string]any `json:"context,omitempty"`
 }
 
 // NewValidator creates a new validator instance
@@ -84,7 +84,7 @@ func (v *Validator) ValidateSchema(ctx context.Context, schema *Schema) *Validat
 }
 
 // ValidateData validates form data against schema
-func (v *Validator) ValidateData(ctx context.Context, schema *Schema, data map[string]interface{}) *ValidationResult {
+func (v *Validator) ValidateData(ctx context.Context, schema *Schema, data map[string]any) *ValidationResult {
 	collector := NewErrorCollector()
 
 	// Validate each field's data
@@ -295,7 +295,7 @@ func (v *Validator) validateSchemaFrameworkIntegration(schema *Schema, collector
 }
 
 // Field data validation methods
-func (v *Validator) validateFieldData(ctx context.Context, field *Field, data map[string]interface{}, collector *ErrorCollector) {
+func (v *Validator) validateFieldData(ctx context.Context, field *Field, data map[string]any, collector *ErrorCollector) {
 	value, exists := data[field.Name]
 
 	// Check if field is required
@@ -327,7 +327,7 @@ func (v *Validator) validateFieldData(ctx context.Context, field *Field, data ma
 	}
 }
 
-func (v *Validator) validateFieldValueByType(fieldType FieldType, value interface{}) SchemaError {
+func (v *Validator) validateFieldValueByType(fieldType FieldType, value any) SchemaError {
 	switch fieldType {
 	case FieldEmail:
 		return v.validateEmail(value)
@@ -346,7 +346,7 @@ func (v *Validator) validateFieldValueByType(fieldType FieldType, value interfac
 	}
 }
 
-func (v *Validator) validateFieldValueByRules(ctx context.Context, field *Field, value interface{}, collector *ErrorCollector) {
+func (v *Validator) validateFieldValueByRules(ctx context.Context, field *Field, value any, collector *ErrorCollector) {
 	rules := field.Validation
 
 	// Length validation
@@ -385,7 +385,7 @@ func (v *Validator) validateFieldValueByRules(ctx context.Context, field *Field,
 	}
 }
 
-func (v *Validator) validateCrossFieldRules(ctx context.Context, rules []CrossFieldRule, data map[string]interface{}, collector *ErrorCollector) {
+func (v *Validator) validateCrossFieldRules(ctx context.Context, rules []CrossFieldRule, data map[string]any, collector *ErrorCollector) {
 	for _, rule := range rules {
 		_ = rule
 		// TODO: Implement cross-field validation using condition package
@@ -393,7 +393,7 @@ func (v *Validator) validateCrossFieldRules(ctx context.Context, rules []CrossFi
 	}
 }
 
-func (v *Validator) validateCustomRules(ctx context.Context, rules []CustomRule, data map[string]interface{}, collector *ErrorCollector) {
+func (v *Validator) validateCustomRules(ctx context.Context, rules []CustomRule, data map[string]any, collector *ErrorCollector) {
 	for _, rule := range rules {
 		if validator, exists := v.customValidators[rule.Name]; exists {
 			if err := validator(ctx, data, nil); err != nil {
@@ -404,7 +404,7 @@ func (v *Validator) validateCustomRules(ctx context.Context, rules []CustomRule,
 }
 
 // Specific validation helper methods
-func (v *Validator) validateEmail(value interface{}) SchemaError {
+func (v *Validator) validateEmail(value any) SchemaError {
 	str, ok := value.(string)
 	if !ok {
 		return NewValidationError("invalid_type", "value must be a string")
@@ -417,7 +417,7 @@ func (v *Validator) validateEmail(value interface{}) SchemaError {
 	return nil
 }
 
-func (v *Validator) validateURL(value interface{}) SchemaError {
+func (v *Validator) validateURL(value any) SchemaError {
 	str, ok := value.(string)
 	if !ok {
 		return NewValidationError("invalid_type", "value must be a string")
@@ -430,7 +430,7 @@ func (v *Validator) validateURL(value interface{}) SchemaError {
 	return nil
 }
 
-func (v *Validator) validateNumber(value interface{}) SchemaError {
+func (v *Validator) validateNumber(value any) SchemaError {
 	switch value.(type) {
 	case int, int32, int64, float32, float64:
 		return nil
@@ -445,7 +445,7 @@ func (v *Validator) validateNumber(value interface{}) SchemaError {
 	}
 }
 
-func (v *Validator) validatePhone(value interface{}) SchemaError {
+func (v *Validator) validatePhone(value any) SchemaError {
 	str, ok := value.(string)
 	if !ok {
 		return NewValidationError("invalid_type", "value must be a string")
@@ -465,7 +465,7 @@ func (v *Validator) validatePhone(value interface{}) SchemaError {
 	return nil
 }
 
-func (v *Validator) validateDate(value interface{}) SchemaError {
+func (v *Validator) validateDate(value any) SchemaError {
 	str, ok := value.(string)
 	if !ok {
 		return NewValidationError("invalid_type", "value must be a string")
@@ -490,7 +490,7 @@ func (v *Validator) validateDate(value interface{}) SchemaError {
 	return NewValidationError("invalid_date", "invalid date format")
 }
 
-func (v *Validator) validateJSON(value interface{}) SchemaError {
+func (v *Validator) validateJSON(value any) SchemaError {
 	str, ok := value.(string)
 	if !ok {
 		return NewValidationError("invalid_type", "value must be a string")
@@ -503,7 +503,7 @@ func (v *Validator) validateJSON(value interface{}) SchemaError {
 	return nil
 }
 
-func (v *Validator) validateLength(value interface{}, minLength, maxLength *int) SchemaError {
+func (v *Validator) validateLength(value any, minLength, maxLength *int) SchemaError {
 	str := fmt.Sprintf("%v", value)
 	length := utf8.RuneCountInString(str)
 
@@ -518,7 +518,7 @@ func (v *Validator) validateLength(value interface{}, minLength, maxLength *int)
 	return nil
 }
 
-func (v *Validator) validateRange(value interface{}, min, max *float64) SchemaError {
+func (v *Validator) validateRange(value any, min, max *float64) SchemaError {
 	var numValue float64
 	var err error
 
@@ -553,7 +553,7 @@ func (v *Validator) validateRange(value interface{}, min, max *float64) SchemaEr
 	return nil
 }
 
-func (v *Validator) validatePattern(value interface{}, pattern string) SchemaError {
+func (v *Validator) validatePattern(value any, pattern string) SchemaError {
 	str := fmt.Sprintf("%v", value)
 
 	matched, err := regexp.MatchString(pattern, str)
@@ -569,7 +569,7 @@ func (v *Validator) validatePattern(value interface{}, pattern string) SchemaErr
 }
 
 // Helper validation methods
-func (v *Validator) isEmpty(value interface{}) bool {
+func (v *Validator) isEmpty(value any) bool {
 	if value == nil {
 		return true
 	}

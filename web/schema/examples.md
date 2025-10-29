@@ -1450,7 +1450,7 @@ func main() {
         formSchema := CreateCustomerEditForm(customerID)
         
         // Pre-populate with existing data
-        data := map[string]interface{}{
+        data := map[string]any{
             "company_name": customer.CompanyName,
             "contact_name": customer.ContactName,
             "email":        customer.Email,
@@ -1467,7 +1467,7 @@ func main() {
     
     // API endpoints for form submissions
     app.Post("/api/customers", func(c *fiber.Ctx) error {
-        var formData map[string]interface{}
+        var formData map[string]any
         if err := c.BodyParser(&formData); err != nil {
             return c.Status(400).JSON(fiber.Map{"error": "Invalid form data"})
         }

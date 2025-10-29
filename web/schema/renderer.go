@@ -10,7 +10,7 @@ import (
 
 // FieldRenderer interface for rendering different field types
 type FieldRenderer interface {
-	Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error)
+	Render(ctx context.Context, field *Field, value any, errors []string) (string, error)
 	SupportsFieldType(fieldType FieldType) bool
 	GetRequiredAssets() []string
 }
@@ -39,7 +39,7 @@ func (r *RendererRegistry) RegisterRenderer(fieldType FieldType, renderer FieldR
 }
 
 // RenderField renders a field using the appropriate renderer
-func (r *RendererRegistry) RenderField(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (r *RendererRegistry) RenderField(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	renderer, exists := r.renderers[field.Type]
 	if !exists {
 		return "", NewRenderError("renderer_not_found", fmt.Sprintf("no renderer found for field type: %s", field.Type))
@@ -105,7 +105,7 @@ func (br *BaseRenderer) RenderContainer(field *Field, inputHTML string, errors [
 		if field.Required {
 			labelClass += " field-label--required"
 		}
-		
+
 		ariaLabel := field.Label
 		if field.Required {
 			ariaLabel += " (required)"
@@ -201,7 +201,7 @@ func (br *BaseRenderer) resolveFieldStyle(field *Field) string {
 }
 
 // buildInputAttributes builds common input attributes
-func (br *BaseRenderer) buildInputAttributes(field *Field, value interface{}) map[string]string {
+func (br *BaseRenderer) buildInputAttributes(field *Field, value any) map[string]string {
 	attrs := map[string]string{
 		"id":   field.Name,
 		"name": field.Name,
@@ -317,13 +317,13 @@ func (br *BaseRenderer) buildInputAttributes(field *Field, value interface{}) ma
 		if field.Alpine.XRef != "" {
 			attrs["x-ref"] = field.Alpine.XRef
 		}
-		
+
 		// Add x-bind attributes
 		for key, value := range field.Alpine.XBind {
 			attrs[fmt.Sprintf("x-bind:%s", key)] = value
 		}
-		
-		// Add x-on attributes  
+
+		// Add x-on attributes
 		for event, handler := range field.Alpine.XOn {
 			attrs[fmt.Sprintf("x-on:%s", event)] = handler
 		}
@@ -416,56 +416,56 @@ func (tr *DefaultTokenResolver) AddToken(token, value string) {
 func getDefaultTokens() map[string]string {
 	return map[string]string{
 		// Input tokens
-		"input.background":        "var(--color-white)",
-		"input.text":             "var(--color-gray-900)",
-		"input.border":           "var(--color-gray-300)",
-		"input.border.focus":     "var(--color-blue-500)",
-		"input.placeholder":      "var(--color-gray-500)",
+		"input.background":          "var(--color-white)",
+		"input.text":                "var(--color-gray-900)",
+		"input.border":              "var(--color-gray-300)",
+		"input.border.focus":        "var(--color-blue-500)",
+		"input.placeholder":         "var(--color-gray-500)",
 		"input.disabled.background": "var(--color-gray-100)",
-		"input.disabled.text":    "var(--color-gray-400)",
-		"input.error.border":     "var(--color-red-500)",
-		"input.error.background": "var(--color-red-50)",
+		"input.disabled.text":       "var(--color-gray-400)",
+		"input.error.border":        "var(--color-red-500)",
+		"input.error.background":    "var(--color-red-50)",
 
 		// Button tokens
-		"button.primary.background":   "var(--color-blue-600)",
-		"button.primary.text":        "var(--color-white)",
-		"button.primary.border":      "var(--color-blue-600)",
+		"button.primary.background":       "var(--color-blue-600)",
+		"button.primary.text":             "var(--color-white)",
+		"button.primary.border":           "var(--color-blue-600)",
 		"button.primary.hover.background": "var(--color-blue-700)",
-		"button.secondary.background": "var(--color-white)",
-		"button.secondary.text":      "var(--color-gray-700)",
-		"button.secondary.border":    "var(--color-gray-300)",
-		"button.outline.background":  "transparent",
-		"button.outline.text":        "var(--color-blue-600)",
-		"button.outline.border":      "var(--color-blue-600)",
+		"button.secondary.background":     "var(--color-white)",
+		"button.secondary.text":           "var(--color-gray-700)",
+		"button.secondary.border":         "var(--color-gray-300)",
+		"button.outline.background":       "transparent",
+		"button.outline.text":             "var(--color-blue-600)",
+		"button.outline.border":           "var(--color-blue-600)",
 
 		// Select tokens
-		"select.background":       "var(--color-white)",
-		"select.text":            "var(--color-gray-900)",
-		"select.border":          "var(--color-gray-300)",
-		"select.arrow":           "var(--color-gray-500)",
-		"select.option.background": "var(--color-white)",
-		"select.option.text":     "var(--color-gray-900)",
+		"select.background":              "var(--color-white)",
+		"select.text":                    "var(--color-gray-900)",
+		"select.border":                  "var(--color-gray-300)",
+		"select.arrow":                   "var(--color-gray-500)",
+		"select.option.background":       "var(--color-white)",
+		"select.option.text":             "var(--color-gray-900)",
 		"select.option.hover.background": "var(--color-blue-50)",
 
 		// Spacing tokens
-		"spacing.xs":    "0.25rem",
-		"spacing.sm":    "0.5rem",
-		"spacing.md":    "0.75rem",
-		"spacing.lg":    "1rem",
-		"spacing.xl":    "1.25rem",
-		"spacing.2xl":   "1.5rem",
-		"spacing.3xl":   "2rem",
+		"spacing.xs":  "0.25rem",
+		"spacing.sm":  "0.5rem",
+		"spacing.md":  "0.75rem",
+		"spacing.lg":  "1rem",
+		"spacing.xl":  "1.25rem",
+		"spacing.2xl": "1.5rem",
+		"spacing.3xl": "2rem",
 
 		// Typography tokens
-		"font.size.xs":   "0.75rem",
-		"font.size.sm":   "0.875rem",
-		"font.size.md":   "1rem",
-		"font.size.lg":   "1.125rem",
-		"font.size.xl":   "1.25rem",
-		"font.weight.normal": "400",
-		"font.weight.medium": "500",
+		"font.size.xs":         "0.75rem",
+		"font.size.sm":         "0.875rem",
+		"font.size.md":         "1rem",
+		"font.size.lg":         "1.125rem",
+		"font.size.xl":         "1.25rem",
+		"font.weight.normal":   "400",
+		"font.weight.medium":   "500",
 		"font.weight.semibold": "600",
-		"font.weight.bold":   "700",
+		"font.weight.bold":     "700",
 
 		// Border radius tokens
 		"border.radius.sm": "0.125rem",
@@ -537,3 +537,4 @@ func (r *RendererRegistry) registerDefaultRenderers() {
 	r.RegisterRenderer(FieldDivider, NewDividerRenderer(baseRenderer))
 	r.RegisterRenderer(FieldHTML, NewHTMLRenderer(baseRenderer))
 }
+

@@ -141,7 +141,7 @@ type Mask struct {
 	Pattern     string                 `json:"pattern" validate:"required"`
 	Placeholder string                 `json:"placeholder,omitempty"`
 	Type        string                 `json:"type,omitempty" validate:"oneof=phone currency date custom"`
-	Options     map[string]interface{} `json:"options,omitempty"`
+	Options     map[string]any `json:"options,omitempty"`
 }
 
 // FieldEvents defines field-level event handlers
@@ -261,7 +261,7 @@ type ActionConfig struct {
 	Download  bool              `json:"download,omitempty"`
 	NewWindow bool              `json:"newWindow,omitempty"`
 	Headers   map[string]string `json:"headers,omitempty"`
-	Payload   interface{}       `json:"payload,omitempty"`
+	Payload   any       `json:"payload,omitempty"`
 	Transform string            `json:"transform,omitempty" validate:"js_function"`
 	OnSuccess string            `json:"onSuccess,omitempty" validate:"js_function"`
 	OnError   string            `json:"onError,omitempty" validate:"js_function"`
@@ -445,22 +445,7 @@ type ChangelogEntry struct {
 	Description string    `json:"description,omitempty" validate:"max=500"`
 }
 
-// Helper functions for pointer types
-func IntPtr(i int) *int {
-	return &i
-}
-
-func Float64Ptr(f float64) *float64 {
-	return &f
-}
-
-func StringPtr(s string) *string {
-	return &s
-}
-
-func BoolPtr(b bool) *bool {
-	return &b
-}
+// Helper functions for pointer types are in template_helpers.go to avoid redeclaration
 
 // Validation helper methods
 func (f *Field) HasValidation() bool {

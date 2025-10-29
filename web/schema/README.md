@@ -197,9 +197,9 @@ type SchemaError interface {
     Code() string
     Type() ErrorType  
     Field() string
-    Details() map[string]interface{}
+    Details() map[string]any
     WithField(field string) SchemaError
-    WithDetail(key string, value interface{}) SchemaError
+    WithDetail(key string, value any) SchemaError
 }
 ```
 

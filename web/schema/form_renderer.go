@@ -150,7 +150,7 @@ func (fr *DefaultFormRenderer) renderCSRFToken(csrf *CSRF) string {
 }
 
 // renderFormContent renders the main form content based on layout
-func (fr *DefaultFormRenderer) renderFormContent(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
+func (fr *DefaultFormRenderer) renderFormContent(ctx context.Context, schema *Schema, data map[string]any, errors map[string][]string) (string, error) {
 	if schema.Layout == nil {
 		// Simple field-by-field rendering
 		return fr.renderFieldList(ctx, schema.Fields, data, errors)
@@ -170,7 +170,7 @@ func (fr *DefaultFormRenderer) renderFormContent(ctx context.Context, schema *Sc
 }
 
 // renderFieldList renders a simple list of fields
-func (fr *DefaultFormRenderer) renderFieldList(ctx context.Context, fields []Field, data map[string]interface{}, errors map[string][]string) (string, error) {
+func (fr *DefaultFormRenderer) renderFieldList(ctx context.Context, fields []Field, data map[string]any, errors map[string][]string) (string, error) {
 	var fieldHTMLs []string
 
 	for _, field := range fields {
@@ -189,7 +189,7 @@ func (fr *DefaultFormRenderer) renderFieldList(ctx context.Context, fields []Fie
 }
 
 // renderSections renders form sections
-func (fr *DefaultFormRenderer) renderSections(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
+func (fr *DefaultFormRenderer) renderSections(ctx context.Context, schema *Schema, data map[string]any, errors map[string][]string) (string, error) {
 	var sectionHTMLs []string
 
 	// Create field lookup map
@@ -218,7 +218,7 @@ func (fr *DefaultFormRenderer) renderSections(ctx context.Context, schema *Schem
 }
 
 // renderSection renders a single section
-func (fr *DefaultFormRenderer) renderSection(ctx context.Context, section Section, fields []Field, data map[string]interface{}, errors map[string][]string) (string, error) {
+func (fr *DefaultFormRenderer) renderSection(ctx context.Context, section Section, fields []Field, data map[string]any, errors map[string][]string) (string, error) {
 	var parts []string
 
 	// Section classes
@@ -278,7 +278,7 @@ func (fr *DefaultFormRenderer) renderSection(ctx context.Context, section Sectio
 }
 
 // renderTabs renders tabbed layout
-func (fr *DefaultFormRenderer) renderTabs(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
+func (fr *DefaultFormRenderer) renderTabs(ctx context.Context, schema *Schema, data map[string]any, errors map[string][]string) (string, error) {
 	var parts []string
 
 	// Tab navigation
@@ -347,7 +347,7 @@ func (fr *DefaultFormRenderer) renderTabs(ctx context.Context, schema *Schema, d
 }
 
 // renderSteps renders multi-step layout
-func (fr *DefaultFormRenderer) renderSteps(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
+func (fr *DefaultFormRenderer) renderSteps(ctx context.Context, schema *Schema, data map[string]any, errors map[string][]string) (string, error) {
 	var parts []string
 
 	// Step progress indicator
@@ -542,7 +542,7 @@ func (fr *DefaultFormRenderer) attributesToString(attrs map[string]string) strin
 }
 
 // RenderFormWithErrors renders a complete form with error handling (extended interface)
-func (fr *DefaultFormRenderer) RenderFormWithErrors(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
+func (fr *DefaultFormRenderer) RenderFormWithErrors(ctx context.Context, schema *Schema, data map[string]any, errors map[string][]string) (string, error) {
 	if schema.Type != TypeForm {
 		return "", NewRenderError("invalid_schema_type", "schema must be of type 'form'")
 	}
@@ -589,12 +589,12 @@ func (fr *DefaultFormRenderer) RenderFormWithErrors(ctx context.Context, schema 
 // Interface implementation methods for FormRenderer
 
 // RenderForm implements FormRenderer interface (without errors parameter)
-func (fr *DefaultFormRenderer) RenderForm(ctx context.Context, schema *Schema, data map[string]interface{}) (string, error) {
+func (fr *DefaultFormRenderer) RenderForm(ctx context.Context, schema *Schema, data map[string]any) (string, error) {
 	return fr.RenderFormWithErrors(ctx, schema, data, nil)
 }
 
 // RenderField implements FormRenderer interface
-func (fr *DefaultFormRenderer) RenderField(ctx context.Context, field *Field, value interface{}) (string, error) {
+func (fr *DefaultFormRenderer) RenderField(ctx context.Context, field *Field, value any) (string, error) {
 	return fr.registry.RenderField(ctx, field, value, nil)
 }
 

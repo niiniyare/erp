@@ -16,7 +16,7 @@ func NewNumberRenderer(base *BaseRenderer) *NumberRenderer {
 	return &NumberRenderer{BaseRenderer: base}
 }
 
-func (nr *NumberRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (nr *NumberRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := nr.buildInputAttributes(field, value)
 	attrs["type"] = "number"
 
@@ -48,7 +48,7 @@ func NewCurrencyRenderer(base *BaseRenderer) *CurrencyRenderer {
 	return &CurrencyRenderer{BaseRenderer: base}
 }
 
-func (cr *CurrencyRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (cr *CurrencyRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := cr.buildInputAttributes(field, value)
 	attrs["type"] = "text"
 	attrs["inputmode"] = "decimal"
@@ -97,7 +97,7 @@ func NewSliderRenderer(base *BaseRenderer) *SliderRenderer {
 	return &SliderRenderer{BaseRenderer: base}
 }
 
-func (sr *SliderRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (sr *SliderRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := sr.buildInputAttributes(field, value)
 	attrs["type"] = "range"
 
@@ -159,7 +159,7 @@ func NewRatingRenderer(base *BaseRenderer) *RatingRenderer {
 	return &RatingRenderer{BaseRenderer: base}
 }
 
-func (rr *RatingRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (rr *RatingRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	// Get configuration
 	maxRating := 5
 	allowHalf := false

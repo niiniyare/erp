@@ -14,7 +14,7 @@ func NewTextRenderer(base *BaseRenderer) *TextRenderer {
 	return &TextRenderer{BaseRenderer: base}
 }
 
-func (tr *TextRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (tr *TextRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := tr.buildInputAttributes(field, value)
 	attrs["type"] = "text"
 
@@ -47,7 +47,7 @@ func NewEmailRenderer(base *BaseRenderer) *EmailRenderer {
 	return &EmailRenderer{BaseRenderer: base}
 }
 
-func (er *EmailRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (er *EmailRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := er.buildInputAttributes(field, value)
 	attrs["type"] = "email"
 	attrs["autocomplete"] = "email"
@@ -73,7 +73,7 @@ func NewPasswordRenderer(base *BaseRenderer) *PasswordRenderer {
 	return &PasswordRenderer{BaseRenderer: base}
 }
 
-func (pr *PasswordRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (pr *PasswordRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := pr.buildInputAttributes(field, value)
 	attrs["type"] = "password"
 	attrs["autocomplete"] = "current-password"
@@ -116,7 +116,7 @@ func NewURLRenderer(base *BaseRenderer) *URLRenderer {
 	return &URLRenderer{BaseRenderer: base}
 }
 
-func (ur *URLRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (ur *URLRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := ur.buildInputAttributes(field, value)
 	attrs["type"] = "url"
 	attrs["autocomplete"] = "url"
@@ -142,7 +142,7 @@ func NewPhoneRenderer(base *BaseRenderer) *PhoneRenderer {
 	return &PhoneRenderer{BaseRenderer: base}
 }
 
-func (pr *PhoneRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (pr *PhoneRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := pr.buildInputAttributes(field, value)
 	attrs["type"] = "tel"
 	attrs["autocomplete"] = "tel"
@@ -174,7 +174,7 @@ func NewHiddenRenderer(base *BaseRenderer) *HiddenRenderer {
 	return &HiddenRenderer{BaseRenderer: base}
 }
 
-func (hr *HiddenRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (hr *HiddenRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := map[string]string{
 		"type": "hidden",
 		"id":   field.Name,
@@ -208,7 +208,7 @@ func NewTextareaRenderer(base *BaseRenderer) *TextareaRenderer {
 	return &TextareaRenderer{BaseRenderer: base}
 }
 
-func (tr *TextareaRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
+func (tr *TextareaRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := tr.buildInputAttributes(field, value)
 	delete(attrs, "value") // Value goes inside textarea tag
 
