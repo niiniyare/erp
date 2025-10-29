@@ -73,10 +73,10 @@ func (h *HandlerHelper) RespondWithComponent(c *fiber.Ctx, statusCode int, data 
 	acceptHeader := c.Get("Accept")
 	contentType := c.Get("Content-Type")
 	isHTMX := c.Get("HX-Request") == "true"
-	
+
 	// Record response metrics
 	h.metrics.IncrementCounter("handler_responses_total", metrics.Fields{
-		"status_code": fmt.Sprintf("%d", statusCode),
+		"status_code":  fmt.Sprintf("%d", statusCode),
 		"content_type": h.getResponseContentType(acceptHeader, contentType, isHTMX),
 	})
 
@@ -131,7 +131,7 @@ func (h *HandlerHelper) getResponseContentType(accept, contentType string, isHTM
 func (h *HandlerHelper) RenderTemplComponent(c *fiber.Ctx, statusCode int, component templ.Component) error {
 	c.Set("Content-Type", "text/html; charset=utf-8")
 	c.Status(statusCode)
-	
+
 	// Render the templ component to the response writer
 	return component.Render(c.Context(), c.Response().BodyWriter())
 }

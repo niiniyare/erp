@@ -137,16 +137,16 @@ func NewMetricsProvider(cfg *config.Config, log logger.Logger) (metrics.MetricsP
 // NewTracingService creates a new tracing service
 func NewTracingService(cfg *config.Config, log logger.Logger) (tracing.Service, error) {
 	return tracing.NewService(tracing.Config{
-		ServiceName:         cfg.App.Name,
-		ServiceVersion:      cfg.App.Version,
-		Environment:         cfg.App.Environment,
-		ExporterType:        tracing.StdoutExporter, // Configure based on your tracing backend
-		Protocol:            tracing.ProtocolStdout, // Set the protocol for stdout exporter
-		SamplingRatio:       1.0,                    // Adjust based on environment
-		BatchTimeout:        time.Second * 5,       // Set batch timeout
-		MaxExportBatchSize:  100,                   // Set batch size
-		MaxQueueSize:        1000,                  // Set queue size
-		Enabled:             true,
+		ServiceName:        cfg.App.Name,
+		ServiceVersion:     cfg.App.Version,
+		Environment:        cfg.App.Environment,
+		ExporterType:       tracing.StdoutExporter, // Configure based on your tracing backend
+		Protocol:           tracing.ProtocolStdout, // Set the protocol for stdout exporter
+		SamplingRatio:      1.0,                    // Adjust based on environment
+		BatchTimeout:       time.Second * 5,        // Set batch timeout
+		MaxExportBatchSize: 100,                    // Set batch size
+		MaxQueueSize:       1000,                   // Set queue size
+		Enabled:            true,
 	})
 }
 
@@ -162,4 +162,3 @@ func NewTemporalClient(cfg *config.Config, log logger.Logger) (temporalclient.Cl
 	}
 	return clientManager.GetClient(), nil
 }
-

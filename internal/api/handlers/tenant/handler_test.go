@@ -226,7 +226,7 @@ func (suite *TenantHandlerTestSuite) TestTenantHandler_Create() {
 		suite.Run(tt.name, func() {
 			// Setup mock expectations for this test
 			tt.setupMocks()
-			
+
 			req := httptest.NewRequest("POST", "/api/v1/tenants", strings.NewReader(tt.payload))
 			req.Header.Set("Content-Type", "application/json")
 
@@ -348,7 +348,7 @@ func (suite *TenantHandlerTestSuite) TestTenantHandler_Get() {
 		suite.Run(tt.name, func() {
 			// Setup mock expectations for this test
 			tt.setupMocks()
-			
+
 			url := fmt.Sprintf("/api/v1/tenants/%s", tt.tenantID)
 			if tt.view != "" {
 				url += "?view=" + tt.view
@@ -457,7 +457,7 @@ func (suite *TenantHandlerTestSuite) TestTenantHandler_List() {
 		suite.Run(tt.name, func() {
 			// Setup mock expectations for this test
 			tt.setupMocks()
-			
+
 			url := "/api/v1/tenants" + tt.queryParams
 
 			req := httptest.NewRequest("GET", url, nil)
@@ -594,7 +594,7 @@ func (suite *TenantHandlerTestSuite) TestTenantHandler_Update() {
 		suite.Run(tt.name, func() {
 			// Setup mock expectations for this test
 			tt.setupMocks()
-			
+
 			url := fmt.Sprintf("/api/v1/tenants/%s", tt.tenantID)
 			req := httptest.NewRequest("PUT", url, strings.NewReader(tt.payload))
 			req.Header.Set("Content-Type", "application/json")
@@ -690,7 +690,7 @@ func (suite *TenantHandlerTestSuite) TestTenantHandler_Delete() {
 		suite.Run(tt.name, func() {
 			// Setup mock expectations for this test
 			tt.setupMocks()
-			
+
 			url := fmt.Sprintf("/api/v1/tenants/%s", tt.tenantID)
 			req := httptest.NewRequest("DELETE", url, nil)
 

@@ -8,8 +8,8 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 
-	financeService "github.com/niiniyare/erp/internal/core/finance/service"
 	financeDomain "github.com/niiniyare/erp/internal/core/finance/domain"
+	financeService "github.com/niiniyare/erp/internal/core/finance/service"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -33,10 +33,10 @@ func NewFinanceHandler(
 	tracer tracing.Service,
 ) *FinanceHandler {
 	validator := validator.New()
-	
+
 	// Register custom validators
 	registerCustomValidators(validator)
-	
+
 	return &FinanceHandler{
 		services:  services,
 		logger:    logger,
@@ -152,12 +152,12 @@ func (h *FinanceHandler) ListAccounts(c *fiber.Ctx) error {
 
 	// Step 2: Extract pagination and filter parameters
 	offset, limit := h.ExtractPaginationParams(c)
-	
+
 	// Extract optional filters
 	filters := financeDomain.AccountFilter{
 		IsActive: h.extractBoolQuery(c, "active"),
 	}
-	
+
 	if rootType := c.Query("root_type"); rootType != "" {
 		rt, err := financeDomain.ParseRootType(rootType)
 		if err == nil {
@@ -318,7 +318,7 @@ func (h *FinanceHandler) ListTransactions(c *fiber.Ctx) error {
 	c.SetUserContext(ctx)
 
 	offset, limit := h.ExtractPaginationParams(c)
-	
+
 	// Extract optional filters
 	filters := financeDomain.TransactionFilter{}
 	if accountID := c.Query("account_id"); accountID != "" {
@@ -374,7 +374,7 @@ func (h *FinanceHandler) GetTrialBalance(c *fiber.Ctx) error {
 	}
 
 	meta := map[string]interface{}{
-		"as_of_date": asOfDate.Format("2006-01-02"),
+		"as_of_date":   asOfDate.Format("2006-01-02"),
 		"generated_at": time.Now(),
 	}
 
@@ -428,11 +428,11 @@ func (h *FinanceHandler) GetAccountBalance(c *fiber.Ctx) error {
 func (h *FinanceHandler) HandleError(c *fiber.Ctx, err error) error {
 	requestID := h.getRequestID(c)
 	tenantID := h.getTenantID(c)
-	
+
 	// Convert to HTTP error using existing system
 	httpErr := errors.ToHTTPError(err)
 	httpErr.RequestID = requestID
-	
+
 	// Log the error with context
 	h.logger.Error("Finance API error", logger.Fields{
 		"error":      err.Error(),
@@ -444,10 +444,10 @@ func (h *FinanceHandler) HandleError(c *fiber.Ctx, err error) error {
 		"status":     httpErr.Status,
 		"code":       httpErr.Code,
 	})
-	
+
 	// Record metrics
 	h.recordErrorMetrics(c, httpErr)
-	
+
 	return c.Status(httpErr.Status).JSON(httpErr)
 }
 
@@ -459,11 +459,11 @@ func (h *FinanceHandler) ValidateRequest(c *fiber.Ctx, req interface{}) error {
 			WithCategory(errors.CategoryValidation).
 			WithSuggestion("Ensure request body contains valid JSON")
 	}
-	
+
 	if err := h.validator.Struct(req); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -475,7 +475,7 @@ func (h *FinanceHandler) Success(c *fiber.Ctx, data interface{}) error {
 		"request_id": h.getRequestID(c),
 		"timestamp":  time.Now(),
 	}
-	
+
 	h.recordSuccessMetrics(c)
 	return c.JSON(response)
 }
@@ -489,7 +489,7 @@ func (h *FinanceHandler) SuccessWithMeta(c *fiber.Ctx, data interface{}, meta ma
 		"request_id": h.getRequestID(c),
 		"timestamp":  time.Now(),
 	}
-	
+
 	h.recordSuccessMetrics(c)
 	return c.JSON(response)
 }
@@ -502,7 +502,7 @@ func (h *FinanceHandler) Created(c *fiber.Ctx, data interface{}) error {
 		"request_id": h.getRequestID(c),
 		"timestamp":  time.Now(),
 	}
-	
+
 	h.recordSuccessMetrics(c)
 	return c.Status(fiber.StatusCreated).JSON(response)
 }
@@ -511,7 +511,7 @@ func (h *FinanceHandler) Created(c *fiber.Ctx, data interface{}) error {
 func (h *FinanceHandler) ExtractPaginationParams(c *fiber.Ctx) (offset, limit int) {
 	offset = c.QueryInt("offset", 0)
 	limit = c.QueryInt("limit", 20)
-	
+
 	if limit > 100 {
 		limit = 100
 	}
@@ -521,7 +521,7 @@ func (h *FinanceHandler) ExtractPaginationParams(c *fiber.Ctx) (offset, limit in
 	if offset < 0 {
 		offset = 0
 	}
-	
+
 	return offset, limit
 }
 

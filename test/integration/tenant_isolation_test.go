@@ -35,7 +35,7 @@ func TestTenantIsolation(t *testing.T) {
 	store := db.NewStore(pool)
 	tracer := tracing.NewNoOpService()
 	cacheService := cache.NewMockService(nil)
-	
+
 	repo := tenant.NewRepository(store, tracer)
 	service := tenant.NewService(repo, cacheService, tracer)
 
@@ -179,7 +179,7 @@ func TestTenantIsolation(t *testing.T) {
 	t.Run("tenant_context_validation", func(t *testing.T) {
 		// Test invalid tenant context
 		invalidTenantID := uuid.New()
-		
+
 		err := service.SetTenant(ctx, invalidTenantID)
 		assert.Error(t, err, "Should fail to set context for non-existent tenant")
 

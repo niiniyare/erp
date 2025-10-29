@@ -53,7 +53,7 @@ func (suite *RouterTestSuite) SetupTest() {
 
 	// Create tenant service for testing
 	tenantService := tenant.NewService(suite.mockRepo, suite.mockCache, suite.mockTracer)
-	
+
 	// Create dependencies
 	suite.deps = &Dependencies{
 		Logger:        suite.mockLogger,

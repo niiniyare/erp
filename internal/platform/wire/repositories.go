@@ -4,7 +4,7 @@ package wire
 import (
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/shared/tracing"
-	
+
 	// Core domain repositories
 	"github.com/niiniyare/erp/internal/core/tenant"
 )

@@ -16,17 +16,17 @@ import (
 var PlatformProviderSet = wire.NewSet(
 	// Configuration
 	config.Load,
-	
+
 	// Database and cache
 	NewDatabaseConnection,
 	NewDBStore,
 	NewCacheService,
-	
+
 	// Observability
 	NewLogger,
 	NewMetricsProvider,
 	NewTracingService,
-	
+
 	// Temporal client
 	NewTemporalClient,
 )
@@ -49,11 +49,11 @@ var RepositoryProviderSet = wire.NewSet(
 var CoreServiceProviderSet = wire.NewSet(
 	// Tenant service (no business service dependencies)
 	NewTenantService,
-	
+
 	// Simplified IAM services for startup
 	NewSimpleAuthenticationService,
 	NewSimpleIAMService,
-	
+
 	// Finance services
 	NewFinanceServices,
 )
@@ -66,11 +66,11 @@ var CoreServiceProviderSet = wire.NewSet(
 var APIProviderSet = wire.NewSet(
 	// Fiber app
 	NewFiberApp,
-	
+
 	// Middleware components
 	NewTenantMiddlewareConfig,
 	NewTenantMiddleware,
-	
+
 	// Handler dependencies
 	NewHandlerDependencies,
 	NewRouter,

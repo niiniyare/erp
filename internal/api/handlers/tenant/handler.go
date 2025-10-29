@@ -35,10 +35,10 @@ func NewTenantHandler(
 	tracer tracing.Service,
 ) *TenantHandler {
 	validator := validator.New()
-	
+
 	// Register custom validators
 	registerCustomValidators(validator)
-	
+
 	return &TenantHandler{
 		service:    tenantService,
 		logger:     logger,
@@ -211,11 +211,11 @@ func (h *TenantHandler) List(c *fiber.Ctx) error {
 func (h *TenantHandler) HandleError(c *fiber.Ctx, err error) error {
 	requestID := h.getRequestID(c)
 	tenantID := h.getTenantID(c)
-	
+
 	// Convert to HTTP error using existing system
 	httpErr := errors.ToHTTPError(err)
 	httpErr.RequestID = requestID
-	
+
 	// Log the error with context
 	h.logger.Error("Request error", logger.Fields{
 		"error":      err.Error(),
@@ -227,10 +227,10 @@ func (h *TenantHandler) HandleError(c *fiber.Ctx, err error) error {
 		"status":     httpErr.Status,
 		"code":       httpErr.Code,
 	})
-	
+
 	// Record metrics
 	h.recordErrorMetrics(c, httpErr)
-	
+
 	return c.Status(httpErr.Status).JSON(httpErr)
 }
 
@@ -242,11 +242,11 @@ func (h *TenantHandler) ValidateRequest(c *fiber.Ctx, req interface{}) error {
 			WithCategory(errors.CategoryValidation).
 			WithSuggestion("Ensure request body contains valid JSON")
 	}
-	
+
 	if err := h.validator.Struct(req); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -258,7 +258,7 @@ func (h *TenantHandler) Success(c *fiber.Ctx, data interface{}) error {
 		"request_id": h.getRequestID(c),
 		"timestamp":  time.Now(),
 	}
-	
+
 	h.recordSuccessMetrics(c)
 	return c.JSON(response)
 }
@@ -272,7 +272,7 @@ func (h *TenantHandler) SuccessWithMeta(c *fiber.Ctx, data interface{}, meta map
 		"request_id": h.getRequestID(c),
 		"timestamp":  time.Now(),
 	}
-	
+
 	h.recordSuccessMetrics(c)
 	return c.JSON(response)
 }
@@ -285,7 +285,7 @@ func (h *TenantHandler) Created(c *fiber.Ctx, data interface{}) error {
 		"request_id": h.getRequestID(c),
 		"timestamp":  time.Now(),
 	}
-	
+
 	h.recordSuccessMetrics(c)
 	return c.Status(fiber.StatusCreated).JSON(response)
 }
@@ -294,10 +294,10 @@ func (h *TenantHandler) Created(c *fiber.Ctx, data interface{}) error {
 func (h *TenantHandler) StartTracing(c *fiber.Ctx, operationName string) (tracing.Span, func()) {
 	ctx := c.Context()
 	newCtx, span := h.tracer.StartSpan(ctx, operationName)
-	
+
 	// Update the context in fiber
 	c.SetUserContext(newCtx)
-	
+
 	span.SetAttributes(
 		attribute.String("http.method", c.Method()),
 		attribute.String("http.path", c.Path()),
@@ -305,11 +305,11 @@ func (h *TenantHandler) StartTracing(c *fiber.Ctx, operationName string) (tracin
 		attribute.String("tenant.id", h.getTenantID(c)),
 		attribute.String("request.id", h.getRequestID(c)),
 	)
-	
+
 	cleanup := func() {
 		span.End()
 	}
-	
+
 	return span, cleanup
 }
 
@@ -317,7 +317,7 @@ func (h *TenantHandler) StartTracing(c *fiber.Ctx, operationName string) (tracin
 func (h *TenantHandler) ExtractPaginationParams(c *fiber.Ctx) (offset, limit int) {
 	offset = c.QueryInt("offset", 0)
 	limit = c.QueryInt("limit", 20)
-	
+
 	if limit > 100 {
 		limit = 100
 	}
@@ -327,7 +327,7 @@ func (h *TenantHandler) ExtractPaginationParams(c *fiber.Ctx) (offset, limit int
 	if offset < 0 {
 		offset = 0
 	}
-	
+
 	return offset, limit
 }
 
@@ -373,7 +373,6 @@ func registerCustomValidators(v *validator.Validate) {
 		return len(value) == 36 && value[8] == '-' && value[13] == '-' && value[18] == '-' && value[23] == '-'
 	})
 }
-
 
 // Update handles tenant updates (PUT /api/v1/tenants/:id)
 func (h *TenantHandler) Update(c *fiber.Ctx) error {
@@ -576,8 +575,8 @@ func setupTenantRoutes(app *fiber.App, handler *TenantHandler) {
 	tenants.Get("/:id", handler.Get)
 	tenants.Put("/:id", handler.Update)
 	tenants.Delete("/:id", handler.Delete)
-	
+
 	// UI form routes
-	tenants.Get("/new", handler.NewForm)      // GET /api/v1/tenants/new - New tenant form
+	tenants.Get("/new", handler.NewForm)       // GET /api/v1/tenants/new - New tenant form
 	tenants.Get("/:id/edit", handler.EditForm) // GET /api/v1/tenants/:id/edit - Edit tenant form
 }

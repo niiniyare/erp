@@ -3,23 +3,24 @@ package wire
 
 import (
 	"context"
+
 	"github.com/google/uuid"
-	
+
 	"github.com/niiniyare/erp/internal/platform/cache"
+	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	
+
 	// Core services
-	"github.com/niiniyare/erp/internal/core/tenant"
+	financeService "github.com/niiniyare/erp/internal/core/finance/service"
 	"github.com/niiniyare/erp/internal/core/iam"
 	"github.com/niiniyare/erp/internal/core/iam/authn"
 	"github.com/niiniyare/erp/internal/core/iam/authz"
-	"github.com/niiniyare/erp/internal/core/iam/policy"
 	"github.com/niiniyare/erp/internal/core/iam/model"
-	financeService "github.com/niiniyare/erp/internal/core/finance/service"
-	
+	"github.com/niiniyare/erp/internal/core/iam/policy"
+	"github.com/niiniyare/erp/internal/core/tenant"
+
 	db "github.com/niiniyare/erp/db/sqlc"
 )
 
@@ -218,4 +219,3 @@ func NewFinanceServices(
 	// TODO: Implement proper finance services after getting basic app running
 	return nil
 }
-

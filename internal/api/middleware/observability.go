@@ -193,7 +193,7 @@ func (m *ObservabilityMiddleware) addResponseAttributes(span tracing.Span, c *fi
 func (m *ObservabilityMiddleware) addSafeHeaders(span tracing.Span, c *fiber.Ctx) {
 	c.Request().Header.VisitAll(func(key, value []byte) {
 		headerName := string(key)
-		
+
 		// Skip sensitive headers
 		for _, sensitive := range m.config.SensitiveHeaders {
 			if headerName == sensitive {
@@ -309,12 +309,12 @@ func (m *ObservabilityMiddleware) logRequestStart(ctx context.Context, c *fiber.
 	}
 
 	fields := logger.Fields{
-		"request_id":    requestID,
-		"method":        c.Method(),
-		"path":          c.Path(),
-		"remote_addr":   c.IP(),
-		"user_agent":    c.Get("User-Agent"),
-		"content_type":  c.Get("Content-Type"),
+		"request_id":     requestID,
+		"method":         c.Method(),
+		"path":           c.Path(),
+		"remote_addr":    c.IP(),
+		"user_agent":     c.Get("User-Agent"),
+		"content_type":   c.Get("Content-Type"),
 		"content_length": len(c.Body()),
 	}
 
@@ -387,7 +387,7 @@ func DefaultObservabilityConfig() ObservabilityConfig {
 		},
 		SkipPaths: []string{
 			"/health",
-			"/metrics", 
+			"/metrics",
 			"/favicon.ico",
 			"/ping",
 		},

@@ -104,8 +104,6 @@ func TestRouteSecurityManager_PublicRoutes(t *testing.T) {
 func TestRouteSecurityManager_CSPConfiguration(t *testing.T) {
 	// Setup mocks
 	// Setup
-	
-	
 
 	// Create custom CSP configuration
 	config := DefaultRouteSecurityConfig()
@@ -131,8 +129,6 @@ func TestRouteSecurityManager_CSPConfiguration(t *testing.T) {
 func TestRouteSecurityManager_RateLimitConfiguration(t *testing.T) {
 	// Setup mocks
 	// Setup
-	
-	
 
 	// Create configuration with rate limiting enabled
 	config := DefaultRouteSecurityConfig()
@@ -191,9 +187,9 @@ func TestRouteSecurityManager_SecurityConfigDefaults(t *testing.T) {
 			configFunc: func() interface{} { return DefaultUISecurityConfig() },
 			expectedFields: map[string]interface{}{
 				"RequireSession":        true,
-				"EnableCSRF":           true,
+				"EnableCSRF":            true,
 				"EnableSecurityHeaders": true,
-				"SecureCookies":        true,
+				"SecureCookies":         true,
 			},
 		},
 		{
@@ -280,8 +276,6 @@ func TestRouteSecurityManager_DevelopmentConfiguration(t *testing.T) {
 func TestRouteSecurityManager_SecurityHeaderValidation(t *testing.T) {
 	// Setup mocks
 	// Setup
-	
-	
 
 	// Create security manager
 	config := DefaultRouteSecurityConfig()
@@ -312,18 +306,18 @@ func TestRouteSecurityManager_SecurityHeaderValidation(t *testing.T) {
 	})
 
 	tests := []struct {
-		name           string
-		path           string
+		name            string
+		path            string
 		expectedHeaders map[string]string
 	}{
 		{
 			name: "API Route Headers",
 			path: "/api/test",
 			expectedHeaders: map[string]string{
-				"X-Frame-Options":         "DENY",
-				"X-Content-Type-Options":  "nosniff",
-				"X-Xss-Protection":        "1; mode=block",
-				"Referrer-Policy":         "no-referrer",
+				"X-Frame-Options":        "DENY",
+				"X-Content-Type-Options": "nosniff",
+				"X-Xss-Protection":       "1; mode=block",
+				"Referrer-Policy":        "no-referrer",
 			},
 		},
 		{
@@ -357,7 +351,7 @@ func TestRouteSecurityManager_SecurityHeaderValidation(t *testing.T) {
 			// Verify expected headers
 			for headerName, expectedValue := range tt.expectedHeaders {
 				actualValue := resp.Header.Get(headerName)
-				assert.Equal(t, expectedValue, actualValue, 
+				assert.Equal(t, expectedValue, actualValue,
 					"Header %s should be %s, got %s", headerName, expectedValue, actualValue)
 			}
 		})
@@ -367,8 +361,6 @@ func TestRouteSecurityManager_SecurityHeaderValidation(t *testing.T) {
 func TestRouteSecurityManager_CSRFProtection(t *testing.T) {
 	// Setup mocks
 	// Setup
-	
-	
 
 	// Create security manager with CSRF enabled
 	config := DefaultRouteSecurityConfig()
@@ -388,7 +380,7 @@ func TestRouteSecurityManager_CSRFProtection(t *testing.T) {
 	// Test POST request without CSRF token (should fail)
 	reqWithoutCSRF := httptest.NewRequest("POST", "/ui/form", strings.NewReader("data=test"))
 	reqWithoutCSRF.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	
+
 	respWithoutCSRF, err := app.Test(reqWithoutCSRF)
 	assert.NoError(t, err)
 	assert.Equal(t, fiber.StatusForbidden, respWithoutCSRF.StatusCode)
@@ -398,8 +390,6 @@ func TestRouteSecurityManager_CSRFProtection(t *testing.T) {
 func BenchmarkRouteSecurityMiddleware(b *testing.B) {
 	// Setup mocks
 	// Setup
-	
-	
 
 	// Create security manager
 	config := DefaultRouteSecurityConfig()

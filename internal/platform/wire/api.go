@@ -11,12 +11,12 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 
+	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/api/handlers"
 	"github.com/niiniyare/erp/internal/api/middleware"
-	"github.com/niiniyare/erp/internal/core/tenant"
-	"github.com/niiniyare/erp/internal/core/iam"
 	financeService "github.com/niiniyare/erp/internal/core/finance/service"
-	db "github.com/niiniyare/erp/db/sqlc"
+	"github.com/niiniyare/erp/internal/core/iam"
+	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -143,12 +143,12 @@ func NewHandlerDependencies(
 	tenantMiddleware fiber.Handler,
 ) *handlers.Dependencies {
 	return &handlers.Dependencies{
-		Logger:          log,
-		Metrics:         metrics,
-		Tracer:          tracer,
-		TenantService:   tenantService,
-		UserService:     iamService.Authentication(), // Get authn service from IAM
-		FinanceServices: financeServices,
+		Logger:           log,
+		Metrics:          metrics,
+		Tracer:           tracer,
+		TenantService:    tenantService,
+		UserService:      iamService.Authentication(), // Get authn service from IAM
+		FinanceServices:  financeServices,
 		TenantMiddleware: tenantMiddleware,
 		// TODO: Add SecurityManager when implemented
 		// TODO: Add health config when implemented

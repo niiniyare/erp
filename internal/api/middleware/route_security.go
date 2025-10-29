@@ -1,13 +1,14 @@
 package middleware
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/csrf"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
-	"time"
 
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -19,7 +20,7 @@ type RouteSecurityConfig struct {
 	// API route security
 	API APISecurityConfig `json:"api"`
 
-	// UI route security  
+	// UI route security
 	UI UISecurityConfig `json:"ui"`
 
 	// Public route security
@@ -171,10 +172,10 @@ func (m *RouteSecurityManager) ConfigureAPIRoutes(router fiber.Router) {
 
 	// Security headers for API
 	router.Use(helmet.New(helmet.Config{
-		XSSProtection:         "1; mode=block",
-		ContentTypeNosniff:    "nosniff",
-		XFrameOptions:         "DENY",
-		ReferrerPolicy:        "no-referrer",
+		XSSProtection:             "1; mode=block",
+		ContentTypeNosniff:        "nosniff",
+		XFrameOptions:             "DENY",
+		ReferrerPolicy:            "no-referrer",
 		CrossOriginEmbedderPolicy: "require-corp",
 	}))
 
@@ -189,7 +190,7 @@ func (m *RouteSecurityManager) ConfigureAPIRoutes(router fiber.Router) {
 		router.Use(func(c *fiber.Ctx) error {
 			if int64(len(c.Body())) > m.config.API.MaxRequestSize {
 				return c.Status(fiber.StatusRequestEntityTooLarge).JSON(fiber.Map{
-					"error": "Request entity too large",
+					"error":    "Request entity too large",
 					"max_size": m.config.API.MaxRequestSize,
 				})
 			}
@@ -247,13 +248,13 @@ func (m *RouteSecurityManager) ConfigureUIRoutes(router fiber.Router) {
 	if m.config.UI.EnableSecurityHeaders {
 		cspDirectives := m.buildCSPDirectives()
 		router.Use(helmet.New(helmet.Config{
-			XSSProtection:              "1; mode=block",
-			ContentTypeNosniff:         "nosniff",
-			XFrameOptions:              "SAMEORIGIN", // Allow framing from same origin for UI
-			ReferrerPolicy:             "strict-origin-when-cross-origin",
-			CrossOriginEmbedderPolicy:  "unsafe-none", // More lenient for UI
-			ContentSecurityPolicy:      cspDirectives,
-			HSTSMaxAge:                 31536000, // 1 year
+			XSSProtection:             "1; mode=block",
+			ContentTypeNosniff:        "nosniff",
+			XFrameOptions:             "SAMEORIGIN", // Allow framing from same origin for UI
+			ReferrerPolicy:            "strict-origin-when-cross-origin",
+			CrossOriginEmbedderPolicy: "unsafe-none", // More lenient for UI
+			ContentSecurityPolicy:     cspDirectives,
+			HSTSMaxAge:                31536000, // 1 year
 		}))
 	}
 
@@ -332,9 +333,9 @@ func (m *RouteSecurityManager) ConfigurePublicRoutes(router fiber.Router) {
 // buildCSPDirectives creates Content Security Policy directives
 func (m *RouteSecurityManager) buildCSPDirectives() string {
 	csp := m.config.UI.CSPConfig
-	
+
 	directives := []string{}
-	
+
 	if len(csp.DefaultSrc) > 0 {
 		directives = append(directives, "default-src "+joinCSPSources(csp.DefaultSrc))
 	}
@@ -376,7 +377,7 @@ func joinStringSlice(slice []string, sep string) string {
 	if len(slice) == 0 {
 		return ""
 	}
-	
+
 	result := slice[0]
 	for i := 1; i < len(slice); i++ {
 		result += sep + slice[i]
@@ -391,13 +392,13 @@ func joinStringSlice(slice []string, sep string) string {
 // DefaultAPISecurityConfig returns secure defaults for API routes
 func DefaultAPISecurityConfig() APISecurityConfig {
 	return APISecurityConfig{
-		RequireAuth:     true,
-		RequireTenant:   true,
-		EnableCORS:      true,
-		RequireAPIKey:   false, // Enable based on needs
-		ValidateJWT:     true,
-		MaxRequestSize:  10 * 1024 * 1024, // 10MB
-		RateLimit:       DefaultRateLimitConfig(),
+		RequireAuth:    true,
+		RequireTenant:  true,
+		EnableCORS:     true,
+		RequireAPIKey:  false, // Enable based on needs
+		ValidateJWT:    true,
+		MaxRequestSize: 10 * 1024 * 1024, // 10MB
+		RateLimit:      DefaultRateLimitConfig(),
 	}
 }
 
@@ -405,10 +406,10 @@ func DefaultAPISecurityConfig() APISecurityConfig {
 func DefaultUISecurityConfig() UISecurityConfig {
 	return UISecurityConfig{
 		RequireSession:        true,
-		EnableCSRF:           true,
+		EnableCSRF:            true,
 		EnableSecurityHeaders: true,
-		SessionTimeout:       8 * time.Hour,
-		SecureCookies:        true, // Set to false for development
+		SessionTimeout:        8 * time.Hour,
+		SecureCookies:         true, // Set to false for development
 		CSPConfig: CSPConfig{
 			DefaultSrc: []string{"'self'"},
 			ScriptSrc:  []string{"'self'", "'unsafe-inline'", "'unsafe-eval'"}, // Adjust for your needs
@@ -459,12 +460,12 @@ func DefaultRouteSecurityConfig() RouteSecurityConfig {
 // DevelopmentRouteSecurityConfig returns a development-friendly configuration
 func DevelopmentRouteSecurityConfig() RouteSecurityConfig {
 	config := DefaultRouteSecurityConfig()
-	
+
 	// Relax some restrictions for development
 	config.UI.SecureCookies = false
 	config.UI.CSPConfig.ScriptSrc = append(config.UI.CSPConfig.ScriptSrc, "'unsafe-eval'")
 	config.API.RateLimit.GlobalRPS = 10000 // Higher limits for dev
 	config.Public.AllowedOrigins = []string{"*"}
-	
+
 	return config
 }

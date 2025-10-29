@@ -6,15 +6,15 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/niiniyare/erp/internal/api/handlers/health"
-	middlewarePkg "github.com/niiniyare/erp/internal/api/middleware"
-	tenantHandler "github.com/niiniyare/erp/internal/api/handlers/tenant"
-	userHandler "github.com/niiniyare/erp/internal/api/handlers/user"
 	financeHandler "github.com/niiniyare/erp/internal/api/handlers/finance"
+	"github.com/niiniyare/erp/internal/api/handlers/health"
+	tenantHandler "github.com/niiniyare/erp/internal/api/handlers/tenant"
 	uiHandler "github.com/niiniyare/erp/internal/api/handlers/ui"
-	coreTenant "github.com/niiniyare/erp/internal/core/tenant"
-	"github.com/niiniyare/erp/internal/core/iam/authn"
+	userHandler "github.com/niiniyare/erp/internal/api/handlers/user"
+	middlewarePkg "github.com/niiniyare/erp/internal/api/middleware"
 	financeService "github.com/niiniyare/erp/internal/core/finance/service"
+	"github.com/niiniyare/erp/internal/core/iam/authn"
+	coreTenant "github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -23,9 +23,9 @@ import (
 
 // Module names as constants for consistency
 const (
-	ModuleHealth = "health"
-	ModuleTenant = "tenant"
-	ModuleUser   = "user"
+	ModuleHealth  = "health"
+	ModuleTenant  = "tenant"
+	ModuleUser    = "user"
 	ModuleFinance = "finance"
 )
 
@@ -98,9 +98,9 @@ func (r *RouteRegistry) RegisterModuleWithMiddleware(
 	// NOTE: Legacy middleware switching is now replaced by RouteSecurityManager
 	// The security manager handles all middleware configuration based on route groups:
 	// - Public routes: minimal security (health, metrics)
-	// - API routes: full security (auth, tenant, rate limiting, observability)  
+	// - API routes: full security (auth, tenant, rate limiting, observability)
 	// - UI routes: session-based security (CSRF, security headers)
-	
+
 	// Apply middleware instances based on middleware names (legacy support)
 	for _, middlewareName := range middleware {
 		switch middlewareName {
@@ -190,15 +190,15 @@ func (r *RouteRegistry) ListRoutes() map[string]*ModuleInfo {
 // Dependencies contains all required dependencies for handlers.
 // All fields are required and must be non-nil.
 type Dependencies struct {
-	Logger            logger.Logger
-	Metrics           metrics.MetricsProvider
-	Tracer            tracing.Service
-	conf              *health.Config
-	TenantService     coreTenant.Service
-	UserService       authn.Service
-	FinanceServices   *financeService.Services
-	TenantMiddleware  fiber.Handler
-	SecurityManager   *middlewarePkg.RouteSecurityManager
+	Logger           logger.Logger
+	Metrics          metrics.MetricsProvider
+	Tracer           tracing.Service
+	conf             *health.Config
+	TenantService    coreTenant.Service
+	UserService      authn.Service
+	FinanceServices  *financeService.Services
+	TenantMiddleware fiber.Handler
+	SecurityManager  *middlewarePkg.RouteSecurityManager
 }
 
 // Validate ensures all required dependencies are present.
@@ -274,7 +274,7 @@ func (r *Router) RegisterAll(app *fiber.App) error {
 func (r *Router) registerPublicRoutes(app *fiber.App) error {
 	// Create public route group
 	publicGroup := app.Group("")
-	
+
 	// Apply public security configuration
 	if r.deps.SecurityManager != nil {
 		r.deps.SecurityManager.ConfigurePublicRoutes(publicGroup)
@@ -293,7 +293,7 @@ func (r *Router) registerPublicRoutes(app *fiber.App) error {
 func (r *Router) registerAPIRoutes(app *fiber.App) error {
 	// Create API route group
 	apiGroup := app.Group("/api")
-	
+
 	// Apply API security configuration
 	if r.deps.SecurityManager != nil {
 		r.deps.SecurityManager.ConfigureAPIRoutes(apiGroup)
@@ -331,10 +331,10 @@ func (r *Router) registerAPIRoutes(app *fiber.App) error {
 func (r *Router) registerUIRoutes(app *fiber.App) error {
 	// Configure static file serving first
 	app.Static("/static", "./web/static")
-	
+
 	// Create UI route group
 	uiGroup := app.Group("/ui")
-	
+
 	// Apply UI security configuration
 	if r.deps.SecurityManager != nil {
 		r.deps.SecurityManager.ConfigureUIRoutes(uiGroup)
@@ -348,12 +348,12 @@ func (r *Router) registerUIRoutes(app *fiber.App) error {
 	uiGroup.Get("/demo/components", handler.ServeComponents)
 	uiGroup.Get("/demo/forms", handler.ServeForms)
 	uiGroup.Get("/login", handler.ServeLogin)
-	
+
 	// Redirect root UI to demo for now
 	uiGroup.Get("/", func(c *fiber.Ctx) error {
 		return c.Redirect("/ui/demo")
 	})
-	
+
 	r.deps.Logger.Info("registered UI routes with static assets")
 	return nil
 }
@@ -390,7 +390,7 @@ func (r *Router) registerTenantAPI(apiRouter fiber.Router) error {
 
 	// Register tenant endpoints directly on the API router
 	tenantsGroup := apiRouter.Group("/v1/tenants")
-	
+
 	// Apply tenant middleware for RLS if available
 	if r.deps.TenantMiddleware != nil {
 		tenantsGroup.Use(r.deps.TenantMiddleware)
@@ -420,18 +420,18 @@ func (r *Router) registerUserAPI(apiRouter fiber.Router) error {
 
 	// Register user endpoints directly on the API router
 	usersGroup := apiRouter.Group("/v1/users")
-	
+
 	// Apply tenant middleware for RLS if available
 	if r.deps.TenantMiddleware != nil {
 		usersGroup.Use(r.deps.TenantMiddleware)
 	}
 
-	usersGroup.Get("/", handler.List)                            // GET /api/v1/users - List users with pagination
-	usersGroup.Post("/", handler.Create)                         // POST /api/v1/users - Create new user
-	usersGroup.Get("/:id", handler.Get)                          // GET /api/v1/users/:id - Get user by ID
-	usersGroup.Put("/:id", handler.Update)                       // PUT /api/v1/users/:id - Update user
-	usersGroup.Delete("/:id", handler.Delete)                    // DELETE /api/v1/users/:id - Delete user
-	usersGroup.Post("/authenticate", handler.Authenticate)       // POST /api/v1/users/authenticate - User authentication
+	usersGroup.Get("/", handler.List)                               // GET /api/v1/users - List users with pagination
+	usersGroup.Post("/", handler.Create)                            // POST /api/v1/users - Create new user
+	usersGroup.Get("/:id", handler.Get)                             // GET /api/v1/users/:id - Get user by ID
+	usersGroup.Put("/:id", handler.Update)                          // PUT /api/v1/users/:id - Update user
+	usersGroup.Delete("/:id", handler.Delete)                       // DELETE /api/v1/users/:id - Delete user
+	usersGroup.Post("/authenticate", handler.Authenticate)          // POST /api/v1/users/authenticate - User authentication
 	usersGroup.Post("/:id/change-password", handler.ChangePassword) // POST /api/v1/users/:id/change-password - Change password
 
 	r.deps.Logger.Info("registered user API endpoints")
@@ -450,7 +450,7 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 
 	// Register finance endpoints directly on the API router
 	financeGroup := apiRouter.Group("/v1/finance")
-	
+
 	// Apply tenant middleware for RLS if available
 	if r.deps.TenantMiddleware != nil {
 		financeGroup.Use(r.deps.TenantMiddleware)
@@ -458,7 +458,7 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 
 	// Account management endpoints
 	accountsGroup := financeGroup.Group("/accounts")
-	accountsGroup.Post("/", handler.CreateAccount)                // POST /api/v1/finance/accounts - Create account
+	accountsGroup.Post("/", handler.CreateAccount)               // POST /api/v1/finance/accounts - Create account
 	accountsGroup.Get("/", handler.ListAccounts)                 // GET /api/v1/finance/accounts - List accounts with filters
 	accountsGroup.Get("/:id", handler.GetAccount)                // GET /api/v1/finance/accounts/:id - Get account by ID
 	accountsGroup.Put("/:id", handler.UpdateAccount)             // PUT /api/v1/finance/accounts/:id - Update account
@@ -467,9 +467,9 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 
 	// Transaction management endpoints
 	transactionsGroup := financeGroup.Group("/transactions")
-	transactionsGroup.Post("/", handler.CreateTransaction)   // POST /api/v1/finance/transactions - Create transaction
-	transactionsGroup.Get("/", handler.ListTransactions)    // GET /api/v1/finance/transactions - List transactions with filters
-	transactionsGroup.Get("/:id", handler.GetTransaction)   // GET /api/v1/finance/transactions/:id - Get transaction by ID
+	transactionsGroup.Post("/", handler.CreateTransaction) // POST /api/v1/finance/transactions - Create transaction
+	transactionsGroup.Get("/", handler.ListTransactions)   // GET /api/v1/finance/transactions - List transactions with filters
+	transactionsGroup.Get("/:id", handler.GetTransaction)  // GET /api/v1/finance/transactions/:id - Get transaction by ID
 
 	// Reporting endpoints
 	reportsGroup := financeGroup.Group("/reports")

@@ -8,7 +8,7 @@ import (
 
 func TestObservabilityConfig_Default(t *testing.T) {
 	config := DefaultObservabilityConfig()
-	
+
 	assert.Equal(t, "erp-api", config.ServiceName)
 	assert.Equal(t, false, config.DetailedLogging)
 	assert.NotEmpty(t, config.CustomLabels)
@@ -23,7 +23,7 @@ func TestObservabilityConfig_Custom(t *testing.T) {
 		SkipPaths:       []string{"/test"},
 		CustomLabels:    map[string]string{"env": "test"},
 	}
-	
+
 	assert.Equal(t, "test-service", config.ServiceName)
 	assert.Equal(t, false, config.DetailedLogging)
 	assert.Equal(t, []string{"/test"}, config.SkipPaths)

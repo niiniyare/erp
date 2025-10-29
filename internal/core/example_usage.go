@@ -23,7 +23,7 @@ func ExampleUsage() {
 		cache    cache.Service           = nil // Initialize Redis cache
 		logger   logger.Logger           = nil // Initialize logger
 		metrics  metrics.MetricsProvider = nil // Initialize metrics service
-		tracing  tracing.Service  = nil // Initialize tracing
+		tracing  tracing.Service         = nil // Initialize tracing
 		temporal *temporal.Platform      = nil // Initialize Temporal platform
 	)
 
