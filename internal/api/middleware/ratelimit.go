@@ -21,6 +21,9 @@ import (
 
 // RateLimitConfig defines the configuration for rate limiting
 type RateLimitConfig struct {
+	// Enable/disable rate limiting
+	Enabled bool `json:"enabled"`
+
 	// Global limits
 	GlobalRPS        int           `json:"global_rps"`         // Requests per second globally
 	GlobalBurst      int           `json:"global_burst"`       // Global burst capacity

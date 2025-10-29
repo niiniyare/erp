@@ -21,7 +21,7 @@ type DatabaseConfig struct {
 // GetDatabaseURL returns the PostgreSQL connection URL
 func (d *DatabaseConfig) GetDatabaseURL() string {
 	return fmt.Sprintf(
-		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		"postgresql://%s:%s@%s:%d/%s?sslmode=%s",
 		d.User, d.Password, d.Host, d.Port, d.Database, d.SSLMode,
 	)
 }

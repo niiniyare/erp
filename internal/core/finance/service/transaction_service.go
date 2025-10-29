@@ -17,6 +17,12 @@ import (
 )
 
 type TransactionService interface {
+	// Handler convenience methods (for backward compatibility)
+	Create(ctx context.Context, req *domain.CreateTransactionRequest) (*domain.Transaction, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Transaction, error)
+	List(ctx context.Context, filter *domain.TransactionFilter) ([]*domain.Transaction, error)
+
+	// Core transaction operations
 	CreateTransaction(ctx context.Context, req domain.CreateTransactionRequest) (*domain.Transaction, error)
 	GetTransactionByID(ctx context.Context, id uuid.UUID) (*domain.Transaction, error)
 	GetTransactionByNumber(ctx context.Context, number string) (*domain.Transaction, error)
@@ -59,6 +65,22 @@ func NewTransactionService(
 		tracing:      tracing,
 		metrics:      metrics,
 	}
+}
+
+// Handler convenience methods (delegate to main methods)
+func (s *transactionService) Create(ctx context.Context, req *domain.CreateTransactionRequest) (*domain.Transaction, error) {
+	if req == nil {
+		return nil, errors.NewBusinessError("INVALID_REQUEST", "request cannot be nil")
+	}
+	return s.CreateTransaction(ctx, *req)
+}
+
+func (s *transactionService) GetByID(ctx context.Context, id uuid.UUID) (*domain.Transaction, error) {
+	return s.GetTransactionByID(ctx, id)
+}
+
+func (s *transactionService) List(ctx context.Context, filter *domain.TransactionFilter) ([]*domain.Transaction, error) {
+	return s.ListTransactions(ctx, filter)
 }
 
 func (s *transactionService) CreateTransaction(ctx context.Context, req domain.CreateTransactionRequest) (*domain.Transaction, error) {

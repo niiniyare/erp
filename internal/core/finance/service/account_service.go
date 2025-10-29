@@ -20,6 +20,13 @@ import (
 )
 
 type AccountService interface {
+	// Handler convenience methods (for backward compatibility)
+	Create(ctx context.Context, req *domain.CreateAccountRequest) (*domain.Accounts, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*domain.Accounts, error)
+	List(ctx context.Context, filter *domain.AccountFilter) ([]*domain.Accounts, error)
+	Update(ctx context.Context, id uuid.UUID, req *domain.UpdateAccountRequest) (*domain.Accounts, error)
+	Delete(ctx context.Context, id uuid.UUID) error
+
 	// Core account operations
 	CreateAccount(ctx context.Context, req domain.CreateAccountRequest) (*domain.Accounts, error)
 	GetAccountByID(ctx context.Context, id uuid.UUID) (*domain.Accounts, error)
@@ -105,6 +112,33 @@ func NewAccountService(
 		iamService:         iamService,
 		featureFlagService: featureFlagService,
 	}
+}
+
+// Handler convenience methods (delegate to main methods)
+func (s *accountService) Create(ctx context.Context, req *domain.CreateAccountRequest) (*domain.Accounts, error) {
+	if req == nil {
+		return nil, errors.NewBusinessError("INVALID_REQUEST", "request cannot be nil")
+	}
+	return s.CreateAccount(ctx, *req)
+}
+
+func (s *accountService) GetByID(ctx context.Context, id uuid.UUID) (*domain.Accounts, error) {
+	return s.GetAccountByID(ctx, id)
+}
+
+func (s *accountService) List(ctx context.Context, filter *domain.AccountFilter) ([]*domain.Accounts, error) {
+	return s.ListAccounts(ctx, filter)
+}
+
+func (s *accountService) Update(ctx context.Context, id uuid.UUID, req *domain.UpdateAccountRequest) (*domain.Accounts, error) {
+	if req == nil {
+		return nil, errors.NewBusinessError("INVALID_REQUEST", "request cannot be nil")
+	}
+	return s.UpdateAccount(ctx, id, *req)
+}
+
+func (s *accountService) Delete(ctx context.Context, id uuid.UUID) error {
+	return s.DeleteAccount(ctx, id)
 }
 
 func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAccountRequest) (*domain.Accounts, error) {

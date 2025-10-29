@@ -14,6 +14,8 @@ import (
 	"github.com/niiniyare/erp/internal/api/handlers"
 	"github.com/niiniyare/erp/internal/api/middleware"
 	"github.com/niiniyare/erp/internal/core/tenant"
+	"github.com/niiniyare/erp/internal/core/iam"
+	financeService "github.com/niiniyare/erp/internal/core/finance/service"
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -133,9 +135,11 @@ func NewTenantMiddleware(config middleware.TenantMiddlewareConfig) fiber.Handler
 // NewHandlerDependencies creates handler dependencies
 func NewHandlerDependencies(
 	log logger.Logger,
-	metrics *metrics.MetricsService,
+	metrics metrics.MetricsProvider,
 	tracer tracing.Service,
 	tenantService tenant.Service,
+	iamService iam.Service,
+	financeServices *financeService.Services,
 	tenantMiddleware fiber.Handler,
 ) *handlers.Dependencies {
 	return &handlers.Dependencies{
@@ -143,7 +147,11 @@ func NewHandlerDependencies(
 		Metrics:         metrics,
 		Tracer:          tracer,
 		TenantService:   tenantService,
+		UserService:     iamService.Authentication(), // Get authn service from IAM
+		FinanceServices: financeServices,
 		TenantMiddleware: tenantMiddleware,
+		// TODO: Add SecurityManager when implemented
+		// TODO: Add health config when implemented
 	}
 }
 

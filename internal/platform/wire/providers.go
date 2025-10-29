@@ -49,6 +49,13 @@ var RepositoryProviderSet = wire.NewSet(
 var CoreServiceProviderSet = wire.NewSet(
 	// Tenant service (no business service dependencies)
 	NewTenantService,
+	
+	// Simplified IAM services for startup
+	NewSimpleAuthenticationService,
+	NewSimpleIAMService,
+	
+	// Finance services
+	NewFinanceServices,
 )
 
 // ============================================================================

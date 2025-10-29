@@ -147,11 +147,11 @@ goa:
 
 # Database Configuration (PostgreSQL)
 database:
-  host: "${DB_HOST}"                # Use environment variables in production
+  host: "localhost"                 # Use environment variables in production
   port: 5432
-  user: "${DB_USER}"
-  password: "${DB_PASSWORD}"
-  database: "${DB_NAME}"
+  user: "admin"
+  password: "admin"
+  database: "ledger"
   ssl_mode: "disable"               # SSL mode: disable, require, verify-ca, verify-full
   max_open_conns: 100
   max_idle_conns: 10
@@ -344,7 +344,7 @@ ui:
   # Session management for UI
   session:
     store: "redis"
-    redis_url: ""
+    redis_url: "redis://localhost:6379"
     redis_db: 0
     key_prefix: "ui:session:"
     cookie:

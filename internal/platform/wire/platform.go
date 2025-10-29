@@ -125,7 +125,7 @@ func NewLogger(cfg *config.Config) (logger.Logger, error) {
 }
 
 // NewMetricsProvider creates a new metrics provider
-func NewMetricsProvider(cfg *config.Config, log logger.Logger) (*metrics.MetricsService, error) {
+func NewMetricsProvider(cfg *config.Config, log logger.Logger) (metrics.MetricsProvider, error) {
 	return metrics.NewMetricsService(metrics.MetricsConfig{
 		Provider:  "prometheus",
 		Namespace: cfg.App.Name,
@@ -137,12 +137,16 @@ func NewMetricsProvider(cfg *config.Config, log logger.Logger) (*metrics.Metrics
 // NewTracingService creates a new tracing service
 func NewTracingService(cfg *config.Config, log logger.Logger) (tracing.Service, error) {
 	return tracing.NewService(tracing.Config{
-		ServiceName:    cfg.App.Name,
-		ServiceVersion: cfg.App.Version,
-		Environment:    cfg.App.Environment,
-		ExporterType:   tracing.StdoutExporter, // Configure based on your tracing backend
-		SamplingRatio:  1.0,                    // Adjust based on environment
-		Enabled:        true,
+		ServiceName:         cfg.App.Name,
+		ServiceVersion:      cfg.App.Version,
+		Environment:         cfg.App.Environment,
+		ExporterType:        tracing.StdoutExporter, // Configure based on your tracing backend
+		Protocol:            tracing.ProtocolStdout, // Set the protocol for stdout exporter
+		SamplingRatio:       1.0,                    // Adjust based on environment
+		BatchTimeout:        time.Second * 5,       // Set batch timeout
+		MaxExportBatchSize:  100,                   // Set batch size
+		MaxQueueSize:        1000,                  // Set queue size
+		Enabled:             true,
 	})
 }
 

@@ -290,8 +290,8 @@ func loadDotEnvFile(_ *viper.Viper) {
 			}
 		}
 		// Parse .env content
-		lines := bytes.SplitSeq(content, []byte("\n"))
-		for line := range lines {
+		lines := bytes.Split(content, []byte("\n"))
+		for _, line := range lines {
 			lineStr := strings.TrimSpace(string(line))
 			if lineStr == "" || strings.HasPrefix(lineStr, "#") {
 				continue

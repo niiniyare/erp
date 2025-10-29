@@ -10,8 +10,11 @@ import (
 	middlewarePkg "github.com/niiniyare/erp/internal/api/middleware"
 	tenantHandler "github.com/niiniyare/erp/internal/api/handlers/tenant"
 	userHandler "github.com/niiniyare/erp/internal/api/handlers/user"
+	financeHandler "github.com/niiniyare/erp/internal/api/handlers/finance"
+	uiHandler "github.com/niiniyare/erp/internal/api/handlers/ui"
 	coreTenant "github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/core/iam/authn"
+	financeService "github.com/niiniyare/erp/internal/core/finance/service"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -23,7 +26,7 @@ const (
 	ModuleHealth = "health"
 	ModuleTenant = "tenant"
 	ModuleUser   = "user"
-	// ModuleFinance = "finance"
+	ModuleFinance = "finance"
 )
 
 // ============================================================================
@@ -92,7 +95,13 @@ func (r *RouteRegistry) RegisterModuleWithMiddleware(
 	// Create router group for the module
 	router := app.Group(basePath)
 
-	// Apply middleware instances based on middleware names
+	// NOTE: Legacy middleware switching is now replaced by RouteSecurityManager
+	// The security manager handles all middleware configuration based on route groups:
+	// - Public routes: minimal security (health, metrics)
+	// - API routes: full security (auth, tenant, rate limiting, observability)  
+	// - UI routes: session-based security (CSRF, security headers)
+	
+	// Apply middleware instances based on middleware names (legacy support)
 	for _, middlewareName := range middleware {
 		switch middlewareName {
 		case "observability":
@@ -181,13 +190,15 @@ func (r *RouteRegistry) ListRoutes() map[string]*ModuleInfo {
 // Dependencies contains all required dependencies for handlers.
 // All fields are required and must be non-nil.
 type Dependencies struct {
-	Logger           logger.Logger
-	Metrics          metrics.MetricsProvider
-	Tracer           tracing.Service
-	conf             *health.Config
-	TenantService    coreTenant.Service
-	UserService      authn.Service
-	TenantMiddleware fiber.Handler
+	Logger            logger.Logger
+	Metrics           metrics.MetricsProvider
+	Tracer            tracing.Service
+	conf              *health.Config
+	TenantService     coreTenant.Service
+	UserService       authn.Service
+	FinanceServices   *financeService.Services
+	TenantMiddleware  fiber.Handler
+	SecurityManager   *middlewarePkg.RouteSecurityManager
 }
 
 // Validate ensures all required dependencies are present.
@@ -241,62 +252,132 @@ func NewRouter(deps *Dependencies) (*Router, error) {
 	}, nil
 }
 
-// RegisterAll registers all application routes.
+// RegisterAll registers all application routes with proper security configuration.
 func (r *Router) RegisterAll(app *fiber.App) error {
-	// Define modules to register in order
-	modules := []struct {
-		name string
-		fn   func(*fiber.App) error
-	}{
-		{ModuleHealth, r.registerHealth},
-		{ModuleTenant, r.registerTenant},
-		{ModuleUser, r.registerUser},
-		// Add future modules here:
-		// {ModuleFinance, r.registerFinance},
+	// Register route groups with different security configurations
+	if err := r.registerPublicRoutes(app); err != nil {
+		return fmt.Errorf("failed to register public routes: %w", err)
 	}
 
-	// Register each module
-	for _, module := range modules {
-		if err := module.fn(app); err != nil {
-			return errors.NewBusinessError("MODULE_REGISTRATION_FAILED",
-				fmt.Sprintf("failed to register %s module", module.name)).
-				WithCategory(errors.CategorySystem).
-				WithSeverity(errors.SeverityCritical).
-				WithDetail("module_name", module.name).
-				WithDetail("error", err.Error()).
-				WithSuggestion("Check module configuration and dependencies")
-		}
+	if err := r.registerAPIRoutes(app); err != nil {
+		return fmt.Errorf("failed to register API routes: %w", err)
+	}
 
-		r.deps.Logger.Info(fmt.Sprintf("registered %s module", module.name))
+	if err := r.registerUIRoutes(app); err != nil {
+		return fmt.Errorf("failed to register UI routes: %w", err)
 	}
 
 	return nil
 }
 
+// registerPublicRoutes registers public routes with minimal security
+func (r *Router) registerPublicRoutes(app *fiber.App) error {
+	// Create public route group
+	publicGroup := app.Group("")
+	
+	// Apply public security configuration
+	if r.deps.SecurityManager != nil {
+		r.deps.SecurityManager.ConfigurePublicRoutes(publicGroup)
+	}
+
+	// Register health endpoints
+	if err := r.registerHealth(publicGroup); err != nil {
+		return fmt.Errorf("failed to register health module: %w", err)
+	}
+
+	r.deps.Logger.Info("registered public routes")
+	return nil
+}
+
+// registerAPIRoutes registers API routes with full security
+func (r *Router) registerAPIRoutes(app *fiber.App) error {
+	// Create API route group
+	apiGroup := app.Group("/api")
+	
+	// Apply API security configuration
+	if r.deps.SecurityManager != nil {
+		r.deps.SecurityManager.ConfigureAPIRoutes(apiGroup)
+	}
+
+	// Define API modules to register
+	modules := []struct {
+		name string
+		fn   func(fiber.Router) error
+	}{
+		{ModuleTenant, r.registerTenantAPI},
+		{ModuleUser, r.registerUserAPI},
+		{ModuleFinance, r.registerFinanceAPI},
+	}
+
+	// Register each API module
+	for _, module := range modules {
+		if err := module.fn(apiGroup); err != nil {
+			return errors.NewBusinessError("API_MODULE_REGISTRATION_FAILED",
+				fmt.Sprintf("failed to register %s API module", module.name)).
+				WithCategory(errors.CategorySystem).
+				WithSeverity(errors.SeverityCritical).
+				WithDetail("module_name", module.name).
+				WithDetail("error", err.Error()).
+				WithSuggestion("Check API module configuration and dependencies")
+		}
+
+		r.deps.Logger.Info(fmt.Sprintf("registered %s API module", module.name))
+	}
+
+	return nil
+}
+
+// registerUIRoutes registers UI routes with session-based security
+func (r *Router) registerUIRoutes(app *fiber.App) error {
+	// Configure static file serving first
+	app.Static("/static", "./web/static")
+	
+	// Create UI route group
+	uiGroup := app.Group("/ui")
+	
+	// Apply UI security configuration
+	if r.deps.SecurityManager != nil {
+		r.deps.SecurityManager.ConfigureUIRoutes(uiGroup)
+	}
+
+	// Create UI handler
+	handler := uiHandler.NewUIHandler(r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
+
+	// Register UI demo routes
+	uiGroup.Get("/demo", handler.ServeDemo)
+	uiGroup.Get("/demo/components", handler.ServeComponents)
+	uiGroup.Get("/demo/forms", handler.ServeForms)
+	uiGroup.Get("/login", handler.ServeLogin)
+	
+	// Redirect root UI to demo for now
+	uiGroup.Get("/", func(c *fiber.Ctx) error {
+		return c.Redirect("/ui/demo")
+	})
+	
+	r.deps.Logger.Info("registered UI routes with static assets")
+	return nil
+}
+
 // registerHealth registers health check routes.
-func (r *Router) registerHealth(app *fiber.App) error {
+func (r *Router) registerHealth(router fiber.Router) error {
 	// FIXME:pass real system Config here
 	handler := health.NewHealthHandler(r.deps.Logger, r.deps.Metrics, r.deps.Tracer, nil)
 
-	return r.registry.RegisterModuleWithMiddleware(
-		app,
-		ModuleHealth,
-		"/health",
-		[]string{"cors"}, // Minimal middleware for health checks - no observability for health endpoints
-		func(router fiber.Router) {
-			router.Get("/", handler.Get)
+	// Register health endpoints directly on the provided router
+	healthGroup := router.Group("/health")
+	healthGroup.Get("/", handler.Get)
 
-			// Uncomment when implementing Kubernetes-style health checks:
-			// router.Get("/ready", handler.Ready)   // Readiness probe
-			// router.Get("/live", handler.Live)     // Liveness probe
-			// router.Get("/startup", handler.Startup) // Startup probe
-		},
-		r.deps,
-	)
+	// Uncomment when implementing Kubernetes-style health checks:
+	// healthGroup.Get("/ready", handler.Ready)   // Readiness probe
+	// healthGroup.Get("/live", handler.Live)     // Liveness probe
+	// healthGroup.Get("/startup", handler.Startup) // Startup probe
+
+	r.deps.Logger.Info("registered health endpoints")
+	return nil
 }
 
-// registerTenant registers tenant management routes.
-func (r *Router) registerTenant(app *fiber.App) error {
+// registerTenantAPI registers tenant management API routes.
+func (r *Router) registerTenantAPI(apiRouter fiber.Router) error {
 	// Use existing tenant service
 	if r.deps.TenantService == nil {
 		return errors.NewBusinessError("MISSING_TENANT_SERVICE", "Tenant service is required").
@@ -307,24 +388,26 @@ func (r *Router) registerTenant(app *fiber.App) error {
 
 	handler := tenantHandler.NewTenantHandler(r.deps.TenantService, r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
 
-	return r.registry.RegisterModuleWithMiddleware(
-		app,
-		ModuleTenant,
-		"/api/v1/tenants",
-		[]string{"observability", "cors", "tenant", "auth"}, // Full observability for API endpoints
-		func(router fiber.Router) {
-			router.Get("/", handler.List)         // GET /api/v1/tenants - List tenants with pagination
-			router.Post("/", handler.Create)      // POST /api/v1/tenants - Create new tenant
-			router.Get("/:id", handler.Get)       // GET /api/v1/tenants/:id - Get tenant by ID
-			router.Put("/:id", handler.Update)    // PUT /api/v1/tenants/:id - Update tenant
-			router.Delete("/:id", handler.Delete) // DELETE /api/v1/tenants/:id - Delete tenant
-		},
-		r.deps,
-	)
+	// Register tenant endpoints directly on the API router
+	tenantsGroup := apiRouter.Group("/v1/tenants")
+	
+	// Apply tenant middleware for RLS if available
+	if r.deps.TenantMiddleware != nil {
+		tenantsGroup.Use(r.deps.TenantMiddleware)
+	}
+
+	tenantsGroup.Get("/", handler.List)         // GET /api/v1/tenants - List tenants with pagination
+	tenantsGroup.Post("/", handler.Create)      // POST /api/v1/tenants - Create new tenant
+	tenantsGroup.Get("/:id", handler.Get)       // GET /api/v1/tenants/:id - Get tenant by ID
+	tenantsGroup.Put("/:id", handler.Update)    // PUT /api/v1/tenants/:id - Update tenant
+	tenantsGroup.Delete("/:id", handler.Delete) // DELETE /api/v1/tenants/:id - Delete tenant
+
+	r.deps.Logger.Info("registered tenant API endpoints")
+	return nil
 }
 
-// registerUser registers user management routes.
-func (r *Router) registerUser(app *fiber.App) error {
+// registerUserAPI registers user management API routes.
+func (r *Router) registerUserAPI(apiRouter fiber.Router) error {
 	// Use existing user service
 	if r.deps.UserService == nil {
 		return errors.NewBusinessError("MISSING_USER_SERVICE", "User service is required").
@@ -335,22 +418,65 @@ func (r *Router) registerUser(app *fiber.App) error {
 
 	handler := userHandler.NewUserHandler(r.deps.UserService, r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
 
-	return r.registry.RegisterModuleWithMiddleware(
-		app,
-		ModuleUser,
-		"/api/v1/users",
-		[]string{"observability", "cors", "tenant", "auth"}, // Full observability for API endpoints
-		func(router fiber.Router) {
-			router.Get("/", handler.List)                            // GET /api/v1/users - List users with pagination
-			router.Post("/", handler.Create)                         // POST /api/v1/users - Create new user
-			router.Get("/:id", handler.Get)                          // GET /api/v1/users/:id - Get user by ID
-			router.Put("/:id", handler.Update)                       // PUT /api/v1/users/:id - Update user
-			router.Delete("/:id", handler.Delete)                    // DELETE /api/v1/users/:id - Delete user
-			router.Post("/authenticate", handler.Authenticate)       // POST /api/v1/users/authenticate - User authentication
-			router.Post("/:id/change-password", handler.ChangePassword) // POST /api/v1/users/:id/change-password - Change password
-		},
-		r.deps,
-	)
+	// Register user endpoints directly on the API router
+	usersGroup := apiRouter.Group("/v1/users")
+	
+	// Apply tenant middleware for RLS if available
+	if r.deps.TenantMiddleware != nil {
+		usersGroup.Use(r.deps.TenantMiddleware)
+	}
+
+	usersGroup.Get("/", handler.List)                            // GET /api/v1/users - List users with pagination
+	usersGroup.Post("/", handler.Create)                         // POST /api/v1/users - Create new user
+	usersGroup.Get("/:id", handler.Get)                          // GET /api/v1/users/:id - Get user by ID
+	usersGroup.Put("/:id", handler.Update)                       // PUT /api/v1/users/:id - Update user
+	usersGroup.Delete("/:id", handler.Delete)                    // DELETE /api/v1/users/:id - Delete user
+	usersGroup.Post("/authenticate", handler.Authenticate)       // POST /api/v1/users/authenticate - User authentication
+	usersGroup.Post("/:id/change-password", handler.ChangePassword) // POST /api/v1/users/:id/change-password - Change password
+
+	r.deps.Logger.Info("registered user API endpoints")
+	return nil
+}
+
+// registerFinanceAPI registers finance management API routes.
+func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
+	// Use existing finance services
+	if r.deps.FinanceServices == nil {
+		r.deps.Logger.Warn("Finance services not available, skipping finance API registration")
+		return nil // Skip registration gracefully instead of failing
+	}
+
+	handler := financeHandler.NewFinanceHandler(r.deps.FinanceServices, r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
+
+	// Register finance endpoints directly on the API router
+	financeGroup := apiRouter.Group("/v1/finance")
+	
+	// Apply tenant middleware for RLS if available
+	if r.deps.TenantMiddleware != nil {
+		financeGroup.Use(r.deps.TenantMiddleware)
+	}
+
+	// Account management endpoints
+	accountsGroup := financeGroup.Group("/accounts")
+	accountsGroup.Post("/", handler.CreateAccount)                // POST /api/v1/finance/accounts - Create account
+	accountsGroup.Get("/", handler.ListAccounts)                 // GET /api/v1/finance/accounts - List accounts with filters
+	accountsGroup.Get("/:id", handler.GetAccount)                // GET /api/v1/finance/accounts/:id - Get account by ID
+	accountsGroup.Put("/:id", handler.UpdateAccount)             // PUT /api/v1/finance/accounts/:id - Update account
+	accountsGroup.Delete("/:id", handler.DeleteAccount)          // DELETE /api/v1/finance/accounts/:id - Delete account
+	accountsGroup.Get("/:id/balance", handler.GetAccountBalance) // GET /api/v1/finance/accounts/:id/balance - Get account balance
+
+	// Transaction management endpoints
+	transactionsGroup := financeGroup.Group("/transactions")
+	transactionsGroup.Post("/", handler.CreateTransaction)   // POST /api/v1/finance/transactions - Create transaction
+	transactionsGroup.Get("/", handler.ListTransactions)    // GET /api/v1/finance/transactions - List transactions with filters
+	transactionsGroup.Get("/:id", handler.GetTransaction)   // GET /api/v1/finance/transactions/:id - Get transaction by ID
+
+	// Reporting endpoints
+	reportsGroup := financeGroup.Group("/reports")
+	reportsGroup.Get("/trial-balance", handler.GetTrialBalance) // GET /api/v1/finance/reports/trial-balance - Trial balance report
+
+	r.deps.Logger.Info("registered finance API endpoints")
+	return nil
 }
 
 // Future module registration examples:

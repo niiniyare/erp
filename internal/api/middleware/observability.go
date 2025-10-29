@@ -348,24 +348,19 @@ func (m *ObservabilityMiddleware) logRequestEnd(ctx context.Context, c *fiber.Ct
 		fields["user_id"] = userID
 	}
 
-	var logLevel string
 	var message string
 
 	if err != nil {
 		fields["error"] = err.Error()
-		logLevel = "error"
 		message = "Request failed"
 		m.logger.ErrorContext(ctx, message, fields)
 	} else if statusCode >= 500 {
-		logLevel = "error"
 		message = "Request completed with server error"
 		m.logger.ErrorContext(ctx, message, fields)
 	} else if statusCode >= 400 {
-		logLevel = "warn"
 		message = "Request completed with client error"
 		m.logger.WarnContext(ctx, message, fields)
 	} else {
-		logLevel = "info"
 		message = "Request completed successfully"
 		if m.config.DetailedLogging {
 			m.logger.InfoContext(ctx, message, fields)
