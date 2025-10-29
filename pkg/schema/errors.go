@@ -466,7 +466,7 @@ func RecoverSchemaError() SchemaError {
 
 // Error middleware for consistent error handling
 type ErrorHandler struct {
-	logger logger.Logger // Assume Logger interface exists
+	logger logger.Logger
 }
 
 func NewErrorHandler(logger logger.Logger) *ErrorHandler {
@@ -502,6 +502,7 @@ func (eh *ErrorHandler) HandleError(err error) SchemaError {
 	}
 }
 
+// ErrRendererNotFound represents a renderer not found error
 type ErrRendererNotFound struct {
 	Type string
 }
