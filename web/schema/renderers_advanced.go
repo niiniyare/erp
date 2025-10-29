@@ -390,13 +390,9 @@ func (cr *ColorRenderer) Render(ctx context.Context, field *Field, value interfa
 
 	// Configuration
 	showInput := true
-	format := "hex"
 	if field.Config != nil {
 		if show, exists := field.Config["showInput"]; exists {
 			showInput = show.(bool)
-		}
-		if fmt, exists := field.Config["format"]; exists {
-			format = fmt.(string)
 		}
 	}
 

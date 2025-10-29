@@ -183,8 +183,8 @@ func (hr *HiddenRenderer) Render(ctx context.Context, field *Field, value interf
 
 	if value != nil {
 		attrs["value"] = fmt.Sprintf("%v", value)
-	} else if field.DefaultValue != nil {
-		attrs["value"] = fmt.Sprintf("%v", field.DefaultValue)
+	} else if field.Default != nil {
+		attrs["value"] = fmt.Sprintf("%v", field.Default)
 	}
 
 	// Hidden fields don't need container
@@ -235,8 +235,8 @@ func (tr *TextareaRenderer) Render(ctx context.Context, field *Field, value inte
 	var textValue string
 	if value != nil {
 		textValue = fmt.Sprintf("%v", value)
-	} else if field.DefaultValue != nil {
-		textValue = fmt.Sprintf("%v", field.DefaultValue)
+	} else if field.Default != nil {
+		textValue = fmt.Sprintf("%v", field.Default)
 	}
 
 	inputHTML := fmt.Sprintf(`<textarea %s>%s</textarea>`, tr.attributesToString(attrs), textValue)

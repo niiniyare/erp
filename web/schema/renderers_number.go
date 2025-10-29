@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // NumberRenderer handles number input fields
@@ -217,7 +218,7 @@ func (rr *RatingRenderer) Render(ctx context.Context, field *Field, value interf
 		<div class="rating-container" data-rating="%.1f">
 			<input type="hidden" name="%s" id="%s" value="%.1f">
 			<div class="rating-stars">%s</div>
-		</div>`, currentValue, field.Name, field.Name, currentValue, fmt.Sprintf(strings.Join(stars, "")))
+		</div>`, currentValue, field.Name, field.Name, currentValue, strings.Join(stars, ""))
 
 	return rr.RenderContainer(field, inputHTML, errors), nil
 }

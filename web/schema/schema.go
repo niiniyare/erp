@@ -110,6 +110,7 @@ type Field struct {
 	Name        string    `json:"name" validate:"required,min=1,max=100" example:"email"`
 	Type        FieldType `json:"type" validate:"required" example:"email"`
 	Label       string    `json:"label" validate:"required,min=1,max=200" example:"Email Address"`
+	Description string    `json:"description,omitempty" validate:"max=500" example:"Enter your primary email address"`
 	Placeholder string    `json:"placeholder,omitempty" validate:"max=200" example:"user@example.com"`
 
 	// Field state
@@ -133,9 +134,10 @@ type Field struct {
 	Style  *Style       `json:"style,omitempty"`
 
 	// Behavior and interaction
-	Events      *FieldEvents `json:"events,omitempty"`
-	Conditional *Conditional `json:"conditional,omitempty"`
-	DataSource  *DataSource  `json:"dataSource,omitempty"`
+	Config      map[string]interface{} `json:"config,omitempty"`
+	Events      *FieldEvents           `json:"events,omitempty"`
+	Conditional *Conditional           `json:"conditional,omitempty"`
+	DataSource  *DataSource            `json:"dataSource,omitempty"`
 
 	// Help and accessibility
 	Help    string `json:"help,omitempty" validate:"max=500"`

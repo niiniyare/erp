@@ -18,11 +18,11 @@ type FieldRenderer interface {
 // RendererRegistry manages field renderers
 type RendererRegistry struct {
 	renderers map[FieldType]FieldRenderer
-	tokens    *TokenResolver
+	tokens    TokenResolver
 }
 
 // NewRendererRegistry creates a new renderer registry
-func NewRendererRegistry(tokens *TokenResolver) *RendererRegistry {
+func NewRendererRegistry(tokens TokenResolver) *RendererRegistry {
 	registry := &RendererRegistry{
 		renderers: make(map[FieldType]FieldRenderer),
 		tokens:    tokens,
@@ -73,11 +73,11 @@ func (r *RendererRegistry) GetAllRequiredAssets() []string {
 
 // BaseRenderer provides common functionality for all renderers
 type BaseRenderer struct {
-	tokens *TokenResolver
+	tokens TokenResolver
 }
 
 // NewBaseRenderer creates a new base renderer
-func NewBaseRenderer(tokens *TokenResolver) *BaseRenderer {
+func NewBaseRenderer(tokens TokenResolver) *BaseRenderer {
 	return &BaseRenderer{tokens: tokens}
 }
 
@@ -141,12 +141,12 @@ func (br *BaseRenderer) RenderContainer(field *Field, inputHTML string, errors [
 		parts = append(parts, `</div>`)
 	}
 
-	// Hint
-	if field.Hint != "" {
+	// Help text (more detailed help)
+	if field.Help != "" {
 		parts = append(parts, fmt.Sprintf(
-			`<div class="field-hint" id="%s-hint">%s</div>`,
+			`<div class="field-help" id="%s-help">%s</div>`,
 			html.EscapeString(field.Name),
-			html.EscapeString(field.Hint),
+			html.EscapeString(field.Help),
 		))
 	}
 
@@ -227,7 +227,7 @@ func (br *BaseRenderer) buildInputAttributes(field *Field, value interface{}) ma
 	}
 
 	// Readonly
-	if field.ReadOnly {
+	if field.Readonly {
 		attrs["readonly"] = "readonly"
 		attrs["aria-readonly"] = "true"
 	}
@@ -240,20 +240,20 @@ func (br *BaseRenderer) buildInputAttributes(field *Field, value interface{}) ma
 	// Value
 	if value != nil {
 		attrs["value"] = fmt.Sprintf("%v", value)
-	} else if field.DefaultValue != nil {
-		attrs["value"] = fmt.Sprintf("%v", field.DefaultValue)
+	} else if field.Default != nil {
+		attrs["value"] = fmt.Sprintf("%v", field.Default)
 	}
 
 	// ARIA attributes
+	var describedByParts []string
 	if field.Description != "" {
-		attrs["aria-describedby"] = field.Name + "-description"
+		describedByParts = append(describedByParts, field.Name+"-description")
 	}
-	if field.Hint != "" {
-		if describedBy, exists := attrs["aria-describedby"]; exists {
-			attrs["aria-describedby"] = describedBy + " " + field.Name + "-hint"
-		} else {
-			attrs["aria-describedby"] = field.Name + "-hint"
-		}
+	if field.Help != "" {
+		describedByParts = append(describedByParts, field.Name+"-help")
+	}
+	if len(describedByParts) > 0 {
+		attrs["aria-describedby"] = strings.Join(describedByParts, " ")
 	}
 
 	// Validation attributes

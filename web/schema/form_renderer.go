@@ -7,67 +7,23 @@ import (
 	"strings"
 )
 
-// FormRenderer handles rendering complete forms
-type FormRenderer struct {
+// DefaultFormRenderer handles rendering complete forms
+type DefaultFormRenderer struct {
 	registry *RendererRegistry
-	tokens   *TokenResolver
+	tokens   TokenResolver
 }
 
-// NewFormRenderer creates a new form renderer
-func NewFormRenderer(registry *RendererRegistry, tokens *TokenResolver) *FormRenderer {
-	return &FormRenderer{
+// NewDefaultFormRenderer creates a new form renderer
+func NewDefaultFormRenderer(registry *RendererRegistry, tokens TokenResolver) *DefaultFormRenderer {
+	return &DefaultFormRenderer{
 		registry: registry,
 		tokens:   tokens,
 	}
 }
 
-// RenderForm renders a complete form from schema
-func (fr *FormRenderer) RenderForm(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
-	if schema.Type != TypeForm {
-		return "", NewRenderError("invalid_schema_type", "schema must be of type 'form'")
-	}
-
-	var parts []string
-
-	// Form opening tag with attributes
-	formAttrs := fr.buildFormAttributes(schema)
-	parts = append(parts, fmt.Sprintf(`<form %s>`, fr.attributesToString(formAttrs)))
-
-	// Form header (title, description)
-	if header := fr.renderFormHeader(schema); header != "" {
-		parts = append(parts, header)
-	}
-
-	// CSRF token if security is enabled
-	if schema.Security != nil && schema.Security.CSRF != nil && schema.Security.CSRF.Enabled {
-		parts = append(parts, fr.renderCSRFToken(schema.Security.CSRF))
-	}
-
-	// Render form content based on layout
-	content, err := fr.renderFormContent(ctx, schema, data, errors)
-	if err != nil {
-		return "", err
-	}
-	parts = append(parts, content)
-
-	// Form actions (submit, reset, etc.)
-	if actions := fr.renderFormActions(schema); actions != "" {
-		parts = append(parts, actions)
-	}
-
-	// Form closing tag
-	parts = append(parts, `</form>`)
-
-	// Required assets and scripts
-	if scripts := fr.renderRequiredScripts(schema); scripts != "" {
-		parts = append(parts, scripts)
-	}
-
-	return strings.Join(parts, "\n"), nil
-}
 
 // buildFormAttributes builds form tag attributes
-func (fr *FormRenderer) buildFormAttributes(schema *Schema) map[string]string {
+func (fr *DefaultFormRenderer) buildFormAttributes(schema *Schema) map[string]string {
 	attrs := map[string]string{
 		"id":     schema.ID,
 		"class":  "schema-form",
@@ -85,8 +41,8 @@ func (fr *FormRenderer) buildFormAttributes(schema *Schema) map[string]string {
 		if schema.Config.Target != "" {
 			attrs["target"] = schema.Config.Target
 		}
-		if schema.Config.EncType != "" {
-			attrs["enctype"] = schema.Config.EncType
+		if schema.Config.Encoding != "" {
+			attrs["enctype"] = schema.Config.Encoding
 		}
 	}
 
@@ -162,7 +118,7 @@ func (fr *FormRenderer) buildFormAttributes(schema *Schema) map[string]string {
 }
 
 // renderFormHeader renders form title and description
-func (fr *FormRenderer) renderFormHeader(schema *Schema) string {
+func (fr *DefaultFormRenderer) renderFormHeader(schema *Schema) string {
 	if schema.Title == "" && schema.Description == "" {
 		return ""
 	}
@@ -183,7 +139,7 @@ func (fr *FormRenderer) renderFormHeader(schema *Schema) string {
 }
 
 // renderCSRFToken renders CSRF protection token
-func (fr *FormRenderer) renderCSRFToken(csrf *CSRF) string {
+func (fr *DefaultFormRenderer) renderCSRFToken(csrf *CSRF) string {
 	tokenField := csrf.TokenField
 	if tokenField == "" {
 		tokenField = "csrf_token"
@@ -194,7 +150,7 @@ func (fr *FormRenderer) renderCSRFToken(csrf *CSRF) string {
 }
 
 // renderFormContent renders the main form content based on layout
-func (fr *FormRenderer) renderFormContent(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
+func (fr *DefaultFormRenderer) renderFormContent(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
 	if schema.Layout == nil {
 		// Simple field-by-field rendering
 		return fr.renderFieldList(ctx, schema.Fields, data, errors)
@@ -214,7 +170,7 @@ func (fr *FormRenderer) renderFormContent(ctx context.Context, schema *Schema, d
 }
 
 // renderFieldList renders a simple list of fields
-func (fr *FormRenderer) renderFieldList(ctx context.Context, fields []Field, data map[string]interface{}, errors map[string][]string) (string, error) {
+func (fr *DefaultFormRenderer) renderFieldList(ctx context.Context, fields []Field, data map[string]interface{}, errors map[string][]string) (string, error) {
 	var fieldHTMLs []string
 
 	for _, field := range fields {
@@ -233,7 +189,7 @@ func (fr *FormRenderer) renderFieldList(ctx context.Context, fields []Field, dat
 }
 
 // renderSections renders form sections
-func (fr *FormRenderer) renderSections(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
+func (fr *DefaultFormRenderer) renderSections(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
 	var sectionHTMLs []string
 
 	// Create field lookup map
@@ -262,7 +218,7 @@ func (fr *FormRenderer) renderSections(ctx context.Context, schema *Schema, data
 }
 
 // renderSection renders a single section
-func (fr *FormRenderer) renderSection(ctx context.Context, section Section, fields []Field, data map[string]interface{}, errors map[string][]string) (string, error) {
+func (fr *DefaultFormRenderer) renderSection(ctx context.Context, section Section, fields []Field, data map[string]interface{}, errors map[string][]string) (string, error) {
 	var parts []string
 
 	// Section classes
@@ -322,7 +278,7 @@ func (fr *FormRenderer) renderSection(ctx context.Context, section Section, fiel
 }
 
 // renderTabs renders tabbed layout
-func (fr *FormRenderer) renderTabs(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
+func (fr *DefaultFormRenderer) renderTabs(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
 	var parts []string
 
 	// Tab navigation
@@ -391,7 +347,7 @@ func (fr *FormRenderer) renderTabs(ctx context.Context, schema *Schema, data map
 }
 
 // renderSteps renders multi-step layout
-func (fr *FormRenderer) renderSteps(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
+func (fr *DefaultFormRenderer) renderSteps(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
 	var parts []string
 
 	// Step progress indicator
@@ -468,7 +424,7 @@ func (fr *FormRenderer) renderSteps(ctx context.Context, schema *Schema, data ma
 }
 
 // renderFormActions renders form action buttons
-func (fr *FormRenderer) renderFormActions(schema *Schema) string {
+func (fr *DefaultFormRenderer) renderFormActions(schema *Schema) string {
 	if len(schema.Actions) == 0 {
 		return ""
 	}
@@ -484,7 +440,7 @@ func (fr *FormRenderer) renderFormActions(schema *Schema) string {
 }
 
 // renderAction renders a single action button
-func (fr *FormRenderer) renderAction(action Action) string {
+func (fr *DefaultFormRenderer) renderAction(action Action) string {
 	classes := []string{"action-button"}
 	classes = append(classes, fmt.Sprintf("action-button--%s", action.Type))
 	if action.Variant != "" {
@@ -530,17 +486,13 @@ func (fr *FormRenderer) renderAction(action Action) string {
 			action.ID, action.Confirm.Title, action.Confirm.Message)
 	}
 
-	// Resolve button style tokens
-	style := fr.resolveActionStyle(action)
-	if style != "" {
-		attrs["style"] = style
-	}
+	// Note: Action styling would be handled via CSS classes and design tokens
 
 	return fmt.Sprintf(`<button %s>%s</button>`, fr.attributesToString(attrs), html.EscapeString(action.Text))
 }
 
 // resolveFormStyle resolves form-level design tokens
-func (fr *FormRenderer) resolveFormStyle(schema *Schema) string {
+func (fr *DefaultFormRenderer) resolveFormStyle(schema *Schema) string {
 	if fr.tokens == nil {
 		return ""
 	}
@@ -561,37 +513,9 @@ func (fr *FormRenderer) resolveFormStyle(schema *Schema) string {
 	return strings.Join(styles, "; ")
 }
 
-// resolveActionStyle resolves action button design tokens
-func (fr *FormRenderer) resolveActionStyle(action Action) string {
-	if fr.tokens == nil || action.Style == nil {
-		return ""
-	}
-
-	var styles []string
-
-	// Resolve background token
-	if action.Style.BackgroundToken != "" {
-		if value, err := fr.tokens.ResolveToken(action.Style.BackgroundToken); err == nil {
-			styles = append(styles, fmt.Sprintf("background: %s", value))
-		}
-	} else if action.Style.Background != "" {
-		styles = append(styles, fmt.Sprintf("background: %s", action.Style.Background))
-	}
-
-	// Resolve color token
-	if action.Style.ColorToken != "" {
-		if value, err := fr.tokens.ResolveToken(action.Style.ColorToken); err == nil {
-			styles = append(styles, fmt.Sprintf("color: %s", value))
-		}
-	} else if action.Style.Color != "" {
-		styles = append(styles, fmt.Sprintf("color: %s", action.Style.Color))
-	}
-
-	return strings.Join(styles, "; ")
-}
 
 // renderRequiredScripts renders JavaScript dependencies
-func (fr *FormRenderer) renderRequiredScripts(schema *Schema) string {
+func (fr *DefaultFormRenderer) renderRequiredScripts(schema *Schema) string {
 	assets := fr.registry.GetAllRequiredAssets()
 	
 	var scripts []string
@@ -609,10 +533,72 @@ func (fr *FormRenderer) renderRequiredScripts(schema *Schema) string {
 }
 
 // attributesToString converts attributes map to HTML string
-func (fr *FormRenderer) attributesToString(attrs map[string]string) string {
+func (fr *DefaultFormRenderer) attributesToString(attrs map[string]string) string {
 	var parts []string
 	for key, value := range attrs {
 		parts = append(parts, fmt.Sprintf(`%s="%s"`, key, html.EscapeString(value)))
 	}
 	return strings.Join(parts, " ")
+}
+
+// RenderFormWithErrors renders a complete form with error handling (extended interface)
+func (fr *DefaultFormRenderer) RenderFormWithErrors(ctx context.Context, schema *Schema, data map[string]interface{}, errors map[string][]string) (string, error) {
+	if schema.Type != TypeForm {
+		return "", NewRenderError("invalid_schema_type", "schema must be of type 'form'")
+	}
+
+	var parts []string
+
+	// Form opening tag with attributes
+	formAttrs := fr.buildFormAttributes(schema)
+	parts = append(parts, fmt.Sprintf(`<form %s>`, fr.attributesToString(formAttrs)))
+
+	// Form header (title, description)
+	if header := fr.renderFormHeader(schema); header != "" {
+		parts = append(parts, header)
+	}
+
+	// CSRF token if security is enabled
+	if schema.Security != nil && schema.Security.CSRF != nil && schema.Security.CSRF.Enabled {
+		parts = append(parts, fr.renderCSRFToken(schema.Security.CSRF))
+	}
+
+	// Render form content based on layout
+	content, err := fr.renderFormContent(ctx, schema, data, errors)
+	if err != nil {
+		return "", err
+	}
+	parts = append(parts, content)
+
+	// Form actions (submit, reset, etc.)
+	if actions := fr.renderFormActions(schema); actions != "" {
+		parts = append(parts, actions)
+	}
+
+	// Form closing tag
+	parts = append(parts, `</form>`)
+
+	// Required assets and scripts
+	if scripts := fr.renderRequiredScripts(schema); scripts != "" {
+		parts = append(parts, scripts)
+	}
+
+	return strings.Join(parts, "\n"), nil
+}
+
+// Interface implementation methods for FormRenderer
+
+// RenderForm implements FormRenderer interface (without errors parameter)
+func (fr *DefaultFormRenderer) RenderForm(ctx context.Context, schema *Schema, data map[string]interface{}) (string, error) {
+	return fr.RenderFormWithErrors(ctx, schema, data, nil)
+}
+
+// RenderField implements FormRenderer interface
+func (fr *DefaultFormRenderer) RenderField(ctx context.Context, field *Field, value interface{}) (string, error) {
+	return fr.registry.RenderField(ctx, field, value, nil)
+}
+
+// RenderAction implements FormRenderer interface
+func (fr *DefaultFormRenderer) RenderAction(ctx context.Context, action *Action) (string, error) {
+	return fr.renderAction(*action), nil
 }

@@ -89,6 +89,15 @@ type FieldLayout struct {
 
 // Style defines visual styling
 type Style struct {
+	// Design token references (preferred)
+	BackgroundToken string `json:"backgroundToken,omitempty" validate:"design_token"`
+	ColorToken      string `json:"colorToken,omitempty" validate:"design_token"`
+	SpacingToken    string `json:"spacingToken,omitempty" validate:"design_token"`
+	FontSizeToken   string `json:"fontSizeToken,omitempty" validate:"design_token"`
+	FontWeightToken string `json:"fontWeightToken,omitempty" validate:"design_token"`
+	BorderToken     string `json:"borderToken,omitempty" validate:"design_token"`
+	
+	// Direct CSS values (fallback)
 	Background string `json:"background,omitempty" validate:"css_color"`
 	Color      string `json:"color,omitempty" validate:"css_color"`
 	Border     string `json:"border,omitempty" validate:"css_border"`

@@ -293,8 +293,8 @@ func (rtr *RichTextRenderer) Render(ctx context.Context, field *Field, value int
 	var textValue string
 	if value != nil {
 		textValue = fmt.Sprintf("%v", value)
-	} else if field.DefaultValue != nil {
-		textValue = fmt.Sprintf("%v", field.DefaultValue)
+	} else if field.Default != nil {
+		textValue = fmt.Sprintf("%v", field.Default)
 	}
 
 	attrs := map[string]string{
@@ -353,8 +353,8 @@ func (cr *CodeRenderer) Render(ctx context.Context, field *Field, value interfac
 	var textValue string
 	if value != nil {
 		textValue = fmt.Sprintf("%v", value)
-	} else if field.DefaultValue != nil {
-		textValue = fmt.Sprintf("%v", field.DefaultValue)
+	} else if field.Default != nil {
+		textValue = fmt.Sprintf("%v", field.Default)
 	}
 
 	attrs := map[string]string{
@@ -420,8 +420,8 @@ func (jr *JSONRenderer) Render(ctx context.Context, field *Field, value interfac
 	var textValue string
 	if value != nil {
 		textValue = fmt.Sprintf("%v", value)
-	} else if field.DefaultValue != nil {
-		textValue = fmt.Sprintf("%v", field.DefaultValue)
+	} else if field.Default != nil {
+		textValue = fmt.Sprintf("%v", field.Default)
 	}
 
 	attrs := map[string]string{
@@ -528,8 +528,8 @@ func (dr *DividerRenderer) GetRequiredAssets() []string { return []string{"css/d
 
 func (hr *HTMLRenderer) Render(ctx context.Context, field *Field, value interface{}, errors []string) (string, error) {
 	htmlContent := ""
-	if field.DefaultValue != nil {
-		htmlContent = fmt.Sprintf("%v", field.DefaultValue)
+	if field.Default != nil {
+		htmlContent = fmt.Sprintf("%v", field.Default)
 	}
 	return fmt.Sprintf(`<div class="field-html">%s</div>`, htmlContent), nil
 }
