@@ -10,26 +10,30 @@
 
 ## Table of Contents
 
-1. [Executive Summary](#1-executive-summary)
-2. [Architectural Overview](#2-architectural-overview)
-3. [Core Schema Definition](#3-core-schema-definition)
-4. [Type System Deep Dive](#4-type-system-deep-dive)
-5. [Field System](#5-field-system)
-6. [Validation System](#6-validation-system)
-7. [Layout Engine](#7-layout-engine)
-8. [Workflow System](#8-workflow-system)
-9. [Security Model](#9-security-model)
-10. [Event & Action System](#10-event--action-system)
-11. [Context & State Management](#11-context--state-management)
-12. [Error Handling & Diagnostics](#12-error-handling--diagnostics)
-13. [Serialization & Deserialization](#13-serialization--deserialization)
-14. [Performance Characteristics](#14-performance-characteristics)
-15. [Tooling & Ecosystem](#15-tooling--ecosystem)
-16. [Versioning & Migration](#16-versioning--migration)
-17. [Testing & Quality Assurance](#17-testing--quality-assurance)
-18. [Implementation Patterns](#18-implementation-patterns)
-19. [Security Considerations](#19-security-considerations)
-20. [Future Roadmap](#20-future-roadmap)
+1. [Executive Summary](#1--executive-summary)
+2. [Architectural Overview](#2--architectural-overview)
+3. [Core Schema Definition](#3--core-schema-definition)
+4. [Type System Deep Dive](#4--type-system-deep-dive)
+5. [Field System](#5--field-system)
+6. [Validation System](#6--validation-system)
+7. [Layout Engine](#7--layout-engine)
+8. [Theme System (shadcn/ui Design)](#8--theme-system-shadcnui-design)
+9. [Workflow System](#9--workflow-system)
+10. [Security Model](#9--security-model-1)
+11. [Event & Action System](#10--event--action-system)
+12. [UI Component System](#11--ui-component-system)
+13. [Context & State Management](#12--context--state-management)
+14. [Error Handling & Diagnostics](#12--error-handling--diagnostics-1)
+15. [Serialization & Deserialization](#13--serialization--deserialization)
+16. [Performance Characteristics](#14--performance-characteristics)
+17. [Tooling & Ecosystem](#15--tooling--ecosystem)
+18. [Versioning & Migration](#16--versioning--migration)
+19. [Testing & Quality Assurance](#17--testing--quality-assurance)
+20. [Implementation Patterns](#18--implementation-patterns)
+21. [Security Considerations](#19--security-considerations)
+22. [Future Roadmap](#20--future-roadmap)
+23. [Appendices](#21--appendices)
+24. [Conclusion](#--conclusion)
 
 ---
 
@@ -128,7 +132,7 @@ JSON Schema → Parse → Validate → Hydrate Context → Execute
 | **Schema Definition** | Declarative UI/logic specs | JSON |
 | **Core Engine** | Parsing, validation, execution | Go |
 | **Runtime Services** | State, auth, data fetching | Go + External |
-| **Client Rendering** | UI presentation | HTML/React/Mobile |
+| **Client Rendering** | UI presentation | HTML/Templ/Mobile/Desktop |
 
 ---
 
@@ -196,7 +200,7 @@ While UUIDs prevent collisions, human-readable IDs improve developer experience 
 
 - **Type:** `Type` enum
 - **Purpose:** Defines the schema's primary purpose
-- **Values:** `FORM`, `LIST`, `DASHBOARD`, `WIZARD`, `REPORT`, `MODAL`
+- **Values:** `form`, `list`, `dashboard`, `wizard`, `report`, `modal`
 
 ```go
 type Type string
@@ -290,27 +294,27 @@ type Meta struct {
 
 #### `Fields` — Content Definition
 
-See [Section 5: Field System](#5-field-system)
+See [Field System](#5--field-system)
 
 #### `Layout` — Visual Structure
 
-See [Section 7: Layout Engine](#7-layout-engine)
+See [Layout Engine](#7--layout-engine)
 
 #### `Workflow` — Business Logic
 
-See [Section 8: Workflow System](#8-workflow-system)
+See [Workflow System](#9--workflow-system)
 
 #### `Security` — Access Control
 
-See [Section 9: Security Model](#9-security-model)
+See [Security Model](#9--security-model-1)
 
 #### `Events` — Interactivity
 
-See [Section 10: Event & Action System](#10-event--action-system)
+See [Event & Action System](#10--event--action-system)
 
 #### `Context` — Runtime State
 
-See [Section 11: Context & State Management](#11-context--state-management)
+See [Context & State Management](#12--context--state-management)
 
 ---
 
@@ -322,7 +326,7 @@ As mentioned in section 3.2, the `Type` field determines the schema's rendering 
 
 ### 4.2 Type-Specific Behavior
 
-#### FORM Type
+#### Form Type
 
 **Purpose:** Capture user input with validation and submission.
 
@@ -335,7 +339,7 @@ As mentioned in section 3.2, the `Type` field determines the schema's rendering 
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "type": "FORM",
+  "type": "form",
   "version": "1.0.0",
   "meta": {
     "name": "Contact Form"
@@ -343,7 +347,7 @@ As mentioned in section 3.2, the `Type` field determines the schema's rendering 
   "fields": [
     {
       "name": "email",
-      "type": "EMAIL",
+      "type": "email",
       "label": "Email Address",
       "validation": {
         "required": true
@@ -351,7 +355,7 @@ As mentioned in section 3.2, the `Type` field determines the schema's rendering 
     },
     {
       "name": "message",
-      "type": "TEXT_AREA",
+      "type": "text_area",
       "label": "Message",
       "validation": {
         "required": true,
@@ -374,7 +378,7 @@ As mentioned in section 3.2, the `Type` field determines the schema's rendering 
 }
 ```
 
-#### LIST Type
+#### List Type
 
 **Purpose:** Display tabular or card-based data collections.
 
@@ -387,7 +391,7 @@ As mentioned in section 3.2, the `Type` field determines the schema's rendering 
 ```json
 {
   "id": "660e8400-e29b-41d4-a716-446655440001",
-  "type": "LIST",
+  "type": "list",
   "version": "1.0.0",
   "meta": {
     "name": "User Directory"
@@ -395,17 +399,17 @@ As mentioned in section 3.2, the `Type` field determines the schema's rendering 
   "fields": [
     {
       "name": "name",
-      "type": "TEXT",
+      "type": "text",
       "label": "Full Name"
     },
     {
       "name": "email",
-      "type": "EMAIL",
+      "type": "email",
       "label": "Email"
     },
     {
       "name": "role",
-      "type": "SELECT",
+      "type": "select",
       "label": "Role"
     }
   ],
@@ -420,7 +424,7 @@ As mentioned in section 3.2, the `Type` field determines the schema's rendering 
 }
 ```
 
-#### DASHBOARD Type
+#### Dashboard Type
 
 **Purpose:** Display multiple widgets/metrics in a grid.
 
@@ -429,13 +433,13 @@ As mentioned in section 3.2, the `Type` field determines the schema's rendering 
 ```json
 {
   "id": "770e8400-e29b-41d4-a716-446655440002",
-  "type": "DASHBOARD",
+  "type": "dashboard",
   "version": "1.0.0",
   "meta": {
     "name": "Sales Overview"
   },
   "layout": {
-    "type": "GRID",
+    "type": "grid",
     "areas": [
       {"id": "revenue", "x": 0, "y": 0, "w": 6, "h": 4},
       {"id": "conversions", "x": 6, "y": 0, "w": 6, "h": 4},
@@ -445,7 +449,7 @@ As mentioned in section 3.2, the `Type` field determines the schema's rendering 
 }
 ```
 
-#### WIZARD Type
+#### Wizard Type
 
 **Purpose:** Multi-step guided flows.
 
@@ -453,7 +457,7 @@ As mentioned in section 3.2, the `Type` field determines the schema's rendering 
 
 ```json
 {
-  "type": "WIZARD",
+  "type": "wizard",
   "workflow": {
     "steps": [
       {"id": "personal", "name": "Personal Info"},
@@ -598,7 +602,7 @@ const (
 ```json
 {
   "name": "first_name",
-  "type": "TEXT",
+  "type": "text",
   "label": "First Name",
   "placeholder": "Enter your first name",
   "validation": {
@@ -614,7 +618,7 @@ const (
 ```json
 {
   "name": "country",
-  "type": "SELECT",
+  "type": "select",
   "label": "Country",
   "options": {
     "choices": [
@@ -634,7 +638,7 @@ const (
 ```json
 {
   "name": "shipping_address",
-  "type": "TEXT_AREA",
+  "type": "text_area",
   "label": "Shipping Address",
   "conditions": {
     "show_if": {
@@ -651,7 +655,7 @@ const (
 ```json
 {
   "name": "total_price",
-  "type": "COMPUTED",
+  "type": "computed",
   "label": "Total Price",
   "options": {
     "expression": "price * quantity * (1 + tax_rate)"
@@ -678,7 +682,7 @@ type FieldValidation struct {
 
 ```go
 type FieldOptions struct {
-    // For SELECT/RADIO/CHECKBOX
+    // For select/radio/checkbox
     Choices []Choice `json:"choices,omitempty"`
     
     // For FILE/IMAGE
@@ -689,7 +693,7 @@ type FieldOptions struct {
     Step     float64 `json:"step,omitempty"`
     Precision int    `json:"precision,omitempty"`
     
-    // For COMPUTED
+    // For computed
     Expression string `json:"expression,omitempty"`
     
     // For RICH_TEXT/CODE
@@ -828,7 +832,7 @@ All validation tags follow the `go-validator` standard:
 | `min=n` | Minimum value/length | `validate:"min=5"` |
 | `max=n` | Maximum value/length | `validate:"max=100"` |
 | `len=n` | Exact length | `validate:"len=10"` |
-| `oneof=a b c` | Must be one of specified values | `validate:"oneof=FORM LIST"` |
+| `oneof=a b c` | Must be one of specified values | `validate:"oneof=form list"` |
 | `regexp` | Must match regex pattern | `validate:"regexp"` |
 | `dive` | Validate nested structures | `validate:"dive"` |
 
@@ -840,10 +844,10 @@ type CustomValidator struct {
     Func func(*Schema) error
 }
 
-// Example: Ensure WIZARD has workflow defined
+// Example: Ensure wizard has workflow defined
 validator.RegisterCustom("wizard_requires_workflow", func(s *Schema) error {
     if s.Type == TypeWizard && s.Workflow == nil {
-        return errors.New("WIZARD type requires workflow configuration")
+        return errors.New("wizard type requires workflow configuration")
     }
     return nil
 })
@@ -859,7 +863,7 @@ validator.RegisterCustom("wizard_requires_workflow", func(s *Schema) error {
   "fields": [
     {
       "name": "email",
-      "type": "EMAIL",
+      "type": "email",
       "depends_on": ["nonexistent_field"]
     }
   ]
@@ -880,7 +884,7 @@ validator.RegisterCustom("wizard_requires_workflow", func(s *Schema) error {
     {
       "code": "INVALID_VALUE",
       "field": "type",
-      "message": "Type must be one of: FORM, LIST, DASHBOARD, WIZARD, REPORT, MODAL",
+      "message": "Type must be one of: form, list, dashboard, wizard, report, modal",
       "details": {"value": "UNKNOWN_TYPE"}
     },
     {
@@ -931,7 +935,7 @@ const (
 
 ### 7.2 Layout Types
 
-#### GRID Layout
+#### Grid Layout
 
 12-column responsive grid system.
 
@@ -951,7 +955,7 @@ type LayoutArea struct {
 ```json
 {
   "layout": {
-    "type": "GRID",
+    "type": "grid",
     "responsive": true,
     "areas": [
       {"id": "header", "x": 0, "y": 0, "w": 12, "h": 2, "fields": ["title"]},
@@ -1834,7 +1838,7 @@ type Security struct {
 ```go
 type Authentication struct {
     Required bool     `json:"required"`
-    Methods  []string `json:"methods" validate:"dive,oneof=PASSWORD OAUTH SSO MFA"`
+    Methods  []string `json:"methods" validate:"dive,oneof=password OAUTH SSO MFA"`
     Redirect string   `json:"redirect,omitempty" validate:"omitempty,url"`
 }
 ```
@@ -1912,7 +1916,7 @@ type FieldSecurity struct {
 ```json
 {
   "name": "ssn",
-  "type": "TEXT",
+  "type": "text",
   "label": "Social Security Number",
   "security": {
     "view_roles": ["admin", "hr"],
@@ -2124,12 +2128,12 @@ type ModalAction struct {
 
 ### 11.1 Overview
 
-The **UI Component System** is the rendering layer that transforms Schema JSON definitions into actual user interfaces. This layer bridges the declarative schema definitions with concrete UI implementations across different frameworks (React, Vue, HTMX, or server-side HTML).
+The **UI Component System** is the rendering layer that transforms Schema JSON definitions into actual user interfaces. This layer bridges the declarative schema definitions with concrete UI implementations across different frameworks (React, Vue, HTMX, or server-side Templ+go).
 
 **Core Concept:**  
 Each `FieldType` or `Type` in the schema corresponds to a registered UI component that knows how to:
 
-1. **Render itself** — Generate appropriate HTML/JSX
+1. **Render itself** — Generate appropriate HTML/Templ functions/JSX
 2. **Validate input** — Apply field-level validation rules
 3. **Handle events** — Respond to user interactions
 4. **Integrate context** — Access workflow, security, and state
@@ -2159,7 +2163,7 @@ The Schema Engine backend serializes JSON + context data. A frontend adapter rea
                      ▼
 ┌─────────────────────────────────────────────────────────┐
 │              UI Renderer                                │
-│  (React / Vue / HTMX / HTML)                            │
+│  (React / Vue / Templ+HTMX / HTML)                            │
 └────────────────────┬────────────────────────────────────┘
                      │
                      ▼
@@ -2239,18 +2243,18 @@ These are the essential foundation components covering 80% of UI needs:
 
 | Component | Schema Type | Description | HTML Output |
 |-----------|-------------|-------------|-------------|
-| **Form** | `FORM` | Container for input fields and actions | `<form>` |
-| **Input** | `TEXT`, `EMAIL`, `PASSWORD` | Single-line text input | `<input>` |
-| **TextArea** | `TEXT_AREA` | Multi-line text input | `<textarea>` |
-| **Select** | `SELECT` | Dropdown selection | `<select>` |
-| **Checkbox** | `CHECKBOX` | Boolean or multi-select | `<input type="checkbox">` |
-| **Radio** | `RADIO` | Single-choice selection | `<input type="radio">` |
+| **Form** | `form` | Container for input fields and actions | `<form>` |
+| **Input** | `text`, `email`, `password` | Single-line text input | `<input>` |
+| **TextArea** | `text_area` | Multi-line text input | `<textarea>` |
+| **Select** | `select` | Dropdown selection | `<select>` |
+| **Checkbox** | `checkbox` | Boolean or multi-select | `<input type="checkbox">` |
+| **Radio** | `radio` | Single-choice selection | `<input type="radio">` |
 | **Button** | Button actions | Trigger actions/events | `<button>` |
 | **Card** | Container | Bordered content grouping | `<div class="card">` |
-| **Grid** | `GRID` layout | Rows/columns layout | `<div class="grid">` |
+| **Grid** | `grid` layout | Rows/columns layout | `<div class="grid">` |
 | **Table** | `TABLE` layout | Tabular data display | `<table>` |
 | **Tabs** | `TABS` layout | Tabbed sections | `<div class="tabs">` |
-| **Modal** | `MODAL` | Popup overlay | `<dialog>` |
+| **Modal** | `modal` | Popup overlay | `<dialog>` |
 
 ### 11.5 Form Field Components
 
@@ -2291,7 +2295,7 @@ func (c *TextInputComponent) Render(ctx *UIContext, node *SchemaNode) ([]byte, e
 ```json
 {
   "name": "email",
-  "type": "EMAIL",
+  "type": "email",
   "label": "Email Address",
   "placeholder": "you@example.com",
   "validation": {
@@ -2667,24 +2671,24 @@ Hello, John! Your balance is $1500.50
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "type": "FORM",
+  "type": "form",
   "version": "1.0.0",
   "fields": [
     {
       "name": "username",
-      "type": "TEXT",
+      "type": "text",
       "label": "Username",
       "validation": {"required": true}
     },
     {
       "name": "email",
-      "type": "EMAIL",
+      "type": "email",
       "label": "Email",
       "validation": {"required": true}
     }
   ],
   "layout": {
-    "type": "GRID",
+    "type": "grid",
     "areas": [
       {"id": "row1", "x": 0, "y": 0, "w": 12, "h": 1, "fields": ["username"]},
       {"id": "row2", "x": 0, "y": 1, "w": 12, "h": 1, "fields": ["email"]}
@@ -2722,10 +2726,10 @@ Hello, John! Your balance is $1500.50
 ```jsx
 // React Component Registry
 const componentMap = {
-  TEXT: TextInput,
-  EMAIL: EmailInput,
-  SELECT: SelectInput,
-  CHECKBOX: CheckboxInput,
+  text: TextInput,
+  email: EmailInput,
+  select: SelectInput,
+  checkbox: CheckboxInput,
   // ... more components
 };
 
@@ -3367,7 +3371,7 @@ func (v *ValidationCache) GetOrValidate(schema *Schema) []SchemaError {
 
 ```go
 func BenchmarkParse(b *testing.B) {
-    data := []byte(`{"id":"...","type":"FORM",...}`)
+    data := []byte(`{"id":"...","type":"form",...}`)
     
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
@@ -4124,7 +4128,7 @@ func EncryptSensitiveFields(schema *Schema) error {
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "type": "FORM",
+  "type": "form",
   "version": "1.0.0",
   "meta": {
     "name": "Customer Registration",
@@ -4136,7 +4140,7 @@ func EncryptSensitiveFields(schema *Schema) error {
   "fields": [
     {
       "name": "email",
-      "type": "EMAIL",
+      "type": "email",
       "label": "Email Address",
       "placeholder": "you@example.com",
       "validation": {
@@ -4146,7 +4150,7 @@ func EncryptSensitiveFields(schema *Schema) error {
     },
     {
       "name": "password",
-      "type": "PASSWORD",
+      "type": "password",
       "label": "Password",
       "validation": {
         "required": true,
@@ -4157,7 +4161,7 @@ func EncryptSensitiveFields(schema *Schema) error {
     },
     {
       "name": "company_name",
-      "type": "TEXT",
+      "type": "text",
       "label": "Company Name",
       "validation": {
         "required": true
@@ -4165,7 +4169,7 @@ func EncryptSensitiveFields(schema *Schema) error {
     },
     {
       "name": "company_size",
-      "type": "SELECT",
+      "type": "select",
       "label": "Company Size",
       "options": {
         "choices": [
@@ -4178,7 +4182,7 @@ func EncryptSensitiveFields(schema *Schema) error {
     },
     {
       "name": "terms_accepted",
-      "type": "CHECKBOX",
+      "type": "checkbox",
       "label": "I accept the terms and conditions",
       "validation": {
         "required": true,
@@ -4187,7 +4191,7 @@ func EncryptSensitiveFields(schema *Schema) error {
     }
   ],
   "layout": {
-    "type": "GRID",
+    "type": "grid",
     "responsive": true,
     "areas": [
       {"id": "row1", "x": 0, "y": 0, "w": 12, "h": 1, "fields": ["email"]},
