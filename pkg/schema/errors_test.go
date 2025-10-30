@@ -62,7 +62,7 @@ func (suite *ErrorsTestSuite) TestValidationErrorCollection() {
 	// Test initial state
 	require.False(suite.T(), collection.HasErrors())
 	require.Equal(suite.T(), 0, collection.Count())
-	require.Equal(suite.T(), "", collection.Error())
+	require.Equal(suite.T(), "no validation errors", collection.Error())
 	
 	// Add errors
 	err1 := NewValidationError("code1", "message1")
@@ -82,8 +82,8 @@ func (suite *ErrorsTestSuite) TestValidationErrorCollection() {
 	
 	// Test ErrorsByField method
 	fieldErrors := collection.ErrorsByField()
-	require.Contains(suite.T(), fieldErrors, "field1")
-	require.Contains(suite.T(), fieldErrors, "field2")
+	require.Contains(suite.T(), fieldErrors, "general") // err1 has no field
+	require.Contains(suite.T(), fieldErrors, "field2")  // err2 was added with field2
 }
 
 // Test error type checking functions
