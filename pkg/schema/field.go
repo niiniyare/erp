@@ -108,6 +108,10 @@ const (
 	FieldDisplay FieldType = "display" // Read-only display
 	FieldDivider FieldType = "divider" // Visual separator
 	FieldHTML    FieldType = "html"    // Raw HTML content
+	
+	// Collections
+	FieldRepeatable   FieldType = "repeatable"   // Repeatable field groups
+	FieldTableRepeater FieldType = "table_repeater" // Table-style repeatable fields
 )
 
 // FieldValidation defines validation rules for a field
@@ -376,13 +380,13 @@ func (f *Field) ValidateValue(value any) error {
 	if strVal, ok := value.(string); ok {
 		if f.Validation.MinLength != nil && len(strVal) < *f.Validation.MinLength {
 			if f.Validation.Messages.MinLength != "" {
-				return fmt.Errorf(f.Validation.Messages.MinLength)
+				return fmt.Errorf("%s", f.Validation.Messages.MinLength)
 			}
 			return fmt.Errorf("%s must be at least %d characters", f.Label, *f.Validation.MinLength)
 		}
 		if f.Validation.MaxLength != nil && len(strVal) > *f.Validation.MaxLength {
 			if f.Validation.Messages.MaxLength != "" {
-				return fmt.Errorf(f.Validation.Messages.MaxLength)
+				return fmt.Errorf("%s", f.Validation.Messages.MaxLength)
 			}
 			return fmt.Errorf("%s must be at most %d characters", f.Label, *f.Validation.MaxLength)
 		}
@@ -397,7 +401,7 @@ func (f *Field) ValidateValue(value any) error {
 			}
 			if !f.Validation.ExclusiveMin && numVal < *f.Validation.Min {
 				if f.Validation.Messages.Min != "" {
-					return fmt.Errorf(f.Validation.Messages.Min)
+					return fmt.Errorf("%s", f.Validation.Messages.Min)
 				}
 				return fmt.Errorf("%s must be at least %v", f.Label, *f.Validation.Min)
 			}
@@ -408,7 +412,7 @@ func (f *Field) ValidateValue(value any) error {
 			}
 			if !f.Validation.ExclusiveMax && numVal > *f.Validation.Max {
 				if f.Validation.Messages.Max != "" {
-					return fmt.Errorf(f.Validation.Messages.Max)
+					return fmt.Errorf("%s", f.Validation.Messages.Max)
 				}
 				return fmt.Errorf("%s must be at most %v", f.Label, *f.Validation.Max)
 			}

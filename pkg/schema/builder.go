@@ -1,16 +1,27 @@
 package schema
 
+import (
+	"context"
+	"time"
+)
+
 // Package-level helpers for common operations
 
 // Builder provides a fluent interface for building schemas programmatically
 type Builder struct {
-	schema *Schema
+	schema       *Schema
+	mixinSupport *MixinRegistry
+	validator    *ValidationRegistry
+	ruleEngine   *BusinessRuleEngine
 }
 
 // NewBuilder creates a new schema builder
 func NewBuilder(id string, schemaType Type, title string) *Builder {
 	return &Builder{
-		schema: NewSchema(id, schemaType, title),
+		schema:       NewSchema(id, schemaType, title),
+		mixinSupport: NewMixinRegistry(),
+		validator:    NewValidationRegistry(),
+		ruleEngine:   NewBusinessRuleEngine(),
 	}
 }
 
@@ -294,6 +305,114 @@ func (b *Builder) MustBuild() *Schema {
 	return schema
 }
 
+// Foundation features - Mixin support
+
+// WithMixin applies a mixin to the schema
+func (b *Builder) WithMixin(mixinID string) *Builder {
+	if mixin, err := b.mixinSupport.Get(mixinID); err == nil && mixin != nil {
+		// Apply mixin fields
+		for _, field := range mixin.Fields {
+			b.schema.AddField(field)
+		}
+		// Apply mixin actions
+		for _, action := range mixin.Actions {
+			b.schema.AddAction(action)
+		}
+		// Update schema metadata
+		if b.schema.Meta == nil {
+			b.schema.Meta = &Meta{CustomData: make(map[string]any)}
+		} else if b.schema.Meta.CustomData == nil {
+			b.schema.Meta.CustomData = make(map[string]any)
+		}
+		if appliedMixins, exists := b.schema.Meta.CustomData["applied_mixins"]; exists {
+			if mixinList, ok := appliedMixins.([]string); ok {
+				b.schema.Meta.CustomData["applied_mixins"] = append(mixinList, mixinID)
+			}
+		} else {
+			b.schema.Meta.CustomData["applied_mixins"] = []string{mixinID}
+		}
+	}
+	return b
+}
+
+// WithCustomMixin applies a custom mixin
+func (b *Builder) WithCustomMixin(mixin *Mixin) *Builder {
+	if err := b.mixinSupport.Register(mixin); err == nil {
+		b.WithMixin(mixin.ID)
+	}
+	return b
+}
+
+// WithRepeatable adds a repeatable field
+func (b *Builder) WithRepeatable(field *RepeatableField) *Builder {
+	b.schema.AddField(field.Field)
+	return b
+}
+
+// WithValidationRegistry sets a custom validation registry
+func (b *Builder) WithValidationRegistry(registry *ValidationRegistry) *Builder {
+	b.validator = registry
+	return b
+}
+
+// WithCustomValidator adds a custom validator
+func (b *Builder) WithCustomValidator(name string, validator ValidatorFunc) *Builder {
+	b.validator.Register(name, validator)
+	return b
+}
+
+// WithAsyncValidator adds an async validator
+func (b *Builder) WithAsyncValidator(validator *AsyncValidator) *Builder {
+	b.validator.RegisterAsync(validator)
+	return b
+}
+
+// GetMixinRegistry returns the mixin registry for advanced operations
+func (b *Builder) GetMixinRegistry() *MixinRegistry {
+	return b.mixinSupport
+}
+
+// GetValidationRegistry returns the validation registry for advanced operations
+func (b *Builder) GetValidationRegistry() *ValidationRegistry {
+	return b.validator
+}
+
+// WithBusinessRule adds a business rule to the schema
+func (b *Builder) WithBusinessRule(rule *BusinessRule) *Builder {
+	b.ruleEngine.AddRule(rule)
+	return b
+}
+
+// WithBusinessRuleBuilder adds a business rule using the builder pattern
+func (b *Builder) WithBusinessRuleBuilder(ruleBuilder *BusinessRuleBuilder) *Builder {
+	if rule, err := ruleBuilder.Build(); err == nil {
+		b.ruleEngine.AddRule(rule)
+	}
+	return b
+}
+
+// GetBusinessRuleEngine returns the business rule engine for advanced operations
+func (b *Builder) GetBusinessRuleEngine() *BusinessRuleEngine {
+	return b.ruleEngine
+}
+
+// ApplyBusinessRules applies business rules to the schema based on data
+func (b *Builder) ApplyBusinessRules(ctx context.Context, data map[string]any) (*Schema, error) {
+	return b.ruleEngine.ApplyRules(ctx, b.schema, data)
+}
+
+// BuildWithRules builds the schema and applies business rules based on provided data
+func (b *Builder) BuildWithRules(ctx context.Context, data map[string]any) (*Schema, error) {
+	// First build the base schema
+	schema, err := b.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	// Then apply business rules
+	return b.ruleEngine.ApplyRules(ctx, schema, data)
+}
+
 // Helper functions for creating common configurations
 
 // NewGridLayout creates a grid layout with specified columns
@@ -438,4 +557,208 @@ func (fb *FieldBuilder) WithValidation(validation *FieldValidation) *FieldBuilde
 // Build returns the constructed field
 func (fb *FieldBuilder) Build() Field {
 	return fb.field
+}
+
+// Foundation helper methods for common schema patterns
+
+// NewInvoiceFormBuilder creates a builder for invoice forms with line items
+func NewInvoiceFormBuilder() *Builder {
+	builder := NewBuilder("invoice_form", TypeForm, "Invoice Form")
+
+	// Apply audit fields mixin
+	builder.WithMixin("audit_fields")
+
+	// Add basic invoice fields
+	builder.AddTextField("invoice_number", "Invoice Number", true)
+	builder.AddDateField("invoice_date", "Invoice Date", true)
+	builder.AddDateField("due_date", "Due Date", true)
+
+	// Add customer information
+	builder.AddTextField("customer_name", "Customer Name", true)
+	builder.AddTextField("customer_email", "Customer Email", false)
+
+	// Add repeatable line items
+	lineItems := CreateInvoiceLineItemsField()
+	builder.WithRepeatable(lineItems)
+
+	// Add totals (readonly calculated fields)
+	builder.AddFieldWithConfig(Field{
+		Name:     "subtotal",
+		Type:     FieldCurrency,
+		Label:    "Subtotal",
+		Readonly: true,
+	})
+	builder.AddFieldWithConfig(Field{
+		Name:     "tax_amount",
+		Type:     FieldCurrency,
+		Label:    "Tax Amount",
+		Readonly: true,
+	})
+	builder.AddFieldWithConfig(Field{
+		Name:     "total",
+		Type:     FieldCurrency,
+		Label:    "Total",
+		Readonly: true,
+	})
+
+	// Add actions
+	builder.AddSubmitButton("Save Invoice")
+	builder.AddButton("preview", "Preview", "secondary")
+	builder.AddButton("send", "Send", "primary")
+
+	return builder
+}
+
+// NewContactFormBuilder creates a builder for contact forms
+func NewContactFormBuilder() *Builder {
+	builder := NewBuilder("contact_form", TypeForm, "Contact Form")
+
+	// Apply contact fields and audit fields mixins
+	builder.WithMixin("contact_fields")
+	builder.WithMixin("audit_fields")
+
+	// Add additional contact-specific fields
+	builder.AddSelectField("contact_type", "Contact Type", true, []Option{
+		CreateOption("customer", "Customer"),
+		CreateOption("supplier", "Supplier"),
+		CreateOption("employee", "Employee"),
+		CreateOption("other", "Other"),
+	})
+
+	builder.AddTextareaField("notes", "Notes", false, 4)
+
+	// Add custom validation
+	builder.WithCustomValidator("phone_required_for_customers", func(ctx context.Context, value any, params map[string]any) error {
+		// Custom business logic
+		return nil
+	})
+
+	builder.AddSubmitButton("Save Contact")
+
+	return builder
+}
+
+// NewAddressFormBuilder creates a builder for address forms
+func NewAddressFormBuilder() *Builder {
+	builder := NewBuilder("address_form", TypeForm, "Address Form")
+
+	// Apply address fields mixin
+	builder.WithMixin("address_fields")
+
+	// Add address type selection
+	builder.AddSelectField("address_type", "Address Type", true, []Option{
+		CreateOption("billing", "Billing Address"),
+		CreateOption("shipping", "Shipping Address"),
+		CreateOption("main", "Main Address"),
+	})
+
+	builder.AddCheckboxField("is_default", "Set as Default", false)
+
+	builder.AddSubmitButton("Save Address")
+
+	return builder
+}
+
+// NewUserRegistrationBuilder creates a builder for user registration with validation
+func NewUserRegistrationBuilder() *Builder {
+	builder := NewBuilder("user_registration", TypeForm, "User Registration")
+
+	// Add user fields
+	builder.AddTextField("username", "Username", true)
+	builder.AddEmailField("email", "Email Address", true)
+	builder.AddPasswordField("password", "Password", true)
+	builder.AddPasswordField("password_confirmation", "Confirm Password", true)
+
+	// Add personal information
+	builder.AddTextField("first_name", "First Name", true)
+	builder.AddTextField("last_name", "Last Name", true)
+	builder.AddDateField("birth_date", "Date of Birth", false)
+
+	// Add custom validators
+	builder.WithAsyncValidator(&AsyncValidator{
+		Name:     "username_available",
+		Debounce: 500 * time.Millisecond,
+		Cache:    true,
+		CacheTTL: 2 * time.Minute,
+		Validate: func(ctx context.Context, value any, params map[string]any) error {
+			// Would check database for username availability
+			return nil
+		},
+	})
+
+	builder.WithAsyncValidator(&AsyncValidator{
+		Name:     "email_available",
+		Debounce: 500 * time.Millisecond,
+		Cache:    true,
+		CacheTTL: 2 * time.Minute,
+		Validate: func(ctx context.Context, value any, params map[string]any) error {
+			// Would check database for email availability
+			return nil
+		},
+	})
+
+	builder.AddCheckboxField("terms_accepted", "I accept the Terms of Service", false)
+	builder.AddSubmitButton("Create Account")
+
+	return builder
+}
+
+// NewTaskFormBuilder creates a builder for task management forms
+func NewTaskFormBuilder() *Builder {
+	builder := NewBuilder("task_form", TypeForm, "Task Form")
+
+	// Apply audit fields for tracking
+	builder.WithMixin("audit_fields")
+
+	// Add task fields
+	builder.AddTextField("title", "Task Title", true)
+	builder.AddTextareaField("description", "Description", false, 6)
+
+	builder.AddSelectField("priority", "Priority", true, []Option{
+		CreateOption("low", "Low"),
+		CreateOption("medium", "Medium"),
+		CreateOption("high", "High"),
+		CreateOption("urgent", "Urgent"),
+	})
+
+	builder.AddSelectField("status", "Status", true, []Option{
+		CreateOption("todo", "To Do"),
+		CreateOption("in_progress", "In Progress"),
+		CreateOption("review", "Under Review"),
+		CreateOption("done", "Completed"),
+	})
+
+	builder.AddDateField("due_date", "Due Date", false)
+	builder.AddTextField("assigned_to", "Assigned To", false)
+
+	// Add subtasks as repeatable field
+	subtaskTemplate := []Field{
+		{
+			Name:     "title",
+			Type:     FieldText,
+			Label:    "Subtask Title",
+			Required: true,
+		},
+		{
+			Name:    "completed",
+			Type:    FieldCheckbox,
+			Label:   "Completed",
+			Default: false,
+		},
+	}
+
+	subtasks, _ := NewRepeatableField("subtasks", "Subtasks").
+		WithTemplate(subtaskTemplate).
+		WithMinItems(0).
+		WithMaxItems(20).
+		WithItemLabel("Subtask {index}").
+		WithTexts("Add Subtask", "Remove").
+		Build()
+
+	builder.WithRepeatable(subtasks)
+
+	builder.AddSubmitButton("Save Task")
+	builder.AddButton("assign", "Assign", "secondary")
+
+	return builder
 }

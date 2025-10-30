@@ -148,36 +148,26 @@ func (a *Action) IsEnabled() bool {
 	return !a.Disabled && !a.Loading
 }
 
-// GetVariantClass returns Flowbite CSS classes for the variant
+// GetVariantClass returns semantic variant identifier for UI rendering
 func (a *Action) GetVariantClass() string {
 	switch a.Variant {
-	case "primary":
-		return "text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-	case "secondary":
-		return "text-gray-900 bg-white border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:focus:ring-gray-700"
-	case "outline":
-		return "text-blue-700 border border-blue-700 hover:bg-blue-700 hover:text-white focus:ring-4 focus:ring-blue-300 dark:border-blue-500 dark:text-blue-500 dark:hover:bg-blue-500 dark:hover:text-white dark:focus:ring-blue-800"
-	case "ghost":
-		return "text-gray-500 hover:text-gray-900 hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-800 dark:focus:ring-gray-700"
-	case "destructive":
-		return "text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
+	case "primary", "secondary", "outline", "ghost", "destructive":
+		return "action-" + a.Variant
+	case "":
+		return "action-primary" // Default fallback
 	default:
-		return "text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300"
+		return "action-primary" // Unknown variants default to primary
 	}
 }
 
-// GetSizeClass returns Flowbite CSS classes for the size
+// GetSizeClass returns semantic size identifier for UI rendering
 func (a *Action) GetSizeClass() string {
 	switch a.Size {
-	case "sm":
-		return "px-3 py-2 text-sm"
-	case "md":
-		return "px-5 py-2.5 text-sm"
-	case "lg":
-		return "px-5 py-3 text-base"
-	case "xl":
-		return "px-6 py-3.5 text-base"
+	case "sm", "md", "lg", "xl":
+		return "action-" + a.Size
+	case "":
+		return "action-md" // Default fallback
 	default:
-		return "px-5 py-2.5 text-sm"
+		return "action-md" // Unknown sizes default to medium
 	}
 }
