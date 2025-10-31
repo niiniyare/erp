@@ -18,7 +18,7 @@ The `condition` package provides a production-ready runtime condition evaluation
 ## Installation
 
 ```bash
-go get github.com/niiniyare/erp/condition
+go get github.com/niiniyare/erp/pkg/condition
 ```
 
 ## Quick Start

@@ -414,7 +414,7 @@ As mentioned in section 3.2, the `Type` field determines the schema's rendering 
     }
   ],
   "layout": {
-    "type": "TABLE",
+    "type": "table",
     "columns": [
       {"field": "name", "width": "40%"},
       {"field": "email", "width": "40%"},
@@ -987,14 +987,14 @@ Flexible box layout for dynamic content.
 }
 ```
 
-#### TABLE Layout
+#### Table Layout
 
 Column-based display for lists.
 
 ```json
 {
   "layout": {
-    "type": "TABLE",
+    "type": "table",
     "columns": [
       {"field": "name", "width": "30%", "sortable": true},
       {"field": "email", "width": "30%"},
@@ -1005,14 +1005,14 @@ Column-based display for lists.
 }
 ```
 
-#### TABS Layout
+#### Tabs Layout
 
 Tabbed interface for grouped content.
 
 ```json
 {
   "layout": {
-    "type": "TABS",
+    "type": "tabs",
     "areas": [
       {"id": "personal", "label": "Personal Info", "fields": ["name", "email"]},
       {"id": "address", "label": "Address", "fields": ["street", "city", "zip"]},
@@ -1687,7 +1687,7 @@ type Condition struct {
 ```json
 {
   "workflow": {
-    "type": "LINEAR",
+    "type": "linear",
     "initial_step": "step1",
     "steps": [
       {
@@ -1721,7 +1721,7 @@ type Condition struct {
 ```json
 {
   "workflow": {
-    "type": "BRANCH",
+    "type": "branch",
     "initial_step": "start",
     "steps": [
       {"id": "start", "name": "Account Type", "fields": ["account_type"]},
@@ -1802,7 +1802,7 @@ A complex Temporal workflow with 50 activities can be represented in the UI sche
 ```json
 {
   "workflow": {
-    "type": "LINEAR",
+    "type": "linear",
     "steps": [
       {"id": "submit", "name": "Submit Request"},
       {"id": "approve", "name": "Approval Process"},
@@ -2252,8 +2252,8 @@ These are the essential foundation components covering 80% of UI needs:
 | **Button** | Button actions | Trigger actions/events | `<button>` |
 | **Card** | Container | Bordered content grouping | `<div class="card">` |
 | **Grid** | `grid` layout | Rows/columns layout | `<div class="grid">` |
-| **Table** | `TABLE` layout | Tabular data display | `<table>` |
-| **Tabs** | `TABS` layout | Tabbed sections | `<div class="tabs">` |
+| **Table** | `table` layout | Tabular data display | `<table>` |
+| **Tabs** | `tabs` layout | Tabbed sections | `<div class="tabs">` |
 | **Modal** | `modal` | Popup overlay | `<dialog>` |
 
 ### 11.5 Form Field Components

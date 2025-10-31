@@ -11,17 +11,17 @@ import (
 
 // BusinessRule represents a business logic rule that can be applied to schemas
 type BusinessRule struct {
-	ID          string                  `json:"id" validate:"required,min=1,max=100"`
-	Name        string                  `json:"name" validate:"required,min=1,max=200"`
-	Description string                  `json:"description,omitempty"`
-	Type        BusinessRuleType        `json:"type" validate:"required"`
-	Priority    int                     `json:"priority,omitempty"`
-	Enabled     bool                    `json:"enabled"`
+	ID          string                    `json:"id" validate:"required,min=1,max=100"`
+	Name        string                    `json:"name" validate:"required,min=1,max=200"`
+	Description string                    `json:"description,omitempty"`
+	Type        BusinessRuleType          `json:"type" validate:"required"`
+	Priority    int                       `json:"priority,omitempty"`
+	Enabled     bool                      `json:"enabled"`
 	Condition   *condition.ConditionGroup `json:"condition,omitempty"`
-	Actions     []BusinessRuleAction    `json:"actions" validate:"dive"`
-	Metadata    map[string]any          `json:"metadata,omitempty"`
-	CreatedAt   time.Time               `json:"created_at"`
-	UpdatedAt   time.Time               `json:"updated_at"`
+	Actions     []BusinessRuleAction      `json:"actions" validate:"dive"`
+	Metadata    map[string]any            `json:"metadata,omitempty"`
+	CreatedAt   time.Time                 `json:"created_at"`
+	UpdatedAt   time.Time                 `json:"updated_at"`
 }
 
 // BusinessRuleType defines the type of business rule
@@ -49,7 +49,7 @@ const (
 	RuleTypeDataFormat      BusinessRuleType = "data_format"
 
 	// Workflow rules
-	RuleTypeWorkflowTrigger BusinessRuleType = "workflow_trigger"
+	RuleTypeWorkflowTrigger  BusinessRuleType = "workflow_trigger"
 	RuleTypeWorkflowApproval BusinessRuleType = "workflow_approval"
 )
 
@@ -66,18 +66,18 @@ type BusinessRuleActionType string
 
 const (
 	// Field actions
-	ActionShowField    BusinessRuleActionType = "show_field"
-	ActionHideField    BusinessRuleActionType = "hide_field"
-	ActionRequireField BusinessRuleActionType = "require_field"
+	ActionShowField     BusinessRuleActionType = "show_field"
+	ActionHideField     BusinessRuleActionType = "hide_field"
+	ActionRequireField  BusinessRuleActionType = "require_field"
 	ActionOptionalField BusinessRuleActionType = "optional_field"
-	ActionSetDefault   BusinessRuleActionType = "set_default"
-	ActionSetOptions   BusinessRuleActionType = "set_options"
-	ActionCalculate    BusinessRuleActionType = "calculate"
+	ActionSetDefault    BusinessRuleActionType = "set_default"
+	ActionSetOptions    BusinessRuleActionType = "set_options"
+	ActionCalculate     BusinessRuleActionType = "calculate"
 
 	// Action actions
-	ActionShowButton   BusinessRuleActionType = "show_button"
-	ActionHideButton   BusinessRuleActionType = "hide_button"
-	ActionEnableButton BusinessRuleActionType = "enable_button"
+	ActionShowButton    BusinessRuleActionType = "show_button"
+	ActionHideButton    BusinessRuleActionType = "hide_button"
+	ActionEnableButton  BusinessRuleActionType = "enable_button"
 	ActionDisableButton BusinessRuleActionType = "disable_button"
 
 	// Schema actions
@@ -155,20 +155,20 @@ func (bre *BusinessRuleEngine) AddRule(rule *BusinessRule) error {
 	if rule == nil {
 		return NewValidationError("business_rule", "business rule is required")
 	}
-	
+
 	if err := bre.validateRule(rule); err != nil {
 		return err
 	}
 
 	bre.mu.Lock()
 	defer bre.mu.Unlock()
-	
+
 	now := time.Now()
 	if rule.CreatedAt.IsZero() {
 		rule.CreatedAt = now
 	}
 	rule.UpdatedAt = now
-	
+
 	bre.rules[rule.ID] = rule
 	return nil
 }
@@ -177,11 +177,11 @@ func (bre *BusinessRuleEngine) AddRule(rule *BusinessRule) error {
 func (bre *BusinessRuleEngine) RemoveRule(ruleID string) error {
 	bre.mu.Lock()
 	defer bre.mu.Unlock()
-	
+
 	if _, exists := bre.rules[ruleID]; !exists {
 		return NewValidationError("rule_not_found", fmt.Sprintf("business rule %s not found", ruleID))
 	}
-	
+
 	delete(bre.rules, ruleID)
 	return nil
 }
@@ -190,7 +190,7 @@ func (bre *BusinessRuleEngine) RemoveRule(ruleID string) error {
 func (bre *BusinessRuleEngine) GetRule(ruleID string) (*BusinessRule, bool) {
 	bre.mu.RLock()
 	defer bre.mu.RUnlock()
-	
+
 	rule, exists := bre.rules[ruleID]
 	return rule, exists
 }
@@ -199,7 +199,7 @@ func (bre *BusinessRuleEngine) GetRule(ruleID string) (*BusinessRule, bool) {
 func (bre *BusinessRuleEngine) ListRules() []*BusinessRule {
 	bre.mu.RLock()
 	defer bre.mu.RUnlock()
-	
+
 	rules := make([]*BusinessRule, 0, len(bre.rules))
 	for _, rule := range bre.rules {
 		rules = append(rules, rule)
@@ -211,32 +211,32 @@ func (bre *BusinessRuleEngine) ListRules() []*BusinessRule {
 func (bre *BusinessRuleEngine) ApplyRules(ctx context.Context, schema *Schema, data map[string]any) (*Schema, error) {
 	bre.mu.RLock()
 	defer bre.mu.RUnlock()
-	
+
 	// Create a copy of the schema to modify
 	modifiedSchema := *schema
 	modifiedSchema.Fields = make([]Field, len(schema.Fields))
 	copy(modifiedSchema.Fields, schema.Fields)
 	modifiedSchema.Actions = make([]Action, len(schema.Actions))
 	copy(modifiedSchema.Actions, schema.Actions)
-	
+
 	// Collect applicable rules and sort by priority
 	applicableRules := bre.getApplicableRules()
-	
+
 	collector := NewErrorCollector()
-	
+
 	// Apply each rule
 	for _, rule := range applicableRules {
 		if !rule.Enabled {
 			continue
 		}
-		
+
 		// Check if rule condition is met
 		shouldApply, err := bre.evaluateRuleCondition(ctx, rule, data)
 		if err != nil {
 			collector.AddValidationError(rule.ID, "condition_evaluation_failed", err.Error())
 			continue
 		}
-		
+
 		if shouldApply {
 			if err := bre.applyRuleActions(ctx, rule, &modifiedSchema, data); err != nil {
 				if schemaErr, ok := err.(SchemaError); ok {
@@ -247,40 +247,40 @@ func (bre *BusinessRuleEngine) ApplyRules(ctx context.Context, schema *Schema, d
 			}
 		}
 	}
-	
+
 	if collector.HasErrors() {
 		return schema, collector.Errors()
 	}
-	
+
 	return &modifiedSchema, nil
 }
 
 // validateRule validates a business rule configuration
 func (bre *BusinessRuleEngine) validateRule(rule *BusinessRule) error {
 	collector := NewErrorCollector()
-	
+
 	if rule.ID == "" {
 		collector.AddValidationError("id", "required", "rule ID is required")
 	}
-	
+
 	if rule.Name == "" {
 		collector.AddValidationError("name", "required", "rule name is required")
 	}
-	
+
 	if rule.Type == "" {
 		collector.AddValidationError("type", "required", "rule type is required")
 	}
-	
+
 	if len(rule.Actions) == 0 {
 		collector.AddValidationError("actions", "required", "rule must have at least one action")
 	}
-	
+
 	// Validate actions
 	for i, action := range rule.Actions {
 		if action.Type == "" {
 			collector.AddValidationError(fmt.Sprintf("actions[%d].type", i), "required", "action type is required")
 		}
-		
+
 		// Validate action-specific requirements
 		switch action.Type {
 		case ActionShowField, ActionHideField, ActionRequireField, ActionOptionalField:
@@ -293,11 +293,11 @@ func (bre *BusinessRuleEngine) validateRule(rule *BusinessRule) error {
 			}
 		}
 	}
-	
+
 	if collector.HasErrors() {
 		return collector.Errors()
 	}
-	
+
 	return nil
 }
 
@@ -307,7 +307,7 @@ func (bre *BusinessRuleEngine) getApplicableRules() []*BusinessRule {
 	for _, rule := range bre.rules {
 		rules = append(rules, rule)
 	}
-	
+
 	// Sort by priority (higher priority first)
 	for i := 0; i < len(rules)-1; i++ {
 		for j := i + 1; j < len(rules); j++ {
@@ -316,7 +316,7 @@ func (bre *BusinessRuleEngine) getApplicableRules() []*BusinessRule {
 			}
 		}
 	}
-	
+
 	return rules
 }
 
@@ -325,7 +325,7 @@ func (bre *BusinessRuleEngine) evaluateRuleCondition(ctx context.Context, rule *
 	if rule.Condition == nil {
 		return true, nil // No condition means always apply
 	}
-	
+
 	evalCtx := condition.NewEvalContext(data, condition.DefaultEvalOptions())
 	return bre.evaluator.Evaluate(ctx, rule.Condition, evalCtx)
 }
@@ -333,7 +333,7 @@ func (bre *BusinessRuleEngine) evaluateRuleCondition(ctx context.Context, rule *
 // applyRuleActions applies all actions for a rule
 func (bre *BusinessRuleEngine) applyRuleActions(ctx context.Context, rule *BusinessRule, schema *Schema, data map[string]any) error {
 	collector := NewErrorCollector()
-	
+
 	for i, action := range rule.Actions {
 		if err := bre.applyAction(ctx, action, schema, data); err != nil {
 			collector.AddValidationError(
@@ -343,11 +343,11 @@ func (bre *BusinessRuleEngine) applyRuleActions(ctx context.Context, rule *Busin
 			)
 		}
 	}
-	
+
 	if collector.HasErrors() {
 		return collector.Errors()
 	}
-	
+
 	return nil
 }
 
@@ -356,40 +356,40 @@ func (bre *BusinessRuleEngine) applyAction(ctx context.Context, action BusinessR
 	switch action.Type {
 	case ActionShowField:
 		return bre.setFieldVisibility(schema, action.Target, true)
-	
+
 	case ActionHideField:
 		return bre.setFieldVisibility(schema, action.Target, false)
-	
+
 	case ActionRequireField:
 		return bre.setFieldRequired(schema, action.Target, true)
-	
+
 	case ActionOptionalField:
 		return bre.setFieldRequired(schema, action.Target, false)
-	
+
 	case ActionSetDefault:
 		return bre.setFieldDefault(schema, action.Target, action.Value)
-	
+
 	case ActionSetOptions:
 		if options, ok := action.Value.([]Option); ok {
 			return bre.setFieldOptions(schema, action.Target, options)
 		}
 		return NewValidationError("invalid_options", "options must be []Option type")
-	
+
 	case ActionCalculate:
 		return bre.calculateFieldValue(ctx, schema, action.Target, action.Params, data)
-	
+
 	case ActionShowButton:
 		return bre.setActionVisibility(schema, action.Target, true)
-	
+
 	case ActionHideButton:
 		return bre.setActionVisibility(schema, action.Target, false)
-	
+
 	case ActionEnableButton:
 		return bre.setActionEnabled(schema, action.Target, true)
-	
+
 	case ActionDisableButton:
 		return bre.setActionEnabled(schema, action.Target, false)
-	
+
 	default:
 		return NewValidationError("unsupported_action", fmt.Sprintf("action type %s not supported", action.Type))
 	}
@@ -436,7 +436,7 @@ func (bre *BusinessRuleEngine) setFieldOptions(schema *Schema, fieldName string,
 	return NewValidationError("field_not_found", fmt.Sprintf("field %s not found", fieldName))
 }
 
-func (bre *BusinessRuleEngine) calculateFieldValue(ctx context.Context, schema *Schema, fieldName string, params map[string]any, data map[string]any) error {
+func (bre *BusinessRuleEngine) calculateFieldValue(_ context.Context, schema *Schema, fieldName string, params map[string]any, data map[string]any) error {
 	// This would implement field calculations using the condition engine
 	// For now, it's a placeholder implementation
 	for i := range schema.Fields {
@@ -445,7 +445,7 @@ func (bre *BusinessRuleEngine) calculateFieldValue(ctx context.Context, schema *
 			// Example: params["formula"] = "quantity * unit_price"
 			if formula, exists := params["formula"]; exists {
 				// Use condition engine to evaluate formula
-				_ = formula // Placeholder - would implement calculation logic
+				_ = formula                      // Placeholder - would implement calculation logic
 				schema.Fields[i].Readonly = true // Calculated fields are typically readonly
 			}
 			return nil
@@ -554,13 +554,13 @@ func (brb *BusinessRuleBuilder) Build() (*BusinessRule, error) {
 		brb.rule.CreatedAt = now
 	}
 	brb.rule.UpdatedAt = now
-	
+
 	// Validate rule
 	engine := &BusinessRuleEngine{}
 	if err := engine.validateRule(brb.rule); err != nil {
 		return nil, err
 	}
-	
+
 	return brb.rule, nil
 }
 
@@ -572,7 +572,7 @@ func CreateFieldVisibilityRule(id, fieldName string, condition *condition.Condit
 	if !visible {
 		actionType = ActionHideField
 	}
-	
+
 	return NewBusinessRule(id, fmt.Sprintf("%s visibility rule", fieldName), RuleTypeFieldVisibility).
 		WithCondition(condition).
 		WithAction(actionType, fieldName, nil).
@@ -585,7 +585,7 @@ func CreateFieldRequiredRule(id, fieldName string, condition *condition.Conditio
 	if !required {
 		actionType = ActionOptionalField
 	}
-	
+
 	return NewBusinessRule(id, fmt.Sprintf("%s required rule", fieldName), RuleTypeFieldRequired).
 		WithCondition(condition).
 		WithAction(actionType, fieldName, nil).
@@ -597,9 +597,10 @@ func CreateCalculationRule(id, fieldName, formula string, condition *condition.C
 	params := map[string]any{
 		"formula": formula,
 	}
-	
+
 	return NewBusinessRule(id, fmt.Sprintf("%s calculation rule", fieldName), RuleTypeDataCalculation).
 		WithCondition(condition).
 		WithActionAndParams(ActionCalculate, fieldName, nil, params).
 		Build()
 }
+
