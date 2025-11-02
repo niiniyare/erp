@@ -394,3 +394,16 @@ func SpacingSM() string {
 func SpacingLG() string {
 	return defaultTokenRegistry.GetSpacing("lg")
 }
+
+// Theme represents the theme configuration for a schema
+type Theme struct {
+	Name        string            `json:"name" validate:"required"`
+	Tokens      *DesignTokens     `json:"tokens,omitempty"`
+	Colors      map[string]string `json:"colors,omitempty"`
+	Fonts       map[string]string `json:"fonts,omitempty"`
+	Breakpoints map[string]string `json:"breakpoints,omitempty"`
+	CustomCSS   string            `json:"customCSS,omitempty"`
+}
+
+// Tokens represents the token configuration for a schema (alias to DesignTokens)
+type Tokens = DesignTokens

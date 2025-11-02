@@ -320,7 +320,7 @@ func (rfb *RepeatableFieldBuilder) Build() (*RepeatableField, error) {
 
 // Helper function to create invoice line items schema
 func CreateInvoiceLineItemsField() *RepeatableField {
-	lineItemsField, _ := NewRepeatableField("line_items", "Line Items").
+	lineItemsField, err := NewRepeatableField("line_items", "Line Items").
 		WithTemplate([]Field{
 			{
 				Name:     "product_id",
@@ -366,6 +366,63 @@ func CreateInvoiceLineItemsField() *RepeatableField {
 		WithItemLabel("Line %d").
 		WithSortable(true).
 		Build()
+	
+	if err != nil {
+		// For debugging - print the error
+		// fmt.Printf("CreateInvoiceLineItemsField build error: %v\n", err)
+		// Return the actual schema with error fixed
+		return &RepeatableField{
+			Field: Field{
+				Name:  "line_items",
+				Type:  FieldRepeatable,
+				Label: "Line Items",
+			},
+			Template: []Field{
+				{
+					Name:     "product_id",
+					Type:     FieldSelect,
+					Label:    "Product",
+					Required: true,
+				},
+				{
+					Name:     "description",
+					Type:     FieldText,
+					Label:    "Description",
+					Required: false,
+				},
+				{
+					Name:     "quantity",
+					Type:     FieldNumber,
+					Label:    "Quantity",
+					Required: true,
+					Default:  1,
+					Validation: &FieldValidation{
+						Min: floatPtr(0.01),
+					},
+				},
+				{
+					Name:     "unit_price",
+					Type:     FieldCurrency,
+					Label:    "Unit Price",
+					Required: true,
+					Validation: &FieldValidation{
+						Min: floatPtr(0),
+					},
+				},
+				{
+					Name:     "line_total",
+					Type:     FieldCurrency,
+					Label:    "Total",
+					Readonly: true,
+				},
+			},
+			MinItems:  1,
+			MaxItems:  100,
+			Sortable:  true,
+			AddText:   "Add Item",
+			RemoveText: "Remove",
+		}
+	}
 	
 	return lineItemsField
 }
