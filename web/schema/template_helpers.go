@@ -168,14 +168,14 @@ func getFieldErrors(errors map[string][]string, fieldName string) []string {
 func renderFieldHTML(field *Field, value any, errors []string, tokens TokenResolver) string {
 	// Create a basic registry for rendering
 	registry := NewRendererRegistry(tokens)
-	
+
 	// Use context.Background() for basic rendering
 	html, err := registry.RenderField(context.Background(), field, value, errors)
 	if err != nil {
 		// Return error HTML if rendering fails
 		return fmt.Sprintf(`<div class="field-error">Error rendering field: %v</div>`, err)
 	}
-	
+
 	return html
 }
 

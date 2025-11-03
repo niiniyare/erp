@@ -105,7 +105,7 @@ func (s *PostgresStorage) Set(ctx context.Context, id string, data []byte) error
     `
     
     // Extract metadata from JSON
-    var schema map[string]interface{}
+    var schema map[string]any
     if err := json.Unmarshal(data, &schema); err != nil {
         return err
     }

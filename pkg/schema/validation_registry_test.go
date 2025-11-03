@@ -221,11 +221,11 @@ func (suite *ValidationRegistryTestSuite) TestLuhnValidator() {
 		number string
 		valid  bool
 	}{
-		{"4532015112830366", true},  // Valid Visa
-		{"5555555555554444", true},  // Valid MasterCard
+		{"4532015112830366", true},    // Valid Visa
+		{"5555555555554444", true},    // Valid MasterCard
 		{"4111 1111 1111 1111", true}, // Valid with spaces
 		{"4111-1111-1111-1111", true}, // Valid with dashes
-		{"1234567890123456", false}, // Invalid
+		{"1234567890123456", false},   // Invalid
 		{"", false},
 		{"abc", false},
 	}
@@ -249,14 +249,14 @@ func (suite *ValidationRegistryTestSuite) TestBusinessDayValidator() {
 	if err != nil {
 		require.NotContains(suite.T(), err.Error(), "invalid_type")
 	}
-	
+
 	// Test string version
 	err = suite.registry.Validate(suite.ctx, "business_day", "2023-12-25", nil)
 	// Just ensure it doesn't crash and doesn't return invalid type
 	if err != nil {
 		require.NotContains(suite.T(), err.Error(), "invalid_type")
 	}
-	
+
 	// Test invalid type
 	err = suite.registry.Validate(suite.ctx, "business_day", 123, nil)
 	require.Error(suite.T(), err)
@@ -512,7 +512,7 @@ func (suite *ValidationRegistryTestSuite) TestAsyncValidatorContextCancellation(
 
 	// Create a context that will be cancelled
 	ctx, cancel := context.WithCancel(suite.ctx)
-	
+
 	// Start validation in a goroutine
 	done := make(chan error, 1)
 	go func() {

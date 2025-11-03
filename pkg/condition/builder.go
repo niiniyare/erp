@@ -494,7 +494,7 @@ func (ctx *EvalContext) GetValue(path string) (any, error) {
 		default:
 			// Use reflection as fallback for struct fields
 			rv := reflect.ValueOf(current)
-			if rv.Kind() == reflect.Ptr {
+			if rv.Kind() == reflect.Pointer {
 				rv = rv.Elem()
 			}
 			if rv.Kind() == reflect.Struct {
@@ -1437,6 +1437,20 @@ func (e *Evaluator) matchRegexp(str, pattern any, timeout time.Duration) (bool, 
 // Builder provides a fluent interface for building conditions programmatically
 type Builder struct {
 	group *ConditionGroup
+}
+
+func (b *Builder) AddRuleWithID(ruleID string, field string, op OperatorType, value any) {
+	rule := &ConditionRule{
+		ID: ruleID,
+		Left: Expression{
+			Type:  ValueTypeField,
+			Field: field,
+		},
+		Op:    op,
+		Right: value,
+	}
+
+	b.group.Children = append(b.group.Children, rule)
 }
 
 // NewBuilder creates a new condition builder with the specified conjunction

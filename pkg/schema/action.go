@@ -1,6 +1,10 @@
 package schema
 
-import "context"
+import (
+	"context"
+
+	"github.com/niiniyare/erp/pkg/condition"
+)
 
 // Action represents a button or actionable element in the form
 type Action struct {
@@ -20,14 +24,21 @@ type Action struct {
 	Hidden   bool `json:"hidden,omitempty"`   // Not displayed
 
 	// Behavior
-	Config      *ActionConfig      `json:"config,omitempty"`      // Action configuration
-	Confirm     *Confirm           `json:"confirm,omitempty"`     // Confirmation dialog
-	Conditional *Conditional       `json:"conditional,omitempty"` // Show/hide conditions
-	Permissions *ActionPermissions `json:"permissions,omitempty"` // Access control
+	Config      *ActionConfig             `json:"config,omitempty"`      // Action configuration
+	Confirm     *Confirm                  `json:"confirm,omitempty"`     // Confirmation dialog
+	Conditional *Conditional              `json:"conditional,omitempty"` // Show/hide conditions
+	Condition   *condition.ConditionGroup `json:"condition,omitempty"`   // Advanced conditions
+	Permissions *ActionPermissions        `json:"permissions,omitempty"` // Access control
 
 	// Framework integration
 	HTMX   *ActionHTMX   `json:"htmx,omitempty"`   // HTMX configuration
 	Alpine *ActionAlpine `json:"alpine,omitempty"` // Alpine.js configuration
+
+	// Theme
+	Theme *ActionTheme `json:"theme,omitempty"` // Action-specific theming
+
+	// Internal (not serialized)
+	evaluator *condition.Evaluator `json:"-"` // Condition evaluator
 }
 
 // ActionType defines the type of action
@@ -51,6 +62,9 @@ type ActionConfig struct {
 	Throttle        int               `json:"throttle,omitempty"`           // Throttle delay in ms
 	PreventDefault  bool              `json:"preventDefault,omitempty"`     // Prevent default action
 	StopPropagation bool              `json:"stopPropagation,omitempty"`    // Stop event propagation
+	SuccessMessage  string            `json:"successMessage,omitempty"`     // Success message to display
+	ErrorMessage    string            `json:"errorMessage,omitempty"`       // Error message to display
+	RedirectURL     string            `json:"redirectUrl,omitempty"`        // Redirect after success
 }
 
 // Confirm defines a confirmation dialog before action executes
@@ -61,6 +75,7 @@ type Confirm struct {
 	Confirm string `json:"confirm,omitempty" example:"Yes"`                        // Confirm button text
 	Cancel  string `json:"cancel,omitempty" example:"No"`                          // Cancel button text
 	Variant string `json:"variant,omitempty" validate:"oneof=info warning danger"` // Dialog type
+	Icon    string `json:"icon,omitempty"`                                         // Dialog icon
 }
 
 // ActionPermissions controls who can see/use the action
@@ -96,13 +111,35 @@ type ActionAlpine struct {
 	XText string `json:"xText,omitempty" validate:"js_expression"` // Text content
 }
 
+// ActionTheme defines theme overrides for this action
+type ActionTheme struct {
+	Colors       map[string]string `json:"colors,omitempty"`       // Color overrides
+	Spacing      map[string]string `json:"spacing,omitempty"`      // Spacing overrides
+	BorderRadius string            `json:"borderRadius,omitempty"` // Border radius override
+	FontSize     string            `json:"fontSize,omitempty"`     // Font size override
+	FontWeight   string            `json:"fontWeight,omitempty"`   // Font weight override
+	CustomCSS    string            `json:"customCSS,omitempty"`    // Custom CSS
+}
+
+// SetEvaluator sets the condition evaluator for the action
+func (a *Action) SetEvaluator(evaluator *condition.Evaluator) {
+	a.evaluator = evaluator
+}
+
+// GetEvaluator returns the action's condition evaluator
+func (a *Action) GetEvaluator() *condition.Evaluator {
+	return a.evaluator
+}
+
 // Validate checks if action configuration is valid
 func (a *Action) Validate(ctx context.Context) error {
+	collector := NewErrorCollector()
+
 	if a.ID == "" {
-		return NewValidationError("action_id", "action ID is required")
+		collector.AddError(NewValidationError("action_id", "action ID is required"))
 	}
 	if a.Text == "" {
-		return NewValidationError("action_text", "action text is required").WithField(a.ID)
+		collector.AddError(NewValidationError("action_text", "action text is required").WithField(a.ID))
 	}
 	if a.Type == "" {
 		a.Type = ActionButton // Default to button
@@ -111,36 +148,63 @@ func (a *Action) Validate(ctx context.Context) error {
 	// Validate link actions have URL
 	if a.Type == ActionLink {
 		if a.Config == nil || a.Config.URL == "" {
-			return NewValidationError(
+			collector.AddError(NewValidationError(
 				"missing_url",
 				"link action requires URL in config",
-			).WithField(a.ID)
+			).WithField(a.ID))
 		}
 	}
 
 	// Validate custom actions have handler
 	if a.Type == ActionCustom {
 		if a.Config == nil || a.Config.Handler == "" {
-			return NewValidationError(
+			collector.AddError(NewValidationError(
 				"missing_handler",
 				"custom action requires handler in config",
-			).WithField(a.ID)
+			).WithField(a.ID))
 		}
+	}
+
+	// Validate confirmation
+	if a.Confirm != nil && a.Confirm.Enabled {
+		if a.Confirm.Message == "" {
+			collector.AddError(NewValidationError(
+				"missing_confirm_message",
+				"confirmation requires message",
+			).WithField(a.ID))
+		}
+	}
+
+	if collector.HasErrors() {
+		return collector.Errors()
 	}
 
 	return nil
 }
 
 // IsVisible checks if action should be displayed given current form data
-func (a *Action) IsVisible(data map[string]any) bool {
+func (a *Action) IsVisible(ctx context.Context, data map[string]any) (bool, error) {
 	if a.Hidden {
-		return false
+		return false, nil
 	}
+
+	// Check advanced conditions with evaluator
+	if a.Condition != nil && a.evaluator != nil {
+		evalCtx := condition.NewEvalContext(data, condition.DefaultEvalOptions())
+		result, err := a.evaluator.Evaluate(ctx, a.Condition, evalCtx)
+		if err != nil {
+			return false, WrapError(err, "condition_evaluation_failed", "failed to evaluate action condition")
+		}
+		return result, nil
+	}
+
+	// Check legacy conditional (deprecated but supported)
 	if a.Conditional != nil {
 		// TODO: Integrate with condition evaluator
-		return true
+		return true, nil
 	}
-	return true
+
+	return true, nil
 }
 
 // IsEnabled checks if action can be executed
@@ -170,4 +234,309 @@ func (a *Action) GetSizeClass() string {
 	default:
 		return "action-md" // Unknown sizes default to medium
 	}
+}
+
+// GetIconPosition returns the icon position with fallback
+func (a *Action) GetIconPosition() string {
+	if a.Position != "" {
+		return a.Position
+	}
+	return "left" // Default to left
+}
+
+// HasIcon checks if action has an icon
+func (a *Action) HasIcon() bool {
+	return a.Icon != ""
+}
+
+// HasConfirmation checks if action requires confirmation
+func (a *Action) HasConfirmation() bool {
+	return a.Confirm != nil && a.Confirm.Enabled
+}
+
+// RequiresPermission checks if action requires specific permission
+func (a *Action) RequiresPermission(permission string) bool {
+	if a.Permissions == nil {
+		return false
+	}
+	for _, p := range a.Permissions.Required {
+		if p == permission {
+			return true
+		}
+	}
+	return false
+}
+
+// CanView checks if user with given roles can view the action
+func (a *Action) CanView(userRoles []string) bool {
+	if a.Permissions == nil || len(a.Permissions.View) == 0 {
+		return true // No restrictions
+	}
+
+	for _, role := range userRoles {
+		for _, allowedRole := range a.Permissions.View {
+			if role == allowedRole {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// CanExecute checks if user with given roles can execute the action
+func (a *Action) CanExecute(userRoles []string) bool {
+	if a.Permissions == nil || len(a.Permissions.Execute) == 0 {
+		return true // No restrictions
+	}
+
+	for _, role := range userRoles {
+		for _, allowedRole := range a.Permissions.Execute {
+			if role == allowedRole {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// Clone creates a copy of the action with evaluator preservation
+func (a *Action) Clone() *Action {
+	clone := *a
+	clone.evaluator = a.evaluator
+	return &clone
+}
+
+// ApplyTheme applies theme settings to the action
+func (a *Action) ApplyTheme(theme *Theme) {
+	if theme == nil {
+		return
+	}
+
+	// Apply theme overrides
+	if a.Theme == nil {
+		a.Theme = &ActionTheme{}
+	}
+
+	// Theme will be applied by renderer
+}
+
+// GetConfig returns action config with fallback
+func (a *Action) GetConfig() *ActionConfig {
+	if a.Config == nil {
+		a.Config = &ActionConfig{}
+	}
+	return a.Config
+}
+
+// SetLoading sets the loading state
+func (a *Action) SetLoading(loading bool) {
+	a.Loading = loading
+}
+
+// SetDisabled sets the disabled state
+func (a *Action) SetDisabled(disabled bool) {
+	a.Disabled = disabled
+}
+
+// SetHidden sets the hidden state
+func (a *Action) SetHidden(hidden bool) {
+	a.Hidden = hidden
+}
+
+// GetHTMXConfig returns HTMX configuration with fallback
+func (a *Action) GetHTMXConfig() *ActionHTMX {
+	if a.HTMX == nil {
+		a.HTMX = &ActionHTMX{}
+	}
+	return a.HTMX
+}
+
+// GetAlpineConfig returns Alpine configuration with fallback
+func (a *Action) GetAlpineConfig() *ActionAlpine {
+	if a.Alpine == nil {
+		a.Alpine = &ActionAlpine{}
+	}
+	return a.Alpine
+}
+
+// IsSubmitAction checks if this is a submit action
+func (a *Action) IsSubmitAction() bool {
+	return a.Type == ActionSubmit
+}
+
+// IsResetAction checks if this is a reset action
+func (a *Action) IsResetAction() bool {
+	return a.Type == ActionReset
+}
+
+// IsLinkAction checks if this is a link action
+func (a *Action) IsLinkAction() bool {
+	return a.Type == ActionLink
+}
+
+// IsCustomAction checks if this is a custom action
+func (a *Action) IsCustomAction() bool {
+	return a.Type == ActionCustom
+}
+
+// GetURL returns the action URL (for link/HTMX actions)
+func (a *Action) GetURL() string {
+	if a.Type == ActionLink && a.Config != nil {
+		return a.Config.URL
+	}
+	if a.HTMX != nil {
+		return a.HTMX.URL
+	}
+	return ""
+}
+
+// GetHTTPMethod returns the HTTP method for HTMX actions
+func (a *Action) GetHTTPMethod() string {
+	if a.HTMX != nil && a.HTMX.Method != "" {
+		return a.HTMX.Method
+	}
+	if a.Type == ActionSubmit {
+		return "POST"
+	}
+	return "GET"
+}
+
+// ShouldDebounce checks if action should be debounced
+func (a *Action) ShouldDebounce() bool {
+	return a.Config != nil && a.Config.Debounce > 0
+}
+
+// GetDebounceDelay returns debounce delay in milliseconds
+func (a *Action) GetDebounceDelay() int {
+	if a.Config != nil {
+		return a.Config.Debounce
+	}
+	return 0
+}
+
+// ShouldThrottle checks if action should be throttled
+func (a *Action) ShouldThrottle() bool {
+	return a.Config != nil && a.Config.Throttle > 0
+}
+
+// GetThrottleDelay returns throttle delay in milliseconds
+func (a *Action) GetThrottleDelay() int {
+	if a.Config != nil {
+		return a.Config.Throttle
+	}
+	return 0
+}
+
+// ActionBuilder provides a fluent interface for building actions
+type ActionBuilder struct {
+	action    *Action
+	evaluator *condition.Evaluator
+}
+
+// NewAction starts building an action
+func NewAction(id string, actionType ActionType, text string) *ActionBuilder {
+	return &ActionBuilder{
+		action: &Action{
+			ID:   id,
+			Type: actionType,
+			Text: text,
+		},
+	}
+}
+
+// WithVariant sets the variant
+func (ab *ActionBuilder) WithVariant(variant string) *ActionBuilder {
+	ab.action.Variant = variant
+	return ab
+}
+
+// WithSize sets the size
+func (ab *ActionBuilder) WithSize(size string) *ActionBuilder {
+	ab.action.Size = size
+	return ab
+}
+
+// WithIcon sets the icon
+func (ab *ActionBuilder) WithIcon(icon string, position string) *ActionBuilder {
+	ab.action.Icon = icon
+	ab.action.Position = position
+	return ab
+}
+
+// WithConfig sets the configuration
+func (ab *ActionBuilder) WithConfig(config *ActionConfig) *ActionBuilder {
+	ab.action.Config = config
+	return ab
+}
+
+// WithConfirmation adds confirmation dialog
+func (ab *ActionBuilder) WithConfirmation(message string, title string) *ActionBuilder {
+	ab.action.Confirm = &Confirm{
+		Enabled: true,
+		Title:   title,
+		Message: message,
+	}
+	return ab
+}
+
+// WithPermissions sets permissions
+func (ab *ActionBuilder) WithPermissions(permissions *ActionPermissions) *ActionBuilder {
+	ab.action.Permissions = permissions
+	return ab
+}
+
+// WithCondition sets the condition
+func (ab *ActionBuilder) WithCondition(condition *condition.ConditionGroup) *ActionBuilder {
+	ab.action.Condition = condition
+	return ab
+}
+
+// WithEvaluator sets the evaluator
+func (ab *ActionBuilder) WithEvaluator(evaluator *condition.Evaluator) *ActionBuilder {
+	ab.evaluator = evaluator
+	return ab
+}
+
+// Disabled marks action as disabled
+func (ab *ActionBuilder) Disabled() *ActionBuilder {
+	ab.action.Disabled = true
+	return ab
+}
+
+// Hidden marks action as hidden
+func (ab *ActionBuilder) Hidden() *ActionBuilder {
+	ab.action.Hidden = true
+	return ab
+}
+
+// Build returns the constructed action
+func (ab *ActionBuilder) Build() *Action {
+	if ab.evaluator != nil {
+		ab.action.SetEvaluator(ab.evaluator)
+	}
+	return ab.action
+}
+
+// Common action builders
+
+// NewSubmitAction creates a submit action
+func NewSubmitAction(id, text string) *ActionBuilder {
+	return NewAction(id, ActionSubmit, text).WithVariant("primary")
+}
+
+// NewResetAction creates a reset action
+func NewResetAction(id, text string) *ActionBuilder {
+	return NewAction(id, ActionReset, text).WithVariant("secondary")
+}
+
+// NewCancelAction creates a cancel action
+func NewCancelAction(id, text string) *ActionBuilder {
+	return NewAction(id, ActionButton, text).WithVariant("outline")
+}
+
+// NewDeleteAction creates a delete action with confirmation
+func NewDeleteAction(id, text string) *ActionBuilder {
+	return NewAction(id, ActionButton, text).
+		WithVariant("destructive").
+		WithConfirmation("Are you sure you want to delete this item?", "Confirm Deletion")
 }

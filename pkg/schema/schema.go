@@ -54,6 +54,9 @@ type Schema struct {
 	// Runtime state (managed by system, not in JSON)
 	State   *State   `json:"state,omitempty"`   // Form values, errors, dirty state
 	Context *Context `json:"context,omitempty"` // Request context, user info, permissions
+
+	// Internal fields (not serialized)
+	evaluator *condition.Evaluator `json:"-"` // Condition evaluator for dynamic behavior
 }
 
 // Type defines what kind of UI element this schema represents
@@ -143,12 +146,6 @@ type SchemaRegistry interface {
 	GetVersion(ctx context.Context, id, version string) (*Schema, error) // Version support
 }
 
-// ConditionEvaluator evaluates conditional display/requirement logic
-type ConditionEvaluator interface {
-	Evaluate(ctx context.Context, condition *condition.ConditionGroup, data map[string]any) (bool, error)
-	Compile(condition *condition.ConditionGroup) error // Pre-compile for performance
-}
-
 // DataSourceResolver resolves dynamic options for select fields
 type DataSourceResolver interface {
 	Resolve(ctx context.Context, source *DataSource, params map[string]string) ([]Option, error)
@@ -185,13 +182,69 @@ func NewSchema(id string, schemaType Type, title string) *Schema {
 	}
 }
 
+// SetEvaluator sets the condition evaluator for the schema and all its fields
+func (s *Schema) SetEvaluator(evaluator *condition.Evaluator) {
+	s.evaluator = evaluator
+
+	// Set evaluator on all fields
+	for i := range s.Fields {
+		s.Fields[i].SetEvaluator(evaluator)
+	}
+}
+
+// GetEvaluator returns the schema's condition evaluator
+func (s *Schema) GetEvaluator() *condition.Evaluator {
+	return s.evaluator
+}
+
 // AddField appends a field to the schema
 func (s *Schema) AddField(field Field) {
 	if s.Fields == nil {
 		s.Fields = []Field{}
 	}
+
+	// Set evaluator on new field if schema has one
+	if s.evaluator != nil {
+		field.SetEvaluator(s.evaluator)
+	}
+
 	s.Fields = append(s.Fields, field)
 	s.updateTimestamp()
+}
+
+// AddFields appends multiple fields to the schema
+func (s *Schema) AddFields(fields ...Field) {
+	for _, field := range fields {
+		s.AddField(field)
+	}
+}
+
+// RemoveField removes a field by name
+func (s *Schema) RemoveField(name string) bool {
+	for i, field := range s.Fields {
+		if field.Name == name {
+			s.Fields = append(s.Fields[:i], s.Fields[i+1:]...)
+			s.updateTimestamp()
+			return true
+		}
+	}
+	return false
+}
+
+// UpdateField updates an existing field by name
+func (s *Schema) UpdateField(name string, updatedField Field) bool {
+	for i, field := range s.Fields {
+		if field.Name == name {
+			// Preserve evaluator
+			if s.evaluator != nil {
+				updatedField.SetEvaluator(s.evaluator)
+			}
+			s.Fields[i] = updatedField
+			s.updateTimestamp()
+			return true
+		}
+	}
+	return false
 }
 
 // AddAction appends an action button to the schema
@@ -201,6 +254,37 @@ func (s *Schema) AddAction(action Action) {
 	}
 	s.Actions = append(s.Actions, action)
 	s.updateTimestamp()
+}
+
+// AddActions appends multiple actions to the schema
+func (s *Schema) AddActions(actions ...Action) {
+	for _, action := range actions {
+		s.AddAction(action)
+	}
+}
+
+// RemoveAction removes an action by ID
+func (s *Schema) RemoveAction(id string) bool {
+	for i, action := range s.Actions {
+		if action.ID == id {
+			s.Actions = append(s.Actions[:i], s.Actions[i+1:]...)
+			s.updateTimestamp()
+			return true
+		}
+	}
+	return false
+}
+
+// UpdateAction updates an existing action by ID
+func (s *Schema) UpdateAction(id string, updatedAction Action) bool {
+	for i, action := range s.Actions {
+		if action.ID == id {
+			s.Actions[i] = updatedAction
+			s.updateTimestamp()
+			return true
+		}
+	}
+	return false
 }
 
 // GetField retrieves a field by name
@@ -213,32 +297,183 @@ func (s *Schema) GetField(name string) (*Field, bool) {
 	return nil, false
 }
 
+// GetFieldByIndex retrieves a field by index
+func (s *Schema) GetFieldByIndex(index int) (*Field, bool) {
+	if index >= 0 && index < len(s.Fields) {
+		return &s.Fields[index], true
+	}
+	return nil, false
+}
+
+// GetAction retrieves an action by ID
+func (s *Schema) GetAction(id string) (*Action, bool) {
+	for i := range s.Actions {
+		if s.Actions[i].ID == id {
+			return &s.Actions[i], true
+		}
+	}
+	return nil, false
+}
+
 // HasField checks if a field exists
 func (s *Schema) HasField(name string) bool {
 	_, exists := s.GetField(name)
 	return exists
 }
 
+// HasAction checks if an action exists
+func (s *Schema) HasAction(id string) bool {
+	_, exists := s.GetAction(id)
+	return exists
+}
+
+// GetFieldNames returns all field names
+func (s *Schema) GetFieldNames() []string {
+	names := make([]string, len(s.Fields))
+	for i, field := range s.Fields {
+		names[i] = field.Name
+	}
+	return names
+}
+
+// GetActionIDs returns all action IDs
+func (s *Schema) GetActionIDs() []string {
+	ids := make([]string, len(s.Actions))
+	for i, action := range s.Actions {
+		ids[i] = action.ID
+	}
+	return ids
+}
+
 // GetVisibleFields returns fields visible for given data context
-func (s *Schema) GetVisibleFields(data map[string]any) []Field {
-	visible := make([]Field, 0, len(s.Fields))
-	for _, field := range s.Fields {
-		if field.IsVisible(data) {
-			visible = append(visible, field)
+func (s *Schema) GetVisibleFields(ctx context.Context, data map[string]any) []*Field {
+	visible := make([]*Field, 0, len(s.Fields))
+	for i := range s.Fields {
+		if ok, _ := s.Fields[i].IsVisible(ctx, data); ok {
+			visible = append(visible, &s.Fields[i])
 		}
 	}
 	return visible
 }
 
+// GetHiddenFields returns fields hidden for given data context
+func (s *Schema) GetHiddenFields(ctx context.Context, data map[string]any) []*Field {
+	hidden := make([]*Field, 0, len(s.Fields))
+	for i := range s.Fields {
+		if ok, _ := s.Fields[i].IsVisible(ctx, data); !ok {
+			hidden = append(hidden, &s.Fields[i])
+		}
+	}
+	return hidden
+}
+
 // GetRequiredFields returns required fields for given data context
-func (s *Schema) GetRequiredFields(data map[string]any) []Field {
-	required := make([]Field, 0)
-	for _, field := range s.Fields {
-		if field.IsRequired(data) && field.IsVisible(data) {
-			required = append(required, field)
+func (s *Schema) GetRequiredFields(ctx context.Context, data map[string]any) []*Field {
+	required := make([]*Field, 0, len(s.Fields))
+	for i := range s.Fields {
+		field := &s.Fields[i]
+
+		// Check if field is required (ignore errors, treat as not required)
+		isRequired, err := field.IsRequired(ctx, data)
+		if err != nil {
+			continue
+		}
+
+		if isRequired {
+			if ok, _ := field.IsVisible(ctx, data); ok {
+				required = append(required, field)
+			}
 		}
 	}
 	return required
+}
+
+// GetOptionalFields returns optional fields for given data context
+func (s *Schema) GetOptionalFields(ctx context.Context, data map[string]any) []*Field {
+	optional := make([]*Field, 0, len(s.Fields))
+	for i := range s.Fields {
+		field := &s.Fields[i]
+
+		isRequired, err := field.IsRequired(ctx, data)
+		if err != nil || isRequired {
+			continue
+		}
+
+		if ok, _ := field.IsVisible(ctx, data); ok {
+			optional = append(optional, field)
+		}
+	}
+	return optional
+}
+
+// GetFieldsByType returns all fields of a specific type
+func (s *Schema) GetFieldsByType(fieldType FieldType) []*Field {
+	fields := make([]*Field, 0)
+	for i := range s.Fields {
+		if s.Fields[i].Type == fieldType {
+			fields = append(fields, &s.Fields[i])
+		}
+	}
+	return fields
+}
+
+// GetEnabledActions returns all enabled (non-disabled) actions
+func (s *Schema) GetEnabledActions(ctx context.Context, data map[string]any) []Action {
+	enabled := make([]Action, 0, len(s.Actions))
+	for _, action := range s.Actions {
+		if !action.Disabled && !action.Hidden {
+			// Check conditions if present
+			if action.Condition != nil && s.evaluator != nil {
+				evalCtx := condition.NewEvalContext(data, condition.DefaultEvalOptions())
+				result, err := s.evaluator.Evaluate(ctx, action.Condition, evalCtx)
+				if err != nil || !result {
+					continue
+				}
+			}
+			enabled = append(enabled, action)
+		}
+	}
+	return enabled
+}
+
+// ValidateData validates submitted data against the schema
+func (s *Schema) ValidateData(ctx context.Context, data map[string]any) error {
+	collector := NewErrorCollector()
+
+	// Get visible required fields
+	requiredFields := s.GetRequiredFields(ctx, data)
+
+	// Check required fields
+	for _, field := range requiredFields {
+		value, exists := data[field.Name]
+		if !exists || isEmpty(value) {
+			collector.AddValidationError(
+				field.Name,
+				"required",
+				fmt.Sprintf("%s is required", field.Label),
+			)
+		}
+	}
+
+	// Validate all provided field values
+	for _, field := range s.Fields {
+		value, exists := data[field.Name]
+		if exists {
+			if err := field.ValidateValue(ctx, value); err != nil {
+				if schemaErr, ok := err.(SchemaError); ok {
+					collector.AddFieldError(field.Name, schemaErr)
+				} else {
+					collector.AddValidationError(field.Name, "validation_failed", err.Error())
+				}
+			}
+		}
+	}
+
+	if collector.HasErrors() {
+		return collector.Errors()
+	}
+
+	return nil
 }
 
 // DetectCircularDependencies checks for circular field dependencies
@@ -339,6 +574,19 @@ func (s *Schema) Validate() error {
 		seen[field.Name] = true
 	}
 
+	// Check for duplicate action IDs
+	seenActions := make(map[string]bool)
+	for _, action := range s.Actions {
+		if seenActions[action.ID] {
+			collector.AddValidationError(
+				action.ID,
+				"duplicate_action",
+				fmt.Sprintf("duplicate action ID: %s", action.ID),
+			)
+		}
+		seenActions[action.ID] = true
+	}
+
 	// Validate field dependencies exist
 	for _, field := range s.Fields {
 		for _, dep := range field.Dependencies {
@@ -368,12 +616,171 @@ func (s *Schema) Validate() error {
 	return nil
 }
 
-// Clone creates a deep copy of the schema
+// Clone creates a deep copy of the schema with evaluator preservation
 func (s *Schema) Clone() *Schema {
+	// Marshal to JSON and back for deep copy
 	data, _ := json.Marshal(s)
 	var clone Schema
 	json.Unmarshal(data, &clone)
+
+	// Preserve evaluator (doesn't serialize)
+	clone.evaluator = s.evaluator
+
+	// Set evaluator on all fields
+	if clone.evaluator != nil {
+		for i := range clone.Fields {
+			clone.Fields[i].SetEvaluator(clone.evaluator)
+		}
+	}
+
 	return &clone
+}
+
+// Reset resets the schema state
+func (s *Schema) Reset() {
+	if s.State == nil {
+		s.State = &State{}
+	}
+
+	s.State.Values = make(map[string]any)
+	s.State.Errors = make(map[string]string)
+	s.State.Touched = make(map[string]bool)
+	s.State.Dirty = make(map[string]bool)
+	s.State.Valid = true
+	s.State.Submitting = false
+	s.State.SubmitCount = 0
+	s.State.LastUpdated = time.Now()
+}
+
+// SetFieldValue sets a value in the schema state
+func (s *Schema) SetFieldValue(fieldName string, value any) {
+	if s.State == nil {
+		s.State = &State{
+			Values: make(map[string]any),
+		}
+	}
+	if s.State.Values == nil {
+		s.State.Values = make(map[string]any)
+	}
+	s.State.Values[fieldName] = value
+	s.State.LastUpdated = time.Now()
+}
+
+// GetFieldValue gets a value from the schema state
+func (s *Schema) GetFieldValue(fieldName string) (any, bool) {
+	if s.State == nil || s.State.Values == nil {
+		return nil, false
+	}
+	value, exists := s.State.Values[fieldName]
+	return value, exists
+}
+
+// SetFieldError sets an error for a field
+func (s *Schema) SetFieldError(fieldName string, errorMsg string) {
+	if s.State == nil {
+		s.State = &State{
+			Errors: make(map[string]string),
+		}
+	}
+	if s.State.Errors == nil {
+		s.State.Errors = make(map[string]string)
+	}
+	s.State.Errors[fieldName] = errorMsg
+	s.State.Valid = false
+}
+
+// ClearFieldError clears an error for a field
+func (s *Schema) ClearFieldError(fieldName string) {
+	if s.State != nil && s.State.Errors != nil {
+		delete(s.State.Errors, fieldName)
+		// Check if there are any remaining errors
+		s.State.Valid = len(s.State.Errors) == 0
+	}
+}
+
+// ClearAllErrors clears all field errors
+func (s *Schema) ClearAllErrors() {
+	if s.State != nil {
+		s.State.Errors = make(map[string]string)
+		s.State.Valid = true
+	}
+}
+
+// HasErrors checks if the schema has any validation errors
+func (s *Schema) HasErrors() bool {
+	return s.State != nil && s.State.Errors != nil && len(s.State.Errors) > 0
+}
+
+// GetErrors returns all validation errors
+func (s *Schema) GetErrors() map[string]string {
+	if s.State == nil || s.State.Errors == nil {
+		return make(map[string]string)
+	}
+	return s.State.Errors
+}
+
+// MarkFieldTouched marks a field as touched
+func (s *Schema) MarkFieldTouched(fieldName string) {
+	if s.State == nil {
+		s.State = &State{
+			Touched: make(map[string]bool),
+		}
+	}
+	if s.State.Touched == nil {
+		s.State.Touched = make(map[string]bool)
+	}
+	s.State.Touched[fieldName] = true
+}
+
+// IsFieldTouched checks if a field has been touched
+func (s *Schema) IsFieldTouched(fieldName string) bool {
+	return s.State != nil && s.State.Touched != nil && s.State.Touched[fieldName]
+}
+
+// MarkFieldDirty marks a field as dirty (changed from default)
+func (s *Schema) MarkFieldDirty(fieldName string) {
+	if s.State == nil {
+		s.State = &State{
+			Dirty: make(map[string]bool),
+		}
+	}
+	if s.State.Dirty == nil {
+		s.State.Dirty = make(map[string]bool)
+	}
+	s.State.Dirty[fieldName] = true
+}
+
+// IsFieldDirty checks if a field is dirty
+func (s *Schema) IsFieldDirty(fieldName string) bool {
+	return s.State != nil && s.State.Dirty != nil && s.State.Dirty[fieldName]
+}
+
+// IsDirty checks if any field is dirty
+func (s *Schema) IsDirty() bool {
+	if s.State == nil || s.State.Dirty == nil {
+		return false
+	}
+	for _, dirty := range s.State.Dirty {
+		if dirty {
+			return true
+		}
+	}
+	return false
+}
+
+// GetFieldCount returns the number of fields in the schema
+func (s *Schema) GetFieldCount() int {
+	return len(s.Fields)
+}
+
+// GetActionCount returns the number of actions in the schema
+func (s *Schema) GetActionCount() int {
+	return len(s.Actions)
+}
+
+// IsEmpty checks if the schema has no fields or actions
+func (s *Schema) IsEmpty() bool {
+	return len(s.Fields) == 0 && len(s.Actions) == 0
 }
 
 // updateTimestamp updates the schema's last modified timestamp
@@ -405,8 +812,126 @@ func (s *Schema) UnmarshalJSON(data []byte) error {
 	return s.Validate()
 }
 
+// ToJSON converts the schema to JSON string
+func (s *Schema) ToJSON() (string, error) {
+	data, err := json.Marshal(s)
+	if err != nil {
+		return "", WrapError(err, "json_marshal_failed", "failed to marshal schema to JSON")
+	}
+	return string(data), nil
+}
+
+// ToJSONPretty converts the schema to pretty-printed JSON string
+func (s *Schema) ToJSONPretty() (string, error) {
+	data, err := json.MarshalIndent(s, "", "  ")
+	if err != nil {
+		return "", WrapError(err, "json_marshal_failed", "failed to marshal schema to JSON")
+	}
+	return string(data), nil
+}
+
+// FromJSON creates a schema from JSON string
+func FromJSON(jsonStr string) (*Schema, error) {
+	var schema Schema
+	if err := json.Unmarshal([]byte(jsonStr), &schema); err != nil {
+		return nil, WrapError(err, "json_unmarshal_failed", "failed to unmarshal schema from JSON")
+	}
+	return &schema, nil
+}
+
 // Interface implementation checks
+
 func (s *Schema) GetID() string      { return s.ID }
 func (s *Schema) GetType() string    { return string(s.Type) }
 func (s *Schema) GetMetadata() *Meta { return s.Meta }
 func (s *Schema) GetVersion() string { return s.Version }
+
+// Utility functions
+
+// isEmpty checks if a value is considered empty
+//
+//	func isEmpty(value any) bool {
+//		if value == nil {
+//			return true
+//		}
+//
+//		switch v := value.(type) {
+//		case string:
+//			return v == ""
+//		case []any:
+//			return len(v) == 0
+//		case map[string]any:
+//			return len(v) == 0
+//		case bool:
+//			return false // boolean false is not considered empty
+//		case int, int8, int16, int32, int64:
+//			return false // zero numbers are not considered empty
+//		case float32, float64:
+//			return false // zero numbers are not considered empty
+//		default:
+//			return false
+//		}
+//	}
+//
+// MergeSchemas merges multiple schemas into one (experimental)
+func MergeSchemas(base *Schema, others ...*Schema) *Schema {
+	merged := base.Clone()
+
+	for _, other := range others {
+		// Merge fields (skip duplicates)
+		for _, field := range other.Fields {
+			if !merged.HasField(field.Name) {
+				merged.AddField(field)
+			}
+		}
+
+		// Merge actions (skip duplicates)
+		for _, action := range other.Actions {
+			if !merged.HasAction(action.ID) {
+				merged.AddAction(action)
+			}
+		}
+
+		// Merge tags
+		if len(other.Tags) > 0 {
+			tagSet := make(map[string]bool)
+			for _, tag := range merged.Tags {
+				tagSet[tag] = true
+			}
+			for _, tag := range other.Tags {
+				if !tagSet[tag] {
+					merged.Tags = append(merged.Tags, tag)
+				}
+			}
+		}
+	}
+
+	merged.updateTimestamp()
+	return merged
+}
+
+// FilterFields returns a new schema with only fields matching the predicate
+func (s *Schema) FilterFields(predicate func(field Field) bool) *Schema {
+	filtered := s.Clone()
+	filtered.Fields = []Field{}
+
+	for _, field := range s.Fields {
+		if predicate(field) {
+			filtered.AddField(field)
+		}
+	}
+
+	return filtered
+}
+
+// MapFields applies a transformation to all fields
+func (s *Schema) MapFields(transform func(field Field) Field) *Schema {
+	mapped := s.Clone()
+
+	for i, field := range mapped.Fields {
+		mapped.Fields[i] = transform(field)
+	}
+
+	mapped.updateTimestamp()
+	return mapped
+}

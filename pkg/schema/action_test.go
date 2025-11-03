@@ -30,7 +30,9 @@ func (suite *ActionTestSuite) TestActionVisibility() {
 		Text:   "Visible Button",
 		Hidden: false,
 	}
-	require.True(suite.T(), visibleAction.IsVisible(map[string]any{}))
+	visible, err := visibleAction.IsVisible(context.Background(), map[string]any{})
+	require.NoError(suite.T(), err)
+	require.True(suite.T(), visible)
 
 	// Test hidden action
 	hiddenAction := &Action{
@@ -39,7 +41,9 @@ func (suite *ActionTestSuite) TestActionVisibility() {
 		Text:   "Hidden Button",
 		Hidden: true,
 	}
-	require.False(suite.T(), hiddenAction.IsVisible(map[string]any{}))
+	visible, err = hiddenAction.IsVisible(context.Background(), map[string]any{})
+	require.NoError(suite.T(), err)
+	require.False(suite.T(), visible)
 }
 
 // Test action enabled methods

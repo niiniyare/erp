@@ -96,7 +96,7 @@ type Style struct {
 	FontSizeToken   string `json:"fontSizeToken,omitempty" validate:"design_token"`
 	FontWeightToken string `json:"fontWeightToken,omitempty" validate:"design_token"`
 	BorderToken     string `json:"borderToken,omitempty" validate:"design_token"`
-	
+
 	// Direct CSS values (fallback)
 	Background string `json:"background,omitempty" validate:"css_color"`
 	Color      string `json:"color,omitempty" validate:"css_color"`
@@ -138,9 +138,9 @@ type Transform struct {
 
 // Mask defines input masking
 type Mask struct {
-	Pattern     string                 `json:"pattern" validate:"required"`
-	Placeholder string                 `json:"placeholder,omitempty"`
-	Type        string                 `json:"type,omitempty" validate:"oneof=phone currency date custom"`
+	Pattern     string         `json:"pattern" validate:"required"`
+	Placeholder string         `json:"placeholder,omitempty"`
+	Type        string         `json:"type,omitempty" validate:"oneof=phone currency date custom"`
 	Options     map[string]any `json:"options,omitempty"`
 }
 
@@ -261,7 +261,7 @@ type ActionConfig struct {
 	Download  bool              `json:"download,omitempty"`
 	NewWindow bool              `json:"newWindow,omitempty"`
 	Headers   map[string]string `json:"headers,omitempty"`
-	Payload   any       `json:"payload,omitempty"`
+	Payload   any               `json:"payload,omitempty"`
 	Transform string            `json:"transform,omitempty" validate:"js_function"`
 	OnSuccess string            `json:"onSuccess,omitempty" validate:"js_function"`
 	OnError   string            `json:"onError,omitempty" validate:"js_function"`

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/niiniyare/erp/pkg/schema"
+	"github.com/niiniyare/erp/pkg/schema/parse"
 )
 
 // Storage defines the interface for schema storage backends
@@ -34,7 +35,7 @@ type Registry struct {
 	cache       Storage // Optional Redis cache
 	memoryCache map[string]*cacheEntry
 	mu          sync.RWMutex
-	parser      *Parser
+	parser      *parse.Parser
 }
 
 type cacheEntry struct {
@@ -64,7 +65,7 @@ func NewRegistry(config RegistryConfig) *Registry {
 		storage:     config.Storage,
 		cache:       config.Cache,
 		memoryCache: make(map[string]*cacheEntry),
-		parser:      NewParser(),
+		parser:      parse.NewParser(),
 	}
 }
 

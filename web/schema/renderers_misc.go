@@ -475,40 +475,60 @@ func (jr *JSONRenderer) GetRequiredAssets() []string {
 }
 
 // Placeholder renderers for remaining field types
-type SignatureRenderer struct{ *BaseRenderer }
-type LocationRenderer struct{ *BaseRenderer }
-type RelationRenderer struct{ *BaseRenderer }
-type DisplayRenderer struct{ *BaseRenderer }
-type DividerRenderer struct{ *BaseRenderer }
-type HTMLRenderer struct{ *BaseRenderer }
+type (
+	SignatureRenderer struct{ *BaseRenderer }
+	LocationRenderer  struct{ *BaseRenderer }
+	RelationRenderer  struct{ *BaseRenderer }
+	DisplayRenderer   struct{ *BaseRenderer }
+	DividerRenderer   struct{ *BaseRenderer }
+	HTMLRenderer      struct{ *BaseRenderer }
+)
 
-func NewSignatureRenderer(base *BaseRenderer) *SignatureRenderer   { return &SignatureRenderer{base} }
-func NewLocationRenderer(base *BaseRenderer) *LocationRenderer     { return &LocationRenderer{base} }
-func NewRelationRenderer(base *BaseRenderer) *RelationRenderer     { return &RelationRenderer{base} }
-func NewDisplayRenderer(base *BaseRenderer) *DisplayRenderer       { return &DisplayRenderer{base} }
-func NewDividerRenderer(base *BaseRenderer) *DividerRenderer       { return &DividerRenderer{base} }
-func NewHTMLRenderer(base *BaseRenderer) *HTMLRenderer             { return &HTMLRenderer{base} }
+func NewSignatureRenderer(base *BaseRenderer) *SignatureRenderer { return &SignatureRenderer{base} }
+func NewLocationRenderer(base *BaseRenderer) *LocationRenderer   { return &LocationRenderer{base} }
+func NewRelationRenderer(base *BaseRenderer) *RelationRenderer   { return &RelationRenderer{base} }
+func NewDisplayRenderer(base *BaseRenderer) *DisplayRenderer     { return &DisplayRenderer{base} }
+func NewDividerRenderer(base *BaseRenderer) *DividerRenderer     { return &DividerRenderer{base} }
+func NewHTMLRenderer(base *BaseRenderer) *HTMLRenderer           { return &HTMLRenderer{base} }
 
 func (sr *SignatureRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	inputHTML := fmt.Sprintf(`<div class="signature-pad" data-field="%s">Signature field - implementation needed</div>`, field.Name)
 	return sr.RenderContainer(field, inputHTML, errors), nil
 }
-func (sr *SignatureRenderer) SupportsFieldType(fieldType FieldType) bool { return fieldType == FieldSignature }
-func (sr *SignatureRenderer) GetRequiredAssets() []string { return []string{"css/signature.css", "js/signature.js"} }
+
+func (sr *SignatureRenderer) SupportsFieldType(fieldType FieldType) bool {
+	return fieldType == FieldSignature
+}
+
+func (sr *SignatureRenderer) GetRequiredAssets() []string {
+	return []string{"css/signature.css", "js/signature.js"}
+}
 
 func (lr *LocationRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	inputHTML := fmt.Sprintf(`<div class="location-picker" data-field="%s">Location picker - implementation needed</div>`, field.Name)
 	return lr.RenderContainer(field, inputHTML, errors), nil
 }
-func (lr *LocationRenderer) SupportsFieldType(fieldType FieldType) bool { return fieldType == FieldLocation }
-func (lr *LocationRenderer) GetRequiredAssets() []string { return []string{"css/location.css", "js/location.js"} }
+
+func (lr *LocationRenderer) SupportsFieldType(fieldType FieldType) bool {
+	return fieldType == FieldLocation
+}
+
+func (lr *LocationRenderer) GetRequiredAssets() []string {
+	return []string{"css/location.css", "js/location.js"}
+}
 
 func (rr *RelationRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	inputHTML := fmt.Sprintf(`<div class="relation-picker" data-field="%s">Relation picker - implementation needed</div>`, field.Name)
 	return rr.RenderContainer(field, inputHTML, errors), nil
 }
-func (rr *RelationRenderer) SupportsFieldType(fieldType FieldType) bool { return fieldType == FieldRelation }
-func (rr *RelationRenderer) GetRequiredAssets() []string { return []string{"css/relation.css", "js/relation.js"} }
+
+func (rr *RelationRenderer) SupportsFieldType(fieldType FieldType) bool {
+	return fieldType == FieldRelation
+}
+
+func (rr *RelationRenderer) GetRequiredAssets() []string {
+	return []string{"css/relation.css", "js/relation.js"}
+}
 
 func (dr *DisplayRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	displayValue := ""
@@ -517,13 +537,19 @@ func (dr *DisplayRenderer) Render(ctx context.Context, field *Field, value any, 
 	}
 	return fmt.Sprintf(`<div class="field-display">%s</div>`, html.EscapeString(displayValue)), nil
 }
-func (dr *DisplayRenderer) SupportsFieldType(fieldType FieldType) bool { return fieldType == FieldDisplay }
+
+func (dr *DisplayRenderer) SupportsFieldType(fieldType FieldType) bool {
+	return fieldType == FieldDisplay
+}
 func (dr *DisplayRenderer) GetRequiredAssets() []string { return []string{"css/display.css"} }
 
 func (dr *DividerRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	return `<hr class="field-divider">`, nil
 }
-func (dr *DividerRenderer) SupportsFieldType(fieldType FieldType) bool { return fieldType == FieldDivider }
+
+func (dr *DividerRenderer) SupportsFieldType(fieldType FieldType) bool {
+	return fieldType == FieldDivider
+}
 func (dr *DividerRenderer) GetRequiredAssets() []string { return []string{"css/divider.css"} }
 
 func (hr *HTMLRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
@@ -534,4 +560,4 @@ func (hr *HTMLRenderer) Render(ctx context.Context, field *Field, value any, err
 	return fmt.Sprintf(`<div class="field-html">%s</div>`, htmlContent), nil
 }
 func (hr *HTMLRenderer) SupportsFieldType(fieldType FieldType) bool { return fieldType == FieldHTML }
-func (hr *HTMLRenderer) GetRequiredAssets() []string { return []string{"css/html-field.css"} }
+func (hr *HTMLRenderer) GetRequiredAssets() []string                { return []string{"css/html-field.css"} }

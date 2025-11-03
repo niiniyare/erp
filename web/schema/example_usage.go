@@ -50,10 +50,10 @@ func ExampleUsage() {
 
 	// You can also get the templ component for composition
 	component := templRenderer.RenderFormAsComponent(form.Schema, data, errors)
-	
+
 	// In a real Fiber handler, you might do:
 	// return templ.Handler(component).ServeHTTP(c.Response(), c.Request())
-	
+
 	// Or render to string for custom handling
 	var builder strings.Builder
 	err = component.Render(ctx, &builder)
@@ -69,7 +69,7 @@ func ExampleUsage() {
 // ExampleFiberIntegration shows how to integrate with Fiber
 func ExampleFiberIntegration() {
 	// This would typically be in a Fiber handler
-	
+
 	// Setup
 	tokens := NewDefaultTokenResolver()
 	registry := NewRendererRegistry(tokens)
@@ -90,35 +90,35 @@ func ExampleFiberIntegration() {
 
 	// In a Fiber handler, you would:
 	/*
-	app.Get("/contact", func(c *fiber.Ctx) error {
-		component := templRenderer.RenderFormAsComponent(contactForm.Schema, nil, nil)
-		return templ.Handler(component).ServeHTTP(c.Response(), c.Request())
-	})
-
-	app.Post("/contact", func(c *fiber.Ctx) error {
-		// Parse form data
-		data := map[string]any{
-			"name":    c.FormValue("name"),
-			"email":   c.FormValue("email"),
-			"message": c.FormValue("message"),
-		}
-
-		// Validate data (using the validation system)
-		validator := NewValidator()
-		result := validator.ValidateData(c.Context(), contactForm.Schema, data)
-		
-		if !result.Valid {
-			// Render form with errors
-			component := templRenderer.RenderFormAsComponent(contactForm.Schema, data, result.FieldErrors)
+		app.Get("/contact", func(c *fiber.Ctx) error {
+			component := templRenderer.RenderFormAsComponent(contactForm.Schema, nil, nil)
 			return templ.Handler(component).ServeHTTP(c.Response(), c.Request())
-		}
+		})
 
-		// Process successful submission
-		// ... save to database, send email, etc.
+		app.Post("/contact", func(c *fiber.Ctx) error {
+			// Parse form data
+			data := map[string]any{
+				"name":    c.FormValue("name"),
+				"email":   c.FormValue("email"),
+				"message": c.FormValue("message"),
+			}
 
-		// Redirect or show success message
-		return c.Redirect("/contact/success")
-	})
+			// Validate data (using the validation system)
+			validator := NewValidator()
+			result := validator.ValidateData(c.Context(), contactForm.Schema, data)
+
+			if !result.Valid {
+				// Render form with errors
+				component := templRenderer.RenderFormAsComponent(contactForm.Schema, data, result.FieldErrors)
+				return templ.Handler(component).ServeHTTP(c.Response(), c.Request())
+			}
+
+			// Process successful submission
+			// ... save to database, send email, etc.
+
+			// Redirect or show success message
+			return c.Redirect("/contact/success")
+		})
 	*/
 
 	fmt.Println("Fiber integration example setup complete")

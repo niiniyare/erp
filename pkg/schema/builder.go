@@ -3,9 +3,9 @@ package schema
 import (
 	"context"
 	"time"
-)
 
-// Package-level helpers for common operations
+	"github.com/niiniyare/erp/pkg/condition"
+)
 
 // Builder provides a fluent interface for building schemas programmatically
 type Builder struct {
@@ -13,6 +13,7 @@ type Builder struct {
 	mixinSupport *MixinRegistry
 	validator    *ValidationRegistry
 	ruleEngine   *BusinessRuleEngine
+	evaluator    *condition.Evaluator
 }
 
 // NewBuilder creates a new schema builder
@@ -23,6 +24,12 @@ func NewBuilder(id string, schemaType Type, title string) *Builder {
 		validator:    NewValidationRegistry(),
 		ruleEngine:   NewBusinessRuleEngine(),
 	}
+}
+
+// WithEvaluator sets the condition evaluator for all fields
+func (b *Builder) WithEvaluator(evaluator *condition.Evaluator) *Builder {
+	b.evaluator = evaluator
+	return b
 }
 
 // WithDescription adds a description
@@ -141,34 +148,46 @@ func (b *Builder) WithI18n(defaultLocale string, supported ...string) *Builder {
 
 // AddTextField adds a text field
 func (b *Builder) AddTextField(name, label string, required bool) *Builder {
-	b.schema.AddField(Field{
+	field := Field{
 		Name:     name,
 		Type:     FieldText,
 		Label:    label,
 		Required: required,
-	})
+	}
+	if b.evaluator != nil {
+		field.SetEvaluator(b.evaluator)
+	}
+	b.schema.AddField(field)
 	return b
 }
 
 // AddEmailField adds an email field
 func (b *Builder) AddEmailField(name, label string, required bool) *Builder {
-	b.schema.AddField(Field{
+	field := Field{
 		Name:     name,
 		Type:     FieldEmail,
 		Label:    label,
 		Required: required,
-	})
+	}
+	if b.evaluator != nil {
+		field.SetEvaluator(b.evaluator)
+	}
+	b.schema.AddField(field)
 	return b
 }
 
 // AddPasswordField adds a password field
 func (b *Builder) AddPasswordField(name, label string, required bool) *Builder {
-	b.schema.AddField(Field{
+	field := Field{
 		Name:     name,
 		Type:     FieldPassword,
 		Label:    label,
 		Required: required,
-	})
+	}
+	if b.evaluator != nil {
+		field.SetEvaluator(b.evaluator)
+	}
+	b.schema.AddField(field)
 	return b
 }
 
@@ -186,19 +205,26 @@ func (b *Builder) AddNumberField(name, label string, required bool, min, max *fl
 			Max: max,
 		}
 	}
+	if b.evaluator != nil {
+		field.SetEvaluator(b.evaluator)
+	}
 	b.schema.AddField(field)
 	return b
 }
 
 // AddSelectField adds a select field with options
 func (b *Builder) AddSelectField(name, label string, required bool, options []Option) *Builder {
-	b.schema.AddField(Field{
+	field := Field{
 		Name:     name,
 		Type:     FieldSelect,
 		Label:    label,
 		Required: required,
 		Options:  options,
-	})
+	}
+	if b.evaluator != nil {
+		field.SetEvaluator(b.evaluator)
+	}
+	b.schema.AddField(field)
 	return b
 }
 
@@ -213,34 +239,48 @@ func (b *Builder) AddTextareaField(name, label string, required bool, rows int) 
 	if rows > 0 {
 		field.Config = map[string]any{"rows": rows}
 	}
+	if b.evaluator != nil {
+		field.SetEvaluator(b.evaluator)
+	}
 	b.schema.AddField(field)
 	return b
 }
 
 // AddCheckboxField adds a checkbox field
 func (b *Builder) AddCheckboxField(name, label string, defaultValue bool) *Builder {
-	b.schema.AddField(Field{
+	field := Field{
 		Name:    name,
 		Type:    FieldCheckbox,
 		Label:   label,
 		Default: defaultValue,
-	})
+	}
+	if b.evaluator != nil {
+		field.SetEvaluator(b.evaluator)
+	}
+	b.schema.AddField(field)
 	return b
 }
 
 // AddDateField adds a date field
 func (b *Builder) AddDateField(name, label string, required bool) *Builder {
-	b.schema.AddField(Field{
+	field := Field{
 		Name:     name,
 		Type:     FieldDate,
 		Label:    label,
 		Required: required,
-	})
+	}
+	if b.evaluator != nil {
+		field.SetEvaluator(b.evaluator)
+	}
+	b.schema.AddField(field)
 	return b
 }
 
 // AddFieldWithConfig adds a fully configured field
 func (b *Builder) AddFieldWithConfig(field Field) *Builder {
+	if b.evaluator != nil {
+		field.SetEvaluator(b.evaluator)
+	}
 	b.schema.AddField(field)
 	return b
 }
@@ -287,8 +327,15 @@ func (b *Builder) AddActionWithConfig(action Action) *Builder {
 	return b
 }
 
-// Build returns the constructed schema
+// Build returns the constructed schema with evaluator set on all fields
 func (b *Builder) Build() (*Schema, error) {
+	// Set evaluator on all fields
+	if b.evaluator != nil {
+		for i := range b.schema.Fields {
+			b.schema.Fields[i].SetEvaluator(b.evaluator)
+		}
+	}
+
 	// Validate before returning
 	if err := b.schema.Validate(); err != nil {
 		return nil, err
@@ -305,20 +352,10 @@ func (b *Builder) MustBuild() *Schema {
 	return schema
 }
 
-// Foundation features - Mixin support
-
-// WithMixin applies a mixin to the schema
+// WithMixin applies a mixin to the schema with evaluator support
 func (b *Builder) WithMixin(mixinID string) *Builder {
-	if mixin, err := b.mixinSupport.Get(mixinID); err == nil && mixin != nil {
-		// Apply mixin fields
-		for _, field := range mixin.Fields {
-			b.schema.AddField(field)
-		}
-		// Apply mixin actions
-		for _, action := range mixin.Actions {
-			b.schema.AddAction(action)
-		}
-		// Update schema metadata
+	if err := b.mixinSupport.ApplyMixinWithEvaluator(b.schema, mixinID, "", b.evaluator); err == nil {
+		// Track applied mixin
 		if b.schema.Meta == nil {
 			b.schema.Meta = &Meta{CustomData: make(map[string]any)}
 		} else if b.schema.Meta.CustomData == nil {
@@ -343,8 +380,11 @@ func (b *Builder) WithCustomMixin(mixin *Mixin) *Builder {
 	return b
 }
 
-// WithRepeatable adds a repeatable field
+// WithRepeatable adds a repeatable field with evaluator support
 func (b *Builder) WithRepeatable(field *RepeatableField) *Builder {
+	if b.evaluator != nil {
+		field.SetEvaluator(b.evaluator)
+	}
 	b.schema.AddField(field.Field)
 	return b
 }
@@ -481,7 +521,8 @@ func CreateGroupedOption(value, label, group string) Option {
 
 // FieldBuilder provides fluent interface for building fields
 type FieldBuilder struct {
-	field Field
+	field     Field
+	evaluator *condition.Evaluator
 }
 
 // NewField starts building a field
@@ -554,8 +595,17 @@ func (fb *FieldBuilder) WithValidation(validation *FieldValidation) *FieldBuilde
 	return fb
 }
 
+// WithEvaluator sets the condition evaluator
+func (fb *FieldBuilder) WithEvaluator(evaluator *condition.Evaluator) *FieldBuilder {
+	fb.evaluator = evaluator
+	return fb
+}
+
 // Build returns the constructed field
 func (fb *FieldBuilder) Build() Field {
+	if fb.evaluator != nil {
+		fb.field.SetEvaluator(fb.evaluator)
+	}
 	return fb.field
 }
 

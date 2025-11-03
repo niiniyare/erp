@@ -537,4 +537,3 @@ func (r *RendererRegistry) registerDefaultRenderers() {
 	r.RegisterRenderer(FieldDivider, NewDividerRenderer(baseRenderer))
 	r.RegisterRenderer(FieldHTML, NewHTMLRenderer(baseRenderer))
 }
-

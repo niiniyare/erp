@@ -47,7 +47,7 @@ type Field struct {
     Required    bool            `json:"required,omitempty"`
     Readonly    bool            `json:"readonly,omitempty"`
     Placeholder string          `json:"placeholder,omitempty"`
-    Value       interface{}     `json:"value,omitempty"`
+    Value       any     `json:"value,omitempty"`
     Options     []Option        `json:"options,omitempty"`
     Validation  *FieldValidation `json:"validation,omitempty"`
     Config      map[string]any  `json:"config,omitempty"`

@@ -150,7 +150,7 @@ func CreateComprehensiveExampleSchema() (*Schema, error) {
 		if !ok {
 			return fmt.Errorf("value must be string")
 		}
-		
+
 		// Check if email has professional domain
 		if email != "" && !contains(email, []string{"@company.com", "@enterprise.org", "@business.net"}) {
 			return fmt.Errorf("please use a professional email address")
@@ -234,21 +234,21 @@ func CreateInvoiceFormWithLineItems() (*Schema, error) {
 				Variant: "primary",
 			},
 			{
-				ID:      "approve",
-				Label:   "Approve",
-				Type:    "approve",
-				ToStage: "approved",
-				Icon:    "check",
-				Variant: "success",
+				ID:          "approve",
+				Label:       "Approve",
+				Type:        "approve",
+				ToStage:     "approved",
+				Icon:        "check",
+				Variant:     "success",
 				Permissions: []string{"invoice:approve"},
 			},
 			{
-				ID:      "reject",
-				Label:   "Reject",
-				Type:    "reject",
-				ToStage: "rejected",
-				Icon:    "x",
-				Variant: "destructive",
+				ID:          "reject",
+				Label:       "Reject",
+				Type:        "reject",
+				ToStage:     "rejected",
+				Icon:        "x",
+				Variant:     "destructive",
 				RequireNote: true,
 				Permissions: []string{"invoice:approve"},
 			},
@@ -290,9 +290,9 @@ func DemonstrateDynamicSchemaWithBusinessRules() error {
 
 	// Sample form data
 	formData := map[string]any{
-		"department":   "engineering",
-		"salary_band":  "senior",
-		"email":        "john.doe@company.com",
+		"department":  "engineering",
+		"salary_band": "senior",
+		"email":       "john.doe@company.com",
 	}
 
 	// Apply business rules to modify schema dynamically

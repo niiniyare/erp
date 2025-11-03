@@ -39,20 +39,20 @@ func (s *MixinTestSuite) TestNewMixinRegistry() {
 	registry := NewMixinRegistry()
 	require.NotNil(s.T(), registry)
 	require.NotNil(s.T(), registry.mixins)
-	
+
 	// Should have built-in mixins registered
 	require.Greater(s.T(), len(registry.mixins), 0, "Should have built-in mixins")
-	
+
 	// Check for expected built-in mixins
 	_, err := registry.Get("audit_fields")
 	require.NoError(s.T(), err, "Should have audit_fields mixin")
-	
+
 	_, err = registry.Get("address_fields")
 	require.NoError(s.T(), err, "Should have address_fields mixin")
-	
+
 	_, err = registry.Get("contact_fields")
 	require.NoError(s.T(), err, "Should have contact_fields mixin")
-	
+
 	_, err = registry.Get("status_fields")
 	require.NoError(s.T(), err, "Should have status_fields mixin")
 }
@@ -60,7 +60,7 @@ func (s *MixinTestSuite) TestNewMixinRegistry() {
 func (s *MixinTestSuite) TestMixinRegistration() {
 	err := s.registry.Register(s.mixin)
 	require.NoError(s.T(), err)
-	
+
 	// Test duplicate registration
 	err = s.registry.Register(s.mixin)
 	require.Error(s.T(), err)
@@ -72,11 +72,11 @@ func (s *MixinTestSuite) TestMixinRetrieval() {
 	_, err := s.registry.Get("nonexistent")
 	require.Error(s.T(), err)
 	require.Contains(s.T(), err.Error(), "not found")
-	
+
 	// Register and retrieve mixin
 	err = s.registry.Register(s.mixin)
 	require.NoError(s.T(), err)
-	
+
 	retrieved, err := s.registry.Get("test_mixin")
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), s.mixin.ID, retrieved.ID)
@@ -90,11 +90,11 @@ func (s *MixinTestSuite) TestMixinListing() {
 	initialList := s.registry.List()
 	initialCount := len(initialList)
 	require.Greater(s.T(), initialCount, 0, "Should have built-in mixins")
-	
+
 	// Register a new mixin
 	err := s.registry.Register(s.mixin)
 	require.NoError(s.T(), err)
-	
+
 	// Check updated list
 	updatedList := s.registry.List()
 	require.Len(s.T(), updatedList, initialCount+1)
@@ -105,16 +105,16 @@ func (s *MixinTestSuite) TestMixinApplication() {
 	// Register the test mixin
 	err := s.registry.Register(s.mixin)
 	require.NoError(s.T(), err)
-	
+
 	// Create a schema to apply mixin to
 	schema := NewSchema("test_schema", TypeForm, "Test Schema")
 	require.Len(s.T(), schema.Fields, 0)
 	require.Len(s.T(), schema.Actions, 0)
-	
+
 	// Apply mixin
 	err = s.registry.ApplyMixin(schema, "test_mixin", "")
 	require.NoError(s.T(), err)
-	
+
 	// Check that fields and actions were added
 	require.Len(s.T(), schema.Fields, 2)
 	require.Len(s.T(), schema.Actions, 1)
@@ -127,14 +127,14 @@ func (s *MixinTestSuite) TestMixinApplicationWithPrefix() {
 	// Register the test mixin
 	err := s.registry.Register(s.mixin)
 	require.NoError(s.T(), err)
-	
+
 	// Create a schema to apply mixin to
 	schema := NewSchema("test_schema", TypeForm, "Test Schema")
-	
+
 	// Apply mixin with prefix
 	err = s.registry.ApplyMixin(schema, "test_mixin", "pre")
 	require.NoError(s.T(), err)
-	
+
 	// Check that fields have prefixed names
 	require.Len(s.T(), schema.Fields, 2)
 	require.Equal(s.T(), "pre_field1", schema.Fields[0].Name)
@@ -143,7 +143,7 @@ func (s *MixinTestSuite) TestMixinApplicationWithPrefix() {
 
 func (s *MixinTestSuite) TestMixinApplicationNonExistent() {
 	schema := NewSchema("test_schema", TypeForm, "Test Schema")
-	
+
 	// Try to apply non-existent mixin
 	err := s.registry.ApplyMixin(schema, "nonexistent", "")
 	require.Error(s.T(), err)
@@ -159,15 +159,15 @@ func (s *MixinTestSuite) TestMixinValidation() {
 			{Name: "test_field", Type: FieldText, Label: "Test Field"},
 		},
 	}
-	
+
 	err := s.registry.Register(validMixin)
 	require.NoError(s.T(), err)
-	
+
 	// Test invalid mixin (empty ID)
 	invalidMixin := &Mixin{
 		Name: "Invalid Mixin",
 	}
-	
+
 	err = s.registry.Register(invalidMixin)
 	require.Error(s.T(), err)
 }
@@ -180,10 +180,10 @@ func (s *MixinTestSuite) TestMixinMetadata() {
 		CreatedBy:  "user123",
 		CustomData: map[string]any{"test": "value"},
 	}
-	
+
 	err := s.registry.Register(s.mixin)
 	require.NoError(s.T(), err)
-	
+
 	retrieved, err := s.registry.Get("test_mixin")
 	require.NoError(s.T(), err)
 	require.NotNil(s.T(), retrieved.Meta)
@@ -198,10 +198,10 @@ func (s *MixinTestSuite) TestMixinSecurity() {
 			FieldName: "_csrf",
 		},
 	}
-	
+
 	err := s.registry.Register(s.mixin)
 	require.NoError(s.T(), err)
-	
+
 	retrieved, err := s.registry.Get("test_mixin")
 	require.NoError(s.T(), err)
 	require.NotNil(s.T(), retrieved.Security)
@@ -214,10 +214,10 @@ func (s *MixinTestSuite) TestMixinEvents() {
 		OnLoad:   "handleLoad",
 		OnSubmit: "handleSubmit",
 	}
-	
+
 	err := s.registry.Register(s.mixin)
 	require.NoError(s.T(), err)
-	
+
 	retrieved, err := s.registry.Get("test_mixin")
 	require.NoError(s.T(), err)
 	require.NotNil(s.T(), retrieved.Events)
@@ -231,7 +231,7 @@ func (s *MixinTestSuite) TestBuiltInAuditFields() {
 	require.Equal(s.T(), "audit_fields", auditMixin.ID)
 	require.Equal(s.T(), "Audit Fields", auditMixin.Name)
 	require.Greater(s.T(), len(auditMixin.Fields), 0)
-	
+
 	// Check for expected audit fields
 	fieldNames := make([]string, len(auditMixin.Fields))
 	for i, field := range auditMixin.Fields {
@@ -249,7 +249,7 @@ func (s *MixinTestSuite) TestBuiltInAddressFields() {
 	require.Equal(s.T(), "address_fields", addressMixin.ID)
 	require.Equal(s.T(), "Address Fields", addressMixin.Name)
 	require.Greater(s.T(), len(addressMixin.Fields), 0)
-	
+
 	// Check for expected address fields
 	fieldNames := make([]string, len(addressMixin.Fields))
 	for i, field := range addressMixin.Fields {
@@ -268,7 +268,7 @@ func (s *MixinTestSuite) TestBuiltInContactFields() {
 	require.Equal(s.T(), "contact_fields", contactMixin.ID)
 	require.Equal(s.T(), "Contact Fields", contactMixin.Name)
 	require.Greater(s.T(), len(contactMixin.Fields), 0)
-	
+
 	// Check for expected contact fields
 	fieldNames := make([]string, len(contactMixin.Fields))
 	for i, field := range contactMixin.Fields {
@@ -286,7 +286,7 @@ func (s *MixinTestSuite) TestBuiltInStatusFields() {
 	require.Equal(s.T(), "status_fields", statusMixin.ID)
 	require.Equal(s.T(), "Status Fields", statusMixin.Name)
 	require.Greater(s.T(), len(statusMixin.Fields), 0)
-	
+
 	// Check for expected status fields
 	fieldNames := make([]string, len(statusMixin.Fields))
 	for i, field := range statusMixin.Fields {
@@ -300,10 +300,10 @@ func (s *MixinTestSuite) TestBuiltInStatusFields() {
 func (s *MixinTestSuite) TestMixinCategoriesAndTags() {
 	s.mixin.Category = "forms"
 	s.mixin.Tags = []string{"user", "contact", "form"}
-	
+
 	err := s.registry.Register(s.mixin)
 	require.NoError(s.T(), err)
-	
+
 	retrieved, err := s.registry.Get("test_mixin")
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), "forms", retrieved.Category)
@@ -329,17 +329,17 @@ func (s *MixinTestSuite) TestMixinFieldIntegration() {
 			},
 		},
 	}
-	
+
 	s.mixin.Fields = append(s.mixin.Fields, complexField)
-	
+
 	err := s.registry.Register(s.mixin)
 	require.NoError(s.T(), err)
-	
+
 	// Apply to schema and verify complex field structure
 	schema := NewSchema("test_schema", TypeForm, "Test Schema")
 	err = s.registry.ApplyMixin(schema, "test_mixin", "")
 	require.NoError(s.T(), err)
-	
+
 	// Find the complex field
 	var found *Field
 	for i := range schema.Fields {
@@ -348,7 +348,7 @@ func (s *MixinTestSuite) TestMixinFieldIntegration() {
 			break
 		}
 	}
-	
+
 	require.NotNil(s.T(), found)
 	require.Equal(s.T(), FieldSelect, found.Type)
 	require.True(s.T(), found.Required)

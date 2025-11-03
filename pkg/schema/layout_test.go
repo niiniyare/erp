@@ -22,24 +22,24 @@ func (suite *LayoutTestSuite) TestGridLayout() {
 		Columns: 3,
 		Gap:     "md",
 	}
-	
+
 	// Test GetColumns
 	require.Equal(suite.T(), 3, layout.GetColumns())
-	
+
 	// Test GetGap with valid gap
 	require.Equal(suite.T(), "md", layout.GetGap())
-	
+
 	// Test with different gap values
 	layout.Gap = "sm"
 	require.Equal(suite.T(), "sm", layout.GetGap())
-	
+
 	layout.Gap = "lg"
 	require.Equal(suite.T(), "lg", layout.GetGap())
-	
+
 	// Test with invalid gap (should return default)
 	layout.Gap = "invalid"
 	require.Equal(suite.T(), "invalid", layout.GetGap())
-	
+
 	// Test with empty gap (should return default)
 	layout.Gap = ""
 	require.Equal(suite.T(), "1rem", layout.GetGap())
@@ -51,23 +51,23 @@ func (suite *LayoutTestSuite) TestFlexDirection() {
 		Type:      LayoutFlex,
 		Direction: "row",
 	}
-	
+
 	// Test GetDirection with valid directions
 	require.Equal(suite.T(), "row", layout.GetDirection())
-	
+
 	layout.Direction = "column"
 	require.Equal(suite.T(), "column", layout.GetDirection())
-	
+
 	layout.Direction = "row-reverse"
 	require.Equal(suite.T(), "row-reverse", layout.GetDirection())
-	
+
 	layout.Direction = "column-reverse"
 	require.Equal(suite.T(), "column-reverse", layout.GetDirection())
-	
+
 	// Test with invalid direction (should return default)
 	layout.Direction = "invalid"
 	require.Equal(suite.T(), "invalid", layout.GetDirection())
-	
+
 	// Test with empty direction (should return default)
 	layout.Direction = ""
 	require.Equal(suite.T(), "column", layout.GetDirection())
@@ -81,26 +81,26 @@ func (suite *LayoutTestSuite) TestLayoutTypeChecking() {
 		Tabs: []Tab{{ID: "tab1", Label: "Tab 1", Fields: []string{"field1"}}},
 	}
 	require.True(suite.T(), tabLayout.HasTabs())
-	
+
 	gridLayout := &Layout{Type: LayoutGrid}
 	require.False(suite.T(), gridLayout.HasTabs())
-	
+
 	// Test HasSteps
 	stepLayout := &Layout{
 		Type:  LayoutSteps,
 		Steps: []Step{{ID: "step1", Title: "Step 1", Order: 1, Fields: []string{"field1"}}},
 	}
 	require.True(suite.T(), stepLayout.HasSteps())
-	
+
 	require.False(suite.T(), gridLayout.HasSteps())
-	
+
 	// Test HasSections
 	sectionLayout := &Layout{
 		Type:     LayoutSections,
 		Sections: []Section{{ID: "section1", Title: "Section 1", Fields: []string{"field1"}}},
 	}
 	require.True(suite.T(), sectionLayout.HasSections())
-	
+
 	require.False(suite.T(), gridLayout.HasSections())
 }
 
@@ -111,24 +111,24 @@ func (suite *LayoutTestSuite) TestFieldsForSection() {
 		Sections: []Section{
 			{
 				ID:     "section1",
-				Title:   "Personal Info",
+				Title:  "Personal Info",
 				Fields: []string{"name", "email", "phone"},
 			},
 			{
 				ID:     "section2",
-				Title:   "Address",
+				Title:  "Address",
 				Fields: []string{"street", "city", "zip"},
 			},
 		},
 	}
-	
+
 	// Test getting fields for existing section
 	fields := layout.GetFieldsForSection("section1")
 	require.Equal(suite.T(), []string{"name", "email", "phone"}, fields)
-	
+
 	fields = layout.GetFieldsForSection("section2")
 	require.Equal(suite.T(), []string{"street", "city", "zip"}, fields)
-	
+
 	// Test getting fields for non-existent section
 	fields = layout.GetFieldsForSection("nonexistent")
 	require.Empty(suite.T(), fields)
@@ -151,14 +151,14 @@ func (suite *LayoutTestSuite) TestFieldsForTab() {
 			},
 		},
 	}
-	
+
 	// Test getting fields for existing tab
 	fields := layout.GetFieldsForTab("tab1")
 	require.Equal(suite.T(), []string{"name", "email"}, fields)
-	
+
 	fields = layout.GetFieldsForTab("tab2")
 	require.Equal(suite.T(), []string{"phone", "address"}, fields)
-	
+
 	// Test getting fields for non-existent tab
 	fields = layout.GetFieldsForTab("nonexistent")
 	require.Empty(suite.T(), fields)
@@ -171,26 +171,26 @@ func (suite *LayoutTestSuite) TestFieldsForStep() {
 		Steps: []Step{
 			{
 				ID:     "step1",
-				Title:   "Step 1",
+				Title:  "Step 1",
 				Order:  1,
 				Fields: []string{"name", "email"},
 			},
 			{
 				ID:     "step2",
-				Title:   "Step 2",
+				Title:  "Step 2",
 				Order:  2,
 				Fields: []string{"phone", "address"},
 			},
 		},
 	}
-	
+
 	// Test getting fields for existing step
 	fields := layout.GetFieldsForStep("step1")
 	require.Equal(suite.T(), []string{"name", "email"}, fields)
-	
+
 	fields = layout.GetFieldsForStep("step2")
 	require.Equal(suite.T(), []string{"phone", "address"}, fields)
-	
+
 	// Test getting fields for non-existent step
 	fields = layout.GetFieldsForStep("nonexistent")
 	require.Empty(suite.T(), fields)
@@ -203,25 +203,25 @@ func (suite *LayoutTestSuite) TestOrderedSteps() {
 		Steps: []Step{
 			{
 				ID:     "step3",
-				Title:   "Step 3",
+				Title:  "Step 3",
 				Order:  3,
 				Fields: []string{"review"},
 			},
 			{
 				ID:     "step1",
-				Title:   "Step 1", 
+				Title:  "Step 1",
 				Order:  1,
 				Fields: []string{"name"},
 			},
 			{
 				ID:     "step2",
-				Title:   "Step 2",
+				Title:  "Step 2",
 				Order:  2,
 				Fields: []string{"email"},
 			},
 		},
 	}
-	
+
 	// Test getting ordered steps
 	orderedSteps := layout.GetOrderedSteps()
 	require.Len(suite.T(), orderedSteps, 3)
@@ -248,7 +248,7 @@ func (suite *LayoutTestSuite) TestLayoutValidation() {
 	}
 	err := validGrid.ValidateLayout(schema)
 	require.NoError(suite.T(), err)
-	
+
 	// Test grid layout without columns (should pass - columns have defaults)
 	gridWithoutColumns := &Layout{
 		Type: LayoutGrid,
@@ -256,7 +256,7 @@ func (suite *LayoutTestSuite) TestLayoutValidation() {
 	}
 	err = gridWithoutColumns.ValidateLayout(schema)
 	require.NoError(suite.T(), err)
-	
+
 	// Test valid tabs layout
 	validTabs := &Layout{
 		Type: LayoutTabs,
@@ -266,14 +266,14 @@ func (suite *LayoutTestSuite) TestLayoutValidation() {
 	}
 	err = validTabs.ValidateLayout(schema)
 	require.NoError(suite.T(), err)
-	
+
 	// Test tabs layout without tabs (should pass - validation only checks field references)
 	tabsWithoutTabs := &Layout{
 		Type: LayoutTabs,
 	}
 	err = tabsWithoutTabs.ValidateLayout(schema)
 	require.NoError(suite.T(), err)
-	
+
 	// Test valid steps layout
 	validSteps := &Layout{
 		Type: LayoutSteps,
@@ -283,14 +283,14 @@ func (suite *LayoutTestSuite) TestLayoutValidation() {
 	}
 	err = validSteps.ValidateLayout(schema)
 	require.NoError(suite.T(), err)
-	
+
 	// Test steps layout without steps (should pass - validation only checks field references)
 	stepsWithoutSteps := &Layout{
 		Type: LayoutSteps,
 	}
 	err = stepsWithoutSteps.ValidateLayout(schema)
 	require.NoError(suite.T(), err)
-	
+
 	// Test valid sections layout
 	validSections := &Layout{
 		Type: LayoutSections,
@@ -300,14 +300,14 @@ func (suite *LayoutTestSuite) TestLayoutValidation() {
 	}
 	err = validSections.ValidateLayout(schema)
 	require.NoError(suite.T(), err)
-	
+
 	// Test sections layout without sections (should pass - validation only checks field references)
 	sectionsWithoutSections := &Layout{
 		Type: LayoutSections,
 	}
 	err = sectionsWithoutSections.ValidateLayout(schema)
 	require.NoError(suite.T(), err)
-	
+
 	// Test layout with invalid field reference (should error)
 	layoutWithInvalidField := &Layout{
 		Type: LayoutSections,

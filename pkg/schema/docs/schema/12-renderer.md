@@ -12,7 +12,7 @@ package views
 
 import "github.com/niiniyare/erp/pkg/schema"
 
-templ FormPage(s *schema.Schema, data map[string]interface{}) {
+templ FormPage(s *schema.Schema, data map[string]any) {
     <!DOCTYPE html>
     <html>
     <head>
@@ -25,7 +25,7 @@ templ FormPage(s *schema.Schema, data map[string]interface{}) {
     </html>
 }
 
-templ FormRenderer(s *schema.Schema, data map[string]interface{}) {
+templ FormRenderer(s *schema.Schema, data map[string]any) {
     <form action={ s.Config.Action } method={ s.Config.Method }>
         for _, field := range s.Fields {
             @FieldRenderer(&field, data[field.Name])
@@ -33,7 +33,7 @@ templ FormRenderer(s *schema.Schema, data map[string]interface{}) {
     </form>
 }
 
-templ FieldRenderer(field *schema.Field, value interface{}) {
+templ FieldRenderer(field *schema.Field, value any) {
     switch field.Type {
         case "text", "email":
             <input type={ string(field.Type) } name={ field.Name } />
@@ -60,7 +60,7 @@ templ FieldRenderer(field *schema.Field, value interface{}) {
 ## HTMX Integration
 
 ```go
-templ FormRenderer(s *schema.Schema, data map[string]interface{}) {
+templ FormRenderer(s *schema.Schema, data map[string]any) {
     <form
         if s.HTMX != nil && s.HTMX.Enabled {
             hx-post={ s.HTMX.Post }

@@ -28,11 +28,11 @@ type AsyncValidatorFunc func(ctx context.Context, value any, params map[string]a
 
 // ValidationResult holds validation results
 type ValidationResult struct {
-	Valid       bool                   `json:"valid"`
-	Errors      []SchemaError          `json:"errors,omitempty"`
-	FieldErrors map[string][]string    `json:"fieldErrors,omitempty"`
-	Warnings    []string               `json:"warnings,omitempty"`
-	Context     map[string]any `json:"context,omitempty"`
+	Valid       bool                `json:"valid"`
+	Errors      []SchemaError       `json:"errors,omitempty"`
+	FieldErrors map[string][]string `json:"fieldErrors,omitempty"`
+	Warnings    []string            `json:"warnings,omitempty"`
+	Context     map[string]any      `json:"context,omitempty"`
 }
 
 // NewValidator creates a new validator instance

@@ -38,7 +38,7 @@ func (tr *TemplRenderer) RenderFormWithErrors(ctx context.Context, schema *Schem
 
 	// Use templ to render the form
 	component := FormTemplate(schema, data, errors, tr.registry, tr.tokens)
-	
+
 	// Render the templ component to string
 	var builder strings.Builder
 	err := component.Render(ctx, &builder)
@@ -59,7 +59,7 @@ func (tr *TemplRenderer) RenderField(ctx context.Context, field *Field, value an
 func (tr *TemplRenderer) RenderAction(ctx context.Context, action *Action) (string, error) {
 	// Render action button using templ
 	component := ActionTemplate(action, tr.tokens)
-	
+
 	var builder strings.Builder
 	err := component.Render(ctx, &builder)
 	if err != nil {
@@ -106,7 +106,7 @@ func (tr *TemplRenderer) GenerateTokenCSS(schema *Schema) string {
 	}
 
 	var cssVars []string
-	
+
 	// Generate common design token CSS variables
 	tokens := tr.tokens.GetTokens()
 	for token, value := range tokens {

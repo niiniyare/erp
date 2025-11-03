@@ -21,7 +21,6 @@ func NewDefaultFormRenderer(registry *RendererRegistry, tokens TokenResolver) *D
 	}
 }
 
-
 // buildFormAttributes builds form tag attributes
 func (fr *DefaultFormRenderer) buildFormAttributes(schema *Schema) map[string]string {
 	attrs := map[string]string{
@@ -249,7 +248,7 @@ func (fr *DefaultFormRenderer) renderSection(ctx context.Context, section Sectio
 			headerHTML += fmt.Sprintf(`<span class="section-icon">%s</span>`, html.EscapeString(section.Icon))
 		}
 		headerHTML += fmt.Sprintf(`<h2 class="section-title">%s</h2>`, html.EscapeString(section.Title))
-		
+
 		if section.Collapsible {
 			headerHTML += `<button type="button" class="section-toggle" onclick="toggleSection(this)" aria-expanded="true">▼</button>`
 		}
@@ -513,11 +512,10 @@ func (fr *DefaultFormRenderer) resolveFormStyle(schema *Schema) string {
 	return strings.Join(styles, "; ")
 }
 
-
 // renderRequiredScripts renders JavaScript dependencies
 func (fr *DefaultFormRenderer) renderRequiredScripts(schema *Schema) string {
 	assets := fr.registry.GetAllRequiredAssets()
-	
+
 	var scripts []string
 	for _, asset := range assets {
 		if strings.HasSuffix(asset, ".js") {

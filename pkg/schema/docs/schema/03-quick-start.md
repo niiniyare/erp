@@ -106,7 +106,7 @@ func ShowContactForm(c *fiber.Ctx) error {
 // SubmitContact processes submission
 func SubmitContact(c *fiber.Ctx) error {
     // Get form data
-    data := map[string]interface{}{
+    data := map[string]any{
         "name":    c.FormValue("name"),
         "email":   c.FormValue("email"),
         "message": c.FormValue("message"),
@@ -143,7 +143,7 @@ package views
 import "github.com/niiniyare/erp/pkg/schema"
 
 // FormPage renders complete form page
-templ FormPage(s *schema.Schema, data map[string]interface{}) {
+templ FormPage(s *schema.Schema, data map[string]any) {
     <!DOCTYPE html>
     <html>
     <head>
@@ -168,7 +168,7 @@ templ FormPage(s *schema.Schema, data map[string]interface{}) {
 }
 
 // FormRenderer renders the form
-templ FormRenderer(s *schema.Schema, data map[string]interface{}) {
+templ FormRenderer(s *schema.Schema, data map[string]any) {
     <form
         if s.HTMX != nil && s.HTMX.Enabled {
             hx-post={ s.HTMX.Post }
@@ -190,7 +190,7 @@ templ FormRenderer(s *schema.Schema, data map[string]interface{}) {
 }
 
 // FieldRenderer renders individual fields
-templ FieldRenderer(field *schema.Field, value interface{}) {
+templ FieldRenderer(field *schema.Field, value any) {
     <label>
         { field.Label }
         if field.Required {

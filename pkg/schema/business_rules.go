@@ -2,7 +2,9 @@ package schema
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"sort"
 	"sync"
 	"time"
 
@@ -207,17 +209,13 @@ func (bre *BusinessRuleEngine) ListRules() []*BusinessRule {
 	return rules
 }
 
-// ApplyRules applies business rules to a schema based on provided data
+// ApplyRules applies business rules to a schema based on provided data with deep copy
 func (bre *BusinessRuleEngine) ApplyRules(ctx context.Context, schema *Schema, data map[string]any) (*Schema, error) {
 	bre.mu.RLock()
 	defer bre.mu.RUnlock()
 
-	// Create a copy of the schema to modify
-	modifiedSchema := *schema
-	modifiedSchema.Fields = make([]Field, len(schema.Fields))
-	copy(modifiedSchema.Fields, schema.Fields)
-	modifiedSchema.Actions = make([]Action, len(schema.Actions))
-	copy(modifiedSchema.Actions, schema.Actions)
+	// Create a deep copy of the schema to modify
+	modifiedSchema := bre.deepCopySchema(schema)
 
 	// Collect applicable rules and sort by priority
 	applicableRules := bre.getApplicableRules()
@@ -238,7 +236,7 @@ func (bre *BusinessRuleEngine) ApplyRules(ctx context.Context, schema *Schema, d
 		}
 
 		if shouldApply {
-			if err := bre.applyRuleActions(ctx, rule, &modifiedSchema, data); err != nil {
+			if err := bre.applyRuleActions(ctx, rule, modifiedSchema, data); err != nil {
 				if schemaErr, ok := err.(SchemaError); ok {
 					collector.AddFieldError(rule.ID, schemaErr)
 				} else {
@@ -252,7 +250,24 @@ func (bre *BusinessRuleEngine) ApplyRules(ctx context.Context, schema *Schema, d
 		return schema, collector.Errors()
 	}
 
-	return &modifiedSchema, nil
+	return modifiedSchema, nil
+}
+
+// deepCopySchema creates a deep copy of a schema preserving evaluators
+func (bre *BusinessRuleEngine) deepCopySchema(schema *Schema) *Schema {
+	// Use JSON marshal/unmarshal for deep copy
+	data, _ := json.Marshal(schema)
+	var copy Schema
+	json.Unmarshal(data, &copy)
+
+	// Preserve evaluators on fields (they don't serialize)
+	for i := range copy.Fields {
+		if i < len(schema.Fields) {
+			copy.Fields[i].evaluator = schema.Fields[i].evaluator
+		}
+	}
+
+	return &copy
 }
 
 // validateRule validates a business rule configuration
@@ -309,13 +324,9 @@ func (bre *BusinessRuleEngine) getApplicableRules() []*BusinessRule {
 	}
 
 	// Sort by priority (higher priority first)
-	for i := 0; i < len(rules)-1; i++ {
-		for j := i + 1; j < len(rules); j++ {
-			if rules[i].Priority < rules[j].Priority {
-				rules[i], rules[j] = rules[j], rules[i]
-			}
-		}
-	}
+	sort.Slice(rules, func(i, j int) bool {
+		return rules[i].Priority > rules[j].Priority
+	})
 
 	return rules
 }
@@ -436,21 +447,33 @@ func (bre *BusinessRuleEngine) setFieldOptions(schema *Schema, fieldName string,
 	return NewValidationError("field_not_found", fmt.Sprintf("field %s not found", fieldName))
 }
 
-func (bre *BusinessRuleEngine) calculateFieldValue(_ context.Context, schema *Schema, fieldName string, params map[string]any, data map[string]any) error {
-	// This would implement field calculations using the condition engine
-	// For now, it's a placeholder implementation
+func (bre *BusinessRuleEngine) calculateFieldValue(ctx context.Context, schema *Schema, fieldName string, params map[string]any, data map[string]any) error {
+	formula, exists := params["formula"].(string)
+	if !exists {
+		return NewValidationError("missing_formula", "calculation requires formula parameter")
+	}
+
+	// Find the field
 	for i := range schema.Fields {
 		if schema.Fields[i].Name == fieldName {
-			// Would use formula from params to calculate value
-			// Example: params["formula"] = "quantity * unit_price"
-			if formula, exists := params["formula"]; exists {
-				// Use condition engine to evaluate formula
-				_ = formula                      // Placeholder - would implement calculation logic
-				schema.Fields[i].Readonly = true // Calculated fields are typically readonly
+			// Mark as readonly calculated field
+			schema.Fields[i].Readonly = true
+
+			// Store formula in config for frontend
+			if schema.Fields[i].Config == nil {
+				schema.Fields[i].Config = make(map[string]any)
 			}
+			schema.Fields[i].Config["formula"] = formula
+			schema.Fields[i].Config["calculated"] = true
+
+			// TODO: Implement actual formula evaluation
+			// For now, we just mark it as calculated and store the formula
+			// The actual calculation would be done by the frontend or a formula evaluator
+
 			return nil
 		}
 	}
+
 	return NewValidationError("field_not_found", fmt.Sprintf("field %s not found", fieldName))
 }
 
@@ -473,6 +496,65 @@ func (bre *BusinessRuleEngine) setActionEnabled(schema *Schema, actionID string,
 		}
 	}
 	return NewValidationError("action_not_found", fmt.Sprintf("action %s not found", actionID))
+}
+
+// TestRule tests a rule against multiple data scenarios
+func (bre *BusinessRuleEngine) TestRule(ctx context.Context, rule *BusinessRule, schema *Schema, testCases []map[string]any) ([]bool, error) {
+	results := make([]bool, len(testCases))
+
+	for i, data := range testCases {
+		shouldApply, err := bre.evaluateRuleCondition(ctx, rule, data)
+		if err != nil {
+			return nil, err
+		}
+		results[i] = shouldApply
+	}
+
+	return results, nil
+}
+
+// ExplainRule provides debugging information about a rule
+func (bre *BusinessRuleEngine) ExplainRule(ctx context.Context, rule *BusinessRule, data map[string]any) (string, error) {
+	explanation := fmt.Sprintf("Rule: %s\n", rule.Name)
+	explanation += fmt.Sprintf("Type: %s\n", rule.Type)
+	explanation += fmt.Sprintf("Priority: %d\n", rule.Priority)
+	explanation += fmt.Sprintf("Enabled: %v\n", rule.Enabled)
+
+	shouldApply, err := bre.evaluateRuleCondition(ctx, rule, data)
+	if err != nil {
+		return "", err
+	}
+
+	explanation += fmt.Sprintf("Condition Met: %v\n", shouldApply)
+	explanation += fmt.Sprintf("Actions: %d\n", len(rule.Actions))
+
+	for i, action := range rule.Actions {
+		explanation += fmt.Sprintf("  Action %d: %s on %s\n", i+1, action.Type, action.Target)
+	}
+
+	return explanation, nil
+}
+
+// UpdateRule updates an existing rule
+func (bre *BusinessRuleEngine) UpdateRule(rule *BusinessRule) error {
+	if rule == nil || rule.ID == "" {
+		return NewValidationError("invalid_rule", "rule is required with valid ID")
+	}
+
+	if err := bre.validateRule(rule); err != nil {
+		return err
+	}
+
+	bre.mu.Lock()
+	defer bre.mu.Unlock()
+
+	if _, exists := bre.rules[rule.ID]; !exists {
+		return NewValidationError("rule_not_found", fmt.Sprintf("business rule %s not found", rule.ID))
+	}
+
+	rule.UpdatedAt = time.Now()
+	bre.rules[rule.ID] = rule
+	return nil
 }
 
 // BusinessRuleBuilder provides a fluent interface for building business rules
@@ -603,4 +685,3 @@ func CreateCalculationRule(id, fieldName, formula string, condition *condition.C
 		WithActionAndParams(ActionCalculate, fieldName, nil, params).
 		Build()
 }
-

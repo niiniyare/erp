@@ -18,7 +18,7 @@ func NewSelectRenderer(base *BaseRenderer) *SelectRenderer {
 
 func (sr *SelectRenderer) Render(ctx context.Context, field *Field, value any, errors []string) (string, error) {
 	attrs := sr.buildInputAttributes(field, value)
-	delete(attrs, "value") // Value is handled in options
+	delete(attrs, "value")       // Value is handled in options
 	delete(attrs, "placeholder") // Placeholder is handled as first option
 
 	// Build options

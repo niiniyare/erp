@@ -3,7 +3,11 @@ package schema
 import (
 	"context"
 	"fmt"
+	"maps"
+	"sync"
 	"time"
+
+	"github.com/niiniyare/erp/pkg/condition"
 )
 
 // Mixin represents a reusable collection of fields and validation rules
@@ -30,9 +34,10 @@ type Mixin struct {
 	Meta *Meta `json:"meta,omitempty"` // Creation/update metadata
 }
 
-// MixinRegistry manages available mixins
+// MixinRegistry manages available mixins with thread-safe operations
 type MixinRegistry struct {
 	mixins map[string]*Mixin
+	mu     sync.RWMutex
 }
 
 // NewMixinRegistry creates a new mixin registry with built-in mixins
@@ -57,11 +62,14 @@ func (r *MixinRegistry) registerBuiltIn(mixin *Mixin) error {
 	return r.register(mixin, false)
 }
 
-// register is the internal registration method
+// register is the internal registration method with thread safety
 func (r *MixinRegistry) register(mixin *Mixin, validate bool) error {
 	if mixin.ID == "" {
 		return NewValidationError("mixin_id", "mixin ID is required")
 	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	// Check for duplicate registration
 	if _, exists := r.mixins[mixin.ID]; exists {
@@ -79,8 +87,11 @@ func (r *MixinRegistry) register(mixin *Mixin, validate bool) error {
 	return nil
 }
 
-// Get retrieves a mixin by ID
+// Get retrieves a mixin by ID with thread safety
 func (r *MixinRegistry) Get(id string) (*Mixin, error) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
 	mixin, exists := r.mixins[id]
 	if !exists {
 		return nil, NewValidationError("mixin_not_found", "mixin not found: "+id)
@@ -88,17 +99,23 @@ func (r *MixinRegistry) Get(id string) (*Mixin, error) {
 	return mixin, nil
 }
 
-// List returns all registered mixins
+// List returns all registered mixins with thread safety
 func (r *MixinRegistry) List() map[string]*Mixin {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
 	result := make(map[string]*Mixin)
-	for id, mixin := range r.mixins {
-		result[id] = mixin
-	}
+	maps.Copy(result, r.mixins)
 	return result
 }
 
-// ApplyMixin applies a mixin to a schema
+// ApplyMixin applies a mixin to a schema (backward compatible)
 func (r *MixinRegistry) ApplyMixin(schema *Schema, mixinID string, prefix string) error {
+	return r.ApplyMixinWithEvaluator(schema, mixinID, prefix, nil)
+}
+
+// ApplyMixinWithEvaluator applies a mixin to a schema with evaluator injection
+func (r *MixinRegistry) ApplyMixinWithEvaluator(schema *Schema, mixinID string, prefix string, evaluator *condition.Evaluator) error {
 	mixin, err := r.Get(mixinID)
 	if err != nil {
 		return err
@@ -109,6 +126,11 @@ func (r *MixinRegistry) ApplyMixin(schema *Schema, mixinID string, prefix string
 		newField := field // Copy field
 		if prefix != "" {
 			newField.Name = prefix + "_" + field.Name
+		}
+
+		// Set evaluator on field if provided
+		if evaluator != nil {
+			newField.SetEvaluator(evaluator)
 		}
 
 		// Check for conflicts
@@ -155,14 +177,47 @@ func (r *MixinRegistry) ApplyMixin(schema *Schema, mixinID string, prefix string
 		appliedMixins = []string{}
 	}
 
-	mixinList := appliedMixins.([]string)
+	mixinList, ok := appliedMixins.([]string)
 	mixinRef := mixinID
-	if prefix != "" {
-		mixinRef = fmt.Sprintf("%s:%s", mixinID, prefix)
+	if !ok {
+		mixinList = []string{}
 	}
-
 	schema.Meta.CustomData["applied_mixins"] = append(mixinList, mixinRef)
 
+	return nil
+}
+
+// Unregister removes a mixin from the registry
+func (r *MixinRegistry) Unregister(mixinID string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, exists := r.mixins[mixinID]; !exists {
+		return NewValidationError("mixin_not_found", fmt.Sprintf("mixin %s not found", mixinID))
+	}
+
+	delete(r.mixins, mixinID)
+	return nil
+}
+
+// Update updates an existing mixin
+func (r *MixinRegistry) Update(mixin *Mixin) error {
+	if mixin == nil || mixin.ID == "" {
+		return NewValidationError("mixin_invalid", "mixin is required with valid ID")
+	}
+
+	if err := mixin.Validate(); err != nil {
+		return fmt.Errorf("invalid mixin %s: %w", mixin.ID, err)
+	}
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, exists := r.mixins[mixin.ID]; !exists {
+		return NewValidationError("mixin_not_found", fmt.Sprintf("mixin %s not found", mixin.ID))
+	}
+
+	r.mixins[mixin.ID] = mixin
 	return nil
 }
 
@@ -212,8 +267,6 @@ func (m *Mixin) Validate() error {
 
 // Clone creates a deep copy of the mixin
 func (m *Mixin) Clone() *Mixin {
-	// Simple clone using JSON marshal/unmarshal
-	// In production, consider using a more efficient method
 	return &Mixin{
 		ID:          m.ID,
 		Name:        m.Name,
@@ -455,10 +508,6 @@ func copyMap(original map[string]any) map[string]any {
 		return nil
 	}
 	copy := make(map[string]any)
-	for k, v := range original {
-		copy[k] = v
-	}
+	maps.Copy(copy, original)
 	return copy
 }
-
-

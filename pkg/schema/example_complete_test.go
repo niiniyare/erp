@@ -95,7 +95,7 @@ func TestComprehensiveExample(t *testing.T) {
 
 	// Test actions
 	assert.Len(t, schema.Actions, 4) // submit, preview, validate, export
-	
+
 	submitAction := schema.Actions[0]
 	assert.Equal(t, "submit", submitAction.ID)
 	assert.Equal(t, ActionSubmit, submitAction.Type)
@@ -150,7 +150,7 @@ func TestSchemaValidation(t *testing.T) {
 
 	// Test form data validation with registries
 	ctx := context.Background()
-	
+
 	// Create validation registries
 	fieldRegistry := NewValidationRegistry()
 	crossFieldRegistry := NewCrossFieldValidationRegistry()
@@ -163,9 +163,9 @@ func TestSchemaValidation(t *testing.T) {
 		"status":     "active", // Required field from status mixin
 		"skills": []map[string]any{
 			{
-				"skill_name":        "Go Programming",
-				"proficiency":       "advanced",
-				"years_experience":  5,
+				"skill_name":       "Go Programming",
+				"proficiency":      "advanced",
+				"years_experience": 5,
 			},
 		},
 	}
@@ -213,7 +213,7 @@ func TestSchemaSerializationRoundTrip(t *testing.T) {
 	var restored Schema
 	err = restored.UnmarshalJSON(data)
 	assert.NoError(t, err)
-	
+
 	assert.Equal(t, original.ID, restored.ID)
 	assert.Equal(t, original.Type, restored.Type)
 	assert.Equal(t, original.Title, restored.Title)
@@ -224,17 +224,17 @@ func TestComprehensiveErrorHandling(t *testing.T) {
 	builder := NewBuilder("", TypeForm, "") // Invalid ID and title
 	_, err := builder.Build()
 	assert.Error(t, err)
-	
+
 	// Test error collection
 	collector := NewErrorCollector()
 	collector.AddValidationError("field1", "required", "Field is required")
 	collector.AddValidationError("field2", "invalid", "Field is invalid")
-	
+
 	assert.True(t, collector.HasErrors())
-	
+
 	errors := collector.Errors()
 	assert.Equal(t, 2, errors.Count())
-	
+
 	fieldErrors := errors.ErrorsByField()
 	assert.Contains(t, fieldErrors, "field1")
 	assert.Contains(t, fieldErrors, "field2")
@@ -244,24 +244,24 @@ func TestDesignTokensIntegration(t *testing.T) {
 	// Test that design tokens are available
 	tokens := GetDefaultTokens()
 	assert.NotNil(t, tokens)
-	
+
 	// Test spacing tokens
 	assert.Equal(t, "1rem", tokens.Spacing.MD)
 	assert.Equal(t, "0.5rem", tokens.Spacing.SM)
 	assert.Equal(t, "2rem", tokens.Spacing.LG)
-	
+
 	// Test color tokens
 	assert.NotEmpty(t, tokens.Colors.Text.Default)
 	assert.NotEmpty(t, tokens.Colors.Background.Default)
-	
+
 	// Test token registry
 	registry := NewTokenRegistry()
 	spacing := registry.GetSpacing("md")
 	assert.Equal(t, "1rem", spacing)
-	
+
 	color := registry.GetColor("text", "default")
 	assert.NotEmpty(t, color)
-	
+
 	// Test convenience functions
 	assert.Equal(t, "1rem", SpacingMD())
 	assert.Equal(t, "0.5rem", SpacingSM())
@@ -271,13 +271,13 @@ func TestDesignTokensIntegration(t *testing.T) {
 func TestCompleteIntegration(t *testing.T) {
 	// Create a schema using all major features
 	builder := NewBuilder("integration_test", TypeForm, "Integration Test")
-	
+
 	// Apply all types of configuration
 	builder.WithMixin("audit_fields").
 		WithCSRF().
 		WithHTMX("/test", "#result").
 		WithI18n("en-US")
-	
+
 	// Add fields with validation
 	builder.AddTextField("name", "Full Name", true).
 		AddEmailField("email", "Email", true).
@@ -285,7 +285,7 @@ func TestCompleteIntegration(t *testing.T) {
 			CreateOption("admin", "Administrator"),
 			CreateOption("user", "User"),
 		})
-	
+
 	// Add business rules
 	visibilityRule, _ := CreateFieldVisibilityRule(
 		"admin_fields",
@@ -294,27 +294,27 @@ func TestCompleteIntegration(t *testing.T) {
 		true,
 	)
 	builder.WithBusinessRule(visibilityRule)
-	
+
 	// Add custom validation
 	builder.WithCustomValidator("test_validator", func(ctx context.Context, value any, params map[string]any) error {
 		return nil // Always pass
 	})
-	
+
 	// Build and validate
 	schema, err := builder.Build()
 	require.NoError(t, err)
-	
+
 	// Test that all features are present
 	assert.NotNil(t, schema.Security.CSRF)
 	assert.NotNil(t, schema.HTMX)
 	assert.NotNil(t, schema.I18n)
 	assert.Greater(t, len(schema.Fields), 3) // audit fields + custom fields
-	
+
 	// Test validation
 	ctx := context.Background()
 	fieldRegistry := builder.GetValidationRegistry()
 	err = fieldRegistry.Validate(ctx, "test_validator", "test_value", nil)
 	assert.NoError(t, err)
-	
+
 	t.Log("✅ Complete integration test passed - all schema features working together")
 }

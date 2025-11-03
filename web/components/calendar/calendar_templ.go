@@ -7,14 +7,14 @@ package calendar
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
 import (
-	"github.com/niiniyare/erp/web/components/icon"
-	"github.com/niiniyare/erp/web/utils"
 	"strconv"
 	"time"
+
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
+	"github.com/niiniyare/erp/web/components/icon"
+	"github.com/niiniyare/erp/web/utils"
 )
 
 type LocaleTag string

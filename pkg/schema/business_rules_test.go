@@ -324,7 +324,7 @@ func (suite *BusinessRulesTestSuite) TestFieldRequiredActions() {
 	modifiedSchema, err := suite.engine.ApplyRules(suite.ctx, schema, map[string]any{})
 	require.NoError(suite.T(), err)
 
-	require.True(suite.T(), modifiedSchema.Fields[0].Required)   // field1 should be required
+	require.True(suite.T(), modifiedSchema.Fields[0].Required)  // field1 should be required
 	require.False(suite.T(), modifiedSchema.Fields[1].Required) // field2 should be optional
 }
 
@@ -442,7 +442,7 @@ func (suite *BusinessRulesTestSuite) TestActionVisibility() {
 	modifiedSchema, err := suite.engine.ApplyRules(suite.ctx, schema, map[string]any{})
 	require.NoError(suite.T(), err)
 
-	require.True(suite.T(), modifiedSchema.Actions[0].Hidden)   // action1 should be hidden
+	require.True(suite.T(), modifiedSchema.Actions[0].Hidden)  // action1 should be hidden
 	require.False(suite.T(), modifiedSchema.Actions[1].Hidden) // action2 should be shown
 
 	// Test action not found
@@ -492,7 +492,7 @@ func (suite *BusinessRulesTestSuite) TestActionEnabled() {
 	modifiedSchema, err := suite.engine.ApplyRules(suite.ctx, schema, map[string]any{})
 	require.NoError(suite.T(), err)
 
-	require.True(suite.T(), modifiedSchema.Actions[0].Disabled)   // action1 should be disabled
+	require.True(suite.T(), modifiedSchema.Actions[0].Disabled)  // action1 should be disabled
 	require.False(suite.T(), modifiedSchema.Actions[1].Disabled) // action2 should be enabled
 }
 
@@ -748,7 +748,7 @@ func (suite *BusinessRulesTestSuite) TestRuleConditionEvaluation() {
 	// Test rule without condition (should always apply)
 	// Clean the engine first
 	suite.engine.RemoveRule("conditional_rule")
-	
+
 	ruleWithoutCondition := &BusinessRule{
 		ID:      "always_apply_rule",
 		Name:    "Always Apply Rule",

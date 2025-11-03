@@ -37,7 +37,7 @@ func (s *RepeatableSimpleTestSuite) SetupTest() {
 			Required: true,
 		},
 	}
-	
+
 	field, err := NewRepeatableField("line_items", "Line Items").
 		WithTemplate(s.template).
 		WithMinItems(1).
@@ -51,7 +51,7 @@ func (s *RepeatableSimpleTestSuite) SetupTest() {
 func (s *RepeatableSimpleTestSuite) TestNewRepeatableField() {
 	builder := NewRepeatableField("test_items", "Test Items")
 	require.NotNil(s.T(), builder)
-	
+
 	// Add a template since it's required
 	template := []Field{{Name: "test", Type: FieldText, Label: "Test"}}
 	field, err := builder.WithTemplate(template).Build()
@@ -65,7 +65,7 @@ func (s *RepeatableSimpleTestSuite) TestRepeatableFieldBuilder() {
 	template := []Field{
 		{Name: "item_name", Type: FieldText, Label: "Item Name"},
 	}
-	
+
 	field, err := NewRepeatableField("items", "Items").
 		WithTemplate(template).
 		WithMinItems(0).
@@ -75,7 +75,7 @@ func (s *RepeatableSimpleTestSuite) TestRepeatableFieldBuilder() {
 		WithSortable(true).
 		WithCollapsible(true).
 		Build()
-	
+
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), "items", field.Name)
 	require.Equal(s.T(), "Items", field.Label)
@@ -94,14 +94,14 @@ func (s *RepeatableSimpleTestSuite) TestRepeatableFieldValidation() {
 	require.NotNil(s.T(), s.repeatableField)
 	require.Equal(s.T(), "line_items", s.repeatableField.Name)
 	require.Len(s.T(), s.repeatableField.Template, 3)
-	
+
 	// Test invalid template (empty)
 	_, err := NewRepeatableField("empty", "Empty").
 		WithTemplate([]Field{}).
 		Build()
 	require.Error(s.T(), err)
 	require.Contains(s.T(), err.Error(), "template")
-	
+
 	// Test invalid min/max
 	_, err = NewRepeatableField("invalid", "Invalid").
 		WithTemplate(s.template).
@@ -114,7 +114,7 @@ func (s *RepeatableSimpleTestSuite) TestRepeatableFieldValidation() {
 
 func (s *RepeatableSimpleTestSuite) TestValidateItems() {
 	ctx := context.Background()
-	
+
 	items := []map[string]any{
 		{
 			"product_name": "Widget A",
@@ -127,15 +127,15 @@ func (s *RepeatableSimpleTestSuite) TestValidateItems() {
 			"unit_price":   25.00,
 		},
 	}
-	
+
 	err := s.manager.ValidateItems(ctx, items)
 	require.NoError(s.T(), err)
-	
+
 	// Test too few items
 	err = s.manager.ValidateItems(ctx, []map[string]any{})
 	require.Error(s.T(), err)
 	require.Contains(s.T(), err.Error(), "minimum")
-	
+
 	// Test too many items
 	tooManyItems := make([]map[string]any, 15)
 	for i := range tooManyItems {
@@ -144,7 +144,7 @@ func (s *RepeatableSimpleTestSuite) TestValidateItems() {
 	err = s.manager.ValidateItems(ctx, tooManyItems)
 	require.Error(s.T(), err)
 	require.Contains(s.T(), err.Error(), "maximum")
-	
+
 	// Test invalid item data
 	invalidItems := []map[string]any{
 		{
@@ -164,22 +164,22 @@ func (s *RepeatableSimpleTestSuite) TestCreateDefaultItem() {
 		"quantity":     1.0,
 		"unit_price":   0.0,
 	}
-	
+
 	field, err := NewRepeatableField("items", "Items").
 		WithTemplate(s.template).
 		WithDefaultItem(defaultItem).
 		Build()
 	require.NoError(s.T(), err)
-	
+
 	manager := NewRepeatableManager(field)
-	created := manager.CreateDefaultItem()
-	
+	created := manager.CreateDefaultItem(context.Background())
+
 	require.Equal(s.T(), "New Product", created["product_name"])
 	require.Equal(s.T(), 1.0, created["quantity"])
 	require.Equal(s.T(), 0.0, created["unit_price"])
-	
+
 	// Test with field without default item
-	created = s.manager.CreateDefaultItem()
+	created = s.manager.CreateDefaultItem(context.Background())
 	require.NotNil(s.T(), created)
 	// Should have default values based on field types
 }
@@ -191,18 +191,18 @@ func (s *RepeatableSimpleTestSuite) TestCreateInvoiceLineItemsField() {
 			s.T().Skip("CreateInvoiceLineItemsField function does not exist or panics")
 		}
 	}()
-	
+
 	lineItems := CreateInvoiceLineItemsField()
 	if lineItems == nil {
 		s.T().Skip("CreateInvoiceLineItemsField returns nil - function may not be fully implemented")
 		return
 	}
-	
+
 	require.Equal(s.T(), "line_items", lineItems.Name)
 	require.Equal(s.T(), "Line Items", lineItems.Label)
 	require.Equal(s.T(), FieldRepeatable, lineItems.Type)
 	require.Greater(s.T(), len(lineItems.Template), 0)
-	
+
 	// Check for expected fields in template
 	templateFieldNames := make([]string, len(lineItems.Template))
 	for i, field := range lineItems.Template {
@@ -225,30 +225,30 @@ func (s *RepeatableSimpleTestSuite) TestCreateInvoiceLineItemsField() {
 func (s *RepeatableSimpleTestSuite) TestHelperFunctions() {
 	// Test that we can create helper functions for common use cases
 	// Note: Only CreateInvoiceLineItemsField exists currently
-	
+
 	// Test creating a simple subtasks field manually
 	subtaskTemplate := []Field{
 		{Name: "title", Type: FieldText, Label: "Task Title", Required: true},
 		{Name: "completed", Type: FieldCheckbox, Label: "Completed", Default: false},
 		{Name: "assigned_to", Type: FieldText, Label: "Assigned To"},
 	}
-	
+
 	subtasks, err := NewRepeatableField("subtasks", "Subtasks").
 		WithTemplate(subtaskTemplate).
 		WithMinItems(0).
 		WithMaxItems(20).
 		Build()
-	
+
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), "subtasks", subtasks.Name)
 	require.Len(s.T(), subtasks.Template, 3)
-	
+
 	// Test creating a simple addresses field manually
 	addressTemplate := []Field{
 		{
-			Name: "type", 
-			Type: FieldSelect, 
-			Label: "Address Type", 
+			Name:     "type",
+			Type:     FieldSelect,
+			Label:    "Address Type",
 			Required: true,
 			Options: []Option{
 				{Value: "home", Label: "Home"},
@@ -259,12 +259,12 @@ func (s *RepeatableSimpleTestSuite) TestHelperFunctions() {
 		{Name: "city", Type: FieldText, Label: "City", Required: true},
 		{Name: "postal_code", Type: FieldText, Label: "Postal Code", Required: true},
 	}
-	
+
 	addresses, err := NewRepeatableField("addresses", "Addresses").
 		WithTemplate(addressTemplate).
 		WithMinItems(1).
 		Build()
-	
+
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), "addresses", addresses.Name)
 	require.Len(s.T(), addresses.Template, 4)
@@ -278,17 +278,17 @@ func (s *RepeatableSimpleTestSuite) TestRepeatableFieldProperties() {
 	require.Len(s.T(), s.repeatableField.Template, 3)
 	require.Equal(s.T(), 1, s.repeatableField.MinItems)
 	require.Equal(s.T(), 10, s.repeatableField.MaxItems)
-	require.True(s.T(), s.repeatableField.Sortable) // Default value
-	require.False(s.T(), s.repeatableField.Collapsible) // Default value
-	require.True(s.T(), s.repeatableField.ShowIndex) // Default value
-	require.Equal(s.T(), "Add Item", s.repeatableField.AddText) // Default value
+	require.True(s.T(), s.repeatableField.Sortable)              // Default value
+	require.False(s.T(), s.repeatableField.Collapsible)          // Default value
+	require.True(s.T(), s.repeatableField.ShowIndex)             // Default value
+	require.Equal(s.T(), "Add Item", s.repeatableField.AddText)  // Default value
 	require.Equal(s.T(), "Remove", s.repeatableField.RemoveText) // Default value
 }
 
 func (s *RepeatableSimpleTestSuite) TestRepeatableManager() {
 	// Test that manager is created correctly
 	require.NotNil(s.T(), s.manager)
-	
+
 	// Test that manager has reference to field
 	manager := NewRepeatableManager(s.repeatableField)
 	require.NotNil(s.T(), manager)
@@ -303,7 +303,7 @@ func (s *RepeatableSimpleTestSuite) TestTableRepeaterField() {
 		Footer:          true,
 		Selectable:      true,
 	}
-	
+
 	require.True(s.T(), field.Editable)
 	require.True(s.T(), field.Footer)
 	require.True(s.T(), field.Selectable)
@@ -319,13 +319,13 @@ func (s *RepeatableSimpleTestSuite) TestAggregateTypes() {
 		AggregateMin,
 		AggregateMax,
 	}
-	
+
 	require.Equal(s.T(), "sum", string(AggregateSum))
 	require.Equal(s.T(), "avg", string(AggregateAvg))
 	require.Equal(s.T(), "count", string(AggregateCount))
 	require.Equal(s.T(), "min", string(AggregateMin))
 	require.Equal(s.T(), "max", string(AggregateMax))
-	
+
 	for _, aggType := range aggregateTypes {
 		require.NotEmpty(s.T(), string(aggType))
 	}
@@ -340,7 +340,7 @@ func (s *RepeatableSimpleTestSuite) TestBuilderEdgeCases() {
 	require.Equal(s.T(), "minimal", field.Name)
 	require.Equal(s.T(), 0, field.MinItems) // Default
 	require.Equal(s.T(), 0, field.MaxItems) // Default (unlimited)
-	
+
 	// Test with all options
 	defaultItem := map[string]any{"test": "default"}
 	field, err = NewRepeatableField("full", "Full").
@@ -353,7 +353,7 @@ func (s *RepeatableSimpleTestSuite) TestBuilderEdgeCases() {
 		WithSortable(false).
 		WithCollapsible(true).
 		Build()
-	
+
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), 2, field.MinItems)
 	require.Equal(s.T(), 20, field.MaxItems)

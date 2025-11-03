@@ -37,11 +37,11 @@ func TestValidation(t *testing.T) {
     validator := validate.NewValidator(nil)
     
     // Test empty - should fail
-    errors := validator.ValidateData(ctx, schema, map[string]interface{}{})
+    errors := validator.ValidateData(ctx, schema, map[string]any{})
     assert.Len(t, errors, 1)
     
     // Test valid
-    errors = validator.ValidateData(ctx, schema, map[string]interface{}{
+    errors = validator.ValidateData(ctx, schema, map[string]any{
         "email": "test@example.com",
     })
     assert.Len(t, errors, 0)

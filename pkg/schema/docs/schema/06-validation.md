@@ -64,7 +64,7 @@ SELECT EXISTS(
 ### Custom Validation
 
 ```go
-validator.AddCustomRule("business_email", func(value interface{}) error {
+validator.AddCustomRule("business_email", func(value any) error {
     email := value.(string)
     if !strings.HasSuffix(email, "@company.com") {
         return errors.New("Must use company email")
