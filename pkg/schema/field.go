@@ -63,6 +63,13 @@ type Field struct {
 	// Security
 	Security *FieldSecurity `json:"security,omitempty"` // Security settings
 
+	// Enrichment fields (for runtime permission/role checking)
+	RequirePermission string   `json:"require_permission,omitempty"` // Permission required to view/edit
+	RequireRoles      []string `json:"require_roles,omitempty"`      // Roles required to view/edit
+
+	// Runtime state (populated by enricher, not in JSON)
+	Runtime *FieldRuntime `json:"-"` // Runtime state set by enricher
+
 	// Internal state (not in JSON)
 	evaluator *condition.Evaluator `json:"-"` // Condition evaluator (injected)
 }
@@ -371,6 +378,13 @@ type FieldPermissions struct {
 	View     []string `json:"view,omitempty"`     // Roles that can view
 	Edit     []string `json:"edit,omitempty"`     // Roles that can edit
 	Required []string `json:"required,omitempty"` // Permissions needed
+}
+
+// FieldRuntime holds runtime state set by the enricher
+type FieldRuntime struct {
+	Visible  bool   `json:"visible"`  // Whether field should be visible to user
+	Editable bool   `json:"editable"` // Whether field can be edited by user
+	Reason   string `json:"reason"`   // Reason for visibility/editability state
 }
 
 // FieldI18n holds field translations for multiple locales

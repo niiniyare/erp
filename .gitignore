@@ -4,4 +4,4 @@ cmd/server/server.log
 gha-creds-*.json
 bin/
 server*
-
+views/static/js/datatable/node_modules/
