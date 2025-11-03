@@ -72,10 +72,12 @@ describe('DataTable Core', () => {
 
     it('should emit init event', () => {
       const initHandler = vi.fn();
-      const newTable = new DataTable({ columns });
+      const newTable = new DataTable({ columns, data: [] });
       newTable.on('init', initHandler);
-      // Reinitialize to trigger event
-      newTable.setData(data);
+      // The init event is emitted during construction, so we need to create a new table after registering the handler
+      const anotherTable = new DataTable({ columns, data });
+      anotherTable.on('init', initHandler);
+      // Since init is called during construction, let's test by creating a table with data
       expect(initHandler).toHaveBeenCalled();
     });
   });

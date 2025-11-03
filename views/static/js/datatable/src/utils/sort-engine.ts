@@ -177,6 +177,21 @@ export class SortEngine<T extends RowData = RowData> {
   private tryParseDate(value: CellValue): Date | null {
     if (this.isDate(value)) return value;
     if (typeof value === 'string' || typeof value === 'number') {
+      // Handle common date formats more specifically
+      if (typeof value === 'string') {
+        // Check for ISO date format (YYYY-MM-DD, YYYY-MM-DDTHH:mm:ss, etc.)
+        if (/^\d{4}-\d{2}-\d{2}/.test(value)) {
+          const date = new Date(value);
+          return isNaN(date.getTime()) ? null : date;
+        }
+        
+        // Check for other common formats
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(value) || /^\d{1,2}-\d{1,2}-\d{4}/.test(value)) {
+          const date = new Date(value);
+          return isNaN(date.getTime()) ? null : date;
+        }
+      }
+      
       const date = new Date(value);
       return isNaN(date.getTime()) ? null : date;
     }

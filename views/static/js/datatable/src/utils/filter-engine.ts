@@ -54,6 +54,12 @@ export class FilterEngine<T extends RowData = RowData> {
    */
   private applyGlobalSearch(rows: Row<T>[], query: string, columns: Column<T>[]): Row<T>[] {
     const searchableColumns = columns.filter((col) => col.filterable !== false);
+    
+    // If no searchable columns, return all rows (no filtering applied)
+    if (searchableColumns.length === 0) {
+      return rows;
+    }
+    
     const normalizedQuery = this.options.filtering.caseSensitive
       ? query
       : query.toLowerCase();

@@ -267,9 +267,10 @@ describe('DataTable Integration Tests', () => {
       });
 
       Object.defineProperty(global, 'Blob', {
-        value: class MockBlob {
-          constructor(public content: any[], public options: any) {}
-        },
+        value: vi.fn().mockImplementation(function(content: any[], options: any) {
+          this.content = content;
+          this.options = options;
+        }),
         writable: true
       });
 
@@ -366,7 +367,10 @@ describe('DataTable Integration Tests', () => {
       });
 
       Object.defineProperty(global, 'Blob', {
-        value: class MockBlob {},
+        value: vi.fn().mockImplementation(function(content: any[], options: any) {
+          this.content = content;
+          this.options = options;
+        }),
         writable: true
       });
 

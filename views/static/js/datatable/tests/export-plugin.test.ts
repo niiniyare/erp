@@ -28,6 +28,7 @@ describe('ExportPlugin', () => {
   let table: DataTableCore<TestData>;
   let columns: Column<TestData>[];
   let data: TestData[];
+  let MockBlob: any;
 
   beforeEach(() => {
     // Mock DOM APIs
@@ -50,10 +51,13 @@ describe('ExportPlugin', () => {
       writable: true
     });
 
+    MockBlob = vi.fn().mockImplementation(function(content: any[], options: any) {
+      this.content = content;
+      this.options = options;
+    });
+    
     Object.defineProperty(global, 'Blob', {
-      value: class MockBlob {
-        constructor(public content: any[], public options: any) {}
-      },
+      value: MockBlob,
       writable: true
     });
 
@@ -526,8 +530,10 @@ describe('ExportPlugin', () => {
 
       exportPlugin.export(options);
 
-      const blobConstructorCall = vi.mocked(global.Blob).mock.calls[0];
-      expect(blobConstructorCall[1]).toEqual({ type: 'text/csv' });
+      expect(MockBlob).toHaveBeenCalledWith(
+        expect.any(Array),
+        { type: 'text/csv' }
+      );
     });
 
     it('should use correct MIME type for JSON', () => {
@@ -537,8 +543,10 @@ describe('ExportPlugin', () => {
 
       exportPlugin.export(options);
 
-      const blobConstructorCall = vi.mocked(global.Blob).mock.calls[0];
-      expect(blobConstructorCall[1]).toEqual({ type: 'application/json' });
+      expect(MockBlob).toHaveBeenCalledWith(
+        expect.any(Array),
+        { type: 'application/json' }
+      );
     });
 
     it('should use correct MIME type for TXT', () => {
@@ -548,8 +556,10 @@ describe('ExportPlugin', () => {
 
       exportPlugin.export(options);
 
-      const blobConstructorCall = vi.mocked(global.Blob).mock.calls[0];
-      expect(blobConstructorCall[1]).toEqual({ type: 'text/plain' });
+      expect(MockBlob).toHaveBeenCalledWith(
+        expect.any(Array),
+        { type: 'text/plain' }
+      );
     });
 
     it('should generate default filename with timestamp', () => {

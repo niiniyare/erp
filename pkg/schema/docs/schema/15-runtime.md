@@ -2,20 +2,35 @@
 
 ## Overview
 
-The **Runtime** is the execution engine that brings schemas to life in your application. It handles rendering, state management, validation, and user interactions at execution time.
+The **Runtime** manages the execution of enriched schemas in your application. It provides state management, validation, and event handling during user interaction with schema-driven forms and components.
 
 ### Purpose
 
-- **Render** schemas into actual UI components
 - **Manage** form/component state during user interaction
 - **Validate** data in real-time as users input values
 - **Handle** events (change, blur, submit, etc.)
-- **Execute** conditional logic and dynamic behavior
+- **Apply** conditional logic and dynamic field behavior
+- **Track** field state (touched, dirty, errors)
 
 ### Runtime Flow
 
 ```
-Enriched Schema → Runtime → Live UI → User Interaction → State Updates → Re-validation
+Registry → Enricher → Runtime → UI Rendering → User Interaction → State Updates → Validation
+```
+
+### Integration with Schema Architecture
+
+```
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│   Builder   │───▶│  Registry   │───▶│  Enricher   │───▶│   Runtime   │
+│ (Design)    │    │ (Storage)   │    │ (Context)   │    │ (Execution) │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+                                                               │
+                                                               ▼
+                                                        ┌─────────────┐
+                                                        │   Renderer  │
+                                                        │    (UI)     │
+                                                        └─────────────┘
 ```
 
 ---
@@ -41,7 +56,7 @@ Shows/hides fields based on runtime conditions.
 
 ## Basic Runtime Setup
 
-### Initialize Runtime
+### Runtime Implementation
 
 ```go
 package runtime
@@ -49,45 +64,43 @@ package runtime
 import (
     "context"
     "sync"
+    "time"
+    
+    "github.com/niiniyare/erp/pkg/schema"
+    "github.com/niiniyare/erp/pkg/schema/validate"
 )
 
-// Runtime manages the execution of a schema
+// Runtime manages the execution of an enriched schema
 type Runtime struct {
-    schema    *schema.Schema
-    state     *State
-    validator *RuntimeValidator
-    renderer  *Renderer
-    events    *EventBus
-    mu        sync.RWMutex
+    schema    *schema.Schema       // Enriched schema with runtime context
+    state     *State              // Current form state
+    validator *validate.Validator  // Runtime validator
+    events    *EventHandler       // Event handling
+    mu        sync.RWMutex        // Concurrent access protection
 }
 
-func NewRuntime(schema *Schema) *Runtime {
+// NewRuntime creates a new runtime instance for an enriched schema
+func NewRuntime(enrichedSchema *schema.Schema) *Runtime {
     return &Runtime{
-        schema:    schema,
-        state:     NewState(schema),
-        validator: NewRuntimeValidator(schema),
-        renderer:  NewRenderer(schema),
-        events:    NewEventBus(),
+        schema:    enrichedSchema,
+        state:     NewState(),
+        validator: validate.NewValidator(),
+        events:    NewEventHandler(),
     }
 }
 
-// Initialize prepares the runtime with initial data
+// Initialize prepares the runtime with initial data and validates the schema
 func (r *Runtime) Initialize(ctx context.Context, initialData map[string]interface{}) error {
     r.mu.Lock()
     defer r.mu.Unlock()
     
-    // Set initial values
-    if err := r.state.Initialize(initialData); err != nil {
+    // Set initial values from enriched schema defaults
+    if err := r.state.Initialize(r.schema, initialData); err != nil {
         return err
     }
     
-    // Run initial validation
-    if err := r.validator.ValidateAll(ctx, r.state.GetAll()); err != nil {
-        return err
-    }
-    
-    // Evaluate initial conditional rules
-    if err := r.applyConditionalRules(ctx); err != nil {
+    // Run initial validation using schema validation rules
+    if err := r.validator.ValidateSchema(ctx, r.schema, r.state.GetAll()); err != nil {
         return err
     }
     
@@ -126,17 +139,18 @@ func HandleFormRender(c *fiber.Ctx) error {
 ### State Structure
 
 ```go
-// State holds runtime form state
+// State holds runtime form state and tracks user interactions
 type State struct {
     values   map[string]interface{} // Current field values
     touched  map[string]bool        // Fields user has interacted with
     dirty    map[string]bool        // Fields that changed from initial
     errors   map[string][]string    // Validation errors per field
     initial  map[string]interface{} // Initial values for dirty checking
-    mu       sync.RWMutex
+    mu       sync.RWMutex          // Concurrent access protection
 }
 
-func NewState(schema *Schema) *State {
+// NewState creates a new state manager
+func NewState() *State {
     return &State{
         values:  make(map[string]interface{}),
         touched: make(map[string]bool),
@@ -146,14 +160,26 @@ func NewState(schema *Schema) *State {
     }
 }
 
-// Initialize sets initial state
-func (s *State) Initialize(data map[string]interface{}) error {
+// Initialize sets initial state from schema and provided data
+func (s *State) Initialize(schema *schema.Schema, data map[string]interface{}) error {
     s.mu.Lock()
     defer s.mu.Unlock()
     
+    // Initialize with schema field defaults first
+    for _, field := range schema.Fields {
+        if field.Value != nil {
+            s.values[field.Name] = field.Value
+            s.initial[field.Name] = field.Value
+        } else if field.Default != nil {
+            s.values[field.Name] = field.Default
+            s.initial[field.Name] = field.Default
+        }
+    }
+    
+    // Override with provided data
     for key, value := range data {
         s.values[key] = value
-        s.initial[key] = value // Store for dirty checking
+        s.initial[key] = value
     }
     
     return nil
@@ -276,97 +302,50 @@ func (s *State) Subscribe(observer StateObserver) func() {
 
 ## Runtime Validation
 
-### Validation Strategies
+### Integration with Schema Validator
 
 ```go
-type ValidationStrategy string
+// Runtime uses the schema validation system for consistent validation
+import "github.com/niiniyare/erp/pkg/schema/validate"
 
-const (
-    ValidateEager    ValidationStrategy = "eager"    // Validate on every change
-    ValidateLazy     ValidationStrategy = "lazy"     // Validate on blur
-    ValidateOnSubmit ValidationStrategy = "onSubmit" // Validate only on submit
-)
-
-// RuntimeValidator validates during user interaction
-type RuntimeValidator struct {
-    schema   *Schema
-    strategy ValidationStrategy
-    debounce time.Duration
+// Runtime validation leverages the schema's built-in validator
+func (r *Runtime) ValidateField(ctx context.Context, fieldName string, value interface{}) []string {
+    r.mu.RLock()
+    defer r.mu.RUnlock()
+    
+    // Find the field in our enriched schema
+    field, exists := r.schema.GetField(fieldName)
+    if !exists {
+        return []string{"field not found"}
+    }
+    
+    // Use schema validator to validate the field
+    if err := r.validator.ValidateField(ctx, &field, value); err != nil {
+        if validationErr, ok := err.(*validate.ValidationError); ok {
+            return []string{validationErr.Message}
+        }
+        return []string{err.Error()}
+    }
+    
+    return nil
 }
 
-func NewRuntimeValidator(schema *Schema) *RuntimeValidator {
-    return &RuntimeValidator{
-        schema:   schema,
-        strategy: ValidateLazy, // Default: validate on blur
-        debounce: 300 * time.Millisecond,
-    }
-}
-
-// ValidateField validates a single field
-func (v *RuntimeValidator) ValidateField(
-    ctx context.Context,
-    fieldName string,
-    value interface{},
-) []string {
-    field := v.schema.FindField(fieldName)
-    if field == nil {
-        return nil
-    }
+// ValidateAll validates all fields using schema validation rules
+func (r *Runtime) ValidateAll(ctx context.Context) map[string][]string {
+    r.mu.RLock()
+    defer r.mu.RUnlock()
     
-    var errors []string
-    
-    // Check required
-    if field.Required && isEmpty(value) {
-        errors = append(errors, fmt.Sprintf("%s is required", field.Label))
-    }
-    
-    // Check type
-    if !isValidType(value, field.Type) {
-        errors = append(errors, fmt.Sprintf("%s must be a %s", field.Label, field.Type))
-    }
-    
-    // Check min/max length
-    if field.MinLength != nil {
-        if length := getLength(value); length < *field.MinLength {
-            errors = append(errors, fmt.Sprintf("%s must be at least %d characters", field.Label, *field.MinLength))
-        }
-    }
-    
-    if field.MaxLength != nil {
-        if length := getLength(value); length > *field.MaxLength {
-            errors = append(errors, fmt.Sprintf("%s must be at most %d characters", field.Label, *field.MaxLength))
-        }
-    }
-    
-    // Check pattern
-    if field.Pattern != "" {
-        matched, _ := regexp.MatchString(field.Pattern, fmt.Sprintf("%v", value))
-        if !matched {
-            errors = append(errors, fmt.Sprintf("%s format is invalid", field.Label))
-        }
-    }
-    
-    // Custom validations
-    for _, rule := range field.Validations {
-        if err := v.validateRule(ctx, rule, value); err != nil {
-            errors = append(errors, err.Error())
-        }
-    }
-    
-    return errors
-}
-
-// ValidateAll validates entire form
-func (v *RuntimeValidator) ValidateAll(
-    ctx context.Context,
-    data map[string]interface{},
-) map[string][]string {
     allErrors := make(map[string][]string)
+    data := r.state.GetAll()
     
-    for _, field := range v.schema.Fields {
-        value := data[field.Name]
+    // Validate each field in the schema
+    for _, field := range r.schema.Fields {
+        if !field.Runtime.Visible {
+            continue // Skip invisible fields
+        }
         
-        if errors := v.ValidateField(ctx, field.Name, value); len(errors) > 0 {
+        value := data[field.Name]
+        if errors := r.ValidateField(ctx, field.Name, value); len(errors) > 0 {
             allErrors[field.Name] = errors
         }
     }
@@ -374,19 +353,48 @@ func (v *RuntimeValidator) ValidateAll(
     return allErrors
 }
 
-// ValidateDebounced validates after a delay (for performance)
-func (v *RuntimeValidator) ValidateDebounced(
+### Validation Timing Strategies
+
+```go
+type ValidationTiming string
+
+const (
+    ValidateOnChange ValidationTiming = "change"  // Validate immediately on change
+    ValidateOnBlur   ValidationTiming = "blur"    // Validate when field loses focus
+    ValidateOnSubmit ValidationTiming = "submit"  // Validate only on form submission
+)
+
+// SetValidationTiming configures when validation occurs
+func (r *Runtime) SetValidationTiming(timing ValidationTiming) {
+    r.mu.Lock()
+    defer r.mu.Unlock()
+    
+    r.events.validationTiming = timing
+}
+
+// ValidateWithDebounce validates after a delay for better UX
+func (r *Runtime) ValidateWithDebounce(
     ctx context.Context,
     fieldName string,
     value interface{},
+    delay time.Duration,
 ) <-chan []string {
     result := make(chan []string, 1)
     
     go func() {
-        time.Sleep(v.debounce)
-        errors := v.ValidateField(ctx, fieldName, value)
-        result <- errors
-        close(result)
+        defer close(result)
+        
+        // Wait for the debounce period
+        timer := time.NewTimer(delay)
+        defer timer.Stop()
+        
+        select {
+        case <-timer.C:
+            errors := r.ValidateField(ctx, fieldName, value)
+            result <- errors
+        case <-ctx.Done():
+            return
+        }
     }()
     
     return result
@@ -428,36 +436,36 @@ type EventHandler struct {
 
 type EventCallback func(ctx context.Context, event *Event) error
 
-// OnChange handles field value changes
+// OnChange handles field value changes with enriched schema context
 func (h *EventHandler) OnChange(ctx context.Context, event *Event) error {
     // 1. Update state
     if err := h.runtime.state.SetValue(event.Field, event.Value); err != nil {
         return err
     }
     
-    // 2. Validate based on strategy
-    if h.runtime.validator.strategy == ValidateEager {
-        errors := h.runtime.validator.ValidateField(ctx, event.Field, event.Value)
+    // 2. Check if field is editable (from enricher)
+    field, exists := h.runtime.schema.GetField(event.Field)
+    if !exists {
+        return fmt.Errorf("field %s not found in schema", event.Field)
+    }
+    
+    if field.Runtime != nil && !field.Runtime.Editable {
+        return fmt.Errorf("field %s is not editable: %s", event.Field, field.Runtime.Reason)
+    }
+    
+    // 3. Validate based on timing strategy
+    if h.validationTiming == ValidateOnChange {
+        errors := h.runtime.ValidateField(ctx, event.Field, event.Value)
         h.runtime.state.SetErrors(event.Field, errors)
     }
     
-    // 3. Re-evaluate conditional rules
-    if err := h.runtime.applyConditionalRules(ctx); err != nil {
+    // 4. Apply any conditional logic
+    if err := h.applyConditionalLogic(ctx, event.Field); err != nil {
         return err
     }
     
-    // 4. Trigger custom handlers
-    h.mu.RLock()
-    callbacks := h.handlers[EventChange]
-    h.mu.RUnlock()
-    
-    for _, callback := range callbacks {
-        if err := callback(ctx, event); err != nil {
-            log.Error().Err(err).Msg("Event callback failed")
-        }
-    }
-    
-    return nil
+    // 5. Trigger custom event handlers
+    return h.triggerCallbacks(ctx, EventChange, event)
 }
 
 // OnBlur handles field blur (focus lost)

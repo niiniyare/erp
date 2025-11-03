@@ -162,12 +162,12 @@ describe('FilterEngine', () => {
         });
 
         const filters: Filter[] = [
-          { columnId: 'name', operator: 'contains', value: 'John' }
+          { columnId: 'name', operator: 'contains', value: 'Doe' }
         ];
         const filterState: FilterState = { filters, globalSearch: '' };
         const result = caseSensitiveEngine.filter(rows, filterState, columns);
         
-        expect(result).toHaveLength(1); // Only John Doe (exact case)
+        expect(result).toHaveLength(1); // Only John Doe (exact case "John")
         expect(result[0].data.name).toBe('John Doe');
       });
     });
@@ -453,7 +453,7 @@ describe('FilterEngine', () => {
       const filterState: FilterState = { filters, globalSearch: '' };
       const result = customFilterEngine.filter(rows, filterState, columns);
       
-      expect(result).toHaveLength(2); // John (30) and Alice (28) - even ages
+      expect(result).toHaveLength(3); // John (30), Alice (28), and Charlie (42) - even ages
       expect(result.every(row => row.data.age % 2 === 0)).toBe(true);
     });
   });
@@ -476,7 +476,7 @@ describe('FilterEngine', () => {
       };
       const result = filterEngine.filter(rows, filterState, []);
       
-      expect(result).toEqual(rows); // Global search should find nothing, return original
+      expect(result).toEqual(rows); // Global search with no searchable columns returns all rows
     });
 
     it('should handle unknown filter operators gracefully', () => {

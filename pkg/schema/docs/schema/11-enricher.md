@@ -9,13 +9,13 @@ The **Enricher** transforms base schemas into runtime-ready schemas by injecting
 - Apply **user permissions** to control field visibility and editability
 - Inject **tenant-specific customizations** (labels, defaults, validations)
 - Set **dynamic default values** based on context (user ID, timestamp, etc.)
-- Add **computed fields** based on business logic
-- Apply **conditional rules** for dynamic behavior
+- Apply **runtime state management** for UI behavior
+- Handle **tenant isolation** for multi-tenant applications
 
 ### When to Use
 
 ```
-Registry (base schema) → Enricher (add context) → Renderer (create UI)
+Registry (base schema) → Enricher (add context) → Runtime (execution) → Renderer (UI)
 ```
 
 The enricher should be called on **every request** before rendering to ensure up-to-date permissions and context.
@@ -28,33 +28,55 @@ The enricher should be called on **every request** before rendering to ensure up
 // Enricher adds runtime context to schemas
 type Enricher interface {
     // Enrich a schema with user context
-    Enrich(ctx context.Context, schema *Schema, user *User) (*Schema, error)
+    Enrich(ctx context.Context, schema *schema.Schema, user User) (*schema.Schema, error)
     
-    // Enrich with advanced options
-    EnrichWithOptions(ctx context.Context, schema *Schema, opts *EnrichOptions) (*Schema, error)
+    // EnrichField enriches a single field with runtime data
+    EnrichField(ctx context.Context, field *schema.Field, user User, data map[string]any) error
+    
+    // SetTenantProvider sets the tenant customization provider
+    SetTenantProvider(provider TenantProvider)
 }
 
-// EnrichOptions provides fine-grained control over enrichment
-type EnrichOptions struct {
-    User              *User                  // Current user context
-    TenantID          string                 // Tenant identifier
-    Permissions       []string               // Override user permissions
-    DefaultOverrides  map[string]interface{} // Custom default values
-    SkipPermissions   bool                   // Skip permission checks (for admin views)
-    SkipDefaults      bool                   // Skip default value injection
-    SkipTenant        bool                   // Skip tenant customizations
-    AuditEnrichment   bool                   // Track what was enriched
+// User represents a user in the system for enrichment purposes
+type User interface {
+    GetID() string
+    GetTenantID() string
+    GetPermissions() []string
+    GetRoles() []string
+    HasPermission(permission string) bool
+    HasRole(role string) bool
 }
 
-// EnrichmentResult provides details about what was enriched
-type EnrichmentResult struct {
-    Schema           *Schema
-    FieldsModified   []string
-    FieldsHidden     []string
-    FieldsAdded      []string
-    DefaultsApplied  map[string]interface{}
-    EnrichmentTime   time.Duration
-    Timestamp        time.Time
+// TenantProvider interface for retrieving tenant customizations
+type TenantProvider interface {
+    GetCustomization(ctx context.Context, schemaID, tenantID string) (*TenantCustomization, error)
+}
+
+// TenantCustomization holds all tenant-specific overrides for a schema
+type TenantCustomization struct {
+    SchemaID   string                    `json:"schema_id"`
+    TenantID   string                    `json:"tenant_id"`
+    Overrides  map[string]TenantOverride `json:"overrides"`
+    CreatedAt  time.Time                 `json:"created_at"`
+    UpdatedAt  time.Time                 `json:"updated_at"`
+}
+
+// TenantOverride represents tenant-specific customizations
+type TenantOverride struct {
+    FieldName    string `json:"field_name"`
+    Label        string `json:"label,omitempty"`
+    Required     *bool  `json:"required,omitempty"`
+    Hidden       *bool  `json:"hidden,omitempty"`
+    DefaultValue any    `json:"default_value,omitempty"`
+    Placeholder  string `json:"placeholder,omitempty"`
+    Help         string `json:"help,omitempty"`
+}
+
+// FieldRuntime holds runtime state populated by enricher
+type FieldRuntime struct {
+    Visible  bool   `json:"visible"`  // Whether field should be visible to user
+    Editable bool   `json:"editable"` // Whether field can be edited by user  
+    Reason   string `json:"reason"`   // Reason for visibility/editability state
 }
 ```
 
@@ -144,109 +166,76 @@ func HandleAdminForm(c *fiber.Ctx) error {
 ### Basic Permission Checks
 
 ```go
-// Enricher implementation
-func (e *Enricher) applyPermissions(schema *Schema, user *User) error {
-    for i := range schema.Fields {
-        field := &schema.Fields[i]
-        
-        // Skip if no permission requirement
-        if field.RequirePermission == "" {
-            continue
-        }
-        
-        // Check user permission
+// applyPermissions applies permission-based field restrictions
+func (e *DefaultEnricher) applyPermissions(field *schema.Field, user User) {
+    // Initialize runtime if not exists
+    if field.Runtime == nil {
+        field.Runtime = &schema.FieldRuntime{}
+    }
+    
+    // Check if field requires specific permission
+    if field.RequirePermission != "" {
         hasPermission := user.HasPermission(field.RequirePermission)
         
-        // Apply runtime configuration
-        field.Runtime = &FieldRuntime{
-            Visible:  hasPermission,
-            Editable: hasPermission,
-            Reason:   getPermissionReason(hasPermission),
-        }
+        field.Runtime.Visible = hasPermission
+        field.Runtime.Editable = hasPermission
         
-        // Clear sensitive data if not permitted
         if !hasPermission {
-            field.Value = nil
-            field.DefaultValue = nil
+            field.Runtime.Reason = "permission_required"
         }
+    } else {
+        // Default to visible and editable if no permission required
+        field.Runtime.Visible = true
+        field.Runtime.Editable = !field.Readonly
     }
     
-    return nil
-}
-
-func getPermissionReason(hasPermission bool) string {
-    if hasPermission {
-        return "permitted"
-    }
-    return "insufficient_permissions"
-}
-```
-
-### Granular Permissions (View vs Edit)
-
-```go
-type FieldPermissions struct {
-    View string // Permission to view the field
-    Edit string // Permission to edit the field
-}
-
-func (e *Enricher) applyGranularPermissions(schema *Schema, user *User) error {
-    for i := range schema.Fields {
-        field := &schema.Fields[i]
-        
-        if field.Permissions == nil {
-            continue
-        }
-        
-        canView := field.Permissions.View == "" || user.HasPermission(field.Permissions.View)
-        canEdit := field.Permissions.Edit == "" || user.HasPermission(field.Permissions.Edit)
-        
-        field.Runtime = &FieldRuntime{
-            Visible:  canView,
-            Editable: canEdit && canView, // Can't edit what you can't see
-            ReadOnly: canView && !canEdit,
-            Reason:   getGranularReason(canView, canEdit),
-        }
-    }
-    
-    return nil
-}
-```
-
-### Role-Based Field Configuration
-
-```go
-// Role-specific field behavior
-func (e *Enricher) applyRoleBasedRules(schema *Schema, user *User) error {
-    roleConfig := map[string]FieldConfig{
-        "admin": {
-            "salary": {Visible: true, Editable: true},
-            "ssn":    {Visible: true, Editable: false},
-        },
-        "manager": {
-            "salary": {Visible: true, Editable: true},
-            "ssn":    {Visible: false, Editable: false},
-        },
-        "employee": {
-            "salary": {Visible: false, Editable: false},
-            "ssn":    {Visible: false, Editable: false},
-        },
-    }
-    
-    config := roleConfig[user.Role]
-    for i := range schema.Fields {
-        field := &schema.Fields[i]
-        
-        if fieldConfig, exists := config[field.Name]; exists {
-            field.Runtime = &FieldRuntime{
-                Visible:  fieldConfig.Visible,
-                Editable: fieldConfig.Editable,
-                ReadOnly: fieldConfig.Visible && !fieldConfig.Editable,
+    // Check role-based restrictions
+    if len(field.RequireRoles) > 0 {
+        hasRequiredRole := false
+        for _, requiredRole := range field.RequireRoles {
+            if user.HasRole(requiredRole) {
+                hasRequiredRole = true
+                break
             }
         }
+        
+        if !hasRequiredRole {
+            field.Runtime.Visible = false
+            field.Runtime.Editable = false
+            field.Runtime.Reason = "role_required"
+        }
+    }
+}
+```
+
+### Field Visibility and Editability
+
+```go
+// Field state is controlled through Runtime struct populated by enricher
+type FieldRuntime struct {
+    Visible  bool   `json:"visible"`  // Whether field should be visible to user
+    Editable bool   `json:"editable"` // Whether field can be edited by user
+    Reason   string `json:"reason"`   // Reason for visibility/editability state
+}
+
+// Example: checking field state after enrichment
+func CheckFieldAccess(enrichedField *schema.Field) {
+    if !enrichedField.Runtime.Visible {
+        // Field should not be rendered
+        return
     }
     
-    return nil
+    if !enrichedField.Runtime.Editable {
+        // Render as readonly
+        enrichedField.Readonly = true
+    }
+    
+    // Log reason if field is restricted
+    if enrichedField.Runtime.Reason != "" {
+        log.Info().Str("field", enrichedField.Name).
+            Str("reason", enrichedField.Runtime.Reason).
+            Msg("Field access restricted")
+    }
 }
 ```
 
@@ -334,7 +323,7 @@ func (e *Enricher) applyTenantOverrides(
             field.Required = *override.Required
         }
         if override.DefaultValue != nil {
-            field.DefaultValue = override.DefaultValue
+            field.Default = override.DefaultValue
         }
         if override.HelpText != nil {
             field.HelpText = *override.HelpText
@@ -355,49 +344,46 @@ func (e *Enricher) applyTenantOverrides(
 ### Static and Dynamic Defaults
 
 ```go
-func (e *Enricher) applyDefaultValues(schema *Schema, user *User) error {
-    timestamp := time.Now()
-    
-    for i := range schema.Fields {
-        field := &schema.Fields[i]
-        
-        // Skip if value already set
-        if field.Value != nil {
-            continue
-        }
-        
-        // Apply static default from schema
-        if field.DefaultValue != nil {
-            field.Value = field.DefaultValue
-            continue
-        }
-        
-        // Apply dynamic defaults based on field name
-        switch field.Name {
-        case "created_by", "updated_by", "user_id":
-            field.Value = user.ID
-            
-        case "created_at", "updated_at":
-            field.Value = timestamp
-            
-        case "tenant_id", "organization_id":
-            field.Value = user.TenantID
-            
-        case "status":
-            field.Value = "draft" // Safe default
-            
-        case "language", "locale":
-            field.Value = user.PreferredLanguage
-            
-        case "timezone":
-            field.Value = user.Timezone
-            
-        case "currency":
-            field.Value = user.PreferredCurrency
-        }
+// applyDynamicDefaults applies dynamic default values based on context
+func (e *DefaultEnricher) applyDynamicDefaults(field *schema.Field, data map[string]any) {
+    // Only apply defaults if field has no current value
+    if field.Value != nil {
+        return
     }
     
-    return nil
+    // Apply static default value if exists
+    if field.Default != nil {
+        field.Value = field.Default
+        return
+    }
+    
+    // Apply dynamic defaults based on field name
+    switch field.Name {
+    case "created_by", "user_id", "author_id":
+        if userID, ok := data["user_id"].(string); ok {
+            field.Value = userID
+        }
+    case "tenant_id", "organization_id":
+        if tenantID, ok := data["tenant_id"].(string); ok {
+            field.Value = tenantID
+        }
+    case "created_at", "timestamp":
+        if timestamp, ok := data["timestamp"].(time.Time); ok {
+            field.Value = timestamp.Format(time.RFC3339)
+        }
+    case "updated_at":
+        field.Value = time.Now().Format(time.RFC3339)
+    }
+}
+
+// applyTenantIsolation applies tenant isolation for multi-tenant fields
+func (e *DefaultEnricher) applyTenantIsolation(field *schema.Field, user User) {
+    // Automatically set tenant_id field for tenant isolation
+    if field.Name == "tenant_id" {
+        field.Value = user.GetTenantID()
+        field.Hidden = true // Hide tenant_id from user
+        field.Readonly = true
+    }
 }
 ```
 

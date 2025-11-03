@@ -66,6 +66,13 @@ type Option struct {
 	Label string `json:"label"`
 }
 
+// FieldRuntime represents runtime state of a field (populated by enricher)
+type FieldRuntime interface {
+	IsVisible() bool
+	IsEditable() bool
+	GetReason() string
+}
+
 // Field represents a form field (interface to avoid circular import)
 type FieldInterface interface {
 	GetName() string
@@ -76,6 +83,12 @@ type FieldInterface interface {
 	GetConfig() map[string]any
 }
 
+// EnrichedFieldInterface extends FieldInterface with runtime state
+type EnrichedFieldInterface interface {
+	FieldInterface
+	GetRuntime() FieldRuntime // Returns nil if not enriched
+}
+
 // Schema represents a form schema (interface to avoid circular import)
 type SchemaInterface interface {
 	GetID() string
@@ -83,6 +96,12 @@ type SchemaInterface interface {
 	GetTitle() string
 	GetFields() []FieldInterface
 	GetValidation() any
+}
+
+// EnrichedSchemaInterface extends SchemaInterface with enriched field support
+type EnrichedSchemaInterface interface {
+	SchemaInterface
+	GetEnrichedFields() []EnrichedFieldInterface
 }
 
 // Validator provides server-side validation for schema data
@@ -203,6 +222,180 @@ func (v *Validator) ValidateBusinessRules(ctx context.Context, schema SchemaInte
 	// TODO: Integrate with business rules engine when implemented
 	// This would evaluate conditions and apply validation rules
 	// For now, return empty errors as business rules engine would handle this
+
+	return errors
+}
+
+// ValidateEnrichedSchema validates form data against an enriched schema
+// This method respects field visibility and editability from the enricher
+func (v *Validator) ValidateEnrichedSchema(ctx context.Context, schema EnrichedSchemaInterface, data map[string]any) (*ValidationResult, error) {
+	result := &ValidationResult{
+		Valid:  true,
+		Errors: make(map[string][]string),
+		Data:   make(map[string]any),
+	}
+
+	// Validate each enriched field
+	for _, field := range schema.GetEnrichedFields() {
+		// Skip validation for invisible fields
+		runtime := field.GetRuntime()
+		if runtime != nil && !runtime.IsVisible() {
+			continue
+		}
+
+		value, exists := data[field.GetName()]
+
+		// Validate field with enriched context
+		fieldErrors := v.ValidateWithFieldState(ctx, field, value, exists)
+		if len(fieldErrors) > 0 {
+			result.Valid = false
+			result.Errors[field.GetName()] = fieldErrors
+		} else {
+			// Store validated/cleaned value
+			result.Data[field.GetName()] = v.cleanValue(field, value)
+		}
+	}
+
+	// Run business rules validation
+	businessRuleErrors := v.ValidateBusinessRules(ctx, schema, data)
+	for field, errors := range businessRuleErrors {
+		if len(errors) > 0 {
+			result.Valid = false
+			if result.Errors[field] == nil {
+				result.Errors[field] = errors
+			} else {
+				result.Errors[field] = append(result.Errors[field], errors...)
+			}
+		}
+	}
+
+	return result, nil
+}
+
+// ValidateWithFieldState validates a field considering its runtime state
+// This method integrates with enricher's permission system
+func (v *Validator) ValidateWithFieldState(ctx context.Context, field EnrichedFieldInterface, value any, exists bool) []string {
+	var errors []string
+
+	runtime := field.GetRuntime()
+	if runtime != nil {
+		// Skip validation for invisible fields
+		if !runtime.IsVisible() {
+			return errors
+		}
+
+		// For readonly/non-editable fields, validate but allow existing values
+		if !runtime.IsEditable() {
+			// Only validate type and format, not required or constraints
+			// since users can't modify these fields
+			return v.validateReadOnlyField(field, value, exists)
+		}
+	}
+
+	// For editable fields or fields without runtime state, run full validation
+	return v.ValidateField(ctx, field, value, exists)
+}
+
+// ValidateConditionalFields validates fields based on their visibility/editability state
+// This method supports conditional validation based on enriched permissions
+func (v *Validator) ValidateConditionalFields(ctx context.Context, schema EnrichedSchemaInterface, data map[string]any) map[string][]string {
+	errors := make(map[string][]string)
+
+	for _, field := range schema.GetEnrichedFields() {
+		runtime := field.GetRuntime()
+		if runtime == nil {
+			continue
+		}
+
+		value, exists := data[field.GetName()]
+
+		// Apply conditional validation logic based on runtime state
+		var fieldErrors []string
+
+		if runtime.IsVisible() {
+			if runtime.IsEditable() {
+				// Full validation for editable fields
+				fieldErrors = v.ValidateField(ctx, field, value, exists)
+			} else {
+				// Limited validation for readonly fields
+				fieldErrors = v.validateReadOnlyField(field, value, exists)
+			}
+		} else {
+			// For invisible fields, ensure no data is submitted
+			if exists && !v.isEmpty(value) {
+				fieldErrors = append(fieldErrors, "Field is not accessible")
+			}
+		}
+
+		if len(fieldErrors) > 0 {
+			errors[field.GetName()] = fieldErrors
+		}
+	}
+
+	return errors
+}
+
+// validateReadOnlyField validates readonly fields with limited rules
+func (v *Validator) validateReadOnlyField(field FieldInterface, value any, exists bool) []string {
+	var errors []string
+
+	// Skip validation if field is empty (readonly fields can be empty)
+	if !exists || v.isEmpty(value) {
+		return errors
+	}
+
+	// Only validate type and format for readonly fields
+	switch field.GetType() {
+	case FieldText, FieldTextarea:
+		if _, ok := value.(string); !ok {
+			errors = append(errors, "Must be a string")
+		}
+	case FieldEmail:
+		if str, ok := value.(string); ok {
+			emailRegex := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+			if matched, _ := regexp.MatchString(emailRegex, str); !matched {
+				errors = append(errors, "Must be a valid email address")
+			}
+		} else {
+			errors = append(errors, "Must be a string")
+		}
+	case FieldNumber, FieldCurrency:
+		// Validate that it's a valid number
+		switch value.(type) {
+		case float64, float32, int, int64:
+			// Valid number types
+		case string:
+			if _, err := strconv.ParseFloat(value.(string), 64); err != nil {
+				errors = append(errors, "Must be a valid number")
+			}
+		default:
+			errors = append(errors, "Must be a valid number")
+		}
+	case FieldDate, FieldDateTime, FieldTime:
+		// Basic date format validation for readonly fields
+		if str, ok := value.(string); ok {
+			var err error
+			switch field.GetType() {
+			case FieldDate:
+				_, err = time.Parse("2006-01-02", str)
+			case FieldTime:
+				_, err = time.Parse("15:04", str)
+			case FieldDateTime:
+				formats := []string{"2006-01-02T15:04:05Z", "2006-01-02T15:04:05", "2006-01-02 15:04:05"}
+				for _, format := range formats {
+					_, err = time.Parse(format, str)
+					if err == nil {
+						break
+					}
+				}
+			}
+			if err != nil {
+				errors = append(errors, "Invalid date format")
+			}
+		} else {
+			errors = append(errors, "Must be a string")
+		}
+	}
 
 	return errors
 }
