@@ -1,0 +1,551 @@
+package examples
+
+import (
+	"github.com/niiniyare/erp/pkg/schema"
+	"github.com/niiniyare/erp/views/ui"
+)
+
+// ============================================================================
+// Example 1: Simple Contact Form
+// ============================================================================
+
+// ContactFormPage renders a simple contact form
+templ ContactFormPage() {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Contact Form</title>
+			<link rel="stylesheet" href="/css/components.css"/>
+			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+			<script src="https://unpkg.com/alpinejs@3.13.3" defer></script>
+		</head>
+		<body class="bg-background">
+			<div class="container mx-auto max-w-2xl py-12">
+				@ui.Card(ui.CardProps{}) {
+					@ui.CardHeader() {
+						@ui.CardTitle("Contact Us", "")
+						@ui.CardDescription("We'd love to hear from you. Send us a message!")
+					}
+					@ui.CardContent() {
+						@ui.Form(ui.FormProps{
+							Action:   "/api/contact",
+							Method:   "POST",
+							HxPost:   "/api/contact",
+							HxTarget: "#result",
+							Class:    "space-y-4",
+						}) {
+							@ui.FormField(ui.FormFieldProps{
+								Label:       "Name",
+								Name:        "name",
+								ID:          "name",
+								Required:    true,
+								Description: "Your full name",
+							}) {
+								@ui.Input(ui.InputProps{
+									Type:        ui.InputTypeText,
+									Name:        "name",
+									ID:          "name",
+									Placeholder: "John Doe",
+									Required:    true,
+								})
+							}
+							
+							@ui.FormField(ui.FormFieldProps{
+								Label:    "Email",
+								Name:     "email",
+								ID:       "email",
+								Required: true,
+							}) {
+								@ui.Input(ui.InputProps{
+									Type:        ui.InputTypeEmail,
+									Name:        "email",
+									ID:          "email",
+									Placeholder: "john@example.com",
+									Required:    true,
+								})
+							}
+							
+							@ui.FormField(ui.FormFieldProps{
+								Label:       "Message",
+								Name:        "message",
+								ID:          "message",
+								Required:    true,
+								Description: "Tell us what's on your mind",
+							}) {
+								@ui.Textarea(ui.TextareaProps{
+									Name:        "message",
+									ID:          "message",
+									Placeholder: "Your message here...",
+									Required:    true,
+									Rows:        5,
+								})
+							}
+							
+							<div id="result"></div>
+							
+							<div class="flex justify-end space-x-2">
+								@ui.Button(ui.ButtonProps{
+									Type:    "reset",
+									Variant: ui.ButtonVariantOutline,
+								}) {
+									<span>Clear</span>
+								}
+								@ui.Button(ui.ButtonProps{
+									Type:    "submit",
+									Variant: ui.ButtonVariantDefault,
+								}) {
+									<span>Send Message</span>
+								}
+							</div>
+						}
+					}
+				}
+			</div>
+		</body>
+	</html>
+}
+
+// ============================================================================
+// Example 2: User Registration Form with Schema
+// ============================================================================
+
+// RegistrationFormPage renders a user registration form from schema
+templ RegistrationFormPage(schema *schema.Schema, data map[string]any, errors map[string][]string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ schema.Title }</title>
+			<link rel="stylesheet" href="/css/components.css"/>
+			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+			<script src="https://unpkg.com/alpinejs@3.13.3" defer></script>
+		</head>
+		<body class="bg-background">
+			<div class="container mx-auto max-w-4xl py-12">
+				@ui.SchemaForm(ui.SchemaFormProps{
+					Schema: schema,
+					Data:   data,
+					Errors: errors,
+					Action: "/api/register",
+					Method: "POST",
+				})
+			</div>
+		</body>
+	</html>
+}
+
+// ============================================================================
+// Example 3: Data Table with CRUD Operations
+// ============================================================================
+
+// UsersTablePage renders a users table with CRUD operations
+templ UsersTablePage(schema *schema.Schema, users []map[string]any, total int) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Users Management</title>
+			<link rel="stylesheet" href="/css/components.css"/>
+			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+			<script src="https://unpkg.com/alpinejs@3.13.3" defer></script>
+		</head>
+		<body class="bg-background">
+			<div class="container mx-auto py-8">
+				@ui.CRUDTable(schema, users, total)
+			</div>
+		</body>
+	</html>
+}
+
+// ============================================================================
+// Example 4: Product Form with Advanced Fields
+// ============================================================================
+
+// ProductFormPage renders a product form with various field types
+templ ProductFormPage() {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Add Product</title>
+			<link rel="stylesheet" href="/css/components.css"/>
+			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+			<script src="https://unpkg.com/alpinejs@3.13.3" defer></script>
+		</head>
+		<body class="bg-background">
+			<div class="container mx-auto max-w-4xl py-12">
+				@ui.Card(ui.CardProps{}) {
+					@ui.CardHeader() {
+						@ui.CardTitle("Add New Product", "")
+						@ui.CardDescription("Fill in the details to add a new product to your inventory")
+					}
+					@ui.CardContent() {
+						@ui.Form(ui.FormProps{
+							Action:   "/api/products",
+							Method:   "POST",
+							HxPost:   "/api/products",
+							Class:    "space-y-6",
+						}) {
+							<!-- Basic Information -->
+							<div class="space-y-4">
+								<h3 class="text-lg font-semibold">Basic Information</h3>
+								@ui.Grid(ui.GridProps{Cols: 2, Gap: "gap-4"}) {
+									@ui.FormField(ui.FormFieldProps{
+										Label:    "Product Name",
+										Name:     "name",
+										ID:       "name",
+										Required: true,
+									}) {
+										@ui.Input(ui.InputProps{
+											Type:        ui.InputTypeText,
+											Name:        "name",
+											ID:          "name",
+											Placeholder: "Enter product name",
+											Required:    true,
+										})
+									}
+									
+									@ui.FormField(ui.FormFieldProps{
+										Label:    "SKU",
+										Name:     "sku",
+										ID:       "sku",
+										Required: true,
+									}) {
+										@ui.Input(ui.InputProps{
+											Type:        ui.InputTypeText,
+											Name:        "sku",
+											ID:          "sku",
+											Placeholder: "PROD-001",
+											Required:    true,
+										})
+									}
+								}
+								
+								@ui.FormField(ui.FormFieldProps{
+									Label:       "Description",
+									Name:        "description",
+									ID:          "description",
+									Description: "Detailed product description",
+								}) {
+									@ui.TextareaWithCounter(ui.TextareaProps{
+										Name:        "description",
+										ID:          "description",
+										Placeholder: "Enter product description...",
+										Rows:        4,
+										MaxLength:   500,
+									})
+								}
+							</div>
+							
+							@ui.Separator("my-6")
+							
+							<!-- Pricing -->
+							<div class="space-y-4">
+								<h3 class="text-lg font-semibold">Pricing</h3>
+								@ui.Grid(ui.GridProps{Cols: 3, Gap: "gap-4"}) {
+									@ui.FormField(ui.FormFieldProps{
+										Label:    "Price",
+										Name:     "price",
+										ID:       "price",
+										Required: true,
+									}) {
+										@ui.CurrencyInput(ui.InputProps{
+											Type:        ui.InputTypeNumber,
+											Name:        "price",
+											ID:          "price",
+											Placeholder: "0.00",
+											Required:    true,
+											Min:         "0",
+										}, "USD", "$")
+									}
+									
+									@ui.FormField(ui.FormFieldProps{
+										Label: "Cost",
+										Name:  "cost",
+										ID:    "cost",
+									}) {
+										@ui.CurrencyInput(ui.InputProps{
+											Type:        ui.InputTypeNumber,
+											Name:        "cost",
+											ID:          "cost",
+											Placeholder: "0.00",
+											Min:         "0",
+										}, "USD", "$")
+									}
+									
+									@ui.FormField(ui.FormFieldProps{
+										Label: "Quantity",
+										Name:  "quantity",
+										ID:    "quantity",
+									}) {
+										@ui.NumberInput(ui.InputProps{
+											Type:        ui.InputTypeNumber,
+											Name:        "quantity",
+											ID:          "quantity",
+											Placeholder: "0",
+											Min:         "0",
+										}, true)
+									}
+								}
+							</div>
+							
+							@ui.Separator("my-6")
+							
+							<!-- Additional Options -->
+							<div class="space-y-4">
+								<h3 class="text-lg font-semibold">Options</h3>
+								
+								@ui.FormField(ui.FormFieldProps{
+									Label: "Category",
+									Name:  "category",
+									ID:    "category",
+								}) {
+									@ui.Select(ui.SelectProps{
+										Name:        "category",
+										ID:          "category",
+										Placeholder: "Select a category",
+										Options: []ui.SelectOption{
+											{Value: "electronics", Label: "Electronics"},
+											{Value: "clothing", Label: "Clothing"},
+											{Value: "food", Label: "Food & Beverages"},
+											{Value: "books", Label: "Books"},
+										},
+									})
+								}
+								
+								@ui.FormField(ui.FormFieldProps{
+									Label:       "Tags",
+									Name:        "tags",
+									ID:          "tags",
+									Description: "Add tags to help organize your products",
+								}) {
+									<!-- Tags input would go here -->
+									<div>Tags input component</div>
+								}
+								
+								@ui.CheckboxWithLabel(ui.CheckboxProps{
+									Name: "featured",
+									ID:   "featured",
+								}, "Feature this product on homepage")
+								
+								@ui.SwitchWithLabel(ui.SwitchProps{
+									Name:    "active",
+									ID:      "active",
+									Checked: true,
+								}, "Product is active")
+							</div>
+							
+							@ui.Separator("my-6")
+							
+							<!-- Form Actions -->
+							<div class="flex items-center justify-end space-x-2">
+								@ui.Button(ui.ButtonProps{
+									Type:    "button",
+									Variant: ui.ButtonVariantOutline,
+								}) {
+									<span>Cancel</span>
+								}
+								@ui.Button(ui.ButtonProps{
+									Type:    "submit",
+									Variant: ui.ButtonVariantDefault,
+								}) {
+									<span>Save Product</span>
+								}
+							</div>
+						}
+					}
+				}
+			</div>
+		</body>
+	</html>
+}
+
+// ============================================================================
+// Example 5: Dashboard with Cards and Stats
+// ============================================================================
+
+// DashboardPage renders a dashboard with various components
+templ DashboardPage() {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Dashboard</title>
+			<link rel="stylesheet" href="/css/components.css"/>
+			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+			<script src="https://unpkg.com/alpinejs@3.13.3" defer></script>
+		</head>
+		<body class="bg-background">
+			<div class="container mx-auto py-8 space-y-8">
+				<!-- Header -->
+				<div class="flex items-center justify-between">
+					<div>
+						<h1 class="text-3xl font-bold">Dashboard</h1>
+						<p class="text-muted-foreground">Welcome back! Here's what's happening.</p>
+					</div>
+					@ui.Button(ui.ButtonProps{
+						Type:    "button",
+						Variant: ui.ButtonVariantDefault,
+					}) {
+						<i class="fa fa-plus mr-2"></i>
+						<span>New Transaction</span>
+					}
+				</div>
+				
+				<!-- Stats Grid -->
+				@ui.Grid(ui.GridProps{Cols: 4, Gap: "gap-6"}) {
+					@StatCard("Total Revenue", "$45,231.89", "+20.1% from last month", "fa fa-dollar-sign")
+					@StatCard("Active Users", "2,350", "+180 new users", "fa fa-users")
+					@StatCard("Sales", "+12,234", "+19% from last month", "fa fa-shopping-cart")
+					@StatCard("Growth", "+573", "+201 since last hour", "fa fa-trending-up")
+				}
+				
+				<!-- Recent Activity -->
+				@ui.Card(ui.CardProps{}) {
+					@ui.CardHeader() {
+						@ui.CardTitle("Recent Activity", "")
+						@ui.CardDescription("Latest transactions and updates")
+					}
+					@ui.CardContent() {
+						<div class="space-y-4">
+							@ActivityItem("New sale recorded", "$299.00", "2 minutes ago")
+							@ActivityItem("User registered", "john@example.com", "5 minutes ago")
+							@ActivityItem("Product added", "Wireless Mouse", "10 minutes ago")
+							@ActivityItem("Order shipped", "Order #1234", "15 minutes ago")
+						</div>
+					}
+				}
+				
+				<!-- Alerts -->
+				<div class="space-y-4">
+					@ui.Alert(ui.AlertProps{
+						Variant:     ui.AlertVariantSuccess,
+						Title:       "Success",
+						Description: "Your changes have been saved successfully.",
+						Icon:        "fa fa-check-circle",
+						Dismissible: true,
+					})
+					
+					@ui.Alert(ui.AlertProps{
+						Variant:     ui.AlertVariantWarning,
+						Title:       "Warning",
+						Description: "You have 3 products with low stock levels.",
+						Icon:        "fa fa-exclamation-triangle",
+						Dismissible: true,
+					})
+				</div>
+			</div>
+		</body>
+	</html>
+}
+
+// StatCard is a helper component for dashboard stats
+templ StatCard(title string, value string, change string, icon string) {
+	@ui.Card(ui.CardProps{}) {
+		@ui.CardHeader() {
+			<div class="flex items-center justify-between">
+				<p class="text-sm font-medium text-muted-foreground">{ title }</p>
+				<i class={ icon + " text-muted-foreground" }></i>
+			</div>
+		}
+		@ui.CardContent() {
+			<div class="space-y-1">
+				<p class="text-2xl font-bold">{ value }</p>
+				<p class="text-xs text-muted-foreground">{ change }</p>
+			</div>
+		}
+	}
+}
+
+// ActivityItem is a helper component for activity list
+templ ActivityItem(title string, description string, time string) {
+	<div class="flex items-start space-x-4">
+		<div class="w-2 h-2 mt-2 rounded-full bg-primary"></div>
+		<div class="flex-1 space-y-1">
+			<p class="text-sm font-medium">{ title }</p>
+			<p class="text-sm text-muted-foreground">{ description }</p>
+		</div>
+		<span class="text-xs text-muted-foreground">{ time }</span>
+	</div>
+}
+
+// ============================================================================
+// Example 6: Modal and Dialog Examples
+// ============================================================================
+
+// ModalsExamplePage demonstrates modal usage
+templ ModalsExamplePage() {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Modals Example</title>
+			<link rel="stylesheet" href="/css/components.css"/>
+			<script src="https://unpkg.com/alpinejs@3.13.3" defer></script>
+		</head>
+		<body class="bg-background">
+			<div class="container mx-auto py-12 space-y-4">
+				<h1 class="text-3xl font-bold">Modal Examples</h1>
+				
+				<!-- Trigger buttons -->
+				<div class="flex space-x-4">
+					@ui.Button(ui.ButtonProps{
+						Type:    "button",
+						Variant: ui.ButtonVariantDefault,
+					}) {
+						<span x-on:click="$dispatch('open-modal', { id: 'example-modal' })">Open Modal</span>
+					}
+					
+					@ui.Button(ui.ButtonProps{
+						Type:    "button",
+						Variant: ui.ButtonVariantDestructive,
+					}) {
+						<span x-on:click="$dispatch('open-modal', { id: 'confirm-dialog' })">Delete Item</span>
+					}
+				</div>
+				
+				<!-- Modals -->
+				@ui.Modal(ui.ModalProps{
+					ID:          "example-modal",
+					Title:       "Example Modal",
+					Description: "This is an example modal dialog",
+					Size:        "md",
+					Dismissible: true,
+				}) {
+					<p class="text-sm">
+						This is the modal content. You can put any content here including forms, tables, or other components.
+					</p>
+					@ui.ModalFooter() {
+						@ui.Button(ui.ButtonProps{
+							Type:    "button",
+							Variant: ui.ButtonVariantOutline,
+						}) {
+							<span x-on:click="$dispatch('close-modal', { id: 'example-modal' })">Cancel</span>
+						}
+						@ui.Button(ui.ButtonProps{
+							Type:    "button",
+							Variant: ui.ButtonVariantDefault,
+						}) {
+							<span>Save Changes</span>
+						}
+					}
+				}
+				
+				@ui.ConfirmDialog(
+					"confirm-dialog",
+					"Are you sure?",
+					"This action cannot be undone. This will permanently delete the item.",
+					"Delete",
+					"Cancel",
+				)
+			</div>
+		</body>
+	</html>
+}

@@ -511,3 +511,10 @@ func copyMap(original map[string]any) map[string]any {
 	maps.Copy(copy, original)
 	return copy
 }
+
+func intPtr(i int) *int {
+	if i == 0 {
+		return nil
+	}
+	return &i
+}

@@ -1,0 +1,425 @@
+package ui
+
+import (
+	"fmt"
+	"github.com/niiniyare/erp/pkg/schema"
+)
+
+// ============================================================================
+// File Upload Component
+// ============================================================================
+
+// FileFieldRenderer renders a file upload field
+templ FileFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		<div
+			x-data={ fmt.Sprintf("{ files: [], uploading: false, maxSize: %d }", getConfigInt(field, "maxSize", 10485760)) }
+			class="space-y-2"
+		>
+			<div class="flex items-center justify-center w-full">
+				<label
+					for={ field.Name }
+					class="flex flex-col items-center justify-center w-full h-32 border-2 border-border border-dashed rounded-lg cursor-pointer bg-background hover:bg-accent/50 transition-colors"
+				>
+					<div class="flex flex-col items-center justify-center pt-5 pb-6">
+						<i class="fa fa-cloud-upload text-4xl text-muted-foreground mb-2"></i>
+						<p class="mb-2 text-sm text-muted-foreground">
+							<span class="font-semibold">Click to upload</span> or drag and drop
+						</p>
+						<p class="text-xs text-muted-foreground">
+							{ getConfigString(field, "accept", "Any file type") }
+						</p>
+					</div>
+					<input
+						type="file"
+						id={ field.Name }
+						name={ field.Name }
+						class="hidden"
+						if getConfigBool(field, "multiple") {
+							multiple
+						}
+						if getConfigString(field, "accept", "") != "" {
+							accept={ getConfigString(field, "accept", "") }
+						}
+						x-on:change="files = Array.from($event.target.files)"
+					/>
+				</label>
+			</div>
+			
+			<!-- File list -->
+			<div x-show="files.length > 0" class="space-y-2">
+				<template x-for="(file, index) in files" :key="index">
+					<div class="flex items-center justify-between p-2 border rounded-md">
+						<div class="flex items-center space-x-2">
+							<i class="fa fa-file text-muted-foreground"></i>
+							<span class="text-sm" x-text="file.name"></span>
+							<span class="text-xs text-muted-foreground" x-text="(file.size / 1024).toFixed(2) + ' KB'"></span>
+						</div>
+						<button
+							type="button"
+							class="text-destructive hover:text-destructive/90"
+							x-on:click="files.splice(index, 1)"
+						>
+							<i class="fa fa-times"></i>
+						</button>
+					</div>
+				</template>
+			</div>
+		</div>
+	}
+}
+
+// ImageFieldRenderer renders an image upload field with preview
+templ ImageFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		<div
+			x-data={ `{
+				preview: '',
+				file: null,
+				handleFileSelect(event) {
+					const file = event.target.files[0];
+					if (file && file.type.startsWith('image/')) {
+						this.file = file;
+						const reader = new FileReader();
+						reader.onload = (e) => { this.preview = e.target.result; };
+						reader.readAsDataURL(file);
+					}
+				}
+			}` }
+			class="space-y-2"
+		>
+			<div class="flex items-center justify-center w-full">
+				<label
+					for={ field.Name }
+					class="flex flex-col items-center justify-center w-full h-48 border-2 border-border border-dashed rounded-lg cursor-pointer bg-background hover:bg-accent/50 transition-colors"
+				>
+					<div x-show="!preview" class="flex flex-col items-center justify-center pt-5 pb-6">
+						<i class="fa fa-image text-4xl text-muted-foreground mb-2"></i>
+						<p class="mb-2 text-sm text-muted-foreground">
+							<span class="font-semibold">Click to upload</span> or drag and drop
+						</p>
+						<p class="text-xs text-muted-foreground">PNG, JPG, GIF up to 5MB</p>
+					</div>
+					<div x-show="preview" class="w-full h-full p-2">
+						<img x-bind:src="preview" class="w-full h-full object-contain rounded" alt="Preview"/>
+					</div>
+					<input
+						type="file"
+						id={ field.Name }
+						name={ field.Name }
+						class="hidden"
+						accept="image/*"
+						x-on:change="handleFileSelect($event)"
+					/>
+				</label>
+			</div>
+			<div x-show="preview" class="flex justify-end">
+				<button
+					type="button"
+					class="text-sm text-destructive hover:text-destructive/90"
+					x-on:click="preview = ''; file = null; $refs.fileInput.value = ''"
+				>
+					Remove image
+				</button>
+			</div>
+		</div>
+	}
+}
+
+// ============================================================================
+// Tags Input Component
+// ============================================================================
+
+// TagsFieldRenderer renders a tags input field
+templ TagsFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		<div
+			x-data={ `{
+				tags: [],
+				input: '',
+				suggestions: [],
+				init() {
+					` + fmt.Sprintf("this.tags = %v || [];", formatTagsValue(value)) + `
+				},
+				addTag() {
+					const tag = this.input.trim();
+					if (tag && !this.tags.includes(tag)) {
+						` + fmt.Sprintf("if (this.tags.length < %d) {", getConfigInt(field, "maxTags", 10)) + `
+							this.tags.push(tag);
+							this.input = '';
+						}
+					}
+				},
+				removeTag(index) {
+					this.tags.splice(index, 1);
+				}
+			}` }
+			class="space-y-2"
+		>
+			<!-- Tags display -->
+			<div class="flex flex-wrap gap-2 p-2 border rounded-md min-h-[42px]">
+				<template x-for="(tag, index) in tags" :key="index">
+					<span class="inline-flex items-center gap-1 px-2 py-1 text-sm bg-primary text-primary-foreground rounded-md">
+						<span x-text="tag"></span>
+						<button
+							type="button"
+							class="hover:text-primary-foreground/80"
+							x-on:click="removeTag(index)"
+						>
+							<i class="fa fa-times text-xs"></i>
+						</button>
+					</span>
+				</template>
+				<input
+					type="text"
+					x-model="input"
+					x-on:keydown.enter.prevent="addTag()"
+					x-on:keydown.comma.prevent="addTag()"
+					placeholder={ field.Placeholder }
+					class="flex-1 min-w-[120px] outline-none bg-transparent"
+				/>
+			</div>
+			
+			<!-- Hidden input to submit tags -->
+			<input
+				type="hidden"
+				name={ field.Name }
+				x-model="tags.join(',')"
+			/>
+			
+			<!-- Suggestions -->
+			if len(field.Options) > 0 {
+				<div class="flex flex-wrap gap-2">
+					<span class="text-xs text-muted-foreground">Suggestions:</span>
+					for _, option := range field.Options {
+						<button
+							type="button"
+							class="text-xs px-2 py-1 border rounded hover:bg-accent"
+							x-on:click={ fmt.Sprintf("if (!tags.includes('%s')) { tags.push('%s'); }", option.Label, option.Label) }
+						>
+							{ option.Label }
+						</button>
+					}
+				</div>
+			}
+		</div>
+	}
+}
+
+// ============================================================================
+// Rating Component
+// ============================================================================
+
+// RatingFieldRenderer renders a star rating field
+templ RatingFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		<div
+			x-data={ fmt.Sprintf(`{
+				rating: %v || 0,
+				max: %d,
+				hovering: 0,
+				setRating(value) {
+					this.rating = value;
+				}
+			}`, value, getConfigInt(field, "max", 5)) }
+			class="flex items-center space-x-1"
+		>
+			<template x-for="i in max" :key="i">
+				<button
+					type="button"
+					x-on:click="setRating(i)"
+					x-on:mouseenter="hovering = i"
+					x-on:mouseleave="hovering = 0"
+					class="text-2xl focus:outline-none transition-colors"
+					x-bind:class="(hovering >= i || rating >= i) ? 'text-yellow-400' : 'text-muted-foreground'"
+				>
+					<i class="fa fa-star"></i>
+				</button>
+			</template>
+			<span class="ml-2 text-sm text-muted-foreground" x-text="rating + ' / ' + max"></span>
+			
+			<!-- Hidden input -->
+			<input
+				type="hidden"
+				name={ field.Name }
+				x-model="rating"
+			/>
+		</div>
+	}
+}
+
+// ============================================================================
+// Slider Component
+// ============================================================================
+
+// SliderFieldRenderer renders a slider field
+templ SliderFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		<div
+			x-data={ fmt.Sprintf(`{
+				value: %v || %d,
+				min: %d,
+				max: %d,
+				step: %d
+			}`, value, getConfigInt(field, "min", 0), getConfigInt(field, "min", 0), getConfigInt(field, "max", 100), getConfigInt(field, "step", 1)) }
+			class="space-y-2"
+		>
+			<div class="flex items-center justify-between text-sm">
+				<span x-text="value"></span>
+				<div class="flex space-x-2 text-xs text-muted-foreground">
+					<span x-text="'Min: ' + min"></span>
+					<span x-text="'Max: ' + max"></span>
+				</div>
+			</div>
+			<input
+				type="range"
+				name={ field.Name }
+				x-model.number="value"
+				x-bind:min="min"
+				x-bind:max="max"
+				x-bind:step="step"
+				class="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer slider"
+			/>
+			if field.Config != nil && field.Config["marks"] != nil {
+				<div class="flex justify-between text-xs text-muted-foreground">
+					<!-- Marks would be rendered here based on config -->
+				</div>
+			}
+		</div>
+	}
+}
+
+// ============================================================================
+// Repeatable Field Component
+// ============================================================================
+
+// RepeatableFieldRenderer renders a repeatable group of fields
+templ RepeatableFieldRenderer(field *schema.Field, value any, errors []string) {
+	<div
+		x-data={ fmt.Sprintf(`{
+			items: [],
+			init() {
+				this.items = %v || [{}];
+			},
+			addItem() {
+				if (this.items.length < %d) {
+					this.items.push({});
+				}
+			},
+			removeItem(index) {
+				if (this.items.length > %d) {
+					this.items.splice(index, 1);
+				}
+			}
+		}`, formatRepeatableValue(value), getConfigInt(field, "maxItems", 100), getConfigInt(field, "minItems", 0)) }
+		class="space-y-4"
+	>
+		<!-- Header -->
+		<div class="flex items-center justify-between">
+			<label class="label">{ field.Label }</label>
+			<button
+				type="button"
+				class="btn btn-sm btn-outline"
+				x-on:click="addItem()"
+			>
+				<i class="fa fa-plus mr-1"></i>
+				{ getConfigString(field, "addButtonText", "Add Item") }
+			</button>
+		</div>
+		
+		<!-- Items -->
+		<div class="space-y-4">
+			<template x-for="(item, index) in items" :key="index">
+				<div class="card">
+					<div class="card-header flex items-center justify-between">
+						<h4 class="text-sm font-medium">
+							{ getConfigString(field, "itemTitle", "Item") } <span x-text="index + 1"></span>
+						</h4>
+						<button
+							type="button"
+							class="text-destructive hover:text-destructive/90"
+							x-on:click="removeItem(index)"
+						>
+							<i class="fa fa-trash"></i>
+						</button>
+					</div>
+					<div class="card-content">
+						if field.Fields != nil && len(field.Fields) > 0 {
+							<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+								for _, subField := range field.Fields {
+									<!-- Render each sub-field -->
+									@FieldRenderer(&subField, nil, nil)
+								}
+							</div>
+						}
+					</div>
+				</div>
+			</template>
+		</div>
+		
+		if field.Hint != "" {
+			@FormDescription(field.Hint)
+		}
+	</div>
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+func formatTagsValue(value any) string {
+	if value == nil {
+		return "[]"
+	}
+	switch v := value.(type) {
+	case []string:
+		return fmt.Sprintf("%#v", v)
+	case string:
+		return fmt.Sprintf("['%s']", v)
+	default:
+		return "[]"
+	}
+}
+
+func formatRepeatableValue(value any) string {
+	if value == nil {
+		return "[{}]"
+	}
+	// Format value as JSON array of objects
+	return fmt.Sprintf("%v", value)
+}

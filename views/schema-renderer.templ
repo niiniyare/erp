@@ -1,0 +1,463 @@
+package ui
+
+import (
+	"fmt"
+	"github.com/niiniyare/erp/pkg/schema"
+)
+
+// ============================================================================
+// Schema Form Renderer
+// ============================================================================
+
+// SchemaFormProps defines properties for rendering a complete schema form
+type SchemaFormProps struct {
+	Schema *schema.Schema
+	Data   map[string]any
+	Errors map[string][]string
+	Action string
+	Method string
+}
+
+// SchemaForm renders a complete form from a schema
+templ SchemaForm(props SchemaFormProps) {
+	@Form(FormProps{
+		Action:   props.Action,
+		Method:   props.Method,
+		HxPost:   props.Schema.HTMX.Post,
+		HxTarget: props.Schema.HTMX.Target,
+		HxSwap:   props.Schema.HTMX.Swap,
+		Class:    "space-y-6",
+	}) {
+		// Title and description
+		if props.Schema.Title != "" {
+			<div class="space-y-2">
+				<h2 class="text-2xl font-bold">{ props.Schema.Title }</h2>
+				if props.Schema.Description != "" {
+					<p class="text-muted-foreground">{ props.Schema.Description }</p>
+				}
+			</div>
+			@Separator("my-6")
+		}
+		
+		// Render fields based on layout
+		if props.Schema.Layout != nil {
+			@RenderLayout(props.Schema.Layout, props.Schema.Fields, props.Data, props.Errors)
+		} else {
+			// Default: render fields in a single column
+			@RenderFields(props.Schema.Fields, props.Data, props.Errors)
+		}
+		
+		// Actions/Buttons
+		if len(props.Schema.Actions) > 0 {
+			@Separator("my-6")
+			<div class="flex items-center justify-end space-x-2">
+				for _, action := range props.Schema.Actions {
+					@RenderAction(&action)
+				}
+			</div>
+		}
+	}
+}
+
+// RenderFields renders a list of fields
+templ RenderFields(fields []schema.Field, data map[string]any, errors map[string][]string) {
+	for i := range fields {
+		field := &fields[i]
+		value := data[field.Name]
+		fieldErrors := errors[field.Name]
+		
+		// Check conditional visibility
+		if shouldRenderField(field, data) {
+			@FieldRenderer(field, value, fieldErrors)
+		}
+	}
+}
+
+// RenderLayout renders fields according to layout configuration
+templ RenderLayout(layout *schema.Layout, fields []schema.Field, data map[string]any, errors map[string][]string) {
+	switch layout.Type {
+	case "grid":
+		@Grid(GridProps{
+			Cols: layout.Columns,
+			Gap:  "gap-4",
+		}) {
+			@RenderFields(fields, data, errors)
+		}
+	case "tabs":
+		@RenderTabsLayout(layout, fields, data, errors)
+	case "accordion":
+		@RenderAccordionLayout(layout, fields, data, errors)
+	default:
+		@RenderFields(fields, data, errors)
+	}
+}
+
+// RenderAction renders an action button
+templ RenderAction(action *schema.Action) {
+	<button
+		type={ action.Type }
+		class={ getActionButtonClasses(action) }
+		if action.Disabled {
+			disabled
+		}
+	>
+		if action.Icon != "" {
+			<i class={ action.Icon + " mr-2" }></i>
+		}
+		{ action.Text }
+	</button>
+}
+
+func getActionButtonClasses(action *schema.Action) string {
+	classes := "btn btn-default-size "
+	
+	switch action.Type {
+	case "submit":
+		classes += "btn-default"
+	case "reset":
+		classes += "btn-outline"
+	case "button":
+		if action.Level == "danger" {
+			classes += "btn-destructive"
+		} else if action.Level == "secondary" {
+			classes += "btn-secondary"
+		} else {
+			classes += "btn-outline"
+		}
+	default:
+		classes += "btn-default"
+	}
+	
+	if action.Class != "" {
+		classes += " " + action.Class
+	}
+	
+	return classes
+}
+
+// ============================================================================
+// Table/CRUD Component
+// ============================================================================
+
+// TableProps defines properties for a data table
+type TableProps struct {
+	Columns   []TableColumn
+	Data      []map[string]any
+	Selectable bool
+	Sortable   bool
+	Class      string
+}
+
+// TableColumn defines a table column
+type TableColumn struct {
+	Name      string
+	Label     string
+	Type      string // text, number, date, badge, actions
+	Width     string
+	Sortable  bool
+	ClassName string
+	Template  string // For custom rendering
+}
+
+// Table renders a data table
+templ Table(props TableProps) {
+	<div class="relative w-full overflow-auto">
+		<table class={ "table " + props.Class }>
+			<thead class="table-header">
+				<tr class="table-row">
+					if props.Selectable {
+						<th class="table-head w-[50px]">
+							<input type="checkbox" class="checkbox"/>
+						</th>
+					}
+					for _, col := range props.Columns {
+						<th
+							class={ "table-head " + col.ClassName }
+							if col.Width != "" {
+								style={ fmt.Sprintf("width: %s", col.Width) }
+							}
+						>
+							if col.Sortable {
+								<button class="flex items-center space-x-1 hover:text-foreground">
+									<span>{ col.Label }</span>
+									<i class="fa fa-sort text-xs"></i>
+								</button>
+							} else {
+								{ col.Label }
+							}
+						</th>
+					}
+				</tr>
+			</thead>
+			<tbody class="table-body">
+				for _, row := range props.Data {
+					<tr class="table-row">
+						if props.Selectable {
+							<td class="table-cell">
+								<input type="checkbox" class="checkbox"/>
+							</td>
+						}
+						for _, col := range props.Columns {
+							<td class={ "table-cell " + col.ClassName }>
+								@RenderTableCell(col, row[col.Name])
+							</td>
+						}
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+// RenderTableCell renders a table cell based on column type
+templ RenderTableCell(col TableColumn, value any) {
+	switch col.Type {
+	case "badge":
+		@Badge(BadgeProps{
+			Text:    fmt.Sprintf("%v", value),
+			Variant: BadgeVariantDefault,
+		})
+	case "date":
+		<span>{ formatDate(value) }</span>
+	case "number":
+		<span class="font-mono">{ formatNumber(value) }</span>
+	case "currency":
+		<span class="font-mono">{ formatCurrency(value) }</span>
+	default:
+		<span>{ fmt.Sprintf("%v", value) }</span>
+	}
+}
+
+// CRUDTable renders a complete CRUD table with filters, pagination, and actions
+templ CRUDTable(schema *schema.Schema, data []map[string]any, totalCount int) {
+	<div class="space-y-4">
+		// Header with title and actions
+		<div class="flex items-center justify-between">
+			<div>
+				<h2 class="text-2xl font-bold">{ schema.Title }</h2>
+				if schema.Description != "" {
+					<p class="text-sm text-muted-foreground">{ schema.Description }</p>
+				}
+			</div>
+			<div class="flex items-center space-x-2">
+				for _, action := range schema.Actions {
+					@Button(ButtonProps{
+						Type:    "button",
+						Variant: ButtonVariantDefault,
+						HxGet:   action.Link,
+					}) {
+						if action.Icon != "" {
+							<i class={ action.Icon + " mr-2" }></i>
+						}
+						<span>{ action.Text }</span>
+					}
+				}
+			</div>
+		</div>
+		
+		// Filters
+		if schema.Filter != nil && len(schema.Filter.Fields) > 0 {
+			<div class="card">
+				<div class="card-content pt-6">
+					@Form(FormProps{
+						Method: "GET",
+						Class:  "grid grid-cols-1 md:grid-cols-3 gap-4",
+					}) {
+						for i := range schema.Filter.Fields {
+							field := &schema.Filter.Fields[i]
+							@FieldRenderer(field, nil, nil)
+						}
+						<div class="flex items-end space-x-2">
+							@Button(ButtonProps{
+								Type:    "submit",
+								Variant: ButtonVariantDefault,
+							}) {
+								<i class="fa fa-search mr-2"></i>
+								<span>Search</span>
+							}
+							@Button(ButtonProps{
+								Type:    "reset",
+								Variant: ButtonVariantOutline,
+							}) {
+								<span>Clear</span>
+							}
+						</div>
+					}
+				</div>
+			</div>
+		}
+		
+		// Table
+		<div class="card">
+			<div class="card-content p-0">
+				@Table(TableProps{
+					Columns:    convertSchemaColumnsToTableColumns(schema.Columns),
+					Data:       data,
+					Selectable: true,
+					Sortable:   true,
+				})
+			</div>
+		</div>
+		
+		// Pagination
+		<div class="flex items-center justify-between">
+			<p class="text-sm text-muted-foreground">
+				Showing <span class="font-medium">1</span> to <span class="font-medium">{ fmt.Sprintf("%d", len(data)) }</span> of <span class="font-medium">{ fmt.Sprintf("%d", totalCount) }</span> results
+			</p>
+			<div class="flex items-center space-x-2">
+				@Button(ButtonProps{
+					Type:     "button",
+					Variant:  ButtonVariantOutline,
+					Size:     ButtonSizeSm,
+					Disabled: true,
+				}) {
+					<i class="fa fa-chevron-left"></i>
+				}
+				@Button(ButtonProps{
+					Type:    "button",
+					Variant: ButtonVariantOutline,
+					Size:    ButtonSizeSm,
+				}) {
+					<span>1</span>
+				}
+				@Button(ButtonProps{
+					Type:    "button",
+					Variant: ButtonVariantOutline,
+					Size:    ButtonSizeSm,
+				}) {
+					<span>2</span>
+				}
+				@Button(ButtonProps{
+					Type:    "button",
+					Variant: ButtonVariantOutline,
+					Size:    ButtonSizeSm,
+				}) {
+					<i class="fa fa-chevron-right"></i>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+func shouldRenderField(field *schema.Field, data map[string]any) bool {
+	// Check if field has showIf condition
+	if field.ShowIf == "" {
+		return true
+	}
+	
+	// TODO: Implement condition evaluation
+	// This should integrate with your condition package
+	return true
+}
+
+func convertSchemaColumnsToTableColumns(columns []schema.Column) []TableColumn {
+	result := make([]TableColumn, len(columns))
+	for i, col := range columns {
+		result[i] = TableColumn{
+			Name:      col.Name,
+			Label:     col.Label,
+			Type:      col.Type,
+			Width:     col.Width,
+			Sortable:  col.Sortable,
+			ClassName: col.ClassName,
+		}
+	}
+	return result
+}
+
+func formatDate(value any) string {
+	// Implement date formatting
+	return fmt.Sprintf("%v", value)
+}
+
+func formatNumber(value any) string {
+	// Implement number formatting
+	return fmt.Sprintf("%v", value)
+}
+
+func formatCurrency(value any) string {
+	// Implement currency formatting
+	return fmt.Sprintf("$%v", value)
+}
+
+// ============================================================================
+// Tabs Layout Renderer
+// ============================================================================
+
+// RenderTabsLayout renders fields organized in tabs
+templ RenderTabsLayout(layout *schema.Layout, fields []schema.Field, data map[string]any, errors map[string][]string) {
+	<div x-data="{ activeTab: 0 }">
+		<!-- Tab buttons -->
+		<div class="tabs-list">
+			for i, tab := range layout.Tabs {
+				<button
+					type="button"
+					class="tabs-trigger"
+					x-on:click={ fmt.Sprintf("activeTab = %d", i) }
+					x-bind:data-state={ fmt.Sprintf("activeTab === %d ? 'active' : 'inactive'", i) }
+				>
+					if tab.Icon != "" {
+						<i class={ tab.Icon + " mr-2" }></i>
+					}
+					{ tab.Label }
+				</button>
+			}
+		</div>
+		
+		<!-- Tab panels -->
+		<div class="mt-4">
+			for i, tab := range layout.Tabs {
+				<div
+					x-show={ fmt.Sprintf("activeTab === %d", i) }
+					class="space-y-4"
+				>
+					@RenderFields(getFieldsForTab(fields, tab), data, errors)
+				</div>
+			}
+		</div>
+	</div>
+}
+
+// RenderAccordionLayout renders fields in accordion sections
+templ RenderAccordionLayout(layout *schema.Layout, fields []schema.Field, data map[string]any, errors map[string][]string) {
+	<div class="space-y-2" x-data="{ open: 0 }">
+		for i, section := range layout.Sections {
+			<div class="accordion-item">
+				<button
+					type="button"
+					class="accordion-trigger w-full"
+					x-on:click={ fmt.Sprintf("open = open === %d ? -1 : %d", i, i) }
+					x-bind:data-state={ fmt.Sprintf("open === %d ? 'open' : 'closed'", i) }
+				>
+					<span>{ section.Title }</span>
+					<i class="fa fa-chevron-down transition-transform duration-200"></i>
+				</button>
+				<div
+					x-show={ fmt.Sprintf("open === %d", i) }
+					x-transition
+					class="accordion-content"
+				>
+					<div class="py-4 space-y-4">
+						@RenderFields(getFieldsForSection(fields, section), data, errors)
+					</div>
+				</div>
+			</div>
+		}
+	</div>
+}
+
+func getFieldsForTab(fields []schema.Field, tab schema.Tab) []schema.Field {
+	// Filter fields that belong to this tab
+	// Implementation depends on how tabs are defined in schema
+	return fields
+}
+
+func getFieldsForSection(fields []schema.Field, section schema.Section) []schema.Field {
+	// Filter fields that belong to this section
+	// Implementation depends on how sections are defined in schema
+	return fields
+}

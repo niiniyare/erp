@@ -861,3 +861,287 @@ func (suite *BusinessRulesTestSuite) TestConcurrentAccess() {
 	rules := suite.engine.ListRules()
 	require.GreaterOrEqual(suite.T(), len(rules), 1)
 }
+
+// Test TestRule method
+func (suite *BusinessRulesTestSuite) TestTestRule() {
+	// Create a rule that checks if user role is admin
+	conditionRule := &condition.ConditionRule{
+		ID: "admin_check",
+		Left: condition.Expression{
+			Type:  condition.ValueTypeField,
+			Field: "user_role",
+		},
+		Op:    condition.OpEqual,
+		Right: "admin",
+	}
+
+	condition := &condition.ConditionGroup{
+		ID:          "admin_condition",
+		Conjunction: condition.ConjunctionAnd,
+		Children:    []any{conditionRule},
+	}
+
+	rule := &BusinessRule{
+		ID:        "admin_rule",
+		Name:      "Admin Rule",
+		Type:      RuleTypeFieldVisibility,
+		Enabled:   true,
+		Condition: condition,
+		Actions: []BusinessRuleAction{
+			{Type: ActionShowField, Target: "admin_field"},
+		},
+	}
+
+	schema := &Schema{
+		ID:    "test_schema",
+		Title: "Test Schema",
+		Fields: []Field{
+			{Name: "admin_field", Type: FieldText},
+			{Name: "user_role", Type: FieldText},
+		},
+	}
+
+	// Test with multiple data scenarios
+	testCases := []map[string]any{
+		{"user_role": "admin"},     // Should match
+		{"user_role": "user"},      // Should not match
+		{"user_role": "admin"},     // Should match
+		{"user_role": "manager"},   // Should not match
+		{"user_role": ""},          // Should not match (empty value)
+	}
+
+	results, err := suite.engine.TestRule(suite.ctx, rule, schema, testCases)
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), results, 5)
+	
+	// Check expected results
+	require.True(suite.T(), results[0])   // admin should match
+	require.False(suite.T(), results[1])  // user should not match
+	require.True(suite.T(), results[2])   // admin should match
+	require.False(suite.T(), results[3])  // manager should not match
+	require.False(suite.T(), results[4])  // empty value should not match
+
+	// Test with rule that has no condition (should always be true)
+	ruleWithoutCondition := &BusinessRule{
+		ID:      "always_true_rule",
+		Name:    "Always True Rule",
+		Type:    RuleTypeFieldVisibility,
+		Enabled: true,
+		Actions: []BusinessRuleAction{
+			{Type: ActionShowField, Target: "test_field"},
+		},
+	}
+
+	resultsAlwaysTrue, err := suite.engine.TestRule(suite.ctx, ruleWithoutCondition, schema, testCases)
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), resultsAlwaysTrue, 5)
+	
+	// All results should be true since there's no condition
+	for i, result := range resultsAlwaysTrue {
+		require.True(suite.T(), result, "Result %d should be true", i)
+	}
+
+	// Test with empty test cases (should not error)
+	emptyResults, err := suite.engine.TestRule(suite.ctx, ruleWithoutCondition, schema, []map[string]any{})
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), emptyResults, 0)
+}
+
+// Test ExplainRule method
+func (suite *BusinessRulesTestSuite) TestExplainRule() {
+	// Create a rule with condition
+	conditionRule := &condition.ConditionRule{
+		ID: "status_check",
+		Left: condition.Expression{
+			Type:  condition.ValueTypeField,
+			Field: "status",
+		},
+		Op:    condition.OpEqual,
+		Right: "active",
+	}
+
+	condition := &condition.ConditionGroup{
+		ID:          "status_condition",
+		Conjunction: condition.ConjunctionAnd,
+		Children:    []any{conditionRule},
+	}
+
+	rule := &BusinessRule{
+		ID:          "test_explain_rule",
+		Name:        "Test Explain Rule",
+		Type:        RuleTypeFieldVisibility,
+		Priority:    10,
+		Enabled:     true,
+		Condition:   condition,
+		Actions: []BusinessRuleAction{
+			{Type: ActionShowField, Target: "field1"},
+			{Type: ActionHideField, Target: "field2"},
+		},
+	}
+
+	// Test with condition met
+	data := map[string]any{"status": "active"}
+	explanation, err := suite.engine.ExplainRule(suite.ctx, rule, data)
+	require.NoError(suite.T(), err)
+	require.Contains(suite.T(), explanation, "Rule: Test Explain Rule")
+	require.Contains(suite.T(), explanation, "Type: field_visibility")
+	require.Contains(suite.T(), explanation, "Priority: 10")
+	require.Contains(suite.T(), explanation, "Enabled: true")
+	require.Contains(suite.T(), explanation, "Condition Met: true")
+	require.Contains(suite.T(), explanation, "Actions: 2")
+	require.Contains(suite.T(), explanation, "Action 1: show_field on field1")
+	require.Contains(suite.T(), explanation, "Action 2: hide_field on field2")
+
+	// Test with condition not met
+	data = map[string]any{"status": "inactive"}
+	explanation, err = suite.engine.ExplainRule(suite.ctx, rule, data)
+	require.NoError(suite.T(), err)
+	require.Contains(suite.T(), explanation, "Condition Met: false")
+
+	// Test with rule without condition
+	ruleWithoutCondition := &BusinessRule{
+		ID:       "no_condition_rule",
+		Name:     "No Condition Rule",
+		Type:     RuleTypeFieldRequired,
+		Priority: 5,
+		Enabled:  false,
+		Actions: []BusinessRuleAction{
+			{Type: ActionRequireField, Target: "required_field"},
+		},
+	}
+
+	explanation, err = suite.engine.ExplainRule(suite.ctx, ruleWithoutCondition, map[string]any{})
+	require.NoError(suite.T(), err)
+	require.Contains(suite.T(), explanation, "Rule: No Condition Rule")
+	require.Contains(suite.T(), explanation, "Type: field_required")
+	require.Contains(suite.T(), explanation, "Priority: 5")
+	require.Contains(suite.T(), explanation, "Enabled: false")
+	require.Contains(suite.T(), explanation, "Condition Met: true") // No condition means always true
+	require.Contains(suite.T(), explanation, "Actions: 1")
+	require.Contains(suite.T(), explanation, "Action 1: require_field on required_field")
+
+	// Test rule with empty actions (edge case)
+	ruleWithEmptyActions := &BusinessRule{
+		ID:       "empty_actions_rule",
+		Name:     "Empty Actions Rule",
+		Type:     RuleTypeFieldVisibility,
+		Priority: 1,
+		Enabled:  true,
+		Actions:  []BusinessRuleAction{},
+	}
+
+	explanation, err = suite.engine.ExplainRule(suite.ctx, ruleWithEmptyActions, map[string]any{})
+	require.NoError(suite.T(), err)
+	require.Contains(suite.T(), explanation, "Actions: 0")
+}
+
+// Test UpdateRule method
+func (suite *BusinessRulesTestSuite) TestUpdateRule() {
+	// First add a rule to update
+	originalRule := &BusinessRule{
+		ID:          "update_test_rule",
+		Name:        "Original Rule",
+		Type:        RuleTypeFieldVisibility,
+		Priority:    1,
+		Enabled:     true,
+		Description: "Original description",
+		Actions: []BusinessRuleAction{
+			{Type: ActionShowField, Target: "field1"},
+		},
+	}
+
+	err := suite.engine.AddRule(originalRule)
+	require.NoError(suite.T(), err)
+
+	// Verify the rule was added
+	retrievedRule, exists := suite.engine.GetRule("update_test_rule")
+	require.True(suite.T(), exists)
+	require.Equal(suite.T(), "Original Rule", retrievedRule.Name)
+	require.Equal(suite.T(), "Original description", retrievedRule.Description)
+	require.Equal(suite.T(), 1, retrievedRule.Priority)
+
+	// Update the rule
+	updatedRule := &BusinessRule{
+		ID:          "update_test_rule",
+		Name:        "Updated Rule",
+		Type:        RuleTypeFieldRequired,
+		Priority:    5,
+		Enabled:     false,
+		Description: "Updated description",
+		Actions: []BusinessRuleAction{
+			{Type: ActionRequireField, Target: "field2"},
+			{Type: ActionOptionalField, Target: "field3"},
+		},
+	}
+
+	err = suite.engine.UpdateRule(updatedRule)
+	require.NoError(suite.T(), err)
+
+	// Verify the rule was updated
+	retrievedRule, exists = suite.engine.GetRule("update_test_rule")
+	require.True(suite.T(), exists)
+	require.Equal(suite.T(), "Updated Rule", retrievedRule.Name)
+	require.Equal(suite.T(), "Updated description", retrievedRule.Description)
+	require.Equal(suite.T(), 5, retrievedRule.Priority)
+	require.Equal(suite.T(), RuleTypeFieldRequired, retrievedRule.Type)
+	require.False(suite.T(), retrievedRule.Enabled)
+	require.Len(suite.T(), retrievedRule.Actions, 2)
+	require.False(suite.T(), retrievedRule.UpdatedAt.IsZero())
+
+	// Test error cases
+	
+	// Test with nil rule
+	err = suite.engine.UpdateRule(nil)
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "rule is required")
+
+	// Test with rule without ID
+	ruleWithoutID := &BusinessRule{
+		Name:    "No ID Rule",
+		Type:    RuleTypeFieldVisibility,
+		Enabled: true,
+	}
+	err = suite.engine.UpdateRule(ruleWithoutID)
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "rule is required with valid ID")
+
+	// Test with non-existent rule ID
+	nonExistentRule := &BusinessRule{
+		ID:      "non_existent_rule",
+		Name:    "Non Existent Rule",
+		Type:    RuleTypeFieldVisibility,
+		Enabled: true,
+		Actions: []BusinessRuleAction{
+			{Type: ActionShowField, Target: "field1"},
+		},
+	}
+	err = suite.engine.UpdateRule(nonExistentRule)
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "business rule non_existent_rule not found")
+
+	// Test with invalid rule (no actions)
+	invalidRule := &BusinessRule{
+		ID:      "update_test_rule",
+		Name:    "Invalid Rule",
+		Type:    RuleTypeFieldVisibility,
+		Enabled: true,
+		Actions: []BusinessRuleAction{}, // Empty actions - should be invalid
+	}
+	err = suite.engine.UpdateRule(invalidRule)
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "rule must have at least one action")
+
+	// Test with invalid rule (empty rule name)
+	invalidRule2 := &BusinessRule{
+		ID:      "update_test_rule",
+		Name:    "", // Empty name - should be invalid
+		Type:    RuleTypeFieldVisibility,
+		Enabled: true,
+		Actions: []BusinessRuleAction{
+			{Type: ActionShowField, Target: "field1"},
+		},
+	}
+	err = suite.engine.UpdateRule(invalidRule2)
+	require.Error(suite.T(), err)
+	require.Contains(suite.T(), err.Error(), "rule name is required")
+}

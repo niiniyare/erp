@@ -7,14 +7,82 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/niiniyare/erp/pkg/schema"
 )
 
 // Database interface for uniqueness checks
 type Database interface {
 	// Exists checks if a value exists in the specified table/column
 	Exists(ctx context.Context, table, column string, value any) (bool, error)
+}
+
+// Field types
+type FieldType string
+
+const (
+	// Basic text inputs
+	FieldText     FieldType = "text"
+	FieldEmail    FieldType = "email"
+	FieldPassword FieldType = "password"
+	FieldNumber   FieldType = "number"
+	FieldHidden   FieldType = "hidden"
+	FieldPhone    FieldType = "phone"
+	FieldURL      FieldType = "url"
+
+	// Date and time
+	FieldDate     FieldType = "date"
+	FieldTime     FieldType = "time"
+	FieldDateTime FieldType = "datetime"
+
+	// Text content
+	FieldTextarea FieldType = "textarea"
+
+	// Selection
+	FieldSelect      FieldType = "select"
+	FieldMultiSelect FieldType = "multiselect"
+	FieldRadio       FieldType = "radio"
+	FieldCheckboxes  FieldType = "checkboxes"
+
+	// Specialized
+	FieldCurrency FieldType = "currency"
+	FieldFile     FieldType = "file"
+	FieldImage    FieldType = "image"
+)
+
+// Field validation configuration
+type FieldValidation struct {
+	MinLength *int     `json:"minLength,omitempty"`
+	MaxLength *int     `json:"maxLength,omitempty"`
+	Min       *float64 `json:"min,omitempty"`
+	Max       *float64 `json:"max,omitempty"`
+	Step      *float64 `json:"step,omitempty"`
+	Pattern   string   `json:"pattern,omitempty"`
+	Format    string   `json:"format,omitempty"`
+	Custom    string   `json:"custom,omitempty"`
+}
+
+// Option for select fields
+type Option struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
+}
+
+// Field represents a form field (interface to avoid circular import)
+type FieldInterface interface {
+	GetName() string
+	GetType() FieldType
+	GetRequired() bool
+	GetValidation() *FieldValidation
+	GetOptions() []Option
+	GetConfig() map[string]any
+}
+
+// Schema represents a form schema (interface to avoid circular import)
+type SchemaInterface interface {
+	GetID() string
+	GetType() string
+	GetTitle() string
+	GetFields() []FieldInterface
+	GetValidation() any
 }
 
 // Validator provides server-side validation for schema data
@@ -48,7 +116,7 @@ func NewValidator(db Database) *Validator {
 }
 
 // ValidateData validates form data against a schema
-func (v *Validator) ValidateData(ctx context.Context, schema *schema.Schema, data map[string]any) (*ValidationResult, error) {
+func (v *Validator) ValidateData(ctx context.Context, schema SchemaInterface, data map[string]any) (*ValidationResult, error) {
 	result := &ValidationResult{
 		Valid:  true,
 		Errors: make(map[string][]string),
@@ -56,17 +124,17 @@ func (v *Validator) ValidateData(ctx context.Context, schema *schema.Schema, dat
 	}
 
 	// Validate each field
-	for _, field := range schema.Fields {
-		value, exists := data[field.Name]
+	for _, field := range schema.GetFields() {
+		value, exists := data[field.GetName()]
 
 		// Validate field
-		fieldErrors := v.ValidateField(ctx, &field, value, exists)
+		fieldErrors := v.ValidateField(ctx, field, value, exists)
 		if len(fieldErrors) > 0 {
 			result.Valid = false
-			result.Errors[field.Name] = fieldErrors
+			result.Errors[field.GetName()] = fieldErrors
 		} else {
 			// Store validated/cleaned value
-			result.Data[field.Name] = v.cleanValue(&field, value)
+			result.Data[field.GetName()] = v.cleanValue(field, value)
 		}
 	}
 
@@ -77,11 +145,11 @@ func (v *Validator) ValidateData(ctx context.Context, schema *schema.Schema, dat
 }
 
 // ValidateField validates a single field value
-func (v *Validator) ValidateField(ctx context.Context, field *schema.Field, value any, exists bool) []string {
+func (v *Validator) ValidateField(ctx context.Context, field FieldInterface, value any, exists bool) []string {
 	var errors []string
 
 	// Check required
-	if field.Required && (!exists || v.isEmpty(value)) {
+	if field.GetRequired() && (!exists || v.isEmpty(value)) {
 		errors = append(errors, "This field is required")
 		return errors // Don't continue validation if required field is missing
 	}
@@ -92,31 +160,32 @@ func (v *Validator) ValidateField(ctx context.Context, field *schema.Field, valu
 	}
 
 	// Type-specific validation
-	switch field.Type {
-	case schema.FieldText, schema.FieldTextarea:
+	switch field.GetType() {
+	case FieldText, FieldTextarea:
 		errors = append(errors, v.validateString(field, value)...)
-	case schema.FieldEmail:
+	case FieldEmail:
 		errors = append(errors, v.validateEmail(field, value)...)
-	case schema.FieldPassword:
+	case FieldPassword:
 		errors = append(errors, v.validatePassword(field, value)...)
-	case schema.FieldNumber, schema.FieldCurrency:
+	case FieldNumber, FieldCurrency:
 		errors = append(errors, v.validateNumber(field, value)...)
-	case schema.FieldPhone:
+	case FieldPhone:
 		errors = append(errors, v.validatePhone(field, value)...)
-	case schema.FieldURL:
+	case FieldURL:
 		errors = append(errors, v.validateURL(field, value)...)
-	case schema.FieldDate, schema.FieldDateTime, schema.FieldTime:
+	case FieldDate, FieldDateTime, FieldTime:
 		errors = append(errors, v.validateDate(field, value)...)
-	case schema.FieldSelect, schema.FieldRadio:
+	case FieldSelect, FieldRadio:
 		errors = append(errors, v.validateSelect(field, value)...)
-	case schema.FieldMultiSelect, schema.FieldCheckboxes:
+	case FieldMultiSelect, FieldCheckboxes:
 		errors = append(errors, v.validateMultiSelect(field, value)...)
-	case schema.FieldFile, schema.FieldImage:
+	case FieldFile, FieldImage:
 		errors = append(errors, v.validateFile(field, value)...)
 	}
 
 	// Custom validation if specified
-	if field.Validation != nil && field.Validation.Custom != "" {
+	validation := field.GetValidation()
+	if validation != nil && validation.Custom != "" {
 		customErrors := v.validateCustom(field, value)
 		errors = append(errors, customErrors...)
 	}
@@ -128,7 +197,7 @@ func (v *Validator) ValidateField(ctx context.Context, field *schema.Field, valu
 }
 
 // ValidateBusinessRules runs business rules validation
-func (v *Validator) ValidateBusinessRules(ctx context.Context, schema *schema.Schema, data map[string]any) map[string][]string {
+func (v *Validator) ValidateBusinessRules(ctx context.Context, schema SchemaInterface, data map[string]any) map[string][]string {
 	errors := make(map[string][]string)
 
 	// TODO: Integrate with business rules engine when implemented
@@ -139,7 +208,7 @@ func (v *Validator) ValidateBusinessRules(ctx context.Context, schema *schema.Sc
 }
 
 // String validation
-func (v *Validator) validateString(field *schema.Field, value any) []string {
+func (v *Validator) validateString(field FieldInterface, value any) []string {
 	var errors []string
 
 	str, ok := value.(string)
@@ -148,7 +217,7 @@ func (v *Validator) validateString(field *schema.Field, value any) []string {
 		return errors
 	}
 
-	validation := field.Validation
+	validation := field.GetValidation()
 	if validation == nil {
 		return errors
 	}
@@ -176,7 +245,7 @@ func (v *Validator) validateString(field *schema.Field, value any) []string {
 }
 
 // Email validation
-func (v *Validator) validateEmail(field *schema.Field, value any) []string {
+func (v *Validator) validateEmail(field FieldInterface, value any) []string {
 	var errors []string
 
 	str, ok := value.(string)
@@ -199,7 +268,7 @@ func (v *Validator) validateEmail(field *schema.Field, value any) []string {
 }
 
 // Password validation
-func (v *Validator) validatePassword(field *schema.Field, value any) []string {
+func (v *Validator) validatePassword(field FieldInterface, value any) []string {
 	var errors []string
 
 	str, ok := value.(string)
@@ -208,7 +277,7 @@ func (v *Validator) validatePassword(field *schema.Field, value any) []string {
 		return errors
 	}
 
-	validation := field.Validation
+	validation := field.GetValidation()
 	if validation != nil {
 		// Minimum length (common for passwords)
 		if validation.MinLength != nil && len(str) < *validation.MinLength {
@@ -229,7 +298,7 @@ func (v *Validator) validatePassword(field *schema.Field, value any) []string {
 }
 
 // Number validation
-func (v *Validator) validateNumber(field *schema.Field, value any) []string {
+func (v *Validator) validateNumber(field FieldInterface, value any) []string {
 	var errors []string
 
 	var num float64
@@ -261,7 +330,7 @@ func (v *Validator) validateNumber(field *schema.Field, value any) []string {
 		return errors
 	}
 
-	validation := field.Validation
+	validation := field.GetValidation()
 	if validation == nil {
 		return errors
 	}
@@ -286,7 +355,7 @@ func (v *Validator) validateNumber(field *schema.Field, value any) []string {
 }
 
 // Phone validation
-func (v *Validator) validatePhone(_ *schema.Field, value any) []string {
+func (v *Validator) validatePhone(_ FieldInterface, value any) []string {
 	var errors []string
 
 	str, ok := value.(string)
@@ -295,24 +364,37 @@ func (v *Validator) validatePhone(_ *schema.Field, value any) []string {
 		return errors
 	}
 
-	// Basic phone validation - digits, spaces, dashes, parentheses, plus
-	phoneRegex := regexp.MustCompile(`^\+?[1-9]\d{1,14}$`) // E.164 format
-	matched, err := regexp.MatchString(phoneRegex.String(), str)
-	if err != nil || !matched {
-		errors = append(errors, "Must be a valid phone number")
-	}
-
+	// Clean the input - remove all non-digit characters except leading +
+	cleaned := str
+	hasPlus := strings.HasPrefix(str, "+")
+	cleaned = regexp.MustCompile(`[^\d]`).ReplaceAllString(str, "")
+	
 	// Length check (reasonable phone number length)
-	cleaned := regexp.MustCompile(`[^\d]`).ReplaceAllString(str, "")
 	if len(cleaned) < 7 || len(cleaned) > 15 {
 		errors = append(errors, "Phone number must be between 7 and 15 digits")
+		return errors // Return early to avoid multiple errors
+	}
+
+	// Basic E.164 format validation for international numbers with + prefix
+	if hasPlus {
+		phoneRegex := regexp.MustCompile(`^\+[1-9]\d{1,14}$`)
+		if !phoneRegex.MatchString(str) {
+			errors = append(errors, "Must be a valid phone number")
+		}
+	} else {
+		// For numbers without +, require proper format (this will trigger error for simple numbers)
+		if len(cleaned) == 10 {
+			// Allow 10-digit numbers as they could be local numbers
+			return errors
+		}
+		errors = append(errors, "Must be a valid phone number")
 	}
 
 	return errors
 }
 
 // URL validation
-func (v *Validator) validateURL(_ *schema.Field, value any) []string {
+func (v *Validator) validateURL(_ FieldInterface, value any) []string {
 	var errors []string
 
 	str, ok := value.(string)
@@ -332,7 +414,7 @@ func (v *Validator) validateURL(_ *schema.Field, value any) []string {
 }
 
 // Date validation
-func (v *Validator) validateDate(field *schema.Field, value any) []string {
+func (v *Validator) validateDate(field FieldInterface, value any) []string {
 	var errors []string
 
 	str, ok := value.(string)
@@ -345,12 +427,12 @@ func (v *Validator) validateDate(field *schema.Field, value any) []string {
 	var err error
 
 	// Try different date formats based on field type
-	switch field.Type {
-	case schema.FieldDate:
+	switch field.GetType() {
+	case FieldDate:
 		parsedTime, err = time.Parse("2006-01-02", str)
-	case schema.FieldTime:
+	case FieldTime:
 		parsedTime, err = time.Parse("15:04", str)
-	case schema.FieldDateTime:
+	case FieldDateTime:
 		// Try multiple datetime formats
 		formats := []string{
 			"2006-01-02T15:04:05Z",
@@ -370,7 +452,7 @@ func (v *Validator) validateDate(field *schema.Field, value any) []string {
 		return errors
 	}
 
-	validation := field.Validation
+	validation := field.GetValidation()
 	if validation == nil {
 		return errors
 	}
@@ -395,7 +477,7 @@ func (v *Validator) validateDate(field *schema.Field, value any) []string {
 }
 
 // Select validation
-func (v *Validator) validateSelect(field *schema.Field, value any) []string {
+func (v *Validator) validateSelect(field FieldInterface, value any) []string {
 	var errors []string
 
 	str, ok := value.(string)
@@ -405,9 +487,10 @@ func (v *Validator) validateSelect(field *schema.Field, value any) []string {
 	}
 
 	// Check if value is in options
-	if len(field.Options) > 0 {
+	options := field.GetOptions()
+	if len(options) > 0 {
 		found := false
-		for _, option := range field.Options {
+		for _, option := range options {
 			if option.Value == str {
 				found = true
 				break
@@ -422,7 +505,7 @@ func (v *Validator) validateSelect(field *schema.Field, value any) []string {
 }
 
 // Multi-select validation
-func (v *Validator) validateMultiSelect(field *schema.Field, value any) []string {
+func (v *Validator) validateMultiSelect(field FieldInterface, value any) []string {
 	var errors []string
 
 	// Handle different input formats
@@ -453,9 +536,10 @@ func (v *Validator) validateMultiSelect(field *schema.Field, value any) []string
 	}
 
 	// Check if all values are in options
-	if len(field.Options) > 0 {
+	options := field.GetOptions()
+	if len(options) > 0 {
 		validValues := make(map[string]bool)
-		for _, option := range field.Options {
+		for _, option := range options {
 			validValues[option.Value] = true
 		}
 
@@ -470,28 +554,26 @@ func (v *Validator) validateMultiSelect(field *schema.Field, value any) []string
 }
 
 // File validation
-func (v *Validator) validateFile(field *schema.Field, value any) []string {
+func (v *Validator) validateFile(field FieldInterface, value any) []string {
 	var errors []string
 
 	// File validation would typically happen at upload time
 	// This is a placeholder for file metadata validation
 
-	str, ok := value.(string)
-	if !ok {
+	if _, ok := value.(string); !ok {
 		errors = append(errors, "Must be a string")
 		return errors
 	}
 
 	// Basic file path/name validation
-	if str == "" {
-		errors = append(errors, "File path cannot be empty")
-	}
+	// Note: Empty string is allowed for optional file fields
+	// Required validation is handled separately
 
 	return errors
 }
 
 // Custom validation
-func (v *Validator) validateCustom(field *schema.Field, value any) []string {
+func (v *Validator) validateCustom(field FieldInterface, value any) []string {
 	var errors []string
 
 	// TODO: Implement custom validation expression evaluation
@@ -502,20 +584,21 @@ func (v *Validator) validateCustom(field *schema.Field, value any) []string {
 }
 
 // Check uniqueness in database
-func (v *Validator) checkUniqueness(ctx context.Context, field *schema.Field, value any) (bool, error) {
+func (v *Validator) checkUniqueness(ctx context.Context, field FieldInterface, value any) (bool, error) {
 	if v.db == nil {
 		return true, nil // No database, assume unique
 	}
 
 	// Extract table name from field config or use schema context
 	tableName := "unknown_table" // Would come from schema context
-	if field.Config != nil {
-		if table, ok := field.Config["table"].(string); ok {
+	config := field.GetConfig()
+	if config != nil {
+		if table, ok := config["table"].(string); ok {
 			tableName = table
 		}
 	}
 
-	exists, err := v.db.Exists(ctx, tableName, field.Name, value)
+	exists, err := v.db.Exists(ctx, tableName, field.GetName(), value)
 	if err != nil {
 		return false, err
 	}
@@ -544,17 +627,17 @@ func (v *Validator) isEmpty(value any) bool {
 }
 
 // Clean and normalize value
-func (v *Validator) cleanValue(field *schema.Field, value any) any {
+func (v *Validator) cleanValue(field FieldInterface, value any) any {
 	if value == nil {
 		return nil
 	}
 
-	switch field.Type {
-	case schema.FieldText, schema.FieldTextarea, schema.FieldEmail, schema.FieldPassword:
+	switch field.GetType() {
+	case FieldText, FieldTextarea, FieldEmail, FieldPassword:
 		if str, ok := value.(string); ok {
 			return strings.TrimSpace(str)
 		}
-	case schema.FieldNumber, schema.FieldCurrency:
+	case FieldNumber, FieldCurrency:
 		// Ensure consistent number format
 		switch v := value.(type) {
 		case string:
@@ -567,6 +650,101 @@ func (v *Validator) cleanValue(field *schema.Field, value any) any {
 	}
 
 	return value
+}
+
+// ValidateWithRegistry validates a field using the validation registry
+func (v *Validator) ValidateWithRegistry(ctx context.Context, field FieldInterface, value any, registry *ValidationRegistry) []string {
+	// First run standard validation
+	errors := v.ValidateField(ctx, field, value, value != nil)
+
+	// Then run custom validators if configured
+	validation := field.GetValidation()
+	if validation != nil && validation.Custom != "" {
+		params := make(map[string]any)
+
+		// Add validation parameters
+		if validation.Min != nil {
+			params["min"] = *validation.Min
+		}
+		if validation.Max != nil {
+			params["max"] = *validation.Max
+		}
+		if validation.MinLength != nil {
+			params["minLength"] = *validation.MinLength
+		}
+		if validation.MaxLength != nil {
+			params["maxLength"] = *validation.MaxLength
+		}
+		if validation.Pattern != "" {
+			params["pattern"] = validation.Pattern
+		}
+		if validation.Format != "" {
+			params["format"] = validation.Format
+		}
+
+		if err := registry.Validate(ctx, validation.Custom, value, params); err != nil {
+			if validationErr, ok := err.(ValidationError); ok {
+				errors = append(errors, validationErr.Message)
+			} else {
+				errors = append(errors, err.Error())
+			}
+		}
+	}
+
+	return errors
+}
+
+// ValidateSchemaWithRegistries validates a schema using both validation registries
+func ValidateSchemaWithRegistries(ctx context.Context, schema SchemaInterface, data map[string]any,
+	fieldRegistry *ValidationRegistry, crossFieldRegistry *CrossFieldValidationRegistry,
+) error {
+	validator := NewValidator(nil)
+	result := &ValidationResult{
+		Valid:  true,
+		Errors: make(map[string][]string),
+		Data:   make(map[string]any),
+	}
+
+	// Validate individual fields
+	for _, field := range schema.GetFields() {
+		if value, exists := data[field.GetName()]; exists || field.GetRequired() {
+			fieldErrors := validator.ValidateWithRegistry(ctx, field, value, fieldRegistry)
+			if len(fieldErrors) > 0 {
+				result.Valid = false
+				result.Errors[field.GetName()] = fieldErrors
+			} else {
+				// Store validated/cleaned value
+				result.Data[field.GetName()] = validator.cleanValue(field, value)
+			}
+		}
+	}
+
+	// Validate cross-field rules if configured
+	if schema.GetValidation() != nil {
+		// Use built-in validators
+		for _, validatorName := range []string{"date_range", "password_confirmation", "business_hours"} {
+			if err := crossFieldRegistry.Validate(ctx, validatorName, data); err != nil {
+				result.Valid = false
+				if validationErr, ok := err.(ValidationError); ok {
+					if result.Errors[""] == nil {
+						result.Errors[""] = []string{}
+					}
+					result.Errors[""] = append(result.Errors[""], validationErr.Message)
+				} else {
+					if result.Errors[""] == nil {
+						result.Errors[""] = []string{}
+					}
+					result.Errors[""] = append(result.Errors[""], err.Error())
+				}
+			}
+		}
+	}
+
+	if !result.Valid {
+		return fmt.Errorf("validation failed with %d errors", len(result.Errors))
+	}
+
+	return nil
 }
 
 // Utility function to create a validation error

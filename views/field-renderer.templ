@@ -1,0 +1,594 @@
+package ui
+
+import (
+	"fmt"
+	"github.com/niiniyare/erp/pkg/schema"
+)
+
+// FieldRenderer is the main component that renders any field based on its type
+templ FieldRenderer(field *schema.Field, value any, errors []string) {
+	// Check if field should be visible based on runtime settings
+	if field.Runtime != nil && !field.Runtime.Visible {
+		// Field is hidden
+		@Input(InputProps{
+			Type: InputTypeHidden,
+			Name: field.Name,
+			Value: fmt.Sprintf("%v", value),
+		})
+	} else {
+		// Render based on field type
+		switch field.Type {
+		case schema.FieldTypeText:
+			@TextFieldRenderer(field, value, errors)
+		case schema.FieldTypeEmail:
+			@EmailFieldRenderer(field, value, errors)
+		case schema.FieldTypePassword:
+			@PasswordFieldRenderer(field, value, errors)
+		case schema.FieldTypeNumber:
+			@NumberFieldRenderer(field, value, errors)
+		case schema.FieldTypePhone:
+			@PhoneFieldRenderer(field, value, errors)
+		case schema.FieldTypeURL:
+			@URLFieldRenderer(field, value, errors)
+		case schema.FieldTypeHidden:
+			@HiddenFieldRenderer(field, value)
+		case schema.FieldTypeTextarea:
+			@TextareaFieldRenderer(field, value, errors)
+		case schema.FieldTypeSelect:
+			@SelectFieldRenderer(field, value, errors)
+		case schema.FieldTypeRadio:
+			@RadioFieldRenderer(field, value, errors)
+		case schema.FieldTypeCheckbox:
+			@CheckboxFieldRenderer(field, value, errors)
+		case schema.FieldTypeCheckboxes:
+			@CheckboxesFieldRenderer(field, value, errors)
+		case schema.FieldTypeSwitch:
+			@SwitchFieldRenderer(field, value, errors)
+		case schema.FieldTypeDate:
+			@DateFieldRenderer(field, value, errors)
+		case schema.FieldTypeTime:
+			@TimeFieldRenderer(field, value, errors)
+		case schema.FieldTypeDatetime:
+			@DatetimeFieldRenderer(field, value, errors)
+		case schema.FieldTypeCurrency:
+			@CurrencyFieldRenderer(field, value, errors)
+		case schema.FieldTypeFile:
+			@FileFieldRenderer(field, value, errors)
+		case schema.FieldTypeImage:
+			@ImageFieldRenderer(field, value, errors)
+		case schema.FieldTypeTags:
+			@TagsFieldRenderer(field, value, errors)
+		case schema.FieldTypeRating:
+			@RatingFieldRenderer(field, value, errors)
+		case schema.FieldTypeSlider:
+			@SliderFieldRenderer(field, value, errors)
+		case schema.FieldTypeRepeatable:
+			@RepeatableFieldRenderer(field, value, errors)
+		default:
+			@TextFieldRenderer(field, value, errors)
+		}
+	}
+}
+
+// TextFieldRenderer renders a text input field
+templ TextFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		if field.Config != nil && field.Config["prefix"] != nil {
+			@InputWithIcon(InputProps{
+				Type:        InputTypeText,
+				Name:        field.Name,
+				ID:          field.Name,
+				Value:       fmt.Sprintf("%v", value),
+				Placeholder: field.Placeholder,
+				Required:    field.Required,
+				Disabled:    field.Readonly || (field.Runtime != nil && !field.Runtime.Editable),
+				MinLength:   getValidationInt(field, "minLength"),
+				MaxLength:   getValidationInt(field, "maxLength"),
+				Pattern:     getValidationString(field, "pattern"),
+				AriaInvalid: len(errors) > 0,
+			}, fmt.Sprintf("%v", field.Config["prefix"]), "left")
+		} else if field.Config != nil && field.Config["suffix"] != nil {
+			@InputWithIcon(InputProps{
+				Type:        InputTypeText,
+				Name:        field.Name,
+				ID:          field.Name,
+				Value:       fmt.Sprintf("%v", value),
+				Placeholder: field.Placeholder,
+				Required:    field.Required,
+				Disabled:    field.Readonly || (field.Runtime != nil && !field.Runtime.Editable),
+				MinLength:   getValidationInt(field, "minLength"),
+				MaxLength:   getValidationInt(field, "maxLength"),
+				Pattern:     getValidationString(field, "pattern"),
+				AriaInvalid: len(errors) > 0,
+			}, fmt.Sprintf("%v", field.Config["suffix"]), "right")
+		} else {
+			@Input(InputProps{
+				Type:        InputTypeText,
+				Name:        field.Name,
+				ID:          field.Name,
+				Value:       fmt.Sprintf("%v", value),
+				Placeholder: field.Placeholder,
+				Required:    field.Required,
+				Disabled:    field.Readonly || (field.Runtime != nil && !field.Runtime.Editable),
+				MinLength:   getValidationInt(field, "minLength"),
+				MaxLength:   getValidationInt(field, "maxLength"),
+				Pattern:     getValidationString(field, "pattern"),
+				AriaInvalid: len(errors) > 0,
+			})
+		}
+	}
+}
+
+// EmailFieldRenderer renders an email input field
+templ EmailFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		@Input(InputProps{
+			Type:        InputTypeEmail,
+			Name:        field.Name,
+			ID:          field.Name,
+			Value:       fmt.Sprintf("%v", value),
+			Placeholder: field.Placeholder,
+			Required:    field.Required,
+			Disabled:    field.Readonly,
+			MaxLength:   255,
+			Autocomplete: "email",
+			AriaInvalid: len(errors) > 0,
+		})
+	}
+}
+
+// PasswordFieldRenderer renders a password input field
+templ PasswordFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		@PasswordInput(InputProps{
+			Type:        InputTypePassword,
+			Name:        field.Name,
+			ID:          field.Name,
+			Placeholder: field.Placeholder,
+			Required:    field.Required,
+			MinLength:   getValidationInt(field, "minLength"),
+			Pattern:     getValidationString(field, "pattern"),
+			Autocomplete: "current-password",
+			AriaInvalid: len(errors) > 0,
+		})
+	}
+}
+
+// NumberFieldRenderer renders a number input field
+templ NumberFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		if field.Config != nil && field.Config["showStepper"] == true {
+			@NumberInput(InputProps{
+				Type:        InputTypeNumber,
+				Name:        field.Name,
+				ID:          field.Name,
+				Value:       fmt.Sprintf("%v", value),
+				Placeholder: field.Placeholder,
+				Required:    field.Required,
+				Disabled:    field.Readonly,
+				Min:         getValidationString(field, "min"),
+				Max:         getValidationString(field, "max"),
+				Step:        getValidationString(field, "step"),
+				AriaInvalid: len(errors) > 0,
+			}, true)
+		} else {
+			@Input(InputProps{
+				Type:        InputTypeNumber,
+				Name:        field.Name,
+				ID:          field.Name,
+				Value:       fmt.Sprintf("%v", value),
+				Placeholder: field.Placeholder,
+				Required:    field.Required,
+				Disabled:    field.Readonly,
+				Min:         getValidationString(field, "min"),
+				Max:         getValidationString(field, "max"),
+				Step:        getValidationString(field, "step"),
+				AriaInvalid: len(errors) > 0,
+			})
+		}
+	}
+}
+
+// PhoneFieldRenderer renders a phone input field
+templ PhoneFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		@Input(InputProps{
+			Type:        InputTypeTel,
+			Name:        field.Name,
+			ID:          field.Name,
+			Value:       fmt.Sprintf("%v", value),
+			Placeholder: field.Placeholder,
+			Required:    field.Required,
+			Disabled:    field.Readonly,
+			Pattern:     getValidationString(field, "pattern"),
+			Autocomplete: "tel",
+			AriaInvalid: len(errors) > 0,
+		})
+	}
+}
+
+// URLFieldRenderer renders a URL input field
+templ URLFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		@Input(InputProps{
+			Type:        InputTypeURL,
+			Name:        field.Name,
+			ID:          field.Name,
+			Value:       fmt.Sprintf("%v", value),
+			Placeholder: field.Placeholder,
+			Required:    field.Required,
+			Disabled:    field.Readonly,
+			Autocomplete: "url",
+			AriaInvalid: len(errors) > 0,
+		})
+	}
+}
+
+// HiddenFieldRenderer renders a hidden input field
+templ HiddenFieldRenderer(field *schema.Field, value any) {
+	@Input(InputProps{
+		Type:  InputTypeHidden,
+		Name:  field.Name,
+		Value: fmt.Sprintf("%v", value),
+	})
+}
+
+// TextareaFieldRenderer renders a textarea field
+templ TextareaFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		if field.Config != nil && field.Config["showCount"] == true {
+			@TextareaWithCounter(TextareaProps{
+				Name:        field.Name,
+				ID:          field.Name,
+				Value:       fmt.Sprintf("%v", value),
+				Placeholder: field.Placeholder,
+				Required:    field.Required,
+				Disabled:    field.Readonly,
+				Rows:        getConfigInt(field, "rows", 4),
+				MaxLength:   getValidationInt(field, "maxLength"),
+				AriaInvalid: len(errors) > 0,
+			})
+		} else {
+			@Textarea(TextareaProps{
+				Name:        field.Name,
+				ID:          field.Name,
+				Value:       fmt.Sprintf("%v", value),
+				Placeholder: field.Placeholder,
+				Required:    field.Required,
+				Disabled:    field.Readonly,
+				Rows:        getConfigInt(field, "rows", 4),
+				MaxLength:   getValidationInt(field, "maxLength"),
+				AriaInvalid: len(errors) > 0,
+			})
+		}
+	}
+}
+
+// SelectFieldRenderer renders a select dropdown field
+templ SelectFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		@Select(SelectProps{
+			Name:        field.Name,
+			ID:          field.Name,
+			Options:     convertToSelectOptions(field.Options, fmt.Sprintf("%v", value)),
+			Required:    field.Required,
+			Disabled:    field.Readonly,
+			Multiple:    getConfigBool(field, "multiple"),
+			Placeholder: field.Placeholder,
+		})
+	}
+}
+
+// CheckboxFieldRenderer renders a single checkbox field
+templ CheckboxFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Name:        field.Name,
+		ID:          field.Name,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		@CheckboxWithLabel(CheckboxProps{
+			Name:        field.Name,
+			ID:          field.Name,
+			Checked:     value == true || value == "true" || value == "1",
+			Required:    field.Required,
+			Disabled:    field.Readonly,
+			AriaInvalid: len(errors) > 0,
+		}, field.Label)
+	}
+}
+
+// CheckboxesFieldRenderer renders multiple checkboxes
+templ CheckboxesFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		<div class={ templ.KV("space-y-2", !getConfigBool(field, "inline")) + templ.KV("flex space-x-4", getConfigBool(field, "inline")) }>
+			for _, option := range field.Options {
+				@CheckboxWithLabel(CheckboxProps{
+					Name:  field.Name + "[]",
+					ID:    fmt.Sprintf("%s-%s", field.Name, option.Value),
+					Value: option.Value,
+					Checked: isValueSelected(value, option.Value),
+					Disabled: field.Readonly,
+				}, option.Label)
+			}
+		</div>
+	}
+}
+
+// RadioFieldRenderer renders radio buttons
+templ RadioFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		@RadioGroup(field.Name, convertToSelectOptions(field.Options, fmt.Sprintf("%v", value)), fmt.Sprintf("%v", value), getConfigBool(field, "inline"))
+	}
+}
+
+// SwitchFieldRenderer renders a switch toggle
+templ SwitchFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Name:        field.Name,
+		ID:          field.Name,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		@SwitchWithLabel(SwitchProps{
+			Name:     field.Name,
+			ID:       field.Name,
+			Checked:  value == true || value == "true" || value == "1",
+			Disabled: field.Readonly,
+		}, field.Label)
+	}
+}
+
+// DateFieldRenderer renders a date input field
+templ DateFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		@Input(InputProps{
+			Type:        InputTypeDate,
+			Name:        field.Name,
+			ID:          field.Name,
+			Value:       fmt.Sprintf("%v", value),
+			Required:    field.Required,
+			Disabled:    field.Readonly,
+			Min:         getValidationString(field, "min"),
+			Max:         getValidationString(field, "max"),
+			AriaInvalid: len(errors) > 0,
+		})
+	}
+}
+
+// TimeFieldRenderer renders a time input field
+templ TimeFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		@Input(InputProps{
+			Type:        InputTypeTime,
+			Name:        field.Name,
+			ID:          field.Name,
+			Value:       fmt.Sprintf("%v", value),
+			Required:    field.Required,
+			Disabled:    field.Readonly,
+			Min:         getValidationString(field, "min"),
+			Max:         getValidationString(field, "max"),
+			Step:        getConfigString(field, "step", ""),
+			AriaInvalid: len(errors) > 0,
+		})
+	}
+}
+
+// DatetimeFieldRenderer renders a datetime input field
+templ DatetimeFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		@Input(InputProps{
+			Type:        InputTypeDatetime,
+			Name:        field.Name,
+			ID:          field.Name,
+			Value:       fmt.Sprintf("%v", value),
+			Required:    field.Required,
+			Disabled:    field.Readonly,
+			Min:         getValidationString(field, "min"),
+			Max:         getValidationString(field, "max"),
+			AriaInvalid: len(errors) > 0,
+		})
+	}
+}
+
+// CurrencyFieldRenderer renders a currency input field
+templ CurrencyFieldRenderer(field *schema.Field, value any, errors []string) {
+	@FormField(FormFieldProps{
+		Label:       field.Label,
+		Name:        field.Name,
+		ID:          field.Name,
+		Required:    field.Required,
+		Description: field.Hint,
+		Error:       getFirstError(errors),
+	}) {
+		@CurrencyInput(InputProps{
+			Type:        InputTypeNumber,
+			Name:        field.Name,
+			ID:          field.Name,
+			Value:       fmt.Sprintf("%v", value),
+			Placeholder: field.Placeholder,
+			Required:    field.Required,
+			Disabled:    field.Readonly,
+			Min:         getValidationString(field, "min"),
+			Max:         getValidationString(field, "max"),
+			AriaInvalid: len(errors) > 0,
+		}, getConfigString(field, "currency", "USD"), getConfigString(field, "symbol", "$"))
+	}
+}
+
+// Helper functions
+func getFirstError(errors []string) string {
+	if len(errors) > 0 {
+		return errors[0]
+	}
+	return ""
+}
+
+func getValidationInt(field *schema.Field, key string) int {
+	if field.Validation == nil {
+		return 0
+	}
+	// Implementation depends on your schema.Validation structure
+	return 0
+}
+
+func getValidationString(field *schema.Field, key string) string {
+	if field.Validation == nil {
+		return ""
+	}
+	// Implementation depends on your schema.Validation structure
+	return ""
+}
+
+func getConfigInt(field *schema.Field, key string, defaultValue int) int {
+	if field.Config == nil {
+		return defaultValue
+	}
+	if val, ok := field.Config[key].(int); ok {
+		return val
+	}
+	return defaultValue
+}
+
+func getConfigString(field *schema.Field, key string, defaultValue string) string {
+	if field.Config == nil {
+		return defaultValue
+	}
+	if val, ok := field.Config[key].(string); ok {
+		return val
+	}
+	return defaultValue
+}
+
+func getConfigBool(field *schema.Field, key string) bool {
+	if field.Config == nil {
+		return false
+	}
+	if val, ok := field.Config[key].(bool); ok {
+		return val
+	}
+	return false
+}
+
+func convertToSelectOptions(options []schema.Option, selectedValue string) []SelectOption {
+	result := make([]SelectOption, len(options))
+	for i, opt := range options {
+		result[i] = SelectOption{
+			Value:    opt.Value,
+			Label:    opt.Label,
+			Disabled: opt.Disabled,
+			Selected: opt.Value == selectedValue,
+		}
+	}
+	return result
+}
+
+func isValueSelected(value any, optionValue string) bool {
+	// Handle different value types (string, []string, etc.)
+	switch v := value.(type) {
+	case string:
+		return v == optionValue
+	case []string:
+		for _, val := range v {
+			if val == optionValue {
+				return true
+			}
+		}
+	case []interface{}:
+		for _, val := range v {
+			if fmt.Sprintf("%v", val) == optionValue {
+				return true
+			}
+		}
+	}
+	return false
+}

@@ -5,13 +5,14 @@ import (
 	"time"
 
 	"github.com/niiniyare/erp/pkg/condition"
+	"github.com/niiniyare/erp/pkg/schema/validate"
 )
 
 // Builder provides a fluent interface for building schemas programmatically
 type Builder struct {
 	schema       *Schema
 	mixinSupport *MixinRegistry
-	validator    *ValidationRegistry
+	validator    *validate.ValidationRegistry
 	ruleEngine   *BusinessRuleEngine
 	evaluator    *condition.Evaluator
 }
@@ -21,7 +22,7 @@ func NewBuilder(id string, schemaType Type, title string) *Builder {
 	return &Builder{
 		schema:       NewSchema(id, schemaType, title),
 		mixinSupport: NewMixinRegistry(),
-		validator:    NewValidationRegistry(),
+		validator:    validate.NewValidationRegistry(),
 		ruleEngine:   NewBusinessRuleEngine(),
 	}
 }
@@ -390,19 +391,19 @@ func (b *Builder) WithRepeatable(field *RepeatableField) *Builder {
 }
 
 // WithValidationRegistry sets a custom validation registry
-func (b *Builder) WithValidationRegistry(registry *ValidationRegistry) *Builder {
+func (b *Builder) WithValidationRegistry(registry *validate.ValidationRegistry) *Builder {
 	b.validator = registry
 	return b
 }
 
 // WithCustomValidator adds a custom validator
-func (b *Builder) WithCustomValidator(name string, validator ValidatorFunc) *Builder {
+func (b *Builder) WithCustomValidator(name string, validator validate.ValidatorFunc) *Builder {
 	b.validator.Register(name, validator)
 	return b
 }
 
 // WithAsyncValidator adds an async validator
-func (b *Builder) WithAsyncValidator(validator *AsyncValidator) *Builder {
+func (b *Builder) WithAsyncValidator(validator *validate.AsyncValidator) *Builder {
 	b.validator.RegisterAsync(validator)
 	return b
 }
@@ -413,7 +414,7 @@ func (b *Builder) GetMixinRegistry() *MixinRegistry {
 }
 
 // GetValidationRegistry returns the validation registry for advanced operations
-func (b *Builder) GetValidationRegistry() *ValidationRegistry {
+func (b *Builder) GetValidationRegistry() *validate.ValidationRegistry {
 	return b.validator
 }
 
@@ -458,7 +459,7 @@ func (b *Builder) BuildWithRules(ctx context.Context, data map[string]any) (*Sch
 // NewGridLayout creates a grid layout with specified columns
 func NewGridLayout(columns int) *Layout {
 	return &Layout{
-		Type:       LayoutGrid,
+		Type:       "grid",
 		Columns:    columns,
 		Gap:        "1rem",
 		Responsive: true,
@@ -468,7 +469,7 @@ func NewGridLayout(columns int) *Layout {
 // NewTabLayout creates a tabbed layout
 func NewTabLayout(tabs []Tab) *Layout {
 	return &Layout{
-		Type: LayoutTabs,
+		Type: "tabs",
 		Tabs: tabs,
 	}
 }
@@ -476,7 +477,7 @@ func NewTabLayout(tabs []Tab) *Layout {
 // NewStepLayout creates a multi-step wizard layout
 func NewStepLayout(steps []Step) *Layout {
 	return &Layout{
-		Type:  LayoutSteps,
+		Type:  "steps",
 		Steps: steps,
 	}
 }
@@ -725,7 +726,7 @@ func NewUserRegistrationBuilder() *Builder {
 	builder.AddDateField("birth_date", "Date of Birth", false)
 
 	// Add custom validators
-	builder.WithAsyncValidator(&AsyncValidator{
+	builder.WithAsyncValidator(&validate.AsyncValidator{
 		Name:     "username_available",
 		Debounce: 500 * time.Millisecond,
 		Cache:    true,
@@ -736,7 +737,7 @@ func NewUserRegistrationBuilder() *Builder {
 		},
 	})
 
-	builder.WithAsyncValidator(&AsyncValidator{
+	builder.WithAsyncValidator(&validate.AsyncValidator{
 		Name:     "email_available",
 		Debounce: 500 * time.Millisecond,
 		Cache:    true,

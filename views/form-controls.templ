@@ -1,0 +1,472 @@
+package ui
+
+import "fmt"
+
+// ============================================================================
+// Label Component
+// ============================================================================
+
+// LabelProps defines properties for label component
+type LabelProps struct {
+	For      string
+	Text     string
+	Required bool
+	Class    string
+}
+
+// Label renders a label element
+templ Label(props LabelProps) {
+	<label
+		class={ "label " + props.Class }
+		if props.For != "" {
+			for={ props.For }
+		}
+	>
+		{ props.Text }
+		if props.Required {
+			<span class="text-destructive ml-1">*</span>
+		}
+	</label>
+}
+
+// ============================================================================
+// Textarea Component
+// ============================================================================
+
+// TextareaProps defines properties for textarea component
+type TextareaProps struct {
+	Name        string
+	ID          string
+	Value       string
+	Placeholder string
+	Required    bool
+	Disabled    bool
+	Readonly    bool
+	Rows        int
+	MaxLength   int
+	Class       string
+	
+	// HTMX
+	HxPost    string
+	HxTrigger string
+	HxTarget  string
+	
+	// Alpine.js
+	AlpineModel string
+	
+	// Accessibility
+	AriaLabel       string
+	AriaDescribedBy string
+	AriaInvalid     bool
+}
+
+// Textarea renders a textarea element
+templ Textarea(props TextareaProps) {
+	<textarea
+		name={ props.Name }
+		class={ "textarea " + props.Class }
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		if props.Placeholder != "" {
+			placeholder={ props.Placeholder }
+		}
+		if props.Rows > 0 {
+			rows={ fmt.Sprintf("%d", props.Rows) }
+		}
+		if props.MaxLength > 0 {
+			maxlength={ fmt.Sprintf("%d", props.MaxLength) }
+		}
+		if props.Required {
+			required
+		}
+		if props.Disabled {
+			disabled
+		}
+		if props.Readonly {
+			readonly
+		}
+		if props.HxPost != "" {
+			hx-post={ props.HxPost }
+		}
+		if props.HxTrigger != "" {
+			hx-trigger={ props.HxTrigger }
+		}
+		if props.HxTarget != "" {
+			hx-target={ props.HxTarget }
+		}
+		if props.AlpineModel != "" {
+			x-model={ props.AlpineModel }
+		}
+		if props.AriaLabel != "" {
+			aria-label={ props.AriaLabel }
+		}
+		if props.AriaDescribedBy != "" {
+			aria-describedby={ props.AriaDescribedBy }
+		}
+		if props.AriaInvalid {
+			aria-invalid="true"
+		}
+	>{ props.Value }</textarea>
+}
+
+// TextareaWithCounter renders textarea with character counter
+templ TextareaWithCounter(props TextareaProps) {
+	<div x-data={ fmt.Sprintf("{ count: %d }", len(props.Value)) }>
+		<textarea
+			name={ props.Name }
+			class={ "textarea " + props.Class }
+			x-model="count"
+			x-on:input={ fmt.Sprintf("count = $event.target.value.length") }
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			if props.Placeholder != "" {
+				placeholder={ props.Placeholder }
+			}
+			if props.Rows > 0 {
+				rows={ fmt.Sprintf("%d", props.Rows) }
+			}
+			if props.MaxLength > 0 {
+				maxlength={ fmt.Sprintf("%d", props.MaxLength) }
+			}
+			if props.Required {
+				required
+			}
+		>{ props.Value }</textarea>
+		if props.MaxLength > 0 {
+			<div class="text-sm text-muted-foreground mt-1 text-right">
+				<span x-text="count"></span> / { fmt.Sprintf("%d", props.MaxLength) }
+			</div>
+		}
+	</div>
+}
+
+// ============================================================================
+// Select Component
+// ============================================================================
+
+// SelectOption represents an option in a select dropdown
+type SelectOption struct {
+	Value    string
+	Label    string
+	Disabled bool
+	Selected bool
+}
+
+// SelectProps defines properties for select component
+type SelectProps struct {
+	Name        string
+	ID          string
+	Options     []SelectOption
+	Required    bool
+	Disabled    bool
+	Multiple    bool
+	Size        int
+	Class       string
+	Placeholder string
+	
+	// HTMX
+	HxPost    string
+	HxGet     string
+	HxTrigger string
+	HxTarget  string
+	
+	// Alpine.js
+	AlpineModel string
+	
+	// Accessibility
+	AriaLabel       string
+	AriaDescribedBy string
+}
+
+// Select renders a select dropdown
+templ Select(props SelectProps) {
+	<select
+		name={ props.Name }
+		class={ "select-trigger " + props.Class }
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		if props.Required {
+			required
+		}
+		if props.Disabled {
+			disabled
+		}
+		if props.Multiple {
+			multiple
+			if props.Size > 0 {
+				size={ fmt.Sprintf("%d", props.Size) }
+			}
+		}
+		if props.HxPost != "" {
+			hx-post={ props.HxPost }
+		}
+		if props.HxGet != "" {
+			hx-get={ props.HxGet }
+		}
+		if props.HxTrigger != "" {
+			hx-trigger={ props.HxTrigger }
+		}
+		if props.HxTarget != "" {
+			hx-target={ props.HxTarget }
+		}
+		if props.AlpineModel != "" {
+			x-model={ props.AlpineModel }
+		}
+		if props.AriaLabel != "" {
+			aria-label={ props.AriaLabel }
+		}
+		if props.AriaDescribedBy != "" {
+			aria-describedby={ props.AriaDescribedBy }
+		}
+	>
+		if props.Placeholder != "" {
+			<option value="" disabled selected>{ props.Placeholder }</option>
+		}
+		for _, option := range props.Options {
+			<option
+				value={ option.Value }
+				if option.Disabled {
+					disabled
+				}
+				if option.Selected {
+					selected
+				}
+			>
+				{ option.Label }
+			</option>
+		}
+	</select>
+}
+
+// ============================================================================
+// Checkbox Component
+// ============================================================================
+
+// CheckboxProps defines properties for checkbox component
+type CheckboxProps struct {
+	Name     string
+	ID       string
+	Value    string
+	Checked  bool
+	Required bool
+	Disabled bool
+	Class    string
+	
+	// Alpine.js
+	AlpineModel string
+	AlpineOn    string
+	
+	// Accessibility
+	AriaLabel       string
+	AriaDescribedBy string
+}
+
+// Checkbox renders a checkbox input
+templ Checkbox(props CheckboxProps) {
+	<input
+		type="checkbox"
+		name={ props.Name }
+		class={ "checkbox " + props.Class }
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		if props.Value != "" {
+			value={ props.Value }
+		}
+		if props.Checked {
+			checked
+		}
+		if props.Required {
+			required
+		}
+		if props.Disabled {
+			disabled
+		}
+		if props.AlpineModel != "" {
+			x-model={ props.AlpineModel }
+		}
+		if props.AlpineOn != "" {
+			x-on={ props.AlpineOn }
+		}
+		if props.AriaLabel != "" {
+			aria-label={ props.AriaLabel }
+		}
+		if props.AriaDescribedBy != "" {
+			aria-describedby={ props.AriaDescribedBy }
+		}
+	/>
+}
+
+// CheckboxWithLabel renders a checkbox with label
+templ CheckboxWithLabel(props CheckboxProps, labelText string) {
+	<div class="flex items-center space-x-2">
+		@Checkbox(props)
+		<label
+			class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+			if props.ID != "" {
+				for={ props.ID }
+			}
+		>
+			{ labelText }
+		</label>
+	</div>
+}
+
+// ============================================================================
+// Radio Component
+// ============================================================================
+
+// RadioProps defines properties for radio button component
+type RadioProps struct {
+	Name     string
+	ID       string
+	Value    string
+	Checked  bool
+	Required bool
+	Disabled bool
+	Class    string
+	
+	// Alpine.js
+	AlpineModel string
+	
+	// Accessibility
+	AriaLabel       string
+	AriaDescribedBy string
+}
+
+// Radio renders a radio button
+templ Radio(props RadioProps) {
+	<input
+		type="radio"
+		name={ props.Name }
+		class={ "radio " + props.Class }
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		if props.Value != "" {
+			value={ props.Value }
+		}
+		if props.Checked {
+			checked
+		}
+		if props.Required {
+			required
+		}
+		if props.Disabled {
+			disabled
+		}
+		if props.AlpineModel != "" {
+			x-model={ props.AlpineModel }
+		}
+		if props.AriaLabel != "" {
+			aria-label={ props.AriaLabel }
+		}
+		if props.AriaDescribedBy != "" {
+			aria-describedby={ props.AriaDescribedBy }
+		}
+	/>
+}
+
+// RadioWithLabel renders a radio button with label
+templ RadioWithLabel(props RadioProps, labelText string) {
+	<div class="flex items-center space-x-2">
+		@Radio(props)
+		<label
+			class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+			if props.ID != "" {
+				for={ props.ID }
+			}
+		>
+			{ labelText }
+		</label>
+	</div>
+}
+
+// RadioGroup renders a group of radio buttons
+templ RadioGroup(name string, options []SelectOption, selectedValue string, inline bool) {
+	<div class={ templ.KV("space-y-2", !inline) + templ.KV("flex space-x-4", inline) }>
+		for _, option := range options {
+			@RadioWithLabel(RadioProps{
+				Name:    name,
+				ID:      fmt.Sprintf("%s-%s", name, option.Value),
+				Value:   option.Value,
+				Checked: option.Value == selectedValue,
+				Disabled: option.Disabled,
+			}, option.Label)
+		}
+	</div>
+}
+
+// ============================================================================
+// Switch Component
+// ============================================================================
+
+// SwitchProps defines properties for switch component
+type SwitchProps struct {
+	Name     string
+	ID       string
+	Checked  bool
+	Disabled bool
+	Class    string
+	
+	// Alpine.js
+	AlpineModel string
+	
+	// Accessibility
+	AriaLabel       string
+	AriaDescribedBy string
+}
+
+// Switch renders a toggle switch
+templ Switch(props SwitchProps) {
+	<button
+		type="button"
+		role="switch"
+		class={ "switch " + props.Class }
+		x-data={ fmt.Sprintf("{ checked: %t }", props.Checked) }
+		x-on:click="checked = !checked"
+		x-bind:data-state="checked ? 'checked' : 'unchecked'"
+		x-bind:aria-checked="checked"
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		if props.Disabled {
+			disabled
+		}
+		if props.AriaLabel != "" {
+			aria-label={ props.AriaLabel }
+		}
+		if props.AriaDescribedBy != "" {
+			aria-describedby={ props.AriaDescribedBy }
+		}
+	>
+		<span class="block h-5 w-5 bg-background rounded-full shadow-lg transform transition-transform" x-bind:class="checked ? 'translate-x-5' : 'translate-x-0'"></span>
+		<input
+			type="checkbox"
+			name={ props.Name }
+			class="sr-only"
+			x-model="checked"
+			if props.Checked {
+				checked
+			}
+		/>
+	</button>
+}
+
+// SwitchWithLabel renders a switch with label
+templ SwitchWithLabel(props SwitchProps, labelText string) {
+	<div class="flex items-center space-x-2">
+		@Switch(props)
+		<label
+			class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+			if props.ID != "" {
+				for={ props.ID }
+			}
+		>
+			{ labelText }
+		</label>
+	</div>
+}
