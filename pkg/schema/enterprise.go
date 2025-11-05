@@ -270,6 +270,7 @@ type Meta struct {
 	Repository    string           `json:"repository,omitempty" validate:"url"`                        // Source repository
 	Documentation string           `json:"documentation,omitempty" validate:"url"`                     // Documentation URL
 	Status        string           `json:"status,omitempty" validate:"oneof=draft published archived"` // Schema status
+	Theme         *ThemeConfig     `json:"theme,omitempty"`                                            // Theme configuration
 }
 
 // ChangelogEntry represents a version change
@@ -281,6 +282,12 @@ type ChangelogEntry struct {
 	Breaking    bool      `json:"breaking,omitempty"`  // Breaking change
 	Changes     []string  `json:"changes,omitempty"`   // List of changes
 	Migration   string    `json:"migration,omitempty"` // Migration guide
+}
+
+// ThemeConfig stores theme configuration for a schema
+type ThemeConfig struct {
+	ID        string          `json:"id,omitempty"`        // Theme ID to use
+	Overrides *ThemeOverrides `json:"overrides,omitempty"` // Theme overrides
 }
 
 // Helper methods for enterprise features
