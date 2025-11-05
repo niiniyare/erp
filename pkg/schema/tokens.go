@@ -841,21 +841,72 @@ func (r *DefaultTokenResolver) collectReferencesFromValue(v reflect.Value, refer
 	}
 }
 
+// CompiledTokenMap provides O(1) token lookups for performance
+type CompiledTokenMap struct {
+	tokenMap map[string]string
+	mu       sync.RWMutex
+}
+
+// NewCompiledTokenMap creates a new compiled token map
+func NewCompiledTokenMap() *CompiledTokenMap {
+	return &CompiledTokenMap{
+		tokenMap: make(map[string]string),
+	}
+}
+
+// Get retrieves a token value by path
+func (ctm *CompiledTokenMap) Get(path string) (string, bool) {
+	ctm.mu.RLock()
+	defer ctm.mu.RUnlock()
+	value, exists := ctm.tokenMap[path]
+	return value, exists
+}
+
+// Set stores a token value at path
+func (ctm *CompiledTokenMap) Set(path, value string) {
+	ctm.mu.Lock()
+	defer ctm.mu.Unlock()
+	ctm.tokenMap[path] = value
+}
+
+// Clear removes all compiled tokens
+func (ctm *CompiledTokenMap) Clear() {
+	ctm.mu.Lock()
+	defer ctm.mu.Unlock()
+	ctm.tokenMap = make(map[string]string)
+}
+
+// Size returns the number of compiled tokens
+func (ctm *CompiledTokenMap) Size() int {
+	ctm.mu.RLock()
+	defer ctm.mu.RUnlock()
+	return len(ctm.tokenMap)
+}
+
 // TokenRegistry manages design tokens with thread safety and caching.
 type TokenRegistry struct {
-	tokens   *DesignTokens
-	resolver TokenResolver
-	mu       sync.RWMutex
-	cache    map[string]string // TODO: Implement cache for resolved tokens
+	tokens      *DesignTokens
+	resolver    TokenResolver
+	compiled    *CompiledTokenMap // Precompiled token map for O(1) lookups
+	cache       map[string]string // Resolution cache
+	needsRecompile bool            // Flag to trigger recompilation
+	mu          sync.RWMutex
 }
 
 // NewTokenRegistry creates a new token registry with default values.
 func NewTokenRegistry() *TokenRegistry {
-	return &TokenRegistry{
-		tokens:   GetDefaultTokens(),
-		resolver: NewDefaultTokenResolver(),
-		cache:    make(map[string]string),
+	registry := &TokenRegistry{
+		tokens:         GetDefaultTokens(),
+		resolver:       NewDefaultTokenResolver(),
+		compiled:       NewCompiledTokenMap(),
+		cache:          make(map[string]string),
+		needsRecompile: true,
 	}
+	
+	// Trigger initial compilation
+	registry.compileTokens()
+	
+	return registry
 }
 
 // NewTokenRegistryWithResolver creates a new token registry with a custom resolver.
@@ -863,14 +914,74 @@ func NewTokenRegistryWithResolver(resolver TokenResolver) *TokenRegistry {
 	if resolver == nil {
 		resolver = NewDefaultTokenResolver()
 	}
-	return &TokenRegistry{
-		tokens:   GetDefaultTokens(),
-		resolver: resolver,
-		cache:    make(map[string]string),
+	
+	registry := &TokenRegistry{
+		tokens:         GetDefaultTokens(),
+		resolver:       resolver,
+		compiled:       NewCompiledTokenMap(),
+		cache:          make(map[string]string),
+		needsRecompile: true,
 	}
+	
+	// Trigger initial compilation
+	registry.compileTokens()
+	
+	return registry
 }
 
 // SetTokens updates the entire token set (thread-safe).
+//
+// Example:
+//   registry := schema.NewTokenRegistry()
+//   
+//   // Create custom token structure
+//   tokens := &schema.DesignTokens{
+//       Primitives: &schema.PrimitiveTokens{
+//           Colors: &schema.ColorPrimitives{
+//               Blue: &schema.ColorScale{
+//                   Scale500: "#1e40af", // Custom blue
+//               },
+//               Gray: &schema.ColorScale{
+//                   Scale100: "#f5f5f5",
+//                   Scale900: "#111827",
+//               },
+//           },
+//           Spacing: &schema.SpacingScale{
+//               Base: "1rem",
+//               SM:   "0.5rem",
+//               LG:   "2rem",
+//           },
+//       },
+//       Semantic: &schema.SemanticTokens{
+//           Colors: &schema.SemanticColors{
+//               Background: &schema.BackgroundColors{
+//                   Default: schema.TokenReference("{primitives.colors.gray.100}"),
+//               },
+//               Text: &schema.TextColors{
+//                   Default: schema.TokenReference("{primitives.colors.gray.900}"),
+//               },
+//               Interactive: &schema.InteractiveColors{
+//                   Primary: &schema.InteractiveColorSet{
+//                       Default: schema.TokenReference("{primitives.colors.blue.500}"),
+//                   },
+//               },
+//           },
+//       },
+//   }
+//   
+//   // Set the tokens (validates references and compiles for performance)
+//   err := registry.SetTokens(tokens)
+//   if err != nil {
+//       return fmt.Errorf("failed to set tokens: %w", err)
+//   }
+//   
+//   // Now resolve tokens
+//   ctx := context.Background()
+//   bgColor, err := registry.ResolveToken(ctx, schema.TokenReference("{semantic.colors.background.default}"))
+//   if err != nil {
+//       return err
+//   }
+//   fmt.Printf("Background color: %s\n", bgColor) // Output: "#f5f5f5"
 func (tr *TokenRegistry) SetTokens(tokens *DesignTokens) error {
 	if tokens == nil {
 		return NewValidationError("tokens_nil", "tokens cannot be nil")
@@ -885,8 +996,14 @@ func (tr *TokenRegistry) SetTokens(tokens *DesignTokens) error {
 	defer tr.mu.Unlock()
 	
 	tr.tokens = tokens
-	// Clear cache since tokens have changed
+	tr.needsRecompile = true
+	
+	// Clear caches since tokens have changed
 	tr.cache = make(map[string]string)
+	tr.compiled.Clear()
+	
+	// Trigger recompilation
+	tr.compileTokensUnsafe()
 	
 	return nil
 }
@@ -906,6 +1023,46 @@ func (tr *TokenRegistry) GetTokens() *DesignTokens {
 }
 
 // ResolveToken resolves a single token reference to its actual value.
+//
+// Example:
+//   registry := schema.GetDefaultRegistry()
+//   ctx := context.Background()
+//   
+//   // Resolve a primitive token
+//   blueColor, err := registry.ResolveToken(ctx, schema.TokenReference("{primitives.colors.blue.500}"))
+//   if err != nil {
+//       return err
+//   }
+//   fmt.Printf("Blue 500: %s\n", blueColor) // Output: "#3b82f6"
+//   
+//   // Resolve a semantic token (references primitive)
+//   primaryColor, err := registry.ResolveToken(ctx, schema.TokenReference("{semantic.colors.interactive.primary}"))
+//   if err != nil {
+//       return err
+//   }
+//   fmt.Printf("Primary color: %s\n", primaryColor) // Output: "#3b82f6"
+//   
+//   // Resolve a component token (references semantic)
+//   buttonBg, err := registry.ResolveToken(ctx, schema.TokenReference("{components.button.primary.background}"))
+//   if err != nil {
+//       return err
+//   }
+//   fmt.Printf("Button background: %s\n", buttonBg) // Output: "#3b82f6"
+//   
+//   // Handle non-reference values (pass-through)
+//   literal, err := registry.ResolveToken(ctx, schema.TokenReference("#ff0000"))
+//   if err != nil {
+//       return err
+//   }
+//   fmt.Printf("Literal color: %s\n", literal) // Output: "#ff0000"
+//   
+//   // Error handling for invalid tokens
+//   _, err = registry.ResolveToken(ctx, schema.TokenReference("{invalid.token.path}"))
+//   if err != nil {
+//       if schema.IsValidationError(err) {
+//           fmt.Printf("Token validation error: %s\n", err.Error())
+//       }
+//   }
 func (tr *TokenRegistry) ResolveToken(ctx context.Context, reference TokenReference) (string, error) {
 	if !reference.IsReference() {
 		return reference.String(), nil
@@ -913,20 +1070,35 @@ func (tr *TokenRegistry) ResolveToken(ctx context.Context, reference TokenRefere
 	
 	path := reference.Path()
 	
-	// Check cache first
+	// Check compiled map first (O(1) lookup)
+	if compiled, exists := tr.compiled.Get(path); exists {
+		return compiled, nil
+	}
+	
+	// Check resolution cache
 	tr.mu.RLock()
 	if cached, exists := tr.cache[path]; exists {
 		tr.mu.RUnlock()
 		return cached, nil
 	}
 	tokens := tr.tokens
+	needsRecompile := tr.needsRecompile
 	tr.mu.RUnlock()
+	
+	// Recompile if needed
+	if needsRecompile {
+		tr.compileTokens()
+		// Try compiled map again after recompilation
+		if compiled, exists := tr.compiled.Get(path); exists {
+			return compiled, nil
+		}
+	}
 	
 	if tokens == nil {
 		return "", NewValidationError("tokens_unavailable", "no tokens available")
 	}
 	
-	// Resolve the token
+	// Fallback to resolver (should be rare after compilation)
 	resolved, err := tr.resolver.Resolve(ctx, reference, tokens)
 	if err != nil {
 		return "", err
@@ -936,6 +1108,9 @@ func (tr *TokenRegistry) ResolveToken(ctx context.Context, reference TokenRefere
 	tr.mu.Lock()
 	tr.cache[path] = resolved
 	tr.mu.Unlock()
+	
+	// Add to compiled map for future O(1) access
+	tr.compiled.Set(path, resolved)
 	
 	return resolved, nil
 }
@@ -971,6 +1146,88 @@ func (tr *TokenRegistry) ValidateTokens() error {
 	}
 	
 	return tr.resolver.ValidateReferences(tokens)
+}
+
+// compileTokens precompiles all token paths for O(1) lookups (thread-safe)
+func (tr *TokenRegistry) compileTokens() {
+	tr.mu.Lock()
+	defer tr.mu.Unlock()
+	tr.compileTokensUnsafe()
+}
+
+// compileTokensUnsafe precompiles all token paths (must hold lock)
+func (tr *TokenRegistry) compileTokensUnsafe() {
+	if tr.tokens == nil {
+		return
+	}
+	
+	// Clear existing compiled tokens
+	tr.compiled.Clear()
+	
+	// Compile all token paths using reflection
+	tr.compileTokenStruct(reflect.ValueOf(tr.tokens).Elem(), "")
+	
+	tr.needsRecompile = false
+}
+
+// compileTokenStruct recursively compiles token paths from a struct
+func (tr *TokenRegistry) compileTokenStruct(structValue reflect.Value, basePath string) {
+	structType := structValue.Type()
+	
+	for i := 0; i < structValue.NumField(); i++ {
+		field := structType.Field(i)
+		fieldValue := structValue.Field(i)
+		
+		// Skip unexported fields
+		if !field.IsExported() {
+			continue
+		}
+		
+		// Build field path
+		fieldPath := field.Name
+		if jsonTag := field.Tag.Get("json"); jsonTag != "" {
+			tagParts := strings.Split(jsonTag, ",")
+			if len(tagParts) > 0 && tagParts[0] != "" && tagParts[0] != "-" {
+				fieldPath = tagParts[0]
+			}
+		}
+		
+		fullPath := fieldPath
+		if basePath != "" {
+			fullPath = basePath + "." + fieldPath
+		}
+		
+		// Handle different field types
+		switch fieldValue.Kind() {
+		case reflect.Ptr:
+			if !fieldValue.IsNil() {
+				tr.compileTokenStruct(fieldValue.Elem(), fullPath)
+			}
+			
+		case reflect.Struct:
+			tr.compileTokenStruct(fieldValue, fullPath)
+			
+		case reflect.String:
+			// Store string values directly
+			if fieldValue.String() != "" {
+				tr.compiled.Set(fullPath, fieldValue.String())
+			}
+			
+		case reflect.Interface:
+			if fieldValue.CanInterface() {
+				if str, ok := fieldValue.Interface().(string); ok && str != "" {
+					tr.compiled.Set(fullPath, str)
+				} else if tokenRef, ok := fieldValue.Interface().(TokenReference); ok {
+					tr.compiled.Set(fullPath, tokenRef.String())
+				}
+			}
+		}
+	}
+}
+
+// GetCompiledSize returns the number of precompiled tokens
+func (tr *TokenRegistry) GetCompiledSize() int {
+	return tr.compiled.Size()
 }
 
 // GetDefaultTokens returns the default design token values.
@@ -1571,30 +1828,98 @@ func GetDefaultRegistry() *TokenRegistry {
 
 // GetSpacing returns a spacing token value.
 func GetSpacing(key string) string {
-	// TODO: Implement spacing token retrieval
-	return ""
+	registry := GetDefaultRegistry()
+	tokenRef := TokenReference(fmt.Sprintf("{primitives.spacing.%s}", key))
+	
+	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
+	if err != nil {
+		// Fallback to semantic spacing
+		semanticRef := TokenReference(fmt.Sprintf("{semantic.spacing.%s}", key))
+		if semanticResolved, semanticErr := registry.ResolveToken(context.Background(), semanticRef); semanticErr == nil {
+			return semanticResolved
+		}
+		return "1rem" // Safe fallback
+	}
+	
+	return resolved
 }
 
 // GetColor returns a color token value.
 func GetColor(path string) string {
-	// TODO: Implement color token retrieval
-	return ""
+	registry := GetDefaultRegistry()
+	
+	// Support both full paths and shorthand
+	var tokenRef TokenReference
+	if strings.Contains(path, ".") {
+		tokenRef = TokenReference(fmt.Sprintf("{%s}", path))
+	} else {
+		// Try common color paths
+		tokenRef = TokenReference(fmt.Sprintf("{colors.%s}", path))
+	}
+	
+	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
+	if err != nil {
+		// Try semantic colors as fallback
+		semanticRef := TokenReference(fmt.Sprintf("{semantic.colors.%s}", path))
+		if semanticResolved, semanticErr := registry.ResolveToken(context.Background(), semanticRef); semanticErr == nil {
+			return semanticResolved
+		}
+		return "#000000" // Safe fallback
+	}
+	
+	return resolved
 }
 
 // GetFontSize returns a font size token value.
 func GetFontSize(key string) string {
-	// TODO: Implement font size token retrieval
-	return ""
+	registry := GetDefaultRegistry()
+	tokenRef := TokenReference(fmt.Sprintf("{primitives.typography.fontSizes.%s}", key))
+	
+	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
+	if err != nil {
+		// Fallback to semantic typography
+		semanticRef := TokenReference(fmt.Sprintf("{semantic.typography.%s}", key))
+		if semanticResolved, semanticErr := registry.ResolveToken(context.Background(), semanticRef); semanticErr == nil {
+			return semanticResolved
+		}
+		return "1rem" // Safe fallback
+	}
+	
+	return resolved
 }
 
 // GetShadow returns a shadow token value.
 func GetShadow(key string) string {
-	// TODO: Implement shadow token retrieval
-	return ""
+	registry := GetDefaultRegistry()
+	tokenRef := TokenReference(fmt.Sprintf("{primitives.shadows.%s}", key))
+	
+	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
+	if err != nil {
+		// Fallback to semantic shadows
+		semanticRef := TokenReference(fmt.Sprintf("{semantic.interactive.shadow.%s}", key))
+		if semanticResolved, semanticErr := registry.ResolveToken(context.Background(), semanticRef); semanticErr == nil {
+			return semanticResolved
+		}
+		return "none" // Safe fallback
+	}
+	
+	return resolved
 }
 
 // GetBorderRadius returns a border radius token value.
 func GetBorderRadius(key string) string {
-	// TODO: Implement border radius token retrieval
-	return ""
+	registry := GetDefaultRegistry()
+	tokenRef := TokenReference(fmt.Sprintf("{primitives.borders.radius.%s}", key))
+	
+	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
+	if err != nil {
+		// Fallback to semantic border radius
+		semanticRef := TokenReference(fmt.Sprintf("{semantic.interactive.borderRadius.%s}", key))
+		if semanticResolved, semanticErr := registry.ResolveToken(context.Background(), semanticRef); semanticErr == nil {
+			return semanticResolved
+		}
+		return "4px" // Safe fallback
+	}
+	
+	return resolved
 }
