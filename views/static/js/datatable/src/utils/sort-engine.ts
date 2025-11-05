@@ -163,10 +163,21 @@ export class SortEngine<T extends RowData = RowData> {
   private tryParseNumber(value: CellValue): number | null {
     if (typeof value === 'number') return value;
     if (typeof value === 'string') {
+      // Don't parse date-like strings as numbers
+      if (/^\d{4}-\d{2}-\d{2}/.test(value) || /^\d{1,2}\/\d{1,2}\/\d{4}/.test(value) || /^\d{1,2}-\d{1,2}-\d{4}/.test(value)) {
+        return null;
+      }
+      
       // Remove common number formatting
       const cleaned = value.replace(/[,$]/g, '');
       const num = parseFloat(cleaned);
-      return isNaN(num) ? null : num;
+      
+      // Only return if the entire string was consumed (i.e., it's actually a number)
+      if (isNaN(num) || cleaned !== String(num)) {
+        return null;
+      }
+      
+      return num;
     }
     return null;
   }

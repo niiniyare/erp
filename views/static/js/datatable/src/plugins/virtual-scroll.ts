@@ -114,15 +114,35 @@ export class VirtualScrollPlugin<T extends RowData = RowData> implements Plugin<
     if (!this.table) return;
 
     const tableState = this.table.getState();
-    const rows = tableState.paginatedRows.length > 0
-      ? tableState.paginatedRows
-      : tableState.visibleRows;
+    
+    // Determine which rows to use for virtual scrolling
+    // If pagination is enabled, use current page; otherwise use all filtered rows
+    let rows: Row<T>[];
+    
+    if (tableState.paginationState?.enabled && tableState.paginatedRows.length > 0) {
+      // Use paginated rows when pagination is enabled
+      rows = tableState.paginatedRows;
+    } else {
+      // Use all filtered rows when pagination is disabled
+      rows = tableState.filteredRows.length > 0
+        ? tableState.filteredRows
+        : tableState.rows;
+    }
 
     const totalRows = rows.length;
     const { rowHeight, containerHeight, overscan = 5 } = this.options;
 
-    // Calculate total height
+    // Calculate total height based on available rows
     this.state.totalHeight = totalRows * rowHeight;
+
+    // Handle edge case: zero container height means no visible rows
+    if (containerHeight <= 0) {
+      this.state.visibleStartIndex = 0;
+      this.state.visibleEndIndex = 0;
+      this.state.offsetY = 0;
+      this.state.virtualRows = [];
+      return;
+    }
 
     // Calculate visible range
     const scrollTop = this.state.scrollTop;
@@ -179,9 +199,17 @@ export class VirtualScrollPlugin<T extends RowData = RowData> implements Plugin<
     if (!this.table) return;
 
     const tableState = this.table.getState();
-    const rows = tableState.paginatedRows.length > 0
-      ? tableState.paginatedRows
-      : tableState.visibleRows;
+    
+    // Use same logic as calculateVisibleRows
+    let rows: Row<T>[];
+    
+    if (tableState.paginationState?.enabled && tableState.paginatedRows.length > 0) {
+      rows = tableState.paginatedRows;
+    } else {
+      rows = tableState.filteredRows.length > 0
+        ? tableState.filteredRows
+        : tableState.rows;
+    }
 
     this.scrollToRow(rows.length - 1);
   }
@@ -211,11 +239,11 @@ export function createVirtualScrollPlugin<T extends RowData = RowData>(
  */
 export function measureRowHeight(element: HTMLElement): number {
   const computed = window.getComputedStyle(element);
-  return (
-    element.offsetHeight +
-    parseFloat(computed.marginTop) +
-    parseFloat(computed.marginBottom)
-  );
+  
+  const marginTop = parseFloat(computed.marginTop) || 0;
+  const marginBottom = parseFloat(computed.marginBottom) || 0;
+  
+  return element.offsetHeight + marginTop + marginBottom;
 }
 
 /**
@@ -225,6 +253,11 @@ export function calculateOptimalOverscan(
   rowHeight: number,
   containerHeight: number
 ): number {
+  // Handle edge cases
+  if (rowHeight <= 0 || containerHeight <= 0) {
+    return 3; // Minimum overscan
+  }
+  
   const visibleRows = Math.ceil(containerHeight / rowHeight);
   return Math.max(3, Math.floor(visibleRows * 0.5));
 }
