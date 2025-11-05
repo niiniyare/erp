@@ -7,214 +7,298 @@ This document provides a comprehensive visual representation of how the Theme an
 ```mermaid
 graph TB
     %% ========================================
-    %% CORE THEME & TOKEN SUBSYSTEM
+    %% CORE FOUNDATION LAYER
     %% ========================================
-    subgraph "🎨 Theme & Token Core System"
+    subgraph "🏗️ Core Foundation"
         direction TB
         
-        %% Theme Management Layer
-        subgraph "Theme Management"
-            TM[ThemeManager<br/>🔧 Registration & Retrieval]
-            TC[ThemeCache<br/>⚡ LRU + TTL Cache]
-            TR[ThemeRegistry<br/>💾 Storage & Lookup]
-            TB[ThemeBuilder<br/>🏗️ Fluent Construction]
-        end
+        %% Core Managers
+        TM[ThemeManager<br/>🎨 Singleton Orchestrator]
+        SM[SchemaManager<br/>📋 Schema Lifecycle]
+        RM[RegistryManager<br/>🗂️ Central Registry]
         
-        %% Token Processing Layer  
-        subgraph "Token Processing"
-            TKR[TokenRegistry<br/>🎯 Resolution Engine]
-            TKS[TokenResolver<br/>🔍 Reference Resolution]
-            TKC[CompiledTokenMap<br/>⚡ O(1) Lookups]
-            TKV[TokenValidator<br/>✅ Circular Detection]
-        end
+        %% Core Models
+        THM[Theme<br/>Primary Definition]
+        SCH[Schema<br/>Form Structure]
+        CTX[Context<br/>Request Context]
         
-        %% Theme Data Models
-        subgraph "Theme Models"
-            THM[Theme<br/>📋 Complete Definition]
-            DTK[DesignTokens<br/>🎨 Token Hierarchy]
-            TOV[ThemeOverrides<br/>🎛️ Customizations]
-        end
+        %% Core Interfaces
+        TIFACE[ThemeInterface<br/>Contract]
+        SIFACE[SchemaInterface<br/>Contract]
     end
 
     %% ========================================
-    %% SCHEMA CORE COMPONENTS
+    %% THEME SUBSYSTEM
     %% ========================================
-    subgraph "📋 Schema Core Components"
+    subgraph "🎨 Theme Engine"
         direction TB
         
-        SCH[Schema<br/>🏠 Core Data Model]
-        BLD[Builder<br/>🏗️ Schema Construction]
-        FLD[Field<br/>📝 Form Fields]
-        ACT[Action<br/>⚡ User Actions]
-        LAY[Layout<br/>📐 Visual Structure]
+        %% Theme Processing Pipeline
+        TLOAD[ThemeLoader<br/>📥 Load & Parse]
+        TBUILD[ThemeBuilder<br/>🏗️ Fluent Construction]
+        TCOMP[ThemeCompiler<br/>⚡ Compile & Optimize]
         
-        %% Schema Methods
-        SCH_APPLY[schema.ApplyTheme()<br/>🎨 Theme Application]
-        SCH_BUILD[builder.Build()<br/>🔨 Schema Creation]
+        %% Token System
+        TREG[TokenRegistry<br/>🔤 Token Definitions]
+        TRES[TokenResolver<br/>🔍 Resolution Engine]
+        TCACHE[TokenCache<br/>🚀 Compiled Tokens]
+        
+        %% Theme Storage
+        TSTOR[ThemeStorage<br/>💾 Persistence Layer]
+        TMRG[ThemeMerger<br/>🔄 Override Management]
     end
 
     %% ========================================
-    %% REGISTRY & STORAGE LAYER
+    %% SCHEMA SUBSYSTEM
     %% ========================================
-    subgraph "🗃️ Registry & Storage Layer"
+    subgraph "📋 Schema Engine"
         direction TB
         
-        GREG[GlobalRegistry<br/>🌍 Centralized Access]
-        SREG[SchemaRegistry<br/>📚 Schema Storage]
-        MREG[MixinRegistry<br/>🧩 Reusable Components]
+        %% Schema Construction
+        SBUILD[SchemaBuilder<br/>🏗️ Declarative Builder]
+        SLOAD[SchemaLoader<br/>📥 Load & Validate]
+        SCOMP[SchemaCompiler<br/>⚡ Compile Schema]
         
-        %% Storage backends
-        FSYS[FileSystem<br/>💾 File Storage]
-        REDIS[Redis<br/>⚡ Cache Layer] 
-        S3[S3<br/>☁️ Cloud Storage]
+        %% Field System
+        FREG[FieldRegistry<br/>📝 Field Types]
+        FRES[FieldResolver<br/>🔮 Dynamic Resolution]
+        FVALID[FieldValidator<br/>✅ Validation Rules]
+        
+        %% Layout Engine
+        LENG[LayoutEngine<br/>📐 Responsive Layout]
+        LREG[LayoutRegistry<br/>🧩 Layout Components]
     end
 
     %% ========================================
-    %% VALIDATION & PROCESSING
+    %% RUNTIME EXECUTION
     %% ========================================
-    subgraph "✅ Validation & Processing"
+    subgraph "⚡ Runtime Engine"
         direction TB
         
-        VAL[Validator<br/>🔍 Schema Validation]
-        VTHM[ThemeValidator<br/>🎨 Theme Validation]
-        ENR[Enricher<br/>✨ Data Enhancement]
-        PRS[Parser<br/>📖 Config Processing]
+        %% Execution Core
+        RUNTIME[Runtime<br/>🚀 Execution Context]
+        PIPELINE[RenderPipeline<br/>🔄 Processing Flow]
+        STATEMGR[StateManager<br/>💾 Session State]
         
-        %% Processing steps
-        VAL_FLOW[Validation Flow<br/>schema → theme → tokens]
-        ENR_FLOW[Enrichment Flow<br/>context → theme → resolution]
+        %% Context Management
+        CTXMGR[ContextManager<br/>📡 Request Context]
+        TENANTCTX[TenantContext<br/>🏢 Multi-tenant]
+        USERCTX[UserContext<br/>👤 User Preferences]
+        
+        %% Performance
+        PERFCACHE[PerformanceCache<br/>⚡ Response Cache]
+        MEMCACHE[MemoryCache<br/>💽 In-Memory Store]
     end
 
     %% ========================================
-    %% RUNTIME & CONTEXT SYSTEM
+    %% STORAGE & PERSISTENCE
     %% ========================================
-    subgraph "🏃 Runtime & Context System"
+    subgraph "💾 Storage Layer"
         direction TB
         
-        RT[Runtime<br/>🚀 Execution Engine]
-        CTX[Context<br/>📡 Request Context]
-        STATE[RuntimeState<br/>💾 Session State]
+        %% Primary Storage
+        FS[FileSystem<br/>📁 Local Storage]
+        DB[Database<br/>🗄️ Persistent Store]
+        S3[S3 Storage<br/>☁️ Cloud Storage]
         
-        %% Context types
-        TCTX[ThemeContext<br/>🎨 Active Theme]
-        TENCTX[TenantContext<br/>🏢 Multi-tenant]
-        USRCTX[UserContext<br/>👤 User Preferences]
+        %% Caching Layers
+        REDIS[Redis<br/>🔴 Distributed Cache]
+        LRU[LRU Cache<br/>⚡ Memory Cache]
+        CDN[CDN<br/>🌐 Edge Cache]
+        
+        %% Storage Abstraction
+        STORAGE[StorageAdapter<br/>🔌 Unified Interface]
+        MIGRATE[DataMigrator<br/>🔄 Schema Migration]
     end
 
     %% ========================================
-    %% ENTERPRISE & MULTI-TENANT
+    %% VALIDATION & SECURITY
     %% ========================================
-    subgraph "🏢 Enterprise & Multi-Tenant"
+    subgraph "🛡️ Validation & Security"
         direction TB
         
-        ENT[Enterprise<br/>💼 Advanced Features]
-        TTM[TenantThemeManager<br/>🏢 Tenant Themes]
-        TTC[TenantConfig<br/>⚙️ Tenant Settings]
+        %% Validation Pipeline
+        VENGINE[ValidationEngine<br/>🔍 Rule Validation]
+        VCHAIN[ValidationChain<br/>⛓️ Sequential Checks]
+        VCONTEXT[ValidationContext<br/>📋 Validation State]
         
-        %% Multi-tenant flow
-        TENANT_FLOW[Tenant Resolution<br/>context → tenant → theme]
-        OVERRIDE_FLOW[Override Application<br/>base → tenant → custom]
+        %% Security
+        AUTH[Auth Manager<br/>🔐 Authentication]
+        AUTHZ[AuthZ Manager<br/>⚖️ Authorization]
+        AUDIT[Audit Logger<br/>📝 Audit Trail]
+        
+        %% Schema Validation
+        SCHEMA_V[SchemaValidator<br/>📋 Structure Check]
+        THEME_V[ThemeValidator<br/>🎨 Theme Compliance]
+        TOKEN_V[TokenValidator<br/>🔤 Token Integrity]
+    end
+
+    %% ========================================
+    %% ENTERPRISE FEATURES
+    %% ========================================
+    subgraph "🏢 Enterprise Scale"
+        direction TB
+        
+        %% Multi-tenancy
+        TENANTMGR[TenantManager<br/>🏢 Tenant Isolation]
+        TENANTTHEME[TenantThemes<br/>🎨 Per-tenant Themes]
+        TENANTCONFIG[TenantConfig<br/>⚙️ Tenant Settings]
+        
+        %% Advanced Features
+        WORKSPACE[WorkspaceManager<br/>💼 Workspaces]
+        COLLAB[Collaboration<br/>👥 Team Features]
+        VERSIONING[VersionControl<br/>🔀 Theme Versions]
+        
+        %% Monitoring
+        METRICS[MetricsCollector<br/>📊 Performance]
+        HEALTH[HealthMonitor<br/>❤️ System Health]
+        ALERTS[AlertManager<br/>🚨 Notifications]
+    end
+
+    %% ========================================
+    %% INTEGRATION & EXTENSIBILITY
+    %% ========================================
+    subgraph "🔌 Integration Layer"
+        direction TB
+        
+        %% API Layer
+        REST[REST API<br/>🌐 HTTP Interface]
+        GRAPHQL[GraphQL API<br/>🕸️ Query Interface]
+        WEBSOCKET[WebSocket<br/>🔌 Real-time Updates]
+        
+        %% Extensibility
+        PLUGINS[PluginSystem<br/>🧩 Extensions]
+        HOOKS[HookSystem<br/>🎣 Lifecycle Hooks]
+        EVENTS[EventSystem<br/>⚡ Event Bus]
+        
+        %% External Integration
+        WEBHOOKS[WebhookManager<br/>🔗 External Calls]
+        SSO[SSO Integration<br/>🔑 Single Sign-On]
+        APIKEYS[API Key Manager<br/>🗝️ External Access]
     end
 
     %% ========================================
     %% DATA FLOW CONNECTIONS
     %% ========================================
     
-    %% Schema Building Flow
-    BLD -->|"creates"| SCH
-    BLD -->|"applies theme"| TM
-    BLD -->|"uses builder"| TB
-    SCH_BUILD -->|"triggers"| VAL
+    %% Foundation Connections
+    TM -->|manages| THM
+    SM -->|manages| SCH
+    RM -->|coordinates| TM
+    RM -->|coordinates| SM
     
-    %% Theme Application Flow
-    SCH -->|"calls ApplyTheme()"| SCH_APPLY
-    SCH_APPLY -->|"fetches theme"| TM
-    TM -->|"checks cache"| TC
-    TC -->|"miss: loads from"| TR
-    TM -->|"returns"| THM
+    %% Theme System Flow
+    TLOAD -->|loads| THM
+    TBUILD -->|builds| THM
+    TCOMP -->|compiles| TCACHE
+    TREG -->|registers| TRES
+    TRES -->|resolves| TCACHE
+    TSTOR -->|persists| THM
+    TMRG -->|merges| THM
     
-    %% Token Resolution Flow
-    FLD -->|"references tokens"| TKR
-    ACT -->|"uses tokens"| TKR
-    LAY -->|"applies tokens"| TKR
-    TKR -->|"checks compiled"| TKC
-    TKC -->|"miss: resolves via"| TKS
-    TKS -->|"validates with"| TKV
+    %% Schema System Flow
+    SBUILD -->|constructs| SCH
+    SLOAD -->|loads| SCH
+    SCOMP -->|compiles| SCH
+    FREG -->|provides| FRES
+    FRES -->|resolves| FVALID
+    LENG -->|layouts| LREG
     
-    %% Registry Integration
-    TM -->|"registers themes"| TR
-    TR -->|"stores in"| GREG
-    GREG -->|"persists to"| FSYS
-    GREG -->|"caches in"| REDIS
-    GREG -->|"backups to"| S3
+    %% Runtime Execution
+    RUNTIME -->|executes| PIPELINE
+    PIPELINE -->|processes| CTX
+    STATEMGR -->|manages| CTXMGR
+    CTXMGR -->|creates| TENANTCTX
+    CTXMGR -->|creates| USERCTX
+    PERFCACHE -->|caches| MEMCACHE
     
-    %% Validation Flow
-    VAL -->|"validates schema"| SCH
-    VAL -->|"validates theme"| VTHM
-    VTHM -->|"checks theme"| THM
-    VTHM -->|"validates tokens"| TKV
-    TKV -->|"checks references"| DTK
+    %% Storage Integration
+    STORAGE -->|abstracts| FS
+    STORAGE -->|abstracts| DB
+    STORAGE -->|abstracts| S3
+    REDIS -->|caches| LRU
+    CDN -->|edges| REDIS
+    MIGRATE -->|migrates| DB
     
-    %% Enrichment Flow
-    ENR -->|"enriches schema"| SCH
-    ENR -->|"resolves theme"| TM
-    ENR -->|"resolves tokens"| TKR
-    ENR_FLOW -->|"applies to"| FLD
+    %% Validation & Security
+    VENGINE -->|orchestrates| VCHAIN
+    VCHAIN -->|validates| VCONTEXT
+    AUTH -->|authenticates| AUTHZ
+    AUTHZ -->|authorizes| AUDIT
+    SCHEMA_V -->|validates| SCH
+    THEME_V -->|validates| THM
+    TOKEN_V -->|validates| TREG
     
-    %% Runtime Context Flow
-    RT -->|"creates"| CTX
-    CTX -->|"contains"| TCTX
-    CTX -->|"contains"| TENCTX
-    CTX -->|"maintains"| STATE
-    STATE -->|"tracks active"| THM
+    %% Enterprise Features
+    TENANTMGR -->|isolates| TENANTTHEME
+    TENANTTHEME -->|configures| TENANTCONFIG
+    WORKSPACE -->|manages| COLLAB
+    COLLAB -->|enables| VERSIONING
+    METRICS -->|monitors| HEALTH
+    HEALTH -->|triggers| ALERTS
     
-    %% Multi-Tenant Flow
-    TENCTX -->|"identifies tenant"| TTM
-    TTM -->|"loads config"| TTC
-    TTM -->|"applies overrides"| TOV
-    TENANT_FLOW -->|"resolves to"| THM
-    OVERRIDE_FLOW -->|"customizes"| DTK
-    
-    %% Enterprise Integration
-    ENT -->|"enables"| TTM
-    ENT -->|"provides"| TTC
-    ENT -->|"manages"| TOV
-    
-    %% Parser Integration
-    PRS -->|"parses theme config"| THM
-    PRS -->|"extracts tokens"| DTK
-    PRS -->|"builds overrides"| TOV
+    %% Integration Layer
+    REST -->|exposes| GRAPHQL
+    GRAPHQL -->|streams| WEBSOCKET
+    PLUGINS -->|extends| HOOKS
+    HOOKS -->|triggers| EVENTS
+    WEBHOOKS -->|notifies| EVENTS
+    SSO -->|integrates| AUTH
+    APIKEYS -->|manages| AUTHZ
+
+    %% Cross-System Integration
+    TM -->|uses| STORAGE
+    SM -->|uses| STORAGE
+    RUNTIME -->|validates with| VENGINE
+    PIPELINE -->|caches with| PERFCACHE
+    TENANTMGR -->|authenticates with| AUTH
+    PLUGINS -->|monitors with| METRICS
 
     %% ========================================
-    %% STYLING & VISUAL GROUPING
+    %% STYLING & VISUAL DESIGN
     %% ========================================
     
-    %% Core Theme System - Blue
-    style TM fill:#3b82f6,stroke:#1e40af,stroke-width:3px,color:#fff
-    style TKR fill:#3b82f6,stroke:#1e40af,stroke-width:3px,color:#fff
-    style THM fill:#60a5fa,stroke:#2563eb,stroke-width:2px,color:#fff
-    style DTK fill:#60a5fa,stroke:#2563eb,stroke-width:2px,color:#fff
+    %% Foundation - Deep Blue
+    style TM fill:#1e40af,stroke:#1e3a8a,stroke-width:3px,color:#fff
+    style SM fill:#1e40af,stroke:#1e3a8a,stroke-width:3px,color:#fff
+    style RM fill:#1e40af,stroke:#1e3a8a,stroke-width:3px,color:#fff
     
-    %% Schema Core - Green
-    style SCH fill:#10b981,stroke:#059669,stroke-width:3px,color:#fff
-    style BLD fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
-    style SCH_APPLY fill:#34d399,stroke:#10b981,stroke-width:2px,color:#000
+    %% Theme System - Purple
+    style TLOAD fill:#7e22ce,stroke:#6b21a8,stroke-width:2px,color:#fff
+    style TBUILD fill:#7e22ce,stroke:#6b21a8,stroke-width:2px,color:#fff
+    style TCOMP fill:#7e22ce,stroke:#6b21a8,stroke-width:2px,color:#fff
+    style TREG fill:#a855f7,stroke:#9333ea,stroke-width:2px,color:#fff
     
-    %% Registry Layer - Purple
-    style GREG fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
-    style TR fill:#a78bfa,stroke:#8b5cf6,stroke-width:2px,color:#fff
+    %% Schema System - Green
+    style SBUILD fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+    style SLOAD fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+    style SCOMP fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+    style FREG fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
     
-    %% Runtime - Orange
-    style RT fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
-    style CTX fill:#fbbf24,stroke:#f59e0b,stroke-width:2px,color:#000
+    %% Runtime - Amber
+    style RUNTIME fill:#d97706,stroke:#b45309,stroke-width:2px,color:#fff
+    style PIPELINE fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#000
+    style CTXMGR fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#000
     
-    %% Enterprise - Red
-    style ENT fill:#ef4444,stroke:#dc2626,stroke-width:2px,color:#fff
-    style TTM fill:#f87171,stroke:#ef4444,stroke-width:2px,color:#fff
+    %% Storage - Slate
+    style STORAGE fill:#475569,stroke:#334155,stroke-width:2px,color:#fff
+    style REDIS fill:#64748b,stroke:#475569,stroke-width:2px,color:#fff
+    style DB fill:#64748b,stroke:#475569,stroke-width:2px,color:#fff
     
-    %% Performance Components - Yellow
-    style TC fill:#eab308,stroke:#ca8a04,stroke-width:2px,color:#000
-    style TKC fill:#eab308,stroke:#ca8a04,stroke-width:2px,color:#000
+    %% Validation & Security - Red
+    style VENGINE fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff
+    style AUTH fill:#dc2626,stroke:#b91c1c,stroke-width:2px,color:#fff
+    style AUTHZ fill:#ef4444,stroke:#dc2626,stroke-width:2px,color:#fff
+    
+    %% Enterprise - Indigo
+    style TENANTMGR fill:#3730a3,stroke:#312e81,stroke-width:2px,color:#fff
+    style WORKSPACE fill:#4f46e5,stroke:#4338ca,stroke-width:2px,color:#fff
+    style METRICS fill:#4f46e5,stroke:#4338ca,stroke-width:2px,color:#fff
+    
+    %% Integration - Emerald
+    style REST fill:#047857,stroke:#065f46,stroke-width:2px,color:#fff
+    style PLUGINS fill:#059669,stroke:#047857,stroke-width:2px,color:#fff
+    style WEBHOOKS fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
 ```
 
 ## Integration Flow Explanation
