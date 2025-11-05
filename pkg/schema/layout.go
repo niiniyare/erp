@@ -204,7 +204,7 @@ func (l *Layout) GetGap() string {
 	if l.Gap != "" {
 		return l.Gap
 	}
-	return SpacingMD() // Use design token
+	return GetSpacing("md") // Use design token
 }
 
 // GetDirection returns the direction with fallback

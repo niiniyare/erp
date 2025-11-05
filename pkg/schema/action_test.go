@@ -179,10 +179,9 @@ func (suite *ActionTestSuite) TestActionApplyTheme() {
 	
 	// Test applying valid theme
 	theme := &Theme{
-		Name: "test-theme",
-		Button: &ButtonTheme{
-			PrimaryBackground: "#007bff",
-		},
+		ID:     "test-theme-id",
+		Name:   "test-theme",
+		Tokens: GetDefaultTokens(),
 	}
 	action.ApplyTheme(theme)
 	suite.Require().NotNil(action.Theme) // Should be initialized

@@ -3,7 +3,7 @@
 // with support for OTLP exporters and common observability patterns.
 package tracing
 
-//go:generate go run github.com/golang/mock/mockgen -source=$GOFILE -destination=tracing_mock.go -package=$GOPACKAGE
+//go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
 
 import (
 	"context"

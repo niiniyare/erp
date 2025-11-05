@@ -1,654 +1,645 @@
 package schema
 
 import (
-	"fmt"
-	"strings"
+	"context"
 	"sync"
 )
 
-// DesignTokens represents the design token system
-// Based on the comprehensive design system documented in styles.md
+// TokenReference represents a reference to another token using the syntax "{token.path}".
+// References are resolved at runtime, allowing dynamic theme customization.
+// Example: "{colors.primary.base}" references the base primary color.
+type TokenReference string
+
+// IsReference checks if the value is a token reference (starts with { and ends with }).
+func (t TokenReference) IsReference() bool {
+	// TODO: Implement reference validation logic
+	return false
+}
+
+// Path extracts the token path from a reference.
+// For "{colors.primary.base}", it returns "colors.primary.base".
+func (t TokenReference) Path() string {
+	// TODO: Implement path extraction logic
+	return string(t)
+}
+
+// String returns the string representation of the token reference.
+func (t TokenReference) String() string {
+	return string(t)
+}
+
+// Validate checks if the token reference is well-formed.
+func (t TokenReference) Validate() error {
+	// TODO: Implement validation logic for token reference format
+	return nil
+}
+
+// DesignTokens is the root container for all design tokens.
+// It follows a three-tier architecture for maximum flexibility and maintainability.
+//
+// Architecture:
+//   - Primitives: Raw values (hsl(220, 50%, 50%))
+//   - Semantic: Functional meaning ({colors.primary.base})
+//   - Components: Component-specific styles ({semantic.interactive.default})
+//
+// Breaking Changes: The structure may evolve to add new token categories.
+// Always use token references to ensure forward compatibility.
 type DesignTokens struct {
-	Spacing    SpacingTokens    `json:"spacing"`
-	Colors     ColorTokens      `json:"colors"`
-	Typography TypographyTokens `json:"typography"`
-	Sizes      SizeTokens       `json:"sizes"`
-	Borders    BorderTokens     `json:"borders"`
-	Shadows    ShadowTokens     `json:"shadows"`
-	Animations AnimationTokens  `json:"animations"`
-	ZIndex     ZIndexTokens     `json:"zIndex"`
+	// Primitives contains raw design values - the foundation of the system
+	Primitives *PrimitiveTokens `json:"primitives"`
+
+	// Semantic contains functional token assignments
+	Semantic *SemanticTokens `json:"semantic"`
+
+	// Components contains component-specific token assignments
+	Components *ComponentTokens `json:"components"`
 }
 
-// SpacingTokens define all spacing values following design system
-type SpacingTokens struct {
-	None string `json:"0"`  // "0"
-	XS   string `json:"1"`  // "0.25rem"
-	SM   string `json:"2"`  // "0.5rem"
-	MD   string `json:"4"`  // "1rem" - Base spacing unit
-	LG   string `json:"8"`  // "2rem"
-	XL   string `json:"12"` // "3rem"
-	XXL  string `json:"16"` // "4rem"
+// PrimitiveTokens contains the raw design values that form the foundation
+// of the design system. These values should rarely change and represent
+// the atomic design decisions.
+type PrimitiveTokens struct {
+	Colors     *ColorPrimitives      `json:"colors"`
+	Spacing    *SpacingScale         `json:"spacing"`
+	Typography *TypographyPrimitives `json:"typography"`
+	Borders    *BorderPrimitives     `json:"borders"`
+	Shadows    *ShadowScale          `json:"shadows"`
+	Animations *AnimationPrimitives  `json:"animations"`
+	Sizes      *SizeScale            `json:"sizes"`
+	ZIndex     *ZIndexScale          `json:"zIndex"`
 }
 
-// ColorTokens define semantic color mappings
-type ColorTokens struct {
-	Background BackgroundColors `json:"background"`
-	Text       TextColors       `json:"text"`
-	Border     BorderColors     `json:"border"`
-	Feedback   FeedbackColors   `json:"feedback"`
-	Primary    PrimaryColors    `json:"primary"`
-	Secondary  SecondaryColors  `json:"secondary"`
-	Neutral    NeutralColors    `json:"neutral"`
+// ColorPrimitives defines the raw color palette.
+// Uses HSL format for better manipulation and theming.
+type ColorPrimitives struct {
+	// Neutral colors - foundation for text, borders, and backgrounds
+	Gray *GrayScale `json:"gray"`
+
+	// Brand colors - full scales for primary, secondary, accent
+	Blue   *ColorScale `json:"blue"`   // Primary brand color
+	Purple *ColorScale `json:"purple"` // Secondary brand color
+	Cyan   *ColorScale `json:"cyan"`   // Accent color
+
+	// Semantic colors - full scales for feedback states
+	Green  *ColorScale `json:"green"`  // Success states
+	Red    *ColorScale `json:"red"`    // Error states
+	Yellow *ColorScale `json:"yellow"` // Warning states
+	Sky    *ColorScale `json:"sky"`    // Info states
+
+	// Pure colors
+	White string `json:"white"`
+	Black string `json:"black"`
 }
 
-type BackgroundColors struct {
-	Default  string `json:"default"`
-	Subtle   string `json:"subtle"`
-	Emphasis string `json:"emphasis"`
-	Overlay  string `json:"overlay"`
+// ColorScale represents a complete color scale from 50 (lightest) to 900 (darkest).
+// Follows industry standards for predictable color relationships.
+type ColorScale struct {
+	Scale50  string `json:"50"`
+	Scale100 string `json:"100"`
+	Scale200 string `json:"200"`
+	Scale300 string `json:"300"`
+	Scale400 string `json:"400"`
+	Scale500 string `json:"500"`  // Base color
+	Scale600 string `json:"600"`
+	Scale700 string `json:"700"`
+	Scale800 string `json:"800"`
+	Scale900 string `json:"900"`
 }
 
-type TextColors struct {
-	Default   string `json:"default"`
-	Subtle    string `json:"subtle"`
-	Disabled  string `json:"disabled"`
-	Inverted  string `json:"inverted"`
-	Link      string `json:"link"`
-	LinkHover string `json:"linkHover"`
-}
-
-type BorderColors struct {
-	Default string `json:"default"`
-	Focus   string `json:"focus"`
-	Strong  string `json:"strong"`
-	Subtle  string `json:"subtle"`
-}
-
-type FeedbackColors struct {
-	Success       string `json:"success"`
-	SuccessSubtle string `json:"successSubtle"`
-	Error         string `json:"error"`
-	ErrorSubtle   string `json:"errorSubtle"`
-	Warning       string `json:"warning"`
-	WarningSubtle string `json:"warningSubtle"`
-	Info          string `json:"info"`
-	InfoSubtle    string `json:"infoSubtle"`
-}
-
-type PrimaryColors struct {
-	Main   string `json:"main"`
-	Light  string `json:"light"`
-	Dark   string `json:"dark"`
-	Subtle string `json:"subtle"`
-}
-
-type SecondaryColors struct {
-	Main   string `json:"main"`
-	Light  string `json:"light"`
-	Dark   string `json:"dark"`
-	Subtle string `json:"subtle"`
-}
-
-type NeutralColors struct {
-	White string    `json:"white"`
-	Black string    `json:"black"`
-	Gray  GrayScale `json:"gray"`
-}
-
+// GrayScale represents the neutral color scale used throughout the system.
 type GrayScale struct {
-	Gray50  string `json:"50"`
-	Gray100 string `json:"100"`
-	Gray200 string `json:"200"`
-	Gray300 string `json:"300"`
-	Gray400 string `json:"400"`
-	Gray500 string `json:"500"`
-	Gray600 string `json:"600"`
-	Gray700 string `json:"700"`
-	Gray800 string `json:"800"`
-	Gray900 string `json:"900"`
+	Scale50  string `json:"50"`
+	Scale100 string `json:"100"`
+	Scale200 string `json:"200"`
+	Scale300 string `json:"300"`
+	Scale400 string `json:"400"`
+	Scale500 string `json:"500"`
+	Scale600 string `json:"600"`
+	Scale700 string `json:"700"`
+	Scale800 string `json:"800"`
+	Scale900 string `json:"900"`
 }
 
-// TypographyTokens define text properties
-type TypographyTokens struct {
-	FontSizes     FontSizeTokens      `json:"font_sizes"`
-	FontWeights   FontWeightTokens    `json:"font_weights"`
-	LineHeights   LineHeightTokens    `json:"line_heights"`
-	FontFamily    FontFamilyTokens    `json:"font_family"`
-	LetterSpacing LetterSpacingTokens `json:"letter_spacing"`
+// SpacingScale defines the spacing scale used for margins, padding, and gaps.
+type SpacingScale struct {
+	None string `json:"0"`   // 0
+	XS   string `json:"xs"`  // 0.25rem
+	SM   string `json:"sm"`  // 0.5rem
+	MD   string `json:"md"`  // 1rem - Base spacing unit
+	LG   string `json:"lg"`  // 1.5rem
+	XL   string `json:"xl"`  // 2rem
+	XXL  string `json:"2xl"` // 3rem
+	XXXL string `json:"3xl"` // 4rem
+	Huge string `json:"4xl"` // 6rem
 }
 
-type FontSizeTokens struct {
-	XS    string `json:"xs"`   // "0.75rem"
-	SM    string `json:"sm"`   // "0.875rem"
-	Base  string `json:"base"` // "1rem"
-	LG    string `json:"lg"`   // "1.125rem"
-	XL    string `json:"xl"`   // "1.25rem"
-	XXL   string `json:"2xl"`  // "1.5rem"
-	XXXL  string `json:"3xl"`  // "1.875rem"
-	XXXXL string `json:"4xl"`  // "2.25rem"
+// TypographyPrimitives defines the raw typography values.
+type TypographyPrimitives struct {
+	FontSizes     *FontSizeScale      `json:"fontSizes"`
+	FontWeights   *FontWeightScale    `json:"fontWeights"`
+	LineHeights   *LineHeightScale    `json:"lineHeights"`
+	FontFamilies  *FontFamilyScale    `json:"fontFamilies"`
+	LetterSpacing *LetterSpacingScale `json:"letterSpacing"`
 }
 
-type FontWeightTokens struct {
-	Light     string `json:"light"`     // "300"
-	Normal    string `json:"normal"`    // "400"
-	Medium    string `json:"medium"`    // "500"
-	Semibold  string `json:"semibold"`  // "600"
-	Bold      string `json:"bold"`      // "700"
-	Extrabold string `json:"extrabold"` // "800"
+// FontSizeScale defines the typography size scale.
+type FontSizeScale struct {
+	XS   string `json:"xs"`   // 0.75rem
+	SM   string `json:"sm"`   // 0.875rem
+	Base string `json:"base"` // 1rem
+	LG   string `json:"lg"`   // 1.125rem
+	XL   string `json:"xl"`   // 1.25rem
+	XXL  string `json:"2xl"`  // 1.5rem
+	XXXL string `json:"3xl"`  // 1.875rem
+	Huge string `json:"4xl"`  // 2.25rem
 }
 
-type LineHeightTokens struct {
-	Tight   string `json:"tight"`   // "1.25"
-	Normal  string `json:"normal"`  // "1.5"
-	Relaxed string `json:"relaxed"` // "1.75"
-	Loose   string `json:"loose"`   // "2"
+// FontWeightScale defines font weight values.
+type FontWeightScale struct {
+	Thin      string `json:"thin"`      // 100
+	Light     string `json:"light"`     // 300
+	Normal    string `json:"normal"`    // 400
+	Medium    string `json:"medium"`    // 500
+	Semibold  string `json:"semibold"`  // 600
+	Bold      string `json:"bold"`      // 700
+	Extrabold string `json:"extrabold"` // 800
+	Black     string `json:"black"`     // 900
 }
 
-type FontFamilyTokens struct {
+// LineHeightScale defines line height values.
+type LineHeightScale struct {
+	Tight   string `json:"tight"`   // 1.25
+	Normal  string `json:"normal"`  // 1.5
+	Relaxed string `json:"relaxed"` // 1.75
+	Loose   string `json:"loose"`   // 2
+}
+
+// FontFamilyScale defines font family stacks.
+type FontFamilyScale struct {
 	Sans  string `json:"sans"`  // Sans-serif font stack
 	Serif string `json:"serif"` // Serif font stack
 	Mono  string `json:"mono"`  // Monospace font stack
 }
 
-type LetterSpacingTokens struct {
-	Tight  string `json:"tight"`  // "-0.05em"
-	Normal string `json:"normal"` // "0"
-	Wide   string `json:"wide"`   // "0.05em"
+// LetterSpacingScale defines letter spacing values.
+type LetterSpacingScale struct {
+	Tight  string `json:"tight"`  // -0.05em
+	Normal string `json:"normal"` // 0
+	Wide   string `json:"wide"`   // 0.05em
 }
 
-// SizeTokens define dimensional values
-type SizeTokens struct {
-	XS  string `json:"xs"`  // "1rem"
-	SM  string `json:"sm"`  // "1.5rem"
-	MD  string `json:"md"`  // "2rem"
-	LG  string `json:"lg"`  // "2.5rem"
-	XL  string `json:"xl"`  // "3rem"
-	XXL string `json:"2xl"` // "4rem"
+// BorderPrimitives defines border-related primitive values.
+type BorderPrimitives struct {
+	Width  *BorderWidthScale  `json:"width"`
+	Radius *BorderRadiusScale `json:"radius"`
+	Style  *BorderStyleScale  `json:"style"`
 }
 
-// BorderTokens define border properties
-type BorderTokens struct {
-	Width  BorderWidthTokens  `json:"width"`
-	Radius BorderRadiusTokens `json:"radius"`
-	Style  BorderStyleTokens  `json:"style"`
+// BorderWidthScale defines border width values.
+type BorderWidthScale struct {
+	None   string `json:"none"`   // 0
+	Thin   string `json:"thin"`   // 1px
+	Medium string `json:"medium"` // 2px
+	Thick  string `json:"thick"`  // 4px
 }
 
-type BorderWidthTokens struct {
-	None   string `json:"none"`   // "0"
-	Thin   string `json:"thin"`   // "1px"
-	Medium string `json:"medium"` // "2px"
-	Thick  string `json:"thick"`  // "4px"
+// BorderRadiusScale defines border radius values.
+type BorderRadiusScale struct {
+	None string `json:"none"` // 0
+	SM   string `json:"sm"`   // 0.125rem
+	MD   string `json:"md"`   // 0.25rem
+	LG   string `json:"lg"`   // 0.5rem
+	XL   string `json:"xl"`   // 1rem
+	Full string `json:"full"` // 9999px
 }
 
-type BorderRadiusTokens struct {
-	None string `json:"none"` // "0"
-	SM   string `json:"sm"`   // "0.125rem"
-	MD   string `json:"md"`   // "0.25rem"
-	LG   string `json:"lg"`   // "0.5rem"
-	XL   string `json:"xl"`   // "1rem"
-	Full string `json:"full"` // "9999px"
+// BorderStyleScale defines border style values.
+type BorderStyleScale struct {
+	Solid  string `json:"solid"`  // solid
+	Dashed string `json:"dashed"` // dashed
+	Dotted string `json:"dotted"` // dotted
+	None   string `json:"none"`   // none
 }
 
-type BorderStyleTokens struct {
-	Solid  string `json:"solid"`  // "solid"
-	Dashed string `json:"dashed"` // "dashed"
-	Dotted string `json:"dotted"` // "dotted"
-	None   string `json:"none"`   // "none"
+// ShadowScale defines elevation shadow values.
+type ShadowScale struct {
+	None  string `json:"none"`  // none
+	SM    string `json:"sm"`    // 0 1px 2px rgba(0, 0, 0, 0.05)
+	MD    string `json:"md"`    // 0 4px 6px rgba(0, 0, 0, 0.1)
+	LG    string `json:"lg"`    // 0 10px 15px rgba(0, 0, 0, 0.1)
+	XL    string `json:"xl"`    // 0 20px 25px rgba(0, 0, 0, 0.1)
+	XXL   string `json:"2xl"`   // 0 25px 50px rgba(0, 0, 0, 0.15)
+	Inner string `json:"inner"` // inset 0 2px 4px rgba(0, 0, 0, 0.06)
 }
 
-// ShadowTokens define elevation effects
-type ShadowTokens struct {
-	None  string `json:"none"`  // "none"
-	SM    string `json:"sm"`    // "0 1px 2px rgba(0, 0, 0, 0.05)"
-	MD    string `json:"md"`    // "0 4px 6px rgba(0, 0, 0, 0.1)"
-	LG    string `json:"lg"`    // "0 10px 15px rgba(0, 0, 0, 0.1)"
-	XL    string `json:"xl"`    // "0 20px 25px rgba(0, 0, 0, 0.1)"
-	XXL   string `json:"2xl"`   // "0 25px 50px rgba(0, 0, 0, 0.15)"
-	Inner string `json:"inner"` // "inset 0 2px 4px rgba(0, 0, 0, 0.06)"
+// AnimationPrimitives defines animation-related primitive values.
+type AnimationPrimitives struct {
+	Duration *AnimationDurationScale `json:"duration"`
+	Easing   *AnimationEasingScale   `json:"easing"`
 }
 
-// AnimationTokens define animation properties
-type AnimationTokens struct {
-	Duration AnimationDurationTokens `json:"duration"`
-	Easing   AnimationEasingTokens   `json:"easing"`
+// AnimationDurationScale defines animation duration values.
+type AnimationDurationScale struct {
+	Fast   string `json:"fast"`   // 150ms
+	Normal string `json:"normal"` // 300ms
+	Slow   string `json:"slow"`   // 500ms
 }
 
-type AnimationDurationTokens struct {
-	Fast   string `json:"fast"`   // "150ms"
-	Normal string `json:"normal"` // "300ms"
-	Slow   string `json:"slow"`   // "500ms"
+// AnimationEasingScale defines animation easing values.
+type AnimationEasingScale struct {
+	Linear    string `json:"linear"`    // linear
+	EaseIn    string `json:"easeIn"`    // cubic-bezier(0.4, 0, 1, 1)
+	EaseOut   string `json:"easeOut"`   // cubic-bezier(0, 0, 0.2, 1)
+	EaseInOut string `json:"easeInOut"` // cubic-bezier(0.4, 0, 0.2, 1)
 }
 
-type AnimationEasingTokens struct {
-	Linear    string `json:"linear"`    // "linear"
-	EaseIn    string `json:"easeIn"`    // "cubic-bezier(0.4, 0, 1, 1)"
-	EaseOut   string `json:"easeOut"`   // "cubic-bezier(0, 0, 0.2, 1)"
-	EaseInOut string `json:"easeInOut"` // "cubic-bezier(0.4, 0, 0.2, 1)"
+// SizeScale defines dimensional values for components.
+type SizeScale struct {
+	XS  string `json:"xs"`  // 1rem
+	SM  string `json:"sm"`  // 1.5rem
+	MD  string `json:"md"`  // 2rem
+	LG  string `json:"lg"`  // 2.5rem
+	XL  string `json:"xl"`  // 3rem
+	XXL string `json:"2xl"` // 4rem
 }
 
-// ZIndexTokens define layering
-type ZIndexTokens struct {
-	Dropdown string `json:"dropdown"` // "1000"
-	Sticky   string `json:"sticky"`   // "1100"
-	Fixed    string `json:"fixed"`    // "1200"
-	Modal    string `json:"modal"`    // "1300"
-	Popover  string `json:"popover"`  // "1400"
-	Tooltip  string `json:"tooltip"`  // "1500"
+// ZIndexScale defines layering values.
+type ZIndexScale struct {
+	Dropdown string `json:"dropdown"` // 1000
+	Sticky   string `json:"sticky"`   // 1100
+	Fixed    string `json:"fixed"`    // 1200
+	Modal    string `json:"modal"`    // 1300
+	Popover  string `json:"popover"`  // 1400
+	Tooltip  string `json:"tooltip"`  // 1500
 }
 
-// TokenRegistry manages design tokens with thread safety
+// SemanticTokens contains functional token assignments that map to primitive values.
+// These tokens provide semantic meaning to design decisions.
+type SemanticTokens struct {
+	Colors     *SemanticColors     `json:"colors"`
+	Typography *SemanticTypography `json:"typography"`
+	Spacing    *SemanticSpacing    `json:"spacing"`
+	Interactive *SemanticInteractive `json:"interactive"`
+}
+
+// SemanticColors defines semantic color assignments.
+type SemanticColors struct {
+	// Background colors
+	Background *BackgroundColors `json:"background"`
+
+	// Text colors
+	Text *TextColors `json:"text"`
+
+	// Border colors
+	Border *BorderColors `json:"border"`
+
+	// Interactive colors
+	Interactive *InteractiveColors `json:"interactive"`
+
+	// Feedback colors
+	Feedback *FeedbackColors `json:"feedback"`
+}
+
+// BackgroundColors defines semantic background color assignments.
+type BackgroundColors struct {
+	Default  TokenReference `json:"default"`  // Primary background
+	Subtle   TokenReference `json:"subtle"`   // Subtle background
+	Emphasis TokenReference `json:"emphasis"` // Emphasized background
+	Overlay  TokenReference `json:"overlay"`  // Overlay background
+}
+
+// TextColors defines semantic text color assignments.
+type TextColors struct {
+	Default   TokenReference `json:"default"`   // Primary text
+	Subtle    TokenReference `json:"subtle"`    // Secondary text
+	Disabled  TokenReference `json:"disabled"`  // Disabled text
+	Inverted  TokenReference `json:"inverted"`  // Inverted text
+	Link      TokenReference `json:"link"`      // Link text
+	LinkHover TokenReference `json:"linkHover"` // Link hover text
+}
+
+// BorderColors defines semantic border color assignments.
+type BorderColors struct {
+	Default TokenReference `json:"default"` // Default border
+	Focus   TokenReference `json:"focus"`   // Focus border
+	Strong  TokenReference `json:"strong"`  // Strong border
+	Subtle  TokenReference `json:"subtle"`  // Subtle border
+}
+
+// InteractiveColors defines semantic interactive color assignments.
+type InteractiveColors struct {
+	Primary   *InteractiveColorSet `json:"primary"`   // Primary interactive
+	Secondary *InteractiveColorSet `json:"secondary"` // Secondary interactive
+	Accent    *InteractiveColorSet `json:"accent"`    // Accent interactive
+}
+
+// InteractiveColorSet defines a complete set of interactive colors.
+type InteractiveColorSet struct {
+	Default TokenReference `json:"default"` // Default state
+	Hover   TokenReference `json:"hover"`   // Hover state
+	Active  TokenReference `json:"active"`  // Active state
+	Focus   TokenReference `json:"focus"`   // Focus state
+}
+
+// FeedbackColors defines semantic feedback color assignments.
+type FeedbackColors struct {
+	Success *FeedbackColorSet `json:"success"` // Success feedback
+	Error   *FeedbackColorSet `json:"error"`   // Error feedback
+	Warning *FeedbackColorSet `json:"warning"` // Warning feedback
+	Info    *FeedbackColorSet `json:"info"`    // Info feedback
+}
+
+// FeedbackColorSet defines a complete set of feedback colors.
+type FeedbackColorSet struct {
+	Default TokenReference `json:"default"` // Default feedback color
+	Subtle  TokenReference `json:"subtle"`  // Subtle feedback color
+	Strong  TokenReference `json:"strong"`  // Strong feedback color
+}
+
+// SemanticTypography defines semantic typography assignments.
+type SemanticTypography struct {
+	Headings  *HeadingTokens  `json:"headings"`
+	Body      *BodyTokens     `json:"body"`
+	Labels    *LabelTokens    `json:"labels"`
+	Captions  *CaptionTokens  `json:"captions"`
+	Code      *CodeTokens     `json:"code"`
+}
+
+// HeadingTokens defines semantic heading typography.
+type HeadingTokens struct {
+	H1 *TypographyToken `json:"h1"`
+	H2 *TypographyToken `json:"h2"`
+	H3 *TypographyToken `json:"h3"`
+	H4 *TypographyToken `json:"h4"`
+	H5 *TypographyToken `json:"h5"`
+	H6 *TypographyToken `json:"h6"`
+}
+
+// BodyTokens defines semantic body typography.
+type BodyTokens struct {
+	Large   *TypographyToken `json:"large"`
+	Default *TypographyToken `json:"default"`
+	Small   *TypographyToken `json:"small"`
+}
+
+// LabelTokens defines semantic label typography.
+type LabelTokens struct {
+	Large   *TypographyToken `json:"large"`
+	Default *TypographyToken `json:"default"`
+	Small   *TypographyToken `json:"small"`
+}
+
+// CaptionTokens defines semantic caption typography.
+type CaptionTokens struct {
+	Default *TypographyToken `json:"default"`
+	Small   *TypographyToken `json:"small"`
+}
+
+// CodeTokens defines semantic code typography.
+type CodeTokens struct {
+	Inline *TypographyToken `json:"inline"`
+	Block  *TypographyToken `json:"block"`
+}
+
+// TypographyToken represents a complete typography definition.
+type TypographyToken struct {
+	FontFamily    TokenReference `json:"fontFamily"`
+	FontSize      TokenReference `json:"fontSize"`
+	FontWeight    TokenReference `json:"fontWeight"`
+	LineHeight    TokenReference `json:"lineHeight"`
+	LetterSpacing TokenReference `json:"letterSpacing"`
+}
+
+// SemanticSpacing defines semantic spacing assignments.
+type SemanticSpacing struct {
+	Component *ComponentSpacing `json:"component"` // Component spacing
+	Layout    *LayoutSpacing    `json:"layout"`    // Layout spacing
+}
+
+// ComponentSpacing defines semantic component spacing.
+type ComponentSpacing struct {
+	Tight   TokenReference `json:"tight"`   // Tight component spacing
+	Default TokenReference `json:"default"` // Default component spacing
+	Loose   TokenReference `json:"loose"`   // Loose component spacing
+}
+
+// LayoutSpacing defines semantic layout spacing.
+type LayoutSpacing struct {
+	Section TokenReference `json:"section"` // Section spacing
+	Page    TokenReference `json:"page"`    // Page spacing
+}
+
+// SemanticInteractive defines semantic interactive assignments.
+type SemanticInteractive struct {
+	BorderRadius *InteractiveBorderRadius `json:"borderRadius"` // Interactive border radius
+	Shadow       *InteractiveShadow       `json:"shadow"`       // Interactive shadows
+}
+
+// InteractiveBorderRadius defines semantic interactive border radius.
+type InteractiveBorderRadius struct {
+	Small   TokenReference `json:"small"`   // Small interactive radius
+	Default TokenReference `json:"default"` // Default interactive radius
+	Large   TokenReference `json:"large"`   // Large interactive radius
+}
+
+// InteractiveShadow defines semantic interactive shadows.
+type InteractiveShadow struct {
+	Default TokenReference `json:"default"` // Default interactive shadow
+	Hover   TokenReference `json:"hover"`   // Hover interactive shadow
+	Focus   TokenReference `json:"focus"`   // Focus interactive shadow
+}
+
+// ComponentTokens contains component-specific token assignments.
+// These tokens are used directly by UI components.
+type ComponentTokens struct {
+	Button  *ButtonTokens  `json:"button"`
+	Input   *InputTokens   `json:"input"`
+	Card    *CardTokens    `json:"card"`
+	Modal   *ModalTokens   `json:"modal"`
+	Form    *FormTokens    `json:"form"`
+	Table   *TableTokens   `json:"table"`
+	Navigation *NavigationTokens `json:"navigation"`
+}
+
+// ButtonTokens defines component tokens for buttons.
+type ButtonTokens struct {
+	Primary     *ButtonVariantTokens `json:"primary"`
+	Secondary   *ButtonVariantTokens `json:"secondary"`
+	Outline     *ButtonVariantTokens `json:"outline"`
+	Ghost       *ButtonVariantTokens `json:"ghost"`
+	Destructive *ButtonVariantTokens `json:"destructive"`
+}
+
+// ButtonVariantTokens defines tokens for a button variant.
+type ButtonVariantTokens struct {
+	Background      TokenReference `json:"background"`
+	BackgroundHover TokenReference `json:"backgroundHover"`
+	BackgroundActive TokenReference `json:"backgroundActive"`
+	Color           TokenReference `json:"color"`
+	ColorHover      TokenReference `json:"colorHover"`
+	Border          TokenReference `json:"border"`
+	BorderHover     TokenReference `json:"borderHover"`
+	BorderRadius    TokenReference `json:"borderRadius"`
+	Padding         TokenReference `json:"padding"`
+	FontWeight      TokenReference `json:"fontWeight"`
+	Shadow          TokenReference `json:"shadow"`
+	ShadowHover     TokenReference `json:"shadowHover"`
+}
+
+// InputTokens defines component tokens for inputs.
+type InputTokens struct {
+	Background      TokenReference `json:"background"`
+	BackgroundFocus TokenReference `json:"backgroundFocus"`
+	Border          TokenReference `json:"border"`
+	BorderFocus     TokenReference `json:"borderFocus"`
+	BorderError     TokenReference `json:"borderError"`
+	BorderRadius    TokenReference `json:"borderRadius"`
+	Padding         TokenReference `json:"padding"`
+	Color           TokenReference `json:"color"`
+	Placeholder     TokenReference `json:"placeholder"`
+}
+
+// CardTokens defines component tokens for cards.
+type CardTokens struct {
+	Background   TokenReference `json:"background"`
+	Border       TokenReference `json:"border"`
+	BorderRadius TokenReference `json:"borderRadius"`
+	Shadow       TokenReference `json:"shadow"`
+	Padding      TokenReference `json:"padding"`
+}
+
+// ModalTokens defines component tokens for modals.
+type ModalTokens struct {
+	Background   TokenReference `json:"background"`
+	Overlay      TokenReference `json:"overlay"`
+	Border       TokenReference `json:"border"`
+	BorderRadius TokenReference `json:"borderRadius"`
+	Shadow       TokenReference `json:"shadow"`
+	Padding      TokenReference `json:"padding"`
+}
+
+// FormTokens defines component tokens for forms.
+type FormTokens struct {
+	Background   TokenReference `json:"background"`
+	Padding      TokenReference `json:"padding"`
+	BorderRadius TokenReference `json:"borderRadius"`
+	Shadow       TokenReference `json:"shadow"`
+	Spacing      TokenReference `json:"spacing"`
+}
+
+// TableTokens defines component tokens for tables.
+type TableTokens struct {
+	Background      TokenReference `json:"background"`
+	BackgroundHover TokenReference `json:"backgroundHover"`
+	Border          TokenReference `json:"border"`
+	HeaderBackground TokenReference `json:"headerBackground"`
+	HeaderColor     TokenReference `json:"headerColor"`
+	Padding         TokenReference `json:"padding"`
+}
+
+// NavigationTokens defines component tokens for navigation.
+type NavigationTokens struct {
+	Background      TokenReference `json:"background"`
+	BackgroundHover TokenReference `json:"backgroundHover"`
+	BackgroundActive TokenReference `json:"backgroundActive"`
+	Color           TokenReference `json:"color"`
+	ColorHover      TokenReference `json:"colorHover"`
+	ColorActive     TokenReference `json:"colorActive"`
+	Border          TokenReference `json:"border"`
+	Padding         TokenReference `json:"padding"`
+}
+
+// TokenResolver provides methods for resolving token references to actual values.
+// Implementations should handle circular reference detection and caching.
+type TokenResolver interface {
+	// Resolve resolves a token reference to its actual value
+	Resolve(ctx context.Context, reference TokenReference, tokens *DesignTokens) (string, error)
+
+	// ResolveAll resolves all token references in a token set
+	ResolveAll(ctx context.Context, tokens *DesignTokens) (*DesignTokens, error)
+
+	// ValidateReferences checks for circular references and invalid paths
+	ValidateReferences(tokens *DesignTokens) error
+}
+
+// TokenRegistry manages design tokens with thread safety and caching.
 type TokenRegistry struct {
-	tokens *DesignTokens
-	mu     sync.RWMutex
+	tokens   *DesignTokens
+	resolver TokenResolver
+	mu       sync.RWMutex
+	cache    map[string]string // TODO: Implement cache for resolved tokens
 }
 
-// NewTokenRegistry creates a new token registry with default values
+// NewTokenRegistry creates a new token registry with default values.
 func NewTokenRegistry() *TokenRegistry {
-	return &TokenRegistry{
-		tokens: GetDefaultTokens(),
-	}
+	// TODO: Implement constructor with default tokens
+	return &TokenRegistry{}
 }
 
-// GetDefaultTokens returns the default design token values
-// Following the design system specification in styles.md
-func GetDefaultTokens() *DesignTokens {
-	return &DesignTokens{
-		Spacing: SpacingTokens{
-			None: "0",
-			XS:   "0.25rem",
-			SM:   "0.5rem",
-			MD:   "1rem",
-			LG:   "2rem",
-			XL:   "3rem",
-			XXL:  "4rem",
-		},
-		Colors: ColorTokens{
-			Background: BackgroundColors{
-				Default:  "hsl(0, 0%, 98%)",
-				Subtle:   "hsl(0, 0%, 96%)",
-				Emphasis: "hsl(0, 0%, 90%)",
-				Overlay:  "rgba(0, 0, 0, 0.5)",
-			},
-			Text: TextColors{
-				Default:   "hsl(0, 0%, 9%)",
-				Subtle:    "hsl(0, 0%, 32%)",
-				Disabled:  "hsl(0, 0%, 64%)",
-				Inverted:  "hsl(0, 0%, 98%)",
-				Link:      "hsl(222, 47%, 50%)",
-				LinkHover: "hsl(222, 47%, 40%)",
-			},
-			Border: BorderColors{
-				Default: "hsl(0, 0%, 83%)",
-				Focus:   "hsl(222, 47%, 50%)",
-				Strong:  "hsl(0, 0%, 64%)",
-				Subtle:  "hsl(0, 0%, 90%)",
-			},
-			Feedback: FeedbackColors{
-				Success:       "hsl(142, 76%, 36%)",
-				SuccessSubtle: "hsl(142, 76%, 95%)",
-				Error:         "hsl(0, 84%, 60%)",
-				ErrorSubtle:   "hsl(0, 84%, 95%)",
-				Warning:       "hsl(38, 92%, 50%)",
-				WarningSubtle: "hsl(38, 92%, 95%)",
-				Info:          "hsl(199, 89%, 48%)",
-				InfoSubtle:    "hsl(199, 89%, 95%)",
-			},
-			Primary: PrimaryColors{
-				Main:   "hsl(222, 47%, 50%)",
-				Light:  "hsl(222, 47%, 60%)",
-				Dark:   "hsl(222, 47%, 40%)",
-				Subtle: "hsl(222, 47%, 95%)",
-			},
-			Secondary: SecondaryColors{
-				Main:   "hsl(280, 47%, 50%)",
-				Light:  "hsl(280, 47%, 60%)",
-				Dark:   "hsl(280, 47%, 40%)",
-				Subtle: "hsl(280, 47%, 95%)",
-			},
-			Neutral: NeutralColors{
-				White: "hsl(0, 0%, 100%)",
-				Black: "hsl(0, 0%, 0%)",
-				Gray: GrayScale{
-					Gray50:  "hsl(0, 0%, 98%)",
-					Gray100: "hsl(0, 0%, 96%)",
-					Gray200: "hsl(0, 0%, 90%)",
-					Gray300: "hsl(0, 0%, 83%)",
-					Gray400: "hsl(0, 0%, 64%)",
-					Gray500: "hsl(0, 0%, 50%)",
-					Gray600: "hsl(0, 0%, 32%)",
-					Gray700: "hsl(0, 0%, 21%)",
-					Gray800: "hsl(0, 0%, 13%)",
-					Gray900: "hsl(0, 0%, 9%)",
-				},
-			},
-		},
-		Typography: TypographyTokens{
-			FontSizes: FontSizeTokens{
-				XS:    "0.75rem",
-				SM:    "0.875rem",
-				Base:  "1rem",
-				LG:    "1.125rem",
-				XL:    "1.25rem",
-				XXL:   "1.5rem",
-				XXXL:  "1.875rem",
-				XXXXL: "2.25rem",
-			},
-			FontWeights: FontWeightTokens{
-				Light:     "300",
-				Normal:    "400",
-				Medium:    "500",
-				Semibold:  "600",
-				Bold:      "700",
-				Extrabold: "800",
-			},
-			LineHeights: LineHeightTokens{
-				Tight:   "1.25",
-				Normal:  "1.5",
-				Relaxed: "1.75",
-				Loose:   "2",
-			},
-			FontFamily: FontFamilyTokens{
-				Sans:  "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-				Serif: "Georgia, Cambria, 'Times New Roman', Times, serif",
-				Mono:  "'Courier New', Courier, monospace",
-			},
-			LetterSpacing: LetterSpacingTokens{
-				Tight:  "-0.05em",
-				Normal: "0",
-				Wide:   "0.05em",
-			},
-		},
-		Sizes: SizeTokens{
-			XS:  "1rem",
-			SM:  "1.5rem",
-			MD:  "2rem",
-			LG:  "2.5rem",
-			XL:  "3rem",
-			XXL: "4rem",
-		},
-		Borders: BorderTokens{
-			Width: BorderWidthTokens{
-				None:   "0",
-				Thin:   "1px",
-				Medium: "2px",
-				Thick:  "4px",
-			},
-			Radius: BorderRadiusTokens{
-				None: "0",
-				SM:   "0.125rem",
-				MD:   "0.25rem",
-				LG:   "0.5rem",
-				XL:   "1rem",
-				Full: "9999px",
-			},
-			Style: BorderStyleTokens{
-				Solid:  "solid",
-				Dashed: "dashed",
-				Dotted: "dotted",
-				None:   "none",
-			},
-		},
-		Shadows: ShadowTokens{
-			None:  "none",
-			SM:    "0 1px 2px rgba(0, 0, 0, 0.05)",
-			MD:    "0 4px 6px rgba(0, 0, 0, 0.1)",
-			LG:    "0 10px 15px rgba(0, 0, 0, 0.1)",
-			XL:    "0 20px 25px rgba(0, 0, 0, 0.1)",
-			XXL:   "0 25px 50px rgba(0, 0, 0, 0.15)",
-			Inner: "inset 0 2px 4px rgba(0, 0, 0, 0.06)",
-		},
-		Animations: AnimationTokens{
-			Duration: AnimationDurationTokens{
-				Fast:   "150ms",
-				Normal: "300ms",
-				Slow:   "500ms",
-			},
-			Easing: AnimationEasingTokens{
-				Linear:    "linear",
-				EaseIn:    "cubic-bezier(0.4, 0, 1, 1)",
-				EaseOut:   "cubic-bezier(0, 0, 0.2, 1)",
-				EaseInOut: "cubic-bezier(0.4, 0, 0.2, 1)",
-			},
-		},
-		ZIndex: ZIndexTokens{
-			Dropdown: "1000",
-			Sticky:   "1100",
-			Fixed:    "1200",
-			Modal:    "1300",
-			Popover:  "1400",
-			Tooltip:  "1500",
-		},
-	}
+// NewTokenRegistryWithResolver creates a new token registry with a custom resolver.
+func NewTokenRegistryWithResolver(resolver TokenResolver) *TokenRegistry {
+	// TODO: Implement constructor with custom resolver
+	return &TokenRegistry{}
 }
 
-// Token resolution methods with thread safety
-
-// GetSpacing returns spacing token value
-func (tr *TokenRegistry) GetSpacing(key string) string {
-	tr.mu.RLock()
-	defer tr.mu.RUnlock()
-
-	switch key {
-	case "0", "none":
-		return tr.tokens.Spacing.None
-	case "1", "xs":
-		return tr.tokens.Spacing.XS
-	case "2", "sm":
-		return tr.tokens.Spacing.SM
-	case "4", "md":
-		return tr.tokens.Spacing.MD
-	case "8", "lg":
-		return tr.tokens.Spacing.LG
-	case "12", "xl":
-		return tr.tokens.Spacing.XL
-	case "16", "xxl":
-		return tr.tokens.Spacing.XXL
-	default:
-		return tr.tokens.Spacing.MD // Safe fallback
-	}
+// SetTokens updates the entire token set (thread-safe).
+func (tr *TokenRegistry) SetTokens(tokens *DesignTokens) error {
+	// TODO: Implement thread-safe token update with validation
+	return nil
 }
 
-// GetColor returns color token value
-func (tr *TokenRegistry) GetColor(category, variant string) string {
-	tr.mu.RLock()
-	defer tr.mu.RUnlock()
-
-	switch category {
-	case "background":
-		switch variant {
-		case "default":
-			return tr.tokens.Colors.Background.Default
-		case "subtle":
-			return tr.tokens.Colors.Background.Subtle
-		case "emphasis":
-			return tr.tokens.Colors.Background.Emphasis
-		case "overlay":
-			return tr.tokens.Colors.Background.Overlay
-		}
-	case "text":
-		switch variant {
-		case "default":
-			return tr.tokens.Colors.Text.Default
-		case "subtle":
-			return tr.tokens.Colors.Text.Subtle
-		case "disabled":
-			return tr.tokens.Colors.Text.Disabled
-		case "inverted":
-			return tr.tokens.Colors.Text.Inverted
-		case "link":
-			return tr.tokens.Colors.Text.Link
-		case "linkHover":
-			return tr.tokens.Colors.Text.LinkHover
-		}
-	case "border":
-		switch variant {
-		case "default":
-			return tr.tokens.Colors.Border.Default
-		case "focus":
-			return tr.tokens.Colors.Border.Focus
-		case "strong":
-			return tr.tokens.Colors.Border.Strong
-		case "subtle":
-			return tr.tokens.Colors.Border.Subtle
-		}
-	case "feedback":
-		switch variant {
-		case "success":
-			return tr.tokens.Colors.Feedback.Success
-		case "successSubtle":
-			return tr.tokens.Colors.Feedback.SuccessSubtle
-		case "error":
-			return tr.tokens.Colors.Feedback.Error
-		case "errorSubtle":
-			return tr.tokens.Colors.Feedback.ErrorSubtle
-		case "warning":
-			return tr.tokens.Colors.Feedback.Warning
-		case "warningSubtle":
-			return tr.tokens.Colors.Feedback.WarningSubtle
-		case "info":
-			return tr.tokens.Colors.Feedback.Info
-		case "infoSubtle":
-			return tr.tokens.Colors.Feedback.InfoSubtle
-		}
-	case "primary":
-		switch variant {
-		case "main":
-			return tr.tokens.Colors.Primary.Main
-		case "light":
-			return tr.tokens.Colors.Primary.Light
-		case "dark":
-			return tr.tokens.Colors.Primary.Dark
-		case "subtle":
-			return tr.tokens.Colors.Primary.Subtle
-		}
-	case "secondary":
-		switch variant {
-		case "main":
-			return tr.tokens.Colors.Secondary.Main
-		case "light":
-			return tr.tokens.Colors.Secondary.Light
-		case "dark":
-			return tr.tokens.Colors.Secondary.Dark
-		case "subtle":
-			return tr.tokens.Colors.Secondary.Subtle
-		}
-	}
-	return tr.tokens.Colors.Text.Default // Safe fallback
-}
-
-// GetFontSize returns font size token value
-func (tr *TokenRegistry) GetFontSize(key string) string {
-	tr.mu.RLock()
-	defer tr.mu.RUnlock()
-
-	switch key {
-	case "xs":
-		return tr.tokens.Typography.FontSizes.XS
-	case "sm":
-		return tr.tokens.Typography.FontSizes.SM
-	case "base", "md":
-		return tr.tokens.Typography.FontSizes.Base
-	case "lg":
-		return tr.tokens.Typography.FontSizes.LG
-	case "xl":
-		return tr.tokens.Typography.FontSizes.XL
-	case "2xl", "xxl":
-		return tr.tokens.Typography.FontSizes.XXL
-	case "3xl", "xxxl":
-		return tr.tokens.Typography.FontSizes.XXXL
-	case "4xl", "xxxxl":
-		return tr.tokens.Typography.FontSizes.XXXXL
-	default:
-		return tr.tokens.Typography.FontSizes.Base // Safe fallback
-	}
-}
-
-// GetSize returns size token value
-func (tr *TokenRegistry) GetSize(key string) string {
-	tr.mu.RLock()
-	defer tr.mu.RUnlock()
-
-	switch key {
-	case "xs":
-		return tr.tokens.Sizes.XS
-	case "sm":
-		return tr.tokens.Sizes.SM
-	case "md":
-		return tr.tokens.Sizes.MD
-	case "lg":
-		return tr.tokens.Sizes.LG
-	case "xl":
-		return tr.tokens.Sizes.XL
-	case "2xl", "xxl":
-		return tr.tokens.Sizes.XXL
-	default:
-		return tr.tokens.Sizes.MD // Safe fallback
-	}
-}
-
-// GetBorderRadius returns border radius token value
-func (tr *TokenRegistry) GetBorderRadius(key string) string {
-	tr.mu.RLock()
-	defer tr.mu.RUnlock()
-
-	switch key {
-	case "none":
-		return tr.tokens.Borders.Radius.None
-	case "sm":
-		return tr.tokens.Borders.Radius.SM
-	case "md":
-		return tr.tokens.Borders.Radius.MD
-	case "lg":
-		return tr.tokens.Borders.Radius.LG
-	case "xl":
-		return tr.tokens.Borders.Radius.XL
-	case "full":
-		return tr.tokens.Borders.Radius.Full
-	default:
-		return tr.tokens.Borders.Radius.MD // Safe fallback
-	}
-}
-
-// GetShadow returns shadow token value
-func (tr *TokenRegistry) GetShadow(key string) string {
-	tr.mu.RLock()
-	defer tr.mu.RUnlock()
-
-	switch key {
-	case "none":
-		return tr.tokens.Shadows.None
-	case "sm":
-		return tr.tokens.Shadows.SM
-	case "md":
-		return tr.tokens.Shadows.MD
-	case "lg":
-		return tr.tokens.Shadows.LG
-	case "xl":
-		return tr.tokens.Shadows.XL
-	case "2xl", "xxl":
-		return tr.tokens.Shadows.XXL
-	case "inner":
-		return tr.tokens.Shadows.Inner
-	default:
-		return tr.tokens.Shadows.MD // Safe fallback
-	}
-}
-
-// SetTokens updates the entire token set (thread-safe)
-func (tr *TokenRegistry) SetTokens(tokens *DesignTokens) {
-	tr.mu.Lock()
-	defer tr.mu.Unlock()
-	tr.tokens = tokens
-}
-
-// GetTokens returns a copy of current tokens (thread-safe)
+// GetTokens returns a copy of current tokens (thread-safe).
 func (tr *TokenRegistry) GetTokens() *DesignTokens {
-	tr.mu.RLock()
-	defer tr.mu.RUnlock()
+	// TODO: Implement thread-safe token retrieval
+	return nil
+}
 
-	// Return a copy to prevent external modification
-	tokens := *tr.tokens
-	return &tokens
+// ResolveToken resolves a single token reference to its actual value.
+func (tr *TokenRegistry) ResolveToken(ctx context.Context, reference TokenReference) (string, error) {
+	// TODO: Implement token resolution with caching
+	return "", nil
+}
+
+// ResolveAllTokens resolves all token references in the registry.
+func (tr *TokenRegistry) ResolveAllTokens(ctx context.Context) (*DesignTokens, error) {
+	// TODO: Implement complete token resolution
+	return nil, nil
+}
+
+// InvalidateCache clears the resolution cache.
+func (tr *TokenRegistry) InvalidateCache() {
+	// TODO: Implement cache invalidation
+}
+
+// ValidateTokens validates the current token set for circular references and invalid paths.
+func (tr *TokenRegistry) ValidateTokens() error {
+	// TODO: Implement token validation
+	return nil
+}
+
+// GetDefaultTokens returns the default design token values.
+// Following the design system specification.
+func GetDefaultTokens() *DesignTokens {
+	// TODO: Implement default token generation
+	return &DesignTokens{}
+}
+
+// MergeTokens merges two token sets (second overrides first).
+func MergeTokens(base, override *DesignTokens) *DesignTokens {
+	// TODO: Implement deep token merging
+	return base
+}
+
+// ValidateTokenPath checks if a token path is valid.
+func ValidateTokenPath(path string) error {
+	// TODO: Implement token path validation
+	return nil
+}
+
+// TokenPath creates a token path from components.
+func TokenPath(parts ...string) string {
+	// TODO: Implement token path construction
+	return ""
 }
 
 // Global token registry instance
@@ -657,7 +648,7 @@ var (
 	registryOnce         sync.Once
 )
 
-// GetDefaultRegistry returns the global token registry
+// GetDefaultRegistry returns the global token registry.
 func GetDefaultRegistry() *TokenRegistry {
 	registryOnce.Do(func() {
 		defaultTokenRegistry = NewTokenRegistry()
@@ -665,193 +656,34 @@ func GetDefaultRegistry() *TokenRegistry {
 	return defaultTokenRegistry
 }
 
-// Token resolution helper functions for easy access
+// Convenience functions for common token access
 
-// GetToken returns a token value by path (e.g., "spacing.md", "color.text.default")
-func GetToken(path string) string {
-	registry := GetDefaultRegistry()
-	parts := strings.Split(path, ".")
-
-	if len(parts) < 2 {
-		return ""
-	}
-
-	category := parts[0]
-	key := parts[1]
-
-	switch category {
-	case "spacing":
-		return registry.GetSpacing(key)
-	case "color":
-		if len(parts) >= 3 {
-			return registry.GetColor(key, parts[2])
-		}
-	case "fontSize", "font-size":
-		return registry.GetFontSize(key)
-	case "size":
-		return registry.GetSize(key)
-	case "borderRadius", "border-radius":
-		return registry.GetBorderRadius(key)
-	case "shadow":
-		return registry.GetShadow(key)
-	}
-
+// GetSpacing returns a spacing token value.
+func GetSpacing(key string) string {
+	// TODO: Implement spacing token retrieval
 	return ""
 }
 
-// Convenience functions for common tokens
-
-// SpacingMD returns the medium spacing token (replaces hardcoded "1rem")
-func SpacingMD() string {
-	return GetDefaultRegistry().GetSpacing("md")
+// GetColor returns a color token value.
+func GetColor(path string) string {
+	// TODO: Implement color token retrieval
+	return ""
 }
 
-// SpacingSM returns the small spacing token
-func SpacingSM() string {
-	return GetDefaultRegistry().GetSpacing("sm")
+// GetFontSize returns a font size token value.
+func GetFontSize(key string) string {
+	// TODO: Implement font size token retrieval
+	return ""
 }
 
-// SpacingLG returns the large spacing token
-func SpacingLG() string {
-	return GetDefaultRegistry().GetSpacing("lg")
+// GetShadow returns a shadow token value.
+func GetShadow(key string) string {
+	// TODO: Implement shadow token retrieval
+	return ""
 }
 
-// SpacingXS returns the extra small spacing token
-func SpacingXS() string {
-	return GetDefaultRegistry().GetSpacing("xs")
-}
-
-// SpacingXL returns the extra large spacing token
-func SpacingXL() string {
-	return GetDefaultRegistry().GetSpacing("xl")
-}
-
-// ColorPrimary returns the primary color
-func ColorPrimary() string {
-	return GetDefaultRegistry().GetColor("primary", "main")
-}
-
-// ColorSecondary returns the secondary color
-func ColorSecondary() string {
-	return GetDefaultRegistry().GetColor("secondary", "main")
-}
-
-// ColorSuccess returns the success color
-func ColorSuccess() string {
-	return GetDefaultRegistry().GetColor("feedback", "success")
-}
-
-// ColorError returns the error color
-func ColorError() string {
-	return GetDefaultRegistry().GetColor("feedback", "error")
-}
-
-// ColorWarning returns the warning color
-func ColorWarning() string {
-	return GetDefaultRegistry().GetColor("feedback", "warning")
-}
-
-// ColorInfo returns the info color
-func ColorInfo() string {
-	return GetDefaultRegistry().GetColor("feedback", "info")
-}
-
-// BorderRadiusMD returns the medium border radius
-func BorderRadiusMD() string {
-	return GetDefaultRegistry().GetBorderRadius("md")
-}
-
-// ShadowMD returns the medium shadow
-func ShadowMD() string {
-	return GetDefaultRegistry().GetShadow("md")
-}
-
-// ResolveToken resolves a token reference (e.g., "$spacing.md") to its value
-func ResolveToken(tokenRef string) string {
-	if !strings.HasPrefix(tokenRef, "$") {
-		return tokenRef // Not a token reference
-	}
-
-	path := strings.TrimPrefix(tokenRef, "$")
-	value := GetToken(path)
-
-	if value == "" {
-		return tokenRef // Return original if not found
-	}
-
-	return value
-}
-
-// ResolveTokens resolves all token references in a map
-func ResolveTokens(values map[string]string) map[string]string {
-	resolved := make(map[string]string, len(values))
-
-	for key, value := range values {
-		resolved[key] = ResolveToken(value)
-	}
-
-	return resolved
-}
-
-// TokenPath creates a token path from components
-func TokenPath(parts ...string) string {
-	return strings.Join(parts, ".")
-}
-
-// ValidateTokenPath checks if a token path is valid
-func ValidateTokenPath(path string) error {
-	parts := strings.Split(path, ".")
-
-	if len(parts) < 2 {
-		return fmt.Errorf("token path must have at least 2 parts: %s", path)
-	}
-
-	validCategories := map[string]bool{
-		"spacing": true, "color": true, "fontSize": true,
-		"size": true, "borderRadius": true, "shadow": true,
-		"font-size": true, "border-radius": true,
-	}
-
-	if !validCategories[parts[0]] {
-		return fmt.Errorf("invalid token category: %s", parts[0])
-	}
-
-	return nil
-}
-
-// MergeTokens merges two token sets (second overrides first)
-func MergeTokens(base, override *DesignTokens) *DesignTokens {
-	merged := *base
-
-	if override == nil {
-		return &merged
-	}
-
-	// Merge spacing
-	if override.Spacing.None != "" {
-		merged.Spacing.None = override.Spacing.None
-	}
-	if override.Spacing.XS != "" {
-		merged.Spacing.XS = override.Spacing.XS
-	}
-	if override.Spacing.SM != "" {
-		merged.Spacing.SM = override.Spacing.SM
-	}
-	if override.Spacing.MD != "" {
-		merged.Spacing.MD = override.Spacing.MD
-	}
-	if override.Spacing.LG != "" {
-		merged.Spacing.LG = override.Spacing.LG
-	}
-	if override.Spacing.XL != "" {
-		merged.Spacing.XL = override.Spacing.XL
-	}
-	if override.Spacing.XXL != "" {
-		merged.Spacing.XXL = override.Spacing.XXL
-	}
-
-	// Similar merging for other token categories...
-	// (Implementation continues for colors, typography, etc.)
-
-	return &merged
+// GetBorderRadius returns a border radius token value.
+func GetBorderRadius(key string) string {
+	// TODO: Implement border radius token retrieval
+	return ""
 }

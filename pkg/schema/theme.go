@@ -1,601 +1,496 @@
 package schema
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sync"
+	"time"
 )
 
-// Theme represents the comprehensive theme configuration for a schema
-// Integrates with the design token system and provides overrides for all components
+// Theme represents a complete theme configuration for the UI system.
+// A theme is essentially a configured set of design tokens with metadata.
+//
+// Design Philosophy:
+//   - Themes are immutable once created (use ThemeManager for customization)
+//   - All styling flows through design tokens (single source of truth)
+//   - Supports runtime customization via ThemeManager
+//   - Multi-tenant capable with TenantThemeManager
+//
+// Breaking Changes: The Theme structure is designed to be stable, but new
+// optional fields may be added for enhanced functionality.
 type Theme struct {
 	// Identity
-	Name        string `json:"name" validate:"required" example:"corporate-blue"`
-	Version     string `json:"version,omitempty" validate:"semver" example:"1.0.0"`
+	ID          string `json:"id" validate:"required"`
+	Name        string `json:"name" validate:"required"`
 	Description string `json:"description,omitempty"`
+	Version     string `json:"version,omitempty" validate:"semver"`
 	Author      string `json:"author,omitempty"`
 
-	// Design tokens - base values
-	Tokens *DesignTokens `json:"tokens,omitempty"` // Override default tokens
+	// Design tokens - the single source of truth for all styling
+	Tokens *DesignTokens `json:"tokens" validate:"required"`
 
-	// Component-specific theming
-	Form    *FormTheme    `json:"form,omitempty"`    // Form container theme
-	Field   *FieldTheme   `json:"field,omitempty"`   // Default field theme
-	Button  *ButtonTheme  `json:"button,omitempty"`  // Button/action theme
-	Layout  *LayoutTheme  `json:"layout,omitempty"`  // Layout theme
-	Section *SectionTheme `json:"section,omitempty"` // Section theme
-	Tab     *TabTheme     `json:"tab,omitempty"`     // Tab theme
-	Step    *StepTheme    `json:"step,omitempty"`    // Step theme
+	// Dark mode configuration
+	DarkMode *DarkModeConfig `json:"darkMode,omitempty"`
 
-	// Global overrides
-	Colors      map[string]string `json:"colors,omitempty"`      // Color overrides
-	Fonts       map[string]string `json:"fonts,omitempty"`       // Font overrides
-	Breakpoints map[string]string `json:"breakpoints,omitempty"` // Breakpoint definitions
-	CustomCSS   string            `json:"customCSS,omitempty"`   // Custom CSS
-	CustomJS    string            `json:"customJS,omitempty"`    // Custom JavaScript
-
-	// Dark mode support
-	DarkMode *DarkModeConfig `json:"darkMode,omitempty"` // Dark mode configuration
-
-	// Accessibility
-	Accessibility *AccessibilityConfig `json:"accessibility,omitempty"` // Accessibility settings
+	// Accessibility configuration
+	Accessibility *AccessibilityConfig `json:"accessibility,omitempty"`
 
 	// Metadata
-	Meta *ThemeMeta `json:"meta,omitempty"` // Theme metadata
+	Meta *ThemeMeta `json:"meta,omitempty"`
+
+	// Custom extensions (advanced users only)
+	// Breaking Changes: CustomCSS/CustomJS may be deprecated in favor of
+	// a more structured extension system.
+	CustomCSS string `json:"customCSS,omitempty"`
+	CustomJS  string `json:"customJS,omitempty"`
+
+	// Internal fields (not serialized)
+	createdAt time.Time
+	updatedAt time.Time
 }
 
-// FormTheme defines theme for the form container
-type FormTheme struct {
-	Background   string            `json:"background,omitempty"`
-	Padding      string            `json:"padding,omitempty"`
-	MaxWidth     string            `json:"maxWidth,omitempty"`
-	BorderRadius string            `json:"borderRadius,omitempty"`
-	Shadow       string            `json:"shadow,omitempty"`
-	Border       string            `json:"border,omitempty"`
-	Colors       map[string]string `json:"colors,omitempty"`
-	CustomCSS    string            `json:"customCSS,omitempty"`
-}
-
-// FieldTheme defines default theme for all fields
-type FieldTheme struct {
-	// Input styling
-	Background      string `json:"background,omitempty"`
-	BackgroundFocus string `json:"backgroundFocus,omitempty"`
-	Border          string `json:"border,omitempty"`
-	BorderFocus     string `json:"borderFocus,omitempty"`
-	BorderError     string `json:"borderError,omitempty"`
-	BorderRadius    string `json:"borderRadius,omitempty"`
-	Padding         string `json:"padding,omitempty"`
-	FontSize        string `json:"fontSize,omitempty"`
-	FontWeight      string `json:"fontWeight,omitempty"`
-
-	// Label styling
-	LabelFontSize   string `json:"labelFontSize,omitempty"`
-	LabelFontWeight string `json:"labelFontWeight,omitempty"`
-	LabelColor      string `json:"labelColor,omitempty"`
-	LabelMargin     string `json:"labelMargin,omitempty"`
-
-	// Helper text styling
-	HelperFontSize string `json:"helperFontSize,omitempty"`
-	HelperColor    string `json:"helperColor,omitempty"`
-
-	// Error styling
-	ErrorColor    string `json:"errorColor,omitempty"`
-	ErrorFontSize string `json:"errorFontSize,omitempty"`
-
-	// Success styling
-	SuccessColor  string `json:"successColor,omitempty"`
-	SuccessBorder string `json:"successBorder,omitempty"`
-
-	// Disabled styling
-	DisabledBackground string `json:"disabledBackground,omitempty"`
-	DisabledColor      string `json:"disabledColor,omitempty"`
-	DisabledCursor     string `json:"disabledCursor,omitempty"`
-
-	// Custom overrides
-	Colors    map[string]string `json:"colors,omitempty"`
-	CustomCSS string            `json:"customCSS,omitempty"`
-}
-
-// ButtonTheme defines theme for buttons and actions
-type ButtonTheme struct {
-	// Primary variant
-	PrimaryBackground      string `json:"primaryBackground,omitempty"`
-	PrimaryBackgroundHover string `json:"primaryBackgroundHover,omitempty"`
-	PrimaryColor           string `json:"primaryColor,omitempty"`
-	PrimaryBorder          string `json:"primaryBorder,omitempty"`
-
-	// Secondary variant
-	SecondaryBackground      string `json:"secondaryBackground,omitempty"`
-	SecondaryBackgroundHover string `json:"secondaryBackgroundHover,omitempty"`
-	SecondaryColor           string `json:"secondaryColor,omitempty"`
-	SecondaryBorder          string `json:"secondaryBorder,omitempty"`
-
-	// Outline variant
-	OutlineBackground      string `json:"outlineBackground,omitempty"`
-	OutlineBackgroundHover string `json:"outlineBackgroundHover,omitempty"`
-	OutlineColor           string `json:"outlineColor,omitempty"`
-	OutlineBorder          string `json:"outlineBorder,omitempty"`
-
-	// Destructive variant
-	DestructiveBackground      string `json:"destructiveBackground,omitempty"`
-	DestructiveBackgroundHover string `json:"destructiveBackgroundHover,omitempty"`
-	DestructiveColor           string `json:"destructiveColor,omitempty"`
-	DestructiveBorder          string `json:"destructiveBorder,omitempty"`
-
-	// Ghost variant
-	GhostBackground      string `json:"ghostBackground,omitempty"`
-	GhostBackgroundHover string `json:"ghostBackgroundHover,omitempty"`
-	GhostColor           string `json:"ghostColor,omitempty"`
-
-	// Common properties
-	BorderRadius string `json:"borderRadius,omitempty"`
-	FontWeight   string `json:"fontWeight,omitempty"`
-	Padding      string `json:"padding,omitempty"`
-	Shadow       string `json:"shadow,omitempty"`
-	ShadowHover  string `json:"shadowHover,omitempty"`
-	Transition   string `json:"transition,omitempty"`
-
-	// Sizes
-	SizeSmall  *ButtonSizeTheme `json:"sizeSmall,omitempty"`
-	SizeMedium *ButtonSizeTheme `json:"sizeMedium,omitempty"`
-	SizeLarge  *ButtonSizeTheme `json:"sizeLarge,omitempty"`
-
-	// Custom overrides
-	Colors    map[string]string `json:"colors,omitempty"`
-	CustomCSS string            `json:"customCSS,omitempty"`
-}
-
-// ButtonSizeTheme defines size-specific button styling
-type ButtonSizeTheme struct {
-	Padding  string `json:"padding,omitempty"`
-	FontSize string `json:"fontSize,omitempty"`
-	Height   string `json:"height,omitempty"`
-	MinWidth string `json:"minWidth,omitempty"`
-	IconSize string `json:"iconSize,omitempty"`
-}
-
-// DarkModeConfig defines dark mode theme configuration
+// DarkModeConfig defines dark mode behavior and color overrides.
 type DarkModeConfig struct {
-	Enabled   bool              `json:"enabled"`                                              // Enable dark mode
-	Default   bool              `json:"default,omitempty"`                                    // Use dark mode by default
-	Toggle    bool              `json:"toggle,omitempty"`                                     // Allow user to toggle
-	Strategy  string            `json:"strategy,omitempty" validate:"oneof=class media auto"` // Detection strategy
-	Colors    map[string]string `json:"colors,omitempty"`                                     // Dark mode color overrides
-	CustomCSS string            `json:"customCSS,omitempty"`                                  // Dark mode specific CSS
+	// Enabled indicates if dark mode is available
+	Enabled bool `json:"enabled"`
+
+	// Default indicates if dark mode should be the default
+	Default bool `json:"default,omitempty"`
+
+	// Strategy defines how dark mode is detected/applied
+	// Valid values: "class", "media", "auto"
+	Strategy string `json:"strategy,omitempty" validate:"oneof=class media auto"`
+
+	// DarkTokens are token overrides specifically for dark mode
+	// These override the base tokens when dark mode is active
+	DarkTokens *DesignTokens `json:"darkTokens,omitempty"`
 }
 
-// AccessibilityConfig defines accessibility settings
+// AccessibilityConfig defines accessibility settings and preferences.
+// These settings help meet WCAG 2.1 Level AA compliance.
 type AccessibilityConfig struct {
 	// ARIA
-	AutoARIA        bool   `json:"autoAria,omitempty"`        // Auto-generate ARIA attributes
-	AriaLive        string `json:"ariaLive,omitempty"`        // ARIA live region
+	AutoARIA        bool   `json:"autoAria,omitempty"` // Auto-generate ARIA attributes
+	AriaLive        string `json:"ariaLive,omitempty" validate:"oneof=off polite assertive"`
 	AriaDescribedBy bool   `json:"ariaDescribedBy,omitempty"` // Auto-link descriptions
 
 	// Keyboard navigation
-	KeyboardNav        bool `json:"keyboardNav,omitempty"`        // Enable keyboard navigation
-	FocusIndicator     bool `json:"focusIndicator,omitempty"`     // Show focus indicators
-	SkipLinks          bool `json:"skipLinks,omitempty"`          // Add skip links
-	TabIndexManagement bool `json:"tabIndexManagement,omitempty"` // Manage tab indices
+	KeyboardNav        bool `json:"keyboardNav,omitempty"`        // Enable enhanced keyboard nav
+	FocusIndicator     bool `json:"focusIndicator,omitempty"`     // Enhanced focus indicators
+	SkipLinks          bool `json:"skipLinks,omitempty"`          // Add skip navigation links
+	TabIndexManagement bool `json:"tabIndexManagement,omitempty"` // Automatic tabindex management
 
-	// Screen reader
-	ScreenReaderOnly  bool `json:"screenReaderOnly,omitempty"`  // Screen reader optimizations
-	LiveAnnouncements bool `json:"liveAnnouncements,omitempty"` // Announce changes
+	// Screen reader optimizations
+	ScreenReaderOnly  bool `json:"screenReaderOnly,omitempty"`  // Screen reader enhancements
+	LiveAnnouncements bool `json:"liveAnnouncements,omitempty"` // Announce dynamic changes
 
-	// Contrast
-	HighContrast     bool    `json:"highContrast,omitempty"`     // High contrast mode
-	MinContrastRatio float64 `json:"minContrastRatio,omitempty"` // Minimum contrast ratio
+	// Contrast and visibility
+	HighContrast     bool    `json:"highContrast,omitempty"`                             // High contrast mode
+	MinContrastRatio float64 `json:"minContrastRatio,omitempty" validate:"gte=0,lte=21"` // WCAG ratio
 
-	// Focus management
-	FocusOutlineColor string `json:"focusOutlineColor,omitempty"` // Focus outline color
-	FocusOutlineWidth string `json:"focusOutlineWidth,omitempty"` // Focus outline width
-	FocusOutlineStyle string `json:"focusOutlineStyle,omitempty"` // Focus outline style
+	// Focus styling
+	FocusOutlineColor string `json:"focusOutlineColor,omitempty"`
+	FocusOutlineWidth string `json:"focusOutlineWidth,omitempty"`
 
-	// Motion
+	// Motion preferences
 	ReducedMotion bool `json:"reducedMotion,omitempty"` // Respect prefers-reduced-motion
 }
 
-// ThemeMeta contains theme metadata
+// ThemeMeta contains theme metadata and organizational information.
 type ThemeMeta struct {
-	Tags       []string       `json:"tags,omitempty"`
-	License    string         `json:"license,omitempty"`
-	Repository string         `json:"repository,omitempty" validate:"url"`
-	Homepage   string         `json:"homepage,omitempty" validate:"url"`
-	Preview    string         `json:"preview,omitempty" validate:"url"` // Preview image URL
-	CustomData map[string]any `json:"customData,omitempty"`
+	Tags       []string          `json:"tags,omitempty"`
+	License    string            `json:"license,omitempty"`
+	Repository string            `json:"repository,omitempty" validate:"url"`
+	Homepage   string            `json:"homepage,omitempty" validate:"url"`
+	Preview    string            `json:"preview,omitempty" validate:"url"` // Preview image URL
+	CustomData map[string]interface{} `json:"customData,omitempty"`
+	CreatedAt  time.Time         `json:"createdAt,omitempty"`
+	UpdatedAt  time.Time         `json:"updatedAt,omitempty"`
 }
 
-// ThemeRegistry manages theme storage and retrieval with thread safety
+// ThemeOverrides represents customizations that can be applied to a base theme.
+// This enables runtime theme customization without modifying the original theme.
+type ThemeOverrides struct {
+	// Token overrides - specific token values to override
+	TokenOverrides map[string]string `json:"tokenOverrides,omitempty"`
+
+	// Component customizations
+	ComponentOverrides map[string]interface{} `json:"componentOverrides,omitempty"`
+
+	// Custom CSS to inject
+	CustomCSS string `json:"customCSS,omitempty"`
+
+	// Accessibility overrides
+	AccessibilityOverrides *AccessibilityConfig `json:"accessibilityOverrides,omitempty"`
+
+	// Dark mode specific overrides
+	DarkModeOverrides map[string]string `json:"darkModeOverrides,omitempty"`
+}
+
+// TenantConfig represents tenant-specific theming configuration.
+// Enables multi-tenant theme customization with tenant isolation.
+type TenantConfig struct {
+	TenantID    string           `json:"tenantId" validate:"required"`
+	BaseThemeID string           `json:"baseThemeId" validate:"required"`
+	Overrides   *ThemeOverrides  `json:"overrides,omitempty"`
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+	Active      bool             `json:"active"`
+	CreatedAt   time.Time        `json:"createdAt"`
+	UpdatedAt   time.Time        `json:"updatedAt"`
+}
+
+// ThemeManager provides high-level theme management with runtime customization.
+// Handles theme registration, resolution, and customization with caching.
+type ThemeManager struct {
+	registry     *ThemeRegistry
+	tokenManager *TokenRegistry
+	cache        map[string]*Theme // TODO: Implement LRU cache
+	mu           sync.RWMutex
+}
+
+// NewThemeManager creates a new theme manager with the given registries.
+func NewThemeManager(themeRegistry *ThemeRegistry, tokenManager *TokenRegistry) *ThemeManager {
+	// TODO: Implement theme manager constructor
+	return &ThemeManager{}
+}
+
+// RegisterTheme registers a new theme in the manager.
+func (tm *ThemeManager) RegisterTheme(theme *Theme) error {
+	// TODO: Implement theme registration with validation
+	return nil
+}
+
+// GetTheme retrieves a theme by ID with caching.
+func (tm *ThemeManager) GetTheme(ctx context.Context, themeID string) (*Theme, error) {
+	// TODO: Implement cached theme retrieval
+	return nil, nil
+}
+
+// GetThemeWithOverrides applies overrides to a base theme and returns the result.
+func (tm *ThemeManager) GetThemeWithOverrides(ctx context.Context, themeID string, overrides *ThemeOverrides) (*Theme, error) {
+	// TODO: Implement theme customization with overrides
+	return nil, nil
+}
+
+// ResolveTheme fully resolves all token references in a theme.
+func (tm *ThemeManager) ResolveTheme(ctx context.Context, theme *Theme) (*Theme, error) {
+	// TODO: Implement complete theme resolution
+	return nil, nil
+}
+
+// InvalidateCache clears the theme cache.
+func (tm *ThemeManager) InvalidateCache() {
+	// TODO: Implement cache invalidation
+}
+
+// ListThemes returns all registered themes.
+func (tm *ThemeManager) ListThemes(ctx context.Context) ([]*Theme, error) {
+	// TODO: Implement theme listing
+	return nil, nil
+}
+
+// ValidateTheme validates a theme configuration for correctness.
+func (tm *ThemeManager) ValidateTheme(theme *Theme) error {
+	// TODO: Implement comprehensive theme validation
+	return nil
+}
+
+// TenantThemeManager provides multi-tenant theme management.
+// Enables tenant-specific theme customization with proper isolation.
+type TenantThemeManager struct {
+	themeManager  *ThemeManager
+	tenantConfigs map[string]*TenantConfig
+	mu            sync.RWMutex
+}
+
+// NewTenantThemeManager creates a new tenant theme manager.
+func NewTenantThemeManager(themeManager *ThemeManager) *TenantThemeManager {
+	// TODO: Implement tenant theme manager constructor
+	return &TenantThemeManager{}
+}
+
+// SetTenantTheme configures a theme for a specific tenant.
+func (ttm *TenantThemeManager) SetTenantTheme(ctx context.Context, tenantID, themeID string, overrides *ThemeOverrides) error {
+	// TODO: Implement tenant theme configuration
+	return nil
+}
+
+// GetTenantTheme retrieves the resolved theme for a specific tenant.
+func (ttm *TenantThemeManager) GetTenantTheme(ctx context.Context, tenantID string) (*Theme, error) {
+	// TODO: Implement tenant-specific theme resolution
+	return nil, nil
+}
+
+// ResolveTenantContext determines the tenant from the request context.
+func (ttm *TenantThemeManager) ResolveTenantContext(ctx context.Context) (string, error) {
+	// TODO: Implement tenant context resolution
+	return "", nil
+}
+
+// InvalidateTenantCache clears the cache for a specific tenant.
+func (ttm *TenantThemeManager) InvalidateTenantCache(tenantID string) {
+	// TODO: Implement tenant-specific cache invalidation
+}
+
+// ListTenantConfigs returns all tenant configurations.
+func (ttm *TenantThemeManager) ListTenantConfigs(ctx context.Context) ([]*TenantConfig, error) {
+	// TODO: Implement tenant config listing
+	return nil, nil
+}
+
+// ThemeRegistry provides storage and retrieval of themes with thread safety.
 type ThemeRegistry struct {
 	themes map[string]*Theme
 	mu     sync.RWMutex
 }
 
-// NewThemeRegistry creates a new theme registry
+// NewThemeRegistry creates a new theme registry.
 func NewThemeRegistry() *ThemeRegistry {
-	return &ThemeRegistry{
-		themes: make(map[string]*Theme),
-	}
+	// TODO: Implement theme registry constructor
+	return &ThemeRegistry{}
 }
 
-// Register registers a new theme
+// Register registers a new theme in the registry.
 func (tr *ThemeRegistry) Register(theme *Theme) error {
-	if theme.Name == "" {
-		return NewValidationError("theme_name_required", "theme name is required")
-	}
-
-	tr.mu.Lock()
-	defer tr.mu.Unlock()
-
-	tr.themes[theme.Name] = theme
+	// TODO: Implement theme registration with validation
 	return nil
 }
 
-// Get retrieves a theme by name
-func (tr *ThemeRegistry) Get(name string) (*Theme, error) {
-	tr.mu.RLock()
-	defer tr.mu.RUnlock()
-
-	theme, exists := tr.themes[name]
-	if !exists {
-		return nil, NewValidationError("theme_not_found", fmt.Sprintf("theme not found: %s", name))
-	}
-
-	return theme, nil
+// Get retrieves a theme by ID.
+func (tr *ThemeRegistry) Get(themeID string) (*Theme, error) {
+	// TODO: Implement theme retrieval
+	return nil, nil
 }
 
-// List returns all registered themes
-func (tr *ThemeRegistry) List() []*Theme {
-	tr.mu.RLock()
-	defer tr.mu.RUnlock()
-
-	themes := make([]*Theme, 0, len(tr.themes))
-	for _, theme := range tr.themes {
-		themes = append(themes, theme)
-	}
-
-	return themes
-}
-
-// Unregister removes a theme
-func (tr *ThemeRegistry) Unregister(name string) error {
-	tr.mu.Lock()
-	defer tr.mu.Unlock()
-
-	if _, exists := tr.themes[name]; !exists {
-		return NewValidationError("theme_not_found", fmt.Sprintf("theme not found: %s", name))
-	}
-
-	delete(tr.themes, name)
-	return nil
-}
-
-// Update updates an existing theme
+// Update updates an existing theme.
 func (tr *ThemeRegistry) Update(theme *Theme) error {
-	if theme.Name == "" {
-		return NewValidationError("theme_name_required", "theme name is required")
-	}
-
-	tr.mu.Lock()
-	defer tr.mu.Unlock()
-
-	if _, exists := tr.themes[theme.Name]; !exists {
-		return NewValidationError("theme_not_found", fmt.Sprintf("theme not found: %s", theme.Name))
-	}
-
-	tr.themes[theme.Name] = theme
+	// TODO: Implement theme update
 	return nil
 }
 
-// Exists checks if a theme exists
-func (tr *ThemeRegistry) Exists(name string) bool {
-	tr.mu.RLock()
-	defer tr.mu.RUnlock()
-
-	_, exists := tr.themes[name]
-	return exists
-}
-
-// Clone creates a copy of a theme
-func (tr *ThemeRegistry) Clone(name, newName string) error {
-	tr.mu.Lock()
-	defer tr.mu.Unlock()
-
-	original, exists := tr.themes[name]
-	if !exists {
-		return NewValidationError("theme_not_found", fmt.Sprintf("theme not found: %s", name))
-	}
-
-	// Deep copy using JSON
-	data, _ := json.Marshal(original)
-	var cloned Theme
-	json.Unmarshal(data, &cloned)
-	cloned.Name = newName
-
-	tr.themes[newName] = &cloned
+// Delete removes a theme from the registry.
+func (tr *ThemeRegistry) Delete(themeID string) error {
+	// TODO: Implement theme deletion
 	return nil
 }
 
-// Global theme registry
-var (
-	globalThemeRegistry *ThemeRegistry
-	themeRegistryOnce   sync.Once
-)
-
-// GetGlobalThemeRegistry returns the global theme registry
-func GetGlobalThemeRegistry() *ThemeRegistry {
-	themeRegistryOnce.Do(func() {
-		globalThemeRegistry = NewThemeRegistry()
-		// Register default themes
-		registerDefaultThemes(globalThemeRegistry)
-	})
-	return globalThemeRegistry
+// List returns all registered themes.
+func (tr *ThemeRegistry) List() ([]*Theme, error) {
+	// TODO: Implement theme listing
+	return nil, nil
 }
 
-// ApplyTheme applies a theme to a schema
-func (s *Schema) ApplyTheme(theme *Theme) {
-	if theme == nil {
-		return
-	}
-
-	// Apply theme to layout
-	if s.Layout != nil && theme.Layout != nil {
-		s.Layout.Theme = theme.Layout
-	}
-
-	// Apply theme to actions
-	for i := range s.Actions {
-		if theme.Button != nil {
-			if s.Actions[i].Theme == nil {
-				s.Actions[i].Theme = &ActionTheme{}
-			}
-			// Map ButtonTheme to ActionTheme
-			s.Actions[i].Theme.Colors = theme.Button.Colors
-			s.Actions[i].Theme.BorderRadius = theme.Button.BorderRadius
-			s.Actions[i].Theme.CustomCSS = theme.Button.CustomCSS
-		}
-	}
-
-	// Apply global colors if present
-	if len(theme.Colors) > 0 {
-		// Colors will be resolved during rendering
-	}
-
-	// Apply custom CSS
-	if theme.CustomCSS != "" {
-		// Custom CSS will be injected during rendering
-	}
+// Exists checks if a theme exists in the registry.
+func (tr *ThemeRegistry) Exists(themeID string) bool {
+	// TODO: Implement theme existence check
+	return false
 }
 
-// GetTheme returns the theme from a theme name
-func (s *Schema) GetTheme(themeName string) (*Theme, error) {
-	registry := GetGlobalThemeRegistry()
-	return registry.Get(themeName)
+// Clone creates a copy of an existing theme with a new ID.
+func (tr *ThemeRegistry) Clone(sourceID, newID string) (*Theme, error) {
+	// TODO: Implement theme cloning
+	return nil, nil
 }
 
-// Theme builder for fluent interface
+// ThemeBuilder provides a fluent interface for constructing themes.
 type ThemeBuilder struct {
 	theme *Theme
 }
 
-// NewTheme starts building a theme
+// NewTheme creates a new theme builder with the given name.
 func NewTheme(name string) *ThemeBuilder {
-	return &ThemeBuilder{
-		theme: &Theme{
-			Name:   name,
-			Colors: make(map[string]string),
-			Fonts:  make(map[string]string),
-		},
-	}
+	// TODO: Implement theme builder constructor
+	return &ThemeBuilder{}
 }
 
-// WithDescription sets the description
+// WithID sets the theme ID.
+func (tb *ThemeBuilder) WithID(id string) *ThemeBuilder {
+	// TODO: Implement ID setter
+	return tb
+}
+
+// WithDescription sets the theme description.
 func (tb *ThemeBuilder) WithDescription(description string) *ThemeBuilder {
-	tb.theme.Description = description
+	// TODO: Implement description setter
 	return tb
 }
 
-// WithAuthor sets the author
+// WithVersion sets the theme version.
+func (tb *ThemeBuilder) WithVersion(version string) *ThemeBuilder {
+	// TODO: Implement version setter
+	return tb
+}
+
+// WithAuthor sets the theme author.
 func (tb *ThemeBuilder) WithAuthor(author string) *ThemeBuilder {
-	tb.theme.Author = author
+	// TODO: Implement author setter
 	return tb
 }
 
-// WithTokens sets the design tokens
+// WithTokens sets the design tokens.
 func (tb *ThemeBuilder) WithTokens(tokens *DesignTokens) *ThemeBuilder {
-	tb.theme.Tokens = tokens
+	// TODO: Implement tokens setter
 	return tb
 }
 
-// WithFormTheme sets the form theme
-func (tb *ThemeBuilder) WithFormTheme(form *FormTheme) *ThemeBuilder {
-	tb.theme.Form = form
-	return tb
-}
-
-// WithFieldTheme sets the field theme
-func (tb *ThemeBuilder) WithFieldTheme(field *FieldTheme) *ThemeBuilder {
-	tb.theme.Field = field
-	return tb
-}
-
-// WithButtonTheme sets the button theme
-func (tb *ThemeBuilder) WithButtonTheme(button *ButtonTheme) *ThemeBuilder {
-	tb.theme.Button = button
-	return tb
-}
-
-// WithColor adds a color override
-func (tb *ThemeBuilder) WithColor(key, value string) *ThemeBuilder {
-	tb.theme.Colors[key] = value
-	return tb
-}
-
-// WithFont adds a font override
-func (tb *ThemeBuilder) WithFont(key, value string) *ThemeBuilder {
-	tb.theme.Fonts[key] = value
-	return tb
-}
-
-// WithDarkMode enables dark mode
+// WithDarkMode configures dark mode settings.
 func (tb *ThemeBuilder) WithDarkMode(config *DarkModeConfig) *ThemeBuilder {
-	tb.theme.DarkMode = config
+	// TODO: Implement dark mode configuration
 	return tb
 }
 
-// WithAccessibility sets accessibility config
+// WithAccessibility configures accessibility settings.
 func (tb *ThemeBuilder) WithAccessibility(config *AccessibilityConfig) *ThemeBuilder {
-	tb.theme.Accessibility = config
+	// TODO: Implement accessibility configuration
 	return tb
 }
 
-// WithCustomCSS adds custom CSS
+// WithMeta sets theme metadata.
+func (tb *ThemeBuilder) WithMeta(meta *ThemeMeta) *ThemeBuilder {
+	// TODO: Implement metadata setter
+	return tb
+}
+
+// WithCustomCSS adds custom CSS to the theme.
 func (tb *ThemeBuilder) WithCustomCSS(css string) *ThemeBuilder {
-	tb.theme.CustomCSS = css
+	// TODO: Implement custom CSS setter
 	return tb
 }
 
-// Build returns the constructed theme
-func (tb *ThemeBuilder) Build() *Theme {
-	return tb.theme
+// WithCustomJS adds custom JavaScript to the theme.
+func (tb *ThemeBuilder) WithCustomJS(js string) *ThemeBuilder {
+	// TODO: Implement custom JS setter
+	return tb
 }
 
-// Register registers the theme to the global registry
-func (tb *ThemeBuilder) Register() error {
-	registry := GetGlobalThemeRegistry()
-	return registry.Register(tb.theme)
+// Build constructs and returns the final theme.
+func (tb *ThemeBuilder) Build() (*Theme, error) {
+	// TODO: Implement theme building with validation
+	return nil, nil
 }
 
-// Predefined themes
-
-// registerDefaultThemes registers default themes
-func registerDefaultThemes(registry *ThemeRegistry) {
-	// Light theme (default)
-	lightTheme := NewTheme("light").
-		WithDescription("Clean light theme").
-		WithAuthor("Schema System").
-		WithTokens(GetDefaultTokens()).
-		Build()
-	registry.Register(lightTheme)
-
-	// Dark theme
-	darkColors := make(map[string]string)
-	darkColors["background"] = "hsl(0, 0%, 9%)"
-	darkColors["text"] = "hsl(0, 0%, 98%)"
-	darkColors["border"] = "hsl(0, 0%, 32%)"
-
-	darkTheme := NewTheme("dark").
-		WithDescription("Dark theme with high contrast").
-		WithAuthor("Schema System").
-		WithColor("background", "hsl(0, 0%, 9%)").
-		WithColor("text", "hsl(0, 0%, 98%)").
-		WithColor("border", "hsl(0, 0%, 32%)").
-		WithDarkMode(&DarkModeConfig{
-			Enabled: true,
-			Default: true,
-		}).
-		Build()
-	registry.Register(darkTheme)
-
-	// Corporate theme
-	corporateTheme := NewTheme("corporate").
-		WithDescription("Professional corporate theme").
-		WithAuthor("Schema System").
-		WithColor("primary", "hsl(210, 100%, 45%)").
-		WithColor("secondary", "hsl(210, 20%, 50%)").
-		Build()
-	registry.Register(corporateTheme)
+// BuildAndRegister builds the theme and registers it with the global registry.
+func (tb *ThemeBuilder) BuildAndRegister() (*Theme, error) {
+	// TODO: Implement build and register
+	return nil, nil
 }
 
-// GetDefaultTheme returns the default light theme
-func GetDefaultTheme() *Theme {
-	registry := GetGlobalThemeRegistry()
-	theme, _ := registry.Get("light")
-	return theme
+// Global theme management instances
+var (
+	globalThemeRegistry     *ThemeRegistry
+	globalThemeManager      *ThemeManager
+	globalTenantManager     *TenantThemeManager
+	themeRegistryOnce       sync.Once
+	themeManagerOnce        sync.Once
+	tenantManagerOnce       sync.Once
+)
+
+// GetGlobalThemeRegistry returns the global theme registry instance.
+func GetGlobalThemeRegistry() *ThemeRegistry {
+	themeRegistryOnce.Do(func() {
+		globalThemeRegistry = NewThemeRegistry()
+		// TODO: Register default themes
+	})
+	return globalThemeRegistry
 }
 
-// Helper functions
-
-// MergeThemes merges two themes (second overrides first)
-func MergeThemes(base, override *Theme) *Theme {
-	if override == nil {
-		return base
-	}
-	if base == nil {
-		return override
-	}
-
-	// Deep copy base
-	data, _ := json.Marshal(base)
-	var merged Theme
-	json.Unmarshal(data, &merged)
-
-	// Merge override properties
-	if override.Tokens != nil {
-		merged.Tokens = MergeTokens(merged.Tokens, override.Tokens)
-	}
-
-	if override.Form != nil {
-		merged.Form = override.Form
-	}
-	if override.Field != nil {
-		merged.Field = override.Field
-	}
-	if override.Button != nil {
-		merged.Button = override.Button
-	}
-	if override.Layout != nil {
-		merged.Layout = override.Layout
-	}
-
-	// Merge color maps
-	for k, v := range override.Colors {
-		merged.Colors[k] = v
-	}
-	for k, v := range override.Fonts {
-		merged.Fonts[k] = v
-	}
-
-	if override.CustomCSS != "" {
-		merged.CustomCSS += "\n" + override.CustomCSS
-	}
-
-	return &merged
+// GetGlobalThemeManager returns the global theme manager instance.
+func GetGlobalThemeManager() *ThemeManager {
+	themeManagerOnce.Do(func() {
+		registry := GetGlobalThemeRegistry()
+		tokenRegistry := GetDefaultRegistry()
+		globalThemeManager = NewThemeManager(registry, tokenRegistry)
+	})
+	return globalThemeManager
 }
 
-// ValidateTheme validates a theme configuration
-func ValidateTheme(theme *Theme) error {
-	if theme.Name == "" {
-		return NewValidationError("theme_name_required", "theme name is required")
-	}
+// GetGlobalTenantManager returns the global tenant theme manager instance.
+func GetGlobalTenantManager() *TenantThemeManager {
+	tenantManagerOnce.Do(func() {
+		themeManager := GetGlobalThemeManager()
+		globalTenantManager = NewTenantThemeManager(themeManager)
+	})
+	return globalTenantManager
+}
 
-	// Validate version if present
-	if theme.Version != "" {
-		// TODO: Validate semver format
-	}
+// Utility functions for theme operations
 
+// ApplyThemeToSchema applies a theme to a schema.
+// This is the integration point with the existing schema system.
+func (s *Schema) ApplyTheme(ctx context.Context, themeID string) error {
+	// TODO: Implement theme application to schema
 	return nil
 }
 
-// ExportTheme exports a theme to JSON
-func ExportTheme(theme *Theme) (string, error) {
-	data, err := json.MarshalIndent(theme, "", "  ")
-	if err != nil {
-		return "", WrapError(err, "theme_export_failed", "failed to export theme")
-	}
-	return string(data), nil
+// ApplyThemeWithOverrides applies a theme with custom overrides to a schema.
+func (s *Schema) ApplyThemeWithOverrides(ctx context.Context, themeID string, overrides *ThemeOverrides) error {
+	// TODO: Implement theme application with overrides
+	return nil
 }
 
-// ImportTheme imports a theme from JSON
-func ImportTheme(jsonData string) (*Theme, error) {
+// GetThemeFromContext extracts theme information from the request context.
+func GetThemeFromContext(ctx context.Context) (*Theme, error) {
+	// TODO: Implement context-based theme resolution
+	return nil, nil
+}
+
+// WithThemeContext adds theme information to the context.
+func WithThemeContext(ctx context.Context, themeID string) context.Context {
+	// TODO: Implement context enhancement with theme info
+	return ctx
+}
+
+// WithTenantContext adds tenant information to the context.
+func WithTenantContext(ctx context.Context, tenantID string) context.Context {
+	// TODO: Implement context enhancement with tenant info
+	return ctx
+}
+
+// Theme helper functions
+
+// MergeThemes merges two themes, with the override theme taking precedence.
+func MergeThemes(base, override *Theme) (*Theme, error) {
+	// TODO: Implement deep theme merging
+	return nil, nil
+}
+
+// ValidateTheme validates a theme configuration for correctness and completeness.
+func ValidateTheme(theme *Theme) error {
+	// TODO: Implement comprehensive theme validation
+	return nil
+}
+
+// ExportTheme exports a theme to JSON format.
+func ExportTheme(theme *Theme) ([]byte, error) {
+	// TODO: Implement theme export with pretty formatting
+	return json.MarshalIndent(theme, "", "  ")
+}
+
+// ImportTheme imports a theme from JSON format.
+func ImportTheme(data []byte) (*Theme, error) {
+	// TODO: Implement theme import with validation
 	var theme Theme
-	if err := json.Unmarshal([]byte(jsonData), &theme); err != nil {
-		return nil, WrapError(err, "theme_import_failed", "failed to import theme")
+	if err := json.Unmarshal(data, &theme); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal theme: %w", err)
 	}
-
-	if err := ValidateTheme(&theme); err != nil {
-		return nil, err
-	}
-
 	return &theme, nil
+}
+
+// CreateDefaultThemes creates and registers the default system themes.
+func CreateDefaultThemes() error {
+	// TODO: Implement default theme creation and registration
+	return nil
+}
+
+// GetDefaultTheme returns the default light theme.
+func GetDefaultTheme() (*Theme, error) {
+	// TODO: Implement default theme retrieval
+	return nil, nil
+}
+
+// GetDefaultDarkTheme returns the default dark theme.
+func GetDefaultDarkTheme() (*Theme, error) {
+	// TODO: Implement default dark theme retrieval
+	return nil, nil
 }
