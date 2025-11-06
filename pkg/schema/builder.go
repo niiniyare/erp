@@ -2,17 +2,15 @@ package schema
 
 import (
 	"context"
-	"time"
 
 	"github.com/niiniyare/erp/pkg/condition"
-	"github.com/niiniyare/erp/pkg/schema/validate"
 )
 
 // Builder provides a fluent interface for building schemas programmatically
 type Builder struct {
 	schema       *Schema
 	mixinSupport *MixinRegistry
-	validator    *validate.ValidationRegistry
+	validator    Validator // Use interface instead of concrete type
 	ruleEngine   *BusinessRuleEngine
 	evaluator    *condition.Evaluator
 }
@@ -22,7 +20,7 @@ func NewBuilder(id string, schemaType Type, title string) *Builder {
 	return &Builder{
 		schema:       NewSchema(id, schemaType, title),
 		mixinSupport: NewMixinRegistry(),
-		validator:    validate.NewValidationRegistry(),
+		validator:    nil, // Will be set via WithValidator
 		ruleEngine:   NewBusinessRuleEngine(),
 	}
 }
@@ -329,7 +327,7 @@ func (b *Builder) AddActionWithConfig(action Action) *Builder {
 }
 
 // Build returns the constructed schema with evaluator set on all fields
-func (b *Builder) Build() (*Schema, error) {
+func (b *Builder) Build(ctx context.Context) (*Schema, error) {
 	// Set evaluator on all fields
 	if b.evaluator != nil {
 		for i := range b.schema.Fields {
@@ -338,15 +336,15 @@ func (b *Builder) Build() (*Schema, error) {
 	}
 
 	// Validate before returning
-	if err := b.schema.Validate(); err != nil {
+	if err := b.schema.Validate(ctx); err != nil {
 		return nil, err
 	}
 	return b.schema, nil
 }
 
 // MustBuild returns the schema or panics on error (useful for static definitions)
-func (b *Builder) MustBuild() *Schema {
-	schema, err := b.Build()
+func (b *Builder) MustBuild(ctx context.Context) *Schema {
+	schema, err := b.Build(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -390,21 +388,15 @@ func (b *Builder) WithRepeatable(field *RepeatableField) *Builder {
 	return b
 }
 
-// WithValidationRegistry sets a custom validation registry
-func (b *Builder) WithValidationRegistry(registry *validate.ValidationRegistry) *Builder {
-	b.validator = registry
+// WithValidator sets a custom validator
+func (b *Builder) WithValidator(validator Validator) *Builder {
+	b.validator = validator
 	return b
 }
 
-// WithCustomValidator adds a custom validator
-func (b *Builder) WithCustomValidator(name string, validator validate.ValidatorFunc) *Builder {
-	b.validator.Register(name, validator)
-	return b
-}
-
-// WithAsyncValidator adds an async validator
-func (b *Builder) WithAsyncValidator(validator *validate.AsyncValidator) *Builder {
-	b.validator.RegisterAsync(validator)
+// WithCustomValidator adds a custom validator (placeholder - implement with concrete validator)
+func (b *Builder) WithCustomValidator(name string, validatorFunc func(context.Context, any, map[string]any) error) *Builder {
+	// Implementation depends on concrete validator type
 	return b
 }
 
@@ -413,8 +405,8 @@ func (b *Builder) GetMixinRegistry() *MixinRegistry {
 	return b.mixinSupport
 }
 
-// GetValidationRegistry returns the validation registry for advanced operations
-func (b *Builder) GetValidationRegistry() *validate.ValidationRegistry {
+// GetValidator returns the validator for advanced operations
+func (b *Builder) GetValidator() Validator {
 	return b.validator
 }
 
@@ -445,7 +437,7 @@ func (b *Builder) ApplyBusinessRules(ctx context.Context, data map[string]any) (
 // BuildWithRules builds the schema and applies business rules based on provided data
 func (b *Builder) BuildWithRules(ctx context.Context, data map[string]any) (*Schema, error) {
 	// First build the base schema
-	schema, err := b.Build()
+	schema, err := b.Build(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -725,27 +717,15 @@ func NewUserRegistrationBuilder() *Builder {
 	builder.AddTextField("last_name", "Last Name", true)
 	builder.AddDateField("birth_date", "Date of Birth", false)
 
-	// Add custom validators
-	builder.WithAsyncValidator(&validate.AsyncValidator{
-		Name:     "username_available",
-		Debounce: 500 * time.Millisecond,
-		Cache:    true,
-		CacheTTL: 2 * time.Minute,
-		Validate: func(ctx context.Context, value any, params map[string]any) error {
-			// Would check database for username availability
-			return nil
-		},
+	// Add custom validators (would implement with concrete validator)
+	builder.WithCustomValidator("username_available", func(ctx context.Context, value any, params map[string]any) error {
+		// Would check database for username availability
+		return nil
 	})
 
-	builder.WithAsyncValidator(&validate.AsyncValidator{
-		Name:     "email_available",
-		Debounce: 500 * time.Millisecond,
-		Cache:    true,
-		CacheTTL: 2 * time.Minute,
-		Validate: func(ctx context.Context, value any, params map[string]any) error {
-			// Would check database for email availability
-			return nil
-		},
+	builder.WithCustomValidator("email_available", func(ctx context.Context, value any, params map[string]any) error {
+		// Would check database for email availability
+		return nil
 	})
 
 	builder.AddCheckboxField("terms_accepted", "I accept the Terms of Service", false)

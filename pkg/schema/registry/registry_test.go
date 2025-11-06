@@ -260,17 +260,17 @@ func TestRegistry_List(t *testing.T) {
 	ctx := context.Background()
 
 	// Test empty list
-	ids, err := registry.List(ctx)
+	schemas, err := registry.List(ctx, map[string]any{})
 	if err != nil {
 		t.Errorf("List() failed: %v", err)
 	}
 
-	if len(ids) != 0 {
-		t.Errorf("List() should return empty list, got %d items", len(ids))
+	if len(schemas) != 0 {
+		t.Errorf("List() should return empty list, got %d items", len(schemas))
 	}
 
 	// Add some schemas
-	schemas := []*schema.Schema{
+	testSchemas := []*schema.Schema{
 		{
 			ID:          "form1",
 			Type:        "form",
@@ -289,7 +289,7 @@ func TestRegistry_List(t *testing.T) {
 		},
 	}
 
-	for _, s := range schemas {
+	for _, s := range testSchemas {
 		err := registry.Set(ctx, s.ID, s)
 		if err != nil {
 			t.Fatalf("Set() failed for %s: %v", s.ID, err)
@@ -297,19 +297,19 @@ func TestRegistry_List(t *testing.T) {
 	}
 
 	// Test list with items
-	ids, err = registry.List(ctx)
+	schemas, err = registry.List(ctx, map[string]any{})
 	if err != nil {
 		t.Errorf("List() failed: %v", err)
 	}
 
-	if len(ids) != 2 {
-		t.Errorf("List() should return 2 items, got %d", len(ids))
+	if len(schemas) != 2 {
+		t.Errorf("List() should return 2 items, got %d", len(schemas))
 	}
 
 	// Check IDs are present
 	found := make(map[string]bool)
-	for _, id := range ids {
-		found[id] = true
+	for _, s := range schemas {
+		found[s.ID] = true
 	}
 
 	if !found["form1"] || !found["form2"] {

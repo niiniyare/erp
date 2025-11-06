@@ -1141,8 +1141,8 @@ func (s *FieldTestSuite) TestFieldConfigGetters() {
 	// Test GetTextConfig with proper return values
 	s.field.Type = FieldText
 	s.field.Config = map[string]any{
-		"maxLength":    100,
-		"minLength":    5,
+		"maxLength":   100,
+		"minLength":   5,
 		"placeholder": "Enter text",
 	}
 	textConfig, err := s.field.GetTextConfig()
@@ -1162,9 +1162,9 @@ func (s *FieldTestSuite) TestFieldConfigGetters() {
 	// Test GetFileConfig with proper return values
 	s.field.Type = FieldFile
 	s.field.Config = map[string]any{
-		"maxSize":     1024000,
-		"accept":      []string{".pdf", ".doc"},
-		"multiple":    true,
+		"maxSize":  1024000,
+		"accept":   []string{".pdf", ".doc"},
+		"multiple": true,
 	}
 	fileConfig, err := s.field.GetFileConfig()
 	s.Require().NoError(err)
@@ -1173,7 +1173,7 @@ func (s *FieldTestSuite) TestFieldConfigGetters() {
 	// Test GetRelationConfig with proper return values
 	s.field.Type = FieldRelation
 	s.field.Config = map[string]any{
-		"entity":      "users",
+		"entity":       "users",
 		"displayField": "name",
 		"valueField":   "id",
 	}
@@ -1285,13 +1285,13 @@ func (s *FieldTestSuite) TestFieldGetOptionLabel() {
 
 func (s *FieldTestSuite) TestFieldBasicProperties() {
 	originalField := Field{
-		Name:        "original",
-		Type:        FieldText,
-		Label:       "Original Field",
-		Required:    true,
-		Config:      map[string]any{"key": "value"},
-		Options:     []Option{{Value: "1", Label: "Option 1"}},
-		Validation:  &FieldValidation{MinLength: &[]int{5}[0]},
+		Name:       "original",
+		Type:       FieldText,
+		Label:      "Original Field",
+		Required:   true,
+		Config:     map[string]any{"key": "value"},
+		Options:    []Option{{Value: "1", Label: "Option 1"}},
+		Validation: &FieldValidation{MinLength: &[]int{5}[0]},
 	}
 
 	// Test that field properties are set correctly

@@ -100,14 +100,14 @@ type AccessibilityConfig struct {
 
 // ThemeMeta contains theme metadata and organizational information.
 type ThemeMeta struct {
-	Tags       []string          `json:"tags,omitempty"`
-	License    string            `json:"license,omitempty"`
-	Repository string            `json:"repository,omitempty" validate:"url"`
-	Homepage   string            `json:"homepage,omitempty" validate:"url"`
-	Preview    string            `json:"preview,omitempty" validate:"url"` // Preview image URL
-	CustomData map[string]interface{} `json:"customData,omitempty"`
-	CreatedAt  time.Time         `json:"createdAt,omitempty"`
-	UpdatedAt  time.Time         `json:"updatedAt,omitempty"`
+	Tags       []string               `json:"tags,omitempty"`
+	License    string                 `json:"license,omitempty"`
+	Repository string                 `json:"repository,omitempty" validate:"url"`
+	Homepage   string                 `json:"homepage,omitempty" validate:"url"`
+	Preview    string                 `json:"preview,omitempty" validate:"url"` // Preview image URL
+	CustomData map[string]any `json:"customData,omitempty"`
+	CreatedAt  time.Time              `json:"createdAt,omitempty"`
+	UpdatedAt  time.Time              `json:"updatedAt,omitempty"`
 }
 
 // ThemeOverrides represents customizations that can be applied to a base theme.
@@ -117,7 +117,7 @@ type ThemeOverrides struct {
 	TokenOverrides map[string]string `json:"tokenOverrides,omitempty"`
 
 	// Component customizations
-	ComponentOverrides map[string]interface{} `json:"componentOverrides,omitempty"`
+	ComponentOverrides map[string]any `json:"componentOverrides,omitempty"`
 
 	// Custom CSS to inject
 	CustomCSS string `json:"customCSS,omitempty"`
@@ -132,13 +132,13 @@ type ThemeOverrides struct {
 // TenantConfig represents tenant-specific theming configuration.
 // Enables multi-tenant theme customization with tenant isolation.
 type TenantConfig struct {
-	TenantID    string           `json:"tenantId" validate:"required"`
-	BaseThemeID string           `json:"baseThemeId" validate:"required"`
-	Overrides   *ThemeOverrides  `json:"overrides,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	Active      bool             `json:"active"`
-	CreatedAt   time.Time        `json:"createdAt"`
-	UpdatedAt   time.Time        `json:"updatedAt"`
+	TenantID    string                 `json:"tenantId" validate:"required"`
+	BaseThemeID string                 `json:"baseThemeId" validate:"required"`
+	Overrides   *ThemeOverrides        `json:"overrides,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
+	Active      bool                   `json:"active"`
+	CreatedAt   time.Time              `json:"createdAt"`
+	UpdatedAt   time.Time              `json:"updatedAt"`
 }
 
 // ThemeCacheEntry represents a cached theme with timestamp
@@ -149,11 +149,11 @@ type ThemeCacheEntry struct {
 
 // ThemeCache implements a bounded LRU cache with TTL
 type ThemeCache struct {
-	entries   map[string]*ThemeCacheEntry
-	order     []string // LRU order (most recent first)
-	maxSize   int
-	ttl       time.Duration
-	mu        sync.RWMutex
+	entries map[string]*ThemeCacheEntry
+	order   []string // LRU order (most recent first)
+	maxSize int
+	ttl     time.Duration
+	mu      sync.RWMutex
 }
 
 // NewThemeCache creates a new LRU cache with TTL
@@ -170,18 +170,18 @@ func NewThemeCache(maxSize int, ttl time.Duration) *ThemeCache {
 func (tc *ThemeCache) Get(key string) (*Theme, bool) {
 	tc.mu.Lock()
 	defer tc.mu.Unlock()
-	
+
 	entry, exists := tc.entries[key]
 	if !exists {
 		return nil, false
 	}
-	
+
 	// Check TTL
 	if time.Since(entry.timestamp) > tc.ttl {
 		tc.removeUnsafe(key)
 		return nil, false
 	}
-	
+
 	// Move to front (most recently used)
 	tc.moveToFrontUnsafe(key)
 	return entry.theme, true
@@ -191,7 +191,7 @@ func (tc *ThemeCache) Get(key string) (*Theme, bool) {
 func (tc *ThemeCache) Set(key string, theme *Theme) {
 	tc.mu.Lock()
 	defer tc.mu.Unlock()
-	
+
 	// If key exists, update and move to front
 	if _, exists := tc.entries[key]; exists {
 		tc.entries[key] = &ThemeCacheEntry{
@@ -201,13 +201,13 @@ func (tc *ThemeCache) Set(key string, theme *Theme) {
 		tc.moveToFrontUnsafe(key)
 		return
 	}
-	
+
 	// If at capacity, remove LRU item
 	if len(tc.entries) >= tc.maxSize {
 		lruKey := tc.order[len(tc.order)-1]
 		tc.removeUnsafe(lruKey)
 	}
-	
+
 	// Add new entry
 	tc.entries[key] = &ThemeCacheEntry{
 		theme:     theme,
@@ -220,7 +220,7 @@ func (tc *ThemeCache) Set(key string, theme *Theme) {
 func (tc *ThemeCache) Clear() {
 	tc.mu.Lock()
 	defer tc.mu.Unlock()
-	
+
 	tc.entries = make(map[string]*ThemeCacheEntry)
 	tc.order = tc.order[:0]
 }
@@ -228,7 +228,7 @@ func (tc *ThemeCache) Clear() {
 // removeUnsafe removes an entry (must hold lock)
 func (tc *ThemeCache) removeUnsafe(key string) {
 	delete(tc.entries, key)
-	
+
 	// Remove from order slice
 	for i, k := range tc.order {
 		if k == key {
@@ -247,7 +247,7 @@ func (tc *ThemeCache) moveToFrontUnsafe(key string) {
 			break
 		}
 	}
-	
+
 	// Add to front
 	tc.order = append([]string{key}, tc.order...)
 }
@@ -269,7 +269,7 @@ func NewThemeManager(themeRegistry *ThemeRegistry, tokenManager *TokenRegistry) 
 	if tokenManager == nil {
 		tokenManager = NewTokenRegistry()
 	}
-	
+
 	return &ThemeManager{
 		registry:     themeRegistry,
 		tokenManager: tokenManager,
@@ -280,135 +280,138 @@ func NewThemeManager(themeRegistry *ThemeRegistry, tokenManager *TokenRegistry) 
 // RegisterTheme registers a new theme in the manager.
 //
 // Example:
-//   manager := schema.GetGlobalThemeManager()
-//   
-//   // Create and register a theme
-//   theme, err := schema.NewTheme("Company Theme").
-//       WithID("company-v1").
-//       WithTokens(schema.GetDefaultTokens()).
-//       Build()
-//   if err != nil {
-//       return err
-//   }
-//   
-//   // Register the theme
-//   err = manager.RegisterTheme(theme)
-//   if err != nil {
-//       return fmt.Errorf("failed to register theme: %w", err)
-//   }
-//   
-//   fmt.Printf("Theme %s registered successfully\n", theme.ID)
+//
+//	manager := schema.GetGlobalThemeManager()
+//
+//	// Create and register a theme
+//	theme, err := schema.NewTheme("Company Theme").
+//	    WithID("company-v1").
+//	    WithTokens(schema.GetDefaultTokens()).
+//	    Build()
+//	if err != nil {
+//	    return err
+//	}
+//
+//	// Register the theme
+//	err = manager.RegisterTheme(theme)
+//	if err != nil {
+//	    return fmt.Errorf("failed to register theme: %w", err)
+//	}
+//
+//	fmt.Printf("Theme %s registered successfully\n", theme.ID)
 func (tm *ThemeManager) RegisterTheme(theme *Theme) error {
 	if err := tm.ValidateTheme(theme); err != nil {
 		return WrapError(err, "theme_validation_failed", "theme validation failed")
 	}
-	
+
 	return tm.registry.Register(theme)
 }
 
 // GetTheme retrieves a theme by ID with caching.
 //
 // Example:
-//   manager := schema.GetGlobalThemeManager()
-//   ctx := context.Background()
-//   
-//   // Get a theme by ID
-//   theme, err := manager.GetTheme(ctx, "company-v1")
-//   if err != nil {
-//       if schema.IsNotFoundError(err) {
-//           fmt.Println("Theme not found")
-//           return nil
-//       }
-//       return fmt.Errorf("failed to get theme: %w", err)
-//   }
-//   
-//   fmt.Printf("Retrieved theme: %s (%s)\n", theme.Name, theme.Version)
-//   
-//   // List all available themes
-//   themes, err := manager.ListThemes(ctx)
-//   if err != nil {
-//       return err
-//   }
-//   
-//   for _, t := range themes {
-//       fmt.Printf("- %s: %s\n", t.ID, t.Name)
-//   }
+//
+//	manager := schema.GetGlobalThemeManager()
+//	ctx := context.Background()
+//
+//	// Get a theme by ID
+//	theme, err := manager.GetTheme(ctx, "company-v1")
+//	if err != nil {
+//	    if schema.IsNotFoundError(err) {
+//	        fmt.Println("Theme not found")
+//	        return nil
+//	    }
+//	    return fmt.Errorf("failed to get theme: %w", err)
+//	}
+//
+//	fmt.Printf("Retrieved theme: %s (%s)\n", theme.Name, theme.Version)
+//
+//	// List all available themes
+//	themes, err := manager.ListThemes(ctx)
+//	if err != nil {
+//	    return err
+//	}
+//
+//	for _, t := range themes {
+//	    fmt.Printf("- %s: %s\n", t.ID, t.Name)
+//	}
 func (tm *ThemeManager) GetTheme(ctx context.Context, themeID string) (*Theme, error) {
 	// Check cache first
 	if cached, exists := tm.cache.Get(themeID); exists {
 		return cached, nil
 	}
-	
+
 	// Get from registry
 	theme, err := tm.registry.Get(themeID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Cache the theme
 	tm.cache.Set(themeID, theme)
-	
+
 	return theme, nil
 }
 
 // GetThemeWithOverrides applies overrides to a base theme and returns the result.
 //
 // Example:
-//   manager := schema.GetGlobalThemeManager()
-//   ctx := context.Background()
-//   
-//   // Create tenant-specific overrides
-//   overrides := &schema.ThemeOverrides{
-//       TokenOverrides: map[string]string{
-//           "colors.primary.500":   "#f59e0b", // Custom brand color
-//           "spacing.base":         "1rem",    // Custom spacing
-//           "typography.family":    "'Custom Font', sans-serif",
-//       },
-//       ComponentOverrides: map[string]interface{}{
-//           "button.borderRadius": "8px",
-//           "card.shadow":        "0 4px 12px rgba(0,0,0,0.15)",
-//       },
-//       CustomCSS: `
-//           .header { background: linear-gradient(135deg, #f59e0b, #d97706); }
-//           .logo { font-family: 'Custom Font', sans-serif; }
-//       `,
-//   }
-//   
-//   // Apply overrides to base theme
-//   customTheme, err := manager.GetThemeWithOverrides(ctx, "base-theme", overrides)
-//   if err != nil {
-//       return fmt.Errorf("failed to apply overrides: %w", err)
-//   }
-//   
-//   fmt.Printf("Custom theme created with %d token overrides\n", len(overrides.TokenOverrides))
+//
+//	manager := schema.GetGlobalThemeManager()
+//	ctx := context.Background()
+//
+//	// Create tenant-specific overrides
+//	overrides := &schema.ThemeOverrides{
+//	    TokenOverrides: map[string]string{
+//	        "colors.primary.500":   "#f59e0b", // Custom brand color
+//	        "spacing.base":         "1rem",    // Custom spacing
+//	        "typography.family":    "'Custom Font', sans-serif",
+//	    },
+//	    ComponentOverrides: map[string]any{
+//	        "button.borderRadius": "8px",
+//	        "card.shadow":        "0 4px 12px rgba(0,0,0,0.15)",
+//	    },
+//	    CustomCSS: `
+//	        .header { background: linear-gradient(135deg, #f59e0b, #d97706); }
+//	        .logo { font-family: 'Custom Font', sans-serif; }
+//	    `,
+//	}
+//
+//	// Apply overrides to base theme
+//	customTheme, err := manager.GetThemeWithOverrides(ctx, "base-theme", overrides)
+//	if err != nil {
+//	    return fmt.Errorf("failed to apply overrides: %w", err)
+//	}
+//
+//	fmt.Printf("Custom theme created with %d token overrides\n", len(overrides.TokenOverrides))
 func (tm *ThemeManager) GetThemeWithOverrides(ctx context.Context, themeID string, overrides *ThemeOverrides) (*Theme, error) {
 	// Get base theme
 	baseTheme, err := tm.GetTheme(ctx, themeID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	if overrides == nil {
 		return baseTheme, nil
 	}
-	
+
 	// Create a deep copy of the base theme to avoid mutations
 	customizedTheme, err := deepCopyTheme(baseTheme)
 	if err != nil {
 		return nil, WrapError(err, "theme_customization_failed", "failed to create customized theme copy")
 	}
-	
+
 	// Update identity for customized theme
 	customizedTheme.ID = baseTheme.ID + "_customized"
 	customizedTheme.Name = baseTheme.Name + " (Customized)"
 	customizedTheme.createdAt = time.Now()
 	customizedTheme.updatedAt = time.Now()
-	
+
 	// Apply accessibility overrides
 	if overrides.AccessibilityOverrides != nil {
 		customizedTheme.Accessibility = overrides.AccessibilityOverrides
 	}
-	
+
 	// Apply custom CSS
 	if overrides.CustomCSS != "" {
 		if customizedTheme.CustomCSS != "" {
@@ -417,7 +420,7 @@ func (tm *ThemeManager) GetThemeWithOverrides(ctx context.Context, themeID strin
 			customizedTheme.CustomCSS = overrides.CustomCSS
 		}
 	}
-	
+
 	// Apply token overrides with deep modification
 	if overrides.TokenOverrides != nil && len(overrides.TokenOverrides) > 0 {
 		err := tm.applyTokenOverrides(customizedTheme, overrides.TokenOverrides)
@@ -425,7 +428,7 @@ func (tm *ThemeManager) GetThemeWithOverrides(ctx context.Context, themeID strin
 			return nil, WrapError(err, "token_override_failed", "failed to apply token overrides")
 		}
 	}
-	
+
 	// Apply dark mode overrides
 	if overrides.DarkModeOverrides != nil && len(overrides.DarkModeOverrides) > 0 {
 		err := tm.applyDarkModeOverrides(customizedTheme, overrides.DarkModeOverrides)
@@ -433,7 +436,7 @@ func (tm *ThemeManager) GetThemeWithOverrides(ctx context.Context, themeID strin
 			return nil, WrapError(err, "dark_mode_override_failed", "failed to apply dark mode overrides")
 		}
 	}
-	
+
 	return customizedTheme, nil
 }
 
@@ -442,14 +445,14 @@ func (tm *ThemeManager) applyTokenOverrides(theme *Theme, overrides map[string]s
 	if theme.Tokens == nil {
 		return NewValidationError("tokens_nil", "theme tokens are nil")
 	}
-	
+
 	for path, value := range overrides {
 		err := tm.setTokenValue(theme.Tokens, path, value)
 		if err != nil {
 			return WrapError(err, "token_override_failed", "failed to override token: "+path)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -462,7 +465,7 @@ func (tm *ThemeManager) applyDarkModeOverrides(theme *Theme, overrides map[strin
 			Strategy: "class",
 		}
 	}
-	
+
 	// Ensure dark tokens exist
 	if theme.DarkMode.DarkTokens == nil {
 		// Create a copy of the base tokens for dark mode customization
@@ -472,7 +475,7 @@ func (tm *ThemeManager) applyDarkModeOverrides(theme *Theme, overrides map[strin
 		}
 		theme.DarkMode.DarkTokens = darkTokens
 	}
-	
+
 	// Apply overrides to dark tokens
 	for path, value := range overrides {
 		err := tm.setTokenValue(theme.DarkMode.DarkTokens, path, value)
@@ -480,7 +483,7 @@ func (tm *ThemeManager) applyDarkModeOverrides(theme *Theme, overrides map[strin
 			return WrapError(err, "dark_mode_override_failed", "failed to override dark mode token: "+path)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -492,17 +495,17 @@ func (tm *ThemeManager) setTokenValue(tokens *DesignTokens, path, value string) 
 	if len(parts) < 2 {
 		return NewValidationError("invalid_token_path", "token path must have at least two parts: "+path)
 	}
-	
+
 	// Use reflection to navigate and set the token value
 	current := reflect.ValueOf(tokens).Elem()
-	
+
 	// Navigate to the target field
 	for _, part := range parts[:len(parts)-1] {
 		field := findStructFieldByName(current, part)
 		if !field.IsValid() {
 			return NewValidationError("token_field_not_found", "token field not found: "+part+" in path "+path)
 		}
-		
+
 		// Handle pointer fields
 		if field.Kind() == reflect.Ptr {
 			if field.IsNil() {
@@ -514,18 +517,18 @@ func (tm *ThemeManager) setTokenValue(tokens *DesignTokens, path, value string) 
 			current = field
 		}
 	}
-	
+
 	// Set the final value
 	finalPart := parts[len(parts)-1]
 	field := findStructFieldByName(current, finalPart)
 	if !field.IsValid() {
 		return NewValidationError("token_field_not_found", "final token field not found: "+finalPart+" in path "+path)
 	}
-	
+
 	if !field.CanSet() {
 		return NewValidationError("token_field_not_settable", "token field is not settable: "+finalPart)
 	}
-	
+
 	// Set the value based on field type
 	if field.Kind() == reflect.String {
 		field.SetString(value)
@@ -534,28 +537,28 @@ func (tm *ThemeManager) setTokenValue(tokens *DesignTokens, path, value string) 
 	} else {
 		return NewValidationError("unsupported_token_type", "unsupported token field type for: "+finalPart)
 	}
-	
+
 	return nil
 }
 
 // findStructFieldByName finds a struct field by name (case-insensitive with JSON tag support)
 func findStructFieldByName(structValue reflect.Value, fieldName string) reflect.Value {
 	structType := structValue.Type()
-	
+
 	// First try exact match
 	if field := structValue.FieldByName(fieldName); field.IsValid() {
 		return field
 	}
-	
+
 	// Then try case-insensitive match and JSON tags
 	for i := 0; i < structValue.NumField(); i++ {
 		field := structType.Field(i)
-		
+
 		// Check field name (case-insensitive)
 		if strings.EqualFold(field.Name, fieldName) {
 			return structValue.Field(i)
 		}
-		
+
 		// Check JSON tag
 		if jsonTag := field.Tag.Get("json"); jsonTag != "" {
 			tagParts := strings.Split(jsonTag, ",")
@@ -564,7 +567,7 @@ func findStructFieldByName(structValue reflect.Value, fieldName string) reflect.
 			}
 		}
 	}
-	
+
 	return reflect.Value{} // Invalid value
 }
 
@@ -574,13 +577,13 @@ func deepCopyTokens(source *DesignTokens) (*DesignTokens, error) {
 	if err != nil {
 		return nil, WrapError(err, "tokens_marshal_failed", "failed to marshal tokens for deep copy")
 	}
-	
+
 	var copied DesignTokens
 	err = json.Unmarshal(data, &copied)
 	if err != nil {
 		return nil, WrapError(err, "tokens_unmarshal_failed", "failed to unmarshal tokens for deep copy")
 	}
-	
+
 	return &copied, nil
 }
 
@@ -589,17 +592,17 @@ func (tm *ThemeManager) ResolveTheme(ctx context.Context, theme *Theme) (*Theme,
 	if theme == nil {
 		return nil, NewValidationError("theme_nil", "theme is nil")
 	}
-	
+
 	// For now, delegate to token manager (full resolution would be complex)
 	resolvedTokens, err := tm.tokenManager.ResolveAllTokens(ctx)
 	if err != nil {
 		return nil, WrapError(err, "token_resolution_failed", "failed to resolve tokens")
 	}
-	
+
 	// Create a resolved copy of the theme
 	resolvedTheme := *theme
 	resolvedTheme.Tokens = resolvedTokens
-	
+
 	return &resolvedTheme, nil
 }
 
@@ -618,19 +621,19 @@ func (tm *ThemeManager) ValidateTheme(theme *Theme) error {
 	if theme == nil {
 		return NewValidationError("theme_nil", "theme is nil")
 	}
-	
+
 	if theme.ID == "" {
 		return NewValidationError("theme_id_required", "theme ID is required")
 	}
-	
+
 	if theme.Name == "" {
 		return NewValidationError("theme_name_required", "theme name is required")
 	}
-	
+
 	if theme.Tokens == nil {
 		return NewValidationError("theme_tokens_required", "theme tokens are required")
 	}
-	
+
 	// Validate tokens using the token registry
 	return tm.tokenManager.resolver.ValidateReferences(theme.Tokens)
 }
@@ -648,7 +651,7 @@ func NewTenantThemeManager(themeManager *ThemeManager) *TenantThemeManager {
 	if themeManager == nil {
 		themeManager = GetGlobalThemeManager()
 	}
-	
+
 	return &TenantThemeManager{
 		themeManager:  themeManager,
 		tenantConfigs: make(map[string]*TenantConfig),
@@ -660,20 +663,20 @@ func (ttm *TenantThemeManager) SetTenantTheme(ctx context.Context, tenantID, the
 	if tenantID == "" {
 		return NewValidationError("tenant_id_required", "tenant ID is required")
 	}
-	
+
 	if themeID == "" {
 		return NewValidationError("theme_id_required", "theme ID is required")
 	}
-	
+
 	// Verify theme exists
 	_, err := ttm.themeManager.GetTheme(ctx, themeID)
 	if err != nil {
 		return WrapError(err, "theme_not_found", "base theme not found")
 	}
-	
+
 	ttm.mu.Lock()
 	defer ttm.mu.Unlock()
-	
+
 	// Create or update tenant config
 	config := &TenantConfig{
 		TenantID:    tenantID,
@@ -683,12 +686,12 @@ func (ttm *TenantThemeManager) SetTenantTheme(ctx context.Context, tenantID, the
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
 	}
-	
+
 	// If config exists, preserve creation time
 	if existing, exists := ttm.tenantConfigs[tenantID]; exists {
 		config.CreatedAt = existing.CreatedAt
 	}
-	
+
 	ttm.tenantConfigs[tenantID] = config
 	return nil
 }
@@ -698,16 +701,16 @@ func (ttm *TenantThemeManager) GetTenantTheme(ctx context.Context, tenantID stri
 	if tenantID == "" {
 		return nil, NewValidationError("tenant_id_required", "tenant ID is required")
 	}
-	
+
 	ttm.mu.RLock()
 	config, exists := ttm.tenantConfigs[tenantID]
 	ttm.mu.RUnlock()
-	
+
 	if !exists || !config.Active {
 		// Return default theme for tenant without configuration
 		return ttm.themeManager.GetTheme(ctx, "default")
 	}
-	
+
 	// Get base theme and apply overrides
 	return ttm.themeManager.GetThemeWithOverrides(ctx, config.BaseThemeID, config.Overrides)
 }
@@ -718,16 +721,16 @@ func (ttm *TenantThemeManager) ResolveTenantContext(ctx context.Context) (string
 	if tenantID, ok := ctx.Value("tenantID").(string); ok && tenantID != "" {
 		return tenantID, nil
 	}
-	
+
 	// Try alternative context keys
 	if tenantID, ok := ctx.Value("tenant_id").(string); ok && tenantID != "" {
 		return tenantID, nil
 	}
-	
+
 	if tenantID, ok := ctx.Value("tenant").(string); ok && tenantID != "" {
 		return tenantID, nil
 	}
-	
+
 	return "", NewValidationError("tenant_context_missing", "tenant context not found in request")
 }
 
@@ -743,12 +746,12 @@ func (ttm *TenantThemeManager) InvalidateTenantCache(tenantID string) {
 func (ttm *TenantThemeManager) ListTenantConfigs(ctx context.Context) ([]*TenantConfig, error) {
 	ttm.mu.RLock()
 	defer ttm.mu.RUnlock()
-	
+
 	configs := make([]*TenantConfig, 0, len(ttm.tenantConfigs))
 	for _, config := range ttm.tenantConfigs {
 		configs = append(configs, config)
 	}
-	
+
 	return configs, nil
 }
 
@@ -770,23 +773,23 @@ func (tr *ThemeRegistry) Register(theme *Theme) error {
 	if theme == nil {
 		return NewValidationError("theme_nil", "theme cannot be nil")
 	}
-	
+
 	if theme.ID == "" {
 		return NewValidationError("theme_id_required", "theme ID is required")
 	}
-	
+
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
-	
+
 	// Check if theme already exists
 	if _, exists := tr.themes[theme.ID]; exists {
 		return NewConflictError("theme", "theme with ID already exists: "+theme.ID)
 	}
-	
+
 	// Set creation timestamp
 	theme.createdAt = time.Now()
 	theme.updatedAt = time.Now()
-	
+
 	tr.themes[theme.ID] = theme
 	return nil
 }
@@ -796,15 +799,15 @@ func (tr *ThemeRegistry) Get(themeID string) (*Theme, error) {
 	if themeID == "" {
 		return nil, NewValidationError("theme_id_required", "theme ID is required")
 	}
-	
+
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()
-	
+
 	theme, exists := tr.themes[themeID]
 	if !exists {
 		return nil, NewNotFoundError("theme", "theme not found: "+themeID)
 	}
-	
+
 	return theme, nil
 }
 
@@ -813,22 +816,22 @@ func (tr *ThemeRegistry) Update(theme *Theme) error {
 	if theme == nil {
 		return NewValidationError("theme_nil", "theme cannot be nil")
 	}
-	
+
 	if theme.ID == "" {
 		return NewValidationError("theme_id_required", "theme ID is required")
 	}
-	
+
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
-	
+
 	// Check if theme exists
 	if _, exists := tr.themes[theme.ID]; !exists {
 		return NewNotFoundError("theme", "theme not found: "+theme.ID)
 	}
-	
+
 	// Update timestamp
 	theme.updatedAt = time.Now()
-	
+
 	tr.themes[theme.ID] = theme
 	return nil
 }
@@ -838,15 +841,15 @@ func (tr *ThemeRegistry) Delete(themeID string) error {
 	if themeID == "" {
 		return NewValidationError("theme_id_required", "theme ID is required")
 	}
-	
+
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
-	
+
 	// Check if theme exists
 	if _, exists := tr.themes[themeID]; !exists {
 		return NewNotFoundError("theme", "theme not found: "+themeID)
 	}
-	
+
 	delete(tr.themes, themeID)
 	return nil
 }
@@ -855,12 +858,12 @@ func (tr *ThemeRegistry) Delete(themeID string) error {
 func (tr *ThemeRegistry) List() ([]*Theme, error) {
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()
-	
+
 	themes := make([]*Theme, 0, len(tr.themes))
 	for _, theme := range tr.themes {
 		themes = append(themes, theme)
 	}
-	
+
 	return themes, nil
 }
 
@@ -869,10 +872,10 @@ func (tr *ThemeRegistry) Exists(themeID string) bool {
 	if themeID == "" {
 		return false
 	}
-	
+
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()
-	
+
 	_, exists := tr.themes[themeID]
 	return exists
 }
@@ -885,17 +888,17 @@ func deepCopyTheme(source *Theme) (*Theme, error) {
 	if err != nil {
 		return nil, WrapError(err, "deep_copy_marshal_failed", "failed to marshal theme for deep copy")
 	}
-	
+
 	var copied Theme
 	err = json.Unmarshal(data, &copied)
 	if err != nil {
 		return nil, WrapError(err, "deep_copy_unmarshal_failed", "failed to unmarshal theme for deep copy")
 	}
-	
+
 	// Preserve internal fields that don't serialize
 	copied.createdAt = source.createdAt
 	copied.updatedAt = source.updatedAt
-	
+
 	return &copied, nil
 }
 
@@ -904,37 +907,37 @@ func (tr *ThemeRegistry) Clone(sourceID, newID string) (*Theme, error) {
 	if sourceID == "" {
 		return nil, NewValidationError("source_id_required", "source theme ID is required")
 	}
-	
+
 	if newID == "" {
 		return nil, NewValidationError("new_id_required", "new theme ID is required")
 	}
-	
+
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
-	
+
 	// Get source theme
 	sourceTheme, exists := tr.themes[sourceID]
 	if !exists {
 		return nil, NewNotFoundError("theme", "source theme not found: "+sourceID)
 	}
-	
+
 	// Check if new ID already exists
 	if _, exists := tr.themes[newID]; exists {
 		return nil, NewConflictError("theme", "theme with new ID already exists: "+newID)
 	}
-	
+
 	// Create a deep copy of the theme
 	clonedTheme, err := deepCopyTheme(sourceTheme)
 	if err != nil {
 		return nil, WrapError(err, "theme_clone_failed", "failed to clone theme")
 	}
-	
+
 	// Update the copied theme with new identity
 	clonedTheme.ID = newID
 	clonedTheme.Name = sourceTheme.Name + " (Copy)"
 	clonedTheme.createdAt = time.Now()
 	clonedTheme.updatedAt = time.Now()
-	
+
 	tr.themes[newID] = clonedTheme
 	return clonedTheme, nil
 }
@@ -947,42 +950,43 @@ type ThemeBuilder struct {
 // NewTheme creates a new theme builder with the given name.
 //
 // Example:
-//   // Create a basic theme
-//   theme, err := schema.NewTheme("Corporate Theme").
-//       WithID("corp-v2").
-//       WithDescription("Modern corporate design system").
-//       WithVersion("2.1.0").
-//       WithAuthor("Design Team").
-//       WithTokens(schema.GetDefaultTokens()).
-//       Build()
-//   if err != nil {
-//       log.Fatal(err)
-//   }
 //
-//   // Create theme with dark mode and accessibility
-//   theme, err := schema.NewTheme("Accessible Theme").
-//       WithID("accessible-v1").
-//       WithTokens(schema.GetDefaultTokens()).
-//       WithDarkMode(&schema.DarkModeConfig{
-//           Enabled:  true,
-//           Strategy: "class",
-//       }).
-//       WithAccessibility(&schema.AccessibilityConfig{
-//           HighContrast:     true,
-//           MinContrastRatio: 4.5,
-//           KeyboardNav:      true,
-//       }).
-//       Build()
-//   if err != nil {
-//       log.Fatal(err)
-//   }
+//	// Create a basic theme
+//	theme, err := schema.NewTheme("Corporate Theme").
+//	    WithID("corp-v2").
+//	    WithDescription("Modern corporate design system").
+//	    WithVersion("2.1.0").
+//	    WithAuthor("Design Team").
+//	    WithTokens(schema.GetDefaultTokens()).
+//	    Build()
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 //
-//   // Register theme with global manager
-//   manager := schema.GetGlobalThemeManager()
-//   err = manager.RegisterTheme(theme)
-//   if err != nil {
-//       log.Fatal(err)
-//   }
+//	// Create theme with dark mode and accessibility
+//	theme, err := schema.NewTheme("Accessible Theme").
+//	    WithID("accessible-v1").
+//	    WithTokens(schema.GetDefaultTokens()).
+//	    WithDarkMode(&schema.DarkModeConfig{
+//	        Enabled:  true,
+//	        Strategy: "class",
+//	    }).
+//	    WithAccessibility(&schema.AccessibilityConfig{
+//	        HighContrast:     true,
+//	        MinContrastRatio: 4.5,
+//	        KeyboardNav:      true,
+//	    }).
+//	    Build()
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
+//
+//	// Register theme with global manager
+//	manager := schema.GetGlobalThemeManager()
+//	err = manager.RegisterTheme(theme)
+//	if err != nil {
+//	    log.Fatal(err)
+//	}
 func NewTheme(name string) *ThemeBuilder {
 	return &ThemeBuilder{
 		theme: &Theme{
@@ -1058,24 +1062,24 @@ func (tb *ThemeBuilder) Build() (*Theme, error) {
 	if tb.theme == nil {
 		return nil, NewValidationError("theme_nil", "theme is nil")
 	}
-	
+
 	// Validate required fields
 	if tb.theme.ID == "" {
 		return nil, NewValidationError("theme_id_required", "theme ID is required")
 	}
-	
+
 	if tb.theme.Name == "" {
 		return nil, NewValidationError("theme_name_required", "theme name is required")
 	}
-	
+
 	// Set default tokens if not provided
 	if tb.theme.Tokens == nil {
 		tb.theme.Tokens = GetDefaultTokens()
 	}
-	
+
 	// Update timestamp
 	tb.theme.updatedAt = time.Now()
-	
+
 	return tb.theme, nil
 }
 
@@ -1085,24 +1089,24 @@ func (tb *ThemeBuilder) BuildAndRegister() (*Theme, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	registry := GetGlobalThemeRegistry()
 	err = registry.Register(theme)
 	if err != nil {
 		return nil, WrapError(err, "theme_registration_failed", "failed to register theme")
 	}
-	
+
 	return theme, nil
 }
 
 // Global theme management instances
 var (
-	globalThemeRegistry     *ThemeRegistry
-	globalThemeManager      *ThemeManager
-	globalTenantManager     *TenantThemeManager
-	themeRegistryOnce       sync.Once
-	themeManagerOnce        sync.Once
-	tenantManagerOnce       sync.Once
+	globalThemeRegistry *ThemeRegistry
+	globalThemeManager  *ThemeManager
+	globalTenantManager *TenantThemeManager
+	themeRegistryOnce   sync.Once
+	themeManagerOnce    sync.Once
+	tenantManagerOnce   sync.Once
 )
 
 // GetGlobalThemeRegistry returns the global theme registry instance.
@@ -1139,54 +1143,55 @@ func GetGlobalTenantManager() *TenantThemeManager {
 // This is the integration point with the existing schema system.
 //
 // Example:
-//   // Create a schema
-//   schemaBuilder := schema.NewBuilder("user-profile").
-//       WithTitle("User Profile Form").
-//       WithDescription("Update user profile information")
-//   
-//   schemaBuilder.AddField(&schema.Field{
-//       Name:     "email",
-//       Type:     schema.FieldTypeEmail,
-//       Label:    "Email Address",
-//       Required: true,
-//   })
-//   
-//   schemaBuilder.AddField(&schema.Field{
-//       Name:  "name",
-//       Type:  schema.FieldTypeText,
-//       Label: "Full Name",
-//   })
-//   
-//   userSchema, err := schemaBuilder.Build()
-//   if err != nil {
-//       return err
-//   }
-//   
-//   // Apply a theme to the schema
-//   ctx := context.Background()
-//   err = userSchema.ApplyTheme(ctx, "corporate-v2")
-//   if err != nil {
-//       return fmt.Errorf("failed to apply theme: %w", err)
-//   }
-//   
-//   fmt.Printf("Applied theme %s to schema %s\n", userSchema.Meta.Theme.ID, userSchema.Title)
-//   
-//   // The schema now uses the theme's design tokens for consistent styling
-//   // Components will automatically resolve tokens like:
-//   // - {semantic.colors.background.default} for backgrounds
-//   // - {components.input.border} for input styling
-//   // - {semantic.spacing.component.default} for spacing
+//
+//	// Create a schema
+//	schemaBuilder := schema.NewBuilder("user-profile").
+//	    WithTitle("User Profile Form").
+//	    WithDescription("Update user profile information")
+//
+//	schemaBuilder.AddField(&schema.Field{
+//	    Name:     "email",
+//	    Type:     schema.FieldTypeEmail,
+//	    Label:    "Email Address",
+//	    Required: true,
+//	})
+//
+//	schemaBuilder.AddField(&schema.Field{
+//	    Name:  "name",
+//	    Type:  schema.FieldTypeText,
+//	    Label: "Full Name",
+//	})
+//
+//	userSchema, err := schemaBuilder.Build()
+//	if err != nil {
+//	    return err
+//	}
+//
+//	// Apply a theme to the schema
+//	ctx := context.Background()
+//	err = userSchema.ApplyTheme(ctx, "corporate-v2")
+//	if err != nil {
+//	    return fmt.Errorf("failed to apply theme: %w", err)
+//	}
+//
+//	fmt.Printf("Applied theme %s to schema %s\n", userSchema.Meta.Theme.ID, userSchema.Title)
+//
+//	// The schema now uses the theme's design tokens for consistent styling
+//	// Components will automatically resolve tokens like:
+//	// - {semantic.colors.background.default} for backgrounds
+//	// - {components.input.border} for input styling
+//	// - {semantic.spacing.component.default} for spacing
 func (s *Schema) ApplyTheme(ctx context.Context, themeID string) error {
 	if themeID == "" {
 		return NewValidationError("theme_id_required", "theme ID is required")
 	}
-	
+
 	themeManager := GetGlobalThemeManager()
 	theme, err := themeManager.GetTheme(ctx, themeID)
 	if err != nil {
 		return WrapError(err, "theme_application_failed", "failed to apply theme to schema")
 	}
-	
+
 	// Store theme reference in schema
 	if s.Meta == nil {
 		s.Meta = &Meta{}
@@ -1195,12 +1200,12 @@ func (s *Schema) ApplyTheme(ctx context.Context, themeID string) error {
 		s.Meta.Theme = &ThemeConfig{}
 	}
 	s.Meta.Theme.ID = themeID
-	
+
 	// Apply theme to layout if present
 	if s.Layout != nil {
 		s.Layout.ApplyTheme(theme)
 	}
-	
+
 	return nil
 }
 
@@ -1209,13 +1214,13 @@ func (s *Schema) ApplyThemeWithOverrides(ctx context.Context, themeID string, ov
 	if themeID == "" {
 		return NewValidationError("theme_id_required", "theme ID is required")
 	}
-	
+
 	themeManager := GetGlobalThemeManager()
 	theme, err := themeManager.GetThemeWithOverrides(ctx, themeID, overrides)
 	if err != nil {
 		return WrapError(err, "theme_application_failed", "failed to apply theme with overrides to schema")
 	}
-	
+
 	// Store theme reference in schema
 	if s.Meta == nil {
 		s.Meta = &Meta{}
@@ -1225,12 +1230,12 @@ func (s *Schema) ApplyThemeWithOverrides(ctx context.Context, themeID string, ov
 	}
 	s.Meta.Theme.ID = themeID
 	s.Meta.Theme.Overrides = overrides
-	
+
 	// Apply theme to layout if present
 	if s.Layout != nil {
 		s.Layout.ApplyTheme(theme)
 	}
-	
+
 	return nil
 }
 
@@ -1241,20 +1246,20 @@ func GetThemeFromContext(ctx context.Context) (*Theme, error) {
 		themeManager := GetGlobalThemeManager()
 		return themeManager.GetTheme(ctx, themeID)
 	}
-	
+
 	// Try alternative context keys
 	if themeID, ok := ctx.Value("theme_id").(string); ok && themeID != "" {
 		themeManager := GetGlobalThemeManager()
 		return themeManager.GetTheme(ctx, themeID)
 	}
-	
+
 	// Try tenant-based theme resolution
 	tenantManager := GetGlobalTenantManager()
 	tenantID, err := tenantManager.ResolveTenantContext(ctx)
 	if err == nil && tenantID != "" {
 		return tenantManager.GetTenantTheme(ctx, tenantID)
 	}
-	
+
 	// Fall back to default theme
 	return GetDefaultTheme()
 }
@@ -1276,28 +1281,28 @@ func MergeThemes(base, override *Theme) (*Theme, error) {
 	if base == nil {
 		return nil, NewValidationError("base_theme_nil", "base theme cannot be nil")
 	}
-	
+
 	if override == nil {
 		return base, nil // No override, return base
 	}
-	
+
 	// Create a new theme by merging
 	merged := &Theme{
-		ID:          override.ID,
-		Name:        override.Name,
-		Description: override.Description,
-		Version:     override.Version,
-		Author:      override.Author,
-		Tokens:      override.Tokens,
-		DarkMode:    override.DarkMode,
+		ID:            override.ID,
+		Name:          override.Name,
+		Description:   override.Description,
+		Version:       override.Version,
+		Author:        override.Author,
+		Tokens:        override.Tokens,
+		DarkMode:      override.DarkMode,
 		Accessibility: override.Accessibility,
-		Meta:        override.Meta,
-		CustomCSS:   override.CustomCSS,
-		CustomJS:    override.CustomJS,
-		createdAt:   time.Now(),
-		updatedAt:   time.Now(),
+		Meta:          override.Meta,
+		CustomCSS:     override.CustomCSS,
+		CustomJS:      override.CustomJS,
+		createdAt:     time.Now(),
+		updatedAt:     time.Now(),
 	}
-	
+
 	// Fall back to base values where override is empty
 	if merged.Name == "" {
 		merged.Name = base.Name
@@ -1329,7 +1334,7 @@ func MergeThemes(base, override *Theme) (*Theme, error) {
 	if merged.CustomJS == "" {
 		merged.CustomJS = base.CustomJS
 	}
-	
+
 	return merged, nil
 }
 
@@ -1338,25 +1343,25 @@ func ValidateTheme(theme *Theme) error {
 	if theme == nil {
 		return NewValidationError("theme_nil", "theme cannot be nil")
 	}
-	
+
 	if theme.ID == "" {
 		return NewValidationError("theme_id_required", "theme ID is required")
 	}
-	
+
 	if theme.Name == "" {
 		return NewValidationError("theme_name_required", "theme name is required")
 	}
-	
+
 	if theme.Tokens == nil {
 		return NewValidationError("theme_tokens_required", "theme tokens are required")
 	}
-	
+
 	// Validate tokens using token registry
 	tokenRegistry := GetDefaultRegistry()
 	if err := tokenRegistry.resolver.ValidateReferences(theme.Tokens); err != nil {
 		return WrapError(err, "theme_token_validation_failed", "theme token validation failed")
 	}
-	
+
 	return nil
 }
 
@@ -1379,7 +1384,7 @@ func ImportTheme(data []byte) (*Theme, error) {
 // CreateDefaultThemes creates and registers the default system themes.
 func CreateDefaultThemes() error {
 	registry := GetGlobalThemeRegistry()
-	
+
 	// Create default light theme
 	lightTheme, err := NewTheme("Default Light").
 		WithID("default").
@@ -1391,12 +1396,12 @@ func CreateDefaultThemes() error {
 	if err != nil {
 		return WrapError(err, "default_theme_creation_failed", "failed to create default light theme")
 	}
-	
+
 	err = registry.Register(lightTheme)
 	if err != nil {
 		return WrapError(err, "default_theme_registration_failed", "failed to register default light theme")
 	}
-	
+
 	// Create default dark theme
 	darkTheme, err := NewTheme("Default Dark").
 		WithID("default-dark").
@@ -1413,12 +1418,12 @@ func CreateDefaultThemes() error {
 	if err != nil {
 		return WrapError(err, "dark_theme_creation_failed", "failed to create default dark theme")
 	}
-	
+
 	err = registry.Register(darkTheme)
 	if err != nil {
 		return WrapError(err, "dark_theme_registration_failed", "failed to register default dark theme")
 	}
-	
+
 	return nil
 }
 

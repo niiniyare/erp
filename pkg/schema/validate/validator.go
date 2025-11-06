@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/niiniyare/erp/pkg/schema"
 )
 
 // Database interface for uniqueness checks
@@ -134,8 +136,28 @@ func NewValidator(db Database) *Validator {
 	}
 }
 
-// ValidateData validates form data against a schema
-func (v *Validator) ValidateData(ctx context.Context, schema SchemaInterface, data map[string]any) (*ValidationResult, error) {
+// ValidateSchema validates schema structure (implements schema.Validator interface)
+func (v *Validator) ValidateSchema(ctx context.Context, schema *schema.Schema) error {
+	if schema == nil {
+		return fmt.Errorf("schema cannot be nil")
+	}
+
+	// Use the existing schema validation method
+	return schema.Validate(ctx)
+}
+
+// ValidateData validates form data against a schema (implements schema.Validator interface)
+func (v *Validator) ValidateData(ctx context.Context, schema *schema.Schema, data map[string]any) error {
+	if schema == nil {
+		return fmt.Errorf("schema cannot be nil")
+	}
+
+	// Use the existing schema data validation method
+	return schema.ValidateData(ctx, data)
+}
+
+// ValidateDataDetailed validates form data against a schema and returns detailed results
+func (v *Validator) ValidateDataDetailed(ctx context.Context, schema SchemaInterface, data map[string]any) (*ValidationResult, error) {
 	result := &ValidationResult{
 		Valid:  true,
 		Errors: make(map[string][]string),
@@ -561,7 +583,7 @@ func (v *Validator) validatePhone(_ FieldInterface, value any) []string {
 	cleaned := str
 	hasPlus := strings.HasPrefix(str, "+")
 	cleaned = regexp.MustCompile(`[^\d]`).ReplaceAllString(str, "")
-	
+
 	// Length check (reasonable phone number length)
 	if len(cleaned) < 7 || len(cleaned) > 15 {
 		errors = append(errors, "Phone number must be between 7 and 15 digits")

@@ -10,41 +10,41 @@ import (
 
 // State holds runtime form state and tracks user interactions
 type State struct {
-	values  map[string]interface{} // Current field values
+	values  map[string]any // Current field values
 	touched map[string]bool        // Fields user has interacted with
 	dirty   map[string]bool        // Fields that changed from initial
 	errors  map[string][]string    // Validation errors per field
-	initial map[string]interface{} // Initial values for dirty checking
-	mu      sync.RWMutex          // Concurrent access protection
+	initial map[string]any // Initial values for dirty checking
+	mu      sync.RWMutex           // Concurrent access protection
 }
 
 // NewState creates a new state manager
 func NewState() *State {
 	return &State{
-		values:  make(map[string]interface{}),
+		values:  make(map[string]any),
 		touched: make(map[string]bool),
 		dirty:   make(map[string]bool),
 		errors:  make(map[string][]string),
-		initial: make(map[string]interface{}),
+		initial: make(map[string]any),
 	}
 }
 
 // Initialize sets initial state from schema and provided data
-func (s *State) Initialize(schema *schema.Schema, data map[string]interface{}) error {
+func (s *State) Initialize(schema *schema.Schema, data map[string]any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	// Clear existing state
-	s.values = make(map[string]interface{})
+	s.values = make(map[string]any)
 	s.touched = make(map[string]bool)
 	s.dirty = make(map[string]bool)
 	s.errors = make(map[string][]string)
-	s.initial = make(map[string]interface{})
+	s.initial = make(map[string]any)
 
 	// Initialize with schema field defaults first
 	for _, field := range schema.Fields {
 		// Use Default if available, otherwise use Value
-		var defaultValue interface{}
+		var defaultValue any
 		if field.Default != nil {
 			defaultValue = field.Default
 		} else if field.Value != nil {
@@ -67,7 +67,7 @@ func (s *State) Initialize(schema *schema.Schema, data map[string]interface{}) e
 }
 
 // SetValue updates a field value and tracks dirty state
-func (s *State) SetValue(path string, value interface{}) error {
+func (s *State) SetValue(path string, value any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -89,7 +89,7 @@ func (s *State) SetValue(path string, value interface{}) error {
 }
 
 // GetValue retrieves a field value
-func (s *State) GetValue(path string) (interface{}, bool) {
+func (s *State) GetValue(path string) (any, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -198,12 +198,12 @@ func (s *State) IsValid() bool {
 }
 
 // GetAll returns all current values
-func (s *State) GetAll() map[string]interface{} {
+func (s *State) GetAll() map[string]any {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	// Return a copy to prevent external modification
-	result := make(map[string]interface{}, len(s.values))
+	result := make(map[string]any, len(s.values))
 	for k, v := range s.values {
 		result[k] = v
 	}
@@ -212,12 +212,12 @@ func (s *State) GetAll() map[string]interface{} {
 }
 
 // GetInitialValues returns all initial values
-func (s *State) GetInitialValues() map[string]interface{} {
+func (s *State) GetInitialValues() map[string]any {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	// Return a copy to prevent external modification
-	result := make(map[string]interface{}, len(s.initial))
+	result := make(map[string]any, len(s.initial))
 	for k, v := range s.initial {
 		result[k] = v
 	}
@@ -273,7 +273,7 @@ func (s *State) Reset() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.values = make(map[string]interface{})
+	s.values = make(map[string]any)
 	s.touched = make(map[string]bool)
 	s.dirty = make(map[string]bool)
 	s.errors = make(map[string][]string)
@@ -362,7 +362,7 @@ func (s *State) RemoveField(path string) {
 }
 
 // SetInitialValue updates the initial value for a field (useful for dynamic forms)
-func (s *State) SetInitialValue(path string, value interface{}) {
+func (s *State) SetInitialValue(path string, value any) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -376,11 +376,11 @@ func (s *State) SetInitialValue(path string, value interface{}) {
 }
 
 // GetChangedValues returns only the values that have changed from initial
-func (s *State) GetChangedValues() map[string]interface{} {
+func (s *State) GetChangedValues() map[string]any {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	result := make(map[string]interface{})
+	result := make(map[string]any)
 	for field, isDirty := range s.dirty {
 		if isDirty {
 			if value, exists := s.values[field]; exists {
@@ -393,7 +393,7 @@ func (s *State) GetChangedValues() map[string]interface{} {
 }
 
 // UpdateValues updates multiple field values at once
-func (s *State) UpdateValues(updates map[string]interface{}) error {
+func (s *State) UpdateValues(updates map[string]any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -417,7 +417,7 @@ func (s *State) UpdateValues(updates map[string]interface{}) error {
 }
 
 // valuesEqual compares two values for equality, handling different types
-func (s *State) valuesEqual(a, b interface{}) bool {
+func (s *State) valuesEqual(a, b any) bool {
 	if a == nil && b == nil {
 		return true
 	}
@@ -430,11 +430,11 @@ func (s *State) valuesEqual(a, b interface{}) bool {
 
 // StateSnapshot represents a point-in-time snapshot of the state
 type StateSnapshot struct {
-	Values  map[string]interface{} `json:"values"`
+	Values  map[string]any `json:"values"`
 	Touched map[string]bool        `json:"touched"`
 	Dirty   map[string]bool        `json:"dirty"`
 	Errors  map[string][]string    `json:"errors"`
-	Initial map[string]interface{} `json:"initial"`
+	Initial map[string]any `json:"initial"`
 }
 
 // CreateSnapshot creates a snapshot of current state
@@ -443,11 +443,11 @@ func (s *State) CreateSnapshot() *StateSnapshot {
 	defer s.mu.RUnlock()
 
 	snapshot := &StateSnapshot{
-		Values:  make(map[string]interface{}),
+		Values:  make(map[string]any),
 		Touched: make(map[string]bool),
 		Dirty:   make(map[string]bool),
 		Errors:  make(map[string][]string),
-		Initial: make(map[string]interface{}),
+		Initial: make(map[string]any),
 	}
 
 	// Deep copy all state
@@ -477,11 +477,11 @@ func (s *State) RestoreSnapshot(snapshot *StateSnapshot) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.values = make(map[string]interface{})
+	s.values = make(map[string]any)
 	s.touched = make(map[string]bool)
 	s.dirty = make(map[string]bool)
 	s.errors = make(map[string][]string)
-	s.initial = make(map[string]interface{})
+	s.initial = make(map[string]any)
 
 	// Restore all state
 	for k, v := range snapshot.Values {

@@ -94,10 +94,10 @@ func TestRedisStorage_SetAndGet(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	testSchema := map[string]interface{}{
+	testSchema := map[string]any{
 		"id":    "user.profile",
 		"title": "User Profile",
-		"fields": []map[string]interface{}{
+		"fields": []map[string]any{
 			{
 				"name": "username",
 				"type": "text",
@@ -154,7 +154,7 @@ func TestRedisStorage_SetAndGet(t *testing.T) {
 				// Mock SET command
 				mock.ExpectSet("test:"+tt.schemaID, tt.data, 0).SetVal("OK")
 				// Mock GET command
-				mock.ExpectGet("test:"+tt.schemaID).SetVal(string(tt.data))
+				mock.ExpectGet("test:" + tt.schemaID).SetVal(string(tt.data))
 			}
 
 			// Test Set

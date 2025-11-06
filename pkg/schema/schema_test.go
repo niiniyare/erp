@@ -14,6 +14,7 @@ import (
 type SchemaTestSuite struct {
 	suite.Suite
 	schema *Schema
+	ctx    context.Context
 }
 
 func (s *SchemaTestSuite) SetupTest() {
@@ -66,18 +67,18 @@ func (s *SchemaTestSuite) TestSchemaValidate() {
 	s.schema.Type = TypeForm
 	s.schema.Title = "Valid Title"
 
-	err := s.schema.Validate()
+	err := s.schema.Validate(s.ctx)
 	require.NoError(s.T(), err)
 
 	// Invalid schema - empty ID
 	s.schema.ID = ""
-	err = s.schema.Validate()
+	err = s.schema.Validate(s.ctx)
 	require.Error(s.T(), err)
 
 	// Invalid schema - empty title
 	s.schema.ID = "valid-id"
 	s.schema.Title = ""
-	err = s.schema.Validate()
+	err = s.schema.Validate(s.ctx)
 	require.Error(s.T(), err)
 }
 
@@ -462,10 +463,10 @@ func (s *SchemaTestSuite) TestMergeSchemas() {
 	other.AddField(Field{Name: "field1", Type: FieldText, Label: "Duplicate Field"}) // Duplicate, should be skipped
 	other.AddAction(Action{ID: "action2", Type: ActionButton, Text: "Button"})
 	other.AddAction(Action{ID: "action1", Type: ActionButton, Text: "Duplicate"}) // Duplicate, should be skipped
-	other.Tags = []string{"tag2", "tag1"} // tag1 is duplicate
+	other.Tags = []string{"tag2", "tag1"}                                         // tag1 is duplicate
 
-	merged := MergeSchemas(base, other)
-
+	merged, err := MergeSchemas(base, other)
+	s.NoError(err)
 	// Should have 2 fields (field1 from base, field2 from other)
 	s.Require().Len(merged.Fields, 2)
 	s.Require().True(merged.HasField("field1"))
@@ -488,9 +489,10 @@ func (s *SchemaTestSuite) TestFilterFields() {
 	s.schema.AddField(Field{Name: "text2", Type: FieldText, Label: "Text 2"})
 
 	// Filter for text fields only
-	filtered := s.schema.FilterFields(func(field Field) bool {
+	filtered, err := s.schema.FilterFields(func(field Field) bool {
 		return field.Type == FieldText
 	})
+	s.NoError(err)
 
 	s.Require().Len(filtered.Fields, 2)
 	s.Require().Equal("text1", filtered.Fields[0].Name)
@@ -502,10 +504,11 @@ func (s *SchemaTestSuite) TestMapFields() {
 	s.schema.AddField(Field{Name: "field2", Type: FieldText, Label: "Field 2"})
 
 	// Transform all field labels to uppercase
-	mapped := s.schema.MapFields(func(field Field) Field {
+	mapped, err := s.schema.MapFields(func(field Field) Field {
 		field.Label = "TRANSFORMED: " + field.Label
 		return field
 	})
+	s.NoError(err)
 
 	s.Require().Len(mapped.Fields, 2)
 	s.Require().Equal("TRANSFORMED: Field 1", mapped.Fields[0].Label)
@@ -521,21 +524,21 @@ func (s *SchemaTestSuite) TestMapFields() {
 func (s *SchemaTestSuite) TestSchemaValidationEdgeCases() {
 	// Test schema with circular dependencies
 	schema := NewSchema("test", TypeForm, "Test Schema")
-	
+
 	field1 := Field{
 		Name:         "field1",
 		Type:         FieldText,
 		Dependencies: []string{"field2"},
 	}
-	
+
 	field2 := Field{
-		Name:         "field2", 
+		Name:         "field2",
 		Type:         FieldText,
 		Dependencies: []string{"field1"}, // Circular dependency
 	}
-	
+
 	schema.AddFields(field1, field2)
-	
+
 	// Test circular dependency detection
 	err := schema.DetectCircularDependencies()
 	s.Require().Error(err)
@@ -544,18 +547,18 @@ func (s *SchemaTestSuite) TestSchemaValidationEdgeCases() {
 
 func (s *SchemaTestSuite) TestSchemaAdvancedValidation() {
 	schema := NewSchema("test", TypeForm, "Test Schema")
-	
+
 	// Test with invalid schema structure
 	schema.ID = "" // Invalid ID
-	err := schema.Validate()
+	err := schema.Validate(s.ctx)
 	s.Require().Error(err)
-	
+
 	// Test with duplicate field names
 	schema.ID = "valid-id"
 	schema.AddField(Field{Name: "duplicate", Type: FieldText, Label: "Field 1"})
 	schema.AddField(Field{Name: "duplicate", Type: FieldEmail, Label: "Field 2"})
-	
-	err = schema.Validate()
+
+	err = schema.Validate(s.ctx)
 	s.Require().Error(err)
 	s.Require().Contains(err.Error(), "duplicate")
 }
@@ -563,7 +566,7 @@ func (s *SchemaTestSuite) TestSchemaAdvancedValidation() {
 func (s *SchemaTestSuite) TestSchemaConditionalFieldsAdvanced() {
 	schema := NewSchema("test", TypeForm, "Test Form")
 	ctx := context.Background()
-	
+
 	// Create fields with complex conditional logic
 	visibleField := Field{
 		Name:     "visible_field",
@@ -571,7 +574,7 @@ func (s *SchemaTestSuite) TestSchemaConditionalFieldsAdvanced() {
 		Label:    "Visible Field",
 		Required: true,
 	}
-	
+
 	conditionalField := Field{
 		Name:  "conditional_field",
 		Type:  FieldText,
@@ -585,37 +588,37 @@ func (s *SchemaTestSuite) TestSchemaConditionalFieldsAdvanced() {
 			},
 		},
 	}
-	
+
 	hiddenField := Field{
 		Name:   "hidden_field",
 		Type:   FieldText,
 		Label:  "Hidden Field",
 		Hidden: true,
 	}
-	
+
 	schema.AddFields(visibleField, conditionalField, hiddenField)
-	
+
 	// Test with premium type (conditional field should be visible)
 	premiumData := map[string]any{
-		"type": "premium",
+		"type":          "premium",
 		"visible_field": "value",
 	}
-	
+
 	visibleFields := schema.GetVisibleFields(ctx, premiumData)
 	s.Require().Len(visibleFields, 1) // Only visible_field (conditional logic may not be fully implemented)
-	
+
 	hiddenFields := schema.GetHiddenFields(ctx, premiumData)
 	s.Require().Len(hiddenFields, 2) // hidden_field and conditional_field (not shown)
-	
+
 	// Test with basic type (conditional field should be hidden)
 	basicData := map[string]any{
-		"type": "basic",
+		"type":          "basic",
 		"visible_field": "value",
 	}
-	
+
 	visibleFields = schema.GetVisibleFields(ctx, basicData)
 	s.Require().Len(visibleFields, 1) // only visible_field
-	
+
 	hiddenFields = schema.GetHiddenFields(ctx, basicData)
 	s.Require().Len(hiddenFields, 2) // conditional_field and hidden_field
 }
@@ -739,10 +742,10 @@ func (s *SchemaTestSuite) TestSecurityEnterpriseFeatures() {
 
 	// Test CSRF methods
 	s.Require().True(security.IsCSRFEnabled())
-	
-	// Test rate limit methods  
+
+	// Test rate limit methods
 	s.Require().True(security.IsRateLimitEnabled())
-	
+
 	// Test encryption methods
 	s.Require().True(security.IsEncryptionEnabled())
 	s.Require().True(security.ShouldEncryptField("password"))
@@ -763,7 +766,7 @@ func (s *SchemaTestSuite) TestSecurityEnterpriseFeatures() {
 	// Test with nil features
 	nilSecurity := &Security{}
 	s.Require().False(nilSecurity.IsCSRFEnabled())
-	s.Require().False(nilSecurity.IsRateLimitEnabled()) 
+	s.Require().False(nilSecurity.IsRateLimitEnabled())
 	s.Require().False(nilSecurity.IsEncryptionEnabled())
 	s.Require().False(nilSecurity.ShouldEncryptField("password"))
 }
@@ -806,7 +809,7 @@ func (s *SchemaTestSuite) TestWorkflowEnterpriseFeatures() {
 				ToStatus: "completed",
 			},
 			{
-				ID:       "reject", 
+				ID:       "reject",
 				Label:    "Reject",
 				Type:     "reject",
 				ToStage:  "rejected",
@@ -896,7 +899,7 @@ func (s *SchemaTestSuite) TestHTMXEnterpriseFeatures() {
 		Enabled: true,
 		Get:     "/api/get",
 		Post:    "/api/post",
-		Put:     "/api/put", 
+		Put:     "/api/put",
 		Patch:   "/api/patch",
 		Delete:  "/api/delete",
 		Target:  "#content",
@@ -968,7 +971,7 @@ func (s *SchemaTestSuite) TestMetaEnterpriseFeatures() {
 		CreatedAt:    now,
 		UpdatedAt:    now,
 		CreatedBy:    "user123",
-		UpdatedBy:    "user456", 
+		UpdatedBy:    "user456",
 		Deprecated:   false,
 		Experimental: true,
 		Changelog: []ChangelogEntry{

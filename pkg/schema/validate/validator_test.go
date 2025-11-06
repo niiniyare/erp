@@ -3,6 +3,8 @@ package validate
 import (
 	"context"
 	"testing"
+
+	"github.com/niiniyare/erp/pkg/schema"
 )
 
 // Mock implementations are shared from registry_test.go
@@ -37,9 +39,9 @@ func TestValidator_ValidateField_Required(t *testing.T) {
 	ctx := context.Background()
 
 	field := &MockField{
-		name:     "email",
-		fieldType:     FieldEmail,
-		required: true,
+		name:      "email",
+		fieldType: FieldEmail,
+		required:  true,
 	}
 
 	// Test missing required field
@@ -71,7 +73,7 @@ func TestValidator_ValidateField_Text(t *testing.T) {
 	minLen := 3
 	maxLen := 10
 	field := &MockField{
-		name: "username",
+		name:      "username",
 		fieldType: FieldText,
 		validation: &FieldValidation{
 			MinLength: &minLen,
@@ -146,7 +148,7 @@ func TestValidator_ValidateField_Email(t *testing.T) {
 	ctx := context.Background()
 
 	field := &MockField{
-		name: "email",
+		name:      "email",
 		fieldType: FieldEmail,
 	}
 
@@ -206,7 +208,7 @@ func TestValidator_ValidateField_Number(t *testing.T) {
 	max := 100.0
 	step := 0.5
 	field := &MockField{
-		name: "price",
+		name:      "price",
 		fieldType: FieldNumber,
 		validation: &FieldValidation{
 			Min:  &min,
@@ -273,7 +275,7 @@ func TestValidator_ValidateField_Phone(t *testing.T) {
 	ctx := context.Background()
 
 	field := &MockField{
-		name: "phone",
+		name:      "phone",
 		fieldType: FieldPhone,
 	}
 
@@ -335,7 +337,7 @@ func TestValidator_ValidateField_URL(t *testing.T) {
 	ctx := context.Background()
 
 	field := &MockField{
-		name: "website",
+		name:      "website",
 		fieldType: FieldURL,
 	}
 
@@ -387,7 +389,7 @@ func TestValidator_ValidateField_Select(t *testing.T) {
 	ctx := context.Background()
 
 	field := &MockField{
-		name: "status",
+		name:      "status",
 		fieldType: FieldSelect,
 		options: []Option{
 			{Value: "active", Label: "Active"},
@@ -434,7 +436,7 @@ func TestValidator_ValidateField_MultiSelect(t *testing.T) {
 	ctx := context.Background()
 
 	field := &MockField{
-		name: "permissions",
+		name:      "permissions",
 		fieldType: FieldMultiSelect,
 		options: []Option{
 			{Value: "read", Label: "Read"},
@@ -599,32 +601,17 @@ func TestValidator_ValidateData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := validator.ValidateData(ctx, testSchema, tt.data)
-			if err != nil {
-				t.Errorf("ValidateData() unexpected error: %v", err)
+			// Convert MockSchema to real schema for ValidateData
+			realSchema := convertMockToRealSchema(testSchema)
+			err := validator.ValidateData(ctx, realSchema, tt.data)
+			gotValid := (err == nil)
+
+			if gotValid != tt.wantValid {
+				t.Errorf("ValidateData() got valid=%t, want %t", gotValid, tt.wantValid)
 			}
 
-			if result.Valid != tt.wantValid {
-				t.Errorf("ValidateData() got valid=%t, want %t", result.Valid, tt.wantValid)
-			}
-
-			if tt.wantValid && len(result.Errors) > 0 {
-				t.Errorf("ValidateData() valid result should have no errors, got: %v", result.Errors)
-			}
-
-			if !tt.wantValid && len(result.Errors) == 0 {
-				t.Error("ValidateData() invalid result should have errors")
-			}
-
-			if tt.wantValid && tt.wantData != nil {
-				for key, expectedValue := range tt.wantData {
-					if actualValue, exists := result.Data[key]; !exists {
-						t.Errorf("ValidateData() missing data field: %s", key)
-					} else if actualValue != expectedValue {
-						t.Errorf("ValidateData() data[%s] = %v, want %v", key, actualValue, expectedValue)
-					}
-				}
-			}
+			// Note: ValidateData only returns error, so we can't check detailed validation results
+			// For detailed validation, use ValidateDataDetailed instead
 		})
 	}
 }
@@ -777,7 +764,7 @@ func BenchmarkValidator_ValidateField_Text(b *testing.B) {
 	ctx := context.Background()
 
 	field := &MockField{
-		name: "username",
+		name:      "username",
 		fieldType: FieldText,
 		validation: &FieldValidation{
 			MinLength: func() *int { v := 3; return &v }(),
@@ -797,7 +784,7 @@ func BenchmarkValidator_ValidateField_Email(b *testing.B) {
 	ctx := context.Background()
 
 	field := &MockField{
-		name: "email",
+		name:      "email",
 		fieldType: FieldEmail,
 	}
 
@@ -812,8 +799,8 @@ func TestValidator_ValidateField_Date(t *testing.T) {
 	ctx := context.Background()
 
 	field := &MockField{
-		name: "birth_date",
-		fieldType: FieldDate,
+		name:       "birth_date",
+		fieldType:  FieldDate,
 		validation: &FieldValidation{
 			// Note: Min/Max for dates would need special handling in the actual schema
 			// For now, test basic date validation
@@ -859,7 +846,7 @@ func TestValidator_ValidateField_Password(t *testing.T) {
 
 	minLen := 8
 	field := &MockField{
-		name: "password",
+		name:      "password",
 		fieldType: FieldPassword,
 		validation: &FieldValidation{
 			MinLength: &minLen,
@@ -910,7 +897,7 @@ func TestValidator_ValidateField_File(t *testing.T) {
 	ctx := context.Background()
 
 	field := &MockField{
-		name: "document",
+		name:      "document",
 		fieldType: FieldFile,
 	}
 
@@ -981,7 +968,7 @@ func TestValidator_CheckUniqueness(t *testing.T) {
 	ctx := context.Background()
 
 	field := &MockField{
-		name: "username",
+		name:      "username",
 		fieldType: FieldText,
 		config: map[string]any{
 			"table": "users",
@@ -1019,9 +1006,9 @@ func TestValidator_CheckUniqueness(t *testing.T) {
 
 func TestValidator_ValidateCustom(t *testing.T) {
 	validator := NewValidator(nil)
-	
+
 	field := &MockField{
-		name: "test_field",
+		name:      "test_field",
 		fieldType: FieldText,
 	}
 
@@ -1037,7 +1024,7 @@ func TestValidator_ValidateField_UnsupportedType(t *testing.T) {
 	ctx := context.Background()
 
 	field := &MockField{
-		name: "unknown_field",
+		name:      "unknown_field",
 		fieldType: "unknown_type", // Unsupported field type
 	}
 
@@ -1054,7 +1041,7 @@ func TestValidator_EmptyValidation(t *testing.T) {
 
 	field := &MockField{
 		name:       "test_field",
-		fieldType:       FieldText,
+		fieldType:  FieldText,
 		validation: nil, // No validation rules
 	}
 
@@ -1083,8 +1070,9 @@ func BenchmarkValidator_ValidateData(b *testing.B) {
 	}
 
 	b.ResetTimer()
+	realSchema := convertMockToRealSchema(testSchema)
 	for i := 0; i < b.N; i++ {
-		validator.ValidateData(ctx, testSchema, data)
+		validator.ValidateData(ctx, realSchema, data)
 	}
 }
 
@@ -1099,8 +1087,8 @@ type MockFieldRuntime struct {
 	reason   string
 }
 
-func (r *MockFieldRuntime) IsVisible() bool  { return r.visible }
-func (r *MockFieldRuntime) IsEditable() bool { return r.editable }
+func (r *MockFieldRuntime) IsVisible() bool   { return r.visible }
+func (r *MockFieldRuntime) IsEditable() bool  { return r.editable }
 func (r *MockFieldRuntime) GetReason() string { return r.reason }
 
 // MockEnrichedField implements EnrichedFieldInterface for testing
@@ -1109,11 +1097,11 @@ type MockEnrichedField struct {
 	runtime *MockFieldRuntime
 }
 
-func (f *MockEnrichedField) GetRuntime() FieldRuntime { 
+func (f *MockEnrichedField) GetRuntime() FieldRuntime {
 	if f.runtime == nil {
 		return nil
 	}
-	return f.runtime 
+	return f.runtime
 }
 
 // MockEnrichedSchema implements EnrichedSchemaInterface for testing
@@ -1135,10 +1123,10 @@ func TestValidator_ValidateEnrichedSchema(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
-		name      string
-		schema    *MockEnrichedSchema
-		data      map[string]any
-		wantValid bool
+		name       string
+		schema     *MockEnrichedSchema
+		data       map[string]any
+		wantValid  bool
 		wantErrors map[string]int // field -> error count
 	}{
 		{
@@ -1147,9 +1135,9 @@ func TestValidator_ValidateEnrichedSchema(t *testing.T) {
 				enrichedFields: []EnrichedFieldInterface{
 					&MockEnrichedField{
 						MockField: &MockField{
-							name:     "email",
+							name:      "email",
 							fieldType: FieldEmail,
-							required: true,
+							required:  true,
 						},
 						runtime: &MockFieldRuntime{
 							visible:  true,
@@ -1158,9 +1146,9 @@ func TestValidator_ValidateEnrichedSchema(t *testing.T) {
 					},
 					&MockEnrichedField{
 						MockField: &MockField{
-							name:     "name",
+							name:      "name",
 							fieldType: FieldText,
-							required: true,
+							required:  true,
 						},
 						runtime: &MockFieldRuntime{
 							visible:  true,
@@ -1173,7 +1161,7 @@ func TestValidator_ValidateEnrichedSchema(t *testing.T) {
 				"email": "test@example.com",
 				"name":  "Test User",
 			},
-			wantValid: true,
+			wantValid:  true,
 			wantErrors: map[string]int{},
 		},
 		{
@@ -1182,9 +1170,9 @@ func TestValidator_ValidateEnrichedSchema(t *testing.T) {
 				enrichedFields: []EnrichedFieldInterface{
 					&MockEnrichedField{
 						MockField: &MockField{
-							name:     "email",
+							name:      "email",
 							fieldType: FieldEmail,
-							required: true,
+							required:  true,
 						},
 						runtime: &MockFieldRuntime{
 							visible:  true,
@@ -1193,9 +1181,9 @@ func TestValidator_ValidateEnrichedSchema(t *testing.T) {
 					},
 					&MockEnrichedField{
 						MockField: &MockField{
-							name:     "secret",
+							name:      "secret",
 							fieldType: FieldText,
-							required: true, // Required but invisible - should be skipped
+							required:  true, // Required but invisible - should be skipped
 						},
 						runtime: &MockFieldRuntime{
 							visible:  false,
@@ -1209,7 +1197,7 @@ func TestValidator_ValidateEnrichedSchema(t *testing.T) {
 				"email": "test@example.com",
 				// secret field not provided - should not cause error since invisible
 			},
-			wantValid: true,
+			wantValid:  true,
 			wantErrors: map[string]int{},
 		},
 		{
@@ -1218,9 +1206,9 @@ func TestValidator_ValidateEnrichedSchema(t *testing.T) {
 				enrichedFields: []EnrichedFieldInterface{
 					&MockEnrichedField{
 						MockField: &MockField{
-							name:     "email",
+							name:      "email",
 							fieldType: FieldEmail,
-							required: true,
+							required:  true,
 						},
 						runtime: &MockFieldRuntime{
 							visible:  true,
@@ -1244,9 +1232,9 @@ func TestValidator_ValidateEnrichedSchema(t *testing.T) {
 				enrichedFields: []EnrichedFieldInterface{
 					&MockEnrichedField{
 						MockField: &MockField{
-							name:     "email",
+							name:      "email",
 							fieldType: FieldEmail,
-							required: true,
+							required:  true,
 						},
 						runtime: &MockFieldRuntime{
 							visible:  true,
@@ -1268,7 +1256,6 @@ func TestValidator_ValidateEnrichedSchema(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := validator.ValidateEnrichedSchema(ctx, tt.schema, tt.data)
-
 			if err != nil {
 				t.Errorf("ValidateEnrichedSchema() error = %v", err)
 				return
@@ -1281,7 +1268,7 @@ func TestValidator_ValidateEnrichedSchema(t *testing.T) {
 			for field, expectedCount := range tt.wantErrors {
 				actualCount := len(result.Errors[field])
 				if actualCount != expectedCount {
-					t.Errorf("ValidateEnrichedSchema() field %s got %d errors, want %d: %v", 
+					t.Errorf("ValidateEnrichedSchema() field %s got %d errors, want %d: %v",
 						field, actualCount, expectedCount, result.Errors[field])
 				}
 			}
@@ -1311,9 +1298,9 @@ func TestValidator_ValidateWithFieldState(t *testing.T) {
 			name: "visible editable field - valid",
 			field: &MockEnrichedField{
 				MockField: &MockField{
-					name:     "email",
+					name:      "email",
 					fieldType: FieldEmail,
-					required: true,
+					required:  true,
 				},
 				runtime: &MockFieldRuntime{
 					visible:  true,
@@ -1328,9 +1315,9 @@ func TestValidator_ValidateWithFieldState(t *testing.T) {
 			name: "visible editable field - invalid",
 			field: &MockEnrichedField{
 				MockField: &MockField{
-					name:     "email",
+					name:      "email",
 					fieldType: FieldEmail,
-					required: true,
+					required:  true,
 				},
 				runtime: &MockFieldRuntime{
 					visible:  true,
@@ -1345,9 +1332,9 @@ func TestValidator_ValidateWithFieldState(t *testing.T) {
 			name: "invisible field",
 			field: &MockEnrichedField{
 				MockField: &MockField{
-					name:     "secret",
+					name:      "secret",
 					fieldType: FieldText,
-					required: true,
+					required:  true,
 				},
 				runtime: &MockFieldRuntime{
 					visible:  false,
@@ -1362,9 +1349,9 @@ func TestValidator_ValidateWithFieldState(t *testing.T) {
 			name: "readonly field - valid format",
 			field: &MockEnrichedField{
 				MockField: &MockField{
-					name:     "created_at",
+					name:      "created_at",
 					fieldType: FieldDateTime,
-					required: false,
+					required:  false,
 				},
 				runtime: &MockFieldRuntime{
 					visible:  true,
@@ -1379,9 +1366,9 @@ func TestValidator_ValidateWithFieldState(t *testing.T) {
 			name: "readonly field - invalid format",
 			field: &MockEnrichedField{
 				MockField: &MockField{
-					name:     "created_at",
+					name:      "created_at",
 					fieldType: FieldDateTime,
-					required: false,
+					required:  false,
 				},
 				runtime: &MockFieldRuntime{
 					visible:  true,
@@ -1396,9 +1383,9 @@ func TestValidator_ValidateWithFieldState(t *testing.T) {
 			name: "field without runtime - defaults to full validation",
 			field: &MockEnrichedField{
 				MockField: &MockField{
-					name:     "name",
+					name:      "name",
 					fieldType: FieldText,
-					required: true,
+					required:  true,
 				},
 				runtime: nil, // No runtime state
 			},
@@ -1413,7 +1400,7 @@ func TestValidator_ValidateWithFieldState(t *testing.T) {
 			errors := validator.ValidateWithFieldState(ctx, tt.field, tt.value, tt.exists)
 
 			if len(errors) != tt.wantErrors {
-				t.Errorf("ValidateWithFieldState() got %d errors, want %d: %v", 
+				t.Errorf("ValidateWithFieldState() got %d errors, want %d: %v",
 					len(errors), tt.wantErrors, errors)
 			}
 		})
@@ -1436,9 +1423,9 @@ func TestValidator_ValidateConditionalFields(t *testing.T) {
 				enrichedFields: []EnrichedFieldInterface{
 					&MockEnrichedField{
 						MockField: &MockField{
-							name:     "visible_editable",
+							name:      "visible_editable",
 							fieldType: FieldText,
-							required: true,
+							required:  true,
 						},
 						runtime: &MockFieldRuntime{
 							visible:  true,
@@ -1447,9 +1434,9 @@ func TestValidator_ValidateConditionalFields(t *testing.T) {
 					},
 					&MockEnrichedField{
 						MockField: &MockField{
-							name:     "visible_readonly",
+							name:      "visible_readonly",
 							fieldType: FieldEmail,
-							required: false,
+							required:  false,
 						},
 						runtime: &MockFieldRuntime{
 							visible:  true,
@@ -1458,9 +1445,9 @@ func TestValidator_ValidateConditionalFields(t *testing.T) {
 					},
 					&MockEnrichedField{
 						MockField: &MockField{
-							name:     "invisible",
+							name:      "invisible",
 							fieldType: FieldText,
-							required: true,
+							required:  true,
 						},
 						runtime: &MockFieldRuntime{
 							visible:  false,
@@ -1484,9 +1471,9 @@ func TestValidator_ValidateConditionalFields(t *testing.T) {
 				enrichedFields: []EnrichedFieldInterface{
 					&MockEnrichedField{
 						MockField: &MockField{
-							name:     "no_runtime",
+							name:      "no_runtime",
 							fieldType: FieldText,
-							required: true,
+							required:  true,
 						},
 						runtime: nil, // No runtime state - skip conditional validation
 					},
@@ -1506,7 +1493,7 @@ func TestValidator_ValidateConditionalFields(t *testing.T) {
 			for field, expectedCount := range tt.wantErrors {
 				actualCount := len(errors[field])
 				if actualCount != expectedCount {
-					t.Errorf("ValidateConditionalFields() field %s got %d errors, want %d: %v", 
+					t.Errorf("ValidateConditionalFields() field %s got %d errors, want %d: %v",
 						field, actualCount, expectedCount, errors[field])
 				}
 			}
@@ -1534,7 +1521,7 @@ func TestValidator_validateReadOnlyField(t *testing.T) {
 		{
 			name: "readonly text field - valid",
 			field: &MockField{
-				name:     "readonly_text",
+				name:      "readonly_text",
 				fieldType: FieldText,
 			},
 			value:      "some text",
@@ -1544,7 +1531,7 @@ func TestValidator_validateReadOnlyField(t *testing.T) {
 		{
 			name: "readonly email field - valid",
 			field: &MockField{
-				name:     "readonly_email",
+				name:      "readonly_email",
 				fieldType: FieldEmail,
 			},
 			value:      "test@example.com",
@@ -1554,7 +1541,7 @@ func TestValidator_validateReadOnlyField(t *testing.T) {
 		{
 			name: "readonly email field - invalid",
 			field: &MockField{
-				name:     "readonly_email",
+				name:      "readonly_email",
 				fieldType: FieldEmail,
 			},
 			value:      "invalid-email",
@@ -1564,7 +1551,7 @@ func TestValidator_validateReadOnlyField(t *testing.T) {
 		{
 			name: "readonly number field - valid",
 			field: &MockField{
-				name:     "readonly_number",
+				name:      "readonly_number",
 				fieldType: FieldNumber,
 			},
 			value:      42.5,
@@ -1574,7 +1561,7 @@ func TestValidator_validateReadOnlyField(t *testing.T) {
 		{
 			name: "readonly number field - invalid",
 			field: &MockField{
-				name:     "readonly_number",
+				name:      "readonly_number",
 				fieldType: FieldNumber,
 			},
 			value:      "not-a-number",
@@ -1584,7 +1571,7 @@ func TestValidator_validateReadOnlyField(t *testing.T) {
 		{
 			name: "readonly field - empty",
 			field: &MockField{
-				name:     "readonly_text",
+				name:      "readonly_text",
 				fieldType: FieldText,
 			},
 			value:      "",
@@ -1594,7 +1581,7 @@ func TestValidator_validateReadOnlyField(t *testing.T) {
 		{
 			name: "readonly date field - valid",
 			field: &MockField{
-				name:     "readonly_date",
+				name:      "readonly_date",
 				fieldType: FieldDate,
 			},
 			value:      "2023-01-01",
@@ -1604,7 +1591,7 @@ func TestValidator_validateReadOnlyField(t *testing.T) {
 		{
 			name: "readonly date field - invalid",
 			field: &MockField{
-				name:     "readonly_date",
+				name:      "readonly_date",
 				fieldType: FieldDate,
 			},
 			value:      "invalid-date",
@@ -1618,9 +1605,58 @@ func TestValidator_validateReadOnlyField(t *testing.T) {
 			errors := validator.validateReadOnlyField(tt.field, tt.value, tt.exists)
 
 			if len(errors) != tt.wantErrors {
-				t.Errorf("validateReadOnlyField() got %d errors, want %d: %v", 
+				t.Errorf("validateReadOnlyField() got %d errors, want %d: %v",
 					len(errors), tt.wantErrors, errors)
 			}
 		})
 	}
+}
+
+// Helper function to convert MockSchema to real schema for testing
+func convertMockToRealSchema(mockSchema *MockSchema) *schema.Schema {
+	realSchema := &schema.Schema{
+		ID:     mockSchema.GetID(),
+		Type:   schema.Type((mockSchema.GetType())),
+		Title:  mockSchema.GetTitle(),
+		Fields: make([]schema.Field, 0),
+	}
+
+	// Convert mock fields to real fields
+	for _, mockField := range mockSchema.GetFields() {
+		field := schema.Field{
+			Name:     mockField.GetName(),
+			Type:     schema.FieldType(mockField.GetType()),
+			Required: mockField.GetRequired(),
+		}
+
+		// Convert validation if present
+		if mockValidation := mockField.GetValidation(); mockValidation != nil {
+			field.Validation = &schema.FieldValidation{
+				MinLength: mockValidation.MinLength,
+				MaxLength: mockValidation.MaxLength,
+				Min:       mockValidation.Min,
+				Max:       mockValidation.Max,
+				Step:      mockValidation.Step,
+				Pattern:   mockValidation.Pattern,
+				Format:    mockValidation.Format,
+				Custom:    mockValidation.Custom,
+			}
+		}
+
+		// Convert options if present
+		mockOptions := mockField.GetOptions()
+		if len(mockOptions) > 0 {
+			field.Options = make([]schema.Option, len(mockOptions))
+			for i, opt := range mockOptions {
+				field.Options[i] = schema.Option{
+					Value: opt.Value,
+					Label: opt.Label,
+				}
+			}
+		}
+
+		realSchema.Fields = append(realSchema.Fields, field)
+	}
+
+	return realSchema
 }

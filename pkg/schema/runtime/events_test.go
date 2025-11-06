@@ -7,36 +7,50 @@ import (
 	"time"
 
 	"github.com/niiniyare/erp/pkg/schema"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestNewEventHandler(t *testing.T) {
-	handler := NewEventHandler()
-
-	if handler == nil {
-		t.Fatal("NewEventHandler() returned nil")
-	}
-
-	if handler.handlers == nil {
-		t.Error("Event handlers map not initialized")
-	}
-
-	if handler.validationTiming != ValidateOnBlur {
-		t.Error("Default validation timing should be ValidateOnBlur")
-	}
+// EventHandlerTestSuite defines the test suite for EventHandler
+type EventHandlerTestSuite struct {
+	suite.Suite
+	ctx     context.Context
+	schema  *schema.Schema
+	runtime *Runtime
+	handler *EventHandler
 }
 
-func TestEventHandler_OnChange(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
+// SetupTest runs before each test
+func (s *EventHandlerTestSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.schema = s.createTestSchema()
+	s.runtime = NewRuntime(s.schema)
+	s.handler = s.runtime.events
+}
 
+// TearDownTest runs after each test
+func (s *EventHandlerTestSuite) TearDownTest() {
+	// Clean up if needed
+	s.handler = nil
+	s.runtime = nil
+}
+
+// TestNewEventHandler tests event handler initialization
+func (s *EventHandlerTestSuite) TestNewEventHandler() {
+	handler := NewEventHandler()
+
+	require.NotNil(s.T(), handler, "NewEventHandler() should not return nil")
+	require.NotNil(s.T(), handler.handlers, "Event handlers map should be initialized")
+	require.Equal(s.T(), ValidateOnBlur, handler.validationTiming, "Default validation timing should be ValidateOnBlur")
+}
+
+// TestOnChange tests field change event handling
+func (s *EventHandlerTestSuite) TestOnChange() {
 	// Initialize runtime
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
+	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
-	handler := runtime.events
-	handler.SetValidationTiming(ValidateOnChange)
+	s.handler.SetValidationTiming(ValidateOnChange)
 
 	// Create change event
 	event := &Event{
@@ -48,26 +62,22 @@ func TestEventHandler_OnChange(t *testing.T) {
 	}
 
 	// Handle change event
-	err = handler.OnChange(ctx, event)
-	if err != nil {
-		t.Errorf("OnChange() error = %v", err)
-	}
+	err = s.handler.OnChange(s.ctx, event)
+	require.NoError(s.T(), err, "OnChange() should not return error")
 
 	// Check value was updated in state
-	value, exists := runtime.state.GetValue("name")
-	if !exists || value != "John Doe" {
-		t.Errorf("Expected value 'John Doe', got %v", value)
-	}
+	value, exists := s.runtime.state.GetValue("name")
+	require.True(s.T(), exists, "Value should exist")
+	require.Equal(s.T(), "John Doe", value, "Value should be updated")
 
 	// Check field is marked as dirty
-	if !runtime.state.IsDirty("name") {
-		t.Error("Field should be marked as dirty after change")
-	}
+	require.True(s.T(), s.runtime.state.IsDirty("name"), "Field should be marked as dirty after change")
 }
 
-func TestEventHandler_OnChange_ReadOnlyField(t *testing.T) {
+// TestOnChange_ReadOnlyField tests change event on read-only field
+func (s *EventHandlerTestSuite) TestOnChange_ReadOnlyField() {
 	// Create schema with read-only field
-	schema := &schema.Schema{
+	readonlySchema := &schema.Schema{
 		ID:    "readonly_test",
 		Title: "Read-only Test",
 		Fields: []schema.Field{
@@ -85,14 +95,11 @@ func TestEventHandler_OnChange_ReadOnlyField(t *testing.T) {
 		},
 	}
 
-	runtime := NewRuntime(schema)
-	ctx := context.Background()
+	runtime := NewRuntime(readonlySchema)
 
 	// Initialize runtime
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
+	err := runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	handler := runtime.events
 
@@ -106,30 +113,23 @@ func TestEventHandler_OnChange_ReadOnlyField(t *testing.T) {
 	}
 
 	// Handle change event (should fail)
-	err = handler.OnChange(ctx, event)
-	if err == nil {
-		t.Error("OnChange() should fail for read-only field")
-	}
+	err = handler.OnChange(s.ctx, event)
+	require.Error(s.T(), err, "OnChange() should fail for read-only field")
 
 	// Check value was not updated
 	value, exists := runtime.state.GetValue("readonly_field")
-	if exists && value == "new value" {
-		t.Error("Read-only field value should not be updated")
+	if exists {
+		require.NotEqual(s.T(), "new value", value, "Read-only field value should not be updated")
 	}
 }
 
-func TestEventHandler_OnBlur(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
+// TestOnBlur tests field blur event handling
+func (s *EventHandlerTestSuite) TestOnBlur() {
 	// Initialize runtime
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
+	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
-	handler := runtime.events
-	handler.SetValidationTiming(ValidateOnBlur)
+	s.handler.SetValidationTiming(ValidateOnBlur)
 
 	// Create blur event with invalid email
 	event := &Event{
@@ -140,100 +140,64 @@ func TestEventHandler_OnBlur(t *testing.T) {
 	}
 
 	// Handle blur event
-	err = handler.OnBlur(ctx, event)
-	if err != nil {
-		t.Errorf("OnBlur() error = %v", err)
-	}
+	err = s.handler.OnBlur(s.ctx, event)
+	require.NoError(s.T(), err, "OnBlur() should not return error")
 
 	// Check field is marked as touched
-	if !runtime.state.IsTouched("email") {
-		t.Error("Field should be marked as touched after blur")
-	}
+	require.True(s.T(), s.runtime.state.IsTouched("email"), "Field should be marked as touched after blur")
 
 	// Check validation occurred (should have errors for invalid email)
-	errors := runtime.state.GetErrors("email")
-	if len(errors) == 0 {
-		t.Error("Expected validation errors for invalid email on blur")
-	}
+	errors := s.runtime.state.GetErrors("email")
+	require.NotEmpty(s.T(), errors, "Expected validation errors for invalid email on blur")
 }
 
-func TestEventHandler_OnSubmit(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
+// TestOnSubmit tests submit event with valid data
+func (s *EventHandlerTestSuite) TestOnSubmit() {
 	// Initialize runtime with valid data
-	err := runtime.Initialize(ctx, map[string]interface{}{
+	err := s.runtime.Initialize(s.ctx, map[string]any{
 		"name":  "John Doe",
 		"email": "john@example.com",
 		"age":   30,
 	})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
-
-	handler := runtime.events
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Handle submit event
-	err = handler.OnSubmit(ctx)
-	if err != nil {
-		t.Errorf("OnSubmit() error = %v", err)
-	}
+	err = s.handler.OnSubmit(s.ctx)
+	require.NoError(s.T(), err, "OnSubmit() should not return error")
 
 	// Check state is valid
-	if !runtime.state.IsValid() {
-		t.Error("State should be valid after successful submit")
-	}
+	require.True(s.T(), s.runtime.state.IsValid(), "State should be valid after successful submit")
 }
 
-func TestEventHandler_OnSubmit_WithErrors(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
+// TestOnSubmit_WithErrors tests submit event with validation errors
+func (s *EventHandlerTestSuite) TestOnSubmit_WithErrors() {
 	// Initialize runtime with invalid data
-	err := runtime.Initialize(ctx, map[string]interface{}{
-		"name":  "",               // Required field empty
-		"email": "invalid-email",  // Invalid email
+	err := s.runtime.Initialize(s.ctx, map[string]any{
+		"name":  "",              // Required field empty
+		"email": "invalid-email", // Invalid email
 	})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
-
-	handler := runtime.events
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Handle submit event
-	err = handler.OnSubmit(ctx)
-	if err == nil {
-		t.Error("OnSubmit() should fail with validation errors")
-	}
+	err = s.handler.OnSubmit(s.ctx)
+	require.Error(s.T(), err, "OnSubmit() should fail with validation errors")
 
 	// Check state has errors
-	if runtime.state.IsValid() {
-		t.Error("State should be invalid with validation errors")
-	}
+	require.False(s.T(), s.runtime.state.IsValid(), "State should be invalid with validation errors")
 
 	// Check specific errors exist
-	nameErrors := runtime.state.GetErrors("name")
-	if len(nameErrors) == 0 {
-		t.Error("Expected validation errors for empty required name field")
-	}
+	nameErrors := s.runtime.state.GetErrors("name")
+	require.NotEmpty(s.T(), nameErrors, "Expected validation errors for empty required name field")
 
-	emailErrors := runtime.state.GetErrors("email")
-	if len(emailErrors) == 0 {
-		t.Error("Expected validation errors for invalid email")
-	}
+	emailErrors := s.runtime.state.GetErrors("email")
+	require.NotEmpty(s.T(), emailErrors, "Expected validation errors for invalid email")
 }
 
-func TestEventHandler_ValidationTiming(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
+// TestValidationTiming tests different validation timing modes
+func (s *EventHandlerTestSuite) TestValidationTiming() {
 	// Initialize runtime
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
-
-	handler := runtime.events
+	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	tests := []struct {
 		name   string
@@ -274,13 +238,13 @@ func TestEventHandler_ValidationTiming(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		s.Run(tt.name, func() {
 			// Reset state
-			runtime.state.Reset()
-			runtime.state.ClearErrors("email")
+			s.runtime.state.Reset()
+			s.runtime.state.ClearErrors("email")
 
 			// Set validation timing
-			handler.SetValidationTiming(tt.timing)
+			s.handler.SetValidationTiming(tt.timing)
 
 			// Create event with invalid email
 			event := &Event{
@@ -294,27 +258,28 @@ func TestEventHandler_ValidationTiming(t *testing.T) {
 			var err error
 			switch tt.event {
 			case EventChange:
-				err = handler.OnChange(ctx, event)
+				err = s.handler.OnChange(s.ctx, event)
 			case EventBlur:
-				err = handler.OnBlur(ctx, event)
+				err = s.handler.OnBlur(s.ctx, event)
 			}
 
-			if err != nil {
-				t.Errorf("Event handler error: %v", err)
-			}
+			require.NoError(s.T(), err, "Event handler should not return error")
 
 			// Check if errors exist based on expectation
-			errors := runtime.state.GetErrors("email")
+			errors := s.runtime.state.GetErrors("email")
 			hasErrors := len(errors) > 0
 
-			if hasErrors != tt.hasErr {
-				t.Errorf("Expected hasErrors = %v, got %v (errors: %v)", tt.hasErr, hasErrors, errors)
+			if tt.hasErr {
+				require.True(s.T(), hasErrors, "Expected validation errors")
+			} else {
+				require.False(s.T(), hasErrors, "Expected no validation errors")
 			}
 		})
 	}
 }
 
-func TestEventHandler_Register(t *testing.T) {
+// TestRegister tests event handler registration
+func (s *EventHandlerTestSuite) TestRegister() {
 	handler := NewEventHandler()
 
 	// Track if callback was called
@@ -329,15 +294,12 @@ func TestEventHandler_Register(t *testing.T) {
 	})
 
 	// Create runtime and set handler
-	runtime := NewRuntime(createTestSchema())
+	runtime := NewRuntime(s.createTestSchema())
 	runtime.events = handler
 	handler.runtime = runtime
 
-	ctx := context.Background()
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
+	err := runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Create event
 	event := &Event{
@@ -348,91 +310,66 @@ func TestEventHandler_Register(t *testing.T) {
 	}
 
 	// Trigger event
-	err = handler.OnChange(ctx, event)
-	if err != nil {
-		t.Errorf("OnChange() error = %v", err)
-	}
+	err = handler.OnChange(s.ctx, event)
+	require.NoError(s.T(), err, "OnChange() should not return error")
 
 	// Check callback was called
-	if !callbackCalled {
-		t.Error("Registered callback was not called")
-	}
+	require.True(s.T(), callbackCalled, "Registered callback should be called")
+	require.NotNil(s.T(), receivedEvent, "Callback should receive event")
 
-	if receivedEvent == nil {
-		t.Error("Callback did not receive event")
-	} else {
-		if receivedEvent.Field != "name" {
-			t.Errorf("Expected field 'name', got '%s'", receivedEvent.Field)
-		}
-		if receivedEvent.Value != "Test Value" {
-			t.Errorf("Expected value 'Test Value', got '%v'", receivedEvent.Value)
-		}
+	if receivedEvent != nil {
+		require.Equal(s.T(), "name", receivedEvent.Field, "Event field should match")
+		require.Equal(s.T(), "Test Value", receivedEvent.Value, "Event value should match")
 	}
 }
 
-func TestEventHandler_HandleBatchUpdate(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
+// TestHandleBatchUpdate tests batch field updates
+func (s *EventHandlerTestSuite) TestHandleBatchUpdate() {
 	// Initialize runtime
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
+	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
-	handler := runtime.events
-	handler.SetValidationTiming(ValidateOnChange)
+	s.handler.SetValidationTiming(ValidateOnChange)
 
 	// Track callback calls
 	changeEvents := 0
-	handler.Register(EventChange, func(ctx context.Context, event *Event) error {
+	s.handler.Register(EventChange, func(ctx context.Context, event *Event) error {
 		changeEvents++
 		return nil
 	})
 
 	// Batch update
-	updates := map[string]interface{}{
+	updates := map[string]any{
 		"name":  "John Doe",
 		"email": "john@example.com",
 		"age":   30,
 	}
 
-	err = handler.HandleBatchUpdate(ctx, updates)
-	if err != nil {
-		t.Errorf("HandleBatchUpdate() error = %v", err)
-	}
+	err = s.handler.HandleBatchUpdate(s.ctx, updates)
+	require.NoError(s.T(), err, "HandleBatchUpdate() should not return error")
 
 	// Check all values were updated
 	for field, expectedValue := range updates {
-		value, exists := runtime.state.GetValue(field)
-		if !exists {
-			t.Errorf("Value not set for field %s", field)
-		} else if value != expectedValue {
-			t.Errorf("Value for %s = %v, want %v", field, value, expectedValue)
-		}
+		value, exists := s.runtime.state.GetValue(field)
+		require.True(s.T(), exists, "Value should exist for field %s", field)
+		require.Equal(s.T(), expectedValue, value, "Value for %s should match", field)
 	}
 
 	// Check change events were triggered for each field
-	if changeEvents != len(updates) {
-		t.Errorf("Expected %d change events, got %d", len(updates), changeEvents)
-	}
+	require.Equal(s.T(), len(updates), changeEvents, "Expected change event for each field")
 }
 
-func TestDebouncedEventHandler(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
+// TestDebouncedEventHandler tests debounced event handling
+func (s *EventHandlerTestSuite) TestDebouncedEventHandler() {
+	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Create debounced handler
-	debouncedHandler := NewDebouncedEventHandler(runtime.events)
+	debouncedHandler := NewDebouncedEventHandler(s.runtime.events)
 
 	// Track if validation occurred
 	validationOccurred := false
-	runtime.events.Register(EventChange, func(ctx context.Context, event *Event) error {
+	s.runtime.events.Register(EventChange, func(ctx context.Context, event *Event) error {
 		validationOccurred = true
 		return nil
 	})
@@ -446,33 +383,26 @@ func TestDebouncedEventHandler(t *testing.T) {
 	}
 
 	// Handle debounced change
-	err = debouncedHandler.OnChangeDebounced(ctx, event, 50*time.Millisecond)
-	if err != nil {
-		t.Errorf("OnChangeDebounced() error = %v", err)
-	}
+	err = debouncedHandler.OnChangeDebounced(s.ctx, event, 50*time.Millisecond)
+	require.NoError(s.T(), err, "OnChangeDebounced() should not return error")
 
 	// Check validation hasn't occurred immediately
-	if validationOccurred {
-		t.Error("Validation should not occur immediately with debouncing")
-	}
+	require.False(s.T(), validationOccurred, "Validation should not occur immediately with debouncing")
 
 	// Wait for debounce period
 	time.Sleep(100 * time.Millisecond)
 
 	// Check validation occurred after debounce
-	if !validationOccurred {
-		t.Error("Validation should occur after debounce period")
-	}
+	require.True(s.T(), validationOccurred, "Validation should occur after debounce period")
 }
 
-func TestEventTracker(t *testing.T) {
+// TestEventTracker tests event tracking functionality
+func (s *EventHandlerTestSuite) TestEventTracker() {
 	tracker := NewEventTracker()
 
 	// Initially no events
 	stats := tracker.GetStats()
-	if stats.TotalEvents != 0 {
-		t.Errorf("Expected 0 total events, got %d", stats.TotalEvents)
-	}
+	require.Equal(s.T(), 0, stats.TotalEvents, "Should start with 0 events")
 
 	// Track some events
 	events := []*Event{
@@ -488,41 +418,24 @@ func TestEventTracker(t *testing.T) {
 
 	// Check stats
 	stats = tracker.GetStats()
-	if stats.TotalEvents != 4 {
-		t.Errorf("Expected 4 total events, got %d", stats.TotalEvents)
-	}
-
-	if stats.EventsByType[EventChange] != 2 {
-		t.Errorf("Expected 2 change events, got %d", stats.EventsByType[EventChange])
-	}
-
-	if stats.EventsByType[EventBlur] != 1 {
-		t.Errorf("Expected 1 blur event, got %d", stats.EventsByType[EventBlur])
-	}
-
-	if stats.EventsByType[EventSubmit] != 1 {
-		t.Errorf("Expected 1 submit event, got %d", stats.EventsByType[EventSubmit])
-	}
-
-	if stats.LastEventType != EventSubmit {
-		t.Errorf("Expected last event type to be submit, got %s", stats.LastEventType)
-	}
+	require.Equal(s.T(), 4, stats.TotalEvents, "Should have 4 total events")
+	require.Equal(s.T(), 2, stats.EventsByType[EventChange], "Should have 2 change events")
+	require.Equal(s.T(), 1, stats.EventsByType[EventBlur], "Should have 1 blur event")
+	require.Equal(s.T(), 1, stats.EventsByType[EventSubmit], "Should have 1 submit event")
+	require.Equal(s.T(), EventSubmit, stats.LastEventType, "Last event type should be submit")
 
 	// Reset and check
 	tracker.Reset()
 	stats = tracker.GetStats()
-	if stats.TotalEvents != 0 {
-		t.Errorf("Expected 0 total events after reset, got %d", stats.TotalEvents)
-	}
+	require.Equal(s.T(), 0, stats.TotalEvents, "Should have 0 events after reset")
 }
 
-func TestEventHandler_GetValidationTiming(t *testing.T) {
+// TestGetValidationTiming tests getting validation timing
+func (s *EventHandlerTestSuite) TestGetValidationTiming() {
 	handler := NewEventHandler()
 
 	// Check default timing
-	if handler.GetValidationTiming() != ValidateOnBlur {
-		t.Error("Default validation timing should be ValidateOnBlur")
-	}
+	require.Equal(s.T(), ValidateOnBlur, handler.GetValidationTiming(), "Default validation timing should be ValidateOnBlur")
 
 	// Set and check different timings
 	timings := []ValidationTiming{
@@ -534,13 +447,12 @@ func TestEventHandler_GetValidationTiming(t *testing.T) {
 
 	for _, timing := range timings {
 		handler.SetValidationTiming(timing)
-		if handler.GetValidationTiming() != timing {
-			t.Errorf("Expected timing %s, got %s", timing, handler.GetValidationTiming())
-		}
+		require.Equal(s.T(), timing, handler.GetValidationTiming(), "Timing should match set value")
 	}
 }
 
-func TestEventHandler_Unregister(t *testing.T) {
+// TestUnregister tests event handler unregistration
+func (s *EventHandlerTestSuite) TestUnregister() {
 	handler := NewEventHandler()
 
 	// Register some callbacks
@@ -556,9 +468,7 @@ func TestEventHandler_Unregister(t *testing.T) {
 	changeHandlers := len(handler.handlers[EventChange])
 	handler.mu.RUnlock()
 
-	if changeHandlers != 2 {
-		t.Errorf("Expected 2 change handlers, got %d", changeHandlers)
-	}
+	require.Equal(s.T(), 2, changeHandlers, "Should have 2 change handlers")
 
 	// Unregister
 	handler.Unregister(EventChange)
@@ -568,24 +478,16 @@ func TestEventHandler_Unregister(t *testing.T) {
 	changeHandlers = len(handler.handlers[EventChange])
 	handler.mu.RUnlock()
 
-	if changeHandlers != 0 {
-		t.Errorf("Expected 0 change handlers after unregister, got %d", changeHandlers)
-	}
+	require.Equal(s.T(), 0, changeHandlers, "Should have 0 change handlers after unregister")
 }
 
-func TestEventHandler_ErrorHandling(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
-
-	handler := runtime.events
+// TestErrorHandling tests error propagation from callbacks
+func (s *EventHandlerTestSuite) TestErrorHandling() {
+	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Register callback that returns error
-	handler.Register(EventChange, func(ctx context.Context, event *Event) error {
+	s.handler.Register(EventChange, func(ctx context.Context, event *Event) error {
 		return fmt.Errorf("callback error")
 	})
 
@@ -598,22 +500,14 @@ func TestEventHandler_ErrorHandling(t *testing.T) {
 	}
 
 	// Handle event (should propagate callback error)
-	err = handler.OnChange(ctx, event)
-	if err == nil {
-		t.Error("OnChange() should return error from callback")
-	}
+	err = s.handler.OnChange(s.ctx, event)
+	require.Error(s.T(), err, "OnChange() should return error from callback")
 }
 
-func TestEventHandler_NonExistentField(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
-
-	handler := runtime.events
+// TestNonExistentField tests handling of non-existent field
+func (s *EventHandlerTestSuite) TestNonExistentField() {
+	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Create event for non-existent field
 	event := &Event{
@@ -624,8 +518,54 @@ func TestEventHandler_NonExistentField(t *testing.T) {
 	}
 
 	// Handle event (should fail)
-	err = handler.OnChange(ctx, event)
-	if err == nil {
-		t.Error("OnChange() should fail for non-existent field")
+	err = s.handler.OnChange(s.ctx, event)
+	require.Error(s.T(), err, "OnChange() should fail for non-existent field")
+}
+
+// Helper method to create a test schema
+func (s *EventHandlerTestSuite) createTestSchema() *schema.Schema {
+	return &schema.Schema{
+		ID:    "test_schema",
+		Title: "Test Schema",
+		Fields: []schema.Field{
+			{
+				Name:     "name",
+				Type:     schema.FieldText,
+				Label:    "Full Name",
+				Required: true,
+				Runtime: &schema.FieldRuntime{
+					Visible:  true,
+					Editable: true,
+					Reason:   "",
+				},
+			},
+			{
+				Name:     "email",
+				Type:     schema.FieldEmail,
+				Label:    "Email Address",
+				Required: true,
+				Runtime: &schema.FieldRuntime{
+					Visible:  true,
+					Editable: true,
+					Reason:   "",
+				},
+			},
+			{
+				Name:     "age",
+				Type:     schema.FieldNumber,
+				Label:    "Age",
+				Required: false,
+				Runtime: &schema.FieldRuntime{
+					Visible:  true,
+					Editable: true,
+					Reason:   "",
+				},
+			},
+		},
 	}
+}
+
+// TestEventHandlerTestSuite runs the test suite
+func TestEventHandlerTestSuite(t *testing.T) {
+	suite.Run(t, new(EventHandlerTestSuite))
 }

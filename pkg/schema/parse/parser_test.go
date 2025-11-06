@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
@@ -10,10 +11,15 @@ import (
 
 type ParserTestSuite struct {
 	suite.Suite
+	ctx context.Context
 }
 
 func TestParserSuite(t *testing.T) {
 	suite.Run(t, new(ParserTestSuite))
+}
+
+func (s *ParserTestSuite) SetupTest() {
+	s.ctx = context.Background()
 }
 
 func (s *ParserTestSuite) TestParser_Parse_Basic() {
@@ -32,7 +38,7 @@ func (s *ParserTestSuite) TestParser_Parse_Basic() {
 	}`)
 
 	parser := NewParser()
-	schema, err := parser.Parse(jsonData)
+	schema, err := parser.Parse(s.ctx, jsonData)
 
 	s.Require().NoError(err)
 	s.Require().Equal("test-form", schema.ID)
@@ -57,7 +63,7 @@ func (s *ParserTestSuite) TestParser_Parse_WithDefaults() {
 
 	// Without defaults
 	parser := NewParser()
-	schema, err := parser.Parse(jsonData)
+	schema, err := parser.Parse(s.ctx, jsonData)
 	s.Require().NoError(err)
 
 	// Textarea should not have rows set
@@ -65,7 +71,7 @@ func (s *ParserTestSuite) TestParser_Parse_WithDefaults() {
 
 	// With defaults
 	parserWithDefaults := NewParser(WithDefaults())
-	schema2, err := parserWithDefaults.Parse(jsonData)
+	schema2, err := parserWithDefaults.Parse(s.ctx, jsonData)
 	s.Require().NoError(err)
 
 	// Textarea should have default rows
@@ -75,7 +81,7 @@ func (s *ParserTestSuite) TestParser_Parse_WithDefaults() {
 
 func (s *ParserTestSuite) TestParser_Parse_EmptyData() {
 	parser := NewParser()
-	_, err := parser.Parse([]byte{})
+	_, err := parser.Parse(s.ctx, []byte{})
 
 	s.Require().Error(err)
 	s.Require().Contains(err.Error(), "empty schema data")
@@ -83,7 +89,7 @@ func (s *ParserTestSuite) TestParser_Parse_EmptyData() {
 
 func (s *ParserTestSuite) TestParser_Parse_InvalidJSON() {
 	parser := NewParser()
-	_, err := parser.Parse([]byte(`{invalid json`))
+	_, err := parser.Parse(s.ctx, []byte(`{invalid json`))
 
 	s.Require().Error(err)
 	s.Require().Contains(err.Error(), "malformed JSON")
@@ -115,7 +121,7 @@ func (s *ParserTestSuite) TestParser_Parse_MissingRequiredFields() {
 	parser := NewParser()
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
-			_, err := parser.Parse([]byte(tt.jsonData))
+			_, err := parser.Parse(s.ctx, []byte(tt.jsonData))
 			s.Require().Error(err)
 			s.Require().Contains(err.Error(), tt.errMsg)
 		})
@@ -130,7 +136,7 @@ func (s *ParserTestSuite) TestParser_Parse_PageType() {
 	}`)
 
 	parser := NewParser()
-	schema, err := parser.Parse(jsonData)
+	schema, err := parser.Parse(s.ctx, jsonData)
 
 	s.Require().NoError(err)
 	s.Require().Equal("page", string(schema.Type))
@@ -159,7 +165,7 @@ func (s *ParserTestSuite) TestParser_Parse_MaxFieldsLimit() {
 	jsonData, _ := json.Marshal(schemaMap)
 
 	parser := NewParser(WithMaxFields(500))
-	_, err := parser.Parse(jsonData)
+	_, err := parser.Parse(s.ctx, jsonData)
 
 	s.Require().Error(err)
 	s.Require().Contains(err.Error(), "too many fields")
@@ -177,7 +183,7 @@ func (s *ParserTestSuite) TestParser_Parse_DuplicateFieldNames() {
 	}`)
 
 	parser := NewParser() // Strict validation by default
-	_, err := parser.Parse(jsonData)
+	_, err := parser.Parse(s.ctx, jsonData)
 
 	s.Require().Error(err)
 	s.Require().Contains(err.Error(), "field name already exists")
@@ -191,7 +197,7 @@ func (s *ParserTestSuite) TestParser_ParseString() {
 	}`
 
 	parser := NewParser()
-	schema, err := parser.ParseString(jsonStr)
+	schema, err := parser.ParseString(s.ctx, jsonStr)
 
 	s.Require().NoError(err)
 	s.Require().Equal("test-form", schema.ID)
@@ -212,7 +218,7 @@ func (s *ParserTestSuite) TestParser_ParseMap() {
 	}
 
 	parser := NewParser()
-	schema, err := parser.ParseMap(data)
+	schema, err := parser.ParseMap(s.ctx, data)
 
 	s.Require().NoError(err)
 	s.Require().Equal("test-form", schema.ID)
@@ -242,7 +248,7 @@ func (s *ParserTestSuite) TestParser_Serialize() {
 	s.Require().Contains(string(data), `"email"`)
 
 	// Should be able to parse back
-	schema2, err := parser.Parse(data)
+	schema2, err := parser.Parse(s.ctx, data)
 	s.Require().NoError(err)
 	s.Require().Equal(schema.ID, schema2.ID)
 }
@@ -278,7 +284,7 @@ func (s *ParserTestSuite) TestParser_Clone() {
 	}
 
 	parser := NewParser()
-	cloned, err := parser.Clone(original)
+	cloned, err := parser.Clone(s.ctx, original)
 
 	s.Require().NoError(err)
 	s.Require().Equal(original.ID, cloned.ID)
@@ -310,7 +316,7 @@ func (s *ParserTestSuite) TestParser_Merge() {
 	}
 
 	parser := NewParser()
-	merged, err := parser.Merge(base, overlay)
+	merged, err := parser.Merge(s.ctx, base, overlay)
 
 	s.Require().NoError(err)
 	s.Require().Equal("Overlay Form", merged.Title) // Overlay wins
@@ -418,7 +424,7 @@ func (s *ParserTestSuite) TestParser_FieldDefaults() {
 			}`)
 
 			parser := NewParser(WithDefaults())
-			schema, err := parser.Parse(jsonData)
+			schema, err := parser.Parse(s.ctx, jsonData)
 
 			s.Require().NoError(err)
 			s.Require().Len(schema.Fields, 1)
@@ -440,7 +446,7 @@ func (s *ParserTestSuite) TestParser_ActionDefaults() {
 	}`)
 
 	parser := NewParser(WithDefaults())
-	schema, err := parser.Parse(jsonData)
+	schema, err := parser.Parse(s.ctx, jsonData)
 
 	s.Require().NoError(err)
 	s.Require().Len(schema.Actions, 3)
@@ -511,7 +517,7 @@ func BenchmarkParser_Parse(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = parser.Parse(jsonData)
+		_, _ = parser.Parse(context.Background(), jsonData)
 	}
 }
 
@@ -531,6 +537,6 @@ func BenchmarkParser_ParseWithDefaults(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = parser.Parse(jsonData)
+		_, _ = parser.Parse(context.Background(), jsonData)
 	}
 }

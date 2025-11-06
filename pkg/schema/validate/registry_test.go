@@ -637,4 +637,3 @@ func BenchmarkValidationRegistry_ValidateAsync(b *testing.B) {
 		registry.ValidateAsync(ctx, "unique", "test_value", map[string]any{})
 	}
 }
-

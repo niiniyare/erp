@@ -903,23 +903,23 @@ func (suite *BusinessRulesTestSuite) TestTestRule() {
 
 	// Test with multiple data scenarios
 	testCases := []map[string]any{
-		{"user_role": "admin"},     // Should match
-		{"user_role": "user"},      // Should not match
-		{"user_role": "admin"},     // Should match
-		{"user_role": "manager"},   // Should not match
-		{"user_role": ""},          // Should not match (empty value)
+		{"user_role": "admin"},   // Should match
+		{"user_role": "user"},    // Should not match
+		{"user_role": "admin"},   // Should match
+		{"user_role": "manager"}, // Should not match
+		{"user_role": ""},        // Should not match (empty value)
 	}
 
 	results, err := suite.engine.TestRule(suite.ctx, rule, schema, testCases)
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), results, 5)
-	
+
 	// Check expected results
-	require.True(suite.T(), results[0])   // admin should match
-	require.False(suite.T(), results[1])  // user should not match
-	require.True(suite.T(), results[2])   // admin should match
-	require.False(suite.T(), results[3])  // manager should not match
-	require.False(suite.T(), results[4])  // empty value should not match
+	require.True(suite.T(), results[0])  // admin should match
+	require.False(suite.T(), results[1]) // user should not match
+	require.True(suite.T(), results[2])  // admin should match
+	require.False(suite.T(), results[3]) // manager should not match
+	require.False(suite.T(), results[4]) // empty value should not match
 
 	// Test with rule that has no condition (should always be true)
 	ruleWithoutCondition := &BusinessRule{
@@ -935,7 +935,7 @@ func (suite *BusinessRulesTestSuite) TestTestRule() {
 	resultsAlwaysTrue, err := suite.engine.TestRule(suite.ctx, ruleWithoutCondition, schema, testCases)
 	require.NoError(suite.T(), err)
 	require.Len(suite.T(), resultsAlwaysTrue, 5)
-	
+
 	// All results should be true since there's no condition
 	for i, result := range resultsAlwaysTrue {
 		require.True(suite.T(), result, "Result %d should be true", i)
@@ -967,12 +967,12 @@ func (suite *BusinessRulesTestSuite) TestExplainRule() {
 	}
 
 	rule := &BusinessRule{
-		ID:          "test_explain_rule",
-		Name:        "Test Explain Rule",
-		Type:        RuleTypeFieldVisibility,
-		Priority:    10,
-		Enabled:     true,
-		Condition:   condition,
+		ID:        "test_explain_rule",
+		Name:      "Test Explain Rule",
+		Type:      RuleTypeFieldVisibility,
+		Priority:  10,
+		Enabled:   true,
+		Condition: condition,
 		Actions: []BusinessRuleAction{
 			{Type: ActionShowField, Target: "field1"},
 			{Type: ActionHideField, Target: "field2"},
@@ -1089,7 +1089,7 @@ func (suite *BusinessRulesTestSuite) TestUpdateRule() {
 	require.False(suite.T(), retrievedRule.UpdatedAt.IsZero())
 
 	// Test error cases
-	
+
 	// Test with nil rule
 	err = suite.engine.UpdateRule(nil)
 	require.Error(suite.T(), err)

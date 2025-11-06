@@ -39,7 +39,7 @@ func (fs *FilesystemStorage) Get(ctx context.Context, id string) ([]byte, error)
 	}
 
 	filePath := fs.getFilePath(id)
-	
+
 	// Check if context is cancelled
 	select {
 	case <-ctx.Done():
@@ -76,7 +76,7 @@ func (fs *FilesystemStorage) Set(ctx context.Context, id string, data []byte) er
 	}
 
 	filePath := fs.getFilePath(id)
-	
+
 	// Ensure the directory exists
 	dir := filepath.Dir(filePath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -112,7 +112,7 @@ func (fs *FilesystemStorage) Delete(ctx context.Context, id string) error {
 	}
 
 	filePath := fs.getFilePath(id)
-	
+
 	err := os.Remove(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -161,7 +161,7 @@ func (fs *FilesystemStorage) List(ctx context.Context) ([]string, error) {
 		// Remove .json extension and convert path separators to dots
 		schemaID := strings.TrimSuffix(relPath, ".json")
 		schemaID = strings.ReplaceAll(schemaID, string(filepath.Separator), ".")
-		
+
 		schemaIDs = append(schemaIDs, schemaID)
 		return nil
 	})
@@ -187,7 +187,7 @@ func (fs *FilesystemStorage) Exists(ctx context.Context, id string) (bool, error
 	}
 
 	filePath := fs.getFilePath(id)
-	
+
 	_, err := os.Stat(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -270,7 +270,7 @@ func (fs *FilesystemStorage) Stats(ctx context.Context) (*StorageStats, error) {
 
 		if !d.IsDir() && strings.HasSuffix(d.Name(), ".json") {
 			stats.SchemaCount++
-			
+
 			if info, err := d.Info(); err == nil {
 				stats.TotalSize += info.Size()
 			}

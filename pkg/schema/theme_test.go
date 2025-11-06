@@ -25,12 +25,12 @@ func (suite *ThemeTestSuite) TestThemeStructure() {
 	theme := &Theme{
 		ID:          "test-theme-id",
 		Name:        "Test Theme",
-		Version:     "1.0.0", 
+		Version:     "1.0.0",
 		Description: "A test theme",
 		Author:      "Test Author",
 		Tokens:      GetDefaultTokens(),
 	}
-	
+
 	suite.Require().Equal("test-theme-id", theme.ID)
 	suite.Require().Equal("Test Theme", theme.Name)
 	suite.Require().Equal("1.0.0", theme.Version)
@@ -41,7 +41,7 @@ func (suite *ThemeTestSuite) TestThemeStructure() {
 
 func (suite *ThemeTestSuite) TestTokens() {
 	tokens := GetDefaultTokens()
-	
+
 	suite.Require().NotNil(tokens)
 	suite.Require().NotNil(tokens.Primitives)
 	suite.Require().NotNil(tokens.Semantic)
@@ -50,11 +50,11 @@ func (suite *ThemeTestSuite) TestTokens() {
 
 func (suite *ThemeTestSuite) TestTokenReference() {
 	ref := TokenReference("{colors.primary.base}")
-	
+
 	suite.Require().True(ref.IsReference())
 	suite.Require().Equal("colors.primary.base", ref.Path())
 	suite.Require().Equal("{colors.primary.base}", ref.String())
-	
+
 	// Test non-reference
 	nonRef := TokenReference("#123456")
 	suite.Require().False(nonRef.IsReference())
@@ -63,7 +63,7 @@ func (suite *ThemeTestSuite) TestTokenReference() {
 func (suite *ThemeTestSuite) TestThemeRegistry() {
 	registry := NewThemeRegistry()
 	suite.Require().NotNil(registry)
-	
+
 	// Test registry methods exist (they return placeholder values for now)
 	exists := registry.Exists("test-theme")
 	suite.Require().False(exists) // Should be false for non-existent theme
@@ -82,7 +82,7 @@ func (suite *ThemeTestSuite) TestDarkModeConfig() {
 		Default:  true,
 		Strategy: "auto",
 	}
-	
+
 	suite.Require().True(darkModeConfig.Enabled)
 	suite.Require().True(darkModeConfig.Default)
 	suite.Require().Equal("auto", darkModeConfig.Strategy)
@@ -90,13 +90,13 @@ func (suite *ThemeTestSuite) TestDarkModeConfig() {
 
 func (suite *ThemeTestSuite) TestAccessibilityConfig() {
 	accessibilityConfig := &AccessibilityConfig{
-		HighContrast:      true,
-		ReducedMotion:     false,
-		FocusIndicator:    true,
-		ScreenReaderOnly:  true,
-		KeyboardNav:       true,
+		HighContrast:     true,
+		ReducedMotion:    false,
+		FocusIndicator:   true,
+		ScreenReaderOnly: true,
+		KeyboardNav:      true,
 	}
-	
+
 	suite.Require().True(accessibilityConfig.HighContrast)
 	suite.Require().False(accessibilityConfig.ReducedMotion)
 	suite.Require().True(accessibilityConfig.FocusIndicator)
@@ -111,21 +111,21 @@ func (suite *ThemeTestSuite) TestThemeWithAllComponents() {
 		Version:     "2.0.0",
 		Description: "A complete theme with all components",
 		Tokens:      GetDefaultTokens(),
-		
+
 		DarkMode: &DarkModeConfig{
 			Enabled: true,
 			Default: true,
 		},
-		
+
 		Accessibility: &AccessibilityConfig{
 			HighContrast:     true,
 			FocusIndicator:   true,
 			ScreenReaderOnly: true,
 		},
-		
+
 		CustomCSS: "/* Custom theme styles */",
 	}
-	
+
 	suite.Require().Equal("complete-theme-id", theme.ID)
 	suite.Require().Equal("Complete Theme", theme.Name)
 	suite.Require().NotNil(theme.Tokens)
@@ -363,7 +363,7 @@ func BenchmarkThemeOverrides(b *testing.B) {
 			"spacing.base":         "1.5rem",
 			"typography.size.base": "18px",
 		},
-		ComponentOverrides: map[string]interface{}{
+		ComponentOverrides: map[string]any{
 			"button.borderRadius": "12px",
 			"input.height":        "44px",
 		},

@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,6 +10,7 @@ import (
 
 type BuilderExtendedTestSuite struct {
 	suite.Suite
+	ctx context.Context
 }
 
 func TestBuilderExtendedTestSuite(t *testing.T) {
@@ -21,28 +23,28 @@ func (suite *BuilderExtendedTestSuite) TestBuilderConfiguration() {
 
 	// Test WithVersion
 	builder.WithVersion("1.2.0")
-	schema, err := builder.Build()
+	schema, err := builder.Build(suite.ctx)
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), "1.2.0", schema.Version)
 
 	// Test WithCategory
 	builder2 := NewBuilder("test-schema-2", TypeForm, "Test Schema 2")
 	builder2.WithCategory("finance")
-	schema2, err := builder2.Build()
+	schema2, err := builder2.Build(suite.ctx)
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), "finance", schema2.Category)
 
 	// Test WithModule
 	builder3 := NewBuilder("test-schema-3", TypeForm, "Test Schema 3")
 	builder3.WithModule("accounting")
-	schema3, err := builder3.Build()
+	schema3, err := builder3.Build(suite.ctx)
 	require.NoError(suite.T(), err)
 	require.Equal(suite.T(), "accounting", schema3.Module)
 
 	// Test WithTags
 	builder4 := NewBuilder("test-schema-4", TypeForm, "Test Schema 4")
 	builder4.WithTags("tag1", "tag2", "tag3")
-	schema4, err := builder4.Build()
+	schema4, err := builder4.Build(suite.ctx)
 	require.NoError(suite.T(), err)
 	require.Contains(suite.T(), schema4.Tags, "tag1")
 	require.Contains(suite.T(), schema4.Tags, "tag2")
@@ -60,7 +62,7 @@ func (suite *BuilderExtendedTestSuite) TestBuilderWithConfig() {
 	}
 
 	builder.WithConfig(config)
-	schema, err := builder.Build()
+	schema, err := builder.Build(suite.ctx)
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), schema.Config)
 	require.Equal(suite.T(), "POST", schema.Config.Method)
@@ -78,7 +80,7 @@ func (suite *BuilderExtendedTestSuite) TestBuilderWithLayout() {
 	}
 
 	builder.WithLayout(layout)
-	schema, err := builder.Build()
+	schema, err := builder.Build(suite.ctx)
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), schema.Layout)
 	require.Equal(suite.T(), LayoutGrid, schema.Layout.Type)
@@ -90,7 +92,7 @@ func (suite *BuilderExtendedTestSuite) TestBuilderWithTenant() {
 	builder := NewBuilder("test-schema", TypeForm, "Test Schema")
 
 	builder.WithTenant("organization_id", "strict")
-	schema, err := builder.Build()
+	schema, err := builder.Build(suite.ctx)
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), schema.Tenant)
 	require.True(suite.T(), schema.Tenant.Enabled)
@@ -111,7 +113,7 @@ func (suite *BuilderExtendedTestSuite) TestBuilderWithSecurity() {
 	}
 
 	builder.WithSecurity(security)
-	schema, err := builder.Build()
+	schema, err := builder.Build(suite.ctx)
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), schema.Security)
 	require.NotNil(suite.T(), schema.Security.CSRF)
@@ -123,7 +125,7 @@ func (suite *BuilderExtendedTestSuite) TestBuilderWithRateLimit() {
 	builder := NewBuilder("test-schema", TypeForm, "Test Schema")
 
 	builder.WithRateLimit(100, 60)
-	schema, err := builder.Build()
+	schema, err := builder.Build(suite.ctx)
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), schema.Security)
 	require.NotNil(suite.T(), schema.Security.RateLimit)
@@ -136,7 +138,7 @@ func (suite *BuilderExtendedTestSuite) TestBuilderWithHTMX() {
 	builder := NewBuilder("test-schema", TypeForm, "Test Schema")
 
 	builder.WithHTMX("/api/submit", "#result")
-	schema, err := builder.Build()
+	schema, err := builder.Build(suite.ctx)
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), schema.HTMX)
 	require.True(suite.T(), schema.HTMX.Enabled)
@@ -150,7 +152,7 @@ func (suite *BuilderExtendedTestSuite) TestBuilderWithAlpine() {
 	builder := NewBuilder("test-schema", TypeForm, "Test Schema")
 
 	builder.WithAlpine("{ count: 0, increment() { this.count++ } }")
-	schema, err := builder.Build()
+	schema, err := builder.Build(suite.ctx)
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), schema.Alpine)
 	require.True(suite.T(), schema.Alpine.Enabled)
@@ -162,7 +164,7 @@ func (suite *BuilderExtendedTestSuite) TestBuilderWithI18n() {
 	builder := NewBuilder("test-schema", TypeForm, "Test Schema")
 
 	builder.WithI18n("en", "en", "es", "fr", "de")
-	schema, err := builder.Build()
+	schema, err := builder.Build(suite.ctx)
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), schema.I18n)
 	require.True(suite.T(), schema.I18n.Enabled)
@@ -198,7 +200,7 @@ func (suite *BuilderExtendedTestSuite) TestAdditionalFieldMethods() {
 	// Test AddDateField
 	builder.AddDateField("birth_date", "Birth Date", false)
 
-	schema, err := builder.Build()
+	schema, err := builder.Build(suite.ctx)
 	require.NoError(suite.T(), err)
 
 	// Verify fields were added
@@ -235,7 +237,7 @@ func (suite *BuilderExtendedTestSuite) TestAdditionalActionMethods() {
 	}
 	builder.AddActionWithConfig(customAction)
 
-	schema, err := builder.Build()
+	schema, err := builder.Build(suite.ctx)
 	require.NoError(suite.T(), err)
 
 	// Verify actions were added
@@ -255,12 +257,12 @@ func (suite *BuilderExtendedTestSuite) TestMustBuild() {
 	builder := NewBuilder("test-schema", TypeForm, "Test Schema")
 	builder.AddTextField("name", "Name", true)
 
-	schema := builder.MustBuild()
+	schema := builder.MustBuild(suite.ctx)
 	require.NotNil(suite.T(), schema)
 	require.Equal(suite.T(), "test-schema", schema.ID)
 
 	// Test that MustBuild panics on validation error
-	// Note: We can't easily test the panic case without causing the test to fail
+	// NOTE: We can't easily test the panic case without causing the test to fail
 	// This would require a separate test function that expects a panic
 }
 

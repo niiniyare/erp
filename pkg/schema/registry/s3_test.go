@@ -17,7 +17,7 @@ import (
 
 // MockS3Client implements a basic S3 client interface for testing
 type MockS3Client struct {
-	objects map[string][]byte
+	objects  map[string][]byte
 	metadata map[string]map[string]string
 }
 
@@ -42,12 +42,12 @@ func (m *MockS3Client) GetObject(ctx context.Context, params *s3.GetObjectInput,
 
 func (m *MockS3Client) PutObject(ctx context.Context, params *s3.PutObjectInput, optFns ...func(*s3.Options)) (*s3.PutObjectOutput, error) {
 	key := aws.ToString(params.Key)
-	
+
 	data, err := io.ReadAll(params.Body)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	m.objects[key] = data
 	if params.Metadata != nil {
 		m.metadata[key] = params.Metadata
@@ -90,7 +90,7 @@ func (m *MockS3Client) HeadObject(ctx context.Context, params *s3.HeadObjectInpu
 
 func (m *MockS3Client) ListObjectsV2(ctx context.Context, params *s3.ListObjectsV2Input, optFns ...func(*s3.Options)) (*s3.ListObjectsV2Output, error) {
 	prefix := aws.ToString(params.Prefix)
-	
+
 	var contents []types.Object
 	for key, data := range m.objects {
 		if strings.HasPrefix(key, prefix) {
@@ -262,23 +262,23 @@ func TestS3Storage_KeyGeneration(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		schemaID   string
+		name        string
+		schemaID    string
 		expectedKey string
 	}{
 		{
-			name:       "simple ID",
-			schemaID:   "user",
+			name:        "simple ID",
+			schemaID:    "user",
 			expectedKey: "schemas/user.json",
 		},
 		{
-			name:       "dotted ID",
-			schemaID:   "user.profile",
+			name:        "dotted ID",
+			schemaID:    "user.profile",
 			expectedKey: "schemas/user/profile.json",
 		},
 		{
-			name:       "complex nested ID",
-			schemaID:   "forms.user.registration.step1",
+			name:        "complex nested ID",
+			schemaID:    "forms.user.registration.step1",
 			expectedKey: "schemas/forms/user/registration/step1.json",
 		},
 	}

@@ -73,10 +73,10 @@ func TestFilesystemStorage_SetAndGet(t *testing.T) {
 	storage, tempDir := setupFilesystemTest(t)
 	ctx := context.Background()
 
-	testSchema := map[string]interface{}{
+	testSchema := map[string]any{
 		"id":    "user.profile",
 		"title": "User Profile",
-		"fields": []map[string]interface{}{
+		"fields": []map[string]any{
 			{
 				"name": "username",
 				"type": "text",
@@ -217,10 +217,10 @@ func TestFilesystemStorage_List(t *testing.T) {
 
 	// Store multiple schemas
 	testSchemas := map[string][]byte{
-		"user.profile":         []byte(`{"id": "user.profile"}`),
-		"user.settings":        []byte(`{"id": "user.settings"}`),
-		"forms.registration":   []byte(`{"id": "forms.registration"}`),
-		"admin.dashboard":      []byte(`{"id": "admin.dashboard"}`),
+		"user.profile":       []byte(`{"id": "user.profile"}`),
+		"user.settings":      []byte(`{"id": "user.settings"}`),
+		"forms.registration": []byte(`{"id": "forms.registration"}`),
+		"admin.dashboard":    []byte(`{"id": "admin.dashboard"}`),
 	}
 
 	for id, data := range testSchemas {
@@ -569,7 +569,7 @@ func TestFilesystemStorage_ConcurrentAccess(t *testing.T) {
 
 func setupFilesystemTest(t *testing.T) (*FilesystemStorage, string) {
 	tempDir := t.TempDir()
-	
+
 	storage, err := NewFilesystemStorage(tempDir)
 	if err != nil {
 		t.Fatalf("Failed to create filesystem storage: %v", err)
@@ -625,7 +625,7 @@ func BenchmarkFilesystemStorage_Get(b *testing.B) {
 
 func setupFilesystemBenchmark(b *testing.B) (*FilesystemStorage, string) {
 	tempDir := b.TempDir()
-	
+
 	storage, err := NewFilesystemStorage(tempDir)
 	if err != nil {
 		b.Fatalf("Failed to create filesystem storage: %v", err)

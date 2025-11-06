@@ -3,6 +3,7 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"maps"
 	"sync"
 	"time"
 
@@ -12,11 +13,11 @@ import (
 
 // Runtime manages the execution of an enriched schema
 type Runtime struct {
-	schema    *schema.Schema        // Enriched schema with runtime context
-	state     *State               // Current form state
-	validator *validate.Validator  // Runtime validator
-	events    *EventHandler        // Event handling
-	mu        sync.RWMutex         // Concurrent access protection
+	schema    *schema.Schema      // Enriched schema with runtime context
+	state     *State              // Current form state
+	validator *validate.Validator // Runtime validator
+	events    *EventHandler       // Event handling
+	mu        sync.RWMutex        // Concurrent access protection
 }
 
 // NewRuntime creates a new runtime instance for an enriched schema
@@ -30,7 +31,7 @@ func NewRuntime(enrichedSchema *schema.Schema) *Runtime {
 }
 
 // Initialize prepares the runtime with initial data and validates the schema
-func (r *Runtime) Initialize(ctx context.Context, initialData map[string]interface{}) error {
+func (r *Runtime) Initialize(ctx context.Context, initialData map[string]any) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -43,16 +44,9 @@ func (r *Runtime) Initialize(ctx context.Context, initialData map[string]interfa
 	r.events.runtime = r
 
 	// Run initial validation using schema validation rules
-	result, err := r.validator.ValidateData(ctx, &schemaAdapter{r.schema}, r.state.GetAll())
+	err := r.validator.ValidateData(ctx, r.schema, r.state.GetAll())
 	if err != nil {
 		return fmt.Errorf("failed to validate initial data: %w", err)
-	}
-
-	// Store validation errors in state
-	if !result.Valid {
-		for field, errors := range result.Errors {
-			r.state.SetErrors(field, errors)
-		}
 	}
 
 	return nil
@@ -73,7 +67,7 @@ func (r *Runtime) GetSchema() *schema.Schema {
 }
 
 // HandleFieldChange processes a field value change
-func (r *Runtime) HandleFieldChange(ctx context.Context, fieldName string, value interface{}) error {
+func (r *Runtime) HandleFieldChange(ctx context.Context, fieldName string, value any) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -99,7 +93,7 @@ func (r *Runtime) HandleFieldChange(ctx context.Context, fieldName string, value
 }
 
 // HandleFieldBlur processes a field blur event
-func (r *Runtime) HandleFieldBlur(ctx context.Context, fieldName string, value interface{}) error {
+func (r *Runtime) HandleFieldBlur(ctx context.Context, fieldName string, value any) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -116,7 +110,7 @@ func (r *Runtime) HandleFieldBlur(ctx context.Context, fieldName string, value i
 }
 
 // HandleFieldFocus processes a field focus event
-func (r *Runtime) HandleFieldFocus(ctx context.Context, fieldName string, value interface{}) error {
+func (r *Runtime) HandleFieldFocus(ctx context.Context, fieldName string, value any) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -142,7 +136,7 @@ func (r *Runtime) HandleSubmit(ctx context.Context) error {
 }
 
 // ValidateField validates a single field value
-func (r *Runtime) ValidateField(ctx context.Context, fieldName string, value interface{}) []string {
+func (r *Runtime) ValidateField(ctx context.Context, fieldName string, value any) []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -150,7 +144,7 @@ func (r *Runtime) ValidateField(ctx context.Context, fieldName string, value int
 }
 
 // validateFieldUnlocked validates a single field value without locking
-func (r *Runtime) validateFieldUnlocked(ctx context.Context, fieldName string, value interface{}) []string {
+func (r *Runtime) validateFieldUnlocked(ctx context.Context, fieldName string, value any) []string {
 	// Find the field in our enriched schema
 	var field *schema.Field
 	for i := range r.schema.Fields {
@@ -258,7 +252,7 @@ func (r *Runtime) SetValidationTiming(timing ValidationTiming) {
 func (r *Runtime) ValidateWithDebounce(
 	ctx context.Context,
 	fieldName string,
-	value interface{},
+	value any,
 	delay time.Duration,
 ) <-chan []string {
 	result := make(chan []string, 1)
@@ -307,7 +301,7 @@ func (r *Runtime) Reset() {
 }
 
 // GetFieldValue gets the current value of a specific field
-func (r *Runtime) GetFieldValue(fieldName string) (interface{}, bool) {
+func (r *Runtime) GetFieldValue(fieldName string) (any, bool) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -315,7 +309,7 @@ func (r *Runtime) GetFieldValue(fieldName string) (interface{}, bool) {
 }
 
 // SetFieldValue sets the value of a specific field
-func (r *Runtime) SetFieldValue(fieldName string, value interface{}) error {
+func (r *Runtime) SetFieldValue(fieldName string, value any) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -347,7 +341,7 @@ func (r *Runtime) IsFieldTouched(fieldName string) bool {
 }
 
 // GetAllData returns all current form data
-func (r *Runtime) GetAllData() map[string]interface{} {
+func (r *Runtime) GetAllData() map[string]any {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -453,7 +447,7 @@ func (f *fieldAdapter) GetValidation() *validate.FieldValidation {
 	if f.Validation == nil {
 		return nil
 	}
-	
+
 	// Convert schema validation to validator validation
 	return &validate.FieldValidation{
 		MinLength: f.Validation.MinLength,
@@ -471,7 +465,7 @@ func (f *fieldAdapter) GetOptions() []validate.Option {
 	if f.Options == nil {
 		return nil
 	}
-	
+
 	options := make([]validate.Option, len(f.Options))
 	for i, opt := range f.Options {
 		options[i] = validate.Option{
@@ -485,19 +479,17 @@ func (f *fieldAdapter) GetOptions() []validate.Option {
 func (f *fieldAdapter) GetConfig() map[string]any {
 	// Build config from field properties
 	config := make(map[string]any)
-	
+
 	if f.Config != nil {
 		// Copy existing config
-		for k, v := range f.Config {
-			config[k] = v
-		}
+		maps.Copy(config, f.Config)
 	}
-	
+
 	// Add common field properties as config
 	config["label"] = f.Label
 	config["placeholder"] = f.Placeholder
 	config["help"] = f.Help
 	config["hidden"] = f.Hidden
-	
+
 	return config
 }

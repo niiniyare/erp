@@ -39,25 +39,25 @@ func (t TokenReference) Validate() error {
 	if !t.IsReference() {
 		return nil // Non-references are always valid
 	}
-	
+
 	path := t.Path()
 	if path == "" {
 		return NewValidationError("empty_token_path", "empty token path in reference")
 	}
-	
+
 	// Token paths must contain at least one dot
 	if !strings.Contains(path, ".") {
 		return NewValidationError("invalid_token_path", fmt.Sprintf("invalid token path format: %s (must contain at least one dot)", path))
 	}
-	
+
 	// Check for valid characters (alphanumeric, dots, underscores, hyphens)
 	for _, char := range path {
-		if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || 
-			 (char >= '0' && char <= '9') || char == '.' || char == '_' || char == '-') {
+		if !((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') ||
+			(char >= '0' && char <= '9') || char == '.' || char == '_' || char == '-') {
 			return NewValidationError("invalid_token_char", fmt.Sprintf("invalid character '%c' in token path: %s", char, path))
 		}
 	}
-	
+
 	return nil
 }
 
@@ -126,7 +126,7 @@ type ColorScale struct {
 	Scale200 string `json:"200"`
 	Scale300 string `json:"300"`
 	Scale400 string `json:"400"`
-	Scale500 string `json:"500"`  // Base color
+	Scale500 string `json:"500"` // Base color
 	Scale600 string `json:"600"`
 	Scale700 string `json:"700"`
 	Scale800 string `json:"800"`
@@ -303,9 +303,9 @@ type ZIndexScale struct {
 // SemanticTokens contains functional token assignments that map to primitive values.
 // These tokens provide semantic meaning to design decisions.
 type SemanticTokens struct {
-	Colors     *SemanticColors     `json:"colors"`
-	Typography *SemanticTypography `json:"typography"`
-	Spacing    *SemanticSpacing    `json:"spacing"`
+	Colors      *SemanticColors      `json:"colors"`
+	Typography  *SemanticTypography  `json:"typography"`
+	Spacing     *SemanticSpacing     `json:"spacing"`
 	Interactive *SemanticInteractive `json:"interactive"`
 }
 
@@ -385,11 +385,11 @@ type FeedbackColorSet struct {
 
 // SemanticTypography defines semantic typography assignments.
 type SemanticTypography struct {
-	Headings  *HeadingTokens  `json:"headings"`
-	Body      *BodyTokens     `json:"body"`
-	Labels    *LabelTokens    `json:"labels"`
-	Captions  *CaptionTokens  `json:"captions"`
-	Code      *CodeTokens     `json:"code"`
+	Headings *HeadingTokens `json:"headings"`
+	Body     *BodyTokens    `json:"body"`
+	Labels   *LabelTokens   `json:"labels"`
+	Captions *CaptionTokens `json:"captions"`
+	Code     *CodeTokens    `json:"code"`
 }
 
 // HeadingTokens defines semantic heading typography.
@@ -479,12 +479,12 @@ type InteractiveShadow struct {
 // ComponentTokens contains component-specific token assignments.
 // These tokens are used directly by UI components.
 type ComponentTokens struct {
-	Button  *ButtonTokens  `json:"button"`
-	Input   *InputTokens   `json:"input"`
-	Card    *CardTokens    `json:"card"`
-	Modal   *ModalTokens   `json:"modal"`
-	Form    *FormTokens    `json:"form"`
-	Table   *TableTokens   `json:"table"`
+	Button     *ButtonTokens     `json:"button"`
+	Input      *InputTokens      `json:"input"`
+	Card       *CardTokens       `json:"card"`
+	Modal      *ModalTokens      `json:"modal"`
+	Form       *FormTokens       `json:"form"`
+	Table      *TableTokens      `json:"table"`
 	Navigation *NavigationTokens `json:"navigation"`
 }
 
@@ -499,18 +499,18 @@ type ButtonTokens struct {
 
 // ButtonVariantTokens defines tokens for a button variant.
 type ButtonVariantTokens struct {
-	Background      TokenReference `json:"background"`
-	BackgroundHover TokenReference `json:"backgroundHover"`
+	Background       TokenReference `json:"background"`
+	BackgroundHover  TokenReference `json:"backgroundHover"`
 	BackgroundActive TokenReference `json:"backgroundActive"`
-	Color           TokenReference `json:"color"`
-	ColorHover      TokenReference `json:"colorHover"`
-	Border          TokenReference `json:"border"`
-	BorderHover     TokenReference `json:"borderHover"`
-	BorderRadius    TokenReference `json:"borderRadius"`
-	Padding         TokenReference `json:"padding"`
-	FontWeight      TokenReference `json:"fontWeight"`
-	Shadow          TokenReference `json:"shadow"`
-	ShadowHover     TokenReference `json:"shadowHover"`
+	Color            TokenReference `json:"color"`
+	ColorHover       TokenReference `json:"colorHover"`
+	Border           TokenReference `json:"border"`
+	BorderHover      TokenReference `json:"borderHover"`
+	BorderRadius     TokenReference `json:"borderRadius"`
+	Padding          TokenReference `json:"padding"`
+	FontWeight       TokenReference `json:"fontWeight"`
+	Shadow           TokenReference `json:"shadow"`
+	ShadowHover      TokenReference `json:"shadowHover"`
 }
 
 // InputTokens defines component tokens for inputs.
@@ -556,24 +556,24 @@ type FormTokens struct {
 
 // TableTokens defines component tokens for tables.
 type TableTokens struct {
-	Background      TokenReference `json:"background"`
-	BackgroundHover TokenReference `json:"backgroundHover"`
-	Border          TokenReference `json:"border"`
+	Background       TokenReference `json:"background"`
+	BackgroundHover  TokenReference `json:"backgroundHover"`
+	Border           TokenReference `json:"border"`
 	HeaderBackground TokenReference `json:"headerBackground"`
-	HeaderColor     TokenReference `json:"headerColor"`
-	Padding         TokenReference `json:"padding"`
+	HeaderColor      TokenReference `json:"headerColor"`
+	Padding          TokenReference `json:"padding"`
 }
 
 // NavigationTokens defines component tokens for navigation.
 type NavigationTokens struct {
-	Background      TokenReference `json:"background"`
-	BackgroundHover TokenReference `json:"backgroundHover"`
+	Background       TokenReference `json:"background"`
+	BackgroundHover  TokenReference `json:"backgroundHover"`
 	BackgroundActive TokenReference `json:"backgroundActive"`
-	Color           TokenReference `json:"color"`
-	ColorHover      TokenReference `json:"colorHover"`
-	ColorActive     TokenReference `json:"colorActive"`
-	Border          TokenReference `json:"border"`
-	Padding         TokenReference `json:"padding"`
+	Color            TokenReference `json:"color"`
+	ColorHover       TokenReference `json:"colorHover"`
+	ColorActive      TokenReference `json:"colorActive"`
+	Border           TokenReference `json:"border"`
+	Padding          TokenReference `json:"padding"`
 }
 
 // TokenResolver provides methods for resolving token references to actual values.
@@ -606,7 +606,7 @@ func (r *DefaultTokenResolver) Resolve(ctx context.Context, reference TokenRefer
 	if !reference.IsReference() {
 		return reference.String(), nil
 	}
-	
+
 	// Track resolution path to detect circular references
 	visited := make(map[string]bool)
 	return r.resolveWithTracking(ctx, reference, tokens, visited, 0)
@@ -617,33 +617,33 @@ func (r *DefaultTokenResolver) resolveWithTracking(ctx context.Context, referenc
 	if depth > r.maxDepth {
 		return "", NewValidationError("max_depth_exceeded", fmt.Sprintf("maximum resolution depth exceeded for token: %s", reference.String()))
 	}
-	
+
 	if !reference.IsReference() {
 		return reference.String(), nil
 	}
-	
+
 	path := reference.Path()
-	
+
 	// Check for circular reference
 	if visited[path] {
 		return "", NewValidationError("circular_reference", fmt.Sprintf("circular reference detected in token path: %s", path))
 	}
-	
+
 	visited[path] = true
 	defer delete(visited, path) // Clean up for backtracking
-	
+
 	// Get the value from the token structure
 	value, err := r.getTokenValue(path, tokens)
 	if err != nil {
 		return "", err
 	}
-	
+
 	// If the resolved value is itself a reference, resolve it recursively
 	valueRef := TokenReference(value)
 	if valueRef.IsReference() {
 		return r.resolveWithTracking(ctx, valueRef, tokens, visited, depth+1)
 	}
-	
+
 	return value, nil
 }
 
@@ -652,23 +652,23 @@ func (r *DefaultTokenResolver) getTokenValue(path string, tokens *DesignTokens) 
 	if tokens == nil {
 		return "", NewValidationError("tokens_nil", "tokens is nil")
 	}
-	
+
 	parts := strings.Split(path, ".")
 	if len(parts) < 2 {
 		return "", NewValidationError("invalid_token_path", fmt.Sprintf("invalid token path: %s", path))
 	}
-	
+
 	// Navigate through the token structure using reflection
 	current := reflect.ValueOf(tokens)
 	if current.Kind() == reflect.Ptr {
 		current = current.Elem()
 	}
-	
+
 	for i, part := range parts {
 		if !current.IsValid() {
 			return "", NewValidationError("invalid_token_path", fmt.Sprintf("invalid token path at part %d: %s", i, path))
 		}
-		
+
 		// Handle different types of navigation
 		switch current.Kind() {
 		case reflect.Struct:
@@ -678,7 +678,7 @@ func (r *DefaultTokenResolver) getTokenValue(path string, tokens *DesignTokens) 
 				return "", NewValidationError("token_field_not_found", fmt.Sprintf("token field not found: %s in path %s", part, path))
 			}
 			current = field
-			
+
 		case reflect.Ptr:
 			if current.IsNil() {
 				return "", NewValidationError("nil_pointer_in_path", fmt.Sprintf("nil pointer encountered in token path: %s", path))
@@ -690,11 +690,11 @@ func (r *DefaultTokenResolver) getTokenValue(path string, tokens *DesignTokens) 
 				return "", NewValidationError("token_field_not_found", fmt.Sprintf("token field not found: %s in path %s", part, path))
 			}
 			current = field
-			
+
 		default:
 			return "", NewValidationError("unsupported_token_type", fmt.Sprintf("cannot navigate token path %s at part %s: unsupported type %s", path, part, current.Kind()))
 		}
-		
+
 		// If we reach a pointer, dereference it
 		if current.Kind() == reflect.Ptr {
 			if current.IsNil() {
@@ -703,7 +703,7 @@ func (r *DefaultTokenResolver) getTokenValue(path string, tokens *DesignTokens) 
 			current = current.Elem()
 		}
 	}
-	
+
 	// Extract the final value
 	switch current.Kind() {
 	case reflect.String:
@@ -733,19 +733,19 @@ func (r *DefaultTokenResolver) getTokenValue(path string, tokens *DesignTokens) 
 // findStructField finds a struct field by name (case-insensitive).
 func (r *DefaultTokenResolver) findStructField(structValue reflect.Value, fieldName string) reflect.Value {
 	structType := structValue.Type()
-	
+
 	// First try exact match
 	if field := structValue.FieldByName(fieldName); field.IsValid() {
 		return field
 	}
-	
+
 	// Then try case-insensitive match
 	for i := 0; i < structValue.NumField(); i++ {
 		field := structType.Field(i)
 		if strings.EqualFold(field.Name, fieldName) {
 			return structValue.Field(i)
 		}
-		
+
 		// Also check JSON tag
 		if jsonTag := field.Tag.Get("json"); jsonTag != "" {
 			tagParts := strings.Split(jsonTag, ",")
@@ -754,7 +754,7 @@ func (r *DefaultTokenResolver) findStructField(structValue reflect.Value, fieldN
 			}
 		}
 	}
-	
+
 	return reflect.Value{} // Invalid value
 }
 
@@ -770,23 +770,23 @@ func (r *DefaultTokenResolver) ValidateReferences(tokens *DesignTokens) error {
 	if tokens == nil {
 		return NewValidationError("tokens_nil", "tokens is nil")
 	}
-	
+
 	// Collect all token references from the structure
 	references := r.collectTokenReferences(tokens)
-	
+
 	// Validate each reference
 	for _, ref := range references {
 		if err := ref.Validate(); err != nil {
 			return WrapError(err, "invalid_token_reference", fmt.Sprintf("invalid token reference %s", ref.String()))
 		}
-		
+
 		// Check if the reference can be resolved (this will catch circular references)
 		_, err := r.Resolve(context.Background(), ref, tokens)
 		if err != nil {
 			return WrapError(err, "token_resolution_failed", fmt.Sprintf("failed to resolve token reference %s", ref.String()))
 		}
 	}
-	
+
 	return nil
 }
 
@@ -802,33 +802,33 @@ func (r *DefaultTokenResolver) collectReferencesFromValue(v reflect.Value, refer
 	if !v.IsValid() {
 		return
 	}
-	
+
 	switch v.Kind() {
 	case reflect.Ptr:
 		if !v.IsNil() {
 			r.collectReferencesFromValue(v.Elem(), references)
 		}
-		
+
 	case reflect.Struct:
 		for i := 0; i < v.NumField(); i++ {
 			r.collectReferencesFromValue(v.Field(i), references)
 		}
-		
+
 	case reflect.Slice, reflect.Array:
 		for i := 0; i < v.Len(); i++ {
 			r.collectReferencesFromValue(v.Index(i), references)
 		}
-		
+
 	case reflect.Map:
 		for _, key := range v.MapKeys() {
 			r.collectReferencesFromValue(v.MapIndex(key), references)
 		}
-		
+
 	case reflect.Interface:
 		if !v.IsNil() {
 			r.collectReferencesFromValue(v.Elem(), references)
 		}
-		
+
 	case reflect.String:
 		// Check if this string is a TokenReference
 		if v.CanInterface() {
@@ -885,12 +885,12 @@ func (ctm *CompiledTokenMap) Size() int {
 
 // TokenRegistry manages design tokens with thread safety and caching.
 type TokenRegistry struct {
-	tokens      *DesignTokens
-	resolver    TokenResolver
-	compiled    *CompiledTokenMap // Precompiled token map for O(1) lookups
-	cache       map[string]string // Resolution cache
-	needsRecompile bool            // Flag to trigger recompilation
-	mu          sync.RWMutex
+	tokens         *DesignTokens
+	resolver       TokenResolver
+	compiled       *CompiledTokenMap // Precompiled token map for O(1) lookups
+	cache          map[string]string // Resolution cache
+	needsRecompile bool              // Flag to trigger recompilation
+	mu             sync.RWMutex
 }
 
 // NewTokenRegistry creates a new token registry with default values.
@@ -902,10 +902,10 @@ func NewTokenRegistry() *TokenRegistry {
 		cache:          make(map[string]string),
 		needsRecompile: true,
 	}
-	
+
 	// Trigger initial compilation
 	registry.compileTokens()
-	
+
 	return registry
 }
 
@@ -914,7 +914,7 @@ func NewTokenRegistryWithResolver(resolver TokenResolver) *TokenRegistry {
 	if resolver == nil {
 		resolver = NewDefaultTokenResolver()
 	}
-	
+
 	registry := &TokenRegistry{
 		tokens:         GetDefaultTokens(),
 		resolver:       resolver,
@@ -922,89 +922,90 @@ func NewTokenRegistryWithResolver(resolver TokenResolver) *TokenRegistry {
 		cache:          make(map[string]string),
 		needsRecompile: true,
 	}
-	
+
 	// Trigger initial compilation
 	registry.compileTokens()
-	
+
 	return registry
 }
 
 // SetTokens updates the entire token set (thread-safe).
 //
 // Example:
-//   registry := schema.NewTokenRegistry()
-//   
-//   // Create custom token structure
-//   tokens := &schema.DesignTokens{
-//       Primitives: &schema.PrimitiveTokens{
-//           Colors: &schema.ColorPrimitives{
-//               Blue: &schema.ColorScale{
-//                   Scale500: "#1e40af", // Custom blue
-//               },
-//               Gray: &schema.ColorScale{
-//                   Scale100: "#f5f5f5",
-//                   Scale900: "#111827",
-//               },
-//           },
-//           Spacing: &schema.SpacingScale{
-//               Base: "1rem",
-//               SM:   "0.5rem",
-//               LG:   "2rem",
-//           },
-//       },
-//       Semantic: &schema.SemanticTokens{
-//           Colors: &schema.SemanticColors{
-//               Background: &schema.BackgroundColors{
-//                   Default: schema.TokenReference("{primitives.colors.gray.100}"),
-//               },
-//               Text: &schema.TextColors{
-//                   Default: schema.TokenReference("{primitives.colors.gray.900}"),
-//               },
-//               Interactive: &schema.InteractiveColors{
-//                   Primary: &schema.InteractiveColorSet{
-//                       Default: schema.TokenReference("{primitives.colors.blue.500}"),
-//                   },
-//               },
-//           },
-//       },
-//   }
-//   
-//   // Set the tokens (validates references and compiles for performance)
-//   err := registry.SetTokens(tokens)
-//   if err != nil {
-//       return fmt.Errorf("failed to set tokens: %w", err)
-//   }
-//   
-//   // Now resolve tokens
-//   ctx := context.Background()
-//   bgColor, err := registry.ResolveToken(ctx, schema.TokenReference("{semantic.colors.background.default}"))
-//   if err != nil {
-//       return err
-//   }
-//   fmt.Printf("Background color: %s\n", bgColor) // Output: "#f5f5f5"
+//
+//	registry := schema.NewTokenRegistry()
+//
+//	// Create custom token structure
+//	tokens := &schema.DesignTokens{
+//	    Primitives: &schema.PrimitiveTokens{
+//	        Colors: &schema.ColorPrimitives{
+//	            Blue: &schema.ColorScale{
+//	                Scale500: "#1e40af", // Custom blue
+//	            },
+//	            Gray: &schema.ColorScale{
+//	                Scale100: "#f5f5f5",
+//	                Scale900: "#111827",
+//	            },
+//	        },
+//	        Spacing: &schema.SpacingScale{
+//	            Base: "1rem",
+//	            SM:   "0.5rem",
+//	            LG:   "2rem",
+//	        },
+//	    },
+//	    Semantic: &schema.SemanticTokens{
+//	        Colors: &schema.SemanticColors{
+//	            Background: &schema.BackgroundColors{
+//	                Default: schema.TokenReference("{primitives.colors.gray.100}"),
+//	            },
+//	            Text: &schema.TextColors{
+//	                Default: schema.TokenReference("{primitives.colors.gray.900}"),
+//	            },
+//	            Interactive: &schema.InteractiveColors{
+//	                Primary: &schema.InteractiveColorSet{
+//	                    Default: schema.TokenReference("{primitives.colors.blue.500}"),
+//	                },
+//	            },
+//	        },
+//	    },
+//	}
+//
+//	// Set the tokens (validates references and compiles for performance)
+//	err := registry.SetTokens(tokens)
+//	if err != nil {
+//	    return fmt.Errorf("failed to set tokens: %w", err)
+//	}
+//
+//	// Now resolve tokens
+//	ctx := context.Background()
+//	bgColor, err := registry.ResolveToken(ctx, schema.TokenReference("{semantic.colors.background.default}"))
+//	if err != nil {
+//	    return err
+//	}
+//	fmt.Printf("Background color: %s\n", bgColor) // Output: "#f5f5f5"
 func (tr *TokenRegistry) SetTokens(tokens *DesignTokens) error {
 	if tokens == nil {
 		return NewValidationError("tokens_nil", "tokens cannot be nil")
 	}
-	
+
 	// Validate the tokens before setting them
 	if err := tr.resolver.ValidateReferences(tokens); err != nil {
 		return WrapError(err, "token_validation_failed", "token validation failed")
 	}
-	
+
 	tr.mu.Lock()
 	defer tr.mu.Unlock()
-	
+
 	tr.tokens = tokens
 	tr.needsRecompile = true
-	
+
 	// Clear caches since tokens have changed
 	tr.cache = make(map[string]string)
 	tr.compiled.Clear()
-	
+
 	// Trigger recompilation
 	tr.compileTokensUnsafe()
-	
+
 	return nil
 }
 
@@ -1012,11 +1013,11 @@ func (tr *TokenRegistry) SetTokens(tokens *DesignTokens) error {
 func (tr *TokenRegistry) GetTokens() *DesignTokens {
 	tr.mu.RLock()
 	defer tr.mu.RUnlock()
-	
+
 	if tr.tokens == nil {
 		return nil
 	}
-	
+
 	// Return a deep copy to prevent external modification
 	// For now, return the original (deep copy can be implemented later if needed)
 	return tr.tokens
@@ -1025,56 +1026,57 @@ func (tr *TokenRegistry) GetTokens() *DesignTokens {
 // ResolveToken resolves a single token reference to its actual value.
 //
 // Example:
-//   registry := schema.GetDefaultRegistry()
-//   ctx := context.Background()
-//   
-//   // Resolve a primitive token
-//   blueColor, err := registry.ResolveToken(ctx, schema.TokenReference("{primitives.colors.blue.500}"))
-//   if err != nil {
-//       return err
-//   }
-//   fmt.Printf("Blue 500: %s\n", blueColor) // Output: "#3b82f6"
-//   
-//   // Resolve a semantic token (references primitive)
-//   primaryColor, err := registry.ResolveToken(ctx, schema.TokenReference("{semantic.colors.interactive.primary}"))
-//   if err != nil {
-//       return err
-//   }
-//   fmt.Printf("Primary color: %s\n", primaryColor) // Output: "#3b82f6"
-//   
-//   // Resolve a component token (references semantic)
-//   buttonBg, err := registry.ResolveToken(ctx, schema.TokenReference("{components.button.primary.background}"))
-//   if err != nil {
-//       return err
-//   }
-//   fmt.Printf("Button background: %s\n", buttonBg) // Output: "#3b82f6"
-//   
-//   // Handle non-reference values (pass-through)
-//   literal, err := registry.ResolveToken(ctx, schema.TokenReference("#ff0000"))
-//   if err != nil {
-//       return err
-//   }
-//   fmt.Printf("Literal color: %s\n", literal) // Output: "#ff0000"
-//   
-//   // Error handling for invalid tokens
-//   _, err = registry.ResolveToken(ctx, schema.TokenReference("{invalid.token.path}"))
-//   if err != nil {
-//       if schema.IsValidationError(err) {
-//           fmt.Printf("Token validation error: %s\n", err.Error())
-//       }
-//   }
+//
+//	registry := schema.GetDefaultRegistry()
+//	ctx := context.Background()
+//
+//	// Resolve a primitive token
+//	blueColor, err := registry.ResolveToken(ctx, schema.TokenReference("{primitives.colors.blue.500}"))
+//	if err != nil {
+//	    return err
+//	}
+//	fmt.Printf("Blue 500: %s\n", blueColor) // Output: "#3b82f6"
+//
+//	// Resolve a semantic token (references primitive)
+//	primaryColor, err := registry.ResolveToken(ctx, schema.TokenReference("{semantic.colors.interactive.primary}"))
+//	if err != nil {
+//	    return err
+//	}
+//	fmt.Printf("Primary color: %s\n", primaryColor) // Output: "#3b82f6"
+//
+//	// Resolve a component token (references semantic)
+//	buttonBg, err := registry.ResolveToken(ctx, schema.TokenReference("{components.button.primary.background}"))
+//	if err != nil {
+//	    return err
+//	}
+//	fmt.Printf("Button background: %s\n", buttonBg) // Output: "#3b82f6"
+//
+//	// Handle non-reference values (pass-through)
+//	literal, err := registry.ResolveToken(ctx, schema.TokenReference("#ff0000"))
+//	if err != nil {
+//	    return err
+//	}
+//	fmt.Printf("Literal color: %s\n", literal) // Output: "#ff0000"
+//
+//	// Error handling for invalid tokens
+//	_, err = registry.ResolveToken(ctx, schema.TokenReference("{invalid.token.path}"))
+//	if err != nil {
+//	    if schema.IsValidationError(err) {
+//	        fmt.Printf("Token validation error: %s\n", err.Error())
+//	    }
+//	}
 func (tr *TokenRegistry) ResolveToken(ctx context.Context, reference TokenReference) (string, error) {
 	if !reference.IsReference() {
 		return reference.String(), nil
 	}
-	
+
 	path := reference.Path()
-	
+
 	// Check compiled map first (O(1) lookup)
 	if compiled, exists := tr.compiled.Get(path); exists {
 		return compiled, nil
 	}
-	
+
 	// Check resolution cache
 	tr.mu.RLock()
 	if cached, exists := tr.cache[path]; exists {
@@ -1084,7 +1086,7 @@ func (tr *TokenRegistry) ResolveToken(ctx context.Context, reference TokenRefere
 	tokens := tr.tokens
 	needsRecompile := tr.needsRecompile
 	tr.mu.RUnlock()
-	
+
 	// Recompile if needed
 	if needsRecompile {
 		tr.compileTokens()
@@ -1093,25 +1095,25 @@ func (tr *TokenRegistry) ResolveToken(ctx context.Context, reference TokenRefere
 			return compiled, nil
 		}
 	}
-	
+
 	if tokens == nil {
 		return "", NewValidationError("tokens_unavailable", "no tokens available")
 	}
-	
+
 	// Fallback to resolver (should be rare after compilation)
 	resolved, err := tr.resolver.Resolve(ctx, reference, tokens)
 	if err != nil {
 		return "", err
 	}
-	
+
 	// Cache the resolved value
 	tr.mu.Lock()
 	tr.cache[path] = resolved
 	tr.mu.Unlock()
-	
+
 	// Add to compiled map for future O(1) access
 	tr.compiled.Set(path, resolved)
-	
+
 	return resolved, nil
 }
 
@@ -1120,11 +1122,11 @@ func (tr *TokenRegistry) ResolveAllTokens(ctx context.Context) (*DesignTokens, e
 	tr.mu.RLock()
 	tokens := tr.tokens
 	tr.mu.RUnlock()
-	
+
 	if tokens == nil {
 		return nil, NewValidationError("tokens_unavailable", "no tokens available")
 	}
-	
+
 	return tr.resolver.ResolveAll(ctx, tokens)
 }
 
@@ -1140,11 +1142,11 @@ func (tr *TokenRegistry) ValidateTokens() error {
 	tr.mu.RLock()
 	tokens := tr.tokens
 	tr.mu.RUnlock()
-	
+
 	if tokens == nil {
 		return NewValidationError("tokens_unavailable", "no tokens to validate")
 	}
-	
+
 	return tr.resolver.ValidateReferences(tokens)
 }
 
@@ -1160,29 +1162,29 @@ func (tr *TokenRegistry) compileTokensUnsafe() {
 	if tr.tokens == nil {
 		return
 	}
-	
+
 	// Clear existing compiled tokens
 	tr.compiled.Clear()
-	
+
 	// Compile all token paths using reflection
 	tr.compileTokenStruct(reflect.ValueOf(tr.tokens).Elem(), "")
-	
+
 	tr.needsRecompile = false
 }
 
 // compileTokenStruct recursively compiles token paths from a struct
 func (tr *TokenRegistry) compileTokenStruct(structValue reflect.Value, basePath string) {
 	structType := structValue.Type()
-	
+
 	for i := 0; i < structValue.NumField(); i++ {
 		field := structType.Field(i)
 		fieldValue := structValue.Field(i)
-		
+
 		// Skip unexported fields
 		if !field.IsExported() {
 			continue
 		}
-		
+
 		// Build field path
 		fieldPath := field.Name
 		if jsonTag := field.Tag.Get("json"); jsonTag != "" {
@@ -1191,28 +1193,28 @@ func (tr *TokenRegistry) compileTokenStruct(structValue reflect.Value, basePath 
 				fieldPath = tagParts[0]
 			}
 		}
-		
+
 		fullPath := fieldPath
 		if basePath != "" {
 			fullPath = basePath + "." + fieldPath
 		}
-		
+
 		// Handle different field types
 		switch fieldValue.Kind() {
 		case reflect.Ptr:
 			if !fieldValue.IsNil() {
 				tr.compileTokenStruct(fieldValue.Elem(), fullPath)
 			}
-			
+
 		case reflect.Struct:
 			tr.compileTokenStruct(fieldValue, fullPath)
-			
+
 		case reflect.String:
 			// Store string values directly
 			if fieldValue.String() != "" {
 				tr.compiled.Set(fullPath, fieldValue.String())
 			}
-			
+
 		case reflect.Interface:
 			if fieldValue.CanInterface() {
 				if str, ok := fieldValue.Interface().(string); ok && str != "" {
@@ -1661,74 +1663,74 @@ func GetDefaultTokens() *DesignTokens {
 		Components: &ComponentTokens{
 			Button: &ButtonTokens{
 				Primary: &ButtonVariantTokens{
-					Background:      TokenReference("{semantic.colors.interactive.primary.default}"),
-					BackgroundHover: TokenReference("{semantic.colors.interactive.primary.hover}"),
+					Background:       TokenReference("{semantic.colors.interactive.primary.default}"),
+					BackgroundHover:  TokenReference("{semantic.colors.interactive.primary.hover}"),
 					BackgroundActive: TokenReference("{semantic.colors.interactive.primary.active}"),
-					Color:           TokenReference("{semantic.colors.text.inverted}"),
-					ColorHover:      TokenReference("{semantic.colors.text.inverted}"),
-					Border:          TokenReference("{semantic.colors.interactive.primary.default}"),
-					BorderHover:     TokenReference("{semantic.colors.interactive.primary.hover}"),
-					BorderRadius:    TokenReference("{semantic.interactive.borderRadius.default}"),
-					Padding:         TokenReference("{semantic.spacing.component.default}"),
-					FontWeight:      TokenReference("{primitives.typography.fontWeights.medium}"),
-					Shadow:          TokenReference("{semantic.interactive.shadow.default}"),
-					ShadowHover:     TokenReference("{semantic.interactive.shadow.hover}"),
+					Color:            TokenReference("{semantic.colors.text.inverted}"),
+					ColorHover:       TokenReference("{semantic.colors.text.inverted}"),
+					Border:           TokenReference("{semantic.colors.interactive.primary.default}"),
+					BorderHover:      TokenReference("{semantic.colors.interactive.primary.hover}"),
+					BorderRadius:     TokenReference("{semantic.interactive.borderRadius.default}"),
+					Padding:          TokenReference("{semantic.spacing.component.default}"),
+					FontWeight:       TokenReference("{primitives.typography.fontWeights.medium}"),
+					Shadow:           TokenReference("{semantic.interactive.shadow.default}"),
+					ShadowHover:      TokenReference("{semantic.interactive.shadow.hover}"),
 				},
 				Secondary: &ButtonVariantTokens{
-					Background:      TokenReference("{semantic.colors.background.default}"),
-					BackgroundHover: TokenReference("{semantic.colors.background.subtle}"),
+					Background:       TokenReference("{semantic.colors.background.default}"),
+					BackgroundHover:  TokenReference("{semantic.colors.background.subtle}"),
 					BackgroundActive: TokenReference("{semantic.colors.background.emphasis}"),
-					Color:           TokenReference("{semantic.colors.text.default}"),
-					ColorHover:      TokenReference("{semantic.colors.text.default}"),
-					Border:          TokenReference("{semantic.colors.border.default}"),
-					BorderHover:     TokenReference("{semantic.colors.border.strong}"),
-					BorderRadius:    TokenReference("{semantic.interactive.borderRadius.default}"),
-					Padding:         TokenReference("{semantic.spacing.component.default}"),
-					FontWeight:      TokenReference("{primitives.typography.fontWeights.medium}"),
-					Shadow:          TokenReference("{semantic.interactive.shadow.default}"),
-					ShadowHover:     TokenReference("{semantic.interactive.shadow.hover}"),
+					Color:            TokenReference("{semantic.colors.text.default}"),
+					ColorHover:       TokenReference("{semantic.colors.text.default}"),
+					Border:           TokenReference("{semantic.colors.border.default}"),
+					BorderHover:      TokenReference("{semantic.colors.border.strong}"),
+					BorderRadius:     TokenReference("{semantic.interactive.borderRadius.default}"),
+					Padding:          TokenReference("{semantic.spacing.component.default}"),
+					FontWeight:       TokenReference("{primitives.typography.fontWeights.medium}"),
+					Shadow:           TokenReference("{semantic.interactive.shadow.default}"),
+					ShadowHover:      TokenReference("{semantic.interactive.shadow.hover}"),
 				},
 				Outline: &ButtonVariantTokens{
-					Background:      TokenReference("transparent"),
-					BackgroundHover: TokenReference("{semantic.colors.interactive.primary.default}"),
+					Background:       TokenReference("transparent"),
+					BackgroundHover:  TokenReference("{semantic.colors.interactive.primary.default}"),
 					BackgroundActive: TokenReference("{semantic.colors.interactive.primary.active}"),
-					Color:           TokenReference("{semantic.colors.interactive.primary.default}"),
-					ColorHover:      TokenReference("{semantic.colors.text.inverted}"),
-					Border:          TokenReference("{semantic.colors.interactive.primary.default}"),
-					BorderHover:     TokenReference("{semantic.colors.interactive.primary.hover}"),
-					BorderRadius:    TokenReference("{semantic.interactive.borderRadius.default}"),
-					Padding:         TokenReference("{semantic.spacing.component.default}"),
-					FontWeight:      TokenReference("{primitives.typography.fontWeights.medium}"),
-					Shadow:          TokenReference("none"),
-					ShadowHover:     TokenReference("{semantic.interactive.shadow.hover}"),
+					Color:            TokenReference("{semantic.colors.interactive.primary.default}"),
+					ColorHover:       TokenReference("{semantic.colors.text.inverted}"),
+					Border:           TokenReference("{semantic.colors.interactive.primary.default}"),
+					BorderHover:      TokenReference("{semantic.colors.interactive.primary.hover}"),
+					BorderRadius:     TokenReference("{semantic.interactive.borderRadius.default}"),
+					Padding:          TokenReference("{semantic.spacing.component.default}"),
+					FontWeight:       TokenReference("{primitives.typography.fontWeights.medium}"),
+					Shadow:           TokenReference("none"),
+					ShadowHover:      TokenReference("{semantic.interactive.shadow.hover}"),
 				},
 				Ghost: &ButtonVariantTokens{
-					Background:      TokenReference("transparent"),
-					BackgroundHover: TokenReference("{semantic.colors.background.subtle}"),
+					Background:       TokenReference("transparent"),
+					BackgroundHover:  TokenReference("{semantic.colors.background.subtle}"),
 					BackgroundActive: TokenReference("{semantic.colors.background.emphasis}"),
-					Color:           TokenReference("{semantic.colors.text.default}"),
-					ColorHover:      TokenReference("{semantic.colors.text.default}"),
-					Border:          TokenReference("transparent"),
-					BorderHover:     TokenReference("transparent"),
-					BorderRadius:    TokenReference("{semantic.interactive.borderRadius.default}"),
-					Padding:         TokenReference("{semantic.spacing.component.default}"),
-					FontWeight:      TokenReference("{primitives.typography.fontWeights.medium}"),
-					Shadow:          TokenReference("none"),
-					ShadowHover:     TokenReference("none"),
+					Color:            TokenReference("{semantic.colors.text.default}"),
+					ColorHover:       TokenReference("{semantic.colors.text.default}"),
+					Border:           TokenReference("transparent"),
+					BorderHover:      TokenReference("transparent"),
+					BorderRadius:     TokenReference("{semantic.interactive.borderRadius.default}"),
+					Padding:          TokenReference("{semantic.spacing.component.default}"),
+					FontWeight:       TokenReference("{primitives.typography.fontWeights.medium}"),
+					Shadow:           TokenReference("none"),
+					ShadowHover:      TokenReference("none"),
 				},
 				Destructive: &ButtonVariantTokens{
-					Background:      TokenReference("{semantic.colors.feedback.error.default}"),
-					BackgroundHover: TokenReference("{semantic.colors.feedback.error.strong}"),
+					Background:       TokenReference("{semantic.colors.feedback.error.default}"),
+					BackgroundHover:  TokenReference("{semantic.colors.feedback.error.strong}"),
 					BackgroundActive: TokenReference("{semantic.colors.feedback.error.strong}"),
-					Color:           TokenReference("{semantic.colors.text.inverted}"),
-					ColorHover:      TokenReference("{semantic.colors.text.inverted}"),
-					Border:          TokenReference("{semantic.colors.feedback.error.default}"),
-					BorderHover:     TokenReference("{semantic.colors.feedback.error.strong}"),
-					BorderRadius:    TokenReference("{semantic.interactive.borderRadius.default}"),
-					Padding:         TokenReference("{semantic.spacing.component.default}"),
-					FontWeight:      TokenReference("{primitives.typography.fontWeights.medium}"),
-					Shadow:          TokenReference("{semantic.interactive.shadow.default}"),
-					ShadowHover:     TokenReference("{semantic.interactive.shadow.hover}"),
+					Color:            TokenReference("{semantic.colors.text.inverted}"),
+					ColorHover:       TokenReference("{semantic.colors.text.inverted}"),
+					Border:           TokenReference("{semantic.colors.feedback.error.default}"),
+					BorderHover:      TokenReference("{semantic.colors.feedback.error.strong}"),
+					BorderRadius:     TokenReference("{semantic.interactive.borderRadius.default}"),
+					Padding:          TokenReference("{semantic.spacing.component.default}"),
+					FontWeight:       TokenReference("{primitives.typography.fontWeights.medium}"),
+					Shadow:           TokenReference("{semantic.interactive.shadow.default}"),
+					ShadowHover:      TokenReference("{semantic.interactive.shadow.hover}"),
 				},
 			},
 			Input: &InputTokens{
@@ -1765,22 +1767,22 @@ func GetDefaultTokens() *DesignTokens {
 				Spacing:      TokenReference("{semantic.spacing.component.default}"),
 			},
 			Table: &TableTokens{
-				Background:      TokenReference("{semantic.colors.background.default}"),
-				BackgroundHover: TokenReference("{semantic.colors.background.subtle}"),
-				Border:          TokenReference("{semantic.colors.border.subtle}"),
+				Background:       TokenReference("{semantic.colors.background.default}"),
+				BackgroundHover:  TokenReference("{semantic.colors.background.subtle}"),
+				Border:           TokenReference("{semantic.colors.border.subtle}"),
 				HeaderBackground: TokenReference("{semantic.colors.background.emphasis}"),
-				HeaderColor:     TokenReference("{semantic.colors.text.default}"),
-				Padding:         TokenReference("{semantic.spacing.component.default}"),
+				HeaderColor:      TokenReference("{semantic.colors.text.default}"),
+				Padding:          TokenReference("{semantic.spacing.component.default}"),
 			},
 			Navigation: &NavigationTokens{
-				Background:      TokenReference("{semantic.colors.background.default}"),
-				BackgroundHover: TokenReference("{semantic.colors.background.subtle}"),
+				Background:       TokenReference("{semantic.colors.background.default}"),
+				BackgroundHover:  TokenReference("{semantic.colors.background.subtle}"),
 				BackgroundActive: TokenReference("{semantic.colors.background.emphasis}"),
-				Color:           TokenReference("{semantic.colors.text.default}"),
-				ColorHover:      TokenReference("{semantic.colors.text.default}"),
-				ColorActive:     TokenReference("{semantic.colors.interactive.primary.default}"),
-				Border:          TokenReference("{semantic.colors.border.subtle}"),
-				Padding:         TokenReference("{semantic.spacing.component.default}"),
+				Color:            TokenReference("{semantic.colors.text.default}"),
+				ColorHover:       TokenReference("{semantic.colors.text.default}"),
+				ColorActive:      TokenReference("{semantic.colors.interactive.primary.default}"),
+				Border:           TokenReference("{semantic.colors.border.subtle}"),
+				Padding:          TokenReference("{semantic.spacing.component.default}"),
 			},
 		},
 	}
@@ -1794,7 +1796,7 @@ func MergeTokens(base, override *DesignTokens) *DesignTokens {
 	if override == nil {
 		return base
 	}
-	
+
 	// For now, return override (deep merging can be implemented later if needed)
 	return override
 }
@@ -1830,7 +1832,7 @@ func GetDefaultRegistry() *TokenRegistry {
 func GetSpacing(key string) string {
 	registry := GetDefaultRegistry()
 	tokenRef := TokenReference(fmt.Sprintf("{primitives.spacing.%s}", key))
-	
+
 	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
 	if err != nil {
 		// Fallback to semantic spacing
@@ -1840,14 +1842,14 @@ func GetSpacing(key string) string {
 		}
 		return "1rem" // Safe fallback
 	}
-	
+
 	return resolved
 }
 
 // GetColor returns a color token value.
 func GetColor(path string) string {
 	registry := GetDefaultRegistry()
-	
+
 	// Support both full paths and shorthand
 	var tokenRef TokenReference
 	if strings.Contains(path, ".") {
@@ -1856,7 +1858,7 @@ func GetColor(path string) string {
 		// Try common color paths
 		tokenRef = TokenReference(fmt.Sprintf("{colors.%s}", path))
 	}
-	
+
 	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
 	if err != nil {
 		// Try semantic colors as fallback
@@ -1866,7 +1868,7 @@ func GetColor(path string) string {
 		}
 		return "#000000" // Safe fallback
 	}
-	
+
 	return resolved
 }
 
@@ -1874,7 +1876,7 @@ func GetColor(path string) string {
 func GetFontSize(key string) string {
 	registry := GetDefaultRegistry()
 	tokenRef := TokenReference(fmt.Sprintf("{primitives.typography.fontSizes.%s}", key))
-	
+
 	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
 	if err != nil {
 		// Fallback to semantic typography
@@ -1884,7 +1886,7 @@ func GetFontSize(key string) string {
 		}
 		return "1rem" // Safe fallback
 	}
-	
+
 	return resolved
 }
 
@@ -1892,7 +1894,7 @@ func GetFontSize(key string) string {
 func GetShadow(key string) string {
 	registry := GetDefaultRegistry()
 	tokenRef := TokenReference(fmt.Sprintf("{primitives.shadows.%s}", key))
-	
+
 	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
 	if err != nil {
 		// Fallback to semantic shadows
@@ -1902,7 +1904,7 @@ func GetShadow(key string) string {
 		}
 		return "none" // Safe fallback
 	}
-	
+
 	return resolved
 }
 
@@ -1910,7 +1912,7 @@ func GetShadow(key string) string {
 func GetBorderRadius(key string) string {
 	registry := GetDefaultRegistry()
 	tokenRef := TokenReference(fmt.Sprintf("{primitives.borders.radius.%s}", key))
-	
+
 	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
 	if err != nil {
 		// Fallback to semantic border radius
@@ -1920,6 +1922,6 @@ func GetBorderRadius(key string) string {
 		}
 		return "4px" // Safe fallback
 	}
-	
+
 	return resolved
 }

@@ -82,7 +82,7 @@ func (r *Registry) Get(ctx context.Context, id string) (*schema.Schema, error) {
 	// 2. Check Redis cache (5ms)
 	if r.cache != nil {
 		if data, err := r.cache.Get(ctx, id); err == nil {
-			schema, err := r.parser.Parse(data)
+			schema, err := r.parser.Parse(ctx, data)
 			if err == nil {
 				// Cache in memory
 				r.cacheInMemory(id, schema)
@@ -98,7 +98,7 @@ func (r *Registry) Get(ctx context.Context, id string) (*schema.Schema, error) {
 	}
 
 	// Parse JSON to schema
-	schema, err := r.parser.Parse(data)
+	schema, err := r.parser.Parse(ctx, data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse schema: %w", err)
 	}
@@ -117,10 +117,15 @@ func (r *Registry) Get(ctx context.Context, id string) (*schema.Schema, error) {
 	return schema, nil
 }
 
-// Set stores a schema
+// Register stores a schema (implements schema.Registry interface)
+func (r *Registry) Register(ctx context.Context, schema *schema.Schema) error {
+	return r.Set(ctx, schema.ID, schema)
+}
+
+// Set stores a schema (internal method)
 func (r *Registry) Set(ctx context.Context, id string, schema *schema.Schema) error {
 	// Validate schema first
-	if err := schema.Validate(); err != nil {
+	if err := schema.Validate(ctx); err != nil {
 		return fmt.Errorf("invalid schema: %w", err)
 	}
 
@@ -167,14 +172,105 @@ func (r *Registry) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-// List returns all schema IDs
-func (r *Registry) List(ctx context.Context) ([]string, error) {
+// Update updates an existing schema (implements schema.Registry interface)
+func (r *Registry) Update(ctx context.Context, schema *schema.Schema) error {
+	// Check if schema exists first
+	exists, err := r.Exists(ctx, schema.ID)
+	if err != nil {
+		return fmt.Errorf("failed to check if schema exists: %w", err)
+	}
+	if !exists {
+		return fmt.Errorf("schema %s does not exist", schema.ID)
+	}
+
+	// Update is same as Set for this implementation
+	return r.Set(ctx, schema.ID, schema)
+}
+
+// List returns all schemas (implements schema.Registry interface)
+func (r *Registry) List(ctx context.Context, filter map[string]any) ([]*schema.Schema, error) {
+	// Get all schema IDs from storage
+	ids, err := r.storage.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list schema IDs: %w", err)
+	}
+
+	var schemas []*schema.Schema
+	for _, id := range ids {
+		schema, err := r.Get(ctx, id)
+		if err != nil {
+			// Log error but continue with other schemas
+			continue
+		}
+
+		// Apply filters if provided
+		if filter != nil && !r.matchesFilter(schema, filter) {
+			continue
+		}
+
+		schemas = append(schemas, schema)
+	}
+
+	return schemas, nil
+}
+
+// ListIDs returns all schema IDs (helper method)
+func (r *Registry) ListIDs(ctx context.Context) ([]string, error) {
 	return r.storage.List(ctx)
+}
+
+// GetVersion retrieves a specific version of a schema (implements schema.Registry interface)
+func (r *Registry) GetVersion(ctx context.Context, id, version string) (*schema.Schema, error) {
+	// For this implementation, we'll use version as part of the key
+	versionedID := fmt.Sprintf("%s@%s", id, version)
+	return r.Get(ctx, versionedID)
 }
 
 // Exists checks if a schema exists
 func (r *Registry) Exists(ctx context.Context, id string) (bool, error) {
 	return r.storage.Exists(ctx, id)
+}
+
+// matchesFilter checks if a schema matches the given filter criteria
+func (r *Registry) matchesFilter(s *schema.Schema, filter map[string]any) bool {
+	for key, value := range filter {
+		switch key {
+		case "type":
+			if s.Type != schema.Type(fmt.Sprintf("%v", value)) {
+				return false
+			}
+		case "category":
+			if s.Category != fmt.Sprintf("%v", value) {
+				return false
+			}
+		case "module":
+			if s.Module != fmt.Sprintf("%v", value) {
+				return false
+			}
+		case "tags":
+			// Check if schema has any of the specified tags
+			filterTags, ok := value.([]string)
+			if !ok {
+				continue
+			}
+			hasTag := false
+			for _, filterTag := range filterTags {
+				for _, schemaTag := range s.Tags {
+					if schemaTag == filterTag {
+						hasTag = true
+						break
+					}
+				}
+				if hasTag {
+					break
+				}
+			}
+			if !hasTag {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 // cacheInMemory stores schema in memory cache

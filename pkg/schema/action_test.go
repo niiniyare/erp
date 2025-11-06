@@ -172,11 +172,11 @@ func (suite *ActionTestSuite) TestActionClone() {
 
 func (suite *ActionTestSuite) TestActionApplyTheme() {
 	action := &Action{ID: "test", Type: ActionSubmit}
-	
+
 	// Test applying nil theme
 	action.ApplyTheme(nil)
 	suite.Require().Nil(action.Theme) // Should remain nil
-	
+
 	// Test applying valid theme
 	theme := &Theme{
 		ID:     "test-theme-id",
@@ -516,9 +516,9 @@ func (suite *ActionTestSuite) TestActionCopy() {
 // Test action with conditions
 func (suite *ActionTestSuite) TestActionWithConditions() {
 	action := Action{
-		ID:        "conditional-action",
-		Type:      ActionButton,
-		Text:      "Conditional Button",
+		ID:   "conditional-action",
+		Type: ActionButton,
+		Text: "Conditional Button",
 		Conditional: &Conditional{
 			Show: &ConditionGroup{
 				Logic: "AND",
@@ -616,7 +616,7 @@ func (suite *ActionTestSuite) TestActionStates() {
 	suite.Require().False(action.Hidden)
 }
 
-// Test action execution context  
+// Test action execution context
 func (suite *ActionTestSuite) TestActionExecutionContext() {
 	// Skip execution context tests as these fields/methods don't exist
 }

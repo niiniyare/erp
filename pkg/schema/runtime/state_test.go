@@ -41,7 +41,7 @@ func TestState_Initialize(t *testing.T) {
 	schema.Fields[0].Default = "Default Name"
 	schema.Fields[1].Value = "default@example.com"
 
-	initialData := map[string]interface{}{
+	initialData := map[string]any{
 		"name": "Provided Name", // Should override default
 		"age":  25,              // No default in schema
 	}
@@ -80,7 +80,7 @@ func TestState_SetValue(t *testing.T) {
 	state := NewState()
 
 	// Initialize with some data
-	initialData := map[string]interface{}{
+	initialData := map[string]any{
 		"name": "John Doe",
 		"age":  30,
 	}
@@ -89,7 +89,7 @@ func TestState_SetValue(t *testing.T) {
 	tests := []struct {
 		name      string
 		path      string
-		value     interface{}
+		value     any
 		wantError bool
 		wantDirty bool
 	}{
@@ -220,7 +220,7 @@ func TestState_Errors(t *testing.T) {
 func TestState_GetAll(t *testing.T) {
 	state := NewState()
 
-	testData := map[string]interface{}{
+	testData := map[string]any{
 		"name":  "John Doe",
 		"email": "john@example.com",
 		"age":   30,
@@ -256,7 +256,7 @@ func TestState_Reset(t *testing.T) {
 	state := NewState()
 
 	// Initialize with data
-	initialData := map[string]interface{}{
+	initialData := map[string]any{
 		"name": "John Doe",
 		"age":  30,
 	}
@@ -303,7 +303,7 @@ func TestState_ResetField(t *testing.T) {
 	state := NewState()
 
 	// Initialize with data
-	initialData := map[string]interface{}{
+	initialData := map[string]any{
 		"name": "John Doe",
 		"age":  30,
 	}
@@ -349,14 +349,14 @@ func TestState_UpdateValues(t *testing.T) {
 	state := NewState()
 
 	// Initialize with data
-	initialData := map[string]interface{}{
+	initialData := map[string]any{
 		"name": "John Doe",
 		"age":  30,
 	}
 	state.Initialize(createTestSchema(), initialData)
 
 	// Update multiple values
-	updates := map[string]interface{}{
+	updates := map[string]any{
 		"name":  "Jane Doe",
 		"email": "jane@example.com",
 		"age":   30, // Same as initial
@@ -393,7 +393,7 @@ func TestState_GetChangedValues(t *testing.T) {
 	state := NewState()
 
 	// Initialize with data
-	initialData := map[string]interface{}{
+	initialData := map[string]any{
 		"name": "John Doe",
 		"age":  30,
 	}
@@ -407,7 +407,7 @@ func TestState_GetChangedValues(t *testing.T) {
 	changedValues := state.GetChangedValues()
 
 	// Should only include changed values
-	expectedChanged := map[string]interface{}{
+	expectedChanged := map[string]any{
 		"name":  "Jane Doe",
 		"email": "new@test.com",
 	}
@@ -421,7 +421,7 @@ func TestState_Snapshot(t *testing.T) {
 	state := NewState()
 
 	// Initialize and modify state
-	initialData := map[string]interface{}{
+	initialData := map[string]any{
 		"name": "John Doe",
 	}
 	state.Initialize(createTestSchema(), initialData)
@@ -463,7 +463,7 @@ func TestState_ConcurrentAccess(t *testing.T) {
 	state := NewState()
 
 	// Initialize
-	state.Initialize(createTestSchema(), map[string]interface{}{
+	state.Initialize(createTestSchema(), map[string]any{
 		"counter": 0,
 	})
 
@@ -526,7 +526,7 @@ func TestState_EdgeCases(t *testing.T) {
 	}
 
 	// Test empty string path in UpdateValues
-	err = state.UpdateValues(map[string]interface{}{
+	err = state.UpdateValues(map[string]any{
 		"": "value",
 	})
 	if err == nil {

@@ -23,18 +23,18 @@ const (
 type ValidationTiming string
 
 const (
-	ValidateOnChange ValidationTiming = "change"  // Validate immediately on change
-	ValidateOnBlur   ValidationTiming = "blur"    // Validate when field loses focus
-	ValidateOnSubmit ValidationTiming = "submit"  // Validate only on form submission
-	ValidateNever    ValidationTiming = "never"   // Never validate automatically
+	ValidateOnChange ValidationTiming = "change" // Validate immediately on change
+	ValidateOnBlur   ValidationTiming = "blur"   // Validate when field loses focus
+	ValidateOnSubmit ValidationTiming = "submit" // Validate only on form submission
+	ValidateNever    ValidationTiming = "never"  // Never validate automatically
 )
 
 // Event represents a runtime event
 type Event struct {
 	Type      EventType   `json:"type"`
 	Field     string      `json:"field"`
-	Value     interface{} `json:"value"`
-	OldValue  interface{} `json:"old_value"`
+	Value     any `json:"value"`
+	OldValue  any `json:"old_value"`
 	Timestamp time.Time   `json:"timestamp"`
 }
 
@@ -43,10 +43,10 @@ type EventCallback func(ctx context.Context, event *Event) error
 
 // EventHandler handles runtime events
 type EventHandler struct {
-	runtime          *Runtime                       // Reference to runtime
-	handlers         map[EventType][]EventCallback  // Event handlers
-	validationTiming ValidationTiming               // When to validate
-	mu               sync.RWMutex                   // Concurrent access protection
+	runtime          *Runtime                      // Reference to runtime
+	handlers         map[EventType][]EventCallback // Event handlers
+	validationTiming ValidationTiming              // When to validate
+	mu               sync.RWMutex                  // Concurrent access protection
 }
 
 // NewEventHandler creates a new event handler
@@ -201,7 +201,7 @@ func (h *EventHandler) getField(fieldName string) *schema.Field {
 }
 
 // ValidateFieldWithTiming validates a field based on current timing strategy
-func (h *EventHandler) ValidateFieldWithTiming(ctx context.Context, fieldName string, value interface{}, eventType EventType) []string {
+func (h *EventHandler) ValidateFieldWithTiming(ctx context.Context, fieldName string, value any, eventType EventType) []string {
 	// Check if we should validate based on timing and event type
 	shouldValidate := false
 	switch h.validationTiming {
@@ -223,7 +223,7 @@ func (h *EventHandler) ValidateFieldWithTiming(ctx context.Context, fieldName st
 }
 
 // HandleBatchUpdate processes multiple field updates at once
-func (h *EventHandler) HandleBatchUpdate(ctx context.Context, updates map[string]interface{}) error {
+func (h *EventHandler) HandleBatchUpdate(ctx context.Context, updates map[string]any) error {
 	// Update all values first
 	if err := h.runtime.state.UpdateValues(updates); err != nil {
 		return fmt.Errorf("failed to update values: %w", err)

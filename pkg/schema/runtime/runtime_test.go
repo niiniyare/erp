@@ -6,125 +6,109 @@ import (
 	"time"
 
 	"github.com/niiniyare/erp/pkg/schema"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestNewRuntime(t *testing.T) {
-	schema := createTestSchema()
-	runtime := NewRuntime(schema)
-
-	if runtime == nil {
-		t.Fatal("NewRuntime() returned nil")
-	}
-
-	if runtime.schema != schema {
-		t.Error("Runtime schema not set correctly")
-	}
-
-	if runtime.state == nil {
-		t.Error("Runtime state not initialized")
-	}
-
-	if runtime.validator == nil {
-		t.Error("Runtime validator not initialized")
-	}
-
-	if runtime.events == nil {
-		t.Error("Runtime events not initialized")
-	}
+// RuntimeTestSuite defines the test suite for Runtime
+type RuntimeTestSuite struct {
+	suite.Suite
+	ctx     context.Context
+	schema  *schema.Schema
+	runtime *Runtime
 }
 
-func TestRuntime_Initialize(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
+// SetupTest runs before each test
+func (s *RuntimeTestSuite) SetupTest() {
+	s.ctx = context.Background()
+	s.schema = s.createTestSchema()
+	s.runtime = NewRuntime(s.schema)
+}
 
-	initialData := map[string]interface{}{
+// TearDownTest runs after each test
+func (s *RuntimeTestSuite) TearDownTest() {
+	// Clean up if needed
+	s.runtime = nil
+}
+
+// TestNewRuntime tests runtime initialization
+func (s *RuntimeTestSuite) TestNewRuntime() {
+	schema := s.createTestSchema()
+	runtime := NewRuntime(schema)
+
+	require.NotNil(s.T(), runtime, "NewRuntime() should not return nil")
+	require.Equal(s.T(), schema, runtime.schema, "Runtime schema should be set correctly")
+	require.NotNil(s.T(), runtime.state, "Runtime state should be initialized")
+	require.NotNil(s.T(), runtime.validator, "Runtime validator should be initialized")
+	require.NotNil(s.T(), runtime.events, "Runtime events should be initialized")
+}
+
+// TestInitialize tests runtime initialization with data
+func (s *RuntimeTestSuite) TestInitialize() {
+	initialData := map[string]any{
 		"name":  "John Doe",
 		"email": "john@example.com",
 		"age":   30,
 	}
 
-	err := runtime.Initialize(ctx, initialData)
-	if err != nil {
-		t.Errorf("Initialize() error = %v", err)
-	}
+	err := s.runtime.Initialize(s.ctx, initialData)
+	require.NoError(s.T(), err, "Initialize() should not return error")
 
 	// Check that initial data was set
-	name, exists := runtime.GetFieldValue("name")
-	if !exists || name != "John Doe" {
-		t.Errorf("Initial data not set correctly for name field")
-	}
+	name, exists := s.runtime.GetFieldValue("name")
+	require.True(s.T(), exists, "Name field should exist")
+	require.Equal(s.T(), "John Doe", name, "Name should be set correctly")
 
-	email, exists := runtime.GetFieldValue("email")
-	if !exists || email != "john@example.com" {
-		t.Errorf("Initial data not set correctly for email field")
-	}
+	email, exists := s.runtime.GetFieldValue("email")
+	require.True(s.T(), exists, "Email field should exist")
+	require.Equal(s.T(), "john@example.com", email, "Email should be set correctly")
 }
 
-func TestRuntime_HandleFieldChange(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
+// TestHandleFieldChange tests field value changes
+func (s *RuntimeTestSuite) TestHandleFieldChange() {
 	// Initialize first
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
+	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Test field change
-	err = runtime.HandleFieldChange(ctx, "name", "Jane Doe")
-	if err != nil {
-		t.Errorf("HandleFieldChange() error = %v", err)
-	}
+	err = s.runtime.HandleFieldChange(s.ctx, "name", "Jane Doe")
+	require.NoError(s.T(), err, "HandleFieldChange() should not return error")
 
 	// Check value was updated
-	value, exists := runtime.GetFieldValue("name")
-	if !exists || value != "Jane Doe" {
-		t.Errorf("Field value not updated correctly")
-	}
+	value, exists := s.runtime.GetFieldValue("name")
+	require.True(s.T(), exists, "Field should exist")
+	require.Equal(s.T(), "Jane Doe", value, "Field value should be updated")
 
 	// Check field is marked as dirty
-	if !runtime.IsFieldDirty("name") {
-		t.Error("Field should be marked as dirty after change")
-	}
+	require.True(s.T(), s.runtime.IsFieldDirty("name"), "Field should be marked as dirty after change")
 }
 
-func TestRuntime_HandleFieldBlur(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	runtime.SetValidationTiming(ValidateOnBlur)
-	ctx := context.Background()
+// TestHandleFieldBlur tests field blur events
+func (s *RuntimeTestSuite) TestHandleFieldBlur() {
+	s.runtime.SetValidationTiming(ValidateOnBlur)
 
 	// Initialize first
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
+	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Test field blur
-	err = runtime.HandleFieldBlur(ctx, "email", "invalid-email")
-	if err != nil {
-		t.Errorf("HandleFieldBlur() error = %v", err)
-	}
+	err = s.runtime.HandleFieldBlur(s.ctx, "email", "invalid-email")
+	require.NoError(s.T(), err, "HandleFieldBlur() should not return error")
 
 	// Check field is marked as touched
-	if !runtime.IsFieldTouched("email") {
-		t.Error("Field should be marked as touched after blur")
-	}
+	require.True(s.T(), s.runtime.IsFieldTouched("email"), "Field should be marked as touched after blur")
 }
 
-func TestRuntime_ValidateField(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
+// TestValidateField tests field validation
+func (s *RuntimeTestSuite) TestValidateField() {
 	// Initialize first
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
+	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	tests := []struct {
 		name      string
 		fieldName string
-		value     interface{}
+		value     any
 		wantError bool
 	}{
 		{
@@ -154,135 +138,117 @@ func TestRuntime_ValidateField(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			errors := runtime.ValidateField(ctx, tt.fieldName, tt.value)
-			hasError := len(errors) > 0
+		s.Run(tt.name, func() {
+			errors := s.runtime.ValidateField(s.ctx, tt.fieldName, tt.value)
+			_ = len(errors) > 0
 
-			if hasError != tt.wantError {
-				t.Errorf("ValidateField() hasError = %v, wantError = %v, errors = %v", hasError, tt.wantError, errors)
+			if tt.wantError {
+				require.NotEmpty(s.T(), errors, "Expected validation errors for %s", tt.name)
+			} else {
+				require.Empty(s.T(), errors, "Expected no validation errors for %s", tt.name)
 			}
 		})
 	}
 }
 
-func TestRuntime_ValidationTiming(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
+// TestValidationTiming tests different validation timing modes
+func (s *RuntimeTestSuite) TestValidationTiming() {
 	// Initialize first
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
+	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Test different validation timings
 	timings := []ValidationTiming{ValidateOnChange, ValidateOnBlur, ValidateOnSubmit, ValidateNever}
 
 	for _, timing := range timings {
-		t.Run(string(timing), func(t *testing.T) {
+		s.Run(string(timing), func() {
 			// Clear previous errors
-			runtime.GetState().ClearErrors("email")
-			
-			runtime.SetValidationTiming(timing)
+			s.runtime.GetState().ClearErrors("email")
+
+			s.runtime.SetValidationTiming(timing)
 
 			// Handle a change with invalid data
-			err := runtime.HandleFieldChange(ctx, "email", "invalid-email")
-			if err != nil {
-				t.Errorf("HandleFieldChange() error = %v", err)
-			}
+			err := s.runtime.HandleFieldChange(s.ctx, "email", "invalid-email")
+			require.NoError(s.T(), err, "HandleFieldChange should not return error")
 
-			errors := runtime.GetState().GetErrors("email")
+			errors := s.runtime.GetState().GetErrors("email")
 			hasErrors := len(errors) > 0
 
 			// Only ValidateOnChange should have errors at this point
-			if timing == ValidateOnChange && !hasErrors {
-				t.Error("Expected validation errors with ValidateOnChange timing")
-			} else if timing != ValidateOnChange && hasErrors {
-				t.Error("Unexpected validation errors with non-change timing")
+			if timing == ValidateOnChange {
+				require.True(s.T(), hasErrors, "Expected validation errors with ValidateOnChange timing")
+			} else {
+				require.False(s.T(), hasErrors, "Expected no validation errors with %s timing", timing)
 			}
 		})
 	}
 }
 
-func TestRuntime_GetStats(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
-	// Initialize first
-	err := runtime.Initialize(ctx, map[string]interface{}{
+// TestGetStats tests runtime statistics
+func (s *RuntimeTestSuite) TestGetStats() {
+	// Initialize with data
+	initialData := map[string]any{
 		"name":  "John Doe",
 		"email": "john@example.com",
-	})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
 	}
+	err := s.runtime.Initialize(s.ctx, initialData)
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Make some changes
-	runtime.HandleFieldChange(ctx, "name", "Jane Doe")
-	runtime.HandleFieldChange(ctx, "email", "jane@example.com")
-	runtime.HandleFieldBlur(ctx, "email", "jane@example.com")
+	err = s.runtime.HandleFieldChange(s.ctx, "name", "Jane Doe")
+	require.NoError(s.T(), err)
 
-	stats := runtime.GetStats()
+	err = s.runtime.HandleFieldChange(s.ctx, "email", "jane@example.com")
+	require.NoError(s.T(), err)
 
-	if stats == nil {
-		t.Fatal("GetStats() returned nil")
-	}
+	err = s.runtime.HandleFieldBlur(s.ctx, "email", "jane@example.com")
+	require.NoError(s.T(), err)
 
-	if stats.FieldCount != 3 { // name, email, age from test schema
-		t.Errorf("Expected 3 fields, got %d", stats.FieldCount)
-	}
+	stats := s.runtime.GetStats()
 
-	if stats.TouchedFields != 1 { // only email was blurred (touched)
-		t.Errorf("Expected 1 touched field, got %d", stats.TouchedFields)
-	}
-
-	if stats.DirtyFields != 2 { // both name and email were changed
-		t.Errorf("Expected 2 dirty fields, got %d", stats.DirtyFields)
-	}
+	require.NotNil(s.T(), stats, "GetStats() should not return nil")
+	require.Equal(s.T(), 3, stats.FieldCount, "Expected 3 fields (name, email, age)")
+	require.Equal(s.T(), 1, stats.TouchedFields, "Expected 1 touched field (email)")
+	require.Equal(s.T(), 2, stats.DirtyFields, "Expected 2 dirty fields (name, email)")
 }
 
-func TestRuntime_Reset(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
-	initialData := map[string]interface{}{
+// TestReset tests runtime reset functionality
+func (s *RuntimeTestSuite) TestReset() {
+	initialData := map[string]any{
 		"name":  "John Doe",
 		"email": "john@example.com",
 	}
 
 	// Initialize with data
-	err := runtime.Initialize(ctx, initialData)
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
+	err := s.runtime.Initialize(s.ctx, initialData)
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Make changes
-	runtime.HandleFieldChange(ctx, "name", "Jane Doe")
-	runtime.HandleFieldBlur(ctx, "email", "jane@example.com")
+	err = s.runtime.HandleFieldChange(s.ctx, "name", "Jane Doe")
+	require.NoError(s.T(), err)
+
+	err = s.runtime.HandleFieldBlur(s.ctx, "email", "jane@example.com")
+	require.NoError(s.T(), err)
 
 	// Verify changes
-	if !runtime.IsDirty() {
-		t.Error("Runtime should be dirty after changes")
-	}
+	require.True(s.T(), s.runtime.IsDirty(), "Runtime should be dirty after changes")
 
 	// Reset
-	runtime.Reset()
+	s.runtime.Reset()
 
 	// Verify reset
-	if runtime.IsDirty() {
-		t.Error("Runtime should not be dirty after reset")
-	}
+	require.False(s.T(), s.runtime.IsDirty(), "Runtime should not be dirty after reset")
 
 	// Check values are back to initial
-	name, _ := runtime.GetFieldValue("name")
-	if name != "John Doe" {
-		t.Errorf("Name should be reset to initial value, got %v", name)
-	}
+	name, exists := s.runtime.GetFieldValue("name")
+	require.True(s.T(), exists)
+	require.Equal(s.T(), "John Doe", name, "Name should be reset to initial value")
 }
 
-func TestRuntime_ConditionalLogic(t *testing.T) {
+// TestConditionalLogic tests conditional field logic
+func (s *RuntimeTestSuite) TestConditionalLogic() {
 	// Create schema with conditional field
-	schema := &schema.Schema{
+	conditionalSchema := &schema.Schema{
 		ID:    "test_conditional",
 		Title: "Test Conditional Schema",
 		Fields: []schema.Field{
@@ -297,93 +263,135 @@ func TestRuntime_ConditionalLogic(t *testing.T) {
 				Type:     schema.FieldText,
 				Label:    "Conditional Field",
 				Required: false,
-				// Note: Conditional logic would be handled by field.IsVisible()
-				// The runtime applies this through ApplyConditionalLogic()
 			},
 		},
 	}
 
-	runtime := NewRuntime(schema)
-	ctx := context.Background()
+	runtime := NewRuntime(conditionalSchema)
 
 	// Initialize
-	err := runtime.Initialize(ctx, map[string]interface{}{
+	err := runtime.Initialize(s.ctx, map[string]any{
 		"show_field": false,
 	})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Test applying conditional logic
-	err = runtime.ApplyConditionalLogic(ctx)
-	if err != nil {
-		t.Errorf("ApplyConditionalLogic() error = %v", err)
-	}
-
-	// The actual conditional logic evaluation depends on the condition evaluator
-	// For this test, we just verify the method doesn't error
+	err = runtime.ApplyConditionalLogic(s.ctx)
+	require.NoError(s.T(), err, "ApplyConditionalLogic() should not return error")
 }
 
-func TestRuntime_EventHandling(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
+// TestEventHandling tests custom event handler registration
+func (s *RuntimeTestSuite) TestEventHandling() {
 	// Initialize
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
+	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Register custom event handler
 	eventTriggered := false
-	runtime.RegisterEventHandler(EventChange, func(ctx context.Context, event *Event) error {
+	expectedField := "name"
+	expectedValue := "Test Name"
+
+	s.runtime.RegisterEventHandler(EventChange, func(ctx context.Context, event *Event) error {
 		eventTriggered = true
-		if event.Field != "name" {
-			t.Errorf("Expected field 'name', got '%s'", event.Field)
-		}
-		if event.Value != "Test Name" {
-			t.Errorf("Expected value 'Test Name', got '%v'", event.Value)
-		}
+		require.Equal(s.T(), expectedField, event.Field, "Event field should match")
+		require.Equal(s.T(), expectedValue, event.Value, "Event value should match")
 		return nil
 	})
 
 	// Trigger change
-	err = runtime.HandleFieldChange(ctx, "name", "Test Name")
-	if err != nil {
-		t.Errorf("HandleFieldChange() error = %v", err)
-	}
+	err = s.runtime.HandleFieldChange(s.ctx, expectedField, expectedValue)
+	require.NoError(s.T(), err, "HandleFieldChange should not return error")
 
-	if !eventTriggered {
-		t.Error("Custom event handler was not triggered")
-	}
+	require.True(s.T(), eventTriggered, "Custom event handler should be triggered")
 }
 
-func TestRuntime_ValidateWithDebounce(t *testing.T) {
-	runtime := NewRuntime(createTestSchema())
-	ctx := context.Background()
-
+// TestValidateWithDebounce tests debounced validation
+func (s *RuntimeTestSuite) TestValidateWithDebounce() {
 	// Initialize
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
+	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Test debounced validation
-	resultChan := runtime.ValidateWithDebounce(ctx, "email", "invalid-email", 100*time.Millisecond)
+	resultChan := s.runtime.ValidateWithDebounce(s.ctx, "email", "invalid-email", 100*time.Millisecond)
 
 	// Wait for result
 	select {
 	case errors := <-resultChan:
-		if len(errors) == 0 {
-			t.Error("Expected validation errors for invalid email")
-		}
+		require.NotEmpty(s.T(), errors, "Expected validation errors for invalid email")
 	case <-time.After(200 * time.Millisecond):
-		t.Error("Debounced validation timed out")
+		s.T().Error("Debounced validation timed out")
 	}
 }
 
-// Helper function to create a test schema
-func createTestSchema() *schema.Schema {
+// TestEnrichedSchemaIntegration tests runtime with enriched schema context
+func (s *RuntimeTestSuite) TestEnrichedSchemaIntegration() {
+	// Create schema with runtime permissions set by enricher
+	enrichedSchema := &schema.Schema{
+		ID:    "enriched_test",
+		Title: "Enriched Test Schema",
+		Fields: []schema.Field{
+			{
+				Name:     "public_field",
+				Type:     schema.FieldText,
+				Label:    "Public Field",
+				Required: false,
+				Runtime: &schema.FieldRuntime{
+					Visible:  true,
+					Editable: true,
+					Reason:   "",
+				},
+			},
+			{
+				Name:     "readonly_field",
+				Type:     schema.FieldText,
+				Label:    "Read-only Field",
+				Required: false,
+				Runtime: &schema.FieldRuntime{
+					Visible:  true,
+					Editable: false,
+					Reason:   "User lacks edit permission",
+				},
+			},
+			{
+				Name:     "hidden_field",
+				Type:     schema.FieldText,
+				Label:    "Hidden Field",
+				Required: false,
+				Runtime: &schema.FieldRuntime{
+					Visible:  false,
+					Editable: false,
+					Reason:   "User lacks view permission",
+				},
+			},
+		},
+	}
+
+	runtime := NewRuntime(enrichedSchema)
+
+	// Initialize
+	err := runtime.Initialize(s.ctx, map[string]any{})
+	require.NoError(s.T(), err, "Initialize should not fail")
+
+	// Test editing public field (should work)
+	err = runtime.HandleFieldChange(s.ctx, "public_field", "test value")
+	require.NoError(s.T(), err, "Should be able to edit public field")
+
+	// Test editing readonly field (should fail)
+	err = runtime.HandleFieldChange(s.ctx, "readonly_field", "test value")
+	require.Error(s.T(), err, "Should not be able to edit readonly field")
+
+	// Test validation only processes visible fields
+	allErrors := runtime.ValidateCurrentState(s.ctx)
+	_, hasHidden := allErrors["hidden_field"]
+	require.False(s.T(), hasHidden, "Hidden field should not be validated")
+
+	// Test stats reflect visible fields correctly
+	stats := runtime.GetStats()
+	require.Equal(s.T(), 2, stats.VisibleFields, "Expected 2 visible fields (public and readonly)")
+}
+
+// Helper method to create a test schema
+func (s *RuntimeTestSuite) createTestSchema() *schema.Schema {
 	return &schema.Schema{
 		ID:    "test_schema",
 		Title: "Test Schema",
@@ -425,79 +433,7 @@ func createTestSchema() *schema.Schema {
 	}
 }
 
-// Test runtime with enriched schema context
-func TestRuntime_EnrichedSchemaIntegration(t *testing.T) {
-	// Create schema with runtime permissions set by enricher
-	schema := &schema.Schema{
-		ID:    "enriched_test",
-		Title: "Enriched Test Schema",
-		Fields: []schema.Field{
-			{
-				Name:     "public_field",
-				Type:     schema.FieldText,
-				Label:    "Public Field",
-				Required: false,
-				Runtime: &schema.FieldRuntime{
-					Visible:  true,
-					Editable: true,
-					Reason:   "",
-				},
-			},
-			{
-				Name:     "readonly_field",
-				Type:     schema.FieldText,
-				Label:    "Read-only Field",
-				Required: false,
-				Runtime: &schema.FieldRuntime{
-					Visible:  true,
-					Editable: false,
-					Reason:   "User lacks edit permission",
-				},
-			},
-			{
-				Name:     "hidden_field",
-				Type:     schema.FieldText,
-				Label:    "Hidden Field",
-				Required: false,
-				Runtime: &schema.FieldRuntime{
-					Visible:  false,
-					Editable: false,
-					Reason:   "User lacks view permission",
-				},
-			},
-		},
-	}
-
-	runtime := NewRuntime(schema)
-	ctx := context.Background()
-
-	// Initialize
-	err := runtime.Initialize(ctx, map[string]interface{}{})
-	if err != nil {
-		t.Fatalf("Failed to initialize runtime: %v", err)
-	}
-
-	// Test editing public field (should work)
-	err = runtime.HandleFieldChange(ctx, "public_field", "test value")
-	if err != nil {
-		t.Errorf("Should be able to edit public field: %v", err)
-	}
-
-	// Test editing readonly field (should fail)
-	err = runtime.HandleFieldChange(ctx, "readonly_field", "test value")
-	if err == nil {
-		t.Error("Should not be able to edit readonly field")
-	}
-
-	// Test validation only processes visible fields
-	allErrors := runtime.ValidateCurrentState(ctx)
-	if _, hasHidden := allErrors["hidden_field"]; hasHidden {
-		t.Error("Hidden field should not be validated")
-	}
-
-	// Test stats reflect visible fields correctly
-	stats := runtime.GetStats()
-	if stats.VisibleFields != 2 { // only public_field and readonly_field
-		t.Errorf("Expected 2 visible fields, got %d", stats.VisibleFields)
-	}
+// TestRuntimeTestSuite runs the test suite
+func TestRuntimeTestSuite(t *testing.T) {
+	suite.Run(t, new(RuntimeTestSuite))
 }

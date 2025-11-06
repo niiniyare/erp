@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -72,7 +73,7 @@ func WithMaxDepth(max int) Option {
 }
 
 // Parse converts JSON bytes to Schema struct
-func (p *Parser) Parse(data []byte) (*schema.Schema, error) {
+func (p *Parser) Parse(ctx context.Context, data []byte) (*schema.Schema, error) {
 	if len(data) == 0 {
 		return nil, NewParseError("", "empty schema data")
 	}
@@ -88,7 +89,7 @@ func (p *Parser) Parse(data []byte) (*schema.Schema, error) {
 	}
 
 	// Validate schema structure
-	if err := p.validate(&s); err != nil {
+	if err := p.validate(ctx, &s); err != nil {
 		return nil, err
 	}
 
@@ -101,8 +102,8 @@ func (p *Parser) Parse(data []byte) (*schema.Schema, error) {
 }
 
 // ParseString converts JSON string to Schema struct
-func (p *Parser) ParseString(jsonStr string) (*schema.Schema, error) {
-	return p.Parse([]byte(jsonStr))
+func (p *Parser) ParseString(ctx context.Context, jsonStr string) (*schema.Schema, error) {
+	return p.Parse(ctx, []byte(jsonStr))
 }
 
 // ParseFile reads and parses a JSON file
@@ -117,12 +118,12 @@ func (p *Parser) ParseFile(filename string) (*schema.Schema, error) {
 }
 
 // ParseMap converts map to Schema (useful for dynamic schemas)
-func (p *Parser) ParseMap(data map[string]any) (*schema.Schema, error) {
+func (p *Parser) ParseMap(ctx context.Context, data map[string]any) (*schema.Schema, error) {
 	jsonBytes, err := json.Marshal(data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal map: %w", err)
 	}
-	return p.Parse(jsonBytes)
+	return p.Parse(ctx, jsonBytes)
 }
 
 // validateJSON performs quick validation before full parse
@@ -156,14 +157,14 @@ func (p *Parser) validateJSON(data []byte) error {
 }
 
 // validate performs deep validation
-func (p *Parser) validate(s *schema.Schema) error {
+func (p *Parser) validate(ctx context.Context, s *schema.Schema) error {
 	// Check field count limits
 	if len(s.Fields) > p.maxFieldCount {
 		return NewParseError(s.ID, fmt.Sprintf("too many fields: %d (max: %d)", len(s.Fields), p.maxFieldCount))
 	}
 
 	// Use schema's built-in validation
-	if err := s.Validate(); err != nil {
+	if err := s.Validate(ctx); err != nil {
 		return NewParseError(s.ID, fmt.Sprintf("validation failed: %v", err))
 	}
 
@@ -388,19 +389,19 @@ func (p *Parser) SerializeCompact(s *schema.Schema) ([]byte, error) {
 }
 
 // Clone creates a deep copy of a schema
-func (p *Parser) Clone(s *schema.Schema) (*schema.Schema, error) {
+func (p *Parser) Clone(ctx context.Context, s *schema.Schema) (*schema.Schema, error) {
 	// Serialize and re-parse to get a deep copy
 	data, err := p.Serialize(s)
 	if err != nil {
 		return nil, fmt.Errorf("clone failed: %w", err)
 	}
-	return p.Parse(data)
+	return p.Parse(ctx, data)
 }
 
 // Merge combines two schemas (useful for inheritance/composition)
-func (p *Parser) Merge(base, overlay *schema.Schema) (*schema.Schema, error) {
+func (p *Parser) Merge(ctx context.Context, base, overlay *schema.Schema) (*schema.Schema, error) {
 	// Clone base to avoid mutation
-	result, err := p.Clone(base)
+	result, err := p.Clone(ctx, base)
 	if err != nil {
 		return nil, err
 	}

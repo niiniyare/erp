@@ -211,7 +211,7 @@ func (suite *ThemeEdgeCasesTestSuite) TestBasicThemeOperations() {
 	// Register base theme
 	baseTheme := &Theme{
 		ID:      "base-theme",
-		Name:    "Base Theme", 
+		Name:    "Base Theme",
 		Version: "1.0.0",
 		Tokens:  GetDefaultTokens(),
 	}
@@ -334,7 +334,7 @@ func (suite *ThemeEdgeCasesTestSuite) TestLargeTokenStructures() {
 		Name:    "Large Theme",
 		Version: "1.0.0",
 		Tokens:  largeTokens,
-		CustomCSS: fmt.Sprintf("/* Large CSS content: %s */", 
+		CustomCSS: fmt.Sprintf("/* Large CSS content: %s */",
 			fmt.Sprintf("%0*s", 10000, "x")), // 10KB of CSS
 	}
 

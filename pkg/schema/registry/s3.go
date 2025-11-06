@@ -174,10 +174,10 @@ func (s3s *S3Storage) List(ctx context.Context) ([]string, error) {
 				if strings.HasPrefix(key, s3s.keyPrefix) && strings.HasSuffix(key, ".json") {
 					schemaID := strings.TrimPrefix(key, s3s.keyPrefix)
 					schemaID = strings.TrimSuffix(schemaID, ".json")
-					
+
 					// Convert path separators back to dots
 					schemaID = strings.ReplaceAll(schemaID, "/", ".")
-					
+
 					schemaIDs = append(schemaIDs, schemaID)
 				}
 			}

@@ -18,9 +18,9 @@ type RedisStorage struct {
 
 // RedisConfig configures Redis storage
 type RedisConfig struct {
-	Client redis.Cmdable  // Redis client interface
-	Prefix string         // Key prefix for schemas (default: "schema:")
-	TTL    time.Duration  // Optional TTL for cached schemas
+	Client redis.Cmdable // Redis client interface
+	Prefix string        // Key prefix for schemas (default: "schema:")
+	TTL    time.Duration // Optional TTL for cached schemas
 }
 
 // NewRedisStorage creates a new Redis storage backend
@@ -47,7 +47,7 @@ func (rs *RedisStorage) Get(ctx context.Context, id string) ([]byte, error) {
 	}
 
 	key := rs.getKey(id)
-	
+
 	data, err := rs.client.Get(ctx, key).Bytes()
 	if err != nil {
 		if err == redis.Nil {
@@ -70,7 +70,7 @@ func (rs *RedisStorage) Set(ctx context.Context, id string, data []byte) error {
 	}
 
 	key := rs.getKey(id)
-	
+
 	var err error
 	if rs.ttl > 0 {
 		err = rs.client.Set(ctx, key, data, rs.ttl).Err()
@@ -92,7 +92,7 @@ func (rs *RedisStorage) Delete(ctx context.Context, id string) error {
 	}
 
 	key := rs.getKey(id)
-	
+
 	deleted, err := rs.client.Del(ctx, key).Result()
 	if err != nil {
 		return fmt.Errorf("failed to delete schema %s from Redis: %w", id, err)
@@ -108,14 +108,14 @@ func (rs *RedisStorage) Delete(ctx context.Context, id string) error {
 // List returns all schema IDs from Redis
 func (rs *RedisStorage) List(ctx context.Context) ([]string, error) {
 	pattern := rs.prefix + "*"
-	
+
 	var allKeys []string
 	iter := rs.client.Scan(ctx, 0, pattern, 0).Iterator()
-	
+
 	for iter.Next(ctx) {
 		allKeys = append(allKeys, iter.Val())
 	}
-	
+
 	if err := iter.Err(); err != nil {
 		return nil, fmt.Errorf("failed to scan Redis keys: %w", err)
 	}
@@ -139,7 +139,7 @@ func (rs *RedisStorage) Exists(ctx context.Context, id string) (bool, error) {
 	}
 
 	key := rs.getKey(id)
-	
+
 	exists, err := rs.client.Exists(ctx, key).Result()
 	if err != nil {
 		return false, fmt.Errorf("failed to check if schema %s exists in Redis: %w", id, err)
@@ -172,11 +172,11 @@ func (rs *RedisStorage) Stats(ctx context.Context) (*RedisStats, error) {
 	// Get schema count
 	pattern := rs.prefix + "*"
 	iter := rs.client.Scan(ctx, 0, pattern, 0).Iterator()
-	
+
 	for iter.Next(ctx) {
 		stats.SchemaCount++
 	}
-	
+
 	if err := iter.Err(); err != nil {
 		return nil, fmt.Errorf("failed to calculate schema count: %w", err)
 	}
@@ -221,14 +221,14 @@ func (rs *RedisStorage) Ping(ctx context.Context) error {
 // FlushAll removes all schemas from Redis (use with caution)
 func (rs *RedisStorage) FlushAll(ctx context.Context) error {
 	pattern := rs.prefix + "*"
-	
+
 	var keys []string
 	iter := rs.client.Scan(ctx, 0, pattern, 0).Iterator()
-	
+
 	for iter.Next(ctx) {
 		keys = append(keys, iter.Val())
 	}
-	
+
 	if err := iter.Err(); err != nil {
 		return fmt.Errorf("failed to scan Redis keys for flush: %w", err)
 	}
@@ -249,12 +249,12 @@ func (rs *RedisStorage) GetWithTTL(ctx context.Context, id string) ([]byte, time
 	}
 
 	key := rs.getKey(id)
-	
+
 	// Use pipeline for atomic operations
 	pipe := rs.client.Pipeline()
 	getCmd := pipe.Get(ctx, key)
 	ttlCmd := pipe.TTL(ctx, key)
-	
+
 	_, err := pipe.Exec(ctx)
 	if err != nil && err != redis.Nil {
 		return nil, 0, fmt.Errorf("failed to get schema %s with TTL from Redis: %w", id, err)
@@ -288,7 +288,7 @@ func (rs *RedisStorage) SetWithCustomTTL(ctx context.Context, id string, data []
 	}
 
 	key := rs.getKey(id)
-	
+
 	err := rs.client.Set(ctx, key, data, ttl).Err()
 	if err != nil {
 		return fmt.Errorf("failed to set schema %s in Redis with TTL %v: %w", id, ttl, err)
@@ -353,7 +353,7 @@ func (rs *RedisStorage) BatchSet(ctx context.Context, schemas map[string][]byte)
 
 	// Use pipeline for batch operations
 	pipe := rs.client.Pipeline()
-	
+
 	for id, data := range schemas {
 		key := rs.getKey(id)
 		if rs.ttl > 0 {
