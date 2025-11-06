@@ -93,13 +93,10 @@ func (suite *EnricherTestSuite) TestEnrichBasic() {
 	}
 
 	// Clone the schema to test enrichment
-	testSchema := *testSchemaTemplate
-	if len(testSchemaTemplate.Fields) > 0 {
-		testSchema.Fields = make([]schema.Field, len(testSchemaTemplate.Fields))
-		copy(testSchema.Fields, testSchemaTemplate.Fields)
-	}
+	testSchema, err := testSchemaTemplate.Clone()
+	suite.Require().NoError(err)
 
-	err := suite.enricher.Enrich(suite.ctx, &testSchema, WithUser(user))
+	err = suite.enricher.Enrich(suite.ctx, testSchema, WithUser(user))
 	suite.Require().NoError(err)
 
 	// Check field enrichment
@@ -364,17 +361,10 @@ func (suite *EnricherTestSuite) TestEnrichActions() {
 	}
 
 	// Clone the schema to test enrichment
-	testSchema := *testSchemaTemplate
-	if len(testSchemaTemplate.Fields) > 0 {
-		testSchema.Fields = make([]schema.Field, len(testSchemaTemplate.Fields))
-		copy(testSchema.Fields, testSchemaTemplate.Fields)
-	}
-	if len(testSchemaTemplate.Actions) > 0 {
-		testSchema.Actions = make([]schema.Action, len(testSchemaTemplate.Actions))
-		copy(testSchema.Actions, testSchemaTemplate.Actions)
-	}
+	testSchema, err := testSchemaTemplate.Clone()
+	suite.Require().NoError(err)
 
-	err := suite.enricher.Enrich(suite.ctx, &testSchema, WithUser(user))
+	err = suite.enricher.Enrich(suite.ctx, testSchema, WithUser(user))
 	suite.Require().NoError(err)
 
 	// Public action should remain unchanged
@@ -471,17 +461,10 @@ func (suite *EnricherTestSuite) TestTenantProviderError() {
 
 	// Should not fail even if tenant provider returns error
 	// Clone the schema to test enrichment
-	testSchema := *testSchemaTemplate
-	if len(testSchemaTemplate.Fields) > 0 {
-		testSchema.Fields = make([]schema.Field, len(testSchemaTemplate.Fields))
-		copy(testSchema.Fields, testSchemaTemplate.Fields)
-	}
-	if len(testSchemaTemplate.Actions) > 0 {
-		testSchema.Actions = make([]schema.Action, len(testSchemaTemplate.Actions))
-		copy(testSchema.Actions, testSchemaTemplate.Actions)
-	}
+	testSchema, err := testSchemaTemplate.Clone()
+	suite.Require().NoError(err)
 
-	err := suite.enricher.Enrich(suite.ctx, &testSchema, WithUser(user))
+	err = suite.enricher.Enrich(suite.ctx, testSchema, WithUser(user))
 	suite.Require().NoError(err)
 	suite.Require().NotNil(&testSchema)
 }
