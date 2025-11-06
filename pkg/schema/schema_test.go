@@ -18,6 +18,7 @@ type SchemaTestSuite struct {
 }
 
 func (s *SchemaTestSuite) SetupTest() {
+	s.ctx = context.Background()
 	s.schema = NewSchema("test-schema", TypeForm, "Test Schema")
 }
 
@@ -492,7 +493,7 @@ func (s *SchemaTestSuite) TestFilterFields() {
 	filtered, err := s.schema.FilterFields(func(field Field) bool {
 		return field.Type == FieldText
 	})
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	s.Require().Len(filtered.Fields, 2)
 	s.Require().Equal("text1", filtered.Fields[0].Name)
@@ -508,7 +509,7 @@ func (s *SchemaTestSuite) TestMapFields() {
 		field.Label = "TRANSFORMED: " + field.Label
 		return field
 	})
-	s.NoError(err)
+	s.Require().NoError(err)
 
 	s.Require().Len(mapped.Fields, 2)
 	s.Require().Equal("TRANSFORMED: Field 1", mapped.Fields[0].Label)

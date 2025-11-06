@@ -256,6 +256,8 @@ func (suite *LayoutTestSuite) TestLayoutValidation() {
 		Title:  "Test",
 		Fields: []Field{{Name: "field1", Type: FieldText}},
 	}
+	// Initialize the schema to build field map
+	schema.buildFieldMap()
 
 	// Test valid grid layout
 	validGrid := &Layout{

@@ -1629,7 +1629,7 @@ func convertMockToRealSchema(mockSchema *MockSchema) *schema.Schema {
 			Required: mockField.GetRequired(),
 		}
 
-		// Convert validation if present
+		// Convert validation if present or create based on field type
 		if mockValidation := mockField.GetValidation(); mockValidation != nil {
 			field.Validation = &schema.FieldValidation{
 				MinLength: mockValidation.MinLength,
@@ -1640,6 +1640,21 @@ func convertMockToRealSchema(mockSchema *MockSchema) *schema.Schema {
 				Pattern:   mockValidation.Pattern,
 				Format:    mockValidation.Format,
 				Custom:    mockValidation.Custom,
+			}
+		} else {
+			// Create validation based on field type
+			field.Validation = &schema.FieldValidation{}
+		}
+
+		// Set format validation based on field type if not already set
+		if field.Validation != nil && field.Validation.Format == "" {
+			switch mockField.GetType() {
+			case FieldEmail:
+				field.Validation.Format = "email"
+			case FieldURL:
+				field.Validation.Format = "url"
+			case FieldPhone:
+				field.Validation.Format = "phone"
 			}
 		}
 

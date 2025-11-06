@@ -714,11 +714,13 @@ func (s *Schema) Validate(ctx context.Context) error {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	// Check context cancellation
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
+	// Check context cancellation (only if context is provided)
+	if ctx != nil {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		default:
+		}
 	}
 
 	collector := NewErrorCollector()
@@ -736,11 +738,13 @@ func (s *Schema) Validate(ctx context.Context) error {
 
 	// Validate all fields
 	for i, field := range s.Fields {
-		// Check cancellation periodically
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
+		// Check cancellation periodically (only if context is provided)
+		if ctx != nil {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
 		}
 
 		if err := field.Validate(ctx); err != nil {
@@ -838,8 +842,12 @@ func (s *Schema) Clone() (*Schema, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	// Marshal to JSON for deep copy
-	data, err := json.Marshal(s)
+	// Create a type alias to avoid calling custom MarshalJSON
+	type Alias Schema
+	alias := (*Alias)(s)
+	
+	// Marshal to JSON for deep copy using the alias (bypassing custom MarshalJSON)
+	data, err := json.Marshal(alias)
 	if err != nil {
 		return nil, fmt.Errorf("clone marshal: %w", err)
 	}

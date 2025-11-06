@@ -66,8 +66,11 @@ func (s *RuntimeTestSuite) TestInitialize() {
 
 // TestHandleFieldChange tests field value changes
 func (s *RuntimeTestSuite) TestHandleFieldChange() {
-	// Initialize first
-	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	// Initialize first with valid data for required fields
+	err := s.runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Test field change
@@ -87,8 +90,11 @@ func (s *RuntimeTestSuite) TestHandleFieldChange() {
 func (s *RuntimeTestSuite) TestHandleFieldBlur() {
 	s.runtime.SetValidationTiming(ValidateOnBlur)
 
-	// Initialize first
-	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	// Initialize first with valid data for required fields
+	err := s.runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Test field blur
@@ -101,8 +107,11 @@ func (s *RuntimeTestSuite) TestHandleFieldBlur() {
 
 // TestValidateField tests field validation
 func (s *RuntimeTestSuite) TestValidateField() {
-	// Initialize first
-	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	// Initialize first with valid data for required fields
+	err := s.runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	tests := []struct {
@@ -153,8 +162,11 @@ func (s *RuntimeTestSuite) TestValidateField() {
 
 // TestValidationTiming tests different validation timing modes
 func (s *RuntimeTestSuite) TestValidationTiming() {
-	// Initialize first
-	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	// Initialize first with valid data for required fields
+	err := s.runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Test different validation timings
@@ -283,7 +295,10 @@ func (s *RuntimeTestSuite) TestConditionalLogic() {
 // TestEventHandling tests custom event handler registration
 func (s *RuntimeTestSuite) TestEventHandling() {
 	// Initialize
-	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	err := s.runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Register custom event handler
@@ -308,7 +323,10 @@ func (s *RuntimeTestSuite) TestEventHandling() {
 // TestValidateWithDebounce tests debounced validation
 func (s *RuntimeTestSuite) TestValidateWithDebounce() {
 	// Initialize
-	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	err := s.runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Test debounced validation

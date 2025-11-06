@@ -13,6 +13,10 @@ type BuilderExtendedTestSuite struct {
 	ctx context.Context
 }
 
+func (suite *BuilderExtendedTestSuite) SetupTest() {
+	suite.ctx = context.Background()
+}
+
 func TestBuilderExtendedTestSuite(t *testing.T) {
 	suite.Run(t, new(BuilderExtendedTestSuite))
 }

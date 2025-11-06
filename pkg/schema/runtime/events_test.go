@@ -47,7 +47,10 @@ func (s *EventHandlerTestSuite) TestNewEventHandler() {
 // TestOnChange tests field change event handling
 func (s *EventHandlerTestSuite) TestOnChange() {
 	// Initialize runtime
-	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	err := s.runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	s.handler.SetValidationTiming(ValidateOnChange)
@@ -56,8 +59,8 @@ func (s *EventHandlerTestSuite) TestOnChange() {
 	event := &Event{
 		Type:      EventChange,
 		Field:     "name",
-		Value:     "John Doe",
-		OldValue:  "",
+		Value:     "Jane Doe",
+		OldValue:  "John Doe",
 		Timestamp: time.Now(),
 	}
 
@@ -68,7 +71,7 @@ func (s *EventHandlerTestSuite) TestOnChange() {
 	// Check value was updated in state
 	value, exists := s.runtime.state.GetValue("name")
 	require.True(s.T(), exists, "Value should exist")
-	require.Equal(s.T(), "John Doe", value, "Value should be updated")
+	require.Equal(s.T(), "Jane Doe", value, "Value should be updated")
 
 	// Check field is marked as dirty
 	require.True(s.T(), s.runtime.state.IsDirty("name"), "Field should be marked as dirty after change")
@@ -98,7 +101,10 @@ func (s *EventHandlerTestSuite) TestOnChange_ReadOnlyField() {
 	runtime := NewRuntime(readonlySchema)
 
 	// Initialize runtime
-	err := runtime.Initialize(s.ctx, map[string]any{})
+	err := runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	handler := runtime.events
@@ -126,7 +132,10 @@ func (s *EventHandlerTestSuite) TestOnChange_ReadOnlyField() {
 // TestOnBlur tests field blur event handling
 func (s *EventHandlerTestSuite) TestOnBlur() {
 	// Initialize runtime
-	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	err := s.runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	s.handler.SetValidationTiming(ValidateOnBlur)
@@ -171,12 +180,18 @@ func (s *EventHandlerTestSuite) TestOnSubmit() {
 
 // TestOnSubmit_WithErrors tests submit event with validation errors
 func (s *EventHandlerTestSuite) TestOnSubmit_WithErrors() {
-	// Initialize runtime with invalid data
+	// Initialize runtime with valid data first
 	err := s.runtime.Initialize(s.ctx, map[string]any{
-		"name":  "",              // Required field empty
-		"email": "invalid-email", // Invalid email
+		"name":  "John Doe",
+		"email": "john@example.com",
 	})
 	require.NoError(s.T(), err, "Initialize should not fail")
+	
+	// Now set invalid data through direct state manipulation
+	err = s.runtime.state.SetValue("name", "")
+	require.NoError(s.T(), err, "Setting empty name should not fail")
+	err = s.runtime.state.SetValue("email", "invalid-email")
+	require.NoError(s.T(), err, "Setting invalid email should not fail")
 
 	// Handle submit event
 	err = s.handler.OnSubmit(s.ctx)
@@ -196,7 +211,10 @@ func (s *EventHandlerTestSuite) TestOnSubmit_WithErrors() {
 // TestValidationTiming tests different validation timing modes
 func (s *EventHandlerTestSuite) TestValidationTiming() {
 	// Initialize runtime
-	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	err := s.runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	tests := []struct {
@@ -298,7 +316,10 @@ func (s *EventHandlerTestSuite) TestRegister() {
 	runtime.events = handler
 	handler.runtime = runtime
 
-	err := runtime.Initialize(s.ctx, map[string]any{})
+	err := runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Create event
@@ -326,7 +347,10 @@ func (s *EventHandlerTestSuite) TestRegister() {
 // TestHandleBatchUpdate tests batch field updates
 func (s *EventHandlerTestSuite) TestHandleBatchUpdate() {
 	// Initialize runtime
-	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	err := s.runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	s.handler.SetValidationTiming(ValidateOnChange)
@@ -361,7 +385,10 @@ func (s *EventHandlerTestSuite) TestHandleBatchUpdate() {
 
 // TestDebouncedEventHandler tests debounced event handling
 func (s *EventHandlerTestSuite) TestDebouncedEventHandler() {
-	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	err := s.runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Create debounced handler
@@ -483,7 +510,10 @@ func (s *EventHandlerTestSuite) TestUnregister() {
 
 // TestErrorHandling tests error propagation from callbacks
 func (s *EventHandlerTestSuite) TestErrorHandling() {
-	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	err := s.runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Register callback that returns error
@@ -506,7 +536,10 @@ func (s *EventHandlerTestSuite) TestErrorHandling() {
 
 // TestNonExistentField tests handling of non-existent field
 func (s *EventHandlerTestSuite) TestNonExistentField() {
-	err := s.runtime.Initialize(s.ctx, map[string]any{})
+	err := s.runtime.Initialize(s.ctx, map[string]any{
+		"name":  "John Doe",
+		"email": "john@example.com",
+	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Create event for non-existent field
