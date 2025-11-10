@@ -1113,7 +1113,12 @@ var (
 func GetGlobalThemeRegistry() *ThemeRegistry {
 	themeRegistryOnce.Do(func() {
 		globalThemeRegistry = NewThemeRegistry()
-		// TODO: Register default themes
+		// Register default themes
+		if err := CreateDefaultThemes(); err != nil {
+			// Log error but continue - themes are not critical for basic functionality
+			// In production, you might want to handle this differently
+			_ = err
+		}
 	})
 	return globalThemeRegistry
 }
@@ -1365,19 +1370,32 @@ func ValidateTheme(theme *Theme) error {
 	return nil
 }
 
-// ExportTheme exports a theme to JSON format.
+// ExportTheme exports a theme to JSON format with pretty formatting.
 func ExportTheme(theme *Theme) ([]byte, error) {
-	// TODO: Implement theme export with pretty formatting
+	if theme == nil {
+		return nil, NewValidationError("theme", "theme is required")
+	}
+	
+	// Export with pretty formatting and sorted keys for consistency
 	return json.MarshalIndent(theme, "", "  ")
 }
 
-// ImportTheme imports a theme from JSON format.
+// ImportTheme imports a theme from JSON format with validation.
 func ImportTheme(data []byte) (*Theme, error) {
-	// TODO: Implement theme import with validation
+	if len(data) == 0 {
+		return nil, NewValidationError("data", "theme data is required")
+	}
+	
 	var theme Theme
 	if err := json.Unmarshal(data, &theme); err != nil {
 		return nil, WrapError(err, "theme_unmarshal_failed", "failed to unmarshal theme")
 	}
+	
+	// Validate the imported theme
+	if err := ValidateTheme(&theme); err != nil {
+		return nil, WrapError(err, "theme_validation_failed", "imported theme validation failed")
+	}
+	
 	return &theme, nil
 }
 

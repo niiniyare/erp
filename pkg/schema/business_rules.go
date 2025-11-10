@@ -466,9 +466,15 @@ func (bre *BusinessRuleEngine) calculateFieldValue(ctx context.Context, schema *
 			schema.Fields[i].Config["formula"] = formula
 			schema.Fields[i].Config["calculated"] = true
 
-			// TODO: Implement actual formula evaluation
-			// For now, we just mark it as calculated and store the formula
-			// The actual calculation would be done by the frontend or a formula evaluator
+			// Use the condition package's expression evaluator for formula calculation
+			evalCtx := condition.NewEvalContext(data, condition.DefaultEvalOptions())
+			result, err := bre.evaluator.EvaluateFormula(ctx, formula, evalCtx)
+			if err != nil {
+				return NewValidationError("formula_evaluation_failed", fmt.Sprintf("failed to evaluate formula %s: %v", formula, err))
+			}
+
+			// Set the calculated value as the field default
+			schema.Fields[i].Default = result
 
 			return nil
 		}

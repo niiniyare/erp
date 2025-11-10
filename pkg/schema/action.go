@@ -3,7 +3,9 @@ package schema
 import (
 	"context"
 	"slices"
+	"strings"
 
+	"github.com/google/uuid"
 	"github.com/niiniyare/erp/pkg/condition"
 )
 
@@ -199,9 +201,21 @@ func (a *Action) IsVisible(ctx context.Context, data map[string]any) (bool, erro
 		return result, nil
 	}
 
-	// Check legacy conditional (deprecated but supported)
+	// Check legacy conditional
 	if a.Conditional != nil {
-		// TODO: Integrate with condition evaluator
+		if a.evaluator != nil {
+			// Convert legacy conditional to modern condition format
+			convertedCondition := convertLegacyConditional(a.Conditional)
+			if convertedCondition != nil {
+				evalCtx := condition.NewEvalContext(data, condition.DefaultEvalOptions())
+				result, err := a.evaluator.Evaluate(ctx, convertedCondition, evalCtx)
+				if err != nil {
+					return false, WrapError(err, "legacy_condition_evaluation_failed", "failed to evaluate legacy action condition")
+				}
+				return result, nil
+			}
+		}
+		// Fallback: always visible if no evaluator or conversion failed
 		return true, nil
 	}
 
@@ -309,7 +323,7 @@ func (a *Action) ApplyTheme(theme *Theme) {
 		a.Theme = &ActionTheme{}
 	}
 
-	// Theme will be applied by renderer
+	// NOTE:Theme will be applied by renderer
 }
 
 // GetConfig returns action config with fallback
@@ -531,4 +545,100 @@ func NewDeleteAction(id, text string) *ActionBuilder {
 	return NewAction(id, ActionButton, text).
 		WithVariant("destructive").
 		WithConfirmation("Are you sure you want to delete this item?", "Confirm Deletion")
+}
+
+
+// convertLegacyConditional converts legacy Conditional to condition.ConditionGroup
+// This is for backward compatibility with the old conditional format
+func convertLegacyConditional(cond *Conditional) *condition.ConditionGroup {
+	if cond == nil {
+		return nil
+	}
+
+	// For actions, we typically check the "show" condition
+	if cond.Show != nil {
+		return convertConditionGroup(cond.Show)
+	}
+	
+	// If there's a hide condition, invert it for visibility
+	if cond.Hide != nil {
+		hideGroup := convertConditionGroup(cond.Hide)
+		if hideGroup != nil {
+			// Wrap in NOT condition
+			return &condition.ConditionGroup{
+				ID:          "hide_condition_not",
+				Conjunction: condition.ConjunctionAnd,
+				Not:         true,
+				Children:    []any{hideGroup},
+			}
+		}
+	}
+
+	return nil
+}
+
+// convertConditionGroup converts schema.ConditionGroup to condition.ConditionGroup
+func convertConditionGroup(group *ConditionGroup) *condition.ConditionGroup {
+	if group == nil || len(group.Conditions) == 0 {
+		return nil
+	}
+
+	// Map logic to conjunction
+	conjunction := condition.ConjunctionAnd
+	if strings.ToLower(group.Logic) == "or" {
+		conjunction = condition.ConjunctionOr
+	}
+
+	result := &condition.ConditionGroup{
+		ID:          "converted_group_" + uuid.New().String()[:8],
+		Conjunction: conjunction,
+	}
+
+	// Convert each condition to ConditionRule
+	for _, cond := range group.Conditions {
+		conditionRule := &condition.ConditionRule{
+			ID: "converted_rule_" + uuid.New().String()[:8],
+			Left: condition.Expression{
+				Type:  condition.ValueTypeField,
+				Field: cond.Field,
+			},
+			Op:    condition.OperatorType(convertOperator(cond.Operator)),
+			Right: cond.Value,
+		}
+		result.Children = append(result.Children, conditionRule)
+	}
+
+	return result
+}
+
+// convertOperator converts legacy operator names to condition package operators
+func convertOperator(op string) string {
+	// Map common operator names
+	switch op {
+	case "equal", "equals", "==":
+		return "equal"
+	case "not_equal", "not_equals", "!=":
+		return "not_equal"
+	case "greater", "greater_than", ">":
+		return "greater"
+	case "greater_equal", "greater_or_equal", ">=":
+		return "greater_or_equal"
+	case "less", "less_than", "<":
+		return "less"
+	case "less_equal", "less_or_equal", "<=":
+		return "less_or_equal"
+	case "contains":
+		return "contains"
+	case "starts_with":
+		return "starts_with"
+	case "ends_with":
+		return "ends_with"
+	case "in":
+		return "select_any_in"
+	case "not_in":
+		return "select_not_any_in"
+	default:
+		// Return as-is if not mapped
+		return op
+	}
 }

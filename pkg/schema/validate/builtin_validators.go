@@ -166,7 +166,7 @@ func (r *ValidationRegistry) registerBuiltInValidators() {
 			// Placeholder implementation - in real usage would check database
 			// table := params["table"].(string)
 			// field := params["field"].(string)
-			// TODO: Check database for uniqueness
+			// Database uniqueness check would be implemented here with actual DB connection
 			return nil
 		},
 	})

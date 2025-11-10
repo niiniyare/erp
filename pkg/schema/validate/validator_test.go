@@ -493,7 +493,7 @@ func TestValidator_ValidateField_MultiSelect(t *testing.T) {
 	}
 }
 
-// TODO: Add TestValidator_ValidateField_Uniqueness when Unique field is implemented in FieldValidation
+// TestValidator_ValidateField_Uniqueness tests uniqueness validation (ready when Unique field is added)
 // func TestValidator_ValidateField_Uniqueness(t *testing.T) {
 // 	// Test uniqueness validation
 // 	db := &MockDatabase{

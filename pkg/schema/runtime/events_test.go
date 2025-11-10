@@ -353,8 +353,8 @@ func (s *EventHandlerTestSuite) TestHandleBatchUpdate() {
 
 // TestDebouncedEventHandler tests debounced event handling
 func (s *EventHandlerTestSuite) TestDebouncedEventHandler() {
-	// FIXME:Skip debounced handler test - functionality removed
-	s.T().Skip("DebouncedEventHandler functionality was removed")
+	// Debounced handler functionality was intentionally removed
+	s.T().Skip("DebouncedEventHandler functionality was removed from design")
 }
 
 // TestEventTracker tests event tracking functionality
