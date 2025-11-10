@@ -1,0 +1,332 @@
+package atoms
+
+import (
+	"strings"
+)
+
+// TagProps defines the properties for individual Tag components
+type TagProps struct {
+	Text        string
+	Value       string
+	Selected    bool
+	Removable   bool
+	Disabled    bool
+	Class       string
+	ID          string
+	// Events
+	OnClick     string // Alpine.js click handler
+	OnRemove    string // Alpine.js remove handler
+	// HTMX attributes
+	HXPost      string
+	HXGet       string
+	HXTarget    string
+	HXSwap      string
+}
+
+// TagsProps defines the properties for the Tags container component
+type TagsProps struct {
+	Tags        []TagProps
+	MaxTags     int
+	Editable    bool
+	Placeholder string
+	Class       string
+	ID          string
+	Name        string
+	// Alpine.js data and methods
+	AlpineData  string // x-data attribute
+	// Events
+	OnTagAdd    string // Alpine.js method for adding tags
+	OnTagRemove string // Alpine.js method for removing tags
+	// HTMX attributes for the container
+	HXPost      string
+	HXGet       string
+	HXTarget    string
+	HXSwap      string
+}
+
+// tagClasses generates Tailwind CSS classes for individual tags
+func tagClasses(props TagProps) string {
+	var classes []string
+
+	// Base classes
+	classes = append(classes,
+		"inline-flex",
+		"items-center",
+		"gap-1",
+		"rounded-md",
+		"border",
+		"px-2",
+		"py-1",
+		"text-xs",
+		"font-medium",
+		"transition-colors",
+		"focus:outline-none",
+		"focus:ring-2",
+		"focus:ring-ring",
+		"focus:ring-offset-1",
+	)
+
+	// State-based styling
+	if props.Selected {
+		classes = append(classes,
+			"border-primary",
+			"bg-primary",
+			"text-primary-foreground",
+		)
+	} else {
+		classes = append(classes,
+			"border-input",
+			"bg-background",
+			"text-foreground",
+			"hover:bg-accent",
+			"hover:text-accent-foreground",
+		)
+	}
+
+	// Disabled state
+	if props.Disabled {
+		classes = append(classes, "opacity-50", "cursor-not-allowed")
+	} else if props.OnClick != "" || props.HXPost != "" || props.HXGet != "" {
+		classes = append(classes, "cursor-pointer")
+	}
+
+	// Custom classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// tagsContainerClasses generates Tailwind CSS classes for the tags container
+func tagsContainerClasses(props TagsProps) string {
+	var classes []string
+
+	// Base classes
+	classes = append(classes,
+		"flex",
+		"flex-wrap",
+		"gap-1",
+		"p-2",
+		"border",
+		"border-input",
+		"rounded-md",
+		"bg-background",
+		"min-h-[2.5rem]",
+		"focus-within:ring-2",
+		"focus-within:ring-ring",
+		"focus-within:ring-offset-2",
+	)
+
+	// Custom classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// Tag renders an individual tag component
+templ Tag(props TagProps) {
+	if props.OnClick != "" || props.HXPost != "" || props.HXGet != "" {
+		<button
+			type="button"
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			if props.Value != "" {
+				value={ props.Value }
+			}
+			class={ tagClasses(props) }
+			if props.Disabled {
+				disabled
+			}
+			if props.OnClick != "" {
+				x-on:click={ props.OnClick }
+			}
+			if props.HXPost != "" {
+				hx-post={ props.HXPost }
+			}
+			if props.HXGet != "" {
+				hx-get={ props.HXGet }
+			}
+			if props.HXTarget != "" {
+				hx-target={ props.HXTarget }
+			}
+			if props.HXSwap != "" {
+				hx-swap={ props.HXSwap }
+			}
+		>
+			@tagContent(props)
+		</button>
+	} else {
+		<span
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			class={ tagClasses(props) }
+		>
+			@tagContent(props)
+		</span>
+	}
+}
+
+// tagContent renders the content of a tag
+templ tagContent(props TagProps) {
+	<span>{ props.Text }</span>
+	if props.Removable && !props.Disabled {
+		<button
+			type="button"
+			class="ml-1 h-3 w-3 rounded-full outline-none ring-offset-background transition-colors hover:bg-foreground/20 focus:bg-foreground/20 focus:ring-1 focus:ring-ring"
+			if props.OnRemove != "" {
+				x-on:click={ props.OnRemove }
+			}
+			aria-label={ "Remove " + props.Text }
+		>
+			@Icon(IconProps{Name: "x", Size: IconSizeXS})
+		</button>
+	}
+}
+
+// Tags renders a container for multiple tags with optional editing capabilities
+templ Tags(props TagsProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ tagsContainerClasses(props) }
+		if props.AlpineData != "" {
+			x-data={ props.AlpineData }
+		} else if props.Editable {
+			x-data="{ 
+				tags: [],
+				newTag: '',
+				addTag() {
+					if (this.newTag.trim() && !this.tags.includes(this.newTag.trim())) {
+						this.tags.push(this.newTag.trim());
+						this.newTag = '';
+						" + props.OnTagAdd + "
+					}
+				},
+				removeTag(index) {
+					this.tags.splice(index, 1);
+					" + props.OnTagRemove + "
+				}
+			}"
+		}
+		if props.HXPost != "" {
+			hx-post={ props.HXPost }
+		}
+		if props.HXGet != "" {
+			hx-get={ props.HXGet }
+		}
+		if props.HXTarget != "" {
+			hx-target={ props.HXTarget }
+		}
+		if props.HXSwap != "" {
+			hx-swap={ props.HXSwap }
+		}
+	>
+		// Render existing tags
+		for _, tag := range props.Tags {
+			@Tag(tag)
+		}
+		
+		// Render Alpine.js dynamic tags (if editable)
+		if props.Editable {
+			<template x-for="(tag, index) in tags" x-key="index">
+				<span
+					class="inline-flex items-center gap-1 rounded-md border border-input bg-background px-2 py-1 text-xs font-medium text-foreground"
+				>
+					<span x-text="tag"></span>
+					<button
+						type="button"
+						class="ml-1 h-3 w-3 rounded-full outline-none ring-offset-background transition-colors hover:bg-foreground/20 focus:bg-foreground/20 focus:ring-1 focus:ring-ring"
+						x-on:click="removeTag(index)"
+						aria-label="Remove tag"
+					>
+						@Icon(IconProps{Name: "x", Size: IconSizeXS})
+					</button>
+				</span>
+			</template>
+			
+			// Input for adding new tags
+			<input
+				type="text"
+				if props.Name != "" {
+					name={ props.Name + "_input" }
+				}
+				if props.Placeholder != "" {
+					placeholder={ props.Placeholder }
+				} else {
+					placeholder="Add tag..."
+				}
+				class="flex-1 min-w-[120px] border-0 bg-transparent text-xs placeholder:text-muted-foreground focus:outline-none"
+				x-model="newTag"
+				x-on:keydown.enter.prevent="addTag()"
+				x-on:keydown.comma.prevent="addTag()"
+			/>
+		}
+	</div>
+}
+
+// EditableTags renders an editable tags component with Alpine.js functionality
+templ EditableTags(props TagsProps) {
+	@Tags(TagsProps{
+		Tags:        props.Tags,
+		MaxTags:     props.MaxTags,
+		Editable:    true,
+		Placeholder: props.Placeholder,
+		Class:       props.Class,
+		ID:          props.ID,
+		Name:        props.Name,
+		AlpineData:  props.AlpineData,
+		OnTagAdd:    props.OnTagAdd,
+		OnTagRemove: props.OnTagRemove,
+		HXPost:      props.HXPost,
+		HXGet:       props.HXGet,
+		HXTarget:    props.HXTarget,
+		HXSwap:      props.HXSwap,
+	})
+}
+
+// SelectableTags renders tags that can be selected/deselected
+templ SelectableTags(props TagsProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ "flex flex-wrap gap-1 " + props.Class }
+		if props.AlpineData != "" {
+			x-data={ props.AlpineData }
+		} else {
+			x-data="{ selectedTags: [] }"
+		}
+		if props.HXPost != "" {
+			hx-post={ props.HXPost }
+		}
+		if props.HXGet != "" {
+			hx-get={ props.HXGet }
+		}
+		if props.HXTarget != "" {
+			hx-target={ props.HXTarget }
+		}
+		if props.HXSwap != "" {
+			hx-swap={ props.HXSwap }
+		}
+	>
+		for _, tag := range props.Tags {
+			<button
+				type="button"
+				class="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+				x-bind:class="selectedTags.includes('" + tag.Value + "') ? 'border-primary bg-primary text-primary-foreground' : 'border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground'"
+				x-on:click={ "selectedTags.includes('" + tag.Value + "') ? selectedTags = selectedTags.filter(t => t !== '" + tag.Value + "') : selectedTags.push('" + tag.Value + "')" }
+				if tag.OnClick != "" {
+					x-on:click={ tag.OnClick }
+				}
+			>
+				{ tag.Text }
+			</button>
+		}
+	</div>
+}

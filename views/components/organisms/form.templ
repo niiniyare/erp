@@ -1,0 +1,490 @@
+package organisms
+
+import (
+	"strings"
+	"../atoms"
+	"../molecules"
+)
+
+// FormLayout defines the layout style for the form
+type FormLayout string
+
+const (
+	FormLayoutVertical   FormLayout = "vertical"
+	FormLayoutHorizontal FormLayout = "horizontal"
+	FormLayoutInline     FormLayout = "inline"
+	FormLayoutGrid       FormLayout = "grid"
+)
+
+// FormSize defines the size variants for form components
+type FormSize string
+
+const (
+	FormSizeSM FormSize = "sm"
+	FormSizeMD FormSize = "md"
+	FormSizeLG FormSize = "lg"
+)
+
+// FormAction represents a form action button
+type FormAction struct {
+	Text        string
+	Type        string // "submit", "reset", "button"
+	Variant     atoms.ButtonVariant
+	Size        atoms.ButtonSize
+	Icon        string
+	IconLeft    string
+	IconRight   string
+	Loading     bool
+	Disabled    bool
+	Class       string
+	ID          string
+	// HTMX attributes
+	HXPost      string
+	HXGet       string
+	HXTarget    string
+	HXSwap      string
+	// Alpine.js attributes
+	AlpineClick string
+	// Events
+	OnClick     string
+}
+
+// FormSection represents a section within the form
+type FormSection struct {
+	Title       string
+	Description string
+	Fields      []molecules.FormFieldProps
+	Collapsible bool
+	Collapsed   bool
+	Class       string
+	ID          string
+}
+
+// FormProps defines the properties for the Form component
+type FormProps struct {
+	Layout       FormLayout
+	Size         FormSize
+	Title        string
+	Description  string
+	Method       string // "GET", "POST", "PUT", "DELETE"
+	Action       string // Form action URL
+	Sections     []FormSection
+	Fields       []molecules.FormFieldProps // Direct fields (not in sections)
+	Actions      []FormAction
+	ShowProgress bool
+	Class        string
+	ID           string
+	Name         string
+	// HTMX attributes
+	HXPost       string
+	HXGet        string
+	HXTarget     string
+	HXSwap       string
+	HXTrigger    string
+	HXValidate   bool // Enable client-side validation
+	// Alpine.js attributes
+	AlpineData   string // Custom x-data
+	AlpineSubmit string // Custom submit handler
+	// Events
+	OnSubmit     string
+	OnReset      string
+	OnValidate   string
+	// Grid layout options
+	GridCols     int // Number of columns for grid layout
+}
+
+// formClasses generates classes for the form container
+func formClasses(props FormProps) string {
+	var classes []string
+
+	// Base classes
+	classes = append(classes, "space-y-6")
+
+	// Layout-specific classes
+	switch props.Layout {
+	case FormLayoutHorizontal:
+		classes = append(classes, "space-y-4")
+	case FormLayoutInline:
+		classes = append(classes, "flex", "flex-wrap", "items-end", "gap-4", "space-y-0")
+	case FormLayoutGrid:
+		gridCols := props.GridCols
+		if gridCols == 0 {
+			gridCols = 2
+		}
+		classes = append(classes, "grid", "gap-6", "space-y-0")
+		switch gridCols {
+		case 1:
+			classes = append(classes, "grid-cols-1")
+		case 2:
+			classes = append(classes, "grid-cols-1", "md:grid-cols-2")
+		case 3:
+			classes = append(classes, "grid-cols-1", "md:grid-cols-2", "lg:grid-cols-3")
+		case 4:
+			classes = append(classes, "grid-cols-1", "md:grid-cols-2", "lg:grid-cols-4")
+		default:
+			classes = append(classes, "grid-cols-1", "md:grid-cols-2")
+		}
+	default:
+		// FormLayoutVertical - default spacing already applied
+	}
+
+	// Custom classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// formActionsClasses generates classes for the form actions area
+func formActionsClasses(props FormProps) string {
+	var classes []string
+
+	// Base classes
+	classes = append(classes, "flex", "gap-2", "pt-6", "border-t", "border-border")
+
+	// Layout-specific classes
+	if props.Layout == FormLayoutInline {
+		classes = append(classes, "border-t-0", "pt-0")
+	} else {
+		classes = append(classes, "justify-end")
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// Form renders a complete form with sections, fields, and actions
+templ Form(props FormProps) {
+	<form
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		if props.Name != "" {
+			name={ props.Name }
+		}
+		if props.Method != "" {
+			method={ props.Method }
+		} else {
+			method="POST"
+		}
+		if props.Action != "" {
+			action={ props.Action }
+		}
+		class={ formClasses(props) }
+		if props.AlpineData != "" {
+			x-data={ props.AlpineData }
+		} else {
+			x-data="{ 
+				loading: false, 
+				errors: {}, 
+				currentStep: 1, 
+				totalSteps: " + strings.Itoa(len(props.Sections)) + ",
+				validateField(fieldName) {
+					// Custom validation logic
+					" + props.OnValidate + "
+				},
+				handleSubmit() {
+					this.loading = true;
+					" + props.AlpineSubmit + "
+				}
+			}"
+		}
+		if props.HXPost != "" {
+			hx-post={ props.HXPost }
+		}
+		if props.HXGet != "" {
+			hx-get={ props.HXGet }
+		}
+		if props.HXTarget != "" {
+			hx-target={ props.HXTarget }
+		}
+		if props.HXSwap != "" {
+			hx-swap={ props.HXSwap }
+		}
+		if props.HXTrigger != "" {
+			hx-trigger={ props.HXTrigger }
+		}
+		if props.HXValidate {
+			hx-validate="true"
+		}
+		if props.OnSubmit != "" {
+			x-on:submit={ props.OnSubmit }
+		}
+		if props.OnReset != "" {
+			x-on:reset={ props.OnReset }
+		}
+	>
+		// Form header
+		if props.Title != "" || props.Description != "" {
+			<div class="space-y-2">
+				if props.Title != "" {
+					<h2 class="text-2xl font-bold tracking-tight">{ props.Title }</h2>
+				}
+				if props.Description != "" {
+					<p class="text-muted-foreground">{ props.Description }</p>
+				}
+			</div>
+		}
+
+		// Progress indicator
+		if props.ShowProgress && len(props.Sections) > 1 {
+			@formProgress(len(props.Sections))
+		}
+
+		// Form sections
+		for i, section := range props.Sections {
+			@formSection(section, i+1, props)
+		}
+
+		// Direct fields (not in sections)
+		if len(props.Fields) > 0 {
+			<div class="space-y-4">
+				for _, field := range props.Fields {
+					@molecules.FormField(field)
+				}
+			</div>
+		}
+
+		// Form actions
+		if len(props.Actions) > 0 {
+			<div class={ formActionsClasses(props) }>
+				for _, action := range props.Actions {
+					@formAction(action)
+				}
+			</div>
+		}
+	</form>
+}
+
+// formProgress renders a progress indicator for multi-step forms
+templ formProgress(totalSteps int) {
+	<div class="mb-6">
+		<div class="flex items-center justify-between mb-2">
+			<span class="text-sm font-medium text-foreground" x-text="`Step ${currentStep} of " + strings.Itoa(totalSteps) + "`"></span>
+			<span class="text-sm text-muted-foreground" x-text="`${Math.round((currentStep / " + strings.Itoa(totalSteps) + ") * 100)}% complete`"></span>
+		</div>
+		<div class="w-full bg-secondary rounded-full h-2">
+			<div 
+				class="bg-primary h-2 rounded-full transition-all duration-300" 
+				x-bind:style="`width: ${(currentStep / " + strings.Itoa(totalSteps) + ") * 100}%`"
+			></div>
+		</div>
+	</div>
+}
+
+// formSection renders a form section with optional collapsible functionality
+templ formSection(section FormSection, stepNumber int, formProps FormProps) {
+	<div
+		if section.ID != "" {
+			id={ section.ID }
+		}
+		class={ "space-y-4 " + section.Class }
+		if section.Collapsible {
+			x-data="{ open: " + if section.Collapsed { "false" } else { "true" } + " }"
+		}
+		if formProps.ShowProgress {
+			x-show={ "currentStep === " + strings.Itoa(stepNumber) }
+		}
+	>
+		// Section header
+		if section.Title != "" || section.Description != "" {
+			<div class="space-y-1">
+				if section.Title != "" {
+					<div class="flex items-center justify-between">
+						<h3 class="text-lg font-medium">{ section.Title }</h3>
+						if section.Collapsible {
+							<button
+								type="button"
+								class="p-1 hover:bg-accent rounded-sm"
+								x-on:click="open = !open"
+							>
+								@atoms.Icon(atoms.IconProps{
+									Name: "chevron-down", 
+									Size: atoms.IconSizeSM,
+									Class: "transition-transform duration-200 x-bind:class=\"{'rotate-180': !open}\"",
+								})
+							</button>
+						}
+					</div>
+				}
+				if section.Description != "" {
+					<p class="text-sm text-muted-foreground">{ section.Description }</p>
+				}
+			</div>
+		}
+
+		// Section fields
+		<div
+			class={ getSectionFieldsClasses(formProps) }
+			if section.Collapsible {
+				x-show="open"
+				x-transition
+			}
+		>
+			for _, field := range section.Fields {
+				@molecules.FormField(field)
+			}
+		</div>
+	</div>
+}
+
+// getSectionFieldsClasses returns classes for section fields based on form layout
+func getSectionFieldsClasses(props FormProps) string {
+	switch props.Layout {
+	case FormLayoutGrid:
+		if props.GridCols > 2 {
+			return "grid grid-cols-1 md:grid-cols-2 gap-4"
+		}
+		return "space-y-4"
+	case FormLayoutHorizontal:
+		return "grid grid-cols-1 md:grid-cols-2 gap-4"
+	case FormLayoutInline:
+		return "flex flex-wrap gap-4"
+	default:
+		return "space-y-4"
+	}
+}
+
+// formAction renders a form action button
+templ formAction(action FormAction) {
+	@atoms.Button(atoms.ButtonProps{
+		Type:        if action.Type != "" { action.Type } else { "button" },
+		Variant:     if action.Variant != "" { action.Variant } else { atoms.ButtonPrimary },
+		Size:        if action.Size != "" { action.Size } else { atoms.ButtonSizeMD },
+		Icon:        action.Icon,
+		IconLeft:    action.IconLeft,
+		IconRight:   action.IconRight,
+		Loading:     action.Loading,
+		Disabled:    action.Disabled,
+		Class:       action.Class,
+		ID:          action.ID,
+		HXPost:      action.HXPost,
+		HXGet:       action.HXGet,
+		HXTarget:    action.HXTarget,
+		HXSwap:      action.HXSwap,
+		AlpineClick: action.AlpineClick,
+	}) {
+		{ action.Text }
+	}
+}
+
+// Convenience components for common form types
+
+// SimpleForm renders a basic form with fields and actions
+templ SimpleForm(props FormProps) {
+	@Form(FormProps{
+		Layout:      FormLayoutVertical,
+		Size:        if props.Size != "" { props.Size } else { FormSizeMD },
+		Title:       props.Title,
+		Description: props.Description,
+		Method:      if props.Method != "" { props.Method } else { "POST" },
+		Action:      props.Action,
+		Fields:      props.Fields,
+		Actions:     props.Actions,
+		Class:       props.Class,
+		ID:          props.ID,
+		Name:        props.Name,
+		HXPost:      props.HXPost,
+		HXGet:       props.HXGet,
+		HXTarget:    props.HXTarget,
+		HXSwap:      props.HXSwap,
+		HXValidate:  props.HXValidate,
+		OnSubmit:    props.OnSubmit,
+		OnReset:     props.OnReset,
+	})
+}
+
+// GridForm renders a form with grid layout
+templ GridForm(props FormProps) {
+	@Form(FormProps{
+		Layout:      FormLayoutGrid,
+		Size:        if props.Size != "" { props.Size } else { FormSizeMD },
+		GridCols:    if props.GridCols > 0 { props.GridCols } else { 2 },
+		Title:       props.Title,
+		Description: props.Description,
+		Method:      if props.Method != "" { props.Method } else { "POST" },
+		Action:      props.Action,
+		Fields:      props.Fields,
+		Actions:     props.Actions,
+		Class:       props.Class,
+		ID:          props.ID,
+		Name:        props.Name,
+		HXPost:      props.HXPost,
+		HXGet:       props.HXGet,
+		HXTarget:    props.HXTarget,
+		HXSwap:      props.HXSwap,
+		HXValidate:  props.HXValidate,
+		OnSubmit:    props.OnSubmit,
+		OnReset:     props.OnReset,
+	})
+}
+
+// MultiStepForm renders a form with step-by-step navigation
+templ MultiStepForm(props FormProps) {
+	@Form(FormProps{
+		Layout:       props.Layout,
+		Size:         if props.Size != "" { props.Size } else { FormSizeMD },
+		Title:        props.Title,
+		Description:  props.Description,
+		Method:       if props.Method != "" { props.Method } else { "POST" },
+		Action:       props.Action,
+		Sections:     props.Sections,
+		ShowProgress: true,
+		Class:        props.Class,
+		ID:           props.ID,
+		Name:         props.Name,
+		HXPost:       props.HXPost,
+		HXGet:        props.HXGet,
+		HXTarget:     props.HXTarget,
+		HXSwap:       props.HXSwap,
+		HXValidate:   props.HXValidate,
+		AlpineData:   if props.AlpineData != "" { props.AlpineData } else { getMultiStepAlpineData(len(props.Sections)) },
+		OnSubmit:     props.OnSubmit,
+		OnReset:      props.OnReset,
+	})
+}
+
+// getMultiStepAlpineData returns Alpine.js data for multi-step forms
+func getMultiStepAlpineData(totalSteps int) string {
+	return `{
+		currentStep: 1,
+		totalSteps: ` + strings.Itoa(totalSteps) + `,
+		loading: false,
+		errors: {},
+		
+		nextStep() {
+			if (this.currentStep < this.totalSteps) {
+				this.currentStep++;
+			}
+		},
+		
+		prevStep() {
+			if (this.currentStep > 1) {
+				this.currentStep--;
+			}
+		},
+		
+		goToStep(step) {
+			if (step >= 1 && step <= this.totalSteps) {
+				this.currentStep = step;
+			}
+		},
+		
+		isFirstStep() {
+			return this.currentStep === 1;
+		},
+		
+		isLastStep() {
+			return this.currentStep === this.totalSteps;
+		},
+		
+		handleSubmit() {
+			if (this.isLastStep()) {
+				this.loading = true;
+				// Submit form
+			} else {
+				this.nextStep();
+			}
+		}
+	}`
+}

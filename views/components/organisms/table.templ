@@ -1,0 +1,711 @@
+package organisms
+
+import (
+	"strings"
+	"strconv"
+	"../atoms"
+	"../molecules"
+)
+
+// TableSize defines the size variants for tables
+type TableSize string
+
+const (
+	TableSizeSM TableSize = "sm"
+	TableSizeMD TableSize = "md"
+	TableSizeLG TableSize = "lg"
+)
+
+// TableVariant defines the visual style variants
+type TableVariant string
+
+const (
+	TableDefault TableVariant = "default"
+	TableBordered TableVariant = "bordered"
+	TableStriped  TableVariant = "striped"
+	TableHover    TableVariant = "hover"
+)
+
+// ColumnType defines the type of column for special rendering
+type ColumnType string
+
+const (
+	ColumnTypeText     ColumnType = "text"
+	ColumnTypeNumber   ColumnType = "number"
+	ColumnTypeDate     ColumnType = "date"
+	ColumnTypeBadge    ColumnType = "badge"
+	ColumnTypeActions  ColumnType = "actions"
+	ColumnTypeCheckbox ColumnType = "checkbox"
+	ColumnTypeImage    ColumnType = "image"
+	ColumnTypeLink     ColumnType = "link"
+	ColumnTypeProgress ColumnType = "progress"
+)
+
+// SortDirection defines the sort direction
+type SortDirection string
+
+const (
+	SortNone SortDirection = ""
+	SortAsc  SortDirection = "asc"
+	SortDesc SortDirection = "desc"
+)
+
+// TableColumn represents a table column definition
+type TableColumn struct {
+	Key         string        // Data key
+	Title       string        // Display title
+	Type        ColumnType    // Column type for special rendering
+	Width       string        // CSS width value
+	Sortable    bool          // Whether column is sortable
+	Searchable  bool          // Whether column is searchable
+	Hidden      bool          // Whether column is hidden
+	Align       string        // text-left, text-center, text-right
+	Class       string        // Additional CSS classes
+	// Rendering options
+	Format      string        // Format string for dates/numbers
+	BadgeMap    map[string]atoms.BadgeVariant // Badge variant mapping for badge columns
+	ActionItems []molecules.MenuItemProps    // Action items for action columns
+	// Sort and filter
+	SortKey     string        // Custom sort key (defaults to Key)
+	FilterKey   string        // Custom filter key (defaults to Key)
+}
+
+// TableRow represents a table row with data and metadata
+type TableRow struct {
+	ID       string                 // Row identifier
+	Data     map[string]interface{} // Row data
+	Selected bool                   // Whether row is selected
+	Class    string                 // Additional CSS classes
+	URL      string                 // URL for clickable rows
+	Actions  []molecules.MenuItemProps // Row-specific actions
+}
+
+// TableAction represents a table-level action
+type TableAction struct {
+	Text        string
+	Icon        string
+	Variant     atoms.ButtonVariant
+	Size        atoms.ButtonSize
+	Disabled    bool
+	Class       string
+	ID          string
+	// HTMX attributes
+	HXPost      string
+	HXGet       string
+	HXTarget    string
+	HXSwap      string
+	// Alpine.js attributes
+	AlpineClick string
+	// Events
+	OnClick     string
+}
+
+// TableProps defines the properties for the Table component
+type TableProps struct {
+	Variant         TableVariant
+	Size            TableSize
+	Columns         []TableColumn
+	Rows            []TableRow
+	Actions         []TableAction // Table-level actions
+	Title           string
+	Description     string
+	EmptyMessage    string
+	Loading         bool
+	Error           string
+	Class           string
+	ID              string
+	// Features
+	Selectable      bool   // Enable row selection
+	Sortable        bool   // Enable sorting
+	Searchable      bool   // Enable search
+	Filterable      bool   // Enable filtering
+	Paginated       bool   // Enable pagination
+	// Pagination
+	CurrentPage     int
+	PageSize        int
+	TotalPages      int
+	TotalItems      int
+	// Selection
+	SelectedRows    []string // IDs of selected rows
+	SelectAll       bool     // Whether all rows are selected
+	// Sorting
+	SortColumn      string
+	SortDirection   SortDirection
+	// Search and filter
+	SearchQuery     string
+	Filters         map[string]string
+	// HTMX attributes
+	HXPost          string // URL for data updates
+	HXGet           string // URL for data fetching
+	HXTarget        string
+	HXSwap          string
+	HXTrigger       string
+	// Alpine.js attributes
+	AlpineData      string
+	// Events
+	OnRowClick      string // JavaScript function for row clicks
+	OnRowSelect     string // JavaScript function for row selection
+	OnSort          string // JavaScript function for sorting
+	OnSearch        string // JavaScript function for search
+	OnFilter        string // JavaScript function for filtering
+	OnPageChange    string // JavaScript function for pagination
+}
+
+// tableClasses generates classes for the table container
+func tableClasses(props TableProps) string {
+	var classes []string
+
+	// Base classes
+	classes = append(classes, "w-full", "overflow-auto")
+
+	// Custom classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// tableElementClasses generates classes for the actual table element
+func tableElementClasses(props TableProps) string {
+	var classes []string
+
+	// Base classes
+	classes = append(classes, "w-full", "caption-bottom", "text-sm")
+
+	// Variant classes
+	switch props.Variant {
+	case TableBordered:
+		classes = append(classes, "border", "border-border")
+	case TableStriped:
+		classes = append(classes, "[&_tbody_tr:nth-child(odd)]:bg-muted/50")
+	case TableHover:
+		classes = append(classes, "[&_tbody_tr:hover]:bg-muted/50")
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// Table renders a complete data table with features
+templ Table(props TableProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ "space-y-4 " + props.Class }
+		if props.AlpineData != "" {
+			x-data={ props.AlpineData }
+		} else {
+			x-data={ getDefaultTableAlpineData(props) }
+		}
+	>
+		// Table header with title, description, and actions
+		if props.Title != "" || props.Description != "" || len(props.Actions) > 0 || props.Searchable {
+			<div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+				<div class="space-y-1">
+					if props.Title != "" {
+						<h2 class="text-xl font-semibold tracking-tight">{ props.Title }</h2>
+					}
+					if props.Description != "" {
+						<p class="text-sm text-muted-foreground">{ props.Description }</p>
+					}
+				</div>
+				
+				<div class="flex items-center gap-2">
+					// Search box
+					if props.Searchable {
+						@molecules.QuickSearchBox(molecules.SearchBoxProps{
+							Size:        molecules.SearchBoxSizeSM,
+							ID:          props.ID + "_search",
+							Name:        "search",
+							Value:       props.SearchQuery,
+							Placeholder: "Search...",
+							HXGet:       props.HXGet,
+							HXTarget:    props.HXTarget,
+							HXSwap:      props.HXSwap,
+						})
+					}
+					
+					// Table actions
+					for _, action := range props.Actions {
+						@tableAction(action)
+					}
+				</div>
+			</div>
+		}
+
+		// Selection and bulk actions bar
+		if props.Selectable && len(props.SelectedRows) > 0 {
+			<div class="flex items-center justify-between p-3 bg-muted rounded-md">
+				<span class="text-sm font-medium" x-text="`${selectedRows.length} row(s) selected`"></span>
+				<div class="flex items-center gap-2">
+					@atoms.Button(atoms.ButtonProps{
+						Variant: atoms.ButtonDestructive,
+						Size:    atoms.ButtonSizeSM,
+						Text:    "Delete Selected",
+						Icon:    "trash",
+					})
+					@atoms.Button(atoms.ButtonProps{
+						Variant: atoms.ButtonOutline,
+						Size:    atoms.ButtonSizeSM,
+						Text:    "Clear Selection",
+						AlpineClick: "clearSelection()",
+					})
+				</div>
+			</div>
+		}
+
+		// Loading state
+		if props.Loading {
+			@tableLoading()
+		} else if props.Error != "" {
+			// Error state
+			@tableError(props.Error)
+		} else if len(props.Rows) == 0 {
+			// Empty state
+			@tableEmpty(if props.EmptyMessage != "" { props.EmptyMessage } else { "No data available" })
+		} else {
+			// Table content
+			<div class={ tableClasses(props) }>
+				<table class={ tableElementClasses(props) }>
+					@tableHeader(props)
+					@tableBody(props)
+				</table>
+			</div>
+
+			// Pagination
+			if props.Paginated && props.TotalPages > 1 {
+				@tablePagination(props)
+			}
+		}
+	</div>
+}
+
+// tableHeader renders the table header
+templ tableHeader(props TableProps) {
+	<thead class="[&_tr]:border-b">
+		<tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+			// Selection checkbox column
+			if props.Selectable {
+				<th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 w-[50px]">
+					<label class="flex items-center space-x-2 cursor-pointer">
+						<input
+							type="checkbox"
+							class="sr-only"
+							x-bind:checked="selectAll"
+							x-on:change="toggleSelectAll()"
+						/>
+						<div class="flex items-center justify-center w-4 h-4 border rounded-sm border-input">
+							<div class="w-2 h-2 bg-primary rounded-sm transition-opacity" x-bind:class="{'opacity-100': selectAll, 'opacity-0': !selectAll}"></div>
+						</div>
+					</label>
+				</th>
+			}
+
+			// Data columns
+			for _, column := range props.Columns {
+				if !column.Hidden {
+					<th
+						class={ getColumnHeaderClasses(column, props) }
+						if column.Width != "" {
+							style={ "width: " + column.Width }
+						}
+						if column.Sortable {
+							x-on:click={ "sort('" + getSortKey(column) + "')" }
+						}
+					>
+						<div class="flex items-center gap-1">
+							<span>{ column.Title }</span>
+							if column.Sortable {
+								<button class="p-1 hover:bg-accent rounded">
+									@atoms.Icon(atoms.IconProps{
+										Name:  getSortIcon(column.Key, props),
+										Size:  atoms.IconSizeXS,
+										Class: "text-muted-foreground",
+									})
+								</button>
+							}
+						</div>
+					</th>
+				}
+			}
+		</tr>
+	</thead>
+}
+
+// tableBody renders the table body
+templ tableBody(props TableProps) {
+	<tbody class="[&_tr:last-child]:border-0">
+		for _, row := range props.Rows {
+			@tableRow(row, props)
+		}
+	</tbody>
+}
+
+// tableRow renders a single table row
+templ tableRow(row TableRow, props TableProps) {
+	<tr
+		if row.ID != "" {
+			data-row-id={ row.ID }
+		}
+		class={ getRowClasses(row, props) }
+		if props.OnRowClick != "" {
+			x-on:click={ props.OnRowClick + "('" + row.ID + "')" }
+		}
+		if row.URL != "" {
+			hx-get={ row.URL }
+			hx-target={ props.HXTarget }
+			hx-swap={ props.HXSwap }
+		}
+	>
+		// Selection checkbox cell
+		if props.Selectable {
+			<td class="p-4 align-middle [&:has([role=checkbox])]:pr-0">
+				<label class="flex items-center space-x-2 cursor-pointer">
+					<input
+						type="checkbox"
+						class="sr-only"
+						value={ row.ID }
+						x-bind:checked={ "selectedRows.includes('" + row.ID + "')" }
+						x-on:change={ "toggleRowSelection('" + row.ID + "')" }
+					/>
+					<div class="flex items-center justify-center w-4 h-4 border rounded-sm border-input">
+						<div 
+							class="w-2 h-2 bg-primary rounded-sm transition-opacity" 
+							x-bind:class={ "{'opacity-100': selectedRows.includes('" + row.ID + "'), 'opacity-0': !selectedRows.includes('" + row.ID + "')}" }
+						></div>
+					</div>
+				</label>
+			</td>
+		}
+
+		// Data cells
+		for _, column := range props.Columns {
+			if !column.Hidden {
+				<td class={ getColumnCellClasses(column, props) }>
+					@tableCell(row, column, props)
+				</td>
+			}
+		}
+	</tr>
+}
+
+// tableCell renders a table cell based on column type
+templ tableCell(row TableRow, column TableColumn, props TableProps) {
+	switch column.Type {
+	case ColumnTypeBadge:
+		if badgeText, ok := row.Data[column.Key].(string); ok {
+			@atoms.Badge(atoms.BadgeProps{
+				Variant: getBadgeVariant(badgeText, column.BadgeMap),
+				Size:    atoms.BadgeSizeSM,
+			}) {
+				{ badgeText }
+			}
+		}
+	case ColumnTypeActions:
+		@tableActionsCell(row, column, props)
+	case ColumnTypeCheckbox:
+		if checked, ok := row.Data[column.Key].(bool); ok {
+			@atoms.Icon(atoms.IconProps{
+				Name: if checked { "check" } else { "x" },
+				Size: atoms.IconSizeSM,
+				Class: if checked { "text-success" } else { "text-muted-foreground" },
+			})
+		}
+	case ColumnTypeLink:
+		if url, ok := row.Data[column.Key+"_url"].(string); ok {
+			<a href={ url } class="text-primary hover:underline">
+				{ getStringValue(row.Data[column.Key]) }
+			</a>
+		} else {
+			{ getStringValue(row.Data[column.Key]) }
+		}
+	case ColumnTypeProgress:
+		if progress, ok := row.Data[column.Key].(int); ok {
+			<div class="flex items-center gap-2">
+				<div class="w-full bg-secondary rounded-full h-2">
+					<div 
+						class="bg-primary h-2 rounded-full"
+						style={ "width: " + strconv.Itoa(progress) + "%" }
+					></div>
+				</div>
+				<span class="text-xs text-muted-foreground min-w-[3rem]">{ strconv.Itoa(progress) }%</span>
+			</div>
+		}
+	default:
+		{ getStringValue(row.Data[column.Key]) }
+	}
+}
+
+// tableActionsCell renders an actions cell with dropdown menu
+templ tableActionsCell(row TableRow, column TableColumn, props TableProps) {
+	<div class="flex items-center justify-end">
+		<div class="relative" x-data="{ open: false }">
+			<button
+				class="p-1 hover:bg-accent rounded-sm"
+				x-on:click="open = !open"
+			>
+				@atoms.Icon(atoms.IconProps{Name: "more-vertical", Size: atoms.IconSizeSM})
+			</button>
+			<div
+				class="absolute right-0 top-8 z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+				x-show="open"
+				x-on:click.away="open = false"
+				x-transition
+			>
+				// Column actions
+				for _, action := range column.ActionItems {
+					@molecules.MenuItem(action)
+				}
+				// Row-specific actions
+				if len(row.Actions) > 0 && len(column.ActionItems) > 0 {
+					@molecules.MenuDivider()
+				}
+				for _, action := range row.Actions {
+					@molecules.MenuItem(action)
+				}
+			</div>
+		</div>
+	</div>
+}
+
+// Helper components
+
+templ tableLoading() {
+	<div class="flex items-center justify-center py-24">
+		<div class="flex items-center gap-2">
+			@atoms.LoadingIcon()
+			<span class="text-muted-foreground">Loading...</span>
+		</div>
+	</div>
+}
+
+templ tableError(errorMsg string) {
+	<div class="flex items-center justify-center py-24">
+		<div class="text-center space-y-2">
+			@atoms.Icon(atoms.IconProps{Name: "alert-triangle", Size: atoms.IconSizeLG, Class: "text-destructive mx-auto"})
+			<p class="text-destructive font-medium">Error loading data</p>
+			<p class="text-sm text-muted-foreground">{ errorMsg }</p>
+		</div>
+	</div>
+}
+
+templ tableEmpty(message string) {
+	<div class="flex items-center justify-center py-24">
+		<div class="text-center space-y-2">
+			@atoms.Icon(atoms.IconProps{Name: "search", Size: atoms.IconSizeLG, Class: "text-muted-foreground mx-auto"})
+			<p class="text-muted-foreground font-medium">{ message }</p>
+		</div>
+	</div>
+}
+
+templ tablePagination(props TableProps) {
+	<div class="flex items-center justify-between">
+		<div class="text-sm text-muted-foreground">
+			Showing { strconv.Itoa((props.CurrentPage-1)*props.PageSize + 1) } to { strconv.Itoa(min(props.CurrentPage*props.PageSize, props.TotalItems)) } of { strconv.Itoa(props.TotalItems) } results
+		</div>
+		<div class="flex items-center gap-1">
+			@atoms.Button(atoms.ButtonProps{
+				Variant:  atoms.ButtonOutline,
+				Size:     atoms.ButtonSizeSM,
+				Icon:     "chevron-left",
+				Disabled: props.CurrentPage <= 1,
+				AlpineClick: "changePage(" + strconv.Itoa(props.CurrentPage-1) + ")",
+			})
+			
+			// Page numbers (simplified)
+			for i := max(1, props.CurrentPage-2); i <= min(props.TotalPages, props.CurrentPage+2); i++ {
+				@atoms.Button(atoms.ButtonProps{
+					Variant: if i == props.CurrentPage { atoms.ButtonPrimary } else { atoms.ButtonGhost },
+					Size:    atoms.ButtonSizeSM,
+					AlpineClick: "changePage(" + strconv.Itoa(i) + ")",
+				}) {
+					{ strconv.Itoa(i) }
+				}
+			}
+			
+			@atoms.Button(atoms.ButtonProps{
+				Variant:  atoms.ButtonOutline,
+				Size:     atoms.ButtonSizeSM,
+				Icon:     "chevron-right",
+				Disabled: props.CurrentPage >= props.TotalPages,
+				AlpineClick: "changePage(" + strconv.Itoa(props.CurrentPage+1) + ")",
+			})
+		</div>
+	</div>
+}
+
+templ tableAction(action TableAction) {
+	@atoms.Button(atoms.ButtonProps{
+		Variant:     if action.Variant != "" { action.Variant } else { atoms.ButtonPrimary },
+		Size:        if action.Size != "" { action.Size } else { atoms.ButtonSizeSM },
+		Icon:        action.Icon,
+		Disabled:    action.Disabled,
+		Class:       action.Class,
+		ID:          action.ID,
+		HXPost:      action.HXPost,
+		HXGet:       action.HXGet,
+		HXTarget:    action.HXTarget,
+		HXSwap:      action.HXSwap,
+		AlpineClick: action.AlpineClick,
+	}) {
+		{ action.Text }
+	}
+}
+
+// Helper functions (would be implemented in Go)
+
+func getColumnHeaderClasses(column TableColumn, props TableProps) string {
+	classes := []string{"h-12", "px-4", "text-left", "align-middle", "font-medium", "text-muted-foreground"}
+	
+	if column.Sortable {
+		classes = append(classes, "cursor-pointer", "hover:text-foreground")
+	}
+	
+	if column.Align != "" {
+		classes = append(classes, column.Align)
+	}
+	
+	if column.Class != "" {
+		classes = append(classes, column.Class)
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getColumnCellClasses(column TableColumn, props TableProps) string {
+	classes := []string{"p-4", "align-middle"}
+	
+	if column.Align != "" {
+		classes = append(classes, column.Align)
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getRowClasses(row TableRow, props TableProps) string {
+	classes := []string{"border-b", "transition-colors"}
+	
+	if props.OnRowClick != "" || row.URL != "" {
+		classes = append(classes, "hover:bg-muted/50", "cursor-pointer")
+	}
+	
+	if row.Selected {
+		classes = append(classes, "bg-muted")
+	}
+	
+	if row.Class != "" {
+		classes = append(classes, row.Class)
+	}
+	
+	return strings.Join(classes, " ")
+}
+
+func getSortKey(column TableColumn) string {
+	if column.SortKey != "" {
+		return column.SortKey
+	}
+	return column.Key
+}
+
+func getSortIcon(columnKey string, props TableProps) string {
+	if props.SortColumn == columnKey {
+		if props.SortDirection == SortAsc {
+			return "chevron-up"
+		} else if props.SortDirection == SortDesc {
+			return "chevron-down"
+		}
+	}
+	return "chevron-down"
+}
+
+func getBadgeVariant(value string, badgeMap map[string]atoms.BadgeVariant) atoms.BadgeVariant {
+	if badgeMap != nil {
+		if variant, exists := badgeMap[value]; exists {
+			return variant
+		}
+	}
+	return atoms.BadgeDefault
+}
+
+func getStringValue(value interface{}) string {
+	if value == nil {
+		return ""
+	}
+	if str, ok := value.(string); ok {
+		return str
+	}
+	return ""
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func getDefaultTableAlpineData(props TableProps) string {
+	return `{
+		selectedRows: [],
+		selectAll: false,
+		sortColumn: '` + props.SortColumn + `',
+		sortDirection: '` + string(props.SortDirection) + `',
+		searchQuery: '` + props.SearchQuery + `',
+		currentPage: ` + strconv.Itoa(props.CurrentPage) + `,
+		
+		toggleSelectAll() {
+			if (this.selectAll) {
+				this.selectedRows = [];
+			} else {
+				this.selectedRows = [` + getRowIDs(props.Rows) + `];
+			}
+			this.selectAll = !this.selectAll;
+		},
+		
+		toggleRowSelection(rowId) {
+			const index = this.selectedRows.indexOf(rowId);
+			if (index === -1) {
+				this.selectedRows.push(rowId);
+			} else {
+				this.selectedRows.splice(index, 1);
+			}
+			this.selectAll = this.selectedRows.length === ` + strconv.Itoa(len(props.Rows)) + `;
+		},
+		
+		clearSelection() {
+			this.selectedRows = [];
+			this.selectAll = false;
+		},
+		
+		sort(column) {
+			if (this.sortColumn === column) {
+				this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+			} else {
+				this.sortColumn = column;
+				this.sortDirection = 'asc';
+			}
+			` + props.OnSort + `
+		},
+		
+		changePage(page) {
+			this.currentPage = page;
+			` + props.OnPageChange + `
+		}
+	}`
+}
+
+func getRowIDs(rows []TableRow) string {
+	var ids []string
+	for _, row := range rows {
+		ids = append(ids, "'"+row.ID+"'")
+	}
+	return strings.Join(ids, ", ")
+}

@@ -1,0 +1,268 @@
+package atoms
+
+import (
+	"strings"
+)
+
+// BadgeVariant defines the visual style variants for badges
+type BadgeVariant string
+
+const (
+	BadgeDefault     BadgeVariant = "default"
+	BadgeSecondary   BadgeVariant = "secondary"
+	BadgeSuccess     BadgeVariant = "success"
+	BadgeWarning     BadgeVariant = "warning"
+	BadgeDestructive BadgeVariant = "destructive"
+	BadgeOutline     BadgeVariant = "outline"
+)
+
+// BadgeSize defines the size variants for badges
+type BadgeSize string
+
+const (
+	BadgeSizeSM BadgeSize = "sm"
+	BadgeSizeMD BadgeSize = "md"
+	BadgeSizeLG BadgeSize = "lg"
+)
+
+// BadgeProps defines the properties for the Badge component
+type BadgeProps struct {
+	Variant     BadgeVariant
+	Size        BadgeSize
+	Icon        string
+	IconLeft    string
+	IconRight   string
+	Class       string
+	ID          string
+	Removable   bool
+	OnRemove    string // Alpine.js remove handler
+	// HTMX attributes for interactive badges
+	HXPost      string
+	HXGet       string
+	HXTarget    string
+	HXSwap      string
+	HXTrigger   string
+	// Alpine.js attributes
+	AlpineClick string
+}
+
+// badgeClasses generates Tailwind CSS classes for the badge
+func badgeClasses(props BadgeProps) string {
+	var classes []string
+
+	// Base classes
+	classes = append(classes,
+		"inline-flex",
+		"items-center",
+		"rounded-full",
+		"border",
+		"font-semibold",
+		"transition-colors",
+		"focus:outline-none",
+		"focus:ring-2",
+		"focus:ring-ring",
+		"focus:ring-offset-2",
+	)
+
+	// Variant classes
+	switch props.Variant {
+	case BadgeDefault:
+		classes = append(classes, "border-transparent", "bg-primary", "text-primary-foreground", "hover:bg-primary/80")
+	case BadgeSecondary:
+		classes = append(classes, "border-transparent", "bg-secondary", "text-secondary-foreground", "hover:bg-secondary/80")
+	case BadgeSuccess:
+		classes = append(classes, "border-transparent", "bg-success", "text-success-foreground", "hover:bg-success/80")
+	case BadgeWarning:
+		classes = append(classes, "border-transparent", "bg-warning", "text-warning-foreground", "hover:bg-warning/80")
+	case BadgeDestructive:
+		classes = append(classes, "border-transparent", "bg-destructive", "text-destructive-foreground", "hover:bg-destructive/80")
+	case BadgeOutline:
+		classes = append(classes, "text-foreground")
+	default:
+		classes = append(classes, "border-transparent", "bg-primary", "text-primary-foreground", "hover:bg-primary/80")
+	}
+
+	// Size classes
+	switch props.Size {
+	case BadgeSizeSM:
+		classes = append(classes, "px-2", "py-0.5", "text-xs")
+	case BadgeSizeMD:
+		classes = append(classes, "px-2.5", "py-0.5", "text-xs")
+	case BadgeSizeLG:
+		classes = append(classes, "px-3", "py-1", "text-sm")
+	default:
+		classes = append(classes, "px-2.5", "py-0.5", "text-xs")
+	}
+
+	// Interactive classes
+	if props.HXPost != "" || props.HXGet != "" || props.AlpineClick != "" {
+		classes = append(classes, "cursor-pointer")
+	}
+
+	// Custom classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// Badge renders a styled badge component
+templ Badge(props BadgeProps, children ...templ.Component) {
+	if props.HXPost != "" || props.HXGet != "" || props.AlpineClick != "" {
+		<button
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			class={ badgeClasses(props) }
+			if props.HXPost != "" {
+				hx-post={ props.HXPost }
+			}
+			if props.HXGet != "" {
+				hx-get={ props.HXGet }
+			}
+			if props.HXTarget != "" {
+				hx-target={ props.HXTarget }
+			}
+			if props.HXSwap != "" {
+				hx-swap={ props.HXSwap }
+			}
+			if props.HXTrigger != "" {
+				hx-trigger={ props.HXTrigger }
+			}
+			if props.AlpineClick != "" {
+				x-on:click={ props.AlpineClick }
+			}
+		>
+			@badgeContent(props, children...)
+		</button>
+	} else {
+		<span
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			class={ badgeClasses(props) }
+		>
+			@badgeContent(props, children...)
+		</span>
+	}
+}
+
+// badgeContent renders the internal content of the badge
+templ badgeContent(props BadgeProps, children ...templ.Component) {
+	// Left icon
+	if props.IconLeft != "" {
+		@Icon(IconProps{Name: props.IconLeft, Size: IconSizeXS, Class: "mr-1"})
+	}
+	
+	// Single icon (for icon-only badges)
+	if props.Icon != "" && len(children) == 0 {
+		@Icon(IconProps{Name: props.Icon, Size: IconSizeXS})
+	}
+	
+	// Badge content
+	for _, child := range children {
+		@child
+	}
+	
+	// Right icon
+	if props.IconRight != "" {
+		@Icon(IconProps{Name: props.IconRight, Size: IconSizeXS, Class: "ml-1"})
+	}
+	
+	// Remove button
+	if props.Removable {
+		<button
+			type="button"
+			class="ml-1 h-3 w-3 rounded-full outline-none ring-offset-background transition-colors hover:bg-secondary-foreground/20 focus:bg-secondary-foreground/20 focus:ring-2 focus:ring-ring focus:ring-offset-1"
+			if props.OnRemove != "" {
+				x-on:click={ props.OnRemove }
+			}
+			aria-label="Remove"
+		>
+			@Icon(IconProps{Name: "x", Size: IconSizeXS})
+		</button>
+	}
+}
+
+// Convenience components for common badge variants
+
+templ DefaultBadge(props BadgeProps, children ...templ.Component) {
+	@Badge(BadgeProps{
+		Variant:     BadgeDefault,
+		Size:        props.Size,
+		Icon:        props.Icon,
+		IconLeft:    props.IconLeft,
+		IconRight:   props.IconRight,
+		Class:       props.Class,
+		ID:          props.ID,
+		Removable:   props.Removable,
+		OnRemove:    props.OnRemove,
+		HXPost:      props.HXPost,
+		HXGet:       props.HXGet,
+		HXTarget:    props.HXTarget,
+		HXSwap:      props.HXSwap,
+		HXTrigger:   props.HXTrigger,
+		AlpineClick: props.AlpineClick,
+	}, children...)
+}
+
+templ SuccessBadge(props BadgeProps, children ...templ.Component) {
+	@Badge(BadgeProps{
+		Variant:     BadgeSuccess,
+		Size:        props.Size,
+		Icon:        props.Icon,
+		IconLeft:    props.IconLeft,
+		IconRight:   props.IconRight,
+		Class:       props.Class,
+		ID:          props.ID,
+		Removable:   props.Removable,
+		OnRemove:    props.OnRemove,
+		HXPost:      props.HXPost,
+		HXGet:       props.HXGet,
+		HXTarget:    props.HXTarget,
+		HXSwap:      props.HXSwap,
+		HXTrigger:   props.HXTrigger,
+		AlpineClick: props.AlpineClick,
+	}, children...)
+}
+
+templ WarningBadge(props BadgeProps, children ...templ.Component) {
+	@Badge(BadgeProps{
+		Variant:     BadgeWarning,
+		Size:        props.Size,
+		Icon:        props.Icon,
+		IconLeft:    props.IconLeft,
+		IconRight:   props.IconRight,
+		Class:       props.Class,
+		ID:          props.ID,
+		Removable:   props.Removable,
+		OnRemove:    props.OnRemove,
+		HXPost:      props.HXPost,
+		HXGet:       props.HXGet,
+		HXTarget:    props.HXTarget,
+		HXSwap:      props.HXSwap,
+		HXTrigger:   props.HXTrigger,
+		AlpineClick: props.AlpineClick,
+	}, children...)
+}
+
+templ DestructiveBadge(props BadgeProps, children ...templ.Component) {
+	@Badge(BadgeProps{
+		Variant:     BadgeDestructive,
+		Size:        props.Size,
+		Icon:        props.Icon,
+		IconLeft:    props.IconLeft,
+		IconRight:   props.IconRight,
+		Class:       props.Class,
+		ID:          props.ID,
+		Removable:   props.Removable,
+		OnRemove:    props.OnRemove,
+		HXPost:      props.HXPost,
+		HXGet:       props.HXGet,
+		HXTarget:    props.HXTarget,
+		HXSwap:      props.HXSwap,
+		HXTrigger:   props.HXTrigger,
+		AlpineClick: props.AlpineClick,
+	}, children...)
+}

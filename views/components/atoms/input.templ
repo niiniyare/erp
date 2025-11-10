@@ -1,0 +1,362 @@
+package atoms
+
+import (
+	"strings"
+)
+
+// InputType defines the type of input
+type InputType string
+
+const (
+	InputTypeText     InputType = "text"
+	InputTypeEmail    InputType = "email"
+	InputTypePassword InputType = "password"
+	InputTypeNumber   InputType = "number"
+	InputTypeTel      InputType = "tel"
+	InputTypeURL      InputType = "url"
+	InputTypeSearch   InputType = "search"
+	InputTypeDate     InputType = "date"
+	InputTypeTime     InputType = "time"
+	InputTypeDatetime InputType = "datetime-local"
+	InputTypeHidden   InputType = "hidden"
+)
+
+// InputSize defines the size variants for inputs
+type InputSize string
+
+const (
+	InputSizeSM InputSize = "sm"
+	InputSizeMD InputSize = "md"
+	InputSizeLG InputSize = "lg"
+)
+
+// InputProps defines the properties for the Input component
+type InputProps struct {
+	Type         InputType
+	Size         InputSize
+	ID           string
+	Name         string
+	Value        string
+	Placeholder  string
+	Required     bool
+	Disabled     bool
+	Readonly     bool
+	Error        bool
+	Class        string
+	MinLength    int
+	MaxLength    int
+	Min          string
+	Max          string
+	Step         string
+	Pattern      string
+	Autocomplete string
+	// HTMX attributes
+	HXPost       string
+	HXGet        string
+	HXTarget     string
+	HXSwap       string
+	HXTrigger    string
+	// Alpine.js attributes
+	AlpineModel  string
+	AlpineChange string
+	AlpineBlur   string
+	AlpineFocus  string
+}
+
+// inputClasses generates Tailwind CSS classes for the input
+func inputClasses(props InputProps) string {
+	var classes []string
+
+	// Base classes
+	classes = append(classes,
+		"flex",
+		"w-full",
+		"rounded-md",
+		"border",
+		"border-input",
+		"bg-background",
+		"px-3",
+		"py-2",
+		"text-sm",
+		"ring-offset-background",
+		"file:border-0",
+		"file:bg-transparent",
+		"file:text-sm",
+		"file:font-medium",
+		"placeholder:text-muted-foreground",
+		"focus-visible:outline-none",
+		"focus-visible:ring-2",
+		"focus-visible:ring-ring",
+		"focus-visible:ring-offset-2",
+		"disabled:cursor-not-allowed",
+		"disabled:opacity-50",
+	)
+
+	// Size classes
+	switch props.Size {
+	case InputSizeSM:
+		classes = append(classes, "h-8", "px-2", "text-xs")
+	case InputSizeMD:
+		classes = append(classes, "h-10", "px-3", "text-sm")
+	case InputSizeLG:
+		classes = append(classes, "h-11", "px-4", "text-base")
+	default:
+		classes = append(classes, "h-10", "px-3", "text-sm")
+	}
+
+	// Error state
+	if props.Error {
+		classes = append(classes, "border-destructive", "focus-visible:ring-destructive")
+	}
+
+	// Custom classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// Input renders an accessible, styled input component
+templ Input(props InputProps) {
+	<input
+		if props.Type != "" {
+			type={ string(props.Type) }
+		} else {
+			type="text"
+		}
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		if props.Name != "" {
+			name={ props.Name }
+		}
+		if props.Value != "" {
+			value={ props.Value }
+		}
+		if props.Placeholder != "" {
+			placeholder={ props.Placeholder }
+		}
+		if props.Required {
+			required
+		}
+		if props.Disabled {
+			disabled
+		}
+		if props.Readonly {
+			readonly
+		}
+		if props.MinLength > 0 {
+			minlength={ strings.Itoa(props.MinLength) }
+		}
+		if props.MaxLength > 0 {
+			maxlength={ strings.Itoa(props.MaxLength) }
+		}
+		if props.Min != "" {
+			min={ props.Min }
+		}
+		if props.Max != "" {
+			max={ props.Max }
+		}
+		if props.Step != "" {
+			step={ props.Step }
+		}
+		if props.Pattern != "" {
+			pattern={ props.Pattern }
+		}
+		if props.Autocomplete != "" {
+			autocomplete={ props.Autocomplete }
+		}
+		class={ inputClasses(props) }
+		if props.HXPost != "" {
+			hx-post={ props.HXPost }
+		}
+		if props.HXGet != "" {
+			hx-get={ props.HXGet }
+		}
+		if props.HXTarget != "" {
+			hx-target={ props.HXTarget }
+		}
+		if props.HXSwap != "" {
+			hx-swap={ props.HXSwap }
+		}
+		if props.HXTrigger != "" {
+			hx-trigger={ props.HXTrigger }
+		}
+		if props.AlpineModel != "" {
+			x-model={ props.AlpineModel }
+		}
+		if props.AlpineChange != "" {
+			x-on:change={ props.AlpineChange }
+		}
+		if props.AlpineBlur != "" {
+			x-on:blur={ props.AlpineBlur }
+		}
+		if props.AlpineFocus != "" {
+			x-on:focus={ props.AlpineFocus }
+		}
+		if props.Error {
+			aria-invalid="true"
+		}
+	/>
+}
+
+// Convenience components for common input types
+
+templ TextInput(props InputProps) {
+	@Input(InputProps{
+		Type:         InputTypeText,
+		Size:         props.Size,
+		ID:           props.ID,
+		Name:         props.Name,
+		Value:        props.Value,
+		Placeholder:  props.Placeholder,
+		Required:     props.Required,
+		Disabled:     props.Disabled,
+		Readonly:     props.Readonly,
+		Error:        props.Error,
+		Class:        props.Class,
+		MinLength:    props.MinLength,
+		MaxLength:    props.MaxLength,
+		Pattern:      props.Pattern,
+		Autocomplete: props.Autocomplete,
+		HXPost:       props.HXPost,
+		HXGet:        props.HXGet,
+		HXTarget:     props.HXTarget,
+		HXSwap:       props.HXSwap,
+		HXTrigger:    props.HXTrigger,
+		AlpineModel:  props.AlpineModel,
+		AlpineChange: props.AlpineChange,
+		AlpineBlur:   props.AlpineBlur,
+		AlpineFocus:  props.AlpineFocus,
+	})
+}
+
+templ EmailInput(props InputProps) {
+	@Input(InputProps{
+		Type:         InputTypeEmail,
+		Size:         props.Size,
+		ID:           props.ID,
+		Name:         props.Name,
+		Value:        props.Value,
+		Placeholder:  props.Placeholder,
+		Required:     props.Required,
+		Disabled:     props.Disabled,
+		Readonly:     props.Readonly,
+		Error:        props.Error,
+		Class:        props.Class,
+		MaxLength:    props.MaxLength,
+		Autocomplete: "email",
+		HXPost:       props.HXPost,
+		HXGet:        props.HXGet,
+		HXTarget:     props.HXTarget,
+		HXSwap:       props.HXSwap,
+		HXTrigger:    props.HXTrigger,
+		AlpineModel:  props.AlpineModel,
+		AlpineChange: props.AlpineChange,
+		AlpineBlur:   props.AlpineBlur,
+		AlpineFocus:  props.AlpineFocus,
+	})
+}
+
+templ PasswordInput(props InputProps) {
+	<div class="relative">
+		@Input(InputProps{
+			Type:         InputTypePassword,
+			Size:         props.Size,
+			ID:           props.ID,
+			Name:         props.Name,
+			Value:        props.Value,
+			Placeholder:  props.Placeholder,
+			Required:     props.Required,
+			Disabled:     props.Disabled,
+			Readonly:     props.Readonly,
+			Error:        props.Error,
+			Class:        props.Class + " pr-10",
+			MinLength:    props.MinLength,
+			MaxLength:    props.MaxLength,
+			Autocomplete: "current-password",
+			HXPost:       props.HXPost,
+			HXGet:        props.HXGet,
+			HXTarget:     props.HXTarget,
+			HXSwap:       props.HXSwap,
+			HXTrigger:    props.HXTrigger,
+			AlpineModel:  props.AlpineModel,
+			AlpineChange: props.AlpineChange,
+			AlpineBlur:   props.AlpineBlur,
+			AlpineFocus:  props.AlpineFocus,
+		})
+		<button
+			type="button"
+			class="absolute inset-y-0 right-0 flex items-center pr-3"
+			x-data="{ show: false }"
+			x-on:click={ "show = !show; $refs.input.type = show ? 'text' : 'password'" }
+		>
+			<span x-show="!show">
+				@Icon(IconProps{Name: "eye", Size: IconSizeSM, Class: "text-muted-foreground"})
+			</span>
+			<span x-show="show">
+				@Icon(IconProps{Name: "eye-off", Size: IconSizeSM, Class: "text-muted-foreground"})
+			</span>
+		</button>
+	</div>
+}
+
+templ NumberInput(props InputProps) {
+	@Input(InputProps{
+		Type:         InputTypeNumber,
+		Size:         props.Size,
+		ID:           props.ID,
+		Name:         props.Name,
+		Value:        props.Value,
+		Placeholder:  props.Placeholder,
+		Required:     props.Required,
+		Disabled:     props.Disabled,
+		Readonly:     props.Readonly,
+		Error:        props.Error,
+		Class:        props.Class,
+		Min:          props.Min,
+		Max:          props.Max,
+		Step:         props.Step,
+		HXPost:       props.HXPost,
+		HXGet:        props.HXGet,
+		HXTarget:     props.HXTarget,
+		HXSwap:       props.HXSwap,
+		HXTrigger:    props.HXTrigger,
+		AlpineModel:  props.AlpineModel,
+		AlpineChange: props.AlpineChange,
+		AlpineBlur:   props.AlpineBlur,
+		AlpineFocus:  props.AlpineFocus,
+	})
+}
+
+templ SearchInput(props InputProps) {
+	<div class="relative">
+		<div class="absolute inset-y-0 left-0 flex items-center pl-3">
+			@Icon(IconProps{Name: "search", Size: IconSizeSM, Class: "text-muted-foreground"})
+		</div>
+		@Input(InputProps{
+			Type:         InputTypeSearch,
+			Size:         props.Size,
+			ID:           props.ID,
+			Name:         props.Name,
+			Value:        props.Value,
+			Placeholder:  props.Placeholder,
+			Required:     props.Required,
+			Disabled:     props.Disabled,
+			Readonly:     props.Readonly,
+			Error:        props.Error,
+			Class:        props.Class + " pl-9",
+			MaxLength:    props.MaxLength,
+			HXPost:       props.HXPost,
+			HXGet:        props.HXGet,
+			HXTarget:     props.HXTarget,
+			HXSwap:       props.HXSwap,
+			HXTrigger:    props.HXTrigger,
+			AlpineModel:  props.AlpineModel,
+			AlpineChange: props.AlpineChange,
+			AlpineBlur:   props.AlpineBlur,
+			AlpineFocus:  props.AlpineFocus,
+		})
+	</div>
+}

@@ -1,0 +1,686 @@
+package templates
+
+import (
+	"strings"
+	"../atoms"
+	"../molecules"
+	"../organisms"
+)
+
+// DashboardSection defines different sections of the dashboard
+type DashboardSection string
+
+const (
+	DashboardSectionOverview   DashboardSection = "overview"
+	DashboardSectionAnalytics  DashboardSection = "analytics"
+	DashboardSectionReports    DashboardSection = "reports"
+	DashboardSectionSettings   DashboardSection = "settings"
+	DashboardSectionActivity   DashboardSection = "activity"
+)
+
+// WidgetSize defines the size of dashboard widgets
+type WidgetSize string
+
+const (
+	WidgetSizeSmall  WidgetSize = "small"   // 1x1 grid
+	WidgetSizeMedium WidgetSize = "medium"  // 2x1 grid
+	WidgetSizeLarge  WidgetSize = "large"   // 2x2 grid
+	WidgetSizeWide   WidgetSize = "wide"    // 3x1 grid
+	WidgetSizeFull   WidgetSize = "full"    // Full width
+)
+
+// DashboardWidget represents a dashboard widget
+type DashboardWidget struct {
+	ID          string
+	Title       string
+	Description string
+	Icon        string
+	Size        WidgetSize
+	Type        string // "metric", "chart", "table", "custom"
+	Value       string // Primary value to display
+	SubValue    string // Secondary value
+	Change      string // Change indicator (+5%, -2%, etc.)
+	ChangeType  string // "positive", "negative", "neutral"
+	Loading     bool
+	Error       string
+	Class       string
+	// HTMX attributes for dynamic content
+	HXGet       string
+	HXPost      string
+	HXTarget    string
+	HXSwap      string
+	HXTrigger   string // Default: "load"
+	// Actions
+	Actions     []organisms.TableAction
+	// Custom content
+	CustomContent bool // Whether widget has custom content vs standard layout
+}
+
+// DashboardStats represents quick stats for the dashboard
+type DashboardStats struct {
+	Title       string
+	Value       string
+	Change      string
+	ChangeType  string
+	Icon        string
+	Color       string
+	URL         string
+	Loading     bool
+}
+
+// DashboardQuickActions represents quick action buttons
+type DashboardQuickAction struct {
+	Text        string
+	Description string
+	Icon        string
+	URL         string
+	Variant     atoms.ButtonVariant
+	Size        atoms.ButtonSize
+	// HTMX attributes
+	HXPost      string
+	HXGet       string
+	HXTarget    string
+	HXSwap      string
+	// Alpine.js attributes
+	AlpineClick string
+}
+
+// DashboardLayoutProps defines the properties for dashboard layouts
+type DashboardLayoutProps struct {
+	Title           string
+	Description     string
+	Section         DashboardSection
+	Stats           []DashboardStats
+	QuickActions    []DashboardQuickAction
+	Widgets         []DashboardWidget
+	GridCols        int    // Number of grid columns (default: 4)
+	Class           string
+	ID              string
+	// Layout options
+	ShowStats       bool   // Show stats bar
+	ShowActions     bool   // Show quick actions
+	ShowFilters     bool   // Show filters sidebar
+	Responsive      bool   // Enable responsive layout
+	// Sidebar navigation
+	Navigation      []organisms.NavigationItem
+	UserMenu        []organisms.NavigationItem
+	UserName        string
+	UserAvatar      string
+	// Page configuration
+	Meta            PageMeta
+	Loading         bool
+	Error           string
+	// HTMX attributes
+	HXGet           string // URL for refreshing dashboard data
+	HXTarget        string // Target for dashboard updates
+	HXSwap          string
+	HXTrigger       string // Trigger for auto-refresh
+	// Alpine.js attributes
+	AlpineData      string
+	// Theme and customization
+	Theme           string
+	CustomCSS       []string
+	CustomJS        []string
+}
+
+// dashboardClasses generates classes for the dashboard container
+func dashboardClasses(props DashboardLayoutProps) string {
+	var classes []string
+
+	// Base classes
+	classes = append(classes, "space-y-6")
+
+	// Responsive
+	if props.Responsive {
+		classes = append(classes, "container", "mx-auto", "px-4")
+	}
+
+	// Custom classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// dashboardGridClasses generates classes for the widgets grid
+func dashboardGridClasses(props DashboardLayoutProps) string {
+	var classes []string
+
+	// Base grid classes
+	classes = append(classes, "grid", "gap-6")
+
+	// Grid columns based on configuration
+	gridCols := props.GridCols
+	if gridCols == 0 {
+		gridCols = 4
+	}
+
+	switch gridCols {
+	case 2:
+		classes = append(classes, "grid-cols-1", "md:grid-cols-2")
+	case 3:
+		classes = append(classes, "grid-cols-1", "md:grid-cols-2", "lg:grid-cols-3")
+	case 4:
+		classes = append(classes, "grid-cols-1", "md:grid-cols-2", "lg:grid-cols-4")
+	case 6:
+		classes = append(classes, "grid-cols-1", "md:grid-cols-3", "lg:grid-cols-6")
+	default:
+		classes = append(classes, "grid-cols-1", "md:grid-cols-2", "lg:grid-cols-4")
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// DashboardLayout renders a complete dashboard layout
+templ DashboardLayout(props DashboardLayoutProps, children ...templ.Component) {
+	@CombinedLayout(PageLayoutProps{
+		Meta: props.Meta,
+		Header: PageHeader{
+			Title:       props.Title,
+			Description: props.Description,
+			Icon:        "home",
+			Actions:     convertQuickActionsToDashboardActions(props.QuickActions),
+		},
+		Sidebar: PageSidebar{
+			Title:       "ERP Dashboard",
+			Logo:        "/static/images/logo.png",
+			LogoURL:     "/",
+			Navigation:  props.Navigation,
+			Collapsible: true,
+		},
+		Topbar: PageTopbar{
+			UserMenu:   props.UserMenu,
+			UserName:   props.UserName,
+			UserAvatar: props.UserAvatar,
+			SearchBox:  true,
+		},
+		Footer: PageFooter{
+			Show:      true,
+			Copyright: "© 2024 Awo ERP. All rights reserved.",
+		},
+		Loading:    props.Loading,
+		Error:      props.Error,
+		HXBoost:    true,
+		HXTarget:   if props.HXTarget != "" { props.HXTarget } else { "#dashboard-content" },
+		HXSwap:     if props.HXSwap != "" { props.HXSwap } else { "innerHTML" },
+		AlpineData: if props.AlpineData != "" { props.AlpineData } else { getDashboardAlpineData(props) },
+		Theme:      props.Theme,
+		CustomCSS:  props.CustomCSS,
+		CustomJS:   props.CustomJS,
+	}) {
+		<div
+			id="dashboard-content"
+			class={ dashboardClasses(props) }
+			if props.HXGet != "" {
+				hx-get={ props.HXGet }
+				hx-target="this"
+				hx-swap="innerHTML"
+			}
+			if props.HXTrigger != "" {
+				hx-trigger={ props.HXTrigger }
+			}
+		>
+			// Dashboard stats
+			if props.ShowStats && len(props.Stats) > 0 {
+				@dashboardStats(props.Stats)
+			}
+
+			// Quick actions
+			if props.ShowActions && len(props.QuickActions) > 0 {
+				@dashboardQuickActions(props.QuickActions)
+			}
+
+			// Main dashboard content
+			if len(props.Widgets) > 0 {
+				@dashboardWidgets(props.Widgets, props)
+			} else {
+				// Custom content
+				for _, child := range children {
+					@child
+				}
+			}
+		</div>
+	}
+}
+
+// dashboardStats renders the stats overview section
+templ dashboardStats(stats []DashboardStats) {
+	<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+		for _, stat := range stats {
+			@dashboardStatCard(stat)
+		}
+	</div>
+}
+
+// dashboardStatCard renders an individual stat card
+templ dashboardStatCard(stat DashboardStats) {
+	<div class="bg-card text-card-foreground rounded-lg border p-6 shadow-sm hover:shadow-md transition-shadow">
+		<div class="flex items-center justify-between">
+			<div class="space-y-2">
+				<p class="text-sm font-medium text-muted-foreground">{ stat.Title }</p>
+				if stat.Loading {
+					<div class="h-8 w-24 bg-muted animate-pulse rounded"></div>
+				} else {
+					<p class="text-2xl font-bold">{ stat.Value }</p>
+				}
+				if stat.Change != "" {
+					<p class={ "text-xs " + getChangeTextClasses(stat.ChangeType) }>
+						{ stat.Change }
+					</p>
+				}
+			</div>
+			if stat.Icon != "" {
+				<div class={ "p-2 rounded-lg " + getStatIconClasses(stat.Color) }>
+					@atoms.Icon(atoms.IconProps{
+						Name: stat.Icon,
+						Size: atoms.IconSizeLG,
+						Class: "text-white",
+					})
+				</div>
+			}
+		</div>
+		if stat.URL != "" {
+			<a 
+				href={ stat.URL }
+				class="absolute inset-0"
+				aria-label={ "View " + stat.Title + " details" }
+			></a>
+		}
+	</div>
+}
+
+// dashboardQuickActions renders the quick actions section
+templ dashboardQuickActions(actions []DashboardQuickAction) {
+	<div class="bg-card text-card-foreground rounded-lg border p-6">
+		<h3 class="text-lg font-medium mb-4">Quick Actions</h3>
+		<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+			for _, action := range actions {
+				@dashboardQuickActionButton(action)
+			}
+		</div>
+	</div>
+}
+
+// dashboardQuickActionButton renders a quick action button
+templ dashboardQuickActionButton(action DashboardQuickAction) {
+	@atoms.Button(atoms.ButtonProps{
+		Variant:     if action.Variant != "" { action.Variant } else { atoms.ButtonOutline },
+		Size:        if action.Size != "" { action.Size } else { atoms.ButtonSizeMD },
+		Icon:        action.Icon,
+		Class:       "h-auto p-4 flex-col gap-2 text-center",
+		HXPost:      action.HXPost,
+		HXGet:       action.HXGet,
+		HXTarget:    action.HXTarget,
+		HXSwap:      action.HXSwap,
+		AlpineClick: action.AlpineClick,
+	}) {
+		<div class="space-y-1">
+			<div class="font-medium">{ action.Text }</div>
+			if action.Description != "" {
+				<div class="text-xs text-muted-foreground">{ action.Description }</div>
+			}
+		</div>
+	}
+}
+
+// dashboardWidgets renders the widgets grid
+templ dashboardWidgets(widgets []DashboardWidget, props DashboardLayoutProps) {
+	<div class={ dashboardGridClasses(props) }>
+		for _, widget := range widgets {
+			@dashboardWidget(widget)
+		}
+	</div>
+}
+
+// dashboardWidget renders an individual dashboard widget
+templ dashboardWidget(widget DashboardWidget) {
+	<div
+		if widget.ID != "" {
+			id={ widget.ID }
+		}
+		class={ getDashboardWidgetClasses(widget) }
+		if widget.HXGet != "" {
+			hx-get={ widget.HXGet }
+			hx-target="this"
+			hx-swap={ if widget.HXSwap != "" { widget.HXSwap } else { "innerHTML" } }
+			hx-trigger={ if widget.HXTrigger != "" { widget.HXTrigger } else { "load" } }
+		}
+	>
+		if widget.CustomContent {
+			// Custom content placeholder - will be filled by HTMX or child components
+			<div class="p-6">
+				<div class="flex items-center justify-center py-8">
+					@atoms.LoadingIcon()
+					<span class="ml-2 text-muted-foreground">Loading...</span>
+				</div>
+			</div>
+		} else {
+			// Standard widget layout
+			@dashboardWidgetContent(widget)
+		}
+	</div>
+}
+
+// dashboardWidgetContent renders standard widget content
+templ dashboardWidgetContent(widget DashboardWidget) {
+	// Widget header
+	<div class="flex items-center justify-between p-6 pb-3">
+		<div class="space-y-1">
+			<div class="flex items-center gap-2">
+				if widget.Icon != "" {
+					@atoms.Icon(atoms.IconProps{
+						Name:  widget.Icon,
+						Size:  atoms.IconSizeSM,
+						Class: "text-muted-foreground",
+					})
+				}
+				<h3 class="font-medium">{ widget.Title }</h3>
+			</div>
+			if widget.Description != "" {
+				<p class="text-xs text-muted-foreground">{ widget.Description }</p>
+			}
+		</div>
+		
+		// Widget actions
+		if len(widget.Actions) > 0 {
+			<div class="relative" x-data="{ open: false }">
+				<button
+					class="p-1 hover:bg-accent rounded-sm"
+					x-on:click="open = !open"
+				>
+					@atoms.Icon(atoms.IconProps{Name: "more-vertical", Size: atoms.IconSizeSM})
+				</button>
+				<div
+					class="absolute right-0 top-8 z-50 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+					x-show="open"
+					x-on:click.away="open = false"
+					x-transition
+				>
+					for _, action := range widget.Actions {
+						@molecules.MenuItem(molecules.MenuItemProps{
+							Type: molecules.MenuItemButton,
+							Text: action.Text,
+							Icon: action.Icon,
+							HXPost: action.HXPost,
+							HXGet: action.HXGet,
+							HXTarget: action.HXTarget,
+							HXSwap: action.HXSwap,
+							AlpineClick: action.AlpineClick,
+						})
+					}
+				</div>
+			</div>
+		}
+	</div>
+
+	// Widget body
+	<div class="px-6 pb-6">
+		if widget.Loading {
+			@widgetLoading()
+		} else if widget.Error != "" {
+			@widgetError(widget.Error)
+		} else {
+			switch widget.Type {
+			case "metric":
+				@widgetMetric(widget)
+			case "chart":
+				@widgetChart(widget)
+			case "table":
+				@widgetTable(widget)
+			default:
+				@widgetDefault(widget)
+			}
+		}
+	</div>
+}
+
+// Widget type templates
+
+templ widgetMetric(widget DashboardWidget) {
+	<div class="space-y-2">
+		<div class="text-3xl font-bold">{ widget.Value }</div>
+		if widget.SubValue != "" {
+			<div class="text-sm text-muted-foreground">{ widget.SubValue }</div>
+		}
+		if widget.Change != "" {
+			<div class={ "text-xs " + getChangeTextClasses(widget.ChangeType) }>
+				{ widget.Change }
+			</div>
+		}
+	</div>
+}
+
+templ widgetChart(widget DashboardWidget) {
+	<div class="h-48 flex items-center justify-center bg-muted/50 rounded">
+		<span class="text-muted-foreground">Chart placeholder</span>
+	</div>
+}
+
+templ widgetTable(widget DashboardWidget) {
+	<div class="space-y-2">
+		<div class="text-sm text-muted-foreground">Recent items</div>
+		<div class="space-y-1">
+			<div class="flex justify-between text-sm">
+				<span>Item 1</span>
+				<span class="text-muted-foreground">Value 1</span>
+			</div>
+			<div class="flex justify-between text-sm">
+				<span>Item 2</span>
+				<span class="text-muted-foreground">Value 2</span>
+			</div>
+			<div class="flex justify-between text-sm">
+				<span>Item 3</span>
+				<span class="text-muted-foreground">Value 3</span>
+			</div>
+		</div>
+	</div>
+}
+
+templ widgetDefault(widget DashboardWidget) {
+	<div class="space-y-2">
+		if widget.Value != "" {
+			<div class="text-xl font-semibold">{ widget.Value }</div>
+		}
+		if widget.SubValue != "" {
+			<div class="text-sm text-muted-foreground">{ widget.SubValue }</div>
+		}
+	</div>
+}
+
+templ widgetLoading() {
+	<div class="flex items-center justify-center py-8">
+		@atoms.LoadingIcon()
+		<span class="ml-2 text-muted-foreground">Loading...</span>
+	</div>
+}
+
+templ widgetError(errorMsg string) {
+	<div class="flex items-center justify-center py-8">
+		<div class="text-center space-y-2">
+			@atoms.Icon(atoms.IconProps{Name: "alert-triangle", Size: atoms.IconSizeMD, Class: "text-destructive mx-auto"})
+			<p class="text-sm text-destructive">{ errorMsg }</p>
+		</div>
+	</div>
+}
+
+// Helper functions
+
+func getDashboardWidgetClasses(widget DashboardWidget) string {
+	classes := []string{
+		"bg-card", "text-card-foreground", "rounded-lg", "border", "shadow-sm",
+		"hover:shadow-md", "transition-shadow",
+	}
+
+	// Size-based grid positioning
+	switch widget.Size {
+	case WidgetSizeSmall:
+		classes = append(classes, "col-span-1", "row-span-1")
+	case WidgetSizeMedium:
+		classes = append(classes, "col-span-1", "md:col-span-2", "row-span-1")
+	case WidgetSizeLarge:
+		classes = append(classes, "col-span-1", "md:col-span-2", "row-span-2")
+	case WidgetSizeWide:
+		classes = append(classes, "col-span-1", "md:col-span-2", "lg:col-span-3", "row-span-1")
+	case WidgetSizeFull:
+		classes = append(classes, "col-span-full", "row-span-1")
+	default:
+		classes = append(classes, "col-span-1", "row-span-1")
+	}
+
+	if widget.Class != "" {
+		classes = append(classes, widget.Class)
+	}
+
+	return strings.Join(classes, " ")
+}
+
+func getChangeTextClasses(changeType string) string {
+	switch changeType {
+	case "positive":
+		return "text-success"
+	case "negative":
+		return "text-destructive"
+	default:
+		return "text-muted-foreground"
+	}
+}
+
+func getStatIconClasses(color string) string {
+	switch color {
+	case "blue":
+		return "bg-blue-500"
+	case "green":
+		return "bg-green-500"
+	case "red":
+		return "bg-red-500"
+	case "yellow":
+		return "bg-yellow-500"
+	case "purple":
+		return "bg-purple-500"
+	default:
+		return "bg-primary"
+	}
+}
+
+func convertQuickActionsToDashboardActions(actions []DashboardQuickAction) []organisms.TableAction {
+	tableActions := make([]organisms.TableAction, len(actions))
+	for i, action := range actions {
+		tableActions[i] = organisms.TableAction{
+			Text:        action.Text,
+			Icon:        action.Icon,
+			Variant:     if action.Variant != "" { action.Variant } else { atoms.ButtonPrimary },
+			Size:        if action.Size != "" { action.Size } else { atoms.ButtonSizeSM },
+			HXPost:      action.HXPost,
+			HXGet:       action.HXGet,
+			HXTarget:    action.HXTarget,
+			HXSwap:      action.HXSwap,
+			AlpineClick: action.AlpineClick,
+		}
+	}
+	return tableActions
+}
+
+func getDashboardAlpineData(props DashboardLayoutProps) string {
+	return `{
+		refreshInterval: null,
+		autoRefresh: false,
+		refreshRate: 30000, // 30 seconds
+		
+		init() {
+			// Initialize dashboard
+			this.startAutoRefresh();
+		},
+		
+		startAutoRefresh() {
+			if (this.autoRefresh) {
+				this.refreshInterval = setInterval(() => {
+					this.refreshDashboard();
+				}, this.refreshRate);
+			}
+		},
+		
+		stopAutoRefresh() {
+			if (this.refreshInterval) {
+				clearInterval(this.refreshInterval);
+				this.refreshInterval = null;
+			}
+		},
+		
+		toggleAutoRefresh() {
+			this.autoRefresh = !this.autoRefresh;
+			if (this.autoRefresh) {
+				this.startAutoRefresh();
+			} else {
+				this.stopAutoRefresh();
+			}
+		},
+		
+		refreshDashboard() {
+			htmx.trigger('#dashboard-content', 'refresh');
+		},
+		
+		refreshWidget(widgetId) {
+			htmx.trigger('#' + widgetId, 'refresh');
+		}
+	}`
+}
+
+// Specialized dashboard layouts
+
+// AnalyticsDashboard renders an analytics-focused dashboard
+templ AnalyticsDashboard(props DashboardLayoutProps, children ...templ.Component) {
+	@DashboardLayout(DashboardLayoutProps{
+		Title:        if props.Title != "" { props.Title } else { "Analytics Dashboard" },
+		Description:  if props.Description != "" { props.Description } else { "Performance metrics and analytics" },
+		Section:      DashboardSectionAnalytics,
+		Stats:        props.Stats,
+		QuickActions: props.QuickActions,
+		Widgets:      props.Widgets,
+		GridCols:     if props.GridCols > 0 { props.GridCols } else { 3 },
+		ShowStats:    true,
+		ShowActions:  true,
+		Navigation:   props.Navigation,
+		UserMenu:     props.UserMenu,
+		UserName:     props.UserName,
+		UserAvatar:   props.UserAvatar,
+		Meta:         props.Meta,
+		Loading:      props.Loading,
+		Error:        props.Error,
+		HXGet:        props.HXGet,
+		HXTarget:     props.HXTarget,
+		HXSwap:       props.HXSwap,
+		HXTrigger:    if props.HXTrigger != "" { props.HXTrigger } else { "load, every 60s" },
+		Theme:        props.Theme,
+		CustomCSS:    props.CustomCSS,
+		CustomJS:     props.CustomJS,
+	}, children...)
+}
+
+// OverviewDashboard renders a general overview dashboard
+templ OverviewDashboard(props DashboardLayoutProps, children ...templ.Component) {
+	@DashboardLayout(DashboardLayoutProps{
+		Title:        if props.Title != "" { props.Title } else { "Overview" },
+		Description:  if props.Description != "" { props.Description } else { "System overview and key metrics" },
+		Section:      DashboardSectionOverview,
+		Stats:        props.Stats,
+		QuickActions: props.QuickActions,
+		Widgets:      props.Widgets,
+		GridCols:     if props.GridCols > 0 { props.GridCols } else { 4 },
+		ShowStats:    true,
+		ShowActions:  true,
+		Navigation:   props.Navigation,
+		UserMenu:     props.UserMenu,
+		UserName:     props.UserName,
+		UserAvatar:   props.UserAvatar,
+		Meta:         props.Meta,
+		Loading:      props.Loading,
+		Error:        props.Error,
+		HXGet:        props.HXGet,
+		HXTarget:     props.HXTarget,
+		HXSwap:       props.HXSwap,
+		Theme:        props.Theme,
+		CustomCSS:    props.CustomCSS,
+		CustomJS:     props.CustomJS,
+	}, children...)
+}

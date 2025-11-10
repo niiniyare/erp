@@ -1,0 +1,279 @@
+package atoms
+
+import (
+	"strings"
+)
+
+// ButtonVariant defines the visual style variants for buttons
+type ButtonVariant string
+
+const (
+	ButtonPrimary     ButtonVariant = "primary"
+	ButtonSecondary   ButtonVariant = "secondary"
+	ButtonDestructive ButtonVariant = "destructive"
+	ButtonOutline     ButtonVariant = "outline"
+	ButtonGhost       ButtonVariant = "ghost"
+	ButtonLink        ButtonVariant = "link"
+)
+
+// ButtonSize defines the size variants for buttons
+type ButtonSize string
+
+const (
+	ButtonSizeXS ButtonSize = "xs"
+	ButtonSizeSM ButtonSize = "sm"
+	ButtonSizeMD ButtonSize = "md"
+	ButtonSizeLG ButtonSize = "lg"
+	ButtonSizeXL ButtonSize = "xl"
+)
+
+// ButtonProps defines the properties for the Button component
+type ButtonProps struct {
+	Variant     ButtonVariant
+	Size        ButtonSize
+	Type        string // "button", "submit", "reset"
+	Disabled    bool
+	Loading     bool
+	Icon        string
+	IconLeft    string
+	IconRight   string
+	Class       string
+	ID          string
+	Name        string
+	Value       string
+	HXPost      string // HTMX post URL
+	HXGet       string // HTMX get URL
+	HXTarget    string // HTMX target
+	HXSwap      string // HTMX swap strategy
+	AlpineClick string // Alpine.js click handler
+}
+
+// buttonClasses generates Tailwind CSS classes for the button based on props
+func buttonClasses(props ButtonProps) string {
+	var classes []string
+
+	// Base classes
+	classes = append(classes, 
+		"inline-flex",
+		"items-center",
+		"justify-center",
+		"whitespace-nowrap",
+		"rounded-md",
+		"text-sm",
+		"font-medium",
+		"ring-offset-background",
+		"transition-colors",
+		"focus-visible:outline-none",
+		"focus-visible:ring-2",
+		"focus-visible:ring-ring",
+		"focus-visible:ring-offset-2",
+		"disabled:pointer-events-none",
+		"disabled:opacity-50",
+	)
+
+	// Variant classes
+	switch props.Variant {
+	case ButtonPrimary:
+		classes = append(classes, "bg-primary", "text-primary-foreground", "hover:bg-primary/90")
+	case ButtonSecondary:
+		classes = append(classes, "bg-secondary", "text-secondary-foreground", "hover:bg-secondary/80")
+	case ButtonDestructive:
+		classes = append(classes, "bg-destructive", "text-destructive-foreground", "hover:bg-destructive/90")
+	case ButtonOutline:
+		classes = append(classes, "border", "border-input", "bg-background", "hover:bg-accent", "hover:text-accent-foreground")
+	case ButtonGhost:
+		classes = append(classes, "hover:bg-accent", "hover:text-accent-foreground")
+	case ButtonLink:
+		classes = append(classes, "text-primary", "underline-offset-4", "hover:underline")
+	default:
+		classes = append(classes, "bg-primary", "text-primary-foreground", "hover:bg-primary/90")
+	}
+
+	// Size classes
+	switch props.Size {
+	case ButtonSizeXS:
+		classes = append(classes, "h-6", "px-2", "text-xs")
+	case ButtonSizeSM:
+		classes = append(classes, "h-8", "px-3", "text-xs")
+	case ButtonSizeMD:
+		classes = append(classes, "h-10", "px-4", "py-2")
+	case ButtonSizeLG:
+		classes = append(classes, "h-11", "px-8")
+	case ButtonSizeXL:
+		classes = append(classes, "h-14", "px-8", "text-lg")
+	default:
+		classes = append(classes, "h-10", "px-4", "py-2")
+	}
+
+	// Loading state
+	if props.Loading {
+		classes = append(classes, "pointer-events-none")
+	}
+
+	// Custom classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// Button renders an accessible, styled button component
+templ Button(props ButtonProps, children ...templ.Component) {
+	<button
+		if props.Type != "" {
+			type={ props.Type }
+		} else {
+			type="button"
+		}
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		if props.Name != "" {
+			name={ props.Name }
+		}
+		if props.Value != "" {
+			value={ props.Value }
+		}
+		if props.Disabled {
+			disabled
+		}
+		class={ buttonClasses(props) }
+		if props.HXPost != "" {
+			hx-post={ props.HXPost }
+		}
+		if props.HXGet != "" {
+			hx-get={ props.HXGet }
+		}
+		if props.HXTarget != "" {
+			hx-target={ props.HXTarget }
+		}
+		if props.HXSwap != "" {
+			hx-swap={ props.HXSwap }
+		}
+		if props.AlpineClick != "" {
+			x-on:click={ props.AlpineClick }
+		}
+		if props.Loading {
+			aria-label="Loading..."
+		}
+	>
+		// Loading icon
+		if props.Loading {
+			@LoadingIcon()
+		}
+		
+		// Left icon
+		if !props.Loading && props.IconLeft != "" {
+			@Icon(IconProps{Name: props.IconLeft, Size: IconSizeSM, Class: "mr-2"})
+		}
+		
+		// Single icon (for icon-only buttons)
+		if !props.Loading && props.Icon != "" && len(children) == 0 {
+			@Icon(IconProps{Name: props.Icon, Size: IconSizeMD})
+		}
+		
+		// Button content
+		for _, child := range children {
+			@child
+		}
+		
+		// Right icon
+		if !props.Loading && props.IconRight != "" {
+			@Icon(IconProps{Name: props.IconRight, Size: IconSizeSM, Class: "ml-2"})
+		}
+	</button>
+}
+
+// Convenience components for common button variants
+
+templ PrimaryButton(props ButtonProps, children ...templ.Component) {
+	@Button(ButtonProps{
+		Variant:     ButtonPrimary,
+		Size:        props.Size,
+		Type:        props.Type,
+		Disabled:    props.Disabled,
+		Loading:     props.Loading,
+		Icon:        props.Icon,
+		IconLeft:    props.IconLeft,
+		IconRight:   props.IconRight,
+		Class:       props.Class,
+		ID:          props.ID,
+		Name:        props.Name,
+		Value:       props.Value,
+		HXPost:      props.HXPost,
+		HXGet:       props.HXGet,
+		HXTarget:    props.HXTarget,
+		HXSwap:      props.HXSwap,
+		AlpineClick: props.AlpineClick,
+	}, children...)
+}
+
+templ SecondaryButton(props ButtonProps, children ...templ.Component) {
+	@Button(ButtonProps{
+		Variant:     ButtonSecondary,
+		Size:        props.Size,
+		Type:        props.Type,
+		Disabled:    props.Disabled,
+		Loading:     props.Loading,
+		Icon:        props.Icon,
+		IconLeft:    props.IconLeft,
+		IconRight:   props.IconRight,
+		Class:       props.Class,
+		ID:          props.ID,
+		Name:        props.Name,
+		Value:       props.Value,
+		HXPost:      props.HXPost,
+		HXGet:       props.HXGet,
+		HXTarget:    props.HXTarget,
+		HXSwap:      props.HXSwap,
+		AlpineClick: props.AlpineClick,
+	}, children...)
+}
+
+templ DestructiveButton(props ButtonProps, children ...templ.Component) {
+	@Button(ButtonProps{
+		Variant:     ButtonDestructive,
+		Size:        props.Size,
+		Type:        props.Type,
+		Disabled:    props.Disabled,
+		Loading:     props.Loading,
+		Icon:        props.Icon,
+		IconLeft:    props.IconLeft,
+		IconRight:   props.IconRight,
+		Class:       props.Class,
+		ID:          props.ID,
+		Name:        props.Name,
+		Value:       props.Value,
+		HXPost:      props.HXPost,
+		HXGet:       props.HXGet,
+		HXTarget:    props.HXTarget,
+		HXSwap:      props.HXSwap,
+		AlpineClick: props.AlpineClick,
+	}, children...)
+}
+
+// LoadingIcon renders a spinning loading indicator
+templ LoadingIcon() {
+	<svg
+		class="mr-2 h-4 w-4 animate-spin"
+		xmlns="http://www.w3.org/2000/svg"
+		fill="none"
+		viewBox="0 0 24 24"
+		aria-hidden="true"
+	>
+		<circle
+			class="opacity-25"
+			cx="12"
+			cy="12"
+			r="10"
+			stroke="currentColor"
+			stroke-width="4"
+		></circle>
+		<path
+			class="opacity-75"
+			fill="currentColor"
+			d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+		></path>
+	</svg>
+}

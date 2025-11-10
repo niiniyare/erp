@@ -1,0 +1,446 @@
+package molecules
+
+import (
+	"strings"
+	"../atoms"
+)
+
+// MenuItemType defines the type of menu item
+type MenuItemType string
+
+const (
+	MenuItemButton    MenuItemType = "button"
+	MenuItemLink      MenuItemType = "link"
+	MenuItemDivider   MenuItemType = "divider"
+	MenuItemSubmenu   MenuItemType = "submenu"
+	MenuItemCheckbox  MenuItemType = "checkbox"
+	MenuItemRadio     MenuItemType = "radio"
+)
+
+// MenuItemSize defines the size variants for menu items
+type MenuItemSize string
+
+const (
+	MenuItemSizeSM MenuItemSize = "sm"
+	MenuItemSizeMD MenuItemSize = "md"
+	MenuItemSizeLG MenuItemSize = "lg"
+)
+
+// MenuItemProps defines the properties for MenuItem components
+type MenuItemProps struct {
+	Type        MenuItemType
+	Size        MenuItemSize
+	Text        string
+	Description string
+	Value       string
+	URL         string
+	Icon        string
+	IconLeft    string
+	IconRight   string
+	Badge       string
+	BadgeVariant atoms.BadgeVariant
+	Active      bool
+	Selected    bool
+	Checked     bool
+	Disabled    bool
+	Destructive bool
+	Class       string
+	ID          string
+	Name        string
+	Target      string // For links: _blank, _self, etc.
+	// Submenu items
+	SubItems    []MenuItemProps
+	// HTMX attributes
+	HXPost      string
+	HXGet       string
+	HXTarget    string
+	HXSwap      string
+	HXTrigger   string
+	// Alpine.js attributes
+	AlpineClick string
+	AlpineShow  string // For submenu visibility
+	AlpineData  string // Custom x-data
+	// Events
+	OnClick     string
+	OnSelect    string
+}
+
+// menuItemClasses generates classes for menu items
+func menuItemClasses(props MenuItemProps) string {
+	var classes []string
+
+	// Base classes for interactive items
+	if props.Type != MenuItemDivider {
+		classes = append(classes,
+			"relative",
+			"flex",
+			"cursor-pointer",
+			"select-none",
+			"items-center",
+			"gap-2",
+			"rounded-sm",
+			"text-sm",
+			"transition-colors",
+			"focus:outline-none",
+			"focus:bg-accent",
+			"focus:text-accent-foreground",
+		)
+
+		// Size-based padding
+		switch props.Size {
+		case MenuItemSizeSM:
+			classes = append(classes, "px-2", "py-1", "text-xs")
+		case MenuItemSizeMD:
+			classes = append(classes, "px-2", "py-1.5", "text-sm")
+		case MenuItemSizeLG:
+			classes = append(classes, "px-3", "py-2", "text-base")
+		default:
+			classes = append(classes, "px-2", "py-1.5", "text-sm")
+		}
+
+		// State-based styling
+		if props.Disabled {
+			classes = append(classes, "pointer-events-none", "opacity-50")
+		} else {
+			if props.Destructive {
+				classes = append(classes, "text-destructive", "focus:text-destructive")
+			}
+			classes = append(classes, "hover:bg-accent", "hover:text-accent-foreground")
+		}
+
+		if props.Active || props.Selected {
+			classes = append(classes, "bg-accent", "text-accent-foreground")
+		}
+	} else {
+		// Divider classes
+		classes = append(classes, "h-px", "bg-muted", "my-1", "-mx-1")
+	}
+
+	// Custom classes
+	if props.Class != "" {
+		classes = append(classes, props.Class)
+	}
+
+	return strings.Join(classes, " ")
+}
+
+// MenuItem renders a menu item component
+templ MenuItem(props MenuItemProps) {
+	switch props.Type {
+	case MenuItemDivider:
+		<div class={ menuItemClasses(props) }></div>
+	case MenuItemLink:
+		<a
+			if props.URL != "" {
+				href={ props.URL }
+			}
+			if props.Target != "" {
+				target={ props.Target }
+			}
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			class={ menuItemClasses(props) }
+			if props.HXGet != "" {
+				hx-get={ props.HXGet }
+			}
+			if props.HXPost != "" {
+				hx-post={ props.HXPost }
+			}
+			if props.HXTarget != "" {
+				hx-target={ props.HXTarget }
+			}
+			if props.HXSwap != "" {
+				hx-swap={ props.HXSwap }
+			}
+			if props.HXTrigger != "" {
+				hx-trigger={ props.HXTrigger }
+			}
+			if props.AlpineClick != "" {
+				x-on:click={ props.AlpineClick }
+			}
+		>
+			@menuItemContent(props)
+		</a>
+	case MenuItemCheckbox:
+		<label
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			class={ menuItemClasses(props) }
+			if props.AlpineClick != "" {
+				x-on:click={ props.AlpineClick }
+			}
+		>
+			<input
+				type="checkbox"
+				if props.Name != "" {
+					name={ props.Name }
+				}
+				if props.Value != "" {
+					value={ props.Value }
+				}
+				if props.Checked {
+					checked
+				}
+				if props.Disabled {
+					disabled
+				}
+				class="sr-only"
+			/>
+			<div class="flex items-center justify-center w-4 h-4 border rounded-sm border-input">
+				<div class={ "w-2 h-2 bg-primary rounded-sm transition-opacity " + if props.Checked { "opacity-100" } else { "opacity-0" } }></div>
+			</div>
+			@menuItemContent(props)
+		</label>
+	case MenuItemRadio:
+		<label
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			class={ menuItemClasses(props) }
+			if props.AlpineClick != "" {
+				x-on:click={ props.AlpineClick }
+			}
+		>
+			<input
+				type="radio"
+				if props.Name != "" {
+					name={ props.Name }
+				}
+				if props.Value != "" {
+					value={ props.Value }
+				}
+				if props.Checked {
+					checked
+				}
+				if props.Disabled {
+					disabled
+				}
+				class="sr-only"
+			/>
+			<div class="flex items-center justify-center w-4 h-4 border rounded-full border-input">
+				<div class={ "w-2 h-2 bg-primary rounded-full transition-opacity " + if props.Checked { "opacity-100" } else { "opacity-0" } }></div>
+			</div>
+			@menuItemContent(props)
+		</label>
+	case MenuItemSubmenu:
+		<div
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			class="relative"
+			if props.AlpineData != "" {
+				x-data={ props.AlpineData }
+			} else {
+				x-data="{ open: false }"
+			}
+		>
+			<div
+				class={ menuItemClasses(props) }
+				x-on:click="open = !open"
+				x-on:mouseenter="open = true"
+				x-on:mouseleave="open = false"
+			>
+				@menuItemContent(props)
+				@atoms.Icon(atoms.IconProps{Name: "chevron-right", Size: atoms.IconSizeXS, Class: "ml-auto"})
+			</div>
+			<div
+				class="absolute left-full top-0 ml-1 min-w-[8rem] rounded-md border bg-popover p-1 text-popover-foreground shadow-md z-50"
+				x-show="open"
+				x-transition:enter="transition ease-out duration-100"
+				x-transition:enter-start="transform opacity-0 scale-95"
+				x-transition:enter-end="transform opacity-100 scale-100"
+				x-transition:leave="transition ease-in duration-75"
+				x-transition:leave-start="transform opacity-100 scale-100"
+				x-transition:leave-end="transform opacity-0 scale-95"
+			>
+				for _, subItem := range props.SubItems {
+					@MenuItem(subItem)
+				}
+			</div>
+		</div>
+	default:
+		// MenuItemButton or default
+		<div
+			if props.ID != "" {
+				id={ props.ID }
+			}
+			class={ menuItemClasses(props) }
+			if props.HXPost != "" {
+				hx-post={ props.HXPost }
+			}
+			if props.HXGet != "" {
+				hx-get={ props.HXGet }
+			}
+			if props.HXTarget != "" {
+				hx-target={ props.HXTarget }
+			}
+			if props.HXSwap != "" {
+				hx-swap={ props.HXSwap }
+			}
+			if props.HXTrigger != "" {
+				hx-trigger={ props.HXTrigger }
+			}
+			if props.AlpineClick != "" {
+				x-on:click={ props.AlpineClick }
+			}
+			role="button"
+			tabindex="0"
+		>
+			@menuItemContent(props)
+		</div>
+	}
+}
+
+// menuItemContent renders the content of a menu item
+templ menuItemContent(props MenuItemProps) {
+	// Left icon
+	if props.IconLeft != "" {
+		@atoms.Icon(atoms.IconProps{Name: props.IconLeft, Size: atoms.IconSizeSM, Class: "shrink-0"})
+	}
+	
+	// Single icon (for icon-only items)
+	if props.Icon != "" && props.Text == "" {
+		@atoms.Icon(atoms.IconProps{Name: props.Icon, Size: atoms.IconSizeMD})
+	}
+	
+	// Text content
+	if props.Text != "" {
+		<div class="flex flex-col gap-0.5">
+			<span>{ props.Text }</span>
+			if props.Description != "" {
+				<span class="text-xs text-muted-foreground">{ props.Description }</span>
+			}
+		</div>
+	}
+	
+	// Badge
+	if props.Badge != "" {
+		@atoms.Badge(atoms.BadgeProps{
+			Variant: if props.BadgeVariant != "" { props.BadgeVariant } else { atoms.BadgeSecondary },
+			Size:    atoms.BadgeSizeSM,
+		}) {
+			{ props.Badge }
+		}
+	}
+	
+	// Right icon
+	if props.IconRight != "" {
+		@atoms.Icon(atoms.IconProps{Name: props.IconRight, Size: atoms.IconSizeSM, Class: "ml-auto shrink-0"})
+	}
+}
+
+// MenuDivider renders a menu divider
+templ MenuDivider() {
+	@MenuItem(MenuItemProps{
+		Type: MenuItemDivider,
+	})
+}
+
+// MenuLink renders a link menu item
+templ MenuLink(props MenuItemProps) {
+	@MenuItem(MenuItemProps{
+		Type:        MenuItemLink,
+		Size:        props.Size,
+		Text:        props.Text,
+		Description: props.Description,
+		URL:         props.URL,
+		Target:      props.Target,
+		Icon:        props.Icon,
+		IconLeft:    props.IconLeft,
+		IconRight:   props.IconRight,
+		Badge:       props.Badge,
+		BadgeVariant: props.BadgeVariant,
+		Active:      props.Active,
+		Disabled:    props.Disabled,
+		Class:       props.Class,
+		ID:          props.ID,
+		HXGet:       props.HXGet,
+		HXPost:      props.HXPost,
+		HXTarget:    props.HXTarget,
+		HXSwap:      props.HXSwap,
+		HXTrigger:   props.HXTrigger,
+		AlpineClick: props.AlpineClick,
+	})
+}
+
+// MenuButton renders a button menu item
+templ MenuButton(props MenuItemProps) {
+	@MenuItem(MenuItemProps{
+		Type:        MenuItemButton,
+		Size:        props.Size,
+		Text:        props.Text,
+		Description: props.Description,
+		Value:       props.Value,
+		Icon:        props.Icon,
+		IconLeft:    props.IconLeft,
+		IconRight:   props.IconRight,
+		Badge:       props.Badge,
+		BadgeVariant: props.BadgeVariant,
+		Disabled:    props.Disabled,
+		Destructive: props.Destructive,
+		Class:       props.Class,
+		ID:          props.ID,
+		Name:        props.Name,
+		HXPost:      props.HXPost,
+		HXGet:       props.HXGet,
+		HXTarget:    props.HXTarget,
+		HXSwap:      props.HXSwap,
+		HXTrigger:   props.HXTrigger,
+		AlpineClick: props.AlpineClick,
+		OnClick:     props.OnClick,
+	})
+}
+
+// MenuCheckbox renders a checkbox menu item
+templ MenuCheckbox(props MenuItemProps) {
+	@MenuItem(MenuItemProps{
+		Type:        MenuItemCheckbox,
+		Size:        props.Size,
+		Text:        props.Text,
+		Description: props.Description,
+		Value:       props.Value,
+		Checked:     props.Checked,
+		Disabled:    props.Disabled,
+		Class:       props.Class,
+		ID:          props.ID,
+		Name:        props.Name,
+		AlpineClick: props.AlpineClick,
+		OnClick:     props.OnClick,
+	})
+}
+
+// MenuRadio renders a radio menu item
+templ MenuRadio(props MenuItemProps) {
+	@MenuItem(MenuItemProps{
+		Type:        MenuItemRadio,
+		Size:        props.Size,
+		Text:        props.Text,
+		Description: props.Description,
+		Value:       props.Value,
+		Checked:     props.Checked,
+		Disabled:    props.Disabled,
+		Class:       props.Class,
+		ID:          props.ID,
+		Name:        props.Name,
+		AlpineClick: props.AlpineClick,
+		OnClick:     props.OnClick,
+	})
+}
+
+// MenuSubmenu renders a submenu item
+templ MenuSubmenu(props MenuItemProps) {
+	@MenuItem(MenuItemProps{
+		Type:        MenuItemSubmenu,
+		Size:        props.Size,
+		Text:        props.Text,
+		Description: props.Description,
+		Icon:        props.Icon,
+		IconLeft:    props.IconLeft,
+		SubItems:    props.SubItems,
+		Class:       props.Class,
+		ID:          props.ID,
+		AlpineData:  props.AlpineData,
+	})
+}
