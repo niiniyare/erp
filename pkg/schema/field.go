@@ -1052,11 +1052,19 @@ func (f *Field) validateString(value string) error {
 
 	// Length validation
 	if v.MinLength != nil && len(value) < *v.MinLength {
-		return f.validationError(v.Messages.MinLength,
+		msg := ""
+		if v.Messages != nil {
+			msg = v.Messages.MinLength
+		}
+		return f.validationError(msg,
 			"%s must be at least %d characters", f.Label, *v.MinLength)
 	}
 	if v.MaxLength != nil && len(value) > *v.MaxLength {
-		return f.validationError(v.Messages.MaxLength,
+			msg := ""
+		if v.Messages != nil {
+			msg = v.Messages.MaxLength
+		}
+		return f.validationError(msg,
 			"%s must be at most %d characters", f.Label, *v.MaxLength)
 	}
 
@@ -1068,7 +1076,11 @@ func (f *Field) validateString(value string) error {
 				"invalid validation pattern").WithField(f.Name).WithDetail("pattern", v.Pattern).WithDetail("error", err.Error())
 		}
 		if !matched {
-			return f.validationError(v.Messages.Pattern,
+			msg := ""
+			if v.Messages != nil {
+				msg = v.Messages.Pattern
+			}
+			return f.validationError(msg,
 				"%s format is invalid", f.Label)
 		}
 	}
@@ -1140,7 +1152,11 @@ func (f *Field) validateNumber(value any) error {
 				fmt.Sprintf("%s must be greater than %v", f.Label, *v.Min)).WithField(f.Name).WithDetail("value", numVal).WithDetail("min", *v.Min).WithDetail("exclusive", true)
 		}
 		if !v.ExclusiveMin && numVal < *v.Min {
-			return f.validationError(v.Messages.Min,
+			msg := ""
+			if v.Messages != nil {
+				msg = v.Messages.Min
+			}
+			return f.validationError(msg,
 				"%s must be at least %v", f.Label, *v.Min)
 		}
 	}
@@ -1151,7 +1167,11 @@ func (f *Field) validateNumber(value any) error {
 				fmt.Sprintf("%s must be less than %v", f.Label, *v.Max)).WithField(f.Name).WithDetail("value", numVal).WithDetail("max", *v.Max).WithDetail("exclusive", true)
 		}
 		if !v.ExclusiveMax && numVal > *v.Max {
-			return f.validationError(v.Messages.Max,
+			msg := ""
+			if v.Messages != nil {
+				msg = v.Messages.Max
+			}
+			return f.validationError(msg,
 				"%s must be at most %v", f.Label, *v.Max)
 		}
 	}
