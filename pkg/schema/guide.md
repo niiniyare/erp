@@ -826,20 +826,134 @@ rule := &schema.BusinessRule{
 
 ## Internationalization (I18n)
 
-### I18n Manager
+### Embedded Translation System
+
+The schema package uses an **embedded translation system** where translations are compiled into the binary using Go's `embed` directive. This provides zero runtime I/O and automatic locale detection.
+
+#### Key Features:
+- **Embedded JSON Files**: Translations stored in `pkg/schema/translations/*.json`
+- **Field ID-based Keys**: Field names are automatically used as translation keys
+- **Zero Configuration**: Works out of the box with no setup required
+- **Automatic Fallbacks**: User locale → Language-only → Default ("en")
+- **RTL Support**: Built-in support for right-to-left languages
+- **Browser Detection**: Automatic locale detection from Accept-Language headers
+
+### Translation Files Structure
+
+```json
+// pkg/schema/translations/en.json
+{
+  "fields": {
+    "firstName": "First Name",
+    "lastName": "Last Name", 
+    "email": "Email Address",
+    "password": "Password"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalidEmail": "Please enter a valid email address",
+    "minLength": "Must be at least {min} characters",
+    "maxLength": "Must be no more than {max} characters"
+  },
+  "actions": {
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "status": {
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "error": "An error occurred"
+  }
+}
+```
+
+```json
+// pkg/schema/translations/es.json
+{
+  "fields": {
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "email": "Correo Electrónico",
+    "password": "Contraseña"
+  },
+  "validation": {
+    "required": "Este campo es requerido",
+    "invalidEmail": "Por favor ingresa un email válido",
+    "minLength": "Debe tener al menos {min} caracteres",
+    "maxLength": "Debe tener máximo {max} caracteres"
+  },
+  "actions": {
+    "submit": "Enviar",
+    "cancel": "Cancelar",
+    "save": "Guardar"
+  },
+  "status": {
+    "loading": "Cargando...",
+    "saving": "Guardando...",
+    "error": "Ocurrió un error"
+  }
+}
+```
+
+### Runtime Integration with I18n
+
+The runtime system automatically provides localized validation messages:
 
 ```go
-// Initialize I18n manager
-i18n := schema.NewI18nManager("en", "en") // locale, fallback
+// Create runtime with locale support
+runtime := runtime.NewRuntimeBuilder(schema).
+    WithLocale("es").  // Set default locale
+    Build(ctx)
 
-// Load default translations (includes validation messages)
-err := i18n.LoadDefaultTranslations()
+// Or detect user's preferred locale automatically
+userPreferences := []string{"es-ES", "es", "en"}
+detectedLocale := runtime.DetectUserLocale(userPreferences)
+// Returns "es" if available
 
-// Load custom translations from files
-err = i18n.LoadTranslations("./translations")
+// Change locale at runtime
+err := runtime.SetLocale(ctx, "fr")
+
+// Get current locale
+currentLocale := runtime.GetCurrentLocale() // "fr"
+
+// Validation errors are automatically localized
+errors := runtime.ValidateField(ctx, "email", "invalid")
+// Returns localized error: "Por favor ingresa un email válido" (if locale is "es")
+```
+
+### Enricher Integration with I18n
+
+The enricher automatically localizes schemas based on user preferences:
+
+```go
+// User interface includes locale preference
+type User interface {
+    GetID() string
+    GetTenantID() string
+    GetPermissions() []string
+    GetRoles() []string
+    HasPermission(permission string) bool
+    HasRole(role string) bool
+    GetPreferredLocale() string // Returns user's preferred locale
+}
+
+// Enrich schema with user's preferred locale
+enricher := enrich.NewEnricher()
+enrichedSchema, err := enricher.EnrichWithLocale(ctx, schema, user, "")
+// Automatically uses user.GetPreferredLocale()
+
+// Override with specific locale
+enrichedSchema, err := enricher.EnrichWithLocale(ctx, schema, user, "fr")
+
+// Field labels are now localized:
+// enrichedSchema.Fields[0].Label = "Prénom" (firstName in French)
+// enrichedSchema.Fields[1].Label = "Nom" (lastName in French)
 ```
 
 ### Schema-Level I18n
+
+Schemas support explicit I18n for titles and descriptions, while fields use embedded translations:
 
 ```go
 schema := &schema.Schema{
@@ -866,89 +980,95 @@ schema := &schema.Schema{
     },
 }
 
-// Apply localization
-localizedSchema, err := schema.ApplySchemaI18nLocalization(i18n, "es")
-// localizedSchema.Title is now "Registro de Usuario"
+// Localization is applied automatically during enrichment
+// localizedSchema.Title becomes "Registro de Usuario" for Spanish users
 ```
 
 ### Field-Level I18n
 
+Fields automatically use embedded translations based on their field ID (name):
+
 ```go
+// Simple field creation - translations handled automatically
 field := schema.Field{
-    Name:        "firstName",
+    Name:        "firstName",  // Used as translation key
     Type:        schema.FieldText,
-    Label:       "First Name",
+    Label:       "First Name", // English fallback
     Placeholder: "Enter your first name",
     Help:        "Your legal first name",
+}
+
+// Get localized values (uses embedded translations)
+label := field.GetLocalizedLabel("es")        // "Nombre" (from es.json)
+placeholder := field.GetLocalizedPlaceholder("es") // Fallback behavior
+help := field.GetLocalizedHelp("es")          // Fallback behavior
+
+// For custom fields not in embedded translations, use explicit I18n
+customField := schema.Field{
+    Name:  "customBusinessField",
+    Type:  schema.FieldText,
+    Label: "Custom Business Field",
     I18n: &schema.FieldI18n{
         Label: map[string]string{
-            "en": "First Name",
-            "es": "Nombre",
-            "fr": "Prénom", 
-            "ar": "الاسم الأول",
-        },
-        Placeholder: map[string]string{
-            "en": "Enter your first name",
-            "es": "Ingresa tu nombre",
-            "fr": "Entrez votre prénom",
-            "ar": "أدخل اسمك الأول",
-        },
-        Help: map[string]string{
-            "en": "Your legal first name",
-            "es": "Tu nombre legal",
-            "fr": "Votre prénom légal",
-            "ar": "اسمك القانوني الأول",
+            "en": "Custom Business Field",
+            "es": "Campo de Negocio Personalizado",
+            "fr": "Champ Commercial Personnalisé",
         },
     },
 }
 
-// Get localized values
-label := field.GetLocalizedLabel("es")        // "Nombre"
-placeholder := field.GetLocalizedPlaceholder("es") // "Ingresa tu nombre"
-help := field.GetLocalizedHelp("es")          // "Tu nombre legal"
+// GetLocalizedLabel checks I18n first, then embedded translations, then humanizes field ID
+customLabel := customField.GetLocalizedLabel("es") // "Campo de Negocio Personalizado"
 ```
 
 ### Validation Message I18n
 
 ```go
-// Default validation messages with interpolation
-i18n.GetValidationMessage("required", map[string]any{
-    "field": "Email",
-})
-// Returns: "Email is required" (en) or "Email es requerido" (es)
+// Global translation functions (use embedded translations)
+validationMsg := schema.T_Validation("es", "required", nil)
+// Returns: "Este campo es requerido"
 
-i18n.GetValidationMessage("minLength", map[string]any{
-    "field": "Password",
-    "min":   8,
+validationMsg := schema.T_Validation("es", "minLength", map[string]any{
+    "min": 8,
 })
-// Returns: "Password must be at least 8 characters" 
+// Returns: "Debe tener al menos 8 caracteres"
+
+// Field labels
+fieldLabel := schema.T_Field("es", "firstName") // "Nombre"
+
+// Action text
+actionText := schema.T_Action("es", "submit") // "Enviar"
 
 // Status messages
-i18n.GetStatusMessage("saving", map[string]any{
-    "item": "User",
-})
-// Returns: "Saving User..." (en) or "Guardando Usuario..." (es)
+statusText := schema.T_Status("es", "loading") // "Cargando..."
 
-// Action messages  
-i18n.GetActionMessage("submit", map[string]any{
-    "action": "Save",
-})
-// Returns: "Save" (en) or "Guardar" (es)
+// Runtime automatically localizes validation errors
+runtime := runtime.NewRuntimeBuilder(schema).WithLocale("es").Build(ctx)
+errors := runtime.ValidateField(ctx, "email", "invalid")
+// Returns: ["Por favor ingresa un email válido"]
+
+// Check locale availability
+hasSpanish := schema.T_HasLocale("es") // true
+availableLocales := schema.Translator.GetAvailableLocales() // ["en", "es", "fr", "ar"]
+
+// Detect best locale from user preferences
+userPrefs := []string{"de-DE", "de", "fr", "en"}
+bestLocale := schema.T_DetectLocale(userPrefs) // "fr" (since "de" not available)
 ```
 
 ### RTL Support
 
 ```go
 // Check if locale is RTL
-isRTL := i18n.IsRTL("ar") // true
+isRTL := schema.T_IsRTL("ar") // true
 
-// Get text direction
-direction := i18n.GetTextDirection("ar") // "rtl"
+// Get text direction  
+direction := schema.T_Direction("ar") // "rtl"
 
 // Apply RTL styles in your renderer
 func (r *TemplRenderer) RenderField(ctx context.Context, field *schema.Field, ...) (string, error) {
     locale := ctx.Value("locale").(string)
-    direction := r.i18n.GetTextDirection(locale)
+    direction := schema.T_Direction(locale)
     
     data := FieldRenderData{
         Field:     field,
@@ -960,49 +1080,105 @@ func (r *TemplRenderer) RenderField(ctx context.Context, field *schema.Field, ..
 }
 ```
 
-### Translation Files
+### Complete I18n Workflow
 
-Create translation files in JSON format:
+```go
+// 1. Schema writer creates form (only writes in English)
+schema := schema.NewBuilder("user-form", schema.TypeForm, "User Registration").
+    AddTextField("firstName", "First Name", true).     // Will auto-translate
+    AddTextField("lastName", "Last Name", true).       // Will auto-translate  
+    AddEmailField("email", "Email Address", true).     // Will auto-translate
+    AddPasswordField("password", "Password", true).    // Will auto-translate
+    Build(ctx)
 
-**translations/en.json**:
-```json
-{
-  "validation": {
-    "required": "{{field}} is required",
-    "minLength": "{{field}} must be at least {{min}} characters",
-    "email": "{{field}} must be a valid email address"
-  },
-  "status": {
-    "saving": "Saving {{item}}...",
-    "loading": "Loading {{item}}..."
-  },
-  "actions": {
-    "submit": "Submit",
-    "cancel": "Cancel",
-    "save": "Save"
-  }
+// 2. User with Spanish browser/preference
+user := &enrich.ExampleUser{
+    ID:              "user-123",
+    TenantID:        "tenant-abc",
+    PreferredLocale: "es",
+    Permissions:     []string{"read", "write"},
 }
+
+// 3. Browser sends Accept-Language or user sets preference
+userBrowserLocales := []string{"es-ES", "es", "en"}
+
+// 4. Enricher automatically localizes schema
+enricher := enrich.NewEnricher()
+localizedSchema, _ := enricher.EnrichWithLocale(ctx, schema, user, "")
+// Schema fields are now localized:
+// - localizedSchema.Fields[0].Label = "Nombre" 
+// - localizedSchema.Fields[1].Label = "Apellido"
+// - localizedSchema.Fields[2].Label = "Correo Electrónico"
+
+// 5. Create runtime with automatic locale detection
+runtime := runtime.NewRuntimeBuilder(localizedSchema).
+    WithLocale("es").
+    Build(ctx)
+
+// Or detect from browser preferences
+detectedLocale := runtime.DetectUserLocale(userBrowserLocales) // "es"
+
+// 6. Validation errors are automatically localized
+err := runtime.HandleFieldChange(ctx, "email", "invalid-email")
+errors := runtime.GetErrors()["email"]
+// errors[0] = "Por favor ingresa un email válido"
+
+// 7. UI renderer receives fully localized schema
+for _, field := range localizedSchema.Fields {
+    fmt.Printf("Field %s: %s\n", field.Name, field.Label)
+}
+// Output:
+// Field firstName: Nombre
+// Field lastName: Apellido
+// Field email: Correo Electrónico  
+// Field password: Contraseña
 ```
 
-**translations/es.json**:
-```json
-{
-  "validation": {
-    "required": "{{field}} es requerido",
-    "minLength": "{{field}} debe tener al menos {{min}} caracteres",
-    "email": "{{field}} debe ser una dirección de email válida"
-  },
-  "status": {
-    "saving": "Guardando {{item}}...",
-    "loading": "Cargando {{item}}..."
-  },
-  "actions": {
-    "submit": "Enviar",
-    "cancel": "Cancelar", 
-    "save": "Guardar"
-  }
-}
+### Available Translation Functions
+
+```go
+// Global translation functions available
+schema.T_Field(locale, fieldID string) string              // Field labels
+schema.T_Validation(locale, key string, params) string     // Validation messages
+schema.T_Action(locale, actionKey string) string           // Action text
+schema.T_Status(locale, statusKey string) string           // Status messages
+schema.T_HasLocale(locale string) bool                     // Check availability
+schema.T_DetectLocale(preferences []string) string         // Auto-detect best locale
+schema.T_IsRTL(locale string) bool                         // Check RTL support
+schema.T_Direction(locale string) string                   // Get text direction
+
+// Translation catalog methods
+schema.Translator.GetAvailableLocales() []string           // List available locales
+schema.Translator.FieldLabel(locale, fieldID string) string // Direct field lookup
+schema.Translator.ValidationMessage(locale, key, params)   // Direct validation lookup
 ```
+
+### Adding New Locales
+
+To add support for a new locale (e.g., German):
+
+1. **Create translation file**: `pkg/schema/translations/de.json`
+2. **Follow the same structure** as existing files
+3. **Rebuild the application** - translations are embedded at compile time
+4. **Test with new locale**:
+
+```go
+// Check if new locale is available
+hasGerman := schema.T_HasLocale("de") // true (after rebuild)
+
+// Use new locale
+germanLabel := schema.T_Field("de", "firstName") // "Vorname"
+```
+
+### Supported Locales
+
+By default, the system includes:
+- **English (en)**: Base locale, always available
+- **Spanish (es)**: Full translation coverage
+- **French (fr)**: Full translation coverage  
+- **Arabic (ar)**: Full translation coverage with RTL support
+
+Additional locales can be added by creating corresponding JSON files in the `translations` directory.
 
 ---
 

@@ -74,6 +74,83 @@ type Field struct {
 	evaluator *condition.Evaluator `json:"-"` // Condition evaluator (injected)
 }
 
+// GetLocalizedLabel returns the field label in the specified locale
+// Uses embedded translations based on field ID, with I18n as fallback
+func (f *Field) GetLocalizedLabel(locale string) string {
+	// Check if explicit I18n translations exist (backwards compatibility)
+	if f.I18n != nil && f.I18n.Label != nil {
+		if label, exists := f.I18n.Label[locale]; exists && label != "" {
+			return label
+		}
+	}
+	
+	// Use embedded translations with field ID as key
+	return T_Field(locale, f.Name)
+}
+
+// GetLocalizedPlaceholder returns the placeholder text in the specified locale
+func (f *Field) GetLocalizedPlaceholder(locale string) string {
+	// Check if explicit I18n translations exist
+	if f.I18n != nil && f.I18n.Placeholder != nil {
+		if placeholder, exists := f.I18n.Placeholder[locale]; exists && placeholder != "" {
+			return placeholder
+		}
+	}
+	
+	// For placeholder, fallback to field-specific key or empty
+	placeholderKey := f.Name + "Placeholder"
+	placeholder := T_Field(locale, placeholderKey)
+	
+	// If no specific placeholder translation exists, return the original or empty
+	if placeholder == humanizeFieldID(placeholderKey) {
+		return f.Placeholder // Return original placeholder
+	}
+	
+	return placeholder
+}
+
+// GetLocalizedHelp returns the help text in the specified locale
+func (f *Field) GetLocalizedHelp(locale string) string {
+	// Check if explicit I18n translations exist
+	if f.I18n != nil && f.I18n.Help != nil {
+		if help, exists := f.I18n.Help[locale]; exists && help != "" {
+			return help
+		}
+	}
+	
+	// For help text, fallback to field-specific key or empty
+	helpKey := f.Name + "Help"
+	help := T_Field(locale, helpKey)
+	
+	// If no specific help translation exists, return the original or empty
+	if help == humanizeFieldID(helpKey) {
+		return f.Help // Return original help text
+	}
+	
+	return help
+}
+
+// GetLocalizedDescription returns the description in the specified locale
+func (f *Field) GetLocalizedDescription(locale string) string {
+	// Check if explicit I18n translations exist
+	if f.I18n != nil && f.I18n.Description != nil {
+		if desc, exists := f.I18n.Description[locale]; exists && desc != "" {
+			return desc
+		}
+	}
+	
+	// For description, fallback to field-specific key or empty
+	descKey := f.Name + "Description"
+	desc := T_Field(locale, descKey)
+	
+	// If no specific description translation exists, return the original or empty
+	if desc == humanizeFieldID(descKey) {
+		return f.Description // Return original description
+	}
+	
+	return desc
+}
+
 // FieldType defines all supported input types
 type FieldType string
 

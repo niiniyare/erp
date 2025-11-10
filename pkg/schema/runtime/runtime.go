@@ -22,7 +22,9 @@ type Runtime struct {
 	renderer    schema.RuntimeRenderer          // UI rendering implementation
 	validator   schema.RuntimeValidator         // Validation implementation
 	conditional schema.RuntimeConditionalEngine // Conditional logic implementation
-	i18nManager *schema.I18nManager             // Internationalization manager
+	
+	// Internationalization
+	currentLocale string // Current locale for the runtime instance
 
 	// Configuration
 	config *schema.RuntimeConfig
@@ -46,7 +48,7 @@ type RuntimeBuilder struct {
 	renderer      schema.RuntimeRenderer
 	validator     schema.RuntimeValidator
 	conditional   schema.RuntimeConditionalEngine
-	i18nManager   *schema.I18nManager
+	locale        string // Default locale for this runtime
 	initialData   map[string]any
 	eventHandlers map[schema.EventType][]schema.EventCallback
 }
@@ -79,9 +81,9 @@ func (b *RuntimeBuilder) WithConditionalEngine(conditional schema.RuntimeConditi
 	return b
 }
 
-// WithI18nManager sets the i18n manager
-func (b *RuntimeBuilder) WithI18nManager(i18nManager *schema.I18nManager) *RuntimeBuilder {
-	b.i18nManager = i18nManager
+// WithLocale sets the default locale for the runtime
+func (b *RuntimeBuilder) WithLocale(locale string) *RuntimeBuilder {
+	b.locale = locale
 	return b
 }
 
@@ -143,7 +145,7 @@ func (b *RuntimeBuilder) Build(ctx context.Context) (*Runtime, error) {
 		renderer:      b.renderer,
 		validator:     b.validator,
 		conditional:   b.conditional,
-		i18nManager:   b.i18nManager,
+		currentLocale: b.locale,
 		config:        b.config,
 		initializedAt: time.Now(),
 		lastActivity:  time.Now(),
@@ -269,11 +271,9 @@ func (r *Runtime) HandleFieldChange(ctx context.Context, fieldName string, newVa
 		field := r.getField(fieldName)
 		if field != nil {
 			errors := r.validator.ValidateField(ctx, field, newValue, r.state.GetAll())
-			// Localize validation messages if i18n manager is available
-			if r.i18nManager != nil {
-				errors = r.i18nManager.LocalizeValidationMessages(errors, r.i18nManager.GetCurrentLocale())
-			}
-			r.state.SetErrors(fieldName, errors)
+			// Localize validation messages using embedded translations
+			localizedErrors := r.localizeValidationErrors(errors)
+			r.state.SetErrors(fieldName, localizedErrors)
 		}
 	}
 
@@ -308,11 +308,9 @@ func (r *Runtime) HandleFieldBlur(ctx context.Context, fieldName string, value a
 		field := r.getField(fieldName)
 		if field != nil {
 			errors := r.validator.ValidateField(ctx, field, value, r.state.GetAll())
-			// Localize validation messages if i18n manager is available
-			if r.i18nManager != nil {
-				errors = r.i18nManager.LocalizeValidationMessages(errors, r.i18nManager.GetCurrentLocale())
-			}
-			r.state.SetErrors(fieldName, errors)
+			// Localize validation messages using embedded translations
+			localizedErrors := r.localizeValidationErrors(errors)
+			r.state.SetErrors(fieldName, localizedErrors)
 		}
 	}
 
@@ -351,11 +349,9 @@ func (r *Runtime) HandleSubmit(ctx context.Context) error {
 
 		// Update state with validation errors
 		for field, errors := range allErrors {
-			// Localize validation messages if i18n manager is available
-			if r.i18nManager != nil {
-				errors = r.i18nManager.LocalizeValidationMessages(errors, r.i18nManager.GetCurrentLocale())
-			}
-			r.state.SetErrors(field, errors)
+			// Localize validation messages using embedded translations
+			localizedErrors := r.localizeValidationErrors(errors)
+			r.state.SetErrors(field, localizedErrors)
 		}
 
 		// Check if form is valid
@@ -406,11 +402,8 @@ func (r *Runtime) ValidateField(ctx context.Context, fieldName string, value any
 	}
 
 	errors := r.validator.ValidateField(ctx, field, value, r.state.GetAll())
-	// Localize validation messages if i18n manager is available
-	if r.i18nManager != nil {
-		errors = r.i18nManager.LocalizeValidationMessages(errors, r.i18nManager.GetCurrentLocale())
-	}
-	return errors
+	// Localize validation messages using embedded translations
+	return r.localizeValidationErrors(errors)
 }
 
 // ValidateCurrentState validates all fields using current state
@@ -974,10 +967,10 @@ func NewRuntimeFull(
 	return runtime
 }
 
-// NewRuntimeWithI18n creates a runtime with i18n support
-func NewRuntimeWithI18n(enrichedSchema *schema.Schema, i18nManager *schema.I18nManager) *Runtime {
+// NewRuntimeWithLocale creates a runtime with a specific locale
+func NewRuntimeWithLocale(enrichedSchema *schema.Schema, locale string) *Runtime {
 	runtime, err := NewRuntimeBuilder(enrichedSchema).
-		WithI18nManager(i18nManager).
+		WithLocale(locale).
 		Build(context.Background())
 	if err != nil {
 		panic(fmt.Sprintf("failed to create runtime: %v", err))
@@ -985,11 +978,15 @@ func NewRuntimeWithI18n(enrichedSchema *schema.Schema, i18nManager *schema.I18nM
 	return runtime
 }
 
-// GetI18nManager returns the i18n manager
-func (r *Runtime) GetI18nManager() *schema.I18nManager {
+// GetCurrentLocale returns the current locale for the runtime
+func (r *Runtime) GetCurrentLocale() string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	return r.i18nManager
+	
+	if r.currentLocale == "" {
+		return "en" // Default fallback
+	}
+	return r.currentLocale
 }
 
 // SetLocale changes the current locale for the runtime
@@ -997,9 +994,93 @@ func (r *Runtime) SetLocale(ctx context.Context, locale string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if r.i18nManager == nil {
-		return fmt.Errorf("no i18n manager configured")
+	// Validate locale is available
+	if !schema.T_HasLocale(locale) {
+		return fmt.Errorf("locale '%s' is not available", locale)
 	}
 
-	return r.i18nManager.SetCurrentLocale(locale)
+	r.currentLocale = locale
+	return nil
+}
+
+// DetectUserLocale automatically detects the best locale from user preferences
+func (r *Runtime) DetectUserLocale(userPreferences []string) string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	
+	bestLocale := schema.T_DetectLocale(userPreferences)
+	r.currentLocale = bestLocale
+	return bestLocale
+}
+
+// localizeValidationErrors translates validation error messages to current locale
+func (r *Runtime) localizeValidationErrors(errors []string) []string {
+	if len(errors) == 0 {
+		return errors
+	}
+
+	locale := r.GetCurrentLocale()
+	localizedErrors := make([]string, len(errors))
+	
+	for i, errorMsg := range errors {
+		// Try to map common validation error patterns to translation keys
+		translationKey := r.mapErrorToTranslationKey(errorMsg)
+		if translationKey != "" {
+			localizedErrors[i] = schema.T_Validation(locale, translationKey, nil)
+		} else {
+			// Fallback to original message if no mapping found
+			localizedErrors[i] = errorMsg
+		}
+	}
+	
+	return localizedErrors
+}
+
+// mapErrorToTranslationKey maps validation error messages to translation keys
+func (r *Runtime) mapErrorToTranslationKey(errorMsg string) string {
+	// Map common English validation messages to translation keys
+	errorMap := map[string]string{
+		"This field is required":                    "required",
+		"field is required":                        "required", 
+		"required":                                 "required",
+		"Must be a valid email address":           "invalidEmail",
+		"Must be a valid email":                   "invalidEmail",
+		"invalid email":                           "invalidEmail",
+		"Passwords do not match":                  "passwordMismatch",
+		"passwords must match":                    "passwordMismatch",
+		"Must be a valid phone number":            "invalidPhone",
+		"invalid phone":                           "invalidPhone",
+		"Must be a valid URL":                     "invalidUrl",
+		"invalid url":                             "invalidUrl",
+		"Must be a valid date":                    "invalidDate",
+		"invalid date":                            "invalidDate",
+		"Must be a valid number":                  "invalidNumber",
+		"invalid number":                          "invalidNumber",
+		"Invalid format":                          "patternMismatch",
+		"This value is already taken":             "uniqueViolation",
+		"value already exists":                    "uniqueViolation",
+	}
+	
+	// Check exact matches first
+	if key, exists := errorMap[errorMsg]; exists {
+		return key
+	}
+	
+	// Check partial matches for parameterized messages
+	lowerMsg := strings.ToLower(errorMsg)
+	if strings.Contains(lowerMsg, "must be at least") && strings.Contains(lowerMsg, "character") {
+		return "minLength"
+	}
+	if strings.Contains(lowerMsg, "must be no more than") && strings.Contains(lowerMsg, "character") {
+		return "maxLength"
+	}
+	if strings.Contains(lowerMsg, "must be at least") && !strings.Contains(lowerMsg, "character") {
+		return "numberMin"
+	}
+	if strings.Contains(lowerMsg, "must be no more than") && !strings.Contains(lowerMsg, "character") {
+		return "numberMax"
+	}
+	
+	// No mapping found
+	return ""
 }

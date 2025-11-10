@@ -257,7 +257,7 @@ func (e *DefaultEnricher) EnrichWithUser(ctx context.Context, schemaObj *schema.
 	return enriched, nil
 }
 
-// EnrichWithLocale enriches a schema with localization support
+// EnrichWithLocale enriches a schema with localization support using embedded translations
 func (e *DefaultEnricher) EnrichWithLocale(ctx context.Context, schemaObj *schema.Schema, user User, locale string) (*schema.Schema, error) {
 	if schemaObj == nil {
 		return nil, fmt.Errorf("schema cannot be nil")
@@ -275,10 +275,44 @@ func (e *DefaultEnricher) EnrichWithLocale(ctx context.Context, schemaObj *schem
 		locale = "en" // Default to English
 	}
 
-	// First localize the schema
-	localizedSchema, err := schema.LocalizeSchema(ctx, schemaObj, locale)
+	// Validate the locale is available
+	if !schema.T_HasLocale(locale) {
+		// Fallback to detected locale or English
+		locale = schema.T_DetectLocale([]string{locale, "en"})
+	}
+
+	// First clone the schema to avoid modifying the original
+	localizedSchema, err := schemaObj.Clone()
 	if err != nil {
-		return nil, fmt.Errorf("localization failed: %w", err)
+		return nil, fmt.Errorf("failed to clone schema: %w", err)
+	}
+
+	// Apply embedded translations to all fields
+	for i := range localizedSchema.Fields {
+		field := &localizedSchema.Fields[i]
+		
+		// Localize field labels using embedded translations
+		field.Label = field.GetLocalizedLabel(locale)
+		field.Placeholder = field.GetLocalizedPlaceholder(locale)
+		field.Help = field.GetLocalizedHelp(locale)
+		field.Description = field.GetLocalizedDescription(locale)
+	}
+
+	// Apply embedded translations to actions
+	for i := range localizedSchema.Actions {
+		action := &localizedSchema.Actions[i]
+		// Use action ID as translation key
+		action.Text = schema.T_Action(locale, action.ID)
+	}
+
+	// Localize schema-level content if I18n is available
+	if localizedSchema.I18n != nil {
+		if title, exists := localizedSchema.I18n.Title[locale]; exists && title != "" {
+			localizedSchema.Title = title
+		}
+		if desc, exists := localizedSchema.I18n.Description[locale]; exists && desc != "" {
+			localizedSchema.Description = desc
+		}
 	}
 
 	// Then enrich with user context
