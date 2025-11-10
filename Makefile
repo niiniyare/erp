@@ -675,6 +675,116 @@ docker-run: ## 🐳 Run application in Docker
 	@echo "$(BLUE)Running application in Docker...$(NC)"
 	@docker run -p 8080:8080 erp-app
 
+
+# ============================================================================
+# Code stats
+# ============================================================================
+.PHONY: stats-detailed
+stats-detailed: ## 📈 Detailed code statistics with percentages (usage: make stats-detailed [sum=true/false])
+	@echo "$(BLUE)╔══════════════════════════════════════════════════════════════╗$(NC)"
+	@echo "$(BLUE)║$(NC) $(CYAN)📊 DETAILED CODE STATISTICS$(NC)                                 $(BLUE)║$(NC)"
+	@echo "$(BLUE)╚══════════════════════════════════════════════════════════════╝$(NC)"
+	@echo ""
+	
+	@declare -A lines_map files_map; \
+	total_lines=0; total_files=0; \
+	# First pass: count totals \
+	for lang in go sql js css html json ts tsx jsx py java md yaml yml xml sh; do \
+		files_count=$$(find . -name "*.$$lang" -type f 2>/dev/null | wc -l); \
+		files_map[$$lang]=$$files_count; \
+		lang_lines=$$(find . -name "*.$$lang" -type f -exec cat {} + 2>/dev/null | wc -l); \
+		lines_map[$$lang]=$${lang_lines:-0}; \
+		total_lines=$$((total_lines + $${lines_map[$$lang]})); \
+		total_files=$$((total_files + files_count)); \
+	done; \
+	\
+	# Print table header \
+	echo "$(YELLOW)┌────────────────────────────────────────────────────────────┐$(NC)"; \
+	echo "$(YELLOW)│$(NC) $(PURPLE)Language    $(NC) $(CYAN)│$(NC)  $(PURPLE)Files$(NC)  $(CYAN)│$(NC)    $(PURPLE)Lines$(NC)    $(CYAN)│$(NC)  $(PURPLE)% Total$(NC)  $(YELLOW)│$(NC)"; \
+	echo "$(YELLOW)├────────────────────────────────────────────────────────────┤$(NC)"; \
+	\
+	# Print language rows \
+	for lang in go sql js css html json ts tsx jsx py java md yaml yml xml sh; do \
+		files=$${files_map[$$lang]}; \
+		lines=$${lines_map[$$lang]}; \
+		if [ $$files -gt 0 ]; then \
+			if [ $$total_lines -gt 0 ]; then \
+				percent=$$(echo "scale=1; $$lines * 100 / $$total_lines" | bc 2>/dev/null || echo "0"); \
+			else \
+				percent=0; \
+			fi; \
+			# Format numbers with commas \
+			files_formatted=$$(echo $$files | sed ':a;s/\B[0-9]\{3\}\>/,&/;ta'); \
+			lines_formatted=$$(echo $$lines | sed ':a;s/\B[0-9]\{3\}\>/,&/;ta'); \
+			\
+			# Color coding based on language type \
+			case "$$lang" in \
+				go)      color="$(GREEN)" ;; \
+				js|ts*)  color="$(YELLOW)" ;; \
+				sql)     color="$(CYAN)" ;; \
+				css)     color="$(PURPLE)" ;; \
+				html)    color="$(RED)" ;; \
+				json)    color="$(BLUE)" ;; \
+				py|java) color="$(GREEN)" ;; \
+				md)      color="$(CYAN)" ;; \
+				yaml|yml)color="$(PURPLE)" ;; \
+				*)       color="$(NC)" ;; \
+			esac; \
+			\
+			printf "$(YELLOW)│$(NC) $${color}%-11s$(NC) $(CYAN)│$(NC) %6s $(CYAN)│$(NC) %9s $(CYAN)│$(NC) %7s%% $(YELLOW)│$(NC)\n" \
+				"$$lang" "$$files_formatted" "$$lines_formatted" "$$percent"; \
+		fi; \
+	done; \
+	\
+	# Print total row \
+	echo "$(YELLOW)├────────────────────────────────────────────────────────────┤$(NC)"; \
+	total_files_formatted=$$(echo $$total_files | sed ':a;s/\B[0-9]\{3\}\>/,&/;ta'); \
+	total_lines_formatted=$$(echo $$total_lines | sed ':a;s/\B[0-9]\{3\}\>/,&/;ta'); \
+	printf "$(YELLOW)│$(NC) $(RED)%-11s$(NC) $(CYAN)│$(NC) %6s $(CYAN)│$(NC) %9s $(CYAN)│$(NC) %7s  $(YELLOW)│$(NC)\n" \
+		"TOTAL" "$$total_files_formatted" "$$total_lines_formatted" "100.0"; \
+	echo "$(YELLOW)└────────────────────────────────────────────────────────────┘$(NC)"; \
+	\
+	# Project summary section \
+	if [ "$(sum)" != "false" ]; then \
+		echo ""; \
+		echo "$(GREEN)🏗️  PROJECT SUMMARY$(NC)"; \
+		echo "$(CYAN)────────────────────────────────────────────────────────────$(NC)"; \
+		\
+		# Main directories \
+		echo "$(YELLOW)📁 Main Directories:$(NC)"; \
+		for dir in cmd internal pkg ui web app src; do \
+			if [ -d "$$dir" ]; then \
+				dir_files=$$(find "$$dir" -type f | wc -l); \
+				if [ $$dir_files -gt 0 ]; then \
+					dir_files_formatted=$$(echo $$dir_files | sed ':a;s/\B[0-9]\{3\}\>/,&/;ta'); \
+					printf "  $(GREEN)%-12s$(NC) %6s files\n" "$$dir/" "$$dir_files_formatted"; \
+				fi; \
+			fi; \
+		done; \
+		\
+		# File type breakdown \
+		echo ""; \
+		echo "$(YELLOW)📄 File Type Overview:$(NC)"; \
+		echo "  $(GREEN)Backend$(NC)    (Go, Java, Python): $$(find . -type f \( -name "*.go" -o -name "*.java" -o -name "*.py" \) 2>/dev/null | wc -l) files"; \
+		echo "  $(YELLOW)Frontend$(NC)   (JS, TS, CSS):      $$(find . -type f \( -name "*.js" -o -name "*.ts" -o -name "*.tsx" -o -name "*.jsx" -o -name "*.css" \) 2>/dev/null | wc -l) files"; \
+		echo "  $(CYAN)Database$(NC)    (SQL):              $$(find . -name "*.sql" -type f 2>/dev/null | wc -l) files"; \
+		echo "  $(PURPLE)Config$(NC)     (YAML, JSON, XML):  $$(find . -type f \( -name "*.yaml" -o -name "*.yml" -o -name "*.json" -o -name "*.xml" \) 2>/dev/null | wc -l) files"; \
+		echo "  $(BLUE)Docs$(NC)        (MD):               $$(find . -name "*.md" -type f 2>/dev/null | wc -l) files"; \
+		\
+		# Largest files \
+		echo ""; \
+		echo "$(YELLOW)📏 Largest Files (by lines):$(NC)"; \
+		find . -type f \( -name "*.go" -o -name "*.js" -o -name "*.ts" -o -name "*.py" -o -name "*.java" \) -exec wc -l {} + 2>/dev/null | \
+		sort -rn | head -5 | while read lines file; do \
+			if [ "$$lines" != "total" ]; then \
+				lines_formatted=$$(echo $$lines | sed ':a;s/\B[0-9]\{3\}\>/,&/;ta'); \
+				printf "  $(RED)%6s$(NC) lines - $(CYAN)%s$(NC)\n" "$$lines_formatted" "$$file"; \
+			fi; \
+		done; \
+	fi; \
+	\
+	echo ""; \
+	echo "$(GREEN)✅ Analysis complete!$(NC)"
 # ============================================================================
 # 🎯 Aliases & Shortcuts
 # ============================================================================

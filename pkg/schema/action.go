@@ -2,6 +2,7 @@ package schema
 
 import (
 	"context"
+	"slices"
 
 	"github.com/niiniyare/erp/pkg/condition"
 )
@@ -259,12 +260,7 @@ func (a *Action) RequiresPermission(permission string) bool {
 	if a.Permissions == nil {
 		return false
 	}
-	for _, p := range a.Permissions.Required {
-		if p == permission {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(a.Permissions.Required, permission)
 }
 
 // CanView checks if user with given roles can view the action
@@ -274,10 +270,8 @@ func (a *Action) CanView(userRoles []string) bool {
 	}
 
 	for _, role := range userRoles {
-		for _, allowedRole := range a.Permissions.View {
-			if role == allowedRole {
-				return true
-			}
+		if slices.Contains(a.Permissions.View, role) {
+			return true
 		}
 	}
 	return false
@@ -290,10 +284,8 @@ func (a *Action) CanExecute(userRoles []string) bool {
 	}
 
 	for _, role := range userRoles {
-		for _, allowedRole := range a.Permissions.Execute {
-			if role == allowedRole {
-				return true
-			}
+		if slices.Contains(a.Permissions.Execute, role) {
+			return true
 		}
 	}
 	return false

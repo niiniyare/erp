@@ -181,8 +181,8 @@ type FieldValidation struct {
 	Image *ImageValidation `json:"image,omitempty"` // Image upload validation
 
 	// Custom validation (uses condition engine formula syntax)
-	Custom   string   `json:"custom,omitempty"`   // Custom validation formula
-	Messages Messages `json:"messages,omitempty"` // Custom error messages
+	Custom   string    `json:"custom,omitempty"` // Custom validation formula
+	Messages *Messages `json:"messages"`         // Custom error messages
 }
 
 // FileValidation for file upload fields
@@ -251,14 +251,33 @@ type Style struct {
 
 // FieldEvents defines field-level event handlers
 type FieldEvents struct {
-	OnChange  string `json:"onChange,omitempty" validate:"js_function"`  // Value changed
-	OnBlur    string `json:"onBlur,omitempty" validate:"js_function"`    // Lost focus
-	OnFocus   string `json:"onFocus,omitempty" validate:"js_function"`   // Gained focus
-	OnInput   string `json:"onInput,omitempty" validate:"js_function"`   // Input event
-	OnKeyDown string `json:"onKeyDown,omitempty" validate:"js_function"` // Key pressed
-	OnKeyUp   string `json:"onKeyUp,omitempty" validate:"js_function"`   // Key released
-	OnMount   string `json:"onMount,omitempty" validate:"js_function"`   // Field mounted
-	OnUnmount string `json:"onUnmount,omitempty" validate:"js_function"` // Field unmounted
+	// Form lifecycle
+	OnMount   string `json:"onMount,omitempty" validate:"js_function"`   // Form mounted
+	OnUnmount string `json:"onUnmount,omitempty" validate:"js_function"` // Form unmounted
+
+	// Submission lifecycle
+	OnSubmit        string `json:"onSubmit,omitempty" validate:"js_function"`        // Submit triggered
+	BeforeSubmit    string `json:"beforeSubmit,omitempty" validate:"js_function"`    // Before submit
+	AfterSubmit     string `json:"afterSubmit,omitempty" validate:"js_function"`     // After submit
+	OnSubmitSuccess string `json:"onSubmitSuccess,omitempty" validate:"js_function"` // Submit success
+	OnSubmitError   string `json:"onSubmitError,omitempty" validate:"js_function"`   // Submit error
+
+	// Form state
+	OnReset    string `json:"onReset,omitempty" validate:"js_function"`    // Form reset
+	OnValidate string `json:"onValidate,omitempty" validate:"js_function"` // Validation
+	OnChange   string `json:"onChange,omitempty" validate:"js_function"`   // Any field changed
+	OnDirty    string `json:"onDirty,omitempty" validate:"js_function"`    // Form becomes dirty
+	OnPristine string `json:"onPristine,omitempty" validate:"js_function"` // Form becomes pristine
+
+	// Data events
+	OnLoad  string `json:"onLoad,omitempty" validate:"js_function"`  // Data loaded
+	OnError string `json:"onError,omitempty" validate:"js_function"` // Error occurred
+
+	// Field events
+	OnFieldChange   string `json:"onFieldChange,omitempty" validate:"js_function"`   // Individual field changed
+	OnFieldFocus    string `json:"onFieldFocus,omitempty" validate:"js_function"`    // Field focused
+	OnFieldBlur     string `json:"onFieldBlur,omitempty" validate:"js_function"`     // Field blurred
+	OnFieldValidate string `json:"onFieldValidate,omitempty" validate:"js_function"` // Field validated
 }
 
 // Conditional defines when field is shown/required using condition engine
@@ -394,18 +413,39 @@ type FieldI18n struct {
 	Help        map[string]string `json:"help,omitempty"`        // Localized help text
 	Tooltip     map[string]string `json:"tooltip,omitempty"`     // Localized tooltips
 	Error       map[string]string `json:"error,omitempty"`       // Localized error messages
+	// settings
+	Enabled          bool              `json:"enabled"` // Enable i18n
+	DefaultLocale    string            `json:"defaultLocale" validate:"locale" example:"en-US"`
+	SupportedLocales []string          `json:"supportedLocales" validate:"dive,locale"`
+	Translations     map[string]string `json:"translations,omitempty"` // Translation keys
+	DateFormat       string            `json:"dateFormat,omitempty" example:"MM/DD/YYYY"`
+	TimeFormat       string            `json:"timeFormat,omitempty" example:"HH:mm:ss"`
+	NumberFormat     string            `json:"numberFormat,omitempty" example:"1,000.00"`
+	CurrencyFormat   string            `json:"currencyFormat,omitempty" example:"$1,000.00"`
+	Currency         string            `json:"currency,omitempty" validate:"iso4217" example:"USD"`
+	Direction        string            `json:"direction,omitempty" validate:"oneof=ltr rtl" example:"ltr"`
+	FallbackLocale   string            `json:"fallbackLocale,omitempty" validate:"locale"`
+	LoadPath         string            `json:"loadPath,omitempty"` // Path to translation files
 }
 
 // FieldHTMX defines HTMX behavior for this field
 type FieldHTMX struct {
-	Trigger   string            `json:"trigger,omitempty"`   // HTMX trigger event
-	Post      string            `json:"post,omitempty"`      // POST endpoint
-	Get       string            `json:"get,omitempty"`       // GET endpoint
-	Target    string            `json:"target,omitempty"`    // Update target
-	Swap      string            `json:"swap,omitempty"`      // Swap method
-	Indicator string            `json:"indicator,omitempty"` // Loading indicator
-	Headers   map[string]string `json:"headers,omitempty"`   // Extra headers
-	Validate  bool              `json:"validate,omitempty"`  // Validate before request
+	Enabled     bool   `json:"enabled"`                                     // Enable Alpine.js
+	XData       string `json:"xData,omitempty" validate:"js_object"`        // Component data
+	XInit       string `json:"xInit,omitempty" validate:"js_function"`      // Initialization
+	XShow       string `json:"xShow,omitempty" validate:"js_expression"`    // Show/hide
+	XIf         string `json:"xIf,omitempty" validate:"js_expression"`      // Conditional
+	XModel      string `json:"xModel,omitempty" validate:"js_variable"`     // Two-way binding
+	XBind       string `json:"xBind,omitempty" validate:"js_object"`        // Attribute bindings
+	XOn         string `json:"xOn,omitempty" validate:"js_object"`          // Event handlers
+	XText       string `json:"xText,omitempty" validate:"js_expression"`    // Text content
+	XHTML       string `json:"xHtml,omitempty" validate:"js_expression"`    // HTML content
+	XRef        string `json:"xRef,omitempty" validate:"js_variable"`       // Reference
+	XCloak      bool   `json:"xCloak,omitempty"`                            // Cloak until ready
+	XTransition string `json:"xTransition,omitempty"`                       // Transition effect
+	XTeleport   string `json:"xTeleport,omitempty" validate:"css_selector"` // Teleport target
+	XFor        string `json:"xFor,omitempty" validate:"js_expression"`     // Loop directive
+	XEffect     string `json:"xEffect,omitempty" validate:"js_function"`    // Side effects
 }
 
 // FieldAlpine defines Alpine.js bindings
@@ -868,10 +908,18 @@ func (f *Field) requiresOptions() bool {
 
 // validateValueExcludingCustom validates a value against field rules, excluding custom condition engine validation
 func (f *Field) validateValueExcludingCustom(ctx context.Context, value any) error {
+	// Check for context cancellation before starting validation
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		// Continue with validation
+	}
+
 	// Required check
 	if f.Required && isEmpty(value) {
 		var requiredMsg string
-		if f.Validation != nil {
+		if f.Validation != nil && f.Validation.Messages != nil {
 			requiredMsg = f.Validation.Messages.Required
 		}
 		return f.validationError(requiredMsg, "%s is required", f.Label)
@@ -882,31 +930,71 @@ func (f *Field) validateValueExcludingCustom(ctx context.Context, value any) err
 		return nil
 	}
 
+	// Type compatibility check
+	if !f.isValueTypeCompatible(value) {
+		return f.validationError("", "invalid type for field %s", f.Label)
+	}
+
 	if f.Validation == nil {
 		return nil
 	}
 
-	// String validation
-	if strVal, ok := value.(string); ok {
-		if err := f.validateString(strVal); err != nil {
-			return err
+	// Type-specific validation using switch for better performance and clarity
+	switch val := value.(type) {
+	case string:
+		if err := f.validateString(val); err != nil {
+			return fmt.Errorf("string validation failed for field %s: %w", f.Label, err)
 		}
-	}
-
-	// Number validation
-	if err := f.validateNumber(value); err != nil {
-		return err
-	}
-
-	// Array validation
-	if arr, ok := value.([]any); ok {
-		if err := f.validateArray(arr); err != nil {
-			return err
+	case []any:
+		if err := f.validateArray(val); err != nil {
+			return fmt.Errorf("array validation failed for field %s: %w", f.Label, err)
+		}
+	default:
+		// Handle numbers and other types
+		if err := f.validateNumber(val); err != nil {
+			return fmt.Errorf("number validation failed for field %s: %w", f.Label, err)
 		}
 	}
 
 	// Skip custom validation - will be handled by registry
 	return nil
+}
+
+// isValueTypeCompatible checks if the value type is compatible with field expectations
+func (f *Field) isValueTypeCompatible(value any) bool {
+	// Implement type compatibility logic based on field configuration
+	// This could check against f.Type or other field metadata
+	switch value.(type) {
+	case string:
+		return f.isStringTypeCompatible()
+	case []any:
+		return f.isArrayTypeCompatible()
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+		return f.isNumberTypeCompatible()
+	default:
+		return f.isOtherTypeCompatible()
+	}
+}
+
+// Helper methods for type compatibility (to be implemented based on your field configuration)
+func (f *Field) isStringTypeCompatible() bool {
+	// Check if field expects string type
+	return true // default implementation
+}
+
+func (f *Field) isArrayTypeCompatible() bool {
+	// Check if field expects array type
+	return true // default implementation
+}
+
+func (f *Field) isNumberTypeCompatible() bool {
+	// Check if field expects number type
+	return true // default implementation
+}
+
+func (f *Field) isOtherTypeCompatible() bool {
+	// Check if field expects other specific types
+	return true // default implementation
 }
 
 // ValidateValue validates a value against field rules

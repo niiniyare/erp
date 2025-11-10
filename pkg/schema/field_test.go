@@ -157,7 +157,7 @@ func (s *FieldTestSuite) TestPatternValidation() {
 func (s *FieldTestSuite) TestPatternValidationCustomMessage() {
 	s.field.Validation = &FieldValidation{
 		Pattern: "^[a-zA-Z0-9_-]+$",
-		Messages: Messages{
+		Messages: &Messages{
 			Pattern: "Only letters, numbers, underscore and hyphen allowed",
 		},
 	}
@@ -1061,7 +1061,7 @@ func (s *FieldTestSuite) TestFieldCustomMessages() {
 	minLen := 5
 	s.field.Validation = &FieldValidation{
 		MinLength: &minLen,
-		Messages: Messages{
+		Messages: &Messages{
 			MinLength: "Custom min length message",
 		},
 	}

@@ -321,20 +321,12 @@ Awo provides sophisticated organizational modeling that adapts to complex busine
 - **[API Reference](docs/api/)** - Complete API documentation
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment instructions
 - **[Security Best Practices](docs/dev/securityHandbook.md)** - Security configuration and hardening
+- [system design](./sys-desing.md)
+- [Architecture](./docs/architecture/UI-Architecture.md) 
+- [API spec](./docs/reference/api/index.md) 
 
 ---
 
-<!-- ## 🤝 Contributing -->
-<!---->
-<!-- This is a **private enterprise repository** under active development. Access is restricted to authorized team members and partners. Please review our security guidelines and development standards before contributing. -->
-<!---->
-<!-- ### **Development Workflow** -->
-<!-- 1. Follow Clean Architecture principles -->
-<!-- 2. Implement  test coverage -->
-<!-- 3. Ensure ABAC policy compliance -->
-<!-- 4. Update documentation for new features -->
-<!-- 5. Performance testing for authorization-critical paths -->
-<!---->
 <!-- --- -->
 
 

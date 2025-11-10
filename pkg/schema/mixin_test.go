@@ -324,7 +324,7 @@ func (s *MixinTestSuite) TestMixinFieldIntegration() {
 			{Value: "option2", Label: "Option 2"},
 		},
 		Validation: &FieldValidation{
-			Messages: Messages{
+			Messages: &Messages{
 				Required: "This field is required",
 			},
 		},
