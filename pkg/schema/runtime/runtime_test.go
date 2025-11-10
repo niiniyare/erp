@@ -21,8 +21,8 @@ type RuntimeTestSuite struct {
 // SetupTest runs before each test
 func (s *RuntimeTestSuite) SetupTest() {
 	s.ctx = context.Background()
-	s.schema = s.createTestSchema()
-	s.runtime = NewRuntime(s.schema)
+	s.schema = createTestSchema()
+	s.runtime = createTestRuntimeWithValidator()
 }
 
 // TearDownTest runs after each test
@@ -33,14 +33,17 @@ func (s *RuntimeTestSuite) TearDownTest() {
 
 // TestNewRuntime tests runtime initialization
 func (s *RuntimeTestSuite) TestNewRuntime() {
-	schema := s.createTestSchema()
+	schema := createTestSchema()
 	runtime := NewRuntime(schema)
 
 	require.NotNil(s.T(), runtime, "NewRuntime() should not return nil")
 	require.Equal(s.T(), schema, runtime.schema, "Runtime schema should be set correctly")
 	require.NotNil(s.T(), runtime.state, "Runtime state should be initialized")
-	require.NotNil(s.T(), runtime.validator, "Runtime validator should be initialized")
 	require.NotNil(s.T(), runtime.events, "Runtime events should be initialized")
+	
+	// Test with validator
+	runtimeWithValidator := createTestRuntimeWithValidator()
+	require.NotNil(s.T(), runtimeWithValidator.validator, "Runtime with validator should have validator initialized")
 }
 
 // TestInitialize tests runtime initialization with data
@@ -88,7 +91,7 @@ func (s *RuntimeTestSuite) TestHandleFieldChange() {
 
 // TestHandleFieldBlur tests field blur events
 func (s *RuntimeTestSuite) TestHandleFieldBlur() {
-	s.runtime.SetValidationTiming(ValidateOnBlur)
+	s.runtime.SetValidationTiming(schema.ValidateOnBlur)
 
 	// Initialize first with valid data for required fields
 	err := s.runtime.Initialize(s.ctx, map[string]any{
@@ -170,12 +173,12 @@ func (s *RuntimeTestSuite) TestValidationTiming() {
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Test different validation timings
-	timings := []ValidationTiming{ValidateOnChange, ValidateOnBlur, ValidateOnSubmit, ValidateNever}
+	timings := []schema.ValidationTiming{schema.ValidateOnChange, schema.ValidateOnBlur, schema.ValidateOnSubmit, schema.ValidateNever}
 
 	for _, timing := range timings {
 		s.Run(string(timing), func() {
-			// Clear previous errors
-			s.runtime.GetState().ClearErrors("email")
+			// Clear previous errors by setting empty errors
+			s.runtime.GetState().SetErrors("email", []string{})
 
 			s.runtime.SetValidationTiming(timing)
 
@@ -187,7 +190,7 @@ func (s *RuntimeTestSuite) TestValidationTiming() {
 			hasErrors := len(errors) > 0
 
 			// Only ValidateOnChange should have errors at this point
-			if timing == ValidateOnChange {
+			if timing == schema.ValidateOnChange {
 				require.True(s.T(), hasErrors, "Expected validation errors with ValidateOnChange timing")
 			} else {
 				require.False(s.T(), hasErrors, "Expected no validation errors with %s timing", timing)
@@ -306,7 +309,7 @@ func (s *RuntimeTestSuite) TestEventHandling() {
 	expectedField := "name"
 	expectedValue := "Test Name"
 
-	s.runtime.RegisterEventHandler(EventChange, func(ctx context.Context, event *Event) error {
+	s.runtime.RegisterEventHandler(schema.EventChange, func(ctx context.Context, event *schema.Event) error {
 		eventTriggered = true
 		require.Equal(s.T(), expectedField, event.Field, "Event field should match")
 		require.Equal(s.T(), expectedValue, event.Value, "Event value should match")
@@ -409,47 +412,6 @@ func (s *RuntimeTestSuite) TestEnrichedSchemaIntegration() {
 }
 
 // Helper method to create a test schema
-func (s *RuntimeTestSuite) createTestSchema() *schema.Schema {
-	return &schema.Schema{
-		ID:    "test_schema",
-		Title: "Test Schema",
-		Fields: []schema.Field{
-			{
-				Name:     "name",
-				Type:     schema.FieldText,
-				Label:    "Full Name",
-				Required: true,
-				Runtime: &schema.FieldRuntime{
-					Visible:  true,
-					Editable: true,
-					Reason:   "",
-				},
-			},
-			{
-				Name:     "email",
-				Type:     schema.FieldEmail,
-				Label:    "Email Address",
-				Required: true,
-				Runtime: &schema.FieldRuntime{
-					Visible:  true,
-					Editable: true,
-					Reason:   "",
-				},
-			},
-			{
-				Name:     "age",
-				Type:     schema.FieldNumber,
-				Label:    "Age",
-				Required: false,
-				Runtime: &schema.FieldRuntime{
-					Visible:  true,
-					Editable: true,
-					Reason:   "",
-				},
-			},
-		},
-	}
-}
 
 // TestRuntimeTestSuite runs the test suite
 func TestRuntimeTestSuite(t *testing.T) {

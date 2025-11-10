@@ -34,10 +34,11 @@ type Schema struct {
 	Description string `json:"description,omitempty" validate:"max=1000" example:"Add a new user to the system"`
 
 	// Core UI structure
-	Config  *Config  `json:"config,omitempty"`                  // HTTP/API configuration
-	Layout  *Layout  `json:"layout,omitempty"`                  // Visual layout (grid, tabs, sections)
-	Fields  []Field  `json:"fields,omitempty" validate:"dive"`  // Form fields and inputs
-	Actions []Action `json:"actions,omitempty" validate:"dive"` // Buttons and actions
+	Config   *Config  `json:"config,omitempty"`                  // HTTP/API configuration
+	Layout   *Layout  `json:"layout,omitempty"`                  // Visual layout (grid, tabs, sections)
+	Fields   []Field  `json:"fields,omitempty" validate:"dive"`  // Form fields and inputs
+	Actions  []Action `json:"actions,omitempty" validate:"dive"` // Buttons and actions
+	Children []Schema `json:"children,omitempty"`                // Nested components
 
 	// Performance optimization: field name -> index mapping
 	fieldMap map[string]int `json:"-"` // Not serialized
@@ -49,6 +50,7 @@ type Schema struct {
 	Validation *Validation `json:"validation,omitempty"` // Cross-field validation rules
 	Events     *Events     `json:"events,omitempty"`     // Lifecycle event handlers
 	I18n       *I18n       `json:"i18n,omitempty"`       // Internationalization
+	Mixin      *Mixin
 
 	// Frontend framework integration
 	HTMX   *HTMX   `json:"htmx,omitempty"`   // HTMX configuration
@@ -192,6 +194,31 @@ type PermissionEvaluator interface {
 	// EvaluatePermission evaluates if user has permission based on resource:action format
 	// e.g., "contact:create", "transaction:delete", "report:view"
 	EvaluatePermission(ctx context.Context, permission string, renderCtx *Context) bool
+}
+
+// ConditionalUpdate  Conditional types
+type ConditionalUpdate struct {
+	FieldName string `json:"fieldName"`
+	Visible   bool   `json:"visible"`
+	Required  bool   `json:"required"`
+	Editable  bool   `json:"editable"`
+	Reason    string `json:"reason,omitempty"`
+}
+
+type ConditionalResults struct {
+	Updates   []ConditionalUpdate `json:"updates"`
+	Changed   bool                `json:"changed"`
+	Timestamp time.Time           `json:"timestamp"`
+}
+
+// LayoutConditionalResult represents conditional evaluation for layout components
+type LayoutConditionalResult struct {
+	Changed         bool                `json:"changed"`         // Whether any conditions changed
+	VisibleSections map[string]bool     `json:"visibleSections"` // Section visibility
+	VisibleTabs     map[string]bool     `json:"visibleTabs"`     // Tab visibility
+	VisibleSteps    map[string]bool     `json:"visibleSteps"`    // Step visibility
+	VisibleGroups   map[string]bool     `json:"visibleGroups"`   // Group visibility
+	FieldUpdates    []ConditionalUpdate `json:"fieldUpdates"`    // Field updates
 }
 
 // NewSchema constructor - creates a new schema with sensible defaults
@@ -845,7 +872,7 @@ func (s *Schema) Clone() (*Schema, error) {
 	// Create a type alias to avoid calling custom MarshalJSON
 	type Alias Schema
 	alias := (*Alias)(s)
-	
+
 	// Marshal to JSON for deep copy using the alias (bypassing custom MarshalJSON)
 	data, err := json.Marshal(alias)
 	if err != nil {

@@ -4,45 +4,68 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"time"
 
 	"github.com/niiniyare/erp/pkg/schema"
 )
 
 // State holds runtime form state and tracks user interactions
+// Implements schema.RuntimeStateManager interface for clean integration
 type State struct {
-	values  map[string]any // Current field values
-	touched map[string]bool        // Fields user has interacted with
-	dirty   map[string]bool        // Fields that changed from initial
-	errors  map[string][]string    // Validation errors per field
-	initial map[string]any // Initial values for dirty checking
-	mu      sync.RWMutex           // Concurrent access protection
+	// Core state maps
+	values  map[string]any      // Current field values
+	initial map[string]any      // Initial values for dirty checking
+	touched map[string]bool     // Fields user has interacted with
+	dirty   map[string]bool     // Fields that changed from initial
+	errors  map[string][]string // Validation errors per field
+
+	// Metadata
+	initialized time.Time // When state was initialized
+	lastUpdated time.Time // Last state modification
+
+	// Concurrency control
+	mu sync.RWMutex // Concurrent access protection
 }
 
 // NewState creates a new state manager
 func NewState() *State {
+	now := time.Now()
 	return &State{
-		values:  make(map[string]any),
-		touched: make(map[string]bool),
-		dirty:   make(map[string]bool),
-		errors:  make(map[string][]string),
-		initial: make(map[string]any),
+		values:      make(map[string]any),
+		initial:     make(map[string]any),
+		touched:     make(map[string]bool),
+		dirty:       make(map[string]bool),
+		errors:      make(map[string][]string),
+		initialized: now,
+		lastUpdated: now,
 	}
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// RuntimeStateManager Interface Implementation
+// ═══════════════════════════════════════════════════════════════════════════
+
 // Initialize sets initial state from schema and provided data
-func (s *State) Initialize(schema *schema.Schema, data map[string]any) error {
+// Implements schema.RuntimeStateManager interface
+func (s *State) Initialize(sch *schema.Schema, data map[string]any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if sch == nil {
+		return fmt.Errorf("schema cannot be nil")
+	}
+
 	// Clear existing state
 	s.values = make(map[string]any)
+	s.initial = make(map[string]any)
 	s.touched = make(map[string]bool)
 	s.dirty = make(map[string]bool)
 	s.errors = make(map[string][]string)
-	s.initial = make(map[string]any)
 
 	// Initialize with schema field defaults first
-	for _, field := range schema.Fields {
+	for i := range sch.Fields {
+		field := &sch.Fields[i]
+
 		// Use Default if available, otherwise use Value
 		var defaultValue any
 		if field.Default != nil {
@@ -63,71 +86,107 @@ func (s *State) Initialize(schema *schema.Schema, data map[string]any) error {
 		s.initial[key] = value
 	}
 
-	return nil
-}
-
-// SetValue updates a field value and tracks dirty state
-func (s *State) SetValue(path string, value any) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if path == "" {
-		return fmt.Errorf("field path cannot be empty")
-	}
-
-	s.values[path] = value
-
-	// Mark as dirty if changed from initial
-	initialValue, hasInitial := s.initial[path]
-	if !hasInitial || !s.valuesEqual(initialValue, value) {
-		s.dirty[path] = true
-	} else {
-		s.dirty[path] = false
-	}
+	s.initialized = time.Now()
+	s.lastUpdated = time.Now()
 
 	return nil
 }
 
 // GetValue retrieves a field value
-func (s *State) GetValue(path string) (any, bool) {
+// Implements schema.RuntimeStateManager interface
+func (s *State) GetValue(fieldName string) (any, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	value, exists := s.values[path]
+	if fieldName == "" {
+		return nil, false
+	}
+
+	value, exists := s.values[fieldName]
 	return value, exists
 }
 
-// Touch marks a field as touched (user interacted with it)
-func (s *State) Touch(path string) {
+// SetValue updates a field value and tracks dirty state
+// Implements schema.RuntimeStateManager interface
+func (s *State) SetValue(fieldName string, value any) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.touched[path] = true
+	if fieldName == "" {
+		return fmt.Errorf("field name cannot be empty")
+	}
+
+	// Update value
+	s.values[fieldName] = value
+
+	// Mark as dirty if changed from initial
+	initialValue, hasInitial := s.initial[fieldName]
+	if !hasInitial || !s.valuesEqual(initialValue, value) {
+		s.dirty[fieldName] = true
+	} else {
+		s.dirty[fieldName] = false
+	}
+
+	s.lastUpdated = time.Now()
+
+	return nil
+}
+
+// GetAll returns all current values
+// Implements schema.RuntimeStateManager interface
+func (s *State) GetAll() map[string]any {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	// Return a deep copy to prevent external modification
+	result := make(map[string]any, len(s.values))
+	for k, v := range s.values {
+		result[k] = s.deepCopyValue(v)
+	}
+
+	return result
 }
 
 // IsTouched checks if field has been touched
-func (s *State) IsTouched(path string) bool {
+// Implements schema.RuntimeStateManager interface
+func (s *State) IsTouched(fieldName string) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	return s.touched[path]
+	return s.touched[fieldName]
+}
+
+// Touch marks a field as touched (user interacted with it)
+// Implements schema.RuntimeStateManager interface
+func (s *State) Touch(fieldName string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if fieldName == "" {
+		return
+	}
+
+	s.touched[fieldName] = true
+	s.lastUpdated = time.Now()
 }
 
 // IsDirty checks if field changed from initial value
-func (s *State) IsDirty(path string) bool {
+// Implements schema.RuntimeStateManager interface
+func (s *State) IsDirty(fieldName string) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	return s.dirty[path]
+	return s.dirty[fieldName]
 }
 
 // IsAnyDirty checks if any field has been modified
+// Implements schema.RuntimeStateManager interface
 func (s *State) IsAnyDirty() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	for _, dirty := range s.dirty {
-		if dirty {
+	for _, isDirty := range s.dirty {
+		if isDirty {
 			return true
 		}
 	}
@@ -135,11 +194,12 @@ func (s *State) IsAnyDirty() bool {
 }
 
 // GetErrors returns validation errors for a field
-func (s *State) GetErrors(path string) []string {
+// Implements schema.RuntimeStateManager interface
+func (s *State) GetErrors(fieldName string) []string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	errors, exists := s.errors[path]
+	errors, exists := s.errors[fieldName]
 	if !exists {
 		return nil
 	}
@@ -151,35 +211,35 @@ func (s *State) GetErrors(path string) []string {
 }
 
 // SetErrors sets validation errors for a field
-func (s *State) SetErrors(path string, errors []string) {
+// Implements schema.RuntimeStateManager interface
+func (s *State) SetErrors(fieldName string, errors []string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if fieldName == "" {
+		return
+	}
+
 	if len(errors) == 0 {
-		delete(s.errors, path)
+		delete(s.errors, fieldName)
 	} else {
 		// Store a copy to prevent external modification
 		errorsCopy := make([]string, len(errors))
 		copy(errorsCopy, errors)
-		s.errors[path] = errorsCopy
+		s.errors[fieldName] = errorsCopy
 	}
-}
 
-// ClearErrors removes all errors for a field
-func (s *State) ClearErrors(path string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	delete(s.errors, path)
+	s.lastUpdated = time.Now()
 }
 
 // GetAllErrors returns all current validation errors
+// Implements schema.RuntimeStateManager interface
 func (s *State) GetAllErrors() map[string][]string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	// Return a deep copy to prevent external modification
-	result := make(map[string][]string)
+	result := make(map[string][]string, len(s.errors))
 	for field, errors := range s.errors {
 		errorsCopy := make([]string, len(errors))
 		copy(errorsCopy, errors)
@@ -190,6 +250,7 @@ func (s *State) GetAllErrors() map[string][]string {
 }
 
 // IsValid checks if entire form is valid (no errors)
+// Implements schema.RuntimeStateManager interface
 func (s *State) IsValid() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -197,33 +258,257 @@ func (s *State) IsValid() bool {
 	return len(s.errors) == 0
 }
 
-// GetAll returns all current values
-func (s *State) GetAll() map[string]any {
+// Reset clears all state back to initial
+// Implements schema.RuntimeStateManager interface
+func (s *State) Reset() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Clear mutable state
+	s.values = make(map[string]any)
+	s.touched = make(map[string]bool)
+	s.dirty = make(map[string]bool)
+	s.errors = make(map[string][]string)
+
+	// Restore initial values
+	for k, v := range s.initial {
+		s.values[k] = s.deepCopyValue(v)
+	}
+
+	s.lastUpdated = time.Now()
+}
+
+// CreateSnapshot creates a snapshot of current state
+// Implements schema.RuntimeStateManager interface
+// Returns schema.StateSnapshot type to avoid import cycles
+func (s *State) CreateSnapshot() any {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	// Return a copy to prevent external modification
-	result := make(map[string]any, len(s.values))
-	for k, v := range s.values {
-		result[k] = v
+	snapshot := &schema.StateSnapshot{
+		Values:      make(map[string]any, len(s.values)),
+		Initial:     make(map[string]any, len(s.initial)),
+		Touched:     make(map[string]bool, len(s.touched)),
+		Dirty:       make(map[string]bool, len(s.dirty)),
+		Errors:      make(map[string][]string, len(s.errors)),
+		Timestamp:   time.Now(),
+		Initialized: s.initialized,
 	}
 
-	return result
+	// Deep copy all state
+	for k, v := range s.values {
+		snapshot.Values[k] = s.deepCopyValue(v)
+	}
+	for k, v := range s.initial {
+		snapshot.Initial[k] = s.deepCopyValue(v)
+	}
+	for k, v := range s.touched {
+		snapshot.Touched[k] = v
+	}
+	for k, v := range s.dirty {
+		snapshot.Dirty[k] = v
+	}
+	for k, v := range s.errors {
+		errorsCopy := make([]string, len(v))
+		copy(errorsCopy, v)
+		snapshot.Errors[k] = errorsCopy
+	}
+
+	return snapshot
 }
+
+// RestoreSnapshot restores state from a snapshot
+// Implements schema.RuntimeStateManager interface
+// Accepts schema.StateSnapshot type to avoid import cycles
+func (s *State) RestoreSnapshot(snapshot any) {
+	stateSnapshot, ok := snapshot.(*schema.StateSnapshot)
+	if !ok {
+		return // Invalid snapshot type
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Create new maps
+	s.values = make(map[string]any, len(stateSnapshot.Values))
+	s.initial = make(map[string]any, len(stateSnapshot.Initial))
+	s.touched = make(map[string]bool, len(stateSnapshot.Touched))
+	s.dirty = make(map[string]bool, len(stateSnapshot.Dirty))
+	s.errors = make(map[string][]string, len(stateSnapshot.Errors))
+
+	// Restore all state with deep copies
+	for k, v := range stateSnapshot.Values {
+		s.values[k] = s.deepCopyValue(v)
+	}
+	for k, v := range stateSnapshot.Initial {
+		s.initial[k] = s.deepCopyValue(v)
+	}
+	for k, v := range stateSnapshot.Touched {
+		s.touched[k] = v
+	}
+	for k, v := range stateSnapshot.Dirty {
+		s.dirty[k] = v
+	}
+	for k, v := range stateSnapshot.Errors {
+		errorsCopy := make([]string, len(v))
+		copy(errorsCopy, v)
+		s.errors[k] = errorsCopy
+	}
+
+	s.initialized = stateSnapshot.Initialized
+	s.lastUpdated = time.Now()
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Additional Methods Beyond RuntimeStateManager Interface
+// ═══════════════════════════════════════════════════════════════════════════
 
 // GetInitialValues returns all initial values
 func (s *State) GetInitialValues() map[string]any {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	// Return a copy to prevent external modification
 	result := make(map[string]any, len(s.initial))
 	for k, v := range s.initial {
-		result[k] = v
+		result[k] = s.deepCopyValue(v)
 	}
 
 	return result
 }
+
+// GetChangedValues returns only the values that have changed from initial
+func (s *State) GetChangedValues() map[string]any {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	result := make(map[string]any)
+	for field, isDirty := range s.dirty {
+		if isDirty {
+			if value, exists := s.values[field]; exists {
+				result[field] = s.deepCopyValue(value)
+			}
+		}
+	}
+
+	return result
+}
+
+// UpdateValues updates multiple field values at once (batch operation)
+func (s *State) UpdateValues(updates map[string]any) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for field, value := range updates {
+		if field == "" {
+			return fmt.Errorf("field name cannot be empty")
+		}
+
+		s.values[field] = value
+
+		// Update dirty state
+		initialValue, hasInitial := s.initial[field]
+		if !hasInitial || !s.valuesEqual(initialValue, value) {
+			s.dirty[field] = true
+		} else {
+			s.dirty[field] = false
+		}
+	}
+
+	s.lastUpdated = time.Now()
+	return nil
+}
+
+// ClearErrors removes all errors for a field
+func (s *State) ClearErrors(fieldName string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	delete(s.errors, fieldName)
+	s.lastUpdated = time.Now()
+}
+
+// ClearAllErrors removes all validation errors
+func (s *State) ClearAllErrors() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.errors = make(map[string][]string)
+	s.lastUpdated = time.Now()
+}
+
+// ResetField resets a single field to its initial value
+func (s *State) ResetField(fieldName string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if fieldName == "" {
+		return
+	}
+
+	// Restore initial value
+	if initialValue, exists := s.initial[fieldName]; exists {
+		s.values[fieldName] = s.deepCopyValue(initialValue)
+	} else {
+		delete(s.values, fieldName)
+	}
+
+	// Clear field state
+	s.dirty[fieldName] = false
+	s.touched[fieldName] = false
+	delete(s.errors, fieldName)
+
+	s.lastUpdated = time.Now()
+}
+
+// SetInitialValue updates the initial value for a field (useful for dynamic forms)
+func (s *State) SetInitialValue(fieldName string, value any) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if fieldName == "" {
+		return
+	}
+
+	s.initial[fieldName] = value
+
+	// Recalculate dirty state based on new initial value
+	if currentValue, exists := s.values[fieldName]; exists {
+		s.dirty[fieldName] = !s.valuesEqual(value, currentValue)
+	}
+
+	s.lastUpdated = time.Now()
+}
+
+// HasField checks if a field exists in the state
+func (s *State) HasField(fieldName string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	_, exists := s.values[fieldName]
+	return exists
+}
+
+// RemoveField removes a field completely from state
+func (s *State) RemoveField(fieldName string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if fieldName == "" {
+		return
+	}
+
+	delete(s.values, fieldName)
+	delete(s.initial, fieldName)
+	delete(s.touched, fieldName)
+	delete(s.dirty, fieldName)
+	delete(s.errors, fieldName)
+
+	s.lastUpdated = time.Now()
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Statistics and Query Methods
+// ═══════════════════════════════════════════════════════════════════════════
 
 // GetTouchedFields returns list of touched field names
 func (s *State) GetTouchedFields() []string {
@@ -268,38 +553,6 @@ func (s *State) GetFieldsWithErrors() []string {
 	return fields
 }
 
-// Reset clears all state back to initial
-func (s *State) Reset() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.values = make(map[string]any)
-	s.touched = make(map[string]bool)
-	s.dirty = make(map[string]bool)
-	s.errors = make(map[string][]string)
-
-	// Restore initial values
-	for k, v := range s.initial {
-		s.values[k] = v
-	}
-}
-
-// ResetField resets a single field to its initial value
-func (s *State) ResetField(path string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if initialValue, exists := s.initial[path]; exists {
-		s.values[path] = initialValue
-	} else {
-		delete(s.values, path)
-	}
-
-	s.dirty[path] = false
-	s.touched[path] = false
-	delete(s.errors, path)
-}
-
 // GetTouchedCount returns number of touched fields
 func (s *State) GetTouchedCount() int {
 	s.mu.RLock()
@@ -340,81 +593,27 @@ func (s *State) GetErrorCount() int {
 	return count
 }
 
-// HasField checks if a field exists in the state
-func (s *State) HasField(path string) bool {
+// GetStats returns comprehensive state statistics
+// Returns schema.StateStats to avoid import cycles
+func (s *State) GetStats() *schema.StateStats {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	_, exists := s.values[path]
-	return exists
-}
-
-// RemoveField removes a field completely from state
-func (s *State) RemoveField(path string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	delete(s.values, path)
-	delete(s.initial, path)
-	delete(s.touched, path)
-	delete(s.dirty, path)
-	delete(s.errors, path)
-}
-
-// SetInitialValue updates the initial value for a field (useful for dynamic forms)
-func (s *State) SetInitialValue(path string, value any) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.initial[path] = value
-
-	// Recalculate dirty state based on new initial value
-	currentValue, exists := s.values[path]
-	if exists {
-		s.dirty[path] = !s.valuesEqual(value, currentValue)
+	return &schema.StateStats{
+		FieldCount:        len(s.values),
+		TouchedCount:      s.getTouchedCountUnsafe(),
+		DirtyCount:        s.getDirtyCountUnsafe(),
+		ErrorCount:        s.getErrorCountUnsafe(),
+		IsValid:           len(s.errors) == 0,
+		InitializedAt:     s.initialized,
+		LastUpdated:       s.lastUpdated,
+		HasUnsavedChanges: s.hasUnsavedChangesUnsafe(),
 	}
 }
 
-// GetChangedValues returns only the values that have changed from initial
-func (s *State) GetChangedValues() map[string]any {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	result := make(map[string]any)
-	for field, isDirty := range s.dirty {
-		if isDirty {
-			if value, exists := s.values[field]; exists {
-				result[field] = value
-			}
-		}
-	}
-
-	return result
-}
-
-// UpdateValues updates multiple field values at once
-func (s *State) UpdateValues(updates map[string]any) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for field, value := range updates {
-		if field == "" {
-			return fmt.Errorf("field path cannot be empty")
-		}
-
-		s.values[field] = value
-
-		// Update dirty state
-		initialValue, hasInitial := s.initial[field]
-		if !hasInitial || !s.valuesEqual(initialValue, value) {
-			s.dirty[field] = true
-		} else {
-			s.dirty[field] = false
-		}
-	}
-
-	return nil
-}
+// ═══════════════════════════════════════════════════════════════════════════
+// Private Helper Methods
+// ═══════════════════════════════════════════════════════════════════════════
 
 // valuesEqual compares two values for equality, handling different types
 func (s *State) valuesEqual(a, b any) bool {
@@ -428,77 +627,67 @@ func (s *State) valuesEqual(a, b any) bool {
 	return reflect.DeepEqual(a, b)
 }
 
-// StateSnapshot represents a point-in-time snapshot of the state
-type StateSnapshot struct {
-	Values  map[string]any `json:"values"`
-	Touched map[string]bool        `json:"touched"`
-	Dirty   map[string]bool        `json:"dirty"`
-	Errors  map[string][]string    `json:"errors"`
-	Initial map[string]any `json:"initial"`
+// deepCopyValue creates a deep copy of a value
+func (s *State) deepCopyValue(value any) any {
+	if value == nil {
+		return nil
+	}
+
+	// For maps and slices, we need proper deep copy
+	switch v := value.(type) {
+	case map[string]any:
+		result := make(map[string]any, len(v))
+		for k, val := range v {
+			result[k] = s.deepCopyValue(val)
+		}
+		return result
+	case []any:
+		result := make([]any, len(v))
+		for i, val := range v {
+			result[i] = s.deepCopyValue(val)
+		}
+		return result
+	default:
+		// For primitive types, direct assignment is fine
+		return value
+	}
 }
 
-// CreateSnapshot creates a snapshot of current state
-func (s *State) CreateSnapshot() *StateSnapshot {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+// Unsafe methods (must be called with lock held)
 
-	snapshot := &StateSnapshot{
-		Values:  make(map[string]any),
-		Touched: make(map[string]bool),
-		Dirty:   make(map[string]bool),
-		Errors:  make(map[string][]string),
-		Initial: make(map[string]any),
+func (s *State) getTouchedCountUnsafe() int {
+	count := 0
+	for _, touched := range s.touched {
+		if touched {
+			count++
+		}
 	}
-
-	// Deep copy all state
-	for k, v := range s.values {
-		snapshot.Values[k] = v
-	}
-	for k, v := range s.touched {
-		snapshot.Touched[k] = v
-	}
-	for k, v := range s.dirty {
-		snapshot.Dirty[k] = v
-	}
-	for k, v := range s.errors {
-		errorsCopy := make([]string, len(v))
-		copy(errorsCopy, v)
-		snapshot.Errors[k] = errorsCopy
-	}
-	for k, v := range s.initial {
-		snapshot.Initial[k] = v
-	}
-
-	return snapshot
+	return count
 }
 
-// RestoreSnapshot restores state from a snapshot
-func (s *State) RestoreSnapshot(snapshot *StateSnapshot) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *State) getDirtyCountUnsafe() int {
+	count := 0
+	for _, dirty := range s.dirty {
+		if dirty {
+			count++
+		}
+	}
+	return count
+}
 
-	s.values = make(map[string]any)
-	s.touched = make(map[string]bool)
-	s.dirty = make(map[string]bool)
-	s.errors = make(map[string][]string)
-	s.initial = make(map[string]any)
+func (s *State) getErrorCountUnsafe() int {
+	count := 0
+	for _, errors := range s.errors {
+		count += len(errors)
+	}
+	return count
+}
 
-	// Restore all state
-	for k, v := range snapshot.Values {
-		s.values[k] = v
+func (s *State) hasUnsavedChangesUnsafe() bool {
+	for _, dirty := range s.dirty {
+		if dirty {
+			return true
+		}
 	}
-	for k, v := range snapshot.Touched {
-		s.touched[k] = v
-	}
-	for k, v := range snapshot.Dirty {
-		s.dirty[k] = v
-	}
-	for k, v := range snapshot.Errors {
-		errorsCopy := make([]string, len(v))
-		copy(errorsCopy, v)
-		s.errors[k] = errorsCopy
-	}
-	for k, v := range snapshot.Initial {
-		s.initial[k] = v
-	}
+	return false
 }

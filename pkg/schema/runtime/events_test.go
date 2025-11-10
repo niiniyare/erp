@@ -23,8 +23,8 @@ type EventHandlerTestSuite struct {
 // SetupTest runs before each test
 func (s *EventHandlerTestSuite) SetupTest() {
 	s.ctx = context.Background()
-	s.schema = s.createTestSchema()
-	s.runtime = NewRuntime(s.schema)
+	s.schema = createTestSchema()
+	s.runtime = createTestRuntimeWithValidator()
 	s.handler = s.runtime.events
 }
 
@@ -41,7 +41,7 @@ func (s *EventHandlerTestSuite) TestNewEventHandler() {
 
 	require.NotNil(s.T(), handler, "NewEventHandler() should not return nil")
 	require.NotNil(s.T(), handler.handlers, "Event handlers map should be initialized")
-	require.Equal(s.T(), ValidateOnBlur, handler.validationTiming, "Default validation timing should be ValidateOnBlur")
+	require.Equal(s.T(), schema.ValidateOnBlur, handler.validationTiming, "Default validation timing should be ValidateOnBlur")
 }
 
 // TestOnChange tests field change event handling
@@ -53,20 +53,11 @@ func (s *EventHandlerTestSuite) TestOnChange() {
 	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
-	s.handler.SetValidationTiming(ValidateOnChange)
+	s.handler.SetValidationTiming(schema.ValidateOnChange)
 
-	// Create change event
-	event := &Event{
-		Type:      EventChange,
-		Field:     "name",
-		Value:     "Jane Doe",
-		OldValue:  "John Doe",
-		Timestamp: time.Now(),
-	}
-
-	// Handle change event
-	err = s.handler.OnChange(s.ctx, event)
-	require.NoError(s.T(), err, "OnChange() should not return error")
+	// Handle change event through runtime (not directly through handler)
+	err = s.runtime.HandleFieldChange(s.ctx, "name", "Jane Doe")
+	require.NoError(s.T(), err, "HandleFieldChange() should not return error")
 
 	// Check value was updated in state
 	value, exists := s.runtime.state.GetValue("name")
@@ -107,20 +98,9 @@ func (s *EventHandlerTestSuite) TestOnChange_ReadOnlyField() {
 	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
-	handler := runtime.events
-
-	// Create change event for read-only field
-	event := &Event{
-		Type:      EventChange,
-		Field:     "readonly_field",
-		Value:     "new value",
-		OldValue:  "",
-		Timestamp: time.Now(),
-	}
-
-	// Handle change event (should fail)
-	err = handler.OnChange(s.ctx, event)
-	require.Error(s.T(), err, "OnChange() should fail for read-only field")
+	// Handle change event for read-only field (should fail)
+	err = runtime.HandleFieldChange(s.ctx, "readonly_field", "new value")
+	require.Error(s.T(), err, "HandleFieldChange() should fail for read-only field")
 
 	// Check value was not updated
 	value, exists := runtime.state.GetValue("readonly_field")
@@ -138,19 +118,11 @@ func (s *EventHandlerTestSuite) TestOnBlur() {
 	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
-	s.handler.SetValidationTiming(ValidateOnBlur)
+	s.handler.SetValidationTiming(schema.ValidateOnBlur)
 
-	// Create blur event with invalid email
-	event := &Event{
-		Type:      EventBlur,
-		Field:     "email",
-		Value:     "invalid-email",
-		Timestamp: time.Now(),
-	}
-
-	// Handle blur event
-	err = s.handler.OnBlur(s.ctx, event)
-	require.NoError(s.T(), err, "OnBlur() should not return error")
+	// Handle blur event through runtime (not directly through handler)
+	err = s.runtime.HandleFieldBlur(s.ctx, "email", "invalid-email")
+	require.NoError(s.T(), err, "HandleFieldBlur() should not return error")
 
 	// Check field is marked as touched
 	require.True(s.T(), s.runtime.state.IsTouched("email"), "Field should be marked as touched after blur")
@@ -186,7 +158,7 @@ func (s *EventHandlerTestSuite) TestOnSubmit_WithErrors() {
 		"email": "john@example.com",
 	})
 	require.NoError(s.T(), err, "Initialize should not fail")
-	
+
 	// Now set invalid data through direct state manipulation
 	err = s.runtime.state.SetValue("name", "")
 	require.NoError(s.T(), err, "Setting empty name should not fail")
@@ -194,8 +166,8 @@ func (s *EventHandlerTestSuite) TestOnSubmit_WithErrors() {
 	require.NoError(s.T(), err, "Setting invalid email should not fail")
 
 	// Handle submit event
-	err = s.handler.OnSubmit(s.ctx)
-	require.Error(s.T(), err, "OnSubmit() should fail with validation errors")
+	err = s.runtime.HandleSubmit(s.ctx)
+	require.Error(s.T(), err, "HandleSubmit() should fail with validation errors")
 
 	// Check state has errors
 	require.False(s.T(), s.runtime.state.IsValid(), "State should be invalid with validation errors")
@@ -219,38 +191,38 @@ func (s *EventHandlerTestSuite) TestValidationTiming() {
 
 	tests := []struct {
 		name   string
-		timing ValidationTiming
-		event  EventType
+		timing schema.ValidationTiming
+		event  schema.EventType
 		hasErr bool
 	}{
 		{
 			name:   "validate on change with change event",
-			timing: ValidateOnChange,
-			event:  EventChange,
+			timing: schema.ValidateOnChange,
+			event:  schema.EventChange,
 			hasErr: true, // Invalid email should produce errors
 		},
 		{
 			name:   "validate on change with blur event",
-			timing: ValidateOnChange,
-			event:  EventBlur,
+			timing: schema.ValidateOnChange,
+			event:  schema.EventBlur,
 			hasErr: false, // No validation on blur with ValidateOnChange
 		},
 		{
 			name:   "validate on blur with blur event",
-			timing: ValidateOnBlur,
-			event:  EventBlur,
+			timing: schema.ValidateOnBlur,
+			event:  schema.EventBlur,
 			hasErr: true, // Invalid email should produce errors
 		},
 		{
 			name:   "validate on blur with change event",
-			timing: ValidateOnBlur,
-			event:  EventChange,
+			timing: schema.ValidateOnBlur,
+			event:  schema.EventChange,
 			hasErr: false, // No validation on change with ValidateOnBlur
 		},
 		{
 			name:   "never validate with change event",
-			timing: ValidateNever,
-			event:  EventChange,
+			timing: schema.ValidateNever,
+			event:  schema.EventChange,
 			hasErr: false, // No validation with ValidateNever
 		},
 	}
@@ -265,20 +237,13 @@ func (s *EventHandlerTestSuite) TestValidationTiming() {
 			s.handler.SetValidationTiming(tt.timing)
 
 			// Create event with invalid email
-			event := &Event{
-				Type:      tt.event,
-				Field:     "email",
-				Value:     "invalid-email",
-				Timestamp: time.Now(),
-			}
-
-			// Handle event based on type
+			// Handle event based on type through runtime
 			var err error
 			switch tt.event {
-			case EventChange:
-				err = s.handler.OnChange(s.ctx, event)
-			case EventBlur:
-				err = s.handler.OnBlur(s.ctx, event)
+			case schema.EventChange:
+				err = s.runtime.HandleFieldChange(s.ctx, "email", "invalid-email")
+			case schema.EventBlur:
+				err = s.runtime.HandleFieldBlur(s.ctx, "email", "invalid-email")
 			}
 
 			require.NoError(s.T(), err, "Event handler should not return error")
@@ -302,19 +267,18 @@ func (s *EventHandlerTestSuite) TestRegister() {
 
 	// Track if callback was called
 	callbackCalled := false
-	var receivedEvent *Event
+	var receivedEvent *schema.Event
 
 	// Register callback
-	handler.Register(EventChange, func(ctx context.Context, event *Event) error {
+	handler.Register(schema.EventChange, func(ctx context.Context, event *schema.Event) error {
 		callbackCalled = true
 		receivedEvent = event
 		return nil
 	})
 
 	// Create runtime and set handler
-	runtime := NewRuntime(s.createTestSchema())
+	runtime := NewRuntime(createTestSchema())
 	runtime.events = handler
-	handler.runtime = runtime
 
 	err := runtime.Initialize(s.ctx, map[string]any{
 		"name":  "John Doe",
@@ -323,8 +287,8 @@ func (s *EventHandlerTestSuite) TestRegister() {
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Create event
-	event := &Event{
-		Type:      EventChange,
+	event := &schema.Event{
+		Type:      schema.EventChange,
 		Field:     "name",
 		Value:     "Test Value",
 		Timestamp: time.Now(),
@@ -353,11 +317,11 @@ func (s *EventHandlerTestSuite) TestHandleBatchUpdate() {
 	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
-	s.handler.SetValidationTiming(ValidateOnChange)
+	s.handler.SetValidationTiming(schema.ValidateOnChange)
 
 	// Track callback calls
 	changeEvents := 0
-	s.handler.Register(EventChange, func(ctx context.Context, event *Event) error {
+	s.handler.Register(schema.EventChange, func(ctx context.Context, event *schema.Event) error {
 		changeEvents++
 		return nil
 	})
@@ -369,7 +333,11 @@ func (s *EventHandlerTestSuite) TestHandleBatchUpdate() {
 		"age":   30,
 	}
 
-	err = s.handler.HandleBatchUpdate(s.ctx, updates)
+	// HandleBatchUpdate was removed - update fields individually
+	for field, value := range updates {
+		err := s.runtime.HandleFieldChange(s.ctx, field, value)
+		require.NoError(s.T(), err, "HandleFieldChange() should not return error for field %s", field)
+	}
 	require.NoError(s.T(), err, "HandleBatchUpdate() should not return error")
 
 	// Check all values were updated
@@ -385,42 +353,8 @@ func (s *EventHandlerTestSuite) TestHandleBatchUpdate() {
 
 // TestDebouncedEventHandler tests debounced event handling
 func (s *EventHandlerTestSuite) TestDebouncedEventHandler() {
-	err := s.runtime.Initialize(s.ctx, map[string]any{
-		"name":  "John Doe",
-		"email": "john@example.com",
-	})
-	require.NoError(s.T(), err, "Initialize should not fail")
-
-	// Create debounced handler
-	debouncedHandler := NewDebouncedEventHandler(s.runtime.events)
-
-	// Track if validation occurred
-	validationOccurred := false
-	s.runtime.events.Register(EventChange, func(ctx context.Context, event *Event) error {
-		validationOccurred = true
-		return nil
-	})
-
-	// Create event
-	event := &Event{
-		Type:      EventChange,
-		Field:     "name",
-		Value:     "Test Value",
-		Timestamp: time.Now(),
-	}
-
-	// Handle debounced change
-	err = debouncedHandler.OnChangeDebounced(s.ctx, event, 50*time.Millisecond)
-	require.NoError(s.T(), err, "OnChangeDebounced() should not return error")
-
-	// Check validation hasn't occurred immediately
-	require.False(s.T(), validationOccurred, "Validation should not occur immediately with debouncing")
-
-	// Wait for debounce period
-	time.Sleep(100 * time.Millisecond)
-
-	// Check validation occurred after debounce
-	require.True(s.T(), validationOccurred, "Validation should occur after debounce period")
+	// FIXME:Skip debounced handler test - functionality removed
+	s.T().Skip("DebouncedEventHandler functionality was removed")
 }
 
 // TestEventTracker tests event tracking functionality
@@ -432,11 +366,11 @@ func (s *EventHandlerTestSuite) TestEventTracker() {
 	require.Equal(s.T(), 0, stats.TotalEvents, "Should start with 0 events")
 
 	// Track some events
-	events := []*Event{
-		{Type: EventChange, Field: "name", Timestamp: time.Now()},
-		{Type: EventChange, Field: "email", Timestamp: time.Now()},
-		{Type: EventBlur, Field: "name", Timestamp: time.Now()},
-		{Type: EventSubmit, Timestamp: time.Now()},
+	events := []*schema.Event{
+		{Type: schema.EventChange, Field: "name", Timestamp: time.Now()},
+		{Type: schema.EventChange, Field: "email", Timestamp: time.Now()},
+		{Type: schema.EventBlur, Field: "name", Timestamp: time.Now()},
+		{Type: schema.EventSubmit, Timestamp: time.Now()},
 	}
 
 	for _, event := range events {
@@ -446,10 +380,10 @@ func (s *EventHandlerTestSuite) TestEventTracker() {
 	// Check stats
 	stats = tracker.GetStats()
 	require.Equal(s.T(), 4, stats.TotalEvents, "Should have 4 total events")
-	require.Equal(s.T(), 2, stats.EventsByType[EventChange], "Should have 2 change events")
-	require.Equal(s.T(), 1, stats.EventsByType[EventBlur], "Should have 1 blur event")
-	require.Equal(s.T(), 1, stats.EventsByType[EventSubmit], "Should have 1 submit event")
-	require.Equal(s.T(), EventSubmit, stats.LastEventType, "Last event type should be submit")
+	require.Equal(s.T(), 2, stats.EventsByType[schema.EventChange], "Should have 2 change events")
+	require.Equal(s.T(), 1, stats.EventsByType[schema.EventBlur], "Should have 1 blur event")
+	require.Equal(s.T(), 1, stats.EventsByType[schema.EventSubmit], "Should have 1 submit event")
+	require.Equal(s.T(), schema.EventSubmit, stats.LastEventType, "Last event type should be submit")
 
 	// Reset and check
 	tracker.Reset()
@@ -462,14 +396,14 @@ func (s *EventHandlerTestSuite) TestGetValidationTiming() {
 	handler := NewEventHandler()
 
 	// Check default timing
-	require.Equal(s.T(), ValidateOnBlur, handler.GetValidationTiming(), "Default validation timing should be ValidateOnBlur")
+	require.Equal(s.T(), schema.ValidateOnBlur, handler.GetValidationTiming(), "Default validation timing should be ValidateOnBlur")
 
 	// Set and check different timings
-	timings := []ValidationTiming{
-		ValidateOnChange,
-		ValidateOnBlur,
-		ValidateOnSubmit,
-		ValidateNever,
+	timings := []schema.ValidationTiming{
+		schema.ValidateOnChange,
+		schema.ValidateOnBlur,
+		schema.ValidateOnSubmit,
+		schema.ValidateNever,
 	}
 
 	for _, timing := range timings {
@@ -483,26 +417,26 @@ func (s *EventHandlerTestSuite) TestUnregister() {
 	handler := NewEventHandler()
 
 	// Register some callbacks
-	handler.Register(EventChange, func(ctx context.Context, event *Event) error {
+	handler.Register(schema.EventChange, func(ctx context.Context, event *schema.Event) error {
 		return nil
 	})
-	handler.Register(EventChange, func(ctx context.Context, event *Event) error {
+	handler.Register(schema.EventChange, func(ctx context.Context, event *schema.Event) error {
 		return nil
 	})
 
 	// Verify callbacks exist
 	handler.mu.RLock()
-	changeHandlers := len(handler.handlers[EventChange])
+	changeHandlers := len(handler.handlers[schema.EventChange])
 	handler.mu.RUnlock()
 
 	require.Equal(s.T(), 2, changeHandlers, "Should have 2 change handlers")
 
 	// Unregister
-	handler.Unregister(EventChange)
+	handler.Unregister(schema.EventChange)
 
 	// Verify callbacks are removed
 	handler.mu.RLock()
-	changeHandlers = len(handler.handlers[EventChange])
+	changeHandlers = len(handler.handlers[schema.EventChange])
 	handler.mu.RUnlock()
 
 	require.Equal(s.T(), 0, changeHandlers, "Should have 0 change handlers after unregister")
@@ -517,13 +451,13 @@ func (s *EventHandlerTestSuite) TestErrorHandling() {
 	require.NoError(s.T(), err, "Initialize should not fail")
 
 	// Register callback that returns error
-	s.handler.Register(EventChange, func(ctx context.Context, event *Event) error {
+	s.handler.Register(schema.EventChange, func(ctx context.Context, event *schema.Event) error {
 		return fmt.Errorf("callback error")
 	})
 
 	// Create event
-	event := &Event{
-		Type:      EventChange,
+	event := &schema.Event{
+		Type:      schema.EventChange,
 		Field:     "name",
 		Value:     "Test Value",
 		Timestamp: time.Now(),
@@ -542,61 +476,12 @@ func (s *EventHandlerTestSuite) TestNonExistentField() {
 	})
 	require.NoError(s.T(), err, "Initialize should not fail")
 
-	// Create event for non-existent field
-	event := &Event{
-		Type:      EventChange,
-		Field:     "non_existent_field",
-		Value:     "test value",
-		Timestamp: time.Now(),
-	}
-
-	// Handle event (should fail)
-	err = s.handler.OnChange(s.ctx, event)
-	require.Error(s.T(), err, "OnChange() should fail for non-existent field")
+	// Handle change for non-existent field (should fail)
+	err = s.runtime.HandleFieldChange(s.ctx, "non_existent_field", "test value")
+	require.Error(s.T(), err, "HandleFieldChange() should fail for non-existent field")
 }
 
 // Helper method to create a test schema
-func (s *EventHandlerTestSuite) createTestSchema() *schema.Schema {
-	return &schema.Schema{
-		ID:    "test_schema",
-		Title: "Test Schema",
-		Fields: []schema.Field{
-			{
-				Name:     "name",
-				Type:     schema.FieldText,
-				Label:    "Full Name",
-				Required: true,
-				Runtime: &schema.FieldRuntime{
-					Visible:  true,
-					Editable: true,
-					Reason:   "",
-				},
-			},
-			{
-				Name:     "email",
-				Type:     schema.FieldEmail,
-				Label:    "Email Address",
-				Required: true,
-				Runtime: &schema.FieldRuntime{
-					Visible:  true,
-					Editable: true,
-					Reason:   "",
-				},
-			},
-			{
-				Name:     "age",
-				Type:     schema.FieldNumber,
-				Label:    "Age",
-				Required: false,
-				Runtime: &schema.FieldRuntime{
-					Visible:  true,
-					Editable: true,
-					Reason:   "",
-				},
-			},
-		},
-	}
-}
 
 // TestEventHandlerTestSuite runs the test suite
 func TestEventHandlerTestSuite(t *testing.T) {
