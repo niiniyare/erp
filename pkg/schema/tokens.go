@@ -8,25 +8,25 @@ import (
 	"sync"
 )
 
-// TokenReference represents a reference to another token using the syntax "{token.path}".
+// TokenReference represents a reference to another token using the syntax "token.path".
 // References are resolved at runtime, allowing dynamic theme customization.
-// Example: "{colors.primary.base}" references the base primary color.
+// Example: "colors.primary.base" references the base primary color.
 type TokenReference string
 
 // IsReference checks if the value is a token reference (starts with { and ends with }).
 func (t TokenReference) IsReference() bool {
 	s := string(t)
-	return len(s) >= 3 && strings.HasPrefix(s, "{") && strings.HasSuffix(s, "}")
+	return len(s) >= 3 && strings.HasPrefix(s, "") && strings.HasSuffix(s, "")
 }
 
 // Path extracts the token path from a reference.
-// For "{colors.primary.base}", it returns "colors.primary.base".
+// For "colors.primary.base", it returns "colors.primary.base".
 func (t TokenReference) Path() string {
 	if !t.IsReference() {
 		return string(t)
 	}
 	s := string(t)
-	return strings.Trim(s, "{}")
+	return strings.Trim(s, "")
 }
 
 // String returns the string representation of the token reference.
@@ -956,14 +956,14 @@ func NewTokenRegistryWithResolver(resolver TokenResolver) *TokenRegistry {
 //	    Semantic: &schema.SemanticTokens{
 //	        Colors: &schema.SemanticColors{
 //	            Background: &schema.BackgroundColors{
-//	                Default: schema.TokenReference("{primitives.colors.gray.100}"),
+//	                Default: schema.TokenReference("primitives.colors.gray.100"),
 //	            },
 //	            Text: &schema.TextColors{
-//	                Default: schema.TokenReference("{primitives.colors.gray.900}"),
+//	                Default: schema.TokenReference("primitives.colors.gray.900"),
 //	            },
 //	            Interactive: &schema.InteractiveColors{
 //	                Primary: &schema.InteractiveColorSet{
-//	                    Default: schema.TokenReference("{primitives.colors.blue.500}"),
+//	                    Default: schema.TokenReference("primitives.colors.blue.500"),
 //	                },
 //	            },
 //	        },
@@ -978,7 +978,7 @@ func NewTokenRegistryWithResolver(resolver TokenResolver) *TokenRegistry {
 //
 //	// Now resolve tokens
 //	ctx := context.Background()
-//	bgColor, err := registry.ResolveToken(ctx, schema.TokenReference("{semantic.colors.background.default}"))
+//	bgColor, err := registry.ResolveToken(ctx, schema.TokenReference("semantic.colors.background.default"))
 //	if err != nil {
 //	    return err
 //	}
@@ -1031,21 +1031,21 @@ func (tr *TokenRegistry) GetTokens() *DesignTokens {
 //	ctx := context.Background()
 //
 //	// Resolve a primitive token
-//	blueColor, err := registry.ResolveToken(ctx, schema.TokenReference("{primitives.colors.blue.500}"))
+//	blueColor, err := registry.ResolveToken(ctx, schema.TokenReference("primitives.colors.blue.500"))
 //	if err != nil {
 //	    return err
 //	}
 //	fmt.Printf("Blue 500: %s\n", blueColor) // Output: "#3b82f6"
 //
 //	// Resolve a semantic token (references primitive)
-//	primaryColor, err := registry.ResolveToken(ctx, schema.TokenReference("{semantic.colors.interactive.primary}"))
+//	primaryColor, err := registry.ResolveToken(ctx, schema.TokenReference("semantic.colors.interactive.primary"))
 //	if err != nil {
 //	    return err
 //	}
 //	fmt.Printf("Primary color: %s\n", primaryColor) // Output: "#3b82f6"
 //
 //	// Resolve a component token (references semantic)
-//	buttonBg, err := registry.ResolveToken(ctx, schema.TokenReference("{components.button.primary.background}"))
+//	buttonBg, err := registry.ResolveToken(ctx, schema.TokenReference("components.button.primary.background"))
 //	if err != nil {
 //	    return err
 //	}
@@ -1059,7 +1059,7 @@ func (tr *TokenRegistry) GetTokens() *DesignTokens {
 //	fmt.Printf("Literal color: %s\n", literal) // Output: "#ff0000"
 //
 //	// Error handling for invalid tokens
-//	_, err = registry.ResolveToken(ctx, schema.TokenReference("{invalid.token.path}"))
+//	_, err = registry.ResolveToken(ctx, schema.TokenReference("invalid.token.path"))
 //	if err != nil {
 //	    if schema.IsValidationError(err) {
 //	        fmt.Printf("Token validation error: %s\n", err.Error())
@@ -1450,339 +1450,339 @@ func GetDefaultTokens() *DesignTokens {
 		Semantic: &SemanticTokens{
 			Colors: &SemanticColors{
 				Background: &BackgroundColors{
-					Default:  TokenReference("{primitives.colors.white}"),
-					Subtle:   TokenReference("{primitives.colors.gray.50}"),
-					Emphasis: TokenReference("{primitives.colors.gray.100}"),
+					Default:  TokenReference("primitives.colors.white"),
+					Subtle:   TokenReference("primitives.colors.gray.50"),
+					Emphasis: TokenReference("primitives.colors.gray.100"),
 					Overlay:  TokenReference("rgba(0, 0, 0, 0.5)"),
 				},
 				Text: &TextColors{
-					Default:   TokenReference("{primitives.colors.gray.900}"),
-					Subtle:    TokenReference("{primitives.colors.gray.600}"),
-					Disabled:  TokenReference("{primitives.colors.gray.400}"),
-					Inverted:  TokenReference("{primitives.colors.white}"),
-					Link:      TokenReference("{primitives.colors.blue.500}"),
-					LinkHover: TokenReference("{primitives.colors.blue.600}"),
+					Default:   TokenReference("primitives.colors.gray.900"),
+					Subtle:    TokenReference("primitives.colors.gray.600"),
+					Disabled:  TokenReference("primitives.colors.gray.400"),
+					Inverted:  TokenReference("primitives.colors.white"),
+					Link:      TokenReference("primitives.colors.blue.500"),
+					LinkHover: TokenReference("primitives.colors.blue.600"),
 				},
 				Border: &BorderColors{
-					Default: TokenReference("{primitives.colors.gray.300}"),
-					Focus:   TokenReference("{primitives.colors.blue.500}"),
-					Strong:  TokenReference("{primitives.colors.gray.400}"),
-					Subtle:  TokenReference("{primitives.colors.gray.200}"),
+					Default: TokenReference("primitives.colors.gray.300"),
+					Focus:   TokenReference("primitives.colors.blue.500"),
+					Strong:  TokenReference("primitives.colors.gray.400"),
+					Subtle:  TokenReference("primitives.colors.gray.200"),
 				},
 				Interactive: &InteractiveColors{
 					Primary: &InteractiveColorSet{
-						Default: TokenReference("{primitives.colors.blue.500}"),
-						Hover:   TokenReference("{primitives.colors.blue.600}"),
-						Active:  TokenReference("{primitives.colors.blue.700}"),
-						Focus:   TokenReference("{primitives.colors.blue.500}"),
+						Default: TokenReference("primitives.colors.blue.500"),
+						Hover:   TokenReference("primitives.colors.blue.600"),
+						Active:  TokenReference("primitives.colors.blue.700"),
+						Focus:   TokenReference("primitives.colors.blue.500"),
 					},
 					Secondary: &InteractiveColorSet{
-						Default: TokenReference("{primitives.colors.gray.500}"),
-						Hover:   TokenReference("{primitives.colors.gray.600}"),
-						Active:  TokenReference("{primitives.colors.gray.700}"),
-						Focus:   TokenReference("{primitives.colors.gray.500}"),
+						Default: TokenReference("primitives.colors.gray.500"),
+						Hover:   TokenReference("primitives.colors.gray.600"),
+						Active:  TokenReference("primitives.colors.gray.700"),
+						Focus:   TokenReference("primitives.colors.gray.500"),
 					},
 					Accent: &InteractiveColorSet{
-						Default: TokenReference("{primitives.colors.purple.500}"),
-						Hover:   TokenReference("{primitives.colors.purple.600}"),
-						Active:  TokenReference("{primitives.colors.purple.700}"),
-						Focus:   TokenReference("{primitives.colors.purple.500}"),
+						Default: TokenReference("primitives.colors.purple.500"),
+						Hover:   TokenReference("primitives.colors.purple.600"),
+						Active:  TokenReference("primitives.colors.purple.700"),
+						Focus:   TokenReference("primitives.colors.purple.500"),
 					},
 				},
 				Feedback: &FeedbackColors{
 					Success: &FeedbackColorSet{
-						Default: TokenReference("{primitives.colors.green.500}"),
-						Subtle:  TokenReference("{primitives.colors.green.50}"),
-						Strong:  TokenReference("{primitives.colors.green.700}"),
+						Default: TokenReference("primitives.colors.green.500"),
+						Subtle:  TokenReference("primitives.colors.green.50"),
+						Strong:  TokenReference("primitives.colors.green.700"),
 					},
 					Error: &FeedbackColorSet{
-						Default: TokenReference("{primitives.colors.red.500}"),
-						Subtle:  TokenReference("{primitives.colors.red.50}"),
-						Strong:  TokenReference("{primitives.colors.red.700}"),
+						Default: TokenReference("primitives.colors.red.500"),
+						Subtle:  TokenReference("primitives.colors.red.50"),
+						Strong:  TokenReference("primitives.colors.red.700"),
 					},
 					Warning: &FeedbackColorSet{
-						Default: TokenReference("{primitives.colors.yellow.500}"),
-						Subtle:  TokenReference("{primitives.colors.yellow.50}"),
-						Strong:  TokenReference("{primitives.colors.yellow.700}"),
+						Default: TokenReference("primitives.colors.yellow.500"),
+						Subtle:  TokenReference("primitives.colors.yellow.50"),
+						Strong:  TokenReference("primitives.colors.yellow.700"),
 					},
 					Info: &FeedbackColorSet{
-						Default: TokenReference("{primitives.colors.sky.500}"),
-						Subtle:  TokenReference("{primitives.colors.sky.50}"),
-						Strong:  TokenReference("{primitives.colors.sky.700}"),
+						Default: TokenReference("primitives.colors.sky.500"),
+						Subtle:  TokenReference("primitives.colors.sky.50"),
+						Strong:  TokenReference("primitives.colors.sky.700"),
 					},
 				},
 			},
 			Typography: &SemanticTypography{
 				Headings: &HeadingTokens{
 					H1: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.sans}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.4xl}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.bold}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.tight}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.tight}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.sans"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.4xl"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.bold"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.tight"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.tight"),
 					},
 					H2: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.sans}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.3xl}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.bold}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.tight}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.tight}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.sans"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.3xl"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.bold"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.tight"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.tight"),
 					},
 					H3: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.sans}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.2xl}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.semibold}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.tight}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.normal}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.sans"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.2xl"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.semibold"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.tight"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.normal"),
 					},
 					H4: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.sans}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.xl}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.semibold}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.normal}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.normal}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.sans"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.xl"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.semibold"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.normal"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.normal"),
 					},
 					H5: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.sans}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.lg}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.semibold}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.normal}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.normal}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.sans"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.lg"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.semibold"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.normal"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.normal"),
 					},
 					H6: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.sans}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.base}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.semibold}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.normal}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.normal}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.sans"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.base"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.semibold"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.normal"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.normal"),
 					},
 				},
 				Body: &BodyTokens{
 					Large: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.sans}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.lg}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.normal}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.relaxed}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.normal}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.sans"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.lg"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.normal"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.relaxed"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.normal"),
 					},
 					Default: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.sans}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.base}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.normal}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.normal}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.normal}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.sans"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.base"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.normal"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.normal"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.normal"),
 					},
 					Small: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.sans}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.sm}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.normal}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.normal}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.normal}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.sans"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.sm"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.normal"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.normal"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.normal"),
 					},
 				},
 				Labels: &LabelTokens{
 					Large: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.sans}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.base}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.medium}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.normal}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.normal}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.sans"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.base"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.medium"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.normal"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.normal"),
 					},
 					Default: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.sans}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.sm}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.medium}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.normal}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.normal}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.sans"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.sm"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.medium"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.normal"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.normal"),
 					},
 					Small: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.sans}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.xs}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.medium}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.normal}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.normal}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.sans"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.xs"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.medium"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.normal"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.normal"),
 					},
 				},
 				Captions: &CaptionTokens{
 					Default: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.sans}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.sm}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.normal}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.normal}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.normal}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.sans"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.sm"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.normal"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.normal"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.normal"),
 					},
 					Small: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.sans}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.xs}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.normal}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.normal}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.normal}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.sans"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.xs"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.normal"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.normal"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.normal"),
 					},
 				},
 				Code: &CodeTokens{
 					Inline: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.mono}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.sm}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.normal}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.normal}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.normal}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.mono"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.sm"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.normal"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.normal"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.normal"),
 					},
 					Block: &TypographyToken{
-						FontFamily:    TokenReference("{primitives.typography.fontFamilies.mono}"),
-						FontSize:      TokenReference("{primitives.typography.fontSizes.sm}"),
-						FontWeight:    TokenReference("{primitives.typography.fontWeights.normal}"),
-						LineHeight:    TokenReference("{primitives.typography.lineHeights.relaxed}"),
-						LetterSpacing: TokenReference("{primitives.typography.letterSpacing.normal}"),
+						FontFamily:    TokenReference("primitives.typography.fontFamilies.mono"),
+						FontSize:      TokenReference("primitives.typography.fontSizes.sm"),
+						FontWeight:    TokenReference("primitives.typography.fontWeights.normal"),
+						LineHeight:    TokenReference("primitives.typography.lineHeights.relaxed"),
+						LetterSpacing: TokenReference("primitives.typography.letterSpacing.normal"),
 					},
 				},
 			},
 			Spacing: &SemanticSpacing{
 				Component: &ComponentSpacing{
-					Tight:   TokenReference("{primitives.spacing.xs}"),
-					Default: TokenReference("{primitives.spacing.md}"),
-					Loose:   TokenReference("{primitives.spacing.lg}"),
+					Tight:   TokenReference("primitives.spacing.xs"),
+					Default: TokenReference("primitives.spacing.md"),
+					Loose:   TokenReference("primitives.spacing.lg"),
 				},
 				Layout: &LayoutSpacing{
-					Section: TokenReference("{primitives.spacing.2xl}"),
-					Page:    TokenReference("{primitives.spacing.4xl}"),
+					Section: TokenReference("primitives.spacing.2xl"),
+					Page:    TokenReference("primitives.spacing.4xl"),
 				},
 			},
 			Interactive: &SemanticInteractive{
 				BorderRadius: &InteractiveBorderRadius{
-					Small:   TokenReference("{primitives.borders.radius.sm}"),
-					Default: TokenReference("{primitives.borders.radius.md}"),
-					Large:   TokenReference("{primitives.borders.radius.lg}"),
+					Small:   TokenReference("primitives.borders.radius.sm"),
+					Default: TokenReference("primitives.borders.radius.md"),
+					Large:   TokenReference("primitives.borders.radius.lg"),
 				},
 				Shadow: &InteractiveShadow{
-					Default: TokenReference("{primitives.shadows.sm}"),
-					Hover:   TokenReference("{primitives.shadows.md}"),
-					Focus:   TokenReference("{primitives.shadows.lg}"),
+					Default: TokenReference("primitives.shadows.sm"),
+					Hover:   TokenReference("primitives.shadows.md"),
+					Focus:   TokenReference("primitives.shadows.lg"),
 				},
 			},
 		},
 		Components: &ComponentTokens{
 			Button: &ButtonTokens{
 				Primary: &ButtonVariantTokens{
-					Background:       TokenReference("{semantic.colors.interactive.primary.default}"),
-					BackgroundHover:  TokenReference("{semantic.colors.interactive.primary.hover}"),
-					BackgroundActive: TokenReference("{semantic.colors.interactive.primary.active}"),
-					Color:            TokenReference("{semantic.colors.text.inverted}"),
-					ColorHover:       TokenReference("{semantic.colors.text.inverted}"),
-					Border:           TokenReference("{semantic.colors.interactive.primary.default}"),
-					BorderHover:      TokenReference("{semantic.colors.interactive.primary.hover}"),
-					BorderRadius:     TokenReference("{semantic.interactive.borderRadius.default}"),
-					Padding:          TokenReference("{semantic.spacing.component.default}"),
-					FontWeight:       TokenReference("{primitives.typography.fontWeights.medium}"),
-					Shadow:           TokenReference("{semantic.interactive.shadow.default}"),
-					ShadowHover:      TokenReference("{semantic.interactive.shadow.hover}"),
+					Background:       TokenReference("semantic.colors.interactive.primary.default"),
+					BackgroundHover:  TokenReference("semantic.colors.interactive.primary.hover"),
+					BackgroundActive: TokenReference("semantic.colors.interactive.primary.active"),
+					Color:            TokenReference("semantic.colors.text.inverted"),
+					ColorHover:       TokenReference("semantic.colors.text.inverted"),
+					Border:           TokenReference("semantic.colors.interactive.primary.default"),
+					BorderHover:      TokenReference("semantic.colors.interactive.primary.hover"),
+					BorderRadius:     TokenReference("semantic.interactive.borderRadius.default"),
+					Padding:          TokenReference("semantic.spacing.component.default"),
+					FontWeight:       TokenReference("primitives.typography.fontWeights.medium"),
+					Shadow:           TokenReference("semantic.interactive.shadow.default"),
+					ShadowHover:      TokenReference("semantic.interactive.shadow.hover"),
 				},
 				Secondary: &ButtonVariantTokens{
-					Background:       TokenReference("{semantic.colors.background.default}"),
-					BackgroundHover:  TokenReference("{semantic.colors.background.subtle}"),
-					BackgroundActive: TokenReference("{semantic.colors.background.emphasis}"),
-					Color:            TokenReference("{semantic.colors.text.default}"),
-					ColorHover:       TokenReference("{semantic.colors.text.default}"),
-					Border:           TokenReference("{semantic.colors.border.default}"),
-					BorderHover:      TokenReference("{semantic.colors.border.strong}"),
-					BorderRadius:     TokenReference("{semantic.interactive.borderRadius.default}"),
-					Padding:          TokenReference("{semantic.spacing.component.default}"),
-					FontWeight:       TokenReference("{primitives.typography.fontWeights.medium}"),
-					Shadow:           TokenReference("{semantic.interactive.shadow.default}"),
-					ShadowHover:      TokenReference("{semantic.interactive.shadow.hover}"),
+					Background:       TokenReference("semantic.colors.background.default"),
+					BackgroundHover:  TokenReference("semantic.colors.background.subtle"),
+					BackgroundActive: TokenReference("semantic.colors.background.emphasis"),
+					Color:            TokenReference("semantic.colors.text.default"),
+					ColorHover:       TokenReference("semantic.colors.text.default"),
+					Border:           TokenReference("semantic.colors.border.default"),
+					BorderHover:      TokenReference("semantic.colors.border.strong"),
+					BorderRadius:     TokenReference("semantic.interactive.borderRadius.default"),
+					Padding:          TokenReference("semantic.spacing.component.default"),
+					FontWeight:       TokenReference("primitives.typography.fontWeights.medium"),
+					Shadow:           TokenReference("semantic.interactive.shadow.default"),
+					ShadowHover:      TokenReference("semantic.interactive.shadow.hover"),
 				},
 				Outline: &ButtonVariantTokens{
 					Background:       TokenReference("transparent"),
-					BackgroundHover:  TokenReference("{semantic.colors.interactive.primary.default}"),
-					BackgroundActive: TokenReference("{semantic.colors.interactive.primary.active}"),
-					Color:            TokenReference("{semantic.colors.interactive.primary.default}"),
-					ColorHover:       TokenReference("{semantic.colors.text.inverted}"),
-					Border:           TokenReference("{semantic.colors.interactive.primary.default}"),
-					BorderHover:      TokenReference("{semantic.colors.interactive.primary.hover}"),
-					BorderRadius:     TokenReference("{semantic.interactive.borderRadius.default}"),
-					Padding:          TokenReference("{semantic.spacing.component.default}"),
-					FontWeight:       TokenReference("{primitives.typography.fontWeights.medium}"),
+					BackgroundHover:  TokenReference("semantic.colors.interactive.primary.default"),
+					BackgroundActive: TokenReference("semantic.colors.interactive.primary.active"),
+					Color:            TokenReference("semantic.colors.interactive.primary.default"),
+					ColorHover:       TokenReference("semantic.colors.text.inverted"),
+					Border:           TokenReference("semantic.colors.interactive.primary.default"),
+					BorderHover:      TokenReference("semantic.colors.interactive.primary.hover"),
+					BorderRadius:     TokenReference("semantic.interactive.borderRadius.default"),
+					Padding:          TokenReference("semantic.spacing.component.default"),
+					FontWeight:       TokenReference("primitives.typography.fontWeights.medium"),
 					Shadow:           TokenReference("none"),
-					ShadowHover:      TokenReference("{semantic.interactive.shadow.hover}"),
+					ShadowHover:      TokenReference("semantic.interactive.shadow.hover"),
 				},
 				Ghost: &ButtonVariantTokens{
 					Background:       TokenReference("transparent"),
-					BackgroundHover:  TokenReference("{semantic.colors.background.subtle}"),
-					BackgroundActive: TokenReference("{semantic.colors.background.emphasis}"),
-					Color:            TokenReference("{semantic.colors.text.default}"),
-					ColorHover:       TokenReference("{semantic.colors.text.default}"),
+					BackgroundHover:  TokenReference("semantic.colors.background.subtle"),
+					BackgroundActive: TokenReference("semantic.colors.background.emphasis"),
+					Color:            TokenReference("semantic.colors.text.default"),
+					ColorHover:       TokenReference("semantic.colors.text.default"),
 					Border:           TokenReference("transparent"),
 					BorderHover:      TokenReference("transparent"),
-					BorderRadius:     TokenReference("{semantic.interactive.borderRadius.default}"),
-					Padding:          TokenReference("{semantic.spacing.component.default}"),
-					FontWeight:       TokenReference("{primitives.typography.fontWeights.medium}"),
+					BorderRadius:     TokenReference("semantic.interactive.borderRadius.default"),
+					Padding:          TokenReference("semantic.spacing.component.default"),
+					FontWeight:       TokenReference("primitives.typography.fontWeights.medium"),
 					Shadow:           TokenReference("none"),
 					ShadowHover:      TokenReference("none"),
 				},
 				Destructive: &ButtonVariantTokens{
-					Background:       TokenReference("{semantic.colors.feedback.error.default}"),
-					BackgroundHover:  TokenReference("{semantic.colors.feedback.error.strong}"),
-					BackgroundActive: TokenReference("{semantic.colors.feedback.error.strong}"),
-					Color:            TokenReference("{semantic.colors.text.inverted}"),
-					ColorHover:       TokenReference("{semantic.colors.text.inverted}"),
-					Border:           TokenReference("{semantic.colors.feedback.error.default}"),
-					BorderHover:      TokenReference("{semantic.colors.feedback.error.strong}"),
-					BorderRadius:     TokenReference("{semantic.interactive.borderRadius.default}"),
-					Padding:          TokenReference("{semantic.spacing.component.default}"),
-					FontWeight:       TokenReference("{primitives.typography.fontWeights.medium}"),
-					Shadow:           TokenReference("{semantic.interactive.shadow.default}"),
-					ShadowHover:      TokenReference("{semantic.interactive.shadow.hover}"),
+					Background:       TokenReference("semantic.colors.feedback.error.default"),
+					BackgroundHover:  TokenReference("semantic.colors.feedback.error.strong"),
+					BackgroundActive: TokenReference("semantic.colors.feedback.error.strong"),
+					Color:            TokenReference("semantic.colors.text.inverted"),
+					ColorHover:       TokenReference("semantic.colors.text.inverted"),
+					Border:           TokenReference("semantic.colors.feedback.error.default"),
+					BorderHover:      TokenReference("semantic.colors.feedback.error.strong"),
+					BorderRadius:     TokenReference("semantic.interactive.borderRadius.default"),
+					Padding:          TokenReference("semantic.spacing.component.default"),
+					FontWeight:       TokenReference("primitives.typography.fontWeights.medium"),
+					Shadow:           TokenReference("semantic.interactive.shadow.default"),
+					ShadowHover:      TokenReference("semantic.interactive.shadow.hover"),
 				},
 			},
 			Input: &InputTokens{
-				Background:      TokenReference("{semantic.colors.background.default}"),
-				BackgroundFocus: TokenReference("{semantic.colors.background.default}"),
-				Border:          TokenReference("{semantic.colors.border.default}"),
-				BorderFocus:     TokenReference("{semantic.colors.border.focus}"),
-				BorderError:     TokenReference("{semantic.colors.feedback.error.default}"),
-				BorderRadius:    TokenReference("{semantic.interactive.borderRadius.default}"),
-				Padding:         TokenReference("{semantic.spacing.component.default}"),
-				Color:           TokenReference("{semantic.colors.text.default}"),
-				Placeholder:     TokenReference("{semantic.colors.text.subtle}"),
+				Background:      TokenReference("semantic.colors.background.default"),
+				BackgroundFocus: TokenReference("semantic.colors.background.default"),
+				Border:          TokenReference("semantic.colors.border.default"),
+				BorderFocus:     TokenReference("semantic.colors.border.focus"),
+				BorderError:     TokenReference("semantic.colors.feedback.error.default"),
+				BorderRadius:    TokenReference("semantic.interactive.borderRadius.default"),
+				Padding:         TokenReference("semantic.spacing.component.default"),
+				Color:           TokenReference("semantic.colors.text.default"),
+				Placeholder:     TokenReference("semantic.colors.text.subtle"),
 			},
 			Card: &CardTokens{
-				Background:   TokenReference("{semantic.colors.background.default}"),
-				Border:       TokenReference("{semantic.colors.border.subtle}"),
-				BorderRadius: TokenReference("{semantic.interactive.borderRadius.large}"),
-				Shadow:       TokenReference("{semantic.interactive.shadow.default}"),
-				Padding:      TokenReference("{semantic.spacing.component.loose}"),
+				Background:   TokenReference("semantic.colors.background.default"),
+				Border:       TokenReference("semantic.colors.border.subtle"),
+				BorderRadius: TokenReference("semantic.interactive.borderRadius.large"),
+				Shadow:       TokenReference("semantic.interactive.shadow.default"),
+				Padding:      TokenReference("semantic.spacing.component.loose"),
 			},
 			Modal: &ModalTokens{
-				Background:   TokenReference("{semantic.colors.background.default}"),
-				Overlay:      TokenReference("{semantic.colors.background.overlay}"),
-				Border:       TokenReference("{semantic.colors.border.subtle}"),
-				BorderRadius: TokenReference("{semantic.interactive.borderRadius.large}"),
-				Shadow:       TokenReference("{semantic.interactive.shadow.focus}"),
-				Padding:      TokenReference("{semantic.spacing.component.loose}"),
+				Background:   TokenReference("semantic.colors.background.default"),
+				Overlay:      TokenReference("semantic.colors.background.overlay"),
+				Border:       TokenReference("semantic.colors.border.subtle"),
+				BorderRadius: TokenReference("semantic.interactive.borderRadius.large"),
+				Shadow:       TokenReference("semantic.interactive.shadow.focus"),
+				Padding:      TokenReference("semantic.spacing.component.loose"),
 			},
 			Form: &FormTokens{
-				Background:   TokenReference("{semantic.colors.background.default}"),
-				Padding:      TokenReference("{semantic.spacing.component.loose}"),
-				BorderRadius: TokenReference("{semantic.interactive.borderRadius.default}"),
+				Background:   TokenReference("semantic.colors.background.default"),
+				Padding:      TokenReference("semantic.spacing.component.loose"),
+				BorderRadius: TokenReference("semantic.interactive.borderRadius.default"),
 				Shadow:       TokenReference("none"),
-				Spacing:      TokenReference("{semantic.spacing.component.default}"),
+				Spacing:      TokenReference("semantic.spacing.component.default"),
 			},
 			Table: &TableTokens{
-				Background:       TokenReference("{semantic.colors.background.default}"),
-				BackgroundHover:  TokenReference("{semantic.colors.background.subtle}"),
-				Border:           TokenReference("{semantic.colors.border.subtle}"),
-				HeaderBackground: TokenReference("{semantic.colors.background.emphasis}"),
-				HeaderColor:      TokenReference("{semantic.colors.text.default}"),
-				Padding:          TokenReference("{semantic.spacing.component.default}"),
+				Background:       TokenReference("semantic.colors.background.default"),
+				BackgroundHover:  TokenReference("semantic.colors.background.subtle"),
+				Border:           TokenReference("semantic.colors.border.subtle"),
+				HeaderBackground: TokenReference("semantic.colors.background.emphasis"),
+				HeaderColor:      TokenReference("semantic.colors.text.default"),
+				Padding:          TokenReference("semantic.spacing.component.default"),
 			},
 			Navigation: &NavigationTokens{
-				Background:       TokenReference("{semantic.colors.background.default}"),
-				BackgroundHover:  TokenReference("{semantic.colors.background.subtle}"),
-				BackgroundActive: TokenReference("{semantic.colors.background.emphasis}"),
-				Color:            TokenReference("{semantic.colors.text.default}"),
-				ColorHover:       TokenReference("{semantic.colors.text.default}"),
-				ColorActive:      TokenReference("{semantic.colors.interactive.primary.default}"),
-				Border:           TokenReference("{semantic.colors.border.subtle}"),
-				Padding:          TokenReference("{semantic.spacing.component.default}"),
+				Background:       TokenReference("semantic.colors.background.default"),
+				BackgroundHover:  TokenReference("semantic.colors.background.subtle"),
+				BackgroundActive: TokenReference("semantic.colors.background.emphasis"),
+				Color:            TokenReference("semantic.colors.text.default"),
+				ColorHover:       TokenReference("semantic.colors.text.default"),
+				ColorActive:      TokenReference("semantic.colors.interactive.primary.default"),
+				Border:           TokenReference("semantic.colors.border.subtle"),
+				Padding:          TokenReference("semantic.spacing.component.default"),
 			},
 		},
 	}
@@ -1803,7 +1803,7 @@ func MergeTokens(base, override *DesignTokens) *DesignTokens {
 
 // ValidateTokenPath checks if a token path is valid.
 func ValidateTokenPath(path string) error {
-	ref := TokenReference("{" + path + "}")
+	ref := TokenReference("" + path + "")
 	return ref.Validate()
 }
 
@@ -1831,12 +1831,12 @@ func GetDefaultRegistry() *TokenRegistry {
 // GetSpacing returns a spacing token value.
 func GetSpacing(key string) string {
 	registry := GetDefaultRegistry()
-	tokenRef := TokenReference(fmt.Sprintf("{primitives.spacing.%s}", key))
+	tokenRef := TokenReference(fmt.Sprintf("primitives.spacing.%s", key))
 
 	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
 	if err != nil {
 		// Fallback to semantic spacing
-		semanticRef := TokenReference(fmt.Sprintf("{semantic.spacing.%s}", key))
+		semanticRef := TokenReference(fmt.Sprintf("semantic.spacing.%s", key))
 		if semanticResolved, semanticErr := registry.ResolveToken(context.Background(), semanticRef); semanticErr == nil {
 			return semanticResolved
 		}
@@ -1853,16 +1853,16 @@ func GetColor(path string) string {
 	// Support both full paths and shorthand
 	var tokenRef TokenReference
 	if strings.Contains(path, ".") {
-		tokenRef = TokenReference(fmt.Sprintf("{%s}", path))
+		tokenRef = TokenReference(fmt.Sprintf("%s", path))
 	} else {
 		// Try common color paths
-		tokenRef = TokenReference(fmt.Sprintf("{colors.%s}", path))
+		tokenRef = TokenReference(fmt.Sprintf("colors.%s", path))
 	}
 
 	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
 	if err != nil {
 		// Try semantic colors as fallback
-		semanticRef := TokenReference(fmt.Sprintf("{semantic.colors.%s}", path))
+		semanticRef := TokenReference(fmt.Sprintf("semantic.colors.%s", path))
 		if semanticResolved, semanticErr := registry.ResolveToken(context.Background(), semanticRef); semanticErr == nil {
 			return semanticResolved
 		}
@@ -1875,12 +1875,12 @@ func GetColor(path string) string {
 // GetFontSize returns a font size token value.
 func GetFontSize(key string) string {
 	registry := GetDefaultRegistry()
-	tokenRef := TokenReference(fmt.Sprintf("{primitives.typography.fontSizes.%s}", key))
+	tokenRef := TokenReference(fmt.Sprintf("primitives.typography.fontSizes.%s", key))
 
 	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
 	if err != nil {
 		// Fallback to semantic typography
-		semanticRef := TokenReference(fmt.Sprintf("{semantic.typography.%s}", key))
+		semanticRef := TokenReference(fmt.Sprintf("semantic.typography.%s", key))
 		if semanticResolved, semanticErr := registry.ResolveToken(context.Background(), semanticRef); semanticErr == nil {
 			return semanticResolved
 		}
@@ -1893,12 +1893,12 @@ func GetFontSize(key string) string {
 // GetShadow returns a shadow token value.
 func GetShadow(key string) string {
 	registry := GetDefaultRegistry()
-	tokenRef := TokenReference(fmt.Sprintf("{primitives.shadows.%s}", key))
+	tokenRef := TokenReference(fmt.Sprintf("primitives.shadows.%s", key))
 
 	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
 	if err != nil {
 		// Fallback to semantic shadows
-		semanticRef := TokenReference(fmt.Sprintf("{semantic.interactive.shadow.%s}", key))
+		semanticRef := TokenReference(fmt.Sprintf("semantic.interactive.shadow.%s", key))
 		if semanticResolved, semanticErr := registry.ResolveToken(context.Background(), semanticRef); semanticErr == nil {
 			return semanticResolved
 		}
@@ -1911,12 +1911,12 @@ func GetShadow(key string) string {
 // GetBorderRadius returns a border radius token value.
 func GetBorderRadius(key string) string {
 	registry := GetDefaultRegistry()
-	tokenRef := TokenReference(fmt.Sprintf("{primitives.borders.radius.%s}", key))
+	tokenRef := TokenReference(fmt.Sprintf("primitives.borders.radius.%s", key))
 
 	resolved, err := registry.ResolveToken(context.Background(), tokenRef)
 	if err != nil {
 		// Fallback to semantic border radius
-		semanticRef := TokenReference(fmt.Sprintf("{semantic.interactive.borderRadius.%s}", key))
+		semanticRef := TokenReference(fmt.Sprintf("semantic.interactive.borderRadius.%s", key))
 		if semanticResolved, semanticErr := registry.ResolveToken(context.Background(), semanticRef); semanticErr == nil {
 			return semanticResolved
 		}

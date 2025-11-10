@@ -17,6 +17,8 @@ type User interface {
 	GetRoles() []string
 	HasPermission(permission string) bool
 	HasRole(role string) bool
+	// I18n support
+	GetPreferredLocale() string
 }
 
 // TenantOverride represents tenant-specific customizations
@@ -51,6 +53,9 @@ type Enricher interface {
 
 	// EnrichField enriches a single field with runtime data
 	EnrichField(ctx context.Context, field *schema.Field, user User, data map[string]any) error
+
+	// EnrichWithLocale enriches a schema with localization support
+	EnrichWithLocale(ctx context.Context, schema *schema.Schema, user User, locale string) (*schema.Schema, error)
 
 	// SetTenantProvider sets the tenant customization provider
 	SetTenantProvider(provider TenantProvider)
@@ -250,6 +255,39 @@ func (e *DefaultEnricher) EnrichWithUser(ctx context.Context, schemaObj *schema.
 	}
 
 	return enriched, nil
+}
+
+// EnrichWithLocale enriches a schema with localization support
+func (e *DefaultEnricher) EnrichWithLocale(ctx context.Context, schemaObj *schema.Schema, user User, locale string) (*schema.Schema, error) {
+	if schemaObj == nil {
+		return nil, fmt.Errorf("schema cannot be nil")
+	}
+
+	if user == nil {
+		return nil, fmt.Errorf("user cannot be nil")
+	}
+
+	// Use user's preferred locale if none specified
+	if locale == "" {
+		locale = user.GetPreferredLocale()
+	}
+	if locale == "" {
+		locale = "en" // Default to English
+	}
+
+	// First localize the schema
+	localizedSchema, err := schema.LocalizeSchema(ctx, schemaObj, locale)
+	if err != nil {
+		return nil, fmt.Errorf("localization failed: %w", err)
+	}
+
+	// Then enrich with user context
+	enrichedSchema, err := e.EnrichWithUser(ctx, localizedSchema, user)
+	if err != nil {
+		return nil, fmt.Errorf("enrichment failed: %w", err)
+	}
+
+	return enrichedSchema, nil
 }
 
 // EnrichField enriches a single field with runtime data
@@ -469,6 +507,11 @@ func (u *DefaultUser) GetRoles() []string {
 	return u.Roles
 }
 
+// GetPreferredLocale returns user's preferred locale
+func (u *DefaultUser) GetPreferredLocale() string {
+	return "en" // Default implementation
+}
+
 // HasPermission checks if user has specific permission
 func (u *DefaultUser) HasPermission(permission string) bool {
 	for _, perm := range u.Permissions {
@@ -509,6 +552,11 @@ func (u *BasicUser) GetPermissions() []string {
 // GetRoles returns user roles
 func (u *BasicUser) GetRoles() []string {
 	return u.Roles
+}
+
+// GetPreferredLocale returns user's preferred locale
+func (u *BasicUser) GetPreferredLocale() string {
+	return "en" // Default implementation
 }
 
 // HasPermission checks if user has specific permission

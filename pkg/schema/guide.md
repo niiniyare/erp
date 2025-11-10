@@ -588,17 +588,17 @@ Tokens can reference other tokens using the `{token.path}` syntax:
   "semantic": {
     "colors": {
       "primary": {
-        "base": "{primitives.colors.blue.500}",
-        "hover": "{primitives.colors.blue.600}",
-        "active": "{primitives.colors.blue.700}"
+        "base": "primitives.colors.blue.500",
+        "hover": "primitives.colors.blue.600",
+        "active": "primitives.colors.blue.700"
       }
     }
   },
   "components": {
     "button": {
       "primary": {
-        "background": "{semantic.colors.primary.base}",
-        "color": "{semantic.colors.text.on-primary}",
+        "background": "semantic.colors.primary.base",
+        "color": "semantic.colors.text.on-primary",
         "border": "none"
       }
     }
@@ -661,15 +661,15 @@ theme := &schema.Theme{
     Tokens: &schema.DesignTokens{
         Semantic: &schema.SemanticTokens{
             Colors: &schema.ColorTokens{
-                Background: schema.TokenReference("{primitives.colors.white}"),
-                Text:       schema.TokenReference("{primitives.colors.gray.900}"),
+                Background: schema.TokenReference("primitives.colors.white"),
+                Text:       schema.TokenReference("primitives.colors.gray.900"),
             },
         },
     },
     DarkMode: &schema.DarkModeTokens{
         Colors: &schema.ColorTokens{
-            Background: schema.TokenReference("{primitives.colors.gray.900}"),
-            Text:       schema.TokenReference("{primitives.colors.white}"),
+            Background: schema.TokenReference("primitives.colors.gray.900"),
+            Text:       schema.TokenReference("primitives.colors.white"),
         },
     },
 }
@@ -1508,41 +1508,41 @@ customTheme := &schema.Theme{
         },
         Semantic: &schema.SemanticTokens{
             Colors: &schema.ColorTokens{
-                Primary:    schema.TokenReference("{primitives.colors.primary.500}"),
-                Success:    schema.TokenReference("{primitives.colors.green.500}"),
-                Warning:    schema.TokenReference("{primitives.colors.yellow.500}"),
-                Error:      schema.TokenReference("{primitives.colors.red.500}"),
-                Background: schema.TokenReference("{primitives.colors.white}"),
-                Text:       schema.TokenReference("{primitives.colors.gray.900}"),
+                Primary:    schema.TokenReference("primitives.colors.primary.500"),
+                Success:    schema.TokenReference("primitives.colors.green.500"),
+                Warning:    schema.TokenReference("primitives.colors.yellow.500"),
+                Error:      schema.TokenReference("primitives.colors.red.500"),
+                Background: schema.TokenReference("primitives.colors.white"),
+                Text:       schema.TokenReference("primitives.colors.gray.900"),
             },
         },
         Components: &schema.ComponentTokens{
             Button: map[string]map[string]string{
                 "primary": {
-                    "background":    "{semantic.colors.primary}",
-                    "color":        "{semantic.colors.white}",
+                    "background":    "semantic.colors.primary",
+                    "color":        "semantic.colors.white",
                     "border":       "none",
-                    "borderRadius": "{primitives.borders.radius.md}",
-                    "padding":      "{primitives.spacing.2} {primitives.spacing.4}",
+                    "borderRadius": "primitives.borders.radius.md",
+                    "padding":      "primitives.spacing.2} {primitives.spacing.4",
                 },
                 "secondary": {
                     "background":    "transparent", 
-                    "color":        "{semantic.colors.primary}",
-                    "border":       "1px solid {semantic.colors.primary}",
-                    "borderRadius": "{primitives.borders.radius.md}",
-                    "padding":      "{primitives.spacing.2} {primitives.spacing.4}",
+                    "color":        "semantic.colors.primary",
+                    "border":       "1px solid {semantic.colors.primary",
+                    "borderRadius": "primitives.borders.radius.md",
+                    "padding":      "primitives.spacing.2} {primitives.spacing.4",
                 },
             },
             Input: map[string]map[string]string{
                 "default": {
-                    "background":    "{semantic.colors.background}",
-                    "color":        "{semantic.colors.text}",
-                    "border":       "1px solid {primitives.colors.gray.300}",
-                    "borderRadius": "{primitives.borders.radius.md}",
-                    "padding":      "{primitives.spacing.2} {primitives.spacing.3}",
+                    "background":    "semantic.colors.background",
+                    "color":        "semantic.colors.text",
+                    "border":       "1px solid {primitives.colors.gray.300",
+                    "borderRadius": "primitives.borders.radius.md",
+                    "padding":      "primitives.spacing.2} {primitives.spacing.3",
                 },
                 "error": {
-                    "borderColor": "{semantic.colors.error}",
+                    "borderColor": "semantic.colors.error",
                 },
             },
         },
@@ -1559,9 +1559,9 @@ err := schema.RegisterTheme(customTheme)
 // Add dark mode tokens
 customTheme.DarkMode = &schema.DarkModeTokens{
     Colors: &schema.ColorTokens{
-        Background: schema.TokenReference("{primitives.colors.gray.900}"),
-        Text:       schema.TokenReference("{primitives.colors.white}"),
-        Primary:    schema.TokenReference("{primitives.colors.primary.400}"),
+        Background: schema.TokenReference("primitives.colors.gray.900"),
+        Text:       schema.TokenReference("primitives.colors.white"),
+        Primary:    schema.TokenReference("primitives.colors.primary.400"),
     },
 }
 

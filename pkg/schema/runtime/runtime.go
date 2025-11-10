@@ -22,6 +22,7 @@ type Runtime struct {
 	renderer    schema.RuntimeRenderer          // UI rendering implementation
 	validator   schema.RuntimeValidator         // Validation implementation
 	conditional schema.RuntimeConditionalEngine // Conditional logic implementation
+	i18nManager *schema.I18nManager             // Internationalization manager
 
 	// Configuration
 	config *schema.RuntimeConfig
@@ -45,6 +46,7 @@ type RuntimeBuilder struct {
 	renderer      schema.RuntimeRenderer
 	validator     schema.RuntimeValidator
 	conditional   schema.RuntimeConditionalEngine
+	i18nManager   *schema.I18nManager
 	initialData   map[string]any
 	eventHandlers map[schema.EventType][]schema.EventCallback
 }
@@ -74,6 +76,12 @@ func (b *RuntimeBuilder) WithValidator(validator schema.RuntimeValidator) *Runti
 // WithConditionalEngine sets the conditional logic implementation
 func (b *RuntimeBuilder) WithConditionalEngine(conditional schema.RuntimeConditionalEngine) *RuntimeBuilder {
 	b.conditional = conditional
+	return b
+}
+
+// WithI18nManager sets the i18n manager
+func (b *RuntimeBuilder) WithI18nManager(i18nManager *schema.I18nManager) *RuntimeBuilder {
+	b.i18nManager = i18nManager
 	return b
 }
 
@@ -135,6 +143,7 @@ func (b *RuntimeBuilder) Build(ctx context.Context) (*Runtime, error) {
 		renderer:      b.renderer,
 		validator:     b.validator,
 		conditional:   b.conditional,
+		i18nManager:   b.i18nManager,
 		config:        b.config,
 		initializedAt: time.Now(),
 		lastActivity:  time.Now(),
@@ -260,6 +269,10 @@ func (r *Runtime) HandleFieldChange(ctx context.Context, fieldName string, newVa
 		field := r.getField(fieldName)
 		if field != nil {
 			errors := r.validator.ValidateField(ctx, field, newValue, r.state.GetAll())
+			// Localize validation messages if i18n manager is available
+			if r.i18nManager != nil {
+				errors = r.i18nManager.LocalizeValidationMessages(errors, r.i18nManager.GetCurrentLocale())
+			}
 			r.state.SetErrors(fieldName, errors)
 		}
 	}
@@ -295,6 +308,10 @@ func (r *Runtime) HandleFieldBlur(ctx context.Context, fieldName string, value a
 		field := r.getField(fieldName)
 		if field != nil {
 			errors := r.validator.ValidateField(ctx, field, value, r.state.GetAll())
+			// Localize validation messages if i18n manager is available
+			if r.i18nManager != nil {
+				errors = r.i18nManager.LocalizeValidationMessages(errors, r.i18nManager.GetCurrentLocale())
+			}
 			r.state.SetErrors(fieldName, errors)
 		}
 	}
@@ -334,6 +351,10 @@ func (r *Runtime) HandleSubmit(ctx context.Context) error {
 
 		// Update state with validation errors
 		for field, errors := range allErrors {
+			// Localize validation messages if i18n manager is available
+			if r.i18nManager != nil {
+				errors = r.i18nManager.LocalizeValidationMessages(errors, r.i18nManager.GetCurrentLocale())
+			}
 			r.state.SetErrors(field, errors)
 		}
 
@@ -384,7 +405,12 @@ func (r *Runtime) ValidateField(ctx context.Context, fieldName string, value any
 		return nil // Don't validate invisible fields
 	}
 
-	return r.validator.ValidateField(ctx, field, value, r.state.GetAll())
+	errors := r.validator.ValidateField(ctx, field, value, r.state.GetAll())
+	// Localize validation messages if i18n manager is available
+	if r.i18nManager != nil {
+		errors = r.i18nManager.LocalizeValidationMessages(errors, r.i18nManager.GetCurrentLocale())
+	}
+	return errors
 }
 
 // ValidateCurrentState validates all fields using current state
@@ -946,4 +972,34 @@ func NewRuntimeFull(
 		panic(fmt.Sprintf("failed to create runtime: %v", err))
 	}
 	return runtime
+}
+
+// NewRuntimeWithI18n creates a runtime with i18n support
+func NewRuntimeWithI18n(enrichedSchema *schema.Schema, i18nManager *schema.I18nManager) *Runtime {
+	runtime, err := NewRuntimeBuilder(enrichedSchema).
+		WithI18nManager(i18nManager).
+		Build(context.Background())
+	if err != nil {
+		panic(fmt.Sprintf("failed to create runtime: %v", err))
+	}
+	return runtime
+}
+
+// GetI18nManager returns the i18n manager
+func (r *Runtime) GetI18nManager() *schema.I18nManager {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.i18nManager
+}
+
+// SetLocale changes the current locale for the runtime
+func (r *Runtime) SetLocale(ctx context.Context, locale string) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if r.i18nManager == nil {
+		return fmt.Errorf("no i18n manager configured")
+	}
+
+	return r.i18nManager.SetCurrentLocale(locale)
 }
