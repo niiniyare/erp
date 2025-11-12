@@ -1,8 +1,10 @@
 package molecules
 
 import (
+	"fmt"
+	"strconv"
 	"strings"
-	"../atoms"
+	"github.com/niiniyare/erp/views/components/atoms"
 )
 
 // SearchBoxSize defines the size variants for the search box
@@ -144,15 +146,15 @@ templ SearchBox(props SearchBoxProps) {
 				ID:          props.ID,
 				Name:        props.Name,
 				Value:       props.Value,
-				Placeholder: if props.Placeholder != "" { props.Placeholder } else { "Search..." },
+				Placeholder: getPlaceholderValue(props.Placeholder),
 				Disabled:    props.Disabled,
 				Class:       "pl-9 pr-8",
 				HXPost:      props.HXPost,
 				HXGet:       props.HXGet,
 				HXTarget:    props.HXTarget,
 				HXSwap:      props.HXSwap,
-				HXTrigger:   if props.HXTrigger != "" { props.HXTrigger } else { "keyup changed delay:300ms" },
-				AlpineModel: if props.AlpineModel != "" { props.AlpineModel } else { "searchQuery" },
+				HXTrigger:   getHXTriggerValue(props.HXTrigger),
+				AlpineModel: getAlpineModelValue(props.AlpineModel),
 				AlpineChange: "handleSearch()",
 				AlpineFocus: "showSuggestions = true",
 			})
@@ -221,9 +223,9 @@ templ suggestionItem(suggestion SearchSuggestion, props SearchBoxProps) {
 		if suggestion.URL != "" {
 			hx-get={ suggestion.URL }
 			hx-target={ props.HXTarget }
-			hx-swap={ if props.HXSwap != "" { props.HXSwap } else { "innerHTML" } }
+			hx-swap={ getHXSwapValue(props.HXSwap) }
 		}
-		x-on:click={ "selectSuggestion(" + suggestionToJS(suggestion) + ")" }
+		x-on:click={ generateSelectSuggestionHandler(suggestion) }
 	>
 		if suggestion.Icon != "" {
 			<span class="shrink-0">
@@ -260,7 +262,7 @@ func getDefaultAlpineData(props SearchBoxProps) string {
 		showSuggestions: false,
 		selectedIndex: -1,
 		loading: false,
-		minChars: ` + strings.Itoa(minChars) + `,
+		minChars: ` + strconv.Itoa(minChars) + `,
 		debounceTimer: null,
 		
 		handleSearch() {
@@ -275,7 +277,7 @@ func getDefaultAlpineData(props SearchBoxProps) string {
 					this.suggestions = [];
 					this.showSuggestions = false;
 				}
-			}, ` + strings.Itoa(debounce) + `);
+			}, ` + strconv.Itoa(debounce) + `);
 		},
 		
 		search() {
@@ -286,7 +288,7 @@ func getDefaultAlpineData(props SearchBoxProps) string {
 		},
 		
 		selectSuggestion(suggestion) {
-			` + if props.ClearOnSelect { `this.searchQuery = '';` } else { `this.searchQuery = suggestion.label;` } + `
+			` + getClearOnSelectJS(props.ClearOnSelect) + `
 			this.showSuggestions = false;
 			this.selectedIndex = -1;
 			` + props.OnSelect + `
@@ -345,6 +347,123 @@ func suggestionToJS(suggestion SearchSuggestion) string {
 	}`
 }
 
+// getHXSwapValue returns the HX swap value, defaulting to "innerHTML" if empty
+func getHXSwapValue(swap string) string {
+	if swap != "" {
+		return swap
+	}
+	return "innerHTML"
+}
+
+// generateSelectSuggestionHandler creates the x-on:click handler for selecting a suggestion
+func generateSelectSuggestionHandler(suggestion SearchSuggestion) string {
+	return fmt.Sprintf("selectSuggestion(%s)", suggestionToJS(suggestion))
+}
+
+// getClearOnSelectJS returns the JavaScript for clearing on select
+func getClearOnSelectJS(clearOnSelect bool) string {
+	if clearOnSelect {
+		return "this.searchQuery = '';"
+	}
+	return "this.searchQuery = suggestion.label;"
+}
+
+// getPlaceholderValue returns the placeholder value, defaulting to "Search..." if empty
+func getPlaceholderValue(placeholder string) string {
+	if placeholder != "" {
+		return placeholder
+	}
+	return "Search..."
+}
+
+// getHXTriggerValue returns the HX trigger value, defaulting to "keyup changed delay:300ms" if empty
+func getHXTriggerValue(trigger string) string {
+	if trigger != "" {
+		return trigger
+	}
+	return "keyup changed delay:300ms"
+}
+
+// getAlpineModelValue returns the Alpine model value, defaulting to "searchQuery" if empty
+func getAlpineModelValue(model string) string {
+	if model != "" {
+		return model
+	}
+	return "searchQuery"
+}
+
+// getSearchSizeValue returns the search size value with default
+func getSearchSizeValue(size SearchBoxSize) SearchBoxSize {
+	if size != "" {
+		return size
+	}
+	return SearchBoxSizeMD
+}
+
+// getGlobalSearchID returns the global search ID with default
+func getGlobalSearchID(id string) string {
+	if id != "" {
+		return id
+	}
+	return "global-search"
+}
+
+// getGlobalSearchName returns the global search name with default
+func getGlobalSearchName(name string) string {
+	if name != "" {
+		return name
+	}
+	return "q"
+}
+
+// getGlobalSearchPlaceholder returns the global search placeholder with default
+func getGlobalSearchPlaceholder(placeholder string) string {
+	if placeholder != "" {
+		return placeholder
+	}
+	return "Search everything..."
+}
+
+// getGlobalSearchHXGet returns the global search HX get value with default
+func getGlobalSearchHXGet(hxGet string) string {
+	if hxGet != "" {
+		return hxGet
+	}
+	return "/search"
+}
+
+// getGlobalSearchHXTarget returns the global search HX target value with default
+func getGlobalSearchHXTarget(hxTarget string) string {
+	if hxTarget != "" {
+		return hxTarget
+	}
+	return "#search-results"
+}
+
+// getQuickSearchPlaceholder returns the placeholder for quick search
+func getQuickSearchPlaceholder(placeholder string) string {
+	if placeholder != "" {
+		return placeholder
+	}
+	return "Quick search..."
+}
+
+// getMinCharsValue returns the minimum characters value, defaulting to 2 if 0 or less
+func getMinCharsValue(minChars int) int {
+	if minChars > 0 {
+		return minChars
+	}
+	return 2
+}
+
+// getDebounceValue returns the debounce value, defaulting to 200 if 0 or less
+func getDebounceValue(debounce int) int {
+	if debounce > 0 {
+		return debounce
+	}
+	return 200
+}
+
 // QuickSearchBox renders a simplified search box for quick searches
 templ QuickSearchBox(props SearchBoxProps) {
 	@SearchBox(SearchBoxProps{
@@ -352,10 +471,10 @@ templ QuickSearchBox(props SearchBoxProps) {
 		ID:          props.ID,
 		Name:        props.Name,
 		Value:       props.Value,
-		Placeholder: if props.Placeholder != "" { props.Placeholder } else { "Quick search..." },
+		Placeholder: getQuickSearchPlaceholder(props.Placeholder),
 		Class:       props.Class,
-		MinChars:    if props.MinChars > 0 { props.MinChars } else { 2 },
-		Debounce:    if props.Debounce > 0 { props.Debounce } else { 200 },
+		MinChars:    getMinCharsValue(props.MinChars),
+		Debounce:    getDebounceValue(props.Debounce),
 		HXGet:       props.HXGet,
 		HXTarget:    props.HXTarget,
 		HXSwap:     props.HXSwap,
@@ -365,17 +484,17 @@ templ QuickSearchBox(props SearchBoxProps) {
 // GlobalSearchBox renders a search box for global/site-wide search
 templ GlobalSearchBox(props SearchBoxProps) {
 	@SearchBox(SearchBoxProps{
-		Size:        if props.Size != "" { props.Size } else { SearchBoxSizeMD },
-		ID:          if props.ID != "" { props.ID } else { "global-search" },
-		Name:        if props.Name != "" { props.Name } else { "q" },
+		Size:        getSearchSizeValue(props.Size),
+		ID:          getGlobalSearchID(props.ID),
+		Name:        getGlobalSearchName(props.Name),
 		Value:       props.Value,
-		Placeholder: if props.Placeholder != "" { props.Placeholder } else { "Search everything..." },
+		Placeholder: getGlobalSearchPlaceholder(props.Placeholder),
 		Class:       props.Class,
-		MinChars:    if props.MinChars > 0 { props.MinChars } else { 2 },
-		Debounce:    if props.Debounce > 0 { props.Debounce } else { 300 },
-		HXGet:       if props.HXGet != "" { props.HXGet } else { "/search" },
-		HXTarget:    if props.HXTarget != "" { props.HXTarget } else { "#search-results" },
-		HXSwap:     if props.HXSwap != "" { props.HXSwap } else { "innerHTML" },
+		MinChars:    getMinCharsValue(props.MinChars),
+		Debounce:    getDebounceValue(props.Debounce),
+		HXGet:       getGlobalSearchHXGet(props.HXGet),
+		HXTarget:    getGlobalSearchHXTarget(props.HXTarget),
+		HXSwap:     getHXSwapValue(props.HXSwap),
 		OnSearch:    props.OnSearch,
 		OnSelect:    props.OnSelect,
 		OnClear:     props.OnClear,

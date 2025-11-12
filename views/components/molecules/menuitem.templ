@@ -2,7 +2,7 @@ package molecules
 
 import (
 	"strings"
-	"../atoms"
+	"github.com/niiniyare/erp/views/components/atoms"
 )
 
 // MenuItemType defines the type of menu item
@@ -124,6 +124,30 @@ func menuItemClasses(props MenuItemProps) string {
 	return strings.Join(classes, " ")
 }
 
+// getCheckboxOpacity returns the opacity class for checkbox items
+func getCheckboxOpacity(checked bool) string {
+	if checked {
+		return "w-2 h-2 bg-primary rounded-sm transition-opacity opacity-100"
+	}
+	return "w-2 h-2 bg-primary rounded-sm transition-opacity opacity-0"
+}
+
+// getRadioOpacity returns the opacity class for radio items
+func getRadioOpacity(checked bool) string {
+	if checked {
+		return "w-2 h-2 bg-primary rounded-full transition-opacity opacity-100"
+	}
+	return "w-2 h-2 bg-primary rounded-full transition-opacity opacity-0"
+}
+
+// getBadgeVariant returns the badge variant with default
+func getBadgeVariant(variant atoms.BadgeVariant) atoms.BadgeVariant {
+	if variant != "" {
+		return variant
+	}
+	return atoms.BadgeSecondary
+}
+
 // MenuItem renders a menu item component
 templ MenuItem(props MenuItemProps) {
 	switch props.Type {
@@ -189,7 +213,7 @@ templ MenuItem(props MenuItemProps) {
 				class="sr-only"
 			/>
 			<div class="flex items-center justify-center w-4 h-4 border rounded-sm border-input">
-				<div class={ "w-2 h-2 bg-primary rounded-sm transition-opacity " + if props.Checked { "opacity-100" } else { "opacity-0" } }></div>
+				<div class={ getCheckboxOpacity(props.Checked) }></div>
 			</div>
 			@menuItemContent(props)
 		</label>
@@ -220,7 +244,7 @@ templ MenuItem(props MenuItemProps) {
 				class="sr-only"
 			/>
 			<div class="flex items-center justify-center w-4 h-4 border rounded-full border-input">
-				<div class={ "w-2 h-2 bg-primary rounded-full transition-opacity " + if props.Checked { "opacity-100" } else { "opacity-0" } }></div>
+				<div class={ getRadioOpacity(props.Checked) }></div>
 			</div>
 			@menuItemContent(props)
 		</label>
@@ -318,7 +342,7 @@ templ menuItemContent(props MenuItemProps) {
 	// Badge
 	if props.Badge != "" {
 		@atoms.Badge(atoms.BadgeProps{
-			Variant: if props.BadgeVariant != "" { props.BadgeVariant } else { atoms.BadgeSecondary },
+			Variant: getBadgeVariant(props.BadgeVariant),
 			Size:    atoms.BadgeSizeSM,
 		}) {
 			{ props.Badge }

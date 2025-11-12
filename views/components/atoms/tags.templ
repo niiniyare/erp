@@ -1,6 +1,7 @@
 package atoms
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -98,6 +99,21 @@ func tagClasses(props TagProps) string {
 	return strings.Join(classes, " ")
 }
 
+// generateTagSelectedClass creates the Alpine.js class binding for selectable tags
+func generateTagSelectedClass(value string) string {
+	return fmt.Sprintf("selectedTags.includes('%s') ? 'border-primary bg-primary text-primary-foreground' : 'border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground'", value)
+}
+
+// generateTagClickHandler creates the Alpine.js click handler for selectable tags
+func generateTagClickHandler(value string) string {
+	return fmt.Sprintf("selectedTags.includes('%s') ? selectedTags = selectedTags.filter(t => t !== '%s') : selectedTags.push('%s')", value, value, value)
+}
+
+// generateAriaLabel creates the aria-label for remove buttons
+func generateAriaLabel(text string) string {
+	return fmt.Sprintf("Remove %s", text)
+}
+
 // tagsContainerClasses generates Tailwind CSS classes for the tags container
 func tagsContainerClasses(props TagsProps) string {
 	var classes []string
@@ -181,7 +197,7 @@ templ tagContent(props TagProps) {
 			if props.OnRemove != "" {
 				x-on:click={ props.OnRemove }
 			}
-			aria-label={ "Remove " + props.Text }
+			aria-label={ generateAriaLabel(props.Text) }
 		>
 			@Icon(IconProps{Name: "x", Size: IconSizeXS})
 		</button>
@@ -205,12 +221,11 @@ templ Tags(props TagsProps) {
 					if (this.newTag.trim() && !this.tags.includes(this.newTag.trim())) {
 						this.tags.push(this.newTag.trim());
 						this.newTag = '';
-						" + props.OnTagAdd + "
 					}
 				},
 				removeTag(index) {
 					this.tags.splice(index, 1);
-					" + props.OnTagRemove + "
+				}
 				}
 			}"
 		}
@@ -319,8 +334,8 @@ templ SelectableTags(props TagsProps) {
 			<button
 				type="button"
 				class="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-				x-bind:class="selectedTags.includes('" + tag.Value + "') ? 'border-primary bg-primary text-primary-foreground' : 'border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground'"
-				x-on:click={ "selectedTags.includes('" + tag.Value + "') ? selectedTags = selectedTags.filter(t => t !== '" + tag.Value + "') : selectedTags.push('" + tag.Value + "')" }
+				x-bind:class={ generateTagSelectedClass(tag.Value) }
+				x-on:click={ generateTagClickHandler(tag.Value) }
 				if tag.OnClick != "" {
 					x-on:click={ tag.OnClick }
 				}

@@ -4,8 +4,8 @@ import (
 	"strings"
 	"strconv"
 	"encoding/json"
-	"../atoms"
-	"../molecules"
+	"github.com/niiniyare/erp/views/components/atoms"
+	"github.com/niiniyare/erp/views/components/molecules"
 )
 
 // SchemaField represents a field from the ERP schema system
@@ -150,15 +150,15 @@ templ SchemaForm(props SchemaFormProps) {
 			Size:        FormSizeMD,
 			Title:       props.Schema.Title,
 			Description: props.Schema.Description,
-			Method:      if props.Schema.Method != "" { props.Schema.Method } else { "POST" },
+			Method:      getSchemaFormMethod(props.Schema.Method),
 			Action:      props.Schema.Action,
 			Sections:    convertSchemaToFormSections(props.Schema.Sections, props),
 			Fields:      convertSchemaToFormFields(props.Schema.Fields, props),
 			Actions:     getSchemaFormActions(props),
-			GridCols:    if props.Schema.GridCols > 0 { props.Schema.GridCols } else { 2 },
+			GridCols:    getSchemaFormGridCols(props.Schema.GridCols),
 			HXPost:      props.Schema.SubmitURL,
-			HXTarget:    if props.HXTarget != "" { props.HXTarget } else { "#form-result" },
-			HXSwap:      if props.HXSwap != "" { props.HXSwap } else { "innerHTML" },
+			HXTarget:    getSchemaFormTarget(props.HXTarget),
+			HXSwap:      getSchemaFormSwap(props.HXSwap),
 			HXValidate:  props.Schema.Validation.ClientSide,
 			AlpineSubmit: "submitForm()",
 			OnSubmit:    props.OnSubmit,
@@ -221,13 +221,13 @@ func convertSchemaToFormFields(schemaFields []SchemaField, props SchemaFormProps
 			Options:     convertSchemaOptionsToFormOptions(field.Options),
 			Multiple:    field.Multiple,
 			// HTMX for dynamic fields
-			HXPost:      if field.Reference != "" { "/api/fields/" + field.Name + "/validate" } else { "" },
+			HXPost:      getFieldValidationURL(field.Reference, field.Name),
 			HXTarget:    "#field-" + field.Name + "-feedback",
-			HXTrigger:   if props.Schema.Validation.RealTime { "change, keyup delay:300ms" } else { "change" },
+			HXTrigger:   getFieldTrigger(props.Schema.Validation.RealTime),
 			// Alpine.js
 			AlpineModel: "formData." + field.Name,
 			AlpineChange: "validateField('" + field.Name + "')",
-			AlpineBlur:  if props.Schema.Validation.OnBlur { "validateField('" + field.Name + "')" } else { "" },
+			AlpineBlur:  getFieldBlurValidation(props.Schema.Validation.OnBlur, field.Name),
 		}
 		
 		// Handle special field types
@@ -536,6 +536,63 @@ templ schemaFormDebug(props SchemaFormProps) {
 	</div>
 }
 
+// Helper functions for ternary operators
+func getSchemaFormMethod(method string) string {
+	if method != "" {
+		return method
+	}
+	return "POST"
+}
+
+func getSchemaFormGridCols(gridCols int) int {
+	if gridCols > 0 {
+		return gridCols
+	}
+	return 2
+}
+
+func getSchemaFormTarget(target string) string {
+	if target != "" {
+		return target
+	}
+	return "#form-result"
+}
+
+func getSchemaFormSwap(swap string) string {
+	if swap != "" {
+		return swap
+	}
+	return "innerHTML"
+}
+
+func getFieldValidationURL(reference string, fieldName string) string {
+	if reference != "" {
+		return "/api/fields/" + fieldName + "/validate"
+	}
+	return ""
+}
+
+func getFieldTrigger(realTime bool) string {
+	if realTime {
+		return "change, keyup delay:300ms"
+	}
+	return "change"
+}
+
+func getFieldBlurValidation(onBlur bool, fieldName string) string {
+	if onBlur {
+		return "validateField('" + fieldName + "')"
+	}
+	return ""
+}
+
+func getSchemaFormData(data map[string]interface{}) map[string]interface{} {
+	if data != nil {
+		return data
+	}
+	return make(map[string]interface{})
+}
+
 // Helper functions
 
 func getLocalizedText(text, locale string) string {
@@ -622,7 +679,7 @@ func extractFieldsFromSections(sections []SchemaFormSection) []SchemaField {
 templ SimpleSchemaForm(schema SchemaFormDefinition, data map[string]interface{}) {
 	@SchemaForm(SchemaFormProps{
 		Schema: schema,
-		Data:   if data != nil { data } else { make(map[string]interface{}) },
+		Data:   getSchemaFormData(data),
 		Locale: "en",
 	})
 }
@@ -631,7 +688,7 @@ templ SimpleSchemaForm(schema SchemaFormDefinition, data map[string]interface{})
 templ ReadOnlySchemaForm(schema SchemaFormDefinition, data map[string]interface{}) {
 	@SchemaForm(SchemaFormProps{
 		Schema:   schema,
-		Data:     if data != nil { data } else { make(map[string]interface{}) },
+		Data:     getSchemaFormData(data),
 		Locale:   "en",
 		ReadOnly: true,
 	})
@@ -641,7 +698,7 @@ templ ReadOnlySchemaForm(schema SchemaFormDefinition, data map[string]interface{
 templ DebugSchemaForm(schema SchemaFormDefinition, data map[string]interface{}) {
 	@SchemaForm(SchemaFormProps{
 		Schema: schema,
-		Data:   if data != nil { data } else { make(map[string]interface{}) },
+		Data:   getSchemaFormData(data),
 		Locale: "en",
 		Debug:  true,
 	})

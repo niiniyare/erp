@@ -3,7 +3,7 @@ package molecules
 import (
 	"strings"
 	"strconv"
-	"../atoms"
+	"github.com/niiniyare/erp/views/components/atoms"
 )
 
 // ErrorType defines different types of errors
@@ -278,20 +278,20 @@ templ ErrorBoundary(props ErrorBoundaryProps) {
 }
 
 // errorDetailItem renders a single error detail
-templ errorDetailItem(error ErrorDetail) {
+templ errorDetailItem(errorDetail ErrorDetail) {
 	<div class="flex items-start gap-2 p-3 bg-background/50 rounded border text-sm">
 		@atoms.Icon(atoms.IconProps{
-			Name:  getErrorTypeIcon(error.Type),
+			Name:  getErrorTypeIcon(errorDetail.Type),
 			Size:  atoms.IconSizeXS,
 			Class: "mt-0.5 text-muted-foreground",
 		})
 		<div class="space-y-1">
-			<div class="font-medium">{ error.Message }</div>
-			if error.Code != "" {
-				<div class="text-xs text-muted-foreground">Code: { error.Code }</div>
+			<div class="font-medium">{ errorDetail.Message }</div>
+			if errorDetail.Code != "" {
+				<div class="text-xs text-muted-foreground">Code: { errorDetail.Code }</div>
 			}
-			if error.Field != "" {
-				<div class="text-xs text-muted-foreground">Field: { error.Field }</div>
+			if errorDetail.Field != "" {
+				<div class="text-xs text-muted-foreground">Field: { errorDetail.Field }</div>
 			}
 		</div>
 	</div>
@@ -300,7 +300,7 @@ templ errorDetailItem(error ErrorDetail) {
 // errorActionButton renders an error action button
 templ errorActionButton(action ErrorAction) {
 	@atoms.Button(atoms.ButtonProps{
-		Variant:     if action.Variant != "" { action.Variant } else { atoms.ButtonOutline },
+		Variant:     action.Variant,
 		Size:        atoms.ButtonSizeSM,
 		Icon:        action.Icon,
 		AlpineClick: getActionAlpineClick(action),
@@ -334,7 +334,7 @@ templ Notification(props NotificationProps) {
 			if props.Icon != "" || props.Type != "" {
 				<div class="shrink-0 mt-0.5">
 					@atoms.Icon(atoms.IconProps{
-						Name:  if props.Icon != "" { props.Icon } else { getNotificationTypeIcon(props.Type) },
+						Name:  getNotificationIcon(props.Icon, props.Type),
 						Size:  atoms.IconSizeSM,
 						Class: getNotificationIconColor(props.Type),
 					})
@@ -347,7 +347,7 @@ templ Notification(props NotificationProps) {
 					<h4 class="text-sm font-medium">{ props.Title }</h4>
 				}
 				if props.Message != "" {
-					<p class={ "text-sm " + if props.Title != "" { "mt-1 text-muted-foreground" } else { "" } }>
+					<p class={ getMessageClasses(props.Title != "") }>
 						{ props.Message }
 					</p>
 				}
@@ -357,7 +357,7 @@ templ Notification(props NotificationProps) {
 					<div class="flex items-center gap-2 mt-3">
 						for _, action := range props.Actions {
 							@atoms.Button(atoms.ButtonProps{
-								Variant:     if action.Variant != "" { action.Variant } else { atoms.ButtonOutline },
+								Variant:     action.Variant,
 								Size:        atoms.ButtonSizeXS,
 								AlpineClick: getActionAlpineClick(action),
 								HXPost:      action.HXPost,
@@ -643,6 +643,30 @@ func getActionAlpineClick(action ErrorAction) string {
 	default:
 		return action.AlpineClick
 	}
+}
+
+// getMessageClasses returns the classes for message paragraph based on whether title exists
+func getMessageClasses(hasTitle bool) string {
+	if hasTitle {
+		return "text-sm mt-1 text-muted-foreground"
+	}
+	return "text-sm"
+}
+
+// getActionVariant returns the button variant for an action
+func getActionVariant(variant string) string {
+	if variant != "" {
+		return variant
+	}
+	return string(atoms.ButtonOutline)
+}
+
+// getNotificationIcon returns the notification icon, preferring custom icon over type-based icon
+func getNotificationIcon(customIcon string, notificationType ErrorType) string {
+	if customIcon != "" {
+		return customIcon
+	}
+	return getNotificationTypeIcon(notificationType)
 }
 
 func getErrorBoundaryAlpineData(props ErrorBoundaryProps) string {

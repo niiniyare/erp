@@ -2,7 +2,7 @@ package molecules
 
 import (
 	"strings"
-	"../atoms"
+	"github.com/niiniyare/erp/views/components/atoms"
 )
 
 // ValidationMessageType defines the type of validation message
@@ -120,9 +120,9 @@ templ ValidationMessages(props ValidationProps) {
 		if props.HXPost != "" || props.HXGet != "" {
 			hx-post={ props.HXPost }
 			hx-get={ props.HXGet }
-			hx-target={ if props.HXTarget != "" { props.HXTarget } else { "this" } }
-			hx-swap={ if props.HXSwap != "" { props.HXSwap } else { "innerHTML" } }
-			hx-trigger={ if props.HXTrigger != "" { props.HXTrigger } else { "validate" } }
+			hx-target={ getHXTargetValue(props.HXTarget) }
+			hx-swap={ getValidationHXSwapValue(props.HXSwap) }
+			hx-trigger={ getValidationHXTriggerValue(props.HXTrigger) }
 		}
 	>
 		// Error messages
@@ -377,6 +377,52 @@ templ groupedValidationMessages(messages []ValidationMessage) {
 
 // Helper functions
 
+// getHXTargetValue returns the HX target value, defaulting to "this" if empty
+func getHXTargetValue(target string) string {
+	if target != "" {
+		return target
+	}
+	return "this"
+}
+
+// getValidationHXSwapValue returns the HX swap value, defaulting to "innerHTML" if empty
+func getValidationHXSwapValue(swap string) string {
+	if swap != "" {
+		return swap
+	}
+	return "innerHTML"
+}
+
+// getValidationHXTriggerValue returns the HX trigger value, defaulting to "validate" if empty
+func getValidationHXTriggerValue(trigger string) string {
+	if trigger != "" {
+		return trigger
+	}
+	return "validate"
+}
+
+// formatBool converts bool to string for JavaScript
+func formatBool(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
+}
+
+// getInlineClasses returns the inline classes based on bool value
+func getInlineClasses(inline bool) string {
+	if inline {
+		return "inline-flex items-center gap-1"
+	}
+	return ""
+}
+
+// getRulesJSON converts rules to JSON string (placeholder)
+func getValidationRulesJSONPlaceholder(rules []ValidationRule) string {
+	// This would need proper JSON marshalling in production
+	return "[]"
+}
+
 func getValidationMessageClasses(message ValidationMessage, inline bool) string {
 	var classes []string
 
@@ -434,13 +480,13 @@ func getValidationAlpineData(props ValidationProps) string {
 		isValidating: false,
 		
 		shouldShowMessage(message) {
-			if (message.type === 'success' && !` + strings.ToLower(string(props.ShowSuccess)) + `) return false;
-			if (message.type === 'warning' && !` + strings.ToLower(string(props.ShowWarnings)) + `) return false;
+			if (message.type === 'success' && !` + formatBool(props.ShowSuccess) + `) return false;
+			if (message.type === 'warning' && !` + formatBool(props.ShowWarnings) + `) return false;
 			return true;
 		},
 		
 		getMessageClasses(message) {
-			const baseClasses = '` + (if props.Inline { "inline-flex items-center gap-1" } else { "" }) + `';
+			const baseClasses = '` + getInlineClasses(props.Inline) + `';
 			const typeClasses = {
 				error: 'text-destructive',
 				warning: 'text-warning',
@@ -455,7 +501,7 @@ func getValidationAlpineData(props ValidationProps) string {
 func getFieldValidatorAlpineData(fieldName string, rules []ValidationRule) string {
 	return `{
 		fieldName: '` + fieldName + `',
-		rules: ` + getRulesJSON(rules) + `,
+		rules: ` + getValidationRulesJSON(rules) + `,
 		isValid: true,
 		isValidating: false,
 		hasErrors: false,
@@ -615,7 +661,7 @@ func getFormValidatorAlpineData(formID string) string {
 	}`
 }
 
-func getRulesJSON(rules []ValidationRule) string {
+func getValidationRulesJSON(rules []ValidationRule) string {
 	// This would properly serialize the rules to JSON
 	return "[]"
 }

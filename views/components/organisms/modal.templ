@@ -2,7 +2,7 @@ package organisms
 
 import (
 	"strings"
-	"../atoms"
+	"github.com/niiniyare/erp/views/components/atoms"
 )
 
 // ModalSize defines the size variants for modals
@@ -340,8 +340,8 @@ templ Modal(props ModalProps, children ...templ.Component) {
 // modalAction renders a modal action button
 templ modalAction(action ModalAction, modalProps ModalProps) {
 	@atoms.Button(atoms.ButtonProps{
-		Variant:     if action.Variant != "" { action.Variant } else { atoms.ButtonPrimary },
-		Size:        if action.Size != "" { action.Size } else { atoms.ButtonSizeMD },
+		Variant:     getModalActionVariant(action.Variant),
+		Size:        getModalActionSize(action.Size),
 		Icon:        action.Icon,
 		IconLeft:    action.IconLeft,
 		IconRight:   action.IconRight,
@@ -351,9 +351,9 @@ templ modalAction(action ModalAction, modalProps ModalProps) {
 		ID:          action.ID,
 		HXPost:      action.HXPost,
 		HXGet:       action.HXGet,
-		HXTarget:    if action.HXTarget != "" { action.HXTarget } else { modalProps.HXTarget },
-		HXSwap:      if action.HXSwap != "" { action.HXSwap } else { modalProps.HXSwap },
-		AlpineClick: if action.AutoClose { action.AlpineClick + "; closeModal()" } else { action.AlpineClick },
+		HXTarget:    getModalActionTarget(action.HXTarget, modalProps.HXTarget),
+		HXSwap:      getModalActionSwap(action.HXSwap, modalProps.HXSwap),
+		AlpineClick: getModalActionClick(action.AlpineClick, action.AutoClose),
 	}) {
 		{ action.Text }
 	}
@@ -364,12 +364,12 @@ templ modalAction(action ModalAction, modalProps ModalProps) {
 // AlertModal renders an alert-style modal
 templ AlertModal(props ModalProps, children ...templ.Component) {
 	@Modal(ModalProps{
-		Size:           if props.Size != "" { props.Size } else { ModalSizeSM },
+		Size:           getAlertModalSize(props.Size),
 		Variant:        props.Variant,
 		Title:          props.Title,
 		Description:    props.Description,
-		Icon:           if props.Icon != "" { props.Icon } else { getDefaultAlertIcon(props.Variant) },
-		Actions:        if len(props.Actions) > 0 { props.Actions } else { getDefaultAlertActions(props.Variant) },
+		Icon:           getAlertModalIcon(props.Icon, props.Variant),
+		Actions:        getAlertModalActions(props.Actions, props.Variant),
 		Dismissible:    props.Dismissible,
 		CloseOnOverlay: props.CloseOnOverlay,
 		CloseOnEscape:  props.CloseOnEscape,
@@ -389,15 +389,15 @@ templ AlertModal(props ModalProps, children ...templ.Component) {
 // ConfirmModal renders a confirmation modal
 templ ConfirmModal(props ModalProps, children ...templ.Component) {
 	@Modal(ModalProps{
-		Size:           if props.Size != "" { props.Size } else { ModalSizeSM },
-		Variant:        if props.Variant != "" { props.Variant } else { ModalWarning },
-		Title:          if props.Title != "" { props.Title } else { "Confirm Action" },
+		Size:           getConfirmModalSize(props.Size),
+		Variant:        getConfirmModalVariant(props.Variant),
+		Title:          getConfirmModalTitle(props.Title),
 		Description:    props.Description,
-		Icon:           if props.Icon != "" { props.Icon } else { "alert-triangle" },
-		Actions:        if len(props.Actions) > 0 { props.Actions } else { getDefaultConfirmActions() },
+		Icon:           getConfirmModalIcon(props.Icon),
+		Actions:        getConfirmModalActions(props.Actions),
 		Dismissible:    props.Dismissible,
 		CloseOnOverlay: props.CloseOnOverlay,
-		CloseOnEscape:  if !props.CloseOnEscape { true } else { props.CloseOnEscape },
+		CloseOnEscape:  getConfirmModalCloseOnEscape(props.CloseOnEscape),
 		Header:         true,
 		Footer:         true,
 		Class:          props.Class,
@@ -414,15 +414,15 @@ templ ConfirmModal(props ModalProps, children ...templ.Component) {
 // FormModal renders a modal with form content
 templ FormModal(props ModalProps, children ...templ.Component) {
 	@Modal(ModalProps{
-		Size:          if props.Size != "" { props.Size } else { ModalSizeLG },
+		Size:          getFormModalSize(props.Size),
 		Variant:       props.Variant,
 		Title:         props.Title,
 		Description:   props.Description,
 		Icon:          props.Icon,
 		Actions:       props.Actions,
-		Dismissible:   if !props.Dismissible { true } else { props.Dismissible },
+		Dismissible:   getFormModalDismissible(props.Dismissible),
 		CloseOnOverlay: props.CloseOnOverlay,
-		CloseOnEscape: if !props.CloseOnEscape { true } else { props.CloseOnEscape },
+		CloseOnEscape: getFormModalCloseOnEscape(props.CloseOnEscape),
 		Scrollable:    true,
 		Header:        true,
 		Footer:        len(props.Actions) > 0,
@@ -450,9 +450,9 @@ templ FullScreenModal(props ModalProps, children ...templ.Component) {
 		Description:   props.Description,
 		Icon:          props.Icon,
 		Actions:       props.Actions,
-		Dismissible:   if !props.Dismissible { true } else { props.Dismissible },
+		Dismissible:   getFullScreenModalDismissible(props.Dismissible),
 		CloseOnOverlay: false,
-		CloseOnEscape: if !props.CloseOnEscape { true } else { props.CloseOnEscape },
+		CloseOnEscape: getFullScreenModalCloseOnEscape(props.CloseOnEscape),
 		Scrollable:    true,
 		Header:        true,
 		Footer:        len(props.Actions) > 0,
@@ -471,6 +471,137 @@ templ FullScreenModal(props ModalProps, children ...templ.Component) {
 	}, children...)
 }
 
+// Helper functions for ternary operators
+func getModalActionVariant(variant atoms.ButtonVariant) atoms.ButtonVariant {
+	if variant != "" {
+		return variant
+	}
+	return atoms.ButtonPrimary
+}
+
+func getModalActionSize(size atoms.ButtonSize) atoms.ButtonSize {
+	if size != "" {
+		return size
+	}
+	return atoms.ButtonSizeMD
+}
+
+func getModalActionTarget(actionTarget, modalTarget string) string {
+	if actionTarget != "" {
+		return actionTarget
+	}
+	return modalTarget
+}
+
+func getModalActionSwap(actionSwap, modalSwap string) string {
+	if actionSwap != "" {
+		return actionSwap
+	}
+	return modalSwap
+}
+
+func getModalActionClick(alpineClick string, autoClose bool) string {
+	if autoClose {
+		return alpineClick + "; closeModal()"
+	}
+	return alpineClick
+}
+
+func getAlertModalSize(size ModalSize) ModalSize {
+	if size != "" {
+		return size
+	}
+	return ModalSizeSM
+}
+
+func getAlertModalIcon(icon string, variant ModalVariant) string {
+	if icon != "" {
+		return icon
+	}
+	return getDefaultAlertIcon(variant)
+}
+
+func getAlertModalActions(actions []ModalAction, variant ModalVariant) []ModalAction {
+	if len(actions) > 0 {
+		return actions
+	}
+	return getDefaultAlertActions(variant)
+}
+
+func getConfirmModalSize(size ModalSize) ModalSize {
+	if size != "" {
+		return size
+	}
+	return ModalSizeSM
+}
+
+func getConfirmModalVariant(variant ModalVariant) ModalVariant {
+	if variant != "" {
+		return variant
+	}
+	return ModalWarning
+}
+
+func getConfirmModalTitle(title string) string {
+	if title != "" {
+		return title
+	}
+	return "Confirm Action"
+}
+
+func getConfirmModalIcon(icon string) string {
+	if icon != "" {
+		return icon
+	}
+	return "alert-triangle"
+}
+
+func getConfirmModalActions(actions []ModalAction) []ModalAction {
+	if len(actions) > 0 {
+		return actions
+	}
+	return getDefaultConfirmActions()
+}
+
+func getConfirmModalCloseOnEscape(closeOnEscape bool) bool {
+	// Default to true for confirm modals
+	return true
+}
+
+func getFormModalSize(size ModalSize) ModalSize {
+	if size != "" {
+		return size
+	}
+	return ModalSizeLG
+}
+
+func getFormModalDismissible(dismissible bool) bool {
+	// Default to true for form modals
+	return true
+}
+
+func getFormModalCloseOnEscape(closeOnEscape bool) bool {
+	// Default to true for form modals
+	return true
+}
+
+func getFullScreenModalDismissible(dismissible bool) bool {
+	// Default to true for fullscreen modals
+	return true
+}
+
+func getFullScreenModalCloseOnEscape(closeOnEscape bool) bool {
+	// Default to true for fullscreen modals
+	return true
+}
+
+func getModalOpenValue(open bool) string {
+	if open {
+		return "true"
+	}
+	return "false"
+}
+
 // Helper functions
 
 func getDefaultModalAlpineData(props ModalProps) string {
@@ -480,7 +611,7 @@ func getDefaultModalAlpineData(props ModalProps) string {
 	}
 
 	return `{
-		` + openVar + `: ` + if props.Open { "true" } else { "false" } + `,
+		` + openVar + `: ` + getModalOpenValue(props.Open) + `,
 		
 		openModal() {
 			this.` + openVar + ` = true;

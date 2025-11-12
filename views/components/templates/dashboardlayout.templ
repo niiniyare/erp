@@ -2,9 +2,9 @@ package templates
 
 import (
 	"strings"
-	"../atoms"
-	"../molecules"
-	"../organisms"
+	"github.com/niiniyare/erp/views/components/atoms"
+	"github.com/niiniyare/erp/views/components/molecules"
+	"github.com/niiniyare/erp/views/components/organisms"
 )
 
 // DashboardSection defines different sections of the dashboard
@@ -202,9 +202,9 @@ templ DashboardLayout(props DashboardLayoutProps, children ...templ.Component) {
 		Loading:    props.Loading,
 		Error:      props.Error,
 		HXBoost:    true,
-		HXTarget:   if props.HXTarget != "" { props.HXTarget } else { "#dashboard-content" },
-		HXSwap:     if props.HXSwap != "" { props.HXSwap } else { "innerHTML" },
-		AlpineData: if props.AlpineData != "" { props.AlpineData } else { getDashboardAlpineData(props) },
+		HXTarget:   getDashboardTarget(props.HXTarget),
+		HXSwap:     getDashboardSwap(props.HXSwap),
+		AlpineData: getDashboardAlpineDataWithDefault(props.AlpineData, props),
 		Theme:      props.Theme,
 		CustomCSS:  props.CustomCSS,
 		CustomJS:   props.CustomJS,
@@ -305,8 +305,8 @@ templ dashboardQuickActions(actions []DashboardQuickAction) {
 // dashboardQuickActionButton renders a quick action button
 templ dashboardQuickActionButton(action DashboardQuickAction) {
 	@atoms.Button(atoms.ButtonProps{
-		Variant:     if action.Variant != "" { action.Variant } else { atoms.ButtonOutline },
-		Size:        if action.Size != "" { action.Size } else { atoms.ButtonSizeMD },
+		Variant:     getDashboardQuickActionVariant(action.Variant),
+		Size:        getDashboardQuickActionSize(action.Size),
 		Icon:        action.Icon,
 		Class:       "h-auto p-4 flex-col gap-2 text-center",
 		HXPost:      action.HXPost,
@@ -343,8 +343,8 @@ templ dashboardWidget(widget DashboardWidget) {
 		if widget.HXGet != "" {
 			hx-get={ widget.HXGet }
 			hx-target="this"
-			hx-swap={ if widget.HXSwap != "" { widget.HXSwap } else { "innerHTML" } }
-			hx-trigger={ if widget.HXTrigger != "" { widget.HXTrigger } else { "load" } }
+			hx-swap={ getWidgetSwap(widget.HXSwap) }
+			hx-trigger={ getWidgetTrigger(widget.HXTrigger) }
 		}
 	>
 		if widget.CustomContent {
@@ -569,8 +569,8 @@ func convertQuickActionsToDashboardActions(actions []DashboardQuickAction) []org
 		tableActions[i] = organisms.TableAction{
 			Text:        action.Text,
 			Icon:        action.Icon,
-			Variant:     if action.Variant != "" { action.Variant } else { atoms.ButtonPrimary },
-			Size:        if action.Size != "" { action.Size } else { atoms.ButtonSizeSM },
+			Variant:     getDashboardActionVariant(action.Variant),
+			Size:        getDashboardActionSize(action.Size),
 			HXPost:      action.HXPost,
 			HXGet:       action.HXGet,
 			HXTarget:    action.HXTarget,
@@ -579,6 +579,119 @@ func convertQuickActionsToDashboardActions(actions []DashboardQuickAction) []org
 		}
 	}
 	return tableActions
+}
+
+// Helper functions for ternary operators
+func getDashboardTarget(target string) string {
+	if target != "" {
+		return target
+	}
+	return "#dashboard-content"
+}
+
+func getDashboardSwap(swap string) string {
+	if swap != "" {
+		return swap
+	}
+	return "innerHTML"
+}
+
+func getDashboardAlpineDataWithDefault(alpineData string, props DashboardLayoutProps) string {
+	if alpineData != "" {
+		return alpineData
+	}
+	return getDashboardAlpineData(props)
+}
+
+func getWidgetSwap(swap string) string {
+	if swap != "" {
+		return swap
+	}
+	return "innerHTML"
+}
+
+func getWidgetTrigger(trigger string) string {
+	if trigger != "" {
+		return trigger
+	}
+	return "load"
+}
+
+func getDashboardQuickActionVariant(variant atoms.ButtonVariant) atoms.ButtonVariant {
+	if variant != "" {
+		return variant
+	}
+	return atoms.ButtonOutline
+}
+
+func getDashboardQuickActionSize(size atoms.ButtonSize) atoms.ButtonSize {
+	if size != "" {
+		return size
+	}
+	return atoms.ButtonSizeMD
+}
+
+func getDashboardActionVariant(variant atoms.ButtonVariant) atoms.ButtonVariant {
+	if variant != "" {
+		return variant
+	}
+	return atoms.ButtonPrimary
+}
+
+func getDashboardActionSize(size atoms.ButtonSize) atoms.ButtonSize {
+	if size != "" {
+		return size
+	}
+	return atoms.ButtonSizeSM
+}
+
+func getAnalyticsDashboardTitle(title string) string {
+	if title != "" {
+		return title
+	}
+	return "Analytics Dashboard"
+}
+
+func getAnalyticsDashboardDescription(description string) string {
+	if description != "" {
+		return description
+	}
+	return "Performance metrics and analytics"
+}
+
+func getAnalyticsDashboardGridCols(gridCols int) int {
+	if gridCols > 0 {
+		return gridCols
+	}
+	return 3
+}
+
+func getAnalyticsDashboardTrigger(trigger string) string {
+	if trigger != "" {
+		return trigger
+	}
+	return "load, every 60s"
+}
+
+func getOverviewDashboardTitle(title string) string {
+	if title != "" {
+		return title
+	}
+	return "Overview"
+}
+
+func getOverviewDashboardDescription(description string) string {
+	if description != "" {
+		return description
+	}
+	return "System overview and key metrics"
+}
+
+func getOverviewDashboardGridCols(gridCols int) int {
+	if gridCols > 0 {
+		return gridCols
+	}
+	return 4
 }
 
 func getDashboardAlpineData(props DashboardLayoutProps) string {
@@ -631,13 +744,13 @@ func getDashboardAlpineData(props DashboardLayoutProps) string {
 // AnalyticsDashboard renders an analytics-focused dashboard
 templ AnalyticsDashboard(props DashboardLayoutProps, children ...templ.Component) {
 	@DashboardLayout(DashboardLayoutProps{
-		Title:        if props.Title != "" { props.Title } else { "Analytics Dashboard" },
-		Description:  if props.Description != "" { props.Description } else { "Performance metrics and analytics" },
+		Title:        getAnalyticsDashboardTitle(props.Title),
+		Description:  getAnalyticsDashboardDescription(props.Description),
 		Section:      DashboardSectionAnalytics,
 		Stats:        props.Stats,
 		QuickActions: props.QuickActions,
 		Widgets:      props.Widgets,
-		GridCols:     if props.GridCols > 0 { props.GridCols } else { 3 },
+		GridCols:     getAnalyticsDashboardGridCols(props.GridCols),
 		ShowStats:    true,
 		ShowActions:  true,
 		Navigation:   props.Navigation,
@@ -650,7 +763,7 @@ templ AnalyticsDashboard(props DashboardLayoutProps, children ...templ.Component
 		HXGet:        props.HXGet,
 		HXTarget:     props.HXTarget,
 		HXSwap:       props.HXSwap,
-		HXTrigger:    if props.HXTrigger != "" { props.HXTrigger } else { "load, every 60s" },
+		HXTrigger:    getAnalyticsDashboardTrigger(props.HXTrigger),
 		Theme:        props.Theme,
 		CustomCSS:    props.CustomCSS,
 		CustomJS:     props.CustomJS,
@@ -660,13 +773,13 @@ templ AnalyticsDashboard(props DashboardLayoutProps, children ...templ.Component
 // OverviewDashboard renders a general overview dashboard
 templ OverviewDashboard(props DashboardLayoutProps, children ...templ.Component) {
 	@DashboardLayout(DashboardLayoutProps{
-		Title:        if props.Title != "" { props.Title } else { "Overview" },
-		Description:  if props.Description != "" { props.Description } else { "System overview and key metrics" },
+		Title:        getOverviewDashboardTitle(props.Title),
+		Description:  getOverviewDashboardDescription(props.Description),
 		Section:      DashboardSectionOverview,
 		Stats:        props.Stats,
 		QuickActions: props.QuickActions,
 		Widgets:      props.Widgets,
-		GridCols:     if props.GridCols > 0 { props.GridCols } else { 4 },
+		GridCols:     getOverviewDashboardGridCols(props.GridCols),
 		ShowStats:    true,
 		ShowActions:  true,
 		Navigation:   props.Navigation,

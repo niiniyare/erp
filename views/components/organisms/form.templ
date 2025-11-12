@@ -1,9 +1,10 @@
 package organisms
 
 import (
+	"strconv"
 	"strings"
-	"../atoms"
-	"../molecules"
+	"github.com/niiniyare/erp/views/components/atoms"
+	"github.com/niiniyare/erp/views/components/molecules"
 )
 
 // FormLayout defines the layout style for the form
@@ -153,6 +154,57 @@ func formActionsClasses(props FormProps) string {
 	return strings.Join(classes, " ")
 }
 
+// getDefaultFormAlpineData generates the default Alpine.js data for forms
+func getDefaultFormAlpineData(props FormProps) string {
+	return `{ 
+		loading: false, 
+		errors: {}, 
+		currentStep: 1, 
+		totalSteps: ` + strconv.Itoa(len(props.Sections)) + `,
+		validateField(fieldName) {
+			// Custom validation logic
+			` + props.OnValidate + `
+		},
+		handleSubmit() {
+			this.loading = true;
+			` + props.AlpineSubmit + `
+		}
+	}`
+}
+
+// getStepText generates the step text for progress display
+func getStepText(totalSteps int) string {
+	return "`Step ${currentStep} of " + strconv.Itoa(totalSteps) + "`"
+}
+
+// getProgressText generates the progress percentage text
+func getProgressText(totalSteps int) string {
+	return "`${Math.round((currentStep / " + strconv.Itoa(totalSteps) + ") * 100)}% complete`"
+}
+
+// getProgressStyle generates the progress bar style
+func getProgressStyle(totalSteps int) string {
+	return "`width: ${(currentStep / " + strconv.Itoa(totalSteps) + ") * 100}%`"
+}
+
+// getSectionAlpineData generates Alpine data for collapsible sections
+func getSectionAlpineData(collapsed bool) string {
+	if collapsed {
+		return "{ open: false }"
+	}
+	return "{ open: true }"
+}
+
+// getStepShowExpression generates the x-show expression for steps
+func getStepShowExpression(stepNumber int) string {
+	return "currentStep === " + strconv.Itoa(stepNumber)
+}
+
+// getSectionClasses generates classes for form sections
+func getSectionClasses(sectionClass string) string {
+	return "space-y-4 " + sectionClass
+}
+
 // Form renders a complete form with sections, fields, and actions
 templ Form(props FormProps) {
 	<form
@@ -174,20 +226,7 @@ templ Form(props FormProps) {
 		if props.AlpineData != "" {
 			x-data={ props.AlpineData }
 		} else {
-			x-data="{ 
-				loading: false, 
-				errors: {}, 
-				currentStep: 1, 
-				totalSteps: " + strings.Itoa(len(props.Sections)) + ",
-				validateField(fieldName) {
-					// Custom validation logic
-					" + props.OnValidate + "
-				},
-				handleSubmit() {
-					this.loading = true;
-					" + props.AlpineSubmit + "
-				}
-			}"
+			x-data={ getDefaultFormAlpineData(props) }
 		}
 		if props.HXPost != "" {
 			hx-post={ props.HXPost }
@@ -260,13 +299,13 @@ templ Form(props FormProps) {
 templ formProgress(totalSteps int) {
 	<div class="mb-6">
 		<div class="flex items-center justify-between mb-2">
-			<span class="text-sm font-medium text-foreground" x-text="`Step ${currentStep} of " + strings.Itoa(totalSteps) + "`"></span>
-			<span class="text-sm text-muted-foreground" x-text="`${Math.round((currentStep / " + strings.Itoa(totalSteps) + ") * 100)}% complete`"></span>
+			<span class="text-sm font-medium text-foreground" x-text={ getStepText(totalSteps) }></span>
+			<span class="text-sm text-muted-foreground" x-text={ getProgressText(totalSteps) }></span>
 		</div>
 		<div class="w-full bg-secondary rounded-full h-2">
 			<div 
 				class="bg-primary h-2 rounded-full transition-all duration-300" 
-				x-bind:style="`width: ${(currentStep / " + strings.Itoa(totalSteps) + ") * 100}%`"
+				x-bind:style={ getProgressStyle(totalSteps) }
 			></div>
 		</div>
 	</div>
@@ -278,12 +317,12 @@ templ formSection(section FormSection, stepNumber int, formProps FormProps) {
 		if section.ID != "" {
 			id={ section.ID }
 		}
-		class={ "space-y-4 " + section.Class }
+		class={ getSectionClasses(section.Class) }
 		if section.Collapsible {
-			x-data="{ open: " + if section.Collapsed { "false" } else { "true" } + " }"
+			x-data={ getSectionAlpineData(section.Collapsed) }
 		}
 		if formProps.ShowProgress {
-			x-show={ "currentStep === " + strings.Itoa(stepNumber) }
+			x-show={ getStepShowExpression(stepNumber) }
 		}
 	>
 		// Section header
@@ -348,9 +387,9 @@ func getSectionFieldsClasses(props FormProps) string {
 // formAction renders a form action button
 templ formAction(action FormAction) {
 	@atoms.Button(atoms.ButtonProps{
-		Type:        if action.Type != "" { action.Type } else { "button" },
-		Variant:     if action.Variant != "" { action.Variant } else { atoms.ButtonPrimary },
-		Size:        if action.Size != "" { action.Size } else { atoms.ButtonSizeMD },
+		Type:        getFormActionType(action.Type),
+		Variant:     getFormActionVariant(action.Variant),
+		Size:        getFormActionSize(action.Size),
 		Icon:        action.Icon,
 		IconLeft:    action.IconLeft,
 		IconRight:   action.IconRight,
@@ -374,10 +413,10 @@ templ formAction(action FormAction) {
 templ SimpleForm(props FormProps) {
 	@Form(FormProps{
 		Layout:      FormLayoutVertical,
-		Size:        if props.Size != "" { props.Size } else { FormSizeMD },
+		Size:        getSimpleFormSize(props.Size),
 		Title:       props.Title,
 		Description: props.Description,
-		Method:      if props.Method != "" { props.Method } else { "POST" },
+		Method:      getSimpleFormMethod(props.Method),
 		Action:      props.Action,
 		Fields:      props.Fields,
 		Actions:     props.Actions,
@@ -398,11 +437,11 @@ templ SimpleForm(props FormProps) {
 templ GridForm(props FormProps) {
 	@Form(FormProps{
 		Layout:      FormLayoutGrid,
-		Size:        if props.Size != "" { props.Size } else { FormSizeMD },
-		GridCols:    if props.GridCols > 0 { props.GridCols } else { 2 },
+		Size:        getGridFormSize(props.Size),
+		GridCols:    getGridFormCols(props.GridCols),
 		Title:       props.Title,
 		Description: props.Description,
-		Method:      if props.Method != "" { props.Method } else { "POST" },
+		Method:      getSimpleFormMethod(props.Method),
 		Action:      props.Action,
 		Fields:      props.Fields,
 		Actions:     props.Actions,
@@ -423,10 +462,10 @@ templ GridForm(props FormProps) {
 templ MultiStepForm(props FormProps) {
 	@Form(FormProps{
 		Layout:       props.Layout,
-		Size:         if props.Size != "" { props.Size } else { FormSizeMD },
+		Size:         getMultiStepFormSize(props.Size),
 		Title:        props.Title,
 		Description:  props.Description,
-		Method:       if props.Method != "" { props.Method } else { "POST" },
+		Method:       getMultiStepFormMethod(props.Method),
 		Action:       props.Action,
 		Sections:     props.Sections,
 		ShowProgress: true,
@@ -438,17 +477,88 @@ templ MultiStepForm(props FormProps) {
 		HXTarget:     props.HXTarget,
 		HXSwap:       props.HXSwap,
 		HXValidate:   props.HXValidate,
-		AlpineData:   if props.AlpineData != "" { props.AlpineData } else { getMultiStepAlpineData(len(props.Sections)) },
+		AlpineData:   getMultiStepFormAlpineData(props.AlpineData, len(props.Sections)),
 		OnSubmit:     props.OnSubmit,
 		OnReset:      props.OnReset,
 	})
+}
+
+// Helper functions for ternary operators
+func getFormActionType(actionType string) string {
+	if actionType != "" {
+		return actionType
+	}
+	return "button"
+}
+
+func getFormActionVariant(variant atoms.ButtonVariant) atoms.ButtonVariant {
+	if variant != "" {
+		return variant
+	}
+	return atoms.ButtonPrimary
+}
+
+func getFormActionSize(size atoms.ButtonSize) atoms.ButtonSize {
+	if size != "" {
+		return size
+	}
+	return atoms.ButtonSizeMD
+}
+
+func getSimpleFormSize(size FormSize) FormSize {
+	if size != "" {
+		return size
+	}
+	return FormSizeMD
+}
+
+func getSimpleFormMethod(method string) string {
+	if method != "" {
+		return method
+	}
+	return "POST"
+}
+
+func getGridFormSize(size FormSize) FormSize {
+	if size != "" {
+		return size
+	}
+	return FormSizeMD
+}
+
+func getGridFormCols(cols int) int {
+	if cols > 0 {
+		return cols
+	}
+	return 2
+}
+
+func getMultiStepFormSize(size FormSize) FormSize {
+	if size != "" {
+		return size
+	}
+	return FormSizeMD
+}
+
+func getMultiStepFormMethod(method string) string {
+	if method != "" {
+		return method
+	}
+	return "POST"
+}
+
+func getMultiStepFormAlpineData(alpineData string, totalSteps int) string {
+	if alpineData != "" {
+		return alpineData
+	}
+	return getMultiStepAlpineData(totalSteps)
 }
 
 // getMultiStepAlpineData returns Alpine.js data for multi-step forms
 func getMultiStepAlpineData(totalSteps int) string {
 	return `{
 		currentStep: 1,
-		totalSteps: ` + strings.Itoa(totalSteps) + `,
+		totalSteps: ` + strconv.Itoa(totalSteps) + `,
 		loading: false,
 		errors: {},
 		

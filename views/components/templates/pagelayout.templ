@@ -2,9 +2,8 @@ package templates
 
 import (
 	"strings"
-	"../atoms"
-	"../molecules"
-	"../organisms"
+	"github.com/niiniyare/erp/views/components/atoms"
+	"github.com/niiniyare/erp/views/components/organisms"
 )
 
 // PageLayoutType defines the layout type
@@ -198,7 +197,7 @@ templ PageLayout(props PageLayoutProps, children ...templ.Component) {
 		if props.AlpineData != "" {
 			x-data={ props.AlpineData }
 		} else {
-			x-data="{ sidebarCollapsed: " + if props.Sidebar.Collapsed { "true" } else { "false" } + " }"
+			x-data={ getSidebarAlpineData(props.Sidebar.Collapsed) }
 		}
 		if props.HXBoost {
 			hx-boost="true"
@@ -351,7 +350,7 @@ templ pageHeader(header PageHeader) {
 						<h1 class="text-3xl font-bold tracking-tight">{ header.Title }</h1>
 						if header.Badge != "" {
 							@atoms.Badge(atoms.BadgeProps{
-								Variant: if header.BadgeVariant != "" { header.BadgeVariant } else { atoms.BadgeSecondary },
+								Variant: getHeaderBadgeVariant(header.BadgeVariant),
 								Size:    atoms.BadgeSizeLG,
 							}) {
 								{ header.Badge }
@@ -368,8 +367,8 @@ templ pageHeader(header PageHeader) {
 					<div class="flex items-center gap-2">
 						for _, action := range header.Actions {
 							@atoms.Button(atoms.ButtonProps{
-								Variant:     if action.Variant != "" { action.Variant } else { atoms.ButtonPrimary },
-								Size:        if action.Size != "" { action.Size } else { atoms.ButtonSizeMD },
+								Variant:     getHeaderActionVariant(action.Variant),
+								Size:        getHeaderActionSize(action.Size),
 								Icon:        action.Icon,
 								Disabled:    action.Disabled,
 								Class:       action.Class,
@@ -492,6 +491,34 @@ templ pageScripts(customJS []string) {
 }
 
 // Helper functions
+
+func getSidebarAlpineData(collapsed bool) string {
+	if collapsed {
+		return "{ sidebarCollapsed: true }"
+	}
+	return "{ sidebarCollapsed: false }"
+}
+
+func getHeaderBadgeVariant(variant atoms.BadgeVariant) atoms.BadgeVariant {
+	if variant != "" {
+		return variant
+	}
+	return atoms.BadgeSecondary
+}
+
+func getHeaderActionVariant(variant atoms.ButtonVariant) atoms.ButtonVariant {
+	if variant != "" {
+		return variant
+	}
+	return atoms.ButtonPrimary
+}
+
+func getHeaderActionSize(size atoms.ButtonSize) atoms.ButtonSize {
+	if size != "" {
+		return size
+	}
+	return atoms.ButtonSizeMD
+}
 
 func getContentContainerClasses(props PageLayoutProps) string {
 	classes := []string{"flex-1"}

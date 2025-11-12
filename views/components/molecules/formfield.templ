@@ -2,7 +2,8 @@ package molecules
 
 import (
 	"strings"
-	"../atoms"
+	"strconv"
+	"github.com/niiniyare/erp/views/components/atoms"
 )
 
 // FormFieldType defines the input type for the form field
@@ -312,18 +313,18 @@ templ textareaInput(props FormFieldProps) {
 			readonly
 		}
 		if props.Rows > 0 {
-			rows={ strings.Itoa(props.Rows) }
+			rows={ strconv.Itoa(props.Rows) }
 		} else {
 			rows="3"
 		}
 		if props.Cols > 0 {
-			cols={ strings.Itoa(props.Cols) }
+			cols={ strconv.Itoa(props.Cols) }
 		}
 		if props.MinLength > 0 {
-			minlength={ strings.Itoa(props.MinLength) }
+			minlength={ strconv.Itoa(props.MinLength) }
 		}
 		if props.MaxLength > 0 {
-			maxlength={ strings.Itoa(props.MaxLength) }
+			maxlength={ strconv.Itoa(props.MaxLength) }
 		}
 		class={ textareaClasses(props) }
 		if props.HXPost != "" {
@@ -502,12 +503,28 @@ func selectClasses(props FormFieldProps) string {
 	return strings.Join(classes, " ")
 }
 
+// getTagsErrorClass returns the error class for tags input
+func getTagsErrorClass(hasError bool) string {
+	if hasError {
+		return "border-destructive focus-within:ring-destructive"
+	}
+	return ""
+}
+
+// getSelectableTagsErrorClass returns the error class for selectable tags
+func getSelectableTagsErrorClass(hasError bool) string {
+	if hasError {
+		return "border-destructive"
+	}
+	return ""
+}
+
 // tagsInput renders a tags input using the Tags component
 templ tagsInput(props FormFieldProps) {
 	if props.TagsEditable {
 		@atoms.EditableTags(atoms.TagsProps{
 			Placeholder: props.Placeholder,
-			Class:       if props.ErrorText != "" { "border-destructive focus-within:ring-destructive" } else { "" },
+			Class:       getTagsErrorClass(props.ErrorText != ""),
 			ID:          props.ID,
 			Name:        props.Name,
 			HXPost:      props.HXPost,
@@ -518,7 +535,7 @@ templ tagsInput(props FormFieldProps) {
 	} else {
 		@atoms.SelectableTags(atoms.TagsProps{
 			Tags:     convertSelectOptionsToTagProps(props.TagsOptions),
-			Class:    if props.ErrorText != "" { "border-destructive" } else { "" },
+			Class:    getSelectableTagsErrorClass(props.ErrorText != ""),
 			ID:       props.ID,
 			HXPost:   props.HXPost,
 			HXGet:    props.HXGet,

@@ -1,0 +1,270 @@
+package pages
+
+import (
+	"github.com/niiniyare/erp/views/components/atoms"
+	"github.com/niiniyare/erp/views/components/molecules"
+	"github.com/niiniyare/erp/views/components/organisms"
+)
+
+// SimpleDemoPage renders a simple demo without complex layouts
+templ SimpleDemoPage() {
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		<title>Simple ERP UI Demo</title>
+		
+		// Tailwind CSS
+		<script src="https://cdn.tailwindcss.com"></script>
+		
+		// Alpine.js
+		<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+		
+		// HTMX
+		<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+		
+		// Custom Tailwind config
+		<script>
+			tailwind.config = {
+				theme: {
+					extend: {
+						colors: {
+							border: "hsl(214.3 31.8% 91.4%)",
+							input: "hsl(214.3 31.8% 91.4%)",
+							ring: "hsl(222.2 84% 4.9%)",
+							background: "hsl(0 0% 100%)",
+							foreground: "hsl(222.2 84% 4.9%)",
+							primary: {
+								DEFAULT: "hsl(222.2 47.4% 11.2%)",
+								foreground: "hsl(210 40% 98%)",
+							},
+							secondary: {
+								DEFAULT: "hsl(210 40% 96%)",
+								foreground: "hsl(222.2 84% 4.9%)",
+							},
+							destructive: {
+								DEFAULT: "hsl(0 84.2% 60.2%)",
+								foreground: "hsl(210 40% 98%)",
+							},
+							muted: {
+								DEFAULT: "hsl(210 40% 96%)",
+								foreground: "hsl(215.4 16.3% 46.9%)",
+							},
+							accent: {
+								DEFAULT: "hsl(210 40% 96%)",
+								foreground: "hsl(222.2 84% 4.9%)",
+							},
+							popover: {
+								DEFAULT: "hsl(0 0% 100%)",
+								foreground: "hsl(222.2 84% 4.9%)",
+							},
+							card: {
+								DEFAULT: "hsl(0 0% 100%)",
+								foreground: "hsl(222.2 84% 4.9%)",
+							},
+						},
+						borderRadius: {
+							lg: "0.5rem",
+							md: "calc(0.5rem - 2px)",
+							sm: "calc(0.5rem - 4px)",
+						},
+					},
+				},
+			}
+		</script>
+	</head>
+	<body class="bg-background text-foreground antialiased">
+		<div class="min-h-screen bg-gradient-to-br from-background to-muted">
+			// Simple navbar
+			<nav class="bg-background border-b border-border px-6 py-4">
+				<div class="flex items-center justify-between">
+					<h1 class="text-2xl font-bold text-foreground">ERP UI Demo</h1>
+					<div class="flex items-center gap-4">
+						@atoms.Button(atoms.ButtonProps{
+							Variant: atoms.ButtonPrimary,
+							Size:    atoms.ButtonSizeSM,
+							Icon:    "refresh-cw",
+						}) {
+							Refresh
+						}
+					</div>
+				</div>
+			</nav>
+
+			// Main content
+			<main class="container mx-auto px-6 py-8 max-w-7xl">
+				<div class="space-y-12">
+					// Test Alpine.js
+					<div class="bg-card border border-border rounded-lg p-6">
+						<h2 class="text-xl font-semibold mb-4">Alpine.js Test</h2>
+						<div x-data="{ count: 0 }" class="flex items-center gap-4">
+							<button @click="count++" class="px-4 py-2 bg-primary text-primary-foreground rounded-md">
+								Click me
+							</button>
+							<span class="text-lg font-medium" x-text="count"></span>
+						</div>
+					</div>
+
+					// Buttons Section
+					<div class="bg-card border border-border rounded-lg p-6">
+						<h2 class="text-xl font-semibold mb-6">Buttons</h2>
+						<div class="flex flex-wrap gap-4">
+							@atoms.Button(atoms.ButtonProps{
+								Variant: atoms.ButtonPrimary,
+								Size:    atoms.ButtonSizeMD,
+							}) {
+								Primary Button
+							}
+							
+							@atoms.Button(atoms.ButtonProps{
+								Variant: atoms.ButtonSecondary,
+								Size:    atoms.ButtonSizeMD,
+							}) {
+								Secondary Button
+							}
+							
+							@atoms.Button(atoms.ButtonProps{
+								Variant: atoms.ButtonOutline,
+								Size:    atoms.ButtonSizeMD,
+								Icon:    "download",
+							}) {
+								Outline with Icon
+							}
+							
+							@atoms.Button(atoms.ButtonProps{
+								Variant: atoms.ButtonGhost,
+								Size:    atoms.ButtonSizeSM,
+							}) {
+								Ghost Button
+							}
+							
+							@atoms.Button(atoms.ButtonProps{
+								Variant:  atoms.ButtonDestructive,
+								Size:     atoms.ButtonSizeMD,
+								Icon:     "trash-2",
+								Disabled: false,
+							}) {
+								Delete
+							}
+						</div>
+					</div>
+
+					// Form Fields Section
+					<div class="bg-card border border-border rounded-lg p-6">
+						<h2 class="text-xl font-semibold mb-6">Form Fields</h2>
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+							@molecules.FormField(molecules.FormFieldProps{
+								Type:        molecules.FormFieldText,
+								Size:        molecules.FormFieldSizeMD,
+								ID:          "demo-name",
+								Name:        "name",
+								Label:       "Full Name",
+								Placeholder: "Enter your full name",
+								Required:    true,
+							})
+							
+							@molecules.FormField(molecules.FormFieldProps{
+								Type:        molecules.FormFieldEmail,
+								Size:        molecules.FormFieldSizeMD,
+								ID:          "demo-email",
+								Name:        "email",
+								Label:       "Email Address",
+								Placeholder: "Enter your email",
+								Required:    true,
+							})
+							
+							@molecules.FormField(molecules.FormFieldProps{
+								Type:        molecules.FormFieldSelect,
+								Size:        molecules.FormFieldSizeMD,
+								ID:          "demo-role",
+								Name:        "role",
+								Label:       "Role",
+								Placeholder: "Select your role",
+								Options: []molecules.SelectOption{
+									{Value: "admin", Label: "Administrator"},
+									{Value: "user", Label: "User"},
+									{Value: "manager", Label: "Manager"},
+								},
+							})
+						</div>
+					</div>
+
+					// Simple Table Section
+					<div class="bg-card border border-border rounded-lg p-6">
+						<h2 class="text-xl font-semibold mb-6">Simple Table</h2>
+						@organisms.Table(organisms.TableProps{
+							Title: "Sample Data",
+							Description: "A simple table example",
+							Columns: []organisms.TableColumn{
+								{Key: "name", Title: "Name", Type: organisms.ColumnTypeText, Sortable: true},
+								{Key: "email", Title: "Email", Type: organisms.ColumnTypeText},
+								{Key: "role", Title: "Role", Type: organisms.ColumnTypeBadge},
+								{Key: "status", Title: "Status", Type: organisms.ColumnTypeBadge},
+							},
+							Rows: []organisms.TableRow{
+								{
+									ID: "1",
+									Data: map[string]interface{}{
+										"name":   "John Doe",
+										"email":  "john@example.com", 
+										"role":   "Admin",
+										"status": "Active",
+									},
+								},
+								{
+									ID: "2", 
+									Data: map[string]interface{}{
+										"name":   "Jane Smith",
+										"email":  "jane@example.com",
+										"role":   "User", 
+										"status": "Active",
+									},
+								},
+								{
+									ID: "3",
+									Data: map[string]interface{}{
+										"name":   "Bob Johnson",
+										"email":  "bob@example.com",
+										"role":   "Manager",
+										"status": "Inactive",
+									},
+								},
+							},
+							Selectable: true,
+							Searchable: true,
+							Sortable:   true,
+						})
+					</div>
+
+					// Navigation Test
+					<div class="bg-card border border-border rounded-lg p-6">
+						<h2 class="text-xl font-semibold mb-6">Navigation Test</h2>
+						<div x-data="{ collapsed: false }" class="space-y-4">
+							<button 
+								@click="collapsed = !collapsed" 
+								class="px-4 py-2 bg-primary text-primary-foreground rounded-md"
+							>
+								Toggle Sidebar
+							</button>
+							
+							<div class="border border-border rounded-md overflow-hidden">
+								@organisms.Navigation(organisms.NavigationProps{
+									Type: organisms.NavigationSidebar,
+									Title: "Demo Navigation",
+									Items: []organisms.NavigationItem{
+										{Text: "Dashboard", Icon: "home", URL: "#", Active: true},
+										{Text: "Users", Icon: "users", URL: "#"},
+										{Text: "Settings", Icon: "settings", URL: "#"},
+									},
+									Collapsible: true,
+								})
+							</div>
+						</div>
+					</div>
+				</div>
+			</main>
+		</div>
+	</body>
+	</html>
+}

@@ -3,8 +3,8 @@ package organisms
 import (
 	"strings"
 	"strconv"
-	"../atoms"
-	"../molecules"
+	"github.com/niiniyare/erp/views/components/atoms"
+	"github.com/niiniyare/erp/views/components/molecules"
 )
 
 // TableSize defines the size variants for tables
@@ -242,15 +242,17 @@ templ Table(props TableProps) {
 					@atoms.Button(atoms.ButtonProps{
 						Variant: atoms.ButtonDestructive,
 						Size:    atoms.ButtonSizeSM,
-						Text:    "Delete Selected",
 						Icon:    "trash",
-					})
+					}) {
+						Delete Selected
+					}
 					@atoms.Button(atoms.ButtonProps{
 						Variant: atoms.ButtonOutline,
 						Size:    atoms.ButtonSizeSM,
-						Text:    "Clear Selection",
 						AlpineClick: "clearSelection()",
-					})
+					}) {
+						Clear Selection
+					}
 				</div>
 			</div>
 		}
@@ -263,7 +265,7 @@ templ Table(props TableProps) {
 			@tableError(props.Error)
 		} else if len(props.Rows) == 0 {
 			// Empty state
-			@tableEmpty(if props.EmptyMessage != "" { props.EmptyMessage } else { "No data available" })
+			@tableEmpty(getTableEmptyMessage(props.EmptyMessage))
 		} else {
 			// Table content
 			<div class={ tableClasses(props) }>
@@ -407,9 +409,9 @@ templ tableCell(row TableRow, column TableColumn, props TableProps) {
 	case ColumnTypeCheckbox:
 		if checked, ok := row.Data[column.Key].(bool); ok {
 			@atoms.Icon(atoms.IconProps{
-				Name: if checked { "check" } else { "x" },
+				Name: getCheckboxIconName(checked),
 				Size: atoms.IconSizeSM,
-				Class: if checked { "text-success" } else { "text-muted-foreground" },
+				Class: getCheckboxIconClass(checked),
 			})
 		}
 	case ColumnTypeLink:
@@ -516,7 +518,7 @@ templ tablePagination(props TableProps) {
 			// Page numbers (simplified)
 			for i := max(1, props.CurrentPage-2); i <= min(props.TotalPages, props.CurrentPage+2); i++ {
 				@atoms.Button(atoms.ButtonProps{
-					Variant: if i == props.CurrentPage { atoms.ButtonPrimary } else { atoms.ButtonGhost },
+					Variant: getPageButtonVariant(i, props.CurrentPage),
 					Size:    atoms.ButtonSizeSM,
 					AlpineClick: "changePage(" + strconv.Itoa(i) + ")",
 				}) {
@@ -537,8 +539,8 @@ templ tablePagination(props TableProps) {
 
 templ tableAction(action TableAction) {
 	@atoms.Button(atoms.ButtonProps{
-		Variant:     if action.Variant != "" { action.Variant } else { atoms.ButtonPrimary },
-		Size:        if action.Size != "" { action.Size } else { atoms.ButtonSizeSM },
+		Variant:     getTableActionVariant(action.Variant),
+		Size:        getTableActionSize(action.Size),
 		Icon:        action.Icon,
 		Disabled:    action.Disabled,
 		Class:       action.Class,
@@ -551,6 +553,49 @@ templ tableAction(action TableAction) {
 	}) {
 		{ action.Text }
 	}
+}
+
+// Helper functions for ternary operators
+func getTableEmptyMessage(message string) string {
+	if message != "" {
+		return message
+	}
+	return "No data available"
+}
+
+func getCheckboxIconName(checked bool) string {
+	if checked {
+		return "check"
+	}
+	return "x"
+}
+
+func getCheckboxIconClass(checked bool) string {
+	if checked {
+		return "text-success"
+	}
+	return "text-muted-foreground"
+}
+
+func getTableActionVariant(variant atoms.ButtonVariant) atoms.ButtonVariant {
+	if variant != "" {
+		return variant
+	}
+	return atoms.ButtonPrimary
+}
+
+func getTableActionSize(size atoms.ButtonSize) atoms.ButtonSize {
+	if size != "" {
+		return size
+	}
+	return atoms.ButtonSizeSM
+}
+
+func getPageButtonVariant(page, currentPage int) atoms.ButtonVariant {
+	if page == currentPage {
+		return atoms.ButtonPrimary
+	}
+	return atoms.ButtonGhost
 }
 
 // Helper functions (would be implemented in Go)

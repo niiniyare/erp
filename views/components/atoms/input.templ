@@ -2,6 +2,7 @@ package atoms
 
 import (
 	"strings"
+	"strconv"
 )
 
 // InputType defines the type of input
@@ -147,10 +148,10 @@ templ Input(props InputProps) {
 			readonly
 		}
 		if props.MinLength > 0 {
-			minlength={ strings.Itoa(props.MinLength) }
+			minlength={ strconv.Itoa(props.MinLength) }
 		}
 		if props.MaxLength > 0 {
-			maxlength={ strings.Itoa(props.MaxLength) }
+			maxlength={ strconv.Itoa(props.MaxLength) }
 		}
 		if props.Min != "" {
 			min={ props.Min }

@@ -2,8 +2,9 @@ package organisms
 
 import (
 	"strings"
-	"../atoms"
-	"../molecules"
+	"strconv"
+	"github.com/niiniyare/erp/views/components/atoms"
+	"github.com/niiniyare/erp/views/components/molecules"
 )
 
 // NavigationType defines the type of navigation
@@ -164,7 +165,7 @@ templ sidebarNavigation(props NavigationProps) {
 		if props.AlpineData != "" {
 			x-data={ props.AlpineData }
 		} else if props.Collapsible {
-			x-data="{ collapsed: " + if props.Collapsed { "true" } else { "false" } + " }"
+			x-data={ getNavigationAlpineData(props.Collapsed) }
 		}
 	>
 		// Sidebar header
@@ -176,7 +177,7 @@ templ sidebarNavigation(props NavigationProps) {
 						alt="Logo" 
 						class="h-8 w-8"
 						if props.LogoURL != "" {
-							onclick={ "window.location.href='" + props.LogoURL + "'" }
+							x-on:click={ "window.location.href='" + props.LogoURL + "'" }
 							style="cursor: pointer;"
 						}
 					/>
@@ -263,7 +264,7 @@ templ sidebarNavItem(item NavigationItem, props NavigationProps, depth int) {
 						}
 						class={ getSidebarItemClasses(item, depth, props.Collapsible) }
 						if len(item.Items) > 0 && item.Collapsible {
-							x-data="{ open: " + if item.Collapsed { "false" } else { "true" } + " }"
+							x-data={ getNavItemAlpineData(item.Collapsed) }
 							x-on:click="open = !open"
 						}
 						if item.AlpineClick != "" {
@@ -287,7 +288,7 @@ templ sidebarNavItem(item NavigationItem, props NavigationProps, depth int) {
 				// Nested items
 				if len(item.Items) > 0 {
 					<ul
-						class={ "mt-1 space-y-1 " + if depth == 0 { "ml-6" } else { "ml-4" } }
+						class={ getSubItemClasses(depth) }
 						if item.Collapsible {
 							x-show="open"
 							x-transition
@@ -333,7 +334,7 @@ templ sidebarItemContent(item NavigationItem, collapsible bool) {
 				}
 			>
 				@atoms.Badge(atoms.BadgeProps{
-					Variant: if item.BadgeVariant != "" { item.BadgeVariant } else { atoms.BadgeSecondary },
+					Variant: getNavItemBadgeVariant(item.BadgeVariant),
 					Size:    atoms.BadgeSizeSM,
 				}) {
 					{ item.Badge }
@@ -361,7 +362,7 @@ templ topbarNavigation(props NavigationProps) {
 							alt="Logo" 
 							class="h-8 w-8"
 							if props.LogoURL != "" {
-								onclick={ "window.location.href='" + props.LogoURL + "'" }
+								x-on:click={ "window.location.href='" + props.LogoURL + "'" }
 								style="cursor: pointer;"
 							}
 						/>
@@ -499,7 +500,7 @@ templ topbarItemContent(item NavigationItem) {
 		<span>{ item.Text }</span>
 		if item.Badge != "" {
 			@atoms.Badge(atoms.BadgeProps{
-				Variant: if item.BadgeVariant != "" { item.BadgeVariant } else { atoms.BadgeSecondary },
+				Variant: getNavItemBadgeVariant(item.BadgeVariant),
 				Size:    atoms.BadgeSizeSM,
 			}) {
 				{ item.Badge }
@@ -630,7 +631,7 @@ templ tabItemContent(item NavigationItem) {
 		<span>{ item.Text }</span>
 		if item.Badge != "" {
 			@atoms.Badge(atoms.BadgeProps{
-				Variant: if item.BadgeVariant != "" { item.BadgeVariant } else { atoms.BadgeSecondary },
+				Variant: getNavItemBadgeVariant(item.BadgeVariant),
 				Size:    atoms.BadgeSizeSM,
 			}) {
 				{ item.Badge }
@@ -663,7 +664,7 @@ templ stepNavItem(item NavigationItem, stepNumber int, currentStep int, hasNext 
 				if stepNumber < currentStep {
 					@atoms.Icon(atoms.IconProps{Name: "check", Size: atoms.IconSizeXS, Class: "text-white"})
 				} else {
-					<span class="text-sm font-medium">{ strings.Itoa(stepNumber) }</span>
+					<span class="text-sm font-medium">{ strconv.Itoa(stepNumber) }</span>
 				}
 			</div>
 			
@@ -683,6 +684,35 @@ templ stepNavItem(item NavigationItem, stepNumber int, currentStep int, hasNext 
 			<div class={ getStepConnectorClasses(stepNumber, currentStep) }></div>
 		}
 	</div>
+}
+
+// Helper functions for ternary operators
+func getNavigationAlpineData(collapsed bool) string {
+	if collapsed {
+		return "{ collapsed: true }"
+	}
+	return "{ collapsed: false }"
+}
+
+func getNavItemAlpineData(collapsed bool) string {
+	if collapsed {
+		return "{ open: false }"
+	}
+	return "{ open: true }"
+}
+
+func getNavItemBadgeVariant(variant atoms.BadgeVariant) atoms.BadgeVariant {
+	if variant != "" {
+		return variant
+	}
+	return atoms.BadgeSecondary
+}
+
+func getSubItemClasses(depth int) string {
+	if depth == 0 {
+		return "mt-1 space-y-1 ml-6"
+	}
+	return "mt-1 space-y-1 ml-4"
 }
 
 // Helper functions for class generation
