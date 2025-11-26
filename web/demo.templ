@@ -1,0 +1,931 @@
+package main
+
+import (
+	"fmt"
+	"github.com/niiniyare/erp/web/components/alert"
+	"github.com/niiniyare/erp/web/components/aspectratio"
+	"github.com/niiniyare/erp/web/components/avatar"
+	"github.com/niiniyare/erp/web/components/badge"
+	"github.com/niiniyare/erp/web/components/breadcrumb"
+	"github.com/niiniyare/erp/web/components/button"
+	"github.com/niiniyare/erp/web/components/card"
+	"github.com/niiniyare/erp/web/components/carousel"
+	"github.com/niiniyare/erp/web/components/checkbox"
+	"github.com/niiniyare/erp/web/components/code"
+	"github.com/niiniyare/erp/web/components/collapsible"
+	"github.com/niiniyare/erp/web/components/copybutton"
+	"github.com/niiniyare/erp/web/components/datepicker"
+	"github.com/niiniyare/erp/web/components/dialog"
+	"github.com/niiniyare/erp/web/components/icon"
+	"github.com/niiniyare/erp/web/components/input"
+	"github.com/niiniyare/erp/web/components/inputotp"
+	"github.com/niiniyare/erp/web/components/label"
+	"github.com/niiniyare/erp/web/components/pagination"
+	"github.com/niiniyare/erp/web/components/popover"
+	"github.com/niiniyare/erp/web/components/progress"
+	"github.com/niiniyare/erp/web/components/radio"
+	"github.com/niiniyare/erp/web/components/rating"
+	"github.com/niiniyare/erp/web/components/selectbox"
+	"github.com/niiniyare/erp/web/components/separator"
+	"github.com/niiniyare/erp/web/components/skeleton"
+	"github.com/niiniyare/erp/web/components/slider"
+	switchcomp "github.com/niiniyare/erp/web/components/switch"
+	"github.com/niiniyare/erp/web/components/table"
+	"github.com/niiniyare/erp/web/components/tagsinput"
+	"github.com/niiniyare/erp/web/components/textarea"
+	"github.com/niiniyare/erp/web/components/timepicker"
+	"github.com/niiniyare/erp/web/components/toast"
+)
+
+templ DemoPage() {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>ERP UI Components - Complete Demo</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+			<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/focus@3.x.x/dist/cdn.min.js"></script>
+			<script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+			<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+			<style>
+				:root {
+					--background: 0 0% 100%;
+					--foreground: 240 10% 3.9%;
+					--card: 0 0% 100%;
+					--card-foreground: 240 10% 3.9%;
+					--popover: 0 0% 100%;
+					--popover-foreground: 240 10% 3.9%;
+					--primary: 240 5.9% 10%;
+					--primary-foreground: 0 0% 98%;
+					--secondary: 240 4.8% 95.9%;
+					--secondary-foreground: 240 5.9% 10%;
+					--muted: 240 4.8% 95.9%;
+					--muted-foreground: 240 3.8% 46.1%;
+					--accent: 240 4.8% 95.9%;
+					--accent-foreground: 240 5.9% 10%;
+					--destructive: 0 84.2% 60.2%;
+					--destructive-foreground: 0 0% 98%;
+					--border: 240 5.9% 90%;
+					--input: 240 5.9% 90%;
+					--ring: 240 5.9% 10%;
+				}
+				
+				.dark {
+					--background: 240 10% 3.9%;
+					--foreground: 0 0% 98%;
+					--card: 240 10% 3.9%;
+					--card-foreground: 0 0% 98%;
+					--popover: 240 10% 3.9%;
+					--popover-foreground: 0 0% 98%;
+					--primary: 0 0% 98%;
+					--primary-foreground: 240 5.9% 10%;
+					--secondary: 240 3.7% 15.9%;
+					--secondary-foreground: 0 0% 98%;
+					--muted: 240 3.7% 15.9%;
+					--muted-foreground: 240 5% 64.9%;
+					--accent: 240 3.7% 15.9%;
+					--accent-foreground: 0 0% 98%;
+					--destructive: 0 84.2% 60.2%;
+					--destructive-foreground: 0 0% 98%;
+					--border: 240 3.7% 15.9%;
+					--input: 240 3.7% 15.9%;
+					--ring: 240 4.9% 83.9%;
+				}
+				
+				body { 
+					font-family: 'Inter', sans-serif; 
+					transition: background-color 0.3s ease, color 0.3s ease;
+				}
+				.section-card { @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8; }
+				.component-grid { @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6; }
+				.demo-item { @apply border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800; }
+				
+				/* Dark mode toggle styles */
+				.theme-switch {
+					position: relative;
+					width: 50px;
+					height: 24px;
+					background: #e5e5e5;
+					border-radius: 50px;
+					cursor: pointer;
+					transition: background 0.3s ease;
+				}
+				
+				.theme-switch.dark {
+					background: #374151;
+				}
+				
+				.theme-switch::before {
+					content: '';
+					position: absolute;
+					top: 2px;
+					left: 2px;
+					width: 20px;
+					height: 20px;
+					background: white;
+					border-radius: 50%;
+					transition: transform 0.3s ease;
+					box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+				}
+				
+				.theme-switch.dark::before {
+					transform: translateX(26px);
+				}
+			</style>
+		</head>
+		<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100" x-data="{ darkMode: false }" x-init="darkMode = localStorage.getItem('darkMode') === 'true' || false; $watch('darkMode', val => { localStorage.setItem('darkMode', val); document.documentElement.classList.toggle('dark', val); })">
+			<div class="min-h-screen">
+				<!-- Header -->
+				<header class="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 sticky top-0 z-50">
+					<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+						<div class="flex justify-between items-center py-6">
+							<div>
+								<h1 class="text-3xl font-bold text-gray-900 dark:text-white">ERP UI Components</h1>
+								<p class="text-gray-600 dark:text-gray-300 mt-1">Complete Component Library Demo</p>
+							</div>
+							<div class="flex items-center gap-4">
+								<div class="flex items-center gap-2">
+									@icon.Sun(icon.Props{Size: 16, Class: "text-gray-600 dark:text-gray-300"})
+									<div 
+										class="theme-switch" 
+										:class="{ 'dark': darkMode }"
+										@click="darkMode = !darkMode"
+									></div>
+									@icon.Moon(icon.Props{Size: 16, Class: "text-gray-600 dark:text-gray-300"})
+								</div>
+								<a href="/inventory" class="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+									View All 40+ Components →
+								</a>
+							</div>
+						</div>
+					</div>
+				</header>
+
+				<!-- Navigation -->
+				<nav class="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
+					<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+						<div class="flex gap-6 py-3 overflow-x-auto">
+							<a href="#buttons" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white whitespace-nowrap">Buttons</a>
+							<a href="#form-inputs" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white whitespace-nowrap">Form Inputs</a>
+							<a href="#display" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white whitespace-nowrap">Display</a>
+							<a href="#feedback" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white whitespace-nowrap">Feedback</a>
+							<a href="#layout" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white whitespace-nowrap">Layout</a>
+							<a href="#overlays" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white whitespace-nowrap">Overlays</a>
+							<a href="#data" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white whitespace-nowrap">Data</a>
+							<a href="#misc" class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white whitespace-nowrap">Misc</a>
+						</div>
+					</div>
+				</nav>
+
+				<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+					<!-- Buttons Section -->
+					<section id="buttons" class="mb-12">
+						<h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Buttons</h2>
+						
+						<div class="section-card">
+							<h3 class="text-lg font-semibold mb-4">Button Variants</h3>
+							<div class="flex flex-wrap gap-4">
+								@button.Button(button.Props{}) {
+									Default
+								}
+								@button.Button(button.Props{Variant: button.VariantDestructive}) {
+									Destructive
+								}
+								@button.Button(button.Props{Variant: button.VariantOutline}) {
+									Outline
+								}
+								@button.Button(button.Props{Variant: button.VariantSecondary}) {
+									Secondary
+								}
+								@button.Button(button.Props{Variant: button.VariantGhost}) {
+									Ghost
+								}
+								@button.Button(button.Props{Variant: button.VariantLink}) {
+									Link
+								}
+							</div>
+						</div>
+
+						<div class="section-card">
+							<h3 class="text-lg font-semibold mb-4">Button Sizes</h3>
+							<div class="flex flex-wrap items-center gap-4">
+								@button.Button(button.Props{Size: button.SizeSm}) {
+									Small
+								}
+								@button.Button(button.Props{}) {
+									Default
+								}
+								@button.Button(button.Props{Size: button.SizeLg}) {
+									Large
+								}
+								@button.Button(button.Props{Size: button.SizeIcon}) {
+									@icon.Plus(icon.Props{Size: 16})
+								}
+							</div>
+						</div>
+
+						<div class="section-card">
+							<h3 class="text-lg font-semibold mb-4">Button States</h3>
+							<div class="flex flex-wrap gap-4">
+								@button.Button(button.Props{}) {
+									Normal
+								}
+								@button.Button(button.Props{Disabled: true}) {
+									Disabled
+								}
+								@button.Button(button.Props{Href: "#", Target: "_blank"}) {
+									Link Button
+								}
+								@button.Button(button.Props{FullWidth: true}) {
+									Full Width
+								}
+							</div>
+						</div>
+					</section>
+
+					<!-- Form Inputs Section -->
+					<section id="form-inputs" class="mb-12">
+						<h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Form Inputs</h2>
+
+						<div class="component-grid">
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Text Input</h3>
+								@label.Label(label.Props{For: "demo-input"}) {
+									Username
+								}
+								@input.Input(input.Props{
+									ID: "demo-input",
+									Placeholder: "Enter username",
+									Name: "username",
+								})
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Password Input</h3>
+								@label.Label(label.Props{For: "demo-password"}) {
+									Password
+								}
+								@input.Input(input.Props{
+									ID: "demo-password",
+									Type: input.TypePassword,
+									Placeholder: "Enter password",
+								})
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Email Input</h3>
+								@label.Label(label.Props{For: "demo-email"}) {
+									Email
+								}
+								@input.Input(input.Props{
+									ID: "demo-email",
+									Type: input.TypeEmail,
+									Placeholder: "john@example.com",
+								})
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Textarea</h3>
+								@label.Label(label.Props{For: "demo-textarea"}) {
+									Description
+								}
+								@textarea.Textarea(textarea.Props{
+									ID: "demo-textarea",
+									Placeholder: "Enter description...",
+									Rows: 4,
+								})
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Checkbox</h3>
+								<div class="flex items-center space-x-2">
+									@checkbox.Checkbox(checkbox.Props{
+										ID: "demo-checkbox",
+										Name: "terms",
+									})
+									@label.Label(label.Props{For: "demo-checkbox"}) {
+										Accept terms and conditions
+									}
+								</div>
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Radio Group</h3>
+								<div class="space-y-2">
+									<div class="flex items-center space-x-2">
+										@radio.Radio(radio.Props{
+											ID: "radio1",
+											Name: "demo-radio",
+											Value: "option1",
+											Checked: true,
+										})
+										@label.Label(label.Props{For: "radio1"}) {
+											Option 1
+										}
+									</div>
+									<div class="flex items-center space-x-2">
+										@radio.Radio(radio.Props{
+											ID: "radio2",
+											Name: "demo-radio",
+											Value: "option2",
+										})
+										@label.Label(label.Props{For: "radio2"}) {
+											Option 2
+										}
+									</div>
+									<div class="flex items-center space-x-2">
+										@radio.Radio(radio.Props{
+											ID: "radio3",
+											Name: "demo-radio",
+											Value: "option3",
+										})
+										@label.Label(label.Props{For: "radio3"}) {
+											Option 3
+										}
+									</div>
+								</div>
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Switch</h3>
+								<div class="flex items-center space-x-2">
+									@switchcomp.Switch(switchcomp.Props{
+										ID: "demo-switch",
+										Name: "notifications",
+									})
+									@label.Label(label.Props{For: "demo-switch"}) {
+										Enable notifications
+									}
+								</div>
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Slider</h3>
+								@label.Label(label.Props{For: "demo-slider"}) {
+									Volume
+								}
+								@slider.Slider(slider.Props{ID: "demo-slider-wrapper"}) {
+									@slider.Input(slider.InputProps{
+										ID: "demo-slider",
+										Name: "volume",
+										Min: 0,
+										Max: 100,
+										Value: 50,
+									})
+								}
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Select Box</h3>
+								@label.Label(label.Props{For: "demo-select"}) {
+									Country
+								}
+								@selectbox.SelectBox(selectbox.Props{
+									ID: "demo-select",
+								}) {
+									@selectbox.Trigger(selectbox.TriggerProps{
+										ID: "demo-select-trigger",
+										Name: "country",
+									}) {
+										@selectbox.Value() {
+											Select country...
+										}
+									}
+									@selectbox.Content() {
+										@selectbox.Item(selectbox.ItemProps{Value: "us"}) { United States }
+										@selectbox.Item(selectbox.ItemProps{Value: "uk"}) { United Kingdom }
+										@selectbox.Item(selectbox.ItemProps{Value: "ca"}) { Canada }
+									}
+								}
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">OTP Input</h3>
+								@label.Label(label.Props{}) {
+									Enter Code
+								}
+								@inputotp.InputOTP(inputotp.Props{
+									Name: "otp",
+								}) {
+									@inputotp.Group() {
+										@inputotp.Slot(inputotp.SlotProps{Index: 0})
+										@inputotp.Slot(inputotp.SlotProps{Index: 1})
+										@inputotp.Slot(inputotp.SlotProps{Index: 2})
+									}
+									@inputotp.Separator()
+									@inputotp.Group() {
+										@inputotp.Slot(inputotp.SlotProps{Index: 3})
+										@inputotp.Slot(inputotp.SlotProps{Index: 4})
+										@inputotp.Slot(inputotp.SlotProps{Index: 5})
+									}
+								}
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Tags Input</h3>
+								@label.Label(label.Props{}) {
+									Skills
+								}
+								@tagsinput.TagsInput(tagsinput.Props{
+									Name: "skills",
+									Placeholder: "Add skills...",
+								})
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Rating</h3>
+								@label.Label(label.Props{}) {
+									Rate your experience
+								}
+								@rating.Rating(rating.Props{
+									Name: "rating",
+									Value: 4,
+								}) {
+									@rating.Group() {
+										@rating.Item(rating.ItemProps{Value: 1})
+										@rating.Item(rating.ItemProps{Value: 2})
+										@rating.Item(rating.ItemProps{Value: 3})
+										@rating.Item(rating.ItemProps{Value: 4})
+										@rating.Item(rating.ItemProps{Value: 5})
+									}
+								}
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Date Picker</h3>
+								@label.Label(label.Props{}) {
+									Select Date
+								}
+								@datepicker.DatePicker(datepicker.Props{
+									Name: "date",
+									Placeholder: "Pick a date",
+								})
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Time Picker</h3>
+								@label.Label(label.Props{}) {
+									Select Time
+								}
+								@timepicker.TimePicker(timepicker.Props{
+									Name: "time",
+									Placeholder: "Pick a time",
+								})
+							</div>
+						</div>
+					</section>
+
+					<!-- Display Components -->
+					<section id="display" class="mb-12">
+						<h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Display Components</h2>
+
+						<div class="component-grid">
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Badges</h3>
+								<div class="flex flex-wrap gap-2">
+									@badge.Badge(badge.Props{}) {
+										Default
+									}
+									@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+										Secondary
+									}
+									@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) {
+										Destructive
+									}
+									@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
+										Outline
+									}
+								</div>
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Avatar</h3>
+								<div class="flex gap-3">
+									@avatar.Avatar() {
+										@avatar.Image(avatar.ImageProps{
+											Src: "https://ui-avatars.com/api/?name=John+Doe",
+											Alt: "John Doe",
+										})
+									}
+									@avatar.Avatar() {
+										@avatar.Fallback() {
+											JD
+										}
+									}
+									@avatar.Avatar(avatar.Props{
+										Class: "h-14 w-14",
+									}) {
+										@avatar.Fallback() {
+											AB
+										}
+									}
+								</div>
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Progress Bar</h3>
+								<div class="space-y-3">
+									@progress.Progress(progress.Props{
+										Value: 25,
+										Label: "25%",
+									})
+									@progress.Progress(progress.Props{
+										Value: 75,
+										Label: "75%",
+									})
+								</div>
+							</div>
+						</div>
+
+						<div class="section-card">
+							<h3 class="text-lg font-semibold mb-4">Card</h3>
+							@card.Card() {
+								@card.Header() {
+									@card.Title() {
+										Project Details
+									}
+									@card.Description() {
+										Manage your project settings and configuration
+									}
+								}
+								@card.Content() {
+									<p>This is the card content area where you can place any content.</p>
+								}
+								@card.Footer() {
+									@button.Button(button.Props{Variant: button.VariantOutline}) {
+										Cancel
+									}
+									@button.Button() {
+										Save Changes
+									}
+								}
+							}
+						</div>
+					</section>
+
+					<!-- Feedback Components -->
+					<section id="feedback" class="mb-12">
+						<h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Feedback Components</h2>
+
+						<div class="space-y-4">
+							@alert.Alert(alert.Props{}) {
+								@alert.Title() {
+									Default Alert
+								}
+								@alert.Description() {
+									This is a default alert message.
+								}
+							}
+
+							@alert.Alert(alert.Props{Variant: alert.VariantDestructive}) {
+								@alert.Title() {
+									Error Alert
+								}
+								@alert.Description() {
+									An error occurred while processing your request.
+								}
+							}
+
+							@alert.Alert(alert.Props{}) {
+								@alert.Title() {
+									Success Alert
+								}
+								@alert.Description() {
+									Your changes have been saved successfully.
+								}
+							}
+						</div>
+
+						<div class="section-card mt-6">
+							<h3 class="text-lg font-semibold mb-4">Skeleton Loading</h3>
+							<div class="space-y-3">
+								@skeleton.Skeleton(skeleton.Props{
+									Class: "h-4 w-[250px]",
+								})
+								@skeleton.Skeleton(skeleton.Props{
+									Class: "h-4 w-[200px]",
+								})
+								@skeleton.Skeleton(skeleton.Props{
+									Class: "h-20 w-full",
+								})
+							</div>
+						</div>
+					</section>
+
+					<!-- Layout Components -->
+					<section id="layout" class="mb-12">
+						<h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Layout Components</h2>
+
+						<div class="section-card">
+							<h3 class="text-lg font-semibold mb-4">Tabs</h3>
+							<div x-data="{ activeTab: 'tab1' }">
+								<div class="flex flex-col gap-2">
+									<div class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 inline-flex h-9 w-fit items-center justify-center rounded-lg p-[3px]">
+										<button 
+											class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+											:class="activeTab === 'tab1' ? 'bg-background text-foreground shadow' : 'text-muted-foreground hover:text-foreground'"
+											@click="activeTab = 'tab1'"
+										>
+											Profile
+										</button>
+										<button 
+											class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+											:class="activeTab === 'tab2' ? 'bg-background text-foreground shadow' : 'text-muted-foreground hover:text-foreground'"
+											@click="activeTab = 'tab2'"
+										>
+											Settings
+										</button>
+										<button 
+											class="inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+											:class="activeTab === 'tab3' ? 'bg-background text-foreground shadow' : 'text-muted-foreground hover:text-foreground'"
+											@click="activeTab = 'tab3'"
+										>
+											Security
+										</button>
+									</div>
+									<div x-show="activeTab === 'tab1'" class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+										<div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+											<h4 class="font-semibold mb-2 text-gray-900 dark:text-white">Profile Information</h4>
+											<p class="text-gray-600 dark:text-gray-300">Manage your profile details and preferences.</p>
+										</div>
+									</div>
+									<div x-show="activeTab === 'tab2'" class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+										<div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+											<h4 class="font-semibold mb-2 text-gray-900 dark:text-white">Account Settings</h4>
+											<p class="text-gray-600 dark:text-gray-300">Configure your account settings and preferences.</p>
+										</div>
+									</div>
+									<div x-show="activeTab === 'tab3'" class="mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+										<div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+											<h4 class="font-semibold mb-2 text-gray-900 dark:text-white">Security Options</h4>
+											<p class="text-gray-600 dark:text-gray-300">Manage your security and privacy settings.</p>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-card">
+							<h3 class="text-lg font-semibold mb-4">Accordion</h3>
+							<div x-data="{ openItem: null }" class="space-y-2">
+								<div class="border border-gray-200 dark:border-gray-700 rounded-lg">
+									<button 
+										class="w-full px-4 py-3 text-left font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 flex justify-between items-center"
+										@click="openItem = openItem === 'item1' ? null : 'item1'"
+									>
+										<span>What is the refund policy?</span>
+										<div class="transition-transform duration-200" :class="{ 'rotate-180': openItem === 'item1' }">
+											@icon.ChevronDown(icon.Props{Size: 16, Class: "text-gray-500"})
+										</div>
+									</button>
+									<div x-show="openItem === 'item1'" x-collapse class="px-4 pb-3 text-gray-600 dark:text-gray-300">
+										<p>Our refund policy allows returns within 30 days of purchase with a valid receipt.</p>
+									</div>
+								</div>
+								<div class="border border-gray-200 dark:border-gray-700 rounded-lg">
+									<button 
+										class="w-full px-4 py-3 text-left font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 flex justify-between items-center"
+										@click="openItem = openItem === 'item2' ? null : 'item2'"
+									>
+										<span>How do I track my order?</span>
+										<div class="transition-transform duration-200" :class="{ 'rotate-180': openItem === 'item2' }">
+											@icon.ChevronDown(icon.Props{Size: 16, Class: "text-gray-500"})
+										</div>
+									</button>
+									<div x-show="openItem === 'item2'" x-collapse class="px-4 pb-3 text-gray-600 dark:text-gray-300">
+										<p>You can track your order using the tracking number sent to your email.</p>
+									</div>
+								</div>
+								<div class="border border-gray-200 dark:border-gray-700 rounded-lg">
+									<button 
+										class="w-full px-4 py-3 text-left font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 flex justify-between items-center"
+										@click="openItem = openItem === 'item3' ? null : 'item3'"
+									>
+										<span>Do you ship internationally?</span>
+										<div class="transition-transform duration-200" :class="{ 'rotate-180': openItem === 'item3' }">
+											@icon.ChevronDown(icon.Props{Size: 16, Class: "text-gray-500"})
+										</div>
+									</button>
+									<div x-show="openItem === 'item3'" x-collapse class="px-4 pb-3 text-gray-600 dark:text-gray-300">
+										<p>Yes, we ship to most countries worldwide. Shipping rates vary by location.</p>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="section-card">
+							<h3 class="text-lg font-semibold mb-4">Breadcrumb</h3>
+							@breadcrumb.Breadcrumb() {
+								@breadcrumb.List() {
+									@breadcrumb.Item() {
+										@breadcrumb.Link(breadcrumb.LinkProps{Href: "/"}) {
+											Home
+										}
+									}
+									@breadcrumb.Separator()
+									@breadcrumb.Item() {
+										@breadcrumb.Link(breadcrumb.LinkProps{Href: "/products"}) {
+											Products
+										}
+									}
+									@breadcrumb.Separator()
+									@breadcrumb.Item() {
+										@breadcrumb.Page() {
+											Details
+										}
+									}
+								}
+							}
+						</div>
+
+						<div class="section-card">
+							<h3 class="text-lg font-semibold mb-4">Separator</h3>
+							<div>
+								<p>Content above separator</p>
+								@separator.Separator()
+								<p>Content below separator</p>
+							</div>
+						</div>
+					</section>
+
+					<!-- Data Components -->
+					<section id="data" class="mb-12">
+						<h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Data Components</h2>
+
+						<div class="section-card">
+							<h3 class="text-lg font-semibold mb-4">Table</h3>
+							@table.Table() {
+								@table.Header() {
+									@table.Row() {
+										@table.Head() { Name }
+										@table.Head() { Email }
+										@table.Head() { Role }
+										@table.Head(table.HeadProps{Class: "text-right"}) { Actions }
+									}
+								}
+								@table.Body() {
+									@table.Row() {
+										@table.Cell() { John Doe }
+										@table.Cell() { john@example.com }
+										@table.Cell() { Admin }
+										@table.Cell(table.CellProps{Class: "text-right"}) {
+											@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantOutline}) {
+												Edit
+											}
+										}
+									}
+									@table.Row() {
+										@table.Cell() { Jane Smith }
+										@table.Cell() { jane@example.com }
+										@table.Cell() { User }
+										@table.Cell(table.CellProps{Class: "text-right"}) {
+											@button.Button(button.Props{Size: button.SizeSm, Variant: button.VariantOutline}) {
+												Edit
+											}
+										}
+									}
+								}
+							}
+						</div>
+
+						<div class="section-card">
+							<h3 class="text-lg font-semibold mb-4">Pagination</h3>
+							@pagination.Pagination(pagination.Props{}) {
+								@pagination.Content() {
+									@pagination.Item() {
+										@pagination.Previous(pagination.PreviousProps{Href: "#"})
+									}
+									@pagination.Item() {
+										@pagination.Link(pagination.LinkProps{Href: "#", IsActive: true}) {
+											1
+										}
+									}
+									@pagination.Item() {
+										@pagination.Link(pagination.LinkProps{Href: "#"}) {
+											2
+										}
+									}
+									@pagination.Item() {
+										@pagination.Link(pagination.LinkProps{Href: "#"}) {
+											3
+										}
+									}
+									@pagination.Item() {
+										@pagination.Ellipsis()
+									}
+									@pagination.Item() {
+										@pagination.Next(pagination.NextProps{Href: "#"})
+									}
+								}
+							}
+						</div>
+					</section>
+
+					<!-- Misc Components -->
+					<section id="misc" class="mb-12">
+						<h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Miscellaneous</h2>
+
+						<div class="component-grid">
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Code Block</h3>
+								@code.Code() {
+									<pre>func main() {
+    fmt.Println("Hello, World!")
+}</pre>
+								}
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Copy Button</h3>
+								<div id="copy-target" class="hidden">Copied text content</div>
+								@copybutton.CopyButton(copybutton.Props{
+									TargetID: "copy-target",
+								}) {
+									Copy to clipboard
+								}
+							</div>
+
+							<div class="demo-item">
+								<h3 class="font-semibold mb-3">Aspect Ratio</h3>
+								@aspectratio.AspectRatio(aspectratio.Props{
+									Ratio: aspectratio.RatioVideo,
+									Class: "bg-gray-200",
+								}) {
+									<div class="flex items-center justify-center h-full">
+										16:9 Aspect Ratio
+									</div>
+								}
+							</div>
+						</div>
+
+						<div class="section-card">
+							<h3 class="text-lg font-semibold mb-4">Collapsible</h3>
+							@collapsible.Collapsible() {
+								@collapsible.Trigger() {
+									@button.Button(button.Props{Variant: button.VariantOutline}) {
+										Toggle Content
+									}
+								}
+								@collapsible.Content() {
+									<div class="mt-4 p-4 bg-gray-50 rounded">
+										<p>This is collapsible content that can be shown or hidden.</p>
+									</div>
+								}
+							}
+						</div>
+					</section>
+
+					<!-- Overlay Components -->
+					<section id="overlays" class="mb-12">
+						<h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Overlay Components</h2>
+						<div class="section-card">
+							<p class="text-gray-600 mb-4">
+								Overlay components like Dialog, Sheet, Popover, Tooltip, and Dropdown require JavaScript interactions to demonstrate. 
+								The components are available but need proper JavaScript initialization for full functionality.
+							</p>
+							<div class="flex flex-wrap gap-4">
+								@button.Button(button.Props{Variant: button.VariantOutline}) {
+									Tooltip Example
+								}
+								@button.Button(button.Props{Variant: button.VariantOutline}) {
+									Popover Example
+								}
+								@button.Button(button.Props{Variant: button.VariantOutline}) {
+									Dropdown Example
+								}
+							</div>
+						</div>
+					</section>
+				</main>
+
+				<!-- Footer -->
+				<footer class="bg-white dark:bg-gray-800 border-t dark:border-gray-700 mt-12">
+					<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+						<p class="text-center text-gray-600 dark:text-gray-300">
+							ERP UI Components - Built with Templ, HTMX, Alpine.js, and Tailwind CSS
+						</p>
+					</div>
+				</footer>
+			</div>
+
+			<!-- Load component scripts -->
+			@input.Script()
+			@dialog.Script()
+			@popover.Script()
+			@selectbox.Script()
+			@datepicker.Script()
+			@timepicker.Script()
+			@carousel.Script()
+			@collapsible.Script()
+			@copybutton.Script()
+			@inputotp.Script()
+			@rating.Script()
+			@slider.Script()
+			@tagsinput.Script()
+			@toast.Script()
+		</body>
+	</html>
+}
