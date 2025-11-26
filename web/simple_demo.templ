@@ -1,0 +1,109 @@
+package main
+
+import (
+	"github.com/niiniyare/erp/web/components/button"
+	"github.com/niiniyare/erp/web/components/badge"
+)
+
+templ SimpleDemoPage() {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>ERP UI Components Demo</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<style>
+				body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+			</style>
+		</head>
+		<body class="bg-gray-50">
+			<div class="min-h-screen">
+				<header class="bg-white shadow-sm border-b">
+					<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+						<div class="flex justify-between items-center py-6">
+							<div>
+								<h1 class="text-3xl font-bold text-gray-900">ERP UI Components</h1>
+								<p class="text-gray-600">Interactive demo of available components</p>
+							</div>
+							<div class="flex gap-2">
+								<a href="/inventory" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+									View All 29 Components →
+								</a>
+							</div>
+						</div>
+					</div>
+				</header>
+				<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+					<div class="space-y-12">
+						<!-- Buttons Section -->
+						<section>
+							<h2 class="text-2xl font-bold text-gray-900 mb-6">Buttons</h2>
+							<div class="bg-white p-6 rounded-lg shadow-sm border">
+								<div class="flex flex-wrap gap-4">
+									@button.Button(button.Props{}) {
+										Default Button
+									}
+									@button.Button(button.Props{Variant: button.VariantDestructive}) {
+										Delete
+									}
+									@button.Button(button.Props{Variant: button.VariantOutline}) {
+										Outline
+									}
+									@button.Button(button.Props{Variant: button.VariantSecondary}) {
+										Secondary
+									}
+									@button.Button(button.Props{Variant: button.VariantGhost}) {
+										Ghost
+									}
+								</div>
+							</div>
+						</section>
+						<!-- Badges Section -->
+						<section>
+							<h2 class="text-2xl font-bold text-gray-900 mb-6">Badges</h2>
+							<div class="bg-white p-6 rounded-lg shadow-sm border">
+								<div class="flex flex-wrap gap-4">
+									@badge.Badge(badge.Props{}) {
+										Default
+									}
+									@badge.Badge(badge.Props{Variant: badge.VariantSecondary}) {
+										Secondary
+									}
+									@badge.Badge(badge.Props{Variant: badge.VariantDestructive}) {
+										Error
+									}
+									@badge.Badge(badge.Props{Variant: badge.VariantOutline}) {
+										Outline
+									}
+								</div>
+							</div>
+						</section>
+						<!-- Success Message -->
+						<section>
+							<div class="bg-green-50 border border-green-200 rounded-lg p-4">
+								<div class="flex">
+									<div class="flex-shrink-0">
+										<svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+											<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+										</svg>
+									</div>
+									<div class="ml-3">
+										<h3 class="text-sm font-medium text-green-800">
+											Components Successfully Loaded!
+										</h3>
+										<div class="mt-2 text-sm text-green-700">
+											<p>
+												The ERP UI components are working correctly. All Templ components have been generated and are being served by the Fiber web server.
+											</p>
+										</div>
+									</div>
+								</div>
+							</div>
+						</section>
+					</div>
+				</main>
+			</div>
+		</body>
+	</html>
+}
