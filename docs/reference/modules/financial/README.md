@@ -2,367 +2,407 @@
 
 ## Overview
 
-The Financial Module is the core accounting and financial management system of the AWO ERP platform. It provides a production-ready, enterprise-grade double-entry bookkeeping system with  transaction processing, multi-currency support, and advanced validation frameworks. The module implements sophisticated business rules for financial compliance, audit trails, and real-time reporting.
+The Financial Module is the core accounting and financial management system of the AWO ERP platform. It provides a production-ready, enterprise-grade double-entry bookkeeping system with sophisticated transaction processing, multi-currency support, and comprehensive compliance frameworks. The module implements robust business rules for financial compliance, immutable audit trails, and real-time reporting capabilities.
 
 ## Architecture Overview
 
 ### Domain Model
-The Financial Module implements a sophisticated domain model based on double-entry bookkeeping principles with support for:
+The Financial Module implements a sophisticated domain model based on double-entry bookkeeping principles following Clean Architecture and Domain-Driven Design patterns.
 
-**Core Entities:**
-- `Account`: Chart of accounts with hierarchical structure and balance tracking
-- `Transaction`: Financial transactions with full audit trail and approval workflows
-- `TransactionEntry`: Individual debit/credit entries with multi-dimensional analysis
-- `ExchangeRate`: Multi-currency support with real-time rate management
+## Core Financial Entities
 
-**Domain Services:**
-- `AccountService`: Account management and hierarchy operations
-- `TransactionService`: Transaction processing, posting, and reversal
-- `TransactionEntryService`: Entry-level operations and reconciliation
-- `ValidationService`: 30+ business rule enforcement and compliance checks
+### 1. Accounts (`domain/accounts.go`)
+Chart of accounts with hierarchical structure and comprehensive financial tracking.
 
-### Service Layer
-```go
-type FinanceServices struct {
-    AccountService           AccountService
-    TransactionService       TransactionService
-    TransactionEntryService  TransactionEntryService
-    ExchangeRateService     ExchangeRateService
-    ValidationService       ValidationService
-}
+**Key Properties:**
+- **Identity**: ID, TenantID, EntityID, AccountCode, AccountName
+- **Hierarchy**: ParentAccountID, AccountLevel, AccountPath, HasChildren, IsLeafAccount
+- **Classification**: RootType (ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE), AccountType, AccountSubtype
+- **Financial**: NormalBalance, CurrentBalance, YTDBalance, CurrencyCode, IsMultiCurrency
+- **Operational**: IsActive, IsSystemAccount, AllowManualEntries, RequireReference
+- **Reporting**: FinancialStatementLine, ReportOrder, ShowInReports, CashFlowType
+- **Budgeting**: IsBudgetable, BudgetVarianceThreshold
+- **Audit**: Version, ValidationStatus, CreatedAt/UpdatedAt, CreatedBy/UpdatedBy
 
-type AccountService interface {
-    CreateAccount(ctx context.Context, cmd CreateAccountCommand) (*Account, error)
-    GetAccountByID(ctx context.Context, tenantID tenant.ID, id AccountID) (*Account, error)
-    GetAccountByCode(ctx context.Context, tenantID tenant.ID, code AccountCode) (*Account, error)
-    UpdateAccountBalance(ctx context.Context, accountID AccountID, amount decimal.Decimal) error
-    GetAccountHierarchy(ctx context.Context, tenantID tenant.ID) ([]*Account, error)
-    // ... 14 total methods
-}
+**Business Rules:**
+- Account codes must be unique within tenant/entity
+- Hierarchical relationships with circular reference prevention
+- Control accounts cannot have direct entries
+- System accounts have restricted modifications
 
-type TransactionService interface {
-    CreateTransaction(ctx context.Context, cmd CreateTransactionCommand) (*Transaction, error)
-    PostTransaction(ctx context.Context, tenantID tenant.ID, id TransactionID, userID identity.UserID) error
-    ReverseTransaction(ctx context.Context, tenantID tenant.ID, id TransactionID, reason string) error
-    ValidateTransaction(ctx context.Context, transaction *Transaction) error
-    // ... 30+ total methods
-}
+### 2. Transactions (`domain/transaction.go`)
+Financial transaction headers implementing complete lifecycle management.
+
+**Key Properties:**
+- **Identity**: ID, TenantID, EntityID, TransactionNumber, TransactionType
+- **Status**: TransactionStatus, ApprovalStatus, ValidationStatus
+- **Dates**: TransactionDate, PostingDate, DueDate
+- **Financial**: CurrencyCode, ExchangeRate, TotalDebitAmount, TotalCreditAmount
+- **Workflow**: ApprovalRequired, ApprovedBy/At, IsRecurring, RecurringFrequency
+- **Reversal**: IsReversed, ReversedByTransactionID, ReversalReason
+- **Metadata**: SourceModule, SourceDocumentType, AttachmentIds, Tags
+
+**State Machine:**
+```
+DRAFT → PENDING_APPROVAL → APPROVED → POSTED
+  ↓           ↓              ↓         ↓
+CANCELLED   REJECTED    CANCELLED   REVERSED
+              ↓
+            DRAFT (resubmit)
 ```
 
-### Repository Layer
-```go
-type AccountRepository interface {
-    Create(ctx context.Context, account *Account) (*Account, error)
-    GetByID(ctx context.Context, tenantID tenant.ID, id AccountID) (*Account, error)
-    GetByCode(ctx context.Context, tenantID tenant.ID, code AccountCode) (*Account, error)
-    GetHierarchy(ctx context.Context, tenantID tenant.ID) ([]*Account, error)
-    GetBalance(ctx context.Context, tenantID tenant.ID, accountID AccountID) (decimal.Decimal, error)
-    // ...  CRUD and business operations
-}
-```
+### 3. Transaction Entries (`domain/transaction_entry.go`)
+Individual journal entry lines implementing double-entry principles.
 
-## Key Features
+**Key Properties:**
+- **Identity**: ID, TenantID, TransactionID, EntryNumber, AccountID
+- **Amounts**: DebitAmount, CreditAmount (mutually exclusive)
+- **Dimensional**: CostCenter, Department, ProjectID
+- **Currency**: OriginalCurrency, OriginalAmount, ExchangeRate
+- **Tax**: TaxCode, TaxRate, TaxAmount
+- **Reconciliation**: Reconciled, ReconciledDate, ReconciliationReference
 
-###  Query Capabilities (Latest)
-- ✅ **View-Based Queries**: 22 new optimized queries leveraging `v_finance_accounts_with_groups` and `v_chart_of_accounts_complete` views
-- ✅ **Rich Domain Types**: 5 new domain types for financial reporting (`AccountWithGroups`, `ChartOfAccountsComplete`, `TrialBalanceSummary`, `CashFlowAccount`, `AccountGroupSummary`)
-- ✅ **Extended Service Interface**: 16 new service methods for view-based operations with full observability
-- ✅ **Performance Optimized**: Improved query performance through database view utilization
-- ✅ **Hierarchical Data Access**:  account group and header hierarchy support
+**Business Rules:**
+- Each entry has either DebitAmount OR CreditAmount (never both)
+- Total debits must equal total credits for each transaction
+- Inactive accounts cannot receive new entries
+- Multi-currency entries require valid exchange rates
 
-### Core Functionality
-- ✅ **Double-Entry Bookkeeping**: Production-ready transaction engine with state machine workflows
-- ✅ **Multi-Currency Support**: Exchange rate management with real-time conversions
-- ✅ **Account Management**: Hierarchical chart of accounts with flexible categorization
-- ✅ **Transaction Processing**: Full lifecycle management (Draft → Posted → Reconciled)
-- ✅ **Advanced Validation**: 30+ business rules with  error handling
-- 🚧 **Financial Reporting**: Trial balance, P&L, Balance Sheet (in development)
-- 📋 **AR/AP Automation**: Automated receivables and payables management (planned)
+### 4. Account Groups
+Hierarchical organization of accounts for reporting and financial statement preparation.
 
-### Business Rules
-1. **Double-Entry Validation**: All transactions must balance (debits = credits)
-2. **Account Code Uniqueness**: Account codes must be unique within each tenant
-3. **Hierarchical Integrity**: Parent-child account relationships must be valid
-4. **Currency Consistency**: All entries within a transaction must use the same currency
-5. **Approval Workflow**: High-value transactions require segregated approval
-6. **Posting Restrictions**: Posted transactions cannot be modified, only reversed
-7. **Balance Calculations**: Real-time balance updates with optimistic locking
+**Features:**
+- Financial statement grouping (Balance Sheet, P&L, Cash Flow)
+- Hierarchical structure for consolidated reporting
+- Cash flow categorization (Operating, Investing, Financing)
+- Custom grouping for entity-specific requirements
 
-### Multi-tenancy
-This module implements  row-level security (RLS) for tenant isolation:
-- All database queries are tenant-scoped using RLS policies
-- Repository uses `WithTenant` pattern for state-changing operations
-- Service layer validates tenant access with context-based security
-- Account codes are unique per tenant, allowing cross-tenant code reuse
+## Entity Relationships
 
-## API Endpoints
-
-### REST API
-| Endpoint | Method | Description | Status |
-|----------|--------|-------------|--------|
-| `/api/v1/finance/accounts` | GET | List accounts with pagination | ✅ |
-| `/api/v1/finance/accounts` | POST | Create new account | ✅ |
-| `/api/v1/finance/accounts/{id}` | GET | Get account by ID | ✅ |
-| `/api/v1/finance/accounts/{id}` | PUT | Update account | ✅ |
-| `/api/v1/finance/accounts/{id}` | DELETE | Soft delete account | ✅ |
-| `/api/v1/finance/transactions` | GET | List transactions with filters | ✅ |
-| `/api/v1/finance/transactions` | POST | Create transaction | ✅ |
-| `/api/v1/finance/transactions/{id}` | GET | Get transaction details | ✅ |
-| `/api/v1/finance/transactions/{id}/post` | POST | Post transaction | ✅ |
-| `/api/v1/finance/transactions/{id}/reverse` | POST | Reverse transaction | ✅ |
-| `/api/v1/finance/reports/trial-balance` | GET | Generate trial balance | 🚧 |
-| `/api/v1/finance/reports/account-balance` | GET | Get account balance | ✅ |
-
-### Search Capabilities
-- Search by ID: `GET /accounts/{id}`, `GET /transactions/{id}`
-- Search by code: `GET /accounts/by-code/{account_code}`
-- Search by number: `GET /transactions/by-number/{transaction_number}`
-- Advanced search: `POST /accounts/search`, `POST /transactions/search`
-- List with filters: Pagination, status filters, date ranges, amount ranges
-
-[Full API Reference →](api-reference.md)
-[Database Schema →](./financial.sql)
-
-### Key Relationships
 ```mermaid
 erDiagram
-    TENANT ||--o{ CHART_OF_ACCOUNTS : "owns"
-    CHART_OF_ACCOUNTS ||--o{ CHART_OF_ACCOUNTS : "parent-child"
-    CHART_OF_ACCOUNTS ||--o{ TRANSACTION_ENTRIES : "involved in"
-    TRANSACTION ||--o{ TRANSACTION_ENTRIES : "contains"
-    TENANT ||--o{ TRANSACTION : "owns"
+    TENANTS ||--o{ ENTITIES : contains
+    ENTITIES ||--o{ ACCOUNTS : owns
+    ENTITIES ||--o{ TRANSACTIONS : contains
+    
+    ACCOUNTS {
+        uuid id PK
+        uuid tenant_id FK
+        uuid entity_id FK
+        string account_code UK
+        string account_name
+        uuid parent_account_id FK
+        string root_type
+        decimal current_balance
+        boolean is_active
+    }
+    
+    ACCOUNTS ||--o{ TRANSACTION_ENTRIES : affects
+    TRANSACTIONS ||--o{ TRANSACTION_ENTRIES : contains
+    ACCOUNTS }o--|| ACCOUNT_GROUPS : belongs_to
+    
+    TRANSACTIONS {
+        uuid id PK
+        uuid tenant_id FK
+        uuid entity_id FK
+        string transaction_number UK
+        string transaction_status
+        decimal total_debit_amount
+        decimal total_credit_amount
+        timestamp transaction_date
+    }
+    
+    TRANSACTION_ENTRIES {
+        uuid id PK
+        uuid transaction_id FK
+        uuid account_id FK
+        decimal debit_amount
+        decimal credit_amount
+        boolean reconciled
+    }
+    
+    ACCOUNT_GROUPS {
+        uuid id PK
+        string group_code UK
+        string group_name
+        uuid parent_group_id FK
+        string financial_statement
+    }
+```
+
+## Service Layer Architecture
+
+### Core Services
+
+**AccountService** (`service/account_service.go`)
+```go
+type AccountService interface {
+    // Core operations
+    Create(ctx context.Context, req *CreateAccountRequest) (*Accounts, error)
+    GetByID(ctx context.Context, id uuid.UUID) (*Accounts, error)
+    List(ctx context.Context, filter *AccountFilter) ([]*Accounts, error)
+    Update(ctx context.Context, id uuid.UUID, req *UpdateAccountRequest) (*Accounts, error)
+    Delete(ctx context.Context, id uuid.UUID) error
+    
+    // Hierarchy operations
+    GetAccountHierarchy(ctx context.Context, rootAccountID uuid.UUID) ([]*Accounts, error)
+    GetAccountChildrenHierarchy(ctx context.Context, parentAccountID uuid.UUID) ([]*AccountHierarchy, error)
+    
+    // Financial reporting
+    GetTrialBalanceAccounts(ctx context.Context, entityID *uuid.UUID, nonZeroOnly bool) ([]*TrialBalanceSummary, error)
+    GetAccountsWithBalances(ctx context.Context, filter *BalanceFilter) ([]*ChartOfAccountsComplete, error)
+}
+```
+
+**TransactionService** (`service/transaction_service.go`)
+```go
+type TransactionService interface {
+    // Core operations
+    Create(ctx context.Context, req *CreateTransactionRequest) (*Transaction, error)
+    GetByID(ctx context.Context, id uuid.UUID) (*Transaction, error)
+    List(ctx context.Context, filter *TransactionFilter) ([]*Transaction, error)
+    
+    // Workflow operations
+    Submit(ctx context.Context, id uuid.UUID) error
+    Approve(ctx context.Context, id uuid.UUID) error
+    Post(ctx context.Context, id uuid.UUID) error
+    Reverse(ctx context.Context, id uuid.UUID, reason string) error
+}
+```
+
+### Validation Framework
+
+**Double-Entry Validator** (`service/double_entry_validator.go`)
+```go
+type DoubleEntryValidator interface {
+    ValidateTransaction(ctx context.Context, transaction *Transaction, accounts map[uuid.UUID]*Accounts) *ValidationResult
+    ValidateBalance(ctx context.Context, transaction *Transaction) *ValidationResult
+    ValidateAccountCompatibility(ctx context.Context, entries []TransactionEntry, accounts map[uuid.UUID]*Accounts) *ValidationResult
+    ValidateCurrencyConsistency(ctx context.Context, transaction *Transaction, accounts map[uuid.UUID]*Accounts) *ValidationResult
+}
+```
+
+## Business Rules and Validation
+
+### Double-Entry Accounting Rules
+1. **Fundamental Principle**: Total Debits = Total Credits for every transaction
+2. **Entry Constraints**: Each entry has either DebitAmount OR CreditAmount (never both)
+3. **Balance Impact**: Posted transactions update account balances immediately
+4. **Normal Balance**: Accounts follow standard accounting principles:
+   - Assets & Expenses: Debit normal balance
+   - Liabilities, Equity & Revenue: Credit normal balance
+
+### Account Hierarchy Rules
+- Circular references prevented through validation
+- Parent accounts must be compatible RootType
+- Leaf accounts only can have transactions (control accounts aggregate)
+- Account codes must be unique within tenant/entity scope
+
+### Transaction Lifecycle Rules
+- Transactions progress through defined status transitions
+- Approval required for manual, adjustment, and closing entries
+- Posted transactions become immutable (except reversal)
+- Reversals create offsetting transactions maintaining audit trail
+
+### Validation Layers
+1. **Field Validation**: Format, length, data type constraints
+2. **Entity Validation**: Business rules within single entity
+3. **Cross-Entity Validation**: Relationships and dependencies
+4. **Business Rule Validation**: Complex accounting rules and compliance
+
+## Compliance & Regulatory Features
+
+### Audit Trail Requirements
+- **Immutable Audit Log**: All changes tracked with full context
+- **User Tracking**: CreatedBy/UpdatedBy on all financial entities
+- **Temporal Tracking**: CreatedAt/UpdatedAt timestamps with nanosecond precision
+- **Version Control**: Optimistic locking via version field
+
+### SOX Compliance Support
+- **Approval Workflows**: Multi-level approval for sensitive transactions
+- **Segregation of Duties**: Different users for creation vs. approval
+- **Change Controls**: Complete audit trail for all modifications
+- **Access Controls**: IAM integration for role-based permissions
+
+### Financial Standards Compliance
+- **Chart of Accounts**: Standard account classification following GAAP/IFRS
+- **Financial Statements**: Account grouping for Balance Sheet, P&L, Cash Flow
+- **Multi-Currency**: Full support for international operations
+- **Period-End Closing**: Automated workflow support for month/year-end processes
+
+### Regulatory Workflows
+- **Compliance Audit Workflow**: Automated compliance checking and reporting
+- **Regulatory Reporting**: Scheduled financial report generation
+- **Data Retention**: Configurable audit trail preservation policies
+- **Reconciliation Tracking**: Complete bank reconciliation audit trail
+
+## Money Flow and State Transitions
+
+### Transaction Processing Flow
+```
+1. CREATION (Draft)
+   ├─ User creates transaction with entries
+   ├─ Basic validation performed
+   └─ No impact on account balances
+
+2. VALIDATION
+   ├─ Double-entry validation
+   ├─ Account compatibility checks
+   ├─ Business rule validation
+   └─ Currency conversion validation
+
+3. APPROVAL (if required)
+   ├─ Routed to authorized approver
+   ├─ Can be approved/rejected/returned to draft
+   └─ Approval hierarchy support
+
+4. POSTING
+   ├─ Transaction becomes immutable
+   ├─ Account balances updated atomically
+   ├─ Audit trail created
+   └─ Financial statements affected
+
+5. RECONCILIATION (optional)
+   ├─ Individual entries marked as reconciled
+   ├─ Bank reconciliation support
+   └─ Variance tracking and reporting
+
+6. REVERSAL (if needed)
+   ├─ Creates offsetting transaction
+   ├─ Original transaction marked as reversed
+   └─ Maintains complete audit trail
+```
+
+### Account Balance Updates
+```go
+// Entry Processing Logic
+if entry.IsDebit() && account.NormalBalance == NormalBalanceDebit {
+    account.CurrentBalance = account.CurrentBalance.Add(entry.DebitAmount)
+} else if entry.IsCredit() && account.NormalBalance == NormalBalanceCredit {
+    account.CurrentBalance = account.CurrentBalance.Add(entry.CreditAmount)
+} else {
+    account.CurrentBalance = account.CurrentBalance.Sub(entry.GetEffectiveAmount())
+}
 ```
 
 ## Integration Points
 
-### Internal Dependencies
-- **User Module**: Authentication, authorization, and audit user tracking
-- **Tenant Module**: Multi-tenancy support and context management
-- **Audit Module**:  activity logging and compliance tracking
-- **ABAC Module**: Attribute-based access control for financial operations
+### IAM Integration
+- Role-based access control for financial operations
+- Segregation of duties enforcement
+- Approval workflow authorization
 
-### External Services
-- **Bank Integration**: Real-time transaction import and reconciliation
-- **Payment Gateways**: Payment processing and status updates
-- **Tax Services**: Automated tax calculations and compliance
-- **Exchange Rate Providers**: Real-time currency conversion rates
+### Audit Service Integration
+- Real-time audit log generation
+- Change tracking and compliance reporting
+- Immutable audit trail preservation
 
-### Message Queue Integration
-- **Transaction Events**: Published on transaction state changes
-- **Balance Updates**: Async balance recalculation for performance
-- **Audit Events**: Financial activity logging for compliance
-- **Notification Events**: User alerts for approvals and exceptions
+### Settings Service Integration
+- Configurable business rules
+- Multi-entity configuration management
+- Regulatory compliance settings
 
-## Development Status
-
-### Implementation Progress
-- ✅ **Database Schema** (100%): 11 migrations with  financial tables
-- ✅ **Domain Layer** (100%): Complete entities, value objects, and business rules
-- ✅ **Repository Layer** (100%): Full SQLC integration with 30+ methods and tenant isolation
-- ✅ **Service Layer** (100%): Complete business logic with validation and workflow support
-- ✅ **API Layer** (100%): Complete Goa handlers with view-based query capabilities
-- 📋 **Advanced Features** (20%): AR/AP automation, advanced reporting
-- 📋 **Performance Optimization** (30%): Caching layer and query optimization
-
-### Code Metrics
-- **Lines of Code**: 7,266 (Service: 3,200, Repository: 1,800, Domain: 2,266)
-- **Test Coverage**: 
-  - Unit Tests: 85% (Target: 90%)
-  - Integration Tests: 70% (Target: 80%)
-  - Repository Tests: 90% ( SQLC testing)
-- **Complexity**: Medium (well-structured with clear separation of concerns)
-- **Technical Debt**: Minimal (clean architecture with consistent patterns)
-
-### Major Milestones Achieved
-- 🎉 **Repository Layer Complete**: Full SQLC integration with tenant-aware patterns
-- 🎉 **Transaction Engine**: Production-ready double-entry processing
-- 🎉 **Multi-Currency Support**: Exchange rate management and conversions
-- 🎉 **Validation Framework**: 30+ business rules with  error handling
-- 🎉 **API Design Complete**: 15+ endpoints with search capabilities
-- 🎉 ** View-Based Queries**: 22 new optimized queries leveraging database views for improved performance
-
-[Detailed Progress →](TASK.md)
-
-## Testing
-
-### Test Strategy
-- **Unit Tests**: 90% coverage target for domain logic and business rules
-- **Integration Tests**: Full database and service interaction testing
-- **Performance Tests**: Load testing for high-volume transaction processing
-- **Compliance Tests**: Validation of financial regulations and audit requirements
-
-### Business Rule Testing
-The module includes  testing for all 30+ business validation rules:
-- Double-entry balance validation
-- Account hierarchy integrity
-- Currency consistency checks
-- Transaction state machine validation
-- Multi-tenant data isolation
-- Authorization and audit trail verification
-
-### Running Tests
-```bash
-# Unit tests for financial domain
-make test-unit-finance
-
-# Integration tests with test database
-make test-integration-finance
-
-# Performance benchmarks
-make bench-finance
-
-# Complete test suite
-make test-finance
-```
-
-[Testing Guide →](testing-strategy.md)
-
-## Security & Compliance
-
-### Access Control
-- **ABAC Integration**: Attribute-based access control for financial operations
-- **Role-based Permissions**: Segregation of duties for financial workflows
-- **Multi-tenant Isolation**: Complete data separation using RLS policies
-- **Approval Workflows**: Configurable approval thresholds and segregation
-
-### Audit Trail
-- **Complete Activity Log**: All financial operations logged with user context
-- **Immutable Records**: Posted transactions cannot be modified, only reversed
-- **Compliance Reporting**: SOX-compliant audit trails and change tracking
-- **Data Encryption**: Sensitive financial data encrypted at rest and in transit
-
-### Regulatory Compliance
-- **Double-Entry Standards**: GAAP-compliant accounting principles
-- **Multi-Currency**: ISO 4217 currency code compliance
-- **Audit Requirements**:  change tracking and approval workflows
-- **Data Retention**: Configurable retention policies for financial records
-
-[Security Guide →](security-compliance-guide.md)
+### Temporal Workflow Integration
+- Long-running business processes
+- Reliable transaction processing
+- Automated reconciliation workflows
 
 ## Performance Considerations
 
-### Current Metrics
-- **API Response Time**: <100ms (95th percentile for standard operations)
-- **Database Query Performance**: <50ms average for account/transaction queries
-- **Transaction Throughput**: 500+ transactions/second under normal load
-- **Memory Usage**: <200MB typical, <500MB under high load
-- **Cache Hit Rate**: 85%+ for frequently accessed accounts and balances
+### Caching Strategy
+- Account hierarchy caching (15-minute TTL)
+- Exchange rate caching for multi-currency operations
+- Account balance caching for reporting queries
 
-### Optimization Features
-- **Database Indexing**:  indexing strategy for financial queries
-- **Caching Layer**: Redis-based caching for accounts and exchange rates
-- **Query Optimization**: SQLC-generated queries with optimal execution plans
-- **Connection Pooling**: Efficient database connection management
-- **Async Processing**: Background processing for balance calculations
+### Database Optimization
+- Tenant isolation via Row-Level Security (RLS)
+- Optimized indexes for common query patterns
+- Materialized views for complex reporting queries
 
-### Scalability
-- **Horizontal Scaling**: Stateless service design supports load balancing
-- **Database Scaling**: Read replicas for reporting and analytics
-- **Caching Strategy**: Distributed caching with Redis Cluster
-- **Message Queues**: Async processing for high-volume operations
+### Horizontal Scaling
+- Tenant-aware database sharding support
+- Stateless service design for load balancing
+- Event-driven architecture for loose coupling
 
-## Deployment
+## Security Features
 
-### Environment Configuration
+### Multi-Tenant Isolation
+- Complete tenant data isolation via RLS policies
+- Tenant-aware service operations
+- Cross-tenant access prevention
+
+### Data Protection
+- Encryption at rest and in transit
+- Secure API endpoints with authentication
+- PII handling compliance
+
+### Access Control
+- Fine-grained permissions for financial operations
+- API rate limiting and abuse prevention
+- Audit logging of all access attempts
+
+## Getting Started
+
+### Prerequisites
+- Go 1.21+
+- PostgreSQL 15+
+- Redis for caching
+- Temporal for workflows
+
+### Installation
 ```bash
-# Required environment variables
-DATABASE_URL=postgres://user:password@localhost/erp?sslmode=disable
-REDIS_URL=redis://localhost:6379/0
-FINANCE_MODULE_ENABLED=true
+# Clone the repository
+git clone <repository-url>
 
-# Performance tuning
-FINANCE_CACHE_TTL=3600
-FINANCE_BATCH_SIZE=1000
-FINANCE_QUERY_TIMEOUT=30s
+# Install dependencies
+go mod download
+
+# Run database migrations
+make migrate-up
+
+# Start the service
+make run-finance-service
 ```
 
-### Health Checks
-- **Application Health**: `/health/finance` - Service availability
-- **Database Health**: Connection pool and query performance
-- **Cache Health**: Redis connectivity and performance metrics
-- **Business Logic Health**: Sample transaction validation
+### Basic Usage
+```go
+// Create account service
+accountService := service.NewAccountService(repo, cache, logger)
 
-### Monitoring
-- **Metrics**: Prometheus metrics for performance and business KPIs
-- **Tracing**: OpenTelemetry integration for request tracing
-- **Logging**: Structured logging with financial context
-- **Alerts**: Performance degradation and business rule violations
+// Create an asset account
+account, err := accountService.Create(ctx, &domain.CreateAccountRequest{
+    AccountCode: "1000",
+    AccountName: "Cash",
+    RootType:    domain.RootTypeAsset,
+    IsActive:    true,
+})
 
-[Deployment Guide →](deployment-guide.md)
-
-## Quick Links
-
-### Documentation
-- 📋 [Product Requirements](PRD.md)
-- 🏗️ [Technical Architecture](architecture-guide.md)
-- 🧪 [Testing Strategy](testing-strategy.md)
-- 🚀 [Deployment Guide](deployment-guide.md)
-- 🔒 [Security & Compliance](security-compliance-guide.md)
-- 🔗 [Integration Guide](integration-guide.md)
-- 💱 [Currency Management](currency-management.md)
-
-### Development Resources
-- [Contributing Guidelines](../../../contributing/01-best-practices.md)
-- [API Reference](api-reference.md)
-- Code Examples
-- Database Schema
-
-### Business Resources
-- [Financial Workflows](integration-guide.md#financial-workflows)
-- [Compliance Requirements](security-compliance-guide.md#regulatory-compliance)
-- [Multi-Currency Setup](currency-management.md)
-- [Reporting Capabilities](api-reference.md#reporting-endpoints)
-
-## Troubleshooting
-
-### Common Issues
-
-#### Database Connection Issues
-```bash
-# Check database connectivity
-make createdb
-psql $DATABASE_URL -c "SELECT 1;"
-
-# Verify RLS policies
-psql $DATABASE_URL -c "SELECT schemaname, tablename, rowsecurity FROM pg_tables WHERE tablename LIKE 'finance_%';"
+// Create a transaction
+transactionService := service.NewTransactionService(repo, validator, logger)
+transaction, err := transactionService.Create(ctx, &domain.CreateTransactionRequest{
+    TransactionNumber: "TXN-001",
+    TransactionType:   domain.TransactionTypeManual,
+    Description:       "Initial cash deposit",
+    Entries: []domain.CreateEntryRequest{
+        {
+            AccountID:    cashAccountID,
+            DebitAmount:  decimal.NewFromFloat(1000.00),
+            Description:  "Cash deposit",
+        },
+        {
+            AccountID:    equityAccountID,
+            CreditAmount: decimal.NewFromFloat(1000.00),
+            Description:  "Owner's equity",
+        },
+    },
+})
 ```
 
-#### Transaction Balance Issues
-```bash
-# Validate transaction balance
-make validate-transactions
+## Support and Documentation
 
-# Check for unbalanced transactions
-psql $DATABASE_URL -c "
-SELECT t.id, t.transaction_number, 
-       SUM(e.debit_amount) as total_debits,
-       SUM(e.credit_amount) as total_credits
-FROM finance_transactions t
-JOIN finance_transaction_entries e ON t.id = e.transaction_id
-GROUP BY t.id, t.transaction_number
-HAVING SUM(e.debit_amount) != SUM(e.credit_amount);
-"
-```
-
-#### Performance Issues
-```bash
-# Check database performance
-make analyze-finance-queries
-
-# Monitor cache performance
-redis-cli info stats
-```
-
-### Support Channels
-- **GitHub Issues**: Bug reports and feature requests
-- **Documentation**: This module's  documentation
-- **Team Chat**: #finance-development channel
-
----
-
-**Module Status**: Production Ready (Core), Development (Advanced Features)  
-**Version**: 2.1.0  
-**Last Updated**: 2025-09-01  
-**Maintainer**: Financial Systems Team
-
-**Current Phase**:  Query Capabilities Complete - Next: Advanced Features (AR/AP automation)
+- [API Reference](./api-reference.md)
+- [Architecture Guide](./architecture-guide.md)
+- [Security & Compliance Guide](./security-compliance-guide.md)
+- [Currency Management](./currency-management.md)
+- [Integration Guide](./integration-guide.md)
+- [Testing Strategy](./testing-strategy.md)
