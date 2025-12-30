@@ -38,15 +38,15 @@ X-Entity-ID: <ENTITY_UUID>  # Optional for multi-entity
 **ABAC (Attribute-Based Access Control):**
 ```json
 {
-  \"user_id\": \"uuid\",
-  \"tenant_id\": \"uuid\", 
-  \"entity_id\": \"uuid\",
-  \"roles\": [\"finance_manager\", \"accountant\"],
-  \"permissions\": [\"transactions:create\", \"accounts:read\"],
-  \"context\": {
-    \"ip_address\": \"192.168.1.100\",
-    \"time_of_day\": \"business_hours\",
-    \"location\": \"headquarters\"
+  "user_id": "uuid",
+  "tenant_id": "uuid", 
+  "entity_id": "uuid",
+  "roles": ["finance_manager", "accountant"],
+  "permissions": ["transactions:create", "accounts:read"],
+  "context": {
+    "ip_address": "192.168.1.100",
+    "time_of_day": "business_hours",
+    "location": "headquarters"
   }
 }
 ```
@@ -72,30 +72,30 @@ Authorization: Bearer <token>
 **Request Body:**
 ```json
 {
-  \"account_code\": \"1001\",
-  \"account_name\": \"Cash - Operating\",
-  \"account_description\": \"Main operating cash account\",
-  \"root_type\": \"ASSET\",
-  \"account_type\": \"CASH\",
-  \"normal_balance\": \"DEBIT\",
-  \"is_active\": true,
-  \"allow_manual_entries\": true,
-  \"require_reference\": false,
-  \"parent_account_id\": \"uuid\",
-  \"currency_code\": \"USD\"
+  "account_code": "1001",
+  "account_name": "Cash - Operating",
+  "account_description": "Main operating cash account",
+  "root_type": "ASSET",
+  "account_type": "CASH",
+  "normal_balance": "DEBIT",
+  "is_active": true,
+  "allow_manual_entries": true,
+  "require_reference": false,
+  "parent_account_id": "uuid",
+  "currency_code": "USD"
 }
 ```
 
 **Response (201 Created):**
 ```json
 {
-  \"id\": \"550e8400-e29b-41d4-a716-446655440000\",
-  \"account_code\": \"1001\",
-  \"account_name\": \"Cash - Operating\",
-  \"account_path\": \"/1000/1001\",
-  \"current_balance\": \"0.00\",
-  \"created_at\": \"2025-01-15T10:30:00Z\",
-  \"version\": 1
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "account_code": "1001",
+  "account_name": "Cash - Operating",
+  "account_path": "/1000/1001",
+  "current_balance": "0.00",
+  "created_at": "2025-01-15T10:30:00Z",
+  "version": 1
 }
 ```
 
@@ -120,18 +120,18 @@ GET /api/v1/finance/accounts/{account_id}/balances?as_of_date=2025-01-31
 **Response:**
 ```json
 {
-  \"account\": {
-    \"id\": \"uuid\",
-    \"account_code\": \"1001\",
-    \"account_name\": \"Cash - Operating\"
+  "account": {
+    "id": "uuid",
+    "account_code": "1001",
+    "account_name": "Cash - Operating"
   },
-  \"balances\": {
-    \"current_balance\": \"25000.00\",
-    \"ytd_balance\": \"25000.00\",
-    \"total_debits\": \"125000.00\", 
-    \"total_credits\": \"100000.00\",
-    \"transaction_count\": 45,
-    \"last_transaction_date\": \"2025-01-30\"
+  "balances": {
+    "current_balance": "25000.00",
+    "ytd_balance": "25000.00",
+    "total_debits": "125000.00", 
+    "total_credits": "100000.00",
+    "transaction_count": 45,
+    "last_transaction_date": "2025-01-30"
   }
 }
 ```
@@ -147,23 +147,23 @@ Content-Type: application/json
 **Request Body:**
 ```json
 {
-  \"transaction_number\": \"JE-2025-001\",
-  \"transaction_type\": \"MANUAL\",
-  \"transaction_date\": \"2025-01-15\",
-  \"description\": \"Initial cash investment\",
-  \"reference_number\": \"INV-001\",
-  \"currency_code\": \"USD\",
-  \"entries\": [
+  "transaction_number": "JE-2025-001",
+  "transaction_type": "MANUAL",
+  "transaction_date": "2025-01-15",
+  "description": "Initial cash investment",
+  "reference_number": "INV-001",
+  "currency_code": "USD",
+  "entries": [
     {
-      \"account_id\": \"cash-account-uuid\",
-      \"debit_amount\": \"50000.00\",
-      \"description\": \"Cash investment\",
-      \"reference\": \"Investment Agreement\"
+      "account_id": "cash-account-uuid",
+      "debit_amount": "50000.00",
+      "description": "Cash investment",
+      "reference": "Investment Agreement"
     },
     {
-      \"account_id\": \"equity-account-uuid\", 
-      \"credit_amount\": \"50000.00\",
-      \"description\": \"Owner's equity contribution\"
+      "account_id": "equity-account-uuid", 
+      "credit_amount": "50000.00",
+      "description": "Owner's equity contribution"
     }
   ]
 }
@@ -172,25 +172,25 @@ Content-Type: application/json
 **Response (201 Created):**
 ```json
 {
-  \"id\": \"transaction-uuid\",
-  \"transaction_number\": \"JE-2025-001\",
-  \"transaction_status\": \"DRAFT\",
-  \"total_debit_amount\": \"50000.00\",
-  \"total_credit_amount\": \"50000.00\",
-  \"is_balanced\": true,
-  \"created_at\": \"2025-01-15T10:30:00Z\",
-  \"entries\": [
+  "id": "transaction-uuid",
+  "transaction_number": "JE-2025-001",
+  "transaction_status": "DRAFT",
+  "total_debit_amount": "50000.00",
+  "total_credit_amount": "50000.00",
+  "is_balanced": true,
+  "created_at": "2025-01-15T10:30:00Z",
+  "entries": [
     {
-      \"id\": \"entry-uuid-1\",
-      \"entry_number\": 1,
-      \"account_code\": \"1001\",
-      \"debit_amount\": \"50000.00\"
+      "id": "entry-uuid-1",
+      "entry_number": 1,
+      "account_code": "1001",
+      "debit_amount": "50000.00"
     },
     {
-      \"id\": \"entry-uuid-2\", 
-      \"entry_number\": 2,
-      \"account_code\": \"3001\",
-      \"credit_amount\": \"50000.00\"
+      "id": "entry-uuid-2", 
+      "entry_number": 2,
+      "account_code": "3001",
+      "credit_amount": "50000.00"
     }
   ]
 }
@@ -201,26 +201,26 @@ Content-Type: application/json
 # Submit for Approval
 PUT /api/v1/finance/transactions/{id}/submit
 {
-  \"approval_notes\": \"Monthly journal entry for review\"
+  "approval_notes": "Monthly journal entry for review"
 }
 
 # Approve Transaction
 PUT /api/v1/finance/transactions/{id}/approve
 {
-  \"approval_notes\": \"Approved - proper documentation provided\"
+  "approval_notes": "Approved - proper documentation provided"
 }
 
 # Post Transaction
 PUT /api/v1/finance/transactions/{id}/post
 {
-  \"posting_date\": \"2025-01-15\"
+  "posting_date": "2025-01-15"
 }
 
 # Reverse Posted Transaction
 PUT /api/v1/finance/transactions/{id}/reverse
 {
-  \"reversal_reason\": \"Incorrect amount posted\",
-  \"reversal_date\": \"2025-01-16\"
+  "reversal_reason": "Incorrect amount posted",
+  "reversal_date": "2025-01-16"
 }
 ```
 
@@ -234,26 +234,26 @@ GET /api/v1/finance/reports/trial-balance?as_of_date=2025-01-31&include_zero_bal
 **Response:**
 ```json
 {
-  \"report_date\": \"2025-01-31T23:59:59Z\",
-  \"entity_id\": \"uuid\",
-  \"currency\": \"USD\",
-  \"accounts\": [
+  "report_date": "2025-01-31T23:59:59Z",
+  "entity_id": "uuid",
+  "currency": "USD",
+  "accounts": [
     {
-      \"account_code\": \"1001\",
-      \"account_name\": \"Cash - Operating\",
-      \"root_type\": \"ASSET\",
-      \"normal_balance\": \"DEBIT\",
-      \"debit_balance\": \"25000.00\",
-      \"credit_balance\": \"0.00\",
-      \"net_balance\": \"25000.00\"
+      "account_code": "1001",
+      "account_name": "Cash - Operating",
+      "root_type": "ASSET",
+      "normal_balance": "DEBIT",
+      "debit_balance": "25000.00",
+      "credit_balance": "0.00",
+      "net_balance": "25000.00"
     }
   ],
-  \"totals\": {
-    \"total_debits\": \"175000.00\",
-    \"total_credits\": \"175000.00\",
-    \"difference\": \"0.00\"
+  "totals": {
+    "total_debits": "175000.00",
+    "total_credits": "175000.00",
+    "difference": "0.00"
   },
-  \"is_balanced\": true
+  "is_balanced": true
 }
 ```
 
@@ -280,27 +280,27 @@ GET /api/v1/finance/accounts/{account_id}/activity?start_date=2025-01-01&end_dat
 
 ```mermaid
 graph TB
-    subgraph \"External Systems\"
+    subgraph "External Systems"
         A[Banking APIs]
         B[Payment Gateways] 
         C[Tax Services]
         D[ERP Modules]
     end
     
-    subgraph \"Integration Gateway\"
+    subgraph "Integration Gateway"
         E[API Management]
         F[Protocol Translation]
         G[Security Layer]
         H[Rate Limiting]
     end
     
-    subgraph \"Event Bus\"
+    subgraph "Event Bus"
         I[Redis Streams]
         J[Event Routing]
         K[Dead Letter Queue]
     end
     
-    subgraph \"Financial Module\"
+    subgraph "Financial Module"
         L[Account Management]
         M[Transaction Processing]
         N[Reporting Engine]
@@ -371,28 +371,28 @@ const status = await financeAPI.getBatchStatus(batchResult.batchId);
 **Sales Order Integration:**
 ```json
 {
-  \"event_type\": \"sales_order.completed\",
-  \"data\": {
-    \"order_id\": \"SO-2025-001\",
-    \"customer_id\": \"uuid\",
-    \"total_amount\": \"5000.00\",
-    \"tax_amount\": \"400.00\",
-    \"line_items\": [...]
+  "event_type": "sales_order.completed",
+  "data": {
+    "order_id": "SO-2025-001",
+    "customer_id": "uuid",
+    "total_amount": "5000.00",
+    "tax_amount": "400.00",
+    "line_items": [...]
   },
-  \"generate_transaction\": {
-    \"transaction_type\": \"SALES_INVOICE\",
-    \"entries\": [
+  "generate_transaction": {
+    "transaction_type": "SALES_INVOICE",
+    "entries": [
       {
-        \"account_code\": \"1200\",  // Accounts Receivable
-        \"debit_amount\": \"5400.00\"
+        "account_code": "1200",  // Accounts Receivable
+        "debit_amount": "5400.00"
       },
       {
-        \"account_code\": \"4000\",  // Sales Revenue  
-        \"credit_amount\": \"5000.00\"
+        "account_code": "4000",  // Sales Revenue  
+        "credit_amount": "5000.00"
       },
       {
-        \"account_code\": \"2300\",  // Sales Tax Payable
-        \"credit_amount\": \"400.00\"
+        "account_code": "2300",  // Sales Tax Payable
+        "credit_amount": "400.00"
       }
     ]
   }
@@ -402,23 +402,23 @@ const status = await financeAPI.getBatchStatus(batchResult.batchId);
 **Inventory Integration:**
 ```json
 {
-  \"event_type\": \"inventory.cost_update\",
-  \"data\": {
-    \"item_id\": \"uuid\",
-    \"quantity_sold\": 100,
-    \"unit_cost\": \"15.50\",
-    \"total_cost\": \"1550.00\"
+  "event_type": "inventory.cost_update",
+  "data": {
+    "item_id": "uuid",
+    "quantity_sold": 100,
+    "unit_cost": "15.50",
+    "total_cost": "1550.00"
   },
-  \"generate_transaction\": {
-    \"transaction_type\": \"COST_OF_GOODS_SOLD\",
-    \"entries\": [
+  "generate_transaction": {
+    "transaction_type": "COST_OF_GOODS_SOLD",
+    "entries": [
       {
-        \"account_code\": \"5000\",  // Cost of Goods Sold
-        \"debit_amount\": \"1550.00\"
+        "account_code": "5000",  // Cost of Goods Sold
+        "debit_amount": "1550.00"
       },
       {
-        \"account_code\": \"1300\",  // Inventory
-        \"credit_amount\": \"1550.00\"
+        "account_code": "1300",  // Inventory
+        "credit_amount": "1550.00"
       }
     ]
   }
@@ -433,13 +433,13 @@ const status = await financeAPI.getBatchStatus(batchResult.batchId);
 const approvalConfig = {
   rules: [
     {
-      condition: \"amount > 10000\",
-      approvers: [\"cfo@company.com\"],
+      condition: "amount > 10000",
+      approvers: ["cfo@company.com"],
       required: true
     },
     {
-      condition: \"account_type == 'EXPENSE' && amount > 5000\",
-      approvers: [\"department_head@company.com\"],
+      condition: "account_type == 'EXPENSE' && amount > 5000",
+      approvers: ["department_head@company.com"],
       required: true
     }
   ],
@@ -453,7 +453,7 @@ const approvalConfig = {
 // Submit transaction for approval
 await financeAPI.submitForApproval(transactionId, {
   workflow: approvalConfig,
-  justification: \"Monthly equipment lease payment\"
+  justification: "Monthly equipment lease payment"
 });
 ```
 
@@ -809,17 +809,17 @@ class FinanceAPICache {
 **Standard Error Format:**
 ```json
 {
-  \"error\": {
-    \"type\": \"VALIDATION_ERROR\",
-    \"code\": \"INVALID_ACCOUNT_CODE\",
-    \"message\": \"Account code must be unique within the entity\",
-    \"field\": \"account_code\",
-    \"details\": {
-      \"conflicting_account_id\": \"uuid\",
-      \"suggestion\": \"Use account code 1002 instead\"
+  "error": {
+    "type": "VALIDATION_ERROR",
+    "code": "INVALID_ACCOUNT_CODE",
+    "message": "Account code must be unique within the entity",
+    "field": "account_code",
+    "details": {
+      "conflicting_account_id": "uuid",
+      "suggestion": "Use account code 1002 instead"
     },
-    \"request_id\": \"req-uuid\",
-    \"timestamp\": \"2025-01-15T10:30:00Z\"
+    "request_id": "req-uuid",
+    "timestamp": "2025-01-15T10:30:00Z"
   }
 }
 ```
@@ -1023,7 +1023,7 @@ batch_results = client.transactions.bulk_create([
 
 **NuGet Installation:**
 ```xml
-<PackageReference Include=\"AWO.ERP.Finance.SDK\" Version=\"4.0.0\" />
+<PackageReference Include="AWO.ERP.Finance.SDK" Version="4.0.0" />
 ```
 
 ```csharp
@@ -1031,16 +1031,16 @@ using AWO.ERP.Finance;
 
 // Client initialization
 var financeClient = new FinanceApiClient(
-    baseUrl: \"https://api.awo-erp.com\",
-    apiKey: Environment.GetEnvironmentVariable(\"AWO_API_KEY\"),
-    tenantId: Guid.Parse(Environment.GetEnvironmentVariable(\"AWO_TENANT_ID\"))
+    baseUrl: "https://api.awo-erp.com",
+    apiKey: Environment.GetEnvironmentVariable("AWO_API_KEY"),
+    tenantId: Guid.Parse(Environment.GetEnvironmentVariable("AWO_TENANT_ID"))
 );
 
 // Account creation with strong typing
 var account = await financeClient.Accounts.CreateAsync(new CreateAccountRequest
 {
-    AccountCode = \"1001\",
-    AccountName = \"Cash - Operating\",
+    AccountCode = "1001",
+    AccountName = "Cash - Operating",
     RootType = AccountRootType.Asset,
     NormalBalance = NormalBalance.Debit,
     IsActive = true
@@ -1049,30 +1049,30 @@ var account = await financeClient.Accounts.CreateAsync(new CreateAccountRequest
 // Transaction with validation
 var transaction = await financeClient.Transactions.CreateAsync(new CreateTransactionRequest
 {
-    TransactionNumber = \"JE-2025-001\",
+    TransactionNumber = "JE-2025-001",
     TransactionType = TransactionType.Manual,
     TransactionDate = DateTime.Today,
-    Description = \"Equipment purchase\",
+    Description = "Equipment purchase",
     Entries = new[]
     {
         new TransactionEntry
         {
             AccountId = equipmentAccount.Id,
             DebitAmount = 25000.00m,
-            Description = \"Office equipment\"
+            Description = "Office equipment"
         },
         new TransactionEntry
         {
             AccountId = cashAccount.Id,
             CreditAmount = 25000.00m,
-            Description = \"Payment for equipment\"
+            Description = "Payment for equipment"
         }
     }
 });
 
 // Async workflow operations
 await financeClient.Transactions.SubmitAsync(transaction.Id);
-var approvalResult = await financeClient.Transactions.ApproveAsync(transaction.Id, \"CFO Approval\");
+var approvalResult = await financeClient.Transactions.ApproveAsync(transaction.Id, "CFO Approval");
 await financeClient.Transactions.PostAsync(transaction.Id);
 ```
 
