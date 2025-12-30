@@ -42,49 +42,17 @@
 
 ---
 
-# Financial Management System - Feature Guide
+# Financial Operations User Guide
 
 ## Overview
 
-This guide covers the core financial management features available in modern ERP systems. The features are organized by functional area to help you understand the capabilities and business value of each module.
+This guide provides practical guidance for using the AWO ERP Financial Module in day-to-day operations. For detailed business concepts and domain model, see the [Business Domain Guide](../business-domain-guide.md).
 
-## Core Features
+> **📚 Business Concepts**: For comprehensive coverage of double-entry bookkeeping, chart of accounts structure, and financial domain concepts, see [Business Domain Guide](../business-domain-guide.md).
 
-### Double-Entry Accounting
+> **🔧 Technical Implementation**: For API integration and technical specifications, see [Technical Architecture](../technical-architecture.md).
 
-Double-entry bookkeeping is the foundation of all professional accounting systems. Every financial transaction affects at least two accounts, ensuring that the accounting equation (Assets = Liabilities + Equity) remains balanced.
-
-#### Key Features:
-- **Automated journal entries**: Every transaction automatically creates balanced debit and credit entries
-- **Transaction validation**: System prevents unbalanced entries from being posted
-- **Account type enforcement**: Ensures proper account behavior (assets increase with debits, liabilities with credits)
-- **Audit trail**: Complete transaction history with timestamps and user tracking
-- **Period closing**: Prevents modifications to closed accounting periods
-- **Reversing entries**: Ability to reverse incorrect transactions while maintaining audit trail
-
-### Multi-Currency Support
-
-Handle business transactions in multiple currencies with automatic exchange rate management and gain/loss calculations.
-
-#### Key Features:
-- **Multiple base currencies**: Support for different functional currencies per company
-- **Real-time exchange rates**: Integration with currency rate services
-- **Automatic conversions**: Convert foreign currency transactions to base currency
-- **Gain/loss calculations**: Automatic calculation of realized and unrealized currency gains/losses
-- **Multi-currency reporting**: Financial reports in any supported currency
-- **Exchange rate history**: Track historical exchange rates for audit purposes
-
-### Chart of Accounts
-
-Structured account hierarchy that organizes all financial accounts according to accounting standards.
-
-#### Key Features:
-- **Hierarchical structure**: Main accounts with unlimited sub-account levels
-- **Account types**: Assets, Liabilities, Equity, Income, Expenses with proper behavior
-- **Account codes**: Flexible numbering system for account identification
-- **Account groups**: Logical grouping for reporting and analysis
-- **Inactive accounts**: Ability to deactivate unused accounts while preserving history
-- **Account templates**: Pre-defined chart of accounts for common business types
+## Operational Workflows
 
 ### Financial Reporting
 

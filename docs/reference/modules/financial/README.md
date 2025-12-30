@@ -85,37 +85,16 @@ graph TB
     C --> I
 ```
 
-### Technology Stack
+### Core Features
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| **Database** | PostgreSQL 15+ | ACID transactions, RLS, advanced constraints |
-| **Code Generation** | SQLC | Type-safe database operations |
-| **Decimal Precision** | pgtype.Numeric | Financial calculations without floating-point errors |
-| **Caching** | Redis | High-performance query optimization |
-| **Observability** | OpenTelemetry | Distributed tracing and metrics |
+- **Enterprise Financial Engine**: Full double-entry bookkeeping with regulatory compliance
+- **Multi-Tenant Architecture**: Secure tenant isolation with comprehensive audit trails  
+- **Real-Time Processing**: Atomic transactions with state machine validation
+- **Advanced Integration**: REST APIs with event-driven architecture
 
-## Core Concepts
+> **📋 Technical Details**: See [Technical Architecture](./technical-architecture.md) for comprehensive implementation details, database schema, and technology stack.
 
-### Chart of Accounts
-Hierarchical account structure supporting unlimited depth with materialized path optimization for fast queries.
-
-### Double-Entry Transactions
-Every transaction maintains accounting equation: **Assets = Liabilities + Equity**
-- Enforced at database level through CHECK constraints
-- Automatic balance validation before posting
-
-### Multi-Tenant Security
-- **Row Level Security (RLS)**: Automatic tenant isolation
-- **Comprehensive Audit Trails**: Full user tracking and change history
-- **Soft Deletes**: Compliance-friendly data retention
-
-### State Management
-Transactions follow a strict state machine:
-```
-DRAFT → PENDING_APPROVAL → APPROVED → POSTED
-```
-Each transition validated through database constraints.
+> **💼 Business Concepts**: See [Business Domain Guide](./business-domain-guide.md) for accounting principles, chart of accounts structure, and financial workflows.
 
 ## Documentation Guide
 
@@ -148,16 +127,11 @@ Each transition validated through database constraints.
 
 ## Status & Roadmap
 
-**Current Status**: 80% complete financial module with active development
+**Current Status**: Active development with foundational components complete
 
-| Component | Status | Coverage |
-|-----------|--------|----------|
-| **Core Accounting** | ✅ Complete | Chart of accounts, transactions, entries |
-| **Multi-Currency** | ✅ Complete | Exchange rates, conversion, revaluation |
-| **Reporting** | 🚧 In Progress | Trial balance, P&L, balance sheet |
-| **Advanced Features** | 📅 Planned | Budgeting, forecasting, analytics |
+> **📊 Detailed Progress**: For comprehensive implementation status, phase tracking, and completion metrics, see [Implementation Tasks](./TASK.md#project-progress-overview).
 
-See **[ROADMAP.md](./ROADMAP.md)** for detailed development timeline.
+See **[ROADMAP.md](./ROADMAP.md)** for strategic development timeline.
 
 ---
 

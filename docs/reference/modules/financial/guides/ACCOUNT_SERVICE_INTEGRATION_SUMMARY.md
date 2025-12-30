@@ -41,18 +41,9 @@ Successfully completed  integration of **Settings**, **Feature Flags**, and **IA
 ### 3. **Settings Integration (Configuration Layer)**
 **Implementation**: Added settings-driven configuration and defaults
 
-**Integration Points**:
-- Currency default value application in `CreateAccount`
--  `SettingsHelper` with Finance constants access
-- Helper methods for settings-driven business logic  
-- Integration points prepared for future Settings service API calls
+> **⚙️ Detailed Configuration**: For comprehensive settings integration details, constants, and configuration patterns, see [Settings Integration Guide](./settings-integration.md).
 
-**Key Features**:
-- `SettingsHelper` service provides access to Finance module constants
-- Default currency application (USD) when not specified
-- Configuration key access for future Settings API integration
-- Business validation helpers with configuration-driven logic
-- Template access for different business types (manufacturing, service, retail, non-profit)
+**Integration Status**: ✅ Complete - Settings helper service integrated with account creation and validation workflows.
 
 ### 4. **Service Architecture Updates**
 **Implementation**: Updated service infrastructure to support new dependencies

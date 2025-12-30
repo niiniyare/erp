@@ -817,28 +817,11 @@ WHERE batch_id = $3
 
 ### Multi-Tenant Security Model
 
-**Row Level Security (RLS) Implementation:**
+> **🔒 Security Implementation**: For comprehensive security architecture, RLS implementation details, authentication patterns, and compliance frameworks, see [Operations & Security Guide](./operations-security.md#security-architecture).
 
-```sql
--- Tenant context function
-CREATE OR REPLACE FUNCTION current_tenant_id()
-RETURNS UUID AS $$
-BEGIN
-    RETURN COALESCE(
-        current_setting('app.current_tenant_id', true)::UUID,
-        NULL
-    );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+**Database-Level Security Integration:**
 
--- Automatic tenant isolation policies
-CREATE POLICY tenant_isolation ON finance_accounts
-FOR ALL TO application_role USING (
-    current_tenant_id() IS NOT NULL 
-    AND tenant_id = current_tenant_id()
-    AND deleted_at IS NULL
-);
-```
+All SQLC queries automatically include tenant isolation through the `current_tenant_id()` function:
 
 ### Audit Trail Implementation
 
@@ -1398,4 +1381,1267 @@ func (e *FinanceError) Error() string {
 
 ---
 
-**This technical architecture documentation provides the complete implementation reference for the AWO ERP Financial Module, covering all aspects from Clean Architecture patterns to advanced SQL optimization strategies.**
+## Temporal Financial Workflows
+
+The Financial Module implements comprehensive business process automation using Temporal workflows for reliability, observability, and compensation handling.
+
+### Workflow Architecture Overview
+
+```mermaid
+graph TD
+    A[Client Request] --> B[Workflow Starter]
+    B --> C[Transaction Processing Workflow]
+    B --> D[Approval Workflow] 
+    B --> E[Recurring Transaction Workflow]
+    B --> F[Reconciliation Workflow]
+    
+    C --> G[Create Activity]
+    C --> H[Validate Activity]
+    C --> I[Post Activity]
+    
+    D --> J[Send Approval Request]
+    D --> K[Wait for Decision]
+    D --> L[Process Decision]
+    
+    E --> M[Generate Transaction]
+    E --> N[Schedule Next Run]
+    
+    F --> O[Fetch Bank Data]
+    F --> P[Match Transactions]
+    F --> Q[Generate Report]
+    
+    subgraph "Compensation"
+        R[Compensation Activities]
+        S[Rollback Logic]
+        T[Error Recovery]
+    end
+    
+    C --> R
+    D --> S  
+    E --> T
+```
+
+### Core Financial Workflows
+
+#### 1. Transaction Processing Workflow
+
+**Primary workflow for all financial transaction processing with full compensation support.**
+
+```go
+// TransactionProcessingInput defines the workflow input
+type TransactionProcessingInput struct {
+    TenantID        uuid.UUID                    `json:"tenant_id"`
+    UserID          uuid.UUID                    `json:"user_id"`
+    TransactionData CreateTransactionCommand     `json:"transaction_data"`
+    ProcessingMode  TransactionProcessingMode    `json:"processing_mode"`
+    ApprovalConfig  *ApprovalConfiguration       `json:"approval_config,omitempty"`
+}
+
+type TransactionProcessingMode string
+const (
+    ProcessingModeImmediate TransactionProcessingMode = "IMMEDIATE"
+    ProcessingModeQueued    TransactionProcessingMode = "QUEUED"
+    ProcessingModeBatch     TransactionProcessingMode = "BATCH"
+)
+
+// TransactionProcessingWorkflow orchestrates complete transaction lifecycle
+func TransactionProcessingWorkflow(ctx workflow.Context, input TransactionProcessingInput) (*TransactionProcessingResult, error) {
+    logger := workflow.GetLogger(ctx)
+    
+    // Workflow configuration
+    activityOptions := workflow.ActivityOptions{
+        StartToCloseTimeout:    5 * time.Minute,
+        HeartbeatTimeout:       30 * time.Second,
+        RetryPolicy: &temporal.RetryPolicy{
+            InitialInterval:        time.Second,
+            BackoffCoefficient:     2.0,
+            MaximumInterval:        time.Minute,
+            MaximumAttempts:        3,
+            NonRetryableErrorTypes: []string{"ValidationError", "BusinessRuleError"},
+        },
+    }
+    ctx = workflow.WithActivityOptions(ctx, activityOptions)
+    
+    var transactionID uuid.UUID
+    var compensationData CompensationData
+    
+    // Compensation handling - executed on workflow failure
+    defer func() {
+        if !workflow.IsReplaying(ctx) {
+            disconnectedCtx, _ := workflow.NewDisconnectedContext(ctx)
+            workflow.ExecuteActivity(disconnectedCtx, "CompensateTransactionProcessing", 
+                CompensateTransactionInput{
+                    TransactionID: transactionID,
+                    CompensationData: compensationData,
+                    Reason: "WorkflowFailure",
+                })
+        }
+    }()
+    
+    // Step 1: Business Validation
+    logger.Info("Starting transaction validation", "transaction_type", input.TransactionData.TransactionType)
+    
+    var validationResult ValidationResult
+    err := workflow.ExecuteActivity(ctx, "ValidateTransactionActivity", input.TransactionData).Get(ctx, &validationResult)
+    if err != nil {
+        return nil, fmt.Errorf("transaction validation failed: %w", err)
+    }
+    
+    if !validationResult.IsValid {
+        return nil, fmt.Errorf("transaction validation failed: %s", validationResult.ErrorMessage)
+    }
+    
+    // Step 2: Create Transaction
+    logger.Info("Creating transaction")
+    
+    var createResult CreateTransactionResult
+    err = workflow.ExecuteActivity(ctx, "CreateTransactionActivity", input.TransactionData).Get(ctx, &createResult)
+    if err != nil {
+        return nil, fmt.Errorf("transaction creation failed: %w", err)
+    }
+    
+    transactionID = createResult.TransactionID
+    compensationData.TransactionID = transactionID
+    compensationData.CreatedEntities = createResult.CreatedEntities
+    
+    // Step 3: Approval Processing (if required)
+    if validationResult.RequiresApproval || input.ApprovalConfig != nil {
+        logger.Info("Processing approval workflow", "transaction_id", transactionID)
+        
+        approvalInput := ApprovalWorkflowInput{
+            TenantID:      input.TenantID,
+            TransactionID: transactionID,
+            UserID:        input.UserID,
+            Configuration: input.ApprovalConfig,
+        }
+        
+        var approvalResult ApprovalResult
+        childWorkflowOptions := workflow.ChildWorkflowOptions{
+            WorkflowID: fmt.Sprintf("approval-%s", transactionID.String()),
+        }
+        
+        childCtx := workflow.WithChildOptions(ctx, childWorkflowOptions)
+        err = workflow.ExecuteChildWorkflow(childCtx, "ApprovalWorkflow", approvalInput).Get(ctx, &approvalResult)
+        if err != nil {
+            return nil, fmt.Errorf("approval workflow failed: %w", err)
+        }
+        
+        if !approvalResult.Approved {
+            return &TransactionProcessingResult{
+                TransactionID: transactionID,
+                Status:        "REJECTED",
+                Message:       approvalResult.RejectionReason,
+            }, nil
+        }
+        
+        compensationData.ApprovalID = &approvalResult.ApprovalID
+    }
+    
+    // Step 4: Transaction Posting
+    logger.Info("Posting transaction", "transaction_id", transactionID)
+    
+    var postingResult PostingResult
+    err = workflow.ExecuteActivity(ctx, "PostTransactionActivity", PostTransactionInput{
+        TransactionID: transactionID,
+        PostingDate:   time.Now(),
+        UserID:        input.UserID,
+    }).Get(ctx, &postingResult)
+    if err != nil {
+        return nil, fmt.Errorf("transaction posting failed: %w", err)
+    }
+    
+    compensationData.PostedEntries = postingResult.PostedEntries
+    
+    // Step 5: Balance Updates
+    logger.Info("Updating account balances", "affected_accounts", len(postingResult.PostedEntries))
+    
+    err = workflow.ExecuteActivity(ctx, "UpdateAccountBalancesActivity", UpdateBalancesInput{
+        Entries:       postingResult.PostedEntries,
+        TransactionID: transactionID,
+        PostingDate:   postingResult.PostingDate,
+    }).Get(ctx, nil)
+    if err != nil {
+        return nil, fmt.Errorf("balance update failed: %w", err)
+    }
+    
+    // Step 6: External Integrations (non-critical)
+    logger.Info("Processing external integrations")
+    
+    // Use local activity for fast, non-persistent operations
+    localActivityOptions := workflow.LocalActivityOptions{
+        ScheduleToCloseTimeout: 30 * time.Second,
+    }
+    
+    localCtx := workflow.WithLocalActivityOptions(ctx, localActivityOptions)
+    err = workflow.ExecuteLocalActivity(localCtx, "TriggerExternalIntegrationsActivity", 
+        ExternalIntegrationInput{
+            TransactionID: transactionID,
+            EventType:     "TRANSACTION_POSTED",
+        }).Get(ctx, nil)
+    if err != nil {
+        logger.Warn("External integration failed (non-critical)", "error", err)
+        // Continue execution - external integrations are non-critical
+    }
+    
+    // Step 7: Audit and Notifications
+    logger.Info("Finalizing transaction processing")
+    
+    err = workflow.ExecuteActivity(ctx, "FinalizeTransactionActivity", FinalizeTransactionInput{
+        TransactionID: transactionID,
+        UserID:        input.UserID,
+        Success:       true,
+    }).Get(ctx, nil)
+    if err != nil {
+        logger.Warn("Transaction finalization failed (non-critical)", "error", err)
+        // Continue - finalization is non-critical for business success
+    }
+    
+    return &TransactionProcessingResult{
+        TransactionID: transactionID,
+        Status:        "POSTED",
+        Message:       "Transaction successfully processed and posted",
+        PostingDate:   postingResult.PostingDate,
+        AffectedAccounts: len(postingResult.PostedEntries),
+    }, nil
+}
+```
+
+#### 2. Multi-Level Approval Workflow
+
+**Sophisticated approval workflow with escalation, timeouts, and signal handling.**
+
+```go
+type ApprovalWorkflowInput struct {
+    TenantID      uuid.UUID             `json:"tenant_id"`
+    TransactionID uuid.UUID             `json:"transaction_id"`
+    UserID        uuid.UUID             `json:"user_id"`
+    Configuration *ApprovalConfiguration `json:"configuration"`
+}
+
+type ApprovalConfiguration struct {
+    RequiredApprovers []ApprovalLevel   `json:"required_approvers"`
+    EscalationRules   []EscalationRule  `json:"escalation_rules"`
+    TimeoutPolicy     TimeoutPolicy     `json:"timeout_policy"`
+    ParallelApproval  bool             `json:"parallel_approval"`
+}
+
+type ApprovalLevel struct {
+    Level     int         `json:"level"`
+    Approvers []uuid.UUID `json:"approvers"`
+    Required  int         `json:"required"`  // Number of approvers needed from this level
+    Policy    string      `json:"policy"`   // "ANY", "ALL", "MAJORITY"
+}
+
+// ApprovalWorkflow handles complex approval scenarios
+func ApprovalWorkflow(ctx workflow.Context, input ApprovalWorkflowInput) (*ApprovalResult, error) {
+    logger := workflow.GetLogger(ctx)
+    
+    // Signal handling for real-time approval responses
+    var approvalSignal workflow.ReceiveChannel
+    var rejectionSignal workflow.ReceiveChannel
+    var escalationSignal workflow.ReceiveChannel
+    
+    approvalSelector := workflow.NewSelector(ctx)
+    
+    // Set up signal channels
+    approvalSignal = workflow.GetSignalChannel(ctx, "approval_response")
+    rejectionSignal = workflow.GetSignalChannel(ctx, "rejection_response")
+    escalationSignal = workflow.GetSignalChannel(ctx, "escalation_request")
+    
+    currentLevel := 0
+    approvalResults := make(map[int][]ApprovalResponse)
+    
+    // Process each approval level
+    for currentLevel < len(input.Configuration.RequiredApprovers) {
+        level := input.Configuration.RequiredApprovers[currentLevel]
+        logger.Info("Processing approval level", "level", level.Level, "required", level.Required)
+        
+        // Send approval requests to all approvers at this level
+        var requestResults []ApprovalRequestResult
+        for _, approverID := range level.Approvers {
+            var result ApprovalRequestResult
+            err := workflow.ExecuteActivity(ctx, "SendApprovalRequestActivity", 
+                SendApprovalRequestInput{
+                    TransactionID: input.TransactionID,
+                    ApproverID:    approverID,
+                    Level:         level.Level,
+                    DueDate:       time.Now().Add(input.Configuration.TimeoutPolicy.ApprovalTimeout),
+                }).Get(ctx, &result)
+            if err != nil {
+                logger.Error("Failed to send approval request", "approver_id", approverID, "error", err)
+                continue
+            }
+            requestResults = append(requestResults, result)
+        }
+        
+        if len(requestResults) == 0 {
+            return &ApprovalResult{
+                Approved:        false,
+                RejectionReason: "No valid approvers found at level " + fmt.Sprintf("%d", level.Level),
+            }, nil
+        }
+        
+        // Wait for approvals with timeout handling
+        approvedCount := 0
+        rejectedCount := 0
+        totalRequired := level.Required
+        
+        if level.Policy == "ALL" {
+            totalRequired = len(level.Approvers)
+        }
+        
+        // Timeout timer for this approval level
+        timeoutTimer := workflow.NewTimer(ctx, input.Configuration.TimeoutPolicy.ApprovalTimeout)
+        
+        for {
+            approvalSelector.AddReceive(approvalSignal, func(c workflow.ReceiveChannel, more bool) {
+                var response ApprovalResponse
+                c.Receive(ctx, &response)
+                
+                if response.TransactionID == input.TransactionID && response.Level == level.Level {
+                    if response.Approved {
+                        approvedCount++
+                        logger.Info("Received approval", "approver", response.ApproverID, "level", level.Level)
+                    } else {
+                        rejectedCount++
+                        logger.Info("Received rejection", "approver", response.ApproverID, "level", level.Level)
+                    }
+                    
+                    approvalResults[level.Level] = append(approvalResults[level.Level], response)
+                }
+            })
+            
+            approvalSelector.AddReceive(rejectionSignal, func(c workflow.ReceiveChannel, more bool) {
+                var response ApprovalResponse
+                c.Receive(ctx, &response)
+                
+                if response.TransactionID == input.TransactionID && response.Level == level.Level {
+                    rejectedCount++
+                    logger.Info("Received rejection", "approver", response.ApproverID, "level", level.Level)
+                    approvalResults[level.Level] = append(approvalResults[level.Level], response)
+                }
+            })
+            
+            approvalSelector.AddFuture(timeoutTimer, func(f workflow.Future) {
+                logger.Warn("Approval timeout reached", "level", level.Level)
+                
+                // Handle timeout based on escalation rules
+                escalated := false
+                for _, rule := range input.Configuration.EscalationRules {
+                    if rule.TriggerLevel == level.Level && rule.TriggerCondition == "TIMEOUT" {
+                        // Execute escalation
+                        var escalationResult EscalationResult
+                        err := workflow.ExecuteActivity(ctx, "EscalateApprovalActivity", 
+                            EscalateApprovalInput{
+                                TransactionID:     input.TransactionID,
+                                OriginalLevel:     level.Level,
+                                EscalationLevel:   rule.EscalationLevel,
+                                EscalationReason:  "APPROVAL_TIMEOUT",
+                            }).Get(ctx, &escalationResult)
+                        if err == nil && escalationResult.Success {
+                            escalated = true
+                            logger.Info("Successfully escalated approval", "to_level", rule.EscalationLevel)
+                            break
+                        }
+                    }
+                }
+                
+                if !escalated {
+                    // Default timeout behavior - treat as rejection
+                    rejectedCount = len(level.Approvers)
+                }
+            })
+            
+            approvalSelector.Select(ctx)
+            
+            // Check if we have enough approvals or rejections to proceed
+            if approvedCount >= totalRequired {
+                logger.Info("Level approved", "level", level.Level, "approved", approvedCount, "required", totalRequired)
+                break
+            }
+            
+            if rejectedCount > 0 && level.Policy != "MAJORITY" {
+                logger.Info("Level rejected", "level", level.Level, "rejected", rejectedCount)
+                return &ApprovalResult{
+                    Approved:         false,
+                    RejectionReason:  fmt.Sprintf("Rejected at approval level %d", level.Level),
+                    ApprovalHistory:  approvalResults,
+                }, nil
+            }
+            
+            // For MAJORITY policy, check if rejection is still possible
+            if level.Policy == "MAJORITY" {
+                remaining := len(level.Approvers) - (approvedCount + rejectedCount)
+                if approvedCount + remaining < totalRequired {
+                    return &ApprovalResult{
+                        Approved:         false,
+                        RejectionReason:  fmt.Sprintf("Insufficient approvals possible at level %d", level.Level),
+                        ApprovalHistory:  approvalResults,
+                    }, nil
+                }
+            }
+        }
+        
+        currentLevel++
+    }
+    
+    return &ApprovalResult{
+        Approved:        true,
+        ApprovalID:      uuid.New(),
+        ApprovalHistory: approvalResults,
+        CompletedAt:     time.Now(),
+    }, nil
+}
+```
+
+#### 3. Recurring Transaction Workflow
+
+**Automated recurring transaction processing with schedule management.**
+
+```go
+type RecurringTransactionInput struct {
+    RecurrenceID   uuid.UUID              `json:"recurrence_id"`
+    TenantID       uuid.UUID              `json:"tenant_id"`
+    Template       TransactionTemplate    `json:"template"`
+    Schedule       RecurrenceSchedule     `json:"schedule"`
+    EndCondition   EndCondition          `json:"end_condition"`
+}
+
+type RecurrenceSchedule struct {
+    Frequency    string     `json:"frequency"`     // "DAILY", "WEEKLY", "MONTHLY", "QUARTERLY", "ANNUALLY"
+    Interval     int        `json:"interval"`      // Every N periods
+    DayOfMonth   *int       `json:"day_of_month,omitempty"`   // For monthly/quarterly
+    DayOfWeek    *int       `json:"day_of_week,omitempty"`    // For weekly
+    NextRunDate  time.Time  `json:"next_run_date"`
+}
+
+type EndCondition struct {
+    Type         string     `json:"type"`          // "NEVER", "DATE", "COUNT"
+    EndDate      *time.Time `json:"end_date,omitempty"`
+    MaxOccurrences *int     `json:"max_occurrences,omitempty"`
+}
+
+// RecurringTransactionWorkflow manages automated recurring transactions
+func RecurringTransactionWorkflow(ctx workflow.Context, input RecurringTransactionInput) error {
+    logger := workflow.GetLogger(ctx)
+    
+    occurrenceCount := 0
+    nextRunDate := input.Schedule.NextRunDate
+    
+    for {
+        // Check end conditions
+        if input.EndCondition.Type == "DATE" && input.EndCondition.EndDate != nil && 
+           time.Now().After(*input.EndCondition.EndDate) {
+            logger.Info("Recurring transaction ended by date", "end_date", input.EndCondition.EndDate)
+            break
+        }
+        
+        if input.EndCondition.Type == "COUNT" && input.EndCondition.MaxOccurrences != nil && 
+           occurrenceCount >= *input.EndCondition.MaxOccurrences {
+            logger.Info("Recurring transaction ended by count", "max_occurrences", input.EndCondition.MaxOccurrences)
+            break
+        }
+        
+        // Wait until the next run date
+        sleepDuration := time.Until(nextRunDate)
+        if sleepDuration > 0 {
+            logger.Info("Waiting for next run", "next_run", nextRunDate, "duration", sleepDuration)
+            err := workflow.Sleep(ctx, sleepDuration)
+            if err != nil {
+                logger.Error("Sleep interrupted", "error", err)
+                return err
+            }
+        }
+        
+        // Generate transaction for this occurrence
+        logger.Info("Generating recurring transaction", "occurrence", occurrenceCount+1)
+        
+        transactionData := input.Template.GenerateForDate(nextRunDate)
+        
+        // Execute transaction processing as child workflow
+        childWorkflowOptions := workflow.ChildWorkflowOptions{
+            WorkflowID: fmt.Sprintf("recurring-%s-%d", input.RecurrenceID.String(), occurrenceCount+1),
+        }
+        
+        childCtx := workflow.WithChildOptions(ctx, childWorkflowOptions)
+        var transactionResult TransactionProcessingResult
+        err := workflow.ExecuteChildWorkflow(childCtx, "TransactionProcessingWorkflow", 
+            TransactionProcessingInput{
+                TenantID:        input.TenantID,
+                TransactionData: transactionData,
+                ProcessingMode:  ProcessingModeImmediate,
+            }).Get(ctx, &transactionResult)
+        
+        if err != nil {
+            logger.Error("Recurring transaction failed", "occurrence", occurrenceCount+1, "error", err)
+            
+            // Record failure but continue with next occurrence
+            _ = workflow.ExecuteActivity(ctx, "RecordRecurringTransactionFailureActivity", 
+                RecurringFailureInput{
+                    RecurrenceID: input.RecurrenceID,
+                    Occurrence:   occurrenceCount + 1,
+                    ScheduledDate: nextRunDate,
+                    Error:        err.Error(),
+                }).Get(ctx, nil)
+        } else {
+            logger.Info("Recurring transaction completed successfully", 
+                "occurrence", occurrenceCount+1, "transaction_id", transactionResult.TransactionID)
+            
+            // Update recurrence tracking
+            _ = workflow.ExecuteActivity(ctx, "UpdateRecurrenceTrackingActivity", 
+                UpdateRecurrenceInput{
+                    RecurrenceID:  input.RecurrenceID,
+                    Occurrence:    occurrenceCount + 1,
+                    TransactionID: &transactionResult.TransactionID,
+                    CompletedAt:   time.Now(),
+                }).Get(ctx, nil)
+        }
+        
+        // Calculate next run date
+        nextRunDate = calculateNextRunDate(input.Schedule, nextRunDate)
+        occurrenceCount++
+        
+        // Update the recurring transaction schedule
+        _ = workflow.ExecuteActivity(ctx, "UpdateRecurringScheduleActivity", 
+            UpdateScheduleInput{
+                RecurrenceID: input.RecurrenceID,
+                NextRunDate:  nextRunDate,
+                Occurrence:   occurrenceCount,
+            }).Get(ctx, nil)
+    }
+    
+    logger.Info("Recurring transaction workflow completed", "total_occurrences", occurrenceCount)
+    return nil
+}
+
+// Helper function to calculate next run date based on schedule
+func calculateNextRunDate(schedule RecurrenceSchedule, currentDate time.Time) time.Time {
+    switch schedule.Frequency {
+    case "DAILY":
+        return currentDate.AddDate(0, 0, schedule.Interval)
+    case "WEEKLY":
+        return currentDate.AddDate(0, 0, 7*schedule.Interval)
+    case "MONTHLY":
+        nextMonth := currentDate.AddDate(0, schedule.Interval, 0)
+        if schedule.DayOfMonth != nil {
+            return time.Date(nextMonth.Year(), nextMonth.Month(), *schedule.DayOfMonth, 
+                           currentDate.Hour(), currentDate.Minute(), currentDate.Second(), 
+                           currentDate.Nanosecond(), currentDate.Location())
+        }
+        return nextMonth
+    case "QUARTERLY":
+        return currentDate.AddDate(0, 3*schedule.Interval, 0)
+    case "ANNUALLY":
+        return currentDate.AddDate(schedule.Interval, 0, 0)
+    default:
+        return currentDate.AddDate(0, 0, 1) // Default to daily
+    }
+}
+```
+
+#### 4. Bank Reconciliation Workflow
+
+**Automated bank statement processing and reconciliation.**
+
+```go
+type BankReconciliationInput struct {
+    TenantID         uuid.UUID    `json:"tenant_id"`
+    BankAccountID    uuid.UUID    `json:"bank_account_id"`
+    StatementDate    time.Time    `json:"statement_date"`
+    StatementData    []BankTransaction `json:"statement_data"`
+    AutoMatch        bool         `json:"auto_match"`
+    MatchingRules    []MatchingRule   `json:"matching_rules"`
+}
+
+type BankTransaction struct {
+    ID              string          `json:"id"`
+    Date            time.Time       `json:"date"`
+    Description     string          `json:"description"`
+    Amount          decimal.Decimal `json:"amount"`
+    Type            string          `json:"type"`  // "DEBIT", "CREDIT"
+    Reference       string          `json:"reference"`
+    Balance         decimal.Decimal `json:"balance"`
+}
+
+type MatchingRule struct {
+    Priority        int            `json:"priority"`
+    AmountTolerance decimal.Decimal `json:"amount_tolerance"`
+    DateRange       int            `json:"date_range_days"`
+    DescriptionMatch string        `json:"description_match"`  // Regex pattern
+    ReferenceMatch   string        `json:"reference_match"`    // Exact or pattern
+}
+
+// BankReconciliationWorkflow automates bank statement reconciliation
+func BankReconciliationWorkflow(ctx workflow.Context, input BankReconciliationInput) (*ReconciliationResult, error) {
+    logger := workflow.GetLogger(ctx)
+    
+    activityOptions := workflow.ActivityOptions{
+        StartToCloseTimeout: 10 * time.Minute,
+        HeartbeatTimeout:    time.Minute,
+        RetryPolicy: &temporal.RetryPolicy{
+            InitialInterval:     time.Second,
+            BackoffCoefficient:  2.0,
+            MaximumInterval:     time.Minute,
+            MaximumAttempts:     3,
+        },
+    }
+    ctx = workflow.WithActivityOptions(ctx, activityOptions)
+    
+    reconciliationID := uuid.New()
+    
+    logger.Info("Starting bank reconciliation", "bank_account", input.BankAccountID, 
+               "statement_date", input.StatementDate, "transactions", len(input.StatementData))
+    
+    // Step 1: Fetch unreconciled transactions from our system
+    var systemTransactions []SystemTransaction
+    err := workflow.ExecuteActivity(ctx, "FetchUnreconciledTransactionsActivity", 
+        FetchUnreconciledInput{
+            BankAccountID: input.BankAccountID,
+            StartDate:     input.StatementDate.AddDate(0, -1, 0), // 1 month back
+            EndDate:       input.StatementDate,
+        }).Get(ctx, &systemTransactions)
+    if err != nil {
+        return nil, fmt.Errorf("failed to fetch unreconciled transactions: %w", err)
+    }
+    
+    logger.Info("Fetched unreconciled transactions", "count", len(systemTransactions))
+    
+    // Step 2: Perform automatic matching
+    var matchingResults MatchingResults
+    if input.AutoMatch {
+        err = workflow.ExecuteActivity(ctx, "AutoMatchTransactionsActivity", 
+            AutoMatchInput{
+                ReconciliationID:   reconciliationID,
+                BankTransactions:   input.StatementData,
+                SystemTransactions: systemTransactions,
+                MatchingRules:      input.MatchingRules,
+            }).Get(ctx, &matchingResults)
+        if err != nil {
+            logger.Warn("Auto matching failed, will proceed with manual reconciliation", "error", err)
+        } else {
+            logger.Info("Auto matching completed", 
+                       "matched", len(matchingResults.Matches),
+                       "unmatched_bank", len(matchingResults.UnmatchedBank),
+                       "unmatched_system", len(matchingResults.UnmatchedSystem))
+        }
+    }
+    
+    // Step 3: Handle unmatched items
+    var pendingItems []PendingReconciliationItem
+    
+    // Process unmatched bank transactions
+    for _, bankTxn := range matchingResults.UnmatchedBank {
+        var pendingResult PendingItemResult
+        err = workflow.ExecuteActivity(ctx, "CreatePendingReconciliationItemActivity", 
+            CreatePendingItemInput{
+                ReconciliationID: reconciliationID,
+                Type:             "BANK_UNMATCHED",
+                BankTransaction:  &bankTxn,
+                SuggestedAction:  determineSuggestedAction(bankTxn),
+            }).Get(ctx, &pendingResult)
+        if err != nil {
+            logger.Error("Failed to create pending item for bank transaction", 
+                        "bank_txn_id", bankTxn.ID, "error", err)
+            continue
+        }
+        pendingItems = append(pendingItems, pendingResult.PendingItem)
+    }
+    
+    // Process unmatched system transactions
+    for _, sysTxn := range matchingResults.UnmatchedSystem {
+        var pendingResult PendingItemResult
+        err = workflow.ExecuteActivity(ctx, "CreatePendingReconciliationItemActivity", 
+            CreatePendingItemInput{
+                ReconciliationID:  reconciliationID,
+                Type:              "SYSTEM_UNMATCHED",
+                SystemTransaction: &sysTxn,
+                SuggestedAction:   determineSuggestedAction(sysTxn),
+            }).Get(ctx, &pendingResult)
+        if err != nil {
+            logger.Error("Failed to create pending item for system transaction", 
+                        "sys_txn_id", sysTxn.ID, "error", err)
+            continue
+        }
+        pendingItems = append(pendingItems, pendingResult.PendingItem)
+    }
+    
+    // Step 4: Wait for manual review if there are pending items
+    var manualReviewResult ManualReviewResult
+    if len(pendingItems) > 0 {
+        logger.Info("Waiting for manual review of pending items", "count", len(pendingItems))
+        
+        // Send notification for manual review
+        _ = workflow.ExecuteActivity(ctx, "SendReconciliationNotificationActivity", 
+            SendNotificationInput{
+                ReconciliationID: reconciliationID,
+                Type:            "MANUAL_REVIEW_REQUIRED",
+                Recipients:      []string{"finance-team@company.com"},
+                PendingItems:    pendingItems,
+            }).Get(ctx, nil)
+        
+        // Wait for manual review signal with timeout
+        manualReviewSignal := workflow.GetSignalChannel(ctx, "manual_review_completed")
+        selector := workflow.NewSelector(ctx)
+        
+        // 48 hour timeout for manual review
+        reviewTimeout := workflow.NewTimer(ctx, 48*time.Hour)
+        
+        selector.AddReceive(manualReviewSignal, func(c workflow.ReceiveChannel, more bool) {
+            c.Receive(ctx, &manualReviewResult)
+            logger.Info("Manual review completed", "resolved_items", len(manualReviewResult.ResolvedItems))
+        })
+        
+        selector.AddFuture(reviewTimeout, func(f workflow.Future) {
+            logger.Warn("Manual review timeout reached")
+            manualReviewResult.TimedOut = true
+        })
+        
+        selector.Select(ctx)
+    }
+    
+    // Step 5: Apply reconciliation results
+    var finalResult ReconciliationFinalResult
+    err = workflow.ExecuteActivity(ctx, "ApplyReconciliationResultsActivity", 
+        ApplyReconciliationInput{
+            ReconciliationID:      reconciliationID,
+            MatchedTransactions:   matchingResults.Matches,
+            ManualReviewResults:   manualReviewResult.ResolvedItems,
+            BankAccountID:         input.BankAccountID,
+            StatementDate:         input.StatementDate,
+        }).Get(ctx, &finalResult)
+    if err != nil {
+        return nil, fmt.Errorf("failed to apply reconciliation results: %w", err)
+    }
+    
+    // Step 6: Generate reconciliation report
+    var reportResult ReportGenerationResult
+    err = workflow.ExecuteActivity(ctx, "GenerateReconciliationReportActivity", 
+        GenerateReportInput{
+            ReconciliationID:      reconciliationID,
+            BankAccountID:         input.BankAccountID,
+            StatementDate:         input.StatementDate,
+            ReconciledCount:       finalResult.ReconciledCount,
+            UnreconciledCount:     finalResult.UnreconciledCount,
+            AdjustmentsCreated:    finalResult.AdjustmentsCreated,
+        }).Get(ctx, &reportResult)
+    if err != nil {
+        logger.Error("Failed to generate reconciliation report", "error", err)
+        // Non-critical - continue
+    }
+    
+    logger.Info("Bank reconciliation completed", 
+               "reconciled", finalResult.ReconciledCount,
+               "unreconciled", finalResult.UnreconciledCount,
+               "adjustments", finalResult.AdjustmentsCreated)
+    
+    return &ReconciliationResult{
+        ReconciliationID:      reconciliationID,
+        Status:                "COMPLETED",
+        ReconciledCount:       finalResult.ReconciledCount,
+        UnreconciledCount:     finalResult.UnreconciledCount,
+        AdjustmentsCreated:    finalResult.AdjustmentsCreated,
+        ReportURL:            reportResult.ReportURL,
+        CompletedAt:          time.Now(),
+    }, nil
+}
+
+func determineSuggestedAction(item interface{}) string {
+    switch v := item.(type) {
+    case BankTransaction:
+        if v.Type == "DEBIT" && v.Amount.LessThan(decimal.NewFromFloat(50)) {
+            return "CREATE_EXPENSE_ENTRY"
+        }
+        if v.Type == "CREDIT" {
+            return "CREATE_REVENUE_ENTRY"  
+        }
+        return "MANUAL_REVIEW"
+    case SystemTransaction:
+        if time.Since(v.TransactionDate) > 30*24*time.Hour {
+            return "MARK_AS_CANCELLED"
+        }
+        return "CHECK_BANK_RECORDS"
+    default:
+        return "MANUAL_REVIEW"
+    }
+}
+```
+
+#### 5. Month-End Closing Workflow
+
+**Automated period closing with comprehensive validation.**
+
+```go
+type MonthEndClosingInput struct {
+    TenantID        uuid.UUID `json:"tenant_id"`
+    ClosingPeriod   Period    `json:"closing_period"`
+    UserID          uuid.UUID `json:"user_id"`
+    ForceClose      bool      `json:"force_close"`
+    ValidationRules []ValidationRule `json:"validation_rules"`
+}
+
+type Period struct {
+    Year  int `json:"year"`
+    Month int `json:"month"`
+}
+
+type ValidationRule struct {
+    Type        string                 `json:"type"`
+    Description string                 `json:"description"`
+    Parameters  map[string]interface{} `json:"parameters"`
+    Critical    bool                   `json:"critical"`
+}
+
+// MonthEndClosingWorkflow manages comprehensive period closing procedures
+func MonthEndClosingWorkflow(ctx workflow.Context, input MonthEndClosingInput) (*MonthEndClosingResult, error) {
+    logger := workflow.GetLogger(ctx)
+    
+    activityOptions := workflow.ActivityOptions{
+        StartToCloseTimeout: 30 * time.Minute,
+        HeartbeatTimeout:    2 * time.Minute,
+        RetryPolicy: &temporal.RetryPolicy{
+            InitialInterval:     time.Second,
+            BackoffCoefficient:  1.5,
+            MaximumInterval:     30 * time.Second,
+            MaximumAttempts:     3,
+        },
+    }
+    ctx = workflow.WithActivityOptions(ctx, activityOptions)
+    
+    closingID := uuid.New()
+    startTime := time.Now()
+    
+    logger.Info("Starting month-end closing", 
+               "period", fmt.Sprintf("%d-%02d", input.ClosingPeriod.Year, input.ClosingPeriod.Month),
+               "user", input.UserID)
+    
+    // Step 1: Pre-closing validation
+    logger.Info("Performing pre-closing validation")
+    
+    var validationResults []ValidationResult
+    for _, rule := range input.ValidationRules {
+        var result ValidationResult
+        err := workflow.ExecuteActivity(ctx, "ValidateClosingRuleActivity", 
+            ValidateClosingRuleInput{
+                ClosingID: closingID,
+                Period:    input.ClosingPeriod,
+                Rule:      rule,
+            }).Get(ctx, &result)
+        
+        if err != nil {
+            if rule.Critical && !input.ForceClose {
+                return nil, fmt.Errorf("critical validation failed: %s - %w", rule.Description, err)
+            }
+            logger.Warn("Validation rule failed", "rule", rule.Type, "error", err)
+            result = ValidationResult{
+                RuleType: rule.Type,
+                Passed:   false,
+                Error:    err.Error(),
+                Critical: rule.Critical,
+            }
+        }
+        
+        validationResults = append(validationResults, result)
+        
+        if !result.Passed && rule.Critical && !input.ForceClose {
+            return &MonthEndClosingResult{
+                Status:            "VALIDATION_FAILED",
+                ValidationResults: validationResults,
+                Error:             result.Error,
+            }, nil
+        }
+    }
+    
+    logger.Info("Pre-closing validation completed", 
+               "total_rules", len(input.ValidationRules),
+               "passed", len(validationResults))
+    
+    // Step 2: Generate automatic adjusting entries
+    logger.Info("Generating automatic adjusting entries")
+    
+    var adjustingEntries []AdjustingEntry
+    
+    // Accrual entries
+    var accrualResult AccrualResult
+    err := workflow.ExecuteActivity(ctx, "GenerateAccrualEntriesActivity", 
+        GenerateAccrualInput{
+            ClosingID: closingID,
+            Period:    input.ClosingPeriod,
+            UserID:    input.UserID,
+        }).Get(ctx, &accrualResult)
+    if err != nil {
+        logger.Error("Failed to generate accrual entries", "error", err)
+        if !input.ForceClose {
+            return nil, fmt.Errorf("accrual generation failed: %w", err)
+        }
+    } else {
+        adjustingEntries = append(adjustingEntries, accrualResult.Entries...)
+    }
+    
+    // Depreciation entries
+    var depreciationResult DepreciationResult
+    err = workflow.ExecuteActivity(ctx, "GenerateDepreciationEntriesActivity", 
+        GenerateDepreciationInput{
+            ClosingID: closingID,
+            Period:    input.ClosingPeriod,
+            UserID:    input.UserID,
+        }).Get(ctx, &depreciationResult)
+    if err != nil {
+        logger.Error("Failed to generate depreciation entries", "error", err)
+        if !input.ForceClose {
+            return nil, fmt.Errorf("depreciation generation failed: %w", err)
+        }
+    } else {
+        adjustingEntries = append(adjustingEntries, depreciationResult.Entries...)
+    }
+    
+    // Currency revaluation entries
+    var revaluationResult RevaluationResult
+    err = workflow.ExecuteActivity(ctx, "GenerateCurrencyRevaluationEntriesActivity", 
+        GenerateRevaluationInput{
+            ClosingID: closingID,
+            Period:    input.ClosingPeriod,
+            UserID:    input.UserID,
+        }).Get(ctx, &revaluationResult)
+    if err != nil {
+        logger.Error("Failed to generate revaluation entries", "error", err)
+        if !input.ForceClose {
+            return nil, fmt.Errorf("currency revaluation failed: %w", err)
+        }
+    } else {
+        adjustingEntries = append(adjustingEntries, revaluationResult.Entries...)
+    }
+    
+    logger.Info("Generated adjusting entries", "total", len(adjustingEntries))
+    
+    // Step 3: Post adjusting entries
+    if len(adjustingEntries) > 0 {
+        logger.Info("Posting adjusting entries")
+        
+        for i, entry := range adjustingEntries {
+            // Post each adjusting entry as a separate transaction
+            childWorkflowOptions := workflow.ChildWorkflowOptions{
+                WorkflowID: fmt.Sprintf("adjusting-entry-%s-%d", closingID.String(), i),
+            }
+            
+            childCtx := workflow.WithChildOptions(ctx, childWorkflowOptions)
+            var transactionResult TransactionProcessingResult
+            err = workflow.ExecuteChildWorkflow(childCtx, "TransactionProcessingWorkflow", 
+                TransactionProcessingInput{
+                    TenantID:        input.TenantID,
+                    UserID:          input.UserID,
+                    TransactionData: entry.ToTransactionCommand(),
+                    ProcessingMode:  ProcessingModeImmediate,
+                }).Get(ctx, &transactionResult)
+            
+            if err != nil {
+                logger.Error("Failed to post adjusting entry", "entry_type", entry.Type, "error", err)
+                if !input.ForceClose {
+                    return nil, fmt.Errorf("failed to post adjusting entry %s: %w", entry.Type, err)
+                }
+            } else {
+                logger.Info("Posted adjusting entry", "type", entry.Type, "transaction_id", transactionResult.TransactionID)
+            }
+        }
+    }
+    
+    // Step 4: Generate financial statements
+    logger.Info("Generating month-end financial statements")
+    
+    var statementsResult StatementsResult
+    err = workflow.ExecuteActivity(ctx, "GenerateMonthEndStatementsActivity", 
+        GenerateStatementsInput{
+            ClosingID: closingID,
+            Period:    input.ClosingPeriod,
+            UserID:    input.UserID,
+        }).Get(ctx, &statementsResult)
+    if err != nil {
+        logger.Error("Failed to generate financial statements", "error", err)
+        if !input.ForceClose {
+            return nil, fmt.Errorf("statement generation failed: %w", err)
+        }
+    }
+    
+    // Step 5: Perform final validation
+    logger.Info("Performing final closing validation")
+    
+    var finalValidationResult FinalValidationResult
+    err = workflow.ExecuteActivity(ctx, "PerformFinalClosingValidationActivity", 
+        FinalClosingValidationInput{
+            ClosingID: closingID,
+            Period:    input.ClosingPeriod,
+        }).Get(ctx, &finalValidationResult)
+    if err != nil {
+        logger.Error("Final validation failed", "error", err)
+        if !input.ForceClose {
+            return nil, fmt.Errorf("final validation failed: %w", err)
+        }
+    }
+    
+    // Step 6: Close the period
+    logger.Info("Closing the period")
+    
+    var closingResult PeriodClosingResult
+    err = workflow.ExecuteActivity(ctx, "ClosePeriodActivity", 
+        ClosePeriodInput{
+            ClosingID: closingID,
+            Period:    input.ClosingPeriod,
+            UserID:    input.UserID,
+            ForceClose: input.ForceClose,
+        }).Get(ctx, &closingResult)
+    if err != nil {
+        return nil, fmt.Errorf("period closing failed: %w", err)
+    }
+    
+    // Step 7: Send completion notifications
+    logger.Info("Sending completion notifications")
+    
+    _ = workflow.ExecuteActivity(ctx, "SendClosingCompletionNotificationActivity", 
+        SendClosingNotificationInput{
+            ClosingID:         closingID,
+            Period:           input.ClosingPeriod,
+            Duration:         time.Since(startTime),
+            AdjustingEntries: len(adjustingEntries),
+            ValidationResults: validationResults,
+            Statements:       statementsResult.GeneratedStatements,
+        }).Get(ctx, nil)
+    
+    logger.Info("Month-end closing completed successfully", 
+               "duration", time.Since(startTime),
+               "adjusting_entries", len(adjustingEntries))
+    
+    return &MonthEndClosingResult{
+        ClosingID:         closingID,
+        Status:           "COMPLETED",
+        Period:           input.ClosingPeriod,
+        Duration:         time.Since(startTime),
+        AdjustingEntries: adjustingEntries,
+        ValidationResults: validationResults,
+        Statements:       statementsResult.GeneratedStatements,
+        CompletedAt:      time.Now(),
+    }, nil
+}
+```
+
+### Financial Workflow Activities
+
+#### Core Transaction Activities
+
+```go
+// ValidateTransactionActivity performs comprehensive business rule validation
+func ValidateTransactionActivity(ctx context.Context, input CreateTransactionCommand) (*ValidationResult, error) {
+    // Implementation includes:
+    // - Double-entry balance validation
+    // - Account existence and status checks
+    // - Business rule compliance
+    // - Currency consistency validation
+    // - Approval requirement determination
+    // - Period and date validations
+}
+
+// CreateTransactionActivity creates transaction with audit trail
+func CreateTransactionActivity(ctx context.Context, input CreateTransactionCommand) (*CreateTransactionResult, error) {
+    // Implementation includes:
+    // - Atomic transaction creation
+    // - Entry generation with proper sequencing
+    // - Audit trail recording
+    // - Initial state setting
+    // - Reference number generation
+}
+
+// PostTransactionActivity posts transaction to general ledger
+func PostTransactionActivity(ctx context.Context, input PostTransactionInput) (*PostingResult, error) {
+    // Implementation includes:
+    // - Final balance validation
+    // - Account balance updates
+    // - Posting date validation
+    // - Status transition to POSTED
+    // - Posting reference generation
+}
+
+// UpdateAccountBalancesActivity updates affected account balances
+func UpdateAccountBalancesActivity(ctx context.Context, input UpdateBalancesInput) error {
+    // Implementation includes:
+    // - Optimistic locking for concurrency
+    // - Balance calculation with proper debit/credit logic
+    // - Hierarchical balance rollup
+    // - Balance history recording
+    // - Materialized view updates
+}
+```
+
+#### Approval Activities
+
+```go
+// SendApprovalRequestActivity sends approval requests to designated approvers
+func SendApprovalRequestActivity(ctx context.Context, input SendApprovalRequestInput) (*ApprovalRequestResult, error) {
+    // Implementation includes:
+    // - Approver notification via multiple channels
+    // - Request tracking and timeout management
+    // - Approval URL generation with security tokens
+    // - Escalation rule setup
+}
+
+// ProcessApprovalResponseActivity handles incoming approval decisions
+func ProcessApprovalResponseActivity(ctx context.Context, input ApprovalResponseInput) (*ApprovalProcessResult, error) {
+    // Implementation includes:
+    // - Decision validation and recording
+    // - Approval threshold checking
+    // - Next level determination
+    // - Completion status evaluation
+}
+
+// EscalateApprovalActivity handles approval escalation
+func EscalateApprovalActivity(ctx context.Context, input EscalateApprovalInput) (*EscalationResult, error) {
+    // Implementation includes:
+    // - Escalation path determination
+    // - New approver notification
+    // - Original approver notification
+    // - Escalation reason recording
+}
+```
+
+#### Reconciliation Activities
+
+```go
+// FetchUnreconciledTransactionsActivity retrieves unreconciled transactions
+func FetchUnreconciledTransactionsActivity(ctx context.Context, input FetchUnreconciledInput) ([]SystemTransaction, error) {
+    // Implementation includes:
+    // - Tenant-aware transaction retrieval
+    // - Status filtering for unreconciled items
+    // - Date range filtering
+    // - Account-specific filtering
+}
+
+// AutoMatchTransactionsActivity performs intelligent transaction matching
+func AutoMatchTransactionsActivity(ctx context.Context, input AutoMatchInput) (*MatchingResults, error) {
+    // Implementation includes:
+    // - Rule-based matching algorithms
+    // - Fuzzy matching for descriptions
+    // - Amount tolerance handling
+    // - Date range matching
+    // - Confidence scoring
+}
+
+// CreatePendingReconciliationItemActivity creates items for manual review
+func CreatePendingReconciliationItemActivity(ctx context.Context, input CreatePendingItemInput) (*PendingItemResult, error) {
+    // Implementation includes:
+    // - Pending item creation with full context
+    // - Suggested action determination
+    // - Review priority assignment
+    // - Notification preparation
+}
+```
+
+#### Period Closing Activities
+
+```go
+// ValidateClosingRuleActivity validates specific closing rules
+func ValidateClosingRuleActivity(ctx context.Context, input ValidateClosingRuleInput) (*ValidationResult, error) {
+    // Implementation includes:
+    // - Rule-specific validation logic
+    // - Exception identification
+    // - Warning and error categorization
+    // - Remediation suggestion generation
+}
+
+// GenerateAccrualEntriesActivity creates period-end accrual entries
+func GenerateAccrualEntriesActivity(ctx context.Context, input GenerateAccrualInput) (*AccrualResult, error) {
+    // Implementation includes:
+    // - Accrual calculation based on contracts
+    // - Revenue recognition calculations
+    // - Expense accrual determination
+    // - Multi-currency accrual handling
+}
+
+// GenerateDepreciationEntriesActivity calculates asset depreciation
+func GenerateDepreciationEntriesActivity(ctx context.Context, input GenerateDepreciationInput) (*DepreciationResult, error) {
+    // Implementation includes:
+    // - Asset depreciation calculations
+    // - Method-specific depreciation logic
+    // - Partial period calculations
+    // - Asset disposal handling
+}
+
+// ClosePeriodActivity performs final period closing
+func ClosePeriodActivity(ctx context.Context, input ClosePeriodInput) (*PeriodClosingResult, error) {
+    // Implementation includes:
+    // - Period status update to CLOSED
+    // - Transaction restriction enforcement
+    // - Opening balance preparation
+    // - Archive preparation
+}
+```
+
+### Workflow Error Handling and Compensation
+
+```go
+// CompensateTransactionProcessing handles transaction processing failures
+func CompensateTransactionProcessing(ctx context.Context, input CompensateTransactionInput) error {
+    // Compensation logic includes:
+    // - Transaction status rollback
+    // - Balance adjustment reversal
+    // - Approval state cleanup
+    // - Audit trail notation
+    // - External system notification of failure
+    
+    logger := activity.GetLogger(ctx)
+    logger.Info("Starting transaction compensation", "transaction_id", input.TransactionID)
+    
+    // Reverse balance updates if they were applied
+    if len(input.CompensationData.PostedEntries) > 0 {
+        err := reverseBalanceUpdates(ctx, input.CompensationData.PostedEntries)
+        if err != nil {
+            logger.Error("Failed to reverse balance updates", "error", err)
+            return err
+        }
+    }
+    
+    // Update transaction status to FAILED
+    err := updateTransactionStatus(ctx, input.TransactionID, "FAILED", input.Reason)
+    if err != nil {
+        logger.Error("Failed to update transaction status", "error", err)
+        return err
+    }
+    
+    // Clean up approval records if present
+    if input.CompensationData.ApprovalID != nil {
+        err = cleanupApprovalRecord(ctx, *input.CompensationData.ApprovalID)
+        if err != nil {
+            logger.Warn("Failed to cleanup approval record", "approval_id", *input.CompensationData.ApprovalID, "error", err)
+            // Non-critical - continue
+        }
+    }
+    
+    logger.Info("Transaction compensation completed", "transaction_id", input.TransactionID)
+    return nil
+}
+```
+
+### Workflow Monitoring and Observability
+
+```go
+// Workflow query handlers for real-time status
+func TransactionProcessingWorkflowQuery(ctx workflow.Context) (interface{}, error) {
+    return map[string]interface{}{
+        "status":           "IN_PROGRESS",
+        "current_step":     "VALIDATION", 
+        "transaction_id":   "uuid",
+        "progress_percent": 25,
+        "estimated_completion": time.Now().Add(2 * time.Minute),
+    }, nil
+}
+
+// Workflow metrics collection
+func RecordWorkflowMetrics(ctx workflow.Context, workflowType string, status string, duration time.Duration) {
+    // Metrics recording includes:
+    // - Workflow execution duration
+    // - Success/failure rates
+    // - Step-specific timing
+    // - Error categorization
+    // - Business KPIs (transaction volume, approval times, etc.)
+}
+```
+
+---
+
+**This comprehensive Temporal workflow implementation provides the complete automation framework for the AWO ERP Financial Module, covering all critical business processes with reliability, observability, and compensation handling.**
