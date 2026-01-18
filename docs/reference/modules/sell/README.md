@@ -2865,3 +2865,1340 @@ Additional Documents:
 
 ---
 
+## Sales Invoicing
+
+### Invoice Creation Process
+
+```markdown
+SALES INVOICE GENERATION
+
+Creation Methods:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Method 1: From Delivery Note (Most Common)
+  Trigger: Goods delivered, customer signed
+  Process:
+    1. Open delivery note DN-2025-001
+    2. Click "Create Sales Invoice"
+    3. All data auto-populated
+    4. Review and submit
+
+Method 2: From Sales Order (Direct)
+  Use Case: Service delivery, advance invoice
+  Process:
+    1. Select sales order
+    2. Create invoice without delivery note
+    3. Revenue recognized on invoice submission
+
+Method 3: Manual Invoice
+  Use Case: Ad-hoc sales, adjustments
+  Process:
+    1. Create new invoice
+    2. Select customer
+    3. Add items manually
+    4. Submit
+
+Method 4: Recurring Invoice
+  Use Case: Subscriptions, maintenance contracts
+  Process:
+    1. Set up recurring invoice template
+    2. System auto-generates on schedule
+    3. Auto-email to customer
+
+Invoice Header:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Invoice No: INV-2025-001 (auto-generated)
+Invoice Type: Tax Invoice / Proforma / Commercial
+Invoice Date: 2025-02-10
+Due Date: 2025-03-12 (Net 30 days)
+
+Reference Documents:
+  Sales Order: SO-2025-001
+  Delivery Note: DN-2025-001
+  Customer PO: PO/ABC/2025/045
+  Quotation: QTN-2025-001
+
+Customer Details:
+  Customer: ABC Manufacturing Ltd
+  PIN/Tax ID: P000123456A
+  Billing Address: Head Office, Nairobi
+  Attention: Mary Wanjiku (Finance Manager)
+  Email: mary.wanjiku@abc.com
+
+Company Details (Auto):
+  Company PIN: P987654321Z
+  Address: [From company master]
+  Bank Details: [For payment]
+
+Invoice Items:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Based on Delivery DN-2025-001:
+┌────────┬──────────────┬─────┬────────────┬────────────┐
+│ Item   │ Description  │ Qty │ Rate       │ Amount     │
+├────────┼──────────────┼─────┼────────────┼────────────┤
+│ MDL-A  │ Machine A    │  1  │ 1,900,000  │ 1,900,000  │
+│        │ SN: 12345    │     │            │            │
+│        │ Delivered:   │     │            │            │
+│        │ Feb 10, 2025 │     │            │            │
+├────────┼──────────────┼─────┼────────────┼────────────┤
+│ MDL-B  │ Machine B    │  1  │ 1,620,000  │ 1,620,000  │
+│        │ SN: 12346    │     │            │            │
+├────────┼──────────────┼─────┼────────────┼────────────┤
+│ SVC-01 │ Installation │  1  │   150,000  │   150,000  │
+│        │ Completed:   │     │            │            │
+│        │ Feb 12, 2025 │     │            │            │
+└────────┴──────────────┴─────┴────────────┴────────────┘
+
+Note: MDL-C not invoiced yet (not delivered)
+
+Invoice Calculations:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Item Total:                3,670,000 KES
+Additional Discount (2%):    (73,400) KES
+───────────────────────────────────────
+Net Amount:                3,596,600 KES
+VAT (16%):                   575,456 KES
+───────────────────────────────────────
+Grand Total:               4,172,056 KES
+
+Less: Deposit Applied:    (2,614,640) KES
+───────────────────────────────────────
+Balance Due:               1,557,416 KES
+
+Payment Schedule:
+  Deposit (Received Jan 25): 2,614,640 KES ✓ PAID
+  Balance (Due Mar 12):      1,557,416 KES ⏳ PENDING
+
+Financial Integration:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+On Invoice Submission:
+
+Journal Entry (Automatic):
+Dr. Accounts Receivable - ABC     4,172,056
+    Cr. Sales Revenue - Equipment       3,596,600
+    Cr. VAT Payable                       575,456
+
+Description: Sales Invoice INV-2025-001
+Customer: ABC Manufacturing Ltd
+Sales Order: SO-2025-001
+Cost Center: Sales Department
+Sales Person: Sarah Johnson
+
+If Deposit Already Paid:
+Dr. Customer Deposit Account      2,614,640
+    Cr. Accounts Receivable - ABC       2,614,640
+
+Description: Apply deposit from SO-2025-001
+
+Net Receivable:
+Opening AR Balance:         1,250,000
+New Invoice:               4,172,056
+Less: Deposit Applied:    (2,614,640)
+───────────────────────────────────
+Current AR Balance:        2,807,416 KES
+
+Cost of Goods Sold (from Delivery):
+Dr. Cost of Goods Sold            3,200,000
+    Cr. Inventory - Equipment           3,200,000
+
+Description: COGS for DN-2025-001
+Items: MDL-A (1,600,000), MDL-B (1,600,000)
+
+Margin Analysis:
+Revenue:                   3,596,600 KES
+Less: COGS:               (3,200,000) KES
+───────────────────────────────────
+Gross Profit:               396,600 KES
+Gross Margin:                  11.0%
+
+Commission Calculation:
+Net Revenue:              3,596,600 KES
+Commission Rate:                  5%
+Commission Amount:          179,830 KES
+Payable to: Sarah Johnson
+```
+
+### Invoice Document Format
+
+```markdown
+TAX INVOICE LAYOUT
+
+┌──────────────────────────────────────────────┐
+│           [COMPANY LOGO]                     │
+│                                              │
+│          TAX INVOICE                         │
+│                                              │
+│ Company Name                Invoice No:      │
+│ PIN: P987654321Z            INV-2025-001     │
+│ Address Line 1              Date: Feb 10, 25 │
+│ Address Line 2              Due: Mar 12, 25  │
+│ Phone: +254-20-xxx-xxxx                      │
+│ Email: sales@company.com                     │
+├──────────────────────────────────────────────┤
+│ BILL TO:                                     │
+│                                              │
+│ ABC Manufacturing Ltd                        │
+│ PIN: P000123456A                             │
+│ Head Office, Industrial Area                 │
+│ Nairobi, Kenya                               │
+│                                              │
+│ Attention: Mary Wanjiku, Finance Manager     │
+│ Email: mary.wanjiku@abc.com                  │
+│ Phone: +254-700-234-567                      │
+├──────────────────────────────────────────────┤
+│ REFERENCE:                                   │
+│ Sales Order: SO-2025-001                     │
+│ Your PO: PO/ABC/2025/045                     │
+│ Delivery Note: DN-2025-001                   │
+│ Quotation: QTN-2025-001                      │
+├──────────────────────────────────────────────┤
+│ Item  Description       Qty  Rate     Amount │
+│ ────  ──────────────    ─── ──────   ─────── │
+│ 1.    Machine Model A    1  1,900,000        │
+│       Serial: SN12345          1,900,000     │
+│       Delivered: Feb 10, 2025                │
+│                                              │
+│ 2.    Machine Model B    1  1,620,000        │
+│       Serial: SN12346          1,620,000     │
+│       Delivered: Feb 10, 2025                │
+│                                              │
+│ 3.    Installation       1    150,000        │
+│       Service                    150,000     │
+│       Completed: Feb 12, 2025                │
+│                                              │
+│                       Subtotal: 3,670,000    │
+│                       Discount:   (73,400)   │
+│                       Net:      3,596,600    │
+│                       VAT(16%):   575,456    │
+│                       ─────────────────────  │
+│                       TOTAL:    4,172,056    │
+│                                              │
+│ LESS: DEPOSIT PAID                           │
+│ Payment Ref: PAY-2025-001  (2,614,640)      │
+│ Date: January 25, 2025                       │
+│                       ─────────────────────  │
+│                    BALANCE DUE: 1,557,416    │
+│                                              │
+│ Amount in Words:                             │
+│ One Million Five Hundred Fifty Seven         │
+│ Thousand Four Hundred Sixteen Shillings Only │
+├──────────────────────────────────────────────┤
+│ PAYMENT INSTRUCTIONS:                        │
+│                                              │
+│ Bank: Equity Bank Kenya                      │
+│ Account Name: Company Name Ltd               │
+│ Account Number: 0123456789                   │
+│ Branch: Industrial Area                      │
+│ Swift Code: EQBLKENA                         │
+│                                              │
+│ M-Pesa Till: 123456 (for amounts <100K)     │
+│                                              │
+│ Payment Reference: INV-2025-001              │
+├──────────────────────────────────────────────┤
+│ PAYMENT TERMS:                               │
+│ Net 30 days from invoice date                │
+│ Due Date: March 12, 2025                     │
+│ Late payment interest: 2% per month          │
+├──────────────────────────────────────────────┤
+│ NOTES:                                       │
+│ • Warranty: 12 months from delivery date     │
+│ • For queries: accounts@company.com          │
+│ • This is a computer-generated invoice       │
+│                                              │
+│ [QR Code for Payment]                        │
+│                                              │
+│ Thank you for your business!                 │
+└──────────────────────────────────────────────┘
+```
+
+### Invoice Status Management
+
+```markdown
+INVOICE LIFECYCLE
+
+Status Flow:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DRAFT → SUBMITTED → PAID / PARTIALLY PAID / OVERDUE
+
+Status Details:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DRAFT:
+  - Invoice being prepared
+  - Can be edited
+  - Not posted to GL
+  - Not sent to customer
+  - Not affecting AR
+
+SUBMITTED:
+  - Invoice finalized and sent
+  - Posted to GL
+  - AR balance updated
+  - Email sent to customer
+  - Read-only (cannot edit)
+  - Payment tracking active
+
+PAID:
+  - Full payment received
+  - AR cleared
+  - Payment allocated
+  - Receipt issued
+  - Commission released
+
+PARTIALLY PAID:
+  - Part payment received
+  - Balance outstanding tracked
+  - Aging starts on balance
+  - Follow-up for balance
+
+OVERDUE:
+  - Past due date
+  - Payment not received
+  - Collection actions triggered
+  - Aging bucket assigned
+  - Interest may apply
+
+CANCELLED:
+  - Invoice cancelled before payment
+  - AR reversed
+  - Must have authorization
+  - Reason documented
+
+Invoice Actions:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+From SUBMITTED:
+  □ Record Payment
+  □ Send Reminder
+  □ Generate Statement
+  □ Create Credit Note
+  □ Cancel (with approval)
+
+From PAID:
+  □ Generate Receipt
+  □ View Payment History
+  □ Issue Credit Note (for returns)
+
+From OVERDUE:
+  □ Send Reminder (automatic)
+  □ Escalate to Collections
+  □ Apply Late Fee
+  □ Record Payment
+
+Aging Analysis:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Invoice: INV-2025-001
+Invoice Date: Feb 10, 2025
+Due Date: Mar 12, 2025
+Balance Due: 1,557,416 KES
+
+As of Date: Mar 15, 2025
+Status: OVERDUE
+Days Overdue: 3 days
+Aging Bucket: Current (0-30 days)
+
+Reminder Actions:
+  Mar 10 (2 days before): Friendly reminder ✓
+  Mar 13 (1 day after): First reminder ✓
+  Mar 20 (8 days after): Second reminder ⏳
+  Mar 27 (15 days after): Final notice ⏳
+  Apr 10 (30 days after): Escalate to collections ⏳
+
+Payment Tracking:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+┌────────────┬────────────┬────────────┬────────────┐
+│ Date       │ Reference  │ Amount     │ Balance    │
+├────────────┼────────────┼────────────┼────────────┤
+│ Jan 25     │ Deposit    │ 2,614,640  │ 1,557,416  │
+│ Mar 15     │ Partial    │   500,000  │ 1,057,416  │
+│ Mar 20     │ Balance    │ 1,057,416  │         0  │
+└────────────┴────────────┴────────────┴────────────┘
+```
+
+### Proforma Invoice
+
+```markdown
+PROFORMA INVOICE
+
+Purpose:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Advance invoice for customs/import
+- Bank LC requirements
+- Budget approval documentation
+- Not a demand for payment
+- Not posted to accounting
+
+Key Differences from Tax Invoice:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Proforma Invoice:
+  ✗ Not posted to GL
+  ✗ Not creating AR
+  ✗ No tax obligation
+  ✗ Not for payment demand
+  ✓ For information/planning only
+  ✓ Can be revised freely
+  ✓ No accounting impact
+
+Tax Invoice:
+  ✓ Posted to GL
+  ✓ Creates AR
+  ✓ Tax obligation created
+  ✓ Legal demand for payment
+  ✗ Cannot be revised (need credit note)
+  ✓ Full accounting impact
+
+Proforma Usage:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Export Sales:
+   Customer needs proforma for import clearance
+   
+2. Large Projects:
+   Customer needs quotation in invoice format
+   for budget approval
+   
+3. Government/Tender:
+   Required for procurement process
+
+Conversion Process:
+  Proforma Created → Customer Approves → 
+  Sales Order → Delivery → Tax Invoice
+
+Document Marking:
+  Header: "PROFORMA INVOICE"
+  Footer: "THIS IS NOT A TAX INVOICE"
+  Watermark: "PROFORMA - FOR PLANNING ONLY"
+```
+
+---
+
+## Payment Collection & Allocation
+
+### Payment Entry Process
+
+```markdown
+PAYMENT RECEIPT WORKFLOW
+
+Payment Sources:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Bank transfer
+- Cash payment
+- Check payment
+- Mobile money (M-Pesa, Airtel Money)
+- Credit card
+- Online payment gateway
+
+Payment Entry:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Payment Entry No: PAY-2025-015 (auto)
+Payment Date: 2025-03-15
+Customer: ABC Manufacturing Ltd
+
+Payment Details:
+  Amount Received: 1,557,416 KES
+  Payment Method: Bank Transfer
+  Bank: Equity Bank
+  Reference: TRX/2025/54321
+  Received In: Company Main Account
+  
+Party Details:
+  Paid By: ABC Manufacturing Ltd
+  Account: Accounts Receivable - ABC
+  
+Allocation Method:
+  ○ Auto-allocate (oldest first - FIFO)
+  ○ Manual allocation
+  ● Specific invoice selection
+
+Outstanding Invoices:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+┌──────────────┬─────────┬───────────┬───────────┐
+│ Invoice      │ Date    │ Amount    │ Allocate  │
+├──────────────┼─────────┼───────────┼───────────┤
+│ INV-2025-001 │ Feb 10  │ 1,557,416 │ 1,557,416 │
+│ INV-2024-125 │ Dec 20  │   250,000 │         0 │
+│ INV-2025-010 │ Jan 30  │   180,000 │         0 │
+└──────────────┴─────────┴───────────┴───────────┘
+
+Selected for Payment:
+  INV-2025-001: 1,557,416 KES (FULL PAYMENT)
+  
+Payment Allocation:
+  Total Received: 1,557,416 KES
+  Total Allocated: 1,557,416 KES
+  Unallocated: 0 KES ✓
+
+Financial Entry:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Journal Entry (Automatic):
+
+Dr. Bank - Main Account            1,557,416
+    Cr. Accounts Receivable - ABC        1,557,416
+
+Description: Payment for INV-2025-001
+Reference: TRX/2025/54321
+Payment Entry: PAY-2025-015
+
+Invoice Status Update:
+  INV-2025-001:
+    Status: PARTIALLY PAID → PAID ✓
+    Outstanding: 1,557,416 → 0
+    Payment Date: 2025-03-15
+    Days to Payment: 33 days (from invoice date)
+    
+Customer Account Summary:
+  Previous Balance: 2,807,416 KES
+  Payment Received: (1,557,416) KES
+  ──────────────────────────────
+  Current Balance: 1,250,000 KES
+
+Automatic Actions:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Email Receipt to Customer:
+   Subject: Payment Receipt - PAY-2025-015
+   Attachment: Official receipt PDF
+   
+2. Update Customer Credit:
+   Available Credit Increased by 1,557,416 KES
+   
+3. Release Commission:
+   If payment-based commission:
+     Invoice: INV-2025-001
+     Commission: 179,830 KES
+     Payable to: Sarah Johnson
+     Status: EARNED (payment received)
+     
+4. Cancel Payment Reminders:
+   Stop reminder emails for INV-2025-001
+   
+5. Update Reporting:
+   DSO calculation
+   Collection metrics
+   Cash flow forecast
+```
+
+### Payment Allocation Scenarios
+
+```markdown
+ALLOCATION SCENARIOS
+
+Scenario 1: Exact Match
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Payment: 1,557,416 KES
+Invoice: INV-2025-001 = 1,557,416 KES
+
+Result: Perfect match, fully allocate ✓
+
+Scenario 2: Partial Payment
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Payment: 500,000 KES
+Invoice: INV-2025-001 = 1,557,416 KES
+
+Allocation:
+  Paid: 500,000 KES
+  Balance: 1,057,416 KES
+  Status: PARTIALLY PAID
+  
+Follow-up:
+  - Send acknowledgment
+  - Request balance payment
+  - Track remaining amount
+
+Scenario 3: Overpayment
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Payment: 1,600,000 KES
+Invoice: INV-2025-001 = 1,557,416 KES
+
+Allocation:
+  To Invoice: 1,557,416 KES
+  Excess: 42,584 KES
+  
+Excess Handling Options:
+  ○ Credit to customer account (advance payment)
+  ○ Refund to customer
+  ○ Allocate to other outstanding invoices
+  
+Selected: Credit to account
+Entry:
+  Dr. Bank                      1,600,000
+      Cr. Accounts Receivable         1,557,416
+      Cr. Customer Advance               42,584
+
+Scenario 4: Multiple Invoice Payment
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Payment: 2,000,000 KES
+
+Outstanding Invoices:
+  INV-2025-001: 1,557,416 KES
+  INV-2024-125:   250,000 KES
+  INV-2025-010:   180,000 KES
+  Total: 1,987,416 KES
+
+Allocation (Auto - Oldest First):
+  INV-2024-125: 250,000 KES (PAID) ✓
+  INV-2025-001: 1,557,416 KES (PAID) ✓
+  INV-2025-010: 180,000 KES (PAID) ✓
+  Excess: 12,584 KES (advance credit)
+
+All three invoices marked PAID ✓
+
+Scenario 5: Payment Without Reference
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Bank Statement: 500,000 KES from "ABC Mfg"
+No invoice reference
+
+Process:
+  1. Create unallocated payment entry
+  2. Contact customer for invoice reference
+  3. Manual allocation once confirmed
+  
+Temporary Entry:
+  Dr. Bank                       500,000
+      Cr. Unallocated Payments        500,000
+  
+After Confirmation:
+  Dr. Unallocated Payments       500,000
+      Cr. Accounts Receivable - ABC   500,000
+
+Scenario 6: Early Payment Discount
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Invoice Terms: 2/10 Net 30
+  (2% discount if paid within 10 days)
+
+Invoice Amount: 1,000,000 KES
+Invoice Date: Mar 1
+Due Date: Mar 31
+Discount Valid Until: Mar 11
+
+Payment Date: Mar 8 ✓ (within discount period)
+Payment Amount: 980,000 KES (2% discount taken)
+
+Entry:
+  Dr. Bank                       980,000
+  Dr. Sales Discount              20,000
+      Cr. Accounts Receivable         1,000,000
+
+Invoice Status: PAID ✓
+Discount Given: 20,000 KES
+Effective Discount: 2%
+```
+
+### Payment Reconciliation
+
+```markdown
+BANK RECONCILIATION INTEGRATION
+
+Daily Bank Statement Import:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Date: Mar 15, 2025
+
+Bank Statement Lines:
+┌──────────┬─────────────┬──────────┬───────────┐
+│ Date     │ Description │ Debit    │ Credit    │
+├──────────┼─────────────┼──────────┼───────────┤
+│ Mar 15   │ TRX/54321   │          │ 1,557,416 │
+│          │ ABC MFG     │          │           │
+├──────────┼─────────────┼──────────┼───────────┤
+│ Mar 15   │ TRX/54322   │          │   850,000 │
+│          │ XYZ LTD     │          │           │
+├──────────┼─────────────┼──────────┼───────────┤
+│ Mar 15   │ Bank Fees   │    2,500 │           │
+└──────────┴─────────────┴──────────┴───────────┘
+
+Automatic Matching:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Statement Line 1: TRX/54321, 1,557,416
+  ↓ Match Rules:
+    - Amount matches
+    - Customer name contains "ABC"
+    - Reference in description
+  ↓ Matched to:
+    Payment Entry: PAY-2025-015 ✓
+    Status: RECONCILED
+
+Statement Line 2: TRX/54322, 850,000
+  ↓ Search for matching payment
+    - Amount: 850,000
+    - Customer: XYZ
+  ↓ Matched to:
+    Payment Entry: PAY-2025-016 ✓
+    Status: RECONCILED
+
+Statement Line 3: Bank Fees, 2,500
+  ↓ No matching payment entry
+  ↓ Create GL Entry:
+    Dr. Bank Charges Expense    2,500
+        Cr. Bank Account              2,500
+  Status: RECONCILED (expense entry)
+
+Unreconciled Items:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Payment Entries Not in Bank:
+  PAY-2025-017: 450,000 KES (Check not cleared)
+  Reason: Outstanding check
+  Action: Wait for clearance
+
+Bank Entries Not Matched:
+  None ✓ All reconciled
+
+Reconciliation Summary:
+  Opening Balance: 5,250,000 KES
+  Total Receipts: 2,407,416 KES
+  Total Payments: 2,500 KES
+  Closing Balance: 7,654,916 KES ✓
+  
+  GL Balance: 7,654,916 KES ✓
+  Difference: 0 ✓ RECONCILED
+```
+
+### Payment Receipt Document
+
+```markdown
+OFFICIAL RECEIPT FORMAT
+
+┌────────────────────────────────────────────┐
+│         [COMPANY LOGO]                     │
+│                                            │
+│        OFFICIAL RECEIPT                    │
+│                                            │
+│ Receipt No: RCP-2025-015                   │
+│ Date: March 15, 2025                       │
+│                                            │
+│ Company PIN: P987654321Z                   │
+├────────────────────────────────────────────┤
+│ RECEIVED FROM:                             │
+│                                            │
+│ ABC Manufacturing Ltd                      │
+│ PIN: P000123456A                           │
+│ Head Office, Industrial Area               │
+│ Nairobi, Kenya                             │
+├────────────────────────────────────────────┤
+│ THE SUM OF:                                │
+│                                            │
+│ KES 1,557,416.00                           │
+│                                            │
+│ (One Million Five Hundred Fifty Seven      │
+│  Thousand Four Hundred Sixteen Shillings)  │
+├────────────────────────────────────────────┤
+│ BEING PAYMENT FOR:                         │
+│                                            │
+│ Invoice No: INV-2025-001                   │
+│ Invoice Date: February 10, 2025            │
+│ Invoice Amount: 4,172,056.00               │
+│ Previous Payments: 2,614,640.00            │
+│ This Payment: 1,557,416.00                 │
+│ Balance: 0.00                              │
+│                                            │
+│ Status: PAID IN FULL ✓                     │
+├────────────────────────────────────────────┤
+│ PAYMENT DETAILS:                           │
+│                                            │
+│ Payment Method: Bank Transfer              │
+│ Bank: Equity Bank                          │
+│ Reference: TRX/2025/54321                  │
+│ Date: March 15, 2025                       │
+├────────────────────────────────────────────┤
+│ ACCOUNT SUMMARY:                           │
+│                                            │
+│ Previous Balance: 2,807,416.00             │
+│ Payment Received: (1,557,416.00)           │
+│ Current Balance: 1,250,000.00              │
+├────────────────────────────────────────────┤
+│ This is a computer-generated receipt       │
+│                                            │
+│ For: ABC Manufacturing Ltd                 │
+│                                            │
+│ Received by: _______________               │
+│ Signature: _______________                │
+│ Date: _______________                      │
+│                                            │
+│ [Company Stamp]                            │
+│                                            │
+│ Thank you for your payment!                │
+└────────────────────────────────────────────┘
+```
+
+---
+
+## Returns & Credit Management
+
+### Sales Return Process
+
+```markdown
+RETURN AUTHORIZATION WORKFLOW
+
+Return Request:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Customer: ABC Manufacturing Ltd
+Contact: John Kamau
+Date: 2025-02-25
+
+Return Request Details:
+  Original Invoice: INV-2025-001
+  Invoice Date: 2025-02-10
+  Items to Return: Machine Model B (MDL-B)
+  Quantity: 1 unit
+  Reason: Technical issue / damaged
+  Serial Number: SN12346
+
+Return Reason Categories:
+  ○ Defective product
+  ● Technical issue
+  ○ Wrong item shipped
+  ○ Damaged in transit
+  ○ Customer changed mind
+  ○ Product not as described
+
+Return Policy Check:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Policy: 30-day return window
+Invoice Date: Feb 10
+Return Request: Feb 25 (15 days) ✓ WITHIN POLICY
+
+Conditions Check:
+  □ Return within 30 days ✓
+  □ Product in original condition (TBD on inspection)
+  □ All accessories included
+  □ Proof of purchase ✓ (invoice)
+  
+Return Authorization:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Return Authorization No: RMA-2025-001
+Date Issued: 2025-02-25
+Valid Until: 2025-03-10 (14 days)
+Authorized By: Sales Manager
+
+Instructions to Customer:
+  1. Pack item securely in original packaging
+  2. Include all accessories and documentation
+  3. Attach RMA number to package
+  4. Deliver to: Main Warehouse, Gate B
+  5. Operating hours: Mon-Fri, 8 AM - 5 PM
+
+Return Receipt:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Date Received: 2025-02-28
+Received By: Warehouse Supervisor
+RMA No: RMA-2025-001
+
+Initial Inspection:
+  ☑ Item received
+  ☑ RMA number verified
+  ☑ Serial number matches
+  ☑ Packaging intact
+  ☑ All accessories present
+
+Detailed Inspection:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Inspected By: Quality Control Team
+Date: 2025-02-29
+
+Inspection Results:
+  Item: Machine Model B (SN12346)
+  Condition Assessment:
+    Physical Damage: None ✓
+    Operational Test: Failed ⚠
+    Issue Found: Motor malfunction
+    Root Cause: Manufacturing defect
+    
+  Verdict: DEFECTIVE - ACCEPT RETURN ✓
+  
+  Action:
+    ☑ Accept for full refund/replacement
+    ○ Reject return (customer fault)
+    ○ Partial refund (usage/damage)
+
+Return Approval:
+  Approved By: Quality Manager
+  Approved Date: 2025-02-29
+  Disposition: Replace with new unit
+
+Sales Return Document:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sales Return No: SR-2025-001
+Date: 2025-02-29
+Customer: ABC Manufacturing Ltd
+RMA: RMA-2025-001
+
+Return Items:
+┌────────┬──────────────┬─────┬────────────┬───────────┐
+│ Item   │ Description  │ Qty │ Rate       │ Amount    │
+├────────┼──────────────┼─────┼────────────┼───────────┤
+│ MDL-B  │ Machine B    │  1  │ 1,620,000  │ 1,620,000 │
+│        │ Serial:12346 │     │            │           │
+│        │ Reason:      │     │            │           │
+│        │ Defective    │     │            │           │
+└────────┴──────────────┴─────┴────────────┴───────────┘
+
+Return Total:               1,620,000 KES
+VAT (16%):                    259,200 KES
+───────────────────────────────────────
+Total Credit:               1,879,200 KES
+
+Resolution Options:
+  ● Replacement with new item
+  ○ Store credit
+  ○ Refund
+
+Selected: Replacement
+
+Inventory Impact:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Return Entry:
+  Dr. Inventory - MDL-B (Defective)   1,600,000
+      Cr. Cost of Goods Sold                1,600,000
+
+Description: Return of defective unit SN12346
+Warehouse: Quarantine Area
+Status: For manufacturer warranty claim
+
+Replacement Shipment:
+  Item: Machine Model B (new)
+  Serial: SN12890
+  Delivery Date: 2025-03-05
+  Delivery Note: DN-2025-025
+
+Replacement Entry:
+  Dr. Cost of Goods Sold            1,600,000
+      Cr. Inventory - MDL-B               1,600,000
+
+Credit Note:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Since replacement (not refund), no credit note issued.
+
+If refund was chosen:
+  Credit Note: CN-2025-001
+  Amount: 1,879,200 KES
+  
+  Entry:
+  Dr. Sales Returns               1,620,000
+  Dr. VAT Payable                   259,200
+      Cr. Accounts Receivable           1,879,200
+  
+  Refund Processing:
+  Dr. Accounts Receivable         1,879,200
+      Cr. Bank/Cash                     1,879,200
+```
+
+### Credit Note Management
+
+```markdown
+CREDIT NOTE CREATION
+
+Credit Note Scenarios:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Product Return (Full/Partial)
+2. Price Adjustment/Correction
+3. Billing Error
+4. Damaged Goods
+5. Promotional Discount (post-invoice)
+6. Service Complaint Resolution
+7. Early Payment Discount
+8. Volume Rebate
+
+Example: Price Adjustment
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Situation:
+  Customer received better price from competitor
+  Sales manager approves price match
+  Invoice already issued and paid
+
+Original Invoice: INV-2025-020
+  Item: MDL-X
+  Quantity: 5 units
+  Original Price: 500,000 per unit
+  Total: 2,500,000 KES
+  VAT: 400,000 KES
+  Grand Total: 2,900,000 KES
+  Status: PAID ✓
+
+Price Adjustment:
+  Approved New Price: 450,000 per unit
+  Difference: 50,000 per unit
+  Total Adjustment: 250,000 KES
+  VAT Adjustment: 40,000 KES
+  Total Credit: 290,000 KES
+
+Credit Note:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Credit Note No: CN-2025-005
+Date: 2025-03-10
+Against Invoice: INV-2025-020
+Customer: XYZ Corporation
+Reason: Price adjustment - competitive match
+
+┌────────────────────────────────────────────┐
+│         [COMPANY LOGO]                     │
+│                                            │
+│        CREDIT NOTE                         │
+│                                            │
+│ Credit Note No: CN-2025-005                │
+│ Date: March 10, 2025                       │
+│ Against Invoice: INV-2025-020              │
+│ Invoice Date: February 15, 2025            │
+├────────────────────────────────────────────┤
+│ CUSTOMER:                                  │
+│ XYZ Corporation                            │
+│ PIN: P999888777B                           │
+│ Westlands, Nairobi                         │
+├────────────────────────────────────────────┤
+│ CREDIT FOR:                                │
+│                                            │
+│ Item: MDL-X Industrial Machine             │
+│ Original Price: 500,000 × 5 = 2,500,000   │
+│ Revised Price: 450,000 × 5 = 2,250,000    │
+│                                            │
+│ Price Adjustment:           (250,000)      │
+│ VAT Adjustment (16%):        (40,000)      │
+│                         ───────────────    │
+│ TOTAL CREDIT:               (290,000)      │
+│                                            │
+│ Reason: Price match - approved by Sales   │
+│         Manager as per customer request    │
+├────────────────────────────────────────────┤
+│ CREDIT USAGE:                              │
+│ ☑ Credit to customer account               │
+│ ○ Refund to customer                       │
+│ ○ Apply to future invoices                 │
+├────────────────────────────────────────────┤
+│ Authorized by: James Ndungu               │
+│ Sales Manager                              │
+│ Date: March 10, 2025                       │
+└────────────────────────────────────────────┘
+
+Financial Entry:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Dr. Sales Returns & Allowances    250,000
+Dr. VAT Payable                    40,000
+    Cr. Accounts Receivable - XYZ      290,000
+
+Description: Credit note CN-2025-005
+Reason: Price adjustment
+Invoice: INV-2025-020 (already paid)
+
+Customer Account Impact:
+  Since invoice was paid:
+  Customer now has credit balance: 290,000 KES
+  
+  Usage Options:
+    1. Apply to next invoice
+    2. Refund to customer
+    3. Keep as advance payment
+
+Credit Note Allocation:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Applied Against:
+  Next invoice: INV-2025-045
+  Invoice Amount: 1,200,000 KES
+  Less: Credit Applied: (290,000) KES
+  ─────────────────────────────────
+  Balance Due: 910,000 KES
+
+Entry:
+  Dr. Accounts Receivable - XYZ    290,000
+      Cr. Accounts Receivable - XYZ      290,000
+  Description: Credit CN-2025-005 applied to INV-2025-045
+```
+
+### Return & Credit Reporting
+
+```markdown
+RETURNS & CREDITS ANALYTICS
+
+Return Metrics:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Period: Q1 2025
+
+Total Sales:              50,000,000 KES
+Total Returns:             1,250,000 KES
+Return Rate:                    2.5%
+
+Returns by Reason:
+┌───────────────────────┬──────────┬───────────┐
+│ Reason                │ Count    │ Amount    │
+├───────────────────────┼──────────┼───────────┤
+│ Defective             │    15    │  650,000  │
+│ Damaged in transit    │     8    │  320,000  │
+│ Wrong item shipped    │     5    │  180,000  │
+│ Customer changed mind │     3    │  100,000  │
+└───────────────────────┴──────────┴───────────┘
+
+Return Rate by Product:
+  MDL-A: 1.2% (acceptable)
+  MDL-B: 4.5% (investigate) ⚠
+  MDL-C: 0.8% (excellent)
+
+Action Items:
+  ⚠ Investigate MDL-B quality issues
+  → Contact manufacturer
+  → Review incoming inspection process
+
+Credit Notes Issued:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Credit Notes: 28
+Total Value: 2,100,000 KES
+
+By Category:
+  Returns: 1,250,000 KES (59.5%)
+  Price Adjustments: 580,000 KES (27.6%)
+  Billing Errors: 180,000 KES (8.6%)
+  Discounts: 90,000 KES (4.3%)
+
+Credit Recovery:
+  Applied to future sales: 1,680,000 KES (80%)
+  Refunded: 420,000 KES (20%)
+```
+
+---
+
+## Pricing & Discount Management
+
+### Price List Structure
+
+```markdown
+PRICE LIST CONFIGURATION
+
+Price List Types:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Standard Selling Price (default)
+2. Corporate Pricing (B2B customers)
+3. Wholesale Pricing (distributors)
+4. Retail Pricing (walk-in customers)
+5. Export Pricing (international, USD)
+6. Special Project Pricing
+7. Promotional Pricing
+
+Price List Master:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Price List Name: Corporate Pricing
+Currency: KES
+Enabled: Yes
+Valid From: 2025-01-01
+Valid To: 2025-12-31
+
+Applicable To:
+  ☑ Customer Group: Corporate
+  ☑ Territory: All
+  ☑ Specific Customers: [Select if needed]
+
+Price List Items:
+┌──────────┬─────────────┬────────────┬────────────┐
+│ Item     │ Description │ Std Price  │ Corp Price │
+├──────────┼─────────────┼────────────┼────────────┤
+│ MDL-A    │ Machine A   │ 2,200,000  │ 1,900,000  │
+│ MDL-B    │ Machine B   │ 1,800,000  │ 1,620,000  │
+│ MDL-C    │ Machine C   │ 1,200,000  │ 1,080,000  │
+│ SVC-01   │ Installation│   180,000  │   150,000  │
+│ TRN-01   │ Training/day│    60,000  │    50,000  │
+└──────────┴─────────────┴────────────┴────────────┘
+
+Discount: 10-15% below standard pricing
+
+Price List Priority:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+When multiple price lists apply:
+
+Priority Order:
+  1. Customer-specific pricing (highest)
+  2. Customer group pricing
+  3. Territory pricing
+  4. Standard selling price (default)
+
+Example:
+  Customer: ABC Manufacturing Ltd
+  Customer Group: Corporate
+  Territory: Nairobi
+
+  Price Resolution:
+    Check: Customer-specific price? NO
+    Check: Corporate pricing? YES ✓
+    Use: Corporate Pricing (1,900,000 for MDL-A)
+
+Customer-Specific Pricing:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+For VIP/Key accounts with negotiated prices:
+
+Customer: ABC Manufacturing Ltd
+Special Agreement: Dated 2024-12-15
+Valid: 2025-01-01 to 2025-12-31
+
+┌──────────┬───────────────┬─────────────┬────────────┐
+│ Item     │ Std Price     │ Corp Price  │ ABC Price  │
+├──────────┼───────────────┼─────────────┼────────────┤
+│ MDL-A    │ 2,200,000     │ 1,900,000   │ 1,850,000  │
+│ MDL-B    │ 1,800,000     │ 1,620,000   │ 1,580,000  │
+└──────────┴───────────────┴─────────────┴────────────┘
+
+When ABC places order:
+  System automatically applies: 1,850,000 (best price)
+
+Price List Import:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Bulk price updates via CSV import:
+
+CSV Format:
+item_code, price_list, rate, valid_from, valid_to
+MDL-A, Corporate Pricing, 1900000, 2025-01-01, 2025-12-31
+MDL-B, Corporate Pricing, 1620000, 2025-01-01, 2025-12-31
+...
+
+Import Process:
+  1. Upload CSV file
+  2. Validate format and data
+  3. Preview changes
+  4. Confirm import
+  5. Prices updated
+  6. Audit log entry created
+```
+
+### Discount Rules & Management
+
+```markdown
+DISCOUNT CONFIGURATION
+
+Discount Types:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Customer Group Discount
+2. Volume/Quantity Discount
+3. Promotional Discount
+4. Early Payment Discount
+5. Seasonal Discount
+6. Bundle Discount
+7. Loyalty Discount
+8. Manual/Discretionary Discount
+
+Discount Rule: Volume Discount
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Rule Name: Volume Discount - MDL-A
+Item: Machine Model A (MDL-A)
+Enabled: Yes
+Valid From: 2025-01-01
+Valid To: 2025-12-31
+
+Discount Tiers:
+┌──────────────┬───────────────┬──────────────┐
+│ Quantity     │ Discount %    │ Final Price  │
+├──────────────┼───────────────┼──────────────┤
+│ 1-4 units    │ 0%            │ 1,900,000    │
+│ 5-9 units    │ 5%            │ 1,805,000    │
+│ 10-19 units  │ 10%           │ 1,710,000    │
+│ 20+ units    │ 15%           │ 1,615,000    │
+└──────────────┴───────────────┴──────────────┘
+
+Example Application:
+  Order: 7 units of MDL-A
+  Base Price: 1,900,000 × 7 = 13,300,000
+  Volume Discount (5%): (665,000)
+  Net Amount: 12,635,000 KES
+
+Discount Rule: Promotional Campaign
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Campaign: Q1 2025 Equipment Sale
+Valid: 2025-01-15 to 2025-03-31
+Apply to: All Machine Models
+
+Discount: 8% on all orders above 5M KES
+Additional: Free installation (worth 150K)
+
+Conditions:
+  ☑ Minimum order: 5,000,000 KES
+  ☑ Valid for new orders only
+  ☑ Cannot combine with other promotions
+  ☑ Territory: Kenya only
+
+Discount Rule: Early Payment
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Terms: 2/10 Net 30
+  = 2% discount if paid within 10 days
+  = Full amount due in 30 days
+
+Application:
+  Invoice Amount: 1,000,000 KES
+  Invoice Date: Mar 1
+  Due Date: Mar 31
+  
+  If paid by Mar 11:
+    Discount (2%): 20,000 KES
+    Payment Required: 980,000 KES
+    
+  If paid after Mar 11:
+    Full Amount: 1,000,000 KES
+
+Discount Approval Matrix:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+┌────────────────┬──────────────┬─────────────┐
+│ Discount %     │ Approver     │ Max Value   │
+├────────────────┼──────────────┼─────────────┤
+│ 0-10%          │ Sales Person │ Any         │
+│ 10-15%         │ Sales Manager│ < 5M        │
+│ 15-20%         │ Sales Director│ < 10M      │
+│ 20-25%         │ CFO          │ < 20M       │
+│ >25%           │ CEO + CFO    │ Any         │
+└────────────────┴──────────────┴─────────────┘
+
+Approval Workflow:
+  Sales Rep creates quote with 18% discount
+  → Triggers approval workflow
+  → Routed to Sales Director
+  → Email notification sent
+  → Sales Director reviews and approves
+  → Quote status: APPROVED
+  → Sales Rep can proceed
+
+Discount Tracking:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Period: Q1 2025
+
+Total Sales Revenue: 50,000,000 KES
+Total Discounts Given: 3,500,000 KES
+Average Discount %: 7.0%
+
+Discount Breakdown:
+  Volume Discounts: 1,800,000 KES (51.4%)
+  Customer Group: 1,200,000 KES (34.3%)
+  Promotional: 400,000 KES (11.4%)
+  Manual/Other: 100,000 KES (2.9%)
+
+Discount by Sales Person:
+┌────────────────┬───────────┬────────────┬────────┐
+│ Sales Person   │ Sales     │ Discount   │ Avg %  │
+├────────────────┼───────────┼────────────┼────────┤
+│ Sarah Johnson  │ 15M       │ 900K       │ 6.0%   │
+│ Mike Chen      │ 12M       │ 1,080K     │ 9.0% ⚠│
+│ Jane Mwangi    │ 10M       │ 650K       │ 6.5%   │
+│ Tom Omondi     │ 8M        │ 560K       │ 7.0%   │
+└────────────────┴───────────┴────────────┴────────┘
+
+⚠ Mike Chen's discount rate high - review required
+
+Bundle Pricing:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Bundle: Complete Production Line Package
+
+Items in Bundle:
+  - Machine Model A × 2
+  - Machine Model B × 1
+  - Installation Service
+  - 1 Year Maintenance Contract
+  - Operator Training (5 days)
+
+Individual Prices:
+  MDL-A: 1,900,000 × 2 = 3,800,000
+  MDL-B: 1,620,000 × 1 = 1,620,000
+  Installation: 150,000
+  Maintenance: 500,000
+  Training: 50,000 × 5 = 250,000
+  ─────────────────────────────
+  Total Individual: 6,320,000 KES
+
+Bundle Price: 5,500,000 KES
+Savings: 820,000 KES (13%)
+
+Bundle Rule:
+  - All items must be purchased together
+  - Cannot substitute items
+  - Single invoice for all items
+  - All items delivered together
+```
+
+---
+
