@@ -400,6 +400,36 @@
   - Cache integration with tiered TTL strategies
   - Unified repository approach consolidating account and group operations
   - ✅ **Enhanced analytics capabilities**: 5 new view-based methods for hierarchy analysis and activity monitoring
+
+##### ⚠️ CRITICAL MISSING COMPONENTS (Blocks Full Production)
+
+Based on analysis of PRD requirements vs. current implementation:
+
+**Missing Domain Entities (Must Implement):**
+- ❌ **FiscalYear** - No domain model, no database table, no service
+- ❌ **AccountingPeriod** - No domain model, no database table, no service
+- ❌ **ExchangeRate** - No domain model, no database table, no service (config exists in settings_constants.go)
+- ❌ **CostCenter** - No domain model, no database table, no service (referenced in settings but not implemented)
+- ❌ **Budget** - No domain model, no database table, no service (config exists in settings_constants.go)
+- ❌ **TaxRate** - No domain model, no database table, no service (config exists in settings_constants.go)
+- ❌ **DepreciationSchedule** - No domain model, no database table, no service
+- ❌ **BankReconciliation** - No domain model, no database table, no service (config exists in settings_constants.go)
+
+**Module Integration Dependencies:**
+Finance module requires integration with:
+- ✅ **Settings Module** (`internal/core/settings`) - Configuration management (READY)
+- ✅ **IAM Module** (`internal/core/iam`) - Authorization and permissions (READY)
+- ✅ **Audit Module** (`internal/core/audit`) - Audit trail tracking (READY)
+- ✅ **Notification Module** (`internal/core/notification`) - User notifications (READY)
+- ✅ **Feature Flag Module** (`internal/core/featureflag`) - Feature toggles (READY)
+- ✅ **Entity Module** (`internal/core/entity`) - Multi-entity support (READY)
+- ✅ **Tenant Module** (`internal/core/tenant`) - Multi-tenancy (READY)
+- ⚠️ **Inventory Module** (`internal/core/inventory`) - COGS integration (PARTIAL - basic structure exists)
+- ⚠️ **Sell Module** (`internal/core/sell`) - AR integration (PARTIAL - basic structure exists)
+- ⚠️ **Buy Module** (`internal/core/buy`) - AP integration (PARTIAL - basic structure exists)
+- ❌ **HR/Payroll Module** - Not yet implemented (required for payroll GL posting)
+- ❌ **Fixed Assets Module** - Not yet implemented (required for depreciation)
+- ❌ **Project Module** - Not yet implemented (optional for project accounting)
 - **Database Views Integration**: ✅ **NEWLY COMPLETED** - Enhanced financial reporting capabilities
   - Account hierarchy views for nested tree operations
   - Account activity views for transaction monitoring and stale balance detection
@@ -676,9 +706,353 @@
 
 ---
 
-### Phase 3: Security & Compliance Integration (Weeks 7-8) - ⏳ Not Started (0% Complete)
+### Phase 3: Core Financial Entities & Period Management (Weeks 6-8) - ⏳ Not Started (0% Complete)
 
-<!-- All content for Phase 3 is collapsed here -->
+> **🎯 CRITICAL PRIORITY**: These missing entities block full ERP functionality. Must implement before Phases 5-10.
+
+#### Week 1: Fiscal Year & Period Management 🔥 **CRITICAL**
+
+##### Day 1-2: Fiscal Year Domain & Database
+
+**Files**: `@internal/core/finance/domain/fiscal_year.go`, `@db/migration/071_finance_fiscal_periods.up.sql`
+
+###### Fiscal Year Domain Model:
+- [ ] Create `FiscalYear` domain entity with validation
+- [ ] Add `FiscalYearStatus` enum (DRAFT, ACTIVE, CLOSED, ARCHIVED)
+- [ ] Implement fiscal year validation (no overlapping years)
+- [ ] Add fiscal year creation request/response types
+- [ ] Implement year-end closing business logic
+- [ ] Add helper methods (IsCurrentYear, GetPeriods, etc.)
+
+###### Fiscal Year Database Schema:
+- [ ] Create `finance_fiscal_years` table
+- [ ] Add columns: id, tenant_id, entity_id, year_name, start_date, end_date, status
+- [ ] Add RLS policies for tenant isolation
+- [ ] Create indexes on dates and status
+- [ ] Add check constraint (end_date > start_date)
+- [ ] Add unique constraint on year for entity
+
+##### Day 3-4: Accounting Period Domain & Database
+
+**Files**: `@internal/core/finance/domain/accounting_period.go`, `@db/migration/071_finance_fiscal_periods.up.sql`
+
+###### Accounting Period Domain Model:
+- [ ] Create `AccountingPeriod` domain entity
+- [ ] Add `PeriodStatus` enum (OPEN, SOFT_CLOSE, HARD_CLOSE, LOCKED)
+- [ ] Implement period hierarchy (belongs to fiscal year)
+- [ ] Add period transition state machine
+- [ ] Implement period closing validation logic
+- [ ] Add `PeriodCloseRequest` and `PeriodReopenRequest` types
+
+###### Accounting Period Database Schema:
+- [ ] Create `finance_accounting_periods` table
+- [ ] Add columns: id, fiscal_year_id, period_number, period_name, start_date, end_date, status
+- [ ] Add foreign key to fiscal_years with CASCADE
+- [ ] Add check constraint (end_date > start_date, period_number > 0)
+- [ ] Create indexes on fiscal_year_id, status, dates
+- [ ] Add unique constraint (fiscal_year_id, period_number)
+
+##### Day 5: Fiscal Period Service & Repository
+
+**Files**: `@internal/core/finance/service/fiscal_period_service.go`, `@internal/core/finance/repository/fiscal_period.go`, `@db/queries/finance_fiscal_periods.sql`
+
+###### Period Service Implementation:
+- [ ] Create `FiscalPeriodService` interface
+- [ ] Implement `CreateFiscalYear(req CreateFiscalYearRequest)`
+- [ ] Implement `CreateAccountingPeriods(yearID, frequency)` - auto-generate periods
+- [ ] Implement `ClosePeriod(periodID)` with validation
+- [ ] Implement `ReopenPeriod(periodID, reason)` with authorization
+- [ ] Implement `GetCurrentPeriod()` and `GetOpenPeriods()`
+- [ ] Add `ValidateTransactionDate(date)` - check if period is open
+
+###### SQLC Queries:
+- [ ] `CreateFiscalYear`, `GetFiscalYearByID`, `ListFiscalYears`
+- [ ] `CreateAccountingPeriod`, `GetPeriodByID`, `GetPeriodByDate`
+- [ ] `UpdatePeriodStatus`, `GetOpenPeriods`, `GetCurrentPeriod`
+- [ ] `ValidateNoPeriodOverlap`, `GetPeriodsByFiscalYear`
+
+**Integration Points:**
+- ✅ Settings Module - Fiscal year start/end configuration
+- ✅ Transaction Service - Validate posting date against period status
+- ✅ Audit Module - Track period close/reopen actions
+
+---
+
+#### Week 2: Multi-Currency & Exchange Rates 🔥 **HIGH PRIORITY**
+
+##### Day 1-2: Currency & Exchange Rate Domain
+
+**Files**: `@internal/core/finance/domain/exchange_rate.go`, `@db/migration/072_finance_exchange_rates.up.sql`
+
+###### Exchange Rate Domain Model:
+- [ ] Create `ExchangeRate` domain entity
+- [ ] Add `RateType` enum (SPOT, AVERAGE, HISTORICAL, BUDGET)
+- [ ] Add `RateSource` enum (MANUAL, API, CENTRAL_BANK)
+- [ ] Implement rate validation (rate > 0)
+- [ ] Add `ExchangeRateRequest` and `ConversionRequest` types
+- [ ] Implement currency conversion helpers
+
+###### Exchange Rate Database Schema:
+- [ ] Create `finance_exchange_rates` table
+- [ ] Add columns: id, tenant_id, from_currency, to_currency, rate, rate_type, effective_date, expiry_date, source
+- [ ] Add check constraint (rate > 0)
+- [ ] Create composite index on (from_currency, to_currency, effective_date)
+- [ ] Add unique constraint preventing duplicate rates for same date
+- [ ] Create view `v_current_exchange_rates` for latest rates
+
+##### Day 3: Exchange Rate Service & Integration
+
+**Files**: `@internal/core/finance/service/exchange_rate_service.go`, `@db/queries/finance_exchange_rates.sql`
+
+###### Exchange Rate Service:
+- [ ] Create `ExchangeRateService` interface
+- [ ] Implement `CreateExchangeRate(req)` with validation
+- [ ] Implement `GetExchangeRate(from, to, date, rateType)`
+- [ ] Implement `ConvertAmount(amount, fromCurrency, toCurrency, date)`
+- [ ] Implement `ImportExchangeRates(provider, date)` - API integration
+- [ ] Add `CalculateUnrealizedGainLoss(accountID, asOfDate)`
+- [ ] Implement `RevalueForeignCurrencyAccounts(periodEndDate)`
+
+###### SQLC Queries:
+- [ ] `CreateExchangeRate`, `GetExchangeRateByDate`, `GetLatestRate`
+- [ ] `ListExchangeRates`, `UpdateExchangeRate`, `DeleteExchangeRate`
+- [ ] `GetRatesByCurrency`, `GetRatesInDateRange`
+
+**External Integration:**
+- [ ] Add `ExchangeRateProvider` interface for external APIs
+- [ ] Implement ECB (European Central Bank) provider
+- [ ] Implement fallback to manual rates
+
+**Integration Points:**
+- ✅ Settings Module - Base currency, rate provider configuration
+- ✅ Transaction Service - Multi-currency transaction conversion
+- ⚠️ Sell Module - Foreign currency invoicing
+- ⚠️ Buy Module - Foreign currency bill payment
+
+##### Day 4-5: Currency Revaluation Workflow
+
+**Files**: `@internal/core/finance/workflows/currency_revaluation_workflow.go`, `@internal/core/finance/activities/revaluation_activities.go`
+
+###### Currency Revaluation Workflow:
+- [ ] Create `CurrencyRevaluationWorkflow` (Temporal)
+- [ ] Implement automatic period-end revaluation
+- [ ] Add `FetchCurrentRatesActivity`
+- [ ] Add `CalculateUnrealizedGainLossActivity`
+- [ ] Add `PostRevaluationEntriesActivity`
+- [ ] Implement revaluation journal entry generation
+- [ ] Add comprehensive audit trail
+
+**Revaluation Entry Example:**
+```
+Dr. Foreign Currency Account    10,000 (unrealized gain)
+    Cr. Unrealized FX Gain              10,000
+```
+
+---
+
+#### Week 3: Cost Centers & Budget Management 🔥 **HIGH PRIORITY**
+
+##### Day 1-2: Cost Center Domain & Database
+
+**Files**: `@internal/core/finance/domain/cost_center.go`, `@db/migration/073_finance_cost_centers.up.sql`
+
+###### Cost Center Domain Model:
+- [ ] Create `CostCenter` domain entity
+- [ ] Add `AllocationMethod` enum (PERCENTAGE, HEADCOUNT, SQUARE_FOOTAGE, ACTIVITY_BASED)
+- [ ] Create `AllocationTarget` value object
+- [ ] Implement hierarchical cost center structure (parent-child)
+- [ ] Add distributed cost center logic
+- [ ] Create `CostAllocationRequest` type
+
+###### Cost Center Database Schema:
+- [ ] Create `finance_cost_centers` table
+- [ ] Add columns: id, tenant_id, entity_id, code, name, parent_id, is_group, is_distributed, allocation_method
+- [ ] Create `finance_cost_center_allocations` table for distribution rules
+- [ ] Add materialized path for hierarchy
+- [ ] Create indexes on code, parent_id, is_active
+- [ ] Add RLS policies
+
+##### Day 3: Budget Domain & Database
+
+**Files**: `@internal/core/finance/domain/budget.go`, `@db/migration/074_finance_budgets.up.sql`
+
+###### Budget Domain Model:
+- [ ] Create `Budget` domain entity
+- [ ] Create `BudgetLine` value object
+- [ ] Add `BudgetStatus` enum (DRAFT, APPROVED, ACTIVE, CLOSED)
+- [ ] Add `BudgetPeriod` enum (MONTHLY, QUARTERLY, ANNUAL)
+- [ ] Implement budget validation logic
+- [ ] Create `BudgetRequest`, `BudgetRevisionRequest` types
+
+###### Budget Database Schema:
+- [ ] Create `finance_budgets` table (header)
+- [ ] Add columns: id, tenant_id, entity_id, budget_year, version, status, approved_by, approved_at
+- [ ] Create `finance_budget_lines` table (detail)
+- [ ] Add columns: budget_id, account_id, cost_center_id, period, amount
+- [ ] Add foreign keys with CASCADE delete
+- [ ] Create composite index (budget_id, account_id, cost_center_id, period)
+
+##### Day 4-5: Cost Center & Budget Services
+
+**Files**: `@internal/core/finance/service/cost_center_service.go`, `@internal/core/finance/service/budget_service.go`, `@db/queries/finance_cost_centers.sql`, `@db/queries/finance_budgets.sql`
+
+###### Cost Center Service:
+- [ ] Create `CostCenterService` interface
+- [ ] Implement CRUD operations
+- [ ] Implement `AllocateCostCenter(centerID, month)` - monthly distribution
+- [ ] Add `ValidateCostCenterHierarchy()`
+- [ ] Implement cost center reporting
+
+###### Budget Service:
+- [ ] Create `BudgetService` interface
+- [ ] Implement `CreateBudget(req)` with line items
+- [ ] Implement `RevokeBudget(budgetID)` - create new version
+- [ ] Implement `GetBudgetVsActual(accountID, costCenterID, period)`
+- [ ] Add `CheckBudgetAvailability(accountID, amount, period)` for controls
+- [ ] Implement budget variance analysis
+
+###### SQLC Queries:
+- [ ] Cost Center: Create, Get, List, Update, Delete, GetHierarchy
+- [ ] Allocations: CreateAllocation, GetAllocations, DeleteAllocations
+- [ ] Budget: CreateBudget, CreateBudgetLine, GetBudget, GetBudgetLines
+- [ ] Budget Analysis: GetBudgetVsActual, GetVarianceReport
+
+**Integration Points:**
+- ✅ Transaction Entry - Tag entries with cost center
+- ✅ Settings Module - Cost center configuration
+- ⚠️ HR Module (future) - Headcount-based allocation
+
+---
+
+### Phase 3.5: Tax & Compliance (Week 9) - ⏳ Not Started
+
+#### Week 1: Tax Rate Management
+
+**Files**: `@internal/core/finance/domain/tax_rate.go`, `@internal/core/finance/service/tax_service.go`, `@db/migration/075_finance_tax_rates.up.sql`
+
+##### Day 1-2: Tax Domain & Database
+
+###### Tax Rate Domain Model:
+- [ ] Create `TaxRate` domain entity
+- [ ] Add `TaxType` enum (SALES_TAX, VAT, GST, USE_TAX, WITHHOLDING_TAX)
+- [ ] Create `TaxJurisdiction` value object
+- [ ] Implement tax calculation methods (inclusive, exclusive, compound)
+- [ ] Add tax exemption handling
+
+###### Tax Rate Database Schema:
+- [ ] Create `finance_tax_rates` table
+- [ ] Add columns: id, tenant_id, name, tax_type, rate, jurisdiction, effective_date, expiry_date
+- [ ] Create `finance_tax_components` table for compound taxes
+- [ ] Add indexes on effective_date, jurisdiction, is_active
+
+##### Day 3-4: Tax Service Implementation
+
+###### Tax Service:
+- [ ] Create `TaxService` interface
+- [ ] Implement `CalculateTax(amount, taxRateID, isInclusive)`
+- [ ] Implement `GetApplicableTaxRate(jurisdiction, taxType, date)`
+- [ ] Add `ValidateTaxExemption(customerID, certificateID)`
+- [ ] Implement tax reporting aggregation
+- [ ] Add tax reconciliation helpers
+
+**Integration Points:**
+- ✅ Settings Module - Default tax rates, tax configuration
+- ⚠️ Sell Module - Calculate sales tax on invoices
+- ⚠️ Buy Module - Calculate use tax on purchases
+- ✅ Transaction Service - Post tax entries
+
+##### Day 5: Tax Workflows
+
+**Files**: `@internal/core/finance/workflows/tax_workflows.go`
+
+- [ ] Create `TaxFilingWorkflow` for periodic tax returns
+- [ ] Implement `TaxReconciliationWorkflow`
+- [ ] Add `TaxPaymentWorkflow` with reminders
+
+---
+
+### Phase 3.6: Bank Reconciliation & Depreciation (Week 10) - ⏳ Not Started
+
+#### Day 1-3: Bank Reconciliation
+
+**Files**: `@internal/core/finance/domain/bank_reconciliation.go`, `@internal/core/finance/service/bank_reconciliation_service.go`, `@db/migration/076_finance_bank_reconciliation.up.sql`
+
+##### Bank Reconciliation Domain:
+- [ ] Create `BankReconciliation` domain entity
+- [ ] Add `ReconciliationStatus` enum (DRAFT, IN_PROGRESS, COMPLETE, APPROVED)
+- [ ] Create `BankStatement` and `StatementLine` value objects
+- [ ] Implement matching algorithm types
+
+##### Bank Reconciliation Service:
+- [ ] Create `BankReconciliationService` interface
+- [ ] Implement `CreateReconciliation(bankAccountID, statementDate)`
+- [ ] Implement `ImportBankStatement(file)` - CSV/OFX import
+- [ ] Add `AutoMatchTransactions()` - intelligent matching
+- [ ] Implement `MatchManually(statementLineID, transactionID)`
+- [ ] Add `CompleteReconciliation()` with validation
+
+##### Database Schema:
+- [ ] Create `finance_bank_reconciliations` table
+- [ ] Create `finance_bank_statement_lines` table
+- [ ] Create `finance_reconciliation_matches` table
+- [ ] Add indexes and constraints
+
+**Integration Points:**
+- ✅ Transaction Entry - Mark as reconciled
+- ✅ Workflow - Use existing `BankReconciliationWorkflow` from Phase 2
+
+#### Day 4-5: Depreciation Management
+
+**Files**: `@internal/core/finance/domain/depreciation.go`, `@internal/core/finance/service/depreciation_service.go`, `@db/migration/077_finance_depreciation.up.sql`
+
+##### Depreciation Domain:
+- [ ] Create `DepreciationSchedule` domain entity
+- [ ] Add `DepreciationMethod` enum (STRAIGHT_LINE, DECLINING_BALANCE, UNITS_OF_PRODUCTION)
+- [ ] Implement depreciation calculation algorithms
+- [ ] Create `DepreciationEntry` value object
+
+##### Depreciation Service:
+- [ ] Create `DepreciationService` interface
+- [ ] Implement `CreateSchedule(assetID, method, usefulLife, salvageValue)`
+- [ ] Implement `CalculateMonthlyDepreciation(scheduleID, month)`
+- [ ] Add `PostDepreciationEntry(scheduleID, period)` - create GL entry
+- [ ] Implement `RunMonthlyDepreciation()` - process all schedules
+
+##### Database Schema:
+- [ ] Create `finance_depreciation_schedules` table
+- [ ] Create `finance_depreciation_entries` table
+- [ ] Add indexes on asset_id, period, status
+
+**Integration Points:**
+- ❌ Fixed Assets Module (future) - Asset master data
+- ✅ Transaction Service - Post monthly depreciation entries
+- ✅ Workflow - Monthly depreciation processing workflow
+
+---
+
+#### Phase 3 Summary & Dependencies
+
+**Total New Domain Entities:** 8
+- FiscalYear, AccountingPeriod (Week 1)
+- ExchangeRate (Week 2)
+- CostCenter, Budget (Week 3)
+- TaxRate (Week 3.5)
+- BankReconciliation, DepreciationSchedule (Week 3.6)
+
+**Total New Database Tables:** 14
+**Total New Services:** 7
+**Total New Workflows:** 3
+
+**Module Dependencies:**
+- ✅ Settings - All configuration values
+- ✅ IAM - Authorization for sensitive operations (period close, budget approval)
+- ✅ Audit - Track all financial period changes
+- ✅ Notification - Alerts for period close, budget overruns
+- ✅ Temporal - Workflows for revaluation, depreciation, tax filing
+
+---
+
+### Phase 4: Service Layer Integration (Formerly Phase 3) - ⏳ Not Started (0% Complete)
 
 ---
 
