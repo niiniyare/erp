@@ -23,7 +23,7 @@ DB_PORT ?= 5432
 DB_URL ?= postgresql://$(DB_USER):$(DB_PSSWD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 
 # Paths
-MIGRATION_PATH := db/migration
+MIGRATION_PATH := db/migration.v2
 SQLC_OUT := db/sqlc
 DOCS_PATH := docs
 COVERAGE_FILE := coverage.out

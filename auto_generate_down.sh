@@ -4,9 +4,7 @@ set -euo pipefail
 MIGRATION_DIR="db/migration"
 mkdir -p "$MIGRATION_DIR"
 
-# ------------------------
-# Helper: rename existing migrations
-# ------------------------
+# Helper to rename existing migrations
 rename_file() {
   local old=$1
   local new=$2
@@ -16,69 +14,17 @@ rename_file() {
     if [[ -f "$old_file" ]]; then
       mv "$old_file" "$new_file"
       echo "✔ $old_file → $new_file"
+    else
+      # Create empty if missing
+      touch "$new_file"
+      echo "✚ $new_file created"
     fi
   done
 }
 
 # ------------------------
-# Helper: create empty migrations
+# Sequential renames
 # ------------------------
-create_empty_migrations() {
-  local group=$1
-  local start=$2
-  local end=$((start + 99))
-
-  for i in $(seq $start $end); do
-    num=$(printf "%06d" "$i")
-    up_file="$MIGRATION_DIR/${num}_${group}.up.sql"
-    down_file="$MIGRATION_DIR/${num}_${group}.down.sql"
-    [[ -f "$up_file" ]] || touch "$up_file"
-    [[ -f "$down_file" ]] || touch "$down_file"
-  done
-  echo "✔ Reserved migration range $start-$end for group '$group'"
-}
-
-# ------------------------
-# Groups and start numbers
-# ------------------------
-GROUPS=(
-  "platform 1"
-  "tenant 101"
-  "entity 201"
-  "identity 301"
-  "auth 401"
-  "user_mgmt 501"
-  "settings 601"
-  "policy 701"
-  "feature_flag 801"
-  "finance 901"
-  "audit 1001"
-)
-
-# ------------------------
-# Platform migrations
-# ------------------------
-echo "🔹 Adding Platform Tables (tenant-agnostic)"
-platform_migrations=(
-  "000001_platform_countries"
-  "000002_platform_states"
-  "000003_platform_cities"
-  "000004_platform_locations"
-  "000005_platform_key_values"
-  "000006_platform_modules"
-  "000007_platform_resources"
-  "000008_platform_actions"
-  "000009_platform_audit_log"
-)
-for migration in "${platform_migrations[@]}"; do
-  touch "$MIGRATION_DIR/${migration}.up.sql"
-  touch "$MIGRATION_DIR/${migration}.down.sql"
-done
-
-# ------------------------
-# Renaming existing migrations
-# ------------------------
-echo "🔹 Renaming Existing Migrations"
 
 # TENANT
 rename_file "000001_tenants_core" "000101_tenant_create_core_tables"
@@ -152,18 +98,9 @@ rename_file "000065_finance_add_supporting_tables" "000907_finance_supporting_ta
 rename_file "000066_finance_add_constraints_and_indexes" "000908_finance_constraints_indexes"
 rename_file "000067_finance_add_functions_and_triggers" "000909_finance_triggers"
 rename_file "000068_finance_add_views" "000910_finance_views"
+rename_file "000069_finance_add_rls_policies" "000911_finance_rls_policies"
 
 # AUDIT FUNCTIONS
 rename_file "000070_audit_funcs" "001001_platform_audit_funcs"
 
-# ------------------------
-# Create empty placeholders for remaining numbers
-# ------------------------
-echo "🔹 Creating empty placeholders for remaining numbers"
-for entry in "${GROUPS[@]}"; do
-  group=$(echo $entry | awk '{print $1}')
-  start=$(echo $entry | awk '{print $2}')
-  # create_empty_migrations "$group" "$start"
-done
-
-echo "🎉 All migrations renamed and empty migration placeholders created!"
+echo "🎉 All migrations renamed and sequenced successfully!"
