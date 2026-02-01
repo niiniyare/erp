@@ -1,0 +1,278 @@
+-- =====================================================
+-- PERMISSIONS AND GRANTS
+-- =====================================================
+-- Grant execute permissions on functions to application role
+-- -- GRANT EXECUTE ON FUNCTION set_audit_context(UUID, UUID) TO application_role;
+-- GRANT EXECUTE ON FUNCTION evaluate_feature_flag(VARCHAR) TO application_role;
+-- GRANT EXECUTE ON FUNCTION evaluate_all_feature_flags() TO application_role;
+-- GRANT EXECUTE ON FUNCTION evaluate_feature_flag_fast(VARCHAR) TO application_role;
+--
+-- -- Grant execute permissions to admin role
+-- -- GRANT EXECUTE ON FUNCTION set_audit_context(UUID, UUID) TO admin_role;
+-- GRANT EXECUTE ON FUNCTION evaluate_feature_flag(VARCHAR) TO admin_role;
+-- GRANT EXECUTE ON FUNCTION evaluate_all_feature_flags() TO admin_role;
+-- GRANT EXECUTE ON FUNCTION evaluate_feature_flag_fast(VARCHAR) TO admin_role;
+--
+-- -- Grant execute permissions to readonly role (for monitoring)
+-- GRANT EXECUTE ON FUNCTION evaluate_feature_flag_fast(VARCHAR) TO readonly_role;
+--
+-- -- =====================================================
+-- -- FUNCTION COMMENTS
+-- -- =====================================================
+-- -- COMMENT ON FUNCTION set_audit_context(UUID, UUID) IS 'Sets the current user and session context for audit logging';
+-- COMMENT ON FUNCTION evaluate_feature_flag(VARCHAR) IS 'Evaluates feature flag for current tenant with override and rollout logic, logs evaluation to audit_log';
+-- COMMENT ON FUNCTION evaluate_all_feature_flags() IS 'Evaluates all feature flags for current tenant, logs bulk evaluation to audit_log';
+-- COMMENT ON FUNCTION evaluate_feature_flag_fast(VARCHAR) IS 'Lightweight feature flag evaluation without audit logging for high-frequency calls';
+-- -- =====================================================
+-- -- Creates the core functions for evaluating feature flags with audit logging
+--
+-- -- =====================================================
+-- -- UTILITY FUNCTIONS
+-- -- =====================================================
+--
+-- -- Function to set user context for audit logging
+-- -- CREATE OR REPLACE FUNCTION set_audit_context(user_id UUID DEFAULT NULL, session_id UUID DEFAULT NULL)
+-- -- RETURNS VOID AS $$
+-- -- BEGIN
+-- --     IF user_id IS NOT NULL THEN
+-- --         PERFORM set_config('app.current_user_id', user_id::text, true);
+-- --     END IF;
+-- --
+-- --     IF session_id IS NOT NULL THEN
+-- --         PERFORM set_config('app.current_session_id', session_id::text, true);
+-- --     END IF;
+-- -- END;
+-- -- $$ LANGUAGE plpgsql SECURITY DEFINER;
+-- --
+-- -- =====================================================
+-- -- SINGLE FEATURE FLAG EVALUATION
+-- -- =====================================================
+--
+-- -- Function to evaluate a single feature flag for current tenant
+-- CREATE OR REPLACE FUNCTION evaluate_feature_flag(flag_name VARCHAR)
+-- RETURNS TABLE(enabled BOOLEAN, value JSONB) AS $$
+-- DECLARE
+--     v_tenant_id UUID;
+--     v_feature_flag feature_flags%ROWTYPE;
+--     v_override tenant_feature_overrides%ROWTYPE;
+--     v_result_enabled BOOLEAN;
+--     v_result_value JSONB;
+--     v_evaluation_source TEXT;
+-- BEGIN
+--     -- Get current tenant ID
+--     v_tenant_id := NULLIF(current_setting('app.current_tenant_id', true), '')::UUID;
+--
+--     IF v_tenant_id IS NULL THEN
+--         RAISE EXCEPTION 'No tenant context set. Use SET app.current_tenant_id = ''<tenant_id>''';
+--     END IF;
+--
+--     -- Get feature flag configuration for current tenant
+--     SELECT * INTO v_feature_flag
+--     FROM feature_flags ff
+--     WHERE ff.name = flag_name
+--       AND ff.tenant_id = v_tenant_id
+--       AND ff.deleted_at IS NULL;
+--
+--     IF v_feature_flag.id IS NULL THEN
+--         RAISE EXCEPTION 'Feature flag not found: % for tenant: %', flag_name, v_tenant_id;
+--     END IF;
+--
+--     -- Check for tenant-specific override
+--     SELECT * INTO v_override
+--     FROM tenant_feature_overrides tfo
+--     WHERE tfo.tenant_id = v_tenant_id
+--       AND tfo.feature_flag_id = v_feature_flag.id;
+--
+--     -- Determine effective value
+--     IF v_override.id IS NOT NULL THEN
+--         -- Override exists, use it
+--         v_result_enabled := v_override.enabled;
+--         v_result_value := COALESCE(v_override.value, '{}');
+--         v_evaluation_source := 'override';
+--     ELSIF v_feature_flag.rollout_percentage IS NOT NULL AND v_feature_flag.rollout_percentage > 0 THEN
+--         -- Use percentage rollout (deterministic based on tenant ID)
+--         v_result_enabled := (hashtext(v_tenant_id::text || flag_name) % 100) < v_feature_flag.rollout_percentage;
+--         v_result_value := '{}';
+--         v_evaluation_source := 'rollout';
+--     ELSE
+--         -- Use default value
+--         v_result_enabled := v_feature_flag.default_value;
+--         v_result_value := '{}';
+--         v_evaluation_source := 'default';
+--     END IF;
+--
+--     -- Log feature flag evaluation for audit purposes
+--     INSERT INTO audit_log (
+--         tenant_id,
+--         event_type,
+--         event_category,
+--         severity,
+--         user_id,
+--         decision,
+--         reason,
+--         context,
+--         session_id
+--     ) VALUES (
+--         v_tenant_id,
+--         'FEATURE_FLAG_EVALUATED',
+--         'ACCESS',
+--         'LOW',
+--         NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+--         CASE WHEN v_result_enabled THEN 'ALLOW' ELSE 'DENY' END,
+--         'Feature flag evaluated: ' || flag_name,
+--         jsonb_build_object(
+--             'feature_flag_id', v_feature_flag.id,
+--             'feature_flag_name', flag_name,
+--             'enabled', v_result_enabled,
+--             'value', v_result_value,
+--             'source', v_evaluation_source,
+--             'rollout_percentage', v_feature_flag.rollout_percentage,
+--             'has_override', (v_override.id IS NOT NULL)
+--         ),
+--         NULLIF(current_setting('app.current_session_id', true), '')::UUID
+--     );
+--
+--     RETURN QUERY SELECT v_result_enabled, v_result_value;
+-- END;
+-- $$ LANGUAGE plpgsql SECURITY DEFINER;
+--
+-- -- =====================================================
+-- -- BULK FEATURE FLAG EVALUATION
+-- -- =====================================================
+--
+-- -- Function to bulk evaluate all feature flags for current tenant
+-- CREATE OR REPLACE FUNCTION evaluate_all_feature_flags()
+-- RETURNS TABLE(flag_name VARCHAR, enabled BOOLEAN, value JSONB, flag_type VARCHAR, source TEXT) AS $$
+-- DECLARE
+--     v_tenant_id UUID;
+--     v_flag_count INTEGER;
+-- BEGIN
+--     -- Get current tenant ID
+--     v_tenant_id := NULLIF(current_setting('app.current_tenant_id', true), '')::UUID;
+--
+--     IF v_tenant_id IS NULL THEN
+--         RAISE EXCEPTION 'No tenant context set. Use SET app.current_tenant_id = ''<tenant_id>''';
+--     END IF;
+--
+--     -- Count flags for audit logging
+--     SELECT COUNT(*) INTO v_flag_count
+--     FROM feature_flags ff
+--     WHERE ff.tenant_id = v_tenant_id
+--       AND ff.deleted_at IS NULL;
+--
+--     -- Log bulk evaluation
+--     INSERT INTO audit_log (
+--         tenant_id,
+--         event_type,
+--         event_category,
+--         severity,
+--         user_id,
+--         decision,
+--         reason,
+--         context,
+--         session_id
+--     ) VALUES (
+--         v_tenant_id,
+--         'FEATURE_FLAGS_BULK_EVALUATED',
+--         'ACCESS',
+--         'LOW',
+--         NULLIF(current_setting('app.current_user_id', true), '')::UUID,
+--         'ALLOW',
+--         'All feature flags evaluated for tenant',
+--         jsonb_build_object(
+--             'operation', 'bulk_evaluation',
+--             'flags_count', v_flag_count,
+--             'tenant_id', v_tenant_id
+--         ),
+--         NULLIF(current_setting('app.current_session_id', true), '')::UUID
+--     );
+--
+--     -- Return evaluated flags
+--     RETURN QUERY
+--     WITH feature_evaluation AS (
+--         SELECT
+--             ff.name,
+--             ff.flag_type,
+--             ff.default_value,
+--             ff.rollout_percentage,
+--             tfo.enabled as override_enabled,
+--             tfo.value as override_value,
+--             CASE
+--                 -- Override exists, use it
+--                 WHEN tfo.enabled IS NOT NULL THEN tfo.enabled
+--                 -- Percentage rollout check
+--                 WHEN ff.rollout_percentage IS NOT NULL AND ff.rollout_percentage > 0 THEN
+--                     (hashtext(v_tenant_id::text || ff.name) % 100) < ff.rollout_percentage
+--                 -- Default value
+--                 ELSE ff.default_value
+--             END as effective_enabled,
+--             COALESCE(tfo.value, '{}') as effective_value,
+--             CASE
+--                 WHEN tfo.enabled IS NOT NULL THEN 'override'
+--                 WHEN ff.rollout_percentage IS NOT NULL AND ff.rollout_percentage > 0 THEN 'rollout'
+--                 ELSE 'default'
+--             END as evaluation_source
+--         FROM feature_flags ff
+--         LEFT JOIN tenant_feature_overrides tfo ON ff.id = tfo.feature_flag_id
+--             AND tfo.tenant_id = v_tenant_id
+--         WHERE ff.tenant_id = v_tenant_id
+--           AND ff.deleted_at IS NULL
+--     )
+--     SELECT
+--         fe.name::VARCHAR,
+--         fe.effective_enabled,
+--         fe.effective_value,
+--         fe.flag_type::VARCHAR,
+--         fe.evaluation_source::TEXT
+--     FROM feature_evaluation fe
+--     ORDER BY fe.name;
+-- END;
+-- $$ LANGUAGE plpgsql SECURITY DEFINER;
+--
+-- -- =====================================================
+-- -- FAST EVALUATION FUNCTION (NO AUDIT LOGGING)
+-- -- =====================================================
+--
+-- -- Lightweight evaluation function for high-frequency calls
+-- CREATE OR REPLACE FUNCTION evaluate_feature_flag_fast(flag_name VARCHAR)
+-- RETURNS TABLE(enabled BOOLEAN, value JSONB) AS $$
+-- DECLARE
+--     v_tenant_id UUID;
+--     v_result RECORD;
+-- BEGIN
+--     -- Get current tenant ID
+--     v_tenant_id := NULLIF(current_setting('app.current_tenant_id', true), '')::UUID;
+--
+--     IF v_tenant_id IS NULL THEN
+--         RAISE EXCEPTION 'No tenant context set';
+--     END IF;
+--
+--     -- Single query to get evaluation result
+--     SELECT
+--         CASE
+--             -- Override exists, use it
+--             WHEN tfo.enabled IS NOT NULL THEN tfo.enabled
+--             -- Percentage rollout check
+--             WHEN ff.rollout_percentage IS NOT NULL AND ff.rollout_percentage > 0 THEN
+--                 (hashtext(v_tenant_id::text || ff.name) % 100) < ff.rollout_percentage
+--             -- Default value
+--             ELSE ff.default_value
+--         END as flag_enabled,
+--         COALESCE(tfo.value, '{}') as flag_value
+--     INTO v_result
+--     FROM feature_flags ff
+--     LEFT JOIN tenant_feature_overrides tfo ON ff.id = tfo.feature_flag_id
+--         AND tfo.tenant_id = v_tenant_id
+--     WHERE ff.name = flag_name
+--       AND ff.tenant_id = v_tenant_id
+--       AND ff.deleted_at IS NULL;
+--
+--     IF v_result IS NULL THEN
+--         RAISE EXCEPTION 'Feature flag not found: %', flag_name;
+--     END IF;
+--
+--     RETURN QUERY SELECT v_result.flag_enabled, v_result.flag_value;
+-- END;
+-- $$ LANGUAGE plpgsql SECURITY DEFINER;
+-- =====================================================
+--
