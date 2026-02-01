@@ -1,0 +1,106 @@
+{
+  "type": "page",
+  "title": "Dashboard",
+  "body": [
+    {
+      "type": "service",
+      "api": "/dashboard/stats",
+      "body": [
+        {
+          "type": "grid",
+          "columns": [
+            {
+              "body": {
+                "type": "card",
+                "className": "bg-primary text-white",
+                "header": {"title": "Total Users", "subTitle": "All registered"},
+                "body": {"type": "tpl", "tpl": "<h2 class='text-white m-none'>${totalUsers}</h2>"}
+              }
+            },
+            {
+              "body": {
+                "type": "card",
+                "className": "bg-success text-white",
+                "header": {"title": "Active Sessions", "subTitle": "Currently online"},
+                "body": {"type": "tpl", "tpl": "<h2 class='text-white m-none'>${activeSessions}</h2>"}
+              }
+            },
+            {
+              "body": {
+                "type": "card",
+                "className": "bg-warning text-white",
+                "header": {"title": "Pending Tasks", "subTitle": "Needs attention"},
+                "body": {"type": "tpl", "tpl": "<h2 class='text-white m-none'>${pendingTasks}</h2>"}
+              }
+            },
+            {
+              "body": {
+                "type": "card",
+                "className": "bg-danger text-white",
+                "header": {"title": "Errors", "subTitle": "Last 24 hours"},
+                "body": {"type": "tpl", "tpl": "<h2 class='text-white m-none'>${errors24h}</h2>"}
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "grid",
+      "columns": [
+        {
+          "md": 8,
+          "body": {
+            "type": "panel",
+            "title": "User Signups (Weekly)",
+            "body": {
+              "type": "service",
+              "api": "/dashboard/signups",
+              "body": {
+                "type": "chart",
+                "config": {
+                  "xAxis": {"type": "category", "data": "${categories}"},
+                  "yAxis": {"type": "value"},
+                  "series": [{"data": "${values}", "type": "line", "smooth": true, "areaStyle": {}}],
+                  "tooltip": {"trigger": "axis"}
+                }
+              }
+            }
+          }
+        },
+        {
+          "md": 4,
+          "body": {
+            "type": "panel",
+            "title": "Users by Role",
+            "body": {
+              "type": "service",
+              "api": "/dashboard/roles",
+              "body": {
+                "type": "chart",
+                "config": {
+                  "series": [{"type": "pie", "radius": "65%", "data": "${roles}"}],
+                  "tooltip": {"trigger": "item"}
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "title": "Recent Activity",
+      "body": {
+        "type": "crud",
+        "api": "/dashboard/activity",
+        "syncLocation": false,
+        "columns": [
+          {"name": "user", "label": "User"},
+          {"name": "action", "label": "Action"},
+          {"name": "timestamp", "label": "Time"}
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "type": "page",
+  "title": "User Management",
+  "toolbar": [
+    {
+      "type": "button",
+      "label": "Add User",
+      "level": "primary",
+      "actionType": "dialog",
+      "dialog": {
+        "title": "Add New User",
+        "size": "md",
+        "body": {
+          "type": "form",
+          "api": "post:/users",
+          "body": [
+            {"type": "input-text", "name": "name", "label": "Name", "required": true},
+            {"type": "input-email", "name": "email", "label": "Email", "required": true},
+            {
+              "type": "select", "name": "role", "label": "Role", "value": "user",
+              "options": [{"label": "Admin", "value": "admin"}, {"label": "User", "value": "user"}]
+            },
+            {"type": "switch", "name": "status", "label": "Active", "trueValue": 1, "falseValue": 0, "value": 1}
+          ]
+        }
+      }
+    }
+  ],
+  "body": {
+    "type": "crud",
+    "api": "/users",
+    "syncLocation": false,
+    "filter": {
+      "title": "Search",
+      "body": [
+        {"type": "input-text", "name": "keywords", "placeholder": "Search by name or email", "clearable": true}
+      ],
+      "actions": [
+        {"type": "reset", "label": "Reset"},
+        {"type": "submit", "label": "Search", "level": "primary"}
+      ]
+    },
+    "columns": [
+      {"name": "id", "label": "ID", "sortable": true, "width": 60},
+      {"name": "name", "label": "Name", "sortable": true},
+      {"name": "email", "label": "Email", "sortable": true},
+      {
+        "name": "role", "label": "Role", "type": "mapping",
+        "map": {"admin": "<span class='label label-success'>Admin</span>", "user": "<span class='label label-default'>User</span>"}
+      },
+      {
+        "name": "status", "label": "Status", "type": "mapping",
+        "map": {"1": "<span class='label label-success'>Active</span>", "0": "<span class='label label-danger'>Inactive</span>"}
+      },
+      {"name": "created_at", "label": "Created", "sortable": true},
+      {
+        "type": "operation", "label": "Actions",
+        "buttons": [
+          {
+            "label": "Edit", "type": "button", "level": "link", "actionType": "dialog",
+            "dialog": {
+              "title": "Edit User", "size": "md",
+              "body": {
+                "type": "form",
+                "api": "put:/users/${id}",
+                "body": [
+                  {"type": "input-text", "name": "name", "label": "Name", "required": true},
+                  {"type": "input-email", "name": "email", "label": "Email", "required": true},
+                  {
+                    "type": "select", "name": "role", "label": "Role",
+                    "options": [{"label": "Admin", "value": "admin"}, {"label": "User", "value": "user"}]
+                  },
+                  {"type": "switch", "name": "status", "label": "Active", "trueValue": 1, "falseValue": 0}
+                ]
+              }
+            }
+          },
+          {
+            "label": "Delete", "type": "button", "level": "link", "className": "text-danger",
+            "actionType": "ajax", "api": "delete:/users/${id}",
+            "confirmText": "Are you sure you want to delete this user?"
+          }
+        ]
+      }
+    ]
+  }
+}
