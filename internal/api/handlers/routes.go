@@ -349,6 +349,9 @@ func (r *Router) registerUIRoutes(app *fiber.App) error {
 	uiGroup.Get("/demo/forms", handler.ServeForms)
 	uiGroup.Get("/login", handler.ServeLogin)
 
+	// Register schema, SDK, and utils routes
+	handler.RegisterRoutes(uiGroup)
+
 	// Redirect root UI to demo for now
 	uiGroup.Get("/", func(c *fiber.Ctx) error {
 		return c.Redirect("/ui/demo")
