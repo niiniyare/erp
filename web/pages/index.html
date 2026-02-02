@@ -1,24 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AMIS Admin</title>
   <link rel="stylesheet" href="../sdk/sdk.css">
   <link rel="stylesheet" href="../sdk/helper.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
   <link rel="stylesheet" href="../sdk/iconfont.css">
   <style>
-    html, body {
+    html,
+    body {
       height: 100%;
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
+
     #app {
       display: flex;
       flex-direction: column;
       height: 100%;
     }
+
     #nav {
       background: #2c3e50;
       color: #fff;
@@ -28,25 +33,30 @@
       height: 50px;
       flex-shrink: 0;
     }
+
     #nav .brand {
       font-size: 18px;
       font-weight: bold;
       margin-right: 30px;
     }
+
     #nav a {
-      color: rgba(255,255,255,0.7);
+      color: rgba(255, 255, 255, 0.7);
       text-decoration: none;
       padding: 14px 15px;
       transition: color 0.2s;
     }
+
     #nav a:hover,
     #nav a.active {
       color: #fff;
     }
+
     #content {
       flex: 1;
       overflow: auto;
     }
+
     .loading {
       display: flex;
       justify-content: center;
@@ -54,6 +64,7 @@
       height: 100%;
       color: #999;
     }
+
     .error-page {
       padding: 40px;
       text-align: center;
@@ -61,12 +72,14 @@
     }
   </style>
 </head>
+
 <body>
   <div id="app">
     <div id="nav">
       <span class="brand">AMIS Admin</span>
       <a href="#dashboard">Dashboard</a>
       <a href="#users">Users</a>
+      <a href="#products">Products</a>
       <a href="#settings">Settings</a>
     </div>
     <div id="content">
@@ -79,7 +92,7 @@
   <script src="../sdk/rest.js"></script>
   <script src="../utils/schema-loader.js"></script>
   <script>
-    (function() {
+    (function () {
       // --- Configuration ---
       var API_BASE = 'http://localhost:3000/api';
 
@@ -89,7 +102,10 @@
 
       // AMIS env with fetcher that routes API calls to your REST backend
       var amisEnv = {
-        fetcher: function(api) {
+        // Set locale to English to show error messages in English instead of Chinese
+        locale: 'en-US',
+        
+        fetcher: function (api) {
           var url = api.url;
           // Prefix relative URLs with API base
           if (url && !/^https?:\/\//.test(url)) {
@@ -104,20 +120,20 @@
           }
 
           return fetch(url, opts)
-            .then(function(res) { return res.json(); })
-            .then(function(json) {
+            .then(function (res) {return res.json();})
+            .then(function (json) {
               // Expects standard AMIS format: {status: 0, data: {...}, msg: ''}
               return json;
             });
         },
-        isCancel: function() { return false; },
-        notify: function(type, msg) {
+        isCancel: function () {return false;},
+        notify: function (type, msg) {
           console.log('[' + type + ']', msg);
         },
-        alert: function(msg) {
+        alert: function (msg) {
           alert(msg);
         },
-        copy: function(text) {
+        copy: function (text) {
           if (navigator.clipboard) navigator.clipboard.writeText(text);
         }
       };
@@ -137,7 +153,7 @@
         var contentEl = document.getElementById('content');
 
         if (currentInstance && currentInstance.unmount) {
-          try { currentInstance.unmount(); } catch(e) {}
+          try {currentInstance.unmount();} catch (e) { }
           currentInstance = null;
         }
         contentEl.innerHTML = '<div class="loading">Loading...</div>';
@@ -166,4 +182,188 @@
     })();
   </script>
 </body>
+
 </html>
+<!-- <!DOCTYPE html> -->
+<!-- <html lang="en"> -->
+<!---->
+<!-- <head> -->
+<!--   <meta charset="UTF-8"> -->
+<!--   <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+<!--   <title>AMIS Admin</title> -->
+<!--   <link rel="stylesheet" href="../sdk/sdk.css"> -->
+<!--   <link rel="stylesheet" href="../sdk/helper.css"> -->
+<!--   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"> -->
+<!--   <link rel="stylesheet" href="../sdk/iconfont.css"> -->
+<!--   <style> -->
+<!--     html, -->
+<!--     body { -->
+<!--       height: 100%; -->
+<!--       margin: 0; -->
+<!--       padding: 0; -->
+<!--       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -->
+<!--     } -->
+<!---->
+<!--     #app { -->
+<!--       display: flex; -->
+<!--       flex-direction: column; -->
+<!--       height: 100%; -->
+<!--     } -->
+<!---->
+<!--     #nav { -->
+<!--       background: #2c3e50; -->
+<!--       color: #fff; -->
+<!--       padding: 0 20px; -->
+<!--       display: flex; -->
+<!--       align-items: center; -->
+<!--       height: 50px; -->
+<!--       flex-shrink: 0; -->
+<!--     } -->
+<!---->
+<!--     #nav .brand { -->
+<!--       font-size: 18px; -->
+<!--       font-weight: bold; -->
+<!--       margin-right: 30px; -->
+<!--     } -->
+<!---->
+<!--     #nav a { -->
+<!--       color: rgba(255, 255, 255, 0.7); -->
+<!--       text-decoration: none; -->
+<!--       padding: 14px 15px; -->
+<!--       transition: color 0.2s; -->
+<!--     } -->
+<!---->
+<!--     #nav a:hover, -->
+<!--     #nav a.active { -->
+<!--       color: #fff; -->
+<!--     } -->
+<!---->
+<!--     #content { -->
+<!--       flex: 1; -->
+<!--       overflow: auto; -->
+<!--     } -->
+<!---->
+<!--     .loading { -->
+<!--       display: flex; -->
+<!--       justify-content: center; -->
+<!--       align-items: center; -->
+<!--       height: 100%; -->
+<!--       color: #999; -->
+<!--     } -->
+<!---->
+<!--     .error-page { -->
+<!--       padding: 40px; -->
+<!--       text-align: center; -->
+<!--       color: #e74c3c; -->
+<!--     } -->
+<!--   </style> -->
+<!-- </head> -->
+<!---->
+<!-- <body> -->
+<!--   <div id="app"> -->
+<!--     <div id="nav"> -->
+<!--       <span class="brand">AMIS Admin</span> -->
+<!--       <a href="#dashboard">Dashboard</a> -->
+<!--       <a href="#users">Users</a> -->
+<!--       <a href="#items">Items</a> -->
+<!--       <a href="#settings">Settings</a> -->
+<!--     </div> -->
+<!--     <div id="content"> -->
+<!--       <div class="loading">Loading...</div> -->
+<!--     </div> -->
+<!--   </div> -->
+<!---->
+<!--   <script src="../sdk/sdk.js"></script> -->
+<!--   <script src="../sdk/charts.js"></script> -->
+<!--   <script src="../sdk/rest.js"></script> -->
+<!--   <script src="../utils/schema-loader.js"></script> -->
+<!--   <script> -->
+<!--     (function () { -->
+<!--       // --- Configuration --- -->
+<!--       var API_BASE = 'http://localhost:3000/api'; -->
+<!---->
+<!--       var amis = amisRequire('amis/embed'); -->
+<!--       var loader = new SchemaLoader('../schemas/'); -->
+<!--       var currentInstance = null; -->
+<!---->
+<!--       // AMIS env with fetcher that routes API calls to your REST backend -->
+<!--       var amisEnv = { -->
+<!--         fetcher: function (api) { -->
+<!--           var url = api.url; -->
+<!--           // Prefix relative URLs with API base -->
+<!--           if (url && !/^https?:\/\//.test(url)) { -->
+<!--             url = API_BASE + (url.charAt(0) === '/' ? '' : '/') + url; -->
+<!--           } -->
+<!--           var method = (api.method || 'get').toLowerCase(); -->
+<!--           var headers = Object.assign({'Content-Type': 'application/json'}, api.headers || {}); -->
+<!--           var opts = {method: method, headers: headers}; -->
+<!---->
+<!--           if (method !== 'get' && method !== 'head' && api.data) { -->
+<!--             opts.body = JSON.stringify(api.data); -->
+<!--           } -->
+<!---->
+<!--           return fetch(url, opts) -->
+<!--             .then(function (res) {return res.json();}) -->
+<!--             .then(function (json) { -->
+<!--               // Expects standard AMIS format: {status: 0, data: {...}, msg: ''} -->
+<!--               return json; -->
+<!--             }); -->
+<!--         }, -->
+<!--         isCancel: function () {return false;}, -->
+<!--         notify: function (type, msg) { -->
+<!--           console.log('[' + type + ']', msg); -->
+<!--         }, -->
+<!--         alert: function (msg) { -->
+<!--           alert(msg); -->
+<!--         }, -->
+<!--         copy: function (text) { -->
+<!--           if (navigator.clipboard) navigator.clipboard.writeText(text); -->
+<!--         } -->
+<!--       }; -->
+<!---->
+<!--       function updateNav(route) { -->
+<!--         var links = document.querySelectorAll('#nav a'); -->
+<!--         for (var i = 0; i < links.length; i++) { -->
+<!--           var href = links[i].getAttribute('href').slice(1); -->
+<!--           links[i].className = (href === route) ? 'active' : ''; -->
+<!--         } -->
+<!--       } -->
+<!---->
+<!--       async function navigate() { -->
+<!--         var route = window.location.hash.slice(1) || 'dashboard'; -->
+<!--         updateNav(route); -->
+<!---->
+<!--         var contentEl = document.getElementById('content'); -->
+<!---->
+<!--         if (currentInstance && currentInstance.unmount) { -->
+<!--           try {currentInstance.unmount();} catch (e) { } -->
+<!--           currentInstance = null; -->
+<!--         } -->
+<!--         contentEl.innerHTML = '<div class="loading">Loading...</div>'; -->
+<!---->
+<!--         try { -->
+<!--           var schema = await loader.load('pages/' + route + '.json'); -->
+<!--           contentEl.innerHTML = ''; -->
+<!--           currentInstance = amis.embed(contentEl, schema, {}, amisEnv); -->
+<!--         } catch (error) { -->
+<!--           contentEl.innerHTML = -->
+<!--             '<div class="error-page">' + -->
+<!--             '<h2>Page Not Found</h2>' + -->
+<!--             '<p>' + error.message + '</p>' + -->
+<!--             '<a href="#dashboard">Go to Dashboard</a>' + -->
+<!--             '</div>'; -->
+<!--         } -->
+<!--       } -->
+<!---->
+<!--       window.addEventListener('hashchange', navigate); -->
+<!---->
+<!--       if (!window.location.hash) { -->
+<!--         window.location.hash = '#dashboard'; -->
+<!--       } else { -->
+<!--         navigate(); -->
+<!--       } -->
+<!--     })(); -->
+<!--   </script> -->
+<!-- </body> -->
+<!---->
+<!-- </html> -->

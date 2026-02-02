@@ -1,0 +1,145 @@
+{
+  "type": "page",
+  "title": "Products Management",
+  "body": {
+    "type": "crud",
+    "api": "/products",
+    "syncLocation": false,
+    "headerToolbar": [
+      {
+        "type": "button",
+        "label": "Add Product",
+        "level": "primary",
+        "actionType": "dialog",
+        "dialog": {
+          "title": "Add New Product",
+          "size": "lg",
+          "body": {
+            "type": "form",
+            "api": "post:/products",
+            "body": [
+              {"type": "input-text", "name": "name", "label": "Product Name", "required": true},
+              {"type": "input-text", "name": "sku", "label": "SKU", "required": true},
+              {
+                "type": "select", "name": "category", "label": "Category", "required": true,
+                "options": [
+                  {"label": "Electronics", "value": "electronics"},
+                  {"label": "Clothing", "value": "clothing"},
+                  {"label": "Food & Beverage", "value": "food"},
+                  {"label": "Home & Garden", "value": "home"},
+                  {"label": "Sports", "value": "sports"}
+                ]
+              },
+              {"type": "input-number", "name": "price", "label": "Price", "required": true, "min": 0, "precision": 2, "prefix": "$"},
+              {"type": "input-number", "name": "stock", "label": "Stock", "required": true, "min": 0, "value": 0},
+              {"type": "textarea", "name": "description", "label": "Description"},
+              {"type": "input-image", "name": "image", "label": "Image", "receiver": {"url": "/upload"}},
+              {"type": "switch", "name": "status", "label": "Active", "trueValue": 1, "falseValue": 0, "value": 1}
+            ]
+          }
+        }
+      },
+      "bulkActions"
+    ],
+    "bulkActions": [
+      {
+        "label": "Delete Selected",
+        "actionType": "ajax",
+        "api": "delete:/products/batch?ids=${ids}",
+        "confirmText": "Are you sure you want to delete selected products?"
+      }
+    ],
+    "filter": {
+      "title": "Search & Filter",
+      "body": [
+        {"type": "input-text", "name": "keyword", "placeholder": "Search by name or SKU", "clearable": true},
+        {
+          "type": "select", "name": "category", "placeholder": "All Categories", "clearable": true,
+          "options": [
+            {"label": "Electronics", "value": "electronics"},
+            {"label": "Clothing", "value": "clothing"},
+            {"label": "Food & Beverage", "value": "food"},
+            {"label": "Home & Garden", "value": "home"},
+            {"label": "Sports", "value": "sports"}
+          ]
+        },
+        {
+          "type": "select", "name": "status", "placeholder": "All Status", "clearable": true,
+          "options": [
+            {"label": "Active", "value": "1"},
+            {"label": "Inactive", "value": "0"}
+          ]
+        }
+      ],
+      "actions": [
+        {"type": "reset", "label": "Reset"},
+        {"type": "submit", "label": "Search", "level": "primary"}
+      ]
+    },
+    "columns": [
+      {"name": "id", "label": "ID", "sortable": true, "width": 60},
+      {"name": "image", "label": "Image", "type": "image", "width": 80},
+      {"name": "name", "label": "Product Name", "sortable": true},
+      {"name": "sku", "label": "SKU", "width": 120},
+      {
+        "name": "category", "label": "Category", "type": "mapping",
+        "map": {
+          "electronics": "<span class='label label-info'>Electronics</span>",
+          "clothing": "<span class='label label-success'>Clothing</span>",
+          "food": "<span class='label label-warning'>Food & Beverage</span>",
+          "home": "<span class='label label-primary'>Home & Garden</span>",
+          "sports": "<span class='label label-danger'>Sports</span>"
+        }
+      },
+      {"name": "price", "label": "Price", "sortable": true},
+      {"name": "stock", "label": "Stock", "sortable": true},
+      {
+        "name": "status", "label": "Status", "type": "mapping",
+        "map": {
+          "1": "<span class='label label-success'>Active</span>",
+          "0": "<span class='label label-danger'>Inactive</span>"
+        }
+      },
+      {"name": "created_at", "label": "Created", "sortable": true},
+      {
+        "type": "operation", "label": "Actions",
+        "buttons": [
+          {
+            "label": "Edit", "type": "button", "level": "link", "actionType": "dialog",
+            "dialog": {
+              "title": "Edit Product", "size": "lg",
+              "body": {
+                "type": "form",
+                "api": "put:/products/${id}",
+                "body": [
+                  {"type": "input-text", "name": "name", "label": "Product Name", "required": true},
+                  {"type": "input-text", "name": "sku", "label": "SKU", "required": true},
+                  {
+                    "type": "select", "name": "category", "label": "Category", "required": true,
+                    "options": [
+                      {"label": "Electronics", "value": "electronics"},
+                      {"label": "Clothing", "value": "clothing"},
+                      {"label": "Food & Beverage", "value": "food"},
+                      {"label": "Home & Garden", "value": "home"},
+                      {"label": "Sports", "value": "sports"}
+                    ]
+                  },
+                  {"type": "input-number", "name": "price", "label": "Price", "required": true, "min": 0, "precision": 2, "prefix": "$"},
+                  {"type": "input-number", "name": "stock", "label": "Stock", "required": true, "min": 0},
+                  {"type": "textarea", "name": "description", "label": "Description"},
+                  {"type": "input-image", "name": "image", "label": "Image", "receiver": {"url": "/upload"}},
+                  {"type": "switch", "name": "status", "label": "Active", "trueValue": 1, "falseValue": 0}
+                ]
+              }
+            }
+          },
+          {
+            "label": "Delete", "type": "button", "level": "link", "className": "text-danger",
+            "actionType": "ajax", "api": "delete:/products/${id}",
+            "confirmText": "Are you sure you want to delete this product?"
+          }
+        ]
+      }
+    ]
+  }
+}

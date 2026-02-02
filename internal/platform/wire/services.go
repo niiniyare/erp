@@ -30,11 +30,17 @@ import (
 
 // NewTenantService creates a new tenant service
 func NewTenantService(
-	repo tenant.Repository,
+	store db.Store,
 	cache cache.Service,
 	tracer tracing.Service,
+	log logger.Logger,
 ) tenant.Service {
-	return tenant.NewService(repo, cache, tracer)
+	return tenant.NewService(tenant.Dependencies{
+		Store:  store,
+		Cache:  cache,
+		Tracer: tracer,
+		Logger: log,
+	})
 }
 
 // ============================================================================

@@ -60,7 +60,6 @@ func (d Dependencies) Validate() error {
 type ServiceContainer struct {
 	// Core Infrastructure Services
 	TenantService             tenant.Service
-	TenantProvisioningService tenant.ProvisioningService
 	EntityService             entity.Service
 	IdentityService           identity.Service
 
@@ -164,8 +163,12 @@ func (sc *ServiceContainer) initializeFoundationalServices(ctx context.Context) 
 	sc.logger.Info("Phase 1: Initializing foundational services")
 
 	// Tenant Service - Required by almost everything
-	tenantRepo := tenant.NewRepository(sc.deps.Store, sc.deps.Tracing)
-	sc.TenantService = tenant.NewService(tenantRepo, sc.deps.Cache, sc.deps.Tracing)
+	sc.TenantService = tenant.NewService(tenant.Dependencies{
+		Store:  sc.deps.Store,
+		Cache:  sc.deps.Cache,
+		Tracer: sc.deps.Tracing,
+		Logger: sc.deps.Logger,
+	})
 
 	// Entity Service - Organizational structure
 	entityRepo := entity.NewRepository(sc.deps.Store, sc.deps.Tracing, sc.deps.Metrics)
@@ -304,13 +307,7 @@ func (sc *ServiceContainer) initializeBusinessServices(ctx context.Context) erro
 func (sc *ServiceContainer) initializeIntegrationServices(ctx context.Context) error {
 	sc.logger.Info("Phase 4: Initializing integration services")
 
-	// Tenant Provisioning Service
-	sc.TenantProvisioningService = tenant.NewProvisioningService(
-		sc.TenantService,
-		sc.IdentityService,
-		nil, // AuditLogger - can be nil for now
-		nil, // NotificationSender - can be nil for now
-	)
+	// Tenant Provisioning is now part of tenant.Service (via ProvisionTenant method)
 
 	// Register Finance module with Temporal if available
 	if sc.deps.Temporal != nil {
@@ -402,8 +399,8 @@ func (sc *ServiceContainer) GetTenantService() tenant.Service {
 	return sc.TenantService
 }
 
-func (sc *ServiceContainer) GetTenantProvisioningService() tenant.ProvisioningService {
-	return sc.TenantProvisioningService
+func (sc *ServiceContainer) GetTenantProvisioningService() tenant.Service {
+	return sc.TenantService
 }
 
 func (sc *ServiceContainer) GetEntityService() entity.Service {

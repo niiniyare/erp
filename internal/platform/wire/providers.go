@@ -36,10 +36,7 @@ var PlatformProviderSet = wire.NewSet(
 // ============================================================================
 
 // RepositoryProviderSet provides all repository implementations
-var RepositoryProviderSet = wire.NewSet(
-	// Tenant repositories
-	NewTenantRepository,
-)
+var RepositoryProviderSet = wire.NewSet()
 
 // ============================================================================
 // CORE SERVICE PROVIDER SET - Business Logic Layer
