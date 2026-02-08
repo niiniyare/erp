@@ -24,6 +24,8 @@ type (
 	TenantFilter        = domain.TenantFilter
 	TenantLimits        = domain.TenantLimits
 	PlanType            = domain.PlanType
+	CompanySize         = domain.CompanySize
+	AccountingMethod    = domain.AccountingMethod
 	ProvisioningInput   = domain.ProvisioningInput
 	ProvisioningResult  = domain.ProvisioningResult
 	GrowthStat          = domain.GrowthStat
@@ -39,13 +41,41 @@ const (
 	StatusTrial     = domain.StatusTrial
 )
 
+// Re-export plan constants.
+const (
+	PlanBasic        = domain.PlanBasic
+	PlanProfessional = domain.PlanProfessional
+	PlanEnterprise   = domain.PlanEnterprise
+)
+
+// Re-export company size constants.
+const (
+	CompanySizeStartup    = domain.CompanySizeStartup
+	CompanySizeSmall      = domain.CompanySizeSmall
+	CompanySizeMedium     = domain.CompanySizeMedium
+	CompanySizeLarge      = domain.CompanySizeLarge
+	CompanySizeEnterprise = domain.CompanySizeEnterprise
+)
+
 // Re-export errors.
 var (
-	ErrTenantNotFound    = domain.ErrTenantNotFound
-	ErrSubdomainTaken    = domain.ErrSubdomainTaken
-	ErrInvalidTransition = domain.ErrInvalidTransition
-	ErrTenantSuspended   = domain.ErrTenantSuspended
-	ErrLimitExceeded     = domain.ErrLimitExceeded
+	ErrTenantNotFound               = domain.ErrTenantNotFound
+	ErrTenantAlreadyExists          = domain.ErrTenantAlreadyExists
+	ErrSubdomainTaken               = domain.ErrSubdomainTaken
+	ErrInvalidTransition            = domain.ErrInvalidTransition
+	ErrTenantSuspended              = domain.ErrTenantSuspended
+	ErrLimitExceeded                = domain.ErrLimitExceeded
+	ErrTenantNameRequired           = domain.ErrTenantNameRequired
+	ErrTenantEmailRequired          = domain.ErrTenantEmailRequired
+	ErrInvalidEmail                 = domain.ErrInvalidEmail
+	ErrInvalidSubdomain             = domain.ErrInvalidSubdomain
+	ErrInvalidCompanySize           = domain.ErrInvalidCompanySize
+	ErrAlreadyActive                = domain.ErrAlreadyActive
+	ErrAlreadySuspended             = domain.ErrAlreadySuspended
+	ErrAlreadyArchived              = domain.ErrAlreadyArchived
+	ErrCannotActivateArchivedTenant = domain.ErrCannotActivateArchivedTenant
+	ErrCannotSuspendArchivedTenant  = domain.ErrCannotSuspendArchivedTenant
+	ErrConfigurationNotFound        = domain.ErrConfigurationNotFound
 )
 
 // Service is the backward-compatible tenant service interface that
@@ -217,7 +247,6 @@ func (a *tenantServiceAdapter) ClearTenantCache(ctx context.Context, tenantID uu
 }
 
 func (a *tenantServiceAdapter) ClearSubdomainCache(ctx context.Context, subdomain string) error {
-	// Subdomain cache is handled by the tenant-aware key building in cache package
 	return nil
 }
 

@@ -25,7 +25,7 @@ func NewDefaultConfig(tenantID uuid.UUID) *TenantConfiguration {
 		MaxEntities:             1000,
 		MaxTransactionsPerMonth: 10000,
 		StorageQuota:            10 * 1024 * 1024 * 1024, // 10GB
-		AccountingMethod:        "accrual",
+		AccountingMethod:        string(AccountingMethodAccrual),
 		FiscalYearStartMonth:    1,
 		DefaultCurrency:         "USD",
 		DateFormat:              "YYYY-MM-DD",

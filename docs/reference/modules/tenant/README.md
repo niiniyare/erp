@@ -26,6 +26,7 @@
 20. [Troubleshooting Guide](./20-troubleshooting-guide.md)
 21. [Business Rules & Validation](./21-business-rules-and-validation.md)
 22. [Summary](./22-summary.md)
+23. [Test Cases](./testing.md)
 
 ---
 
@@ -43,3 +44,4 @@
 - [Provisioning Workflow](./06-tenant-provisioning.md)
 - [Security Model](./08-row-level-security-and-isolation.md)
 - [Bulk Operations](./12-bulk-operations.md)
+- [Test Cases](./testing.md)

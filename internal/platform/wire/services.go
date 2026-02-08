@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	temporalclient "go.temporal.io/sdk/client"
 
 	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/errors"
@@ -208,6 +209,23 @@ func (s *simpleIAMService) Authorization() authz.Service {
 
 func (s *simpleIAMService) Policy() policy.Service {
 	return nil // Not implemented for startup
+}
+
+// ============================================================================
+// TENANT TEMPORAL INTEGRATION
+// ============================================================================
+
+// NewTenantTemporalIntegration creates the tenant Temporal integration
+func NewTenantTemporalIntegration(
+	tenantService tenant.Service,
+	temporalClient temporalclient.Client,
+	log logger.Logger,
+) (*tenant.TemporalIntegration, error) {
+	return tenant.NewTemporalIntegration(tenant.TemporalConfig{
+		Service:        tenantService,
+		TemporalClient: temporalClient,
+		Logger:         log,
+	})
 }
 
 // ============================================================================

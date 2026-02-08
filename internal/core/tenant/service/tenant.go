@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"github.com/gosimple/slug"
 	"github.com/niiniyare/erp/internal/core/tenant/domain"
 	"github.com/niiniyare/erp/internal/core/tenant/repository"
 	"github.com/niiniyare/erp/internal/platform/cache"
@@ -67,10 +67,13 @@ func (s *TenantService) Create(ctx context.Context, req domain.CreateTenantReque
 		status = domain.StatusActive
 	}
 
-	t := domain.NewTenant(req.Name, req.Email,
+	t, err := domain.NewTenant(req.Name, req.Email,
 		domain.WithStatus(status),
 	)
-	t.Slug = slug.Make(req.Name)
+	if err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
 	if req.Slug != "" {
 		t.Slug = req.Slug
 	}
@@ -315,6 +318,16 @@ func (s *TenantService) validateCreate(req domain.CreateTenantRequest) error {
 	if req.Subdomain != nil && *req.Subdomain != "" {
 		if len(*req.Subdomain) > 63 {
 			return fmt.Errorf("%w: subdomain too long", domain.ErrInvalidRequest)
+		}
+		// Check reserved subdomains
+		if domain.ReservedSubdomains[strings.ToLower(*req.Subdomain)] {
+			return domain.ErrInvalidSubdomain
+		}
+	}
+	// Validate company size if provided
+	if req.CompanySize != nil && *req.CompanySize != "" {
+		if !domain.ValidCompanySize(*req.CompanySize) {
+			return domain.ErrInvalidCompanySize
 		}
 	}
 	return nil

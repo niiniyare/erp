@@ -6,21 +6,24 @@ import "fmt"
 type TenantStatus string
 
 const (
-	StatusActive      TenantStatus = "ACTIVE"
-	StatusSuspended   TenantStatus = "SUSPENDED"
-	StatusPending     TenantStatus = "PENDING"
-	StatusArchived    TenantStatus = "ARCHIVED"
-	StatusDeactivated TenantStatus = "DEACTIVATED"
-	StatusTrial       TenantStatus = "PENDING" // alias for backward compat
+	StatusActive    TenantStatus = "ACTIVE"
+	StatusSuspended TenantStatus = "SUSPENDED"
+	StatusPending   TenantStatus = "PENDING"
+	StatusArchived  TenantStatus = "ARCHIVED"
+	StatusTrial     TenantStatus = "PENDING" // alias for backward compat with middleware
 )
 
 // validTransitions defines the allowed state machine transitions.
+// Per business rules doc:
+//   - PENDING  → ACTIVE only (must activate before any other transition)
+//   - ACTIVE   → SUSPENDED, ARCHIVED
+//   - SUSPENDED → ACTIVE (reactivation), ARCHIVED
+//   - ARCHIVED → (terminal state, no transitions allowed)
 var validTransitions = map[TenantStatus][]TenantStatus{
-	StatusPending:     {StatusActive, StatusArchived},
-	StatusActive:      {StatusSuspended, StatusArchived, StatusDeactivated},
-	StatusSuspended:   {StatusActive, StatusArchived},
-	StatusDeactivated: {StatusArchived},
-	StatusArchived:    {}, // terminal state
+	StatusPending:   {StatusActive},
+	StatusActive:    {StatusSuspended, StatusArchived},
+	StatusSuspended: {StatusActive, StatusArchived},
+	StatusArchived:  {}, // terminal state
 }
 
 // Valid returns true if the status is a known value.
@@ -43,11 +46,16 @@ func (s TenantStatus) CanTransitionTo(target TenantStatus) bool {
 	return false
 }
 
+// String returns string representation.
+func (s TenantStatus) String() string {
+	return string(s)
+}
+
 // ParseTenantStatus converts a string to TenantStatus, returning an error for unknown values.
 func ParseTenantStatus(s string) (TenantStatus, error) {
 	status := TenantStatus(s)
 	if !status.Valid() {
-		return "", fmt.Errorf("unknown tenant status: %q", s)
+		return "", fmt.Errorf("invalid tenant status: %q", s)
 	}
 	return status, nil
 }

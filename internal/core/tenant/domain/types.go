@@ -6,10 +6,47 @@ import "github.com/google/uuid"
 type PlanType string
 
 const (
-	PlanBasic        PlanType = "basic"
-	PlanProfessional PlanType = "professional"
-	PlanEnterprise   PlanType = "enterprise"
+	PlanBasic        PlanType = "BASIC"
+	PlanProfessional PlanType = "PROFESSIONAL"
+	PlanEnterprise   PlanType = "ENTERPRISE"
 )
+
+// CompanySize represents the size category of a tenant organization.
+type CompanySize string
+
+const (
+	CompanySizeStartup    CompanySize = "STARTUP"
+	CompanySizeSmall      CompanySize = "SMALL"
+	CompanySizeMedium     CompanySize = "MEDIUM"
+	CompanySizeLarge      CompanySize = "LARGE"
+	CompanySizeEnterprise CompanySize = "ENTERPRISE"
+)
+
+// ValidCompanySize returns true if the given size is a valid CompanySize value.
+func ValidCompanySize(s string) bool {
+	switch CompanySize(s) {
+	case CompanySizeStartup, CompanySizeSmall, CompanySizeMedium, CompanySizeLarge, CompanySizeEnterprise:
+		return true
+	}
+	return false
+}
+
+// AccountingMethod represents the accounting method for a tenant.
+type AccountingMethod string
+
+const (
+	AccountingMethodAccrual AccountingMethod = "ACCRUAL"
+	AccountingMethodCash    AccountingMethod = "CASH"
+)
+
+// ValidAccountingMethod returns true if the given method is valid.
+func ValidAccountingMethod(s string) bool {
+	switch AccountingMethod(s) {
+	case AccountingMethodAccrual, AccountingMethodCash:
+		return true
+	}
+	return false
+}
 
 // TenantLimits represents tenant usage limits.
 type TenantLimits struct {
@@ -20,7 +57,7 @@ type TenantLimits struct {
 
 // CreateTenantRequest represents tenant creation input.
 type CreateTenantRequest struct {
-	Name               string         `json:"name" validate:"required,min=2,max=100"`
+	Name               string         `json:"name" validate:"required,min=2,max=255"`
 	Slug               string         `json:"slug,omitempty"`
 	Email              string         `json:"email" validate:"required,email"`
 	Subdomain          *string        `json:"subdomain,omitempty"`
@@ -94,4 +131,17 @@ type StatusCount struct {
 	ActivePct        float64 `json:"active_pct"`
 	SuspendedPct     float64 `json:"suspended_pct"`
 	PendingPct       float64 `json:"pending_pct"`
+}
+
+// ReservedSubdomains is the list of system-reserved subdomain names.
+var ReservedSubdomains = map[string]bool{
+	"admin": true, "api": true, "www": true, "app": true,
+	"cdn": true, "static": true, "assets": true, "mail": true,
+	"ftp": true, "smtp": true, "dev": true, "staging": true,
+	"prod": true, "production": true, "test": true, "localhost": true,
+	"dashboard": true, "portal": true, "auth": true, "login": true,
+	"signup": true, "register": true, "billing": true, "payment": true,
+	"invoice": true, "support": true, "help": true, "docs": true,
+	"status": true, "blog": true, "news": true, "about": true,
+	"contact": true, "legal": true, "privacy": true, "terms": true,
 }

@@ -19,25 +19,31 @@ type TemporalIntegration struct {
 
 // TemporalConfig contains configuration for tenant Temporal integration.
 type TemporalConfig struct {
-	ServiceAdapter *tenantServiceAdapter
+	Service        Service
 	TemporalClient client.Client
 	Logger         loggerPkg.Logger
 }
 
 // NewTemporalIntegration creates a new Temporal integration for the tenant module.
 func NewTemporalIntegration(cfg TemporalConfig) (*TemporalIntegration, error) {
-	if cfg.ServiceAdapter == nil {
-		return nil, fmt.Errorf("service adapter is required")
+	if cfg.Service == nil {
+		return nil, fmt.Errorf("tenant service is required")
 	}
 	if cfg.TemporalClient == nil {
 		return nil, fmt.Errorf("temporal client is required")
 	}
 
+	// Type assert to get internal adapter
+	adapter, ok := cfg.Service.(*tenantServiceAdapter)
+	if !ok {
+		return nil, fmt.Errorf("tenant service must be created via tenant.NewService")
+	}
+
 	acts := activities.New(activities.Deps{
-		TenantService:       cfg.ServiceAdapter.tenant,
-		ProvisioningService: cfg.ServiceAdapter.provisioning,
-		Repo:                cfg.ServiceAdapter.repo,
-		Tracer:              cfg.ServiceAdapter.tracer,
+		TenantService:       adapter.tenant,
+		ProvisioningService: adapter.provisioning,
+		Repo:                adapter.repo,
+		Tracer:              adapter.tracer,
 	})
 
 	return &TemporalIntegration{
