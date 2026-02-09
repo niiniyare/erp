@@ -391,21 +391,25 @@ func (r *Router) registerTenantAPI(apiRouter fiber.Router) error {
 
 	handler := tenantHandler.NewTenantHandler(r.deps.TenantService, r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
 
-	// Register tenant endpoints directly on the API router
-	tenantsGroup := apiRouter.Group("/v1/tenants")
+	// Tenant management routes — no tenant middleware (these manage tenants themselves)
+	tenantsGroup := apiRouter.Group("/v1/organizations")
 
-	// Apply tenant middleware for RLS if available
-	if r.deps.TenantMiddleware != nil {
-		tenantsGroup.Use(r.deps.TenantMiddleware)
-	}
+	tenantsGroup.Get("/", handler.List)         // GET /api/v1/organizations - List organizations with pagination
+	tenantsGroup.Post("/", handler.Create)      // POST /api/v1/organizations - Create new organization
+	tenantsGroup.Get("/:id", handler.Get)       // GET /api/v1/organizations/:id - Get organization by ID
+	tenantsGroup.Put("/:id", handler.Update)    // PUT /api/v1/organizations/:id - Update organization
+	tenantsGroup.Patch("/:id", handler.Update)  // PATCH /api/v1/organizations/:id - Partial update
+	tenantsGroup.Delete("/:id", handler.Delete) // DELETE /api/v1/organizations/:id - Delete organization
 
-	tenantsGroup.Get("/", handler.List)         // GET /api/v1/tenants - List tenants with pagination
-	tenantsGroup.Post("/", handler.Create)      // POST /api/v1/tenants - Create new tenant
-	tenantsGroup.Get("/:id", handler.Get)       // GET /api/v1/tenants/:id - Get tenant by ID
-	tenantsGroup.Put("/:id", handler.Update)    // PUT /api/v1/tenants/:id - Update tenant
-	tenantsGroup.Delete("/:id", handler.Delete) // DELETE /api/v1/tenants/:id - Delete tenant
+	// Lifecycle actions
+	tenantsGroup.Post("/:id/activate", handler.Activate) // POST /api/v1/organizations/:id/activate
+	tenantsGroup.Post("/:id/suspend", handler.Suspend)   // POST /api/v1/organizations/:id/suspend
+	tenantsGroup.Post("/:id/archive", handler.Archive)   // POST /api/v1/organizations/:id/archive
 
-	r.deps.Logger.Info("registered tenant API endpoints")
+	// Complex operations
+	apiRouter.Post("/v1/orgs/onboard", handler.Onboard) // POST /api/v1/orgs/onboard
+
+	r.deps.Logger.Info("registered tenant API endpoints as /organizations")
 	return nil
 }
 

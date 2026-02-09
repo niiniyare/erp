@@ -140,13 +140,15 @@ func NewTracingService(cfg *config.Config, log logger.Logger) (tracing.Service, 
 		ServiceName:        cfg.App.Name,
 		ServiceVersion:     cfg.App.Version,
 		Environment:        cfg.App.Environment,
-		ExporterType:       tracing.StdoutExporter, // Configure based on your tracing backend
-		Protocol:           tracing.ProtocolStdout, // Set the protocol for stdout exporter
-		SamplingRatio:      1.0,                    // Adjust based on environment
-		BatchTimeout:       time.Second * 5,        // Set batch timeout
-		MaxExportBatchSize: 100,                    // Set batch size
-		MaxQueueSize:       1000,                   // Set queue size
-		Enabled:            true,
+		ExporterType:       tracing.ExporterType(cfg.Tracing.Exporter),
+		Protocol:           tracing.Protocol(cfg.Tracing.Protocol),
+		Endpoint:           cfg.Tracing.Endpoint,
+		Insecure:           cfg.Tracing.Insecure,
+		SamplingRatio:      cfg.Tracing.SamplingRatio,
+		BatchTimeout:       time.Second * 5,
+		MaxExportBatchSize: 100,
+		MaxQueueSize:       1000,
+		Enabled:            cfg.Tracing.Enabled,
 	})
 }
 

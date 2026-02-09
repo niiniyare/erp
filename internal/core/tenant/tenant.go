@@ -88,8 +88,10 @@ type Service interface {
 	UpdateTenant(ctx context.Context, id uuid.UUID, req UpdateTenantRequest) (*Tenant, error)
 	DeleteTenant(ctx context.Context, id uuid.UUID) error
 	ActivateTenant(ctx context.Context, id uuid.UUID) error
+	SuspendTenant(ctx context.Context, id uuid.UUID, reason string) error
+	ArchiveTenant(ctx context.Context, id uuid.UUID) error
 	DeactivateTenant(ctx context.Context, id uuid.UUID) error
-	ListTenants(ctx context.Context, offset, limit int) ([]*Tenant, error)
+	ListTenants(ctx context.Context, filter TenantFilter) ([]*Tenant, int64, error)
 
 	// Provisioning
 	ProvisionTenant(ctx context.Context, req ProvisionTenantRequest) (*ProvisionedTenantInfo, error)
@@ -198,16 +200,20 @@ func (a *tenantServiceAdapter) ActivateTenant(ctx context.Context, id uuid.UUID)
 	return a.tenant.Activate(ctx, id)
 }
 
+func (a *tenantServiceAdapter) SuspendTenant(ctx context.Context, id uuid.UUID, reason string) error {
+	return a.tenant.Suspend(ctx, id, reason)
+}
+
+func (a *tenantServiceAdapter) ArchiveTenant(ctx context.Context, id uuid.UUID) error {
+	return a.tenant.Archive(ctx, id)
+}
+
 func (a *tenantServiceAdapter) DeactivateTenant(ctx context.Context, id uuid.UUID) error {
 	return a.tenant.Suspend(ctx, id, "deactivated")
 }
 
-func (a *tenantServiceAdapter) ListTenants(ctx context.Context, offset, limit int) ([]*Tenant, error) {
-	tenants, _, err := a.tenant.List(ctx, domain.TenantFilter{
-		Offset: int32(offset),
-		Limit:  int32(limit),
-	})
-	return tenants, err
+func (a *tenantServiceAdapter) ListTenants(ctx context.Context, filter TenantFilter) ([]*Tenant, int64, error) {
+	return a.tenant.List(ctx, filter)
 }
 
 func (a *tenantServiceAdapter) ProvisionTenant(ctx context.Context, req ProvisionTenantRequest) (*ProvisionedTenantInfo, error) {

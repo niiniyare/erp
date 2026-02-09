@@ -37,7 +37,7 @@ Then:
   - Email is normalized to lowercase
   - Name is trimmed of whitespace
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/tenant_test.go:TestNewTenant_Valid` (4 table cases)
 
 #### Test Case: Tenant Creation with Missing Name
 ```
@@ -49,7 +49,7 @@ Then:
   - Returns nil tenant and ErrTenantNameRequired
   - Whitespace-only names are also rejected
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/tenant_test.go:TestNewTenant_ValidationErrors` (7 table cases)
 
 #### Test Case: Tenant Creation with Missing/Invalid Email
 ```
@@ -66,7 +66,7 @@ Then:
   - Invalid emails return appropriate error
   - Valid emails are accepted and normalized to lowercase
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/tenant_test.go:TestNewTenant_ValidationErrors` (covered in same suite)
 
 #### Test Case: Tenant Slug Generation
 ```
@@ -82,7 +82,7 @@ Then:
   - Special characters are removed/replaced
   - Slug conforms to URL standards (lowercase, hyphens)
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/tenant_test.go:TestNewTenant_Valid` (slug verified per case)
 
 #### Test Case: Functional Options
 ```
@@ -102,7 +102,7 @@ Then:
   - Valid options are applied to the tenant
   - Invalid options return errors and prevent creation
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/tenant_test.go:TestWithSubdomain` (13 cases), `TestWithLimits_CompanySizeValidation` (8 cases), `TestWithTimezoneAndCurrency`, `TestWithStatus`
 
 ### Status State Machine Tests
 
@@ -122,7 +122,7 @@ Then:
   - Transition methods (Activate, Suspend, Archive) succeed
   - UpdatedAt is updated on each transition
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/status_test.go:TestCanTransitionTo_Valid` (5 valid transitions)
 
 #### Test Case: Invalid Status Transitions
 ```
@@ -139,7 +139,7 @@ Then:
   - All invalid transitions return false
   - Transition methods return appropriate errors
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/status_test.go:TestCanTransitionTo_Blocked` (12 blocked transitions)
 
 #### Test Case: Specific Transition Errors
 ```
@@ -156,7 +156,7 @@ Then:
   - Each scenario returns the correct sentinel error
   - Tenant state is not modified on error
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/tenant_test.go:TestActivate` (4 cases), `TestSuspend` (4 cases), `TestArchive` (4 cases)
 
 #### Test Case: Status Parsing
 ```
@@ -175,7 +175,7 @@ Then:
   - Valid uppercase status strings are parsed correctly
   - Invalid strings return descriptive errors
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/status_test.go:TestParseTenantStatus` (9 cases incl. DEACTIVATED rejected)
 
 ### Suspend Metadata Tests
 
@@ -191,7 +191,7 @@ Then:
   - Metadata["suspended_at"] is set to current time
   - Metadata map is initialized if nil
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/tenant_test.go:TestSuspend` + `TestSuspend_InitializesMetadata`
 
 ### Archive Tests
 
@@ -207,7 +207,7 @@ Then:
   - UpdatedAt is updated
   - IsSoftDeleted() returns true
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/tenant_test.go:TestArchive` (verifies DeletedAt + IsSoftDeleted)
 
 ### Predicate Tests
 
@@ -224,7 +224,7 @@ Test Data:
 When: Calling predicate methods
 Then: Each predicate returns the expected boolean
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/tenant_test.go:TestPredicates` (5 table cases)
 
 ### Enum Validation Tests
 
@@ -237,7 +237,7 @@ Then:
   - PlanProfessional == "PROFESSIONAL"
   - PlanEnterprise == "ENTERPRISE"
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/types_test.go:TestPlanTypeConstants` (3 cases)
 
 #### Test Case: CompanySize Validation
 ```
@@ -251,7 +251,7 @@ Then:
   - Valid uppercase values return true
   - Invalid/lowercase values return false
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/types_test.go:TestCompanySizeConstants` (5 cases) + `TestValidCompanySize` (10 cases)
 
 #### Test Case: AccountingMethod Validation
 ```
@@ -265,7 +265,7 @@ Then:
   - Valid uppercase values return true
   - Invalid/lowercase values return false
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/types_test.go:TestAccountingMethodConstants` + `TestValidAccountingMethod` (6 cases)
 
 ### Configuration Tests
 
@@ -288,7 +288,7 @@ Then:
   - NumberFormat == "1,234.56"
   - LanguageCode == "en"
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/config_test.go:TestNewDefaultConfig` (all 11 fields) + `TestNewDefaultConfig_DifferentIDs`
 
 ### Usage Tests
 
@@ -306,7 +306,7 @@ And: TenantConfiguration with MaxUsers=100
 When: Calling usage.IsWithinLimits(config)
 Then: Returns false
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/usage_test.go:TestIsWithinLimits` (8 table cases)
 
 #### Test Case: Usage Percentage Calculation
 ```
@@ -316,7 +316,7 @@ Given: Usage at 50% users, 80% entities, 30% transactions
 When: Calling usage.UsagePercentage(config)
 Then: Returns 0.8 (highest resource utilization)
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/usage_test.go:TestUsagePercentage` (6 table cases)
 
 ### Subdomain Validation Tests
 
@@ -333,7 +333,7 @@ Test Data:
 When: Using WithSubdomain(reserved) option
 Then: Returns ErrInvalidSubdomain for each reserved name
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/types_test.go:TestReservedSubdomains` (36 reserved + 2 non-reserved) + `domain/tenant_test.go:TestWithSubdomain` (reserved cases)
 
 #### Test Case: Subdomain Format Validation
 ```
@@ -351,7 +351,7 @@ Then:
   - Invalid subdomains return ErrInvalidSubdomain
   - Uppercase is auto-lowered
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `domain/tenant_test.go:TestWithSubdomain` (13 table cases incl. format + reserved)
 
 ---
 
@@ -544,7 +544,7 @@ Then:
   - Tracing span is created
   - Returns created tenant
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `service/tenant_test.go:TestCreate_Success` + `TestCreate_ValidCompanySize` (5 sizes)
 
 #### Test Case: Create Tenant Validation Failures
 ```
@@ -561,7 +561,7 @@ Test Data:
 When: Calling service.Create(ctx, req) with invalid data
 Then: Returns appropriate error without database changes
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `service/tenant_test.go:TestCreate_ValidationErrors` (4 cases) + `TestCreate_SubdomainTaken`
 
 #### Test Case: Get Tenant by ID with Cache
 ```
@@ -581,7 +581,7 @@ Then:
   - Repo is NOT called
   - Tracing records cache.hit=true
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `service/tenant_test.go:TestGetByID_Found` + `TestGetByID_NotFound`
 
 #### Test Case: Update Tenant
 ```
@@ -597,7 +597,7 @@ Then:
   - Fresh data is fetched and re-cached
   - Returns updated tenant
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `service/tenant_test.go:TestUpdate_Success` + `TestUpdate_ValidationErrors` (3 cases) + `TestUpdate_SubdomainTaken`
 
 #### Test Case: Activate Tenant
 ```
@@ -612,7 +612,7 @@ Then:
   - Cache is invalidated
   - Returns nil error
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `service/tenant_test.go:TestActivate` (4 table cases)
 
 #### Test Case: Suspend Tenant
 ```
@@ -627,7 +627,7 @@ Then:
   - Cache is invalidated
   - Returns nil error
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `service/tenant_test.go:TestSuspend` (4 table cases)
 
 #### Test Case: Archive Tenant
 ```
@@ -642,7 +642,7 @@ Then:
   - Cache is invalidated
   - Returns nil error
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `service/tenant_test.go:TestArchive` (4 table cases)
 
 #### Test Case: List Tenants with Pagination
 ```
@@ -656,7 +656,7 @@ Then:
   - Limit capped at 100
   - Returns tenants and total count
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `service/tenant_test.go:TestList_PaginationDefaults` (4 table cases)
 
 #### Test Case: Resolve Tenant ID
 ```
@@ -668,7 +668,7 @@ Then: Returns tenant's UUID
 When: Calling service.ResolveTenantID(ctx, "nonexistent")
 Then: Returns uuid.Nil and error
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `service/tenant_test.go:TestResolveTenantID` + `TestResolveTenantID_NotFound`
 
 #### Test Case: Validate Tenant Access
 ```
@@ -682,7 +682,7 @@ Given: Suspended tenant
 When: Calling service.ValidateTenantAccess(ctx, id)
 Then: Returns ErrTenantSuspended
 ```
-- [ ] **Status:** Pending
+- [x] **Status:** Implemented — `service/tenant_test.go:TestValidateTenantAccess` (4 table cases) + `TestExistsTenant`
 
 ### ProvisioningService Tests
 

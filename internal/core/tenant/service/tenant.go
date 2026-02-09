@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/niiniyare/erp/internal/core/tenant/domain"
 	"github.com/niiniyare/erp/internal/core/tenant/repository"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/tracing"
+	"github.com/niiniyare/erp/internal/shared/utils"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
@@ -311,8 +311,7 @@ func (s *TenantService) invalidateCache(ctx context.Context, id uuid.UUID) {
 // --- validation ---
 
 func (s *TenantService) validateCreate(req domain.CreateTenantRequest) error {
-	v := validator.New()
-	if err := v.Struct(req); err != nil {
+	if err := utils.ValidateStruct(req); err != nil {
 		return fmt.Errorf("%w: %v", domain.ErrInvalidRequest, err)
 	}
 	if req.Subdomain != nil && *req.Subdomain != "" {

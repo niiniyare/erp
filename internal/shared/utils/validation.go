@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
@@ -13,10 +14,15 @@ import (
 // validate holds the singleton validator instance.
 var validate *validator.Validate
 
+// slugRegex validates URL-friendly slugs.
+var slugRegex = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`)
+
 func init() {
 	validate = validator.New()
 	// Register a custom validation function for UUIDs
 	_ = validate.RegisterValidation("uuid", validateUUID)
+	// Register slug validator
+	_ = validate.RegisterValidation("slug", validateSlug)
 	// Customize how the 'json' tag is used for field names in error messages
 	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
 		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
@@ -70,6 +76,15 @@ func validateUUID(fl validator.FieldLevel) bool {
 		return u != nil && *u != uuid.Nil
 	}
 	return true // Pass if not a UUID type, other validators can handle it
+}
+
+// validateSlug checks that a string is a valid URL-friendly slug.
+func validateSlug(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	if value == "" {
+		return true
+	}
+	return slugRegex.MatchString(value)
 }
 
 // formatValidationMessage creates a user-friendly error message.

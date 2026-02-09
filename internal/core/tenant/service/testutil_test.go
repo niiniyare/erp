@@ -25,14 +25,23 @@ type mockRepo struct {
 	tenants map[uuid.UUID]*domain.Tenant
 
 	// hooks for custom behaviour per test
-	createFn          func(ctx context.Context, t *domain.Tenant) error
-	getByIDFn         func(ctx context.Context, id uuid.UUID) (*domain.Tenant, error)
-	getBySubdomainFn  func(ctx context.Context, s string) (*domain.Tenant, error)
-	updateFn          func(ctx context.Context, id uuid.UUID, req domain.UpdateTenantRequest) error
-	softDeleteFn      func(ctx context.Context, id uuid.UUID) error
-	subdomainExistsFn func(ctx context.Context, s string) (bool, error)
-	existsFn          func(ctx context.Context, id uuid.UUID) (bool, error)
-	listFn            func(ctx context.Context, f domain.TenantFilter) ([]*domain.Tenant, int64, error)
+	createFn              func(ctx context.Context, t *domain.Tenant) error
+	getByIDFn             func(ctx context.Context, id uuid.UUID) (*domain.Tenant, error)
+	getBySubdomainFn      func(ctx context.Context, s string) (*domain.Tenant, error)
+	updateFn              func(ctx context.Context, id uuid.UUID, req domain.UpdateTenantRequest) error
+	softDeleteFn          func(ctx context.Context, id uuid.UUID) error
+	subdomainExistsFn     func(ctx context.Context, s string) (bool, error)
+	existsFn              func(ctx context.Context, id uuid.UUID) (bool, error)
+	listFn                func(ctx context.Context, f domain.TenantFilter) ([]*domain.Tenant, int64, error)
+	provisionFn           func(ctx context.Context, input domain.ProvisioningInput) (*domain.ProvisioningResult, error)
+	createDefaultConfigFn func(ctx context.Context, id uuid.UUID) error
+	initUsageFn           func(ctx context.Context, id uuid.UUID) error
+	bulkUpdateStatusFn    func(ctx context.Context, ids []uuid.UUID, status domain.TenantStatus) error
+	bulkSoftDeleteFn      func(ctx context.Context, ids []uuid.UUID) error
+	getGrowthStatsFn      func(ctx context.Context, days int) ([]domain.GrowthStat, error)
+	getStatusDistFn       func(ctx context.Context) (*domain.StatusCount, error)
+	getConfigFn           func(ctx context.Context, id uuid.UUID) (*domain.TenantConfiguration, error)
+	getUsageFn            func(ctx context.Context, id uuid.UUID) (*domain.TenantUsage, error)
 }
 
 func newMockRepo() *mockRepo {
@@ -159,21 +168,79 @@ func (r *mockRepo) List(ctx context.Context, f domain.TenantFilter) ([]*domain.T
 	return all[start:end], total, nil
 }
 
-// Stubs for remaining interface methods
-func (r *mockRepo) CreateDefaultConfig(context.Context, uuid.UUID) error                          { return nil }
-func (r *mockRepo) GetConfig(context.Context, uuid.UUID) (*domain.TenantConfiguration, error)     { return nil, nil }
-func (r *mockRepo) GetUsage(context.Context, uuid.UUID) (*domain.TenantUsage, error)              { return nil, nil }
-func (r *mockRepo) InitUsage(context.Context, uuid.UUID) error                                    { return nil }
-func (r *mockRepo) Provision(context.Context, domain.ProvisioningInput) (*domain.ProvisioningResult, error) {
+// Stubs for remaining interface methods — all support optional hooks.
+
+func (r *mockRepo) CreateDefaultConfig(ctx context.Context, id uuid.UUID) error {
+	if r.createDefaultConfigFn != nil {
+		return r.createDefaultConfigFn(ctx, id)
+	}
+	return nil
+}
+
+func (r *mockRepo) GetConfig(ctx context.Context, id uuid.UUID) (*domain.TenantConfiguration, error) {
+	if r.getConfigFn != nil {
+		return r.getConfigFn(ctx, id)
+	}
 	return nil, nil
 }
-func (r *mockRepo) BulkUpdateStatus(context.Context, []uuid.UUID, domain.TenantStatus) error { return nil }
-func (r *mockRepo) BulkSoftDelete(context.Context, []uuid.UUID) error                        { return nil }
-func (r *mockRepo) GetGrowthStats(context.Context, int) ([]domain.GrowthStat, error)         { return nil, nil }
-func (r *mockRepo) GetStatusDistribution(context.Context) (*domain.StatusCount, error)        { return nil, nil }
-func (r *mockRepo) GetCurrentTenantID(context.Context) (uuid.UUID, error)                     { return uuid.Nil, nil }
-func (r *mockRepo) GetCurrentTenant(context.Context) (*domain.Tenant, error)                  { return nil, nil }
-func (r *mockRepo) ValidateCurrentTenant(context.Context) error                               { return nil }
+
+func (r *mockRepo) GetUsage(ctx context.Context, id uuid.UUID) (*domain.TenantUsage, error) {
+	if r.getUsageFn != nil {
+		return r.getUsageFn(ctx, id)
+	}
+	return nil, nil
+}
+
+func (r *mockRepo) InitUsage(ctx context.Context, id uuid.UUID) error {
+	if r.initUsageFn != nil {
+		return r.initUsageFn(ctx, id)
+	}
+	return nil
+}
+
+func (r *mockRepo) Provision(ctx context.Context, input domain.ProvisioningInput) (*domain.ProvisioningResult, error) {
+	if r.provisionFn != nil {
+		return r.provisionFn(ctx, input)
+	}
+	return &domain.ProvisioningResult{
+		TenantID:  uuid.New(),
+		Slug:      "provisioned",
+		Subdomain: input.Subdomain,
+		Status:    "pending",
+	}, nil
+}
+
+func (r *mockRepo) BulkUpdateStatus(ctx context.Context, ids []uuid.UUID, status domain.TenantStatus) error {
+	if r.bulkUpdateStatusFn != nil {
+		return r.bulkUpdateStatusFn(ctx, ids, status)
+	}
+	return nil
+}
+
+func (r *mockRepo) BulkSoftDelete(ctx context.Context, ids []uuid.UUID) error {
+	if r.bulkSoftDeleteFn != nil {
+		return r.bulkSoftDeleteFn(ctx, ids)
+	}
+	return nil
+}
+
+func (r *mockRepo) GetGrowthStats(ctx context.Context, days int) ([]domain.GrowthStat, error) {
+	if r.getGrowthStatsFn != nil {
+		return r.getGrowthStatsFn(ctx, days)
+	}
+	return nil, nil
+}
+
+func (r *mockRepo) GetStatusDistribution(ctx context.Context) (*domain.StatusCount, error) {
+	if r.getStatusDistFn != nil {
+		return r.getStatusDistFn(ctx)
+	}
+	return nil, nil
+}
+
+func (r *mockRepo) GetCurrentTenantID(context.Context) (uuid.UUID, error) { return uuid.Nil, nil }
+func (r *mockRepo) GetCurrentTenant(context.Context) (*domain.Tenant, error) { return nil, nil }
+func (r *mockRepo) ValidateCurrentTenant(context.Context) error              { return nil }
 
 // seed adds a tenant to the mock store for testing.
 func (r *mockRepo) seed(t *domain.Tenant) {

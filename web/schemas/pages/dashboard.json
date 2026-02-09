@@ -95,6 +95,12 @@
         "type": "crud",
         "api": "/dashboard/activity",
         "syncLocation": false,
+        "headerToolbar": [],
+        "footerToolbar": [
+          {
+            "type": "pagination"
+          }
+        ],
         "columns": [
           {"name": "user", "label": "User"},
           {"name": "action", "label": "Action"},

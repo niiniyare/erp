@@ -10,15 +10,18 @@
         "mode": "horizontal",
         "api": "post:/settings/general",
         "initApi": "/settings/general",
+        "submitText": "Save Settings",
         "body": [
           {"type": "input-text", "name": "site_name", "label": "Site Name", "required": true},
           {"type": "textarea", "name": "site_description", "label": "Description"},
           {
             "type": "select", "name": "language", "label": "Language",
+            "searchable": true,
             "options": [{"label": "English", "value": "en"}, {"label": "Chinese", "value": "zh"}]
           },
           {
             "type": "select", "name": "theme", "label": "Theme",
+            "searchable": true,
             "options": [{"label": "Default (CXD)", "value": "cxd"}, {"label": "Ant Design", "value": "antd"}, {"label": "Dark", "value": "dark"}]
           },
           {"type": "input-number", "name": "items_per_page", "label": "Items Per Page", "min": 5, "max": 100, "step": 5},
@@ -35,6 +38,7 @@
         "mode": "horizontal",
         "api": "post:/settings/profile",
         "initApi": "/settings/profile",
+        "submitText": "Update Profile",
         "body": [
           {"type": "input-text", "name": "display_name", "label": "Display Name", "required": true},
           {"type": "input-email", "name": "admin_email", "label": "Email", "required": true},

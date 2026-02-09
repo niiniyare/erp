@@ -21,6 +21,7 @@ type Config struct {
 	Auth      AuthConfig      `yaml:"auth" mapstructure:"auth"`
 	Features  FeatureConfig   `yaml:"features" mapstructure:"features"`
 	Logger    LoggerConfig    `yaml:"logger" mapstructure:"logger"`
+	Tracing   TracingConfig   `yaml:"tracing" mapstructure:"tracing"`
 	UI        UIConfig        `yaml:"ui" mapstructure:"ui"`
 }
 
@@ -170,6 +171,14 @@ func setDefaults(v *viper.Viper) {
 	// Feature defaults
 	v.SetDefault("features.enable_new_dashboard", false)
 
+	// Tracing defaults
+	v.SetDefault("tracing.enabled", false)
+	v.SetDefault("tracing.exporter", "stdout")
+	v.SetDefault("tracing.protocol", "stdout")
+	v.SetDefault("tracing.endpoint", "localhost:4317")
+	v.SetDefault("tracing.insecure", true)
+	v.SetDefault("tracing.sampling_ratio", 1.0)
+
 	// Logger defaults
 	v.SetDefault("logger.type", "zerolog")
 	v.SetDefault("logger.level", "info")
@@ -224,6 +233,14 @@ func bindEnvVars(v *viper.Viper) {
 
 	// Features
 	v.BindEnv("features.enable_new_dashboard", "ENABLE_NEW_DASHBOARD")
+
+	// Tracing
+	v.BindEnv("tracing.enabled", "TRACING_ENABLED")
+	v.BindEnv("tracing.exporter", "TRACING_EXPORTER")
+	v.BindEnv("tracing.protocol", "TRACING_PROTOCOL")
+	v.BindEnv("tracing.endpoint", "OTEL_ENDPOINT")
+	v.BindEnv("tracing.insecure", "OTEL_INSECURE")
+	v.BindEnv("tracing.sampling_ratio", "TRACING_SAMPLING_RATIO")
 
 	// Logger
 	v.BindEnv("logger.type", "LOG_TYPE")

@@ -58,7 +58,7 @@ type TenantLimits struct {
 // CreateTenantRequest represents tenant creation input.
 type CreateTenantRequest struct {
 	Name               string         `json:"name" validate:"required,min=2,max=255"`
-	Slug               string         `json:"slug,omitempty"`
+	Slug               string         `json:"slug,omitempty" validate:"omitempty,slug"`
 	Email              string         `json:"email" validate:"required,email"`
 	Subdomain          *string        `json:"subdomain,omitempty"`
 	Status             TenantStatus   `json:"status,omitempty"`
@@ -92,6 +92,7 @@ type TenantFilter struct {
 	StatusFilter   *string `json:"status_filter,omitempty"`
 	IndustryFilter *string `json:"industry_filter,omitempty"`
 	SortBy         string  `json:"sort_by,omitempty"`
+	SortOrder      string  `json:"sort_order,omitempty"` // asc or desc
 	Offset         int32   `json:"offset"`
 	Limit          int32   `json:"limit"`
 }

@@ -14,14 +14,20 @@
         "dialog": {
           "title": "Add New Product",
           "size": "lg",
+          "actions": [
+            {"type": "button", "label": "Cancel", "actionType": "close"},
+            {"type": "button", "label": "Create", "actionType": "confirm", "level": "primary"}
+          ],
           "body": {
             "type": "form",
             "api": "post:/products",
+            "submitText": "",
             "body": [
               {"type": "input-text", "name": "name", "label": "Product Name", "required": true},
               {"type": "input-text", "name": "sku", "label": "SKU", "required": true},
               {
                 "type": "select", "name": "category", "label": "Category", "required": true,
+                "searchable": true,
                 "options": [
                   {"label": "Electronics", "value": "electronics"},
                   {"label": "Clothing", "value": "clothing"},
@@ -39,7 +45,24 @@
           }
         }
       },
-      "bulkActions"
+      "bulkActions",
+      {
+        "type": "pagination",
+        "align": "right"
+      }
+    ],
+    "footerToolbar": [
+      {
+        "type": "tpl",
+        "tpl": "Showing ${count} of ${total} products"
+      },
+      {
+        "type": "switch-per-page",
+        "label": "Per page"
+      },
+      {
+        "type": "pagination"
+      }
     ],
     "bulkActions": [
       {
@@ -50,11 +73,13 @@
       }
     ],
     "filter": {
-      "title": "Search & Filter",
+      "title": "",
+      "submitText": "Search",
       "body": [
         {"type": "input-text", "name": "keyword", "placeholder": "Search by name or SKU", "clearable": true},
         {
           "type": "select", "name": "category", "placeholder": "All Categories", "clearable": true,
+          "searchable": true,
           "options": [
             {"label": "Electronics", "value": "electronics"},
             {"label": "Clothing", "value": "clothing"},
@@ -108,14 +133,20 @@
             "label": "Edit", "type": "button", "level": "link", "actionType": "dialog",
             "dialog": {
               "title": "Edit Product", "size": "lg",
+              "actions": [
+                {"type": "button", "label": "Cancel", "actionType": "close"},
+                {"type": "button", "label": "Save", "actionType": "confirm", "level": "primary"}
+              ],
               "body": {
                 "type": "form",
                 "api": "put:/products/${id}",
+                "submitText": "",
                 "body": [
                   {"type": "input-text", "name": "name", "label": "Product Name", "required": true},
                   {"type": "input-text", "name": "sku", "label": "SKU", "required": true},
                   {
                     "type": "select", "name": "category", "label": "Category", "required": true,
+                    "searchable": true,
                     "options": [
                       {"label": "Electronics", "value": "electronics"},
                       {"label": "Clothing", "value": "clothing"},

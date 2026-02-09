@@ -347,8 +347,8 @@ INSERT
 
 
 -- Better email validation
-ALTER TABLE tenants ADD CONSTRAINT valid_email 
-  CHECK (email ~* '^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
+-- ALTER TABLE tenants ADD CONSTRAINT valid_email
+--   CHECK ( email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
 
 -- Subdomain validation
 ALTER TABLE tenants ADD CONSTRAINT valid_subdomain 

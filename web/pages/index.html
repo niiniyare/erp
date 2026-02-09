@@ -79,6 +79,7 @@
       <span class="brand">AMIS Admin</span>
       <a href="#dashboard">Dashboard</a>
       <a href="#users">Users</a>
+      <a href="#organizations">Tenant</a>
       <a href="#products">Products</a>
       <a href="#settings">Settings</a>
     </div>
@@ -90,11 +91,12 @@
   <script src="../sdk/sdk.js"></script>
   <script src="../sdk/charts.js"></script>
   <script src="../sdk/rest.js"></script>
+  <script src="../utils/locale-en.js"></script>
   <script src="../utils/schema-loader.js"></script>
   <script>
     (function () {
       // --- Configuration ---
-      var API_BASE = 'http://localhost:3000/api';
+      var API_BASE = 'http://localhost:8080';
 
       var amis = amisRequire('amis/embed');
       var loader = new SchemaLoader('../schemas/');
@@ -122,7 +124,31 @@
           return fetch(url, opts)
             .then(function (res) {return res.json();})
             .then(function (json) {
-              // Expects standard AMIS format: {status: 0, data: {...}, msg: ''}
+              // Adapt our API format to AMIS expected format:
+              // AMIS wants: {status: 0, data: {...}, msg: ''}
+              // Our API returns: {success: true, data: ..., meta: {...}}
+              if (json.success !== undefined) {
+                if (!json.success) {
+                  return {status: 1, msg: json.message || 'Request failed'};
+                }
+                // List response: data is array with pagination in meta
+                if (Array.isArray(json.data) && json.meta && json.meta.pagination) {
+                  return {
+                    status: 0,
+                    data: {
+                      items: json.data,
+                      count: json.meta.pagination.total_records
+                    }
+                  };
+                }
+                // Single object response (create, get, update, action)
+                return {status: 0, data: json.data, msg: ''};
+              }
+              // Error response from our API (no success field)
+              if (json.status && json.status >= 400) {
+                return {status: json.status, msg: json.message || 'Error'};
+              }
+              // Pass through for other formats
               return json;
             });
         },
@@ -280,7 +306,7 @@
 <!--   <script> -->
 <!--     (function () { -->
 <!--       // --- Configuration --- -->
-<!--       var API_BASE = 'http://localhost:3000/api'; -->
+<!--       var API_BASE = 'http://localhost:8080'; -->
 <!---->
 <!--       var amis = amisRequire('amis/embed'); -->
 <!--       var loader = new SchemaLoader('../schemas/'); -->

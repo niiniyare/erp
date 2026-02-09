@@ -10,14 +10,20 @@
       "dialog": {
         "title": "Add New User",
         "size": "md",
+        "actions": [
+          {"type": "button", "label": "Cancel", "actionType": "close"},
+          {"type": "button", "label": "Create", "actionType": "confirm", "level": "primary"}
+        ],
         "body": {
           "type": "form",
           "api": "post:/users",
+          "submitText": "",
           "body": [
             {"type": "input-text", "name": "name", "label": "Name", "required": true},
             {"type": "input-email", "name": "email", "label": "Email", "required": true},
             {
               "type": "select", "name": "role", "label": "Role", "value": "user",
+              "searchable": true,
               "options": [{"label": "Admin", "value": "admin"}, {"label": "User", "value": "user"}]
             },
             {"type": "switch", "name": "status", "label": "Active", "trueValue": 1, "falseValue": 0, "value": 1}
@@ -30,8 +36,28 @@
     "type": "crud",
     "api": "/users",
     "syncLocation": false,
+    "headerToolbar": [
+      {
+        "type": "tpl",
+        "tpl": "Showing ${count} of ${total} users"
+      },
+      {
+        "type": "pagination",
+        "align": "right"
+      }
+    ],
+    "footerToolbar": [
+      {
+        "type": "switch-per-page",
+        "label": "Per page"
+      },
+      {
+        "type": "pagination"
+      }
+    ],
     "filter": {
-      "title": "Search",
+      "title": "",
+      "submitText": "Search",
       "body": [
         {"type": "input-text", "name": "keywords", "placeholder": "Search by name or email", "clearable": true}
       ],
@@ -60,14 +86,20 @@
             "label": "Edit", "type": "button", "level": "link", "actionType": "dialog",
             "dialog": {
               "title": "Edit User", "size": "md",
+              "actions": [
+                {"type": "button", "label": "Cancel", "actionType": "close"},
+                {"type": "button", "label": "Save", "actionType": "confirm", "level": "primary"}
+              ],
               "body": {
                 "type": "form",
                 "api": "put:/users/${id}",
+                "submitText": "",
                 "body": [
                   {"type": "input-text", "name": "name", "label": "Name", "required": true},
                   {"type": "input-email", "name": "email", "label": "Email", "required": true},
                   {
                     "type": "select", "name": "role", "label": "Role",
+                    "searchable": true,
                     "options": [{"label": "Admin", "value": "admin"}, {"label": "User", "value": "user"}]
                   },
                   {"type": "switch", "name": "status", "label": "Active", "trueValue": 1, "falseValue": 0}
