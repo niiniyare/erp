@@ -1,61 +1,67 @@
 {
   "type": "page",
-  "title": "Products Management",
+  "title": "Items",
+  "subTitle": "Manage your inventory items",
+  "toolbar": [
+    {
+      "type": "button",
+      "label": "Add Item",
+      "level": "primary",
+      "icon": "fa fa-plus",
+      "actionType": "dialog",
+      "dialog": {
+        "title": "Add New Item",
+        "size": "lg",
+        "actions": [
+          {"type": "button", "label": "Cancel", "actionType": "close"},
+          {"type": "button", "label": "Create", "actionType": "confirm", "level": "primary"}
+        ],
+        "body": {
+          "type": "form",
+          "api": "post:/products",
+          "submitText": "",
+          "body": [
+            {"type": "input-text", "name": "name", "label": "Item Name", "required": true},
+            {"type": "input-text", "name": "sku", "label": "SKU", "required": true},
+            {
+              "type": "select", "name": "category", "label": "Category", "required": true,
+              "searchable": true,
+              "options": [
+                {"label": "Electronics", "value": "electronics"},
+                {"label": "Clothing", "value": "clothing"},
+                {"label": "Food & Beverage", "value": "food"},
+                {"label": "Home & Garden", "value": "home"},
+                {"label": "Sports", "value": "sports"}
+              ]
+            },
+            {"type": "input-number", "name": "price", "label": "Price", "required": true, "min": 0, "precision": 2, "prefix": "$"},
+            {"type": "input-number", "name": "stock", "label": "Stock", "required": true, "min": 0, "value": 0},
+            {"type": "textarea", "name": "description", "label": "Description"},
+            {"type": "input-image", "name": "image", "label": "Image", "receiver": {"url": "/upload"}},
+            {"type": "switch", "name": "status", "label": "Active", "trueValue": 1, "falseValue": 0, "value": 1}
+          ]
+        }
+      }
+    }
+  ],
   "body": {
     "type": "crud",
     "api": "/products",
     "syncLocation": false,
     "headerToolbar": [
-      {
-        "type": "button",
-        "label": "Add Product",
-        "level": "primary",
-        "actionType": "dialog",
-        "dialog": {
-          "title": "Add New Product",
-          "size": "lg",
-          "actions": [
-            {"type": "button", "label": "Cancel", "actionType": "close"},
-            {"type": "button", "label": "Create", "actionType": "confirm", "level": "primary"}
-          ],
-          "body": {
-            "type": "form",
-            "api": "post:/products",
-            "submitText": "",
-            "body": [
-              {"type": "input-text", "name": "name", "label": "Product Name", "required": true},
-              {"type": "input-text", "name": "sku", "label": "SKU", "required": true},
-              {
-                "type": "select", "name": "category", "label": "Category", "required": true,
-                "searchable": true,
-                "options": [
-                  {"label": "Electronics", "value": "electronics"},
-                  {"label": "Clothing", "value": "clothing"},
-                  {"label": "Food & Beverage", "value": "food"},
-                  {"label": "Home & Garden", "value": "home"},
-                  {"label": "Sports", "value": "sports"}
-                ]
-              },
-              {"type": "input-number", "name": "price", "label": "Price", "required": true, "min": 0, "precision": 2, "prefix": "$"},
-              {"type": "input-number", "name": "stock", "label": "Stock", "required": true, "min": 0, "value": 0},
-              {"type": "textarea", "name": "description", "label": "Description"},
-              {"type": "input-image", "name": "image", "label": "Image", "receiver": {"url": "/upload"}},
-              {"type": "switch", "name": "status", "label": "Active", "trueValue": 1, "falseValue": 0, "value": 1}
-            ]
-          }
-        }
-      },
       "bulkActions",
       {
-        "type": "pagination",
+        "type": "tpl",
+        "tpl": "<span class='text-muted text-sm'>${count} of ${total} items</span>",
         "align": "right"
+      },
+      {
+        "type": "columns-toggler",
+        "align": "right",
+        "label": "Columns"
       }
     ],
     "footerToolbar": [
-      {
-        "type": "tpl",
-        "tpl": "Showing ${count} of ${total} products"
-      },
       {
         "type": "switch-per-page",
         "label": "Per page"
@@ -69,7 +75,7 @@
         "label": "Delete Selected",
         "actionType": "ajax",
         "api": "delete:/products/batch?ids=${ids}",
-        "confirmText": "Are you sure you want to delete selected products?"
+        "confirmText": "Are you sure you want to delete selected items?"
       }
     ],
     "filter": {
@@ -104,7 +110,7 @@
     "columns": [
       {"name": "id", "label": "ID", "sortable": true, "width": 60},
       {"name": "image", "label": "Image", "type": "image", "width": 80},
-      {"name": "name", "label": "Product Name", "sortable": true},
+      {"name": "name", "label": "Item Name", "sortable": true},
       {"name": "sku", "label": "SKU", "width": 120},
       {
         "name": "category", "label": "Category", "type": "mapping",
@@ -132,7 +138,7 @@
           {
             "label": "Edit", "type": "button", "level": "link", "actionType": "dialog",
             "dialog": {
-              "title": "Edit Product", "size": "lg",
+              "title": "Edit Item", "size": "lg",
               "actions": [
                 {"type": "button", "label": "Cancel", "actionType": "close"},
                 {"type": "button", "label": "Save", "actionType": "confirm", "level": "primary"}
@@ -142,7 +148,7 @@
                 "api": "put:/products/${id}",
                 "submitText": "",
                 "body": [
-                  {"type": "input-text", "name": "name", "label": "Product Name", "required": true},
+                  {"type": "input-text", "name": "name", "label": "Item Name", "required": true},
                   {"type": "input-text", "name": "sku", "label": "SKU", "required": true},
                   {
                     "type": "select", "name": "category", "label": "Category", "required": true,
@@ -167,7 +173,7 @@
           {
             "label": "Delete", "type": "button", "level": "link", "className": "text-danger",
             "actionType": "ajax", "api": "delete:/products/${id}",
-            "confirmText": "Are you sure you want to delete this product?"
+            "confirmText": "Are you sure you want to delete this item?"
           }
         ]
       }

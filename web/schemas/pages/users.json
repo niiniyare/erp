@@ -1,11 +1,13 @@
 {
   "type": "page",
-  "title": "User Management",
+  "title": "Users",
+  "subTitle": "Manage user accounts and roles",
   "toolbar": [
     {
       "type": "button",
       "label": "Add User",
       "level": "primary",
+      "icon": "fa fa-plus",
       "actionType": "dialog",
       "dialog": {
         "title": "Add New User",
@@ -39,11 +41,13 @@
     "headerToolbar": [
       {
         "type": "tpl",
-        "tpl": "Showing ${count} of ${total} users"
+        "tpl": "<span class='text-muted text-sm'>${count} of ${total} users</span>",
+        "align": "right"
       },
       {
-        "type": "pagination",
-        "align": "right"
+        "type": "columns-toggler",
+        "align": "right",
+        "label": "Columns"
       }
     ],
     "footerToolbar": [

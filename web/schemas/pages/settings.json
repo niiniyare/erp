@@ -1,6 +1,7 @@
 {
   "type": "page",
   "title": "Settings",
+  "subTitle": "Configure your application preferences",
   "body": [
     {
       "type": "panel",

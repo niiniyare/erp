@@ -1,90 +1,1016 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="system">
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AMIS Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AWO ERP</title>
   <link rel="stylesheet" href="../sdk/sdk.css">
   <link rel="stylesheet" href="../sdk/helper.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
   <link rel="stylesheet" href="../sdk/iconfont.css">
   <style>
-    html,
-    body {
+    /* ── Light Theme (default) ── */
+    :root {
+      --sidebar-width: 260px;
+      --sidebar-collapsed: 60px;
+      --sidebar-bg: #fff;
+      --sidebar-border: #e8eaed;
+      --sidebar-active: #e8f4fd;
+      --sidebar-active-border: #2196f3;
+      --sidebar-hover: #f5f7fa;
+      --topbar-height: 50px;
+      --text-primary: #1a1a2e;
+      --text-secondary: #6b7280;
+      --text-muted: #999;
+      --bg-main: #f5f6f8;
+      --bg-surface: #fff;
+      --bg-input: #f5f7fa;
+      --search-border: #e8eaed;
+      --scrollbar-thumb: #ddd;
+      --tooltip-bg: #333;
+      --tooltip-color: #fff;
+      --backdrop-bg: rgba(0, 0, 0, 0.4);
+      --shadow-sidebar: 4px 0 24px rgba(0, 0, 0, 0.15);
+    }
+
+    /* ── Dark Theme (applied via .dark class on <html>) ── */
+    html.dark {
+      --sidebar-bg: #1e1e2d;
+      --sidebar-border: #2e2e3e;
+      --sidebar-active: #1a2744;
+      --sidebar-active-border: #4dabf7;
+      --sidebar-hover: #262637;
+      --text-primary: #e4e4e7;
+      --text-secondary: #9a9ab0;
+      --text-muted: #6b6b80;
+      --bg-main: #151521;
+      --bg-surface: #1e1e2d;
+      --bg-input: #262637;
+      --search-border: #2e2e3e;
+      --scrollbar-thumb: #3a3a4e;
+      --tooltip-bg: #e4e4e7;
+      --tooltip-color: #1e1e2d;
+      --backdrop-bg: rgba(0, 0, 0, 0.6);
+      --shadow-sidebar: 4px 0 24px rgba(0, 0, 0, 0.4);
+      color-scheme: dark;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    html, body {
       height: 100%;
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      background: var(--bg-main);
+      color: var(--text-primary);
     }
 
+    /* ── Layout Shell ── */
     #app {
       display: flex;
-      flex-direction: column;
       height: 100%;
+      overflow: hidden;
     }
 
-    #nav {
-      background: #2c3e50;
-      color: #fff;
-      padding: 0 20px;
+    /* ── Sidebar ── */
+    #sidebar {
+      width: var(--sidebar-width);
+      min-width: var(--sidebar-width);
+      height: 100%;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--sidebar-border);
       display: flex;
-      align-items: center;
-      height: 50px;
+      flex-direction: column;
+      transition: width 0.25s ease, min-width 0.25s ease;
+      overflow: hidden;
+      z-index: 1001;
       flex-shrink: 0;
     }
 
-    #nav .brand {
-      font-size: 18px;
-      font-weight: bold;
-      margin-right: 30px;
+    #sidebar.collapsed {
+      width: var(--sidebar-collapsed);
+      min-width: var(--sidebar-collapsed);
     }
 
-    #nav a {
-      color: rgba(255, 255, 255, 0.7);
-      text-decoration: none;
-      padding: 14px 15px;
-      transition: color 0.2s;
+    /* ── Sidebar Brand ── */
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      height: 60px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--sidebar-border);
     }
 
-    #nav a:hover,
-    #nav a.active {
+    .sidebar-brand .brand-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .sidebar-brand .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: #2196f3;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      flex-shrink: 0;
     }
 
+    .sidebar-brand .brand-text {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .collapsed .brand-text {
+      display: none;
+    }
+
+    .sidebar-toggle {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 16px;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .sidebar-toggle:hover {
+      background: var(--sidebar-hover);
+    }
+
+    .collapsed .sidebar-toggle {
+      margin: 0 auto;
+    }
+
+    /* ── Sidebar Search ── */
+    .sidebar-search {
+      padding: 12px 16px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-search .search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--search-border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .sidebar-search .search-box:hover {
+      border-color: var(--text-secondary);
+    }
+
+    .sidebar-search .search-box i {
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-search .search-box span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .collapsed .sidebar-search {
+      padding: 12px 8px;
+    }
+
+    .collapsed .sidebar-search .search-box span {
+      display: none;
+    }
+
+    .collapsed .sidebar-search .search-box {
+      justify-content: center;
+      padding: 8px;
+    }
+
+    /* ── Sidebar Menu ── */
+    .sidebar-menu {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 4px 0;
+    }
+
+    .sidebar-menu::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .sidebar-menu::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 4px;
+    }
+
+    /* Menu Group */
+    .menu-group {
+      margin-bottom: 2px;
+    }
+
+    .menu-group-header {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      gap: 10px;
+    }
+
+    .menu-group-header:hover {
+      background: var(--sidebar-hover);
+    }
+
+    .menu-group-header .group-icon {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .menu-group-header .group-label {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .menu-group-header .group-chevron {
+      font-size: 11px;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .menu-group.expanded .group-chevron {
+      transform: rotate(180deg);
+    }
+
+    .menu-group-items {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.25s ease;
+    }
+
+    .menu-group.expanded .menu-group-items {
+      max-height: 500px;
+    }
+
+    /* Collapsed sidebar: hide labels & chevrons */
+    .collapsed .menu-group-header .group-label,
+    .collapsed .menu-group-header .group-chevron {
+      display: none;
+    }
+
+    .collapsed .menu-group-header {
+      justify-content: center;
+      padding: 10px 0;
+    }
+
+    .collapsed .menu-group-items {
+      max-height: 0 !important;
+    }
+
+    /* Menu Item */
+    .menu-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 16px 9px 54px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-left: 3px solid transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .menu-item:hover {
+      background: var(--sidebar-hover);
+      color: var(--text-primary);
+    }
+
+    .menu-item.active {
+      background: var(--sidebar-active);
+      color: var(--sidebar-active-border);
+      border-left-color: var(--sidebar-active-border);
+      font-weight: 500;
+    }
+
+    .menu-item.active .item-label {
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      text-decoration-thickness: 2px;
+    }
+
+    /* Top-level standalone menu items (like Dashboard) */
+    .menu-item.top-level {
+      padding-left: 16px;
+    }
+
+    .menu-item .item-icon {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .menu-item .item-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Collapsed: top-level items show icon only */
+    .collapsed .menu-item.top-level {
+      justify-content: center;
+      padding: 10px 0;
+    }
+
+    .collapsed .menu-item .item-label {
+      display: none;
+    }
+
+    /* Group sub-label dot */
+    .menu-group-items .menu-item {
+      position: relative;
+    }
+
+    /* ── Sidebar Tooltip (collapsed mode) ── */
+    .collapsed .menu-item[data-tooltip]:hover::after,
+    .collapsed .menu-group-header[data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      left: calc(var(--sidebar-collapsed) + 8px);
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--tooltip-bg);
+      color: var(--tooltip-color);
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      z-index: 9999;
+      pointer-events: none;
+      font-weight: 400;
+    }
+
+    .collapsed .menu-item[data-tooltip],
+    .collapsed .menu-group-header[data-tooltip] {
+      position: relative;
+    }
+
+    /* ── Main Area ── */
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      height: 100%;
+      background: var(--bg-main);
+    }
+
+    /* ── Topbar ── */
+    #topbar {
+      height: var(--topbar-height);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--sidebar-border);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      flex-shrink: 0;
+      gap: 12px;
+    }
+
+    #topbar .topbar-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      line-height: 1;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #topbar .topbar-toggle:hover {
+      background: var(--sidebar-hover);
+    }
+
+    #topbar .topbar-brand {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+
+    #topbar .topbar-brand .brand-icon {
+      width: 28px;
+      height: 28px;
+      background: #2196f3;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .topbar-spacer {
+      flex: 1;
+    }
+
+    /* ── Theme Toggle Button ── */
+    .theme-toggle {
+      background: none;
+      border: 1px solid var(--sidebar-border);
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+    }
+
+    .theme-toggle:hover {
+      background: var(--sidebar-hover);
+      color: var(--text-primary);
+      border-color: var(--text-secondary);
+    }
+
+    .theme-toggle .theme-label {
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .breadcrumb {
+      font-size: 14px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .breadcrumb .bc-separator {
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+
+    .breadcrumb .bc-current {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    /* ── Content ── */
     #content {
       flex: 1;
       overflow: auto;
+      padding: 24px;
     }
 
     .loading {
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100%;
-      color: #999;
+      height: 300px;
+      color: var(--text-muted);
+      font-size: 14px;
     }
 
     .error-page {
-      padding: 40px;
+      padding: 60px 20px;
       text-align: center;
       color: #e74c3c;
+    }
+
+    .error-page h2 {
+      margin: 0 0 8px;
+      font-size: 22px;
+    }
+
+    .error-page p {
+      color: var(--text-muted);
+      margin: 0 0 20px;
+    }
+
+    .error-page a {
+      color: #4dabf7;
+      text-decoration: none;
+    }
+
+    /* ── Footer ── */
+    #footer {
+      background: var(--bg-surface);
+      border-top: 1px solid var(--sidebar-border);
+      padding: 14px 20px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    #footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    #footer a:hover {
+      color: var(--text-primary);
+    }
+
+    /* ── Backdrop (mobile) ── */
+    #sidebar-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--backdrop-bg);
+      z-index: 1000;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #sidebar-backdrop.visible {
+      display: block;
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 767px) {
+      #sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100%;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        box-shadow: none;
+      }
+
+      #sidebar.mobile-open {
+        transform: translateX(0);
+        box-shadow: var(--shadow-sidebar);
+      }
+
+      /* Never show collapsed state on mobile */
+      #sidebar.collapsed {
+        width: var(--sidebar-width);
+        min-width: var(--sidebar-width);
+      }
+
+      .collapsed .brand-text,
+      .collapsed .menu-group-header .group-label,
+      .collapsed .menu-group-header .group-chevron,
+      .collapsed .menu-item .item-label,
+      .collapsed .sidebar-search .search-box span {
+        display: unset;
+      }
+
+      .collapsed .menu-group-items {
+        max-height: unset !important;
+      }
+
+      .collapsed .menu-group.expanded .menu-group-items {
+        max-height: 500px !important;
+      }
+
+      .collapsed .menu-group:not(.expanded) .menu-group-items {
+        max-height: 0 !important;
+      }
+
+      .collapsed .menu-group-header,
+      .collapsed .menu-item.top-level {
+        justify-content: flex-start;
+        padding-left: 16px;
+      }
+
+      .collapsed .sidebar-search {
+        padding: 12px 16px;
+      }
+
+      .collapsed .sidebar-search .search-box {
+        justify-content: flex-start;
+        padding: 8px 12px;
+      }
+
+      .collapsed .sidebar-toggle {
+        margin: 0;
+      }
+
+      #topbar .topbar-toggle {
+        display: block;
+      }
+
+      #topbar .topbar-brand {
+        display: flex;
+      }
+
+      .sidebar-brand {
+        display: flex;
+      }
+
+      .theme-toggle .theme-label {
+        display: none;
+      }
+
+      #content {
+        padding: 12px;
+      }
+
+      #footer {
+        padding: 10px 12px;
+        font-size: 11px;
+      }
+    }
+
+    /* ── Tablet ── */
+    @media (min-width: 768px) and (max-width: 1024px) {
+      #content {
+        padding: 16px;
+      }
+    }
+
+    /* ══════════════════════════════════════════
+       AMIS SDK Dark Mode Overrides
+       These override the hardcoded AMIS styles
+       ══════════════════════════════════════════ */
+
+    /* Page & Body */
+    html.dark .cxd-Page,
+    html.dark .cxd-Page-body {
+      background: var(--bg-main) !important;
+      color: var(--text-primary) !important;
+    }
+
+    /* Panels & Cards */
+    html.dark .cxd-Panel,
+    html.dark .cxd-Card,
+    html.dark .cxd-Card-body,
+    html.dark .cxd-Panel--default {
+      background: var(--bg-surface) !important;
+      border-color: var(--sidebar-border) !important;
+      color: var(--text-primary) !important;
+    }
+
+    html.dark .cxd-Panel-heading,
+    html.dark .cxd-Panel-title,
+    html.dark .cxd-Card-heading {
+      color: var(--text-primary) !important;
+    }
+
+    html.dark .cxd-Panel-heading {
+      background: var(--bg-surface) !important;
+      border-color: var(--sidebar-border) !important;
+    }
+
+    /* Tables */
+    html.dark .cxd-Table,
+    html.dark .cxd-Table-table,
+    html.dark .cxd-Table-content {
+      background: var(--bg-surface) !important;
+      color: var(--text-primary) !important;
+    }
+
+    html.dark .cxd-Table-table > thead > tr > th,
+    html.dark .cxd-Table-headCell {
+      background: var(--bg-input) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--sidebar-border) !important;
+    }
+
+    html.dark .cxd-Table-table > tbody > tr > td,
+    html.dark .cxd-Table-cell {
+      border-color: var(--sidebar-border) !important;
+      color: var(--text-primary) !important;
+    }
+
+    html.dark .cxd-Table-table > tbody > tr {
+      background: var(--bg-surface) !important;
+    }
+
+    html.dark .cxd-Table-table > tbody > tr:hover,
+    html.dark .cxd-Table-table > tbody > tr.is-hovered {
+      background: var(--sidebar-hover) !important;
+    }
+
+    html.dark .cxd-Table-table > tbody > tr:nth-child(even),
+    html.dark .cxd-Table--striped > tbody > tr:nth-child(even) {
+      background: var(--bg-input) !important;
+    }
+
+    /* CRUD */
+    html.dark .cxd-Crud,
+    html.dark .cxd-Crud-body {
+      background: transparent !important;
+    }
+
+    html.dark .cxd-Crud-toolbar {
+      background: var(--bg-surface) !important;
+      color: var(--text-primary) !important;
+    }
+
+    /* Forms & Inputs */
+    html.dark .cxd-Form-label,
+    html.dark .cxd-Form-description,
+    html.dark .cxd-Group-label {
+      color: var(--text-primary) !important;
+    }
+
+    html.dark .cxd-TextControl-input,
+    html.dark .cxd-NumberControl-input,
+    html.dark .cxd-DatePicker,
+    html.dark .cxd-Select,
+    html.dark .cxd-Select-value,
+    html.dark .cxd-TextareaControl,
+    html.dark input.cxd-TextControl-input,
+    html.dark .cxd-Switch-option,
+    html.dark .cxd-SearchBox {
+      background: var(--bg-input) !important;
+      border-color: var(--sidebar-border) !important;
+      color: var(--text-primary) !important;
+    }
+
+    html.dark .cxd-TextControl-input:focus,
+    html.dark .cxd-Select.is-focused {
+      border-color: var(--sidebar-active-border) !important;
+    }
+
+    html.dark .cxd-Select-arrow {
+      color: var(--text-secondary) !important;
+    }
+
+    html.dark .cxd-Select-menu,
+    html.dark .cxd-Select-popover,
+    html.dark .cxd-PopOver,
+    html.dark .cxd-Picker-popover {
+      background: var(--bg-surface) !important;
+      border-color: var(--sidebar-border) !important;
+      color: var(--text-primary) !important;
+    }
+
+    html.dark .cxd-Select-option:hover,
+    html.dark .cxd-Select-option.is-highlight {
+      background: var(--sidebar-hover) !important;
+    }
+
+    html.dark .cxd-Select-option.is-active {
+      background: var(--sidebar-active) !important;
+      color: var(--sidebar-active-border) !important;
+    }
+
+    /* Buttons */
+    html.dark .cxd-Button--default {
+      background: var(--bg-input) !important;
+      border-color: var(--sidebar-border) !important;
+      color: var(--text-primary) !important;
+    }
+
+    html.dark .cxd-Button--default:hover {
+      background: var(--sidebar-hover) !important;
+      border-color: var(--text-secondary) !important;
+    }
+
+    /* Pagination */
+    html.dark .cxd-Pagination,
+    html.dark .cxd-Crud-pager {
+      color: var(--text-secondary) !important;
+    }
+
+    html.dark .cxd-Pagination-item,
+    html.dark .cxd-Pagination-prev,
+    html.dark .cxd-Pagination-next {
+      background: var(--bg-input) !important;
+      border-color: var(--sidebar-border) !important;
+      color: var(--text-primary) !important;
+    }
+
+    html.dark .cxd-Pagination-item:hover {
+      background: var(--sidebar-hover) !important;
+    }
+
+    html.dark .cxd-Pagination-item.is-active {
+      background: var(--sidebar-active-border) !important;
+      color: #fff !important;
+      border-color: var(--sidebar-active-border) !important;
+    }
+
+    /* Modal / Dialog */
+    html.dark .cxd-Modal-content,
+    html.dark .cxd-Dialog {
+      background: var(--bg-surface) !important;
+      color: var(--text-primary) !important;
+      border-color: var(--sidebar-border) !important;
+    }
+
+    html.dark .cxd-Modal-header,
+    html.dark .cxd-Dialog-header {
+      background: var(--bg-surface) !important;
+      border-color: var(--sidebar-border) !important;
+      color: var(--text-primary) !important;
+    }
+
+    html.dark .cxd-Modal-footer,
+    html.dark .cxd-Dialog-footer {
+      background: var(--bg-surface) !important;
+      border-color: var(--sidebar-border) !important;
+    }
+
+    html.dark .cxd-Modal-title {
+      color: var(--text-primary) !important;
+    }
+
+    html.dark .cxd-Modal-close {
+      color: var(--text-secondary) !important;
+    }
+
+    /* Tabs */
+    html.dark .cxd-Tabs,
+    html.dark .cxd-Tabs-content {
+      background: var(--bg-surface) !important;
+    }
+
+    html.dark .cxd-Tabs-links {
+      border-color: var(--sidebar-border) !important;
+    }
+
+    html.dark .cxd-Tabs-link a {
+      color: var(--text-secondary) !important;
+    }
+
+    html.dark .cxd-Tabs-link.is-active a {
+      color: var(--sidebar-active-border) !important;
+    }
+
+    /* Badges, labels, tags */
+    html.dark .cxd-Tag {
+      border-color: var(--sidebar-border) !important;
+    }
+
+    /* Breadcrumb, headers, general text */
+    html.dark h1, html.dark h2, html.dark h3,
+    html.dark h4, html.dark h5, html.dark h6 {
+      color: var(--text-primary) !important;
+    }
+
+    html.dark .cxd-TplField,
+    html.dark .cxd-PlainField,
+    html.dark .text-muted,
+    html.dark .cxd-Remark-icon {
+      color: var(--text-secondary) !important;
+    }
+
+    /* Dividers / HRs */
+    html.dark hr,
+    html.dark .cxd-Divider {
+      border-color: var(--sidebar-border) !important;
+    }
+
+    /* Spinner */
+    html.dark .cxd-Spinner {
+      color: var(--text-muted) !important;
+    }
+
+    /* Tooltip */
+    html.dark .cxd-Tooltip {
+      background: var(--tooltip-bg) !important;
+      color: var(--tooltip-color) !important;
+    }
+
+    /* Scrollbar (content area) */
+    html.dark #content::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+    }
+
+    html.dark #content::-webkit-scrollbar-track {
+      background: var(--bg-main);
+    }
+
+    /* Checkbox / Radio */
+    html.dark .cxd-Checkbox-inner,
+    html.dark .cxd-Radio-inner {
+      background: var(--bg-input) !important;
+      border-color: var(--sidebar-border) !important;
+    }
+
+    /* Status / Alert */
+    html.dark .cxd-Alert {
+      border-color: var(--sidebar-border) !important;
+    }
+
+    /* Generic catch-all for white backgrounds inside content */
+    html.dark #content [style*="background: #fff"],
+    html.dark #content [style*="background:#fff"],
+    html.dark #content [style*="background-color: #fff"],
+    html.dark #content [style*="background-color:#fff"],
+    html.dark #content [style*="background: white"],
+    html.dark #content [style*="background-color: white"] {
+      background: var(--bg-surface) !important;
     }
   </style>
 </head>
 
 <body>
   <div id="app">
-    <div id="nav">
-      <span class="brand">AMIS Admin</span>
-      <a href="#dashboard">Dashboard</a>
-      <a href="#users">Users</a>
-      <a href="#organizations">Tenant</a>
-      <a href="#products">Products</a>
-      <a href="#settings">Settings</a>
-    </div>
-    <div id="content">
-      <div class="loading">Loading...</div>
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-content">
+          <div class="brand-icon">A</div>
+          <span class="brand-text">AWO ERP</span>
+        </div>
+        <button class="sidebar-toggle" aria-label="Toggle sidebar" onclick="toggleSidebar()">
+          <i class="fa fa-bars"></i>
+        </button>
+      </div>
+
+      <div class="sidebar-search">
+        <div class="search-box">
+          <i class="fa fa-search"></i>
+          <span>Search tools</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-menu" id="sidebarMenu"></nav>
+    </aside>
+
+    <!-- Backdrop for mobile -->
+    <div id="sidebar-backdrop" onclick="closeSidebarMobile()"></div>
+
+    <!-- Main Content Area -->
+    <div id="main">
+      <div id="topbar">
+        <button class="topbar-toggle" aria-label="Open menu" onclick="openSidebarMobile()">
+          <i class="fa fa-bars"></i>
+        </button>
+        <div class="topbar-brand">
+          <div class="brand-icon">A</div>
+          <span>AWO ERP</span>
+        </div>
+        <div class="breadcrumb" id="breadcrumb">
+          <span class="bc-current">Dashboard</span>
+        </div>
+        <div class="topbar-spacer"></div>
+        <button class="theme-toggle" aria-label="Toggle theme" onclick="cycleTheme()">
+          <i class="fa fa-circle-half-stroke" id="themeIcon"></i>
+          <span class="theme-label" id="themeLabel">System</span>
+        </button>
+      </div>
+
+      <div id="content">
+        <div class="loading">Loading...</div>
+      </div>
+
+      <div id="footer">
+        <span>&copy; 2026 AWO ERP &middot; <a href="#settings">Settings</a></span>
+      </div>
     </div>
   </div>
 
@@ -95,43 +1021,258 @@
   <script src="../utils/schema-loader.js"></script>
   <script>
     (function () {
-      // --- Configuration ---
       var API_BASE = 'http://localhost:8080';
 
       var amis = amisRequire('amis/embed');
       var loader = new SchemaLoader('../schemas/');
       var currentInstance = null;
 
-      // AMIS env with fetcher that routes API calls to your REST backend
+      // ── Theme System ──
+      var themeOrder = ['system', 'light', 'dark'];
+      var themeIcons = { system: 'fa-circle-half-stroke', light: 'fa-sun', dark: 'fa-moon' };
+      var themeLabels = { system: 'System', light: 'Light', dark: 'Dark' };
+      var osDarkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+      function getStoredTheme() {
+        try { return localStorage.getItem('awo-theme') || 'system'; } catch (e) { return 'system'; }
+      }
+
+      function isDarkEffective(theme) {
+        if (theme === 'dark') return true;
+        if (theme === 'light') return false;
+        return osDarkQuery.matches; // system: follow OS
+      }
+
+      function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        // Compute effective dark/light and apply .dark class
+        if (isDarkEffective(theme)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+        var icon = document.getElementById('themeIcon');
+        var label = document.getElementById('themeLabel');
+        if (icon) icon.className = 'fa ' + themeIcons[theme];
+        if (label) label.textContent = themeLabels[theme];
+        try { localStorage.setItem('awo-theme', theme); } catch (e) {}
+      }
+
+      window.cycleTheme = function () {
+        var current = getStoredTheme();
+        var idx = themeOrder.indexOf(current);
+        var next = themeOrder[(idx + 1) % themeOrder.length];
+        applyTheme(next);
+      };
+
+      // React to OS theme changes when in "system" mode
+      osDarkQuery.addEventListener('change', function () {
+        if (getStoredTheme() === 'system') applyTheme('system');
+      });
+
+      // Apply saved theme immediately
+      applyTheme(getStoredTheme());
+
+      // ── Menu Structure ──
+      var menuConfig = [
+        {
+          type: 'item',
+          id: 'dashboard',
+          label: 'Dashboard',
+          icon: 'fa-chart-line',
+          hash: '#dashboard'
+        },
+        {
+          type: 'group',
+          id: 'basic-info',
+          label: 'Basic Information',
+          icon: 'fa-briefcase',
+          expanded: false,
+          items: [
+            { id: 'users', label: 'Users', hash: '#users' },
+            { id: 'organizations', label: 'Tenants', hash: '#organizations' },
+            { id: 'settings', label: 'Settings', hash: '#settings' }
+          ]
+        },
+        {
+          type: 'group',
+          id: 'inventory',
+          label: 'Inventory',
+          icon: 'fa-warehouse',
+          expanded: false,
+          items: [
+            { id: 'products', label: 'Products', hash: '#products' }
+          ]
+        }
+      ];
+
+      // ── Render Sidebar Menu ──
+      function renderMenu() {
+        var menu = document.getElementById('sidebarMenu');
+        var html = '';
+
+        menuConfig.forEach(function (entry) {
+          if (entry.type === 'item') {
+            html += '<a class="menu-item top-level" href="' + entry.hash + '" data-route="' + entry.id + '" data-tooltip="' + entry.label + '">'
+              + '<span class="item-icon"><i class="fa ' + entry.icon + '"></i></span>'
+              + '<span class="item-label">' + entry.label + '</span>'
+              + '</a>';
+          } else if (entry.type === 'group') {
+            html += '<div class="menu-group' + (entry.expanded ? ' expanded' : '') + '" data-group="' + entry.id + '">'
+              + '<div class="menu-group-header" data-tooltip="' + entry.label + '" onclick="toggleMenuGroup(\'' + entry.id + '\')">'
+              + '<span class="group-icon"><i class="fa ' + entry.icon + '"></i></span>'
+              + '<span class="group-label">' + entry.label + '</span>'
+              + '<i class="fa fa-chevron-down group-chevron"></i>'
+              + '</div>'
+              + '<div class="menu-group-items">';
+
+            entry.items.forEach(function (item) {
+              html += '<a class="menu-item" href="' + item.hash + '" data-route="' + item.id + '" data-tooltip="' + item.label + '">'
+                + '<span class="item-label">' + item.label + '</span>'
+                + '</a>';
+            });
+
+            html += '</div></div>';
+          }
+        });
+
+        menu.innerHTML = html;
+      }
+
+      // ── Toggle Menu Group (single-open accordion) ──
+      window.toggleMenuGroup = function (groupId) {
+        var clickedGroup = document.querySelector('[data-group="' + groupId + '"]');
+        if (!clickedGroup) return;
+
+        var isExpanding = !clickedGroup.classList.contains('expanded');
+
+        // Collapse ALL groups first
+        menuConfig.forEach(function (entry) {
+          if (entry.type === 'group') {
+            entry.expanded = false;
+            var el = document.querySelector('[data-group="' + entry.id + '"]');
+            if (el) el.classList.remove('expanded');
+          }
+        });
+
+        // Expand clicked one only if it was closed
+        if (isExpanding) {
+          clickedGroup.classList.add('expanded');
+          menuConfig.forEach(function (entry) {
+            if (entry.id === groupId) entry.expanded = true;
+          });
+        }
+      };
+
+      // ── Collapse sidebar (desktop) ──
+      function collapseSidebar() {
+        var sidebar = document.getElementById('sidebar');
+        if (window.innerWidth >= 768 && !sidebar.classList.contains('collapsed')) {
+          sidebar.classList.add('collapsed');
+        }
+      }
+
+      // ── Toggle Sidebar (desktop) ──
+      window.toggleSidebar = function () {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+      };
+
+      // ── Mobile Sidebar ──
+      window.openSidebarMobile = function () {
+        document.getElementById('sidebar').classList.add('mobile-open');
+        document.getElementById('sidebar-backdrop').classList.add('visible');
+      };
+
+      window.closeSidebarMobile = function () {
+        document.getElementById('sidebar').classList.remove('mobile-open');
+        document.getElementById('sidebar-backdrop').classList.remove('visible');
+      };
+
+      // ── Click outside sidebar → collapse on desktop ──
+      document.getElementById('main').addEventListener('click', function () {
+        collapseSidebar();
+      });
+
+      // ── Update Active Menu & Breadcrumb ──
+      function updateNav(route) {
+        // Update active state
+        var items = document.querySelectorAll('.menu-item');
+        for (var i = 0; i < items.length; i++) {
+          var itemRoute = items[i].getAttribute('data-route');
+          items[i].classList.toggle('active', itemRoute === route);
+        }
+
+        // Auto-expand only the group containing the active route (collapse others)
+        menuConfig.forEach(function (entry) {
+          if (entry.type === 'group') {
+            var hasActive = entry.items.some(function (item) { return item.id === route; });
+            entry.expanded = hasActive;
+            var group = document.querySelector('[data-group="' + entry.id + '"]');
+            if (group) group.classList.toggle('expanded', hasActive);
+          }
+        });
+
+        // Update breadcrumb
+        updateBreadcrumb(route);
+
+        // Close/collapse sidebar on navigation
+        closeSidebarMobile();
+        collapseSidebar();
+      }
+
+      function updateBreadcrumb(route) {
+        var breadcrumb = document.getElementById('breadcrumb');
+        var pageName = '';
+        var groupName = '';
+
+        menuConfig.forEach(function (entry) {
+          if (entry.type === 'item' && entry.id === route) {
+            pageName = entry.label;
+          } else if (entry.type === 'group') {
+            entry.items.forEach(function (item) {
+              if (item.id === route) {
+                groupName = entry.label;
+                pageName = item.label;
+              }
+            });
+          }
+        });
+
+        if (!pageName) pageName = route.charAt(0).toUpperCase() + route.slice(1);
+
+        if (groupName) {
+          breadcrumb.innerHTML = '<span>' + groupName + '</span>'
+            + '<i class="fa fa-chevron-right bc-separator"></i>'
+            + '<span class="bc-current">' + pageName + '</span>';
+        } else {
+          breadcrumb.innerHTML = '<span class="bc-current">' + pageName + '</span>';
+        }
+      }
+
+      // ── AMIS Environment ──
       var amisEnv = {
-        // Set locale to English to show error messages in English instead of Chinese
         locale: 'en-US',
-        
+
         fetcher: function (api) {
           var url = api.url;
-          // Prefix relative URLs with API base
           if (url && !/^https?:\/\//.test(url)) {
             url = API_BASE + (url.charAt(0) === '/' ? '' : '/') + url;
           }
           var method = (api.method || 'get').toLowerCase();
-          var headers = Object.assign({'Content-Type': 'application/json'}, api.headers || {});
-          var opts = {method: method, headers: headers};
+          var headers = Object.assign({ 'Content-Type': 'application/json' }, api.headers || {});
+          var opts = { method: method, headers: headers };
 
           if (method !== 'get' && method !== 'head' && api.data) {
             opts.body = JSON.stringify(api.data);
           }
 
           return fetch(url, opts)
-            .then(function (res) {return res.json();})
+            .then(function (res) { return res.json(); })
             .then(function (json) {
-              // Adapt our API format to AMIS expected format:
-              // AMIS wants: {status: 0, data: {...}, msg: ''}
-              // Our API returns: {success: true, data: ..., meta: {...}}
               if (json.success !== undefined) {
                 if (!json.success) {
-                  return {status: 1, msg: json.message || 'Request failed'};
+                  return { status: 1, msg: json.message || 'Request failed' };
                 }
-                // List response: data is array with pagination in meta
                 if (Array.isArray(json.data) && json.meta && json.meta.pagination) {
                   return {
                     status: 0,
@@ -141,18 +1282,15 @@
                     }
                   };
                 }
-                // Single object response (create, get, update, action)
-                return {status: 0, data: json.data, msg: ''};
+                return { status: 0, data: json.data, msg: '' };
               }
-              // Error response from our API (no success field)
               if (json.status && json.status >= 400) {
-                return {status: json.status, msg: json.message || 'Error'};
+                return { status: json.status, msg: json.message || 'Error' };
               }
-              // Pass through for other formats
               return json;
             });
         },
-        isCancel: function () {return false;},
+        isCancel: function () { return false; },
         notify: function (type, msg) {
           console.log('[' + type + ']', msg);
         },
@@ -164,14 +1302,7 @@
         }
       };
 
-      function updateNav(route) {
-        var links = document.querySelectorAll('#nav a');
-        for (var i = 0; i < links.length; i++) {
-          var href = links[i].getAttribute('href').slice(1);
-          links[i].className = (href === route) ? 'active' : '';
-        }
-      }
-
+      // ── Navigation ──
       async function navigate() {
         var route = window.location.hash.slice(1) || 'dashboard';
         updateNav(route);
@@ -179,10 +1310,10 @@
         var contentEl = document.getElementById('content');
 
         if (currentInstance && currentInstance.unmount) {
-          try {currentInstance.unmount();} catch (e) { }
+          try { currentInstance.unmount(); } catch (e) { }
           currentInstance = null;
         }
-        contentEl.innerHTML = '<div class="loading">Loading...</div>';
+        contentEl.innerHTML = '<div class="loading"><i class="fa fa-spinner fa-spin"></i>&nbsp; Loading...</div>';
 
         try {
           var schema = await loader.load('pages/' + route + '.json');
@@ -191,13 +1322,15 @@
         } catch (error) {
           contentEl.innerHTML =
             '<div class="error-page">' +
-            '<h2>Page Not Found</h2>' +
+            '<h2><i class="fa fa-exclamation-triangle"></i> Page Not Found</h2>' +
             '<p>' + error.message + '</p>' +
-            '<a href="#dashboard">Go to Dashboard</a>' +
+            '<a href="#dashboard"><i class="fa fa-arrow-left"></i> Back to Dashboard</a>' +
             '</div>';
         }
       }
 
+      // ── Init ──
+      renderMenu();
       window.addEventListener('hashchange', navigate);
 
       if (!window.location.hash) {
@@ -210,186 +1343,3 @@
 </body>
 
 </html>
-<!-- <!DOCTYPE html> -->
-<!-- <html lang="en"> -->
-<!---->
-<!-- <head> -->
-<!--   <meta charset="UTF-8"> -->
-<!--   <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
-<!--   <title>AMIS Admin</title> -->
-<!--   <link rel="stylesheet" href="../sdk/sdk.css"> -->
-<!--   <link rel="stylesheet" href="../sdk/helper.css"> -->
-<!--   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"> -->
-<!--   <link rel="stylesheet" href="../sdk/iconfont.css"> -->
-<!--   <style> -->
-<!--     html, -->
-<!--     body { -->
-<!--       height: 100%; -->
-<!--       margin: 0; -->
-<!--       padding: 0; -->
-<!--       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -->
-<!--     } -->
-<!---->
-<!--     #app { -->
-<!--       display: flex; -->
-<!--       flex-direction: column; -->
-<!--       height: 100%; -->
-<!--     } -->
-<!---->
-<!--     #nav { -->
-<!--       background: #2c3e50; -->
-<!--       color: #fff; -->
-<!--       padding: 0 20px; -->
-<!--       display: flex; -->
-<!--       align-items: center; -->
-<!--       height: 50px; -->
-<!--       flex-shrink: 0; -->
-<!--     } -->
-<!---->
-<!--     #nav .brand { -->
-<!--       font-size: 18px; -->
-<!--       font-weight: bold; -->
-<!--       margin-right: 30px; -->
-<!--     } -->
-<!---->
-<!--     #nav a { -->
-<!--       color: rgba(255, 255, 255, 0.7); -->
-<!--       text-decoration: none; -->
-<!--       padding: 14px 15px; -->
-<!--       transition: color 0.2s; -->
-<!--     } -->
-<!---->
-<!--     #nav a:hover, -->
-<!--     #nav a.active { -->
-<!--       color: #fff; -->
-<!--     } -->
-<!---->
-<!--     #content { -->
-<!--       flex: 1; -->
-<!--       overflow: auto; -->
-<!--     } -->
-<!---->
-<!--     .loading { -->
-<!--       display: flex; -->
-<!--       justify-content: center; -->
-<!--       align-items: center; -->
-<!--       height: 100%; -->
-<!--       color: #999; -->
-<!--     } -->
-<!---->
-<!--     .error-page { -->
-<!--       padding: 40px; -->
-<!--       text-align: center; -->
-<!--       color: #e74c3c; -->
-<!--     } -->
-<!--   </style> -->
-<!-- </head> -->
-<!---->
-<!-- <body> -->
-<!--   <div id="app"> -->
-<!--     <div id="nav"> -->
-<!--       <span class="brand">AMIS Admin</span> -->
-<!--       <a href="#dashboard">Dashboard</a> -->
-<!--       <a href="#users">Users</a> -->
-<!--       <a href="#items">Items</a> -->
-<!--       <a href="#settings">Settings</a> -->
-<!--     </div> -->
-<!--     <div id="content"> -->
-<!--       <div class="loading">Loading...</div> -->
-<!--     </div> -->
-<!--   </div> -->
-<!---->
-<!--   <script src="../sdk/sdk.js"></script> -->
-<!--   <script src="../sdk/charts.js"></script> -->
-<!--   <script src="../sdk/rest.js"></script> -->
-<!--   <script src="../utils/schema-loader.js"></script> -->
-<!--   <script> -->
-<!--     (function () { -->
-<!--       // --- Configuration --- -->
-<!--       var API_BASE = 'http://localhost:8080'; -->
-<!---->
-<!--       var amis = amisRequire('amis/embed'); -->
-<!--       var loader = new SchemaLoader('../schemas/'); -->
-<!--       var currentInstance = null; -->
-<!---->
-<!--       // AMIS env with fetcher that routes API calls to your REST backend -->
-<!--       var amisEnv = { -->
-<!--         fetcher: function (api) { -->
-<!--           var url = api.url; -->
-<!--           // Prefix relative URLs with API base -->
-<!--           if (url && !/^https?:\/\//.test(url)) { -->
-<!--             url = API_BASE + (url.charAt(0) === '/' ? '' : '/') + url; -->
-<!--           } -->
-<!--           var method = (api.method || 'get').toLowerCase(); -->
-<!--           var headers = Object.assign({'Content-Type': 'application/json'}, api.headers || {}); -->
-<!--           var opts = {method: method, headers: headers}; -->
-<!---->
-<!--           if (method !== 'get' && method !== 'head' && api.data) { -->
-<!--             opts.body = JSON.stringify(api.data); -->
-<!--           } -->
-<!---->
-<!--           return fetch(url, opts) -->
-<!--             .then(function (res) {return res.json();}) -->
-<!--             .then(function (json) { -->
-<!--               // Expects standard AMIS format: {status: 0, data: {...}, msg: ''} -->
-<!--               return json; -->
-<!--             }); -->
-<!--         }, -->
-<!--         isCancel: function () {return false;}, -->
-<!--         notify: function (type, msg) { -->
-<!--           console.log('[' + type + ']', msg); -->
-<!--         }, -->
-<!--         alert: function (msg) { -->
-<!--           alert(msg); -->
-<!--         }, -->
-<!--         copy: function (text) { -->
-<!--           if (navigator.clipboard) navigator.clipboard.writeText(text); -->
-<!--         } -->
-<!--       }; -->
-<!---->
-<!--       function updateNav(route) { -->
-<!--         var links = document.querySelectorAll('#nav a'); -->
-<!--         for (var i = 0; i < links.length; i++) { -->
-<!--           var href = links[i].getAttribute('href').slice(1); -->
-<!--           links[i].className = (href === route) ? 'active' : ''; -->
-<!--         } -->
-<!--       } -->
-<!---->
-<!--       async function navigate() { -->
-<!--         var route = window.location.hash.slice(1) || 'dashboard'; -->
-<!--         updateNav(route); -->
-<!---->
-<!--         var contentEl = document.getElementById('content'); -->
-<!---->
-<!--         if (currentInstance && currentInstance.unmount) { -->
-<!--           try {currentInstance.unmount();} catch (e) { } -->
-<!--           currentInstance = null; -->
-<!--         } -->
-<!--         contentEl.innerHTML = '<div class="loading">Loading...</div>'; -->
-<!---->
-<!--         try { -->
-<!--           var schema = await loader.load('pages/' + route + '.json'); -->
-<!--           contentEl.innerHTML = ''; -->
-<!--           currentInstance = amis.embed(contentEl, schema, {}, amisEnv); -->
-<!--         } catch (error) { -->
-<!--           contentEl.innerHTML = -->
-<!--             '<div class="error-page">' + -->
-<!--             '<h2>Page Not Found</h2>' + -->
-<!--             '<p>' + error.message + '</p>' + -->
-<!--             '<a href="#dashboard">Go to Dashboard</a>' + -->
-<!--             '</div>'; -->
-<!--         } -->
-<!--       } -->
-<!---->
-<!--       window.addEventListener('hashchange', navigate); -->
-<!---->
-<!--       if (!window.location.hash) { -->
-<!--         window.location.hash = '#dashboard'; -->
-<!--       } else { -->
-<!--         navigate(); -->
-<!--       } -->
-<!--     })(); -->
-<!--   </script> -->
-<!-- </body> -->
-<!---->
-<!-- </html> -->
