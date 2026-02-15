@@ -332,6 +332,12 @@ func (r *Router) registerUIRoutes(app *fiber.App) error {
 	// Configure static file serving first
 	app.Static("/static", "./web/static")
 
+	// Serve web assets at root level so relative paths from /ui/demo resolve correctly
+	// (e.g., ../sdk/sdk.css from /ui/demo resolves to /sdk/sdk.css)
+	app.Static("/sdk", "./web/sdk")
+	app.Static("/schemas", "./web/schemas")
+	app.Static("/utils", "./web/utils")
+
 	// Create UI route group
 	uiGroup := app.Group("/ui")
 
@@ -392,24 +398,24 @@ func (r *Router) registerTenantAPI(apiRouter fiber.Router) error {
 	handler := tenantHandler.NewTenantHandler(r.deps.TenantService, r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
 
 	// Tenant management routes — no tenant middleware (these manage tenants themselves)
-	tenantsGroup := apiRouter.Group("/v1/organizations")
+	tenantsGroup := apiRouter.Group("/v1/tenants")
 
-	tenantsGroup.Get("/", handler.List)         // GET /api/v1/organizations - List organizations with pagination
-	tenantsGroup.Post("/", handler.Create)      // POST /api/v1/organizations - Create new organization
-	tenantsGroup.Get("/:id", handler.Get)       // GET /api/v1/organizations/:id - Get organization by ID
-	tenantsGroup.Put("/:id", handler.Update)    // PUT /api/v1/organizations/:id - Update organization
-	tenantsGroup.Patch("/:id", handler.Update)  // PATCH /api/v1/organizations/:id - Partial update
-	tenantsGroup.Delete("/:id", handler.Delete) // DELETE /api/v1/organizations/:id - Delete organization
+	tenantsGroup.Get("/", handler.List)         // GET /api/v1/tenants - List tenants with pagination
+	tenantsGroup.Post("/", handler.Create)      // POST /api/v1/tenants - Create new tenant
+	tenantsGroup.Get("/:id", handler.Get)       // GET /api/v1/tenants/:id - Get tenant by ID
+	tenantsGroup.Put("/:id", handler.Update)    // PUT /api/v1/tenants/:id - Update tenant
+	tenantsGroup.Patch("/:id", handler.Update)  // PATCH /api/v1/tenants/:id - Partial update
+	tenantsGroup.Delete("/:id", handler.Delete) // DELETE /api/v1/tenants/:id - Delete tenant
 
 	// Lifecycle actions
-	tenantsGroup.Post("/:id/activate", handler.Activate) // POST /api/v1/organizations/:id/activate
-	tenantsGroup.Post("/:id/suspend", handler.Suspend)   // POST /api/v1/organizations/:id/suspend
-	tenantsGroup.Post("/:id/archive", handler.Archive)   // POST /api/v1/organizations/:id/archive
+	tenantsGroup.Post("/:id/activate", handler.Activate) // POST /api/v1/tenants/:id/activate
+	tenantsGroup.Post("/:id/suspend", handler.Suspend)   // POST /api/v1/tenants/:id/suspend
+	tenantsGroup.Post("/:id/archive", handler.Archive)   // POST /api/v1/tenants/:id/archive
 
 	// Complex operations
-	apiRouter.Post("/v1/orgs/onboard", handler.Onboard) // POST /api/v1/orgs/onboard
+	apiRouter.Post("/v1/tenants/onboard", handler.Onboard) // POST /api/v1/tenants/onboard
 
-	r.deps.Logger.Info("registered tenant API endpoints as /organizations")
+	r.deps.Logger.Info("registered tenant API endpoints as /tenants")
 	return nil
 }
 

@@ -40,7 +40,7 @@ func (h *TenantHandler) Create(c *fiber.Ctx) error {
 		attribute.String("tenant.name", createdTenant.Name),
 	)
 
-	c.Set("Location", fmt.Sprintf("/api/v1/organizations/%s", createdTenant.ID))
+	c.Set("Location", fmt.Sprintf("/api/v1/tenants/%s", createdTenant.ID))
 	return h.created(c, toResponse(createdTenant, "detailed"))
 }
 

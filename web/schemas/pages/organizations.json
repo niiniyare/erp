@@ -1,17 +1,17 @@
 {
   "type": "page",
-  "title": "Organizations",
-  "subTitle": "Manage tenant organizations, lifecycle, and settings",
-  "remark": "All multi-tenant organizations are managed here. Use filters to narrow results or create new organizations with the toolbar.",
+  "title": "Tenants",
+  "subTitle": "Manage tenants, lifecycle, and settings",
+  "remark": "All tenants are managed here. Use filters to narrow results or create new tenants with the toolbar.",
   "toolbar": [
     {
       "type": "button",
-      "label": "New Organization",
+      "label": "New Tenant",
       "level": "primary",
       "icon": "fa fa-plus",
       "actionType": "dialog",
       "dialog": {
-        "title": "Create Organization",
+        "title": "Create Tenant",
         "size": "lg",
         "closeOnEsc": true,
         "actions": [
@@ -20,7 +20,7 @@
         ],
         "body": {
           "type": "wizard",
-          "api": "post:/api/v1/organizations",
+          "api": "post:/api/v1/tenants",
           "actionPrevLabel": "Previous",
           "actionNextLabel": "Next",
           "actionFinishLabel": "Create",
@@ -34,7 +34,7 @@
                     {
                       "type": "input-text",
                       "name": "name",
-                      "label": "Organization Name",
+                      "label": "Tenant Name",
                       "required": true,
                       "placeholder": "e.g. Acme Corporation",
                       "validations": {"minLength": 2, "maxLength": 255},
@@ -60,7 +60,7 @@
                   "label": "Primary Email",
                   "required": true,
                   "placeholder": "admin@example.com",
-                  "description": "Main contact email for this organization"
+                  "description": "Main contact email for this tenant"
                 }
               ]
             },
@@ -192,16 +192,11 @@
     {
       "type": "crud",
       "name": "org-crud",
-      "api": "/api/v1/organizations",
+      "api": "/api/v1/tenants",
       "syncLocation": false,
       "autoFillHeight": true,
+      "perPage": 20,
       "perPageAvailable": [10, 20, 50],
-      "defaultParams": {
-        "limit": 20,
-        "offset": 0
-      },
-      "pageField": "offset",
-      "perPageField": "limit",
       "headerToolbar": [
         "bulkActions",
         {
@@ -215,7 +210,7 @@
         },
         {
           "type": "tpl",
-          "tpl": "<span class='text-muted text-sm'>${count} of ${total} organizations</span>",
+          "tpl": "<span class='text-muted text-sm'>${count} of ${total} tenants</span>",
           "className": "m-l-sm",
           "align": "right"
         }
@@ -241,16 +236,16 @@
           "actionType": "ajax",
           "level": "success",
           "icon": "fa fa-check",
-          "api": "post:/api/v1/organizations/${ids|raw}/activate",
-          "confirmText": "Activate ${selectedItems.length} selected organizations?"
+          "api": "post:/api/v1/tenants/${ids|raw}/activate",
+          "confirmText": "Activate ${selectedItems.length} selected tenants?"
         },
         {
           "label": "Bulk Suspend",
           "actionType": "ajax",
           "level": "warning",
           "icon": "fa fa-pause",
-          "api": "post:/api/v1/organizations/${ids|raw}/suspend",
-          "confirmText": "Suspend ${selectedItems.length} selected organizations?"
+          "api": "post:/api/v1/tenants/${ids|raw}/suspend",
+          "confirmText": "Suspend ${selectedItems.length} selected tenants?"
         }
       ],
       "filter": {
@@ -309,7 +304,7 @@
       "columns": [
         {
           "name": "name",
-          "label": "Organization",
+          "label": "Tenant",
           "sortable": true,
           "type": "tpl",
           "tpl": "<div><strong>${name}</strong><br/><small class='text-muted'>${slug}</small></div>"
@@ -365,7 +360,7 @@
                 ],
                 "body": {
                   "type": "service",
-                  "api": "/api/v1/organizations/${id}?view=detailed",
+                  "api": "/api/v1/tenants/${id}?view=detailed",
                   "body": [
                     {
                       "type": "tabs",
@@ -461,8 +456,8 @@
                 "closeOnEsc": true,
                 "body": {
                   "type": "form",
-                  "api": "put:/api/v1/organizations/${id}",
-                  "initApi": "/api/v1/organizations/${id}?view=detailed",
+                  "api": "put:/api/v1/tenants/${id}",
+                  "initApi": "/api/v1/tenants/${id}?view=detailed",
                   "submitText": "Save",
                   "resetAfterSubmit": false,
                   "body": [
@@ -518,7 +513,7 @@
                               "type": "input-text",
                               "name": "subdomain",
                               "label": "Subdomain",
-                              "description": "Custom subdomain for this organization"
+                              "description": "Custom subdomain for this tenant"
                             }
                           ]
                         }
@@ -539,7 +534,7 @@
                   "type": "button",
                   "icon": "fa fa-check text-success",
                   "actionType": "ajax",
-                  "api": "post:/api/v1/organizations/${id}/activate",
+                  "api": "post:/api/v1/tenants/${id}/activate",
                   "confirmText": "Activate '${name}'?",
                   "visibleOn": "this.status !== 'ACTIVE'"
                 },
@@ -557,13 +552,13 @@
                     ],
                     "body": {
                       "type": "form",
-                      "api": "post:/api/v1/organizations/${id}/suspend",
+                      "api": "post:/api/v1/tenants/${id}/suspend",
                       "submitText": "Suspend",
                       "body": [
                         {
                           "type": "alert",
                           "level": "warning",
-                          "body": "Suspending will immediately restrict access for all users in this organization."
+                          "body": "Suspending will immediately restrict access for all users in this tenant."
                         },
                         {
                           "type": "textarea",
@@ -572,7 +567,7 @@
                           "required": true,
                           "validations": {"minLength": 10},
                           "validationErrors": {"minLength": "Please provide at least 10 characters explaining the reason"},
-                          "placeholder": "Why is this organization being suspended?",
+                          "placeholder": "Why is this tenant being suspended?",
                           "rows": 3
                         }
                       ]
@@ -584,7 +579,7 @@
                   "type": "button",
                   "icon": "fa fa-archive text-muted",
                   "actionType": "ajax",
-                  "api": "post:/api/v1/organizations/${id}/archive",
+                  "api": "post:/api/v1/tenants/${id}/archive",
                   "confirmText": "Archive '${name}'? This is a permanent action that cannot be easily undone.",
                   "visibleOn": "this.status !== 'ARCHIVED'"
                 },
@@ -603,7 +598,7 @@
                   "icon": "fa fa-trash text-danger",
                   "className": "text-danger",
                   "actionType": "ajax",
-                  "api": "delete:/api/v1/organizations/${id}",
+                  "api": "delete:/api/v1/tenants/${id}",
                   "confirmText": "Permanently delete '${name}'? This action cannot be undone and all associated data will be lost."
                 }
               ]

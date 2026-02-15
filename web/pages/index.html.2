@@ -3,8 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AWO ERP</title>
   <link rel="stylesheet" href="../sdk/sdk.css">
   <link rel="stylesheet" href="../sdk/helper.css">
@@ -33,8 +32,6 @@
       --tooltip-color: #fff;
       --backdrop-bg: rgba(0, 0, 0, 0.4);
       --shadow-sidebar: 4px 0 24px rgba(0, 0, 0, 0.15);
-      --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      --card-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.12);
     }
 
     /* ── Dark Theme (applied via .dark class on <html>) ── */
@@ -56,8 +53,6 @@
       --tooltip-color: #1e1e2d;
       --backdrop-bg: rgba(0, 0, 0, 0.6);
       --shadow-sidebar: 4px 0 24px rgba(0, 0, 0, 0.4);
-      --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-      --card-shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.4);
       color-scheme: dark;
     }
 
@@ -76,13 +71,6 @@
       -webkit-font-smoothing: antialiased;
       background: var(--bg-main);
       color: var(--text-primary);
-    }
-
-    /* Support for iPhone notch and safe areas */
-    @supports (padding: env(safe-area-inset-bottom)) {
-      body {
-        padding-bottom: env(safe-area-inset-bottom);
-      }
     }
 
     /* ── Layout Shell ── */
@@ -668,55 +656,21 @@
         display: flex;
       }
 
+      .sidebar-brand {
+        display: flex;
+      }
+
       .theme-toggle .theme-label {
         display: none;
       }
 
-      /* ── Mobile Content & Footer Improvements ── */
       #content {
-        padding: 16px;
-        padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+        padding: 12px;
       }
 
       #footer {
-        padding: 16px 16px;
-        padding-bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+        padding: 10px 12px;
         font-size: 11px;
-        background: var(--bg-surface);
-        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
-      }
-
-      html.dark #footer {
-        box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.3);
-      }
-
-      /* Mobile card/panel styling */
-      #content .cxd-Page {
-        padding: 0 !important;
-      }
-
-      #content .cxd-Panel,
-      #content .cxd-Card,
-      #content .cxd-Crud {
-        border-radius: 12px !important;
-        box-shadow: var(--card-shadow) !important;
-        margin-bottom: 16px !important;
-      }
-
-      #content .cxd-Panel-heading,
-      #content .cxd-Card-heading {
-        border-radius: 12px 12px 0 0 !important;
-        padding: 16px !important;
-      }
-
-      #content .cxd-Panel-body,
-      #content .cxd-Card-body {
-        padding: 16px !important;
-      }
-
-      #content .cxd-Table {
-        border-radius: 8px !important;
-        overflow: hidden;
       }
     }
 
@@ -724,10 +678,6 @@
     @media (min-width: 768px) and (max-width: 1024px) {
       #content {
         padding: 16px;
-      }
-
-      #footer {
-        padding: 12px 16px;
       }
     }
 
@@ -844,17 +794,11 @@
       --Form-input-borderColor: #2e2e3e;
       --Form-input-onFocus-borderColor: #4dabf7;
       --Select-input-bg: #262637;
-      --Select-menu-bg: #1e1e2d;
-      --Select-option-bg: #1e1e2d;
-      --Select-option-onHover-bg: #262637;
-      --Select-option-onActive-bg: #1a2744;
-      --DatePicker-bg: #1e1e2d;
-      --DatePicker-cell-bg: #262637;
+      --DatePicker-bg: #262637;
       --DatePicker-onHover-bg: #2e2e3e;
-      --DatePicker-onActive-bg: #1a2744;
       --Checkbox-onHover-bg: #262637;
       --Pick-base-bgColor: #262637;
-      --ColorPicker-bg: #1e1e2d;
+      --ColorPicker-bg: #262637;
       --UserSelect--content-bg: #1e1e2d;
       --table-header-bg-color: #262637;
       --table-body-bg-color: #1e1e2d;
@@ -865,23 +809,6 @@
       --table-togglable-hover-bg-color: #262637;
       --conditionBuilder-body-bg-color: #1e1e2d;
       --Fieldset-legend-bgColor: #1e1e2d;
-      --Picker-bg: #1e1e2d;
-      --Picker-borderColor: #2e2e3e;
-      --Picker-iconColor: #9a9ab0;
-      --Picker-placeholderColor: #6b6b80;
-      --PopOver-bg: #1e1e2d;
-      --PopOver-borderColor: #2e2e3e;
-      --Tooltip-bg: #2e2e3e;
-      --Tooltip-color: #e4e4e7;
-
-      /* ── Additional portal/component backgrounds ── */
-      --PickerColumns-bg: #1e1e2d;
-      --List-bg: #1e1e2d;
-      --Remark-bg: #262637;
-      --Avatar-bg: #3e3e52;
-
-      /* ── Box shadows for dark ── */
-      --boxShadow: 0 2px 12px rgba(0, 0, 0, 0.4);
 
       /* ── Border color aliases ── */
       --borderColor: #2e2e3e;
@@ -899,61 +826,6 @@
       background: var(--bg-main) !important;
     }
 
-    /* ── Portal dark theme reinforcement ──
-       AMIS portals (dropdowns, pickers, modals, drawers, tooltips)
-       are appended directly to <body>. CSS vars cascade from html.dark,
-       but we explicitly style portal containers for safety. */
-    html.dark .cxd-PopOver,
-    html.dark .cxd-PopOverAble-popover {
-      background: var(--PopOver-bg);
-      border-color: var(--PopOver-borderColor);
-      color: var(--text-color);
-    }
-
-    html.dark .cxd-DropDown-popover,
-    html.dark .cxd-DropDown-menu {
-      background: var(--DropDown-menu-bg);
-      border-color: var(--DropDown-menu-borderColor);
-      color: var(--text-color);
-    }
-
-    html.dark .cxd-DropDown-menuItem:hover {
-      background: var(--DropDown-menuItem-onHover-bg);
-    }
-
-    html.dark .cxd-DatePicker-popover {
-      background: var(--DatePicker-bg);
-      color: var(--text-color);
-    }
-
-    html.dark .cxd-Modal-content {
-      background: var(--Modal-bg);
-      color: var(--text-color);
-    }
-
-    html.dark .cxd-Drawer-content {
-      background: var(--Drawer-bg);
-      color: var(--text-color);
-    }
-
-    html.dark .cxd-Tooltip-body {
-      background: var(--Tooltip-bg);
-      color: var(--Tooltip-color);
-    }
-
-    html.dark .cxd-Select-menu {
-      background: var(--Select-menu-bg);
-      color: var(--text-color);
-    }
-
-    html.dark .cxd-Select-option:hover {
-      background: var(--Select-option-onHover-bg);
-    }
-
-    html.dark .cxd-Select-option.is-active {
-      background: var(--Select-option-onActive-bg);
-    }
-
     /* Ensure scrollbar theming */
     html.dark #content::-webkit-scrollbar-thumb {
       background: #3a3a4e;
@@ -961,15 +833,6 @@
 
     html.dark #content::-webkit-scrollbar-track {
       background: #151521;
-    }
-
-    /* ── Enhanced Mobile Card Styling ── */
-    @media (max-width: 767px) {
-
-      html.dark #content .cxd-Panel,
-      html.dark #content .cxd-Card {
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4) !important;
-      }
     }
   </style>
 </head>
@@ -1038,7 +901,7 @@
   <script src="../utils/schema-loader.js"></script>
   <script>
     (function () {
-      var API_BASE = 'http://localhost:8080/';
+      var API_BASE = 'http://localhost:8080';
 
       var amis = amisRequire('amis/embed');
       var loader = new SchemaLoader('../schemas/');
@@ -1062,18 +925,12 @@
 
       function applyTheme(theme) {
         document.documentElement.setAttribute('data-theme', theme);
-
-        // Compute effective dark/light and apply .dark class to BOTH html AND body
-        var isDark = isDarkEffective(theme);
-
-        if (isDark) {
+        // Compute effective dark/light and apply .dark class
+        if (isDarkEffective(theme)) {
           document.documentElement.classList.add('dark');
-          document.body.classList.add('dark', 'amis-theme-dark');
         } else {
           document.documentElement.classList.remove('dark');
-          document.body.classList.remove('dark', 'amis-theme-dark');
         }
-
         var icon = document.getElementById('themeIcon');
         var label = document.getElementById('themeLabel');
         if (icon) icon.className = 'fa ' + themeIcons[theme];
@@ -1113,8 +970,8 @@
           expanded: false,
           items: [
             {id: 'users', label: 'Users', hash: '#users'},
-            {id: 'table', label: 'Table', hash: '#table'},
             {id: 'organizations', label: 'Tenants', hash: '#organizations'},
+            {id: 'table', label: 'Table', hash: '#table'},
             {id: 'settings', label: 'Settings', hash: '#settings'}
           ]
         },
@@ -1280,25 +1137,8 @@
         fetcher: function (api) {
           var url = api.url;
           if (url && !/^https?:\/\//.test(url)) {
-            // Strip leading slash to avoid double-slash with API_BASE
-            url = API_BASE + url.replace(/^\//, '');
+            url = API_BASE + (url.charAt(0) === '/' ? '' : '/') + url;
           }
-
-          // Convert AMIS pagination (page/perPage) to backend (offset/limit)
-          var urlObj = new URL(url);
-          var page = urlObj.searchParams.get('page');
-          var perPage = urlObj.searchParams.get('perPage');
-          if (page !== null) {
-            var limit = perPage ? parseInt(perPage) : 20;
-            urlObj.searchParams.delete('page');
-            urlObj.searchParams.set('offset', String((parseInt(page) - 1) * limit));
-          }
-          if (perPage !== null) {
-            urlObj.searchParams.delete('perPage');
-            urlObj.searchParams.set('limit', perPage);
-          }
-          url = urlObj.toString();
-
           var method = (api.method || 'get').toLowerCase();
           var headers = Object.assign({'Content-Type': 'application/json'}, api.headers || {});
           var opts = {method: method, headers: headers};
@@ -1308,13 +1148,7 @@
           }
 
           return fetch(url, opts)
-            .then(function (res) {
-              if (!res.ok) {
-                console.error('[fetcher] HTTP', res.status, res.statusText, url);
-                return {status: res.status, msg: res.statusText || 'Request failed'};
-              }
-              return res.json();
-            })
+            .then(function (res) {return res.json();})
             .then(function (json) {
               if (json.success !== undefined) {
                 if (!json.success) {
@@ -1325,7 +1159,6 @@
                     status: 0,
                     data: {
                       items: json.data,
-                      options: json.data,
                       count: json.meta.pagination.total_records
                     }
                   };
@@ -1336,10 +1169,6 @@
                 return {status: json.status, msg: json.message || 'Error'};
               }
               return json;
-            })
-            .catch(function (err) {
-              console.error('[fetcher] Network error:', err.message, '| URL:', url);
-              return {status: 1, msg: 'Network error: ' + err.message};
             });
         },
         isCancel: function () {return false;},

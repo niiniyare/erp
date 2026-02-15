@@ -5,7 +5,7 @@
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS actions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  -- tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
   display_name VARCHAR(150),
   description TEXT,
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS actions (
   requires_approval BOOLEAN DEFAULT false,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  CONSTRAINT actions_name_unique_per_tenant UNIQUE (tenant_id, name)
+  -- CONSTRAINT actions_name_unique_per_tenant UNIQUE (tenant_id, name)
 );
 
 COMMENT ON TABLE actions IS 'Defines actions that can be performed on resources with risk assessment and approval workflow requirements.';
@@ -51,15 +51,15 @@ COMMENT ON COLUMN actions.risk_level IS 'Risk level for audit and approval workf
 COMMENT ON COLUMN actions.requires_approval IS 'Whether this action requires explicit approval before execution';
 
 -- Enable RLS and create policies
-ALTER TABLE
-  actions ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY actions_tenant_isolation ON actions FOR ALL TO application_role USING (
-  current_tenant_id() IS NOT NULL
-  AND tenant_id = current_tenant_id()
-) WITH CHECK (
-  current_tenant_id() IS NOT NULL
-  AND tenant_id = current_tenant_id()
-);
-
-CREATE POLICY actions_admin_access ON actions FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+-- ALTER TABLE
+--   actions ENABLE ROW LEVEL SECURITY;
+--
+-- CREATE POLICY actions_tenant_isolation ON actions FOR ALL TO application_role USING (
+--   current_tenant_id() IS NOT NULL
+--   AND tenant_id = current_tenant_id()
+-- ) WITH CHECK (
+--   current_tenant_id() IS NOT NULL
+--   AND tenant_id = current_tenant_id()
+-- );
+--
+-- CREATE POLICY actions_admin_access ON actions FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);

@@ -10,7 +10,7 @@ import (
 
 // tenantLinks generates the HATEOAS links section for a tenant resource.
 func tenantLinks(id string) fiber.Map {
-	base := fmt.Sprintf("/api/v1/organizations/%s", id)
+	base := fmt.Sprintf("/api/v1/tenants/%s", id)
 	return fiber.Map{
 		"self":      base,
 		"dashboard": base + "/dashboard",
@@ -34,7 +34,7 @@ func toResponse(t *coreTenant.Tenant, view string) fiber.Map {
 	// The 'summary' view is the base for all other views.
 	response := fiber.Map{
 		"id":     id,
-		"object": "organization",
+		"object": "tenant",
 		"slug":   t.Slug,
 		"name":   t.Name,
 		"status": string(t.Status),
@@ -94,7 +94,7 @@ func toActionResponse(t *coreTenant.Tenant, action string) fiber.Map {
 	id := t.ID.String()
 	return fiber.Map{
 		"id":     id,
-		"object": "organization",
+		"object": "tenant",
 		"name":   t.Name,
 		"status": string(t.Status),
 		"action": action,

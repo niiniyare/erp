@@ -122,10 +122,10 @@ func (h *TenantHandler) Archive(c *fiber.Ctx) error {
 
 	return h.success(c, fiber.Map{
 		"id":     tenantUUID.String(),
-		"object": "organization",
+		"object": "tenant",
 		"status": "archived",
 		"links": fiber.Map{
-			"self": fmt.Sprintf("/api/v1/organizations/%s", tenantUUID),
+			"self": fmt.Sprintf("/api/v1/tenants/%s", tenantUUID),
 		},
 	})
 }
