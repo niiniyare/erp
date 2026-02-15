@@ -3,6 +3,27 @@
   "title": "Tenants",
   "subTitle": "Manage tenants, lifecycle, and settings",
   "remark": "All tenants are managed here. Use filters to narrow results or create new tenants with the toolbar.",
+  "css": {
+    ".cxd-Page-body": {
+      "padding": "0 !important"
+    },
+    ".cxd-Crud": {
+      "margin": "0 !important"
+    },
+    ".cxd-Table": {
+      "margin": "0 !important"
+    },
+    ".cxd-Table-table": {
+      "font-size": "13px"
+    },
+    ".cxd-Table-table th": {
+      "padding": "8px 4px",
+      "font-size": "12px"
+    },
+    ".cxd-Table-table td": {
+      "padding": "8px 4px"
+    }
+  },
   "toolbar": [
     {
       "type": "button",
@@ -10,6 +31,7 @@
       "level": "primary",
       "icon": "fa fa-plus",
       "actionType": "dialog",
+      "className": "m-r-xs",
       "dialog": {
         "title": "Create Tenant",
         "size": "lg",
@@ -181,11 +203,12 @@
     },
     {
       "type": "button",
-      "label": "Refresh",
+      "label": "",
       "icon": "fa fa-sync",
       "level": "default",
       "actionType": "reload",
-      "target": "org-crud"
+      "target": "org-crud",
+      "size": "sm"
     }
   ],
   "body": [
@@ -195,162 +218,202 @@
       "api": "/api/v1/tenants",
       "syncLocation": false,
       "autoFillHeight": true,
-      "perPage": 20,
+      "affixHeader": false,
+      "perPage": 10,
       "perPageAvailable": [10, 20, 50],
+      "keepItemSelectionOnPageChange": true,
+      "loadDataOnce": false,
       "headerToolbar": [
-        "bulkActions",
         {
-          "type": "pagination",
-          "align": "left"
-        },
-        {
-          "type": "columns-toggler",
-          "align": "right",
-          "label": "Columns"
-        },
-        {
-          "type": "tpl",
-          "tpl": "<span class='text-muted text-sm'>${count} of ${total} tenants</span>",
-          "className": "m-l-sm",
-          "align": "right"
+          "type": "flex",
+          "className": "p-xs",
+          "style": {
+            "flexWrap": "wrap",
+            "gap": "6px",
+            "alignItems": "center"
+          },
+          "items": [
+            {
+              "type": "button",
+              "icon": "fa fa-filter",
+              "level": "light",
+              "size": "xs",
+              "actionType": "drawer",
+              "tooltip": "Filters",
+              "drawer": {
+                "title": "Filters",
+                "size": "sm",
+                "position": "right",
+                "closeOnEsc": true,
+                "body": {
+                  "type": "form",
+                  "mode": "normal",
+                  "wrapWithPanel": false,
+                  "target": "org-crud",
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "search",
+                      "label": "Search",
+                      "placeholder": "Name or slug...",
+                      "clearable": true,
+                      "size": "sm"
+                    },
+                    {
+                      "type": "select",
+                      "name": "status",
+                      "label": "Status",
+                      "placeholder": "All",
+                      "clearable": true,
+                      "size": "sm",
+                      "options": [
+                        {"label": "Active", "value": "ACTIVE"},
+                        {"label": "Suspended", "value": "SUSPENDED"},
+                        {"label": "Pending", "value": "PENDING"},
+                        {"label": "Archived", "value": "ARCHIVED"}
+                      ]
+                    },
+                    {
+                      "type": "select",
+                      "name": "sort_by",
+                      "label": "Sort",
+                      "clearable": true,
+                      "size": "sm",
+                      "value": "created_at",
+                      "options": [
+                        {"label": "Created", "value": "created_at"},
+                        {"label": "Name", "value": "name"},
+                        {"label": "Status", "value": "status"}
+                      ]
+                    }
+                  ],
+                  "actions": [
+                    {
+                      "type": "reset",
+                      "label": "Clear",
+                      "level": "default",
+                      "size": "sm"
+                    },
+                    {
+                      "type": "submit",
+                      "label": "Apply",
+                      "level": "primary",
+                      "size": "sm"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "dropdown-button",
+              "icon": "fa fa-tasks",
+              "level": "light",
+              "size": "xs",
+              "hideCaret": true,
+              "tooltip": "Bulk Actions",
+              "closeOnClick": true,
+              "buttons": [
+                {
+                  "label": "Activate",
+                  "actionType": "ajax",
+                  "icon": "fa fa-check",
+                  "api": "post:/api/v1/tenants/${ids|raw}/activate",
+                  "confirmText": "Activate ${selectedItems.length} tenants?"
+                },
+                {
+                  "label": "Suspend",
+                  "actionType": "ajax",
+                  "icon": "fa fa-pause",
+                  "api": "post:/api/v1/tenants/${ids|raw}/suspend",
+                  "confirmText": "Suspend ${selectedItems.length} tenants?"
+                }
+              ]
+            },
+            {
+              "type": "tpl",
+              "tpl": "<small class='text-muted text-xs'>${count}/${total}</small>",
+              "className": "v-middle"
+            }
+          ]
         }
       ],
       "footerToolbar": [
         {
-          "type": "tpl",
-          "tpl": "Showing ${count} records"
-        },
-        {
-          "type": "switch-per-page",
-          "label": "Per page"
-        },
-        {
-          "type": "pagination",
-          "layout": ["pager", "go"],
-          "actionPerPage": "Per page"
+          "type": "flex",
+          "className": "p-xs",
+          "style": {
+            "flexWrap": "wrap",
+            "gap": "6px",
+            "fontSize": "12px",
+            "alignItems": "center",
+            "justifyContent": "center"
+          },
+          "items": [
+            {
+              "type": "pagination",
+              "layout": ["pager"],
+              "maxButtons": 4,
+              "hasNext": true
+            }
+          ]
         }
       ],
-      "bulkActions": [
-        {
-          "label": "Bulk Activate",
-          "actionType": "ajax",
-          "level": "success",
-          "icon": "fa fa-check",
-          "api": "post:/api/v1/tenants/${ids|raw}/activate",
-          "confirmText": "Activate ${selectedItems.length} selected tenants?"
-        },
-        {
-          "label": "Bulk Suspend",
-          "actionType": "ajax",
-          "level": "warning",
-          "icon": "fa fa-pause",
-          "api": "post:/api/v1/tenants/${ids|raw}/suspend",
-          "confirmText": "Suspend ${selectedItems.length} selected tenants?"
-        }
-      ],
-      "filter": {
-        "title": "",
-        "submitText": "Search",
-        "body": [
-          {
-            "type": "group",
-            "body": [
-              {
-                "type": "input-text",
-                "name": "search",
-                "placeholder": "Search by name or slug...",
-                "clearable": true,
-                "addOn": {
-                  "type": "button",
-                  "icon": "fa fa-search",
-                  "actionType": "submit",
-                  "level": "primary"
-                }
-              },
-              {
-                "type": "select",
-                "name": "status",
-                "placeholder": "All Statuses",
-                "clearable": true,
-                "searchable": true,
-                "options": [
-                  {"label": "Active", "value": "ACTIVE"},
-                  {"label": "Suspended", "value": "SUSPENDED"},
-                  {"label": "Pending", "value": "PENDING"},
-                  {"label": "Archived", "value": "ARCHIVED"}
-                ]
-              },
-              {
-                "type": "select",
-                "name": "sort_by",
-                "placeholder": "Sort by...",
-                "clearable": true,
-                "searchable": true,
-                "value": "created_at",
-                "options": [
-                  {"label": "Created Date", "value": "created_at"},
-                  {"label": "Name", "value": "name"},
-                  {"label": "Status", "value": "status"}
-                ]
-              }
-            ]
-          }
-        ],
-        "actions": [
-          {"type": "reset", "label": "Clear"},
-          {"type": "submit", "label": "Apply Filters", "level": "primary"}
-        ]
-      },
+      "bulkActions": [],
       "columns": [
         {
           "name": "name",
           "label": "Tenant",
-          "sortable": true,
+          "sortable": false,
           "type": "tpl",
-          "tpl": "<div><strong>${name}</strong><br/><small class='text-muted'>${slug}</small></div>"
+          "tpl": "<div><strong>${name}</strong><br/><small class='text-muted text-xs'>${slug}</small></div>"
+        },
+        {
+          "name": "status",
+          "label": "Status",
+          "sortable": false,
+          "type": "mapping",
+          "map": {
+            "ACTIVE": "<span class='label label-success'><i class='fa fa-check'></i> Active</span>",
+            "SUSPENDED": "<span class='label label-warning'><i class='fa fa-pause'></i> Suspend</span>",
+            "PENDING": "<span class='label label-info'><i class='fa fa-clock'></i> Pending</span>",
+            "ARCHIVED": "<span class='label label-default'><i class='fa fa-archive'></i> Archive</span>",
+            "*": "<span class='label label-default'>${status}</span>"
+          }
         },
         {
           "name": "email",
           "label": "Email",
           "type": "tpl",
-          "tpl": "<a href='mailto:${email}'>${email}</a>",
-          "toggled": true
-        },
-        {
-          "name": "status",
-          "label": "Status",
-          "sortable": true,
-          "type": "mapping",
-          "map": {
-            "ACTIVE": "<span class='label label-success'><i class='fa fa-check-circle'></i> Active</span>",
-            "SUSPENDED": "<span class='label label-warning'><i class='fa fa-pause-circle'></i> Suspended</span>",
-            "PENDING": "<span class='label label-info'><i class='fa fa-clock'></i> Pending</span>",
-            "ARCHIVED": "<span class='label label-default'><i class='fa fa-archive'></i> Archived</span>",
-            "*": "<span class='label label-default'>${status}</span>"
-          }
+          "tpl": "<a href='mailto:${email}' class='text-xs'>${email}</a>",
+          "toggled": false,
+          "breakpoint": "lg"
         },
         {
           "name": "preferences.currency_code",
           "label": "Currency",
-          "toggled": true
+          "toggled": false,
+          "breakpoint": "xl"
         },
         {
           "name": "timestamps.created_at",
           "label": "Created",
           "type": "date",
           "format": "YYYY-MM-DD",
-          "sortable": true
+          "sortable": false,
+          "toggled": false,
+          "breakpoint": "xl"
         },
         {
           "type": "operation",
           "label": "Actions",
-          "width": 180,
           "buttons": [
             {
-              "label": "View",
+              "label": "",
               "type": "button",
               "level": "link",
               "icon": "fa fa-eye",
+              "size": "xs",
+              "tooltip": "View",
               "actionType": "dialog",
               "dialog": {
                 "title": "${name}",
@@ -445,10 +508,12 @@
               }
             },
             {
-              "label": "Edit",
+              "label": "",
               "type": "button",
               "level": "link",
               "icon": "fa fa-pen",
+              "size": "xs",
+              "tooltip": "Edit",
               "actionType": "dialog",
               "dialog": {
                 "title": "Edit — ${name}",
@@ -528,6 +593,9 @@
               "label": "",
               "icon": "fa fa-ellipsis-v",
               "level": "link",
+              "size": "xs",
+              "hideCaret": true,
+              "tooltip": "More",
               "buttons": [
                 {
                   "label": "Activate",

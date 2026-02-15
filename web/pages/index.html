@@ -1285,7 +1285,7 @@
           }
 
           // Convert AMIS pagination (page/perPage) to backend (offset/limit)
-          var urlObj = new URL(url);
+          var urlObj = new URL(url, window.location.origin);
           var page = urlObj.searchParams.get('page');
           var perPage = urlObj.searchParams.get('perPage');
           if (page !== null) {

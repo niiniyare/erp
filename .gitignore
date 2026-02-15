@@ -3,4 +3,4 @@
 gha-creds-*.json
 bin/
 server*
-views/static/js/datatable/node_modules/
+web/node_modules

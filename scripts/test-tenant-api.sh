@@ -3,7 +3,7 @@
 # Usage: bash scripts/test-tenant-api.sh [base_url]
 
 BASE="${1:-http://localhost:8080}"
-API="$BASE/api/v1/organizations"
+API="$BASE/api/v1/tenants"
 ONBOARD="$BASE/api/v1/orgs/onboard"
 
 GREEN='\033[0;32m'
@@ -40,7 +40,7 @@ CURRENCY="$(rand_from "${CURRENCIES[@]}")"
 # -------------------------------------------------------
 # 1. Create Organization
 # -------------------------------------------------------
-log "POST /organizations — Create (random data)"
+log "POST /tenants — Create (random data)"
 
 CREATE_RESP=$(curl -s -w "\n%{http_code}" -X POST "$API" \
   -H "Content-Type: application/json" \
@@ -73,30 +73,30 @@ hr
 # -------------------------------------------------------
 # 2–6. Read APIs
 # -------------------------------------------------------
-log "GET /organizations/:id — Default view"
+log "GET /tenants/:id — Default view"
 curl -s "$API/$TENANT_ID" | python3 -m json.tool 2>/dev/null
 hr
 
-log "GET /organizations/:id?view=detailed"
+log "GET /tenants/:id?view=detailed"
 curl -s "$API/$TENANT_ID?view=detailed" | python3 -m json.tool 2>/dev/null
 hr
 
-log "GET /organizations/:id?view=summary"
+log "GET /tenants/:id?view=summary"
 curl -s "$API/$TENANT_ID?view=summary" | python3 -m json.tool 2>/dev/null
 hr
 
-log "GET /organizations — List"
+log "GET /tenants — List"
 curl -s "$API?limit=10&offset=0" | python3 -m json.tool 2>/dev/null
 hr
 
-log "GET /organizations — Filtered"
+log "GET /tenants — Filtered"
 curl -s "$API?status=ACTIVE&limit=5&sort_by=name" | python3 -m json.tool 2>/dev/null
 hr
 
 # -------------------------------------------------------
 # 7. Update (PUT)
 # -------------------------------------------------------
-log "PUT /organizations/:id — Update"
+log "PUT /tenants/:id — Update"
 
 curl -s -X PUT "$API/$TENANT_ID" \
   -H "Content-Type: application/json" \
@@ -109,7 +109,7 @@ hr
 # -------------------------------------------------------
 # 8. Update (PATCH)
 # -------------------------------------------------------
-log "PATCH /organizations/:id — Partial Update"
+log "PATCH /tenants/:id — Partial Update"
 
 curl -s -X PATCH "$API/$TENANT_ID" \
   -H "Content-Type: application/json" \
@@ -121,20 +121,20 @@ hr
 # -------------------------------------------------------
 # 9–11. Lifecycle actions
 # -------------------------------------------------------
-log "POST /organizations/:id/suspend"
+log "POST /tenants/:id/suspend"
 curl -s -X POST "$API/$TENANT_ID/suspend" \
   -H "Content-Type: application/json" \
   -d "{\"reason\": \"Automated test suspend $RAND_SUFFIX\"}" |
   python3 -m json.tool 2>/dev/null
 hr
 
-log "POST /organizations/:id/activate"
+log "POST /tenants/:id/activate"
 curl -s -X POST "$API/$TENANT_ID/activate" \
   -H "Content-Type: application/json" |
   python3 -m json.tool 2>/dev/null
 hr
 
-log "POST /organizations/:id/archive"
+log "POST /tenants/:id/archive"
 curl -s -X POST "$API/$TENANT_ID/archive" \
   -H "Content-Type: application/json" |
   python3 -m json.tool 2>/dev/null
@@ -156,7 +156,7 @@ hr
 # -------------------------------------------------------
 # 13. Delete throwaway org
 # -------------------------------------------------------
-log "DELETE /organizations/:id — Throwaway"
+log "DELETE /tenants/:id — Throwaway"
 
 DEL_SUFFIX="del-$RAND_SUFFIX"
 DEL_RESP=$(curl -s -X POST "$API" \
