@@ -64,7 +64,7 @@ func (s *TenantService) Create(ctx context.Context, req domain.CreateTenantReque
 
 	status := req.Status
 	if status == "" {
-		status = domain.StatusActive
+		status = domain.StatusPending
 	}
 
 	t, err := domain.NewTenant(req.Name, req.Email,

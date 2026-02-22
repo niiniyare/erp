@@ -1,6 +1,7 @@
 package workflow_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/testsuite"
 )
 
@@ -29,6 +31,14 @@ func TestBulkOperationWorkflowSuite(t *testing.T) {
 
 func (s *BulkOperationWorkflowSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
+	s.env.RegisterActivityWithOptions(
+		func(ctx context.Context, ids []uuid.UUID, status domain.TenantStatus) error { return nil },
+		activity.RegisterOptions{Name: "BulkUpdateStatusActivity"},
+	)
+	s.env.RegisterActivityWithOptions(
+		func(ctx context.Context, ids []uuid.UUID) error { return nil },
+		activity.RegisterOptions{Name: "BulkSoftDeleteActivity"},
+	)
 }
 
 func (s *BulkOperationWorkflowSuite) AfterTest(_, _ string) {

@@ -65,14 +65,19 @@ func filterRowToDomain(row *db.FilterTenantsRow) *domain.Tenant {
 	}
 
 	return &domain.Tenant{
-		ID:        row.ID,
-		Name:      row.Name,
-		Subdomain: row.Subdomain,
-		Status:    domain.TenantStatus(row.Status),
-		Industry:  row.Industry,
-		CreatedAt: row.CreatedAt,
-		UpdatedAt: row.UpdatedAt,
-		DeletedAt: deletedAt,
+		ID:           row.ID,
+		Slug:         row.Slug,
+		Name:         row.Name,
+		Email:        row.Email,
+		Subdomain:    row.Subdomain,
+		Status:       domain.TenantStatus(row.Status),
+		Timezone:     row.Timezone,
+		CurrencyCode: row.CurrencyCode,
+		Industry:     row.Industry,
+		CompanySize:  row.CompanySize,
+		CreatedAt:    row.CreatedAt,
+		UpdatedAt:    row.UpdatedAt,
+		DeletedAt:    deletedAt,
 	}
 }
 

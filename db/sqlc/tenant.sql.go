@@ -604,10 +604,15 @@ func (q *Queries) DeleteTenantUsageStats(ctx context.Context, periodStart time.T
 const filterTenants = `-- name: FilterTenants :many
 SELECT
   id,
+  slug,
   name,
+  email,
   subdomain,
   STATUS,
+  timezone,
+  currency_code,
   industry,
+  company_size,
   created_at,
   updated_at,
   deleted_at
@@ -652,14 +657,19 @@ type FilterTenantsParams struct {
 }
 
 type FilterTenantsRow struct {
-	ID        uuid.UUID    `json:"id"`
-	Name      string       `json:"name"`
-	Subdomain *string      `json:"subdomain"`
-	Status    string       `json:"status"`
-	Industry  *string      `json:"industry"`
-	CreatedAt time.Time    `json:"created_at"`
-	UpdatedAt time.Time    `json:"updated_at"`
-	DeletedAt sql.NullTime `json:"deleted_at"`
+	ID           uuid.UUID    `json:"id"`
+	Slug         string       `json:"slug"`
+	Name         string       `json:"name"`
+	Email        string       `json:"email"`
+	Subdomain    *string      `json:"subdomain"`
+	Status       string       `json:"status"`
+	Timezone     string       `json:"timezone"`
+	CurrencyCode string       `json:"currency_code"`
+	Industry     *string      `json:"industry"`
+	CompanySize  *string      `json:"company_size"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	DeletedAt    sql.NullTime `json:"deleted_at"`
 }
 
 // =====================================================
@@ -683,10 +693,15 @@ func (q *Queries) FilterTenants(ctx context.Context, arg FilterTenantsParams) ([
 		var i FilterTenantsRow
 		if err := rows.Scan(
 			&i.ID,
+			&i.Slug,
 			&i.Name,
+			&i.Email,
 			&i.Subdomain,
 			&i.Status,
+			&i.Timezone,
+			&i.CurrencyCode,
 			&i.Industry,
+			&i.CompanySize,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,

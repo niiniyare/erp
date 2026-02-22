@@ -1,6 +1,7 @@
 package workflow_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/testsuite"
 )
 
@@ -29,6 +31,30 @@ func TestProvisioningWorkflowSuite(t *testing.T) {
 
 func (s *ProvisioningWorkflowSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
+	s.env.RegisterActivityWithOptions(
+		func(ctx context.Context, input domain.ProvisioningInput) (*domain.ProvisioningResult, error) { return nil, nil },
+		activity.RegisterOptions{Name: "ProvisionTenantActivity"},
+	)
+	s.env.RegisterActivityWithOptions(
+		func(ctx context.Context, tenantID uuid.UUID) error { return nil },
+		activity.RegisterOptions{Name: "CreateDefaultConfigActivity"},
+	)
+	s.env.RegisterActivityWithOptions(
+		func(ctx context.Context, tenantID uuid.UUID) error { return nil },
+		activity.RegisterOptions{Name: "InitUsageActivity"},
+	)
+	s.env.RegisterActivityWithOptions(
+		func(ctx context.Context, tenantID uuid.UUID) error { return nil },
+		activity.RegisterOptions{Name: "ActivateTenantActivity"},
+	)
+	s.env.RegisterActivityWithOptions(
+		func(ctx context.Context, tenantID uuid.UUID) error { return nil },
+		activity.RegisterOptions{Name: "SendWelcomeNotificationActivity"},
+	)
+	s.env.RegisterActivityWithOptions(
+		func(ctx context.Context, tenantID uuid.UUID) error { return nil },
+		activity.RegisterOptions{Name: "CleanupTenantActivity"},
+	)
 }
 
 func (s *ProvisioningWorkflowSuite) AfterTest(_, _ string) {

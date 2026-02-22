@@ -70,6 +70,15 @@ func toResponse(t *coreTenant.Tenant, view string) fiber.Map {
 	if t.CompanySize != nil {
 		response["company_size"] = *t.CompanySize
 	}
+	if t.TaxID != nil {
+		response["tax_id"] = *t.TaxID
+	}
+	if t.RegistrationNumber != nil {
+		response["registration_number"] = *t.RegistrationNumber
+	}
+	if t.LegalEntityType != nil {
+		response["legal_entity_type"] = *t.LegalEntityType
+	}
 	if t.Metadata != nil {
 		response["metadata"] = t.Metadata
 	}

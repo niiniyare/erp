@@ -1309,17 +1309,31 @@
 
           return fetch(url, opts)
             .then(function (res) {
+              // 204 No Content (DELETE success) — no body to parse
+              if (res.status === 204) {
+                return {status: 0, msg: ''};
+              }
               if (!res.ok) {
-                console.error('[fetcher] HTTP', res.status, res.statusText, url);
-                return {status: res.status, msg: res.statusText || 'Request failed'};
+                // Try to parse error body for backend message
+                return res.json().catch(function () { return {}; }).then(function (body) {
+                  var msg = body.message || body.msg || res.statusText || 'Request failed';
+                  console.error('[fetcher] HTTP', res.status, msg, url);
+                  return {status: res.status, msg: msg};
+                });
               }
               return res.json();
             })
             .then(function (json) {
+              // Already an AMIS response (from error handling above or passthrough)
+              if (json.status !== undefined && json.success === undefined) {
+                return json;
+              }
+              // Backend envelope: {success, data, meta}
               if (json.success !== undefined) {
                 if (!json.success) {
                   return {status: 1, msg: json.message || 'Request failed'};
                 }
+                // List response with pagination
                 if (Array.isArray(json.data) && json.meta && json.meta.pagination) {
                   return {
                     status: 0,
@@ -1330,10 +1344,8 @@
                     }
                   };
                 }
+                // Single item or action response
                 return {status: 0, data: json.data, msg: ''};
-              }
-              if (json.status && json.status >= 400) {
-                return {status: json.status, msg: json.message || 'Error'};
               }
               return json;
             })

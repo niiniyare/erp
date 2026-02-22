@@ -78,6 +78,8 @@ type UpdateTenantRequest struct {
 	Email              *string        `json:"email,omitempty"`
 	Subdomain          *string        `json:"subdomain,omitempty"`
 	Status             *TenantStatus  `json:"status,omitempty"`
+	Timezone           *string        `json:"timezone,omitempty"`
+	CurrencyCode       *string        `json:"currency_code,omitempty"`
 	Industry           *string        `json:"industry,omitempty"`
 	CompanySize        *string        `json:"company_size,omitempty"`
 	TaxID              *string        `json:"tax_id,omitempty"`

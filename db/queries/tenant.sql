@@ -890,10 +890,15 @@ WHERE
 -- name: FilterTenants :many
 SELECT
   id,
+  slug,
   name,
+  email,
   subdomain,
   STATUS,
+  timezone,
+  currency_code,
   industry,
+  company_size,
   created_at,
   updated_at,
   deleted_at

@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS actions (
   ),
   requires_approval BOOLEAN DEFAULT false,
   is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW()
   -- CONSTRAINT actions_name_unique_per_tenant UNIQUE (tenant_id, name)
 );
 

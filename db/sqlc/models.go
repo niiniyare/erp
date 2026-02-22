@@ -44,7 +44,6 @@ type AccessRequest struct {
 // Defines actions that can be performed on resources with risk assessment and approval workflow requirements.
 type Action struct {
 	ID          uuid.UUID `json:"id"`
-	TenantID    uuid.UUID `json:"tenant_id"`
 	Name        string    `json:"name"`
 	DisplayName *string   `json:"display_name"`
 	Description *string   `json:"description"`
@@ -651,12 +650,13 @@ type HierarchyPath struct {
 // System modules for organizing permissions and features into logical groups. Enables modular permission management and feature toggles.
 type Module struct {
 	ID          uuid.UUID `json:"id"`
-	TenantID    uuid.UUID `json:"tenant_id"`
 	Name        string    `json:"name"`
 	DisplayName *string   `json:"display_name"`
 	Description *string   `json:"description"`
 	// Module category for grouping: CORE, HR, FINANCE, SALES, INVENTORY, etc.
 	Category *string `json:"category"`
+	// This will help you categorize INDUSTRY specific Apps
+	ModuleType *string `json:"module_type"`
 	// Module version for tracking feature updates and compatibility
 	Version   *string      `json:"version"`
 	IsActive  *bool        `json:"is_active"`
@@ -846,13 +846,11 @@ type PolicyEvaluation struct {
 
 // System resources that can be protected by permissions including APIs, UI components, data objects, files, reports, and workflows.
 type Resource struct {
-	ID          uuid.UUID  `json:"id"`
-	TenantID    uuid.UUID  `json:"tenant_id"`
-	ModuleID    uuid.UUID  `json:"module_id"`
-	EntityID    *uuid.UUID `json:"entity_id"`
-	Name        string     `json:"name"`
-	DisplayName *string    `json:"display_name"`
-	Description *string    `json:"description"`
+	ID          uuid.UUID `json:"id"`
+	ModuleID    uuid.UUID `json:"module_id"`
+	Name        string    `json:"name"`
+	DisplayName *string   `json:"display_name"`
+	Description *string   `json:"description"`
 	// Type of resource: API, UI, DATA, FILE, REPORT, WORKFLOW, FUNCTION
 	ResourceType string `json:"resource_type"`
 	// Self-referential for resource hierarchy (e.g., API endpoints under API group)

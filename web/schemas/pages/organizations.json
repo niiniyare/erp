@@ -460,7 +460,10 @@
                                       {"label": "Industry", "content": "${industry|default:-}"},
                                       {"label": "Company Size", "content": "${company_size|default:-}"},
                                       {"label": "Currency", "content": "${preferences.currency_code}"},
-                                      {"label": "Timezone", "content": "${preferences.timezone|default:-}"}
+                                      {"label": "Timezone", "content": "${preferences.timezone|default:-}"},
+                                      {"label": "Tax ID", "content": "${tax_id|default:-}"},
+                                      {"label": "Registration No.", "content": "${registration_number|default:-}"},
+                                      {"label": "Legal Entity", "content": "${legal_entity_type|default:-}"}
                                     ]
                                   }
                                 }
@@ -573,6 +576,24 @@
                                 {"label": "Large (201–1000)", "value": "LARGE"},
                                 {"label": "Enterprise (1000+)", "value": "ENTERPRISE"}
                               ]
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "tax_id",
+                              "label": "Tax ID",
+                              "placeholder": "e.g. EIN, VAT number"
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "registration_number",
+                              "label": "Registration Number",
+                              "placeholder": "Business registration number"
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "legal_entity_type",
+                              "label": "Legal Entity Type",
+                              "placeholder": "e.g. LLC, Corporation, Partnership"
                             },
                             {
                               "type": "input-text",

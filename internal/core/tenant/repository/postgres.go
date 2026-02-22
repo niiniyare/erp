@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -28,16 +29,27 @@ func (r *postgres) Create(ctx context.Context, t *domain.Tenant) error {
 	defer span.End()
 	span.SetAttributes(attribute.String("tenant.name", t.Name))
 
-	params := db.CreateTenantParams{
-		Name:      t.Name,
-		Slug:      t.Slug,
-		Email:     t.Email,
-		Subdomain: t.Subdomain,
-		Status:    string(t.Status),
-		Industry:  t.Industry,
+	metadataJSON, _ := json.Marshal(t.Metadata)
+	settingsJSON, _ := json.Marshal(t.Settings)
+
+	params := db.CreateTenantCompleteParams{
+		Name:               t.Name,
+		Slug:               t.Slug,
+		Email:              t.Email,
+		Subdomain:          t.Subdomain,
+		Status:             string(t.Status),
+		Timezone:           t.Timezone,
+		CurrencyCode:       t.CurrencyCode,
+		Metadata:           metadataJSON,
+		Industry:           t.Industry,
+		CompanySize:        t.CompanySize,
+		TaxID:              t.TaxID,
+		RegistrationNumber: t.RegistrationNumber,
+		LegalEntityType:    t.LegalEntityType,
+		Settings:           settingsJSON,
 	}
 
-	created, err := r.store.CreateTenant(ctx, params)
+	created, err := r.store.CreateTenantComplete(ctx, params)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "create failed")
@@ -45,6 +57,7 @@ func (r *postgres) Create(ctx context.Context, t *domain.Tenant) error {
 	}
 
 	t.ID = created.ID
+	t.Slug = created.Slug
 	t.CreatedAt = created.CreatedAt
 	t.UpdatedAt = created.UpdatedAt
 	return nil
@@ -93,15 +106,28 @@ func (r *postgres) Update(ctx context.Context, id uuid.UUID, req domain.UpdateTe
 		status = &s
 	}
 
-	params := db.UpdateTenantParams{
-		Name:      req.Name,
-		Subdomain: req.Subdomain,
-		Status:    status,
-		Industry:  req.Industry,
-		ID:        id,
+	var settingsJSON []byte
+	if req.Settings != nil {
+		settingsJSON, _ = json.Marshal(req.Settings)
 	}
 
-	_, err := r.store.UpdateTenant(ctx, params)
+	params := db.UpdateTenantCompleteParams{
+		Name:               req.Name,
+		Email:              req.Email,
+		Subdomain:          req.Subdomain,
+		Status:             status,
+		Timezone:           req.Timezone,
+		CurrencyCode:       req.CurrencyCode,
+		Industry:           req.Industry,
+		CompanySize:        req.CompanySize,
+		TaxID:              req.TaxID,
+		RegistrationNumber: req.RegistrationNumber,
+		LegalEntityType:    req.LegalEntityType,
+		Settings:           settingsJSON,
+		ID:                 id,
+	}
+
+	_, err := r.store.UpdateTenantComplete(ctx, params)
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "update failed")
