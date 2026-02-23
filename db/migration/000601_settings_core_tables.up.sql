@@ -187,8 +187,6 @@ COMMENT ON COLUMN tenant_configurations.template_applied_at IS 'Timestamp when t
 -- Config definitions indexes
 CREATE INDEX idx_config_definitions_module ON config_definitions(module_name);
 CREATE INDEX idx_config_definitions_module_key ON config_definitions(module_name, config_key);
-CREATE INDEX idx_config_definitions_overridable ON config_definitions(module_name) WHERE is_overridable = true;
-
 -- Configuration templates indexes
 CREATE INDEX idx_configuration_templates_category   ON configuration_templates(category);
 CREATE INDEX idx_configuration_templates_active     ON configuration_templates(is_active) WHERE is_active = true;
@@ -319,8 +317,10 @@ CREATE POLICY template_applications_admin_access ON template_applications
 -- =====================================================================
 
 -- Apply the existing update_updated_at_column trigger to new tables
-CREATE TRIGGER update_config_definitions_updated_at 
-  BEFORE UPDATE ON config_definitions 
+-- config_definitions trigger may already exist from an earlier migration — drop first to be safe
+DROP TRIGGER IF EXISTS update_config_definitions_updated_at ON config_definitions;
+CREATE TRIGGER update_config_definitions_updated_at
+  BEFORE UPDATE ON config_definitions
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_configuration_templates_updated_at 

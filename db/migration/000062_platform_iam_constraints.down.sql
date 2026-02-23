@@ -1,0 +1,31 @@
+-- ------------------------------------------------------------------------------------------------
+-- ROLLBACK: PLATFORM IAM CONSTRAINTS
+-- ------------------------------------------------------------------------------------------------
+
+-- Drop grants
+REVOKE SELECT, INSERT, UPDATE, DELETE ON actions FROM application_role;
+REVOKE SELECT, INSERT, UPDATE, DELETE ON modules FROM application_role;
+
+-- Drop RLS policies — actions
+DROP POLICY IF EXISTS actions_admin  ON actions;
+DROP POLICY IF EXISTS actions_update ON actions;
+DROP POLICY IF EXISTS actions_write  ON actions;
+DROP POLICY IF EXISTS actions_read   ON actions;
+ALTER TABLE actions DISABLE ROW LEVEL SECURITY;
+
+-- Drop RLS policies — modules
+DROP POLICY IF EXISTS modules_admin  ON modules;
+DROP POLICY IF EXISTS modules_update ON modules;
+DROP POLICY IF EXISTS modules_write  ON modules;
+DROP POLICY IF EXISTS modules_read   ON modules;
+ALTER TABLE modules DISABLE ROW LEVEL SECURITY;
+
+-- Drop triggers
+DROP TRIGGER IF EXISTS update_actions_updated_at   ON actions;
+DROP TRIGGER IF EXISTS update_resources_updated_at ON resources;
+DROP TRIGGER IF EXISTS update_modules_updated_at   ON modules;
+
+-- Drop FK constraints
+-- fk_actions_approver_role is dropped in 000413_actions_add_role_fk.down.sql
+ALTER TABLE actions  DROP CONSTRAINT IF EXISTS fk_actions_tenant;
+ALTER TABLE modules  DROP CONSTRAINT IF EXISTS fk_modules_tenant;
