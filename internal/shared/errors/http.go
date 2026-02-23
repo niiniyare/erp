@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -24,7 +25,10 @@ func (e *HTTPError) Error() string {
 	return fmt.Sprintf("HTTP %d: %s - %s", e.Status, e.Code, e.Message)
 }
 
-// ToHTTPError converts any error to an HTTPError
+// ToHTTPError converts any error to an HTTPError.
+// It uses errors.As so that errors wrapped with fmt.Errorf("%w", ...) are
+// correctly unwrapped — e.g. a *BusinessError buried inside a service-layer
+// fmt.Errorf still gets the right HTTP status and code.
 func ToHTTPError(err error) *HTTPError {
 	if err == nil {
 		return nil
@@ -38,32 +42,31 @@ func ToHTTPError(err error) *HTTPError {
 		Timestamp: time.Now(),
 	}
 
-	// Handle different error types
-	switch e := err.(type) {
-	case *BusinessError:
-		httpErr.Status = e.HTTPStatus
-		httpErr.Code = e.Code
-		httpErr.Message = e.Message
-		httpErr.Details = e.Details
+	var be *BusinessError
+	var re *RepositoryError
+	var ec *ErrorCollection
 
-	case *RepositoryError:
+	switch {
+	case errors.As(err, &be):
+		httpErr.Status = be.HTTPStatus
+		httpErr.Code = be.Code
+		httpErr.Message = be.Message
+		if be.Details != nil {
+			httpErr.Details = be.Details
+		}
+
+	case errors.As(err, &re):
 		httpErr.Status = http.StatusInternalServerError
-		httpErr.Code = e.Code
+		httpErr.Code = re.Code
 		httpErr.Message = "A database error occurred"
 		// Don't expose internal database details
 
-	case ValidationErrors:
-		httpErr.Status = http.StatusBadRequest
-		httpErr.Code = "VALIDATION_FAILED"
-		httpErr.Message = "Validation failed"
-		httpErr.Details["validation_errors"] = e.ToMap()
-
-	case *ErrorCollection:
-		if len(e.GetValidationErrors()) > 0 {
+	case errors.As(err, &ec):
+		if len(ec.GetValidationErrors()) > 0 {
 			httpErr.Status = http.StatusBadRequest
 			httpErr.Code = "VALIDATION_FAILED"
 			httpErr.Message = "Validation failed"
-			httpErr.Details["validation_errors"] = e.GetValidationErrors().ToMap()
+			httpErr.Details["validation_errors"] = ec.GetValidationErrors().ToMap()
 		} else {
 			httpErr.Status = http.StatusInternalServerError
 			httpErr.Code = "MULTIPLE_ERRORS"
@@ -71,8 +74,15 @@ func ToHTTPError(err error) *HTTPError {
 		}
 
 	default:
-		// Keep default internal server error
-		httpErr.Details["original_error"] = err.Error()
+		// Check for ValidationErrors (slice type — errors.As doesn't work on non-pointer types)
+		if ve, ok := err.(ValidationErrors); ok {
+			httpErr.Status = http.StatusBadRequest
+			httpErr.Code = "VALIDATION_FAILED"
+			httpErr.Message = "Validation failed"
+			httpErr.Details["validation_errors"] = ve.ToMap()
+		} else {
+			httpErr.Details["original_error"] = err.Error()
+		}
 	}
 
 	return httpErr

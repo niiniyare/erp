@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -32,6 +33,12 @@ func (r *postgres) Create(ctx context.Context, t *domain.Tenant) error {
 	metadataJSON, _ := json.Marshal(t.Metadata)
 	settingsJSON, _ := json.Marshal(t.Settings)
 
+	var companySize *string
+	if t.CompanySize != nil {
+		upper := strings.ToUpper(*t.CompanySize)
+		companySize = &upper
+	}
+
 	params := db.CreateTenantCompleteParams{
 		Name:               t.Name,
 		Slug:               t.Slug,
@@ -42,7 +49,7 @@ func (r *postgres) Create(ctx context.Context, t *domain.Tenant) error {
 		CurrencyCode:       t.CurrencyCode,
 		Metadata:           metadataJSON,
 		Industry:           t.Industry,
-		CompanySize:        t.CompanySize,
+		CompanySize:        companySize,
 		TaxID:              t.TaxID,
 		RegistrationNumber: t.RegistrationNumber,
 		LegalEntityType:    t.LegalEntityType,
@@ -53,7 +60,7 @@ func (r *postgres) Create(ctx context.Context, t *domain.Tenant) error {
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "create failed")
-		return fmt.Errorf("failed to create tenant: %w", err)
+		return parseTenantDBError(err, "create")
 	}
 
 	t.ID = created.ID
@@ -71,10 +78,7 @@ func (r *postgres) GetByID(ctx context.Context, id uuid.UUID) (*domain.Tenant, e
 	row, err := r.store.GetTenantByID(ctx, id)
 	if err != nil {
 		span.RecordError(err)
-		if err.Error() == "no rows in result set" {
-			return nil, domain.ErrTenantNotFound
-		}
-		return nil, fmt.Errorf("failed to get tenant: %w", err)
+		return nil, parseTenantDBError(err, "get_by_id")
 	}
 	return toDomain(row)
 }
@@ -87,10 +91,7 @@ func (r *postgres) GetBySubdomain(ctx context.Context, subdomain string) (*domai
 	row, err := r.store.GetTenantByUUID(ctx, &subdomain)
 	if err != nil {
 		span.RecordError(err)
-		if err.Error() == "no rows in result set" {
-			return nil, domain.ErrTenantNotFound
-		}
-		return nil, fmt.Errorf("failed to get tenant by subdomain: %w", err)
+		return nil, parseTenantDBError(err, "get_by_subdomain")
 	}
 	return toDomain(row)
 }
@@ -111,6 +112,12 @@ func (r *postgres) Update(ctx context.Context, id uuid.UUID, req domain.UpdateTe
 		settingsJSON, _ = json.Marshal(req.Settings)
 	}
 
+	var updateCompanySize *string
+	if req.CompanySize != nil {
+		upper := strings.ToUpper(*req.CompanySize)
+		updateCompanySize = &upper
+	}
+
 	params := db.UpdateTenantCompleteParams{
 		Name:               req.Name,
 		Email:              req.Email,
@@ -119,7 +126,7 @@ func (r *postgres) Update(ctx context.Context, id uuid.UUID, req domain.UpdateTe
 		Timezone:           req.Timezone,
 		CurrencyCode:       req.CurrencyCode,
 		Industry:           req.Industry,
-		CompanySize:        req.CompanySize,
+		CompanySize:        updateCompanySize,
 		TaxID:              req.TaxID,
 		RegistrationNumber: req.RegistrationNumber,
 		LegalEntityType:    req.LegalEntityType,
@@ -131,7 +138,7 @@ func (r *postgres) Update(ctx context.Context, id uuid.UUID, req domain.UpdateTe
 	if err != nil {
 		span.RecordError(err)
 		span.SetStatus(codes.Error, "update failed")
-		return fmt.Errorf("failed to update tenant: %w", err)
+		return parseTenantDBError(err, "update")
 	}
 	return nil
 }
@@ -287,9 +294,9 @@ func (r *postgres) Provision(ctx context.Context, input domain.ProvisioningInput
 		if input.Industry != nil {
 			industry = *input.Industry
 		}
-		companySize := "Small"
+		companySize := "SMALL"
 		if input.CompanySize != nil {
-			companySize = *input.CompanySize
+			companySize = strings.ToUpper(*input.CompanySize)
 		}
 
 		id, err := txStore.ProvisionTenant(ctx, db.ProvisionTenantParams{

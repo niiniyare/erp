@@ -49,8 +49,7 @@ COMMENT ON MATERIALIZED VIEW mv_user_effective_permissions IS 'Pre-computed effe
 -- CLUSTER user_sessions USING idx_user_sessions_user_id;
 --- 3. Security Automation Functions:
 -- Session risk assessment function
-CREATE
-OR REPLACE FUNCTION assess_session_risk(session_id UUID) RETURNS INT AS
+CREATE OR REPLACE FUNCTION assess_session_risk(session_id UUID) RETURNS INT AS
 $$
 DECLARE
 risk INT := 0;
@@ -126,8 +125,7 @@ $$
 LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Automatic session termination
-CREATE
-OR REPLACE FUNCTION terminate_risky_sessions(threshold INT) RETURNS INT AS
+CREATE OR REPLACE FUNCTION terminate_risky_sessions(threshold INT) RETURNS INT AS
 $$
 DECLARE
 terminated_count INT := 0;
@@ -171,8 +169,7 @@ LANGUAGE plpgsql;
 
 --- 4. Compliance Enhancements:
 -- GDPR right-to-forget implementation
-CREATE
-OR REPLACE FUNCTION gdpr_user_deletion(user_id UUID) RETURNS VOID AS
+CREATE OR REPLACE FUNCTION gdpr_user_deletion(user_id UUID) RETURNS VOID AS
 $$
 BEGIN
 -- Pseudonymize sensitive data
@@ -231,8 +228,7 @@ $$
 LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Data retention policy enforcement
-CREATE
-OR REPLACE FUNCTION enforce_data_retention() RETURNS VOID AS
+CREATE OR REPLACE FUNCTION enforce_data_retention() RETURNS VOID AS
 $$
 BEGIN
 -- Anonymize old audit logs
@@ -350,8 +346,7 @@ CREATE TABLE security_notifications (
 );
 
 -- Notification trigger function
-CREATE
-OR REPLACE FUNCTION trigger_security_notification() RETURNS TRIGGER AS
+CREATE OR REPLACE FUNCTION trigger_security_notification() RETURNS TRIGGER AS
 $$
 BEGIN
 IF (

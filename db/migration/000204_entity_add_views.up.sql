@@ -251,7 +251,7 @@ CREATE VIEW v_tenant_entity_summary AS
 SELECT
   t.id AS tenant_id,
   t.name AS tenant_name,
-  t.status AS tenant_status,
+  t."Status" AS tenant_status,
   COUNT(DISTINCT e.uuid) AS total_entities,
   COUNT(DISTINCT e.uuid) FILTER (
     WHERE
@@ -287,7 +287,7 @@ FROM
 GROUP BY
   t.id,
   t.name,
-  t.status;
+  t."Status";
 
 /*
  * Active Entities Report View
@@ -464,7 +464,7 @@ CREATE VIEW v_tenant_resource_utilization AS
 SELECT
   t.id AS tenant_id,
   t.name AS tenant_name,
-  t.status AS tenant_status,
+  t."Status" AS tenant_status,
   COUNT(DISTINCT e.uuid) AS total_entities,
   COUNT(DISTINCT e.uuid) FILTER (
     WHERE
@@ -485,4 +485,4 @@ FROM
 GROUP BY
   t.id,
   t.name,
-  t.status;
+  t."Status";

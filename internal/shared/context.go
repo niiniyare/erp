@@ -62,3 +62,14 @@ func GetRequestContext(ctx context.Context) (*RequestContext, bool) {
 	reqCtx, ok := ctx.Value(RequestCtxKey).(*RequestContext)
 	return reqCtx, ok
 }
+
+type CapabilityContext struct {
+	UserID      string
+	Role        string
+	Scope       string
+	TenantID    *string
+	CustomerID  *string
+	Modules     map[string]bool
+	Features    map[string]bool
+	Permissions map[string]bool
+}

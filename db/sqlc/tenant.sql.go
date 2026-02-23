@@ -33,7 +33,7 @@ const bulkUpdateTenantStatus = `-- name: BulkUpdateTenantStatus :exec
 UPDATE
   tenants
 SET
-  STATUS = $1,
+  "Status" = $1,
   updated_at = NOW()
 WHERE
   id = ANY($2::UUID [])
@@ -197,23 +197,29 @@ WHERE
   )
   AND (
     $2::varchar IS NULL
-    OR STATUS = $2
+    OR "Status" = $3
   )
   AND (
-    $3::varchar IS NULL
-    OR industry = $3
+    $4::varchar IS NULL
+    OR industry = $4
   )
   AND deleted_at IS NULL
 `
 
 type CountFilteredTenantsParams struct {
 	NameFilter     *string `json:"name_filter"`
+	StatusFilter   *string `json:"Status_filter"`
 	StatusFilter   *string `json:"status_filter"`
 	IndustryFilter *string `json:"industry_filter"`
 }
 
 func (q *Queries) CountFilteredTenants(ctx context.Context, arg CountFilteredTenantsParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countFilteredTenants, arg.NameFilter, arg.StatusFilter, arg.IndustryFilter)
+	row := q.db.QueryRow(ctx, countFilteredTenants,
+		arg.NameFilter,
+		arg.StatusFilter,
+		arg.StatusFilter,
+		arg.IndustryFilter,
+	)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -247,11 +253,11 @@ func (q *Queries) CreateDefaultTenantConfiguration(ctx context.Context) error {
 
 const createTenant = `-- name: CreateTenant :one
 INSERT INTO
-  tenants (name, slug, email, subdomain, STATUS, industry)
+  tenants (name, slug, email, subdomain, "Status", industry)
 VALUES
   ($1, $2, $3, $4, $5, $6)
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 `
 
 type CreateTenantParams struct {
@@ -259,7 +265,7 @@ type CreateTenantParams struct {
 	Slug      string  `json:"slug"`
 	Email     string  `json:"email"`
 	Subdomain *string `json:"subdomain"`
-	Status    string  `json:"status"`
+	Status    string  `json:"Status"`
 	Industry  *string `json:"industry"`
 }
 
@@ -282,18 +288,24 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (*Te
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -308,7 +320,7 @@ INSERT INTO
     slug,
     email,
     subdomain,
-    STATUS,
+    "Status",
     timezone,
     currency_code,
     metadata,
@@ -342,7 +354,7 @@ RETURNING
   name,
   email,
   subdomain,
-  STATUS,
+  "Status",
   timezone,
   currency_code,
   metadata,
@@ -362,7 +374,7 @@ type CreateTenantCompleteParams struct {
 	Slug               string  `json:"slug"`
 	Email              string  `json:"email"`
 	Subdomain          *string `json:"subdomain"`
-	Status             string  `json:"status"`
+	Status             string  `json:"Status"`
 	Timezone           string  `json:"timezone"`
 	CurrencyCode       string  `json:"currency_code"`
 	Metadata           []byte  `json:"metadata"`
@@ -380,7 +392,7 @@ type CreateTenantCompleteRow struct {
 	Name               string       `json:"name"`
 	Email              string       `json:"email"`
 	Subdomain          *string      `json:"subdomain"`
-	Status             string       `json:"status"`
+	Status             string       `json:"Status"`
 	Timezone           string       `json:"timezone"`
 	CurrencyCode       string       `json:"currency_code"`
 	Metadata           []byte       `json:"metadata"`
@@ -445,7 +457,7 @@ INSERT INTO
 VALUES
   ($1, $2)
 RETURNING
-  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at, settings_version, last_template_applied, template_applied_at
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at
 `
 
 type CreateTenantConfigurationParams struct {
@@ -505,9 +517,6 @@ func (q *Queries) CreateTenantConfiguration(ctx context.Context, arg CreateTenan
 		&i.ApiRateLimits,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.SettingsVersion,
-		&i.LastTemplateApplied,
-		&i.TemplateAppliedAt,
 	)
 	return &i, err
 }
@@ -608,7 +617,7 @@ SELECT
   name,
   email,
   subdomain,
-  STATUS,
+  "Status",
   timezone,
   currency_code,
   industry,
@@ -625,7 +634,7 @@ WHERE
   )
   AND (
     $2::varchar IS NULL
-    OR STATUS = $2
+    OR "Status" = $2
   )
   AND (
     $3::varchar IS NULL
@@ -662,7 +671,7 @@ type FilterTenantsRow struct {
 	Name         string       `json:"name"`
 	Email        string       `json:"email"`
 	Subdomain    *string      `json:"subdomain"`
-	Status       string       `json:"status"`
+	Status       string       `json:"Status"`
 	Timezone     string       `json:"timezone"`
 	CurrencyCode string       `json:"currency_code"`
 	Industry     *string      `json:"industry"`
@@ -718,11 +727,11 @@ func (q *Queries) FilterTenants(ctx context.Context, arg FilterTenantsParams) ([
 
 const getActiveTenants = `-- name: GetActiveTenants :many
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
-  STATUS = 'ACTIVE'
+  "Status" = 'ACTIVE'
   AND deleted_at IS NULL
 ORDER BY
   name
@@ -742,18 +751,24 @@ func (q *Queries) GetActiveTenants(ctx context.Context) ([]*Tenant, error) {
 			&i.Slug,
 			&i.Name,
 			&i.Email,
+			&i.BillingEmail,
+			&i.BillingContactName,
 			&i.Subdomain,
 			&i.Status,
+			&i.PlanTier,
+			&i.LastActivityAt,
 			&i.Timezone,
 			&i.CurrencyCode,
 			&i.Metadata,
+			&i.Settings,
 			&i.Industry,
 			&i.CompanySize,
 			&i.TaxID,
 			&i.RegistrationNumber,
 			&i.LegalEntityType,
-			&i.LastActivityAt,
-			&i.Settings,
+			&i.ParentTenantID,
+			&i.CreatedBy,
+			&i.DeletedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -843,7 +858,7 @@ const getAllTenantsStorageAnalytics = `-- name: GetAllTenantsStorageAnalytics :m
 SELECT
   t.id,
   t.name,
-  t.status,
+  t."Status",
   tc.storage_quota,
   COALESCE(tus.storage_used, 0) AS current_storage_used,
   ROUND(
@@ -865,7 +880,7 @@ ORDER BY
 type GetAllTenantsStorageAnalyticsRow struct {
 	ID                     uuid.UUID      `json:"id"`
 	Name                   string         `json:"name"`
-	Status                 string         `json:"status"`
+	Status                 string         `json:"Status"`
 	StorageQuota           int64          `json:"storage_quota"`
 	CurrentStorageUsed     int64          `json:"current_storage_used"`
 	StorageUsagePercentage pgtype.Numeric `json:"storage_usage_percentage"`
@@ -917,7 +932,7 @@ func (q *Queries) GetBooleanSetting(ctx context.Context, key string) (bool, erro
 
 const getCurrentTenant = `-- name: GetCurrentTenant :one
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -937,18 +952,24 @@ func (q *Queries) GetCurrentTenant(ctx context.Context) (*Tenant, error) {
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -1031,7 +1052,7 @@ const getCurrentTenantStorageUsage = `-- name: GetCurrentTenantStorageUsage :one
 SELECT
   t.id,
   t.name,
-  t.status,
+  t."Status",
   tc.storage_quota,
   COALESCE(tus.storage_used, 0) AS current_storage_used,
   ROUND(
@@ -1051,7 +1072,7 @@ WHERE
 type GetCurrentTenantStorageUsageRow struct {
 	ID                     uuid.UUID      `json:"id"`
 	Name                   string         `json:"name"`
-	Status                 string         `json:"status"`
+	Status                 string         `json:"Status"`
 	StorageQuota           int64          `json:"storage_quota"`
 	CurrentStorageUsed     int64          `json:"current_storage_used"`
 	StorageUsagePercentage pgtype.Numeric `json:"storage_usage_percentage"`
@@ -1188,7 +1209,7 @@ func (q *Queries) GetSpecificSetting(ctx context.Context, key string) (interface
 
 const getTenantByEmail = `-- name: GetTenantByEmail :one
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -1204,18 +1225,24 @@ func (q *Queries) GetTenantByEmail(ctx context.Context, email string) (*Tenant, 
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -1225,7 +1252,7 @@ func (q *Queries) GetTenantByEmail(ctx context.Context, email string) (*Tenant, 
 
 const getTenantByID = `-- name: GetTenantByID :one
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -1241,18 +1268,24 @@ func (q *Queries) GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, err
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -1262,7 +1295,7 @@ func (q *Queries) GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, err
 
 const getTenantBySlug = `-- name: GetTenantBySlug :one
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -1278,18 +1311,24 @@ func (q *Queries) GetTenantBySlug(ctx context.Context, slug string) (*Tenant, er
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -1299,7 +1338,7 @@ func (q *Queries) GetTenantBySlug(ctx context.Context, slug string) (*Tenant, er
 
 const getTenantByUUID = `-- name: GetTenantByUUID :one
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -1317,18 +1356,24 @@ func (q *Queries) GetTenantByUUID(ctx context.Context, subdomain *string) (*Tena
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -1338,7 +1383,7 @@ func (q *Queries) GetTenantByUUID(ctx context.Context, subdomain *string) (*Tena
 
 const getTenantConfiguration = `-- name: GetTenantConfiguration :one
 SELECT
-  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at, settings_version, last_template_applied, template_applied_at
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at
 FROM
   tenant_configurations
 WHERE
@@ -1366,9 +1411,6 @@ func (q *Queries) GetTenantConfiguration(ctx context.Context) (*TenantConfigurat
 		&i.ApiRateLimits,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.SettingsVersion,
-		&i.LastTemplateApplied,
-		&i.TemplateAppliedAt,
 	)
 	return &i, err
 }
@@ -1379,7 +1421,7 @@ SELECT
   COUNT(*) AS new_tenants,
   COUNT(*) FILTER (
     WHERE
-      STATUS = 'active'
+      "Status" = 'ACTIVE'
   ) AS active_new_tenants
 FROM
   tenants
@@ -1433,15 +1475,15 @@ SELECT
   COUNT(*) AS total_tenants,
   COUNT(*) FILTER (
     WHERE
-      STATUS = 'active'
+      "Status" = 'ACTIVE'
   ) AS active_tenants,
   COUNT(*) FILTER (
     WHERE
-      STATUS = 'suspended'
+      "Status" = 'SUSPENDED'
   ) AS suspended_tenants,
   COUNT(*) FILTER (
     WHERE
-      STATUS = 'pending'
+      "Status" = 'PENDING'
   ) AS pending_tenants
 FROM
   tenants
@@ -1473,34 +1515,34 @@ SELECT
   COUNT(*) AS total_tenants,
   COUNT(*) FILTER (
     WHERE
-      STATUS = 'active'
+      "Status" = 'ACTIVE'
   ) AS active_tenants,
   COUNT(*) FILTER (
     WHERE
-      STATUS = 'suspended'
+      "Status" = 'SUSPENDED'
   ) AS suspended_tenants,
   COUNT(*) FILTER (
     WHERE
-      STATUS = 'pending'
+      "Status" = 'PENDING'
   ) AS pending_tenants,
   ROUND(
     COUNT(*) FILTER (
       WHERE
-        STATUS = 'active'
+        "Status" = 'ACTIVE'
     ) * 100.0 / COUNT(*),
     2
   ) AS active_percentage,
   ROUND(
     COUNT(*) FILTER (
       WHERE
-        STATUS = 'suspended'
+        "Status" = 'SUSPENDED'
     ) * 100.0 / COUNT(*),
     2
   ) AS suspended_percentage,
   ROUND(
     COUNT(*) FILTER (
       WHERE
-        STATUS = 'pending'
+        "Status" = 'PENDING'
     ) * 100.0 / COUNT(*),
     2
   ) AS pending_percentage
@@ -1776,7 +1818,7 @@ func (q *Queries) GetTenantsByTimezone(ctx context.Context) ([]*GetTenantsByTime
 
 const getTenantsCreatedInDateRange = `-- name: GetTenantsCreatedInDateRange :many
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -1806,18 +1848,24 @@ func (q *Queries) GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenan
 			&i.Slug,
 			&i.Name,
 			&i.Email,
+			&i.BillingEmail,
+			&i.BillingContactName,
 			&i.Subdomain,
 			&i.Status,
+			&i.PlanTier,
+			&i.LastActivityAt,
 			&i.Timezone,
 			&i.CurrencyCode,
 			&i.Metadata,
+			&i.Settings,
 			&i.Industry,
 			&i.CompanySize,
 			&i.TaxID,
 			&i.RegistrationNumber,
 			&i.LegalEntityType,
-			&i.LastActivityAt,
-			&i.Settings,
+			&i.ParentTenantID,
+			&i.CreatedBy,
+			&i.DeletedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -1869,7 +1917,7 @@ func (q *Queries) InitializeUsageStats(ctx context.Context, tenantID uuid.UUID) 
 
 const listTenants = `-- name: ListTenants :many
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -1899,18 +1947,24 @@ func (q *Queries) ListTenants(ctx context.Context, arg ListTenantsParams) ([]*Te
 			&i.Slug,
 			&i.Name,
 			&i.Email,
+			&i.BillingEmail,
+			&i.BillingContactName,
 			&i.Subdomain,
 			&i.Status,
+			&i.PlanTier,
+			&i.LastActivityAt,
 			&i.Timezone,
 			&i.CurrencyCode,
 			&i.Metadata,
+			&i.Settings,
 			&i.Industry,
 			&i.CompanySize,
 			&i.TaxID,
 			&i.RegistrationNumber,
 			&i.LegalEntityType,
-			&i.LastActivityAt,
-			&i.Settings,
+			&i.ParentTenantID,
+			&i.CreatedBy,
+			&i.DeletedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -1991,7 +2045,7 @@ func (q *Queries) ResolveSubdomainToID(ctx context.Context, subdomain *string) (
 
 const searchTenantsByName = `-- name: SearchTenantsByName :many
 SELECT
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 FROM
   tenants
 WHERE
@@ -2023,18 +2077,24 @@ func (q *Queries) SearchTenantsByName(ctx context.Context, arg SearchTenantsByNa
 			&i.Slug,
 			&i.Name,
 			&i.Email,
+			&i.BillingEmail,
+			&i.BillingContactName,
 			&i.Subdomain,
 			&i.Status,
+			&i.PlanTier,
+			&i.LastActivityAt,
 			&i.Timezone,
 			&i.CurrencyCode,
 			&i.Metadata,
+			&i.Settings,
 			&i.Industry,
 			&i.CompanySize,
 			&i.TaxID,
 			&i.RegistrationNumber,
 			&i.LegalEntityType,
-			&i.LastActivityAt,
-			&i.Settings,
+			&i.ParentTenantID,
+			&i.CreatedBy,
+			&i.DeletedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -2057,8 +2117,8 @@ SELECT
 // =====================================================
 // TENANT CONTEXT AND LIMITS QUERIES
 // =====================================================
-func (q *Queries) SetTenantContext(ctx context.Context, tenantID uuid.UUID) error {
-	_, err := q.db.Exec(ctx, setTenantContext, tenantID)
+func (q *Queries) SetTenantContext(ctx context.Context, pTenantID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, setTenantContext, pTenantID)
 	return err
 }
 
@@ -2083,20 +2143,20 @@ UPDATE
 SET
   name = $1,
   subdomain = $2,
-  STATUS = $3,
+  "Status" = $3,
   industry = $4,
   updated_at = NOW()
 WHERE
   id = current_tenant_id()
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 `
 
 type UpdateCurrentTenantParams struct {
 	Name      string  `json:"name"`
 	Subdomain *string `json:"subdomain"`
-	Status    string  `json:"status"`
+	Status    string  `json:"Status"`
 	Industry  *string `json:"industry"`
 }
 
@@ -2113,18 +2173,24 @@ func (q *Queries) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTena
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -2266,14 +2332,14 @@ UPDATE
 SET
   name = COALESCE($1, name),
   subdomain = COALESCE($2, subdomain),
-  STATUS = COALESCE($3, STATUS),
+  "Status" = COALESCE($3, "Status"),
   industry = COALESCE($4, industry),
   updated_at = NOW()
 WHERE
   id = $5
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantParams struct {
@@ -2298,18 +2364,24 @@ func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (*Te
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -2325,7 +2397,7 @@ SET
   slug = COALESCE($2, slug),
   email = COALESCE($3, email),
   subdomain = COALESCE($4, subdomain),
-  STATUS = COALESCE($5, STATUS),
+  "Status" = COALESCE($5, "Status"),
   timezone = COALESCE($6, timezone),
   currency_code = COALESCE($7, currency_code),
   metadata = COALESCE($8, metadata),
@@ -2346,7 +2418,7 @@ WHERE
   id = $15
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantCompleteParams struct {
@@ -2391,18 +2463,24 @@ func (q *Queries) UpdateTenantComplete(ctx context.Context, arg UpdateTenantComp
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -2445,7 +2523,7 @@ SET
 WHERE
   tenant_id = current_tenant_id()
 RETURNING
-  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at, settings_version, last_template_applied, template_applied_at
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at
 `
 
 type UpdateTenantConfigurationParams struct {
@@ -2499,9 +2577,6 @@ func (q *Queries) UpdateTenantConfiguration(ctx context.Context, arg UpdateTenan
 		&i.ApiRateLimits,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.SettingsVersion,
-		&i.LastTemplateApplied,
-		&i.TemplateAppliedAt,
 	)
 	return &i, err
 }
@@ -2516,7 +2591,7 @@ WHERE
   id = $1
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantIndustryParams struct {
@@ -2532,18 +2607,24 @@ func (q *Queries) UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndu
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -2561,7 +2642,7 @@ SET
   storage_quota = $4,
   updated_at = NOW()
 RETURNING
-  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at, settings_version, last_template_applied, template_applied_at
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at
 `
 
 type UpdateTenantLimitsParams struct {
@@ -2624,9 +2705,6 @@ func (q *Queries) UpdateTenantLimits(ctx context.Context, arg UpdateTenantLimits
 		&i.ApiRateLimits,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.SettingsVersion,
-		&i.LastTemplateApplied,
-		&i.TemplateAppliedAt,
 	)
 	return &i, err
 }
@@ -2641,7 +2719,7 @@ WHERE
   id = current_tenant_id()
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 `
 
 func (q *Queries) UpdateTenantMetadata(ctx context.Context, metadata []byte) (*Tenant, error) {
@@ -2652,18 +2730,24 @@ func (q *Queries) UpdateTenantMetadata(ctx context.Context, metadata []byte) (*T
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -2681,7 +2765,7 @@ WHERE
   id = $1
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantNameParams struct {
@@ -2697,18 +2781,24 @@ func (q *Queries) UpdateTenantName(ctx context.Context, arg UpdateTenantNamePara
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -2726,7 +2816,7 @@ WHERE
   id = current_tenant_id()
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 `
 
 func (q *Queries) UpdateTenantSettings(ctx context.Context, settings []byte) (*Tenant, error) {
@@ -2737,18 +2827,24 @@ func (q *Queries) UpdateTenantSettings(ctx context.Context, settings []byte) (*T
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -2760,18 +2856,18 @@ const updateTenantStatus = `-- name: UpdateTenantStatus :one
 UPDATE
   tenants
 SET
-  STATUS = $2,
+  "Status" = $2,
   updated_at = NOW()
 WHERE
   id = $1
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantStatusParams struct {
 	ID     uuid.UUID `json:"id"`
-	Status string    `json:"status"`
+	Status string    `json:"Status"`
 }
 
 func (q *Queries) UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatusParams) (*Tenant, error) {
@@ -2782,18 +2878,24 @@ func (q *Queries) UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatus
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -2811,7 +2913,7 @@ WHERE
   id = $1
   AND deleted_at IS NULL
 RETURNING
-  id, slug, name, email, subdomain, status, timezone, currency_code, metadata, industry, company_size, tax_id, registration_number, legal_entity_type, last_activity_at, settings, created_at, updated_at, deleted_at
+  id, slug, name, email, billing_email, billing_contact_name, subdomain, "Status", plan_tier, last_activity_at, timezone, currency_code, metadata, settings, industry, company_size, tax_id, registration_number, legal_entity_type, parent_tenant_id, created_by, deleted_by, created_at, updated_at, deleted_at
 `
 
 type UpdateTenantSubdomainParams struct {
@@ -2827,18 +2929,24 @@ func (q *Queries) UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSub
 		&i.Slug,
 		&i.Name,
 		&i.Email,
+		&i.BillingEmail,
+		&i.BillingContactName,
 		&i.Subdomain,
 		&i.Status,
+		&i.PlanTier,
+		&i.LastActivityAt,
 		&i.Timezone,
 		&i.CurrencyCode,
 		&i.Metadata,
+		&i.Settings,
 		&i.Industry,
 		&i.CompanySize,
 		&i.TaxID,
 		&i.RegistrationNumber,
 		&i.LegalEntityType,
-		&i.LastActivityAt,
-		&i.Settings,
+		&i.ParentTenantID,
+		&i.CreatedBy,
+		&i.DeletedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -2921,7 +3029,7 @@ FROM
 WHERE
   id = current_tenant_id()
   AND deleted_at IS NULL
-  AND STATUS = 'active'
+  AND "Status" = 'ACTIVE'
 `
 
 func (q *Queries) ValidateCurrentTenant(ctx context.Context) error {

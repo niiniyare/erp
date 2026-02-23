@@ -158,88 +158,37 @@ type AuditLog struct {
 	CreatedAt       sql.NullTime `json:"created_at"`
 }
 
-// System-wide configuration metadata defining all possible configuration keys with validation rules and inheritance policies
+// Schema registry for all available configuration keys across modules. Owned exclusively by the Settings module — do not write from other modules directly. Defines what keys exist, their types, defaults, validation rules, and access control.
 type ConfigDefinition struct {
-	// UUID primary key for the configuration definition
-	ID       uuid.UUID  `json:"id"`
-	TenantID uuid.UUID  `json:"tenant_id"`
-	EntityID *uuid.UUID `json:"entity_id"`
-	// ERP module that owns this configuration (finance, hr, inventory, etc.)
-	ModuleName string `json:"module_name"`
-	// Unique configuration key within the module namespace
-	ConfigKey string `json:"config_key"`
-	// Data type constraint for configuration values (string, integer, boolean, decimal, json)
-	DataType string `json:"data_type"`
-	// Default value for this configuration in JSONB format
-	DefaultValue []byte `json:"default_value"`
-	// JSON schema or validation rules for the configuration value
-	ValidationRules []byte `json:"validation_rules"`
-	// Human-readable description of the configuration purpose
-	Description *string `json:"description"`
-	// Permission required to modify this configuration
-	RequiredPermission *string `json:"required_permission"`
-	// Feature flag that must be enabled for this configuration
-	RequiredFeatureFlag *string `json:"required_feature_flag"`
-	// Whether this configuration can be overridden at tenant/entity levels
-	IsOverridable bool      `json:"is_overridable"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
-}
-
-// Complete audit trail of all configuration changes for compliance and troubleshooting
-type ConfigurationAudit struct {
-	// UUID primary key for the audit record
 	ID uuid.UUID `json:"id"`
-	// Foreign key to tenants table for multi-tenant isolation
-	TenantID uuid.UUID `json:"tenant_id"`
-	// Optional foreign key to entities table for entity-level changes
-	EntityID *uuid.UUID `json:"entity_id"`
-	// Full configuration key (module.key) that was modified
+	// Module that owns this key (e.g. finance, hr, inventory). Lowercase snake_case.
+	ModuleName string `json:"module_name"`
+	// Configuration key within the module. Lowercase snake_case. Unique within module.
 	ConfigKey string `json:"config_key"`
-	// Previous configuration value in JSONB format
-	OldValue []byte `json:"old_value"`
-	// New configuration value in JSONB format
-	NewValue []byte `json:"new_value"`
-	// Source level where change occurred: system, tenant, entity, or template
-	Source string `json:"source"`
-	// Type of operation: create, update, delete, reset, or template_apply
-	Operation string `json:"operation"`
-	// UUID of user who made the change
-	UserID    uuid.UUID `json:"user_id"`
-	AppliedAt time.Time `json:"applied_at"`
-	// Session identifier for tracking related changes
-	SessionID *string `json:"session_id"`
-	// Correlation ID for tracking bulk operations
-	CorrelationID *string `json:"correlation_id"`
-}
-
-// Reusable configuration templates for bulk deployment across tenants and entities
-type ConfigurationTemplate struct {
-	// UUID primary key for the configuration template
-	ID       uuid.UUID  `json:"id"`
-	TenantID uuid.UUID  `json:"tenant_id"`
-	EntityID *uuid.UUID `json:"entity_id"`
-	// Template display name
-	Name string `json:"name"`
-	// Template category: industry, functional, or regional
-	Category    string  `json:"category"`
-	Description *string `json:"description"`
-	// Semantic version string for template versioning
-	Version string `json:"version"`
-	// JSON object containing all configuration key-value pairs
-	Configurations []byte `json:"configurations"`
-	// Array of tenant types this template applies to
-	ApplicableTenantTypes []string `json:"applicable_tenant_types"`
-	// Array of feature flags required for this template
-	RequiredFeatureFlags []string `json:"required_feature_flags"`
-	// Strategy for handling configuration conflicts: merge, replace, or preserve
-	ConflictResolution *string `json:"conflict_resolution"`
-	// Whether this template is active and available for use
+	// Value data type used by ConfigurationService for casting and validation.
+	ConfigType string `json:"config_type"`
+	// System-level default (Level 1 in hierarchy). NULL means tenant/entity must configure it explicitly.
+	DefaultValue []byte `json:"default_value"`
+	// Whether tenant admins may override the system default.
+	IsTenantOverridable bool `json:"is_tenant_overridable"`
+	// Whether entity managers may override the tenant value.
+	IsEntityOverridable bool `json:"is_entity_overridable"`
+	// JSON validation rules evaluated by ConfigurationService. Supports min/max/pattern/enum/required.
+	ValidationRules []byte `json:"validation_rules"`
+	// FeatureFlag service key required for this config to be available. NULL = always available. ADR-026.
+	RequiredFeatureFlag *string `json:"required_feature_flag"`
+	// IAM service permission key required to read/write this config. NULL = any authenticated user. ADR-027.
+	RequiredIamPermission *string `json:"required_iam_permission"`
+	// Human-readable label shown in the Settings UI.
+	DisplayName string `json:"display_name"`
+	// Full explanation of what this setting controls. Shown as help text.
+	Description string `json:"description"`
+	// Optional unit label for numeric values (days, %, USD). Shown next to input field.
+	UnitLabel *string `json:"unit_label"`
+	// Inactive definitions are hidden from UI but preserved for backward compatibility with stored values.
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
-	// UUID of user who created this template
-	CreatedBy uuid.UUID `json:"created_by"`
 }
 
 // Employee records extending persons with employment-specific data, organizational hierarchy, and security levels for access control.
@@ -844,6 +793,16 @@ type PolicyEvaluation struct {
 	ExpiresAt        sql.NullTime `json:"expires_at"`
 }
 
+// Subdomains tenants may not register. Enforcement is via trigger on tenants table (see migration 007). Ops can add rows here without a schema migration.
+type ReservedSubdomain struct {
+	// DNS label — lowercase alphanumeric plus hyphens, max 63 chars.
+	Subdomain string `json:"subdomain"`
+	// Why this subdomain is reserved — required for audit clarity.
+	Reason string `json:"reason"`
+	// When this reservation was added.
+	CreatedAt time.Time `json:"created_at"`
+}
+
 // System resources that can be protected by permissions including APIs, UI components, data objects, files, reports, and workflows.
 type Resource struct {
 	ID          uuid.UUID `json:"id"`
@@ -921,58 +880,57 @@ type SecurityNotification struct {
 	ExpiresAt        sql.NullTime `json:"expires_at"`
 }
 
-// History of template applications with detailed results and statistics
-type TemplateApplication struct {
-	// UUID primary key for the template application record
-	ID uuid.UUID `json:"id"`
-	// Foreign key to configuration_templates table
-	TemplateID uuid.UUID `json:"template_id"`
-	// Foreign key to tenants table
-	TenantID uuid.UUID `json:"tenant_id"`
-	// Optional foreign key to entities table for entity-level applications
-	EntityID *uuid.UUID `json:"entity_id"`
-	// Target type: tenant or entity
-	TargetType string `json:"target_type"`
-	// Number of configurations successfully applied
-	AppliedConfigs int32 `json:"applied_configs"`
-	// Number of configurations skipped due to conflicts or policies
-	SkippedConfigs int32 `json:"skipped_configs"`
-	// Number of configuration conflicts encountered
-	ConflictCount int32 `json:"conflict_count"`
-	// Detailed JSON summary of the application results
-	ApplicationSummary []byte    `json:"application_summary"`
-	AppliedAt          time.Time `json:"applied_at"`
-	// UUID of user who applied the template
-	AppliedBy uuid.UUID `json:"applied_by"`
-	// Correlation ID for tracking related operations
-	CorrelationID *string `json:"correlation_id"`
-}
-
-// Core tenant management table for multi-tenant SaaS architecture
+// Core tenant registry for the multi-tenant ERP. One row per customer organisation. The Settings module reads/writes the settings JSONB column via its ConfigurationService — other services must not write directly to it. Soft-delete only: set deleted_at + deleted_by; never hard-DELETE.
 type Tenant struct {
-	// Universal unique identifier for external API references
+	// Immutable UUID — used in all external API references and foreign keys.
 	ID uuid.UUID `json:"id"`
-	// URL-friendly tenant identifier
-	Slug         string  `json:"slug"`
-	Name         string  `json:"name"`
-	Email        string  `json:"email"`
-	Subdomain    *string `json:"subdomain"`
-	Status       string  `json:"status"`
-	Timezone     string  `json:"timezone"`
-	CurrencyCode string  `json:"currency_code"`
-	// Flexible JSONB storage for additional tenant metadata
-	Metadata           []byte       `json:"metadata"`
-	Industry           *string      `json:"industry"`
-	CompanySize        *string      `json:"company_size"`
-	TaxID              *string      `json:"tax_id"`
-	RegistrationNumber *string      `json:"registration_number"`
-	LegalEntityType    *string      `json:"legal_entity_type"`
-	LastActivityAt     sql.NullTime `json:"last_activity_at"`
-	// Tenant-specific configuration settings
-	Settings  []byte    `json:"settings"`
+	// URL-safe identifier. Auto-generated from name on INSERT. IMMUTABLE after creation (trigger-enforced).
+	Slug string `json:"slug"`
+	// Human-readable display name. Must be globally unique.
+	Name string `json:"name"`
+	// Primary account email — used for auth and account notifications.
+	Email string `json:"email"`
+	// Billing contact email — receives invoices and payment alerts. Falls back to email when NULL.
+	BillingEmail *string `json:"billing_email"`
+	// Billing contact name printed on invoices. Optional.
+	BillingContactName *string `json:"billing_contact_name"`
+	// Vanity subdomain for tenant routing. NULL = use path-based routing. Reserved names blocked by trigger.
+	Subdomain *string `json:"subdomain"`
+	// Lifecycle state. New tenants start PENDING until email verification + payment setup complete.
+	Status string `json:"Status"`
+	// Denormalized subscription tier for FeatureFlag and Settings services. Billing module is source of truth; writes back here via event.
+	PlanTier string `json:"plan_tier"`
+	// Last meaningful interaction (login, API call, row change). Updated by trigger unless application already set it in this transaction.
+	LastActivityAt time.Time `json:"last_activity_at"`
+	// IANA timezone string (e.g. America/New_York). Used for date-relative operations in the ERP.
+	Timezone string `json:"timezone"`
+	// ISO 4217 three-letter currency code. Default is USD.
+	CurrencyCode string `json:"currency_code"`
+	// Integration metadata owned by ops/third-party systems: Stripe IDs, webhook URLs, external system refs. NOT managed by Settings module.
+	Metadata []byte `json:"metadata"`
+	// Application-owned config managed exclusively by the Settings module (ConfigurationService). Other services must use GetEffectiveConfiguration() — do not write here directly.
+	Settings []byte `json:"settings"`
+	// Industry vertical for analytics and template selection (e.g. Manufacturing, Retail, Services).
+	Industry *string `json:"industry"`
+	// Approximate headcount band. Used for template selection and capacity planning.
+	CompanySize *string `json:"company_size"`
+	// Government tax identifier (VAT, EIN, GST etc.). Migrate to Compliance module when built.
+	TaxID *string `json:"tax_id"`
+	// Company registry number. Migrate to Compliance module when built.
+	RegistrationNumber *string `json:"registration_number"`
+	// Legal structure (LLC, Ltd, PLC, GmbH etc.). Migrate to Compliance module when built.
+	LegalEntityType *string `json:"legal_entity_type"`
+	// Self-reference for enterprise org trees and reseller chains. NULL = root tenant. Max depth 3 (application-enforced). Circular refs blocked by trigger.
+	ParentTenantID *uuid.UUID `json:"parent_tenant_id"`
+	// UUID of the actor (user or service account) that created this tenant. NULL if seeded by migration.
+	CreatedBy *uuid.UUID `json:"created_by"`
+	// UUID of the actor that issued the soft-delete. Set alongside deleted_at. NULL when not deleted.
+	DeletedBy *uuid.UUID `json:"deleted_by"`
+	// Row creation timestamp.
 	CreatedAt time.Time `json:"created_at"`
+	// Last row modification timestamp. Maintained by trigger.
 	UpdatedAt time.Time `json:"updated_at"`
-	// Soft delete timestamp - NULL means active
+	// Soft-delete timestamp. NULL = tenant is active. Never hard-DELETE a tenant row.
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
@@ -1035,12 +993,6 @@ type TenantConfiguration struct {
 	ApiRateLimits []byte    `json:"api_rate_limits"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
-	// Version counter for optimistic locking of tenant settings
-	SettingsVersion *int32 `json:"settings_version"`
-	// Reference to last template applied to this tenant
-	LastTemplateApplied *uuid.UUID `json:"last_template_applied"`
-	// Timestamp when template was last applied
-	TemplateAppliedAt sql.NullTime `json:"template_applied_at"`
 }
 
 // Tenant-specific feature flag overrides with audit trail

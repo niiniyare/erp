@@ -567,21 +567,22 @@ CREATE TABLE configuration_templates (
     UNIQUE(name, version)
 );
 
--- Configuration audit trail
-CREATE TABLE configuration_audit (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id),
-    entity_id UUID REFERENCES entities(uuid),
-    config_key VARCHAR(150) NOT NULL,
-    old_value JSONB,
-    new_value JSONB,
-    source VARCHAR(20) NOT NULL,
-    operation VARCHAR(20) NOT NULL,
-    user_id UUID NOT NULL,
-    applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    session_id VARCHAR(100),
-    correlation_id VARCHAR(100)
-);
+-- -- Configuration audit trail
+-- CREATE TABLE configuration_audit (
+--     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--     tenant_id UUID NOT NULL REFERENCES tenants(id),
+--     entity_id UUID REFERENCES entities(uuid),
+--     config_key VARCHAR(150) NOT NULL,
+--     old_value JSONB,
+--     new_value JSONB,
+--     source VARCHAR(20) NOT NULL,
+--     operation VARCHAR(20) NOT NULL,
+--     user_id UUID NOT NULL,
+--     applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+--     session_id VARCHAR(100),
+--     correlation_id VARCHAR(100)
+-- );
+-- Note We will use audit_log table 
 
 -- Enable RLS on new tables
 ALTER TABLE config_definitions ENABLE ROW LEVEL SECURITY;

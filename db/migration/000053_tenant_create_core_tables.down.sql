@@ -1,0 +1,74 @@
+-- =============================================================================
+-- MIGRATION 003 DOWN: Tenants Table
+-- =============================================================================
+-- WARNING: This drops ALL tenant data irreversibly.
+-- Ensure migrations 004–009 have been rolled back first.
+-- In production, take a full backup before running this down migration.
+-- =============================================================================
+
+DROP TABLE IF EXISTS tenants CASCADE;
+-- -- === Drop Table ===
+-- DROP TABLE IF EXISTS tenants CASCADE;
+--
+-- -- === Drop RLS Policies ===
+-- DROP POLICY IF EXISTS tenant_isolation_policy ON tenants;
+--
+-- DROP POLICY IF EXISTS tenant_isolation_policy ON tenant_configurations;
+--
+-- -- === Drop Defaults Using current_tenant_id() ===
+-- DO
+-- $$
+-- BEGIN
+-- IF EXISTS (
+--   SELECT
+--     1
+--   FROM
+--     information_schema.columns
+--   WHERE
+--     table_name = 'tenants'
+--     AND column_name = 'tenant_id'
+-- ) THEN
+-- ALTER TABLE
+--   tenants
+-- ALTER COLUMN
+--   tenant_id DROP DEFAULT;
+--
+-- END IF;
+--
+-- END
+-- $$
+-- ;
+--
+-- DO
+-- $$
+-- BEGIN
+-- IF EXISTS (
+--   SELECT
+--     1
+--   FROM
+--     information_schema.columns
+--   WHERE
+--     table_name = 'tenant_configurations'
+--     AND column_name = 'tenant_id'
+-- ) THEN
+-- ALTER TABLE
+--   tenant_configurations
+-- ALTER COLUMN
+--   tenant_id DROP DEFAULT;
+--
+-- END IF;
+--
+-- END
+-- $$
+-- ;
+--
+-- -- === Drop Views that use current_tenant_id() ===
+-- DROP VIEW IF EXISTS active_tenant_configurations;
+--
+-- DROP VIEW IF EXISTS visible_tenants;
+--
+-- -- === Drop Trigger Functions or Others ===
+-- DROP FUNCTION IF EXISTS enforce_tenant_access();
+--
+-- -- === Drop the Function ===
+-- DROP FUNCTION IF EXISTS current_tenant_id();

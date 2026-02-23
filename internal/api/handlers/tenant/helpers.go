@@ -1,18 +1,100 @@
 package tenant
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	coreTenant "github.com/niiniyare/erp/internal/core/tenant"
+	"github.com/niiniyare/erp/internal/core/tenant/domain"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
+	stderrors "errors"
 )
+
+// mapTenantError converts domain-layer errors into structured *BusinessError values
+// so that ToHTTPError can assign the correct HTTP status instead of defaulting to 500.
+func mapTenantError(err error) error {
+	switch {
+	case stderrors.Is(err, domain.ErrTenantNotFound), stderrors.Is(err, domain.ErrConfigurationNotFound):
+		return errors.NewBusinessError("TENANT_NOT_FOUND", "Tenant not found").
+			WithHTTPStatus(http.StatusNotFound).
+			WithCategory(errors.CategoryTenant).
+			WithSuggestion("Verify the tenant ID is correct")
+
+	case stderrors.Is(err, domain.ErrSubdomainTaken):
+		return errors.NewBusinessError("SUBDOMAIN_TAKEN", "Subdomain is already in use").
+			WithHTTPStatus(http.StatusConflict).
+			WithCategory(errors.CategoryTenant).
+			WithSuggestion("Choose a different subdomain")
+
+	case stderrors.Is(err, domain.ErrTenantAlreadyExists):
+		return errors.NewBusinessError("TENANT_EXISTS", "A tenant with that name or slug already exists").
+			WithHTTPStatus(http.StatusConflict).
+			WithCategory(errors.CategoryTenant).
+			WithSuggestion("Use a different name or slug")
+
+	case stderrors.Is(err, domain.ErrTenantSuspended):
+		return errors.NewBusinessError("TENANT_SUSPENDED", "Tenant account is suspended").
+			WithHTTPStatus(http.StatusForbidden).
+			WithCategory(errors.CategoryTenant).
+			WithSuggestion("Contact support to reactivate the account")
+
+	case stderrors.Is(err, domain.ErrAlreadyActive):
+		return errors.NewBusinessError("ALREADY_ACTIVE", "Tenant is already active").
+			WithHTTPStatus(http.StatusConflict).
+			WithCategory(errors.CategoryBusiness)
+
+	case stderrors.Is(err, domain.ErrAlreadySuspended):
+		return errors.NewBusinessError("ALREADY_SUSPENDED", "Tenant is already suspended").
+			WithHTTPStatus(http.StatusConflict).
+			WithCategory(errors.CategoryBusiness)
+
+	case stderrors.Is(err, domain.ErrAlreadyArchived):
+		return errors.NewBusinessError("ALREADY_ARCHIVED", "Tenant is already archived").
+			WithHTTPStatus(http.StatusConflict).
+			WithCategory(errors.CategoryBusiness)
+
+	case stderrors.Is(err, domain.ErrCannotActivateArchivedTenant):
+		return errors.NewBusinessError("CANNOT_ACTIVATE_ARCHIVED", "Archived tenants cannot be activated").
+			WithHTTPStatus(http.StatusUnprocessableEntity).
+			WithCategory(errors.CategoryBusiness).
+			WithSuggestion("Create a new tenant instead")
+
+	case stderrors.Is(err, domain.ErrCannotSuspendArchivedTenant):
+		return errors.NewBusinessError("CANNOT_SUSPEND_ARCHIVED", "Archived tenants cannot be suspended").
+			WithHTTPStatus(http.StatusUnprocessableEntity).
+			WithCategory(errors.CategoryBusiness)
+
+	case stderrors.Is(err, domain.ErrInvalidTransition):
+		return errors.NewBusinessError("INVALID_STATUS_TRANSITION", "This status transition is not allowed").
+			WithHTTPStatus(http.StatusUnprocessableEntity).
+			WithCategory(errors.CategoryBusiness)
+
+	case stderrors.Is(err, domain.ErrInvalidCompanySize):
+		return errors.NewBusinessError("INVALID_COMPANY_SIZE", "Invalid company size").
+			WithHTTPStatus(http.StatusBadRequest).
+			WithCategory(errors.CategoryValidation).
+			WithSuggestion("Valid values: STARTUP, SMALL, MEDIUM, LARGE, ENTERPRISE")
+
+	case stderrors.Is(err, domain.ErrInvalidRequest),
+		stderrors.Is(err, domain.ErrInvalidEmail),
+		stderrors.Is(err, domain.ErrInvalidSubdomain),
+		stderrors.Is(err, domain.ErrTenantNameRequired),
+		stderrors.Is(err, domain.ErrTenantEmailRequired):
+		return errors.NewBusinessError("VALIDATION_ERROR", err.Error()).
+			WithHTTPStatus(http.StatusBadRequest).
+			WithCategory(errors.CategoryValidation)
+	}
+	return err
+}
 
 // handleError provides centralized error handling for the tenant module.
 // It logs the error, records metrics, and formats a structured error response.
 func (h *TenantHandler) handleError(c *fiber.Ctx, err error) error {
+	err = mapTenantError(err)
+
 	requestID := getRequestID(c)
 	// Convert any error into a structured HTTPError
 	httpErr := errors.ToHTTPError(err)

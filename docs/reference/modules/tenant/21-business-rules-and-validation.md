@@ -2,7 +2,7 @@
 
 ## Business Rules & Validation
 
-> **Purpose**: This document defines the business rules, validation constraints, and operational guidelines for multi-tenant system management. These rules ensure data integrity, tenant isolation, and consistent system behavior.
+> **Purpose**: This document explains the business rules and validation requirements for managing tenants in a multi-tenant system. Written for both technical and non-technical audiences, it describes what rules exist, why they matter, and how they protect your data.
 
 ---
 
@@ -21,1213 +21,1600 @@
 
 ## Status Transition Rules
 
-### Overview
+### What Are Status Transitions?
 
-Tenant status follows a strict state machine model to ensure proper lifecycle management and prevent invalid transitions.
+A tenant's status represents its current state in the system. Think of it like a traffic light - you can only move from one color to another in specific ways. These rules prevent invalid state changes that could cause data problems or security issues.
 
-### State Diagram
+### Why Do We Need Status Rules?
+
+**Business Protection**: Prevents accidentally suspending or archiving active, paying customers  
+**Data Integrity**: Ensures proper cleanup and retention policies are followed  
+**Audit Trail**: Documents why and when status changes occurred  
+**Security**: Prevents unauthorized reactivation of closed accounts
+
+### The Four States Explained
+
+**PENDING**: New tenant registration, awaiting activation
+- Like a job application - submitted but not yet approved
+- Limited or no system access
+- Can be activated or rejected
+
+**ACTIVE**: Fully operational tenant
+- Normal business operations
+- All features available
+- Can be suspended or archived
+
+**SUSPENDED**: Temporarily disabled
+- Like a paused subscription
+- No access to system
+- Can be reactivated or archived
+- Common reasons: payment issues, policy violations
+
+**ARCHIVED**: Permanently closed
+- Like a closed bank account
+- Cannot be reactivated
+- Data retained for compliance
+- Final state - no further changes
+
+### State Flow Diagram
 
 ```
     ┌─────────┐
-    │ PENDING │ (Initial state)
+    │ PENDING │ ← All new tenants start here
     └────┬────┘
          │
-         │ activate
+         │ activate (approval required)
          ▼
     ┌────────┐      suspend       ┌───────────┐
-    │ ACTIVE │◄──────────────────►│ SUSPENDED │
+    │ ACTIVE │ ←──────────────────→│ SUSPENDED │
     └───┬────┘      reactivate    └─────┬─────┘
         │                               │
         │ archive                       │ archive
         ▼                               ▼
     ┌──────────┐                   ┌──────────┐
-    │ ARCHIVED │◄──────────────────┤ ARCHIVED │
-    └──────────┘   (Terminal)      └──────────┘
+    │ ARCHIVED │ ← Final state - no way out
+    └──────────┘                   └──────────┘
 ```
 
 ### Valid Transitions
 
-| From State | To State | Required Conditions | Example Use Case |
-|-----------|----------|-------------------|------------------|
-| `PENDING` | `ACTIVE` | • Admin approval OR auto-activation trigger<br>• All required fields complete<br>• Payment method on file (if applicable) | New tenant completes onboarding |
-| `ACTIVE` | `SUSPENDED` | • Suspension reason (required)<br>• One of: payment_failure, policy_violation, security_concern, admin_request | Payment failed for 3rd consecutive month |
-| `ACTIVE` | `ARCHIVED` | • Archive reason (required)<br>• Data retention policy specified<br>• Final export completed (if requested) | Tenant cancels subscription permanently |
-| `SUSPENDED` | `ACTIVE` | • Reactivation reason (required)<br>• Original suspension issue resolved<br>• Verification of resolution | Payment issue resolved |
-| `SUSPENDED` | `ARCHIVED` | • Archive reason (required)<br>• Retention policy specified | Suspended tenant never returned |
+| Current Status | Can Change To | What's Required | Real-World Example |
+|---------------|---------------|-----------------|-------------------|
+| PENDING | ACTIVE | • Administrator approval<br>• Complete registration<br>• Payment method (if needed) | A new company finishes signup and admin activates their account |
+| ACTIVE | SUSPENDED | • Clear reason for suspension<br>• Documentation of issue<br>• Notification to tenant | Company's payment fails for 3 months in a row |
+| ACTIVE | ARCHIVED | • Archive reason documented<br>• Data backup completed<br>• Customer notification sent | Company closes down and requests account deletion |
+| SUSPENDED | ACTIVE | • Original problem resolved<br>• Verification completed<br>• Reactivation approved | Company updates payment method and pays outstanding balance |
+| SUSPENDED | ARCHIVED | • Archive reason<br>• Retention rules applied | Suspended company never comes back after 6 months |
 
-### Invalid Transitions
+### What Transitions Are Blocked?
 
-| From State | To State | Why Blocked | Alternative Action |
-|-----------|----------|-------------|-------------------|
-| `PENDING` | `SUSPENDED` | Cannot suspend before activation | Complete activation or reject application |
-| `PENDING` | `ARCHIVED` | Must activate first to establish baseline | Delete application if rejected |
-| `ARCHIVED` | `ACTIVE` | Terminal state - no reactivation | Create new tenant if customer returns |
-| `ARCHIVED` | `SUSPENDED` | Already permanently deactivated | N/A - consider new tenant |
-| `SUSPENDED` | `PENDING` | Cannot revert to initial state | Reactivate or archive |
+| Trying To Go From | To | Why It's Not Allowed | What To Do Instead |
+|------------------|----|--------------------|-------------------|
+| PENDING | SUSPENDED | Can't suspend what isn't active yet | Activate first, then suspend if needed |
+| PENDING | ARCHIVED | Need to establish baseline first | Reject the application or delete it |
+| ARCHIVED | ACTIVE | Once closed, stays closed | Customer must register as new tenant |
+| ARCHIVED | SUSPENDED | Already closed | Not applicable |
+| SUSPENDED | PENDING | Can't go backwards | Reactivate or archive |
 
-### Implementation Example
+### Why These Restrictions Matter
 
-```python
-def transition_status(tenant, new_status, reason=None, **kwargs):
-    """
-    Transition tenant to new status with validation.
-    
-    Raises:
-        InvalidTransitionError: If transition not allowed
-        ValidationError: If required fields missing
-    """
-    valid_transitions = {
-        'PENDING': ['ACTIVE'],
-        'ACTIVE': ['SUSPENDED', 'ARCHIVED'],
-        'SUSPENDED': ['ACTIVE', 'ARCHIVED'],
-        'ARCHIVED': []  # Terminal state
+**Example Scenario**: Imagine a company (Acme Corp) that was ARCHIVED last year comes back and wants service again.
+
+**❌ Wrong Approach**: Reactivating the ARCHIVED tenant
+- Old data mixed with new
+- Compliance issues with "closed" accounts
+- Audit trail confusion
+- Security risks
+
+**✅ Correct Approach**: Create new tenant registration
+- Clean separation of data
+- Fresh start with current pricing
+- Clear audit history
+- Proper compliance tracking
+
+### Technical Implementation (Minimal)
+
+```go
+// ValidTransitions defines what status changes are allowed
+var ValidTransitions = map[string][]string{
+    "PENDING":   {"ACTIVE"},
+    "ACTIVE":    {"SUSPENDED", "ARCHIVED"},
+    "SUSPENDED": {"ACTIVE", "ARCHIVED"},
+    "ARCHIVED":  {}, // Terminal state - no transitions
+}
+
+// TransitionStatus changes tenant status with validation
+func TransitionStatus(tenant *Tenant, newStatus, reason string) error {
+    // Check if transition is valid
+    allowed := ValidTransitions[tenant.Status]
+    if !contains(allowed, newStatus) {
+        return fmt.Errorf("cannot transition from %s to %s", 
+            tenant.Status, newStatus)
     }
     
-    if new_status not in valid_transitions[tenant.status]:
-        raise InvalidTransitionError(
-            f"Cannot transition from {tenant.status} to {new_status}"
-        )
+    // Require reason for suspension/archival
+    if (newStatus == "SUSPENDED" || newStatus == "ARCHIVED") && reason == "" {
+        return errors.New("reason required")
+    }
     
-    # Validate required fields based on transition
-    if new_status in ['SUSPENDED', 'ARCHIVED'] and not reason:
-        raise ValidationError("Reason required for suspension/archival")
+    // Update tenant
+    tenant.Status = newStatus
+    tenant.StatusReason = reason
+    tenant.StatusChangedAt = time.Now()
     
-    # Perform transition
-    tenant.status = new_status
-    tenant.status_reason = reason
-    tenant.status_changed_at = now()
-    tenant.status_changed_by = current_user()
-    
-    # Create audit log
-    create_audit_log('status_change', tenant, old=tenant.status, new=new_status)
+    return nil
+}
 ```
 
 ---
 
 ## Data Validation Rules
 
+### Why Validate Data?
+
+Data validation ensures that information entering your system is:
+- **Correct**: Meets basic format requirements (valid email, proper length)
+- **Consistent**: Follows the same rules everywhere
+- **Secure**: Prevents malicious input
+- **Unique**: Avoids duplicate accounts when necessary
+
+Think of it like a bouncer at a club - checking IDs, enforcing dress code, and preventing troublemakers from entering.
+
 ### Tenant Creation Fields
 
-#### Name
+When creating a new tenant account, certain information is required and must meet specific criteria.
 
-| Constraint | Rule | Example | Notes |
-|-----------|------|---------|-------|
-| Required | Yes | ✅ "Acme Corporation" | Cannot be empty or null |
-| Max Length | 255 characters | ❌ "A" × 300 | Database column limit |
-| Whitespace | Trimmed automatically | "  Acme Corp  " → "Acme Corp" | Leading/trailing only |
-| Special Characters | Allowed | ✅ "Smith & Sons Ltd." | No restrictions |
-| Uniqueness | Not enforced | ✅ Multiple "Acme Corp" tenants allowed | Use slug for uniqueness |
+---
 
-**Validation Logic**:
-```javascript
-name:
-  - required: true
-  - maxLength: 255
-  - transform: trim
-  - message: "Company name is required and must be under 255 characters"
+#### 1. Company Name
+
+**Purpose**: The main identifier for the business
+
+| Rule | Explanation | Example |
+|------|-------------|---------|
+| **Required** | Must provide a name | ✅ "Acme Corporation" |
+| **Maximum Length** | Up to 255 characters | ❌ A 300-character name won't work |
+| **Automatic Cleanup** | Extra spaces removed | "  Acme Corp  " becomes "Acme Corp" |
+| **Special Characters** | Allowed | ✅ "Smith & Sons, Ltd." is fine |
+| **Duplicates** | Allowed | ✅ Multiple companies can have same name |
+
+**Why these rules?**
+- Length limit: Database storage constraints
+- Spaces trimmed: Prevents accidental duplicates from formatting
+- Duplicates allowed: Many companies share common names (e.g., "ABC Trading")
+
+---
+
+#### 2. Email Address
+
+**Purpose**: Primary contact and account recovery
+
+| Rule | Explanation | Example |
+|------|-------------|---------|
+| **Required** | Must provide email | ✅ admin@acme.com |
+| **Valid Format** | Must look like an email | ❌ "notanemail" won't work |
+| **Maximum Length** | Up to 255 characters total | Including the "@domain.com" part |
+| **Case Insensitive** | ADMIN@acme.com = admin@acme.com | Stored as lowercase |
+| **Must Be Unique** | One email per active tenant | ❌ Can't reuse active email |
+
+**Why these rules?**
+- Format validation: Ensures we can actually send emails
+- Uniqueness: Prevents account confusion and security issues
+- Case insensitive: Most email systems treat case the same way
+
+**What about deleted tenants?**  
+If a tenant is deleted, their email becomes available again. This allows companies that previously closed accounts to return.
+
+**Common Errors:**
+- `"Email is required"` - You forgot to provide an email
+- `"Invalid email format"` - Doesn't look like a proper email address  
+- `"Email already in use"` - Another active tenant uses this email
+
+---
+
+#### 3. Subdomain (Optional)
+
+**Purpose**: Custom web address for the tenant (e.g., `acme.yoursystem.com`)
+
+| Rule | Explanation | Example |
+|------|-------------|---------|
+| **Optional** | Can be added later | null or "acme-corp" |
+| **Maximum Length** | Up to 63 characters | Internet standard for domain names |
+| **Format Rules** | Letters, numbers, hyphens only | ✅ "acme-123" |
+| **Cannot Start/End with Hyphen** | Must have letter/number at edges | ❌ "-acme" or "acme-" |
+| **Reserved Words** | Some names are off-limits | ❌ "admin", "api", "www" |
+| **Must Be Unique** | One subdomain per tenant | ❌ Two tenants can't share subdomain |
+
+**Reserved Subdomains (Cannot Use):**
+```
+admin, api, www, app, cdn, static, mail, ftp, 
+dev, staging, test, dashboard, portal, auth, 
+login, signup, billing, support, help, status
 ```
 
-#### Email
+**Why these rules?**
+- Length limit: Internet DNS standards (RFC 1035)
+- Format rules: Ensures subdomain works in web browsers
+- Reserved words: Protects system functionality and common use cases
+- Uniqueness: Each tenant needs their own web address
 
-| Constraint | Rule | Example | Notes |
-|-----------|------|---------|-------|
-| Required | Yes | ✅ admin@acme.com | Primary contact |
-| Format | RFC 5322 compliant | ❌ "not-an-email" | Standard email validation |
-| Max Length | 255 characters | ❌ "a" × 240 + "@domain.com" | Including domain |
-| Case Sensitivity | Case-insensitive | "Admin@Acme.com" = "admin@acme.com" | Normalized to lowercase |
-| Uniqueness | Across non-deleted tenants | ❌ Duplicate active emails | Can reuse after soft delete |
+**Examples:**
+- ✅ "acme-corporation" - Good
+- ✅ "acme123" - Good
+- ❌ "Acme Corporation" - Spaces not allowed
+- ❌ "admin" - Reserved word
+- ❌ "my_company" - Underscores not allowed (use hyphens)
 
-**Validation Logic**:
-```javascript
-email:
-  - required: true
-  - format: email
-  - maxLength: 255
-  - transform: toLowerCase
-  - unique: { where: { deleted_at: null } }
-  - message: "Valid email required (must be unique)"
-```
+---
 
-**Example Errors**:
-- `"email is required"` - Field missing
-- `"email must be a valid email address"` - Format invalid
-- `"email already exists for another active tenant"` - Duplicate
+#### 4. Slug (Auto-Generated)
 
-#### Subdomain
+**Purpose**: URL-friendly version of company name
 
-| Constraint | Rule | Example | Notes |
-|-----------|------|---------|-------|
-| Required | No (Optional) | ✅ null or "acme-corp" | Can be set later |
-| Max Length | 63 characters | ❌ "a" × 70 | DNS label limit (RFC 1035) |
-| Format | `^[a-z0-9]([a-z0-9-]*[a-z0-9])?$` | ✅ "acme-123"<br>❌ "-acme" or "acme-" | DNS-safe characters only |
-| Reserved Words | Blocked | ❌ "admin", "api", "www", "app" | System reserved |
-| Uniqueness | Across non-deleted tenants | ❌ Duplicate subdomains | One per tenant |
+| Rule | Explanation | Example |
+|------|-------------|---------|
+| **Auto-Generated** | System creates this automatically | From "Acme Corporation" |
+| **Cannot Set Manually** | Users don't choose this | System controlled |
+| **Maximum Length** | Up to 50 characters | May be truncated |
+| **Format** | Lowercase, letters, numbers, hyphens | "acme-corporation" |
+| **Always Unique** | If collision, adds random suffix | "acme-corp-a1b2c3d4" |
 
-**Reserved Subdomain List**:
-```
-admin, api, www, app, cdn, static, assets, mail, ftp, smtp,
-dev, staging, prod, production, test, localhost, 
-dashboard, portal, auth, login, signup, register,
-billing, payment, invoice, support, help, docs, status,
-blog, news, about, contact, legal, privacy, terms
-```
+**How It Works:**
+1. Takes your company name: "Smith & Sons Ltd."
+2. Converts to lowercase: "smith & sons ltd."
+3. Replaces special characters with hyphens: "smith-sons-ltd"
+4. Checks if already used
+5. If duplicate, adds random code: "smith-sons-ltd-x7y8z9"
 
-**Validation Logic**:
-```javascript
-subdomain:
-  - required: false
-  - maxLength: 63
-  - pattern: /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/
-  - transform: toLowerCase
-  - notIn: RESERVED_SUBDOMAINS
-  - unique: { where: { deleted_at: null } }
-```
-
-#### Slug
-
-| Constraint | Rule | Example | Notes |
-|-----------|------|---------|-------|
-| Required | Auto-generated | "acme-corporation" | From name field |
-| Max Length | 50 characters | Truncated if needed | Allows UUID suffix |
-| Format | Lowercase, alphanumeric, hyphens | "acme-corp-123" | Generated from name |
-| Uniqueness | Enforced | If collision, append UUID | "acme-corp-a1b2c3d4" |
-| Generation | Automatic | Cannot be manually set | System-controlled |
-
-**Generation Algorithm**:
-```python
-def generate_slug(name):
-    # Convert to lowercase and replace spaces/special chars with hyphens
-    base = re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
-    
-    # Truncate to 40 chars (leave room for UUID suffix)
-    base = base[:40].rstrip('-')
-    
-    # Check uniqueness
-    slug = base
-    if Tenant.exists(slug=slug, deleted_at=None):
-        # Append short UUID if collision
-        suffix = uuid4().hex[:8]
-        slug = f"{base}-{suffix}"
-    
-    return slug
-```
-
-**Examples**:
+**More Examples:**
 - "Acme Corporation" → `acme-corporation`
-- "Smith & Sons Ltd." → `smith-sons-ltd`
-- "ABC-123 Company!!!" → `abc-123-company`
-- "Acme Corporation" (duplicate) → `acme-corporation-a1b2c3d4`
+- "123 Trading Co." → `123-trading-co`
+- "ABC-XYZ Company!!!" → `abc-xyz-company`
 
-#### Currency Code
+**Why automatic?**
+- Consistency: Everyone follows the same pattern
+- No conflicts: System handles duplicates automatically
+- URL-safe: Always works in web addresses
 
-| Constraint | Rule | Example | Notes |
-|-----------|------|---------|-------|
-| Required | Yes | "USD" | Financial transactions |
-| Length | Exactly 3 characters | ❌ "US" or "USDT" | ISO 4217 standard |
-| Format | Uppercase letters | "USD", "EUR", "KES" | Validated against ISO list |
-| Default | USD | Applied if not specified | Most common currency |
-| Immutability | Cannot change after transactions | Locked after first invoice | Prevents data inconsistency |
+---
 
-**Supported Currencies** (Common):
+#### 5. Currency Code
+
+**Purpose**: Default currency for financial transactions
+
+| Rule | Explanation | Example |
+|------|-------------|---------|
+| **Required** | Must specify currency | "USD" |
+| **Exactly 3 Letters** | ISO standard format | ❌ "US" or "USDT" won't work |
+| **Uppercase** | Always capital letters | USD, EUR, KES |
+| **Default** | USD if not specified | Most common choice |
+| **Cannot Change Later** | Locked after first transaction | Prevents financial chaos |
+
+**Common Currencies:**
+- USD - US Dollar
+- EUR - Euro
+- GBP - British Pound
+- KES - Kenyan Shilling
+- JPY - Japanese Yen
+- CAD - Canadian Dollar
+
+**Why can't you change currency?**  
+Once you start creating invoices and recording transactions, changing currency would make historical data meaningless. Imagine if last month's $1,000 invoice suddenly showed as 1,000 Euros!
+
+---
+
+#### 6. Timezone
+
+**Purpose**: Determines when "today" starts/ends for this tenant
+
+| Rule | Explanation | Example |
+|------|-------------|---------|
+| **Required** | Must specify timezone | "Africa/Nairobi" |
+| **Standard Format** | IANA timezone names | ✅ "America/New_York" |
+| **Case Sensitive** | Must match exactly | ❌ "america/new_york" won't work |
+| **Default** | UTC if not specified | Neutral choice |
+
+**Common Timezones:**
+- UTC - Universal Time (neutral)
+- Africa/Nairobi - East Africa
+- America/New_York - US Eastern Time
+- Europe/London - UK Time
+- Asia/Tokyo - Japan Time
+
+**Why not "GMT+3" or "EST"?**  
+Abbreviated codes don't account for daylight saving time. "America/New_York" automatically switches between EST and EDT.
+
+**Why does this matter?**  
+Your timezone affects:
+- When daily reports are generated
+- When "today's" transactions start/end
+- When scheduled jobs run
+- What date/time users see in the interface
+
+---
+
+#### 7. Company Size (Optional)
+
+**Purpose**: Business analytics and feature recommendations
+
+| Value | Typical Definition |
+|-------|-------------------|
+| **Small** | 1-50 employees (default) |
+| **Medium** | 51-250 employees |
+| **Large** | 251-1000 employees |
+| **Enterprise** | 1000+ employees |
+
+**Note**: This is optional and used for analytics only. Not enforced - it's based on your self-reporting.
+
+---
+
+#### 8. Status
+
+**Purpose**: Current state of the tenant account
+
+| Rule | Explanation |
+|------|-------------|
+| **Required** | Must have a status |
+| **Valid Values** | PENDING, ACTIVE, SUSPENDED, ARCHIVED |
+| **Default** | PENDING for new accounts |
+| **Must Follow Transition Rules** | Can't jump between states randomly |
+
+See [Status Transition Rules](#status-transition-rules) section for complete details.
+
+---
+
+### Technical Implementation (Minimal)
+
+```go
+// TenantValidation contains validation rules
+type TenantValidation struct{}
+
+// ValidateName checks company name
+func (v *TenantValidation) ValidateName(name string) error {
+    name = strings.TrimSpace(name)
+    
+    if name == "" {
+        return errors.New("company name is required")
+    }
+    if len(name) > 255 {
+        return errors.New("company name must be under 255 characters")
+    }
+    return nil
+}
+
+// ValidateEmail checks email format and uniqueness
+func (v *TenantValidation) ValidateEmail(email string) error {
+    email = strings.ToLower(strings.TrimSpace(email))
+    
+    if email == "" {
+        return errors.New("email is required")
+    }
+    if !isValidEmail(email) {
+        return errors.New("invalid email format")
+    }
+    if emailExists(email) {
+        return errors.New("email already in use")
+    }
+    return nil
+}
+
+// ValidateSubdomain checks subdomain format
+func (v *TenantValidation) ValidateSubdomain(subdomain string) error {
+    if subdomain == "" {
+        return nil // Optional field
+    }
+    
+    subdomain = strings.ToLower(subdomain)
+    
+    if len(subdomain) > 63 {
+        return errors.New("subdomain too long (max 63 characters)")
+    }
+    
+    // Check format: lowercase letters, numbers, hyphens only
+    matched, _ := regexp.MatchString(`^[a-z0-9]([a-z0-9-]*[a-z0-9])?$`, subdomain)
+    if !matched {
+        return errors.New("invalid subdomain format")
+    }
+    
+    if isReservedSubdomain(subdomain) {
+        return errors.New("subdomain is reserved")
+    }
+    
+    return nil
+}
 ```
-USD - US Dollar          EUR - Euro               GBP - British Pound
-KES - Kenyan Shilling    NGN - Nigerian Naira    ZAR - South African Rand
-JPY - Japanese Yen       CNY - Chinese Yuan       INR - Indian Rupee
-AUD - Australian Dollar  CAD - Canadian Dollar    CHF - Swiss Franc
-```
-
-#### Timezone
-
-| Constraint | Rule | Example | Notes |
-|-----------|------|---------|-------|
-| Required | Yes | "Africa/Nairobi" | IANA timezone database |
-| Format | Region/City or UTC | ✅ "America/New_York"<br>✅ "UTC" | Case-sensitive |
-| Validation | Must exist in IANA TZ DB | ❌ "EST" or "GMT+3" | Use full names |
-| Default | UTC | Neutral default | User can change |
-
-**Common Timezones**:
-```
-UTC                     # Coordinated Universal Time
-Africa/Nairobi         # East Africa Time (EAT)
-America/New_York       # Eastern Time (US)
-Europe/London          # British Time
-Asia/Tokyo             # Japan Standard Time
-Australia/Sydney       # Australian Eastern Time
-```
-
-**Validation Logic**:
-```python
-from pytz import all_timezones
-
-def validate_timezone(tz):
-    if tz not in all_timezones:
-        raise ValidationError(f"Invalid timezone: {tz}")
-```
-
-#### Company Size
-
-| Constraint | Rule | Example | Notes |
-|-----------|------|---------|-------|
-| Required | No | Default: "Small" | Used for analytics |
-| Valid Values | `Small`, `Medium`, `Large`, `Enterprise` | Case-sensitive | Enum type |
-| Default | Small | Applied if not specified | Most common |
-
-**Size Definitions** (Guidelines):
-- **Small**: 1-50 employees
-- **Medium**: 51-250 employees
-- **Large**: 251-1000 employees
-- **Enterprise**: 1000+ employees
-
-#### Status
-
-| Constraint | Rule | Example | Notes |
-|-----------|------|---------|-------|
-| Required | Yes | "PENDING" | Lifecycle state |
-| Valid Values | `PENDING`, `ACTIVE`, `SUSPENDED`, `ARCHIVED` | Uppercase | Enum type |
-| Default | PENDING | All new tenants | Must activate to use |
-| Immutability | Use transition methods | Don't set directly | Enforced workflows |
 
 ---
 
 ## Resource Limit Rules
 
-### Overview
+### What Are Resource Limits?
 
-Resource limits prevent abuse, ensure fair usage, and maintain system performance. Limits are enforced at the application layer before resource creation.
+Resource limits are like the capacity of a restaurant - there's a maximum number of tables, dishes per hour, and storage space. These limits:
+- **Prevent System Overload**: Keep the platform fast for everyone
+- **Ensure Fair Usage**: No single tenant monopolizes resources
+- **Support Business Tiers**: Different plans offer different capacities
+- **Maintain Performance**: System runs smoothly for all users
 
-### Limit Types
+### The Five Types of Limits
+
+---
 
 #### 1. User Limit
 
-**Rule**: `active_users_count < max_users`
+**What It Means**: Maximum number of people who can have accounts
 
-**When Checked**: Before creating a new user account
+**How It Works**:
+- Plan determines maximum (e.g., 10 users on Starter, 50 on Professional)
+- Checked before creating each new user account
+- Only counts ACTIVE users (not disabled/archived ones)
+- Admins can temporarily override in special cases
 
-**Enforcement**:
-```python
-def create_user(tenant, user_data):
-    active_count = tenant.users.filter(status='ACTIVE').count()
-    
-    if active_count >= tenant.max_users:
-        raise ResourceLimitError(
-            f"Tenant has reached maximum user limit ({tenant.max_users}). "
-            f"Currently: {active_count} active users. "
-            f"Contact support to upgrade your plan."
-        )
-    
-    return User.create(**user_data)
+**Real-World Example**:
+```
+Your Plan: Professional (50 users)
+Current Usage: 47 active users
+Status: 3 slots remaining
+
+Trying to add 51st user → ❌ Blocked
+"Tenant has reached maximum user limit (50)"
 ```
 
-**Override**: Platform administrators can temporarily increase limits
+**What You See in Dashboard**:
+```
+Users: 47 / 50  [█████████-] 94% ⚠️ Warning
+```
 
-**User Experience**:
-- Display usage: "5 of 10 users" in dashboard
-- Warning at 80%: "You've used 8 of 10 available user slots"
-- Upgrade prompt: "Need more users? Upgrade your plan"
+**Solutions When You Hit the Limit**:
+1. **Deactivate unused accounts**: Remove people who left company
+2. **Upgrade plan**: Get more user slots
+3. **Contact support**: Temporary increase for special situations
+
+**Typical Limits by Plan**:
+- Starter: 5-10 users
+- Professional: 25-50 users
+- Enterprise: 100+ users
+
+---
 
 #### 2. Entity Limit
 
-**Rule**: `total_entities < max_entities`
+**What It Means**: Maximum number of organizational units (companies, branches, departments)
 
-**Entities**: Companies, branches, departments, cost centers
+**Why This Matters**:
+Each entity adds complexity to your setup. Too many can make the system hard to manage and slower to use.
 
-**When Checked**: Before creating any new entity
+**What Counts as an Entity**:
+- Companies or business units
+- Branch locations
+- Departments
+- Cost centers
+- Divisions
 
-**Enforcement**:
-```python
-def create_entity(tenant, entity_type, data):
-    total = tenant.get_entity_count()  # All entity types combined
-    
-    if total >= tenant.max_entities:
-        raise ResourceLimitError(
-            f"Entity limit reached ({tenant.max_entities}). "
-            f"Current: {total} entities. "
-            f"Delete unused entities or upgrade."
-        )
-    
-    return Entity.create(type=entity_type, **data)
+**Real-World Example**:
+```
+Your Plan: Professional (25 entities)
+Current: 5 companies, 12 branches, 6 departments = 23 total
+Status: 2 slots remaining
+
+Adding new branch → ✅ Allowed (24/25)
+Adding another department → ✅ Allowed (25/25)
+Adding one more anything → ❌ Blocked
 ```
 
-**Typical Limits by Plan**:
+**Solutions When You Hit the Limit**:
+1. **Remove unused entities**: Clean up old branches/departments
+2. **Consolidate**: Merge similar entities
+3. **Upgrade plan**: Get higher limit
+
+**Typical Limits**:
 - Starter: 5 entities
 - Professional: 25 entities
 - Enterprise: 100+ entities
 
+---
+
 #### 3. Transaction Limit
 
-**Rule**: `transactions_this_month < max_transactions_per_month`
+**What It Means**: Maximum financial transactions per month
 
-**When Checked**: Before posting any financial transaction (invoice, payment, journal entry)
+**What Counts as a Transaction**:
+- Creating an invoice
+- Recording a payment
+- Journal entries
+- Purchase orders
+- Credit notes
+- Any financial record
 
-**Reset**: First day of each month (tenant's timezone)
+**How It Works**:
+- Limit resets on 1st day of each month (in your timezone)
+- Checked before posting each transaction
+- 10% grace period at month-end (helps with closing books)
+- Overages discussed with support team
 
-**Enforcement**:
-```python
-def post_transaction(tenant, transaction):
-    current_month = get_month_start(tenant.timezone)
-    count = tenant.transactions.filter(
-        created_at__gte=current_month
-    ).count()
-    
-    if count >= tenant.max_transactions_per_month:
-        raise ResourceLimitError(
-            f"Monthly transaction limit reached ({tenant.max_transactions_per_month}). "
-            f"Limit resets on {next_month_start(tenant.timezone)}. "
-            f"Upgrade for higher limits."
-        )
-    
-    return Transaction.create(**transaction)
+**Real-World Example**:
+```
+Month: February 2026
+Your Plan: Professional (5,000 transactions/month)
+Current: 4,890 transactions
+Status: 110 remaining
+
+Posting new invoice → ✅ Allowed (4,891/5,000)
+At 5,001 transactions → ❌ Blocked until March 1
+"Monthly transaction limit reached"
 ```
 
-**Grace Period**: 10% overage allowed for end-of-month processing
+**What You See**:
+```
+Transactions: 4,245 / 5,000  [████████--] 85%
+Resets: March 1, 2026
+```
+
+**Why This Limit Exists**:
+- High transaction volume impacts database performance
+- Different plans = different infrastructure costs
+- Prevents accidental bulk imports from overwhelming system
 
 **Typical Limits**:
 - Starter: 500 transactions/month
 - Professional: 5,000 transactions/month
 - Enterprise: Unlimited
 
+---
+
 #### 4. Storage Limit
 
-**Rule**: `storage_used_mb < storage_quota_mb`
+**What It Means**: Total file storage space available
 
-**Includes**: Documents, attachments, exported files, backups
+**What Uses Storage**:
+- Document attachments (PDFs, images, etc.)
+- Exported reports
+- Invoice copies
+- Email attachments saved to system
+- Backup files
 
-**When Checked**: Before any file upload
+**How It Works**:
+- Measured in MB or GB
+- Checked before every file upload
+- Warning at 80% full
+- Alert at 90% full
+- Blocked at 100% (admin can override)
 
-**Enforcement**:
-```python
-def upload_file(tenant, file):
-    file_size_mb = file.size / (1024 * 1024)
-    total_used = tenant.calculate_storage_used()
-    
-    if (total_used + file_size_mb) > tenant.storage_quota_mb:
-        raise ResourceLimitError(
-            f"Storage quota exceeded. "
-            f"Used: {total_used:.1f} MB / {tenant.storage_quota_mb} MB. "
-            f"This file: {file_size_mb:.1f} MB."
-        )
-    
-    # Warning threshold
-    if total_used > (tenant.storage_quota_mb * 0.8):
-        notify_tenant_storage_warning(tenant, total_used)
-    
-    return File.upload(file)
+**Real-World Example**:
+```
+Your Plan: Professional (2 GB storage)
+Current Usage: 1.7 GB
+Status: 300 MB remaining
+
+Uploading 50 MB file → ✅ Allowed (1.75 GB used)
+Uploading 400 MB file → ❌ Blocked
+"Storage quota exceeded"
 ```
 
-**Monitoring**:
-- Warning at 80% utilization
-- Alert at 90% utilization
-- Soft block at 100% (admin override available)
+**Dashboard View**:
+```
+Storage: 1.7 GB / 2.0 GB  [████████--] 85% ⚠️ Warning
+```
 
-**Cleanup**:
-- Auto-delete exports older than 30 days
-- Compress attachments over 1 MB
-- Suggest archival of old documents
+**Automatic Cleanup**:
+- Exported reports deleted after 30 days
+- Attachments over 1 MB automatically compressed
+- System suggests archiving old documents
+
+**Solutions When Storage is Full**:
+1. **Delete old exports**: Remove downloaded reports
+2. **Remove unused attachments**: Clean up unnecessary files
+3. **Archive old documents**: Move to external storage
+4. **Upgrade plan**: Get more storage space
+
+**Typical Limits**:
+- Starter: 500 MB - 1 GB
+- Professional: 2-5 GB
+- Enterprise: 10+ GB
+
+---
 
 #### 5. API Rate Limit
 
-**Rule**: `requests_in_window < rate_limit_per_minute`
+**What It Means**: Maximum API requests per minute
 
-**When Checked**: Every API request (middleware layer)
+**Who This Affects**:
+- Developers using the API
+- Third-party integrations
+- Mobile apps
+- Automated processes
 
-**Enforcement**:
-```python
-@middleware
-def rate_limit_check(request, tenant):
-    key = f"rate_limit:{tenant.id}:{current_minute()}"
-    current = redis.incr(key)
-    
-    if current == 1:
-        redis.expire(key, 60)  # 1-minute window
-    
-    if current > tenant.api_rate_limit_per_minute:
-        raise RateLimitExceededError(
-            status_code=429,
-            message=f"Rate limit exceeded: {tenant.api_rate_limit_per_minute} req/min",
-            retry_after=redis.ttl(key)
-        )
-    
-    # Add headers
-    response.headers['X-RateLimit-Limit'] = tenant.api_rate_limit_per_minute
-    response.headers['X-RateLimit-Remaining'] = tenant.api_rate_limit_per_minute - current
-    response.headers['X-RateLimit-Reset'] = current_minute() + 60
+**How It Works**:
+- Counted per minute (sliding window)
+- 2× burst allowed for 10 seconds (handles brief spikes)
+- Returns error code 429 when exceeded
+- Tells you how long to wait before retrying
+
+**Real-World Example**:
+```
+Your Plan: Professional (600 requests/minute)
+Current: 550 requests in last 60 seconds
+Status: 50 requests remaining
+
+Next API call → ✅ Allowed
+Making 100 calls rapidly → First 50 succeed, next 50 blocked
+
+Error Response:
+"Rate limit exceeded: 600 req/min"
+"Retry after: 45 seconds"
 ```
 
-**Rate Limit Tiers**:
-- Free: 60 requests/minute
-- Professional: 600 requests/minute
-- Enterprise: 6,000 requests/minute
-
-**Burst Allowance**: 2× rate for up to 10 seconds
-
-**Response Headers**:
+**Response You Get**:
 ```
-HTTP/1.1 429 Too Many Requests
-X-RateLimit-Limit: 60
+HTTP 429 Too Many Requests
+X-RateLimit-Limit: 600
 X-RateLimit-Remaining: 0
 X-RateLimit-Reset: 1643472120
 Retry-After: 45
-Content-Type: application/json
+```
 
-{
-  "error": "rate_limit_exceeded",
-  "message": "Rate limit of 60 requests per minute exceeded",
-  "retry_after": 45
+**Why This Limit Exists**:
+- Prevents accidental infinite loops from taking down system
+- Protects against abuse
+- Ensures fair resource sharing
+- Maintains system responsiveness
+
+**Solutions When You Hit Rate Limit**:
+1. **Batch requests**: Combine multiple operations
+2. **Add delays**: Space out API calls
+3. **Use webhooks**: Get notifications instead of polling
+4. **Upgrade plan**: Higher rate limits available
+
+**Typical Limits**:
+- Free/Starter: 60 requests/minute
+- Professional: 600 requests/minute
+- Enterprise: 6,000+ requests/minute
+
+---
+
+### Dashboard Summary
+
+When you log in as admin, you see all limits at a glance:
+
+```
+Resource Usage - Acme Corporation
+Plan: Professional
+
+Users:         47 / 50       [█████████-] 94%  ⚠️ Near limit
+Entities:      23 / 25       [█████████-] 92%  ⚠️ Near limit
+Transactions:  3,245 / 5,000 [██████----] 65%  Resets: Mar 1
+Storage:       850 MB / 2 GB [████------] 42%  
+API Rate:      45 / 600/min  [█---------] 8%   Current minute
+```
+
+**Color Coding**:
+- 🟢 Green (0-79%): Healthy usage
+- 🟡 Yellow (80-95%): Warning - consider action
+- 🔴 Red (96-100%): Critical - action required
+
+---
+
+### Technical Implementation (Minimal)
+
+```go
+// CheckUserLimit verifies before creating user
+func CheckUserLimit(tenantID int) error {
+    activeCount := countActiveUsers(tenantID)
+    maxUsers := getMaxUsers(tenantID)
+    
+    if activeCount >= maxUsers {
+        return fmt.Errorf(
+            "tenant has reached maximum user limit (%d). "+
+            "currently: %d active users. "+
+            "contact support to upgrade", 
+            maxUsers, activeCount,
+        )
+    }
+    return nil
 }
-```
 
-### Limit Monitoring Dashboard
+// CheckStorageLimit verifies before file upload
+func CheckStorageLimit(tenantID int, fileSizeMB float64) error {
+    usedMB := calculateStorageUsed(tenantID)
+    quotaMB := getStorageQuota(tenantID)
+    
+    if (usedMB + fileSizeMB) > quotaMB {
+        return fmt.Errorf(
+            "storage quota exceeded. "+
+            "used: %.1f MB / %.0f MB. "+
+            "this file: %.1f MB", 
+            usedMB, quotaMB, fileSizeMB,
+        )
+    }
+    
+    // Warning at 80%
+    if usedMB > (quotaMB * 0.8) {
+        notifyStorageWarning(tenantID, usedMB, quotaMB)
+    }
+    
+    return nil
+}
 
-**Admin View**:
-```
-Resource Usage - Acme Corporation (Plan: Professional)
-─────────────────────────────────────────────────────
-Users:         8 / 10       [████████--] 80%  ⚠️ Warning
-Entities:     15 / 25       [██████----] 60%
-Transactions: 3,245 / 5,000 [██████----] 65%  (Resets: Mar 1)
-Storage:      850 MB / 2 GB [████------] 42%
-API Rate:     45 / 600 rpm  [█---------] 8%   (Current minute)
+// CheckRateLimit enforces API rate limiting
+func CheckRateLimit(tenantID int) error {
+    key := fmt.Sprintf("rate_limit:%d:%s", tenantID, getCurrentMinute())
+    count := redis.Incr(key)
+    
+    if count == 1 {
+        redis.Expire(key, 60) // 1-minute window
+    }
+    
+    maxRate := getRateLimit(tenantID)
+    if count > maxRate {
+        ttl := redis.TTL(key)
+        return &RateLimitError{
+            Limit:      maxRate,
+            RetryAfter: ttl,
+        }
+    }
+    
+    return nil
+}
 ```
 
 ---
 
 ## Soft Delete Rules
 
-### Overview
+### What Is Soft Delete?
 
-Soft deletion marks records as deleted without physically removing them from the database. This enables audit trails, data recovery, and regulatory compliance.
+**Soft delete** means marking data as deleted without actually removing it from the database. Think of it like moving a file to the Recycle Bin instead of permanently deleting it.
 
-### Implementation
+**Real-World Analogy**:
+- **Soft Delete**: Employee leaves company → mark as "inactive", keep records
+- **Hard Delete**: Permanently erase from existence → no recovery possible
 
-**Database Schema**:
-```sql
-ALTER TABLE tenants ADD COLUMN deleted_at TIMESTAMP NULL DEFAULT NULL;
-CREATE INDEX idx_tenants_deleted_at ON tenants(deleted_at);
+### Why Not Just Delete Everything?
 
--- Unique constraints scoped to non-deleted
-CREATE UNIQUE INDEX idx_tenants_slug_unique 
-  ON tenants(slug) WHERE deleted_at IS NULL;
+**Legal & Compliance**: Many regulations require keeping records for years  
+**Audit Trail**: Need history of who had access and what they did  
+**Data Recovery**: Mistakes happen - soft delete allows undo  
+**Business Intelligence**: Historical data valuable for analytics  
+**Dispute Resolution**: May need old records for legal/financial disputes
 
-CREATE UNIQUE INDEX idx_tenants_subdomain_unique 
-  ON tenants(subdomain) WHERE deleted_at IS NULL;
+### How It Works
 
-CREATE UNIQUE INDEX idx_tenants_email_unique 
-  ON tenants(email) WHERE deleted_at IS NULL;
+**The Deleted Timestamp**:
+```
+Normal record:  deleted_at = NULL (visible to everyone)
+Soft deleted:   deleted_at = "2026-01-15 14:30:00" (hidden from normal queries)
 ```
 
-### Delete Operation
+When you "delete" a tenant:
+1. System adds deletion timestamp
+2. Record stays in database
+3. Normal queries can't see it anymore
+4. Admins can still view/restore it
+5. After retention period, permanently removed
 
-**Process Flow**:
-```python
-def soft_delete_tenant(tenant_id, reason):
-    """
-    Soft delete a tenant with audit trail.
-    
-    Steps:
-    1. Validate tenant can be deleted
-    2. Set deleted_at timestamp
-    3. Create audit log entry
-    4. Notify relevant parties
-    5. Schedule data retention cleanup
-    """
-    tenant = Tenant.find(tenant_id)
-    
-    # Validation
-    if tenant.status not in ['ARCHIVED']:
-        raise ValidationError("Tenant must be archived before deletion")
-    
-    # Perform soft delete
-    tenant.deleted_at = now()
-    tenant.deleted_by = current_user()
-    tenant.deletion_reason = reason
-    tenant.save()
-    
-    # Audit trail
-    create_audit_log('tenant_deleted', {
-        'tenant_id': tenant.id,
-        'tenant_name': tenant.name,
-        'reason': reason,
-        'retention_until': now() + timedelta(days=90)
-    })
-    
-    # Notifications
-    notify_admins(f"Tenant {tenant.name} soft deleted")
-    
-    # Schedule permanent deletion
-    schedule_hard_delete(tenant, after_days=90)
+### The Deletion Process
+
+**Step-by-Step**:
+
+1. **Request Deletion**: Admin initiates tenant deletion
+2. **Validation**: System checks tenant is ARCHIVED (can't delete active tenants)
+3. **Mark as Deleted**: Set `deleted_at` timestamp to current time
+4. **Record Reason**: Document why deletion occurred
+5. **Audit Log**: Create permanent record of deletion
+6. **Schedule Cleanup**: Set timer for permanent removal (90 days)
+
+**What Happens to Data**:
+- Tenant record: Marked deleted, still in database
+- Users: Remain in database, blocked by tenant context
+- Invoices/Transactions: Remain in database, blocked by tenant context
+- Files/Documents: Remain in storage, inaccessible
+- External systems: Notified of deletion (webhooks)
+
+### Reusing Information
+
+When a tenant is soft deleted, certain unique fields become available again:
+
+**Reusable After Soft Delete**:
+- ✅ Email address
+- ✅ Subdomain
+- ✅ Slug
+
+**Example**:
+```
+1. Company "Acme Corp" creates account with email admin@acme.com
+2. Later, they delete their account (soft delete)
+3. New company can now use admin@acme.com
+4. Old Acme Corp data still exists but is hidden
 ```
 
-### Query Filtering
+**Why This Works**:
+- Unique constraints only check non-deleted records
+- Prevents blocking future customers
+- Old data preserved for compliance
+- No conflicts between old and new
 
-**Automatic Filtering**:
-```python
-# All queries automatically filter soft-deleted records
-class TenantQuerySet:
-    def get_queryset(self):
-        return super().get_queryset().filter(deleted_at__isnull=True)
+### Child Records (Non-Cascading)
 
-# Example: This only returns active tenants
-tenants = Tenant.objects.all()  # WHERE deleted_at IS NULL
+**Important**: Deleting a tenant does NOT automatically delete related records.
 
-# To include deleted (admin only)
-tenants = Tenant.objects.with_deleted()  # No filter
-
-# Only deleted (for recovery)
-tenants = Tenant.objects.only_deleted()  # WHERE deleted_at IS NOT NULL
+**What This Means**:
+```
+Tenant deleted → Users, invoices, transactions still in database
+Access prevented by → Application-layer security (tenant context)
 ```
 
-### Unique Constraint Behavior
+**Why Not Auto-Delete Everything?**
+- Regulatory compliance requires keeping transaction history
+- Audit trail must remain intact
+- Investigations may need old data
+- Hard delete handles permanent removal later
 
-**Slug Reusability**:
-```python
-# Create tenant
-tenant1 = Tenant.create(name="Acme Corp", slug="acme-corp")
+### The Restoration Process
 
-# Soft delete
-tenant1.soft_delete()
+Soft-deleted tenants can be restored within the retention period.
 
-# Slug becomes available again
-tenant2 = Tenant.create(name="Acme Corporation", slug="acme-corp")  # ✅ Allowed
+**Requirements for Restoration**:
+1. Within 90-day retention window
+2. Original slug/subdomain still available
+3. Platform admin approval
+4. Valid business reason
+
+**Restoration Steps**:
+1. Admin requests restoration
+2. System checks availability of slug/subdomain
+3. System verifies within retention period
+4. Admin provides reason for restoration
+5. Deletion timestamp removed
+6. Tenant accessible again
+7. Audit log records restoration
+
+**Restoration Timeline**:
+
+| Days Since Deletion | Can Restore? | Who Can Authorize |
+|-------------------|--------------|-------------------|
+| 0-30 days | ✅ Yes | Support team can quickly restore |
+| 30-60 days | ✅ Yes | Requires manager approval |
+| 60-90 days | ⚠️ Maybe | Requires executive approval |
+| 90+ days | ❌ No | Data permanently deleted |
+
+### Permanent Deletion (Hard Delete)
+
+After the retention period, data is permanently removed.
+
+**Hard Delete Process**:
+1. 90 days have passed since soft delete
+2. Automated job runs monthly
+3. Deletes all tenant data:
+   - Users and permissions
+   - Financial transactions
+   - Documents and files
+   - All related records
+4. Tenant record physically deleted from database
+5. Final audit log entry created
+6. **No recovery possible**
+
+**Why 90 Days?**
+- Industry standard for data retention
+- Balances compliance with storage costs
+- Gives reasonable time for recovery requests
+- Allows investigation of disputed deletions
+
+### Technical Implementation (Minimal)
+
+```go
+// SoftDeleteTenant marks tenant as deleted
+func SoftDeleteTenant(tenantID int, reason string) error {
+    tenant := findTenant(tenantID)
+    
+    // Must be archived first
+    if tenant.Status != "ARCHIVED" {
+        return errors.New("tenant must be archived before deletion")
+    }
+    
+    // Mark as deleted
+    tenant.DeletedAt = time.Now()
+    tenant.DeletedBy = getCurrentUser()
+    tenant.DeletionReason = reason
+    
+    // Save and audit
+    saveTenant(tenant)
+    createAuditLog("tenant_deleted", tenant)
+    
+    // Schedule permanent deletion after 90 days
+    scheduleHardDelete(tenantID, 90)
+    
+    return nil
+}
+
+// RestoreTenant brings back soft-deleted tenant
+func RestoreTenant(tenantID int) error {
+    tenant := findDeletedTenant(tenantID)
+    
+    // Check retention period
+    daysSince := time.Since(tenant.DeletedAt).Hours() / 24
+    if daysSince > 90 {
+        return errors.New("beyond 90-day restoration period")
+    }
+    
+    // Check if slug/subdomain available
+    if slugInUse(tenant.Slug) {
+        return errors.New("slug no longer available")
+    }
+    
+    // Restore
+    tenant.DeletedAt = nil
+    tenant.DeletedBy = nil
+    tenant.RestoredAt = time.Now()
+    saveTenant(tenant)
+    
+    return nil
+}
 ```
 
-### Cascade Behavior
+### Business Impact
 
-**Non-Cascading Delete**:
-```sql
--- Tenant is soft deleted
-UPDATE tenants SET deleted_at = NOW() WHERE id = 123;
-
--- Child records remain UNAFFECTED
--- Users, invoices, transactions still reference tenant_id = 123
--- Access is prevented by application-layer tenant context
-```
-
-**Isolation Strategy**:
-- Tenant context filter prevents access to child records
-- Child records remain in database for audit/compliance
-- Hard delete (after retention) removes all data
-
-### Restoration Process
-
-**Restore Deleted Tenant**:
-```python
-def restore_tenant(tenant_id, restored_by):
-    """
-    Restore a soft-deleted tenant.
-    
-    Checks:
-    - Verify slug/subdomain still available
-    - Ensure within retention period
-    - Require platform admin approval
-    """
-    tenant = Tenant.only_deleted().find(tenant_id)
-    
-    # Check retention period
-    if (now() - tenant.deleted_at).days > 90:
-        raise ValidationError("Beyond restoration period (90 days)")
-    
-    # Check uniqueness
-    if Tenant.exists(slug=tenant.slug):
-        raise ValidationError(f"Slug '{tenant.slug}' already in use")
-    
-    if tenant.subdomain and Tenant.exists(subdomain=tenant.subdomain):
-        raise ValidationError(f"Subdomain '{tenant.subdomain}' already in use")
-    
-    # Restore
-    tenant.deleted_at = None
-    tenant.deleted_by = None
-    tenant.deletion_reason = None
-    tenant.restored_at = now()
-    tenant.restored_by = restored_by
-    tenant.save()
-    
-    create_audit_log('tenant_restored', tenant)
-    
-    return tenant
-```
-
-### Data Retention Schedule
-
-| Phase | Timeframe | Data State | Access | Action |
-|-------|-----------|----------|--------|---------|
-| Active | 0-30 days | Soft deleted | Admin read-only | Quick restore available |
-| Grace | 30-60 days | Soft deleted | Admin read-only | Restore with approval |
-| Final | 60-90 days | Soft deleted | No access | Restore requires executive approval |
-| Purged | 90+ days | Hard deleted | Permanently removed | Cannot restore |
-
-**Hard Delete** (Permanent Removal):
-```python
-def hard_delete_tenant(tenant_id):
-    """
-    Permanently delete tenant and all related data.
-    
-    WARNING: This is irreversible.
-    """
-    tenant = Tenant.only_deleted().find(tenant_id)
-    
-    # Verify deletion period elapsed
-    if (now() - tenant.deleted_at).days < 90:
-        raise ValidationError("Must wait 90 days before permanent deletion")
-    
-    # Delete all related data
-    tenant.users.hard_delete()
-    tenant.transactions.hard_delete()
-    tenant.documents.hard_delete()
-    # ... all related entities
-    
-    # Finally delete tenant
-    tenant.hard_delete()  # Physical DELETE from database
-    
-    create_audit_log('tenant_purged', {'tenant_id': tenant_id})
-```
+**Storage Costs**: Soft-deleted data uses storage space  
+**Compliance**: Helps meet regulatory requirements  
+**Customer Service**: Allows fixing accidental deletions  
+**Data Safety**: Extra layer of protection against mistakes
 
 ---
 
 ## Configuration Rules
 
-### Fiscal Year Configuration
+### What Are Configuration Rules?
 
-**Field**: `fiscal_year_start_month`
+Configuration settings control how your tenant's accounting and security systems work. Unlike data that changes frequently (like invoices), these are structural settings that should remain stable once set.
 
-**Constraints**:
-- Must be between 1 (January) and 12 (December)
-- Cannot be changed mid-fiscal-year without migration
-- Affects financial reporting periods
+---
 
-**Validation**:
-```python
-def update_fiscal_year_start(tenant, new_month):
-    if not 1 <= new_month <= 12:
-        raise ValidationError("Month must be between 1-12")
-    
-    current_date = now().date()
-    fiscal_year_end = get_fiscal_year_end(tenant, current_date)
-    
-    # Warning if mid-fiscal-year
-    if current_date < fiscal_year_end:
-        warn(
-            "Changing fiscal year mid-period may affect reporting. "
-            "Recommend waiting until current fiscal year ends."
-        )
-        
-        if not confirm("Continue anyway?"):
-            return
-    
-    tenant.fiscal_year_start_month = new_month
-    tenant.save()
-    
-    create_audit_log('fiscal_year_changed', {
-        'old_month': tenant.fiscal_year_start_month,
-        'new_month': new_month
-    })
-```
+### 1. Fiscal Year Start
+
+**What It Is**: The month when your financial year begins
+
+**Why It Matters**:
+- Determines reporting periods
+- Affects when "Year-to-Date" calculations start
+- Impacts financial statement generation
+- Must align with tax reporting requirements
 
 **Common Configurations**:
-- Calendar Year: `fiscal_year_start_month = 1` (January)
-- UK Tax Year: `fiscal_year_start_month = 4` (April)
-- US Federal: `fiscal_year_start_month = 10` (October)
 
-### Accounting Method
+| Configuration | Start Month | Used By |
+|--------------|-------------|---------|
+| Calendar Year | January (1) | Most businesses worldwide |
+| UK Tax Year | April (4) | UK companies |
+| US Federal Government | October (10) | US government agencies |
+| Australia Tax Year | July (7) | Australian companies |
 
-**Field**: `accounting_method`
+**Can You Change It?**
 
-**Valid Values**: `FIFO`, `LIFO`, `WEIGHTED_AVERAGE`
+Yes, but with caution:
+- ✅ Easy to change before fiscal year starts
+- ⚠️ Risky to change mid-year (affects reports)
+- ❌ Very problematic to change after year-end closing
+
+**Example Impact**:
+```
+Current Setting: Fiscal year starts April 1
+Current Date: August 15, 2025
+
+Trying to change to January 1:
+→ System warns: "This will affect 5 months of existing reports"
+→ Recommendation: Wait until March 31, 2026
+```
+
+---
+
+### 2. Accounting Method
+
+**What It Is**: How you calculate the cost of inventory sold
+
+**The Three Methods**:
+
+**FIFO (First-In, First-Out)**
+- Sells oldest inventory first
+- Like a grocery store - old milk sells before new milk
+- **Best for**: Perishable goods, fashion, anything that expires
+- **Tax impact**: Higher taxes during inflation (selling cheaper old stock)
+
+**LIFO (Last-In, First-Out)**
+- Sells newest inventory first
+- Like a coal pile - use what's on top
+- **Best for**: Non-perishable commodities
+- **Tax impact**: Lower taxes during inflation (selling expensive new stock)
+- **Note**: Not allowed in many countries (including under IFRS)
+
+**WEIGHTED AVERAGE**
+- Averages cost of all inventory
+- Like mixing paint - everything blends together
+- **Best for**: Bulk commodities, interchangeable goods
+- **Tax impact**: Moderate, predictable
+
+**Why You Can't Easily Change**:
+```
+Example: Your company has 1,000 items in stock
+
+Using FIFO:
+- Oldest 500 items cost $5 each = $2,500
+- Newest 500 items cost $8 each = $4,000
+- Total inventory value = $6,500
+
+Switching to WEIGHTED AVERAGE:
+- All 1,000 items now cost $6.50 each
+- Total inventory value = $6,500 (same)
+- BUT: Cost of next sale changes!
+
+This affects:
+✗ All historical reports
+✗ Tax filings
+✗ Financial statements
+✗ Profit calculations
+```
+
+**Changing Methods Requires**:
+1. Valid business reason (must document)
+2. Recalculation of all inventory values
+3. Restatement of financial reports
+4. Accountant approval recommended
+5. Tax authority notification (in some regions)
+
+---
+
+### 3. Password Policy
+
+**What It Controls**: Security requirements for user passwords
+
+**Configurable Settings**:
+
+| Setting | Default | Purpose |
+|---------|---------|---------|
+| Minimum Length | 8 characters | Harder to guess |
+| Require Uppercase | Yes | Increases complexity |
+| Require Lowercase | Yes | Increases complexity |
+| Require Numbers | Yes | Harder to crack |
+| Require Special Characters | Yes | Maximum security |
+| Password Expiry | 90 days | Regular rotation |
+| Prevent Reuse | Last 5 passwords | Can't cycle old passwords |
+| Lockout Attempts | 5 failed tries | Prevents brute force |
+| Lockout Duration | 30 minutes | Balance security/usability |
+
+**Minimum Requirements**:
+- At least 8 characters long
+- At least ONE complexity requirement (uppercase/lowercase/number/special)
+
+**Example Strong Password**:
+```
+✅ "MyP@ssw0rd2026" - Has uppercase, lowercase, numbers, special chars
+✅ "Coffee&Tea#42" - Easy to remember, meets all requirements
+❌ "password" - Too simple
+❌ "12345678" - No letters
+❌ "Password" - No numbers or special chars
+```
+
+**Real-World Example**:
+```
+Your Policy:
+- 10 characters minimum
+- Must have uppercase, lowercase, number
+- Expires every 90 days
+- Cannot reuse last 5 passwords
+
+User tries "welcome123":
+❌ Only 10 characters but no uppercase
+❌ Rejected: "Password must contain uppercase letter"
+
+User tries "Welcome123":
+✅ Accepted! Meets all requirements
+```
+
+---
+
+### 4. API Rate Limits
+
+**What They Control**: How many API requests tenants can make
+
+**Why Configurable**:
+- Different plans = different needs
+- Prevents system abuse
+- Allows burst traffic
+- Fair resource allocation
+
+**Configuration Options**:
+
+| Setting | Description | Typical Value |
+|---------|-------------|---------------|
+| Requests Per Minute | Base rate limit | 60-6,000 depending on plan |
+| Burst Multiplier | Short spike allowance | 2× (allows double for 10 seconds) |
+| Burst Duration | How long burst lasts | 10 seconds |
+| Apply to Webhooks | Include webhook calls | Usually No (webhooks exempt) |
+
+**Why Burst Matters**:
+```
+Normal: 600 requests/minute allowed
+
+Without Burst:
+User makes 700 requests in 10 seconds → 100 rejected immediately
+
+With 2× Burst (10 seconds):
+User makes 700 requests in 10 seconds → All accepted
+System smooths out the spike
+```
 
 **Constraints**:
-- Method selection affects inventory valuation
-- Changing method requires audit trail
-- Cannot change retroactively without recalculation
+- ✅ Can increase up to plan maximum
+- ❌ Cannot exceed plan limits (upgrade required)
+- ⚠️ Burst > 3× may impact system performance
+- ⚠️ Burst duration > 60 seconds defeats the purpose
 
-**Method Comparison**:
+---
 
-| Method | Full Name | Best For | Tax Impact |
-|--------|-----------|----------|------------|
-| `FIFO` | First-In, First-Out | Perishables, fashion | Higher taxes in inflation |
-| `LIFO` | Last-In, First-Out | Non-perishables | Lower taxes in inflation |
-| `WEIGHTED_AVERAGE` | Weighted Average Cost | Bulk commodities | Stable, predictable |
+### 5. Allowed Modules
 
-**Change Process**:
-```python
-def change_accounting_method(tenant, new_method):
-    if new_method not in ['FIFO', 'LIFO', 'WEIGHTED_AVERAGE']:
-        raise ValidationError("Invalid accounting method")
-    
-    old_method = tenant.accounting_method
-    
-    # Warning
-    warn(
-        f"Changing from {old_method} to {new_method} will affect:\n"
-        "- Inventory valuations\n"
-        "- Cost of goods sold\n"
-        "- Financial statements\n"
-        "Recommend consulting accountant before proceeding."
-    )
-    
-    # Require reason
-    reason = prompt("Reason for change:")
-    if not reason:
-        raise ValidationError("Change reason required")
-    
-    # Update
-    tenant.accounting_method = new_method
-    tenant.save()
-    
-    # Audit trail
-    create_audit_log('accounting_method_changed', {
-        'old_method': old_method,
-        'new_method': new_method,
-        'reason': reason,
-        'requires_restatement': True
-    })
-    
-    # Trigger recalculation
-    schedule_inventory_recalculation(tenant)
+**What They Are**: Features/functionality available to tenant
+
+**Module Categories**:
+
+**Core Modules** (Always Enabled):
+- Financial Accounting
+- Sales/Selling
+
+**Optional Modules** (Plan-Dependent):
+- Buying/Purchasing
+- Inventory Management
+- Manufacturing
+- Project Management
+- Human Resources
+- Payroll
+- CRM (Customer Relationship Management)
+- Help Desk/Support
+
+**Plan Comparison**:
+
+| Plan | Available Modules |
+|------|------------------|
+| **Starter** | Financial, Selling only |
+| **Professional** | + Buying, Inventory, CRM |
+| **Enterprise** | All modules available |
+
+**Why Restrict Modules?**
+- Simpler interface for smaller businesses
+- Lower infrastructure costs for basic plans
+- Encourages upgrades as businesses grow
+- Each module adds complexity and support burden
+
+**Enabling New Module**:
+```
+Current Plan: Professional
+Current Modules: Financial, Selling, Buying, Inventory
+
+Request: Enable "Payroll" module
+↓
+Check: Is Payroll in Professional plan?
+Result: ❌ No - Payroll only in Enterprise
+Message: "Upgrade to Enterprise to access Payroll"
 ```
 
-### Password Policy
+**Cannot Disable Core Modules**:
+```
+Request: Disable "Financial" module
+Result: ❌ Blocked
+Reason: "Financial module is core functionality"
+```
 
-**Configurable Fields**:
-```python
-password_policy = {
-    'min_length': 8,              # Minimum: 8 characters
-    'require_uppercase': True,    # At least one A-Z
-    'require_lowercase': True,    # At least one a-z
-    'require_numbers': True,      # At least one 0-9
-    'require_special': True,      # At least one !@#$%^&*
-    'max_age_days': 90,          # Password expires after 90 days (null = never)
-    'prevent_reuse': 5,          # Cannot reuse last 5 passwords
-    'lockout_attempts': 5,       # Lock after 5 failed attempts
-    'lockout_duration': 30       # Lockout for 30 minutes
+---
+
+### Technical Reference (Minimal)
+
+```go
+// ConfigValidation validates configuration changes
+type ConfigValidation struct{}
+
+// ValidateFiscalYear checks fiscal year month
+func (v *ConfigValidation) ValidateFiscalYear(month int) error {
+    if month < 1 || month > 12 {
+        return errors.New("month must be between 1-12")
+    }
+    
+    // Warn if mid-fiscal-year
+    if isMiddleOfFiscalYear() {
+        log.Warn("Changing fiscal year mid-period may affect reporting")
+    }
+    
+    return nil
 }
-```
 
-**Validation**:
-```python
-def validate_password_policy(policy):
-    # Min length
-    if policy['min_length'] < 8:
-        raise ValidationError("Minimum password length must be at least 8")
+// ValidateAccountingMethod checks method change
+func (v *ConfigValidation) ValidateAccountingMethod(method string) error {
+    validMethods := []string{"FIFO", "LIFO", "WEIGHTED_AVERAGE"}
     
-    # At least one complexity requirement
-    complexity_rules = [
-        policy.get('require_uppercase'),
-        policy.get('require_lowercase'),
-        policy.get('require_numbers'),
-        policy.get('require_special')
-    ]
+    if !contains(validMethods, method) {
+        return errors.New("invalid accounting method")
+    }
     
-    if not any(complexity_rules):
-        warn("Recommended: Enable at least one complexity requirement")
+    // Require audit trail
+    if requiresReasonForChange() {
+        return errors.New("reason required for method change")
+    }
     
-    # Max age
-    if policy['max_age_days'] and policy['max_age_days'] < 1:
-        raise ValidationError("Max age must be positive or null (no expiry)")
-```
-
-**Enforcement Example**:
-```python
-def validate_password(password, tenant):
-    policy = tenant.password_policy
-    errors = []
-    
-    if len(password) < policy['min_length']:
-        errors.append(f"Must be at least {policy['min_length']} characters")
-    
-    if policy['require_uppercase'] and not re.search(r'[A-Z]', password):
-        errors.append("Must contain uppercase letter")
-    
-    if policy['require_lowercase'] and not re.search(r'[a-z]', password):
-        errors.append("Must contain lowercase letter")
-    
-    if policy['require_numbers'] and not re.search(r'\d', password):
-        errors.append("Must contain number")
-    
-    if policy['require_special'] and not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-        errors.append("Must contain special character")
-    
-    if errors:
-        raise ValidationError("Password does not meet requirements: " + "; ".join(errors))
-```
-
-### API Rate Limits
-
-**Configuration**:
-```python
-api_rate_limits = {
-    'requests_per_minute': 60,    # Must be > 0
-    'burst_multiplier': 2,        # Burst = 2x per-minute rate
-    'burst_duration': 10,         # Burst allowed for 10 seconds
-    'apply_to_webhooks': False    # Webhooks exempt from rate limit
+    return nil
 }
-```
-
-**Validation**:
-```python
-def validate_rate_limits(tenant, limits):
-    # Must be positive
-    if limits['requests_per_minute'] <= 0:
-        raise ValidationError("Rate limit must be greater than 0")
-    
-    # Cannot exceed plan maximum
-    plan_max = tenant.plan.max_api_rate_limit
-    if limits['requests_per_minute'] > plan_max:
-        raise ValidationError(
-            f"Rate limit cannot exceed plan maximum ({plan_max} req/min). "
-            "Upgrade plan for higher limits."
-        )
-    
-    # Burst validation
-    if limits['burst_multiplier'] > 3:
-        warn("Burst multiplier > 3 may impact system performance")
-    
-    # Reasonable burst duration
-    if limits['burst_duration'] > 60:
-        warn("Burst duration over 60s defeats rate limiting purpose")
-```
-
-### Allowed Modules
-
-**Module System**:
-```python
-AVAILABLE_MODULES = [
-    'financial',      # Always included (core)
-    'selling',        # Always included (core)
-    'buying',         # Purchase orders, suppliers
-    'inventory',      # Stock management
-    'manufacturing',  # Production, BOM
-    'projects',       # Project management
-    'hr',            # Human resources
-    'payroll',       # Payroll processing
-    'crm',           # Customer relationship
-    'support',       # Help desk
-]
-
-PLAN_MODULES = {
-    'starter': ['financial', 'selling'],
-    'professional': ['financial', 'selling', 'buying', 'inventory', 'crm'],
-    'enterprise': AVAILABLE_MODULES  # All modules
-}
-```
-
-**Validation**:
-```python
-def enable_module(tenant, module_name):
-    # Valid module?
-    if module_name not in AVAILABLE_MODULES:
-        raise ValidationError(f"Invalid module: {module_name}")
-    
-    # Already enabled?
-    if module_name in tenant.enabled_modules:
-        return  # No-op
-    
-    # Core modules always enabled
-    if module_name in ['financial', 'selling']:
-        return  # Cannot disable
-    
-    # Check plan allows module
-    allowed = PLAN_MODULES[tenant.plan.tier]
-    if module_name not in allowed:
-        raise ValidationError(
-            f"Module '{module_name}' not available in {tenant.plan.tier} plan. "
-            f"Upgrade to access this module."
-        )
-    
-    # Enable module
-    tenant.enabled_modules.append(module_name)
-    tenant.save()
-    
-    create_audit_log('module_enabled', {'module': module_name})
 ```
 
 ---
 
 ## Tenant Isolation Rules
 
-### Security Invariants
+### What Is Tenant Isolation?
 
-These rules MUST be enforced at all times to maintain multi-tenant security:
+**The Core Principle**: Your data must NEVER be visible to other tenants.
 
-#### 1. Row-Level Security (RLS)
+**Real-World Analogy**:  
+Think of a multi-tenant system like an apartment building:
+- Each tenant (company) has their own apartment (data space)
+- You have your own key (authentication)
+- You can't see your neighbor's mail or enter their apartment
+- The building manager (platform admin) can access all units if needed
+- Each apartment's contents are completely isolated
 
-**Rule**: Every tenant-scoped table has RLS policies enabled
+### Why Isolation Matters
 
-**Implementation**:
-```sql
--- Enable RLS on table
-ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
+**Security**: Prevents data breaches between customers  
+**Privacy**: Keeps business information confidential  
+**Compliance**: Required by regulations like GDPR, HIPAA  
+**Trust**: Customers must know their data is safe  
+**Legal**: Breaches can result in lawsuits and fines
 
--- Policy: Users can only see their tenant's data
-CREATE POLICY tenant_isolation_policy ON invoices
-    FOR ALL
-    TO application_role
-    USING (tenant_id = current_setting('app.tenant_id')::INTEGER);
-
--- Admin bypass (platform admin only)
-CREATE POLICY admin_all_access ON invoices
-    FOR ALL
-    TO admin_role
-    USING (true);
+**What Could Go Wrong Without It**:
+```
+❌ Company A sees Company B's invoices
+❌ Company A can modify Company B's data
+❌ Company A's employee list includes Company B's staff
+❌ Financial reports mixed between companies
 ```
 
-**Tables Requiring RLS**:
-```
-✅ All business data tables:
-   - invoices, payments, customers, products, users, etc.
+### The Eight Security Rules
 
-❌ Exempt tables:
-   - tenants (tenant list itself)
-   - system_settings (global configuration)
-   - audit_logs (access controlled separately)
+These rules work together to create perfect isolation. They're listed from highest-level (business logic) to lowest-level (database).
+
+---
+
+#### 1. Row-Level Security (Database Level)
+
+**What It Is**: The database itself blocks cross-tenant queries
+
+**How It Works**:
+- Every data row has a `tenant_id` field
+- Database automatically filters all queries
+- Only sees rows matching current tenant
+- Happens at database level (can't be bypassed)
+
+**Example**:
 ```
+Invoices Table:
+ID | Tenant ID | Amount | Customer
+1  | 100       | $500   | Acme Corp
+2  | 101       | $300   | Beta LLC
+3  | 100       | $200   | Acme Corp
+
+User from Tenant 100 queries invoices:
+→ Database automatically adds: WHERE tenant_id = 100
+→ User only sees invoices #1 and #3
+→ Invoice #2 is invisible (different tenant)
+```
+
+**Which Tables Need This**:
+- ✅ All business data (invoices, customers, products, users)
+- ❌ System tables (tenant list itself, global settings)
+
+---
 
 #### 2. Application Role Filtering
 
-**Rule**: All queries through `application_role` are automatically filtered by tenant
+**What It Is**: Database connection automatically knows which tenant
 
-**Connection Setup**:
-```python
-def set_tenant_context(connection, tenant_id):
-    """
-    Set tenant context for database connection.
-    Must be called before any data access.
-    """
-    connection.execute(f"SET app.tenant_id = '{tenant_id}'")
-    connection.execute(f"SET ROLE application_role")
+**How It Works**:
+1. User logs in to system
+2. System determines their tenant (from subdomain, JWT, etc.)
+3. Database connection tagged with tenant ID
+4. All queries automatically filtered
+5. Connection cleared after each request
 
-def clear_tenant_context(connection):
-    """
-    Clear tenant context after transaction.
-    Called automatically on connection close.
-    """
-    connection.execute("RESET app.tenant_id")
-    connection.execute("RESET ROLE")
+**Why This Matters**:
+- Developers don't have to remember to filter
+- Automatic protection against mistakes
+- Consistent across entire application
+- Single point of security enforcement
+
+**Real-World Example**:
+```
+User: john@acme.com logs in
+System: Determines tenant_id = 100
+Database: Sets connection context to tenant 100
+John queries: SELECT * FROM invoices
+Database returns: Only tenant 100's invoices
+Connection closes: Context cleared automatically
 ```
 
-**Middleware**:
-```python
-@middleware
-def tenant_context_middleware(request):
-    # Extract tenant from request (subdomain, header, JWT claim, etc.)
-    tenant = extract_tenant_from_request(request)
-    
-    if not tenant:
-        raise AuthenticationError("No tenant context")
-    
-    # Set context
-    with db.connection() as conn:
-        set_tenant_context(conn, tenant.id)
-        
-        try:
-            response = next_handler(request)
-        finally:
-            clear_tenant_context(conn)
-    
-    return response
-```
+---
 
 #### 3. Foreign Key Constraints
 
-**Rule**: Foreign keys cannot reference records from different tenants
+**What It Is**: Database prevents linking to other tenants' data
 
-**Enforcement**:
-```sql
--- Example: Invoice -> Customer
-CREATE TABLE invoices (
-    id SERIAL PRIMARY KEY,
-    tenant_id INTEGER NOT NULL REFERENCES tenants(id),
-    customer_id INTEGER NOT NULL,
-    amount DECIMAL(10,2),
-    
-    -- Compound foreign key ensures same tenant
-    FOREIGN KEY (tenant_id, customer_id) 
-        REFERENCES customers(tenant_id, customer_id)
-);
-
--- Customer table must have compound unique constraint
-CREATE UNIQUE INDEX idx_customers_tenant_customer 
-    ON customers(tenant_id, id);
+**The Problem Without It**:
 ```
+Invoice for Tenant A → Customer from Tenant B
+This should NEVER be possible!
+```
+
+**The Solution**:
+- Foreign keys include tenant_id
+- Database enforces same tenant
+- Impossible to create cross-tenant relationships
+
+**Example**:
+```
+Creating Invoice:
+- Tenant ID: 100
+- Customer ID: 5
+
+Database checks:
+→ Does Customer #5 belong to Tenant 100?
+→ Yes: ✅ Invoice created
+→ No: ❌ Error: "Customer not found"
+```
+
+---
 
 #### 4. Mandatory Tenant Context
 
-**Rule**: Tenant context must be set before any data access
+**What It Is**: System must know which tenant before any data access
 
-**Enforcement**:
-```python
-class TenantRequiredMiddleware:
-    def process_request(self, request):
-        # Check if tenant context set
-        if not hasattr(request, 'tenant'):
-            raise TenantContextError("Tenant context not set")
-        
-        # Verify tenant is active
-        if request.tenant.status != 'ACTIVE':
-            raise TenantInactiveError(
-                f"Tenant {request.tenant.name} is {request.tenant.status}"
-            )
+**How It Works**:
+- Every request must have tenant identified
+- No queries allowed without tenant context
+- System rejects requests lacking tenant info
+- Protects against programming errors
 
-# Database query wrapper
-def execute_query(query, params):
-    # Verify context
-    tenant_id = get_current_tenant_id()
-    if not tenant_id:
-        raise TenantContextError("No tenant context for query")
-    
-    return db.execute(query, params)
+**What You See**:
 ```
+Trying to access data without logging in:
+❌ Error: "No tenant context"
+→ Must authenticate first
+
+Tenant is SUSPENDED:
+❌ Error: "Tenant Acme Corp is SUSPENDED"
+→ Cannot access system
+```
+
+**Why This Rule Exists**:
+- Prevents accidental queries across all tenants
+- Forces proper authentication
+- Catches programming mistakes early
+- Ensures every operation has accountability
+
+---
 
 #### 5. Transaction-Scoped Context
 
-**Rule**: Tenant context is automatically cleared after each transaction
+**What It Is**: Tenant context automatically cleared after each operation
 
-**Implementation**:
-```python
-class TenantScopedConnection:
-    def __enter__(self):
-        self.conn = db.get_connection()
-        self.tenant_id = current_tenant.id
-        set_tenant_context(self.conn, self.tenant_id)
-        return self.conn
-    
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        # Always clear context
-        clear_tenant_context(self.conn)
-        self.conn.close()
+**Why This Matters**:
+- Prevents context from "leaking" to next request
+- Connection pooling doesn't mix tenants
+- Each request starts fresh
+- Eliminates a whole class of security bugs
 
-# Usage
-with TenantScopedConnection() as conn:
-    conn.execute("SELECT * FROM invoices")  # Tenant-filtered
-# Context automatically cleared here
+**Technical Example**:
 ```
+Request 1: User from Tenant A
+→ Context set to Tenant A
+→ Query executes for Tenant A
+→ Request ends
+→ Context AUTOMATICALLY cleared
+
+Request 2: User from Tenant B
+→ Context set to Tenant B (fresh start)
+→ No pollution from Request 1
+→ Query executes for Tenant B only
+```
+
+---
 
 #### 6. Admin Role Bypass
 
-**Rule**: Only platform administrators can bypass RLS
+**What It Is**: Platform administrators can see all tenants
 
-**Role Definitions**:
-```sql
--- Application role (normal users)
-CREATE ROLE application_role;
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO application_role;
+**Who Has This**:
+- Platform operators (your company's staff)
+- Support engineers (for customer assistance)
+- Security team (for investigations)
 
--- Admin role (platform admin)
-CREATE ROLE admin_role;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO admin_role;
-ALTER ROLE admin_role SET row_security = OFF;  -- Bypass RLS
+**NOT available to**:
+- Regular users
+- Tenant administrators
+- Any tenant employees
 
--- Readonly role (monitoring)
-CREATE ROLE readonly_role;
-GRANT SELECT ON ALL TABLES IN SCHEMA public TO readonly_role;
-ALTER ROLE readonly_role SET row_security = OFF;  -- See all tenants
+**When It's Used**:
+- Customer support requests
+- System monitoring
+- Security investigations
+- Data migration tasks
+- Platform maintenance
+
+**Audit Trail**:
+```
+Every admin access is logged:
+- Who accessed (admin name)
+- When (timestamp)
+- Which tenant (tenant ID)
+- Why (reason/ticket number)
+- What they did (actions taken)
 ```
 
-**Access Control**:
-```python
-def switch_to_admin_role(user):
-    if not user.is_platform_admin:
-        raise PermissionError("Admin role restricted to platform admins")
-    
-    # Switch role
-    db.execute("SET ROLE admin_role")
-    
-    # Audit
-    create_audit_log('admin_access', {
-        'user': user.email,
-        'reason': 'Platform administration'
-    })
-```
+---
 
 #### 7. Readonly Role
 
-**Rule**: Monitoring systems can view all tenants without modification rights
+**What It Is**: Monitoring systems can view (but not change) all tenant data
 
-**Usage**:
-```python
-def generate_system_report():
-    with db.connection() as conn:
-        # Switch to readonly role
-        conn.execute("SET ROLE readonly_role")
-        
-        # Can query across all tenants
-        tenants = conn.execute("SELECT * FROM tenants WHERE status = 'ACTIVE'")
-        
-        for tenant in tenants:
-            stats = conn.execute(
-                "SELECT COUNT(*) FROM invoices WHERE tenant_id = %s",
-                [tenant.id]
-            )
-            # Generate report...
+**Purpose**:
+- System health monitoring
+- Generating platform-wide reports
+- Performance analytics
+- Capacity planning
+- No modification allowed
+
+**Example Usage**:
 ```
+Monitoring Dashboard:
+→ Total active tenants: 1,250
+→ Total invoices today: 5,430
+→ System storage used: 2.3 TB
+→ Average response time: 120ms
+
+This requires seeing across all tenants
+But cannot modify any data
+```
+
+---
 
 #### 8. Superuser Prohibition
 
-**Rule**: Superuser access is prohibited in production
+**What It Is**: Database superuser access is blocked in production
 
-**Enforcement**:
-```sql
--- Production database users should NEVER be superuser
-CREATE USER app_user WITH PASSWORD 'secure_password';
-GRANT application_role TO app_user;
+**Why This Rule**:
+- Superuser bypasses ALL security
+- Too dangerous for production
+- Violates isolation principles
+- Creates audit trail gaps
 
--- Verify
-SELECT usename, usesuper FROM pg_user WHERE usename = 'app_user';
--- usesuper should be 'f' (false)
-```
+**Allowed**:
+- ✅ Development environment
+- ✅ Testing environment
+- ✅ Local development
+
+**Blocked**:
+- ❌ Production environment
+- ❌ Staging with real data
+- ❌ Any customer-facing system
 
 **Monitoring**:
-```python
-def check_superuser_connections():
-    """Alert if any superuser connections detected in production"""
-    if os.getenv('ENVIRONMENT') != 'production':
-        return
-    
-    superusers = db.execute("""
-        SELECT usename, application_name, client_addr
-        FROM pg_stat_activity
-        WHERE usesuper = true
-    """)
-    
-    if superusers:
-        alert_security_team(
-            "CRITICAL: Superuser connection detected in production",
-            details=superusers
-        )
+```
+System checks every minute:
+"Are there any superuser connections?"
+↓
+If YES → Alert security team immediately
+"CRITICAL: Superuser detected in production!"
 ```
 
-### Isolation Testing
+---
 
-**Test Suite**:
-```python
-def test_tenant_isolation():
-    """Verify tenant isolation is working correctly"""
-    
-    # Create two test tenants
-    tenant_a = create_test_tenant("Tenant A")
-    tenant_b = create_test_tenant("Tenant B")
-    
-    # Create data for each
-    with tenant_context(tenant_a):
-        invoice_a = Invoice.create(amount=100)
-    
-    with tenant_context(tenant_b):
-        invoice_b = Invoice.create(amount=200)
-    
-    # Verify isolation
-    with tenant_context(tenant_a):
-        assert Invoice.count() == 1
-        assert Invoice.first().amount == 100
-        # Should NOT see tenant B's invoice
-    
-    with tenant_context(tenant_b):
-        assert Invoice.count() == 1
-        assert Invoice.first().amount == 200
-        # Should NOT see tenant A's invoice
-    
-    # Verify direct access blocked
-    with tenant_context(tenant_a):
-        with pytest.raises(PermissionError):
-            Invoice.find(invoice_b.id)  # Should fail
+### How Isolation Is Tested
+
+**Regular Security Tests**:
+1. Create two test tenants (A and B)
+2. Create data for each tenant
+3. Log in as Tenant A user
+4. Try to access Tenant B data
+5. Verify: Access denied
+
+**Example Test**:
 ```
+Setup:
+- Tenant A: Create invoice #123 for $500
+- Tenant B: Create invoice #456 for $300
+
+Test 1: Query all invoices as Tenant A
+Result: Only see invoice #123 ✅
+
+Test 2: Query specific invoice #456 as Tenant A
+Result: "Invoice not found" ✅
+
+Test 3: Direct database ID access to invoice #456 as Tenant A
+Result: Blocked by row-level security ✅
+
+All tests must pass before deployment
+```
+
+---
+
+### What Happens If Isolation Fails?
+
+**Immediate Actions**:
+1. System automatically logs the incident
+2. Security team alerted
+3. Affected tenants notified
+4. Incident investigation started
+5. Audit of all access during time window
+6. Remediation plan created
+
+**Customer Communication**:
+- Transparent notification
+- Explanation of what happened
+- What data was potentially exposed
+- What steps are being taken
+- Follow-up timeline
+
+---
+
+### Technical Implementation (Minimal)
+
+```go
+// SetTenantContext configures database connection for tenant
+func SetTenantContext(ctx context.Context, tenantID int) error {
+    // Set tenant ID in database session
+    _, err := db.Exec(ctx, "SET app.tenant_id = $1", tenantID)
+    if err != nil {
+        return fmt.Errorf("failed to set tenant context: %w", err)
+    }
+    
+    // Switch to application role (has RLS enabled)
+    _, err = db.Exec(ctx, "SET ROLE application_role")
+    if err != nil {
+        return fmt.Errorf("failed to set role: %w", err)
+    }
+    
+    return nil
+}
+
+// ClearTenantContext removes tenant from connection
+func ClearTenantContext(ctx context.Context) {
+    db.Exec(ctx, "RESET app.tenant_id")
+    db.Exec(ctx, "RESET ROLE")
+}
+
+// TenantMiddleware ensures tenant context for all requests
+func TenantMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        // Extract tenant from request
+        tenant, err := extractTenantFromRequest(r)
+        if err != nil {
+            http.Error(w, "No tenant context", http.StatusUnauthorized)
+            return
+        }
+        
+        // Set context for this request
+        ctx := r.Context()
+        SetTenantContext(ctx, tenant.ID)
+        defer ClearTenantContext(ctx)
+        
+        // Continue to next handler
+        next.ServeHTTP(w, r)
+    })
+}
+```
+
+---
+
+### Business Impact
+
+**Trust**: Customers confident their data is safe  
+**Compliance**: Meets regulatory requirements  
+**Liability**: Reduces legal risk  
+**Reputation**: Protects company brand  
+**Sales**: Security is a competitive advantage
 
 ---
 
@@ -1291,88 +1678,388 @@ blog, news, about, contact, legal, privacy, terms
 
 ## Troubleshooting
 
-### Problem: "Email already exists" on tenant creation
+### Common Problems and Solutions
 
-**Cause**: Another active tenant uses this email
+---
 
-**Solution**:
-1. Search for existing tenant: `Tenant.find_by_email(email)`
-2. If tenant is soft-deleted, it will be available again
-3. Use different email, or restore the deleted tenant if same organization
+### Problem 1: "Email already exists"
 
-### Problem: "Tenant has reached maximum user limit"
+**What happened**: Trying to create a new tenant with an email that's already in use
 
-**Cause**: Plan limit exceeded
+**Why it happens**:
+- Another active tenant is using this email
+- Email must be unique across all active tenants
+- Prevents duplicate accounts and confusion
 
 **Solutions**:
-1. **Deactivate unused users**: Archive or remove users no longer needed
-2. **Upgrade plan**: Increase user limit
-3. **Admin override**: Platform admin can temporarily raise limit
 
-### Problem: "Cannot transition from ARCHIVED to ACTIVE"
-
-**Cause**: ARCHIVED is a terminal state
-
-**Solution**:
-- Create new tenant if customer returns
-- Archived tenants cannot be reactivated (by design)
-- Use soft-delete restoration if within retention period
-
-### Problem: Tenant isolation not working
-
-**Symptoms**: Users seeing other tenants' data
-
-**Debugging**:
-```python
-# Check current tenant context
-print(db.execute("SHOW app.tenant_id"))
-
-# Check current role
-print(db.execute("SELECT current_user"))
-
-# Verify RLS enabled
-print(db.execute("""
-    SELECT tablename, rowsecurity 
-    FROM pg_tables 
-    WHERE schemaname = 'public'
-"""))
+**Option A - Use Different Email**
 ```
+Current: admin@acme.com (taken)
+Try: admin+new@acme.com
+Or: contact@acme.com
+```
+
+**Option B - Check If It's Your Old Account**
+1. Search for existing tenant with that email
+2. If found and soft-deleted → Can be restored
+3. If found and active → Contact support to merge/transfer
+4. If same organization → Restore old account instead of creating new
+
+**Option C - Add Subdomain to Distinguish**
+```
+tenant1@acme.com → acme-east.yoursystem.com
+tenant2@acme.com → acme-west.yoursystem.com
+Different subdomains = different tenants = OK
+```
+
+---
+
+### Problem 2: "Maximum user limit reached"
+
+**What happened**: Trying to add a new user but plan limit is full
+
+**Current situation example**:
+```
+Your Plan: Professional (50 users)
+Active Users: 50
+Trying to add: User #51
+Result: ❌ Blocked
+```
+
+**Solutions (in order of preference)**:
+
+**1. Remove Inactive Users** (Free)
+- Review user list
+- Deactivate employees who left
+- Archive unused accounts
+- This frees up slots immediately
+
+**2. Upgrade Your Plan** (Recommended)
+- Professional → Enterprise
+- Get more user slots
+- Usually more features too
+
+**3. Temporary Override** (Special cases)
+- Contact platform support
+- Explain the situation
+- May get temporary increase
+- Usually for short-term needs
+
+**Checking Current Usage**:
+```
+Dashboard → Settings → Users
+Shows: "47 of 50 users (94% used)"
+Click to see full list of active users
+```
+
+---
+
+### Problem 3: "Cannot transition from ARCHIVED to ACTIVE"
+
+**What happened**: Trying to reactivate an archived tenant
+
+**Why it's blocked**:
+- ARCHIVED is a **terminal state**
+- Like a closed bank account
+- Cannot be reopened (by design)
+- Prevents data confusion
+
+**What to do instead**:
+
+**If Customer Wants to Return**:
+1. Create NEW tenant registration
+2. Fresh start with current pricing
+3. Clean separation of data
+4. Better audit trail
+
+**If Need Old Data**:
+1. Data retained for 90 days after archival
+2. Can export old data before new setup
+3. Support can assist with data transfer
+4. Keep old and new accounts separate
+
+**If Archived by Mistake** (Within 90 days):
+1. Check if soft-deleted (not archived)
+2. Soft-deleted can be restored
+3. Archived cannot be reversed
+4. Contact support immediately if urgent
+
+**The Difference**:
+```
+ARCHIVED → Closed permanently (by customer)
+→ Cannot reactivate
+→ Create new tenant
+
+SOFT-DELETED → Marked for cleanup
+→ Can be restored within 90 days
+→ Same tenant reactivated
+```
+
+---
+
+### Problem 4: Tenant isolation not working
+
+**Symptoms**:
+- Users seeing other companies' data
+- Invoices from wrong tenant appearing
+- User list includes other tenants' staff
+
+**🚨 This is a CRITICAL security issue**
+
+**Immediate Steps**:
+
+**For Users**:
+1. Log out immediately
+2. Report to support/security team
+3. Document what was seen
+4. Do not share or use other tenant's data
+
+**For Administrators**:
+1. Check tenant context is set correctly
+2. Verify user is in correct tenant
+3. Check subdomain/URL is correct
+4. Review recent authentication logs
 
 **Common Causes**:
-1. Tenant context not set in middleware
-2. Using superuser role (bypasses RLS)
-3. RLS not enabled on table
-4. Policy not created correctly
 
-### Problem: Rate limit errors for legitimate traffic
+**Cause 1: Wrong Subdomain**
+```
+Should be: acme.yoursystem.com
+Using: beta.yoursystem.com
+Result: Seeing Beta's data instead of Acme's
 
-**Symptoms**: Frequent 429 errors during normal usage
-
-**Solutions**:
-1. **Check burst config**: Ensure burst multiplier is 2×
-2. **Optimize requests**: Batch API calls, use webhooks
-3. **Upgrade plan**: Higher rate limits available
-4. **Request increase**: Contact support for temporary increase
-
-### Problem: Storage quota exceeded unexpectedly
-
-**Investigation**:
-```python
-# Check storage breakdown
-tenant.get_storage_breakdown()
-# Returns: {
-#   'documents': 450 MB,
-#   'attachments': 200 MB,
-#   'exports': 150 MB,
-#   'backups': 50 MB
-# }
+Solution: Use correct subdomain
 ```
 
+**Cause 2: Technical - Tenant Context Not Set**
+```
+Database connection missing tenant filter
+All data visible instead of just one tenant
+
+Solution: Contact development team immediately
+```
+
+**Cause 3: Technical - Using Superuser Role**
+```
+Connection using database superuser
+Bypasses all security filters
+
+Solution: Never use superuser in production
+```
+
+**Cause 4: Technical - RLS Not Enabled**
+```
+Row-level security not configured on table
+No filtering at database level
+
+Solution: Enable RLS on affected tables
+```
+
+**Verification Test**:
+```
+Test 1: Can you see your own invoices? ✅
+Test 2: Search for known other tenant invoice number
+Result should be: "Not found" ✅
+If you can see it: ❌ Report immediately
+```
+
+---
+
+### Problem 5: Rate limit errors (429 responses)
+
+**What happened**: Getting "Too Many Requests" errors from API
+
+**Common Scenarios**:
+
+**Scenario A: Bulk Import**
+```
+Problem: Uploading 1,000 invoices rapidly
+Rate Limit: 600 requests/minute
+Result: First 600 succeed, rest fail
+
+Solution: Add delay between requests
+Example: Upload 10 per second (600/minute)
+```
+
+**Scenario B: Polling Loop**
+```
+Problem: Checking for updates every second
+Rate Limit: Hit within 10 minutes
+
+Solution: Use webhooks instead
+System notifies you when something changes
+No need to keep asking
+```
+
+**Scenario C: Legitimate High Volume**
+```
+Problem: Business needs more API calls
+Current Plan: 600 requests/minute
+Need: 1,500 requests/minute
+
+Solution: Upgrade to Enterprise plan
+Offers: 6,000 requests/minute
+```
+
+**How to Handle 429 Errors**:
+```
+1. Check response headers:
+   X-RateLimit-Limit: 600
+   X-RateLimit-Remaining: 0
+   Retry-After: 45
+
+2. Wait the specified time: 45 seconds
+
+3. Retry your request
+
+4. Implement exponential backoff:
+   - First retry: Wait 1 second
+   - Second retry: Wait 2 seconds
+   - Third retry: Wait 4 seconds
+   - Etc.
+```
+
+**Prevention**:
+1. Batch multiple operations into one request
+2. Cache results instead of re-requesting
+3. Use webhooks for real-time updates
+4. Spread requests over time
+5. Monitor your rate limit usage
+
+---
+
+### Problem 6: Storage quota exceeded
+
+**What happened**: Cannot upload files - storage is full
+
+**Check Current Usage**:
+```
+Dashboard → Settings → Storage
+Shows: "1.8 GB of 2.0 GB used (90%)"
+```
+
+**Where Space Goes**:
+
+| Category | Typical Usage | Can Clean? |
+|----------|--------------|------------|
+| Documents | 40% | ⚠️ Carefully |
+| Attachments | 30% | ✅ Yes |
+| Exports | 20% | ✅ Yes - auto-deleted after 30 days |
+| Backups | 10% | ⚠️ System-managed |
+
 **Solutions**:
-1. Delete old exports (auto-deleted after 30 days)
-2. Compress large attachments
-3. Archive old documents
-4. Upgrade storage quota
+
+**Quick Win - Delete Old Exports**
+```
+1. Go to Reports → Export History
+2. Delete exports older than 7 days
+3. These were for temporary download
+4. Can regenerate if needed later
+5. Usually frees 100-300 MB
+```
+
+**Medium Effort - Remove Attachments**
+```
+1. Review invoices/documents with attachments
+2. Remove duplicates
+3. Delete attachments for old records
+4. Keep important documents only
+5. Can free 200-500 MB
+```
+
+**Long Term - Archive Old Data**
+```
+1. Export old records (> 2 years)
+2. Save export to your own storage
+3. Delete old records from system
+4. Reduces both storage and complexity
+5. Can free up significant space
+```
+
+**Upgrade Plan**
+```
+Professional: 2 GB → 5 GB ($X more/month)
+Enterprise: 10 GB+ (contact sales)
+```
+
+**Prevention**:
+1. Set up automatic export deletion
+2. Regular cleanup schedule (quarterly)
+3. Compress large files before upload
+4. Use external storage for large archives
+
+---
+
+### Problem 7: Forgot which subdomain we use
+
+**Symptoms**: Cannot access tenant account - forgot URL
+
+**Finding Your Subdomain**:
+
+**Option 1: Check Email**
+- Look for welcome/confirmation email
+- Contains your full login URL
+- Example: "Access your account at acme.yoursystem.com"
+
+**Option 2: Try Common Patterns**
+```
+Company name: Acme Corporation
+Try:
+- acme.yoursystem.com
+- acme-corp.yoursystem.com
+- acmecorp.yoursystem.com
+```
+
+**Option 3: Contact Support**
+- Provide: Company name and email
+- Support can look up your subdomain
+- They'll verify your identity first
+
+**Option 4: Check Browser History**
+- Look for yoursystem.com in history
+- Filter by domain
+- Find your specific subdomain
+
+**Future Prevention**:
+- Bookmark your login page
+- Save in password manager
+- Add to company wiki/documentation
+
+---
+
+## Getting More Help
+
+### When to Contact Support
+
+Contact support if:
+- ✅ Security/isolation issues (URGENT)
+- ✅ Cannot access your account
+- ✅ Data appears corrupted
+- ✅ Billing/plan questions
+- ✅ Need temporary limit increases
+- ✅ Technical errors not listed here
+
+### Information to Provide
+
+Include this in your support request:
+1. **Tenant Name**: Company/organization name
+2. **Subdomain**: If you know it
+3. **Email**: Primary contact email
+4. **Problem Description**: What you were trying to do
+5. **Error Message**: Exact text of any errors
+6. **When It Started**: Date/time
+7. **Frequency**: One-time or ongoing
+8. **Impact**: How many users affected
+
+### Response Times
+
+| Priority | Response Time | Examples |
+|----------|--------------|----------|
+| 🔴 Critical | 1 hour | Security breach, system down |
+| 🟡 High | 4 hours | Cannot access, data loss |
+| 🟢 Normal | 24 hours | Feature questions, minor bugs |
+| ⚪ Low | 48 hours | Feature requests, optimization |
 
 ---
 
@@ -1388,185 +2075,3 @@ tenant.get_storage_breakdown()
 **Last Updated**: February 2026  
 **Version**: 2.0  
 **Maintained By**: Platform Engineering Team
-<!-- [<-- Back to Index](README.md) -->
-<!---->
-<!-- ## Business Rules & Validation -->
-<!---->
-<!-- ### Status Transition Rules -->
-<!---->
-<!-- ```markdown -->
-<!-- VALID STATUS TRANSITIONS: -->
-<!---->
-<!-- From          To              Condition -->
-<!-- ───────────────────────────────────────────────── -->
-<!-- PENDING    → ACTIVE          Admin activation or auto-activate -->
-<!-- ACTIVE     → SUSPENDED       Payment/policy/security reason required -->
-<!-- ACTIVE     → ARCHIVED        Archive reason + retention required -->
-<!-- SUSPENDED  → ACTIVE          Reactivation reason required -->
-<!-- SUSPENDED  → ARCHIVED        Archive reason + retention required -->
-<!-- ARCHIVED   → (none)          Terminal state - no transitions allowed -->
-<!---->
-<!-- INVALID TRANSITIONS (blocked): -->
-<!-- PENDING    → SUSPENDED       Must activate first -->
-<!-- PENDING    → ARCHIVED        Must activate first -->
-<!-- ARCHIVED   → ACTIVE          Cannot reactivate archived tenant -->
-<!-- ARCHIVED   → SUSPENDED       Already permanently deactivated -->
-<!-- SUSPENDED  → PENDING         Cannot revert to pending -->
-<!-- ``` -->
-<!---->
-<!-- ### Data Validation Rules -->
-<!---->
-<!-- ```markdown -->
-<!-- TENANT CREATION RULES: -->
-<!---->
-<!-- name: -->
-<!-- ├── Required -->
-<!-- ├── Max 255 characters -->
-<!-- ├── Must not be empty string -->
-<!-- └── Trimmed of leading/trailing whitespace -->
-<!---->
-<!-- email: -->
-<!-- ├── Required -->
-<!-- ├── Must be valid email format -->
-<!-- ├── Max 255 characters -->
-<!-- └── Unique across non-deleted tenants -->
-<!---->
-<!-- subdomain: -->
-<!-- ├── Optional -->
-<!-- ├── Max 63 characters (DNS limit) -->
-<!-- ├── Lowercase alphanumeric + hyphens only -->
-<!-- ├── Cannot start or end with hyphen -->
-<!-- ├── Unique across non-deleted tenants -->
-<!-- └── Cannot be reserved word (admin, api, www, app, etc.) -->
-<!---->
-<!-- slug: -->
-<!-- ├── Auto-generated from name -->
-<!-- ├── Max 50 characters -->
-<!-- ├── Lowercase alphanumeric + hyphens -->
-<!-- ├── Unique across non-deleted tenants -->
-<!-- └── UUID suffix appended if collision -->
-<!---->
-<!-- currency_code: -->
-<!-- ├── 3 characters exactly -->
-<!-- ├── ISO 4217 format -->
-<!-- └── Default: USD -->
-<!---->
-<!-- timezone: -->
-<!-- ├── Valid IANA timezone string -->
-<!-- ├── e.g., Africa/Nairobi, UTC, America/New_York -->
-<!-- └── Default: UTC -->
-<!---->
-<!-- company_size: -->
-<!-- ├── Must be: Small, Medium, Large, Enterprise -->
-<!-- └── Default: Small -->
-<!---->
-<!-- status: -->
-<!-- ├── Must be: PENDING, ACTIVE, SUSPENDED, ARCHIVED -->
-<!-- └── Default: PENDING (on creation) -->
-<!-- ``` -->
-<!---->
-<!-- ### Resource Limit Rules -->
-<!---->
-<!-- ```markdown -->
-<!-- LIMIT ENFORCEMENT RULES: -->
-<!---->
-<!-- 1. User Limit: -->
-<!--    Rule: active_users < max_users -->
-<!--    Checked: Before creating new user -->
-<!--    Error: "Tenant has reached maximum user limit" -->
-<!--    Override: Platform admin can temporarily increase -->
-<!---->
-<!-- 2. Entity Limit: -->
-<!--    Rule: total_entities < max_entities -->
-<!--    Checked: Before creating new company/branch -->
-<!--    Error: "Tenant has reached maximum entity limit" -->
-<!---->
-<!-- 3. Transaction Limit: -->
-<!--    Rule: total_transactions < max_transactions_per_month -->
-<!--    Checked: Before posting any transaction -->
-<!--    Error: "Monthly transaction limit reached" -->
-<!--    Reset: First day of each month -->
-<!---->
-<!-- 4. Storage Limit: -->
-<!--    Rule: storage_used_mb < storage_quota_mb -->
-<!--    Checked: Before file upload -->
-<!--    Error: "Storage quota exceeded" -->
-<!--    Threshold: Warning at 80% utilization -->
-<!---->
-<!-- 5. API Rate Limit: -->
-<!--    Rule: requests_in_window < rate_limit -->
-<!--    Checked: Per request via middleware -->
-<!--    Error: 429 Too Many Requests -->
-<!--    Window: Per minute (configurable) -->
-<!-- ``` -->
-<!---->
-<!-- ### Soft Delete Rules -->
-<!---->
-<!-- ```markdown -->
-<!-- SOFT DELETE BEHAVIOR: -->
-<!---->
-<!-- On Delete: -->
-<!-- ├── deleted_at = NOW() (not physical delete) -->
-<!-- ├── All queries filter: WHERE deleted_at IS NULL -->
-<!-- ├── Slug and subdomain become reusable (unique constraint scoped) -->
-<!-- └── Audit log entry created -->
-<!---->
-<!-- Constraints: -->
-<!-- ├── Unique slug:      WHERE deleted_at IS NULL -->
-<!-- ├── Unique subdomain: WHERE deleted_at IS NULL -->
-<!-- ├── Unique email:     WHERE deleted_at IS NULL -->
-<!-- └── Cascade: Soft delete does NOT cascade to child tables -->
-<!---->
-<!-- Restoration: -->
-<!-- ├── Set deleted_at = NULL -->
-<!-- ├── Verify slug/subdomain still available -->
-<!-- └── Requires platform admin action -->
-<!-- ``` -->
-<!---->
-<!-- ### Configuration Rules -->
-<!---->
-<!-- ```markdown -->
-<!-- CONFIGURATION VALIDATION: -->
-<!---->
-<!-- fiscal_year_start_month: -->
-<!-- ├── Must be 1-12 -->
-<!-- └── Cannot be changed mid-fiscal-year (warning) -->
-<!---->
-<!-- accounting_method: -->
-<!-- ├── Must be: FIFO, LIFO, or WEIGHTED_AVERAGE -->
-<!-- └── Changing method requires audit trail entry -->
-<!---->
-<!-- password_policy: -->
-<!-- ├── min_length: Must be >= 8 -->
-<!-- ├── max_age_days: Must be > 0 or null (no expiry) -->
-<!-- └── At least one complexity rule recommended -->
-<!---->
-<!-- api_rate_limits: -->
-<!-- ├── requests_per_minute: Must be > 0 -->
-<!-- ├── Must not exceed plan maximum -->
-<!-- └── Burst limit <= 2x per-minute rate -->
-<!---->
-<!-- allowed_modules: -->
-<!-- ├── Must be valid module names -->
-<!-- ├── "financial" and "selling" always included -->
-<!-- └── Cannot enable modules above plan tier -->
-<!-- ``` -->
-<!---->
-<!-- ### Isolation Rules -->
-<!---->
-<!-- ```markdown -->
-<!-- TENANT ISOLATION INVARIANTS: -->
-<!---->
-<!-- 1. Every tenant-scoped table has RLS enabled -->
-<!-- 2. Every query through application_role is filtered -->
-<!-- 3. Foreign keys cannot reference cross-tenant records -->
-<!-- 4. Tenant context must be set before any data access -->
-<!-- 5. Tenant context is transaction-scoped (auto-cleared) -->
-<!-- 6. Admin role bypasses RLS (platform admin only) -->
-<!-- 7. Readonly role can see all tenants (monitoring only) -->
-<!-- 8. Superuser access is prohibited in production -->
-<!-- ``` -->
-<!---->
-<!-- --- -->
-<!---->
-<!-- Next: [Summary](./22-summary.md) -->

@@ -257,7 +257,7 @@ INSERT INTO
     slug,
     email,
     subdomain,
-    STATUS,
+    "Status",
     timezone,
     currency_code,
     metadata,
@@ -291,7 +291,7 @@ RETURNING
   name,
   email,
   subdomain,
-  STATUS,
+  "Status",
   timezone,
   currency_code,
   metadata,
@@ -331,7 +331,7 @@ SET
   slug = COALESCE(sqlc.narg('slug'), slug),
   email = COALESCE(sqlc.narg('email'), email),
   subdomain = COALESCE(sqlc.narg('subdomain'), subdomain),
-  STATUS = COALESCE(sqlc.narg('status'), STATUS),
+  "Status" = COALESCE(sqlc.narg('status'), "Status"),
   timezone = COALESCE(sqlc.narg('timezone'), timezone),
   currency_code = COALESCE(sqlc.narg('currency_code'), currency_code),
   metadata = COALESCE(sqlc.narg('metadata'), metadata),
@@ -428,7 +428,7 @@ SELECT
   COUNT(*) AS new_tenants,
   COUNT(*) FILTER (
     WHERE
-      STATUS = 'active'
+      "Status" = 'ACTIVE'
   ) AS active_new_tenants
 FROM
   tenants
@@ -446,34 +446,34 @@ SELECT
   COUNT(*) AS total_tenants,
   COUNT(*) FILTER (
     WHERE
-      STATUS = 'active'
+      "Status" = 'ACTIVE'
   ) AS active_tenants,
   COUNT(*) FILTER (
     WHERE
-      STATUS = 'suspended'
+      "Status" = 'SUSPENDED'
   ) AS suspended_tenants,
   COUNT(*) FILTER (
     WHERE
-      STATUS = 'pending'
+      "Status" = 'PENDING'
   ) AS pending_tenants,
   ROUND(
     COUNT(*) FILTER (
       WHERE
-        STATUS = 'active'
+        "Status" = 'ACTIVE'
     ) * 100.0 / COUNT(*),
     2
   ) AS active_percentage,
   ROUND(
     COUNT(*) FILTER (
       WHERE
-        STATUS = 'suspended'
+        "Status" = 'SUSPENDED'
     ) * 100.0 / COUNT(*),
     2
   ) AS suspended_percentage,
   ROUND(
     COUNT(*) FILTER (
       WHERE
-        STATUS = 'pending'
+        "Status" = 'PENDING'
     ) * 100.0 / COUNT(*),
     2
   ) AS pending_percentage
@@ -487,7 +487,7 @@ WHERE
 SELECT
   t.id,
   t.name,
-  t.status,
+  t."Status",
   tc.storage_quota,
   COALESCE(tus.storage_used, 0) AS current_storage_used,
   ROUND(
@@ -510,7 +510,7 @@ ORDER BY
 SELECT
   t.id,
   t.name,
-  t.status,
+  t."Status",
   tc.storage_quota,
   COALESCE(tus.storage_used, 0) AS current_storage_used,
   ROUND(
@@ -588,7 +588,7 @@ GROUP BY
 -- =====================================================
 -- name: CreateTenant :one
 INSERT INTO
-  tenants (name, slug, email, subdomain, STATUS, industry)
+  tenants (name, slug, email, subdomain, "Status", industry)
 VALUES
   ($1, $2, $3, $4, $5, $6)
 RETURNING
@@ -633,7 +633,7 @@ UPDATE
 SET
   name = COALESCE(sqlc.narg(name), name),
   subdomain = COALESCE(sqlc.narg(subdomain), subdomain),
-  STATUS = COALESCE(sqlc.narg(STATUS), STATUS),
+  "Status" = COALESCE(sqlc.narg(STATUS), "Status"),
   industry = COALESCE(sqlc.narg(industry), industry),
   updated_at = NOW()
 WHERE
@@ -683,7 +683,7 @@ RETURNING
 UPDATE
   tenants
 SET
-  STATUS = $2,
+  "Status" = $2,
   updated_at = NOW()
 WHERE
   id = $1
@@ -706,7 +706,7 @@ SELECT
 FROM
   tenants
 WHERE
-  STATUS = 'ACTIVE'
+  "Status" = 'ACTIVE'
   AND deleted_at IS NULL
 ORDER BY
   name;
@@ -755,7 +755,7 @@ UPDATE
 SET
   name = $1,
   subdomain = $2,
-  STATUS = $3,
+  "Status" = $3,
   industry = $4,
   updated_at = NOW()
 WHERE
@@ -785,15 +785,15 @@ SELECT
   COUNT(*) AS total_tenants,
   COUNT(*) FILTER (
     WHERE
-      STATUS = 'active'
+      "Status" = 'ACTIVE'
   ) AS active_tenants,
   COUNT(*) FILTER (
     WHERE
-      STATUS = 'suspended'
+      "Status" = 'SUSPENDED'
   ) AS suspended_tenants,
   COUNT(*) FILTER (
     WHERE
-      STATUS = 'pending'
+      "Status" = 'PENDING'
   ) AS pending_tenants
 FROM
   tenants
@@ -869,7 +869,7 @@ SELECT
 UPDATE
   tenants
 SET
-  STATUS = @status,
+  "Status" = @status,
   updated_at = NOW()
 WHERE
   id = ANY(sqlc.slice('id')::UUID [])
@@ -894,7 +894,7 @@ SELECT
   name,
   email,
   subdomain,
-  STATUS,
+  "Status",
   timezone,
   currency_code,
   industry,
@@ -911,7 +911,7 @@ WHERE
   )
   AND (
     sqlc.narg('status_filter')::varchar IS NULL
-    OR STATUS = sqlc.narg('status_filter')
+    OR "Status" = sqlc.narg('status_filter')
   )
   AND (
     sqlc.narg('industry_filter')::varchar IS NULL
@@ -943,8 +943,8 @@ WHERE
     OR name ILIKE '%' || sqlc.narg('name_filter') || '%'
   )
   AND (
-    sqlc.narg('status_filter')::varchar IS NULL
-    OR STATUS = sqlc.narg('status_filter')
+    sqlc.narg('Status_filter')::varchar IS NULL
+    OR "Status" = sqlc.narg('status_filter')
   )
   AND (
     sqlc.narg('industry_filter')::varchar IS NULL
@@ -983,7 +983,7 @@ FROM
 WHERE
   id = current_tenant_id()
   AND deleted_at IS NULL
-  AND STATUS = 'active';
+  AND "Status" = 'ACTIVE';
 
 -- =====================================================
 -- password_policy queries
