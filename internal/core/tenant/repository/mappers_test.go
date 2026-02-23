@@ -55,7 +55,7 @@ func (s *MapperSuite) TestToDomain_FullRow() {
 		TaxID:              &taxID,
 		RegistrationNumber: &regNum,
 		LegalEntityType:    &legalType,
-		LastActivityAt:     sql.NullTime{Time: lastActivity, Valid: true},
+		LastActivityAt:     lastActivity,
 		Settings:           settings,
 		CreatedAt:          now,
 		UpdatedAt:          now,
@@ -100,7 +100,7 @@ func (s *MapperSuite) TestToDomain_NullableFieldsNil() {
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 		DeletedAt:      sql.NullTime{Valid: false},
-		LastActivityAt: sql.NullTime{Valid: false},
+		LastActivityAt: time.Time{},
 	}
 
 	tenant, err := toDomain(row)

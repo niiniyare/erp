@@ -131,7 +131,7 @@ func (r *configurationRepository) ResolveConfiguration(ctx context.Context, req 
 		return nil, fmt.Errorf("failed to resolve configuration: %w", err)
 	}
 
-	config, err := r.mapToConfiguration(result.ModuleName, result.ConfigKey, result.Value, result.Source, result.DataType, tenantId, req.EntityID)
+	config, err := r.mapToConfiguration(result.ModuleName, result.ConfigKey, result.Value, result.Source, result.ConfigType, tenantId, req.EntityID)
 	if err != nil {
 		return nil, err
 	}

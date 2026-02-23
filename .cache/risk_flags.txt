@@ -1,0 +1,165 @@
+RISK FLAG REPORT — Mon Feb 23 09:04:18 EAT 2026
+Each flag should be reviewed before Script 2 runs.
+
+══ R1: CHECK constraints with subqueries (unreliable in PostgreSQL) ══
+
+══ R2: RLS fail-open pattern (current_tenant_id() IS NOT NULL) ══
+    Note: This is intentional in some policies — review each one.
+  FILE: 000015_platform_modules.up.sql
+    40:--   current_tenant_id() IS NOT NULL
+    43:--   current_tenant_id() IS NOT NULL
+  FILE: 000017_platform_actions.up.sql
+    58:--   current_tenant_id() IS NOT NULL
+    61:--   current_tenant_id() IS NOT NULL
+  FILE: 000201_entity_create_core_tables.up.sql
+    153:  current_tenant_id() IS NOT NULL
+    156:  current_tenant_id() IS NOT NULL
+  FILE: 000202_entity_add_hierarchy.up.sql
+    102:  current_tenant_id() IS NOT NULL
+    105:  current_tenant_id() IS NOT NULL
+  FILE: 000203_entity_add_state_machine.up.sql
+    77:  current_tenant_id() IS NOT NULL
+    80:  current_tenant_id() IS NOT NULL
+  FILE: 000301_identity_create_persons.up.sql
+    148:  current_tenant_id() IS NOT NULL
+    151:  current_tenant_id() IS NOT NULL
+  FILE: 000302_identity_create_employees.up.sql
+    163:  current_tenant_id() IS NOT NULL
+    167:  current_tenant_id() IS NOT NULL
+  FILE: 000303_identity_create_users.up.sql
+    221:  current_tenant_id() IS NOT NULL
+    225:  current_tenant_id() IS NOT NULL
+  FILE: 000304_identity_add_user_sessions.up.sql
+    117:  current_tenant_id() IS NOT NULL
+    120:  current_tenant_id() IS NOT NULL
+  FILE: 000404_auth_define_permissions.up.sql
+    38:  current_tenant_id() IS NOT NULL
+    41:  current_tenant_id() IS NOT NULL
+  FILE: 000405_auth_create_roles.up.sql
+    62:  current_tenant_id() IS NOT NULL
+    65:  current_tenant_id() IS NOT NULL
+  FILE: 000406_auth_map_role_permissions.up.sql
+    32:  current_tenant_id() IS NOT NULL
+    35:  current_tenant_id() IS NOT NULL
+  FILE: 000407_auth_assign_user_roles.up.sql
+    38:  current_tenant_id() IS NOT NULL
+    49:  current_tenant_id() IS NOT NULL
+  FILE: 000408_policy_define_rules.up.sql
+    69:  current_tenant_id() IS NOT NULL
+    72:  current_tenant_id() IS NOT NULL
+  FILE: 000411_user_permission.up.sql
+    35:  current_tenant_id() IS NOT NULL
+    38:  current_tenant_id() IS NOT NULL
+  FILE: 000601_settings_core_tables.up.sql
+    243:--     current_tenant_id() IS NOT NULL 
+    247:--     current_tenant_id() IS NOT NULL 
+    259:--     current_tenant_id() IS NOT NULL 
+    263:--     current_tenant_id() IS NOT NULL 
+  FILE: 000901_finance_account_groups.up.sql
+    113:  current_tenant_id() IS NOT NULL
+    116:  current_tenant_id() IS NOT NULL
+  FILE: 000902_finance_chart_of_accounts.up.sql
+    117:  current_tenant_id() IS NOT NULL
+    120:  current_tenant_id() IS NOT NULL
+  FILE: 000904_finance_transactions.up.sql
+    300:  current_tenant_id() IS NOT NULL
+    304:  current_tenant_id() IS NOT NULL
+  FILE: 000905_finance_transaction_entries.up.sql
+    77:  current_tenant_id() IS NOT NULL
+    80:  current_tenant_id() IS NOT NULL
+  FILE: 000911_finance_rls_policies.up.sql
+    15:  current_tenant_id() IS NOT NULL
+    20:  current_tenant_id() IS NOT NULL
+
+══ R3: SECURITY DEFINER without search_path pin (injection risk) ══
+  RISK: 000106_validate_set_tenant_context.up.sql
+    60:LANGUAGE plpgsql SECURITY DEFINER;
+  RISK: 000451_audit_funcs.up.sql
+    28:$$ LANGUAGE plpgsql SECURITY DEFINER;
+    322:$$ LANGUAGE plpgsql SECURITY DEFINER;
+  RISK: 000502_user_functions_triggers.up.sql
+    325:LANGUAGE plpgsql SECURITY DEFINER;
+    374:LANGUAGE plpgsql SECURITY DEFINER;
+  RISK: 000503_user_add_on.up.sql
+    125:LANGUAGE plpgsql SECURITY DEFINER;
+    228:LANGUAGE plpgsql SECURITY DEFINER;
+  RISK: 000804_feature_flag_functions.up.sql
+    45:-- -- $$ LANGUAGE plpgsql SECURITY DEFINER;
+    137:-- $$ LANGUAGE plpgsql SECURITY DEFINER;
+    230:-- $$ LANGUAGE plpgsql SECURITY DEFINER;
+    276:-- $$ LANGUAGE plpgsql SECURITY DEFINER;
+  RISK: 000805_feature_flag_cache.up.sql
+    198:LANGUAGE plpgsql SECURITY DEFINER;
+    245:LANGUAGE plpgsql SECURITY DEFINER;
+    308:LANGUAGE plpgsql SECURITY DEFINER;
+    351:LANGUAGE plpgsql SECURITY DEFINER;
+  RISK: 000806_feature_flag_cleanup.up.sql
+    300:LANGUAGE plpgsql SECURITY DEFINER;
+    367:LANGUAGE plpgsql SECURITY DEFINER;
+    507:LANGUAGE plpgsql SECURITY DEFINER;
+    881:LANGUAGE plpgsql SECURITY DEFINER;
+
+══ R4: ORDER BY inside CREATE VIEW (ignored by planner) ══
+  FILE: 000204_entity_add_views.up.sql
+    389:ORDER BY
+    425:ORDER BY
+  FILE: 000501_user_management_views.up.sql
+    29:    ORDER BY
+    34:    ORDER BY
+    36:  ) AS role_ids,  -- Changed to ORDER BY r.id
+    99:    ORDER BY
+    107:    ORDER BY
+    180:ORDER BY
+  FILE: 000805_feature_flag_cache.up.sql
+    340:ORDER BY
+  FILE: 000906_finance_mod.up.sql
+    91:ORDER BY
+    298:ORDER BY
+    350:        ORDER BY header_order, group_code
+    361:ORDER BY
+  FILE: 000910_finance_views.up.sql
+    108:    ORDER BY
+
+══ R5: Tables with updated_at column but no trigger ══
+  FILE: 000201_entity_create_core_tables.up.sql — has updated_at column but no update trigger
+  FILE: 000202_entity_add_hierarchy.up.sql — has updated_at column but no update trigger
+  FILE: 000203_entity_add_state_machine.up.sql — has updated_at column but no update trigger
+  FILE: 000405_auth_create_roles.up.sql — has updated_at column but no update trigger
+  FILE: 000408_policy_define_rules.up.sql — has updated_at column but no update trigger
+  FILE: 000410_access_request_flow.up.sql — has updated_at column but no update trigger
+  FILE: 000702_attribute_values.up.sql — has updated_at column but no update trigger
+  FILE: 000901_finance_account_groups.up.sql — has updated_at column but no update trigger
+  FILE: 000902_finance_chart_of_accounts.up.sql — has updated_at column but no update trigger
+  FILE: 000905_finance_transaction_entries.up.sql — has updated_at column but no update trigger
+  FILE: 000907_finance_supporting_tables.up.sql — has updated_at column but no update trigger
+
+══ R6: Duplicate table names across migrations ══
+  DUPLICATE: 'policy_evaluations' in 000704_policy_evaluation_update.up.sql — also in 000703_policy_evaluation.up.sql
+
+══ R7: Up migrations without a corresponding down migration ══
+  None found — all up/down pairs are present.
+
+══ R8: Feature flag database cache (anti-pattern) ══
+  ANTI-PATTERN: 000805_feature_flag_cache.up.sql
+    A DB cache table adds two DB roundtrips per flag evaluation.
+    Recommendation: move to Redis/Valkey with TTL=60s.
+
+══ R9: Potential dual policy evaluation (RBAC + ABAC) ══
+  RBAC migrations found: 5
+    000404_auth_define_permissions.up.sql
+    000405_auth_create_roles.up.sql
+    000406_auth_map_role_permissions.up.sql
+    000407_auth_assign_user_roles.up.sql
+    000412_user_roles_functions.up.sql
+  ABAC migrations found: 4
+    000701_attribute_definitions.up.sql
+    000702_attribute_values.up.sql
+    000703_policy_evaluation.up.sql
+    000704_policy_evaluation_update.up.sql
+  → Verify a single policy decision point function covers both.
+
+══ R10: Tables with RLS commented out (disabled but present) ══
+
+══════════════════════════════════════════════════════════════
+TOTAL RISK FLAGS: 47
+══════════════════════════════════════════════════════════════

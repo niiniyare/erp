@@ -197,29 +197,23 @@ WHERE
   )
   AND (
     $2::varchar IS NULL
-    OR "Status" = $3
+    OR "Status" = $2
   )
   AND (
-    $4::varchar IS NULL
-    OR industry = $4
+    $3::varchar IS NULL
+    OR industry = $3
   )
   AND deleted_at IS NULL
 `
 
 type CountFilteredTenantsParams struct {
 	NameFilter     *string `json:"name_filter"`
-	StatusFilter   *string `json:"Status_filter"`
 	StatusFilter   *string `json:"status_filter"`
 	IndustryFilter *string `json:"industry_filter"`
 }
 
 func (q *Queries) CountFilteredTenants(ctx context.Context, arg CountFilteredTenantsParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countFilteredTenants,
-		arg.NameFilter,
-		arg.StatusFilter,
-		arg.StatusFilter,
-		arg.IndustryFilter,
-	)
+	row := q.db.QueryRow(ctx, countFilteredTenants, arg.NameFilter, arg.StatusFilter, arg.IndustryFilter)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -457,7 +451,7 @@ INSERT INTO
 VALUES
   ($1, $2)
 RETURNING
-  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at, settings_version, last_template_applied, template_applied_at
 `
 
 type CreateTenantConfigurationParams struct {
@@ -517,6 +511,9 @@ func (q *Queries) CreateTenantConfiguration(ctx context.Context, arg CreateTenan
 		&i.ApiRateLimits,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SettingsVersion,
+		&i.LastTemplateApplied,
+		&i.TemplateAppliedAt,
 	)
 	return &i, err
 }
@@ -1383,7 +1380,7 @@ func (q *Queries) GetTenantByUUID(ctx context.Context, subdomain *string) (*Tena
 
 const getTenantConfiguration = `-- name: GetTenantConfiguration :one
 SELECT
-  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at, settings_version, last_template_applied, template_applied_at
 FROM
   tenant_configurations
 WHERE
@@ -1411,6 +1408,9 @@ func (q *Queries) GetTenantConfiguration(ctx context.Context) (*TenantConfigurat
 		&i.ApiRateLimits,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SettingsVersion,
+		&i.LastTemplateApplied,
+		&i.TemplateAppliedAt,
 	)
 	return &i, err
 }
@@ -2523,7 +2523,7 @@ SET
 WHERE
   tenant_id = current_tenant_id()
 RETURNING
-  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at, settings_version, last_template_applied, template_applied_at
 `
 
 type UpdateTenantConfigurationParams struct {
@@ -2577,6 +2577,9 @@ func (q *Queries) UpdateTenantConfiguration(ctx context.Context, arg UpdateTenan
 		&i.ApiRateLimits,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SettingsVersion,
+		&i.LastTemplateApplied,
+		&i.TemplateAppliedAt,
 	)
 	return &i, err
 }
@@ -2642,7 +2645,7 @@ SET
   storage_quota = $4,
   updated_at = NOW()
 RETURNING
-  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at
+  tenant_id, max_users, max_entities, max_transactions_per_month, storage_quota, accounting_method, fiscal_year_start_month, default_currency, date_format, number_format, language_code, password_policy, settings, webhook_endpoints, api_rate_limits, created_at, updated_at, settings_version, last_template_applied, template_applied_at
 `
 
 type UpdateTenantLimitsParams struct {
@@ -2705,6 +2708,9 @@ func (q *Queries) UpdateTenantLimits(ctx context.Context, arg UpdateTenantLimits
 		&i.ApiRateLimits,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.SettingsVersion,
+		&i.LastTemplateApplied,
+		&i.TemplateAppliedAt,
 	)
 	return &i, err
 }

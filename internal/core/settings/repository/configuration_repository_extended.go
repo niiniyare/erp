@@ -177,12 +177,6 @@ func (r *configurationRepository) CreateConfigDefinition(ctx context.Context, de
 		return fmt.Errorf("failed to marshal validation rules: %w", err)
 	}
 
-	var requiredPermission *string
-	if def.RequiredPermission != nil {
-		perm := string(*def.RequiredPermission)
-		requiredPermission = &perm
-	}
-
 	var requiredFeatureFlag *string
 	if def.RequiredFeatureFlag != nil {
 		flag := string(*def.RequiredFeatureFlag)
@@ -192,13 +186,11 @@ func (r *configurationRepository) CreateConfigDefinition(ctx context.Context, de
 	_, err = r.store.CreateConfigDefinition(ctx, db.CreateConfigDefinitionParams{
 		ModuleName:          string(def.ModuleName),
 		ConfigKey:           string(def.ConfigKey),
-		DataType:            string(def.DataType),
+		ConfigType:          string(def.DataType),
 		DefaultValue:        defaultValueJSON,
 		ValidationRules:     validationRulesJSON,
-		Description:         &def.Description,
-		RequiredPermission:  requiredPermission,
+		Description:         def.Description,
 		RequiredFeatureFlag: requiredFeatureFlag,
-		IsOverridable:       def.IsOverridable,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to create config definition: %w", err)
@@ -226,12 +218,6 @@ func (r *configurationRepository) UpdateConfigDefinition(ctx context.Context, de
 		return fmt.Errorf("failed to marshal validation rules: %w", err)
 	}
 
-	var requiredPermission *string
-	if def.RequiredPermission != nil {
-		perm := string(*def.RequiredPermission)
-		requiredPermission = &perm
-	}
-
 	var requiredFeatureFlag *string
 	if def.RequiredFeatureFlag != nil {
 		flag := string(*def.RequiredFeatureFlag)
@@ -244,17 +230,12 @@ func (r *configurationRepository) UpdateConfigDefinition(ctx context.Context, de
 		dataType = &dt
 	}
 
-	var isOverridable *bool
-	isOverridable = &def.IsOverridable
-
 	_, err = r.store.UpdateConfigDefinition(ctx, db.UpdateConfigDefinitionParams{
-		DataType:            dataType,
+		ConfigType:          dataType,
 		DefaultValue:        defaultValueJSON,
 		ValidationRules:     validationRulesJSON,
 		Description:         &def.Description,
-		RequiredPermission:  requiredPermission,
 		RequiredFeatureFlag: requiredFeatureFlag,
-		IsOverridable:       isOverridable,
 		ModuleName:          string(def.ModuleName),
 		ConfigKey:           string(def.ConfigKey),
 	})

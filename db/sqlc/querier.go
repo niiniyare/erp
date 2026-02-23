@@ -38,6 +38,10 @@ type Querier interface {
 	BulkEvaluateFeatureFlags(ctx context.Context, arg BulkEvaluateFeatureFlagsParams) ([]*BulkEvaluateFeatureFlagsRow, error)
 	BulkMoveEntities(ctx context.Context, arg BulkMoveEntitiesParams) error
 	BulkSoftDeleteTenants(ctx context.Context, tenantIds []uuid.UUID) error
+	// ==========================================
+	// Bulk Operations Queries
+	// ==========================================
+	BulkUpdateEntityConfiguration(ctx context.Context, arg BulkUpdateEntityConfigurationParams) error
 	// Bulk update risk scores based on criteria
 	BulkUpdateEventRiskScores(ctx context.Context, arg BulkUpdateEventRiskScoresParams) error
 	// Usage: Updates multiple sequences in a single transaction
@@ -115,6 +119,15 @@ type Querier interface {
 	// AUDIT LOG QUERIES - ADVANCED WITH SQLC.NARG/SQLC.ARG AND TENANT ISOLATION
 	// ================================================================================================
 	CreateAuditEvent(ctx context.Context, arg CreateAuditEventParams) (*AuditLog, error)
+	CreateConfigDefinition(ctx context.Context, arg CreateConfigDefinitionParams) (*ConfigDefinition, error)
+	// ==========================================
+	// Configuration Audit Queries
+	// ==========================================
+	CreateConfigurationAudit(ctx context.Context, arg CreateConfigurationAuditParams) (*ConfigurationAudit, error)
+	// ==========================================
+	// Configuration Templates Queries
+	// ==========================================
+	CreateConfigurationTemplate(ctx context.Context, arg CreateConfigurationTemplateParams) (*ConfigurationTemplate, error)
 	CreateDefaultTenantConfiguration(ctx context.Context) error
 	CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (*Employee, error)
 	// Entity CRUD Operations
@@ -136,6 +149,10 @@ type Querier interface {
 	CreatePolicy(ctx context.Context, arg CreatePolicyParams) (*Policy, error)
 	CreatePolicyEvaluation(ctx context.Context, arg CreatePolicyEvaluationParams) (*PolicyEvaluation, error)
 	CreateResource(ctx context.Context, arg CreateResourceParams) (*Resource, error)
+	// ==========================================
+	// Template Application Queries
+	// ==========================================
+	CreateTemplateApplication(ctx context.Context, arg CreateTemplateApplicationParams) (*TemplateApplication, error)
 	// =====================================================
 	// TENANT MANAGEMENT QUERIES (Admin/System Level)
 	// Note: These queries are for system administrators managing tenants
@@ -193,10 +210,12 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	CreateUserNotificationPreferences(ctx context.Context, arg CreateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	DeactivateAccountValidationRule(ctx context.Context, arg DeactivateAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
+	DeactivateConfigurationTemplate(ctx context.Context, templateID uuid.UUID) error
 	DeleteAccountBalance(ctx context.Context, id uuid.UUID) error
 	DeleteAccountValidationRule(ctx context.Context, id uuid.UUID) error
 	DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
 	DeleteAttributeValue(ctx context.Context, arg DeleteAttributeValueParams) error
+	DeleteEntityConfiguration(ctx context.Context, arg DeleteEntityConfigurationParams) error
 	DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error
 	DeleteHierarchyPaths(ctx context.Context, ancestorID uuid.UUID) error
 	// Delete audit events older than specified date (for retention policies)
@@ -207,6 +226,7 @@ type Querier interface {
 	// TENANT USAGE STATISTICS QUERIES (RLS-AWARE)
 	// =====================================================
 	DeleteTenantConfiguration(ctx context.Context, arg DeleteTenantConfigurationParams) error
+	DeleteTenantConfigurationSettings(ctx context.Context, configPath []string) error
 	DeleteTenantUsageStats(ctx context.Context, periodStart time.Time) error
 	DeleteTransactionEntries(ctx context.Context, transactionID uuid.UUID) error
 	DeleteTransactionEntry(ctx context.Context, id uuid.UUID) error
@@ -382,6 +402,14 @@ type Querier interface {
 	GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*GetCompleteUserProfileRow, error)
 	// Get events with specific compliance flags
 	GetComplianceEvents(ctx context.Context, arg GetComplianceEventsParams) ([]*GetComplianceEventsRow, error)
+	// This file contains type-safe SQL queries for the Settings Module
+	// ==========================================
+	// Configuration Definitions Queries
+	// ==========================================
+	GetConfigDefinition(ctx context.Context, arg GetConfigDefinitionParams) (*ConfigDefinition, error)
+	GetConfigurationAuditByCorrelation(ctx context.Context, correlationID *string) ([]*ConfigurationAudit, error)
+	GetConfigurationHistory(ctx context.Context, arg GetConfigurationHistoryParams) ([]*ConfigurationAudit, error)
+	GetConfigurationTemplate(ctx context.Context, templateID uuid.UUID) (*ConfigurationTemplate, error)
 	GetControlAccounts(ctx context.Context, entityID *uuid.UUID) ([]*FinanceAccount, error)
 	//=====================================================
 	// CURRENT TENANT QUERIES (RLS-Aware)
@@ -402,16 +430,19 @@ type Querier interface {
 	// Usage: Identifies potential duplicate sequence configurations
 	// Use case: Data integrity verification, migration validation
 	GetDuplicateSequenceCheck(ctx context.Context) ([]*GetDuplicateSequenceCheckRow, error)
+	GetEffectiveConfiguration(ctx context.Context, arg GetEffectiveConfigurationParams) (*GetEffectiveConfigurationRow, error)
 	GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee, error)
 	GetEntitiesByFiscalYear(ctx context.Context, fiscalYear *int16) ([]*Entity, error)
 	GetEntitiesByFiscalYearStart(ctx context.Context, fyStartMonth int32) ([]*Entity, error)
 	GetEntitiesByUUIDs(ctx context.Context, uuids []uuid.UUID) ([]*Entity, error)
+	GetEntitiesForBulkUpdate(ctx context.Context, arg GetEntitiesForBulkUpdateParams) ([]*GetEntitiesForBulkUpdateRow, error)
 	GetEntity(ctx context.Context, argUuid uuid.UUID) (*Entity, error)
 	GetEntityAncestors(ctx context.Context, descendantID uuid.UUID) ([]*GetEntityAncestorsRow, error)
 	GetEntityAuditLog(ctx context.Context, createdAt time.Time) ([]*GetEntityAuditLogRow, error)
 	GetEntityByCode(ctx context.Context, code *string) (*Entity, error)
 	GetEntityByName(ctx context.Context, name string) (*Entity, error)
 	GetEntityChildren(ctx context.Context, ancestorID uuid.UUID) ([]*Entity, error)
+	GetEntityConfigurations(ctx context.Context, entityID uuid.UUID) ([]byte, error)
 	// =====================================================================
 	// 6. PERFORMANCE AND ANALYTICS QUERIES
 	// =====================================================================
@@ -753,6 +784,7 @@ type Querier interface {
 	GetStaleEntityStates(ctx context.Context, updatedAt time.Time) ([]*GetStaleEntityStatesRow, error)
 	// Get suspicious activity from specific IP addresses with risk analysis
 	GetSuspiciousActivityByIP(ctx context.Context, arg GetSuspiciousActivityByIPParams) ([]*GetSuspiciousActivityByIPRow, error)
+	GetTemplateApplicationHistory(ctx context.Context, arg GetTemplateApplicationHistoryParams) ([]*GetTemplateApplicationHistoryRow, error)
 	// =====================================================================
 	// TENANT ANALYTICS QUERIES
 	// =====================================================================
@@ -765,6 +797,10 @@ type Querier interface {
 	// WHERE id = $1 AND deleted_at IS NULL;
 	GetTenantByUUID(ctx context.Context, subdomain *string) (*Tenant, error)
 	GetTenantConfiguration(ctx context.Context) (*TenantConfiguration, error)
+	// ==========================================
+	// Configuration Resolution Queries
+	// ==========================================
+	GetTenantConfigurations(ctx context.Context) (*GetTenantConfigurationsRow, error)
 	GetTenantEntitySummaryAdmin(ctx context.Context, tenantID uuid.UUID) ([]*VTenantEntitySummary, error)
 	GetTenantEntitySummaryUser(ctx context.Context) ([]*VTenantEntitySummary, error)
 	GetTenantFeatureFlagsCacheAdmin(ctx context.Context, tenantID uuid.UUID) ([]*GetTenantFeatureFlagsCacheAdminRow, error)
@@ -861,6 +897,8 @@ type Querier interface {
 	// Attribute Definition Listing and Filtering
 	ListAttributeDefinitions(ctx context.Context, arg ListAttributeDefinitionsParams) ([]*AttributeDefinition, error)
 	ListAttributeDefinitionsByCategory(ctx context.Context, category string) ([]*AttributeDefinition, error)
+	ListConfigDefinitions(ctx context.Context, moduleName *string) ([]*ConfigDefinition, error)
+	ListConfigurationTemplates(ctx context.Context, arg ListConfigurationTemplatesParams) ([]*ConfigurationTemplate, error)
 	// Entity Listing and Filtering
 	ListEntities(ctx context.Context) ([]*Entity, error)
 	ListEntitiesByType(ctx context.Context, type_ string) ([]*Entity, error)
@@ -877,6 +915,7 @@ type Querier interface {
 	ListPolicies(ctx context.Context) ([]*Policy, error)
 	ListPoliciesByCategory(ctx context.Context, category *string) ([]*Policy, error)
 	ListPoliciesByEffect(ctx context.Context, effect *string) ([]*Policy, error)
+	ListTenantEffectiveConfigurations(ctx context.Context, arg ListTenantEffectiveConfigurationsParams) ([]*ListTenantEffectiveConfigurationsRow, error)
 	ListTenants(ctx context.Context, arg ListTenantsParams) ([]*Tenant, error)
 	ListTransactionEntries(ctx context.Context, transactionID uuid.UUID) ([]*FinanceTransactionEntry, error)
 	ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]*FinanceTransaction, error)
@@ -920,6 +959,10 @@ type Querier interface {
 	SearchAccountGroups(ctx context.Context, arg SearchAccountGroupsParams) ([]*FinanceAccountGroup, error)
 	SearchAccounts(ctx context.Context, arg SearchAccountsParams) ([]*FinanceAccount, error)
 	SearchAccountsWithGroupInfo(ctx context.Context, arg SearchAccountsWithGroupInfoParams) ([]*VFinanceAccountsWithGroup, error)
+	// ==========================================
+	// Configuration Search Queries
+	// ==========================================
+	SearchConfigurations(ctx context.Context, arg SearchConfigurationsParams) ([]*SearchConfigurationsRow, error)
 	// =====================================================================
 	// 2. ENTITY SEARCH AND FILTERING ENHANCEMENTS
 	// =====================================================================
@@ -966,9 +1009,12 @@ type Querier interface {
 	UpdateAccountValidationRule(ctx context.Context, arg UpdateAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
 	UpdateAttributeDefinition(ctx context.Context, arg UpdateAttributeDefinitionParams) (*AttributeDefinition, error)
 	UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (*AttributeValue, error)
+	UpdateConfigDefinition(ctx context.Context, arg UpdateConfigDefinitionParams) (*ConfigDefinition, error)
+	UpdateConfigurationTemplate(ctx context.Context, arg UpdateConfigurationTemplateParams) (*ConfigurationTemplate, error)
 	UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (*Tenant, error)
 	UpdateDefaultSettings(ctx context.Context, settings []byte) error
 	UpdateEntity(ctx context.Context, arg UpdateEntityParams) (*Entity, error)
+	UpdateEntityConfiguration(ctx context.Context, arg UpdateEntityConfigurationParams) error
 	// =====================================================================
 	//  NEW SEQUENCE MANAGEMENT QUERIES
 	// =====================================================================
@@ -1000,6 +1046,7 @@ type Querier interface {
 	UpdateTenant(ctx context.Context, arg UpdateTenantParams) (*Tenant, error)
 	UpdateTenantComplete(ctx context.Context, arg UpdateTenantCompleteParams) (*Tenant, error)
 	UpdateTenantConfiguration(ctx context.Context, arg UpdateTenantConfigurationParams) (*TenantConfiguration, error)
+	UpdateTenantConfigurationSettings(ctx context.Context, arg UpdateTenantConfigurationSettingsParams) error
 	UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndustryParams) (*Tenant, error)
 	// -- name: UpdateTenantFeatures :one
 	// UPDATE
@@ -1025,6 +1072,7 @@ type Querier interface {
 	//
 	UpdateTenantStatus(ctx context.Context, arg UpdateTenantStatusParams) (*Tenant, error)
 	UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantSubdomainParams) (*Tenant, error)
+	UpdateTenantTemplateInfo(ctx context.Context, templateID *uuid.UUID) error
 	UpdateTenantUsageStats(ctx context.Context, arg UpdateTenantUsageStatsParams) (*TenantUsageStat, error)
 	UpdateTransaction(ctx context.Context, arg UpdateTransactionParams) (*FinanceTransaction, error)
 	UpdateTransactionAttributes(ctx context.Context, arg UpdateTransactionAttributesParams) error

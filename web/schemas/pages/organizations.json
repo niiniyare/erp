@@ -381,6 +381,19 @@
           }
         },
         {
+          "name": "plan_tier",
+          "label": "Plan",
+          "sortable": false,
+          "type": "mapping",
+          "map": {
+            "STARTER":      "<span class='label label-default'>Starter</span>",
+            "GROWTH":       "<span class='label label-info'>Growth</span>",
+            "PROFESSIONAL": "<span class='label label-primary'>Pro</span>",
+            "ENTERPRISE":   "<span class='label label-success'>Enterprise</span>",
+            "*":            "<span class='label label-default'>${plan_tier}</span>"
+          }
+        },
+        {
           "name": "email",
           "label": "Email",
           "type": "tpl",
@@ -389,13 +402,13 @@
           "breakpoint": "lg"
         },
         {
-          "name": "preferences.currency_code",
+          "name": "currency_code",
           "label": "Currency",
           "toggled": false,
           "breakpoint": "xl"
         },
         {
-          "name": "timestamps.created_at",
+          "name": "created_at",
           "label": "Created",
           "type": "date",
           "format": "YYYY-MM-DD",
@@ -446,7 +459,8 @@
                                       {"label": "Name", "content": "${name}"},
                                       {"label": "Slug", "content": "${slug}"},
                                       {"label": "Email", "content": "${email}"},
-                                      {"label": "Status", "content": "${status}"}
+                                      {"label": "Status", "content": "${status}"},
+                                      {"label": "Plan", "content": "${plan_tier|default:-}"}
                                     ]
                                   }
                                 },
@@ -459,8 +473,9 @@
                                     "items": [
                                       {"label": "Industry", "content": "${industry|default:-}"},
                                       {"label": "Company Size", "content": "${company_size|default:-}"},
-                                      {"label": "Currency", "content": "${preferences.currency_code}"},
-                                      {"label": "Timezone", "content": "${preferences.timezone|default:-}"},
+                                      {"label": "Currency", "content": "${currency_code|default:-}"},
+                                      {"label": "Timezone", "content": "${timezone|default:-}"},
+                                      {"label": "Subdomain", "content": "${subdomain|default:-}"},
                                       {"label": "Tax ID", "content": "${tax_id|default:-}"},
                                       {"label": "Registration No.", "content": "${registration_number|default:-}"},
                                       {"label": "Legal Entity", "content": "${legal_entity_type|default:-}"}
@@ -479,10 +494,10 @@
                             "title": "Timestamps",
                             "column": 2,
                             "items": [
-                              {"label": "Created", "content": "${timestamps.created_at}"},
-                              {"label": "Updated", "content": "${timestamps.updated_at}"},
-                              {"label": "Last Activity", "content": "${timestamps.last_activity_at|default:N/A}"},
-                              {"label": "Deleted", "content": "${timestamps.deleted_at|default:N/A}"}
+                              {"label": "Created", "content": "${created_at}"},
+                              {"label": "Updated", "content": "${updated_at}"},
+                              {"label": "Last Activity", "content": "${last_activity_at|default:N/A}"},
+                              {"label": "Deleted", "content": "${deleted_at|default:N/A}"}
                             ]
                           }
                         },
@@ -552,6 +567,13 @@
                               "type": "input-email",
                               "name": "email",
                               "label": "Email"
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "subdomain",
+                              "label": "Subdomain",
+                              "description": "Custom subdomain for this tenant",
+                              "placeholder": "e.g. acme"
                             }
                           ]
                         },
@@ -559,47 +581,106 @@
                           "title": "Business Details",
                           "body": [
                             {
-                              "type": "input-text",
-                              "name": "industry",
-                              "label": "Industry"
-                            },
-                            {
-                              "type": "select",
-                              "name": "company_size",
-                              "label": "Company Size",
-                              "clearable": true,
-                              "searchable": true,
-                              "options": [
-                                {"label": "Startup (1–10)", "value": "STARTUP"},
-                                {"label": "Small (11–50)", "value": "SMALL"},
-                                {"label": "Medium (51–200)", "value": "MEDIUM"},
-                                {"label": "Large (201–1000)", "value": "LARGE"},
-                                {"label": "Enterprise (1000+)", "value": "ENTERPRISE"}
+                              "type": "group",
+                              "body": [
+                                {
+                                  "type": "input-text",
+                                  "name": "industry",
+                                  "label": "Industry",
+                                  "placeholder": "e.g. Technology, Healthcare"
+                                },
+                                {
+                                  "type": "select",
+                                  "name": "company_size",
+                                  "label": "Company Size",
+                                  "clearable": true,
+                                  "searchable": true,
+                                  "options": [
+                                    {"label": "Startup (1–10)", "value": "STARTUP"},
+                                    {"label": "Small (11–50)", "value": "SMALL"},
+                                    {"label": "Medium (51–200)", "value": "MEDIUM"},
+                                    {"label": "Large (201–1000)", "value": "LARGE"},
+                                    {"label": "Enterprise (1000+)", "value": "ENTERPRISE"}
+                                  ]
+                                }
                               ]
                             },
                             {
-                              "type": "input-text",
-                              "name": "tax_id",
-                              "label": "Tax ID",
-                              "placeholder": "e.g. EIN, VAT number"
-                            },
-                            {
-                              "type": "input-text",
-                              "name": "registration_number",
-                              "label": "Registration Number",
-                              "placeholder": "Business registration number"
+                              "type": "group",
+                              "body": [
+                                {
+                                  "type": "input-text",
+                                  "name": "tax_id",
+                                  "label": "Tax ID",
+                                  "placeholder": "e.g. EIN, VAT number"
+                                },
+                                {
+                                  "type": "input-text",
+                                  "name": "registration_number",
+                                  "label": "Registration Number",
+                                  "placeholder": "Business registration number"
+                                }
+                              ]
                             },
                             {
                               "type": "input-text",
                               "name": "legal_entity_type",
                               "label": "Legal Entity Type",
                               "placeholder": "e.g. LLC, Corporation, Partnership"
+                            }
+                          ]
+                        },
+                        {
+                          "title": "Locale & Plan",
+                          "body": [
+                            {
+                              "type": "group",
+                              "body": [
+                                {
+                                  "type": "select",
+                                  "name": "currency_code",
+                                  "label": "Currency",
+                                  "searchable": true,
+                                  "clearable": true,
+                                  "options": [
+                                    {"label": "USD — US Dollar", "value": "USD"},
+                                    {"label": "GBP — British Pound", "value": "GBP"},
+                                    {"label": "KES — Kenyan Shilling", "value": "KES"},
+                                    {"label": "EUR — Euro", "value": "EUR"},
+                                    {"label": "CAD — Canadian Dollar", "value": "CAD"},
+                                    {"label": "AUD — Australian Dollar", "value": "AUD"},
+                                    {"label": "INR — Indian Rupee", "value": "INR"},
+                                    {"label": "AED — UAE Dirham", "value": "AED"},
+                                    {"label": "SAR — Saudi Riyal", "value": "SAR"},
+                                    {"label": "NGN — Nigerian Naira", "value": "NGN"},
+                                    {"label": "ZAR — South African Rand", "value": "ZAR"},
+                                    {"label": "ETB — Ethiopian Birr", "value": "ETB"},
+                                    {"label": "TZS — Tanzanian Shilling", "value": "TZS"},
+                                    {"label": "UGX — Ugandan Shilling", "value": "UGX"},
+                                    {"label": "DJF — Djiboutian Franc", "value": "DJF"}
+                                  ]
+                                },
+                                {
+                                  "type": "input-text",
+                                  "name": "timezone",
+                                  "label": "Timezone",
+                                  "placeholder": "e.g. UTC, America/New_York",
+                                  "description": "IANA timezone identifier"
+                                }
+                              ]
                             },
                             {
-                              "type": "input-text",
-                              "name": "subdomain",
-                              "label": "Subdomain",
-                              "description": "Custom subdomain for this tenant"
+                              "type": "select",
+                              "name": "plan_tier",
+                              "label": "Plan Tier",
+                              "clearable": false,
+                              "description": "Subscription plan. The Billing module is the source of truth — this is a denormalized signal.",
+                              "options": [
+                                {"label": "Starter", "value": "STARTER"},
+                                {"label": "Growth", "value": "GROWTH"},
+                                {"label": "Professional", "value": "PROFESSIONAL"},
+                                {"label": "Enterprise", "value": "ENTERPRISE"}
+                              ]
                             }
                           ]
                         }

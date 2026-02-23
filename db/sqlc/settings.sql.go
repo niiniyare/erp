@@ -38,54 +38,56 @@ func (q *Queries) BulkUpdateEntityConfiguration(ctx context.Context, arg BulkUpd
 
 const createConfigDefinition = `-- name: CreateConfigDefinition :one
 INSERT INTO config_definitions (
-    module_name, config_key, data_type, default_value, 
-    validation_rules, description, required_permission, 
-    required_feature_flag, is_overridable
-) VALUES (
+    module_name, config_key, config_type, default_value, 
+    validation_rules, description, 
+  -- required_permission, 
+  -- is_overridable
+    required_feature_flag 
+  ) VALUES (
     $1, $2, $3, $4, 
-    $5, $6, $7, 
-    $8, $9
-) RETURNING id, tenant_id, entity_id, module_name, config_key, data_type, default_value, validation_rules, description, required_permission, required_feature_flag, is_overridable, created_at, updated_at
+    $5, $6,
+  -- sqlc.arg(required_permission), 
+    $7
+  -- sqlc.arg(is_overridable)
+) RETURNING id, module_name, config_key, config_type, default_value, is_tenant_overridable, is_entity_overridable, validation_rules, required_feature_flag, required_iam_permission, display_name, description, unit_label, is_active, created_at, updated_at
 `
 
 type CreateConfigDefinitionParams struct {
 	ModuleName          string  `json:"module_name"`
 	ConfigKey           string  `json:"config_key"`
-	DataType            string  `json:"data_type"`
+	ConfigType          string  `json:"config_type"`
 	DefaultValue        []byte  `json:"default_value"`
 	ValidationRules     []byte  `json:"validation_rules"`
-	Description         *string `json:"description"`
-	RequiredPermission  *string `json:"required_permission"`
+	Description         string  `json:"description"`
 	RequiredFeatureFlag *string `json:"required_feature_flag"`
-	IsOverridable       bool    `json:"is_overridable"`
 }
 
 func (q *Queries) CreateConfigDefinition(ctx context.Context, arg CreateConfigDefinitionParams) (*ConfigDefinition, error) {
 	row := q.db.QueryRow(ctx, createConfigDefinition,
 		arg.ModuleName,
 		arg.ConfigKey,
-		arg.DataType,
+		arg.ConfigType,
 		arg.DefaultValue,
 		arg.ValidationRules,
 		arg.Description,
-		arg.RequiredPermission,
 		arg.RequiredFeatureFlag,
-		arg.IsOverridable,
 	)
 	var i ConfigDefinition
 	err := row.Scan(
 		&i.ID,
-		&i.TenantID,
-		&i.EntityID,
 		&i.ModuleName,
 		&i.ConfigKey,
-		&i.DataType,
+		&i.ConfigType,
 		&i.DefaultValue,
+		&i.IsTenantOverridable,
+		&i.IsEntityOverridable,
 		&i.ValidationRules,
-		&i.Description,
-		&i.RequiredPermission,
 		&i.RequiredFeatureFlag,
-		&i.IsOverridable,
+		&i.RequiredIamPermission,
+		&i.DisplayName,
+		&i.Description,
+		&i.UnitLabel,
+		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -313,7 +315,7 @@ func (q *Queries) DeleteTenantConfigurationSettings(ctx context.Context, configP
 const getConfigDefinition = `-- name: GetConfigDefinition :one
 
 
-SELECT id, tenant_id, entity_id, module_name, config_key, data_type, default_value, validation_rules, description, required_permission, required_feature_flag, is_overridable, created_at, updated_at FROM config_definitions 
+SELECT id, module_name, config_key, config_type, default_value, is_tenant_overridable, is_entity_overridable, validation_rules, required_feature_flag, required_iam_permission, display_name, description, unit_label, is_active, created_at, updated_at FROM config_definitions 
 WHERE module_name = $1 AND config_key = $2
 `
 
@@ -331,17 +333,19 @@ func (q *Queries) GetConfigDefinition(ctx context.Context, arg GetConfigDefiniti
 	var i ConfigDefinition
 	err := row.Scan(
 		&i.ID,
-		&i.TenantID,
-		&i.EntityID,
 		&i.ModuleName,
 		&i.ConfigKey,
-		&i.DataType,
+		&i.ConfigType,
 		&i.DefaultValue,
+		&i.IsTenantOverridable,
+		&i.IsEntityOverridable,
 		&i.ValidationRules,
-		&i.Description,
-		&i.RequiredPermission,
 		&i.RequiredFeatureFlag,
-		&i.IsOverridable,
+		&i.RequiredIamPermission,
+		&i.DisplayName,
+		&i.Description,
+		&i.UnitLabel,
+		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -479,8 +483,8 @@ WITH RECURSIVE config_resolution AS (
         cd.default_value as value,
         'system' as source,
         0 as priority,
-        cd.data_type,
-        cd.is_overridable
+        cd.config_type
+        -- cd.is_overridable
     FROM config_definitions cd
     WHERE cd.module_name = $1 AND cd.config_key = $2
     
@@ -493,8 +497,8 @@ WITH RECURSIVE config_resolution AS (
         (tc.settings -> ($1 || '.' || $2)) as value,
         'tenant' as source,
         1 as priority,
-        cd.data_type,
-        cd.is_overridable
+        cd.config_type
+        -- cd.is_overridable
     FROM tenant_configurations tc
     JOIN config_definitions cd ON cd.module_name = $1 AND cd.config_key = $2
     WHERE tc.tenant_id = current_tenant_id()
@@ -509,8 +513,8 @@ WITH RECURSIVE config_resolution AS (
         (e.settings -> ($1 || '.' || $2)) as value,
         'entity' as source,
         2 as priority,
-        cd.data_type,
-        cd.is_overridable
+        cd.config_type
+        -- cd.is_overridable
     FROM entities e
     JOIN config_definitions cd ON cd.module_name = $1 AND cd.config_key = $2
     WHERE e.tenant_id = current_tenant_id()
@@ -523,8 +527,8 @@ SELECT
     config_key,
     value,
     source,
-    data_type,
-    is_overridable
+    config_type
+    -- is_overridable
 FROM config_resolution
 ORDER BY priority DESC
 LIMIT 1
@@ -537,12 +541,11 @@ type GetEffectiveConfigurationParams struct {
 }
 
 type GetEffectiveConfigurationRow struct {
-	ModuleName    string `json:"module_name"`
-	ConfigKey     string `json:"config_key"`
-	Value         []byte `json:"value"`
-	Source        string `json:"source"`
-	DataType      string `json:"data_type"`
-	IsOverridable bool   `json:"is_overridable"`
+	ModuleName string `json:"module_name"`
+	ConfigKey  string `json:"config_key"`
+	Value      []byte `json:"value"`
+	Source     string `json:"source"`
+	ConfigType string `json:"config_type"`
 }
 
 func (q *Queries) GetEffectiveConfiguration(ctx context.Context, arg GetEffectiveConfigurationParams) (*GetEffectiveConfigurationRow, error) {
@@ -553,8 +556,7 @@ func (q *Queries) GetEffectiveConfiguration(ctx context.Context, arg GetEffectiv
 		&i.ConfigKey,
 		&i.Value,
 		&i.Source,
-		&i.DataType,
-		&i.IsOverridable,
+		&i.ConfigType,
 	)
 	return &i, err
 }
@@ -715,7 +717,7 @@ func (q *Queries) GetTenantConfigurations(ctx context.Context) (*GetTenantConfig
 }
 
 const listConfigDefinitions = `-- name: ListConfigDefinitions :many
-SELECT id, tenant_id, entity_id, module_name, config_key, data_type, default_value, validation_rules, description, required_permission, required_feature_flag, is_overridable, created_at, updated_at FROM config_definitions 
+SELECT id, module_name, config_key, config_type, default_value, is_tenant_overridable, is_entity_overridable, validation_rules, required_feature_flag, required_iam_permission, display_name, description, unit_label, is_active, created_at, updated_at FROM config_definitions 
 WHERE ($1::TEXT IS NULL OR $1::TEXT = '' OR module_name = $1)
 ORDER BY module_name, config_key
 `
@@ -731,17 +733,19 @@ func (q *Queries) ListConfigDefinitions(ctx context.Context, moduleName *string)
 		var i ConfigDefinition
 		if err := rows.Scan(
 			&i.ID,
-			&i.TenantID,
-			&i.EntityID,
 			&i.ModuleName,
 			&i.ConfigKey,
-			&i.DataType,
+			&i.ConfigType,
 			&i.DefaultValue,
+			&i.IsTenantOverridable,
+			&i.IsEntityOverridable,
 			&i.ValidationRules,
-			&i.Description,
-			&i.RequiredPermission,
 			&i.RequiredFeatureFlag,
-			&i.IsOverridable,
+			&i.RequiredIamPermission,
+			&i.DisplayName,
+			&i.Description,
+			&i.UnitLabel,
+			&i.IsActive,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -906,7 +910,7 @@ WITH all_configs AS (
         'system' as source,
         NULL::UUID as tenant_id,
         NULL::UUID as entity_id,
-        cd.data_type,
+        cd.config_type,
         cd.updated_at
     FROM config_definitions cd
     
@@ -921,7 +925,7 @@ WITH all_configs AS (
         'tenant' as source,
         tc.tenant_id,
         NULL::UUID as entity_id,
-        cd.data_type,
+        cd.config_type,
         tc.updated_at
     FROM tenant_configurations tc,
          jsonb_each(tc.settings) as setting(key, value)
@@ -940,7 +944,7 @@ WITH all_configs AS (
         'entity' as source,
         e.tenant_id,
         e.uuid as entity_id,
-        cd.data_type,
+        cd.config_type,
         e.updated_at
     FROM entities e,
          jsonb_each(e.settings) as setting(key, value)
@@ -950,7 +954,7 @@ WITH all_configs AS (
     AND e.deleted_at IS NULL
     AND ($8::UUID IS NULL OR e.uuid = $8)
 )
-SELECT module_name, config_key, full_key, value, source, tenant_id, entity_id, data_type, updated_at
+SELECT module_name, config_key, full_key, value, source, tenant_id, entity_id, config_type, updated_at
 FROM all_configs
 WHERE ($1::TEXT[] IS NULL OR module_name = ANY($1::TEXT[]))
 AND ($2::TEXT IS NULL OR $2::TEXT = '' OR full_key ILIKE '%' || $2 || '%')
@@ -982,7 +986,7 @@ type SearchConfigurationsRow struct {
 	Source     string      `json:"source"`
 	TenantID   *uuid.UUID  `json:"tenant_id"`
 	EntityID   *uuid.UUID  `json:"entity_id"`
-	DataType   string      `json:"data_type"`
+	ConfigType string      `json:"config_type"`
 	UpdatedAt  time.Time   `json:"updated_at"`
 }
 
@@ -1015,7 +1019,7 @@ func (q *Queries) SearchConfigurations(ctx context.Context, arg SearchConfigurat
 			&i.Source,
 			&i.TenantID,
 			&i.EntityID,
-			&i.DataType,
+			&i.ConfigType,
 			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
@@ -1031,56 +1035,54 @@ func (q *Queries) SearchConfigurations(ctx context.Context, arg SearchConfigurat
 const updateConfigDefinition = `-- name: UpdateConfigDefinition :one
 UPDATE config_definitions 
 SET 
-    data_type = COALESCE($1, data_type),
+    config_type = COALESCE($1, config_type),
     default_value = COALESCE($2, default_value),
     validation_rules = COALESCE($3, validation_rules),
     description = COALESCE($4, description),
-    required_permission = COALESCE($5, required_permission),
-    required_feature_flag = COALESCE($6, required_feature_flag),
-    is_overridable = COALESCE($7, is_overridable),
+    -- required_permission = COALESCE(sqlc.narg(required_permission), required_permission),
+    required_feature_flag = COALESCE($5, required_feature_flag),
+    -- is_overridable = COALESCE(sqlc.narg(is_overridable), is_overridable),
     updated_at = NOW()
-WHERE module_name = $8 AND config_key = $9
-RETURNING id, tenant_id, entity_id, module_name, config_key, data_type, default_value, validation_rules, description, required_permission, required_feature_flag, is_overridable, created_at, updated_at
+WHERE module_name = $6 AND config_key = $7
+RETURNING id, module_name, config_key, config_type, default_value, is_tenant_overridable, is_entity_overridable, validation_rules, required_feature_flag, required_iam_permission, display_name, description, unit_label, is_active, created_at, updated_at
 `
 
 type UpdateConfigDefinitionParams struct {
-	DataType            *string `json:"data_type"`
+	ConfigType          *string `json:"config_type"`
 	DefaultValue        []byte  `json:"default_value"`
 	ValidationRules     []byte  `json:"validation_rules"`
 	Description         *string `json:"description"`
-	RequiredPermission  *string `json:"required_permission"`
 	RequiredFeatureFlag *string `json:"required_feature_flag"`
-	IsOverridable       *bool   `json:"is_overridable"`
 	ModuleName          string  `json:"module_name"`
 	ConfigKey           string  `json:"config_key"`
 }
 
 func (q *Queries) UpdateConfigDefinition(ctx context.Context, arg UpdateConfigDefinitionParams) (*ConfigDefinition, error) {
 	row := q.db.QueryRow(ctx, updateConfigDefinition,
-		arg.DataType,
+		arg.ConfigType,
 		arg.DefaultValue,
 		arg.ValidationRules,
 		arg.Description,
-		arg.RequiredPermission,
 		arg.RequiredFeatureFlag,
-		arg.IsOverridable,
 		arg.ModuleName,
 		arg.ConfigKey,
 	)
 	var i ConfigDefinition
 	err := row.Scan(
 		&i.ID,
-		&i.TenantID,
-		&i.EntityID,
 		&i.ModuleName,
 		&i.ConfigKey,
-		&i.DataType,
+		&i.ConfigType,
 		&i.DefaultValue,
+		&i.IsTenantOverridable,
+		&i.IsEntityOverridable,
 		&i.ValidationRules,
-		&i.Description,
-		&i.RequiredPermission,
 		&i.RequiredFeatureFlag,
-		&i.IsOverridable,
+		&i.RequiredIamPermission,
+		&i.DisplayName,
+		&i.Description,
+		&i.UnitLabel,
+		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

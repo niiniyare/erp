@@ -17,6 +17,7 @@ type Tenant struct {
 	Email              string         `json:"email"`
 	Subdomain          *string        `json:"subdomain"`
 	Status             TenantStatus   `json:"status"`
+	PlanTier           string         `json:"plan_tier"`
 	Timezone           string         `json:"timezone"`
 	CurrencyCode       string         `json:"currency_code"`
 	Metadata           map[string]any `json:"metadata"`

@@ -943,7 +943,7 @@ WHERE
     OR name ILIKE '%' || sqlc.narg('name_filter') || '%'
   )
   AND (
-    sqlc.narg('Status_filter')::varchar IS NULL
+    sqlc.narg('status_filter')::varchar IS NULL
     OR "Status" = sqlc.narg('status_filter')
   )
   AND (

@@ -21,6 +21,25 @@
 set -euo pipefail
 IFS=$'\n\t'
 
+# =============================================================================
+# SAFE GREP COUNT HELPER
+# =============================================================================
+# WHY THIS EXISTS:
+#   `grep -c` returns exit code 1 when there are zero matches.
+#   With `set -euo pipefail`, even `$(grep -c ... || echo 0)` can fail
+#   inside `{ ... } > file` redirect blocks on certain bash versions because
+#   the subshell inherits the pipefail flag and exits before `echo 0` runs.
+#
+#   SOLUTION: pipe through `wc -l` instead. `wc -l` always exits 0 regardless
+#   of how many lines it receives (including zero). The `|| echo 0` at the
+#   pipeline level is a final belt-and-suspenders guard.
+# =============================================================================
+safe_count() {
+  # Usage: safe_count "PATTERN" "file"
+  local pattern="$1" file="$2"
+  { grep -E "$pattern" "$file" 2>/dev/null || true; } | wc -l | tr -d ' '
+}
+
 # ── Colour helpers ────────────────────────────────────────────────────────────
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
@@ -94,22 +113,15 @@ done
   echo "FILE LISTING (name | lines | tables_created | functions_created)"
   echo "──────────────────────────────────────────────────────────────────"
   for f in "${UP_FILES[@]}"; do
-    # lines=$(wc -l <"$f")
-    # tables=$(grep -cE "^CREATE TABLE" "$f" 2>/dev/null || echo 0)
-    # funcs=$(grep -cE "^CREATE (OR REPLACE )?FUNCTION" "$f" 2>/dev/null || echo 0)
-    # views=$(grep -cE "^CREATE (OR REPLACE )?VIEW" "$f" 2>/dev/null || echo 0)
-    tables=$(grep -cE "^CREATE TABLE" "$f" 2>/dev/null)
-    funcs=$(grep -cE "^CREATE (OR REPLACE )?FUNCTION" "$f" 2>/dev/null)
-    views=$(grep -cE "^CREATE (OR REPLACE )?VIEW" "$f" 2>/dev/null)
-
-    tables=${tables:-0}
-    funcs=${funcs:-0}
-    views=${views:-0}
-    printf "%-65s | %4d lines | %2d tables | %2d funcs | %2d views\n" \
-      "$(basename "$f")" \
-      "$((lines))" "$((tables))" "$((funcs))" "$((views))"
-    # printf "%-65s | %4d lines | %2d tables | %2d funcs | %2d views\n" \
-    #   "$(basename "$f")" "$lines" "$tables" "$funcs" "$views"
+    lines=$(wc -l <"$f" | tr -d ' ')
+    tables=$(safe_count "^CREATE TABLE" "$f")
+    funcs=$(safe_count "^CREATE (OR REPLACE )?FUNCTION" "$f")
+    views=$(safe_count "^CREATE (OR REPLACE )?VIEW" "$f")
+    indexes=$(safe_count "^CREATE (UNIQUE )?INDEX" "$f")
+    triggers=$(safe_count "^CREATE TRIGGER" "$f")
+    policies=$(safe_count "^CREATE POLICY" "$f")
+    printf "%-65s | %4s lines | %s tbl | %s fn | %s view | %s idx | %s trg | %s pol\n" \
+      "$(basename "$f")" "$lines" "$tables" "$funcs" "$views" "$indexes" "$triggers" "$policies"
   done
 } >"$CACHE_DIR/migration_inventory.txt"
 
@@ -120,47 +132,99 @@ success "Inventory written → $CACHE_DIR/migration_inventory.txt"
 # =============================================================================
 info "Phase 2/5 — Mapping tables to owning migrations..."
 
+# WHY AWK ONLY:
+#   Multi-stage grep pipelines like `grep | grep | awk` fail with `set -o pipefail`
+#   when the first grep finds no matches (exits 1) and the second grep receives
+#   empty input (also exits 1). awk always exits 0 regardless of whether it
+#   matched anything, making it safe in all pipeline positions.
+
+SCHEMA_MAP_FILE="$CACHE_DIR/schema_map.txt"
+
 {
-  echo "{"
-  echo "  \"generated\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\","
-  echo "  \"tables\": {"
+  echo "SCHEMA MAP — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  echo ""
+  echo "FORMAT: TYPE:name:migration_file"
+  echo ""
 
-  first_table=true
   for f in "${UP_FILES[@]}"; do
     fname=$(basename "$f")
-    # Extract CREATE TABLE names
-    while IFS= read -r line; do
-      tname=$(echo "$line" | grep -oE 'CREATE TABLE (IF NOT EXISTS )?[a-z_"]+' |
-        awk '{print $NF}' | tr -d '"')
-      [[ -z "$tname" ]] && continue
-      [[ "$first_table" == "false" ]] && echo ","
-      printf "    \"%s\": \"%s\"" "$tname" "$fname"
-      first_table=false
-    done < <(grep -E "^CREATE TABLE" "$f" 2>/dev/null || true)
+
+    # Extract table names using awk field parsing (no regex char class quoting issues)
+    awk -v file="$fname" '
+            /^CREATE TABLE/ {
+                # Find table name: last word before optional (
+                # Works for: CREATE TABLE foo, CREATE TABLE IF NOT EXISTS foo (
+                name = ""
+                for (i = 1; i <= NF; i++) {
+                    if ($i == "EXISTS" || ($i == "TABLE" && $(i+1) != "IF")) {
+                        name = $(i+1)
+                    }
+                }
+                # Remove ( and beyond, remove quotes
+                sub(/\(.*/, "", name)
+                gsub(/"/, "", name)
+                gsub(/'\''/, "", name)
+                if (length(name) > 2) print "TABLE:" name ":" file
+            }
+        ' "$f"
+
+    # Extract function names
+    awk -v file="$fname" '
+            /^CREATE (OR REPLACE )?FUNCTION/ {
+                for (i = 1; i <= NF; i++) {
+                    if ($i == "FUNCTION") {
+                        name = $(i+1)
+                        sub(/\(.*/, "", name)
+                        if (length(name) > 1) print "FUNCTION:" name ":" file
+                        break
+                    }
+                }
+            }
+        ' "$f"
+
+    # Extract view names
+    awk -v file="$fname" '
+            /^CREATE (OR REPLACE )?VIEW/ {
+                for (i = 1; i <= NF; i++) {
+                    if ($i == "VIEW") {
+                        name = $(i+1)
+                        sub(/\(.*/, "", name)
+                        if (length(name) > 1) print "VIEW:" name ":" file
+                        break
+                    }
+                }
+            }
+        ' "$f"
+
+    # Extract index names (CREATE [UNIQUE] INDEX [CONCURRENTLY] [IF NOT EXISTS] name ON)
+    awk -v file="$fname" '
+            /^CREATE (UNIQUE )?INDEX/ {
+                for (i = 1; i <= NF; i++) {
+                    if ($i == "ON" && i > 1) {
+                        name = $(i-1)
+                        sub(/\(.*/, "", name)
+                        if (name != "EXISTS" && length(name) > 1) print "INDEX:" name ":" file
+                        break
+                    }
+                }
+            }
+        ' "$f"
   done
 
   echo ""
-  echo "  },"
-  echo "  \"functions\": {"
+  echo "COUNTS"
+  echo "total_up_files=$(echo "${#UP_FILES[@]}")"
 
-  first_fn=true
-  for f in "${UP_FILES[@]}"; do
-    fname=$(basename "$f")
-    while IFS= read -r line; do
-      fname_fn=$(echo "$line" | grep -oE 'FUNCTION [a-z_]+' | awk '{print $2}')
-      [[ -z "$fname_fn" ]] && continue
-      [[ "$first_fn" == "false" ]] && echo ","
-      printf "    \"%s\": \"%s\"" "$fname_fn" "$fname"
-      first_fn=false
-    done < <(grep -E "^CREATE (OR REPLACE )?FUNCTION" "$f" 2>/dev/null || true)
-  done
+} >"$SCHEMA_MAP_FILE"
 
-  echo ""
-  echo "  }"
-  echo "}"
-} >"$CACHE_DIR/schema_map.json"
+success "Schema map written → $SCHEMA_MAP_FILE"
 
-success "Schema map written → $CACHE_DIR/schema_map.json"
+# Print a summary of what was found
+TABLE_COUNT=$(safe_count "^TABLE:" "$SCHEMA_MAP_FILE")
+FUNC_COUNT=$(safe_count "^FUNCTION:" "$SCHEMA_MAP_FILE")
+VIEW_COUNT=$(safe_count "^VIEW:" "$SCHEMA_MAP_FILE")
+IDX_COUNT=$(safe_count "^INDEX:" "$SCHEMA_MAP_FILE")
+info "  Found: $TABLE_COUNT tables, $FUNC_COUNT functions, $VIEW_COUNT views, $IDX_COUNT indexes"
 
 # =============================================================================
 # PHASE 3 — CROSS-REFERENCE ANALYSIS
@@ -184,9 +248,9 @@ info "Phase 3/5 — Analysing cross-references and dependencies..."
   echo ""
   echo "══ RLS POLICY PRESENCE ══"
   for f in "${UP_FILES[@]}"; do
-    has_enable=$(grep -c "ENABLE ROW LEVEL SECURITY" "$f" 2>/dev/null || echo 0)
-    has_policy=$(grep -c "CREATE POLICY" "$f" 2>/dev/null || echo 0)
-    tables_in_file=$(grep -cE "^CREATE TABLE" "$f" 2>/dev/null || echo 0)
+    has_enable=$(safe_count "ENABLE ROW LEVEL SECURITY" "$f")
+    has_policy=$(safe_count "^CREATE POLICY" "$f")
+    tables_in_file=$(safe_count "^CREATE TABLE" "$f")
 
     if [[ "$tables_in_file" -gt 0 ]]; then
       if [[ "$has_enable" -eq 0 ]]; then
@@ -200,14 +264,14 @@ info "Phase 3/5 — Analysing cross-references and dependencies..."
   echo ""
   echo "══ SECURITY DEFINER FUNCTIONS ══"
   for f in "${UP_FILES[@]}"; do
-    has_sd=$(grep -l "SECURITY DEFINER" "$f" 2>/dev/null || true)
-    if [[ -n "$has_sd" ]]; then
-      # Check if search_path is pinned
-      has_sp=$(grep -c "SET search_path" "$f" 2>/dev/null || echo 0)
+    has_sd=$(safe_count "SECURITY DEFINER" "$f")
+    if [[ "$has_sd" -gt 0 ]]; then
+      has_sp=$(safe_count "SET search_path" "$f")
       if [[ "$has_sp" -eq 0 ]]; then
         echo "  UNPINNED: $(basename "$f") — SECURITY DEFINER without search_path pin"
+        { grep -n "SECURITY DEFINER" "$f" 2>/dev/null || true; } | sed 's/^/    /'
       else
-        echo "  SAFE    : $(basename "$f") — SECURITY DEFINER + search_path pinned"
+        echo "  SAFE    : $(basename "$f") — SECURITY DEFINER + search_path pinned ($has_sd functions)"
       fi
     fi
   done
@@ -215,10 +279,10 @@ info "Phase 3/5 — Analysing cross-references and dependencies..."
   echo ""
   echo "══ TRIGGER FUNCTIONS USAGE ══"
   for f in "${UP_FILES[@]}"; do
-    trigger_count=$(grep -c "CREATE TRIGGER" "$f" 2>/dev/null || echo 0)
+    trigger_count=$(safe_count "^CREATE TRIGGER" "$f")
     if [[ "$trigger_count" -gt 0 ]]; then
       echo "  $(basename "$f"): $trigger_count triggers"
-      grep "EXECUTE FUNCTION" "$f" 2>/dev/null | sed 's/^/    /' || true
+      { grep "EXECUTE FUNCTION" "$f" 2>/dev/null || true; } | sed 's/^/    /'
     fi
   done
 
@@ -277,11 +341,9 @@ RISK_COUNT=0
 
   # ── R4: ORDER BY inside view definitions ─────────────────────────────────
   echo "══ R4: ORDER BY inside CREATE VIEW (ignored by planner) ══"
-  in_view=false
   for f in "${UP_FILES[@]}"; do
-    # Simplified detection: ORDER BY after CREATE VIEW before next DDL
     matches=$(awk '/CREATE.*VIEW/,/^;/' "$f" 2>/dev/null |
-      grep -n "ORDER BY" || true)
+      { grep -n "ORDER BY" || true; })
     if [[ -n "$matches" ]]; then
       echo "  FILE: $(basename "$f")"
       echo "$matches" | sed 's/^/    /'
@@ -293,33 +355,36 @@ RISK_COUNT=0
   # ── R5: Tables with no updated_at trigger ────────────────────────────────
   echo "══ R5: Tables with updated_at column but no trigger ══"
   for f in "${UP_FILES[@]}"; do
-    has_updated_at=$(grep -c "updated_at" "$f" 2>/dev/null || echo 0)
-    has_trigger=$(grep -c "update_updated_at\|updated_at.*trigger\|TRIGGER.*updated" \
-      "$f" 2>/dev/null || echo 0)
-    tables=$(grep -cE "^CREATE TABLE" "$f" 2>/dev/null || echo 0)
+    has_updated_at=$(safe_count "updated_at" "$f")
+    has_trigger=$(safe_count "update_updated_at|updated_at.*trigger|TRIGGER.*updated" "$f")
+    tables=$(safe_count "^CREATE TABLE" "$f")
     if [[ "$has_updated_at" -gt 0 && "$has_trigger" -eq 0 && "$tables" -gt 0 ]]; then
-      echo "  FILE: $(basename "$f") — has updated_at but no trigger"
+      echo "  FILE: $(basename "$f") — has updated_at column but no update trigger"
       RISK_COUNT=$((RISK_COUNT + 1))
     fi
   done
   echo ""
 
   # ── R6: Duplicate table creation ─────────────────────────────────────────
+  # Uses a temp file instead of associative array for bash 3/4 compatibility
   echo "══ R6: Duplicate table names across migrations ══"
-  declare -A seen_tables
+  SEEN_TABLES_FILE=$(mktemp)
   for f in "${UP_FILES[@]}"; do
     while IFS= read -r tname; do
       [[ -z "$tname" ]] && continue
-      if [[ -v "seen_tables[$tname]" ]]; then
-        echo "  DUPLICATE: '$tname' in $(basename "$f") and ${seen_tables[$tname]}"
+      existing=$(grep "^${tname}=" "$SEEN_TABLES_FILE" 2>/dev/null || true)
+      if [[ -n "$existing" ]]; then
+        prev_file="${existing#*=}"
+        echo "  DUPLICATE: '$tname' in $(basename "$f") — also in $prev_file"
         RISK_COUNT=$((RISK_COUNT + 1))
       else
-        seen_tables[$tname]="$(basename "$f")"
+        echo "${tname}=$(basename "$f")" >>"$SEEN_TABLES_FILE"
       fi
-    done < <(grep -E "^CREATE TABLE" "$f" 2>/dev/null |
+    done < <({ grep -E "^CREATE TABLE" "$f" 2>/dev/null || true; } |
       grep -oE 'CREATE TABLE (IF NOT EXISTS )?[a-z_"]+' |
-      awk '{print $NF}' | tr -d '"' || true)
+      awk '{print $NF}' | tr -d '"')
   done
+  rm -f "$SEEN_TABLES_FILE"
   echo ""
 
   # ── R7: Missing down migrations ──────────────────────────────────────────
@@ -337,30 +402,43 @@ RISK_COUNT=0
   for f in "${UP_FILES[@]}"; do
     if echo "$(basename "$f")" | grep -qi "feature_flag_cache"; then
       echo "  ANTI-PATTERN: $(basename "$f")"
-      echo "    A DB table for feature flag caching adds read overhead."
-      echo "    Recommendation: move cache to Redis / application layer."
+      echo "    A DB cache table adds two DB roundtrips per flag evaluation."
+      echo "    Recommendation: move to Redis/Valkey with TTL=60s."
       RISK_COUNT=$((RISK_COUNT + 1))
     fi
   done
   echo ""
 
-  # ── R9: Parallel policy evaluation systems ───────────────────────────────
+  # ── R9: Parallel policy evaluation systems (RBAC + ABAC) ─────────────────
   echo "══ R9: Potential dual policy evaluation (RBAC + ABAC) ══"
   rbac_files=()
   abac_files=()
   for f in "${UP_FILES[@]}"; do
     bn=$(basename "$f")
-    echo "$bn" | grep -qi "auth\|role_perm\|user_role" && rbac_files+=("$bn")
-    echo "$bn" | grep -qi "attribute\|policy_eval\|abac" && abac_files+=("$bn")
+    { echo "$bn" | grep -qi "auth\|role_perm\|user_role" && rbac_files+=("$bn"); } || true
+    { echo "$bn" | grep -qi "attribute\|policy_eval\|abac" && abac_files+=("$bn"); } || true
   done
   if [[ ${#rbac_files[@]} -gt 0 && ${#abac_files[@]} -gt 0 ]]; then
     echo "  RBAC migrations found: ${#rbac_files[@]}"
     printf '    %s\n' "${rbac_files[@]}"
     echo "  ABAC migrations found: ${#abac_files[@]}"
     printf '    %s\n' "${abac_files[@]}"
-    echo "  → Verify a single policy decision point exists."
+    echo "  → Verify a single policy decision point function covers both."
     RISK_COUNT=$((RISK_COUNT + 1))
+  else
+    echo "  Only one policy system detected — verify this is intentional."
   fi
+  echo ""
+
+  # ── R10: Commented-out RLS blocks ────────────────────────────────────────
+  echo "══ R10: Tables with RLS commented out (disabled but present) ══"
+  for f in "${UP_FILES[@]}"; do
+    commented_rls=$(safe_count "-- .*ENABLE ROW LEVEL SECURITY\|-- .*CREATE POLICY\|-- .*ALTER TABLE.*RLS" "$f")
+    if [[ "$commented_rls" -gt 0 ]]; then
+      echo "  FILE: $(basename "$f") — $commented_rls commented-out RLS lines"
+      echo "    Review: intentionally disabled or waiting for implementation?"
+    fi
+  done
   echo ""
 
   echo "══════════════════════════════════════════════════════════════"
@@ -392,64 +470,85 @@ _ask_and_save() {
   local key="$1"
   local question="$2"
   local hint="${3:-}"
+  local default="${4:-}"
   echo ""
   ask "$question"
   [[ -n "$hint" ]] && echo -e "    ${CYAN}Hint: $hint${RESET}"
-  printf "    Your answer: "
-  read -r answer
+
+  local answer=""
+  # Check if we have an interactive terminal
+  if [[ -t 0 ]]; then
+    printf "    Your answer: "
+    read -r answer || answer="$default"
+  else
+    # Non-interactive: use default and note it
+    answer="$default"
+    echo "    [Non-interactive mode — using default: '${default:-not-set}']"
+  fi
+
   echo "${key}=${answer}" >>"$ANSWERS_FILE"
-  echo "    ✓ Saved"
+  echo "    ✓ Saved: $key=${answer}"
 }
 
 # Q1
 _ask_and_save "Q1_MIGRATION_TOOL" \
   "Q1. What migration tool are you using?" \
-  "Options: golang-migrate | goose | flyway | dbmate | atlas | other"
+  "Options: golang-migrate | goose | flyway | dbmate | atlas | other" \
+  "golang-migrate"
 
 # Q2
 _ask_and_save "Q2_DATABASE_LIVE" \
   "Q2. Is there a LIVE production database running these migrations?" \
-  "yes / no  — This affects whether we use CONCURRENTLY for indexes"
+  "yes / no  — This affects whether we use CONCURRENTLY for indexes" \
+  "no"
 
 # Q3
 _ask_and_save "Q3_CONFIG_DEF_LOCATION" \
   "Q3. Which migration is the authoritative source for config_definitions?" \
-  "000058_config_definitions or 000601_settings_core_tables — check which one ConfigurationService queries"
+  "000058_config_definitions or 000601_settings_core_tables — check which one ConfigurationService queries" \
+  "000058"
 
 # Q4
 _ask_and_save "Q4_IAM_AUTHORITY" \
   "Q4. Is RBAC (000404-412) or ABAC (000701-705) the authoritative policy decision?" \
-  "rbac / abac / both-unified / not-decided"
+  "rbac / abac / both-unified / not-decided" \
+  "not-decided"
 
 # Q5
 _ask_and_save "Q5_FEATURE_FLAG_CACHE" \
   "Q5. Is Redis/Memcached available in your infrastructure?" \
-  "yes / no — Determines if we can move feature flag cache out of Postgres"
+  "yes / no — Determines if we can move feature flag cache out of Postgres" \
+  "no"
 
 # Q6
 _ask_and_save "Q6_SERVICE_ACCOUNTS" \
   "Q6. Do background workers and API integrations currently have user rows in the identity tables?" \
-  "yes / no / not-yet"
+  "yes / no / not-yet" \
+  "not-yet"
 
 # Q7
 _ask_and_save "Q7_TENANT_FREEZE" \
   "Q7. Can we add a rule that no new columns are added to the tenants table without a review?" \
-  "yes / no — Helps enforce module ownership boundaries"
+  "yes / no — Helps enforce module ownership boundaries" \
+  "yes"
 
 # Q8
 _ask_and_save "Q8_VIEWS_SECURITY" \
   "Q8. Which PostgreSQL version are you running?" \
-  "Run: SELECT version(); — Needed for SECURITY INVOKER view support (PG15+)"
+  "Run: SELECT version(); — Needed for SECURITY INVOKER view support (PG15+)" \
+  "15"
 
 # Q9
 _ask_and_save "Q9_ENTITY_HIERARCHY" \
   "Q9. What is the maximum real-world entity hierarchy depth in your tenants?" \
-  "e.g. 3 = COMPANY→DEPARTMENT→TEAM — Used to set the hierarchy depth limit trigger"
+  "e.g. 3 = COMPANY→DEPARTMENT→TEAM — Used to set the hierarchy depth limit trigger" \
+  "5"
 
 # Q10
 _ask_and_save "Q10_NAMING_CONVENTION" \
   "Q10. Should refactored migrations follow the existing naming pattern?" \
-  "yes = keep 000NNN_domain_description.up.sql / no = let Script 2 decide"
+  "yes = keep 000NNN_domain_description.up.sql / no = let Script 2 decide" \
+  "yes"
 
 echo ""
 success "All answers saved → $ANSWERS_FILE"

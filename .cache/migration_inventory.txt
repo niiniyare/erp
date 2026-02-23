@@ -1,0 +1,73 @@
+MIGRATION INVENTORY — Mon Feb 23 09:03:35 EAT 2026
+Directory : db/migration
+UP files  : 66
+DOWN files: 66
+
+FILE LISTING (name | lines | tables_created | functions_created)
+──────────────────────────────────────────────────────────────────
+000015_platform_modules.up.sql                                    |   47 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000016_platform_resources.up.sql                                  |   39 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000017_platform_actions.up.sql                                    |   65 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000051_tenant_extensions_and_roles.up.sql                         |   69 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000052_tenant_reserved_subdomains.up.sql                          |   94 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000053_tenant_create_core_tables.up.sql                           |  608 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000054_tenant_indexes.up.sql                                      |  126 lines | 0 tbl | 0 fn | 0 view | 14 idx | 0 trg | 0 pol
+000055_tenant_functions.up.sql                                    |  219 lines | 0 tbl | 4 fn | 0 view | 0 idx | 0 trg | 0 pol
+000056_tenant_rls.up.sql                                          |  105 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 3 pol
+000057_tenant_triggers.up.sql                                     |  367 lines | 0 tbl | 6 fn | 0 view | 0 idx | 6 trg | 0 pol
+000058_config_definitions.up.sql                                  |  312 lines | 1 tbl | 0 fn | 0 view | 2 idx | 1 trg | 0 pol
+000059_permissions.up.sql                                         |  106 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000102_tenant_add_configuration_tables.up.sql                     |  238 lines | 1 tbl | 0 fn | 0 view | 0 idx | 2 trg | 1 pol
+000103_tenant_add_usage_tracking.up.sql                           |  150 lines | 1 tbl | 0 fn | 0 view | 2 idx | 0 trg | 1 pol
+000104_tenant_provision_complete.up.sql                           |   76 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000105_tenant_add_bulk_operations.up.sql                          |  403 lines | 2 tbl | 3 fn | 0 view | 6 idx | 3 trg | 6 pol
+000106_validate_set_tenant_context.up.sql                         |  115 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000107_enforce_tenant_isolation.up.sql                            |   34 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000201_entity_create_core_tables.up.sql                           |  170 lines | 1 tbl | 0 fn | 0 view | 10 idx | 0 trg | 2 pol
+000202_entity_add_hierarchy.up.sql                                |  110 lines | 1 tbl | 0 fn | 0 view | 4 idx | 1 trg | 2 pol
+000203_entity_add_state_machine.up.sql                            |   85 lines | 1 tbl | 0 fn | 0 view | 2 idx | 0 trg | 2 pol
+000204_entity_add_views.up.sql                                    |  488 lines | 0 tbl | 0 fn | 10 view | 0 idx | 0 trg | 0 pol
+000301_identity_create_persons.up.sql                             |  180 lines | 1 tbl | 0 fn | 0 view | 10 idx | 1 trg | 2 pol
+000302_identity_create_employees.up.sql                           |  194 lines | 1 tbl | 0 fn | 0 view | 13 idx | 1 trg | 2 pol
+000303_identity_create_users.up.sql                               |  244 lines | 1 tbl | 0 fn | 0 view | 15 idx | 1 trg | 2 pol
+000304_identity_add_user_sessions.up.sql                          |  138 lines | 1 tbl | 0 fn | 0 view | 10 idx | 0 trg | 2 pol
+000404_auth_define_permissions.up.sql                             |   45 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 2 pol
+000405_auth_create_roles.up.sql                                   |   69 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 2 pol
+000406_auth_map_role_permissions.up.sql                           |   39 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 2 pol
+000407_auth_assign_user_roles.up.sql                              |   61 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 2 pol
+000408_policy_define_rules.up.sql                                 |   99 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 2 pol
+000409_user_entity_access.up.sql                                  |    1 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000410_access_request_flow.up.sql                                 |   86 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 1 pol
+000411_user_permission.up.sql                                     |   42 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 2 pol
+000412_user_roles_functions.up.sql                                |   38 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000450_audit_log.up.sql                                           |   59 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 1 pol
+000451_audit_funcs.up.sql                                         |  511 lines | 0 tbl | 10 fn | 0 view | 0 idx | 0 trg | 0 pol
+000501_user_management_views.up.sql                               |  187 lines | 0 tbl | 0 fn | 3 view | 0 idx | 0 trg | 0 pol
+000502_user_functions_triggers.up.sql                             |  397 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000503_user_add_on.up.sql                                         |  467 lines | 1 tbl | 5 fn | 1 view | 6 idx | 2 trg | 0 pol
+000504_user_activities.up.sql                                     |  277 lines | 1 tbl | 0 fn | 0 view | 10 idx | 0 trg | 3 pol
+000601_settings_core_tables.up.sql                                |  292 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000602_notification.up.sql                                        |   31 lines | 1 tbl | 0 fn | 0 view | 0 idx | 1 trg | 1 pol
+000701_attribute_definitions.up.sql                               |   65 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 1 pol
+000702_attribute_values.up.sql                                    |  107 lines | 2 tbl | 0 fn | 0 view | 3 idx | 0 trg | 2 pol
+000703_policy_evaluation.up.sql                                   |   34 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 1 pol
+000704_policy_evaluation_update.up.sql                            |   74 lines | 1 tbl | 0 fn | 0 view | 4 idx | 0 trg | 1 pol
+000705_policy_decision.up.sql                                     |   19 lines | 1 tbl | 0 fn | 0 view | 2 idx | 0 trg | 0 pol
+000801_feature_flag_core.up.sql                                   |  128 lines | 1 tbl | 0 fn | 0 view | 9 idx | 1 trg | 3 pol
+000802_feature_flag_overrides.up.sql                              |  144 lines | 1 tbl | 0 fn | 0 view | 9 idx | 2 trg | 3 pol
+000803_feature_flag_audit.up.sql                                  |  385 lines | 0 tbl | 0 fn | 0 view | 0 idx | 2 trg | 0 pol
+000804_feature_flag_functions.up.sql                              |  278 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000805_feature_flag_cache.up.sql                                  |  434 lines | 0 tbl | 0 fn | 0 view | 11 idx | 2 trg | 0 pol
+000806_feature_flag_cleanup.up.sql                                |  929 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000807_feature_flag_usage.up.sql                                  |  303 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000901_finance_account_groups.up.sql                              |  192 lines | 1 tbl | 0 fn | 0 view | 5 idx | 0 trg | 2 pol
+000902_finance_chart_of_accounts.up.sql                           |  144 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 2 pol
+000903_finance_coa_indexes.up.sql                                 |   70 lines | 0 tbl | 0 fn | 0 view | 12 idx | 0 trg | 0 pol
+000904_finance_transactions.up.sql                                |  374 lines | 1 tbl | 0 fn | 0 view | 13 idx | 2 trg | 2 pol
+000905_finance_transaction_entries.up.sql                         |  104 lines | 1 tbl | 0 fn | 0 view | 0 idx | 0 trg | 2 pol
+000906_finance_mod.up.sql                                         |  437 lines | 0 tbl | 3 fn | 4 view | 0 idx | 1 trg | 0 pol
+000907_finance_supporting_tables.up.sql                           |   69 lines | 2 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000908_finance_constraints_indexes.up.sql                         |    1 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 0 pol
+000909_finance_triggers.up.sql                                    |  600 lines | 0 tbl | 0 fn | 0 view | 0 idx | 4 trg | 0 pol
+000910_finance_views.up.sql                                       |  180 lines | 0 tbl | 0 fn | 3 view | 0 idx | 0 trg | 0 pol
+000911_finance_rls_policies.up.sql                                |   66 lines | 0 tbl | 0 fn | 0 view | 0 idx | 0 trg | 4 pol

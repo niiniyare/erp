@@ -30,8 +30,8 @@ func toDomain(row *db.Tenant) (*domain.Tenant, error) {
 	}
 
 	var lastActivity *time.Time
-	if row.LastActivityAt.Valid {
-		lastActivity = &row.LastActivityAt.Time
+	if !row.LastActivityAt.IsZero() {
+		lastActivity = &row.LastActivityAt
 	}
 
 	return &domain.Tenant{
@@ -41,6 +41,7 @@ func toDomain(row *db.Tenant) (*domain.Tenant, error) {
 		Email:              row.Email,
 		Subdomain:          row.Subdomain,
 		Status:             domain.TenantStatus(row.Status),
+		PlanTier:           row.PlanTier,
 		Timezone:           row.Timezone,
 		CurrencyCode:       row.CurrencyCode,
 		Metadata:           metadata,
@@ -83,6 +84,26 @@ func filterRowToDomain(row *db.FilterTenantsRow) *domain.Tenant {
 
 // configToDomain converts a SQLC TenantConfiguration to domain.
 func configToDomain(row *db.TenantConfiguration) *domain.TenantConfiguration {
+	var passwordPolicy map[string]any
+	if len(row.PasswordPolicy) > 0 {
+		_ = json.Unmarshal(row.PasswordPolicy, &passwordPolicy)
+	}
+
+	var settings map[string]any
+	if len(row.Settings) > 0 {
+		_ = json.Unmarshal(row.Settings, &settings)
+	}
+
+	var webhookEndpoints []any
+	if len(row.WebhookEndpoints) > 0 {
+		_ = json.Unmarshal(row.WebhookEndpoints, &webhookEndpoints)
+	}
+
+	var apiRateLimits map[string]any
+	if len(row.ApiRateLimits) > 0 {
+		_ = json.Unmarshal(row.ApiRateLimits, &apiRateLimits)
+	}
+
 	return &domain.TenantConfiguration{
 		TenantID:                row.TenantID,
 		MaxUsers:                row.MaxUsers,
@@ -95,6 +116,12 @@ func configToDomain(row *db.TenantConfiguration) *domain.TenantConfiguration {
 		DateFormat:              row.DateFormat,
 		NumberFormat:            row.NumberFormat,
 		LanguageCode:            row.LanguageCode,
+		PasswordPolicy:          passwordPolicy,
+		Settings:                settings,
+		WebhookEndpoints:        webhookEndpoints,
+		ApiRateLimits:           apiRateLimits,
+		CreatedAt:               row.CreatedAt,
+		UpdatedAt:               row.UpdatedAt,
 	}
 }
 

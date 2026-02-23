@@ -191,6 +191,62 @@ type ConfigDefinition struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// Complete audit trail of all configuration changes for compliance and troubleshooting
+type ConfigurationAudit struct {
+	// UUID primary key for the audit record
+	ID uuid.UUID `json:"id"`
+	// Foreign key to tenants table for multi-tenant isolation
+	TenantID uuid.UUID `json:"tenant_id"`
+	// Optional foreign key to entities table for entity-level changes
+	EntityID *uuid.UUID `json:"entity_id"`
+	// Full configuration key (module.key) that was modified
+	ConfigKey string `json:"config_key"`
+	// Previous configuration value in JSONB format
+	OldValue []byte `json:"old_value"`
+	// New configuration value in JSONB format
+	NewValue []byte `json:"new_value"`
+	// Source level where change occurred: system, tenant, entity, or template
+	Source string `json:"source"`
+	// Type of operation: create, update, delete, reset, or template_apply
+	Operation string `json:"operation"`
+	// UUID of user who made the change
+	UserID    uuid.UUID `json:"user_id"`
+	AppliedAt time.Time `json:"applied_at"`
+	// Session identifier for tracking related changes
+	SessionID *string `json:"session_id"`
+	// Correlation ID for tracking bulk operations
+	CorrelationID *string `json:"correlation_id"`
+}
+
+// Reusable configuration templates for bulk deployment across tenants and entities
+type ConfigurationTemplate struct {
+	// UUID primary key for the configuration template
+	ID       uuid.UUID  `json:"id"`
+	TenantID uuid.UUID  `json:"tenant_id"`
+	EntityID *uuid.UUID `json:"entity_id"`
+	// Template display name
+	Name string `json:"name"`
+	// Template category: industry, functional, or regional
+	Category    string  `json:"category"`
+	Description *string `json:"description"`
+	// Semantic version string for template versioning
+	Version string `json:"version"`
+	// JSON object containing all configuration key-value pairs
+	Configurations []byte `json:"configurations"`
+	// Array of tenant types this template applies to
+	ApplicableTenantTypes []string `json:"applicable_tenant_types"`
+	// Array of feature flags required for this template
+	RequiredFeatureFlags []string `json:"required_feature_flags"`
+	// Strategy for handling configuration conflicts: merge, replace, or preserve
+	ConflictResolution *string `json:"conflict_resolution"`
+	// Whether this template is active and available for use
+	IsActive  bool      `json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	// UUID of user who created this template
+	CreatedBy uuid.UUID `json:"created_by"`
+}
+
 // Employee records extending persons with employment-specific data, organizational hierarchy, and security levels for access control.
 type Employee struct {
 	// UUID primary key for the employee record
@@ -880,6 +936,33 @@ type SecurityNotification struct {
 	ExpiresAt        sql.NullTime `json:"expires_at"`
 }
 
+// History of template applications with detailed results and statistics
+type TemplateApplication struct {
+	// UUID primary key for the template application record
+	ID uuid.UUID `json:"id"`
+	// Foreign key to configuration_templates table
+	TemplateID uuid.UUID `json:"template_id"`
+	// Foreign key to tenants table
+	TenantID uuid.UUID `json:"tenant_id"`
+	// Optional foreign key to entities table for entity-level applications
+	EntityID *uuid.UUID `json:"entity_id"`
+	// Target type: tenant or entity
+	TargetType string `json:"target_type"`
+	// Number of configurations successfully applied
+	AppliedConfigs int32 `json:"applied_configs"`
+	// Number of configurations skipped due to conflicts or policies
+	SkippedConfigs int32 `json:"skipped_configs"`
+	// Number of configuration conflicts encountered
+	ConflictCount int32 `json:"conflict_count"`
+	// Detailed JSON summary of the application results
+	ApplicationSummary []byte    `json:"application_summary"`
+	AppliedAt          time.Time `json:"applied_at"`
+	// UUID of user who applied the template
+	AppliedBy uuid.UUID `json:"applied_by"`
+	// Correlation ID for tracking related operations
+	CorrelationID *string `json:"correlation_id"`
+}
+
 // Core tenant registry for the multi-tenant ERP. One row per customer organisation. The Settings module reads/writes the settings JSONB column via its ConfigurationService — other services must not write directly to it. Soft-delete only: set deleted_at + deleted_by; never hard-DELETE.
 type Tenant struct {
 	// Immutable UUID — used in all external API references and foreign keys.
@@ -993,6 +1076,12 @@ type TenantConfiguration struct {
 	ApiRateLimits []byte    `json:"api_rate_limits"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
+	// Version counter for optimistic locking of tenant settings
+	SettingsVersion *int32 `json:"settings_version"`
+	// Reference to last template applied to this tenant
+	LastTemplateApplied *uuid.UUID `json:"last_template_applied"`
+	// Timestamp when template was last applied
+	TemplateAppliedAt sql.NullTime `json:"template_applied_at"`
 }
 
 // Tenant-specific feature flag overrides with audit trail

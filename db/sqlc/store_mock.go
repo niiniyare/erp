@@ -294,20 +294,6 @@ func (mr *MockStoreMockRecorder) BulkSoftDeleteTenants(ctx, tenantIds any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkSoftDeleteTenants", reflect.TypeOf((*MockStore)(nil).BulkSoftDeleteTenants), ctx, tenantIds)
 }
 
-// BulkUpdateEntityConfiguration mocks base method.
-func (m *MockStore) BulkUpdateEntityConfiguration(ctx context.Context, arg BulkUpdateEntityConfigurationParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BulkUpdateEntityConfiguration", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// BulkUpdateEntityConfiguration indicates an expected call of BulkUpdateEntityConfiguration.
-func (mr *MockStoreMockRecorder) BulkUpdateEntityConfiguration(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkUpdateEntityConfiguration", reflect.TypeOf((*MockStore)(nil).BulkUpdateEntityConfiguration), ctx, arg)
-}
-
 // BulkUpdateEventRiskScores mocks base method.
 func (m *MockStore) BulkUpdateEventRiskScores(ctx context.Context, arg BulkUpdateEventRiskScoresParams) error {
 	m.ctrl.T.Helper()
@@ -1017,51 +1003,6 @@ func (mr *MockStoreMockRecorder) CreateAuditEvent(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAuditEvent", reflect.TypeOf((*MockStore)(nil).CreateAuditEvent), ctx, arg)
 }
 
-// CreateConfigDefinition mocks base method.
-func (m *MockStore) CreateConfigDefinition(ctx context.Context, arg CreateConfigDefinitionParams) (*ConfigDefinition, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateConfigDefinition", ctx, arg)
-	ret0, _ := ret[0].(*ConfigDefinition)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateConfigDefinition indicates an expected call of CreateConfigDefinition.
-func (mr *MockStoreMockRecorder) CreateConfigDefinition(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateConfigDefinition", reflect.TypeOf((*MockStore)(nil).CreateConfigDefinition), ctx, arg)
-}
-
-// CreateConfigurationAudit mocks base method.
-func (m *MockStore) CreateConfigurationAudit(ctx context.Context, arg CreateConfigurationAuditParams) (*ConfigurationAudit, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateConfigurationAudit", ctx, arg)
-	ret0, _ := ret[0].(*ConfigurationAudit)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateConfigurationAudit indicates an expected call of CreateConfigurationAudit.
-func (mr *MockStoreMockRecorder) CreateConfigurationAudit(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateConfigurationAudit", reflect.TypeOf((*MockStore)(nil).CreateConfigurationAudit), ctx, arg)
-}
-
-// CreateConfigurationTemplate mocks base method.
-func (m *MockStore) CreateConfigurationTemplate(ctx context.Context, arg CreateConfigurationTemplateParams) (*ConfigurationTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateConfigurationTemplate", ctx, arg)
-	ret0, _ := ret[0].(*ConfigurationTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateConfigurationTemplate indicates an expected call of CreateConfigurationTemplate.
-func (mr *MockStoreMockRecorder) CreateConfigurationTemplate(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateConfigurationTemplate", reflect.TypeOf((*MockStore)(nil).CreateConfigurationTemplate), ctx, arg)
-}
-
 // CreateDefaultTenantConfiguration mocks base method.
 func (m *MockStore) CreateDefaultTenantConfiguration(ctx context.Context) error {
 	m.ctrl.T.Helper()
@@ -1225,21 +1166,6 @@ func (mr *MockStoreMockRecorder) CreateResource(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateResource", reflect.TypeOf((*MockStore)(nil).CreateResource), ctx, arg)
 }
 
-// CreateTemplateApplication mocks base method.
-func (m *MockStore) CreateTemplateApplication(ctx context.Context, arg CreateTemplateApplicationParams) (*TemplateApplication, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateTemplateApplication", ctx, arg)
-	ret0, _ := ret[0].(*TemplateApplication)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateTemplateApplication indicates an expected call of CreateTemplateApplication.
-func (mr *MockStoreMockRecorder) CreateTemplateApplication(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTemplateApplication", reflect.TypeOf((*MockStore)(nil).CreateTemplateApplication), ctx, arg)
-}
-
 // CreateTenant mocks base method.
 func (m *MockStore) CreateTenant(ctx context.Context, arg CreateTenantParams) (*Tenant, error) {
 	m.ctrl.T.Helper()
@@ -1375,20 +1301,6 @@ func (mr *MockStoreMockRecorder) DeactivateAccountValidationRule(ctx, arg any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeactivateAccountValidationRule", reflect.TypeOf((*MockStore)(nil).DeactivateAccountValidationRule), ctx, arg)
 }
 
-// DeactivateConfigurationTemplate mocks base method.
-func (m *MockStore) DeactivateConfigurationTemplate(ctx context.Context, templateID uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeactivateConfigurationTemplate", ctx, templateID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeactivateConfigurationTemplate indicates an expected call of DeactivateConfigurationTemplate.
-func (mr *MockStoreMockRecorder) DeactivateConfigurationTemplate(ctx, templateID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeactivateConfigurationTemplate", reflect.TypeOf((*MockStore)(nil).DeactivateConfigurationTemplate), ctx, templateID)
-}
-
 // DeleteAccountBalance mocks base method.
 func (m *MockStore) DeleteAccountBalance(ctx context.Context, id uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -1443,20 +1355,6 @@ func (m *MockStore) DeleteAttributeValue(ctx context.Context, arg DeleteAttribut
 func (mr *MockStoreMockRecorder) DeleteAttributeValue(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAttributeValue", reflect.TypeOf((*MockStore)(nil).DeleteAttributeValue), ctx, arg)
-}
-
-// DeleteEntityConfiguration mocks base method.
-func (m *MockStore) DeleteEntityConfiguration(ctx context.Context, arg DeleteEntityConfigurationParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteEntityConfiguration", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteEntityConfiguration indicates an expected call of DeleteEntityConfiguration.
-func (mr *MockStoreMockRecorder) DeleteEntityConfiguration(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEntityConfiguration", reflect.TypeOf((*MockStore)(nil).DeleteEntityConfiguration), ctx, arg)
 }
 
 // DeleteFeatureFlag mocks base method.
@@ -1527,20 +1425,6 @@ func (m *MockStore) DeleteTenantConfiguration(ctx context.Context, arg DeleteTen
 func (mr *MockStoreMockRecorder) DeleteTenantConfiguration(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTenantConfiguration", reflect.TypeOf((*MockStore)(nil).DeleteTenantConfiguration), ctx, arg)
-}
-
-// DeleteTenantConfigurationSettings mocks base method.
-func (m *MockStore) DeleteTenantConfigurationSettings(ctx context.Context, configPath []string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteTenantConfigurationSettings", ctx, configPath)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteTenantConfigurationSettings indicates an expected call of DeleteTenantConfigurationSettings.
-func (mr *MockStoreMockRecorder) DeleteTenantConfigurationSettings(ctx, configPath any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTenantConfigurationSettings", reflect.TypeOf((*MockStore)(nil).DeleteTenantConfigurationSettings), ctx, configPath)
 }
 
 // DeleteTenantUsageStats mocks base method.
@@ -2768,66 +2652,6 @@ func (mr *MockStoreMockRecorder) GetComplianceEvents(ctx, arg any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetComplianceEvents", reflect.TypeOf((*MockStore)(nil).GetComplianceEvents), ctx, arg)
 }
 
-// GetConfigDefinition mocks base method.
-func (m *MockStore) GetConfigDefinition(ctx context.Context, arg GetConfigDefinitionParams) (*ConfigDefinition, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConfigDefinition", ctx, arg)
-	ret0, _ := ret[0].(*ConfigDefinition)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetConfigDefinition indicates an expected call of GetConfigDefinition.
-func (mr *MockStoreMockRecorder) GetConfigDefinition(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfigDefinition", reflect.TypeOf((*MockStore)(nil).GetConfigDefinition), ctx, arg)
-}
-
-// GetConfigurationAuditByCorrelation mocks base method.
-func (m *MockStore) GetConfigurationAuditByCorrelation(ctx context.Context, correlationID *string) ([]*ConfigurationAudit, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConfigurationAuditByCorrelation", ctx, correlationID)
-	ret0, _ := ret[0].([]*ConfigurationAudit)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetConfigurationAuditByCorrelation indicates an expected call of GetConfigurationAuditByCorrelation.
-func (mr *MockStoreMockRecorder) GetConfigurationAuditByCorrelation(ctx, correlationID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfigurationAuditByCorrelation", reflect.TypeOf((*MockStore)(nil).GetConfigurationAuditByCorrelation), ctx, correlationID)
-}
-
-// GetConfigurationHistory mocks base method.
-func (m *MockStore) GetConfigurationHistory(ctx context.Context, arg GetConfigurationHistoryParams) ([]*ConfigurationAudit, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConfigurationHistory", ctx, arg)
-	ret0, _ := ret[0].([]*ConfigurationAudit)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetConfigurationHistory indicates an expected call of GetConfigurationHistory.
-func (mr *MockStoreMockRecorder) GetConfigurationHistory(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfigurationHistory", reflect.TypeOf((*MockStore)(nil).GetConfigurationHistory), ctx, arg)
-}
-
-// GetConfigurationTemplate mocks base method.
-func (m *MockStore) GetConfigurationTemplate(ctx context.Context, templateID uuid.UUID) (*ConfigurationTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConfigurationTemplate", ctx, templateID)
-	ret0, _ := ret[0].(*ConfigurationTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetConfigurationTemplate indicates an expected call of GetConfigurationTemplate.
-func (mr *MockStoreMockRecorder) GetConfigurationTemplate(ctx, templateID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfigurationTemplate", reflect.TypeOf((*MockStore)(nil).GetConfigurationTemplate), ctx, templateID)
-}
-
 // GetControlAccounts mocks base method.
 func (m *MockStore) GetControlAccounts(ctx context.Context, entityID *uuid.UUID) ([]*FinanceAccount, error) {
 	m.ctrl.T.Helper()
@@ -2948,21 +2772,6 @@ func (mr *MockStoreMockRecorder) GetDuplicateSequenceCheck(ctx any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDuplicateSequenceCheck", reflect.TypeOf((*MockStore)(nil).GetDuplicateSequenceCheck), ctx)
 }
 
-// GetEffectiveConfiguration mocks base method.
-func (m *MockStore) GetEffectiveConfiguration(ctx context.Context, arg GetEffectiveConfigurationParams) (*GetEffectiveConfigurationRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEffectiveConfiguration", ctx, arg)
-	ret0, _ := ret[0].(*GetEffectiveConfigurationRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetEffectiveConfiguration indicates an expected call of GetEffectiveConfiguration.
-func (mr *MockStoreMockRecorder) GetEffectiveConfiguration(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEffectiveConfiguration", reflect.TypeOf((*MockStore)(nil).GetEffectiveConfiguration), ctx, arg)
-}
-
 // GetEmployeeByID mocks base method.
 func (m *MockStore) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee, error) {
 	m.ctrl.T.Helper()
@@ -3021,21 +2830,6 @@ func (m *MockStore) GetEntitiesByUUIDs(ctx context.Context, uuids []uuid.UUID) (
 func (mr *MockStoreMockRecorder) GetEntitiesByUUIDs(ctx, uuids any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitiesByUUIDs", reflect.TypeOf((*MockStore)(nil).GetEntitiesByUUIDs), ctx, uuids)
-}
-
-// GetEntitiesForBulkUpdate mocks base method.
-func (m *MockStore) GetEntitiesForBulkUpdate(ctx context.Context, arg GetEntitiesForBulkUpdateParams) ([]*GetEntitiesForBulkUpdateRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEntitiesForBulkUpdate", ctx, arg)
-	ret0, _ := ret[0].([]*GetEntitiesForBulkUpdateRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetEntitiesForBulkUpdate indicates an expected call of GetEntitiesForBulkUpdate.
-func (mr *MockStoreMockRecorder) GetEntitiesForBulkUpdate(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitiesForBulkUpdate", reflect.TypeOf((*MockStore)(nil).GetEntitiesForBulkUpdate), ctx, arg)
 }
 
 // GetEntity mocks base method.
@@ -3126,21 +2920,6 @@ func (m *MockStore) GetEntityChildren(ctx context.Context, ancestorID uuid.UUID)
 func (mr *MockStoreMockRecorder) GetEntityChildren(ctx, ancestorID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityChildren", reflect.TypeOf((*MockStore)(nil).GetEntityChildren), ctx, ancestorID)
-}
-
-// GetEntityConfigurations mocks base method.
-func (m *MockStore) GetEntityConfigurations(ctx context.Context, entityID uuid.UUID) ([]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEntityConfigurations", ctx, entityID)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetEntityConfigurations indicates an expected call of GetEntityConfigurations.
-func (mr *MockStoreMockRecorder) GetEntityConfigurations(ctx, entityID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityConfigurations", reflect.TypeOf((*MockStore)(nil).GetEntityConfigurations), ctx, entityID)
 }
 
 // GetEntityCountByType mocks base method.
@@ -4657,21 +4436,6 @@ func (mr *MockStoreMockRecorder) GetSuspiciousActivityByIP(ctx, arg any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSuspiciousActivityByIP", reflect.TypeOf((*MockStore)(nil).GetSuspiciousActivityByIP), ctx, arg)
 }
 
-// GetTemplateApplicationHistory mocks base method.
-func (m *MockStore) GetTemplateApplicationHistory(ctx context.Context, arg GetTemplateApplicationHistoryParams) ([]*GetTemplateApplicationHistoryRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTemplateApplicationHistory", ctx, arg)
-	ret0, _ := ret[0].([]*GetTemplateApplicationHistoryRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetTemplateApplicationHistory indicates an expected call of GetTemplateApplicationHistory.
-func (mr *MockStoreMockRecorder) GetTemplateApplicationHistory(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTemplateApplicationHistory", reflect.TypeOf((*MockStore)(nil).GetTemplateApplicationHistory), ctx, arg)
-}
-
 // GetTenantAnalyticsOverviewAdmin mocks base method.
 func (m *MockStore) GetTenantAnalyticsOverviewAdmin(ctx context.Context, dollar_1 uuid.UUID) (*GetTenantAnalyticsOverviewAdminRow, error) {
 	m.ctrl.T.Helper()
@@ -4775,21 +4539,6 @@ func (m *MockStore) GetTenantConfiguration(ctx context.Context) (*TenantConfigur
 func (mr *MockStoreMockRecorder) GetTenantConfiguration(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantConfiguration", reflect.TypeOf((*MockStore)(nil).GetTenantConfiguration), ctx)
-}
-
-// GetTenantConfigurations mocks base method.
-func (m *MockStore) GetTenantConfigurations(ctx context.Context) (*GetTenantConfigurationsRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTenantConfigurations", ctx)
-	ret0, _ := ret[0].(*GetTenantConfigurationsRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetTenantConfigurations indicates an expected call of GetTenantConfigurations.
-func (mr *MockStoreMockRecorder) GetTenantConfigurations(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantConfigurations", reflect.TypeOf((*MockStore)(nil).GetTenantConfigurations), ctx)
 }
 
 // GetTenantEntitySummaryAdmin mocks base method.
@@ -5983,36 +5732,6 @@ func (mr *MockStoreMockRecorder) ListAttributeDefinitionsByCategory(ctx, categor
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAttributeDefinitionsByCategory", reflect.TypeOf((*MockStore)(nil).ListAttributeDefinitionsByCategory), ctx, category)
 }
 
-// ListConfigDefinitions mocks base method.
-func (m *MockStore) ListConfigDefinitions(ctx context.Context, moduleName *string) ([]*ConfigDefinition, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListConfigDefinitions", ctx, moduleName)
-	ret0, _ := ret[0].([]*ConfigDefinition)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListConfigDefinitions indicates an expected call of ListConfigDefinitions.
-func (mr *MockStoreMockRecorder) ListConfigDefinitions(ctx, moduleName any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListConfigDefinitions", reflect.TypeOf((*MockStore)(nil).ListConfigDefinitions), ctx, moduleName)
-}
-
-// ListConfigurationTemplates mocks base method.
-func (m *MockStore) ListConfigurationTemplates(ctx context.Context, arg ListConfigurationTemplatesParams) ([]*ConfigurationTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListConfigurationTemplates", ctx, arg)
-	ret0, _ := ret[0].([]*ConfigurationTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListConfigurationTemplates indicates an expected call of ListConfigurationTemplates.
-func (mr *MockStoreMockRecorder) ListConfigurationTemplates(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListConfigurationTemplates", reflect.TypeOf((*MockStore)(nil).ListConfigurationTemplates), ctx, arg)
-}
-
 // ListEntities mocks base method.
 func (m *MockStore) ListEntities(ctx context.Context) ([]*Entity, error) {
 	m.ctrl.T.Helper()
@@ -6206,21 +5925,6 @@ func (m *MockStore) ListPoliciesByEffect(ctx context.Context, effect *string) ([
 func (mr *MockStoreMockRecorder) ListPoliciesByEffect(ctx, effect any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPoliciesByEffect", reflect.TypeOf((*MockStore)(nil).ListPoliciesByEffect), ctx, effect)
-}
-
-// ListTenantEffectiveConfigurations mocks base method.
-func (m *MockStore) ListTenantEffectiveConfigurations(ctx context.Context, arg ListTenantEffectiveConfigurationsParams) ([]*ListTenantEffectiveConfigurationsRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListTenantEffectiveConfigurations", ctx, arg)
-	ret0, _ := ret[0].([]*ListTenantEffectiveConfigurationsRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListTenantEffectiveConfigurations indicates an expected call of ListTenantEffectiveConfigurations.
-func (mr *MockStoreMockRecorder) ListTenantEffectiveConfigurations(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTenantEffectiveConfigurations", reflect.TypeOf((*MockStore)(nil).ListTenantEffectiveConfigurations), ctx, arg)
 }
 
 // ListTenants mocks base method.
@@ -6616,21 +6320,6 @@ func (mr *MockStoreMockRecorder) SearchAccountsWithGroupInfo(ctx, arg any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchAccountsWithGroupInfo", reflect.TypeOf((*MockStore)(nil).SearchAccountsWithGroupInfo), ctx, arg)
 }
 
-// SearchConfigurations mocks base method.
-func (m *MockStore) SearchConfigurations(ctx context.Context, arg SearchConfigurationsParams) ([]*SearchConfigurationsRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SearchConfigurations", ctx, arg)
-	ret0, _ := ret[0].([]*SearchConfigurationsRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SearchConfigurations indicates an expected call of SearchConfigurations.
-func (mr *MockStoreMockRecorder) SearchConfigurations(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchConfigurations", reflect.TypeOf((*MockStore)(nil).SearchConfigurations), ctx, arg)
-}
-
 // SearchEntitiesByCodeAndName mocks base method.
 func (m *MockStore) SearchEntitiesByCodeAndName(ctx context.Context, arg SearchEntitiesByCodeAndNameParams) ([]*Entity, error) {
 	m.ctrl.T.Helper()
@@ -6781,17 +6470,17 @@ func (mr *MockStoreMockRecorder) SetSequenceNumber(ctx, arg any) *gomock.Call {
 }
 
 // SetTenantContext mocks base method.
-func (m *MockStore) SetTenantContext(ctx context.Context, tenantID uuid.UUID) error {
+func (m *MockStore) SetTenantContext(ctx context.Context, pTenantID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetTenantContext", ctx, tenantID)
+	ret := m.ctrl.Call(m, "SetTenantContext", ctx, pTenantID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetTenantContext indicates an expected call of SetTenantContext.
-func (mr *MockStoreMockRecorder) SetTenantContext(ctx, tenantID any) *gomock.Call {
+func (mr *MockStoreMockRecorder) SetTenantContext(ctx, pTenantID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTenantContext", reflect.TypeOf((*MockStore)(nil).SetTenantContext), ctx, tenantID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTenantContext", reflect.TypeOf((*MockStore)(nil).SetTenantContext), ctx, pTenantID)
 }
 
 // SetTenantContextFromCtx mocks base method.
@@ -7096,36 +6785,6 @@ func (mr *MockStoreMockRecorder) UpdateAttributeValue(ctx, arg any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAttributeValue", reflect.TypeOf((*MockStore)(nil).UpdateAttributeValue), ctx, arg)
 }
 
-// UpdateConfigDefinition mocks base method.
-func (m *MockStore) UpdateConfigDefinition(ctx context.Context, arg UpdateConfigDefinitionParams) (*ConfigDefinition, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateConfigDefinition", ctx, arg)
-	ret0, _ := ret[0].(*ConfigDefinition)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateConfigDefinition indicates an expected call of UpdateConfigDefinition.
-func (mr *MockStoreMockRecorder) UpdateConfigDefinition(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateConfigDefinition", reflect.TypeOf((*MockStore)(nil).UpdateConfigDefinition), ctx, arg)
-}
-
-// UpdateConfigurationTemplate mocks base method.
-func (m *MockStore) UpdateConfigurationTemplate(ctx context.Context, arg UpdateConfigurationTemplateParams) (*ConfigurationTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateConfigurationTemplate", ctx, arg)
-	ret0, _ := ret[0].(*ConfigurationTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateConfigurationTemplate indicates an expected call of UpdateConfigurationTemplate.
-func (mr *MockStoreMockRecorder) UpdateConfigurationTemplate(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateConfigurationTemplate", reflect.TypeOf((*MockStore)(nil).UpdateConfigurationTemplate), ctx, arg)
-}
-
 // UpdateCurrentTenant mocks base method.
 func (m *MockStore) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (*Tenant, error) {
 	m.ctrl.T.Helper()
@@ -7168,20 +6827,6 @@ func (m *MockStore) UpdateEntity(ctx context.Context, arg UpdateEntityParams) (*
 func (mr *MockStoreMockRecorder) UpdateEntity(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEntity", reflect.TypeOf((*MockStore)(nil).UpdateEntity), ctx, arg)
-}
-
-// UpdateEntityConfiguration mocks base method.
-func (m *MockStore) UpdateEntityConfiguration(ctx context.Context, arg UpdateEntityConfigurationParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateEntityConfiguration", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateEntityConfiguration indicates an expected call of UpdateEntityConfiguration.
-func (mr *MockStoreMockRecorder) UpdateEntityConfiguration(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEntityConfiguration", reflect.TypeOf((*MockStore)(nil).UpdateEntityConfiguration), ctx, arg)
 }
 
 // UpdateEntitySequence mocks base method.
@@ -7445,20 +7090,6 @@ func (mr *MockStoreMockRecorder) UpdateTenantConfiguration(ctx, arg any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTenantConfiguration", reflect.TypeOf((*MockStore)(nil).UpdateTenantConfiguration), ctx, arg)
 }
 
-// UpdateTenantConfigurationSettings mocks base method.
-func (m *MockStore) UpdateTenantConfigurationSettings(ctx context.Context, arg UpdateTenantConfigurationSettingsParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateTenantConfigurationSettings", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateTenantConfigurationSettings indicates an expected call of UpdateTenantConfigurationSettings.
-func (mr *MockStoreMockRecorder) UpdateTenantConfigurationSettings(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTenantConfigurationSettings", reflect.TypeOf((*MockStore)(nil).UpdateTenantConfigurationSettings), ctx, arg)
-}
-
 // UpdateTenantIndustry mocks base method.
 func (m *MockStore) UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndustryParams) (*Tenant, error) {
 	m.ctrl.T.Helper()
@@ -7562,20 +7193,6 @@ func (m *MockStore) UpdateTenantSubdomain(ctx context.Context, arg UpdateTenantS
 func (mr *MockStoreMockRecorder) UpdateTenantSubdomain(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTenantSubdomain", reflect.TypeOf((*MockStore)(nil).UpdateTenantSubdomain), ctx, arg)
-}
-
-// UpdateTenantTemplateInfo mocks base method.
-func (m *MockStore) UpdateTenantTemplateInfo(ctx context.Context, templateID *uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateTenantTemplateInfo", ctx, templateID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateTenantTemplateInfo indicates an expected call of UpdateTenantTemplateInfo.
-func (mr *MockStoreMockRecorder) UpdateTenantTemplateInfo(ctx, templateID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTenantTemplateInfo", reflect.TypeOf((*MockStore)(nil).UpdateTenantTemplateInfo), ctx, templateID)
 }
 
 // UpdateTenantUsageStats mocks base method.
@@ -8199,20 +7816,6 @@ func (m *MockTxStore) BulkSoftDeleteTenants(ctx context.Context, tenantIds []uui
 func (mr *MockTxStoreMockRecorder) BulkSoftDeleteTenants(ctx, tenantIds any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkSoftDeleteTenants", reflect.TypeOf((*MockTxStore)(nil).BulkSoftDeleteTenants), ctx, tenantIds)
-}
-
-// BulkUpdateEntityConfiguration mocks base method.
-func (m *MockTxStore) BulkUpdateEntityConfiguration(ctx context.Context, arg BulkUpdateEntityConfigurationParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "BulkUpdateEntityConfiguration", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// BulkUpdateEntityConfiguration indicates an expected call of BulkUpdateEntityConfiguration.
-func (mr *MockTxStoreMockRecorder) BulkUpdateEntityConfiguration(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BulkUpdateEntityConfiguration", reflect.TypeOf((*MockTxStore)(nil).BulkUpdateEntityConfiguration), ctx, arg)
 }
 
 // BulkUpdateEventRiskScores mocks base method.
@@ -8938,51 +8541,6 @@ func (mr *MockTxStoreMockRecorder) CreateAuditEvent(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateAuditEvent", reflect.TypeOf((*MockTxStore)(nil).CreateAuditEvent), ctx, arg)
 }
 
-// CreateConfigDefinition mocks base method.
-func (m *MockTxStore) CreateConfigDefinition(ctx context.Context, arg CreateConfigDefinitionParams) (*ConfigDefinition, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateConfigDefinition", ctx, arg)
-	ret0, _ := ret[0].(*ConfigDefinition)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateConfigDefinition indicates an expected call of CreateConfigDefinition.
-func (mr *MockTxStoreMockRecorder) CreateConfigDefinition(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateConfigDefinition", reflect.TypeOf((*MockTxStore)(nil).CreateConfigDefinition), ctx, arg)
-}
-
-// CreateConfigurationAudit mocks base method.
-func (m *MockTxStore) CreateConfigurationAudit(ctx context.Context, arg CreateConfigurationAuditParams) (*ConfigurationAudit, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateConfigurationAudit", ctx, arg)
-	ret0, _ := ret[0].(*ConfigurationAudit)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateConfigurationAudit indicates an expected call of CreateConfigurationAudit.
-func (mr *MockTxStoreMockRecorder) CreateConfigurationAudit(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateConfigurationAudit", reflect.TypeOf((*MockTxStore)(nil).CreateConfigurationAudit), ctx, arg)
-}
-
-// CreateConfigurationTemplate mocks base method.
-func (m *MockTxStore) CreateConfigurationTemplate(ctx context.Context, arg CreateConfigurationTemplateParams) (*ConfigurationTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateConfigurationTemplate", ctx, arg)
-	ret0, _ := ret[0].(*ConfigurationTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateConfigurationTemplate indicates an expected call of CreateConfigurationTemplate.
-func (mr *MockTxStoreMockRecorder) CreateConfigurationTemplate(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateConfigurationTemplate", reflect.TypeOf((*MockTxStore)(nil).CreateConfigurationTemplate), ctx, arg)
-}
-
 // CreateDefaultTenantConfiguration mocks base method.
 func (m *MockTxStore) CreateDefaultTenantConfiguration(ctx context.Context) error {
 	m.ctrl.T.Helper()
@@ -9146,21 +8704,6 @@ func (mr *MockTxStoreMockRecorder) CreateResource(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateResource", reflect.TypeOf((*MockTxStore)(nil).CreateResource), ctx, arg)
 }
 
-// CreateTemplateApplication mocks base method.
-func (m *MockTxStore) CreateTemplateApplication(ctx context.Context, arg CreateTemplateApplicationParams) (*TemplateApplication, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateTemplateApplication", ctx, arg)
-	ret0, _ := ret[0].(*TemplateApplication)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateTemplateApplication indicates an expected call of CreateTemplateApplication.
-func (mr *MockTxStoreMockRecorder) CreateTemplateApplication(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateTemplateApplication", reflect.TypeOf((*MockTxStore)(nil).CreateTemplateApplication), ctx, arg)
-}
-
 // CreateTenant mocks base method.
 func (m *MockTxStore) CreateTenant(ctx context.Context, arg CreateTenantParams) (*Tenant, error) {
 	m.ctrl.T.Helper()
@@ -9296,20 +8839,6 @@ func (mr *MockTxStoreMockRecorder) DeactivateAccountValidationRule(ctx, arg any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeactivateAccountValidationRule", reflect.TypeOf((*MockTxStore)(nil).DeactivateAccountValidationRule), ctx, arg)
 }
 
-// DeactivateConfigurationTemplate mocks base method.
-func (m *MockTxStore) DeactivateConfigurationTemplate(ctx context.Context, templateID uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeactivateConfigurationTemplate", ctx, templateID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeactivateConfigurationTemplate indicates an expected call of DeactivateConfigurationTemplate.
-func (mr *MockTxStoreMockRecorder) DeactivateConfigurationTemplate(ctx, templateID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeactivateConfigurationTemplate", reflect.TypeOf((*MockTxStore)(nil).DeactivateConfigurationTemplate), ctx, templateID)
-}
-
 // DeleteAccountBalance mocks base method.
 func (m *MockTxStore) DeleteAccountBalance(ctx context.Context, id uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -9364,20 +8893,6 @@ func (m *MockTxStore) DeleteAttributeValue(ctx context.Context, arg DeleteAttrib
 func (mr *MockTxStoreMockRecorder) DeleteAttributeValue(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAttributeValue", reflect.TypeOf((*MockTxStore)(nil).DeleteAttributeValue), ctx, arg)
-}
-
-// DeleteEntityConfiguration mocks base method.
-func (m *MockTxStore) DeleteEntityConfiguration(ctx context.Context, arg DeleteEntityConfigurationParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteEntityConfiguration", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteEntityConfiguration indicates an expected call of DeleteEntityConfiguration.
-func (mr *MockTxStoreMockRecorder) DeleteEntityConfiguration(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEntityConfiguration", reflect.TypeOf((*MockTxStore)(nil).DeleteEntityConfiguration), ctx, arg)
 }
 
 // DeleteFeatureFlag mocks base method.
@@ -9448,20 +8963,6 @@ func (m *MockTxStore) DeleteTenantConfiguration(ctx context.Context, arg DeleteT
 func (mr *MockTxStoreMockRecorder) DeleteTenantConfiguration(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTenantConfiguration", reflect.TypeOf((*MockTxStore)(nil).DeleteTenantConfiguration), ctx, arg)
-}
-
-// DeleteTenantConfigurationSettings mocks base method.
-func (m *MockTxStore) DeleteTenantConfigurationSettings(ctx context.Context, configPath []string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteTenantConfigurationSettings", ctx, configPath)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// DeleteTenantConfigurationSettings indicates an expected call of DeleteTenantConfigurationSettings.
-func (mr *MockTxStoreMockRecorder) DeleteTenantConfigurationSettings(ctx, configPath any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteTenantConfigurationSettings", reflect.TypeOf((*MockTxStore)(nil).DeleteTenantConfigurationSettings), ctx, configPath)
 }
 
 // DeleteTenantUsageStats mocks base method.
@@ -10689,66 +10190,6 @@ func (mr *MockTxStoreMockRecorder) GetComplianceEvents(ctx, arg any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetComplianceEvents", reflect.TypeOf((*MockTxStore)(nil).GetComplianceEvents), ctx, arg)
 }
 
-// GetConfigDefinition mocks base method.
-func (m *MockTxStore) GetConfigDefinition(ctx context.Context, arg GetConfigDefinitionParams) (*ConfigDefinition, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConfigDefinition", ctx, arg)
-	ret0, _ := ret[0].(*ConfigDefinition)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetConfigDefinition indicates an expected call of GetConfigDefinition.
-func (mr *MockTxStoreMockRecorder) GetConfigDefinition(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfigDefinition", reflect.TypeOf((*MockTxStore)(nil).GetConfigDefinition), ctx, arg)
-}
-
-// GetConfigurationAuditByCorrelation mocks base method.
-func (m *MockTxStore) GetConfigurationAuditByCorrelation(ctx context.Context, correlationID *string) ([]*ConfigurationAudit, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConfigurationAuditByCorrelation", ctx, correlationID)
-	ret0, _ := ret[0].([]*ConfigurationAudit)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetConfigurationAuditByCorrelation indicates an expected call of GetConfigurationAuditByCorrelation.
-func (mr *MockTxStoreMockRecorder) GetConfigurationAuditByCorrelation(ctx, correlationID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfigurationAuditByCorrelation", reflect.TypeOf((*MockTxStore)(nil).GetConfigurationAuditByCorrelation), ctx, correlationID)
-}
-
-// GetConfigurationHistory mocks base method.
-func (m *MockTxStore) GetConfigurationHistory(ctx context.Context, arg GetConfigurationHistoryParams) ([]*ConfigurationAudit, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConfigurationHistory", ctx, arg)
-	ret0, _ := ret[0].([]*ConfigurationAudit)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetConfigurationHistory indicates an expected call of GetConfigurationHistory.
-func (mr *MockTxStoreMockRecorder) GetConfigurationHistory(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfigurationHistory", reflect.TypeOf((*MockTxStore)(nil).GetConfigurationHistory), ctx, arg)
-}
-
-// GetConfigurationTemplate mocks base method.
-func (m *MockTxStore) GetConfigurationTemplate(ctx context.Context, templateID uuid.UUID) (*ConfigurationTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetConfigurationTemplate", ctx, templateID)
-	ret0, _ := ret[0].(*ConfigurationTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetConfigurationTemplate indicates an expected call of GetConfigurationTemplate.
-func (mr *MockTxStoreMockRecorder) GetConfigurationTemplate(ctx, templateID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfigurationTemplate", reflect.TypeOf((*MockTxStore)(nil).GetConfigurationTemplate), ctx, templateID)
-}
-
 // GetControlAccounts mocks base method.
 func (m *MockTxStore) GetControlAccounts(ctx context.Context, entityID *uuid.UUID) ([]*FinanceAccount, error) {
 	m.ctrl.T.Helper()
@@ -10869,21 +10310,6 @@ func (mr *MockTxStoreMockRecorder) GetDuplicateSequenceCheck(ctx any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDuplicateSequenceCheck", reflect.TypeOf((*MockTxStore)(nil).GetDuplicateSequenceCheck), ctx)
 }
 
-// GetEffectiveConfiguration mocks base method.
-func (m *MockTxStore) GetEffectiveConfiguration(ctx context.Context, arg GetEffectiveConfigurationParams) (*GetEffectiveConfigurationRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEffectiveConfiguration", ctx, arg)
-	ret0, _ := ret[0].(*GetEffectiveConfigurationRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetEffectiveConfiguration indicates an expected call of GetEffectiveConfiguration.
-func (mr *MockTxStoreMockRecorder) GetEffectiveConfiguration(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEffectiveConfiguration", reflect.TypeOf((*MockTxStore)(nil).GetEffectiveConfiguration), ctx, arg)
-}
-
 // GetEmployeeByID mocks base method.
 func (m *MockTxStore) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee, error) {
 	m.ctrl.T.Helper()
@@ -10942,21 +10368,6 @@ func (m *MockTxStore) GetEntitiesByUUIDs(ctx context.Context, uuids []uuid.UUID)
 func (mr *MockTxStoreMockRecorder) GetEntitiesByUUIDs(ctx, uuids any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitiesByUUIDs", reflect.TypeOf((*MockTxStore)(nil).GetEntitiesByUUIDs), ctx, uuids)
-}
-
-// GetEntitiesForBulkUpdate mocks base method.
-func (m *MockTxStore) GetEntitiesForBulkUpdate(ctx context.Context, arg GetEntitiesForBulkUpdateParams) ([]*GetEntitiesForBulkUpdateRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEntitiesForBulkUpdate", ctx, arg)
-	ret0, _ := ret[0].([]*GetEntitiesForBulkUpdateRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetEntitiesForBulkUpdate indicates an expected call of GetEntitiesForBulkUpdate.
-func (mr *MockTxStoreMockRecorder) GetEntitiesForBulkUpdate(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntitiesForBulkUpdate", reflect.TypeOf((*MockTxStore)(nil).GetEntitiesForBulkUpdate), ctx, arg)
 }
 
 // GetEntity mocks base method.
@@ -11047,21 +10458,6 @@ func (m *MockTxStore) GetEntityChildren(ctx context.Context, ancestorID uuid.UUI
 func (mr *MockTxStoreMockRecorder) GetEntityChildren(ctx, ancestorID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityChildren", reflect.TypeOf((*MockTxStore)(nil).GetEntityChildren), ctx, ancestorID)
-}
-
-// GetEntityConfigurations mocks base method.
-func (m *MockTxStore) GetEntityConfigurations(ctx context.Context, entityID uuid.UUID) ([]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEntityConfigurations", ctx, entityID)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetEntityConfigurations indicates an expected call of GetEntityConfigurations.
-func (mr *MockTxStoreMockRecorder) GetEntityConfigurations(ctx, entityID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEntityConfigurations", reflect.TypeOf((*MockTxStore)(nil).GetEntityConfigurations), ctx, entityID)
 }
 
 // GetEntityCountByType mocks base method.
@@ -12578,21 +11974,6 @@ func (mr *MockTxStoreMockRecorder) GetSuspiciousActivityByIP(ctx, arg any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSuspiciousActivityByIP", reflect.TypeOf((*MockTxStore)(nil).GetSuspiciousActivityByIP), ctx, arg)
 }
 
-// GetTemplateApplicationHistory mocks base method.
-func (m *MockTxStore) GetTemplateApplicationHistory(ctx context.Context, arg GetTemplateApplicationHistoryParams) ([]*GetTemplateApplicationHistoryRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTemplateApplicationHistory", ctx, arg)
-	ret0, _ := ret[0].([]*GetTemplateApplicationHistoryRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetTemplateApplicationHistory indicates an expected call of GetTemplateApplicationHistory.
-func (mr *MockTxStoreMockRecorder) GetTemplateApplicationHistory(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTemplateApplicationHistory", reflect.TypeOf((*MockTxStore)(nil).GetTemplateApplicationHistory), ctx, arg)
-}
-
 // GetTenantAnalyticsOverviewAdmin mocks base method.
 func (m *MockTxStore) GetTenantAnalyticsOverviewAdmin(ctx context.Context, dollar_1 uuid.UUID) (*GetTenantAnalyticsOverviewAdminRow, error) {
 	m.ctrl.T.Helper()
@@ -12696,21 +12077,6 @@ func (m *MockTxStore) GetTenantConfiguration(ctx context.Context) (*TenantConfig
 func (mr *MockTxStoreMockRecorder) GetTenantConfiguration(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantConfiguration", reflect.TypeOf((*MockTxStore)(nil).GetTenantConfiguration), ctx)
-}
-
-// GetTenantConfigurations mocks base method.
-func (m *MockTxStore) GetTenantConfigurations(ctx context.Context) (*GetTenantConfigurationsRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTenantConfigurations", ctx)
-	ret0, _ := ret[0].(*GetTenantConfigurationsRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetTenantConfigurations indicates an expected call of GetTenantConfigurations.
-func (mr *MockTxStoreMockRecorder) GetTenantConfigurations(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTenantConfigurations", reflect.TypeOf((*MockTxStore)(nil).GetTenantConfigurations), ctx)
 }
 
 // GetTenantEntitySummaryAdmin mocks base method.
@@ -13918,36 +13284,6 @@ func (mr *MockTxStoreMockRecorder) ListAttributeDefinitionsByCategory(ctx, categ
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAttributeDefinitionsByCategory", reflect.TypeOf((*MockTxStore)(nil).ListAttributeDefinitionsByCategory), ctx, category)
 }
 
-// ListConfigDefinitions mocks base method.
-func (m *MockTxStore) ListConfigDefinitions(ctx context.Context, moduleName *string) ([]*ConfigDefinition, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListConfigDefinitions", ctx, moduleName)
-	ret0, _ := ret[0].([]*ConfigDefinition)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListConfigDefinitions indicates an expected call of ListConfigDefinitions.
-func (mr *MockTxStoreMockRecorder) ListConfigDefinitions(ctx, moduleName any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListConfigDefinitions", reflect.TypeOf((*MockTxStore)(nil).ListConfigDefinitions), ctx, moduleName)
-}
-
-// ListConfigurationTemplates mocks base method.
-func (m *MockTxStore) ListConfigurationTemplates(ctx context.Context, arg ListConfigurationTemplatesParams) ([]*ConfigurationTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListConfigurationTemplates", ctx, arg)
-	ret0, _ := ret[0].([]*ConfigurationTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListConfigurationTemplates indicates an expected call of ListConfigurationTemplates.
-func (mr *MockTxStoreMockRecorder) ListConfigurationTemplates(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListConfigurationTemplates", reflect.TypeOf((*MockTxStore)(nil).ListConfigurationTemplates), ctx, arg)
-}
-
 // ListEntities mocks base method.
 func (m *MockTxStore) ListEntities(ctx context.Context) ([]*Entity, error) {
 	m.ctrl.T.Helper()
@@ -14141,21 +13477,6 @@ func (m *MockTxStore) ListPoliciesByEffect(ctx context.Context, effect *string) 
 func (mr *MockTxStoreMockRecorder) ListPoliciesByEffect(ctx, effect any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPoliciesByEffect", reflect.TypeOf((*MockTxStore)(nil).ListPoliciesByEffect), ctx, effect)
-}
-
-// ListTenantEffectiveConfigurations mocks base method.
-func (m *MockTxStore) ListTenantEffectiveConfigurations(ctx context.Context, arg ListTenantEffectiveConfigurationsParams) ([]*ListTenantEffectiveConfigurationsRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListTenantEffectiveConfigurations", ctx, arg)
-	ret0, _ := ret[0].([]*ListTenantEffectiveConfigurationsRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListTenantEffectiveConfigurations indicates an expected call of ListTenantEffectiveConfigurations.
-func (mr *MockTxStoreMockRecorder) ListTenantEffectiveConfigurations(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListTenantEffectiveConfigurations", reflect.TypeOf((*MockTxStore)(nil).ListTenantEffectiveConfigurations), ctx, arg)
 }
 
 // ListTenants mocks base method.
@@ -14565,21 +13886,6 @@ func (mr *MockTxStoreMockRecorder) SearchAccountsWithGroupInfo(ctx, arg any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchAccountsWithGroupInfo", reflect.TypeOf((*MockTxStore)(nil).SearchAccountsWithGroupInfo), ctx, arg)
 }
 
-// SearchConfigurations mocks base method.
-func (m *MockTxStore) SearchConfigurations(ctx context.Context, arg SearchConfigurationsParams) ([]*SearchConfigurationsRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SearchConfigurations", ctx, arg)
-	ret0, _ := ret[0].([]*SearchConfigurationsRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// SearchConfigurations indicates an expected call of SearchConfigurations.
-func (mr *MockTxStoreMockRecorder) SearchConfigurations(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchConfigurations", reflect.TypeOf((*MockTxStore)(nil).SearchConfigurations), ctx, arg)
-}
-
 // SearchEntitiesByCodeAndName mocks base method.
 func (m *MockTxStore) SearchEntitiesByCodeAndName(ctx context.Context, arg SearchEntitiesByCodeAndNameParams) ([]*Entity, error) {
 	m.ctrl.T.Helper()
@@ -14730,17 +14036,17 @@ func (mr *MockTxStoreMockRecorder) SetSequenceNumber(ctx, arg any) *gomock.Call 
 }
 
 // SetTenantContext mocks base method.
-func (m *MockTxStore) SetTenantContext(ctx context.Context, tenantID uuid.UUID) error {
+func (m *MockTxStore) SetTenantContext(ctx context.Context, pTenantID uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetTenantContext", ctx, tenantID)
+	ret := m.ctrl.Call(m, "SetTenantContext", ctx, pTenantID)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SetTenantContext indicates an expected call of SetTenantContext.
-func (mr *MockTxStoreMockRecorder) SetTenantContext(ctx, tenantID any) *gomock.Call {
+func (mr *MockTxStoreMockRecorder) SetTenantContext(ctx, pTenantID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTenantContext", reflect.TypeOf((*MockTxStore)(nil).SetTenantContext), ctx, tenantID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTenantContext", reflect.TypeOf((*MockTxStore)(nil).SetTenantContext), ctx, pTenantID)
 }
 
 // SetTenantContextFromCtx mocks base method.
@@ -15045,36 +14351,6 @@ func (mr *MockTxStoreMockRecorder) UpdateAttributeValue(ctx, arg any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAttributeValue", reflect.TypeOf((*MockTxStore)(nil).UpdateAttributeValue), ctx, arg)
 }
 
-// UpdateConfigDefinition mocks base method.
-func (m *MockTxStore) UpdateConfigDefinition(ctx context.Context, arg UpdateConfigDefinitionParams) (*ConfigDefinition, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateConfigDefinition", ctx, arg)
-	ret0, _ := ret[0].(*ConfigDefinition)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateConfigDefinition indicates an expected call of UpdateConfigDefinition.
-func (mr *MockTxStoreMockRecorder) UpdateConfigDefinition(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateConfigDefinition", reflect.TypeOf((*MockTxStore)(nil).UpdateConfigDefinition), ctx, arg)
-}
-
-// UpdateConfigurationTemplate mocks base method.
-func (m *MockTxStore) UpdateConfigurationTemplate(ctx context.Context, arg UpdateConfigurationTemplateParams) (*ConfigurationTemplate, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateConfigurationTemplate", ctx, arg)
-	ret0, _ := ret[0].(*ConfigurationTemplate)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// UpdateConfigurationTemplate indicates an expected call of UpdateConfigurationTemplate.
-func (mr *MockTxStoreMockRecorder) UpdateConfigurationTemplate(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateConfigurationTemplate", reflect.TypeOf((*MockTxStore)(nil).UpdateConfigurationTemplate), ctx, arg)
-}
-
 // UpdateCurrentTenant mocks base method.
 func (m *MockTxStore) UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (*Tenant, error) {
 	m.ctrl.T.Helper()
@@ -15117,20 +14393,6 @@ func (m *MockTxStore) UpdateEntity(ctx context.Context, arg UpdateEntityParams) 
 func (mr *MockTxStoreMockRecorder) UpdateEntity(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEntity", reflect.TypeOf((*MockTxStore)(nil).UpdateEntity), ctx, arg)
-}
-
-// UpdateEntityConfiguration mocks base method.
-func (m *MockTxStore) UpdateEntityConfiguration(ctx context.Context, arg UpdateEntityConfigurationParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateEntityConfiguration", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateEntityConfiguration indicates an expected call of UpdateEntityConfiguration.
-func (mr *MockTxStoreMockRecorder) UpdateEntityConfiguration(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEntityConfiguration", reflect.TypeOf((*MockTxStore)(nil).UpdateEntityConfiguration), ctx, arg)
 }
 
 // UpdateEntitySequence mocks base method.
@@ -15394,20 +14656,6 @@ func (mr *MockTxStoreMockRecorder) UpdateTenantConfiguration(ctx, arg any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTenantConfiguration", reflect.TypeOf((*MockTxStore)(nil).UpdateTenantConfiguration), ctx, arg)
 }
 
-// UpdateTenantConfigurationSettings mocks base method.
-func (m *MockTxStore) UpdateTenantConfigurationSettings(ctx context.Context, arg UpdateTenantConfigurationSettingsParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateTenantConfigurationSettings", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateTenantConfigurationSettings indicates an expected call of UpdateTenantConfigurationSettings.
-func (mr *MockTxStoreMockRecorder) UpdateTenantConfigurationSettings(ctx, arg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTenantConfigurationSettings", reflect.TypeOf((*MockTxStore)(nil).UpdateTenantConfigurationSettings), ctx, arg)
-}
-
 // UpdateTenantIndustry mocks base method.
 func (m *MockTxStore) UpdateTenantIndustry(ctx context.Context, arg UpdateTenantIndustryParams) (*Tenant, error) {
 	m.ctrl.T.Helper()
@@ -15511,20 +14759,6 @@ func (m *MockTxStore) UpdateTenantSubdomain(ctx context.Context, arg UpdateTenan
 func (mr *MockTxStoreMockRecorder) UpdateTenantSubdomain(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTenantSubdomain", reflect.TypeOf((*MockTxStore)(nil).UpdateTenantSubdomain), ctx, arg)
-}
-
-// UpdateTenantTemplateInfo mocks base method.
-func (m *MockTxStore) UpdateTenantTemplateInfo(ctx context.Context, templateID *uuid.UUID) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateTenantTemplateInfo", ctx, templateID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateTenantTemplateInfo indicates an expected call of UpdateTenantTemplateInfo.
-func (mr *MockTxStoreMockRecorder) UpdateTenantTemplateInfo(ctx, templateID any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateTenantTemplateInfo", reflect.TypeOf((*MockTxStore)(nil).UpdateTenantTemplateInfo), ctx, templateID)
 }
 
 // UpdateTenantUsageStats mocks base method.
