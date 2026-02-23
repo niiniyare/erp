@@ -15,7 +15,7 @@ INSERT INTO
 VALUES
   (current_tenant_id(), $1, $2)
 RETURNING
-  id, name, display_name, description, action_type, action_category, risk_level, requires_approval, is_active, created_at
+  id, tenant_id, scope, name, display_name, description, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
 `
 
 type CreateActionParams struct {
@@ -28,6 +28,8 @@ func (q *Queries) CreateAction(ctx context.Context, arg CreateActionParams) (*Ac
 	var i Action
 	err := row.Scan(
 		&i.ID,
+		&i.TenantID,
+		&i.Scope,
 		&i.Name,
 		&i.DisplayName,
 		&i.Description,
@@ -35,8 +37,10 @@ func (q *Queries) CreateAction(ctx context.Context, arg CreateActionParams) (*Ac
 		&i.ActionCategory,
 		&i.RiskLevel,
 		&i.RequiresApproval,
+		&i.ApproverRoleID,
 		&i.IsActive,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return &i, err
 }

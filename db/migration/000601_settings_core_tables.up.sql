@@ -50,78 +50,96 @@
 -- CONFIGURATION TEMPLATES - Bulk configuration deployment
 -- =====================================================================
 CREATE TABLE configuration_templates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  -- NULL for SYSTEM-scoped templates; NOT NULL for TENANT-scoped templates.
+  -- Enforced by the scope_tenant_check constraint below.
+  tenant_id UUID REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID REFERENCES entities(uuid) ON DELETE CASCADE,
-  name VARCHAR(255) NOT NULL,
-  category VARCHAR(50) NOT NULL CHECK (category IN ('INDUSTRY', 'FUNCTIONAL', 'REGIONAL')),
+  -- SYSTEM = platform-wide (readable by all, writable only by admin_role).
+  -- TENANT = private to the owning tenant.
+  scope     VARCHAR(10) NOT NULL DEFAULT 'TENANT'
+              CHECK (scope IN ('SYSTEM', 'TENANT')),
+  name      VARCHAR(255) NOT NULL,
+  category  VARCHAR(50)  NOT NULL CHECK (category IN ('INDUSTRY', 'FUNCTIONAL', 'REGIONAL')),
   description TEXT,
-  version VARCHAR(20) NOT NULL,
-  configurations JSONB NOT NULL,
+  version   VARCHAR(20) NOT NULL,
+  configurations        JSONB    NOT NULL,
   applicable_tenant_types TEXT[],
-  required_feature_flags TEXT[],
-  conflict_resolution VARCHAR(20) DEFAULT 'MERGE' CHECK (conflict_resolution IN ('MERGE', 'REPLACE', 'PRESERVE')),
-  is_active BOOLEAN NOT NULL DEFAULT true,
+  required_feature_flags  TEXT[],
+  conflict_resolution VARCHAR(20) DEFAULT 'MERGE'
+                        CHECK (conflict_resolution IN ('MERGE', 'REPLACE', 'PRESERVE')),
+  is_active  BOOLEAN NOT NULL DEFAULT true,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_by UUID NOT NULL,
-  -- Ensure unique template name+version combinations
-  CONSTRAINT configuration_templates_name_version_unique UNIQUE (name, version)
+  -- SYSTEM templates have tenant_id=NULL; TENANT templates must have a tenant_id.
+  CONSTRAINT configuration_templates_scope_tenant_check CHECK (
+    (scope = 'SYSTEM' AND tenant_id IS NULL)
+    OR (scope = 'TENANT' AND tenant_id IS NOT NULL)
+  )
 );
 
 -- Add table and column comments
 COMMENT ON TABLE configuration_templates IS 'Reusable configuration templates for bulk deployment across tenants and entities';
 
-COMMENT ON COLUMN configuration_templates.id IS 'UUID primary key for the configuration template';
-COMMENT ON COLUMN configuration_templates.name IS 'Template display name';
-COMMENT ON COLUMN configuration_templates.category IS 'Template category: industry, functional, or regional';
-COMMENT ON COLUMN configuration_templates.version IS 'Semantic version string for template versioning';
-COMMENT ON COLUMN configuration_templates.configurations IS 'JSON object containing all configuration key-value pairs';
-COMMENT ON COLUMN configuration_templates.applicable_tenant_types IS 'Array of tenant types this template applies to';
-COMMENT ON COLUMN configuration_templates.required_feature_flags IS 'Array of feature flags required for this template';
-COMMENT ON COLUMN configuration_templates.conflict_resolution IS 'Strategy for handling configuration conflicts: merge, replace, or preserve';
-COMMENT ON COLUMN configuration_templates.is_active IS 'Whether this template is active and available for use';
+COMMENT ON COLUMN configuration_templates.id        IS 'UUID primary key for the configuration template';
+COMMENT ON COLUMN configuration_templates.tenant_id IS 'Owning tenant for TENANT-scoped templates; NULL for SYSTEM-scoped templates';
+COMMENT ON COLUMN configuration_templates.scope     IS 'SYSTEM = platform-wide, readable by all. TENANT = private to owner tenant.';
+COMMENT ON COLUMN configuration_templates.name      IS 'Template display name';
+COMMENT ON COLUMN configuration_templates.category  IS 'Template category: INDUSTRY, FUNCTIONAL, or REGIONAL';
+COMMENT ON COLUMN configuration_templates.version   IS 'Semantic version string for template versioning';
+COMMENT ON COLUMN configuration_templates.configurations        IS 'JSONB object of module.key → value pairs applied by this template';
+COMMENT ON COLUMN configuration_templates.applicable_tenant_types IS 'Tenant types this template is designed for';
+COMMENT ON COLUMN configuration_templates.required_feature_flags  IS 'Feature flags that must be enabled for this template to be applicable';
+COMMENT ON COLUMN configuration_templates.conflict_resolution IS 'How to handle key conflicts on apply: MERGE, REPLACE, or PRESERVE';
+COMMENT ON COLUMN configuration_templates.is_active IS 'Active templates appear in the UI. Deactivate instead of deleting applied templates.';
 COMMENT ON COLUMN configuration_templates.created_by IS 'UUID of user who created this template';
 
 -- =====================================================================
 -- CONFIGURATION AUDIT - Complete audit trail for all changes
 -- =====================================================================
 CREATE TABLE configuration_audit (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  entity_id UUID REFERENCES entities(uuid) ON DELETE SET NULL,
-  config_key VARCHAR(150) NOT NULL,
-  old_value JSONB,
-  new_value JSONB,
-source VARCHAR(20) NOT NULL CHECK (source IN ('SYSTEM', 'TENANT', 'ENTITY', 'TEMPLATE')),
-operation VARCHAR(20) NOT NULL CHECK (operation IN ('CREATE', 'UPDATE', 'DELETE', 'RESET', 'TEMPLATE_APPLY')),
-  user_id UUID NOT NULL,
-  applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  session_id VARCHAR(100),
-  correlation_id VARCHAR(100)
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id       UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  entity_id       UUID REFERENCES entities(uuid) ON DELETE SET NULL,
+  -- Separate columns enable B-tree indexing on each part.
+  -- Replaces the legacy combined "module.key" string pattern.
+  module_name     VARCHAR(50)  NOT NULL,
+  config_key_name VARCHAR(100) NOT NULL,
+  old_value       JSONB,
+  new_value       JSONB,
+  source    VARCHAR(20) NOT NULL CHECK (source    IN ('SYSTEM', 'TENANT', 'ENTITY', 'TEMPLATE')),
+  operation VARCHAR(20) NOT NULL CHECK (operation IN ('CREATE', 'UPDATE', 'DELETE', 'RESET', 'TEMPLATE_APPLY')),
+  user_id         UUID      NOT NULL,
+  applied_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  session_id      VARCHAR(100),
+  correlation_id  VARCHAR(100)
 );
 
 -- Add table and column comments
 COMMENT ON TABLE configuration_audit IS 'Complete audit trail of all configuration changes for compliance and troubleshooting';
 
-COMMENT ON COLUMN configuration_audit.id IS 'UUID primary key for the audit record';
-COMMENT ON COLUMN configuration_audit.tenant_id IS 'Foreign key to tenants table for multi-tenant isolation';
-COMMENT ON COLUMN configuration_audit.entity_id IS 'Optional foreign key to entities table for entity-level changes';
-COMMENT ON COLUMN configuration_audit.config_key IS 'Full configuration key (module.key) that was modified';
-COMMENT ON COLUMN configuration_audit.old_value IS 'Previous configuration value in JSONB format';
-COMMENT ON COLUMN configuration_audit.new_value IS 'New configuration value in JSONB format';
-COMMENT ON COLUMN configuration_audit.source IS 'Source level where change occurred: system, tenant, entity, or template';
-COMMENT ON COLUMN configuration_audit.operation IS 'Type of operation: create, update, delete, reset, or template_apply';
-COMMENT ON COLUMN configuration_audit.user_id IS 'UUID of user who made the change';
-COMMENT ON COLUMN configuration_audit.session_id IS 'Session identifier for tracking related changes';
-COMMENT ON COLUMN configuration_audit.correlation_id IS 'Correlation ID for tracking bulk operations';
+COMMENT ON COLUMN configuration_audit.id              IS 'UUID primary key for the audit record';
+COMMENT ON COLUMN configuration_audit.tenant_id       IS 'Foreign key to tenants table for multi-tenant isolation';
+COMMENT ON COLUMN configuration_audit.entity_id       IS 'Optional FK to entities — set when the change is entity-level';
+COMMENT ON COLUMN configuration_audit.module_name     IS 'Module owning this config key (e.g. finance, hr, inventory)';
+COMMENT ON COLUMN configuration_audit.config_key_name IS 'Config key within the module (e.g. invoice_prefix, valuation_method)';
+COMMENT ON COLUMN configuration_audit.old_value       IS 'Previous configuration value (JSONB)';
+COMMENT ON COLUMN configuration_audit.new_value       IS 'New configuration value (JSONB)';
+COMMENT ON COLUMN configuration_audit.source          IS 'Level where change occurred: SYSTEM, TENANT, ENTITY, TEMPLATE';
+COMMENT ON COLUMN configuration_audit.operation       IS 'Operation type: CREATE, UPDATE, DELETE, RESET, TEMPLATE_APPLY';
+COMMENT ON COLUMN configuration_audit.user_id         IS 'UUID of user who made the change';
+COMMENT ON COLUMN configuration_audit.session_id      IS 'Session identifier for grouping related changes';
+COMMENT ON COLUMN configuration_audit.correlation_id  IS 'Correlation ID for tracking bulk/template operations';
 
 -- =====================================================================
 -- TEMPLATE APPLICATIONS - History of template deployments
 -- =====================================================================
 CREATE TABLE template_applications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  template_id UUID NOT NULL REFERENCES configuration_templates(id) ON DELETE CASCADE,
+  -- ON DELETE RESTRICT: a template that has been applied cannot be deleted.
+  -- Deactivate templates (is_active=false) instead — preserves deployment history for compliance.
+  template_id UUID NOT NULL REFERENCES configuration_templates(id) ON DELETE RESTRICT,
   tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   entity_id UUID REFERENCES entities(uuid) ON DELETE SET NULL,
   target_type VARCHAR(10) NOT NULL CHECK (target_type IN ('TENANT', 'ENTITY')),
@@ -172,16 +190,25 @@ CREATE INDEX idx_config_definitions_module_key ON config_definitions(module_name
 CREATE INDEX idx_config_definitions_overridable ON config_definitions(module_name) WHERE is_overridable = true;
 
 -- Configuration templates indexes
-CREATE INDEX idx_configuration_templates_category ON configuration_templates(category);
-CREATE INDEX idx_configuration_templates_active ON configuration_templates(is_active) WHERE is_active = true;
+CREATE INDEX idx_configuration_templates_category   ON configuration_templates(category);
+CREATE INDEX idx_configuration_templates_active     ON configuration_templates(is_active) WHERE is_active = true;
 CREATE INDEX idx_configuration_templates_created_by ON configuration_templates(created_by);
+CREATE INDEX idx_configuration_templates_scope      ON configuration_templates(scope, is_active) WHERE is_active = true;
+CREATE INDEX idx_configuration_templates_tenant     ON configuration_templates(tenant_id, scope, is_active)
+  WHERE tenant_id IS NOT NULL AND is_active = true;
+
+-- Unique name+version per scope (SYSTEM templates unique globally; TENANT templates unique per tenant)
+CREATE UNIQUE INDEX configuration_templates_name_version_unique
+  ON configuration_templates (name, version, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'::uuid));
 
 -- Configuration audit indexes
-CREATE INDEX idx_configuration_audit_tenant ON configuration_audit(tenant_id);
-CREATE INDEX idx_configuration_audit_entity ON configuration_audit(tenant_id, entity_id) WHERE entity_id IS NOT NULL;
-CREATE INDEX idx_configuration_audit_config_key ON configuration_audit(tenant_id, config_key, applied_at);
+CREATE INDEX idx_configuration_audit_tenant      ON configuration_audit(tenant_id);
+CREATE INDEX idx_configuration_audit_entity      ON configuration_audit(tenant_id, entity_id) WHERE entity_id IS NOT NULL;
+-- Per-column indexes replace the old combined config_key index; each supports B-tree seeks
+CREATE INDEX idx_configuration_audit_module      ON configuration_audit(tenant_id, module_name, applied_at);
+CREATE INDEX idx_configuration_audit_key         ON configuration_audit(tenant_id, module_name, config_key_name, applied_at);
 CREATE INDEX idx_configuration_audit_correlation ON configuration_audit(correlation_id) WHERE correlation_id IS NOT NULL;
-CREATE INDEX idx_configuration_audit_user_time ON configuration_audit(user_id, applied_at);
+CREATE INDEX idx_configuration_audit_user_time   ON configuration_audit(user_id, applied_at);
 
 -- Template applications indexes
 CREATE INDEX idx_template_applications_template ON template_applications(template_id, applied_at);
@@ -229,11 +256,30 @@ CREATE POLICY config_definitions_read ON config_definitions
 CREATE POLICY config_definitions_modify ON config_definitions 
   FOR ALL TO admin_role USING (true) WITH CHECK (true);
 
--- Configuration templates are globally readable, only system admins can modify
-CREATE POLICY configuration_templates_read ON configuration_templates 
-  FOR SELECT TO application_role USING (true);
+-- SYSTEM-scoped templates are readable by all tenants.
+-- TENANT-scoped templates are readable/writable only by the owning tenant.
+CREATE POLICY configuration_templates_read ON configuration_templates
+  FOR SELECT TO application_role
+  USING (
+    scope = 'SYSTEM'
+    OR (scope = 'TENANT' AND current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+  );
 
-CREATE POLICY configuration_templates_modify ON configuration_templates 
+CREATE POLICY configuration_templates_insert ON configuration_templates
+  FOR INSERT TO application_role
+  WITH CHECK (
+    scope = 'TENANT'
+    AND current_tenant_id() IS NOT NULL
+    AND tenant_id = current_tenant_id()
+  );
+
+CREATE POLICY configuration_templates_update ON configuration_templates
+  FOR UPDATE TO application_role
+  USING  (scope = 'TENANT' AND current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+  WITH CHECK (scope = 'TENANT' AND current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
+
+-- admin_role: full access including SYSTEM-scoped templates
+CREATE POLICY configuration_templates_modify ON configuration_templates
   FOR ALL TO admin_role USING (true) WITH CHECK (true);
 
 -- Configuration audit is tenant-isolated

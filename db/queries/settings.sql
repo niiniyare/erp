@@ -207,25 +207,28 @@ ORDER BY config_full_key, priority DESC;
 
 -- name: CreateConfigurationTemplate :one
 INSERT INTO configuration_templates (
-    name, category, description, version, configurations,
+    tenant_id, scope, name, category, description, version, configurations,
     applicable_tenant_types, required_feature_flags,
     conflict_resolution, created_by
 ) VALUES (
+    sqlc.narg(tenant_id), sqlc.arg(scope),
     sqlc.arg(name), sqlc.arg(category), sqlc.arg(description), sqlc.arg(version), sqlc.arg(configurations),
     sqlc.arg(applicable_tenant_types), sqlc.arg(required_feature_flags),
     sqlc.arg(conflict_resolution), sqlc.arg(created_by)
 ) RETURNING *;
 
 -- name: GetConfigurationTemplate :one
-SELECT * FROM configuration_templates 
+SELECT * FROM configuration_templates
 WHERE id = sqlc.arg(template_id) AND is_active = true;
 
 -- name: ListConfigurationTemplates :many
+-- Returns SYSTEM templates + current tenant's TENANT templates (RLS enforces the TENANT filter).
 SELECT * FROM configuration_templates
 WHERE is_active = true
+AND (sqlc.narg(scope_filter)::TEXT IS NULL    OR sqlc.narg(scope_filter)::TEXT    = '' OR scope    = sqlc.narg(scope_filter))
 AND (sqlc.narg(category_filter)::TEXT IS NULL OR sqlc.narg(category_filter)::TEXT = '' OR category = sqlc.narg(category_filter))
 AND (sqlc.narg(tenant_types_filter)::TEXT[] IS NULL OR applicable_tenant_types && sqlc.narg(tenant_types_filter)::TEXT[])
-ORDER BY name;
+ORDER BY scope DESC, name;  -- TENANT before SYSTEM so tenant customisations appear first
 
 -- name: UpdateConfigurationTemplate :one
 UPDATE configuration_templates 
@@ -285,18 +288,22 @@ WHERE tenant_id = current_tenant_id();
 
 -- name: CreateConfigurationAudit :one
 INSERT INTO configuration_audit (
-    tenant_id, entity_id, config_key, old_value, new_value, 
+    tenant_id, entity_id, module_name, config_key_name, old_value, new_value,
     source, operation, user_id, session_id, correlation_id
 ) VALUES (
-    current_tenant_id(), sqlc.narg(entity_id), sqlc.arg(config_key), sqlc.narg(old_value), sqlc.arg(new_value), 
-    sqlc.arg(source), sqlc.arg(operation), sqlc.arg(user_id), sqlc.narg(session_id), sqlc.narg(correlation_id)
+    current_tenant_id(), sqlc.narg(entity_id),
+    sqlc.arg(module_name), sqlc.arg(config_key_name),
+    sqlc.narg(old_value), sqlc.arg(new_value),
+    sqlc.arg(source), sqlc.arg(operation), sqlc.arg(user_id),
+    sqlc.narg(session_id), sqlc.narg(correlation_id)
 ) RETURNING *;
 
 -- name: GetConfigurationHistory :many
 SELECT * FROM configuration_audit
 WHERE tenant_id = current_tenant_id()
 AND (sqlc.narg(entity_id_filter)::UUID IS NULL OR entity_id = sqlc.narg(entity_id_filter))
-AND (sqlc.narg(config_key_filter)::TEXT IS NULL OR sqlc.narg(config_key_filter)::TEXT = '' OR config_key = sqlc.narg(config_key_filter))
+AND (sqlc.narg(module_filter)::TEXT IS NULL OR sqlc.narg(module_filter)::TEXT = '' OR module_name = sqlc.narg(module_filter))
+AND (sqlc.narg(config_key_filter)::TEXT IS NULL OR sqlc.narg(config_key_filter)::TEXT = '' OR config_key_name = sqlc.narg(config_key_filter))
 ORDER BY applied_at DESC
 LIMIT sqlc.arg(limit_count) OFFSET sqlc.arg(offset_count);
 

@@ -10,6 +10,10 @@ CREATE TABLE entitystate (
   sequence BIGINT NOT NULL,  -- Next sequence number
   entity_id UUID NOT NULL REFERENCES entities(uuid) DEFERRABLE INITIALLY DEFERRED,
   entity_unit_id UUID REFERENCES entities(uuid) DEFERRABLE INITIALLY DEFERRED,
+  -- Document sequence formatting config (prefix, suffix, pad_length, reset_frequency, format_template).
+  -- Values here override tenant_configurations.settings for this entity+doctype.
+  -- Example: {"prefix":"NORTH-INV-","pad_length":6,"reset_frequency":"yearly"}
+  config JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
@@ -32,6 +36,12 @@ COMMENT ON COLUMN entitystate.sequence IS 'Next sequence number - The next avail
 COMMENT ON COLUMN entitystate.entity_id IS 'Primary entity reference - The main entity that owns this sequence numbering';
 
 COMMENT ON COLUMN entitystate.entity_unit_id IS 'Sub-entity reference - Optional reference to a subsidiary or department within the main entity for more granular numbering';
+
+COMMENT ON COLUMN entitystate.config IS
+  'Document sequence formatting config for this entity+doctype combination. '
+  'Keys: prefix, suffix, pad_length (INT), reset_frequency (yearly|monthly|never), format_template (STRING). '
+  'Overrides tenant_configurations.settings for sequences on this entity. '
+  'Example: {"prefix":"NORTH-INV-","pad_length":6,"reset_frequency":"yearly"}';
 
 -- =====================================================================
 -- PERFORMANCE OPTIMIZATION INDEXES

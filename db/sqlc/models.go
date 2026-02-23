@@ -43,20 +43,28 @@ type AccessRequest struct {
 
 // Defines actions that can be performed on resources with risk assessment and approval workflow requirements.
 type Action struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	DisplayName *string   `json:"display_name"`
-	Description *string   `json:"description"`
+	ID uuid.UUID `json:"id"`
+	// NULL for SYSTEM-scope actions. Set for custom TENANT-scope actions.
+	TenantID *uuid.UUID `json:"tenant_id"`
+	// SYSTEM = platform-wide standard action. TENANT = custom action for one tenant.
+	Scope       string  `json:"scope"`
+	Name        string  `json:"name"`
+	DisplayName *string `json:"display_name"`
+	Description *string `json:"description"`
 	// Standard action type: CREATE, READ, UPDATE, DELETE, EXECUTE, APPROVE, REJECT, EXPORT, IMPORT
 	ActionType string `json:"action_type"`
-	// Action category for risk assessment: STANDARD, ADMINISTRATIVE, SENSITIVE, BULK, SYSTEM
+	// Risk category: STANDARD, ADMINISTRATIVE, SENSITIVE, BULK, SYSTEM
 	ActionCategory *string `json:"action_category"`
-	// Risk level for audit and approval workflows: LOW, MEDIUM, HIGH, CRITICAL
+	// Risk level for audit and approval routing: LOW, MEDIUM, HIGH, CRITICAL
 	RiskLevel *string `json:"risk_level"`
-	// Whether this action requires explicit approval before execution
-	RequiresApproval *bool        `json:"requires_approval"`
-	IsActive         *bool        `json:"is_active"`
-	CreatedAt        sql.NullTime `json:"created_at"`
+	// Whether this action requires explicit approval. If TRUE, approver_role_id MUST be set.
+	RequiresApproval *bool `json:"requires_approval"`
+	// Role whose members can approve this action. Required when requires_approval=TRUE.
+	ApproverRoleID *uuid.UUID   `json:"approver_role_id"`
+	IsActive       *bool        `json:"is_active"`
+	CreatedAt      sql.NullTime `json:"created_at"`
+	// Updated by trigger on every row change — use for cache invalidation.
+	UpdatedAt sql.NullTime `json:"updated_at"`
 }
 
 // Defines attributes used in ABAC policies with data types, validation rules, and security controls for consistent attribute management.
@@ -197,49 +205,54 @@ type ConfigurationAudit struct {
 	ID uuid.UUID `json:"id"`
 	// Foreign key to tenants table for multi-tenant isolation
 	TenantID uuid.UUID `json:"tenant_id"`
-	// Optional foreign key to entities table for entity-level changes
+	// Optional FK to entities — set when the change is entity-level
 	EntityID *uuid.UUID `json:"entity_id"`
-	// Full configuration key (module.key) that was modified
-	ConfigKey string `json:"config_key"`
-	// Previous configuration value in JSONB format
+	// Module owning this config key (e.g. finance, hr, inventory)
+	ModuleName string `json:"module_name"`
+	// Config key within the module (e.g. invoice_prefix, valuation_method)
+	ConfigKeyName string `json:"config_key_name"`
+	// Previous configuration value (JSONB)
 	OldValue []byte `json:"old_value"`
-	// New configuration value in JSONB format
+	// New configuration value (JSONB)
 	NewValue []byte `json:"new_value"`
-	// Source level where change occurred: system, tenant, entity, or template
+	// Level where change occurred: SYSTEM, TENANT, ENTITY, TEMPLATE
 	Source string `json:"source"`
-	// Type of operation: create, update, delete, reset, or template_apply
+	// Operation type: CREATE, UPDATE, DELETE, RESET, TEMPLATE_APPLY
 	Operation string `json:"operation"`
 	// UUID of user who made the change
 	UserID    uuid.UUID `json:"user_id"`
 	AppliedAt time.Time `json:"applied_at"`
-	// Session identifier for tracking related changes
+	// Session identifier for grouping related changes
 	SessionID *string `json:"session_id"`
-	// Correlation ID for tracking bulk operations
+	// Correlation ID for tracking bulk/template operations
 	CorrelationID *string `json:"correlation_id"`
 }
 
 // Reusable configuration templates for bulk deployment across tenants and entities
 type ConfigurationTemplate struct {
 	// UUID primary key for the configuration template
-	ID       uuid.UUID  `json:"id"`
-	TenantID uuid.UUID  `json:"tenant_id"`
+	ID uuid.UUID `json:"id"`
+	// Owning tenant for TENANT-scoped templates; NULL for SYSTEM-scoped templates
+	TenantID *uuid.UUID `json:"tenant_id"`
 	EntityID *uuid.UUID `json:"entity_id"`
+	// SYSTEM = platform-wide, readable by all. TENANT = private to owner tenant.
+	Scope string `json:"scope"`
 	// Template display name
 	Name string `json:"name"`
-	// Template category: industry, functional, or regional
+	// Template category: INDUSTRY, FUNCTIONAL, or REGIONAL
 	Category    string  `json:"category"`
 	Description *string `json:"description"`
 	// Semantic version string for template versioning
 	Version string `json:"version"`
-	// JSON object containing all configuration key-value pairs
+	// JSONB object of module.key → value pairs applied by this template
 	Configurations []byte `json:"configurations"`
-	// Array of tenant types this template applies to
+	// Tenant types this template is designed for
 	ApplicableTenantTypes []string `json:"applicable_tenant_types"`
-	// Array of feature flags required for this template
+	// Feature flags that must be enabled for this template to be applicable
 	RequiredFeatureFlags []string `json:"required_feature_flags"`
-	// Strategy for handling configuration conflicts: merge, replace, or preserve
+	// How to handle key conflicts on apply: MERGE, REPLACE, or PRESERVE
 	ConflictResolution *string `json:"conflict_resolution"`
-	// Whether this template is active and available for use
+	// Active templates appear in the UI. Deactivate instead of deleting applied templates.
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -341,10 +354,12 @@ type Entitystate struct {
 	// Primary entity reference - The main entity that owns this sequence numbering
 	EntityID uuid.UUID `json:"entity_id"`
 	// Sub-entity reference - Optional reference to a subsidiary or department within the main entity for more granular numbering
-	EntityUnitID *uuid.UUID   `json:"entity_unit_id"`
-	CreatedAt    time.Time    `json:"created_at"`
-	UpdatedAt    time.Time    `json:"updated_at"`
-	DeletedAt    sql.NullTime `json:"deleted_at"`
+	EntityUnitID *uuid.UUID `json:"entity_unit_id"`
+	// Document sequence formatting config for this entity+doctype combination. Keys: prefix, suffix, pad_length (INT), reset_frequency (yearly|monthly|never), format_template (STRING). Overrides tenant_configurations.settings for sequences on this entity. Example: {"prefix":"NORTH-INV-","pad_length":6,"reset_frequency":"yearly"}
+	Config    []byte       `json:"config"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt time.Time    `json:"updated_at"`
+	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
 // Master feature flags configuration table with tenant isolation
@@ -634,38 +649,38 @@ type FinanceTransactionEntry struct {
 
 // Closure table for efficient entity hierarchy queries. Stores all ancestor-descendant relationships with depth information. Enables fast retrieval of entity trees, subtrees, and hierarchy levels without recursive queries.
 type HierarchyPath struct {
-	// Tenant identifier - Partitions hierarchy data by tenant for multi-tenancy
+	// Tenant identifier — partitions hierarchy data by tenant for multi-tenancy.
 	TenantID uuid.UUID `json:"tenant_id"`
-	// Entity identifier - References the entity this path record belongs to
-	EntityID uuid.UUID `json:"entity_id"`
-	// Parent entity in the relationship - References entities.uuid
+	// Ancestor entity in the relationship — references entities.uuid.
 	AncestorID uuid.UUID `json:"ancestor_id"`
-	// Child entity in the relationship - References entities.uuid
+	// Descendant entity in the relationship — references entities.uuid.
 	DescendantID uuid.UUID `json:"descendant_id"`
-	// Hierarchical distance - 0 for self-reference, 1 for direct parent-child, 2+ for deeper relationships
-	Depth             int32        `json:"depth"`
-	Version           int32        `json:"version"`
-	LastValidationRun sql.NullTime `json:"last_validation_run"`
-	ValidationStatus  *string      `json:"validation_status"`
-	ValidationErrors  []byte       `json:"validation_errors"`
-	CreatedAt         time.Time    `json:"created_at"`
-	UpdatedAt         time.Time    `json:"updated_at"`
+	// Hierarchical distance: 0 = self-reference, 1 = direct parent-child, 2+ = deeper.
+	Depth     int32     `json:"depth"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// System modules for organizing permissions and features into logical groups. Enables modular permission management and feature toggles.
+// System modules for organising permissions and features. Enables modular permission management and feature toggles.
 type Module struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	DisplayName *string   `json:"display_name"`
-	Description *string   `json:"description"`
-	// Module category for grouping: CORE, HR, FINANCE, SALES, INVENTORY, etc.
+	ID uuid.UUID `json:"id"`
+	// NULL for SYSTEM-scope modules. Set for custom TENANT-scope modules.
+	TenantID *uuid.UUID `json:"tenant_id"`
+	// SYSTEM = platform-wide, readable by all. TENANT = private custom module.
+	Scope       string  `json:"scope"`
+	Name        string  `json:"name"`
+	DisplayName *string `json:"display_name"`
+	Description *string `json:"description"`
+	// Module category: CORE, HR, FINANCE, SALES, INVENTORY, etc.
 	Category *string `json:"category"`
-	// This will help you categorize INDUSTRY specific Apps
+	// Helps categorise industry-specific apps: CORE, INDUSTRY, EXTENSION, INTERNAL.
 	ModuleType *string `json:"module_type"`
-	// Module version for tracking feature updates and compatibility
+	// Module version for tracking feature updates and compatibility.
 	Version   *string      `json:"version"`
 	IsActive  *bool        `json:"is_active"`
 	CreatedAt sql.NullTime `json:"created_at"`
+	// Updated by trigger on every row change — use for cache invalidation.
+	UpdatedAt sql.NullTime `json:"updated_at"`
 }
 
 type MvTenantFeatureFlagsCache struct {
@@ -870,13 +885,15 @@ type Resource struct {
 	ResourceType string `json:"resource_type"`
 	// Self-referential for resource hierarchy (e.g., API endpoints under API group)
 	ParentResourceID *uuid.UUID `json:"parent_resource_id"`
-	// Resource path: URL, API endpoint, file path, database object, etc.
+	// Resource path convention: use dot-notation for logical resources (e.g. finance.invoice.create) and slash-notation for HTTP endpoints (e.g. /api/v1/invoices). Be consistent within a module. Consuming services must agree on the convention they parse.
 	Path *string `json:"path"`
 	// JSONB containing ABAC attributes like classification level, sensitivity, department ownership
 	ResourceAttributes []byte       `json:"resource_attributes"`
 	IsActive           *bool        `json:"is_active"`
 	CreatedAt          sql.NullTime `json:"created_at"`
-	DeletedAt          sql.NullTime `json:"deleted_at"`
+	// Updated by trigger on every row change — use for cache invalidation.
+	UpdatedAt sql.NullTime `json:"updated_at"`
+	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
 // Roles with module association, entity scoping, and hierarchical structure. Supports both RBAC and ABAC with conditional access rules.

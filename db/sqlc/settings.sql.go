@@ -97,17 +97,21 @@ func (q *Queries) CreateConfigDefinition(ctx context.Context, arg CreateConfigDe
 const createConfigurationAudit = `-- name: CreateConfigurationAudit :one
 
 INSERT INTO configuration_audit (
-    tenant_id, entity_id, config_key, old_value, new_value, 
+    tenant_id, entity_id, module_name, config_key_name, old_value, new_value,
     source, operation, user_id, session_id, correlation_id
 ) VALUES (
-    current_tenant_id(), $1, $2, $3, $4, 
-    $5, $6, $7, $8, $9
-) RETURNING id, tenant_id, entity_id, config_key, old_value, new_value, source, operation, user_id, applied_at, session_id, correlation_id
+    current_tenant_id(), $1,
+    $2, $3,
+    $4, $5,
+    $6, $7, $8,
+    $9, $10
+) RETURNING id, tenant_id, entity_id, module_name, config_key_name, old_value, new_value, source, operation, user_id, applied_at, session_id, correlation_id
 `
 
 type CreateConfigurationAuditParams struct {
 	EntityID      *uuid.UUID `json:"entity_id"`
-	ConfigKey     string     `json:"config_key"`
+	ModuleName    string     `json:"module_name"`
+	ConfigKeyName string     `json:"config_key_name"`
 	OldValue      []byte     `json:"old_value"`
 	NewValue      []byte     `json:"new_value"`
 	Source        string     `json:"source"`
@@ -123,7 +127,8 @@ type CreateConfigurationAuditParams struct {
 func (q *Queries) CreateConfigurationAudit(ctx context.Context, arg CreateConfigurationAuditParams) (*ConfigurationAudit, error) {
 	row := q.db.QueryRow(ctx, createConfigurationAudit,
 		arg.EntityID,
-		arg.ConfigKey,
+		arg.ModuleName,
+		arg.ConfigKeyName,
 		arg.OldValue,
 		arg.NewValue,
 		arg.Source,
@@ -137,7 +142,8 @@ func (q *Queries) CreateConfigurationAudit(ctx context.Context, arg CreateConfig
 		&i.ID,
 		&i.TenantID,
 		&i.EntityID,
-		&i.ConfigKey,
+		&i.ModuleName,
+		&i.ConfigKeyName,
 		&i.OldValue,
 		&i.NewValue,
 		&i.Source,
@@ -153,26 +159,29 @@ func (q *Queries) CreateConfigurationAudit(ctx context.Context, arg CreateConfig
 const createConfigurationTemplate = `-- name: CreateConfigurationTemplate :one
 
 INSERT INTO configuration_templates (
-    name, category, description, version, configurations,
+    tenant_id, scope, name, category, description, version, configurations,
     applicable_tenant_types, required_feature_flags,
     conflict_resolution, created_by
 ) VALUES (
-    $1, $2, $3, $4, $5,
-    $6, $7,
-    $8, $9
-) RETURNING id, tenant_id, entity_id, name, category, description, version, configurations, applicable_tenant_types, required_feature_flags, conflict_resolution, is_active, created_at, updated_at, created_by
+    $1, $2,
+    $3, $4, $5, $6, $7,
+    $8, $9,
+    $10, $11
+) RETURNING id, tenant_id, entity_id, scope, name, category, description, version, configurations, applicable_tenant_types, required_feature_flags, conflict_resolution, is_active, created_at, updated_at, created_by
 `
 
 type CreateConfigurationTemplateParams struct {
-	Name                  string    `json:"name"`
-	Category              string    `json:"category"`
-	Description           *string   `json:"description"`
-	Version               string    `json:"version"`
-	Configurations        []byte    `json:"configurations"`
-	ApplicableTenantTypes []string  `json:"applicable_tenant_types"`
-	RequiredFeatureFlags  []string  `json:"required_feature_flags"`
-	ConflictResolution    *string   `json:"conflict_resolution"`
-	CreatedBy             uuid.UUID `json:"created_by"`
+	TenantID              *uuid.UUID `json:"tenant_id"`
+	Scope                 string     `json:"scope"`
+	Name                  string     `json:"name"`
+	Category              string     `json:"category"`
+	Description           *string    `json:"description"`
+	Version               string     `json:"version"`
+	Configurations        []byte     `json:"configurations"`
+	ApplicableTenantTypes []string   `json:"applicable_tenant_types"`
+	RequiredFeatureFlags  []string   `json:"required_feature_flags"`
+	ConflictResolution    *string    `json:"conflict_resolution"`
+	CreatedBy             uuid.UUID  `json:"created_by"`
 }
 
 // ==========================================
@@ -180,6 +189,8 @@ type CreateConfigurationTemplateParams struct {
 // ==========================================
 func (q *Queries) CreateConfigurationTemplate(ctx context.Context, arg CreateConfigurationTemplateParams) (*ConfigurationTemplate, error) {
 	row := q.db.QueryRow(ctx, createConfigurationTemplate,
+		arg.TenantID,
+		arg.Scope,
 		arg.Name,
 		arg.Category,
 		arg.Description,
@@ -195,6 +206,7 @@ func (q *Queries) CreateConfigurationTemplate(ctx context.Context, arg CreateCon
 		&i.ID,
 		&i.TenantID,
 		&i.EntityID,
+		&i.Scope,
 		&i.Name,
 		&i.Category,
 		&i.Description,
@@ -353,7 +365,7 @@ func (q *Queries) GetConfigDefinition(ctx context.Context, arg GetConfigDefiniti
 }
 
 const getConfigurationAuditByCorrelation = `-- name: GetConfigurationAuditByCorrelation :many
-SELECT id, tenant_id, entity_id, config_key, old_value, new_value, source, operation, user_id, applied_at, session_id, correlation_id FROM configuration_audit
+SELECT id, tenant_id, entity_id, module_name, config_key_name, old_value, new_value, source, operation, user_id, applied_at, session_id, correlation_id FROM configuration_audit
 WHERE tenant_id = current_tenant_id()
 AND correlation_id = $1
 ORDER BY applied_at DESC
@@ -372,7 +384,8 @@ func (q *Queries) GetConfigurationAuditByCorrelation(ctx context.Context, correl
 			&i.ID,
 			&i.TenantID,
 			&i.EntityID,
-			&i.ConfigKey,
+			&i.ModuleName,
+			&i.ConfigKeyName,
 			&i.OldValue,
 			&i.NewValue,
 			&i.Source,
@@ -393,16 +406,18 @@ func (q *Queries) GetConfigurationAuditByCorrelation(ctx context.Context, correl
 }
 
 const getConfigurationHistory = `-- name: GetConfigurationHistory :many
-SELECT id, tenant_id, entity_id, config_key, old_value, new_value, source, operation, user_id, applied_at, session_id, correlation_id FROM configuration_audit
+SELECT id, tenant_id, entity_id, module_name, config_key_name, old_value, new_value, source, operation, user_id, applied_at, session_id, correlation_id FROM configuration_audit
 WHERE tenant_id = current_tenant_id()
 AND ($1::UUID IS NULL OR entity_id = $1)
-AND ($2::TEXT IS NULL OR $2::TEXT = '' OR config_key = $2)
+AND ($2::TEXT IS NULL OR $2::TEXT = '' OR module_name = $2)
+AND ($3::TEXT IS NULL OR $3::TEXT = '' OR config_key_name = $3)
 ORDER BY applied_at DESC
-LIMIT $4 OFFSET $3
+LIMIT $5 OFFSET $4
 `
 
 type GetConfigurationHistoryParams struct {
 	EntityIDFilter  *uuid.UUID `json:"entity_id_filter"`
+	ModuleFilter    *string    `json:"module_filter"`
 	ConfigKeyFilter *string    `json:"config_key_filter"`
 	OffsetCount     int32      `json:"offset_count"`
 	LimitCount      int32      `json:"limit_count"`
@@ -411,6 +426,7 @@ type GetConfigurationHistoryParams struct {
 func (q *Queries) GetConfigurationHistory(ctx context.Context, arg GetConfigurationHistoryParams) ([]*ConfigurationAudit, error) {
 	rows, err := q.db.Query(ctx, getConfigurationHistory,
 		arg.EntityIDFilter,
+		arg.ModuleFilter,
 		arg.ConfigKeyFilter,
 		arg.OffsetCount,
 		arg.LimitCount,
@@ -426,7 +442,8 @@ func (q *Queries) GetConfigurationHistory(ctx context.Context, arg GetConfigurat
 			&i.ID,
 			&i.TenantID,
 			&i.EntityID,
-			&i.ConfigKey,
+			&i.ModuleName,
+			&i.ConfigKeyName,
 			&i.OldValue,
 			&i.NewValue,
 			&i.Source,
@@ -447,7 +464,7 @@ func (q *Queries) GetConfigurationHistory(ctx context.Context, arg GetConfigurat
 }
 
 const getConfigurationTemplate = `-- name: GetConfigurationTemplate :one
-SELECT id, tenant_id, entity_id, name, category, description, version, configurations, applicable_tenant_types, required_feature_flags, conflict_resolution, is_active, created_at, updated_at, created_by FROM configuration_templates 
+SELECT id, tenant_id, entity_id, scope, name, category, description, version, configurations, applicable_tenant_types, required_feature_flags, conflict_resolution, is_active, created_at, updated_at, created_by FROM configuration_templates
 WHERE id = $1 AND is_active = true
 `
 
@@ -458,6 +475,7 @@ func (q *Queries) GetConfigurationTemplate(ctx context.Context, templateID uuid.
 		&i.ID,
 		&i.TenantID,
 		&i.EntityID,
+		&i.Scope,
 		&i.Name,
 		&i.Category,
 		&i.Description,
@@ -760,20 +778,23 @@ func (q *Queries) ListConfigDefinitions(ctx context.Context, moduleName *string)
 }
 
 const listConfigurationTemplates = `-- name: ListConfigurationTemplates :many
-SELECT id, tenant_id, entity_id, name, category, description, version, configurations, applicable_tenant_types, required_feature_flags, conflict_resolution, is_active, created_at, updated_at, created_by FROM configuration_templates
+SELECT id, tenant_id, entity_id, scope, name, category, description, version, configurations, applicable_tenant_types, required_feature_flags, conflict_resolution, is_active, created_at, updated_at, created_by FROM configuration_templates
 WHERE is_active = true
-AND ($1::TEXT IS NULL OR $1::TEXT = '' OR category = $1)
-AND ($2::TEXT[] IS NULL OR applicable_tenant_types && $2::TEXT[])
-ORDER BY name
+AND ($1::TEXT IS NULL    OR $1::TEXT    = '' OR scope    = $1)
+AND ($2::TEXT IS NULL OR $2::TEXT = '' OR category = $2)
+AND ($3::TEXT[] IS NULL OR applicable_tenant_types && $3::TEXT[])
+ORDER BY scope DESC, name
 `
 
 type ListConfigurationTemplatesParams struct {
+	ScopeFilter       *string  `json:"scope_filter"`
 	CategoryFilter    *string  `json:"category_filter"`
 	TenantTypesFilter []string `json:"tenant_types_filter"`
 }
 
+// Returns SYSTEM templates + current tenant's TENANT templates (RLS enforces the TENANT filter).
 func (q *Queries) ListConfigurationTemplates(ctx context.Context, arg ListConfigurationTemplatesParams) ([]*ConfigurationTemplate, error) {
-	rows, err := q.db.Query(ctx, listConfigurationTemplates, arg.CategoryFilter, arg.TenantTypesFilter)
+	rows, err := q.db.Query(ctx, listConfigurationTemplates, arg.ScopeFilter, arg.CategoryFilter, arg.TenantTypesFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -785,6 +806,7 @@ func (q *Queries) ListConfigurationTemplates(ctx context.Context, arg ListConfig
 			&i.ID,
 			&i.TenantID,
 			&i.EntityID,
+			&i.Scope,
 			&i.Name,
 			&i.Category,
 			&i.Description,
@@ -1090,6 +1112,7 @@ func (q *Queries) UpdateConfigDefinition(ctx context.Context, arg UpdateConfigDe
 }
 
 const updateConfigurationTemplate = `-- name: UpdateConfigurationTemplate :one
+
 UPDATE configuration_templates 
 SET 
     name = COALESCE($1, name),
@@ -1100,7 +1123,7 @@ SET
     conflict_resolution = COALESCE($6, conflict_resolution),
     updated_at = NOW()
 WHERE id = $7 AND is_active = true
-RETURNING id, tenant_id, entity_id, name, category, description, version, configurations, applicable_tenant_types, required_feature_flags, conflict_resolution, is_active, created_at, updated_at, created_by
+RETURNING id, tenant_id, entity_id, scope, name, category, description, version, configurations, applicable_tenant_types, required_feature_flags, conflict_resolution, is_active, created_at, updated_at, created_by
 `
 
 type UpdateConfigurationTemplateParams struct {
@@ -1113,6 +1136,7 @@ type UpdateConfigurationTemplateParams struct {
 	TemplateID            uuid.UUID `json:"template_id"`
 }
 
+// TENANT before SYSTEM so tenant customisations appear first
 func (q *Queries) UpdateConfigurationTemplate(ctx context.Context, arg UpdateConfigurationTemplateParams) (*ConfigurationTemplate, error) {
 	row := q.db.QueryRow(ctx, updateConfigurationTemplate,
 		arg.Name,
@@ -1128,6 +1152,7 @@ func (q *Queries) UpdateConfigurationTemplate(ctx context.Context, arg UpdateCon
 		&i.ID,
 		&i.TenantID,
 		&i.EntityID,
+		&i.Scope,
 		&i.Name,
 		&i.Category,
 		&i.Description,

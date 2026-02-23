@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -267,9 +268,18 @@ func (r *configurationRepository) CreateAuditRecord(ctx context.Context, record 
 		return fmt.Errorf("failed to marshal new value: %w", err)
 	}
 
+	// Split "module.key" → ModuleName + ConfigKeyName (matches DB schema split columns)
+	parts := strings.SplitN(record.ConfigKey, ".", 2)
+	moduleName := parts[0]
+	configKeyName := ""
+	if len(parts) == 2 {
+		configKeyName = parts[1]
+	}
+
 	_, err = r.store.CreateConfigurationAudit(ctx, db.CreateConfigurationAuditParams{
 		EntityID:      record.EntityID,
-		ConfigKey:     record.ConfigKey,
+		ModuleName:    moduleName,
+		ConfigKeyName: configKeyName,
 		OldValue:      oldValueJSON,
 		NewValue:      newValueJSON,
 		Source:        string(record.Source),
@@ -292,9 +302,18 @@ func (r *configurationRepository) GetConfigurationHistory(ctx context.Context, e
 
 	// Tenant ID will be resolved automatically by current_tenant_id() in SQL
 
+	// Split "module.key" for the new per-column filter params
+	parts := strings.SplitN(configKey, ".", 2)
+	moduleFilter := parts[0]
+	keyFilter := ""
+	if len(parts) == 2 {
+		keyFilter = parts[1]
+	}
+
 	results, err := r.store.GetConfigurationHistory(ctx, db.GetConfigurationHistoryParams{
 		EntityIDFilter:  entityID,
-		ConfigKeyFilter: &configKey,
+		ModuleFilter:    &moduleFilter,
+		ConfigKeyFilter: &keyFilter,
 		OffsetCount:     int32(offset),
 		LimitCount:      int32(limit),
 	})

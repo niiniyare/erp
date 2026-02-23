@@ -269,7 +269,7 @@ func (q *Queries) GetEntityStateHealthCheck(ctx context.Context) ([]*GetEntitySt
 
 const getEntityStateHistory = `-- name: GetEntityStateHistory :many
 SELECT
-  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at, es.deleted_at,
+  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.config, es.created_at, es.updated_at, es.deleted_at,
   e.name AS entity_name
 FROM
   entitystate es
@@ -304,6 +304,7 @@ type GetEntityStateHistoryRow struct {
 	Sequence     int64        `json:"sequence"`
 	EntityID     uuid.UUID    `json:"entity_id"`
 	EntityUnitID *uuid.UUID   `json:"entity_unit_id"`
+	Config       []byte       `json:"config"`
 	CreatedAt    time.Time    `json:"created_at"`
 	UpdatedAt    time.Time    `json:"updated_at"`
 	DeletedAt    sql.NullTime `json:"deleted_at"`
@@ -359,6 +360,7 @@ func (q *Queries) GetEntityStateHistory(ctx context.Context, arg GetEntityStateH
 			&i.Sequence,
 			&i.EntityID,
 			&i.EntityUnitID,
+			&i.Config,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -511,7 +513,7 @@ func (q *Queries) GetEntityStateWithLocking(ctx context.Context) (*GetEntityStat
 
 const getEntityStatesByFiscalYear = `-- name: GetEntityStatesByFiscalYear :many
 SELECT
-  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at, es.deleted_at,
+  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.config, es.created_at, es.updated_at, es.deleted_at,
   e.name AS entity_name,
   eu.name AS unit_name
 FROM
@@ -545,6 +547,7 @@ type GetEntityStatesByFiscalYearRow struct {
 	Sequence     int64        `json:"sequence"`
 	EntityID     uuid.UUID    `json:"entity_id"`
 	EntityUnitID *uuid.UUID   `json:"entity_unit_id"`
+	Config       []byte       `json:"config"`
 	CreatedAt    time.Time    `json:"created_at"`
 	UpdatedAt    time.Time    `json:"updated_at"`
 	DeletedAt    sql.NullTime `json:"deleted_at"`
@@ -572,6 +575,7 @@ func (q *Queries) GetEntityStatesByFiscalYear(ctx context.Context, arg GetEntity
 			&i.Sequence,
 			&i.EntityID,
 			&i.EntityUnitID,
+			&i.Config,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -590,7 +594,7 @@ func (q *Queries) GetEntityStatesByFiscalYear(ctx context.Context, arg GetEntity
 
 const getEntityUnitSequence = `-- name: GetEntityUnitSequence :one
 SELECT
-  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, config, created_at, updated_at, deleted_at
 FROM
   entitystate
 WHERE
@@ -627,6 +631,7 @@ func (q *Queries) GetEntityUnitSequence(ctx context.Context, arg GetEntityUnitSe
 		&i.Sequence,
 		&i.EntityID,
 		&i.EntityUnitID,
+		&i.Config,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -636,7 +641,7 @@ func (q *Queries) GetEntityUnitSequence(ctx context.Context, arg GetEntityUnitSe
 
 const getEntityUnitStates = `-- name: GetEntityUnitStates :many
 SELECT
-  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at, es.deleted_at,
+  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.config, es.created_at, es.updated_at, es.deleted_at,
   e1.name AS entity_name,
   e2.name AS unit_name
 FROM
@@ -659,6 +664,7 @@ type GetEntityUnitStatesRow struct {
 	Sequence     int64        `json:"sequence"`
 	EntityID     uuid.UUID    `json:"entity_id"`
 	EntityUnitID *uuid.UUID   `json:"entity_unit_id"`
+	Config       []byte       `json:"config"`
 	CreatedAt    time.Time    `json:"created_at"`
 	UpdatedAt    time.Time    `json:"updated_at"`
 	DeletedAt    sql.NullTime `json:"deleted_at"`
@@ -690,6 +696,7 @@ func (q *Queries) GetEntityUnitStates(ctx context.Context, entityUnitID *uuid.UU
 			&i.Sequence,
 			&i.EntityID,
 			&i.EntityUnitID,
+			&i.Config,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -708,7 +715,7 @@ func (q *Queries) GetEntityUnitStates(ctx context.Context, entityUnitID *uuid.UU
 
 const getEntityWithUnitStates = `-- name: GetEntityWithUnitStates :many
 SELECT
-  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at, es.deleted_at,
+  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.config, es.created_at, es.updated_at, es.deleted_at,
   e1.name AS entity_name,
   e2.name AS unit_name,
   CASE
@@ -737,6 +744,7 @@ type GetEntityWithUnitStatesRow struct {
 	Sequence     int64        `json:"sequence"`
 	EntityID     uuid.UUID    `json:"entity_id"`
 	EntityUnitID *uuid.UUID   `json:"entity_unit_id"`
+	Config       []byte       `json:"config"`
 	CreatedAt    time.Time    `json:"created_at"`
 	UpdatedAt    time.Time    `json:"updated_at"`
 	DeletedAt    sql.NullTime `json:"deleted_at"`
@@ -764,6 +772,7 @@ func (q *Queries) GetEntityWithUnitStates(ctx context.Context, entityID uuid.UUI
 			&i.Sequence,
 			&i.EntityID,
 			&i.EntityUnitID,
+			&i.Config,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -810,7 +819,7 @@ func (q *Queries) GetHighestSequenceNumber(ctx context.Context, arg GetHighestSe
 
 const getMultipleEntityStates = `-- name: GetMultipleEntityStates :many
 SELECT
-  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, config, created_at, updated_at, deleted_at
 FROM
   entitystate
 WHERE
@@ -853,6 +862,7 @@ func (q *Queries) GetMultipleEntityStates(ctx context.Context, arg GetMultipleEn
 			&i.Sequence,
 			&i.EntityID,
 			&i.EntityUnitID,
+			&i.Config,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
@@ -876,7 +886,7 @@ UPDATE
 SET
   updated_at = NOW()
 RETURNING
-  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, created_at, updated_at, deleted_at
+  uuid, tenant_id, fiscal_year, key, sequence, entity_id, entity_unit_id, config, created_at, updated_at, deleted_at
 `
 
 type GetOrCreateEntityStateParams struct {
@@ -898,6 +908,7 @@ func (q *Queries) GetOrCreateEntityState(ctx context.Context, arg GetOrCreateEnt
 		&i.Sequence,
 		&i.EntityID,
 		&i.EntityUnitID,
+		&i.Config,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -971,7 +982,7 @@ func (q *Queries) GetSequenceGaps(ctx context.Context, arg GetSequenceGapsParams
 
 const getStaleEntityStates = `-- name: GetStaleEntityStates :many
 SELECT
-  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.created_at, es.updated_at, es.deleted_at,
+  es.uuid, es.tenant_id, es.fiscal_year, es.key, es.sequence, es.entity_id, es.entity_unit_id, es.config, es.created_at, es.updated_at, es.deleted_at,
   e.name AS entity_name,
   NOW() - es.updated_at AS time_since_update
 FROM
@@ -992,6 +1003,7 @@ type GetStaleEntityStatesRow struct {
 	Sequence        int64        `json:"sequence"`
 	EntityID        uuid.UUID    `json:"entity_id"`
 	EntityUnitID    *uuid.UUID   `json:"entity_unit_id"`
+	Config          []byte       `json:"config"`
 	CreatedAt       time.Time    `json:"created_at"`
 	UpdatedAt       time.Time    `json:"updated_at"`
 	DeletedAt       sql.NullTime `json:"deleted_at"`
@@ -1018,6 +1030,7 @@ func (q *Queries) GetStaleEntityStates(ctx context.Context, updatedAt time.Time)
 			&i.Sequence,
 			&i.EntityID,
 			&i.EntityUnitID,
+			&i.Config,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,

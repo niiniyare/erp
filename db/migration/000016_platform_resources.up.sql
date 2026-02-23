@@ -23,8 +23,9 @@ CREATE TABLE IF NOT EXISTS resources (
   parent_resource_id UUID REFERENCES resources(id),
   path VARCHAR(500),  -- URL path, API endpoint, file path, etc.
   resource_attributes JSONB DEFAULT '{}'::jsonb,  -- ABAC resource attributes
-  is_active BOOLEAN DEFAULT TRUE,
+  is_active  BOOLEAN     DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ
 );
 
@@ -37,3 +38,13 @@ COMMENT ON COLUMN resources.parent_resource_id IS 'Self-referential for resource
 COMMENT ON COLUMN resources.path IS 'Resource path: URL, API endpoint, file path, database object, etc.';
 
 COMMENT ON COLUMN resources.resource_attributes IS 'JSONB containing ABAC attributes like classification level, sensitivity, department ownership';
+COMMENT ON COLUMN resources.path IS
+  'Resource path convention: use dot-notation for logical resources (e.g. finance.invoice.create) '
+  'and slash-notation for HTTP endpoints (e.g. /api/v1/invoices). Be consistent within a module. '
+  'Consuming services must agree on the convention they parse.';
+COMMENT ON COLUMN resources.updated_at IS 'Updated by trigger on every row change — use for cache invalidation.';
+
+-- updated_at trigger
+CREATE TRIGGER update_resources_updated_at
+  BEFORE UPDATE ON resources
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
