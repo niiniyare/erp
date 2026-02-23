@@ -40,7 +40,10 @@ func (s *service) RemovePolicy(ctx context.Context, p Policy) error {
 // GetPolicies returns all p-rules filtered to a specific domain (v1 field).
 func (s *service) GetPolicies(ctx context.Context, domain string) ([]Policy, error) {
 	// fieldIndex=1 matches v1 (the domain column in p-rules).
-	raw := s.enforcer.GetFilteredPolicy(1, domain)
+	raw, err := s.enforcer.GetFilteredPolicy(1, domain)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get filtered policy for domain %s: %w", domain, err)
+	}
 
 	out := make([]Policy, 0, len(raw))
 	for _, r := range raw {

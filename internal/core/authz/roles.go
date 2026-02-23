@@ -69,12 +69,9 @@ func (s *service) RevokeRole(ctx context.Context, subject, role, domain string) 
 }
 
 // GetRoles returns all roles subject holds in domain (from Casbin in-memory).
+// Returns an empty slice (not an error) when subject has no roles.
 func (s *service) GetRoles(ctx context.Context, subject, domain string) ([]string, error) {
-	roles, err := s.enforcer.GetRolesForUserInDomain(subject, domain)
-	if err != nil {
-		return nil, fmt.Errorf("authz GetRoles: %w", err)
-	}
-	return roles, nil
+	return s.enforcer.GetRolesForUserInDomain(subject, domain), nil
 }
 
 // HasRole reports whether subject currently holds role in domain.
