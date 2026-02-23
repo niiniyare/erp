@@ -14,12 +14,20 @@ func (s *service) AddPolicy(ctx context.Context, p Policy) error {
 		return ErrInvalidRequest
 	}
 
-	ok, err := s.enforcer.AddPolicy(p.Subject, p.Domain, p.Object, p.Action, p.Effect)
+	// Explicit duplicate check: Casbin's AddPolicy return value is unreliable
+	// for nil-adapter (in-memory) enforcers — HasPolicy reads the in-memory
+	// model directly and is consistent across all enforcer configurations.
+	exists, err := s.enforcer.HasPolicy(p.Subject, p.Domain, p.Object, p.Action, p.Effect)
+	if err != nil {
+		return fmt.Errorf("authz AddPolicy HasPolicy: %w", err)
+	}
+	if exists {
+		return ErrPolicyConflict
+	}
+
+	_, err = s.enforcer.AddPolicy(p.Subject, p.Domain, p.Object, p.Action, p.Effect)
 	if err != nil {
 		return fmt.Errorf("authz AddPolicy: %w", err)
-	}
-	if !ok {
-		return ErrPolicyConflict
 	}
 	return nil
 }
