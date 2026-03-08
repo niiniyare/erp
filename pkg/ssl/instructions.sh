@@ -1,35 +1,79 @@
 #!/bin/bash
-# Inspired from: https://github.com/grpc/grpc-java/tree/master/examples#generating-self-signed-certificates-for-use-with-grpc
+set -euo pipefail
 
-# Output files
-# ca.key: Certificate Authority private key file (this shouldn't be shared in real-life)
-# ca.crt: Certificate Authority trust certificate (this should be shared with users in real-life)
-# server.key: Server private key, password protected (this shouldn't be shared)
-# server.csr: Server certificate signing request (this should be shared with the CA owner)
-# server.crt: Server certificate signed by the CA (this would be sent back by the CA owner) - keep on server
-# server.pem: Conversion of server.key into a format gRPC likes (this shouldn't be shared)
+# Default values
+CN="localhost"
+DAYS=3650
+PASSWORD="$(openssl rand -base64 32)" # generate a strong random password
+FORCE=0
 
-# Summary
-# Private files: ca.key, server.key, server.pem, server.crt
-# "Share" files: ca.crt (needed by the client), server.csr (needed by the CA)
+usage() {
+  echo "Usage: $0 [--cn <common name>] [--days <days>] [--password <pass>] [--force]"
+  exit 1
+}
 
-# Changes these CN's to match your hosts in your environment if needed.
-SERVER_CN=localhost
+while [[ $# -gt 0 ]]; do
+  case $1 in
+  --cn)
+    CN="$2"
+    shift 2
+    ;;
+  --days)
+    DAYS="$2"
+    shift 2
+    ;;
+  --password)
+    PASSWORD="$2"
+    shift 2
+    ;;
+  --force)
+    FORCE=1
+    shift
+    ;;
+  *) usage ;;
+  esac
+done
 
-# Step 1: Generate Certificate Authority + Trust Certificate (ca.crt)
-openssl genrsa -passout pass:1111 -des3 -out ca.key 4096
-openssl req -passin pass:1111 -new -x509 -days 3650 -key ca.key -out ca.crt -subj "/CN=${SERVER_CN}"
-openssl req -passin pass:1111 -new -x509 -days 3650 -key ca.key -out ca.crt -subj "/CN=localhost"
+# Check for openssl
+command -v openssl >/dev/null 2>&1 || {
+  echo "openssl not found"
+  exit 1
+}
 
-# Step 2: Generate the Server Private Key (server.key)
-openssl genrsa -passout pass:1111 -des3 -out server.key 4096
+# Protect existing files if not forced
+for f in ca.key ca.crt ...; do
+  if [[ -e $f ]]; then
+    read -p "File $f exists. Overwrite? (y/n) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then exit 1; fi
+  fi
+done
 
-# Step 3: Get a certificate signing request from the CA (server.csr)
-openssl req -passin pass:1111 -new -key server.key -out server.csr -subj "/CN=${SERVER_CN}"
-openssl req -passin pass:1111 -new -key server.key -out server.csr -subj "/CN=localhost"
+echo "Generating CA key and certificate..."
+openssl genrsa -aes256 -passout "pass:${PASSWORD}" -out ca.key 4096
+openssl req -new -x509 -days "${DAYS}" -passin "pass:${PASSWORD}" \
+  -key ca.key -out ca.crt -subj "/CN=${CN}"
 
-# Step 4: Sign the certificate with the CA we created (it's called self signing) - server.crt
-openssl x509 -req -passin pass:1111 -days 3650 -in server.csr -CA ca.crt -CAkey ca.key -set_serial 01 -out server.crt
+echo "Generating server private key..."
+openssl genrsa -aes256 -passout "pass:${PASSWORD}" -out server.key 4096
 
-# Step 5: Convert the server certificate to .pem format (server.pem) - usable by gRPC
-openssl pkcs8 -topk8 -nocrypt -passin pass:1111 -in server.key -out server.pem
+echo "Creating server certificate signing request..."
+openssl req -new -passin "pass:${PASSWORD}" \
+  -key server.key -out server.csr -subj "/CN=${CN}"
+
+echo "Signing server certificate with CA..."
+openssl x509 -req -days "${DAYS}" -passin "pass:${PASSWORD}" \
+  -in server.csr -CA ca.crt -CAkey ca.key -set_serial "0x$(openssl rand -hex 16)" \
+  -out server.crt -extfile <(printf "subjectAltName=DNS:${CN}")
+
+echo "Converting server key to PKCS#8 unencrypted format for gRPC..."
+openssl pkcs8 -topk8 -nocrypt -passin "pass:${PASSWORD}" \
+  -in server.key -out server.pem
+
+# Secure private key permissions
+chmod 600 ca.key server.key server.pem
+
+echo "Done."
+echo "Private files: ca.key server.key server.pem"
+echo "Public files:  ca.crt server.crt"
+echo "CSR (can be discarded now): server.csr"

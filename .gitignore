@@ -1,6 +1,4 @@
 # Log files
 .gemini/
 gha-creds-*.json
-bin/
-server*
 web/node_modules
