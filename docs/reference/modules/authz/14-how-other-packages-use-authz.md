@@ -17,6 +17,51 @@ type InvoiceService struct {
 }
 ```
 
+### 0. Session Service — Builds Permissions via authz at Login
+
+`internal/core/identity/session/service.go` is the most important consumer. At login it uses `authz.GetPolicies` + `authz.GetRoles` to compute the permission map stored in `user_sessions.permissions` JSONB. This is the **only time** Casbin is hit on the request path.
+
+```go
+// internal/core/identity/session/service.go
+
+func (s *service) buildPermissions(ctx context.Context, user *identity.User) (map[string]bool, error) {
+    ctx, span := s.tracer.StartSpan(ctx, "session.buildPermissions")
+    defer span.End()
+
+    domain := authz.TenantDomain(user.TenantID.String())
+    subject := authz.TenantSubject(user.ID.String())
+
+    // Get all g-rules for this user in this domain (from Casbin in-memory)
+    roles, err := s.authz.GetRoles(ctx, subject, domain)
+    if err != nil {
+        return nil, fmt.Errorf("session: get roles: %w", err)
+    }
+
+    // Get all p-rules for this domain
+    policies, err := s.authz.GetPolicies(ctx, domain)
+    if err != nil {
+        return nil, fmt.Errorf("session: get policies: %w", err)
+    }
+
+    roleSet := make(map[string]bool, len(roles))
+    for _, r := range roles {
+        roleSet[r] = true
+    }
+
+    // Build {module}.{resource}.{action} permission map
+    perms := make(map[string]bool)
+    for _, p := range policies {
+        if roleSet[p.Subject] && p.Effect == "allow" {
+            // object already is "finance.receivables.invoices", action is "read"
+            perms[p.Object+"."+p.Action] = true
+        }
+    }
+
+    s.metrics.RecordCount("session.permissions_computed", float64(len(perms)), nil)
+    return perms, nil
+}
+```
+
 ### 1. API Gateway / Route Layer
 
 The API gateway is the outermost consumer. It registers routes and attaches middleware. This is the most common usage pattern.

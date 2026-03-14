@@ -4,21 +4,54 @@
 
 ### Performance Is a First-Class Concern
 
-Authorization is on the hot path of every request. If enforcement is slow, every user experiences that slowness. The authz module is designed to be sub-millisecond in the common case.
+Authorization is on the hot path of every request. If enforcement is slow, every user experiences that slowness. The authz module uses a two-layer strategy to stay sub-millisecond.
 
 ```markdown
 LATENCY BUDGET:
 
 Total request budget (typical ERP endpoint): 100-200ms
   ├── Network / TLS:            10-20ms
-  ├── authn middleware:          5-10ms  (JWT validation)
-  ├── authz enforcement:       < 1ms    ← THIS MODULE
+  ├── Authenticate middleware:   1-3ms   (session token → DB lookup → Redis hit)
+  ├── authz fast path:        < 0.1ms   (O(1) map lookup in ResolvedSession)
+  ├── authz Casbin path:      < 1ms     (management ops only, in-memory)
   ├── DB query (with index):   10-30ms
   ├── Business logic:          10-50ms
   └── Response serialization:   5-10ms
 
 authz must NOT be the slow part.
 Target: p50 = 0.2ms, p95 = 0.5ms, p99 = 1ms
+```
+
+### Two-Layer Permission Architecture
+
+```markdown
+LAYER 1 — Pre-computed map (request hot path):
+  Login time:
+    Casbin.GetPolicies(domain) + Casbin.GetRoles(subject, domain)
+    → build map[string]bool {"finance.invoices.read": true, ...}
+    → store in user_sessions.permissions JSONB column
+
+  Every request:
+    ValidateSession() reads session row from Redis (cache hit) or DB
+    → ResolvedSession.Permissions map already populated
+    → Authorize middleware: sess.Can("finance.invoices.read")  ← O(1)
+    → Zero DB hits, zero Casbin calls for permission checks
+
+LAYER 2 — Casbin engine (source of truth / management):
+  Used for:
+    → Computing the permission map at login (once per session)
+    → Management API: "what roles does user X have?"
+    → Admin-driven InvalidateCache() after role changes
+    → Direct svc.Enforce() in non-HTTP contexts (Temporal workflows, jobs)
+
+SESSION CACHE (internal/platform/cache):
+  ValidateSession() uses cache.Service to avoid DB hit on every request:
+    cache key: "session:{sha256(token)}"  TTL = session.ExpiresAt - now
+    Hit:  return cached ResolvedSession (no DB)
+    Miss: query user_sessions → cache result → return
+
+  Role/permission change → call svc.Logout(token) to invalidate session
+  or call cache.Delete("session:{hash}") directly
 ```
 
 ### The In-Memory Cache

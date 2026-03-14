@@ -10,6 +10,8 @@ The `Middleware` method returns a Fiber handler factory that is the primary way 
 func (s *service) Middleware(object, action string) fiber.Handler
 ```
 
+**Two-layer approach**: The `authz.Middleware()` factory (Casbin, source-of-truth, used for management operations) works alongside a fast O(1) map check via `ResolvedSession.Can()` for hot-path requests. Use whichever fits the context.
+
 ### Basic Usage
 
 ```go
@@ -27,7 +29,7 @@ app.Post("/invoices/:id/approve", svc.Middleware("invoice", "approve"), approveI
 Middleware("invoice", "read") creates a handler that:
 
 1. Read Principal from c.Locals("authz_principal")
-   → Set by authn middleware earlier in the chain
+   → Set by Authenticate middleware earlier in the chain
    → If missing → 401 Unauthorized
 
 2. Build object string:
@@ -48,7 +50,7 @@ Middleware("invoice", "read") creates a handler that:
 5. true  → c.Next()
 ```
 
-### Middleware Chain Order
+### Middleware Chain Order (sys-desing.md)
 
 ```markdown
 REQUEST PIPELINE:
@@ -56,24 +58,150 @@ REQUEST PIPELINE:
 HTTP Request
      │
      ▼
-Rate Limiter middleware
+Logger → Recovery → CORS → RateLimiter
      │
      ▼
-authn middleware (JWT validation)
-  → validates token signature
-  → extracts: userID, tenantID, actorType
-  → builds Principal{Subject: "tenant:usr_001", Domain: "tenant-abc"}
-  → c.Locals("authz_principal", principal)
+Authenticate  (internal/api/middleware/jwt_auth.go — REWRITTEN)
+  → reads opaque session token from Cookie or Authorization: Bearer header
+  → calls identity/session.Service.ValidateSession(ctx, token)
+  → ValidateSession: sha256(token) → DB lookup → checks is_active + expires_at
+  → builds ResolvedSession{UserID, UserType, TenantID, PrincipalID, Permissions map}
+  → c.Locals("session", resolved)                          ← for handlers
+  → c.Locals("authz_principal", resolved.ToPrincipal())   ← for authz.Middleware()
+  → sets ctx with tenant_id and user_id via context.WithValue
      │
      ▼
-authz.Middleware("invoice", "read")  ← PER ROUTE
-  → reads Principal from c.Locals
-  → calls Enforce
-  → 403 or next
+ResolveTenant  (internal/api/middleware/tenant.go — existing, unchanged)
+  → reads tenantID from c.Locals or request header
+  → validates tenant status via tenant.Service
+     │
+     ▼
+SetTenantContext
+  → calls store.SetTenantContextFromCtx(ctx)  (sets PostgreSQL RLS context)
+     │
+     ▼
+Authorize  (internal/api/middleware/authorization.go — REWRITTEN, per-route)
+  → fast path: session.Can("finance.receivables.invoices.read")  O(1) map lookup
+  → or Casbin path: authz.Middleware("invoice", "read") for management ops
      │
      ▼
 Route Handler
   → handler can trust: "if we got here, user is authorized"
+  → reads session: c.Locals("session").(*session.ResolvedSession)
+  → tenant_id and user_id are in ctx via context.Value — no extra params needed
+```
+
+### Context Values — No Extra Function Params
+
+`tenant_id` and `user_id` are passed via `context.Value` using the keys defined in `internal/platform/cache`:
+
+```go
+// internal/platform/cache/cache.go defines:
+const (
+    TenantIDKey   contextKey = "tenant_id"
+    TenantSlugKey contextKey = "tenant_subdomain"
+)
+
+// The Authenticate middleware sets these after ValidateSession:
+ctx = context.WithValue(ctx, cache.TenantIDKey, resolved.TenantID.String())
+ctx = context.WithValue(ctx, userIDKey, resolved.UserID.String())
+
+// Any service method reads from ctx — no extra params needed:
+func (s *service) SomeOperation(ctx context.Context) error {
+    tenantID := ctx.Value(cache.TenantIDKey).(string)
+    // ...
+}
+```
+
+### Authenticate Middleware (Rewritten)
+
+`internal/api/middleware/jwt_auth.go` — replaces dead iam imports with identity/session:
+
+```go
+// AuthConfig holds dependencies — passed at wire-up time
+type AuthConfig struct {
+    SessionSvc  session.Service
+    CookieName  string // default: "session"
+    FeatureFlags condition.Evaluator // for MFA flag, etc.
+}
+
+func Authenticate(cfg AuthConfig) fiber.Handler {
+    return func(c *fiber.Ctx) error {
+        token := extractToken(c, cfg.CookieName)
+        if token == "" {
+            return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
+        }
+
+        resolved, err := cfg.SessionSvc.ValidateSession(c.Context(), token)
+        if err != nil {
+            return fiber.NewError(fiber.StatusUnauthorized, "invalid or expired session")
+        }
+
+        // Set locals for downstream middleware and handlers
+        c.Locals(session.LocalsKeySession, resolved)
+        c.Locals(authz.LocalsKeyPrincipal, resolved.ToPrincipal())
+
+        // Set context values — downstream services read these, no extra params
+        ctx := context.WithValue(c.Context(), cache.TenantIDKey, resolved.TenantID.String())
+        c.SetUserContext(ctx)
+        return c.Next()
+    }
+}
+```
+
+### Authorize Middleware (Rewritten)
+
+`internal/api/middleware/authorization.go` — replaces dead iam imports:
+
+```go
+// Authorize uses the pre-computed permission map — O(1), zero DB
+func Authorize(permission string) fiber.Handler {
+    return func(c *fiber.Ctx) error {
+        sess, ok := c.Locals(session.LocalsKeySession).(*session.ResolvedSession)
+        if !ok || sess == nil {
+            return fiber.NewError(fiber.StatusUnauthorized, "no session")
+        }
+        if !sess.Can(permission) {
+            return fiber.NewError(fiber.StatusForbidden, "insufficient permissions")
+        }
+        return c.Next()
+    }
+}
+
+// AuthorizeCasbin uses the Casbin engine — for management ops where the
+// pre-computed map may be stale (after role changes without re-login)
+func AuthorizeCasbin(svc authz.Service, object, action string) fiber.Handler {
+    return svc.Middleware(object, action)
+}
+```
+
+### Route Groups with Shared Middleware
+
+```go
+api := app.Group("/api")
+
+// Public — no auth
+api.Post("/auth/login",  loginHandler)
+
+// All authenticated routes
+auth := api.Group("",
+    middleware.Authenticate(authCfg),
+    middleware.ResolveTenant(tenantCfg),
+)
+
+// Finance routes — permission string follows {module}.{resource}.{action}
+finance := auth.Group("/finance")
+finance.Get("/invoices",
+    middleware.Authorize("finance.receivables.invoices.read"),
+    handler.ListInvoices)
+finance.Post("/invoices",
+    middleware.Authorize("finance.receivables.invoices.create"),
+    handler.CreateInvoice)
+finance.Post("/invoices/:id/approve",
+    middleware.Authorize("finance.receivables.invoices.approve"),
+    handler.ApproveInvoice)
+
+auth.Post("/auth/logout", logoutHandler)
 ```
 
 ### Route Groups with Shared Middleware
