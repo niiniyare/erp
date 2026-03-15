@@ -486,6 +486,30 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (*User
 	return &i, err
 }
 
+const getUserFailedAttempts = `-- name: GetUserFailedAttempts :one
+SELECT
+  failed_login_attempts,
+  lockout_until
+FROM
+  users
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+`
+
+type GetUserFailedAttemptsRow struct {
+	FailedLoginAttempts *int32       `json:"failed_login_attempts"`
+	LockoutUntil        sql.NullTime `json:"lockout_until"`
+}
+
+func (q *Queries) GetUserFailedAttempts(ctx context.Context, id uuid.UUID) (*GetUserFailedAttemptsRow, error) {
+	row := q.db.QueryRow(ctx, getUserFailedAttempts, id)
+	var i GetUserFailedAttemptsRow
+	err := row.Scan(&i.FailedLoginAttempts, &i.LockoutUntil)
+	return &i, err
+}
+
 const getUserPasswordByID = `-- name: GetUserPasswordByID :one
 SELECT
   password_hash
@@ -508,7 +532,8 @@ const incrementFailedLogins = `-- name: IncrementFailedLogins :exec
 UPDATE
   users
 SET
-  failed_login_attempts = failed_login_attempts + 1
+  failed_login_attempts = failed_login_attempts + 1,
+  updated_at = NOW()
 WHERE
   id = $1
   AND tenant_id = current_tenant_id()
@@ -598,6 +623,27 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, 
 		return nil, err
 	}
 	return items, nil
+}
+
+const lockAccount = `-- name: LockAccount :exec
+UPDATE
+  users
+SET
+  lockout_until = $2,
+  updated_at = NOW()
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+`
+
+type LockAccountParams struct {
+	ID           uuid.UUID    `json:"id"`
+	LockoutUntil sql.NullTime `json:"lockout_until"`
+}
+
+func (q *Queries) LockAccount(ctx context.Context, arg LockAccountParams) error {
+	_, err := q.db.Exec(ctx, lockAccount, arg.ID, arg.LockoutUntil)
+	return err
 }
 
 const restoreSoftDeletedUser = `-- name: RestoreSoftDeletedUser :exec
@@ -719,7 +765,8 @@ UPDATE
   users
 SET
   failed_login_attempts = 0,
-  lockout_until = NULL
+  lockout_until = NULL,
+  updated_at = NOW()
 WHERE
   id = $1
   AND tenant_id = current_tenant_id()
@@ -807,7 +854,8 @@ const updateUserLastLogin = `-- name: UpdateUserLastLogin :exec
 UPDATE
   users
 SET
-  last_login_at = NOW()
+  last_login_at = NOW(),
+  updated_at = NOW()
 WHERE
   id = $1
   AND tenant_id = current_tenant_id()

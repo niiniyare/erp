@@ -15,6 +15,45 @@ Track progress here. Check each item when done. Work in order — each step is i
 
 ---
 
+## Blocking: Run `make migrate` + `make sqlc` before Phase 2 compiles
+
+New migration added:
+- `db/migration/000305_identity_sessions_add_permissions.up.sql` — adds `permissions JSONB` and `principal_id UUID` to `user_sessions`
+
+New queries added to `db/queries/sessions.sql`:
+- `CreateSession` — inserts a new session row
+- `GetSessionByToken` — fetches active non-expired session
+- `InvalidateSession` — sets `is_active = FALSE`
+- `UpdateSessionLastSeen` — updates `last_accessed_at`
+
+Run:
+```
+make migrate   # applies 000305
+make sqlc      # generates db/sqlc/sessions.sql.go
+```
+
+After generation, `session/repo.go` and `session/service.go` will compile.
+
+---
+
+## Blocking: Run `sqlc generate` before Phase 1 compiles
+
+New queries added to `db/queries/users.sql`:
+- `LockAccount` — sets `lockout_until = $2`
+- `GetUserFailedAttempts` — returns `failed_login_attempts` + `lockout_until`
+
+The repository stubs in `identity/repository.go` call `store.LockAccount(...)` and
+`store.GetUserFailedAttempts(...)` which do not exist in `db/sqlc/` until you run:
+
+```
+make sqlc        # or: sqlc generate
+```
+
+After generation, the `db.LockAccountParams` struct will use `sql.NullTime` for
+`LockoutUntil` — this is already accounted for in the repository implementation.
+
+---
+
 ## Phase 1 — Wire Identity (no new files)
 
 ### S1 — `internal/core/identity/repo.go` — Brute-force protection methods
@@ -251,14 +290,14 @@ Already part of S4/S5 above — `repo.CreateSession` stores `sha256hex(token)`.
 
 | Step | Description | Status |
 |------|-------------|--------|
-| S1 | identity/repo.go brute-force methods | [ ] pending |
-| S2 | identity/service.go Authenticate() wired | [ ] pending |
-| S3 | session/model.go — Session, ResolvedSession | [ ] pending |
-| S4 | session/repo.go — DB operations | [ ] pending |
-| S5 | session/service.go — Login, ValidateSession, Logout | [ ] pending |
-| S6 | api/middleware/jwt_auth.go rewritten | [ ] pending |
-| S7 | api/middleware/authorization.go rewritten | [ ] pending |
-| S8 | api/handler/auth.go — Login + Logout handlers | [ ] pending |
+| S1 | identity/repo.go brute-force methods | [x] done |
+| S2 | identity/service.go Authenticate() wired | [x] done |
+| S3 | session/model.go — Session, ResolvedSession | [x] done |
+| S4 | session/repo.go — DB operations | [~] needs `sqlc generate` (db/queries/sessions.sql + migration 000305) |
+| S5 | session/service.go — Login, ValidateSession, Logout | [~] needs `sqlc generate` |
+| S6 | api/middleware/jwt_auth.go rewritten | [x] done |
+| S7 | api/middleware/authorization.go rewritten | [x] done |
+| S8 | api/handler/auth.go — Login + Logout handlers | [x] done |
 | S9 | Seed tenant.admin role + policies | [ ] pending |
 | S10 | One protected route end-to-end verified | [ ] pending |
 | G3 | Migration: PENDING tenant guard | [ ] pending |

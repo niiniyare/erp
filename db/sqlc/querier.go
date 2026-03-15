@@ -149,6 +149,7 @@ type Querier interface {
 	CreatePolicy(ctx context.Context, arg CreatePolicyParams) (*Policy, error)
 	CreatePolicyEvaluation(ctx context.Context, arg CreatePolicyEvaluationParams) (*PolicyEvaluation, error)
 	CreateResource(ctx context.Context, arg CreateResourceParams) (*Resource, error)
+	CreateSession(ctx context.Context, arg CreateSessionParams) error
 	// ==========================================
 	// Template Application Queries
 	// ==========================================
@@ -775,6 +776,7 @@ type Querier interface {
 	// Usage: Identifies missing sequence numbers (gaps in numbering)
 	// Use case: Audit compliance, finding deleted/voided documents, sequence integrity checks
 	GetSequenceGaps(ctx context.Context, arg GetSequenceGapsParams) ([]pgtype.Numeric, error)
+	GetSessionByToken(ctx context.Context, sessionToken string) (*GetSessionByTokenRow, error)
 	// Find similar incident patterns for threat intelligence
 	GetSimilarIncidentPatterns(ctx context.Context, arg GetSimilarIncidentPatternsParams) ([]*GetSimilarIncidentPatternsRow, error)
 	GetSpecificSetting(ctx context.Context, key string) (interface{}, error)
@@ -861,6 +863,7 @@ type Querier interface {
 	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
 	GetUserByUsername(ctx context.Context, username string) (*User, error)
 	GetUserEvaluationHistory(ctx context.Context, arg GetUserEvaluationHistoryParams) ([]*PolicyEvaluation, error)
+	GetUserFailedAttempts(ctx context.Context, id uuid.UUID) (*GetUserFailedAttemptsRow, error)
 	GetUserNotificationPreferences(ctx context.Context, userID uuid.UUID) (*NotificationPreference, error)
 	GetUserPasswordByID(ctx context.Context, id uuid.UUID) (*string, error)
 	// Get risk profile for a user
@@ -880,6 +883,7 @@ type Querier interface {
 	InvalidateAllEvaluations(ctx context.Context) error
 	InvalidatePolicyEvaluations(ctx context.Context, dollar_1 []uuid.UUID) error
 	InvalidateResourceEvaluations(ctx context.Context, arg InvalidateResourceEvaluationsParams) error
+	InvalidateSession(ctx context.Context, sessionToken string) error
 	InvalidateUserEvaluations(ctx context.Context, userID uuid.UUID) error
 	IsEntityAncestor(ctx context.Context, arg IsEntityAncestorParams) (bool, error)
 	ListAccessRequestsByStatus(ctx context.Context, arg ListAccessRequestsByStatusParams) ([]*AccessRequest, error)
@@ -922,6 +926,7 @@ type Querier interface {
 	ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]*FinanceTransaction, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error)
 	ListVisibleEntities(ctx context.Context) ([]*Entity, error)
+	LockAccount(ctx context.Context, arg LockAccountParams) error
 	MarkEntriesReconciled(ctx context.Context, arg MarkEntriesReconciledParams) error
 	// =====================================================================
 	// 3. HIERARCHY BULK OPERATIONS
@@ -1043,6 +1048,7 @@ type Querier interface {
 	UpdatePolicy(ctx context.Context, arg UpdatePolicyParams) (*Policy, error)
 	UpdatePolicyStatus(ctx context.Context, arg UpdatePolicyStatusParams) error
 	UpdateRecurringTransactionNextDate(ctx context.Context, arg UpdateRecurringTransactionNextDateParams) error
+	UpdateSessionLastSeen(ctx context.Context, sessionToken string) error
 	UpdateSpecificPasswordPolicyField(ctx context.Context, arg UpdateSpecificPasswordPolicyFieldParams) error
 	UpdateSpecificSetting(ctx context.Context, arg UpdateSpecificSettingParams) error
 	UpdateTenant(ctx context.Context, arg UpdateTenantParams) (*Tenant, error)

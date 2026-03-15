@@ -6,9 +6,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	db "github.com/niiniyare/erp/db/sqlc"
+	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -27,6 +29,13 @@ type Repository interface {
 	GetUserPassword(ctx context.Context, userID uuid.UUID) (string, error)
 	UpdatePassword(ctx context.Context, userID uuid.UUID, newPasswordHash string) error
 
+	// Brute-force protection — backed by SQLC queries in db/queries/users.sql
+	// Call after sqlc generate to get the generated method names.
+	IncrementFailedAttempts(ctx context.Context, userID uuid.UUID) error
+	ResetFailedAttempts(ctx context.Context, userID uuid.UUID) error
+	LockAccount(ctx context.Context, userID uuid.UUID, until time.Time) error
+	UpdateLastLogin(ctx context.Context, userID uuid.UUID) error
+
 	// Person operations
 	CreatePerson(ctx context.Context, req *CreatePersonRequest) (*Person, error)
 	GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, error)
@@ -42,14 +51,16 @@ type Repository interface {
 // repository implements the Repository interface
 type repository struct {
 	store   db.Store
+	cache   cache.Service
 	tracing tracing.Service
 	metrics metrics.MetricsProvider
 }
 
 // NewRepository creates a new user repository
-func NewRepository(store db.Store, tracing tracing.Service, metrics metrics.MetricsProvider) Repository {
+func NewRepository(store db.Store, cache cache.Service, tracing tracing.Service, metrics metrics.MetricsProvider) Repository {
 	return &repository{
 		store:   store,
+		cache:   cache,
 		tracing: tracing,
 		metrics: metrics,
 	}
@@ -158,6 +169,63 @@ func (r *repository) UpdatePassword(ctx context.Context, userID uuid.UUID, newPa
 		ID:           userID,
 		PasswordHash: &newPasswordHash,
 	})
+}
+
+// ── Brute-force protection ────────────────────────────────────────────────────
+// These call the SQLC-generated methods from db/queries/users.sql.
+// Run `make sqlc` (or `sqlc generate`) to regenerate if methods are missing.
+// Mutations invalidate the user cache so Authenticate always sees fresh data.
+
+func (r *repository) IncrementFailedAttempts(ctx context.Context, userID uuid.UUID) error {
+	ctx, span := r.tracing.StartSpan(ctx, "identity.repo.IncrementFailedAttempts")
+	defer span.End()
+
+	if err := r.store.IncrementFailedLogins(ctx, userID); err != nil {
+		return fmt.Errorf("identity repo: increment failed attempts: %w", err)
+	}
+	r.invalidateUserCache(ctx, userID)
+	return nil
+}
+
+func (r *repository) ResetFailedAttempts(ctx context.Context, userID uuid.UUID) error {
+	ctx, span := r.tracing.StartSpan(ctx, "identity.repo.ResetFailedAttempts")
+	defer span.End()
+
+	if err := r.store.UnlockUser(ctx, userID); err != nil {
+		return fmt.Errorf("identity repo: reset failed attempts: %w", err)
+	}
+	r.invalidateUserCache(ctx, userID)
+	return nil
+}
+
+func (r *repository) LockAccount(ctx context.Context, userID uuid.UUID, until time.Time) error {
+	ctx, span := r.tracing.StartSpan(ctx, "identity.repo.LockAccount")
+	defer span.End()
+
+	if err := r.store.LockAccount(ctx, db.LockAccountParams{
+		ID:           userID,
+		LockoutUntil: sql.NullTime{Time: until, Valid: true},
+	}); err != nil {
+		return fmt.Errorf("identity repo: lock account: %w", err)
+	}
+	r.invalidateUserCache(ctx, userID)
+	return nil
+}
+
+func (r *repository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) error {
+	ctx, span := r.tracing.StartSpan(ctx, "identity.repo.UpdateLastLogin")
+	defer span.End()
+
+	if err := r.store.UpdateUserLastLogin(ctx, userID); err != nil {
+		return fmt.Errorf("identity repo: update last login: %w", err)
+	}
+	r.invalidateUserCache(ctx, userID)
+	return nil
+}
+
+// invalidateUserCache removes all cache keys for a user after a mutation.
+func (r *repository) invalidateUserCache(ctx context.Context, userID uuid.UUID) {
+	r.cache.Delete(ctx, fmt.Sprintf("user:id:%s", userID))
 }
 
 // Person operations

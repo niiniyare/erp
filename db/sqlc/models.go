@@ -44,7 +44,7 @@ type AccessRequest struct {
 // Defines actions that can be performed on resources with risk assessment and approval workflow requirements.
 type Action struct {
 	ID uuid.UUID `json:"id"`
-	// NULL for SYSTEM-scope actions. Set for custom TENANT-scope actions.
+	// NULL for SYSTEM-scope actions. Set for custom TENANT-scope actions. FK enforced in 000062.
 	TenantID *uuid.UUID `json:"tenant_id"`
 	// SYSTEM = platform-wide standard action. TENANT = custom action for one tenant.
 	Scope       string  `json:"scope"`
@@ -59,7 +59,7 @@ type Action struct {
 	RiskLevel *string `json:"risk_level"`
 	// Whether this action requires explicit approval. If TRUE, approver_role_id MUST be set.
 	RequiresApproval *bool `json:"requires_approval"`
-	// Role whose members can approve this action. Required when requires_approval=TRUE.
+	// Role whose members can approve this action. Required when requires_approval=TRUE. FK enforced in 000062.
 	ApproverRoleID *uuid.UUID   `json:"approver_role_id"`
 	IsActive       *bool        `json:"is_active"`
 	CreatedAt      sql.NullTime `json:"created_at"`
@@ -164,6 +164,17 @@ type AuditLog struct {
 	// JSONB containing compliance-related flags (GDPR, SOX, HIPAA, PCI, etc.)
 	ComplianceFlags []byte       `json:"compliance_flags"`
 	CreatedAt       sql.NullTime `json:"created_at"`
+}
+
+type CasbinRule struct {
+	ID    uuid.UUID `json:"id"`
+	Ptype string    `json:"ptype"`
+	V0    string    `json:"v0"`
+	V1    string    `json:"v1"`
+	V2    string    `json:"v2"`
+	V3    string    `json:"v3"`
+	V4    string    `json:"v4"`
+	V5    string    `json:"v5"`
 }
 
 // Schema registry for all available configuration keys across modules. Owned exclusively by the Settings module — do not write from other modules directly. Defines what keys exist, their types, defaults, validation rules, and access control.
@@ -664,7 +675,7 @@ type HierarchyPath struct {
 // System modules for organising permissions and features. Enables modular permission management and feature toggles.
 type Module struct {
 	ID uuid.UUID `json:"id"`
-	// NULL for SYSTEM-scope modules. Set for custom TENANT-scope modules.
+	// NULL for SYSTEM-scope modules. Set for custom TENANT-scope modules. FK enforced in 000062.
 	TenantID *uuid.UUID `json:"tenant_id"`
 	// SYSTEM = platform-wide, readable by all. TENANT = private custom module.
 	Scope       string  `json:"scope"`
@@ -922,6 +933,19 @@ type Role struct {
 	CreatedAt    time.Time    `json:"created_at"`
 	UpdatedAt    time.Time    `json:"updated_at"`
 	DeletedAt    sql.NullTime `json:"deleted_at"`
+}
+
+type RoleAssignment struct {
+	ID          uuid.UUID    `json:"id"`
+	TenantID    uuid.UUID    `json:"tenant_id"`
+	Subject     string       `json:"subject"`
+	RoleName    string       `json:"role_name"`
+	Domain      string       `json:"domain"`
+	AssignedBy  *string      `json:"assigned_by"`
+	DelegatedBy *string      `json:"delegated_by"`
+	ExpiresAt   sql.NullTime `json:"expires_at"`
+	IsActive    *bool        `json:"is_active"`
+	CreatedAt   sql.NullTime `json:"created_at"`
 }
 
 // Maps permissions to roles with optional entity-specific scoping and additional conditions for flexible authorization.
@@ -1295,6 +1319,10 @@ type UserSession struct {
 	LastAccessedAt sql.NullTime `json:"last_accessed_at"`
 	// Whether the session is currently active
 	IsActive *bool `json:"is_active"`
+	// Pre-computed permission map {"finance.invoices.read": true, ...} stored at login; used for O(1) authz on every request.
+	Permissions []byte `json:"permissions"`
+	// For portal users: the contact/employee UUID they act as. NULL for platform and tenant users.
+	PrincipalID *uuid.UUID `json:"principal_id"`
 }
 
 type VActiveEntity struct {

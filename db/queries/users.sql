@@ -206,7 +206,8 @@ LIMIT
 UPDATE
   users
 SET
-  failed_login_attempts = failed_login_attempts + 1
+  failed_login_attempts = failed_login_attempts + 1,
+  updated_at = NOW()
 WHERE
   id = $1
   AND tenant_id = current_tenant_id();
@@ -216,7 +217,18 @@ UPDATE
   users
 SET
   failed_login_attempts = 0,
-  lockout_until = NULL
+  lockout_until = NULL,
+  updated_at = NOW()
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id();
+
+-- name: LockAccount :exec
+UPDATE
+  users
+SET
+  lockout_until = $2,
+  updated_at = NOW()
 WHERE
   id = $1
   AND tenant_id = current_tenant_id();
@@ -225,10 +237,22 @@ WHERE
 UPDATE
   users
 SET
-  last_login_at = NOW()
+  last_login_at = NOW(),
+  updated_at = NOW()
 WHERE
   id = $1
   AND tenant_id = current_tenant_id();
+
+-- name: GetUserFailedAttempts :one
+SELECT
+  failed_login_attempts,
+  lockout_until
+FROM
+  users
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL;
 
 -- name: AssignUserRole :one
 SELECT

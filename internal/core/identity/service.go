@@ -42,21 +42,81 @@ type Service interface {
 	SearchUsers(ctx context.Context, query string, limit int, offset int) ([]*User, error)
 }
 
+// Config holds security thresholds for the identity service.
+//
+// NOTE: These are process-level defaults loaded from platform/config.AuthConfig
+// at startup. Per-tenant overrides belong in the Settings module:
+//
+//	configService.GetEffectiveConfiguration(ctx, &entityID, "iam", "max_failed_attempts")
+//	configService.GetEffectiveConfiguration(ctx, &entityID, "iam", "lockout_duration_minutes")
+//	configService.GetEffectiveConfiguration(ctx, &entityID, "iam", "session_ttl_hours")
+//
+// TODO(settings): Replace hardcoded defaults with a settings.ConfigurationService
+// lookup at request time once the settings integration pattern is finalised
+// (see docs/reference/modules/settings/15-service-integration.md §Pattern 1).
+// Use graceful degradation — fall back to the defaults below if settings unavailable.
+//
+// TODO(feature-flags): MFAEnabled should be sourced from the tenant feature-flag
+// system (MvTenantFeatureFlagsCache view, flag name "iam.mfa_enabled") rather
+// than a static bool. Wire this in the middleware layer once the feature-flag
+// middleware decision is resolved.
+type Config struct {
+	// MaxFailedAttempts is the number of consecutive failures before lockout.
+	// TODO(settings): read from settings key "iam.max_failed_attempts" (module: "iam")
+	MaxFailedAttempts int // default: 5
+
+	// LockoutDuration is how long a locked account stays locked.
+	// TODO(settings): read from settings key "iam.lockout_duration_minutes" (module: "iam")
+	LockoutDuration time.Duration // default: 15 min
+
+	// SessionTTL is the lifetime of a new session token.
+	// TODO(settings): read from settings key "iam.session_ttl_hours" (module: "iam")
+	SessionTTL time.Duration // default: 8 h
+
+	// MFAEnabled gates the MFA code-check path in Authenticate.
+	// FIXME(feature-flags): replace with feature-flag lookup:
+	//   featureFlagSvc.IsEnabled(ctx, tenantID, "iam.mfa_enabled")
+	MFAEnabled bool // default: false
+}
+
+// DefaultConfig returns safe production defaults.
+// These match the hardcoded values previously spread across Authenticate().
+func DefaultConfig() Config {
+	return Config{
+		MaxFailedAttempts: 5,
+		LockoutDuration:   15 * time.Minute,
+		SessionTTL:        8 * time.Hour,
+		MFAEnabled:        false,
+	}
+}
+
 // service implements the Service interface
 type service struct {
 	repo    Repository
 	cache   cache.Service
 	tracing tracing.Service
 	metrics metrics.MetricsProvider
+	cfg     Config
 }
 
-// NewService creates a new identity service
+// NewService creates a new identity service with default config.
 func NewService(repo Repository, cache cache.Service, tracing tracing.Service, metrics metrics.MetricsProvider) Service {
+	return NewServiceWithConfig(repo, cache, tracing, metrics, DefaultConfig())
+}
+
+// NewServiceWithConfig creates a new identity service with explicit config.
+// Prefer this constructor when config is loaded from platform/config at startup.
+//
+// NOTE: Once settings integration is in place, the Config fields marked with
+// TODO(settings) should be re-read per request from the settings service,
+// NOT re-read on every call here (that would be per-startup, not per-tenant).
+func NewServiceWithConfig(repo Repository, cache cache.Service, tracing tracing.Service, metrics metrics.MetricsProvider, cfg Config) Service {
 	return &service{
 		repo:    repo,
 		cache:   cache,
 		tracing: tracing,
 		metrics: metrics,
+		cfg:     cfg,
 	}
 }
 
@@ -176,7 +236,24 @@ func (s *service) UpdateUser(ctx context.Context, id uuid.UUID, req *UpdateUserR
 	return updatedUser, nil
 }
 
-// Authenticate handles user login.
+// Authenticate handles user login with brute-force protection.
+//
+// NOTE(tenant-context): This method expects tenant context to already be set in
+// ctx by the ResolveTenant + SetTenantContext middleware chain BEFORE it is called.
+// The underlying SQLC queries (GetUserByEmail, IncrementFailedLogins, etc.) all
+// filter by current_tenant_id() which requires that context. Never call Authenticate
+// without tenant context — it will silently return ErrAuthenticationFailed.
+//
+// TODO(settings): Load s.cfg.MaxFailedAttempts and s.cfg.LockoutDuration from
+// settings service per-tenant at request time. Pattern:
+//   cfg, _ := settingsSvc.GetEffectiveConfiguration(ctx, nil, "iam", "max_failed_attempts")
+//   maxAttempts, _ := cfg.Value.AsInt()
+// Fall back to s.cfg.MaxFailedAttempts if settings unavailable.
+//
+// TODO(feature-flags): Add MFA second-factor check after password verification
+// if featureFlagSvc.IsEnabled(ctx, "iam.mfa_enabled"). The mfa_secret column
+// exists in the users table (000303 migration). Wire MFA in a follow-up step
+// once the feature-flag middleware is resolved.
 func (s *service) Authenticate(ctx context.Context, identifier, password string) (*User, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "identity.service.Authenticate")
 	defer span.End()
@@ -184,30 +261,80 @@ func (s *service) Authenticate(ctx context.Context, identifier, password string)
 	var user *User
 	var err error
 
-	// Try to find user by email first, then by username
+	// Resolve user by email or username.
+	// NOTE: always returns ErrAuthenticationFailed (not ErrUserNotFound) to
+	// prevent username/email oracle attacks.
 	if strings.Contains(identifier, "@") {
 		user, err = s.repo.GetUserByEmail(ctx, identifier)
 	} else {
 		user, err = s.repo.GetUserByUsername(ctx, identifier)
 	}
-
 	if err != nil {
+		s.metrics.RecordCount("identity.auth.user_not_found", 1, nil)
 		return nil, errors.ErrAuthenticationFailed
 	}
 
-	// Get the stored password hash
+	// Lockout check — must happen before password verification to prevent
+	// timing-based enumeration of locked vs. unknown accounts.
+	if user.LockoutUntil != nil && !user.LockoutUntil.IsZero() && user.LockoutUntil.After(time.Now()) {
+		s.metrics.RecordCount("identity.auth.account_locked", 1, nil)
+		return nil, errors.ErrAccountLocked
+	}
+
+	// Fetch stored password hash (not included in GetUserByEmail result).
 	hashedPassword, err := s.repo.GetUserPassword(ctx, user.ID)
 	if err != nil {
 		return nil, errors.ErrAuthenticationFailed
 	}
 
-	// Verify the password
+	// Verify password.
 	if !s.verifyPassword(hashedPassword, password) {
-		// TODO: Increment failed login attempts
+		s.metrics.RecordCount("identity.auth.failure", 1, nil)
+
+		// Increment counter — do not block on error; auth failure is already returned.
+		if incrErr := s.repo.IncrementFailedAttempts(ctx, user.ID); incrErr != nil {
+			// Non-fatal: log and proceed to return auth failure.
+			// The user cache is invalidated inside IncrementFailedAttempts.
+			s.metrics.RecordCount("identity.auth.increment_error", 1, nil)
+		}
+
+		// Lock account when threshold is reached.
+		// NOTE: we check against the CURRENT count + 1 since the DB increment
+		// is already done. user.FailedLoginAttempts is the pre-increment value
+		// read from cache/DB at the top of this call.
+		//
+		// TODO(settings): replace s.cfg.MaxFailedAttempts with per-tenant value.
+		newAttempts := int(user.FailedLoginAttempts) + 1
+		if newAttempts >= s.cfg.MaxFailedAttempts {
+			lockUntil := time.Now().Add(s.cfg.LockoutDuration)
+			// TODO(settings): replace s.cfg.LockoutDuration with per-tenant value.
+			if lockErr := s.repo.LockAccount(ctx, user.ID, lockUntil); lockErr != nil {
+				// Non-fatal: log but still return auth failure.
+				s.metrics.RecordCount("identity.auth.lock_error", 1, nil)
+			}
+		}
+
 		return nil, errors.ErrAuthenticationFailed
 	}
 
-	// TODO: Update last login time
+	// --- Auth success path ---
+
+	// Reset brute-force counter and clear any previous lockout.
+	if resetErr := s.repo.ResetFailedAttempts(ctx, user.ID); resetErr != nil {
+		// Non-fatal: the user can still log in even if the reset fails.
+		s.metrics.RecordCount("identity.auth.reset_error", 1, nil)
+	}
+
+	// Record last login timestamp.
+	if loginErr := s.repo.UpdateLastLogin(ctx, user.ID); loginErr != nil {
+		// Non-fatal: same reasoning.
+		s.metrics.RecordCount("identity.auth.last_login_update_error", 1, nil)
+	}
+
+	// Invalidate user cache so next GetUserByID reflects the updated state.
+	s.invalidateUserCache(ctx, user.ID, user.Email, user.Username)
+
+	s.metrics.RecordCount("identity.auth.success", 1, nil)
 	return user, nil
 }
 
