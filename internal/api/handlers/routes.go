@@ -11,9 +11,11 @@ import (
 	tenantHandler "github.com/niiniyare/erp/internal/api/handlers/tenant"
 	uiHandler "github.com/niiniyare/erp/internal/api/handlers/ui"
 	userHandler "github.com/niiniyare/erp/internal/api/handlers/user"
+	authHandler "github.com/niiniyare/erp/internal/api/handler"
 	middlewarePkg "github.com/niiniyare/erp/internal/api/middleware"
 	financeService "github.com/niiniyare/erp/internal/core/finance/service"
 	"github.com/niiniyare/erp/internal/core/iam/authn"
+	"github.com/niiniyare/erp/internal/core/identity/session"
 	coreTenant "github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -27,6 +29,7 @@ const (
 	ModuleTenant  = "tenant"
 	ModuleUser    = "user"
 	ModuleFinance = "finance"
+	ModuleAuth    = "auth"
 )
 
 // ============================================================================
@@ -199,6 +202,11 @@ type Dependencies struct {
 	FinanceServices  *financeService.Services
 	TenantMiddleware fiber.Handler
 	SecurityManager  *middlewarePkg.RouteSecurityManager
+
+	// Session-based auth (S6/S8 — replaces JWT+IAM approach)
+	// Set these to enable Authenticate/Authorize middleware on protected routes.
+	SessionService session.Service
+	AuthConfig     *middlewarePkg.AuthConfig // nil = auth middleware disabled
 }
 
 // Validate ensures all required dependencies are present.
@@ -304,6 +312,7 @@ func (r *Router) registerAPIRoutes(app *fiber.App) error {
 		name string
 		fn   func(fiber.Router) error
 	}{
+		{ModuleAuth, r.registerAuthAPI},
 		{ModuleTenant, r.registerTenantAPI},
 		{ModuleUser, r.registerUserAPI},
 		{ModuleFinance, r.registerFinanceAPI},
@@ -464,13 +473,16 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 	// Register finance endpoints directly on the API router
 	financeGroup := apiRouter.Group("/v1/finance")
 
-	// Apply tenant middleware for RLS if available
+	// Apply Authenticate + tenant middleware for all finance routes (S10).
+	// If SessionService is not configured the middleware is a no-op (dev mode).
+	financeGroup.Use(r.authenticateMiddleware())
 	if r.deps.TenantMiddleware != nil {
 		financeGroup.Use(r.deps.TenantMiddleware)
 	}
 
-	// Account management endpoints
+	// Account management endpoints — require finance.accounts.read / create / update etc.
 	accountsGroup := financeGroup.Group("/accounts")
+	accountsGroup.Use(middlewarePkg.Authorize("finance.accounts.read"))
 	accountsGroup.Post("/", handler.CreateAccount)               // POST /api/v1/finance/accounts - Create account
 	accountsGroup.Get("/", handler.ListAccounts)                 // GET /api/v1/finance/accounts - List accounts with filters
 	accountsGroup.Get("/:id", handler.GetAccount)                // GET /api/v1/finance/accounts/:id - Get account by ID
@@ -478,8 +490,9 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 	accountsGroup.Delete("/:id", handler.DeleteAccount)          // DELETE /api/v1/finance/accounts/:id - Delete account
 	accountsGroup.Get("/:id/balance", handler.GetAccountBalance) // GET /api/v1/finance/accounts/:id/balance - Get account balance
 
-	// Transaction management endpoints
+	// Transaction management endpoints — require finance.transactions.read
 	transactionsGroup := financeGroup.Group("/transactions")
+	transactionsGroup.Use(middlewarePkg.Authorize("finance.transactions.read"))
 	transactionsGroup.Post("/", handler.CreateTransaction) // POST /api/v1/finance/transactions - Create transaction
 	transactionsGroup.Get("/", handler.ListTransactions)   // GET /api/v1/finance/transactions - List transactions with filters
 	transactionsGroup.Get("/:id", handler.GetTransaction)  // GET /api/v1/finance/transactions/:id - Get transaction by ID
@@ -490,6 +503,37 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 
 	r.deps.Logger.Info("registered finance API endpoints")
 	return nil
+}
+
+// registerAuthAPI registers the login/logout endpoints.
+// These are public (no Authenticate middleware) — the handlers themselves
+// set the session cookie on success.
+func (r *Router) registerAuthAPI(apiRouter fiber.Router) error {
+	if r.deps.SessionService == nil {
+		r.deps.Logger.Warn("SessionService not configured, skipping auth route registration")
+		return nil
+	}
+
+	cookieName := "session"
+	if r.deps.AuthConfig != nil {
+		cookieName = r.deps.AuthConfig.CookieName
+	}
+
+	authGroup := apiRouter.Group("/v1/auth")
+	authGroup.Post("/login", authHandler.LoginHandler(r.deps.SessionService, authHandler.DefaultLoginConfig()))
+	authGroup.Post("/logout", authHandler.LogoutHandler(r.deps.SessionService, cookieName))
+
+	r.deps.Logger.Info("registered auth API endpoints")
+	return nil
+}
+
+// authenticateMiddleware returns the Authenticate handler if session auth is configured,
+// otherwise returns a no-op pass-through.
+func (r *Router) authenticateMiddleware() fiber.Handler {
+	if r.deps.SessionService == nil || r.deps.AuthConfig == nil {
+		return func(c *fiber.Ctx) error { return c.Next() }
+	}
+	return middlewarePkg.Authenticate(*r.deps.AuthConfig)
 }
 
 // Future module registration examples:

@@ -6,8 +6,9 @@ import (
 
 	casbin "github.com/casbin/casbin/v2"
 	casbinmodel "github.com/casbin/casbin/v2/model"
-	"github.com/jackc/pgx/v5/pgxpool"
 
+	db "github.com/niiniyare/erp/db/sqlc"
+	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
 	"github.com/niiniyare/erp/internal/shared/tracing"
@@ -15,15 +16,16 @@ import (
 
 // Config holds the dependencies required to create a Service.
 type Config struct {
-	Pool    *pgxpool.Pool
-	Logger  logger.Logger
+	Store   db.Store           // required — wraps pgxpool for all DB operations
+	Cache   cache.Service      // required — used by repo for role assignment caching
+	Logger  logger.Logger      // required
 	Metrics metrics.MetricsProvider // optional
-	Tracer  tracing.Service         // optional
+	Tracer  tracing.Service    // optional
 }
 
 type service struct {
 	enforcer *casbin.Enforcer
-	pool     *pgxpool.Pool
+	repo     Repository
 	log      logger.Logger
 	metrics  metrics.MetricsProvider
 	tracer   tracing.Service
@@ -31,8 +33,11 @@ type service struct {
 
 // New creates a fully initialised Service backed by PostgreSQL via Casbin.
 func New(cfg Config) (Service, error) {
-	if cfg.Pool == nil {
-		return nil, fmt.Errorf("authz.New: pool is required")
+	if cfg.Store == nil {
+		return nil, fmt.Errorf("authz.New: store is required")
+	}
+	if cfg.Cache == nil {
+		return nil, fmt.Errorf("authz.New: cache is required")
 	}
 	if cfg.Logger == nil {
 		return nil, fmt.Errorf("authz.New: logger is required")
@@ -43,17 +48,20 @@ func New(cfg Config) (Service, error) {
 		return nil, fmt.Errorf("authz.New: build model: %w", err)
 	}
 
-	adapter := newPgxAdapter(cfg.Pool)
+	// Casbin pgx adapter uses the raw pool extracted from the Store.
+	adapter := newPgxAdapter(cfg.Store.GetPool())
 	e, err := casbin.NewEnforcer(m, adapter)
 	if err != nil {
 		return nil, fmt.Errorf("authz.New: create enforcer: %w", err)
 	}
 	e.EnableAutoSave(true)
 
+	log := cfg.Logger.WithFields(logger.Fields{"component": "authz"})
+
 	return &service{
 		enforcer: e,
-		pool:     cfg.Pool,
-		log:      cfg.Logger,
+		repo:     newPgRepo(cfg.Store, cfg.Cache, log, cfg.Metrics, cfg.Tracer),
+		log:      log,
 		metrics:  cfg.Metrics,
 		tracer:   cfg.Tracer,
 	}, nil

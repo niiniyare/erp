@@ -26,13 +26,19 @@ New queries added to `db/queries/sessions.sql`:
 - `InvalidateSession` — sets `is_active = FALSE`
 - `UpdateSessionLastSeen` — updates `last_accessed_at`
 
+New queries added to `db/queries/authz.sql`:
+- `UpsertRoleAssignment` — INSERT … ON CONFLICT upsert for `role_assignments`
+- `DeactivateRoleAssignment` — sets `is_active = FALSE`
+- `ListRoleAssignments` — returns all assignments for subject+domain
+- `ListExpiredActiveRoleNames` — returns role names whose `expires_at` has passed
+
 Run:
 ```
-make migrate   # applies 000305
-make sqlc      # generates db/sqlc/sessions.sql.go
+make migrate   # applies 000305–000307
+make sqlc      # generates db/sqlc/sessions.sql.go + db/sqlc/authz.sql.go
 ```
 
-After generation, `session/repo.go` and `session/service.go` will compile.
+After generation, `session/repo.go`, `session/service.go`, and `authz/repo.go` will compile.
 
 ---
 
@@ -293,13 +299,17 @@ Already part of S4/S5 above — `repo.CreateSession` stores `sha256hex(token)`.
 | S1 | identity/repo.go brute-force methods | [x] done |
 | S2 | identity/service.go Authenticate() wired | [x] done |
 | S3 | session/model.go — Session, ResolvedSession | [x] done |
-| S4 | session/repo.go — DB operations | [~] needs `sqlc generate` (db/queries/sessions.sql + migration 000305) |
-| S5 | session/service.go — Login, ValidateSession, Logout | [~] needs `sqlc generate` |
+| S4 | session/repo.go — DB operations | [~] needs `make sqlc` (sessions.sql + migration 000305) |
+| S5 | session/service.go — Login, ValidateSession, Logout | [~] needs `make sqlc` |
 | S6 | api/middleware/jwt_auth.go rewritten | [x] done |
 | S7 | api/middleware/authorization.go rewritten | [x] done |
 | S8 | api/handler/auth.go — Login + Logout handlers | [x] done |
-| S9 | Seed tenant.admin role + policies | [ ] pending |
-| S10 | One protected route end-to-end verified | [ ] pending |
-| G3 | Migration: PENDING tenant guard | [ ] pending |
-| G4 | Migration: fix policy_evaluations RLS | [ ] pending |
-| G5 | AssignableTo guard in AssignRole() | [ ] pending |
+| S9 | Seed tenant.admin role + policies | [x] done — authz/seed.go: SeedDefaultRoles + AssignAdminRole |
+| S10 | One protected route end-to-end verified | [x] done — finance routes protected; auth routes registered |
+| G3 | Migration: PENDING tenant guard | [x] done — 000306_security_active_tenant_guard |
+| G4 | Migration: fix policy_evaluations RLS | [x] done — 000307_security_policy_evaluations_rls |
+| G5 | AssignableTo guard in AssignRole() | [x] done — authz/roles.go builtinRoles registry |
+| R1 | authz repo layer — raw pool → db.Store | [x] done — authz/repo.go: Repository interface + pgRepo using WithTenantFromCtx |
+| R2 | authz service — Config.Pool → Config.Store + Cache | [x] done — authz/service.go: Casbin adapter via store.GetPool() |
+| R3 | authz roles — raw pool calls → s.repo.* | [x] done — authz/roles.go: all pool.Begin/Exec/Query replaced |
+| R4 | authz tests — updated for new Config shape | [x] done — noopCache, noopRepo added; Config{Store,Cache} wired |

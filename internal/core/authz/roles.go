@@ -3,9 +3,43 @@ package authz
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/google/uuid"
+	"github.com/niiniyare/erp/internal/shared"
 )
+
+// roleMetadata holds static constraints for a built-in role.
+// Roles not listed here are treated as unrestricted (custom/tenant-defined).
+type roleMetadata struct {
+	// AssignableTo lists the ActorType values that may assign this role.
+	// Empty slice means any actor type may assign it.
+	AssignableTo []string
+}
+
+// builtinRoles is the registry of roles whose assignment is restricted by actor type.
+// Keys use the same strings returned by TenantSubject/PlatformSubject prefixes.
+//
+// Add entries here when introducing new system roles whose assignment should be
+// limited to specific actor types (platform, tenant, portal).
+var builtinRoles = map[string]roleMetadata{
+	"role:platform.admin":   {AssignableTo: []string{string(ActorPlatform)}},
+	"role:platform.support": {AssignableTo: []string{string(ActorPlatform)}},
+	"role:tenant.admin":     {AssignableTo: []string{string(ActorPlatform), string(ActorTenant)}},
+	"role:tenant.manager":   {AssignableTo: []string{string(ActorPlatform), string(ActorTenant)}},
+	"role:portal.user":      {AssignableTo: []string{string(ActorTenant)}},
+}
+
+// actorTypeFromSubject extracts the ActorType prefix from a Casbin subject string.
+// e.g. "platform:abc-123" → "platform", "tenant:xyz" → "tenant".
+// Returns "" if the subject has no recognised prefix.
+func actorTypeFromSubject(subject string) string {
+	if idx := strings.Index(subject, ":"); idx > 0 {
+		return subject[:idx]
+	}
+	return ""
+}
 
 // AssignRole grants subject the named role in domain and writes metadata to
 // role_assignments. The Casbin g-rule is added after the DB write succeeds.
@@ -15,32 +49,28 @@ func (s *service) AssignRole(ctx context.Context, tenantID, subject, role, domai
 		opt(o)
 	}
 
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("authz AssignRole begin tx: %w", err)
+	// G5: AssignableTo guard — check that the assigning actor's type is allowed
+	// to grant this particular role.  Only enforced for roles in builtinRoles;
+	// custom tenant roles are unrestricted.
+	if meta, ok := builtinRoles[role]; ok && len(meta.AssignableTo) > 0 && o.assignedBy != "" {
+		actorType := actorTypeFromSubject(o.assignedBy)
+		if !slices.Contains(meta.AssignableTo, actorType) {
+			return fmt.Errorf("authz: role %q is not assignable by actor type %q (allowed: %v)",
+				role, actorType, meta.AssignableTo)
+		}
 	}
-	defer tx.Rollback(ctx) //nolint:errcheck
 
-	_, err = tx.Exec(ctx, `
-		INSERT INTO role_assignments
-			(id, tenant_id, subject, role_name, domain, assigned_by, delegated_by, expires_at, is_active)
-		VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
-		ON CONFLICT (subject, role_name, domain)
-		DO UPDATE SET
-			is_active    = TRUE,
-			assigned_by  = EXCLUDED.assigned_by,
-			delegated_by = EXCLUDED.delegated_by,
-			expires_at   = EXCLUDED.expires_at`,
-		uuid.New().String(), tenantID, subject, role, domain,
+	// Inject tenant UUID into context so the repo can use WithTenantFromCtx.
+	tID, err := uuid.Parse(tenantID)
+	if err != nil {
+		return fmt.Errorf("authz AssignRole: invalid tenant ID %q: %w", tenantID, err)
+	}
+	ctx = shared.WithTenantID(ctx, tID)
+
+	if err := s.repo.UpsertRoleAssignment(ctx, tID, subject, role, domain,
 		nullableString(o.assignedBy), nullableString(o.delegatedBy), o.expiresAt,
-	)
-	if err != nil {
-		return fmt.Errorf("authz AssignRole insert: %w", err)
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return fmt.Errorf("authz AssignRole commit: %w", err)
+	); err != nil {
+		return fmt.Errorf("authz AssignRole: %w", err)
 	}
 
 	// Add the Casbin g-rule after the DB write succeeds.
@@ -53,13 +83,14 @@ func (s *service) AssignRole(ctx context.Context, tenantID, subject, role, domai
 // RevokeRole removes subject's role in domain from Casbin and marks the
 // role_assignments row inactive.
 func (s *service) RevokeRole(ctx context.Context, subject, role, domain string) error {
-	_, err := s.pool.Exec(ctx,
-		`UPDATE role_assignments SET is_active = FALSE
-		 WHERE subject=$1 AND role_name=$2 AND domain=$3`,
-		subject, role, domain,
-	)
-	if err != nil {
-		return fmt.Errorf("authz RevokeRole update: %w", err)
+	// Inject tenant UUID when the domain is a parseable UUID (tenant-scoped roles).
+	// Platform domain (_platform_) has no tenant UUID — repo falls back to WithTx.
+	if tID, err := uuid.Parse(domain); err == nil {
+		ctx = shared.WithTenantID(ctx, tID)
+	}
+
+	if err := s.repo.DeactivateRoleAssignment(ctx, subject, role, domain); err != nil {
+		return fmt.Errorf("authz RevokeRole: %w", err)
 	}
 
 	if _, err := s.enforcer.DeleteRoleForUserInDomain(subject, role, domain); err != nil {
@@ -85,75 +116,20 @@ func (s *service) HasRole(ctx context.Context, subject, role, domain string) (bo
 
 // GetAssignments queries the role_assignments metadata table for subject+domain.
 func (s *service) GetAssignments(ctx context.Context, subject, domain string) ([]RoleAssignment, error) {
-	rows, err := s.pool.Query(ctx, `
-		SELECT id, subject, role_name, domain, tenant_id,
-		       COALESCE(assigned_by,''), COALESCE(delegated_by,''),
-		       expires_at, is_active, created_at
-		FROM role_assignments
-		WHERE subject=$1 AND domain=$2
-		ORDER BY created_at DESC`,
-		subject, domain,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("authz GetAssignments query: %w", err)
-	}
-	defer rows.Close()
-
-	var out []RoleAssignment
-	for rows.Next() {
-		var ra RoleAssignment
-		if err := rows.Scan(
-			&ra.ID, &ra.Subject, &ra.Role, &ra.Domain, &ra.TenantID,
-			&ra.AssignedBy, &ra.DelegatedBy,
-			&ra.ExpiresAt, &ra.IsActive, &ra.CreatedAt,
-		); err != nil {
-			return nil, fmt.Errorf("authz GetAssignments scan: %w", err)
-		}
-		out = append(out, ra)
-	}
-	return out, rows.Err()
+	return s.repo.ListRoleAssignments(ctx, subject, domain)
 }
 
 // revokeExpiredRoles is called at the start of Enforce for lazy cleanup of
 // any role assignments whose expires_at has passed.
 func (s *service) revokeExpiredRoles(ctx context.Context, subject, domain string) error {
-	rows, err := s.pool.Query(ctx, `
-		SELECT role_name FROM role_assignments
-		WHERE subject=$1 AND domain=$2
-		  AND is_active = TRUE
-		  AND expires_at IS NOT NULL
-		  AND expires_at < NOW()`,
-		subject, domain,
-	)
+	expired, err := s.repo.ListExpiredActiveRoleNames(ctx, subject, domain)
 	if err != nil {
-		return fmt.Errorf("revokeExpiredRoles query: %w", err)
-	}
-	defer rows.Close()
-
-	var expired []string
-	for rows.Next() {
-		var role string
-		if err := rows.Scan(&role); err != nil {
-			return fmt.Errorf("revokeExpiredRoles scan: %w", err)
-		}
-		expired = append(expired, role)
-	}
-	if err := rows.Err(); err != nil {
 		return err
 	}
-
 	for _, role := range expired {
 		if err := s.RevokeRole(ctx, subject, role, domain); err != nil {
 			return err
 		}
 	}
 	return nil
-}
-
-// nullableString returns nil for empty strings so pgx stores SQL NULL.
-func nullableString(s string) *string {
-	if s == "" {
-		return nil
-	}
-	return &s
 }

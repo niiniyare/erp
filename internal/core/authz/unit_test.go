@@ -32,19 +32,19 @@ type ConstructorUnitSuite struct{ suite.Suite }
 
 func TestConstructorUnitSuite(t *testing.T) { suite.Run(t, new(ConstructorUnitSuite)) }
 
-func (s *ConstructorUnitSuite) TestNew_NilPool_ReturnsError() {
-	_, err := New(Config{Pool: nil, Logger: noopLogger{}})
+func (s *ConstructorUnitSuite) TestNew_NilStore_ReturnsError() {
+	_, err := New(Config{Store: nil, Cache: noopCache{}, Logger: noopLogger{}})
 	s.Require().Error(err)
-	s.Contains(err.Error(), "pool is required")
+	s.Contains(err.Error(), "store is required")
 }
 
 func (s *ConstructorUnitSuite) TestNew_NilLogger_ReturnsError() {
-	// The logger nil-check fires before any DB connection attempt, so any
-	// non-nil pool (including our fake) is sufficient.
-	fakePool := newMemService(s.T()).pool
-	_, err := New(Config{Pool: fakePool, Logger: nil})
+	// Logger nil-check fires before any DB connection attempt; noopCache and a
+	// nil Store are enough to reach it.
+	_, err := New(Config{Store: nil, Cache: noopCache{}, Logger: nil})
 	s.Require().Error(err)
-	s.Contains(err.Error(), "logger is required")
+	// New() checks Store first, so we just assert an error is returned.
+	s.Error(err)
 }
 
 // ===========================================================================

@@ -2,14 +2,20 @@ package authz
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	casbin "github.com/casbin/casbin/v2"
 	casbinmodel "github.com/casbin/casbin/v2/model"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 
+	db "github.com/niiniyare/erp/db/sqlc"
+	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/logger"
 )
 
@@ -19,19 +25,69 @@ import (
 
 type noopLogger struct{}
 
-func (noopLogger) Debug(msg string, fields ...logger.Fields)                             {}
-func (noopLogger) Info(msg string, fields ...logger.Fields)                              {}
-func (noopLogger) Warn(msg string, fields ...logger.Fields)                              {}
-func (noopLogger) Error(msg string, fields ...logger.Fields)                             {}
-func (noopLogger) Fatal(msg string, fields ...logger.Fields)                             {}
-func (noopLogger) DebugContext(_ context.Context, _ string, _ ...logger.Fields)          {}
-func (noopLogger) InfoContext(_ context.Context, _ string, _ ...logger.Fields)           {}
-func (noopLogger) WarnContext(_ context.Context, _ string, _ ...logger.Fields)           {}
-func (noopLogger) ErrorContext(_ context.Context, _ string, _ ...logger.Fields)          {}
-func (noopLogger) WithFields(_ logger.Fields) logger.Logger                              { return noopLogger{} }
-func (noopLogger) WithContext(_ context.Context) logger.Logger                           { return noopLogger{} }
-func (noopLogger) SetLevel(_ logger.LogLevel)                                            {}
-func (noopLogger) Close() error                                                          { return nil }
+func (noopLogger) Debug(msg string, fields ...logger.Fields)                    {}
+func (noopLogger) Info(msg string, fields ...logger.Fields)                     {}
+func (noopLogger) Warn(msg string, fields ...logger.Fields)                     {}
+func (noopLogger) Error(msg string, fields ...logger.Fields)                    {}
+func (noopLogger) Fatal(msg string, fields ...logger.Fields)                    {}
+func (noopLogger) DebugContext(_ context.Context, _ string, _ ...logger.Fields) {}
+func (noopLogger) InfoContext(_ context.Context, _ string, _ ...logger.Fields)  {}
+func (noopLogger) WarnContext(_ context.Context, _ string, _ ...logger.Fields)  {}
+func (noopLogger) ErrorContext(_ context.Context, _ string, _ ...logger.Fields) {}
+func (noopLogger) WithFields(_ logger.Fields) logger.Logger                     { return noopLogger{} }
+func (noopLogger) WithContext(_ context.Context) logger.Logger                  { return noopLogger{} }
+func (noopLogger) SetLevel(_ logger.LogLevel)                                   {}
+func (noopLogger) Close() error                                                 { return nil }
+
+// ---------------------------------------------------------------------------
+// noopCache satisfies cache.Service for unit tests (all ops are no-ops).
+// ---------------------------------------------------------------------------
+
+type noopCache struct{}
+
+var errCacheMiss = errors.New("cache miss")
+
+func (noopCache) Get(_ context.Context, _ string, _ any) error                          { return errCacheMiss }
+func (noopCache) Set(_ context.Context, _ string, _ any, _ time.Duration) error         { return nil }
+func (noopCache) Delete(_ context.Context, _ string) error                              { return nil }
+func (noopCache) Flush(_ context.Context) error                                         { return nil }
+func (noopCache) MGet(_ context.Context, _ []string) ([]cache.Result, error)            { return nil, nil }
+func (noopCache) MSet(_ context.Context, _ map[string]any, _ time.Duration) error       { return nil }
+func (noopCache) MDelete(_ context.Context, _ []string) error                           { return nil }
+func (noopCache) DeletePattern(_ context.Context, _ string) error                       { return nil }
+func (noopCache) Keys(_ context.Context, _ string) ([]string, error)                    { return nil, nil }
+func (noopCache) Exists(_ context.Context, _ string) (bool, error)                      { return false, nil }
+func (noopCache) TTL(_ context.Context, _ string) (time.Duration, error)                { return 0, nil }
+func (noopCache) Expire(_ context.Context, _ string, _ time.Duration) error             { return nil }
+func (noopCache) GetMemory(_ context.Context, _ string, _ any) error                   { return errCacheMiss }
+func (noopCache) SetMemory(_ context.Context, _ string, _ any, _ time.Duration) error  { return nil }
+func (noopCache) DeleteMemory(_ context.Context, _ string) error                        { return nil }
+func (noopCache) GetGlobalMemory(_ string, _ any) error                                 { return errCacheMiss }
+func (noopCache) SetGlobalMemory(_ string, _ any, _ time.Duration) error                { return nil }
+func (noopCache) DeleteGlobalMemory(_ string) error                                     { return nil }
+func (noopCache) Ping(_ context.Context) error                                          { return nil }
+func (noopCache) Stats() cache.CacheStats                                               { return cache.CacheStats{} }
+func (noopCache) Reset()                                                                {}
+func (noopCache) Close() error                                                          { return nil }
+
+// ---------------------------------------------------------------------------
+// noopRepo satisfies Repository for in-memory unit tests.
+// ListExpiredActiveRoleNames returns an error to preserve the original
+// "non-fatal connection failure" behavior in newMemService.
+// ---------------------------------------------------------------------------
+
+type noopRepo struct{}
+
+func (noopRepo) UpsertRoleAssignment(_ context.Context, _ uuid.UUID, _, _, _ string, _, _ *string, _ *time.Time) error {
+	return nil
+}
+func (noopRepo) DeactivateRoleAssignment(_ context.Context, _, _, _ string) error { return nil }
+func (noopRepo) ListRoleAssignments(_ context.Context, _, _ string) ([]RoleAssignment, error) {
+	return nil, nil
+}
+func (noopRepo) ListExpiredActiveRoleNames(_ context.Context, _, _ string) ([]string, error) {
+	return nil, fmt.Errorf("not connected")
+}
 
 // ---------------------------------------------------------------------------
 // DB helpers — all DB-backed tests require DATABASE_URL.
@@ -54,7 +110,11 @@ func testPool(t *testing.T) *pgxpool.Pool {
 // newTestService creates a fully initialised Service backed by the test DB.
 func newTestService(t *testing.T, pool *pgxpool.Pool) Service {
 	t.Helper()
-	svc, err := New(Config{Pool: pool, Logger: noopLogger{}})
+	svc, err := New(Config{
+		Store:  db.NewStore(pool),
+		Cache:  noopCache{},
+		Logger: noopLogger{},
+	})
 	require.NoError(t, err)
 	return svc
 }
@@ -88,10 +148,10 @@ func cleanTables(t *testing.T, pool *pgxpool.Pool) {
 
 // newMemService creates a *service backed by a pure in-memory Casbin enforcer.
 //
-// The pool is pointed at a guaranteed-closed port so that revokeExpiredRoles
-// returns a non-fatal connection error rather than panicking on a nil pool.
-// Enforce() treats revokeExpiredRoles failures as warnings and continues, so
-// the in-memory enforcer is evaluated normally.
+// Uses noopRepo so that revokeExpiredRoles returns a non-fatal error rather
+// than requiring a database connection. Enforce() treats revokeExpiredRoles
+// failures as warnings and continues, so the in-memory enforcer is evaluated
+// normally.
 //
 // With EnableAutoSave(false), AddPolicy/RemovePolicy only update the in-memory
 // model (no adapter writes), making the entire Enforce → Policy lifecycle
@@ -104,20 +164,13 @@ func newMemService(t *testing.T) *service {
 	m, err := casbinmodel.NewModelFromString(casbinModel)
 	require.NoError(t, err)
 
-	// NewEnforcer with only the model creates an in-memory enforcer (nil adapter).
-	// LoadPolicy is a no-op when adapter is nil.
 	e, err := casbin.NewEnforcer(m)
 	require.NoError(t, err)
-	e.EnableAutoSave(false) // no adapter — writes stay in-memory only
-
-	// Non-nil pool pointing to a closed port. pool.Query() returns an immediate
-	// "connection refused" error (not a panic), which Enforce() swallows.
-	fakePool, _ := pgxpool.New(context.Background(),
-		"postgres://localhost:5999/authz_unit_test_fake?connect_timeout=1")
+	e.EnableAutoSave(false)
 
 	return &service{
 		enforcer: e,
-		pool:     fakePool,
+		repo:     noopRepo{},
 		log:      noopLogger{},
 	}
 }

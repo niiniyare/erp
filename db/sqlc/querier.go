@@ -212,6 +212,7 @@ type Querier interface {
 	CreateUserNotificationPreferences(ctx context.Context, arg CreateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	DeactivateAccountValidationRule(ctx context.Context, arg DeactivateAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
 	DeactivateConfigurationTemplate(ctx context.Context, templateID uuid.UUID) error
+	DeactivateRoleAssignment(ctx context.Context, arg DeactivateRoleAssignmentParams) error
 	DeleteAccountBalance(ctx context.Context, id uuid.UUID) error
 	DeleteAccountValidationRule(ctx context.Context, id uuid.UUID) error
 	DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
@@ -915,11 +916,13 @@ type Querier interface {
 	ListEntityStatesByEntityAndKey(ctx context.Context, arg ListEntityStatesByEntityAndKeyParams) ([]*Entitystate, error)
 	ListEntityStatesByEntityUnit(ctx context.Context, entityUnitID uuid.UUID) ([]*Entitystate, error)
 	ListEntityStatesByFiscalYear(ctx context.Context, fiscalYear int16) ([]*Entitystate, error)
+	ListExpiredActiveRoleNames(ctx context.Context, arg ListExpiredActiveRoleNamesParams) ([]string, error)
 	ListFeatureFlags(ctx context.Context, arg ListFeatureFlagsParams) ([]*FeatureFlag, error)
 	// Policy Listing and Filtering
 	ListPolicies(ctx context.Context) ([]*Policy, error)
 	ListPoliciesByCategory(ctx context.Context, category *string) ([]*Policy, error)
 	ListPoliciesByEffect(ctx context.Context, effect *string) ([]*Policy, error)
+	ListRoleAssignments(ctx context.Context, arg ListRoleAssignmentsParams) ([]*RoleAssignment, error)
 	ListTenantEffectiveConfigurations(ctx context.Context, arg ListTenantEffectiveConfigurationsParams) ([]*ListTenantEffectiveConfigurationsRow, error)
 	ListTenants(ctx context.Context, arg ListTenantsParams) ([]*Tenant, error)
 	ListTransactionEntries(ctx context.Context, transactionID uuid.UUID) ([]*FinanceTransactionEntry, error)
@@ -1094,6 +1097,7 @@ type Querier interface {
 	UpdateUserNotificationPreferences(ctx context.Context, arg UpdateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpsertAccountBalance(ctx context.Context, arg UpsertAccountBalanceParams) (*FinanceAccountBalance, error)
+	UpsertRoleAssignment(ctx context.Context, arg UpsertRoleAssignmentParams) error
 	// Validate if account group code is unique within entity/tenant
 	ValidateAccountGroupCode(ctx context.Context, arg ValidateAccountGroupCodeParams) (bool, error)
 	ValidateAccountHierarchy(ctx context.Context, parentAccountID *uuid.UUID) (bool, error)

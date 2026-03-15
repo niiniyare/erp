@@ -241,25 +241,33 @@ func (s *service) buildPermissions(ctx context.Context, user *identity.User) (ma
 	subject := subjectForUser(user)
 	domain := domainForUser(user)
 
+	// 1. Get the user's roles (g-rules) in this domain.
 	roles, err := s.authz.GetRoles(ctx, subject, domain)
 	if err != nil {
 		return nil, fmt.Errorf("buildPermissions: GetRoles: %w", err)
 	}
 
+	// 2. Get all p-rules for the domain (single call — not per-role).
+	policies, err := s.authz.GetPolicies(ctx, domain)
+	if err != nil {
+		return nil, fmt.Errorf("buildPermissions: GetPolicies: %w", err)
+	}
+
+	// 3. Index roles for O(1) membership checks.
+	roleSet := make(map[string]bool, len(roles))
+	for _, r := range roles {
+		roleSet[r] = true
+	}
+
+	// 4. Build flat "object.action" map — only allow-effect policies matching the user's roles.
 	perms := make(map[string]bool)
-	for _, role := range roles {
-		policies, err := s.authz.GetPolicies(ctx, domain)
-		if err != nil {
-			return nil, fmt.Errorf("buildPermissions: GetPolicies for role %s: %w", role, err)
-		}
-		for _, p := range policies {
-			if p.Subject == role && p.Effect == "allow" {
-				// Compose as "object.action" — mirrors the permission string used in Can().
-				key := p.Object + "." + p.Action
-				perms[key] = true
-			}
+	for _, p := range policies {
+		if roleSet[p.Subject] && p.Effect == "allow" {
+			perms[p.Object+"."+p.Action] = true
 		}
 	}
+
+	s.metrics.RecordCount("session.permissions_computed", float64(len(perms)), nil)
 	return perms, nil
 }
 

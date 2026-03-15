@@ -6,6 +6,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/suite"
+
+	db "github.com/niiniyare/erp/db/sqlc"
 )
 
 // ---------------------------------------------------------------------------
@@ -42,20 +44,20 @@ func (s *ServiceSuite) TearDownSuite() {
 
 // ---- Constructor -----------------------------------------------------------
 
-func (s *ServiceSuite) TestNew_NilPool_ReturnsError() {
-	_, err := New(Config{Pool: nil, Logger: noopLogger{}})
+func (s *ServiceSuite) TestNew_NilStore_ReturnsError() {
+	_, err := New(Config{Store: nil, Cache: noopCache{}, Logger: noopLogger{}})
 	s.Require().Error(err)
-	s.Contains(err.Error(), "pool is required")
+	s.Contains(err.Error(), "store is required")
 }
 
 func (s *ServiceSuite) TestNew_NilLogger_ReturnsError() {
-	_, err := New(Config{Pool: s.pool, Logger: nil})
+	_, err := New(Config{Store: db.NewStore(s.pool), Cache: noopCache{}, Logger: nil})
 	s.Require().Error(err)
 	s.Contains(err.Error(), "logger is required")
 }
 
 func (s *ServiceSuite) TestNew_Success() {
-	svc, err := New(Config{Pool: s.pool, Logger: noopLogger{}})
+	svc, err := New(Config{Store: db.NewStore(s.pool), Cache: noopCache{}, Logger: noopLogger{}})
 	s.Require().NoError(err)
 	s.NotNil(svc)
 }
