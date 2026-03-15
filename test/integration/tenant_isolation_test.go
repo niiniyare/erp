@@ -36,8 +36,11 @@ func TestTenantIsolation(t *testing.T) {
 	tracer := tracing.NewNoOpService()
 	cacheService := cache.NewMockService(nil)
 
-	repo := tenant.NewRepository(store, tracer)
-	service := tenant.NewService(repo, cacheService, tracer)
+	service := tenant.NewService(tenant.Dependencies{
+		Store:  store,
+		Cache:  cacheService,
+		Tracer: tracer,
+	})
 
 	t.Run("tenant_context_isolation", func(t *testing.T) {
 		// Create two test tenants

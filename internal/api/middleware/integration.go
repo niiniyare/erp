@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/core/iam"
 	"github.com/niiniyare/erp/internal/core/tenant"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	loggerPkg "github.com/niiniyare/erp/internal/shared/logger"
@@ -14,15 +13,15 @@ import (
 	"github.com/niiniyare/erp/internal/shared/tracing"
 )
 
-// MiddlewareStack provides a complete middleware stack for the ERP system
+// MiddlewareStack provides a complete middleware stack for the ERP system.
+// JWT auth and per-permission authorization are now handled by Authenticate()
+// and Authorize() functions; this stack covers the remaining cross-cutting concerns.
 type MiddlewareStack struct {
 	// Individual middleware components
-	JWTAuth         *JWTAuthMiddleware
-	Authorization   *AuthorizationMiddleware
 	RateLimit       *RateLimitMiddleware
 	SecurityHeaders *SecurityHeadersMiddleware
 	Validation      *ValidationMiddleware
-	Tenant          tenant.Service // Using the existing tenant middleware
+	Tenant          tenant.Service
 
 	// Configuration
 	Config MiddlewareConfig
@@ -52,9 +51,11 @@ type MiddlewareConfig struct {
 	Authorization   AuthorizationConfig   `json:"authorization"`
 }
 
-// NewMiddlewareStack creates a fully configured middleware stack
+// NewMiddlewareStack creates a fully configured middleware stack.
+// JWT auth and fine-grained authorization are handled by Authenticate() /
+// Authorize() on individual routes; this constructor wires the remaining
+// cross-cutting middleware (rate-limit, security headers, validation).
 func NewMiddlewareStack(
-	iamService iam.Service,
 	tenantService tenant.Service,
 	cacheService cache.Service,
 	config MiddlewareConfig,
@@ -68,20 +69,6 @@ func NewMiddlewareStack(
 		logger:  logger,
 		metrics: metrics,
 		tracer:  tracer,
-	}
-
-	// Initialize JWT authentication middleware
-	stack.JWTAuth = NewJWTAuthMiddleware(iamService, logger, metrics, tracer)
-
-	// Initialize authorization middleware
-	if config.EnableAuthorization {
-		stack.Authorization = NewAuthorizationMiddleware(
-			iamService,
-			config.Authorization,
-			logger,
-			metrics,
-			tracer,
-		)
 	}
 
 	// Initialize rate limiting middleware
@@ -224,7 +211,9 @@ func DefaultMiddlewareConfig(environment string) MiddlewareConfig {
 	return config
 }
 
-// HTTPMiddlewareChain returns an ordered chain of HTTP middleware
+// HTTPMiddlewareChain returns an ordered chain of HTTP middleware.
+// JWT auth and per-permission authorization are applied per-route via
+// Authenticate() / Authorize() and are not part of this chain.
 func (m *MiddlewareStack) HTTPMiddlewareChain() []func(http.Handler) http.Handler {
 	var chain []func(http.Handler) http.Handler
 
@@ -237,7 +226,6 @@ func (m *MiddlewareStack) HTTPMiddlewareChain() []func(http.Handler) http.Handle
 	if m.RateLimit != nil {
 		chain = append(chain, func(next http.Handler) http.Handler {
 			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				// Convert to HTTP middleware pattern
 				next.ServeHTTP(w, r)
 			})
 		})
@@ -248,17 +236,9 @@ func (m *MiddlewareStack) HTTPMiddlewareChain() []func(http.Handler) http.Handle
 		chain = append(chain, m.Validation.HTTPMiddleware())
 	}
 
-	// 4. JWT token extraction (prepares for authentication)
-	chain = append(chain, m.JWTAuth.HTTPJWTMiddleware())
-
-	// 5. Tenant isolation (after auth context is available)
+	// 4. Tenant isolation (after auth context is available)
 	if m.Config.EnableTenantIsolation {
 		chain = append(chain, m.createTenantHTTPMiddleware())
-	}
-
-	// 6. Authorization (last - after all context is established)
-	if m.Authorization != nil {
-		chain = append(chain, m.Authorization.HTTPMiddleware())
 	}
 
 	return chain

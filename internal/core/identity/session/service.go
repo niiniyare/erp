@@ -104,7 +104,7 @@ func (s *service) Login(ctx context.Context, email, password string) (*ResolvedS
 	// 1. Authenticate — handles lockout and brute-force tracking (identity S2).
 	user, err := s.identity.Authenticate(ctx, email, password)
 	if err != nil {
-		s.metrics.RecordCount("session.login.failure", 1, nil)
+		s.metrics.IncrementCounter("session.login.failure", nil)
 		return nil, "", err
 	}
 
@@ -159,7 +159,7 @@ func (s *service) Login(ctx context.Context, email, password string) (*ResolvedS
 		s.log.WarnContext(ctx, "session: cache.Set failed", logger.Fields{"error": err.Error()})
 	}
 
-	s.metrics.RecordCount("session.login.success", 1, nil)
+	s.metrics.IncrementCounter("session.login.success", nil)
 	return resolved, rawToken, nil
 }
 
@@ -267,7 +267,7 @@ func (s *service) buildPermissions(ctx context.Context, user *identity.User) (ma
 		}
 	}
 
-	s.metrics.RecordCount("session.permissions_computed", float64(len(perms)), nil)
+	s.metrics.IncrementCounter("session.permissions_computed", nil)
 	return perms, nil
 }
 
@@ -289,11 +289,6 @@ func generateToken() (rawToken, hash string, err error) {
 func sha256hex(s string) string {
 	sum := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(sum[:])
-}
-
-// sessionCacheKey returns the Redis key for a resolved session.
-func sessionCacheKey(hash string) string {
-	return "session:" + hash
 }
 
 // tenantIDFromCtx reads the tenant UUID from the context.

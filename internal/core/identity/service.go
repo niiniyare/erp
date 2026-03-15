@@ -270,14 +270,14 @@ func (s *service) Authenticate(ctx context.Context, identifier, password string)
 		user, err = s.repo.GetUserByUsername(ctx, identifier)
 	}
 	if err != nil {
-		s.metrics.RecordCount("identity.auth.user_not_found", 1, nil)
+		s.metrics.IncrementCounter("identity.auth.user_not_found", nil)
 		return nil, errors.ErrAuthenticationFailed
 	}
 
 	// Lockout check — must happen before password verification to prevent
 	// timing-based enumeration of locked vs. unknown accounts.
 	if user.LockoutUntil != nil && !user.LockoutUntil.IsZero() && user.LockoutUntil.After(time.Now()) {
-		s.metrics.RecordCount("identity.auth.account_locked", 1, nil)
+		s.metrics.IncrementCounter("identity.auth.account_locked", nil)
 		return nil, errors.ErrAccountLocked
 	}
 
@@ -289,13 +289,13 @@ func (s *service) Authenticate(ctx context.Context, identifier, password string)
 
 	// Verify password.
 	if !s.verifyPassword(hashedPassword, password) {
-		s.metrics.RecordCount("identity.auth.failure", 1, nil)
+		s.metrics.IncrementCounter("identity.auth.failure", nil)
 
 		// Increment counter — do not block on error; auth failure is already returned.
 		if incrErr := s.repo.IncrementFailedAttempts(ctx, user.ID); incrErr != nil {
 			// Non-fatal: log and proceed to return auth failure.
 			// The user cache is invalidated inside IncrementFailedAttempts.
-			s.metrics.RecordCount("identity.auth.increment_error", 1, nil)
+			s.metrics.IncrementCounter("identity.auth.increment_error", nil)
 		}
 
 		// Lock account when threshold is reached.
@@ -310,7 +310,7 @@ func (s *service) Authenticate(ctx context.Context, identifier, password string)
 			// TODO(settings): replace s.cfg.LockoutDuration with per-tenant value.
 			if lockErr := s.repo.LockAccount(ctx, user.ID, lockUntil); lockErr != nil {
 				// Non-fatal: log but still return auth failure.
-				s.metrics.RecordCount("identity.auth.lock_error", 1, nil)
+				s.metrics.IncrementCounter("identity.auth.lock_error", nil)
 			}
 		}
 
@@ -322,19 +322,19 @@ func (s *service) Authenticate(ctx context.Context, identifier, password string)
 	// Reset brute-force counter and clear any previous lockout.
 	if resetErr := s.repo.ResetFailedAttempts(ctx, user.ID); resetErr != nil {
 		// Non-fatal: the user can still log in even if the reset fails.
-		s.metrics.RecordCount("identity.auth.reset_error", 1, nil)
+		s.metrics.IncrementCounter("identity.auth.reset_error", nil)
 	}
 
 	// Record last login timestamp.
 	if loginErr := s.repo.UpdateLastLogin(ctx, user.ID); loginErr != nil {
 		// Non-fatal: same reasoning.
-		s.metrics.RecordCount("identity.auth.last_login_update_error", 1, nil)
+		s.metrics.IncrementCounter("identity.auth.last_login_update_error", nil)
 	}
 
 	// Invalidate user cache so next GetUserByID reflects the updated state.
 	s.invalidateUserCache(ctx, user.ID, user.Email, user.Username)
 
-	s.metrics.RecordCount("identity.auth.success", 1, nil)
+	s.metrics.IncrementCounter("identity.auth.success", nil)
 	return user, nil
 }
 

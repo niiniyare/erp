@@ -6,6 +6,22 @@ import (
 	"github.com/niiniyare/erp/internal/core/identity/session"
 )
 
+// AuthorizationConfig configures legacy authorization middleware behaviour.
+// Used by MiddlewareStack and SecurityValidator; for new routes use Authorize().
+type AuthorizationConfig struct {
+	DefaultDeny           bool     `json:"default_deny"`
+	RequireAuthentication bool     `json:"require_authentication"`
+	EndpointRules         []string `json:"endpoint_rules,omitempty"`
+}
+
+// DefaultAuthorizationConfig returns secure defaults.
+func DefaultAuthorizationConfig() AuthorizationConfig {
+	return AuthorizationConfig{
+		DefaultDeny:           true,
+		RequireAuthentication: true,
+	}
+}
+
 // Authorize returns a Fiber handler that enforces a single permission string
 // using the pre-computed permission map stored in ResolvedSession.
 //

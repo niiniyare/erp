@@ -12,6 +12,7 @@ package identity
 import (
 	context "context"
 	reflect "reflect"
+	time "time"
 
 	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
@@ -219,6 +220,48 @@ func (mr *MockRepositoryMockRecorder) GetUserWithDetails(ctx, id any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserWithDetails", reflect.TypeOf((*MockRepository)(nil).GetUserWithDetails), ctx, id)
 }
 
+// IncrementFailedAttempts mocks base method.
+func (m *MockRepository) IncrementFailedAttempts(ctx context.Context, userID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IncrementFailedAttempts", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IncrementFailedAttempts indicates an expected call of IncrementFailedAttempts.
+func (mr *MockRepositoryMockRecorder) IncrementFailedAttempts(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrementFailedAttempts", reflect.TypeOf((*MockRepository)(nil).IncrementFailedAttempts), ctx, userID)
+}
+
+// LockAccount mocks base method.
+func (m *MockRepository) LockAccount(ctx context.Context, userID uuid.UUID, until time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LockAccount", ctx, userID, until)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// LockAccount indicates an expected call of LockAccount.
+func (mr *MockRepositoryMockRecorder) LockAccount(ctx, userID, until any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LockAccount", reflect.TypeOf((*MockRepository)(nil).LockAccount), ctx, userID, until)
+}
+
+// ResetFailedAttempts mocks base method.
+func (m *MockRepository) ResetFailedAttempts(ctx context.Context, userID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResetFailedAttempts", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ResetFailedAttempts indicates an expected call of ResetFailedAttempts.
+func (mr *MockRepositoryMockRecorder) ResetFailedAttempts(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResetFailedAttempts", reflect.TypeOf((*MockRepository)(nil).ResetFailedAttempts), ctx, userID)
+}
+
 // RevokeUserRole mocks base method.
 func (m *MockRepository) RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -231,6 +274,20 @@ func (m *MockRepository) RevokeUserRole(ctx context.Context, userID, roleID, ent
 func (mr *MockRepositoryMockRecorder) RevokeUserRole(ctx, userID, roleID, entityID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeUserRole", reflect.TypeOf((*MockRepository)(nil).RevokeUserRole), ctx, userID, roleID, entityID)
+}
+
+// UpdateLastLogin mocks base method.
+func (m *MockRepository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateLastLogin", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateLastLogin indicates an expected call of UpdateLastLogin.
+func (mr *MockRepositoryMockRecorder) UpdateLastLogin(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateLastLogin", reflect.TypeOf((*MockRepository)(nil).UpdateLastLogin), ctx, userID)
 }
 
 // UpdatePassword mocks base method.

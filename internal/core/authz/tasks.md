@@ -15,7 +15,7 @@ Track progress here. Check each item when done. Work in order — each step is i
 
 ---
 
-## Blocking: Run `make migrate` + `make sqlc` before Phase 2 compiles
+## ~~Blocking: Run `make migrate` + `make sqlc` before Phase 2 compiles~~ ✓ DONE
 
 New migration added:
 - `db/migration/000305_identity_sessions_add_permissions.up.sql` — adds `permissions JSONB` and `principal_id UUID` to `user_sessions`
@@ -42,7 +42,7 @@ After generation, `session/repo.go`, `session/service.go`, and `authz/repo.go` w
 
 ---
 
-## Blocking: Run `sqlc generate` before Phase 1 compiles
+## ~~Blocking: Run `sqlc generate` before Phase 1 compiles~~ ✓ DONE
 
 New queries added to `db/queries/users.sql`:
 - `LockAccount` — sets `lockout_until = $2`
@@ -62,134 +62,45 @@ After generation, the `db.LockAccountParams` struct will use `sql.NullTime` for
 
 ## Phase 1 — Wire Identity (no new files)
 
-### S1 — `internal/core/identity/repo.go` — Brute-force protection methods
-- [ ] Add `IncrementFailedAttempts(ctx context.Context, userID uuid.UUID) error`
-- [ ] Add `ResetFailedAttempts(ctx context.Context, userID uuid.UUID) error`
-- [ ] Add `LockAccount(ctx context.Context, userID uuid.UUID, until time.Time) error`
-- [ ] Add `UpdateLastLogin(ctx context.Context, userID uuid.UUID, at time.Time) error`
-
-All columns already exist in `users` table (`failed_login_attempts`, `lockout_until`, `last_login_at`).
-No migrations needed.
-
-**Verify**: write a table-driven unit test calling each repo method against the test DB.
+### S1 — `internal/core/identity/repo.go` — Brute-force protection methods ✓
+- [x] Add `IncrementFailedAttempts(ctx context.Context, userID uuid.UUID) error`
+- [x] Add `ResetFailedAttempts(ctx context.Context, userID uuid.UUID) error`
+- [x] Add `LockAccount(ctx context.Context, userID uuid.UUID, until time.Time) error`
+- [x] Add `UpdateLastLogin(ctx context.Context, userID uuid.UUID, at time.Time) error`
 
 ---
 
-### S2 — `internal/core/identity/service.go` — Wire Authenticate() TODOs
-- [ ] At top of `Authenticate()`: check `user.LockoutUntil != nil && user.LockoutUntil.After(time.Now())` → return `ErrAccountLocked`
-- [ ] On password mismatch: call `repo.IncrementFailedAttempts(ctx, user.ID)`
-- [ ] On 5th failure: call `repo.LockAccount(ctx, user.ID, time.Now().Add(cfg.LockoutDuration))`
-- [ ] On success: call `repo.ResetFailedAttempts` + `repo.UpdateLastLogin`
-- [ ] Use `s.metrics.RecordCount("identity.auth.failure", 1, ...)` and `"identity.auth.success"` for observability
-- [ ] Use `s.tracing.StartSpan(ctx, "identity.Authenticate")` — already present in other methods, follow the same pattern
-
-**Verify**: test with wrong password 5 times → account locks → correct password returns `ErrAccountLocked`.
+### S2 — `internal/core/identity/service.go` — Wire Authenticate() TODOs ✓
+- [x] Lockout check before password verification
+- [x] `IncrementFailedAttempts` on mismatch; `LockAccount` on threshold
+- [x] `ResetFailedAttempts` + `UpdateLastLogin` on success
+- [x] `IncrementCounter` metrics for failure/success/lock events
+- [x] Trace span wired
 
 ---
 
 ## Phase 2 — Session Service (new package)
 
-### S3 — `internal/core/identity/session/model.go`
-- [ ] Define `Session` struct (maps to `user_sessions` table):
-  ```go
-  type Session struct {
-      ID          uuid.UUID
-      UserID      uuid.UUID
-      TenantID    uuid.UUID
-      TokenHash   string          // sha256hex(raw_token) — never store raw
-      Permissions map[string]bool // stored as JSONB
-      PrincipalID uuid.UUID       // portal users: their contact/employee ID
-      IsActive    bool
-      ExpiresAt   time.Time
-      LastSeenAt  time.Time
-      IPAddress   string
-      UserAgent   string
-      RiskScore   int
-  }
-  ```
-- [ ] Define `ResolvedSession` struct:
-  ```go
-  type ResolvedSession struct {
-      UserID      uuid.UUID
-      UserType    string          // "platform" | "tenant" | "portal"
-      TenantID    uuid.UUID
-      PrincipalID uuid.UUID
-      DisplayName string
-      Permissions map[string]bool
-  }
-
-  const LocalsKeySession = "session"
-
-  func (s *ResolvedSession) Can(permission string) bool
-  func (s *ResolvedSession) ToPrincipal() authz.Principal   // builds Subject+Domain from UserType
-  func (s *ResolvedSession) IsPortal() bool
-  ```
-- [ ] `ToPrincipal()` uses `authz.TenantSubject/PlatformSubject/PortalSubject` helpers from `authz/types.go`
-
-**Verify**: unit test `ToPrincipal()` for all three user types.
+### S3 — `internal/core/identity/session/model.go` ✓
+- [x] `Session` + `ResolvedSession` structs defined
+- [x] `Can()`, `ToPrincipal()`, `IsPortal()` implemented
+- [x] `LocalsKeySession` constant
 
 ---
 
-### S4 — `internal/core/identity/session/repo.go`
-- [ ] Define `Repository` interface:
-  ```go
-  type Repository interface {
-      CreateSession(ctx context.Context, s Session) error
-      GetByTokenHash(ctx context.Context, hash string) (*Session, error)
-      Invalidate(ctx context.Context, hash string) error
-      UpdateLastSeen(ctx context.Context, hash string) error
-  }
-  ```
-- [ ] Implement against `user_sessions` table
-- [ ] `CreateSession`: INSERT with `token_hash = sha256hex(token)` — column is `session_token` in schema, store the hash there
-- [ ] `GetByTokenHash`: SELECT WHERE `session_token = $1 AND is_active = TRUE AND expires_at > NOW()`
-- [ ] `UpdateLastSeen`: fire-and-forget UPDATE (do not block the request — run in goroutine)
-- [ ] Use `cache.TenantIDKey` context value for RLS tenant context if needed
-
-**Verify**: integration test — create session, get by hash, invalidate, confirm GetByHash returns nil.
+### S4 — `internal/core/identity/session/repo.go` ✓
+- [x] `Repository` interface: `CreateSession`, `GetByTokenHash`, `Invalidate`, `UpdateLastSeen`
+- [x] `pgRepo` implementation via `db.Store` + cache layer
+- [x] `UpdateLastSeen` fires async (goroutine)
 
 ---
 
-### S5 — `internal/core/identity/session/service.go`
-- [ ] Define `Service` interface:
-  ```go
-  type Service interface {
-      Login(ctx context.Context, email, password string) (*ResolvedSession, string, error)
-      ValidateSession(ctx context.Context, token string) (*ResolvedSession, error)
-      Logout(ctx context.Context, token string) error
-  }
-  ```
-- [ ] Implement `service` struct with:
-  - `identity identity.Service`
-  - `authz   authz.Service`
-  - `repo    Repository`
-  - `cache   cache.Service`   ← caches `ResolvedSession` keyed by `sha256(token)`
-  - `tracer  tracing.Service`
-  - `metrics metrics.MetricsProvider`
-  - `log     logger.Logger`
-  - `cfg     Config`          ← session TTL, lockout config, feature flags
-- [ ] `Login()`:
-  1. `identity.Authenticate(ctx, email, password)` — handles brute-force (S2)
-  2. `buildPermissions(ctx, user)` using `authz.GetRoles` + `authz.GetPolicies`
-  3. `generateToken()` — `crypto/rand` 32 bytes → `hex.EncodeToString`
-  4. `sha256hex(token)` — store the hash, return the raw token
-  5. `repo.CreateSession(ctx, Session{...})`
-  6. `cache.Set(ctx, "session:"+hash, resolved, ttl)`
-  7. Emit `metrics.RecordCount("session.login.success", 1, ...)`
-  8. Trace span: `"session.Login"`
-- [ ] `ValidateSession()`:
-  1. `hash := sha256hex(token)`
-  2. Try `cache.Get(ctx, "session:"+hash)` → cache hit: return immediately
-  3. Cache miss: `repo.GetByTokenHash(ctx, hash)` → build `ResolvedSession`
-  4. `go repo.UpdateLastSeen(ctx, hash)` — async, do not block
-  5. Re-populate cache: `cache.Set(...)`
-- [ ] `Logout()`:
-  1. `hash := sha256hex(token)`
-  2. `repo.Invalidate(ctx, hash)`
-  3. `cache.Delete(ctx, "session:"+hash)`
-- [ ] `buildPermissions()` — see doc `14-how-other-packages-use-authz.md §0`
-
-**Verify**: end-to-end test: Login → ValidateSession (cache miss) → ValidateSession (cache hit) → Logout → ValidateSession returns error.
+### S5 — `internal/core/identity/session/service.go` ✓
+- [x] `Service` interface: `Login`, `ValidateSession`, `Logout`
+- [x] `Login`: authenticate → buildPermissions → generateToken → CreateSession → cache
+- [x] `ValidateSession`: cache-first → DB fallback → async UpdateLastSeen → re-cache
+- [x] `Logout`: invalidate DB + delete cache
+- [x] `buildPermissions`: single `GetPolicies` call + roleSet map (O(n), no N+1)
 
 ---
 

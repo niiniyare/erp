@@ -17,6 +17,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/niiniyare/erp/internal/core/tenant"
+	tenant_repo "github.com/niiniyare/erp/internal/core/tenant/repository"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -33,7 +34,7 @@ func TestTenantHandler_CreateBasic(t *testing.T) {
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
 	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
-	mockRepo := tenant.NewMockRepository(ctrl)
+	mockRepo := tenant_repo.NewMockRepository(ctrl)
 	mockCache := cache.NewMockService(ctrl)
 
 	// Setup basic expectations
@@ -65,7 +66,12 @@ func TestTenantHandler_CreateBasic(t *testing.T) {
 	mockRepo.EXPECT().GetBySubdomain(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("tenant not found")).AnyTimes()
 
 	// Create service with mocks
-	service := tenant.NewService(mockRepo, mockCache, mockTracer)
+	service := tenant.NewService(tenant.Dependencies{
+		Store:  nil,
+		Cache:  mockCache,
+		Tracer: mockTracer,
+		Logger: mockLogger,
+	})
 	handler := NewTenantHandler(service, mockLogger, mockMetrics, mockTracer)
 
 	// Create Fiber app
@@ -114,7 +120,7 @@ func TestTenantHandler_ListBasic(t *testing.T) {
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
 	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
-	mockRepo := tenant.NewMockRepository(ctrl)
+	mockRepo := tenant_repo.NewMockRepository(ctrl)
 	mockCache := cache.NewMockService(ctrl)
 
 	// Setup basic expectations
@@ -154,10 +160,12 @@ func TestTenantHandler_ListBasic(t *testing.T) {
 	}
 
 	// Repository expectations - service will call these internally
-	mockRepo.EXPECT().List(gomock.Any(), 0, 20).Return(testTenants, nil).AnyTimes()
+	mockRepo.EXPECT().
+		List(gomock.Any(), 20).
+		Return(testTenants, nil).AnyTimes()
 
 	// Create service with mocks
-	service := tenant.NewService(mockRepo, mockCache, mockTracer)
+	service := tenant.NewService(tenant.Dependencies{Store: nil, Cache: mockCache, Tracer: mockTracer, Logger: mockLogger})
 	handler := NewTenantHandler(service, mockLogger, mockMetrics, mockTracer)
 
 	// Create Fiber app

@@ -15,6 +15,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"github.com/niiniyare/erp/internal/core/tenant"
+	tenant_repo "github.com/niiniyare/erp/internal/core/tenant/repository"
 	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/shared/errors"
 	"github.com/niiniyare/erp/internal/shared/logger"
@@ -32,7 +33,7 @@ type RouterTestSuite struct {
 	mockMetrics *metrics.MockMetricsProvider
 	mockTracer  *tracing.MockService
 	mockSpan    *tracing.MockSpan
-	mockRepo    *tenant.MockRepository
+	mockRepo    *tenant_repo.MockRepository
 	mockCache   *cache.MockService
 }
 
@@ -45,14 +46,19 @@ func (suite *RouterTestSuite) SetupTest() {
 	suite.mockMetrics = metrics.NewMockMetricsProvider(suite.ctrl)
 	suite.mockTracer = tracing.NewMockService(suite.ctrl)
 	suite.mockSpan = tracing.NewMockSpan(suite.ctrl)
-	suite.mockRepo = tenant.NewMockRepository(suite.ctrl)
+	suite.mockRepo = tenant_repo.NewMockRepository(suite.ctrl)
 	suite.mockCache = cache.NewMockService(suite.ctrl)
 
 	// Setup default mock expectations for common operations
 	suite.setupDefaultMockExpectations()
 
 	// Create tenant service for testing
-	tenantService := tenant.NewService(suite.mockRepo, suite.mockCache, suite.mockTracer)
+	tenantService := tenant.NewService(tenant.Dependencies{
+		Store:  nil,
+		Cache:  suite.mockCache,
+		Tracer: suite.mockTracer,
+		Logger: suite.mockLogger,
+	})
 
 	// Create dependencies
 	suite.deps = &Dependencies{
