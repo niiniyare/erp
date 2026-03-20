@@ -210,8 +210,7 @@ func (s *service) ValidateSession(ctx context.Context, token string) (*ResolvedS
 		Permissions: sess.Permissions,
 	}
 
-	// 4. Async last-seen update.
-	s.repo.UpdateLastSeen(ctx, hash)
+	// 4. last_accessed_at already updated atomically by TouchAndGetSession in GetByTokenHash.
 
 	// 5. Re-populate cache.
 	ttl := time.Until(sess.ExpiresAt)
