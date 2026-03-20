@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/core/tenant/domain"
-	"github.com/niiniyare/erp/internal/core/tenant/repository"
-	"github.com/niiniyare/erp/internal/core/tenant/service"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/tenant/domain"
+	"awo/internal/core/tenant/repository"
+	"awo/internal/core/tenant/service"
+	"awo/internal/shared/tracing"
 )
 
 // Activities holds all tenant Temporal activity implementations.

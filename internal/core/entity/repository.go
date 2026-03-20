@@ -7,12 +7,12 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/shared/convert"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	db "awo/db/sqlc"
+	"awo/internal/shared/convert"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )

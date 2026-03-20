@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/niiniyare/erp/internal/core/tenant/domain"
-	"github.com/niiniyare/erp/internal/core/tenant/service"
+	"awo/internal/core/tenant/domain"
+	"awo/internal/core/tenant/service"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )

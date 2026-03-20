@@ -6,13 +6,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared"
-	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	db "awo/db/sqlc"
+	"awo/internal/platform/cache"
+	"awo/internal/shared"
+	sharedErrors "awo/internal/shared/errors"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 const roleAssignmentCacheTTL = 5 * time.Minute

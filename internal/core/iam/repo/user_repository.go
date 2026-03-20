@@ -10,12 +10,12 @@ import (
 
 	"github.com/google/uuid"
 
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/core/iam/model"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	db "awo/db/sqlc"
+	"awo/internal/core/iam/model"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // userRepository implements UserRepository interface

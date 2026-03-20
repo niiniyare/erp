@@ -3,7 +3,7 @@ package service
 import (
 	"fmt"
 
-	"github.com/niiniyare/erp/internal/core/finance/domain"
+	"awo/internal/core/finance/domain"
 )
 
 // SettingsHelper provides helper functions for Finance module integration with Settings

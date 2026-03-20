@@ -10,14 +10,14 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"github.com/niiniyare/erp/internal/core/iam"
-	"github.com/niiniyare/erp/internal/core/iam/authn"
-	"github.com/niiniyare/erp/internal/core/iam/authz"
-	"github.com/niiniyare/erp/internal/core/iam/model"
-	"github.com/niiniyare/erp/internal/core/iam/policy"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/iam"
+	"awo/internal/core/iam/authn"
+	"awo/internal/core/iam/authz"
+	"awo/internal/core/iam/model"
+	"awo/internal/core/iam/policy"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // SimplifiedServiceTestSuite implements basic IAM service integration tests

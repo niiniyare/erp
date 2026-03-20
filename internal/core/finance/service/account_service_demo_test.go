@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/shared"
+	"awo/internal/core/finance/domain"
+	"awo/internal/shared"
 )
 
 // TestAccountServiceIntegration_Demo demonstrates the integration of all three systems

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/platform/cache"
+	"awo/internal/shared/logger"
 )
 
 // CacheWarmer provides utilities for warming up the feature flag cache

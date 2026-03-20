@@ -14,9 +14,9 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	db "awo/db/sqlc"
+	"awo/internal/platform/cache"
+	"awo/internal/shared/logger"
 )
 
 // ---------------------------------------------------------------------------

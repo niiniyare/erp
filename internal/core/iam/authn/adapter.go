@@ -7,12 +7,12 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/iam/model"
-	"github.com/niiniyare/erp/internal/core/identity"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/iam/model"
+	"awo/internal/core/identity"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // adapter implements the Service interface by wrapping the existing identity service

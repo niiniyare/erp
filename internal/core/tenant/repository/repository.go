@@ -6,7 +6,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/core/tenant/domain"
+	"awo/internal/core/tenant/domain"
 )
 
 // Repository defines the interface for tenant data access.

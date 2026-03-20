@@ -6,8 +6,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
 
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/core/finance/domain"
+	db "awo/db/sqlc"
+	"awo/internal/core/finance/domain"
 )
 
 // mapSQLCAccountHierarchyToDomain converts SQLC account hierarchy to domain type

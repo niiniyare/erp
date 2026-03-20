@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	db "awo/db/sqlc"
+	"awo/internal/platform/cache"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // Repository defines the session persistence interface.

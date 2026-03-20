@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/shared"
+	"awo/internal/shared"
 )
 
 // roleMetadata holds static constraints for a built-in role.

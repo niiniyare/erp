@@ -1,4 +1,4 @@
-module github.com/niiniyare/erp
+module awo
 
 go 1.25.0
 

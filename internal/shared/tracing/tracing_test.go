@@ -15,7 +15,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/niiniyare/erp/internal/shared/tracing" // Replace with your actual module path
+	"awo/internal/shared/tracing" // Replace with your actual module path
 )
 
 // Flag to control JSON output (use environment variable to avoid flag redefinition)

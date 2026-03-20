@@ -3,10 +3,10 @@ package tenant
 import (
 	"fmt"
 
-	"github.com/niiniyare/erp/internal/core/tenant/activities"
-	"github.com/niiniyare/erp/internal/core/tenant/workflow"
-	"github.com/niiniyare/erp/internal/platform/temporal"
-	loggerPkg "github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/core/tenant/activities"
+	"awo/internal/core/tenant/workflow"
+	"awo/internal/platform/temporal"
+	loggerPkg "awo/internal/shared/logger"
 	"go.temporal.io/sdk/client"
 )
 

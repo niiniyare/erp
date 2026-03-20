@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/core/tenant/domain"
-	"github.com/niiniyare/erp/internal/core/tenant/workflow"
+	"awo/internal/core/tenant/domain"
+	"awo/internal/core/tenant/workflow"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"

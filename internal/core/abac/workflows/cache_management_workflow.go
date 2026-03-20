@@ -7,7 +7,7 @@ import (
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 
-	"github.com/niiniyare/erp/internal/core/abac/activities"
+	"awo/internal/core/abac/activities"
 )
 
 // CacheCleanupWorkflowName is the name of the cache cleanup workflow

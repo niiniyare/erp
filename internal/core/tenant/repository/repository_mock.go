@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	domain "github.com/niiniyare/erp/internal/core/tenant/domain"
+	domain "awo/internal/core/tenant/domain"
 	gomock "go.uber.org/mock/gomock"
 )
 

@@ -2,7 +2,7 @@ package approval
 
 import (
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/shared/types"
+	"awo/internal/shared/types"
 )
 
 // Type aliases for shared types

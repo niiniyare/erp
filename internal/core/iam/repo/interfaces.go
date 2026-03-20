@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/core/iam/model"
+	db "awo/db/sqlc"
+	"awo/internal/core/iam/model"
 )
 
 // UserRepository defines the interface for user data operations

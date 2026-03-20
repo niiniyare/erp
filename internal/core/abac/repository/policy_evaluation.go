@@ -10,15 +10,15 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/core/abac/models"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/convert"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
-	"github.com/niiniyare/erp/internal/shared/types"
+	db "awo/db/sqlc"
+	"awo/internal/core/abac/models"
+	"awo/internal/platform/cache"
+	"awo/internal/shared/convert"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
+	"awo/internal/shared/types"
 )
 
 // policyEvaluationRepository implements PolicyEvaluationRepository using SQLC and Store

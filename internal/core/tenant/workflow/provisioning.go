@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/niiniyare/erp/internal/core/tenant/domain"
+	"awo/internal/core/tenant/domain"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )

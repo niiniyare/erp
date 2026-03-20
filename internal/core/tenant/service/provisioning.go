@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/niiniyare/erp/internal/core/tenant/domain"
-	"github.com/niiniyare/erp/internal/core/tenant/repository"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/tenant/domain"
+	"awo/internal/core/tenant/repository"
+	"awo/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )

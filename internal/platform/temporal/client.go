@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/niiniyare/erp/internal/platform/config"
-	loggerPkg "github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/platform/config"
+	loggerPkg "awo/internal/shared/logger"
 	"go.temporal.io/api/workflowservice/v1"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/log"

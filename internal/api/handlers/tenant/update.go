@@ -3,9 +3,9 @@ package tenant
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	coreTenant "github.com/niiniyare/erp/internal/core/tenant"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	coreTenant "awo/internal/core/tenant"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/logger"
 )
 
 // Update handles partial or full updates of an organization's details.

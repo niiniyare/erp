@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/niiniyare/erp/internal/platform/config"
-	loggerPkg "github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/platform/config"
+	loggerPkg "awo/internal/shared/logger"
 	"go.temporal.io/sdk/client"
 )
 

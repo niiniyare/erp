@@ -3,7 +3,7 @@ package authz
 import (
 	"fmt"
 
-	"github.com/niiniyare/erp/internal/shared/errors"
+	"awo/internal/shared/errors"
 )
 
 // ─── ERROR DEFINITIONS ─────────────────────────────────────────────────────

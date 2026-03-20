@@ -14,13 +14,13 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
-	"github.com/niiniyare/erp/internal/core/abac/models"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
-	"github.com/niiniyare/erp/internal/shared/types"
+	"awo/internal/core/abac/models"
+	"awo/internal/platform/cache"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
+	"awo/internal/shared/types"
 )
 
 // AttributeCacheService defines the interface for attribute caching

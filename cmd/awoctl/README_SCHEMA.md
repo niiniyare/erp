@@ -165,7 +165,7 @@ type ButtonSchema struct {
 ```go
 package atoms
 
-import "github.com/niiniyare/erp/internal/ui/types"
+import "awo/internal/ui/types"
 
 // Use generated schema in component
 func ButtonFromSchema(schema types.ButtonSchema) templ.Component {
@@ -212,7 +212,7 @@ project/
 ```go
 package engine
 
-import "github.com/niiniyare/erp/internal/ui/types"
+import "awo/internal/ui/types"
 
 func (r *SchemaComponentRegistry) RegisterGeneratedTypes() {
     // Register form schema

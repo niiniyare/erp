@@ -138,8 +138,8 @@ func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*T
 package main
 
 import (
-    "github.com/niiniyare/erp/internal/core/finance"     // ✅ Module facade
-    "github.com/niiniyare/erp/internal/core/iam"         // ✅ Module facade
+    "awo/internal/core/finance"     // ✅ Module facade
+    "awo/internal/core/iam"         // ✅ Module facade
 )
 
 func InitializeServices() {

@@ -29,7 +29,7 @@ import (
     "context"
     "log"
     "github.com/google/uuid"
-    "github.com/niiniyare/erp/internal/core/featureflag"
+    "awo/internal/core/featureflag"
 )
 
 func createMyNewFeatureFlag(ctx context.Context, flagService featureflag.SimpleService) {

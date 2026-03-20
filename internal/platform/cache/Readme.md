@@ -665,9 +665,9 @@ This cache service is **multi-tenant native** - every operation automatically us
 package main
 
 import (
-    "github.com/niiniyare/erp/internal/platform/cache"
-    "github.com/niiniyare/erp/internal/platform/config"
-    "github.com/niiniyare/erp/middleware"
+    "awo/internal/platform/cache"
+    "awo/internal/platform/config"
+    "awo/middleware"
 )
 
 func main() {

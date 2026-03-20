@@ -8,13 +8,13 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/niiniyare/erp/internal/core/abac/models"
-	"github.com/niiniyare/erp/internal/core/abac/repository"
-	"github.com/niiniyare/erp/internal/shared/convert"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
-	"github.com/niiniyare/erp/internal/shared/types"
+	"awo/internal/core/abac/models"
+	"awo/internal/core/abac/repository"
+	"awo/internal/shared/convert"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
+	"awo/internal/shared/types"
 )
 
 // Policy Lifecycle Management types and methods

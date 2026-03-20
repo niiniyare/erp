@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/niiniyare/erp/internal/shared/convert"
+	"awo/internal/shared/convert"
 )
 
 func TestInt64ToUint(t *testing.T) {
@@ -145,7 +145,7 @@ func TestInt64ToUint64(t *testing.T) {
 //
 // 	"github.com/stretchr/testify/require"
 //
-// 	"github.com/niiniyare/erp/internal/shared/convert"
+// 	"awo/internal/shared/convert"
 // )
 //
 // func TestInt64ToUint(t *testing.T) {

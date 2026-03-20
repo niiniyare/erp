@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 	time "time"
 
-	models "github.com/niiniyare/erp/internal/core/abac/models"
+	models "awo/internal/core/abac/models"
 	gomock "go.uber.org/mock/gomock"
 )
 

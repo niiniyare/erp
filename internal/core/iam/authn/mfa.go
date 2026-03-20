@@ -14,12 +14,12 @@ import (
 	"github.com/pquerna/otp/totp"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/niiniyare/erp/internal/core/iam/model"
-	"github.com/niiniyare/erp/internal/core/iam/repo"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/iam/model"
+	"awo/internal/core/iam/repo"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // MFAService handles Multi-Factor Authentication operations

@@ -180,7 +180,7 @@ func (c *DocsConfig) ToTemplateData() TemplateData {
 		EntityNamePlural: ToPascalCase(c.ModuleName),
 
 		PackageName: ToSnakeCase(c.ModuleName),
-		ImportPath:  fmt.Sprintf("github.com/niiniyare/erp/internal/core/%s", ToSnakeCase(c.ModuleName)),
+		ImportPath:  fmt.Sprintf("awo/internal/core/%s", ToSnakeCase(c.ModuleName)),
 
 		GeneratedAt:      time.Now(),
 		GeneratorVersion: "0.1.0",
@@ -214,7 +214,7 @@ func (c *ModuleConfig) ToTemplateData() TemplateData {
 		EntityNamePlural: ToPascalCase(c.Name),
 
 		PackageName: ToSnakeCase(c.Name),
-		ImportPath:  fmt.Sprintf("github.com/niiniyare/erp/internal/core/%s", ToSnakeCase(c.Name)),
+		ImportPath:  fmt.Sprintf("awo/internal/core/%s", ToSnakeCase(c.Name)),
 
 		GeneratedAt:      time.Now(),
 		GeneratorVersion: "0.1.0",
@@ -257,7 +257,7 @@ func (c *FeatureConfig) ToTemplateData() TemplateData {
 		EntityNamePlural: ToPascalCase(featureName),
 
 		PackageName: ToSnakeCase(moduleName),
-		ImportPath:  fmt.Sprintf("github.com/niiniyare/erp/internal/core/%s", ToSnakeCase(moduleName)),
+		ImportPath:  fmt.Sprintf("awo/internal/core/%s", ToSnakeCase(moduleName)),
 
 		GeneratedAt:      time.Now(),
 		GeneratorVersion: "0.1.0",

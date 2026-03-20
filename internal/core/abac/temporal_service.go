@@ -11,13 +11,13 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	workflowservice "go.temporal.io/api/workflowservice/v1"
 
-	"github.com/niiniyare/erp/internal/core/abac/activities"
-	"github.com/niiniyare/erp/internal/core/abac/worker"
-	"github.com/niiniyare/erp/internal/core/abac/workflows"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/abac/activities"
+	"awo/internal/core/abac/worker"
+	"awo/internal/core/abac/workflows"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // TemporalService extends the main ABAC service with Temporal workflow capabilities

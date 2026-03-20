@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/niiniyare/erp/internal/core/tenant/domain"
-	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
+	"awo/internal/core/tenant/domain"
+	sharedErrors "awo/internal/shared/errors"
 )
 
 // parseTenantDBError inspects a raw pgx/DB error and converts it into a meaningful

@@ -6,10 +6,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/abac/models"
-	"github.com/niiniyare/erp/internal/core/access"
-	"github.com/niiniyare/erp/internal/core/iam/model"
-	"github.com/niiniyare/erp/internal/shared/types"
+	"awo/internal/core/abac/models"
+	"awo/internal/core/access"
+	"awo/internal/core/iam/model"
+	"awo/internal/shared/types"
 )
 
 // ─── POLICY DECISION TYPE CONVERSIONS ─────────────────────────────────────

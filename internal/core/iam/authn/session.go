@@ -9,9 +9,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/iam/model"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/core/iam/model"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/logger"
 )
 
 const (

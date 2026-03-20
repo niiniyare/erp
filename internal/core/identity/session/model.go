@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/core/authz"
+	"awo/internal/core/authz"
 )
 
 // EntityScopeType identifies how broadly an entity-scoped session can see data.

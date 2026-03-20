@@ -5,8 +5,8 @@ package admin
 // 	"net/http"
 // 	"strings"
 //
-// 	"github.com/niiniyare/erp/internal/core/tenant"
-// 	"github.com/niiniyare/erp/internal/shared/logger"
+// 	"awo/internal/core/tenant"
+// 	"awo/internal/shared/logger"
 // )
 //
 // // StaticHandler serves static assets (if needed in the future)

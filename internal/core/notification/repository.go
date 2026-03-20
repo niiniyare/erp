@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
+	db "awo/db/sqlc"
 )
 
 // Repository defines the interface for notification data persistence,

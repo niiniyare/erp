@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/core/tenant/domain"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	db "awo/db/sqlc"
+	"awo/internal/core/tenant/domain"
+	"awo/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )

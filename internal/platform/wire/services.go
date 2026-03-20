@@ -7,22 +7,22 @@ import (
 	"github.com/google/uuid"
 	temporalclient "go.temporal.io/sdk/client"
 
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/platform/cache"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 
 	// Core services
-	financeService "github.com/niiniyare/erp/internal/core/finance/service"
-	"github.com/niiniyare/erp/internal/core/iam"
-	"github.com/niiniyare/erp/internal/core/iam/authn"
-	"github.com/niiniyare/erp/internal/core/iam/authz"
-	"github.com/niiniyare/erp/internal/core/iam/model"
-	"github.com/niiniyare/erp/internal/core/iam/policy"
-	"github.com/niiniyare/erp/internal/core/tenant"
+	financeService "awo/internal/core/finance/service"
+	"awo/internal/core/iam"
+	"awo/internal/core/iam/authn"
+	"awo/internal/core/iam/authz"
+	"awo/internal/core/iam/model"
+	"awo/internal/core/iam/policy"
+	"awo/internal/core/tenant"
 
-	db "github.com/niiniyare/erp/db/sqlc"
+	db "awo/db/sqlc"
 )
 
 // ============================================================================

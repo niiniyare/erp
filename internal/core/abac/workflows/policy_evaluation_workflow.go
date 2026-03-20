@@ -7,9 +7,9 @@ import (
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 
-	"github.com/niiniyare/erp/internal/core/abac/activities"
-	"github.com/niiniyare/erp/internal/core/abac/models"
-	"github.com/niiniyare/erp/internal/shared/types"
+	"awo/internal/core/abac/activities"
+	"awo/internal/core/abac/models"
+	"awo/internal/shared/types"
 )
 
 // PolicyEvaluationWorkflowName is the name of the policy evaluation workflow

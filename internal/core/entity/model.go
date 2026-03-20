@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
+	db "awo/db/sqlc"
 )
 
 // Entity represents a business entity in the system (domain model)

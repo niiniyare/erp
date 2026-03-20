@@ -11,8 +11,8 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/finance/domain"
+	"awo/internal/shared/tracing"
 )
 
 // TransactionNumberingService handles automatic generation of transaction numbers

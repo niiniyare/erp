@@ -8,9 +8,9 @@ package main
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/niiniyare/erp/internal/api/handlers"
-	"github.com/niiniyare/erp/internal/platform/config"
-	"github.com/niiniyare/erp/internal/platform/wire"
+	"awo/internal/api/handlers"
+	"awo/internal/platform/config"
+	"awo/internal/platform/wire"
 )
 
 // Injectors from wire.go:

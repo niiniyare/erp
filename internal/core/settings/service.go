@@ -3,12 +3,12 @@ package settings
 import (
 	"context"
 
-	"github.com/niiniyare/erp/internal/core/audit"
-	"github.com/niiniyare/erp/internal/core/settings/repository"
-	"github.com/niiniyare/erp/internal/core/settings/service"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/audit"
+	"awo/internal/core/settings/repository"
+	"awo/internal/core/settings/service"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // SettingsService combines all settings-related services into a single interface

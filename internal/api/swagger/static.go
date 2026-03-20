@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/shared/logger"
 )
 
 //go:embed *

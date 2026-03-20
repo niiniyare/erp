@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/shared/logger"
 )
 
 // CompressionConfig defines compression middleware configuration

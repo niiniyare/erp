@@ -16,12 +16,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/niiniyare/erp/internal/core/tenant"
-	tenant_repo "github.com/niiniyare/erp/internal/core/tenant/repository"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/tenant"
+	tenant_repo "awo/internal/core/tenant/repository"
+	"awo/internal/platform/cache"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // TestTenantHandler_CreateBasic tests basic tenant creation with proper mocks

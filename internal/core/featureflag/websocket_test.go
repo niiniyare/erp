@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/niiniyare/erp/internal/core/featureflag"
+	"awo/internal/core/featureflag"
 )
 
 // TestWebSocketMessage represents the message structure for testing

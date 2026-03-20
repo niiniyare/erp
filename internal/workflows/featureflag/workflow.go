@@ -5,7 +5,7 @@ package featureflag
 // 	"time"
 //
 // 	"github.com/google/uuid"
-// 	wf "github.com/niiniyare/erp/internal/featureflag/workflow"
+// 	wf "awo/internal/featureflag/workflow"
 // 	"go.temporal.io/sdk/workflow"
 // )
 //

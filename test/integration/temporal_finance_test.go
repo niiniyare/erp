@@ -11,11 +11,11 @@ import (
 	"go.temporal.io/sdk/testsuite"
 	"go.temporal.io/sdk/worker"
 
-	"github.com/niiniyare/erp/internal/core/finance"
-	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/core/finance/service"
-	"github.com/niiniyare/erp/internal/core/finance/workflows"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/core/finance"
+	"awo/internal/core/finance/domain"
+	"awo/internal/core/finance/service"
+	"awo/internal/core/finance/workflows"
+	"awo/internal/shared/logger"
 )
 
 // IntegrationTestSuite provides utilities for integration testing of Temporal workflows

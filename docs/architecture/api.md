@@ -173,7 +173,7 @@ var AccountArchiveResult = Type("AccountArchiveResult", func() {
 #### Step 2: Generate Types
 
 ```bash
-$ goa gen github.com/niiniyare/erp/internal/api/design
+$ goa gen awo/internal/api/design
 # ✓ Generated: internal/api/gen/finance/types.go
 ```
 
@@ -185,8 +185,8 @@ package finance
 
 import (
     "github.com/gofiber/fiber/v2"
-    "github.com/niiniyare/erp/internal/api/gen/finance"
-    "github.com/niiniyare/erp/internal/core/account"
+    "awo/internal/api/gen/finance"
+    "awo/internal/core/account"
 )
 
 type AccountHandler struct {
@@ -948,7 +948,7 @@ var DataTableFilter = Type("DataTableFilter", func() {
 
 ```bash
 # Generate types from all design files
-$ goa gen github.com/niiniyare/erp/internal/api/design -o internal/api
+$ goa gen awo/internal/api/design -o internal/api
 
 # Output structure (all in one package):
 # internal/api/gen/
@@ -1149,11 +1149,11 @@ package finance
 
 import (
     "github.com/gofiber/fiber/v2"
-    "github.com/niiniyare/erp/internal/api/gen"
-    accountsvc "github.com/niiniyare/erp/internal/core/finance/account"
-    "github.com/niiniyare/erp/internal/shared/logger"
-    "github.com/niiniyare/erp/internal/shared/metrics"
-    "github.com/niiniyare/erp/internal/shared/tracing"
+    "awo/internal/api/gen"
+    accountsvc "awo/internal/core/finance/account"
+    "awo/internal/shared/logger"
+    "awo/internal/shared/metrics"
+    "awo/internal/shared/tracing"
 )
 
 // Handler struct with dependencies
@@ -1926,7 +1926,7 @@ package account
 import (
     "fmt"
     "net/http"
-    "github.com/niiniyare/erp/internal/shared/errors"
+    "awo/internal/shared/errors"
 )
 
 // Error codes
@@ -2001,10 +2001,10 @@ package finance
 import (
     "strings"
     "github.com/gofiber/fiber/v2"
-    accounterrors "github.com/niiniyare/erp/internal/core/finance/account"
-    "github.com/niiniyare/erp/internal/shared/errors"
-    "github.com/niiniyare/erp/internal/shared/logger"
-    "github.com/niiniyare/erp/web/components"
+    accounterrors "awo/internal/core/finance/account"
+    "awo/internal/shared/errors"
+    "awo/internal/shared/logger"
+    "awo/web/components"
 )
 
 // handleError converts domain errors to HTTP responses
@@ -2362,7 +2362,7 @@ package middleware
 
 import (
     "github.com/gofiber/fiber/v2"
-    "github.com/niiniyare/erp/internal/db/sqlc"
+    "awo/internal/db/sqlc"
 )
 
 func TenantMiddleware(store db.Store) fiber.Handler {
@@ -2401,7 +2401,7 @@ package account
 
 import (
     "context"
-    "github.com/niiniyare/erp/internal/db/sqlc"
+    "awo/internal/db/sqlc"
 )
 
 type accountService struct {
@@ -2739,7 +2739,7 @@ web/components/
 // @internal/api/handlers/finance/account_handler.go
 
 import (
-    "github.com/niiniyare/erp/web/components"
+    "awo/web/components"
 )
 
 // renderComponent renders TemplUI components based on data type
@@ -3511,9 +3511,9 @@ import (
     "github.com/golang/mock/gomock"
     "github.com/stretchr/testify/assert"
     
-    "github.com/niiniyare/erp/internal/api/handlers/finance"
-    "github.com/niiniyare/erp/internal/core/finance/account"
-    "github.com/niiniyare/erp/internal/core/finance/account/mocks"
+    "awo/internal/api/handlers/finance"
+    "awo/internal/core/finance/account"
+    "awo/internal/core/finance/account/mocks"
 )
 
 func TestAccountHandler_Create(t *testing.T) {
@@ -3991,7 +3991,7 @@ isHTMX := c.Get("HX-Request") == "true"
 accept := c.Get("Accept")
 
 // Ensure component import
-import "github.com/niiniyare/erp/web/components"
+import "awo/web/components"
 ```
 
 ### Issue: Error messages showing technical details to users

@@ -9,10 +9,10 @@ import (
 
 	"github.com/google/uuid"
 
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/shared"
-	"github.com/niiniyare/erp/internal/shared/errors"
+	db "awo/db/sqlc"
+	"awo/internal/core/finance/domain"
+	"awo/internal/shared"
+	"awo/internal/shared/errors"
 )
 
 // Cache TTL constants

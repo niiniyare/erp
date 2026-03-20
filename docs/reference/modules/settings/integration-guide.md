@@ -89,8 +89,8 @@ import (
     "context"
     "fmt"
     
-    "github.com/niiniyare/erp/internal/core/settings/service"
-    "github.com/niiniyare/erp/internal/core/finance/domain"
+    "awo/internal/core/settings/service"
+    "awo/internal/core/finance/domain"
 )
 
 type FinanceSettingsIntegration struct {

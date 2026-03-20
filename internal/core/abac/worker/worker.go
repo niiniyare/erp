@@ -7,14 +7,14 @@ import (
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 
-	"github.com/niiniyare/erp/internal/core/abac/activities"
-	"github.com/niiniyare/erp/internal/core/abac/repository"
-	"github.com/niiniyare/erp/internal/core/abac/workflows"
-	"github.com/niiniyare/erp/internal/core/identity"
-	"github.com/niiniyare/erp/internal/core/tenant"
-	loggerPkg "github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/abac/activities"
+	"awo/internal/core/abac/repository"
+	"awo/internal/core/abac/workflows"
+	"awo/internal/core/identity"
+	"awo/internal/core/tenant"
+	loggerPkg "awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // ABACWorkerConfig represents configuration for the ABAC worker

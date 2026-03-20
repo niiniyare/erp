@@ -12,11 +12,11 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/core/tenant"
-	"github.com/niiniyare/erp/internal/shared"
-	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	db "awo/db/sqlc"
+	"awo/internal/core/tenant"
+	"awo/internal/shared"
+	sharedErrors "awo/internal/shared/errors"
+	"awo/internal/shared/logger"
 )
 
 // Fiber context keys

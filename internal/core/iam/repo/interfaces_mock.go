@@ -15,8 +15,8 @@ import (
 	time "time"
 
 	uuid "github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	model "github.com/niiniyare/erp/internal/core/iam/model"
+	db "awo/db/sqlc"
+	model "awo/internal/core/iam/model"
 	gomock "go.uber.org/mock/gomock"
 )
 

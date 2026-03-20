@@ -8,12 +8,12 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 
-	financeDomain "github.com/niiniyare/erp/internal/core/finance/domain"
-	financeService "github.com/niiniyare/erp/internal/core/finance/service"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	financeDomain "awo/internal/core/finance/domain"
+	financeService "awo/internal/core/finance/service"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // FinanceHandler handles finance-related HTTP requests with centralized error handling

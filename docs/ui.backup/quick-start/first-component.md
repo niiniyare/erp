@@ -36,7 +36,7 @@ import (
     "fmt"
     "log"
     
-    "github.com/niiniyare/erp/web/engine"
+    "awo/web/engine"
 )
 
 func main() {
@@ -80,7 +80,7 @@ go run cmd/test-button/main.go
 // In your page template
 package pages
 
-import "github.com/niiniyare/erp/web/engine"
+import "awo/web/engine"
 
 templ TestPage() {
     <!DOCTYPE html>

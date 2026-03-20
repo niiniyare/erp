@@ -5,7 +5,7 @@
 ### Go Service Interface
 
 ```go
-// Package path: github.com/niiniyare/erp/internal/core/authz
+// Package path: awo/internal/core/authz
 
 type Service interface {
     // ENFORCEMENT

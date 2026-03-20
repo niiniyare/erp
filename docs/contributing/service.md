@@ -553,7 +553,7 @@ func (s *service) Policy() policy.Service         { return s.policyService }
 **External modules import ONLY the module root:**
 ```go
 // ✅ CORRECT: Import only the module package
-import "github.com/niiniyare/erp/internal/core/iam"
+import "awo/internal/core/iam"
 
 iamService := iam.NewService(
     authnService,      // Created from iam/authn submodule
@@ -573,8 +573,8 @@ user, err := iamService.Authentication().GetUser(ctx, userID)
 hasPermission, err := iamService.Authorization().HasPermission(ctx, req)
 
 // ❌ WRONG: Never import submodules directly
-// import "github.com/niiniyare/erp/internal/core/iam/authn"
-// import "github.com/niiniyare/erp/internal/core/iam/authz"
+// import "awo/internal/core/iam/authn"
+// import "awo/internal/core/iam/authz"
 ```
 
 ### **Mandatory Service Dependencies**
@@ -749,9 +749,9 @@ graph TD
 ### **❌ Service Import Violations**
 ```go
 // ❌ WRONG: Importing submodules directly
-import "github.com/niiniyare/erp/internal/core/iam/authn"
-import "github.com/niiniyare/erp/internal/core/iam/authz"
-import "github.com/niiniyare/erp/internal/core/finance/service"
+import "awo/internal/core/iam/authn"
+import "awo/internal/core/iam/authz"
+import "awo/internal/core/finance/service"
 
 func main() {
     // ❌ BAD: Bypassing the module facade  

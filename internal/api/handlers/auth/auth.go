@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/niiniyare/erp/internal/core/identity/session"
-	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
+	"awo/internal/core/identity/session"
+	sharedErrors "awo/internal/shared/errors"
 )
 
 // LoginConfig holds tunable settings for the Login handler.

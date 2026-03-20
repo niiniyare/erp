@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/iam/model"
+	"awo/internal/core/iam/model"
 )
 
 // Service defines the authorization service interface

@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/niiniyare/erp/internal/core/iam/model"
-	"github.com/niiniyare/erp/internal/shared/types"
+	"awo/internal/core/iam/model"
+	"awo/internal/shared/types"
 )
 
 // ConversionsTestSuite tests all conversion functions for 100% coverage

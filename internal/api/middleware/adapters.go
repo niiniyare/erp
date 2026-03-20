@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
 )
 
 // HTTPMiddleware defines the standard HTTP middleware signature

@@ -13,14 +13,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/core/abac/models"
-	"github.com/niiniyare/erp/internal/core/tenant"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
-	"github.com/niiniyare/erp/internal/shared/types"
+	db "awo/db/sqlc"
+	"awo/internal/core/abac/models"
+	"awo/internal/core/tenant"
+	"awo/internal/platform/cache"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
+	"awo/internal/shared/types"
 )
 
 // PolicyRepositoryTestSuite defines test suite for ABAC policy repository operations

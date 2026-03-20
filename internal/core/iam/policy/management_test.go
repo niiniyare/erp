@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/niiniyare/erp/internal/core/iam/model"
+	"awo/internal/core/iam/model"
 )
 
 // PolicyManagementTestSuite defines test suite for policy management operations

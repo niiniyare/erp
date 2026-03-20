@@ -112,7 +112,7 @@ package finance
 
 import (
     "net/http"
-    "github.com/niiniyare/erp/internal/shared/errors"
+    "awo/internal/shared/errors"
 )
 
 // Finance-specific error codes
@@ -173,7 +173,7 @@ package iam
 
 import (
     "net/http"
-    "github.com/niiniyare/erp/internal/shared/errors"
+    "awo/internal/shared/errors"
 )
 
 // IAM-specific error codes

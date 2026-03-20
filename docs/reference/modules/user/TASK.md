@@ -314,13 +314,13 @@ import (
     "context"
     "github.com/google/uuid"
     
-    "github.com/niiniyare/erp/internal/core/iam/identity"
-    "github.com/niiniyare/erp/internal/core/iam/authorization" 
-    "github.com/niiniyare/erp/internal/core/iam/access"
-    "github.com/niiniyare/erp/internal/core/iam/analytics"
-    "github.com/niiniyare/erp/internal/shared/logger"
-    "github.com/niiniyare/erp/internal/shared/metrics"
-    "github.com/niiniyare/erp/internal/shared/tracing"
+    "awo/internal/core/iam/identity"
+    "awo/internal/core/iam/authorization" 
+    "awo/internal/core/iam/access"
+    "awo/internal/core/iam/analytics"
+    "awo/internal/shared/logger"
+    "awo/internal/shared/metrics"
+    "awo/internal/shared/tracing"
 )
 
 type Service interface {

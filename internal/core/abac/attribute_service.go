@@ -12,13 +12,13 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/abac/models"
-	"github.com/niiniyare/erp/internal/core/abac/repository"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
-	"github.com/niiniyare/erp/internal/shared/types"
+	"awo/internal/core/abac/models"
+	"awo/internal/core/abac/repository"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
+	"awo/internal/shared/types"
 )
 
 // AttributeService provides attribute management capabilities

@@ -1132,8 +1132,8 @@ import (
     "context"
     "log"
     
-    "github.com/niiniyare/erp/internal/core/featureflag"
-    db "github.com/niiniyare/erp/db/sqlc"
+    "awo/internal/core/featureflag"
+    db "awo/db/sqlc"
 )
 
 func main() {

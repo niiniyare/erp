@@ -10,12 +10,12 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/niiniyare/erp/internal/core/abac"
-	"github.com/niiniyare/erp/internal/core/access"
-	"github.com/niiniyare/erp/internal/core/iam/model"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/abac"
+	"awo/internal/core/access"
+	"awo/internal/core/iam/model"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // adapter implements the authorization service interface by delegating to existing services

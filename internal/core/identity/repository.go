@@ -9,11 +9,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	db "awo/db/sqlc"
+	"awo/internal/platform/cache"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // Repository defines the interface for identity data persistence.
@@ -278,9 +278,10 @@ func (r *repository) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employ
 
 func (r *repository) AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
 	_, err := r.store.AssignUserRole(ctx, db.AssignUserRoleParams{
-		PUserID:   userID,
-		PRoleID:   roleID,
-		PEntityID: entityID,
+		PUserID:     userID,
+		PRoleID:     roleID,
+		PEntityID:   entityID,
+		PAssignedBy: uuid.Nil, // caller can pass assigned_by via service layer if needed
 	})
 	return err
 }

@@ -1,17 +1,17 @@
 package iam
 
 import (
-	"github.com/niiniyare/erp/internal/core/audit"
-	"github.com/niiniyare/erp/internal/core/featureflag"
-	"github.com/niiniyare/erp/internal/core/iam/authn"
-	"github.com/niiniyare/erp/internal/core/iam/authz"
-	"github.com/niiniyare/erp/internal/core/iam/policy"
-	"github.com/niiniyare/erp/internal/core/settings"
-	"github.com/niiniyare/erp/internal/core/tenant"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/audit"
+	"awo/internal/core/featureflag"
+	"awo/internal/core/iam/authn"
+	"awo/internal/core/iam/authz"
+	"awo/internal/core/iam/policy"
+	"awo/internal/core/settings"
+	"awo/internal/core/tenant"
+	"awo/internal/platform/cache"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // Service defines the unified IAM service interface that consolidates

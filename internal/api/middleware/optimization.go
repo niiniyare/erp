@@ -13,8 +13,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
 )
 
 // NOTE: This file provides additional integration methods and helper utilities
@@ -775,7 +775,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"github.com/niiniyare/erp/internal/middleware"
+	"awo/internal/middleware"
 )
 
 func main() {

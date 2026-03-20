@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/core/tenant"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/tenant"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 )

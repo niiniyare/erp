@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/shared/logger"
 )
 
 // responseWriterWrapper wraps http.ResponseWriter to capture the status code.

@@ -6,13 +6,13 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/core/tenant/domain"
-	"github.com/niiniyare/erp/internal/core/tenant/repository"
-	"github.com/niiniyare/erp/internal/core/tenant/service"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	db "awo/db/sqlc"
+	"awo/internal/core/tenant/domain"
+	"awo/internal/core/tenant/repository"
+	"awo/internal/core/tenant/service"
+	"awo/internal/platform/cache"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/tracing"
 )
 
 // Re-export domain types for backward compatibility.

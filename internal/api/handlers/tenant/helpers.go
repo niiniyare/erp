@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	coreTenant "github.com/niiniyare/erp/internal/core/tenant"
-	"github.com/niiniyare/erp/internal/core/tenant/domain"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
+	coreTenant "awo/internal/core/tenant"
+	"awo/internal/core/tenant/domain"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
 	stderrors "errors"
 )
 

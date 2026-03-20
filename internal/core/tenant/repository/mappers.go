@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"time"
 
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/core/tenant/domain"
+	db "awo/db/sqlc"
+	"awo/internal/core/tenant/domain"
 )
 
 // toDomain converts a SQLC Tenant row to the domain entity.

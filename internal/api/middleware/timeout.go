@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/shared/logger"
 )
 
 // TimeoutConfig defines timeout middleware configuration

@@ -13,11 +13,11 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/suite"
 
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/core/tenant"
-	"github.com/niiniyare/erp/internal/shared"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	db "awo/db/sqlc"
+	"awo/internal/core/finance/domain"
+	"awo/internal/core/tenant"
+	"awo/internal/shared"
+	"awo/internal/shared/tracing"
 )
 
 // AccountsRepositoryTestSuite defines test suite for chart of accounts repository operations

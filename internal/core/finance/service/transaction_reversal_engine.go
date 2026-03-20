@@ -9,8 +9,8 @@ import (
 	"github.com/shopspring/decimal"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/finance/domain"
+	"awo/internal/shared/tracing"
 )
 
 // TransactionReversalEngine handles the reversal of posted financial transactions

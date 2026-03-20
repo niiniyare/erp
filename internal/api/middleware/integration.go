@@ -6,11 +6,11 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/core/tenant"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	loggerPkg "github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/tenant"
+	"awo/internal/platform/cache"
+	loggerPkg "awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // MiddlewareStack provides a complete middleware stack for the ERP system.

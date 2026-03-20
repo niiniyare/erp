@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/niiniyare/erp/internal/platform/config"
+	"awo/internal/platform/config"
 )
 
 func main() {

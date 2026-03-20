@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/platform/config"
+	"awo/internal/platform/cache"
+	"awo/internal/platform/config"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )

@@ -19,11 +19,11 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/platform/config"
-	sharedErrors "github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/platform/config"
+	sharedErrors "awo/internal/shared/errors"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )

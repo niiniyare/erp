@@ -425,7 +425,7 @@ func (c *ComponentConfig) ToTemplateData() TemplateData {
 		EntityNamePlural: ToPascalCase(Pluralize(c.ComponentName)),
 
 		PackageName: ToSnakeCase(c.ModuleName),
-		ImportPath:  fmt.Sprintf("github.com/niiniyare/erp/internal/core/%s", ToSnakeCase(c.ModuleName)),
+		ImportPath:  fmt.Sprintf("awo/internal/core/%s", ToSnakeCase(c.ModuleName)),
 
 		GeneratedAt:      time.Now(),
 		GeneratorVersion: "0.1.0",

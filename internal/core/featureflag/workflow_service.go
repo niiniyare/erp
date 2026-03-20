@@ -5,11 +5,11 @@ package featureflag
 // import (
 // 	"context"
 //
-// 	db "github.com/niiniyare/erp/db/sqlc"
-// 	"github.com/niiniyare/erp/internal/core/access/request"
-// 	"github.com/niiniyare/erp/internal/core/tenant"
-// 	"github.com/niiniyare/erp/internal/featureflag/workflow"
-// 	"github.com/niiniyare/erp/internal/shared/logger"
+// 	db "awo/db/sqlc"
+// 	"awo/internal/core/access/request"
+// 	"awo/internal/core/tenant"
+// 	"awo/internal/featureflag/workflow"
+// 	"awo/internal/shared/logger"
 // )
 //
 // // WorkflowService handles feature flag workflows with approval processes.

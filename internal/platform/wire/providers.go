@@ -5,7 +5,7 @@ package wire
 
 import (
 	"github.com/google/wire"
-	"github.com/niiniyare/erp/internal/platform/config"
+	"awo/internal/platform/config"
 )
 
 // ============================================================================

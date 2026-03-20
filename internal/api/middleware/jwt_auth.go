@@ -5,9 +5,9 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/niiniyare/erp/internal/core/authz"
-	"github.com/niiniyare/erp/internal/core/identity/session"
-	"github.com/niiniyare/erp/internal/platform/cache"
+	"awo/internal/core/authz"
+	"awo/internal/core/identity/session"
+	"awo/internal/platform/cache"
 )
 
 // AuthConfig configures the Authenticate middleware.

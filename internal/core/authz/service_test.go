@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/suite"
 
-	db "github.com/niiniyare/erp/db/sqlc"
+	db "awo/db/sqlc"
 )
 
 // ---------------------------------------------------------------------------

@@ -8,18 +8,18 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/platform/cache"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
-	"github.com/niiniyare/erp/internal/core/access/approval"
-	"github.com/niiniyare/erp/internal/core/access/execution"
-	"github.com/niiniyare/erp/internal/core/audit"
-	"github.com/niiniyare/erp/internal/core/notification"
+	"awo/internal/core/access/approval"
+	"awo/internal/core/access/execution"
+	"awo/internal/core/audit"
+	"awo/internal/core/notification"
 )
 
 // BusinessLogicError represents a business logic error

@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/types"
+	db "awo/db/sqlc"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/types"
 )
 
 // Type aliases for shared types

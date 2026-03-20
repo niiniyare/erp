@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/core/audit"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
+	"awo/internal/core/audit"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
 )
 
 // BulkEnableFlags enables multiple feature flags

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	cb "github.com/niiniyare/erp/pkg/condition"
+	cb "awo/pkg/condition"
 	"github.com/stretchr/testify/suite"
 )
 

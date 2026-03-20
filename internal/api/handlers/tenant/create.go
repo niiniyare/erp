@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
-	coreTenant "github.com/niiniyare/erp/internal/core/tenant"
+	coreTenant "awo/internal/core/tenant"
 	"go.opentelemetry.io/otel/attribute"
 )
 

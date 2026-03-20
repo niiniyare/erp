@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/platform/config"
+	"awo/internal/platform/config"
 )
 
 // Benchmark fixtures

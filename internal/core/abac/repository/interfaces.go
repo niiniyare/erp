@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/core/abac/models"
-	"github.com/niiniyare/erp/internal/shared/types"
+	"awo/internal/core/abac/models"
+	"awo/internal/shared/types"
 )
 
 // AttributeDefinitionRepository defines the interface for attribute definition persistence

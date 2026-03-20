@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/core/settings/domain"
+	"awo/internal/core/settings/domain"
 )
 
 // ConfigDefinition represents a configuration definition in the database

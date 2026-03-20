@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/niiniyare/erp/internal/core/abac"
-	"github.com/niiniyare/erp/internal/core/abac/models"
-	"github.com/niiniyare/erp/internal/core/featureflag"
-	"github.com/niiniyare/erp/internal/shared/types"
+	"awo/internal/core/abac"
+	"awo/internal/core/abac/models"
+	"awo/internal/core/featureflag"
+	"awo/internal/shared/types"
 )
 
 func TestABACSecurityIntegration(t *testing.T) {

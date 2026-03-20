@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/platform/cache"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
@@ -1045,7 +1045,7 @@ package main
 import (
 	"time"
 	"github.com/gofiber/fiber/v2"
-	"github.com/niiniyare/erp/internal/platform/middleware"
+	"awo/internal/platform/middleware"
 )
 
 func main() {
@@ -1094,7 +1094,7 @@ package main
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/niiniyare/erp/internal/platform/middleware"
+	"awo/internal/platform/middleware"
 )
 
 func main() {
@@ -1130,7 +1130,7 @@ package main
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/niiniyare/erp/internal/platform/middleware"
+	"awo/internal/platform/middleware"
 )
 
 func main() {
@@ -1176,7 +1176,7 @@ package main
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/niiniyare/erp/internal/platform/middleware"
+	"awo/internal/platform/middleware"
 )
 
 func main() {
@@ -1237,7 +1237,7 @@ package middleware_test
 import (
 	"testing"
 	"github.com/gofiber/fiber/v2"
-	"github.com/niiniyare/erp/internal/platform/middleware"
+	"awo/internal/platform/middleware"
 )
 
 func TestRateLimitMiddleware(t *testing.T) {

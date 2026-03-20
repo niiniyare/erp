@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/shared/logger"
 	"gopkg.in/yaml.v3"
 )
 

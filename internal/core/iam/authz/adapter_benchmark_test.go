@@ -8,13 +8,13 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/mock/gomock"
 
-	"github.com/niiniyare/erp/internal/core/abac"
-	"github.com/niiniyare/erp/internal/core/abac/models"
-	"github.com/niiniyare/erp/internal/core/access"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
-	"github.com/niiniyare/erp/internal/shared/types"
+	"awo/internal/core/abac"
+	"awo/internal/core/abac/models"
+	"awo/internal/core/access"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
+	"awo/internal/shared/types"
 )
 
 // BenchmarkEvaluatePermission benchmarks single permission evaluation

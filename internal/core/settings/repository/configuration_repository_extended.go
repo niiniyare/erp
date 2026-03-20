@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/core/settings/domain"
-	"github.com/niiniyare/erp/internal/shared"
-	"github.com/niiniyare/erp/internal/shared/metrics"
+	db "awo/db/sqlc"
+	"awo/internal/core/settings/domain"
+	"awo/internal/shared"
+	"awo/internal/shared/metrics"
 )
 
 // Implement the remaining repository methods

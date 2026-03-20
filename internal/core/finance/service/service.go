@@ -3,12 +3,12 @@
 package service
 
 import (
-	"github.com/niiniyare/erp/internal/core/featureflag"
-	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/core/iam"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/featureflag"
+	"awo/internal/core/finance/domain"
+	"awo/internal/core/iam"
+	"awo/internal/shared/errors"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // Services aggregates all finance-related services

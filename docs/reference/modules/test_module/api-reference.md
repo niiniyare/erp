@@ -472,7 +472,7 @@ package main
 import (
     "context"
     "fmt"
-    "github.com/niiniyare/erp-sdk-go/test_module"
+    "awo-sdk-go/test_module"
 )
 
 func main() {

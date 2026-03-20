@@ -10,7 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/shared/logger"
 )
 
 // CORSConfig defines CORS configuration for the middleware.

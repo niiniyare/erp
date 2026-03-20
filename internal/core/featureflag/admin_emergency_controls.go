@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/core/audit"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/core/audit"
+	"awo/internal/shared/logger"
 )
 
 // EmergencyDisableAll disables all feature flags system-wide

@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/shared"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	db "awo/db/sqlc"
+	"awo/internal/core/finance/domain"
+	"awo/internal/shared"
+	"awo/internal/shared/tracing"
 )
 
 // AccountsRepositoryUnitTestSuite defines unit test suite using mocks

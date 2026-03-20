@@ -14,8 +14,8 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	models "github.com/niiniyare/erp/internal/core/abac/models"
-	types "github.com/niiniyare/erp/internal/shared/types"
+	models "awo/internal/core/abac/models"
+	types "awo/internal/shared/types"
 	gomock "go.uber.org/mock/gomock"
 )
 

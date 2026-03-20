@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/core/abac"
-	"github.com/niiniyare/erp/internal/shared/types"
+	"awo/internal/core/abac"
+	"awo/internal/shared/types"
 )
 
 // AdminFeatureFlagPermissions defines the ABAC permissions for admin feature flag operations

@@ -2145,8 +2145,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	db "awo/db/sqlc"
+	"awo/internal/shared/logger"
 	"go.temporal.io/sdk/client"
 )
 
@@ -2690,8 +2690,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/workflow/engine"
+	"awo/internal/shared/logger"
+	"awo/internal/workflow/engine"
 )
 
 // ValidationExecutor handles validation steps
@@ -2913,9 +2913,9 @@ import (
 
 	"database/sql"
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/workflow/engine"
+	db "awo/db/sqlc"
+	"awo/internal/shared/logger"
+	"awo/internal/workflow/engine"
 )
 
 // UserTaskExecutor handles user task (approval) steps
@@ -3802,9 +3802,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/workflow/engine"
+	db "awo/db/sqlc"
+	"awo/internal/shared/logger"
+	"awo/internal/workflow/engine"
 )
 
 // Activities struct holds dependencies for Temporal activities
@@ -4205,9 +4205,9 @@ import (
 	"context"
 	"fmt"
 
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/workflow/engine"
+	db "awo/db/sqlc"
+	"awo/internal/shared/logger"
+	"awo/internal/workflow/engine"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 )
@@ -4316,10 +4316,10 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/shared"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/workflow/engine"
+	db "awo/db/sqlc"
+	"awo/internal/shared"
+	"awo/internal/shared/logger"
+	"awo/internal/workflow/engine"
 )
 
 // TemplateHandler handles workflow template operations
@@ -4678,9 +4678,9 @@ package handlers
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/workflow/engine"
+	db "awo/db/sqlc"
+	"awo/internal/shared/logger"
+	"awo/internal/workflow/engine"
 )
 
 // InstanceHandler handles workflow instance operations
@@ -4924,9 +4924,9 @@ package handlers
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/workflow/engine"
+	db "awo/db/sqlc"
+	"awo/internal/shared/logger"
+	"awo/internal/workflow/engine"
 )
 
 // TaskHandler handles user task operations
@@ -5129,11 +5129,11 @@ import (
 	"context"
 
 	"github.com/gofiber/fiber/v2"
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/workflow/engine"
-	"github.com/niiniyare/erp/internal/workflow/handlers"
-	"github.com/niiniyare/erp/internal/workflow/temporal"
+	db "awo/db/sqlc"
+	"awo/internal/shared/logger"
+	"awo/internal/workflow/engine"
+	"awo/internal/workflow/handlers"
+	"awo/internal/workflow/temporal"
 	temporalclient "go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 )
@@ -6329,9 +6329,9 @@ import (
     "context"
     "github.com/google/uuid"
     
-    db "github.com/niiniyare/erp/db/sqlc"
-    "github.com/niiniyare/erp/internal/workflow"
-    "github.com/niiniyare/erp/internal/workflow/engine"
+    db "awo/db/sqlc"
+    "awo/internal/workflow"
+    "awo/internal/workflow/engine"
 )
 
 type InvoiceService struct {
@@ -6439,7 +6439,7 @@ import (
     "context"
     "encoding/json"
     
-    db "github.com/niiniyare/erp/db/sqlc"
+    db "awo/db/sqlc"
 )
 
 type PaymentService struct {
@@ -6502,9 +6502,9 @@ import (
     "time"
 
     "github.com/gofiber/fiber/v2"
-    db "github.com/niiniyare/erp/db/sqlc"
-    "github.com/niiniyare/erp/internal/workflow"
-    "github.com/niiniyare/erp/internal/shared/logger"
+    db "awo/db/sqlc"
+    "awo/internal/workflow"
+    "awo/internal/shared/logger"
     temporalclient "go.temporal.io/sdk/client"
 )
 
@@ -6606,8 +6606,8 @@ package actions
 import (
     "context"
     
-    db "github.com/niiniyare/erp/db/sqlc"
-    "github.com/niiniyare/erp/internal/workflow/engine"
+    db "awo/db/sqlc"
+    "awo/internal/workflow/engine"
 )
 
 // RegisterPaymentActions registers payment-related actions
@@ -6662,8 +6662,8 @@ package events
 import (
     "context"
     
-    db "github.com/niiniyare/erp/db/sqlc"
-    "github.com/niiniyare/erp/internal/workflow"
+    db "awo/db/sqlc"
+    "awo/internal/workflow"
 )
 
 type EventHandler struct {
@@ -7091,8 +7091,8 @@ import (
     "github.com/google/uuid"
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/mock"
-    db "github.com/niiniyare/erp/db/sqlc"
-    "github.com/niiniyare/erp/internal/workflow/engine"
+    db "awo/db/sqlc"
+    "awo/internal/workflow/engine"
 )
 
 func TestCreateTemplate(t *testing.T) {
@@ -7155,8 +7155,8 @@ import (
     "time"
 
     "github.com/stretchr/testify/suite"
-    db "github.com/niiniyare/erp/db/sqlc"
-    "github.com/niiniyare/erp/internal/workflow"
+    db "awo/db/sqlc"
+    "awo/internal/workflow"
 )
 
 type WorkflowIntegrationTestSuite struct {

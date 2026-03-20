@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/access/conditional"
-	"github.com/niiniyare/erp/internal/shared/types"
+	"awo/internal/core/access/conditional"
+	"awo/internal/shared/types"
 )
 
 // Service defines the access management service interface

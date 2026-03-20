@@ -8,9 +8,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/wire"
 
-	"github.com/niiniyare/erp/internal/api/handlers"
-	"github.com/niiniyare/erp/internal/platform/config"
-	wirepkg "github.com/niiniyare/erp/internal/platform/wire"
+	"awo/internal/api/handlers"
+	"awo/internal/platform/config"
+	wirepkg "awo/internal/platform/wire"
 )
 
 // ============================================================================

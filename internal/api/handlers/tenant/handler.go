@@ -2,11 +2,11 @@ package tenant
 
 import (
 	"github.com/go-playground/validator/v10"
-	coreTenant "github.com/niiniyare/erp/internal/core/tenant"
-	"github.com/niiniyare/erp/internal/shared/encryption"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	coreTenant "awo/internal/core/tenant"
+	"awo/internal/shared/encryption"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // TenantHandler handles tenant-related HTTP requests.

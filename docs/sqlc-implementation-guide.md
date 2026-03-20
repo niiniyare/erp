@@ -331,10 +331,10 @@ import (
     "github.com/jackc/pgx/v5"
     "github.com/jackc/pgx/v5/pgtype"
 
-    db "github.com/niiniyare/erp/db/sqlc"
-    "github.com/niiniyare/erp/internal/core/entity/domain"
-    "github.com/niiniyare/erp/internal/shared"
-    "github.com/niiniyare/erp/internal/shared/tracing"
+    db "awo/db/sqlc"
+    "awo/internal/core/entity/domain"
+    "awo/internal/shared"
+    "awo/internal/shared/tracing"
 )
 
 type SQLCEntityRepository struct {
@@ -826,9 +826,9 @@ import (
     "go.temporal.io/sdk/activity"
     "go.temporal.io/sdk/temporal"
 
-    db "github.com/niiniyare/erp/db/sqlc"
-    "github.com/niiniyare/erp/internal/core/entity/domain"
-    "github.com/niiniyare/erp/internal/shared"
+    db "awo/db/sqlc"
+    "awo/internal/core/entity/domain"
+    "awo/internal/shared"
 )
 
 // TemporalEntityActivities wraps SQLC operations for Temporal workflows
@@ -1038,11 +1038,11 @@ import (
     "github.com/stretchr/testify/mock"
     "github.com/stretchr/testify/suite"
 
-    db "github.com/niiniyare/erp/db/sqlc"
-    "github.com/niiniyare/erp/internal/core/entity/domain"
-    "github.com/niiniyare/erp/internal/core/entity/repository"
-    "github.com/niiniyare/erp/internal/shared"
-    "github.com/niiniyare/erp/internal/shared/mocks"
+    db "awo/db/sqlc"
+    "awo/internal/core/entity/domain"
+    "awo/internal/core/entity/repository"
+    "awo/internal/shared"
+    "awo/internal/shared/mocks"
 )
 
 // SQLCRepositoryTestSuite tests repository with mocked SQLC store
@@ -1222,9 +1222,9 @@ import (
     "github.com/google/uuid"
     "github.com/redis/go-redis/v9"
 
-    db "github.com/niiniyare/erp/db/sqlc"
-    "github.com/niiniyare/erp/internal/core/entity/domain"
-    "github.com/niiniyare/erp/internal/shared"
+    db "awo/db/sqlc"
+    "awo/internal/core/entity/domain"
+    "awo/internal/shared"
 )
 
 // CachedSQLCRepository wraps SQLC repository with Redis caching

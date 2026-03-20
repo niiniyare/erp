@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/shared/token"
+	"awo/internal/shared/token"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )

@@ -10,9 +10,9 @@ package admin
 // 	"time"
 //
 // 	"github.com/google/uuid"
-// 	"github.com/niiniyare/erp/internal/core/tenant"
-// 	"github.com/niiniyare/erp/internal/platform/admin/templates"
-// 	"github.com/niiniyare/erp/internal/shared/logger"
+// 	"awo/internal/core/tenant"
+// 	"awo/internal/platform/admin/templates"
+// 	"awo/internal/shared/logger"
 // )
 //
 // // AdminHandlers contains the dependencies for admin handlers

@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/niiniyare/erp/internal/core/authz"
-	"github.com/niiniyare/erp/internal/core/identity/session"
+	"awo/internal/core/authz"
+	"awo/internal/core/identity/session"
 )
 
 // AuthorizationConfig configures legacy authorization middleware behaviour.

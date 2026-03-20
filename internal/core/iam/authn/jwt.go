@@ -7,8 +7,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/iam/model"
-	"github.com/niiniyare/erp/internal/shared/errors"
+	"awo/internal/core/iam/model"
+	"awo/internal/shared/errors"
 )
 
 const (

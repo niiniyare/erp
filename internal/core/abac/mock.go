@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	activities "github.com/niiniyare/erp/internal/core/abac/activities"
+	activities "awo/internal/core/abac/activities"
 	gomock "go.uber.org/mock/gomock"
 )
 

@@ -4,7 +4,7 @@ package domain
 // This file defines all configuration keys and modules used by the Finance service
 // to avoid hard-coded strings and ensure consistency across the system.
 
-import "github.com/niiniyare/erp/internal/core/settings/domain"
+import "awo/internal/core/settings/domain"
 
 // Finance Module Constants
 const (

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/dgraph-io/ristretto/v2"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/shared/logger"
 )
 
 // EvaluationCache provides a high-performance, thread-safe cache for policy evaluation results.

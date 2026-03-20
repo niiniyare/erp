@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/testsuite"
 
-	"github.com/niiniyare/erp/internal/core/finance/domain"
+	"awo/internal/core/finance/domain"
 )
 
 // TestTransactionApprovalWorkflow tests the transaction approval workflow end-to-end

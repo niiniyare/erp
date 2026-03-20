@@ -1,16 +1,16 @@
 package workflows
 
 import (
-	"github.com/niiniyare/erp/internal/core/audit"
-	"github.com/niiniyare/erp/internal/core/featureflag"
-	"github.com/niiniyare/erp/internal/core/finance/service"
-	"github.com/niiniyare/erp/internal/core/iam"
-	"github.com/niiniyare/erp/internal/core/notification"
-	settingsService "github.com/niiniyare/erp/internal/core/settings/service"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	loggerPkg "github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/audit"
+	"awo/internal/core/featureflag"
+	"awo/internal/core/finance/service"
+	"awo/internal/core/iam"
+	"awo/internal/core/notification"
+	settingsService "awo/internal/core/settings/service"
+	"awo/internal/platform/cache"
+	loggerPkg "awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 // WorkflowRegistry manages all finance-related Temporal workflows

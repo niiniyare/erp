@@ -12,11 +12,11 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
 
-	db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/platform/cache"
-	"github.com/niiniyare/erp/internal/shared"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	db "awo/db/sqlc"
+	"awo/internal/core/finance/domain"
+	"awo/internal/platform/cache"
+	"awo/internal/shared"
+	"awo/internal/shared/tracing"
 )
 
 type accountsRepository struct {

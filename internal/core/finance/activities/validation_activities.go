@@ -5,14 +5,14 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/niiniyare/erp/internal/core/finance/domain"
-	"github.com/niiniyare/erp/internal/core/finance/service"
-	"github.com/niiniyare/erp/internal/core/iam"
-	settingsDomain "github.com/niiniyare/erp/internal/core/settings/domain"
-	settingsService "github.com/niiniyare/erp/internal/core/settings/service"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/core/finance/domain"
+	"awo/internal/core/finance/service"
+	"awo/internal/core/iam"
+	settingsDomain "awo/internal/core/settings/domain"
+	settingsService "awo/internal/core/settings/service"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/worker"
 )

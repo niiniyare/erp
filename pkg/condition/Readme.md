@@ -18,7 +18,7 @@ The `condition` package provides a production-ready runtime condition evaluation
 ## Installation
 
 ```bash
-go get github.com/niiniyare/erp/pkg/condition
+go get awo/pkg/condition
 ```
 
 ## Quick Start
@@ -30,7 +30,7 @@ package main
 
 import (
 	"context"
-	"github.com/niiniyare/erp/condition"
+	"awo/condition"
 )
 
 func main() {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/niiniyare/erp/internal/generator"
+	"awo/internal/generator"
 	"github.com/spf13/cobra"
 )
 
