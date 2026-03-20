@@ -44,13 +44,19 @@ type AccessRequest struct {
 // Defines actions that can be performed on resources with risk assessment and approval workflow requirements.
 type Action struct {
 	ID uuid.UUID `json:"id"`
+	// Resource this action belongs to. Null for standalone/global actions.
+	ResourceID *uuid.UUID `json:"resource_id"`
 	// NULL for SYSTEM-scope actions. Set for custom TENANT-scope actions. FK enforced in 000062.
 	TenantID *uuid.UUID `json:"tenant_id"`
 	// SYSTEM = platform-wide standard action. TENANT = custom action for one tenant.
-	Scope       string  `json:"scope"`
+	Scope string `json:"scope"`
+	// Machine-readable key segment within its resource. Forms the third segment of permission keys: {module}.{resource}.{slug}. e.g. 'read', 'create', 'approve'. Do not change after seeding.
+	Slug        string  `json:"slug"`
 	Name        string  `json:"name"`
 	DisplayName *string `json:"display_name"`
 	Description *string `json:"description"`
+	// HTTP verb this action maps to. e.g. 'GET', 'POST', 'PATCH', 'DELETE'. Used for route documentation.
+	HttpMethod *string `json:"http_method"`
 	// Standard action type: CREATE, READ, UPDATE, DELETE, EXECUTE, APPROVE, REJECT, EXPORT, IMPORT
 	ActionType string `json:"action_type"`
 	// Risk category: STANDARD, ADMINISTRATIVE, SENSITIVE, BULK, SYSTEM
@@ -65,6 +71,24 @@ type Action struct {
 	CreatedAt      sql.NullTime `json:"created_at"`
 	// Updated by trigger on every row change — use for cache invalidation.
 	UpdatedAt sql.NullTime `json:"updated_at"`
+}
+
+// Third-party / integration API keys. Key is hashed (SHA-256) — raw key returned once at creation and never stored.
+type ApiKey struct {
+	ID       uuid.UUID `json:"id"`
+	TenantID uuid.UUID `json:"tenant_id"`
+	Name     string    `json:"name"`
+	// SHA-256 hex of the raw bearer token. Raw token returned once at creation, never stored.
+	KeyHash string `json:"key_hash"`
+	// Allowed permission keys for this key. Acts as a ceiling — cannot exceed the creating user's own permissions.
+	Scopes []string `json:"scopes"`
+	// User who created this key. Key inherits at most the creator's permissions at time of creation.
+	CreatedBy uuid.UUID    `json:"created_by"`
+	ExpiresAt sql.NullTime `json:"expires_at"`
+	// Set to revoke the key immediately. Checked on every request before permission evaluation.
+	RevokedAt  sql.NullTime `json:"revoked_at"`
+	LastUsedAt sql.NullTime `json:"last_used_at"`
+	CreatedAt  time.Time    `json:"created_at"`
 }
 
 // Defines attributes used in ABAC policies with data types, validation rules, and security controls for consistent attribute management.
@@ -335,6 +359,10 @@ type Entity struct {
 	Address []byte `json:"address"`
 	// Entity logo or image reference - File path or URL to associated image
 	Picture *string `json:"picture"`
+	// Materialized path: /uuid1/uuid2/this_uuid/. Enables subtree queries via LIKE '/root/%'. Populated by app layer on create/reparent. Root entities: /uuid/.
+	EntityPath *string `json:"entity_path"`
+	// Hierarchy depth: 1 = root COMPANY, increments per level (max 8). Used to determine EntityScope: level 1 = all, leaf = entity, else = subtree.
+	EntityLevel int32 `json:"entity_level"`
 	// Entity-specific configuration - JSON object storing customizable settings and preferences
 	Settings          []byte       `json:"settings"`
 	Metadata          []byte       `json:"metadata"`
@@ -392,6 +420,22 @@ type FeatureFlag struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	// Soft delete timestamp - NULL means active
 	DeletedAt sql.NullTime `json:"deleted_at"`
+}
+
+// System-wide feature flag catalogue. No tenant_id — shared across all tenants. Auto-seeded by triggers on modules and resources. Tenant overrides live in tenant_feature_flags.
+type FeatureFlagDefinition struct {
+	ID         uuid.UUID  `json:"id"`
+	ModuleID   *uuid.UUID `json:"module_id"`
+	ResourceID *uuid.UUID `json:"resource_id"`
+	// Dot-notation key derived from MRA slugs: module.slug or module.slug.resource.slug. e.g. 'finance', 'finance.transactions'. Never write free-form strings — always derive from slugs.
+	FlagKey     string  `json:"flag_key"`
+	Label       string  `json:"label"`
+	Description *string `json:"description"`
+	// Value tenants get without any configuration. Modules default false (off); resources default true (on once module is on).
+	DefaultValue bool `json:"default_value"`
+	// When true, only platform operators (admin_role) can toggle. Tenant admins cannot see or change these.
+	IsSystem  bool      `json:"is_system"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // Master chart of accounts for all financial transactions. Supports hierarchical account structures, multi-currency operations, and financial reporting requirements.
@@ -678,10 +722,16 @@ type Module struct {
 	// NULL for SYSTEM-scope modules. Set for custom TENANT-scope modules. FK enforced in 000062.
 	TenantID *uuid.UUID `json:"tenant_id"`
 	// SYSTEM = platform-wide, readable by all. TENANT = private custom module.
-	Scope       string  `json:"scope"`
+	Scope string `json:"scope"`
+	// Machine-readable key segment used in dot-notation: {slug}.{resource}.{action}. e.g. 'finance', 'selling'. Do not change after seeding — all permission/flag keys depend on it.
+	Slug        string  `json:"slug"`
 	Name        string  `json:"name"`
 	DisplayName *string `json:"display_name"`
 	Description *string `json:"description"`
+	// Icon class for sidebar nav. e.g. 'fa fa-calculator'.
+	Icon *string `json:"icon"`
+	// Sidebar display order. Lower = higher. Default 999.
+	NavOrder int32 `json:"nav_order"`
 	// Module category: CORE, HR, FINANCE, SALES, INVENTORY, etc.
 	Category *string `json:"category"`
 	// Helps categorise industry-specific apps: CORE, INDUSTRY, EXTENSION, INTERNAL.
@@ -887,11 +937,17 @@ type ReservedSubdomain struct {
 
 // System resources that can be protected by permissions including APIs, UI components, data objects, files, reports, and workflows.
 type Resource struct {
-	ID          uuid.UUID `json:"id"`
-	ModuleID    uuid.UUID `json:"module_id"`
-	Name        string    `json:"name"`
-	DisplayName *string   `json:"display_name"`
-	Description *string   `json:"description"`
+	ID       uuid.UUID `json:"id"`
+	ModuleID uuid.UUID `json:"module_id"`
+	// Machine-readable key segment within its module. Forms the second segment of dot-notation keys: {module.slug}.{slug}. e.g. 'transactions', 'accounts'. Unique per module. Do not change after seeding.
+	Slug        string  `json:"slug"`
+	Name        string  `json:"name"`
+	DisplayName *string `json:"display_name"`
+	Description *string `json:"description"`
+	// Browser navigation URL. e.g. '/finance/transactions'. Used by BootService to build sidebar links.
+	NavUrl *string `json:"nav_url"`
+	// Display order within the module section. Lower = higher. Default 999.
+	NavOrder int32 `json:"nav_order"`
 	// Type of resource: API, UI, DATA, FILE, REPORT, WORKFLOW, FUNCTION
 	ResourceType string `json:"resource_type"`
 	// Self-referential for resource hierarchy (e.g., API endpoints under API group)
@@ -935,17 +991,27 @@ type Role struct {
 	DeletedAt    sql.NullTime `json:"deleted_at"`
 }
 
+// Role assignment metadata: who holds which role in which domain, with expiry and revocation tracking. Paired with casbin_rule rows written atomically in AssignRole.
 type RoleAssignment struct {
-	ID          uuid.UUID    `json:"id"`
-	TenantID    uuid.UUID    `json:"tenant_id"`
-	Subject     string       `json:"subject"`
-	RoleName    string       `json:"role_name"`
-	Domain      string       `json:"domain"`
-	AssignedBy  *string      `json:"assigned_by"`
-	DelegatedBy *string      `json:"delegated_by"`
-	ExpiresAt   sql.NullTime `json:"expires_at"`
-	IsActive    *bool        `json:"is_active"`
-	CreatedAt   sql.NullTime `json:"created_at"`
+	ID       uuid.UUID `json:"id"`
+	TenantID uuid.UUID `json:"tenant_id"`
+	Subject  string    `json:"subject"`
+	RoleName string    `json:"role_name"`
+	// Denormalized role slug for display in audit logs and UI without a roles JOIN.
+	RoleSlug   *string `json:"role_slug"`
+	Domain     string  `json:"domain"`
+	AssignedBy *string `json:"assigned_by"`
+	// UUID FK to the user who granted this assignment. Used for delegation chain audit.
+	GrantedBy   *uuid.UUID `json:"granted_by"`
+	DelegatedBy *string    `json:"delegated_by"`
+	// When the assignment lapses automatically. NULL = permanent. Lazy expiry — checked on first request after expiry.
+	ExpiresAt sql.NullTime `json:"expires_at"`
+	// Explicit revocation timestamp. Set alongside is_active=false. Distinguishes revocation from expiry.
+	RevokedAt sql.NullTime `json:"revoked_at"`
+	// Human-readable revocation reason. e.g. 'termination', 'role restructure'.
+	RevokeReason *string      `json:"revoke_reason"`
+	IsActive     *bool        `json:"is_active"`
+	CreatedAt    sql.NullTime `json:"created_at"`
 }
 
 // Maps permissions to roles with optional entity-specific scoping and additional conditions for flexible authorization.
@@ -975,6 +1041,28 @@ type SecurityNotification struct {
 	Acknowledged     *bool        `json:"acknowledged"`
 	CreatedAt        sql.NullTime `json:"created_at"`
 	ExpiresAt        sql.NullTime `json:"expires_at"`
+}
+
+// System-wide setting catalogue. No tenant_id — shared across all tenants. Developer-seeded (unlike feature_flag_definitions which are trigger-seeded). Tenant values in tenant_settings.
+type SettingDefinition struct {
+	ID         uuid.UUID  `json:"id"`
+	ModuleID   *uuid.UUID `json:"module_id"`
+	ResourceID *uuid.UUID `json:"resource_id"`
+	ActionID   *uuid.UUID `json:"action_id"`
+	// Dot-notation key: {module}.{resource?}.{name}. e.g. 'finance.transactions.approval_threshold'. Never free-form — always derived from module/resource slugs.
+	SettingKey  string  `json:"setting_key"`
+	Label       string  `json:"label"`
+	Description *string `json:"description"`
+	// Value type: bool | int | decimal | text | enum. Determines which typed session accessor to use.
+	ValueType    string  `json:"value_type"`
+	DefaultValue *string `json:"default_value"`
+	// For enum type: [{value, label}] array. e.g. [{"value":"soft","label":"Warn only"},{"value":"hard","label":"Block"}]
+	EnumOptions []byte  `json:"enum_options"`
+	MinValue    *string `json:"min_value"`
+	MaxValue    *string `json:"max_value"`
+	// When true, only platform operators can change. Shown as read-only/disabled in tenant admin UI.
+	IsSystem  bool      `json:"is_system"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // History of template applications with detailed results and statistics
@@ -1125,6 +1213,19 @@ type TenantConfiguration struct {
 	TemplateAppliedAt sql.NullTime `json:"template_applied_at"`
 }
 
+// Per-tenant feature flag overrides. Rows exist only for flags explicitly configured. Missing rows resolve to feature_flag_definitions.default_value.
+type TenantFeatureFlag struct {
+	ID       uuid.UUID `json:"id"`
+	TenantID uuid.UUID `json:"tenant_id"`
+	FlagID   uuid.UUID `json:"flag_id"`
+	// Denormalized flag_key from feature_flag_definitions for fast single-table lookups.
+	FlagKey string `json:"flag_key"`
+	Enabled bool   `json:"enabled"`
+	// User who last set this override. NULL if set by system/migration.
+	SetBy *uuid.UUID `json:"set_by"`
+	SetAt time.Time  `json:"set_at"`
+}
+
 // Tenant-specific feature flag overrides with audit trail
 type TenantFeatureOverride struct {
 	ID            uuid.UUID  `json:"id"`
@@ -1140,6 +1241,19 @@ type TenantFeatureOverride struct {
 	Reason    *string   `json:"reason"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// Per-tenant setting values. Rows exist only for explicitly configured settings. Missing rows resolve to setting_definitions.default_value.
+type TenantSetting struct {
+	ID        uuid.UUID `json:"id"`
+	TenantID  uuid.UUID `json:"tenant_id"`
+	SettingID uuid.UUID `json:"setting_id"`
+	// Denormalized from setting_definitions for fast single-table lookups in SettingService.
+	SettingKey string `json:"setting_key"`
+	// Stored as text. Parsed by typed session helpers: SettingBool/Int/Decimal/String.
+	Value string     `json:"value"`
+	SetBy *uuid.UUID `json:"set_by"`
+	SetAt time.Time  `json:"set_at"`
 }
 
 // Tracks tenant resource usage and performance metrics over time
@@ -1177,6 +1291,10 @@ type User struct {
 	Email string `json:"email"`
 	// Unique username for login (optional, email can be used instead)
 	Username string `json:"username"`
+	// Human-readable name shown in UI and stored in ResolvedSession.DisplayName at login. Falls back to username if not set.
+	DisplayName *string `json:"display_name"`
+	// For portal users (CUSTOMER/VENDOR/PARTNER): UUID of the business record they represent. Always read from session — never from request params. NULL for INTERNAL/SYSADMIN accounts.
+	PrincipalID *uuid.UUID `json:"principal_id"`
 	// Hashed password for authentication
 	PasswordHash *string `json:"password_hash"`
 	// Classification of user account: INTERNAL, CUSTOMER, VENDOR, PARTNER, API, SERVICE, SYSADMIN
@@ -1270,6 +1388,16 @@ type UserPermission struct {
 	IsActive   *bool        `json:"is_active"`
 }
 
+// Per-user UI/display preferences. Stored in session configuration.prefs at login. Not business logic.
+type UserPreference struct {
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
+	// Preference key namespaced by module. e.g. 'finance.entry_mode', 'finance.show_account_codes'.
+	PrefKey string    `json:"pref_key"`
+	Value   string    `json:"value"`
+	SetAt   time.Time `json:"set_at"`
+}
+
 // Assigns roles to users with entity context, delegation support, and temporal controls for dynamic authorization.
 type UserRole struct {
 	ID       uuid.UUID `json:"id"`
@@ -1313,6 +1441,12 @@ type UserSession struct {
 	ExpiresAt time.Time `json:"expires_at"`
 	// Calculated risk score (0-100) based on action, context, and user behavior
 	RiskScore *int32 `json:"risk_score"`
+	// Copied from users.user_type at login. Used by SetDBPool middleware to select the right connection pool without a DB roundtrip.
+	UserType *string `json:"user_type"`
+	// Pre-computed session config: {"flags":{"finance":true,...},"settings":{"finance.approval_threshold":"100000",...},"prefs":{"finance.entry_mode":"spreadsheet",...}}. Built at login from 5 concurrent queries. Read-only — refresh requires re-login.
+	Configuration []byte `json:"configuration"`
+	// Pre-computed entity access scope: {"type":"all"|"subtree"|"entity","entity_id":"uuid","path_prefix":"/root/parent/"}. Built at login. Used by repos for subtree WHERE clauses without extra joins.
+	EntityScope []byte `json:"entity_scope"`
 	// Session creation timestamp
 	CreatedAt sql.NullTime `json:"created_at"`
 	// Last activity timestamp for session timeout tracking

@@ -22,7 +22,7 @@ INSERT INTO
 VALUES
   (current_tenant_id(), $1, $2, $3)
 RETURNING
-  id, module_id, name, display_name, description, resource_type, parent_resource_id, path, resource_attributes, is_active, created_at, updated_at, deleted_at
+  id, module_id, slug, name, display_name, description, nav_url, nav_order, resource_type, parent_resource_id, path, resource_attributes, is_active, created_at, updated_at, deleted_at
 `
 
 type CreateResourceParams struct {
@@ -37,9 +37,12 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 	err := row.Scan(
 		&i.ID,
 		&i.ModuleID,
+		&i.Slug,
 		&i.Name,
 		&i.DisplayName,
 		&i.Description,
+		&i.NavUrl,
+		&i.NavOrder,
 		&i.ResourceType,
 		&i.ParentResourceID,
 		&i.Path,

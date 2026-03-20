@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -134,11 +135,6 @@ type CreateFeatureFlagParams struct {
 }
 
 // =====================================================================
-//
-//	SIMPLIFIED FEATURE FLAG QUERIES
-//	Matching the actual table schema from migrations
-//
-// =====================================================================
 func (q *Queries) CreateFeatureFlag(ctx context.Context, arg CreateFeatureFlagParams) (*FeatureFlag, error) {
 	row := q.db.QueryRow(ctx, createFeatureFlag,
 		arg.Name,
@@ -182,6 +178,23 @@ WHERE
 
 func (q *Queries) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteFeatureFlag, id)
+	return err
+}
+
+const deleteTenantFlagOverride = `-- name: DeleteTenantFlagOverride :exec
+DELETE FROM tenant_feature_flags
+WHERE tenant_id = $1
+  AND flag_key  = $2
+`
+
+type DeleteTenantFlagOverrideParams struct {
+	TenantID uuid.UUID `json:"tenant_id"`
+	FlagKey  string    `json:"flag_key"`
+}
+
+// Removes tenant override — flag reverts to default_value.
+func (q *Queries) DeleteTenantFlagOverride(ctx context.Context, arg DeleteTenantFlagOverrideParams) error {
+	_, err := q.db.Exec(ctx, deleteTenantFlagOverride, arg.TenantID, arg.FlagKey)
 	return err
 }
 
@@ -381,6 +394,28 @@ func (q *Queries) GetFeatureFlagsByType(ctx context.Context, flagType string) ([
 	return items, nil
 }
 
+const getFlagDefinition = `-- name: GetFlagDefinition :one
+SELECT id, module_id, resource_id, flag_key, label, description, default_value, is_system, created_at FROM feature_flag_definitions
+WHERE flag_key = $1
+`
+
+func (q *Queries) GetFlagDefinition(ctx context.Context, flagKey string) (*FeatureFlagDefinition, error) {
+	row := q.db.QueryRow(ctx, getFlagDefinition, flagKey)
+	var i FeatureFlagDefinition
+	err := row.Scan(
+		&i.ID,
+		&i.ModuleID,
+		&i.ResourceID,
+		&i.FlagKey,
+		&i.Label,
+		&i.Description,
+		&i.DefaultValue,
+		&i.IsSystem,
+		&i.CreatedAt,
+	)
+	return &i, err
+}
+
 const listFeatureFlags = `-- name: ListFeatureFlags :many
 SELECT
   id, tenant_id, entity_id, name, description, flag_type, default_value, rollout_percentage, target_audience, metadata, created_at, updated_at, deleted_at
@@ -429,6 +464,172 @@ func (q *Queries) ListFeatureFlags(ctx context.Context, arg ListFeatureFlagsPara
 			&i.UpdatedAt,
 			&i.DeletedAt,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listFlagDefinitions = `-- name: ListFlagDefinitions :many
+SELECT id, module_id, resource_id, flag_key, label, description, default_value, is_system, created_at FROM feature_flag_definitions
+WHERE ($1::boolean IS NULL OR is_system = $1)
+ORDER BY flag_key
+`
+
+func (q *Queries) ListFlagDefinitions(ctx context.Context, dollar_1 bool) ([]*FeatureFlagDefinition, error) {
+	rows, err := q.db.Query(ctx, listFlagDefinitions, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*FeatureFlagDefinition{}
+	for rows.Next() {
+		var i FeatureFlagDefinition
+		if err := rows.Scan(
+			&i.ID,
+			&i.ModuleID,
+			&i.ResourceID,
+			&i.FlagKey,
+			&i.Label,
+			&i.Description,
+			&i.DefaultValue,
+			&i.IsSystem,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTenantFlagsWithDefinitions = `-- name: ListTenantFlagsWithDefinitions :many
+SELECT
+    ffd.id          AS definition_id,
+    ffd.flag_key,
+    ffd.label,
+    ffd.description,
+    ffd.default_value,
+    ffd.is_system,
+    ffd.module_id,
+    ffd.resource_id,
+    tff.id          AS override_id,
+    tff.enabled     AS tenant_enabled,
+    tff.set_by,
+    tff.set_at,
+    COALESCE(tff.enabled, ffd.default_value) AS effective_value
+FROM feature_flag_definitions ffd
+LEFT JOIN tenant_feature_flags tff
+    ON tff.flag_id = ffd.id AND tff.tenant_id = $1
+WHERE ($2::boolean IS NULL OR ffd.is_system = $2)
+ORDER BY ffd.flag_key
+`
+
+type ListTenantFlagsWithDefinitionsParams struct {
+	TenantID uuid.UUID `json:"tenant_id"`
+	Column2  bool      `json:"column_2"`
+}
+
+type ListTenantFlagsWithDefinitionsRow struct {
+	DefinitionID   uuid.UUID    `json:"definition_id"`
+	FlagKey        string       `json:"flag_key"`
+	Label          string       `json:"label"`
+	Description    *string      `json:"description"`
+	DefaultValue   bool         `json:"default_value"`
+	IsSystem       bool         `json:"is_system"`
+	ModuleID       *uuid.UUID   `json:"module_id"`
+	ResourceID     *uuid.UUID   `json:"resource_id"`
+	OverrideID     *uuid.UUID   `json:"override_id"`
+	TenantEnabled  *bool        `json:"tenant_enabled"`
+	SetBy          *uuid.UUID   `json:"set_by"`
+	SetAt          sql.NullTime `json:"set_at"`
+	EffectiveValue bool         `json:"effective_value"`
+}
+
+// Used by the tenant admin flags screen: returns all non-system flags with current tenant values.
+func (q *Queries) ListTenantFlagsWithDefinitions(ctx context.Context, arg ListTenantFlagsWithDefinitionsParams) ([]*ListTenantFlagsWithDefinitionsRow, error) {
+	rows, err := q.db.Query(ctx, listTenantFlagsWithDefinitions, arg.TenantID, arg.Column2)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*ListTenantFlagsWithDefinitionsRow{}
+	for rows.Next() {
+		var i ListTenantFlagsWithDefinitionsRow
+		if err := rows.Scan(
+			&i.DefinitionID,
+			&i.FlagKey,
+			&i.Label,
+			&i.Description,
+			&i.DefaultValue,
+			&i.IsSystem,
+			&i.ModuleID,
+			&i.ResourceID,
+			&i.OverrideID,
+			&i.TenantEnabled,
+			&i.SetBy,
+			&i.SetAt,
+			&i.EffectiveValue,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const resolveAllFlagsForTenant = `-- name: ResolveAllFlagsForTenant :many
+
+
+SELECT
+    ffd.flag_key,
+    ffd.is_system,
+    COALESCE(tff.enabled, ffd.default_value) AS effective_value
+FROM feature_flag_definitions ffd
+LEFT JOIN tenant_feature_flags tff
+    ON tff.flag_id = ffd.id AND tff.tenant_id = $1
+ORDER BY ffd.flag_key
+`
+
+type ResolveAllFlagsForTenantRow struct {
+	FlagKey        string `json:"flag_key"`
+	IsSystem       bool   `json:"is_system"`
+	EffectiveValue bool   `json:"effective_value"`
+}
+
+// =====================================================================
+//
+//	FEATURE FLAG QUERIES
+//	Two sections:
+//	  1. feature_flag_definitions + tenant_feature_flags  (IAM session pre-computation)
+//	  2. feature_flags + tenant_feature_overrides         (legacy per-tenant flags)
+//
+// =====================================================================
+// =====================================================================
+// SECTION 1: IAM SPEC — feature_flag_definitions + tenant_feature_flags
+// =====================================================================
+// THE core query. Called once at login. Returns effective value for every flag.
+// Result stored in sessions.configuration.flags for O(1) per-request lookups.
+func (q *Queries) ResolveAllFlagsForTenant(ctx context.Context, tenantID uuid.UUID) ([]*ResolveAllFlagsForTenantRow, error) {
+	rows, err := q.db.Query(ctx, resolveAllFlagsForTenant, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*ResolveAllFlagsForTenantRow{}
+	for rows.Next() {
+		var i ResolveAllFlagsForTenantRow
+		if err := rows.Scan(&i.FlagKey, &i.IsSystem, &i.EffectiveValue); err != nil {
 			return nil, err
 		}
 		items = append(items, &i)
@@ -556,4 +757,34 @@ func (q *Queries) UpdateFeatureFlag(ctx context.Context, arg UpdateFeatureFlagPa
 		&i.DeletedAt,
 	)
 	return &i, err
+}
+
+const upsertTenantFlag = `-- name: UpsertTenantFlag :exec
+INSERT INTO tenant_feature_flags (tenant_id, flag_id, flag_key, enabled, set_by)
+SELECT $1, ffd.id, ffd.flag_key, $2, $3
+FROM   feature_flag_definitions ffd
+WHERE  ffd.flag_key = $4
+ON CONFLICT (tenant_id, flag_id)
+DO UPDATE SET enabled = EXCLUDED.enabled,
+             set_by   = EXCLUDED.set_by,
+             set_at   = NOW()
+`
+
+type UpsertTenantFlagParams struct {
+	TenantID uuid.UUID  `json:"tenant_id"`
+	Enabled  bool       `json:"enabled"`
+	SetBy    *uuid.UUID `json:"set_by"`
+	FlagKey  string     `json:"flag_key"`
+}
+
+// Enable or disable a flag for a specific tenant.
+// FlagService calls InvalidateSessionsByTenant after this for module/resource flags.
+func (q *Queries) UpsertTenantFlag(ctx context.Context, arg UpsertTenantFlagParams) error {
+	_, err := q.db.Exec(ctx, upsertTenantFlag,
+		arg.TenantID,
+		arg.Enabled,
+		arg.SetBy,
+		arg.FlagKey,
+	)
+	return err
 }

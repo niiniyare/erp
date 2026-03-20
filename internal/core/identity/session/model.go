@@ -1,11 +1,47 @@
 package session
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/niiniyare/erp/internal/core/authz"
 )
+
+// EntityScopeType identifies how broadly an entity-scoped session can see data.
+type EntityScopeType string
+
+const (
+	EntityScopeAll     EntityScopeType = "all"     // platform/sysadmin: all entities
+	EntityScopeSubtree EntityScopeType = "subtree" // manager: entity + descendants
+	EntityScopeEntity  EntityScopeType = "entity"  // regular user: own entity only
+)
+
+// EntityScope is the pre-computed access scope stored in user_sessions.entity_scope.
+// {"type":"all"|"subtree"|"entity","entity_id":"uuid","path_prefix":"/uuid/uuid/"}
+type EntityScope struct {
+	Type       EntityScopeType `json:"type"`
+	EntityID   string          `json:"entity_id,omitempty"`
+	PathPrefix string          `json:"path_prefix,omitempty"`
+}
+
+// Configuration is the pre-computed session configuration stored in user_sessions.configuration.
+// {"flags":{"hr.enabled":true,...},"settings":{"iam.session_ttl_hours":"8"},"prefs":{}}
+type Configuration struct {
+	Flags    map[string]bool   `json:"flags"`
+	Settings map[string]string `json:"settings"`
+	Prefs    map[string]string `json:"prefs"`
+}
+
+// DefaultConfiguration returns an empty pre-computed configuration.
+// Populated at login once flags/settings services are wired in.
+func DefaultConfiguration() Configuration {
+	return Configuration{
+		Flags:    map[string]bool{},
+		Settings: map[string]string{},
+		Prefs:    map[string]string{},
+	}
+}
 
 // Session maps to the user_sessions table row.
 // session_token stores sha256hex(raw_token) — the raw token is never persisted.
@@ -13,15 +49,27 @@ type Session struct {
 	ID            uuid.UUID
 	UserID        uuid.UUID
 	TenantID      uuid.UUID
+	UserType      string          // "INTERNAL" | "SYSADMIN" | "CUSTOMER" | "PORTAL"
 	TokenHash     string          // sha256hex(raw_token) — stored in session_token column
 	Permissions   map[string]bool // pre-computed at login, stored as JSONB
 	PrincipalID   uuid.UUID       // portal users: the contact/employee UUID they represent
+	EntityScope   EntityScope     // pre-computed entity access scope
+	Configuration Configuration   // pre-computed flags + settings + prefs
 	IsActive      bool
 	ExpiresAt     time.Time
 	LastSeenAt    time.Time
 	IPAddress     string
 	UserAgent     string
 	RiskScore     int
+}
+
+// marshalJSON marshals a value to JSON bytes, returning nil on error.
+func marshalJSON(v any) []byte {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return []byte("{}")
+	}
+	return b
 }
 
 // ResolvedSession is the runtime view of a validated session.

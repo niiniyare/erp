@@ -12,12 +12,15 @@
 -- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS actions (
   id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  resource_id  UUID        REFERENCES resources(id) ON DELETE CASCADE,  -- links action to a resource
   tenant_id    UUID,        -- FK to tenants(id) added in 000062
   scope        VARCHAR(10) NOT NULL DEFAULT 'SYSTEM'
                              CHECK (scope IN ('SYSTEM', 'TENANT')),
+  slug         VARCHAR(50) NOT NULL,    -- key segment: 'read', 'create', 'approve', 'post', 'void'
   name         VARCHAR(100) NOT NULL,
   display_name VARCHAR(150),
   description  TEXT,
+  http_method  VARCHAR(10) CHECK (http_method IN ('GET','POST','PUT','PATCH','DELETE') OR http_method IS NULL),
   action_type  VARCHAR(50)  NOT NULL CHECK (
     action_type IN (
       'CREATE', 'READ', 'UPDATE', 'DELETE',
@@ -45,12 +48,17 @@ CREATE TABLE IF NOT EXISTS actions (
   -- When approval is required, an approver role must be designated
   CONSTRAINT actions_approval_requires_role CHECK (
     NOT requires_approval OR approver_role_id IS NOT NULL
-  )
+  ),
+  -- slug unique within a resource
+  CONSTRAINT actions_resource_slug_unique UNIQUE (resource_id, slug)
 );
 
 COMMENT ON TABLE  actions                   IS 'Defines actions that can be performed on resources with risk assessment and approval workflow requirements.';
+COMMENT ON COLUMN actions.resource_id       IS 'Resource this action belongs to. Null for standalone/global actions.';
 COMMENT ON COLUMN actions.tenant_id         IS 'NULL for SYSTEM-scope actions. Set for custom TENANT-scope actions. FK enforced in 000062.';
 COMMENT ON COLUMN actions.scope             IS 'SYSTEM = platform-wide standard action. TENANT = custom action for one tenant.';
+COMMENT ON COLUMN actions.slug              IS 'Machine-readable key segment within its resource. Forms the third segment of permission keys: {module}.{resource}.{slug}. e.g. ''read'', ''create'', ''approve''. Do not change after seeding.';
+COMMENT ON COLUMN actions.http_method       IS 'HTTP verb this action maps to. e.g. ''GET'', ''POST'', ''PATCH'', ''DELETE''. Used for route documentation.';
 COMMENT ON COLUMN actions.action_type       IS 'Standard action type: CREATE, READ, UPDATE, DELETE, EXECUTE, APPROVE, REJECT, EXPORT, IMPORT';
 COMMENT ON COLUMN actions.action_category   IS 'Risk category: STANDARD, ADMINISTRATIVE, SENSITIVE, BULK, SYSTEM';
 COMMENT ON COLUMN actions.risk_level        IS 'Risk level for audit and approval routing: LOW, MEDIUM, HIGH, CRITICAL';

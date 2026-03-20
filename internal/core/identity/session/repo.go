@@ -57,6 +57,9 @@ func (r *sessionRepo) CreateSession(ctx context.Context, s Session) error {
 		return fmt.Errorf("session repo: marshal permissions: %w", err)
 	}
 
+	entityScopeJSON := marshalJSON(s.EntityScope)
+	configJSON := marshalJSON(s.Configuration)
+
 	// Nullable principal_id — *uuid.UUID matches the generated SQLC type.
 	var principalID *uuid.UUID
 	if s.PrincipalID != uuid.Nil {
@@ -77,30 +80,39 @@ func (r *sessionRepo) CreateSession(ctx context.Context, s Session) error {
 		userAgent = &s.UserAgent
 	}
 
+	var userType *string
+	if s.UserType != "" {
+		userType = &s.UserType
+	}
+
 	riskScore := int32(s.RiskScore)
 
 	if err := r.store.CreateSession(ctx, db.CreateSessionParams{
-		UserID:       s.UserID,
-		SessionToken: s.TokenHash,
-		Permissions:  permsJSON,
-		PrincipalID:  principalID,
-		IpAddress:    ipAddr,
-		UserAgent:    userAgent,
-		ExpiresAt:    s.ExpiresAt,
-		RiskScore:    &riskScore,
+		UserID:        s.UserID,
+		UserType:      userType,
+		SessionToken:  s.TokenHash,
+		Permissions:   permsJSON,
+		PrincipalID:   principalID,
+		EntityScope:   entityScopeJSON,
+		Configuration: configJSON,
+		IpAddress:     ipAddr,
+		UserAgent:     userAgent,
+		ExpiresAt:     s.ExpiresAt,
+		RiskScore:     &riskScore,
 	}); err != nil {
 		return fmt.Errorf("session repo: create session: %w", err)
 	}
 	return nil
 }
 
-// GetByTokenHash retrieves an active, non-expired session by its token hash.
-// Returns nil, nil when not found.
+// GetByTokenHash atomically touches last_accessed_at and retrieves the session.
+// Uses TouchAndGetSession for a single round-trip instead of get + separate update.
+// Returns nil, nil when not found or expired.
 func (r *sessionRepo) GetByTokenHash(ctx context.Context, hash string) (*Session, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "session.repo.GetByTokenHash")
 	defer span.End()
 
-	row, err := r.store.GetSessionByToken(ctx, hash)
+	row, err := r.store.TouchAndGetSession(ctx, hash)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // session not found or expired
@@ -111,46 +123,85 @@ func (r *sessionRepo) GetByTokenHash(ctx context.Context, hash string) (*Session
 		return nil, nil
 	}
 
+	return rowToSession(row.ID, row.UserID, row.TenantID, row.UserType, row.SessionToken,
+		row.Permissions, row.EntityScope, row.Configuration,
+		row.IpAddress, row.UserAgent, row.ExpiresAt, row.RiskScore, row.IsActive, row.LastAccessedAt)
+}
+
+// rowToSession converts raw sqlc scan results into a domain Session.
+func rowToSession(
+	id, userID, tenantID uuid.UUID,
+	userType *string, sessionToken string,
+	permsRaw, entityScopeRaw, configRaw []byte,
+	ipAddr *netip.Addr,
+	userAgent *string,
+	expiresAt time.Time,
+	riskScore *int32,
+	isActivePt *bool,
+	lastAccessed sql.NullTime,
+) (*Session, error) {
 	perms := make(map[string]bool)
-	if len(row.Permissions) > 0 {
-		if err := json.Unmarshal(row.Permissions, &perms); err != nil {
+	if len(permsRaw) > 0 {
+		if err := json.Unmarshal(permsRaw, &perms); err != nil {
 			return nil, fmt.Errorf("session repo: unmarshal permissions: %w", err)
 		}
 	}
 
-	var principalID uuid.UUID
-	if row.PrincipalID != nil {
-		principalID = *row.PrincipalID
+	var scope EntityScope
+	if len(entityScopeRaw) > 0 {
+		_ = json.Unmarshal(entityScopeRaw, &scope) // non-fatal; default zero value is safe
+	}
+
+	var cfg Configuration
+	if len(configRaw) > 0 {
+		_ = json.Unmarshal(configRaw, &cfg)
+	}
+	if cfg.Flags == nil {
+		cfg.Flags = map[string]bool{}
+	}
+	if cfg.Settings == nil {
+		cfg.Settings = map[string]string{}
+	}
+	if cfg.Prefs == nil {
+		cfg.Prefs = map[string]string{}
+	}
+
+	var utype string
+	if userType != nil {
+		utype = *userType
 	}
 
 	var ipStr string
-	if row.IpAddress != nil {
-		ipStr = row.IpAddress.String()
+	if ipAddr != nil {
+		ipStr = ipAddr.String()
 	}
 
-	var userAgent string
-	if row.UserAgent != nil {
-		userAgent = *row.UserAgent
+	var agent string
+	if userAgent != nil {
+		agent = *userAgent
 	}
 
 	var isActive bool
-	if row.IsActive != nil {
-		isActive = *row.IsActive
+	if isActivePt != nil {
+		isActive = *isActivePt
 	}
 
 	return &Session{
-		ID:          row.ID,
-		UserID:      row.UserID,
-		TenantID:    row.TenantID,
-		TokenHash:   row.SessionToken,
-		Permissions: perms,
-		PrincipalID: principalID,
-		IsActive:    isActive,
-		ExpiresAt:   row.ExpiresAt,
-		LastSeenAt:  row.LastAccessedAt.Time,
-		IPAddress:   ipStr,
-		UserAgent:   userAgent,
-		RiskScore:   int(derefInt32(row.RiskScore)),
+		ID:            id,
+		UserID:        userID,
+		TenantID:      tenantID,
+		UserType:      utype,
+		TokenHash:     sessionToken,
+		Permissions:   perms,
+		PrincipalID:   uuid.Nil,
+		EntityScope:   scope,
+		Configuration: cfg,
+		IsActive:      isActive,
+		ExpiresAt:     expiresAt,
+		LastSeenAt:    lastAccessed.Time,
+		IPAddress:     ipStr,
+		UserAgent:     agent,
+		RiskScore:     int(derefInt32(riskScore)),
 	}, nil
 }
 

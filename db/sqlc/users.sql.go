@@ -92,40 +92,19 @@ func (q *Queries) CheckUsernameAvailability(ctx context.Context, username string
 }
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO
-  users (
-    tenant_id,
-    entity_id,
-    person_id,
-    employee_id,
-    username,
-    email,
-    password_hash,
-    user_type,
-    account_status,
-    session_timeout_minutes,
-    mfa_enabled,
-    user_attributes,
-    settings
-  )
-VALUES
-  (
-    current_tenant_id(),
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6,
-    $7,
-    $8,
-    $9,
-    $10,
-    $11,
-    $12
-  )
-RETURNING
-  id, tenant_id, entity_id, person_id, employee_id, email, username, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, password_strength, compromised, rotation_required, created_at, updated_at, deleted_at
+INSERT INTO users (
+    tenant_id, entity_id, person_id, employee_id,
+    username, email, display_name, password_hash,
+    user_type, account_status, principal_id,
+    session_timeout_minutes, mfa_enabled,
+    user_attributes, settings
+) VALUES (
+    current_tenant_id(), $1, $2, $3,
+    $4, $5, $6, $7,
+    $8, $9, $10,
+    $11, $12,
+    $13, $14
+) RETURNING id, tenant_id, entity_id, person_id, employee_id, email, username, display_name, principal_id, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, password_strength, compromised, rotation_required, created_at, updated_at, deleted_at
 `
 
 type CreateUserParams struct {
@@ -134,9 +113,11 @@ type CreateUserParams struct {
 	EmployeeID            *uuid.UUID `json:"employee_id"`
 	Username              string     `json:"username"`
 	Email                 string     `json:"email"`
+	DisplayName           *string    `json:"display_name"`
 	PasswordHash          *string    `json:"password_hash"`
 	UserType              string     `json:"user_type"`
 	AccountStatus         *string    `json:"account_status"`
+	PrincipalID           *uuid.UUID `json:"principal_id"`
 	SessionTimeoutMinutes *int32     `json:"session_timeout_minutes"`
 	MfaEnabled            *bool      `json:"mfa_enabled"`
 	UserAttributes        []byte     `json:"user_attributes"`
@@ -150,9 +131,11 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, 
 		arg.EmployeeID,
 		arg.Username,
 		arg.Email,
+		arg.DisplayName,
 		arg.PasswordHash,
 		arg.UserType,
 		arg.AccountStatus,
+		arg.PrincipalID,
 		arg.SessionTimeoutMinutes,
 		arg.MfaEnabled,
 		arg.UserAttributes,
@@ -167,6 +150,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, 
 		&i.EmployeeID,
 		&i.Email,
 		&i.Username,
+		&i.DisplayName,
+		&i.PrincipalID,
 		&i.PasswordHash,
 		&i.UserType,
 		&i.AccountStatus,
@@ -192,7 +177,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, 
 
 const getCompleteUserProfile = `-- name: GetCompleteUserProfile :one
 SELECT
-  u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.email, u.username, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.password_strength, u.compromised, u.rotation_required, u.created_at, u.updated_at, u.deleted_at,
+  u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.email, u.username, u.display_name, u.principal_id, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.password_strength, u.compromised, u.rotation_required, u.created_at, u.updated_at, u.deleted_at,
   p.id, p.tenant_id, p.entity_id, p.person_type, p.first_name, p.last_name, p.middle_name, p.email, p.phone, p.birth_date, p.national_id, p.tax_id, p.address, p.security_attributes, p.metadata, p.is_active, p.version, p.last_validation_run, p.validation_status, p.validation_errors, p.created_at, p.updated_at, p.deleted_at,
   e.id, e.tenant_id, e.person_id, e.employee_number, e.entity_id, e.position_title, e.department_id, e.manager_id, e.hire_date, e.termination_date, e.salary_info, e.employment_status, e.work_schedule, e.security_level, e.access_attributes, e.created_at, e.updated_at, e.deleted_at
 FROM
@@ -214,6 +199,8 @@ type GetCompleteUserProfileRow struct {
 	EmployeeID            *uuid.UUID   `json:"employee_id"`
 	Email                 string       `json:"email"`
 	Username              string       `json:"username"`
+	DisplayName           *string      `json:"display_name"`
+	PrincipalID           *uuid.UUID   `json:"principal_id"`
 	PasswordHash          *string      `json:"password_hash"`
 	UserType              string       `json:"user_type"`
 	AccountStatus         *string      `json:"account_status"`
@@ -287,6 +274,8 @@ func (q *Queries) GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*Ge
 		&i.EmployeeID,
 		&i.Email,
 		&i.Username,
+		&i.DisplayName,
+		&i.PrincipalID,
 		&i.PasswordHash,
 		&i.UserType,
 		&i.AccountStatus,
@@ -353,7 +342,7 @@ func (q *Queries) GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*Ge
 
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT
-  id, tenant_id, entity_id, person_id, employee_id, email, username, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, password_strength, compromised, rotation_required, created_at, updated_at, deleted_at
+  id, tenant_id, entity_id, person_id, employee_id, email, username, display_name, principal_id, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, password_strength, compromised, rotation_required, created_at, updated_at, deleted_at
 FROM
   users
 WHERE
@@ -373,6 +362,8 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*User, erro
 		&i.EmployeeID,
 		&i.Email,
 		&i.Username,
+		&i.DisplayName,
+		&i.PrincipalID,
 		&i.PasswordHash,
 		&i.UserType,
 		&i.AccountStatus,
@@ -398,7 +389,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*User, erro
 
 const getUserByID = `-- name: GetUserByID :one
 SELECT
-  id, tenant_id, entity_id, person_id, employee_id, email, username, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, password_strength, compromised, rotation_required, created_at, updated_at, deleted_at
+  id, tenant_id, entity_id, person_id, employee_id, email, username, display_name, principal_id, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, password_strength, compromised, rotation_required, created_at, updated_at, deleted_at
 FROM
   users
 WHERE
@@ -418,6 +409,8 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) 
 		&i.EmployeeID,
 		&i.Email,
 		&i.Username,
+		&i.DisplayName,
+		&i.PrincipalID,
 		&i.PasswordHash,
 		&i.UserType,
 		&i.AccountStatus,
@@ -443,7 +436,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) 
 
 const getUserByUsername = `-- name: GetUserByUsername :one
 SELECT
-  id, tenant_id, entity_id, person_id, employee_id, email, username, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, password_strength, compromised, rotation_required, created_at, updated_at, deleted_at
+  id, tenant_id, entity_id, person_id, employee_id, email, username, display_name, principal_id, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, password_strength, compromised, rotation_required, created_at, updated_at, deleted_at
 FROM
   users
 WHERE
@@ -463,6 +456,8 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (*User
 		&i.EmployeeID,
 		&i.Email,
 		&i.Username,
+		&i.DisplayName,
+		&i.PrincipalID,
 		&i.PasswordHash,
 		&i.UserType,
 		&i.AccountStatus,
@@ -546,7 +541,7 @@ func (q *Queries) IncrementFailedLogins(ctx context.Context, id uuid.UUID) error
 
 const listUsers = `-- name: ListUsers :many
 SELECT
-  id, tenant_id, entity_id, person_id, employee_id, email, username, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, password_strength, compromised, rotation_required, created_at, updated_at, deleted_at
+  id, tenant_id, entity_id, person_id, employee_id, email, username, display_name, principal_id, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, password_strength, compromised, rotation_required, created_at, updated_at, deleted_at
 FROM
   users
 WHERE
@@ -595,6 +590,8 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, 
 			&i.EmployeeID,
 			&i.Email,
 			&i.Username,
+			&i.DisplayName,
+			&i.PrincipalID,
 			&i.PasswordHash,
 			&i.UserType,
 			&i.AccountStatus,
@@ -679,7 +676,7 @@ func (q *Queries) RevokeUserRole(ctx context.Context, arg RevokeUserRoleParams) 
 
 const searchUsersAdvanced = `-- name: SearchUsersAdvanced :many
 SELECT
-  id, tenant_id, entity_id, person_id, employee_id, email, username, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, password_strength, compromised, rotation_required, created_at, updated_at, deleted_at
+  id, tenant_id, entity_id, person_id, employee_id, email, username, display_name, principal_id, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, password_strength, compromised, rotation_required, created_at, updated_at, deleted_at
 FROM
   users
 WHERE
@@ -715,6 +712,8 @@ func (q *Queries) SearchUsersAdvanced(ctx context.Context, arg SearchUsersAdvanc
 			&i.EmployeeID,
 			&i.Email,
 			&i.Username,
+			&i.DisplayName,
+			&i.PrincipalID,
 			&i.PasswordHash,
 			&i.UserType,
 			&i.AccountStatus,
@@ -795,7 +794,7 @@ WHERE
   id = $7
   AND tenant_id = current_tenant_id()
 RETURNING
-  id, tenant_id, entity_id, person_id, employee_id, email, username, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, password_strength, compromised, rotation_required, created_at, updated_at, deleted_at
+  id, tenant_id, entity_id, person_id, employee_id, email, username, display_name, principal_id, password_hash, user_type, account_status, is_active, last_login_at, password_changed_at, failed_login_attempts, lockout_until, session_timeout_minutes, mfa_enabled, mfa_secret, user_attributes, settings, password_strength, compromised, rotation_required, created_at, updated_at, deleted_at
 `
 
 type UpdateUserParams struct {
@@ -827,6 +826,8 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (*User, 
 		&i.EmployeeID,
 		&i.Email,
 		&i.Username,
+		&i.DisplayName,
+		&i.PrincipalID,
 		&i.PasswordHash,
 		&i.UserType,
 		&i.AccountStatus,

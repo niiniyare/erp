@@ -1,5 +1,114 @@
 -- ================================================================================================
 -- SETTINGS MODULE - Configuration management with 3-level inheritance (System → Tenant → Entity)
+-- Also includes IAM-spec setting_definitions, tenant_settings, and user_preferences tables
+-- which power session pre-computation (SettingService.ResolveForTenant).
+-- ================================================================================================
+
+-- =====================================================================
+-- SETTING DEFINITIONS — developer-seeded setting catalogue (no tenant_id)
+-- =====================================================================
+-- Unlike feature_flag_definitions (auto-seeded by triggers), setting definitions
+-- are inserted by developers because settings require human decisions about
+-- types, defaults, and validation ranges.
+--
+-- Naming: setting_key uses the same dot-notation as flags:
+--   'finance.transactions.approval_threshold'
+--   'finance.budget_control_mode'
+--   'iam.mfa.required'
+CREATE TABLE IF NOT EXISTS setting_definitions (
+  id            UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+  module_id     UUID    REFERENCES modules(id)   ON DELETE CASCADE,
+  resource_id   UUID    REFERENCES resources(id) ON DELETE CASCADE,
+  action_id     UUID    REFERENCES actions(id)   ON DELETE CASCADE,  -- NULL for module/resource settings
+  setting_key   TEXT    UNIQUE NOT NULL,    -- dot-notation key
+  label         TEXT    NOT NULL,
+  description   TEXT,
+  value_type    TEXT    NOT NULL CHECK (value_type IN ('bool','int','decimal','text','enum')),
+  default_value TEXT,                       -- stored as text, parsed by typed accessors
+  enum_options  JSONB,                      -- [{"value":"soft","label":"Warn only"}, ...]
+  min_value     TEXT,                       -- for numeric validation
+  max_value     TEXT,
+  is_system     BOOLEAN NOT NULL DEFAULT false,  -- true = only platform operators can change
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE  setting_definitions             IS 'System-wide setting catalogue. No tenant_id — shared across all tenants. Developer-seeded (unlike feature_flag_definitions which are trigger-seeded). Tenant values in tenant_settings.';
+COMMENT ON COLUMN setting_definitions.setting_key IS 'Dot-notation key: {module}.{resource?}.{name}. e.g. ''finance.transactions.approval_threshold''. Never free-form — always derived from module/resource slugs.';
+COMMENT ON COLUMN setting_definitions.value_type  IS 'Value type: bool | int | decimal | text | enum. Determines which typed session accessor to use.';
+COMMENT ON COLUMN setting_definitions.enum_options IS 'For enum type: [{value, label}] array. e.g. [{"value":"soft","label":"Warn only"},{"value":"hard","label":"Block"}]';
+COMMENT ON COLUMN setting_definitions.is_system   IS 'When true, only platform operators can change. Shown as read-only/disabled in tenant admin UI.';
+
+CREATE INDEX idx_setting_defs_module   ON setting_definitions(module_id)   WHERE module_id   IS NOT NULL;
+CREATE INDEX idx_setting_defs_resource ON setting_definitions(resource_id) WHERE resource_id IS NOT NULL;
+
+-- Globally readable
+GRANT SELECT ON setting_definitions TO application_role;
+GRANT SELECT ON setting_definitions TO readonly_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON setting_definitions TO admin_role;
+
+-- =====================================================================
+-- TENANT SETTINGS — per-tenant setting values
+-- =====================================================================
+-- One row per tenant per setting they have explicitly configured.
+-- Missing rows fall back to setting_definitions.default_value.
+CREATE TABLE IF NOT EXISTS tenant_settings (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id   UUID        NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  setting_id  UUID        NOT NULL REFERENCES setting_definitions(id) ON DELETE CASCADE,
+  setting_key TEXT        NOT NULL,    -- denormalized for fast lookup
+  value       TEXT        NOT NULL,    -- stored as text regardless of value_type
+  set_by      UUID        REFERENCES users(id) ON DELETE SET NULL,
+  set_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (tenant_id, setting_id)
+);
+
+COMMENT ON TABLE  tenant_settings             IS 'Per-tenant setting values. Rows exist only for explicitly configured settings. Missing rows resolve to setting_definitions.default_value.';
+COMMENT ON COLUMN tenant_settings.setting_key IS 'Denormalized from setting_definitions for fast single-table lookups in SettingService.';
+COMMENT ON COLUMN tenant_settings.value       IS 'Stored as text. Parsed by typed session helpers: SettingBool/Int/Decimal/String.';
+
+CREATE INDEX idx_ts_tenant  ON tenant_settings(tenant_id);
+CREATE INDEX idx_ts_setting ON tenant_settings(setting_id);
+CREATE INDEX idx_ts_lookup  ON tenant_settings(tenant_id, setting_key);
+
+ALTER TABLE tenant_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY ts_tenant_isolation ON tenant_settings FOR ALL TO application_role
+    USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+    WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
+CREATE POLICY ts_admin_access ON tenant_settings FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON tenant_settings TO application_role;
+GRANT ALL ON tenant_settings TO admin_role;
+GRANT SELECT ON tenant_settings TO readonly_role;
+
+-- =====================================================================
+-- USER PREFERENCES — per-user display preferences
+-- =====================================================================
+-- Not business logic — these are UI/UX preferences that travel in the session.
+-- e.g. 'finance.entry_mode' → 'spreadsheet', 'finance.show_account_codes' → 'true'
+CREATE TABLE IF NOT EXISTS user_preferences (
+  id       UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id  UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  pref_key TEXT        NOT NULL,   -- namespaced: '{module}.{pref_name}'
+  value    TEXT        NOT NULL,
+  set_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, pref_key)
+);
+
+COMMENT ON TABLE  user_preferences          IS 'Per-user UI/display preferences. Stored in session configuration.prefs at login. Not business logic.';
+COMMENT ON COLUMN user_preferences.pref_key IS 'Preference key namespaced by module. e.g. ''finance.entry_mode'', ''finance.show_account_codes''.';
+
+CREATE INDEX idx_uprefs_user ON user_preferences(user_id);
+
+ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
+-- Users can only see/edit their own preferences; admins see all
+CREATE POLICY uprefs_self ON user_preferences FOR ALL TO application_role
+    USING  (user_id = current_setting('app.user_id', true)::uuid)
+    WITH CHECK (user_id = current_setting('app.user_id', true)::uuid);
+CREATE POLICY uprefs_admin ON user_preferences FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON user_preferences TO application_role;
+GRANT ALL ON user_preferences TO admin_role;
+
 -- ================================================================================================
 --
 -- Core tables for ERP Settings Module implementing configuration inheritance, templates,

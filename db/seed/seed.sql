@@ -24,29 +24,29 @@
 -- =====================================================================
 -- STEP 1: EXTENSIONS (idempotent; migrations already ran these)
 -- =====================================================================
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
+-- CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- =====================================================================
 -- STEP 2: SYSTEM MODULES AND ACTIONS (migrations 000015–000017)
 -- SYSTEM scope → tenant_id must be NULL
 -- =====================================================================
 
-INSERT INTO modules (scope, name, display_name, description, category, module_type, version, is_active)
-SELECT 'SYSTEM', t.name, t.display_name, t.description, t.category, t.module_type, '1.0', TRUE
+INSERT INTO modules (scope, slug, name, display_name, description, category, module_type, version, is_active)
+SELECT 'SYSTEM', t.slug, t.slug, t.display_name, t.description, t.category, t.module_type, '1.0', TRUE
 FROM (VALUES
   ('hr',        'Human Resources',       'Employee management, payroll, and workforce planning',   'HR',        'CORE'),
   ('finance',   'Financial Management',  'Accounting, invoicing, budgeting, and financial reports','FINANCE',   'CORE'),
   ('inventory', 'Inventory Control',     'Stock management, warehousing, and supply chain ops',   'OPERATIONS','CORE'),
   ('sales',     'Sales & CRM',           'Customer management, sales orders, and pipeline',       'SALES',     'CORE'),
   ('security',  'Security & Compliance', 'IAM, audit logging, and compliance management',         'CORE',      'INTERNAL')
-) AS t(name, display_name, description, category, module_type)
+) AS t(slug, display_name, description, category, module_type)
 WHERE NOT EXISTS (
-  SELECT 1 FROM modules WHERE name = t.name AND scope = 'SYSTEM' AND tenant_id IS NULL
+  SELECT 1 FROM modules WHERE slug = t.slug AND scope = 'SYSTEM' AND tenant_id IS NULL
 );
 
-INSERT INTO actions (scope, name, display_name, action_type, action_category, risk_level, requires_approval)
-SELECT 'SYSTEM', t.name, t.display_name, t.action_type, t.action_category, t.risk_level, FALSE
+INSERT INTO actions (scope, slug, name, display_name, action_type, action_category, risk_level, requires_approval)
+SELECT 'SYSTEM', t.slug, t.slug, t.display_name, t.action_type, t.action_category, t.risk_level, FALSE
 FROM (VALUES
   ('create', 'Create Record',  'CREATE', 'STANDARD',       'MEDIUM'),
   ('read',   'Read Record',    'READ',   'STANDARD',       'LOW'),
@@ -55,9 +55,9 @@ FROM (VALUES
   ('approve','Approve Action', 'APPROVE','ADMINISTRATIVE', 'HIGH'),
   ('export', 'Export Data',    'EXPORT', 'SENSITIVE',      'MEDIUM'),
   ('import', 'Import Data',    'IMPORT', 'BULK',           'HIGH')
-) AS t(name, display_name, action_type, action_category, risk_level)
+) AS t(slug, display_name, action_type, action_category, risk_level)
 WHERE NOT EXISTS (
-  SELECT 1 FROM actions WHERE name = t.name AND scope = 'SYSTEM' AND tenant_id IS NULL
+  SELECT 1 FROM actions WHERE slug = t.slug AND scope = 'SYSTEM' AND tenant_id IS NULL
 );
 
 DO $$
@@ -68,31 +68,31 @@ DECLARE
   v_mod_sales     UUID;
   v_mod_security  UUID;
 BEGIN
-  SELECT id INTO v_mod_hr        FROM modules WHERE name = 'hr'        AND scope = 'SYSTEM' AND tenant_id IS NULL;
-  SELECT id INTO v_mod_finance   FROM modules WHERE name = 'finance'   AND scope = 'SYSTEM' AND tenant_id IS NULL;
-  SELECT id INTO v_mod_inventory FROM modules WHERE name = 'inventory' AND scope = 'SYSTEM' AND tenant_id IS NULL;
-  SELECT id INTO v_mod_sales     FROM modules WHERE name = 'sales'     AND scope = 'SYSTEM' AND tenant_id IS NULL;
-  SELECT id INTO v_mod_security  FROM modules WHERE name = 'security'  AND scope = 'SYSTEM' AND tenant_id IS NULL;
+  SELECT id INTO v_mod_hr        FROM modules WHERE slug = 'hr'        AND scope = 'SYSTEM' AND tenant_id IS NULL;
+  SELECT id INTO v_mod_finance   FROM modules WHERE slug = 'finance'   AND scope = 'SYSTEM' AND tenant_id IS NULL;
+  SELECT id INTO v_mod_inventory FROM modules WHERE slug = 'inventory' AND scope = 'SYSTEM' AND tenant_id IS NULL;
+  SELECT id INTO v_mod_sales     FROM modules WHERE slug = 'sales'     AND scope = 'SYSTEM' AND tenant_id IS NULL;
+  SELECT id INTO v_mod_security  FROM modules WHERE slug = 'security'  AND scope = 'SYSTEM' AND tenant_id IS NULL;
 
-  INSERT INTO resources (module_id, name, display_name, resource_type, path)
+  INSERT INTO resources (module_id, slug, name, display_name, resource_type, path)
   VALUES
-    (v_mod_hr, 'employees',  'Employee Records',   'DATA',    'hr.employees'),
-    (v_mod_hr, 'payroll',    'Payroll System',     'API',     'hr.payroll'),
-    (v_mod_hr, 'timesheets', 'Timesheet Records',  'DATA',    'hr.timesheets'),
-    (v_mod_hr, 'leave',      'Leave Management',   'WORKFLOW','hr.leave'),
-    (v_mod_finance, 'invoices',          'Invoices',              'API',    'finance.invoices'),
-    (v_mod_finance, 'accounts',          'Chart of Accounts',     'DATA',   'finance.accounts'),
-    (v_mod_finance, 'transactions',      'Financial Transactions','DATA',   'finance.transactions'),
-    (v_mod_finance, 'financial-reports', 'Financial Reports',     'REPORT', 'finance.reports'),
-    (v_mod_inventory, 'products',  'Product Catalogue', 'DATA', 'inventory.products'),
-    (v_mod_inventory, 'stock',     'Stock Levels',      'API',  'inventory.stock'),
-    (v_mod_inventory, 'warehouse', 'Warehouse Data',    'DATA', 'inventory.warehouse'),
-    (v_mod_sales, 'orders',    'Sales Orders',     'API',  'sales.orders'),
-    (v_mod_sales, 'customers', 'Customer Records', 'DATA', 'sales.customers'),
-    (v_mod_sales, 'pipeline',  'Sales Pipeline',   'UI',   'sales.pipeline'),
-    (v_mod_security, 'users',     'User Management', 'DATA',   'security.users'),
-    (v_mod_security, 'roles',     'Role Management', 'DATA',   'security.roles'),
-    (v_mod_security, 'audit-log', 'Audit Log',       'REPORT', 'security.audit')
+    (v_mod_hr, 'employees',       'employees',       'Employee Records',       'DATA',    'hr.employees'),
+    (v_mod_hr, 'payroll',         'payroll',         'Payroll System',         'API',     'hr.payroll'),
+    (v_mod_hr, 'timesheets',      'timesheets',      'Timesheet Records',      'DATA',    'hr.timesheets'),
+    (v_mod_hr, 'leave',           'leave',           'Leave Management',       'WORKFLOW','hr.leave'),
+    (v_mod_finance, 'invoices',          'invoices',          'Invoices',              'API',    'finance.invoices'),
+    (v_mod_finance, 'accounts',          'accounts',          'Chart of Accounts',     'DATA',   'finance.accounts'),
+    (v_mod_finance, 'transactions',      'transactions',      'Financial Transactions','DATA',   'finance.transactions'),
+    (v_mod_finance, 'financial-reports', 'financial-reports', 'Financial Reports',     'REPORT', 'finance.reports'),
+    (v_mod_inventory, 'products',  'products',  'Product Catalogue', 'DATA', 'inventory.products'),
+    (v_mod_inventory, 'stock',     'stock',     'Stock Levels',      'API',  'inventory.stock'),
+    (v_mod_inventory, 'warehouse', 'warehouse', 'Warehouse Data',    'DATA', 'inventory.warehouse'),
+    (v_mod_sales, 'orders',    'orders',    'Sales Orders',     'API',  'sales.orders'),
+    (v_mod_sales, 'customers', 'customers', 'Customer Records', 'DATA', 'sales.customers'),
+    (v_mod_sales, 'pipeline',  'pipeline',  'Sales Pipeline',   'UI',   'sales.pipeline'),
+    (v_mod_security, 'users',     'users',     'User Management', 'DATA',   'security.users'),
+    (v_mod_security, 'roles',     'roles',     'Role Management', 'DATA',   'security.roles'),
+    (v_mod_security, 'audit-log', 'audit-log', 'Audit Log',       'REPORT', 'security.audit')
   ON CONFLICT DO NOTHING;
 END $$;
 

@@ -1,6 +1,80 @@
--- Creates the core feature_flags table with proper indexing and RLS
+-- Creates the core feature_flags table with proper indexing and RLS.
+-- Also adds the IAM-spec feature_flag_definitions catalogue (system-wide, no tenant_id)
+-- which is the authoritative source for module/resource flags resolved into sessions.
+
 -- =====================================================
--- FEATURE FLAGS TABLE
+-- FEATURE FLAG DEFINITIONS — system catalogue (no tenant_id)
+-- =====================================================
+-- Auto-seeded by triggers on modules and resources (see bottom of this file).
+-- Every tenant's flag resolution starts from this catalogue:
+--   COALESCE(tenant_feature_flags.enabled, feature_flag_definitions.default_value)
+CREATE TABLE IF NOT EXISTS feature_flag_definitions (
+  id          UUID    PRIMARY KEY DEFAULT gen_random_uuid(),
+  module_id   UUID    REFERENCES modules(id) ON DELETE CASCADE,    -- NULL = global/platform flag
+  resource_id UUID    REFERENCES resources(id) ON DELETE CASCADE,  -- NULL = module-level flag
+  flag_key    TEXT    UNIQUE NOT NULL,  -- 'finance' | 'finance.transactions'
+  label       TEXT    NOT NULL,
+  description TEXT,
+  default_value BOOLEAN NOT NULL DEFAULT false,  -- effective value when no tenant override exists
+  is_system   BOOLEAN NOT NULL DEFAULT false,    -- true = only platform operators can toggle
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE  feature_flag_definitions             IS 'System-wide feature flag catalogue. No tenant_id — shared across all tenants. Auto-seeded by triggers on modules and resources. Tenant overrides live in tenant_feature_flags.';
+COMMENT ON COLUMN feature_flag_definitions.flag_key    IS 'Dot-notation key derived from MRA slugs: module.slug or module.slug.resource.slug. e.g. ''finance'', ''finance.transactions''. Never write free-form strings — always derive from slugs.';
+COMMENT ON COLUMN feature_flag_definitions.default_value IS 'Value tenants get without any configuration. Modules default false (off); resources default true (on once module is on).';
+COMMENT ON COLUMN feature_flag_definitions.is_system   IS 'When true, only platform operators (admin_role) can toggle. Tenant admins cannot see or change these.';
+
+CREATE INDEX idx_ffd_module   ON feature_flag_definitions(module_id)   WHERE module_id   IS NOT NULL;
+CREATE INDEX idx_ffd_resource ON feature_flag_definitions(resource_id) WHERE resource_id IS NOT NULL;
+
+-- Globally readable — no RLS needed (no tenant data)
+GRANT SELECT ON feature_flag_definitions TO application_role;
+GRANT SELECT ON feature_flag_definitions TO readonly_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON feature_flag_definitions TO admin_role;
+
+-- =====================================================
+-- AUTO-SEED TRIGGERS
+-- =====================================================
+-- When a module row is inserted, seed a module-level flag definition automatically.
+CREATE OR REPLACE FUNCTION seed_module_flag_definition()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO feature_flag_definitions (module_id, flag_key, label, default_value, is_system)
+    VALUES (NEW.id, NEW.slug, NEW.display_name || ' module', false, false)
+    ON CONFLICT (flag_key) DO NOTHING;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION seed_module_flag_definition IS 'Auto-seeds a feature_flag_definitions row when a module is inserted. Idempotent (ON CONFLICT DO NOTHING).';
+
+CREATE TRIGGER trg_seed_module_flag
+    AFTER INSERT ON modules
+    FOR EACH ROW EXECUTE FUNCTION seed_module_flag_definition();
+
+-- When a resource row is inserted, seed a resource-level flag definition automatically.
+CREATE OR REPLACE FUNCTION seed_resource_flag_definition()
+RETURNS TRIGGER AS $$
+DECLARE v_module_slug TEXT;
+BEGIN
+    SELECT slug INTO v_module_slug FROM modules WHERE id = NEW.module_id;
+    INSERT INTO feature_flag_definitions (module_id, resource_id, flag_key, label, default_value)
+    VALUES (NEW.module_id, NEW.id, v_module_slug || '.' || NEW.slug, NEW.display_name, true)
+    -- resources default true: enabled once their parent module is enabled
+    ON CONFLICT (flag_key) DO NOTHING;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION seed_resource_flag_definition IS 'Auto-seeds a feature_flag_definitions row when a resource is inserted. Resources default to true (enabled when module is on).';
+
+CREATE TRIGGER trg_seed_resource_flag
+    AFTER INSERT ON resources
+    FOR EACH ROW EXECUTE FUNCTION seed_resource_flag_definition();
+
+-- =====================================================
+-- FEATURE FLAGS TABLE (tenant-scoped, pre-existing design)
 -- =====================================================
 CREATE TABLE feature_flags (
   -- Primary identifier

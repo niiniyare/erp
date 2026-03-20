@@ -22,6 +22,10 @@ CREATE TABLE user_sessions (
   location_info JSONB DEFAULT '{}'::jsonb,  -- Geographic/network location for ABAC
   expires_at TIMESTAMPTZ NOT NULL,
   risk_score INT DEFAULT 0,
+  -- IAM session pre-computation columns (populated at login, read-only thereafter)
+  user_type       VARCHAR(20),   -- copied from users.user_type for pool routing without a DB join
+  configuration   JSONB NOT NULL DEFAULT '{"flags":{},"settings":{},"prefs":{}}'::jsonb,
+  entity_scope    JSONB NOT NULL DEFAULT '{"type":"entity"}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   last_accessed_at TIMESTAMPTZ DEFAULT NOW(),
   is_active BOOLEAN DEFAULT TRUE
@@ -56,7 +60,10 @@ COMMENT ON COLUMN user_sessions.created_at IS 'Session creation timestamp';
 
 COMMENT ON COLUMN user_sessions.last_accessed_at IS 'Last activity timestamp for session timeout tracking';
 
-COMMENT ON COLUMN user_sessions.is_active IS 'Whether the session is currently active';
+COMMENT ON COLUMN user_sessions.is_active      IS 'Whether the session is currently active';
+COMMENT ON COLUMN user_sessions.user_type      IS 'Copied from users.user_type at login. Used by SetDBPool middleware to select the right connection pool without a DB roundtrip.';
+COMMENT ON COLUMN user_sessions.configuration  IS 'Pre-computed session config: {"flags":{"finance":true,...},"settings":{"finance.approval_threshold":"100000",...},"prefs":{"finance.entry_mode":"spreadsheet",...}}. Built at login from 5 concurrent queries. Read-only — refresh requires re-login.';
+COMMENT ON COLUMN user_sessions.entity_scope   IS 'Pre-computed entity access scope: {"type":"all"|"subtree"|"entity","entity_id":"uuid","path_prefix":"/root/parent/"}. Built at login. Used by repos for subtree WHERE clauses without extra joins.';
 
 -- =====================================================================
 -- PERFORMANCE OPTIMIZATION INDEXES
@@ -92,9 +99,12 @@ WHERE
   ip_address IS NOT NULL;
 
 -- GIN indexes for JSONB columns
-CREATE INDEX idx_user_sessions_device_info_gin ON user_sessions USING gin(device_info);
-
+CREATE INDEX idx_user_sessions_device_info_gin   ON user_sessions USING gin(device_info);
 CREATE INDEX idx_user_sessions_location_info_gin ON user_sessions USING gin(location_info);
+
+-- Index for user_type — used by SetDBPool middleware and platform session queries
+CREATE INDEX idx_user_sessions_user_type ON user_sessions(user_type)
+WHERE user_type IS NOT NULL;
 
 -- =====================================================================
 -- DATA INTEGRITY CONSTRAINTS

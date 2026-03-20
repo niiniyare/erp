@@ -9,9 +9,12 @@
 CREATE TABLE IF NOT EXISTS resources (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   module_id UUID NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
+  slug         VARCHAR(50)  NOT NULL,    -- key segment: 'transactions', 'accounts', 'pumps'
   name VARCHAR(100) NOT NULL,
   display_name VARCHAR(150),
   description TEXT,
+  nav_url      VARCHAR(500),             -- sidebar link: '/finance/transactions'
+  nav_order    INTEGER NOT NULL DEFAULT 999,
   resource_type VARCHAR(50) NOT NULL CHECK (
     resource_type IN (
       'API',
@@ -29,11 +32,16 @@ CREATE TABLE IF NOT EXISTS resources (
   is_active  BOOLEAN     DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  deleted_at TIMESTAMPTZ
+  deleted_at TIMESTAMPTZ,
+  -- slug must be unique within a module
+  CONSTRAINT resources_module_slug_unique UNIQUE (module_id, slug)
 );
 
 COMMENT ON TABLE resources IS 'System resources that can be protected by permissions including APIs, UI components, data objects, files, reports, and workflows.';
-COMMENT ON COLUMN resources.resource_type IS 'Type of resource: API, UI, DATA, FILE, REPORT, WORKFLOW, FUNCTION';
+COMMENT ON COLUMN resources.slug              IS 'Machine-readable key segment within its module. Forms the second segment of dot-notation keys: {module.slug}.{slug}. e.g. ''transactions'', ''accounts''. Unique per module. Do not change after seeding.';
+COMMENT ON COLUMN resources.nav_url           IS 'Browser navigation URL. e.g. ''/finance/transactions''. Used by BootService to build sidebar links.';
+COMMENT ON COLUMN resources.nav_order         IS 'Display order within the module section. Lower = higher. Default 999.';
+COMMENT ON COLUMN resources.resource_type     IS 'Type of resource: API, UI, DATA, FILE, REPORT, WORKFLOW, FUNCTION';
 COMMENT ON COLUMN resources.parent_resource_id IS 'Self-referential for resource hierarchy (e.g., API endpoints under API group)';
 COMMENT ON COLUMN resources.resource_attributes IS 'JSONB containing ABAC attributes like classification level, sensitivity, department ownership';
 COMMENT ON COLUMN resources.path IS

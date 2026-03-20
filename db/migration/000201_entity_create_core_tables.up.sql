@@ -29,6 +29,10 @@ CREATE TABLE entities (
   fy_start_month INTEGER NOT NULL CHECK (fy_start_month BETWEEN 1 AND 12),
   address JSONB DEFAULT '{}'::jsonb,
   picture VARCHAR(100),
+  -- IAM: materialized path for O(1) subtree access checks
+  -- format: '/root_uuid/parent_uuid/this_uuid/'  (leading + trailing slash)
+  entity_path  TEXT,
+  entity_level INTEGER NOT NULL DEFAULT 1,   -- 1 = root (COMPANY), increments per level
   settings JSONB DEFAULT '{}'::jsonb,
   metadata JSONB DEFAULT '{}'::jsonb,
   -- Standard validation columns
@@ -72,6 +76,8 @@ COMMENT ON COLUMN entities.address IS 'Physical address information - Stored as 
 
 COMMENT ON COLUMN entities.picture IS 'Entity logo or image reference - File path or URL to associated image';
 
+COMMENT ON COLUMN entities.entity_path  IS 'Materialized path: /uuid1/uuid2/this_uuid/. Enables subtree queries via LIKE ''/root/%''. Populated by app layer on create/reparent. Root entities: /uuid/.';
+COMMENT ON COLUMN entities.entity_level IS 'Hierarchy depth: 1 = root COMPANY, increments per level (max 8). Used to determine EntityScope: level 1 = all, leaf = entity, else = subtree.';
 COMMENT ON COLUMN entities.settings IS 'Entity-specific configuration - JSON object storing customizable settings and preferences';
 
 COMMENT ON COLUMN entities.created_at IS 'Record creation timestamp - Automatically set when entity is first created';
@@ -109,6 +115,10 @@ COMMENT ON INDEX idx_entities_active IS 'Optimizes queries for active entities o
 
 -- Additional performance indexes
 CREATE INDEX idx_entities_settings_gin ON entities USING gin(settings);
+
+-- IAM subtree access index — for entity_path LIKE '/prefix/%' queries
+CREATE INDEX idx_entities_path  ON entities(tenant_id, entity_path) WHERE entity_path IS NOT NULL AND deleted_at IS NULL;
+CREATE INDEX idx_entities_level ON entities(tenant_id, entity_level) WHERE deleted_at IS NULL;
 
 CREATE INDEX idx_entities_address_gin ON entities USING gin(address);
 

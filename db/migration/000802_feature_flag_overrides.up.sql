@@ -1,6 +1,47 @@
--- Creates the tenant_feature_overrides table with proper indexing and RLS
+-- Creates the tenant_feature_overrides table (pre-existing design) and the new
+-- tenant_feature_flags table which is the IAM-spec per-tenant override table.
+-- tenant_feature_flags is used by the session pre-computation (FlagService.ResolveForTenant).
+
 -- =====================================================
--- TENANT FEATURE OVERRIDES TABLE
+-- TENANT FEATURE FLAGS — IAM spec per-tenant overrides
+-- =====================================================
+-- One row per tenant per flag they have explicitly configured.
+-- Flags with no row here fall back to feature_flag_definitions.default_value.
+-- FlagService queries: SELECT COALESCE(tff.enabled, ffd.default_value)
+--                      FROM feature_flag_definitions ffd
+--                      LEFT JOIN tenant_feature_flags tff ON tff.flag_id = ffd.id
+--                                                        AND tff.tenant_id = $1
+CREATE TABLE IF NOT EXISTS tenant_feature_flags (
+  id       UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id UUID       NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  flag_id   UUID       NOT NULL REFERENCES feature_flag_definitions(id) ON DELETE CASCADE,
+  flag_key  TEXT       NOT NULL,    -- denormalized from definition for fast lookup without JOIN
+  enabled   BOOLEAN    NOT NULL,
+  set_by    UUID       REFERENCES users(id) ON DELETE SET NULL,
+  set_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (tenant_id, flag_id)
+);
+
+COMMENT ON TABLE  tenant_feature_flags          IS 'Per-tenant feature flag overrides. Rows exist only for flags explicitly configured. Missing rows resolve to feature_flag_definitions.default_value.';
+COMMENT ON COLUMN tenant_feature_flags.flag_key IS 'Denormalized flag_key from feature_flag_definitions for fast single-table lookups.';
+COMMENT ON COLUMN tenant_feature_flags.set_by   IS 'User who last set this override. NULL if set by system/migration.';
+
+CREATE INDEX idx_tff_tenant  ON tenant_feature_flags(tenant_id);
+CREATE INDEX idx_tff_flag    ON tenant_feature_flags(flag_id);
+CREATE INDEX idx_tff_lookup  ON tenant_feature_flags(tenant_id, flag_key);
+
+ALTER TABLE tenant_feature_flags ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tff_tenant_isolation ON tenant_feature_flags FOR ALL TO application_role
+    USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+    WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
+CREATE POLICY tff_admin_access ON tenant_feature_flags FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON tenant_feature_flags TO application_role;
+GRANT ALL ON tenant_feature_flags TO admin_role;
+GRANT SELECT ON tenant_feature_flags TO readonly_role;
+
+-- =====================================================
+-- TENANT FEATURE OVERRIDES TABLE (pre-existing design)
 -- =====================================================
 CREATE TABLE tenant_feature_overrides (
   -- Primary identifier

@@ -1,3 +1,9 @@
+-- Add FK from role_assignments.granted_by → users(id)
+-- Deferred here because role_assignments (000064) is created before users (000303).
+ALTER TABLE role_assignments
+    ADD CONSTRAINT role_assignments_granted_by_fk
+    FOREIGN KEY (granted_by) REFERENCES users(id) ON DELETE SET NULL;
+
 CREATE
 OR REPLACE FUNCTION assign_user_role(
   p_user_id UUID,

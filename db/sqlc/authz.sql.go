@@ -29,6 +29,139 @@ func (q *Queries) DeactivateRoleAssignment(ctx context.Context, arg DeactivateRo
 	return err
 }
 
+const listActiveRoleAssignments = `-- name: ListActiveRoleAssignments :many
+SELECT
+    id, subject, role_name, role_slug, domain,
+    expires_at, granted_by
+FROM   role_assignments
+WHERE  subject    = $1
+  AND  domain     = $2
+  AND  is_active  = TRUE
+  AND  revoked_at IS NULL
+  AND  (expires_at IS NULL OR expires_at > NOW())
+ORDER  BY created_at DESC
+`
+
+type ListActiveRoleAssignmentsParams struct {
+	Subject string `json:"subject"`
+	Domain  string `json:"domain"`
+}
+
+type ListActiveRoleAssignmentsRow struct {
+	ID        uuid.UUID    `json:"id"`
+	Subject   string       `json:"subject"`
+	RoleName  string       `json:"role_name"`
+	RoleSlug  *string      `json:"role_slug"`
+	Domain    string       `json:"domain"`
+	ExpiresAt sql.NullTime `json:"expires_at"`
+	GrantedBy *uuid.UUID   `json:"granted_by"`
+}
+
+// Returns roles that are currently active and not expired — used by permission computation.
+func (q *Queries) ListActiveRoleAssignments(ctx context.Context, arg ListActiveRoleAssignmentsParams) ([]*ListActiveRoleAssignmentsRow, error) {
+	rows, err := q.db.Query(ctx, listActiveRoleAssignments, arg.Subject, arg.Domain)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*ListActiveRoleAssignmentsRow{}
+	for rows.Next() {
+		var i ListActiveRoleAssignmentsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Subject,
+			&i.RoleName,
+			&i.RoleSlug,
+			&i.Domain,
+			&i.ExpiresAt,
+			&i.GrantedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAssignmentHistory = `-- name: ListAssignmentHistory :many
+SELECT
+    id, subject, role_name, role_slug, domain,
+    assigned_by, granted_by, delegated_by,
+    expires_at, revoked_at, revoke_reason,
+    is_active, created_at
+FROM   role_assignments
+WHERE  tenant_id = $1
+  AND  ($2::text IS NULL OR subject = $2)
+ORDER  BY created_at DESC
+LIMIT  $3 OFFSET $4
+`
+
+type ListAssignmentHistoryParams struct {
+	TenantID uuid.UUID `json:"tenant_id"`
+	Column2  string    `json:"column_2"`
+	Limit    int32     `json:"limit"`
+	Offset   int32     `json:"offset"`
+}
+
+type ListAssignmentHistoryRow struct {
+	ID           uuid.UUID    `json:"id"`
+	Subject      string       `json:"subject"`
+	RoleName     string       `json:"role_name"`
+	RoleSlug     *string      `json:"role_slug"`
+	Domain       string       `json:"domain"`
+	AssignedBy   *string      `json:"assigned_by"`
+	GrantedBy    *uuid.UUID   `json:"granted_by"`
+	DelegatedBy  *string      `json:"delegated_by"`
+	ExpiresAt    sql.NullTime `json:"expires_at"`
+	RevokedAt    sql.NullTime `json:"revoked_at"`
+	RevokeReason *string      `json:"revoke_reason"`
+	IsActive     *bool        `json:"is_active"`
+	CreatedAt    sql.NullTime `json:"created_at"`
+}
+
+// Audit trail: all assignments including revoked/expired.
+func (q *Queries) ListAssignmentHistory(ctx context.Context, arg ListAssignmentHistoryParams) ([]*ListAssignmentHistoryRow, error) {
+	rows, err := q.db.Query(ctx, listAssignmentHistory,
+		arg.TenantID,
+		arg.Column2,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*ListAssignmentHistoryRow{}
+	for rows.Next() {
+		var i ListAssignmentHistoryRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Subject,
+			&i.RoleName,
+			&i.RoleSlug,
+			&i.Domain,
+			&i.AssignedBy,
+			&i.GrantedBy,
+			&i.DelegatedBy,
+			&i.ExpiresAt,
+			&i.RevokedAt,
+			&i.RevokeReason,
+			&i.IsActive,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listExpiredActiveRoleNames = `-- name: ListExpiredActiveRoleNames :many
 SELECT role_name
 FROM   role_assignments
@@ -66,8 +199,10 @@ func (q *Queries) ListExpiredActiveRoleNames(ctx context.Context, arg ListExpire
 
 const listRoleAssignments = `-- name: ListRoleAssignments :many
 SELECT
-    id, tenant_id, subject, role_name, domain,
-    assigned_by, delegated_by, expires_at, is_active, created_at
+    id, tenant_id, subject, role_name, role_slug, domain,
+    assigned_by, granted_by, delegated_by,
+    expires_at, revoked_at, revoke_reason,
+    is_active, created_at
 FROM   role_assignments
 WHERE  subject = $1 AND domain = $2
 ORDER  BY created_at DESC
@@ -92,10 +227,14 @@ func (q *Queries) ListRoleAssignments(ctx context.Context, arg ListRoleAssignmen
 			&i.TenantID,
 			&i.Subject,
 			&i.RoleName,
+			&i.RoleSlug,
 			&i.Domain,
 			&i.AssignedBy,
+			&i.GrantedBy,
 			&i.DelegatedBy,
 			&i.ExpiresAt,
+			&i.RevokedAt,
+			&i.RevokeReason,
 			&i.IsActive,
 			&i.CreatedAt,
 		); err != nil {
@@ -109,17 +248,51 @@ func (q *Queries) ListRoleAssignments(ctx context.Context, arg ListRoleAssignmen
 	return items, nil
 }
 
+const revokeRoleAssignment = `-- name: RevokeRoleAssignment :exec
+UPDATE role_assignments
+SET    is_active     = FALSE,
+       revoked_at    = NOW(),
+       revoke_reason = $4
+WHERE  subject   = $1
+  AND  role_name = $2
+  AND  domain    = $3
+`
+
+type RevokeRoleAssignmentParams struct {
+	Subject      string  `json:"subject"`
+	RoleName     string  `json:"role_name"`
+	Domain       string  `json:"domain"`
+	RevokeReason *string `json:"revoke_reason"`
+}
+
+// Explicit revocation — sets revoked_at + reason, distinct from expiry.
+func (q *Queries) RevokeRoleAssignment(ctx context.Context, arg RevokeRoleAssignmentParams) error {
+	_, err := q.db.Exec(ctx, revokeRoleAssignment,
+		arg.Subject,
+		arg.RoleName,
+		arg.Domain,
+		arg.RevokeReason,
+	)
+	return err
+}
+
 const upsertRoleAssignment = `-- name: UpsertRoleAssignment :exec
-INSERT INTO role_assignments
-    (id, tenant_id, subject, role_name, domain, assigned_by, delegated_by, expires_at, is_active)
-VALUES
-    ($1, $2, $3, $4, $5, $6, $7, $8, TRUE)
-ON CONFLICT (subject, role_name, domain)
+INSERT INTO role_assignments (
+    id, tenant_id, subject, role_name, role_slug, domain,
+    assigned_by, granted_by, delegated_by, expires_at, is_active
+) VALUES (
+    $1, $2, $3, $4, $5, $6,
+    $7, $8, $9, $10, TRUE
+) ON CONFLICT (subject, role_name, domain)
 DO UPDATE SET
     is_active    = TRUE,
+    role_slug    = EXCLUDED.role_slug,
     assigned_by  = EXCLUDED.assigned_by,
+    granted_by   = EXCLUDED.granted_by,
     delegated_by = EXCLUDED.delegated_by,
-    expires_at   = EXCLUDED.expires_at
+    expires_at   = EXCLUDED.expires_at,
+    revoked_at   = NULL,
+    revoke_reason = NULL
 `
 
 type UpsertRoleAssignmentParams struct {
@@ -127,8 +300,10 @@ type UpsertRoleAssignmentParams struct {
 	TenantID    uuid.UUID    `json:"tenant_id"`
 	Subject     string       `json:"subject"`
 	RoleName    string       `json:"role_name"`
+	RoleSlug    *string      `json:"role_slug"`
 	Domain      string       `json:"domain"`
 	AssignedBy  *string      `json:"assigned_by"`
+	GrantedBy   *uuid.UUID   `json:"granted_by"`
 	DelegatedBy *string      `json:"delegated_by"`
 	ExpiresAt   sql.NullTime `json:"expires_at"`
 }
@@ -139,10 +314,38 @@ func (q *Queries) UpsertRoleAssignment(ctx context.Context, arg UpsertRoleAssign
 		arg.TenantID,
 		arg.Subject,
 		arg.RoleName,
+		arg.RoleSlug,
 		arg.Domain,
 		arg.AssignedBy,
+		arg.GrantedBy,
 		arg.DelegatedBy,
 		arg.ExpiresAt,
 	)
 	return err
+}
+
+const userHasRole = `-- name: UserHasRole :one
+SELECT EXISTS (
+    SELECT 1 FROM role_assignments
+    WHERE subject   = $1
+      AND role_name = $2
+      AND domain    = $3
+      AND is_active = TRUE
+      AND revoked_at IS NULL
+      AND (expires_at IS NULL OR expires_at > NOW())
+) AS has_role
+`
+
+type UserHasRoleParams struct {
+	Subject  string `json:"subject"`
+	RoleName string `json:"role_name"`
+	Domain   string `json:"domain"`
+}
+
+// Guard 3 delegation check: does the granter hold this role?
+func (q *Queries) UserHasRole(ctx context.Context, arg UserHasRoleParams) (bool, error) {
+	row := q.db.QueryRow(ctx, userHasRole, arg.Subject, arg.RoleName, arg.Domain)
+	var has_role bool
+	err := row.Scan(&has_role)
+	return has_role, err
 }

@@ -7,38 +7,57 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createModule = `-- name: CreateModule :one
-INSERT INTO
-  modules (
-    tenant_id,
-    name,
-    display_name,
-    category
-  )
-VALUES
-  (current_tenant_id(), $1, $2, $3)
-RETURNING
-  id, tenant_id, scope, name, display_name, description, category, module_type, version, is_active, created_at, updated_at
+INSERT INTO modules (
+    tenant_id, scope, slug, name, display_name,
+    description, icon, nav_order, category, module_type, version
+) VALUES (
+    current_tenant_id(), $1, $2, $3, $4,
+    $5, $6, $7, $8, $9, $10
+) RETURNING id, tenant_id, scope, slug, name, display_name, description, icon, nav_order, category, module_type, version, is_active, created_at, updated_at
 `
 
 type CreateModuleParams struct {
+	Scope       string  `json:"scope"`
+	Slug        string  `json:"slug"`
 	Name        string  `json:"name"`
 	DisplayName *string `json:"display_name"`
+	Description *string `json:"description"`
+	Icon        *string `json:"icon"`
+	NavOrder    int32   `json:"nav_order"`
 	Category    *string `json:"category"`
+	ModuleType  *string `json:"module_type"`
+	Version     *string `json:"version"`
 }
 
 func (q *Queries) CreateModule(ctx context.Context, arg CreateModuleParams) (*Module, error) {
-	row := q.db.QueryRow(ctx, createModule, arg.Name, arg.DisplayName, arg.Category)
+	row := q.db.QueryRow(ctx, createModule,
+		arg.Scope,
+		arg.Slug,
+		arg.Name,
+		arg.DisplayName,
+		arg.Description,
+		arg.Icon,
+		arg.NavOrder,
+		arg.Category,
+		arg.ModuleType,
+		arg.Version,
+	)
 	var i Module
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
 		&i.Scope,
+		&i.Slug,
 		&i.Name,
 		&i.DisplayName,
 		&i.Description,
+		&i.Icon,
+		&i.NavOrder,
 		&i.Category,
 		&i.ModuleType,
 		&i.Version,
@@ -47,4 +66,209 @@ func (q *Queries) CreateModule(ctx context.Context, arg CreateModuleParams) (*Mo
 		&i.UpdatedAt,
 	)
 	return &i, err
+}
+
+const getModuleBySlug = `-- name: GetModuleBySlug :one
+SELECT id, tenant_id, scope, slug, name, display_name, description, icon, nav_order, category, module_type, version, is_active, created_at, updated_at FROM modules
+WHERE slug = $1
+  AND scope = 'SYSTEM'
+  AND is_active = TRUE
+`
+
+func (q *Queries) GetModuleBySlug(ctx context.Context, slug string) (*Module, error) {
+	row := q.db.QueryRow(ctx, getModuleBySlug, slug)
+	var i Module
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.Scope,
+		&i.Slug,
+		&i.Name,
+		&i.DisplayName,
+		&i.Description,
+		&i.Icon,
+		&i.NavOrder,
+		&i.Category,
+		&i.ModuleType,
+		&i.Version,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const listActiveSystemModules = `-- name: ListActiveSystemModules :many
+SELECT id, tenant_id, scope, slug, name, display_name, description, icon, nav_order, category, module_type, version, is_active, created_at, updated_at FROM modules
+WHERE scope = 'SYSTEM' AND is_active = TRUE
+ORDER BY nav_order
+`
+
+func (q *Queries) ListActiveSystemModules(ctx context.Context) ([]*Module, error) {
+	rows, err := q.db.Query(ctx, listActiveSystemModules)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Module{}
+	for rows.Next() {
+		var i Module
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.Scope,
+			&i.Slug,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.Icon,
+			&i.NavOrder,
+			&i.Category,
+			&i.ModuleType,
+			&i.Version,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listEnabledModulesWithResources = `-- name: ListEnabledModulesWithResources :many
+
+SELECT
+    m.id            AS module_id,
+    m.slug          AS module_slug,
+    m.name          AS module_name,
+    m.display_name  AS module_display_name,
+    m.icon,
+    m.nav_order     AS module_nav_order,
+    r.id            AS resource_id,
+    r.slug          AS resource_slug,
+    r.name          AS resource_name,
+    r.display_name  AS resource_display_name,
+    r.nav_url,
+    r.nav_order     AS resource_nav_order
+FROM modules m
+JOIN resources r ON r.module_id = m.id AND r.is_active = TRUE AND r.deleted_at IS NULL
+
+JOIN feature_flag_definitions mfd
+    ON mfd.module_id = m.id AND mfd.resource_id IS NULL
+LEFT JOIN tenant_feature_flags mtf
+    ON mtf.flag_id = mfd.id AND mtf.tenant_id = $1
+
+LEFT JOIN feature_flag_definitions rfd ON rfd.resource_id = r.id
+LEFT JOIN tenant_feature_flags rtf
+    ON rtf.flag_id = rfd.id AND rtf.tenant_id = $1
+
+WHERE m.is_active = TRUE
+  AND m.scope = 'SYSTEM'
+  AND COALESCE(mtf.enabled, mfd.default_value) = TRUE
+  AND (rfd.id IS NULL OR COALESCE(rtf.enabled, rfd.default_value) = TRUE)
+ORDER BY m.nav_order, r.nav_order
+`
+
+type ListEnabledModulesWithResourcesRow struct {
+	ModuleID            uuid.UUID `json:"module_id"`
+	ModuleSlug          string    `json:"module_slug"`
+	ModuleName          string    `json:"module_name"`
+	ModuleDisplayName   *string   `json:"module_display_name"`
+	Icon                *string   `json:"icon"`
+	ModuleNavOrder      int32     `json:"module_nav_order"`
+	ResourceID          uuid.UUID `json:"resource_id"`
+	ResourceSlug        string    `json:"resource_slug"`
+	ResourceName        string    `json:"resource_name"`
+	ResourceDisplayName *string   `json:"resource_display_name"`
+	NavUrl              *string   `json:"nav_url"`
+	ResourceNavOrder    int32     `json:"resource_nav_order"`
+}
+
+// ============================================================
+// NAV QUERY — powers BootService.BuildAppShell
+// Returns only modules+resources that are enabled for the tenant
+// (flag = true or no override and default_value = true).
+// Permission filter is applied in Go after this returns.
+// ============================================================
+// Module flag: must be enabled for this tenant
+// Resource flag: must be enabled (or have no override and default true)
+func (q *Queries) ListEnabledModulesWithResources(ctx context.Context, tenantID uuid.UUID) ([]*ListEnabledModulesWithResourcesRow, error) {
+	rows, err := q.db.Query(ctx, listEnabledModulesWithResources, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*ListEnabledModulesWithResourcesRow{}
+	for rows.Next() {
+		var i ListEnabledModulesWithResourcesRow
+		if err := rows.Scan(
+			&i.ModuleID,
+			&i.ModuleSlug,
+			&i.ModuleName,
+			&i.ModuleDisplayName,
+			&i.Icon,
+			&i.ModuleNavOrder,
+			&i.ResourceID,
+			&i.ResourceSlug,
+			&i.ResourceName,
+			&i.ResourceDisplayName,
+			&i.NavUrl,
+			&i.ResourceNavOrder,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listModules = `-- name: ListModules :many
+SELECT id, tenant_id, scope, slug, name, display_name, description, icon, nav_order, category, module_type, version, is_active, created_at, updated_at FROM modules
+WHERE is_active = TRUE
+  AND (scope = 'SYSTEM' OR tenant_id = current_tenant_id())
+ORDER BY nav_order, name
+`
+
+func (q *Queries) ListModules(ctx context.Context) ([]*Module, error) {
+	rows, err := q.db.Query(ctx, listModules)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Module{}
+	for rows.Next() {
+		var i Module
+		if err := rows.Scan(
+			&i.ID,
+			&i.TenantID,
+			&i.Scope,
+			&i.Slug,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.Icon,
+			&i.NavOrder,
+			&i.Category,
+			&i.ModuleType,
+			&i.Version,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

@@ -63,3 +63,8 @@ ALTER TABLE IF EXISTS tenant_configurations DROP COLUMN IF EXISTS settings_versi
 DROP TABLE IF EXISTS template_applications;
 DROP TABLE IF EXISTS configuration_audit;
 DROP TABLE IF EXISTS configuration_templates;
+
+-- IAM settings tables
+DROP TABLE IF EXISTS user_preferences;
+DROP TABLE IF EXISTS tenant_settings;
+DROP TABLE IF EXISTS setting_definitions;

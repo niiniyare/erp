@@ -36,6 +36,7 @@ DROP INDEX IF EXISTS idx_users_attributes_gin;
 
 DROP INDEX IF EXISTS idx_users_deleted_at;
 
+DROP INDEX IF EXISTS idx_users_principal;
 DROP INDEX IF EXISTS idx_users_mfa;
 
 DROP INDEX IF EXISTS idx_users_lockout;

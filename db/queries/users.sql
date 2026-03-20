@@ -1,38 +1,17 @@
 -- name: CreateUser :one
-INSERT INTO
-  users (
-    tenant_id,
-    entity_id,
-    person_id,
-    employee_id,
-    username,
-    email,
-    password_hash,
-    user_type,
-    account_status,
-    session_timeout_minutes,
-    mfa_enabled,
-    user_attributes,
-    settings
-  )
-VALUES
-  (
-    current_tenant_id(),
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6,
-    $7,
-    $8,
-    $9,
-    $10,
-    $11,
-    $12
-  )
-RETURNING
-  *;
+INSERT INTO users (
+    tenant_id, entity_id, person_id, employee_id,
+    username, email, display_name, password_hash,
+    user_type, account_status, principal_id,
+    session_timeout_minutes, mfa_enabled,
+    user_attributes, settings
+) VALUES (
+    current_tenant_id(), $1, $2, $3,
+    $4, $5, $6, $7,
+    $8, $9, $10,
+    $11, $12,
+    $13, $14
+) RETURNING *;
 
 -- name: GetUserByID :one
 SELECT

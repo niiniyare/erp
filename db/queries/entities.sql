@@ -1,41 +1,27 @@
 -- Entity CRUD Operations
 -- name: CreateEntity :one
-INSERT INTO
-  entities (
-    uuid,
-    tenant_id,
-    parent_id,
-    name,
-    code,
-    TYPE,
-    is_active,
-    hidden,
-    accrual_method,
-    fy_start_month,
-    address,
-    picture,
-    metadata,
-    settings
-  )
-VALUES
-  (
-    $1,
-    current_tenant_id(),
-    $2,
-    $3,
-    $4,
-    $5,
-    $6,
-    $7,
-    $8,
-    $9,
-    $10,
-    $11,
-    $12,
-    $13
-  )
-RETURNING
-  *;
+INSERT INTO entities (
+    uuid, tenant_id, parent_id,
+    name, code, type, is_active, hidden,
+    accrual_method, fy_start_month,
+    entity_path, entity_level,
+    address, picture, metadata, settings
+) VALUES (
+    $1, current_tenant_id(), $2,
+    $3, $4, $5, $6, $7,
+    $8, $9,
+    $10, $11,
+    $12, $13, $14, $15
+) RETURNING *;
+
+-- name: UpdateEntityPath :exec
+-- Called by app after insert/reparent to maintain the materialized path.
+UPDATE entities
+SET entity_path  = $2,
+    entity_level = $3,
+    updated_at   = NOW()
+WHERE uuid = $1
+  AND tenant_id = current_tenant_id();
 
 -- name: GetEntity :one
 SELECT
@@ -88,6 +74,35 @@ WHERE
   AND deleted_at IS NULL
 RETURNING
   *;
+
+-- name: ResolveEntityScope :one
+-- Called once at login to build EntityScope for session pre-computation.
+-- Returns the entity with its path and level so the service layer can
+-- determine scope type: level=1 → "all", leaf (no children) → "entity", else → "subtree".
+SELECT
+    e.uuid,
+    e.entity_path,
+    e.entity_level,
+    e.type,
+    EXISTS (
+        SELECT 1 FROM entities c
+        WHERE c.parent_id = e.uuid
+          AND c.deleted_at IS NULL
+    ) AS has_children
+FROM entities e
+WHERE e.uuid = $1
+  AND e.tenant_id = current_tenant_id()
+  AND e.deleted_at IS NULL;
+
+-- name: ListEntitySubtree :many
+-- Returns all entities within the subtree rooted at the given path prefix.
+-- Used by business repos for subtree-scoped data queries.
+SELECT uuid, name, type, entity_path, entity_level
+FROM   entities
+WHERE  tenant_id   = current_tenant_id()
+  AND  entity_path LIKE $1 || '%'
+  AND  deleted_at  IS NULL
+ORDER  BY entity_level, name;
 
 -- name: SoftDeleteEntity :exec
 UPDATE

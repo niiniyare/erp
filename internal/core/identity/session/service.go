@@ -129,16 +129,28 @@ func (s *service) Login(ctx context.Context, email, password string) (*ResolvedS
 	tenantID := tenantIDFromCtx(ctx)
 
 	// 5. Build the session row and persist it.
+	// TODO(entity-scope): compute real EntityScope from user's entity hierarchy once
+	// the entity service is wired in. Default to entity-only scope for now.
+	entityScope := EntityScope{
+		Type:     EntityScopeEntity,
+		EntityID: user.EntityID.String(),
+	}
+	// TODO(configuration): compute real flags+settings+prefs from feature-flag / settings services.
+	configuration := DefaultConfiguration()
+
 	now := time.Now()
 	sess := Session{
-		UserID:      user.ID,
-		TenantID:    tenantID,
-		TokenHash:   hash,
-		Permissions: perms,
-		IsActive:    true,
-		ExpiresAt:   now.Add(s.cfg.SessionTTL),
-		LastSeenAt:  now,
-		RiskScore:   0,
+		UserID:        user.ID,
+		TenantID:      tenantID,
+		UserType:      user.UserType,
+		TokenHash:     hash,
+		Permissions:   perms,
+		EntityScope:   entityScope,
+		Configuration: configuration,
+		IsActive:      true,
+		ExpiresAt:     now.Add(s.cfg.SessionTTL),
+		LastSeenAt:    now,
+		RiskScore:     0,
 	}
 	if err := s.repo.CreateSession(ctx, sess); err != nil {
 		return nil, "", fmt.Errorf("session: persist session: %w", err)
@@ -189,16 +201,13 @@ func (s *service) ValidateSession(ctx context.Context, token string) (*ResolvedS
 	}
 
 	// 3. Re-hydrate ResolvedSession from DB row.
-	// NOTE(tenant-context): user display name would require a user lookup; omit for now.
-	// TODO(perf): consider caching user display name separately or including it in the session row.
+	// user_type and permissions are pre-computed at login and stored in the session row.
 	r := &ResolvedSession{
 		UserID:      sess.UserID,
+		UserType:    sess.UserType,
 		TenantID:    sess.TenantID,
 		PrincipalID: sess.PrincipalID,
 		Permissions: sess.Permissions,
-		// NOTE: UserType and DisplayName are not stored in user_sessions today.
-		// They will be populated once the session row includes a user_type column,
-		// or after a follow-up user lookup (TODO: add user_type to CreateSession).
 	}
 
 	// 4. Async last-seen update.

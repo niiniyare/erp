@@ -324,7 +324,41 @@ func (q *Queries) DeleteTenantConfigurationSettings(ctx context.Context, configP
 	return err
 }
 
+const deleteTenantSetting = `-- name: DeleteTenantSetting :exec
+DELETE FROM tenant_settings
+WHERE tenant_id   = $1
+  AND setting_key = $2
+`
+
+type DeleteTenantSettingParams struct {
+	TenantID   uuid.UUID `json:"tenant_id"`
+	SettingKey string    `json:"setting_key"`
+}
+
+// Removes tenant override — setting reverts to default_value.
+func (q *Queries) DeleteTenantSetting(ctx context.Context, arg DeleteTenantSettingParams) error {
+	_, err := q.db.Exec(ctx, deleteTenantSetting, arg.TenantID, arg.SettingKey)
+	return err
+}
+
+const deleteUserPreference = `-- name: DeleteUserPreference :exec
+DELETE FROM user_preferences
+WHERE user_id  = $1
+  AND pref_key = $2
+`
+
+type DeleteUserPreferenceParams struct {
+	UserID  uuid.UUID `json:"user_id"`
+	PrefKey string    `json:"pref_key"`
+}
+
+func (q *Queries) DeleteUserPreference(ctx context.Context, arg DeleteUserPreferenceParams) error {
+	_, err := q.db.Exec(ctx, deleteUserPreference, arg.UserID, arg.PrefKey)
+	return err
+}
+
 const getConfigDefinition = `-- name: GetConfigDefinition :one
+
 
 
 SELECT id, module_name, config_key, config_type, default_value, is_tenant_overridable, is_entity_overridable, validation_rules, required_feature_flag, required_iam_permission, display_name, description, unit_label, is_active, created_at, updated_at FROM config_definitions 
@@ -336,6 +370,9 @@ type GetConfigDefinitionParams struct {
 	ConfigKey  string `json:"config_key"`
 }
 
+// =====================================================================
+// LEGACY CONFIG QUERIES (configuration_templates, config_definitions, etc.)
+// =====================================================================
 // This file contains type-safe SQL queries for the Settings Module
 // ==========================================
 // Configuration Definitions Queries
@@ -642,6 +679,33 @@ func (q *Queries) GetEntityConfigurations(ctx context.Context, entityID uuid.UUI
 	return settings, err
 }
 
+const getSettingDefinition = `-- name: GetSettingDefinition :one
+SELECT id, module_id, resource_id, action_id, setting_key, label, description, value_type, default_value, enum_options, min_value, max_value, is_system, created_at FROM setting_definitions
+WHERE setting_key = $1
+`
+
+func (q *Queries) GetSettingDefinition(ctx context.Context, settingKey string) (*SettingDefinition, error) {
+	row := q.db.QueryRow(ctx, getSettingDefinition, settingKey)
+	var i SettingDefinition
+	err := row.Scan(
+		&i.ID,
+		&i.ModuleID,
+		&i.ResourceID,
+		&i.ActionID,
+		&i.SettingKey,
+		&i.Label,
+		&i.Description,
+		&i.ValueType,
+		&i.DefaultValue,
+		&i.EnumOptions,
+		&i.MinValue,
+		&i.MaxValue,
+		&i.IsSystem,
+		&i.CreatedAt,
+	)
+	return &i, err
+}
+
 const getTemplateApplicationHistory = `-- name: GetTemplateApplicationHistory :many
 SELECT 
     ta.id, ta.template_id, ta.tenant_id, ta.entity_id, ta.target_type, ta.applied_configs, ta.skipped_configs, ta.conflict_count, ta.application_summary, ta.applied_at, ta.applied_by, ta.correlation_id,
@@ -732,6 +796,39 @@ func (q *Queries) GetTenantConfigurations(ctx context.Context) (*GetTenantConfig
 	var i GetTenantConfigurationsRow
 	err := row.Scan(&i.Settings, &i.SettingsVersion)
 	return &i, err
+}
+
+const getUserPreferences = `-- name: GetUserPreferences :many
+SELECT pref_key, value
+FROM   user_preferences
+WHERE  user_id = $1
+ORDER  BY pref_key
+`
+
+type GetUserPreferencesRow struct {
+	PrefKey string `json:"pref_key"`
+	Value   string `json:"value"`
+}
+
+// Called once at login — result stored in sessions.configuration.prefs.
+func (q *Queries) GetUserPreferences(ctx context.Context, userID uuid.UUID) ([]*GetUserPreferencesRow, error) {
+	rows, err := q.db.Query(ctx, getUserPreferences, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetUserPreferencesRow{}
+	for rows.Next() {
+		var i GetUserPreferencesRow
+		if err := rows.Scan(&i.PrefKey, &i.Value); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listConfigDefinitions = `-- name: ListConfigDefinitions :many
@@ -830,6 +927,88 @@ func (q *Queries) ListConfigurationTemplates(ctx context.Context, arg ListConfig
 	return items, nil
 }
 
+const listSettingDefinitionsByModule = `-- name: ListSettingDefinitionsByModule :many
+SELECT
+    sd.id,
+    sd.setting_key,
+    sd.label,
+    sd.description,
+    sd.value_type,
+    sd.default_value,
+    sd.enum_options,
+    sd.min_value,
+    sd.max_value,
+    sd.is_system,
+    sd.module_id,
+    sd.resource_id,
+    ts.value AS tenant_value,
+    COALESCE(ts.value, sd.default_value) AS effective_value
+FROM setting_definitions sd
+LEFT JOIN tenant_settings ts
+    ON ts.setting_id = sd.id AND ts.tenant_id = $1
+WHERE sd.module_id = (SELECT id FROM modules WHERE slug = $2 AND scope = 'SYSTEM')
+ORDER BY sd.setting_key
+`
+
+type ListSettingDefinitionsByModuleParams struct {
+	TenantID uuid.UUID `json:"tenant_id"`
+	Slug     string    `json:"slug"`
+}
+
+type ListSettingDefinitionsByModuleRow struct {
+	ID             uuid.UUID  `json:"id"`
+	SettingKey     string     `json:"setting_key"`
+	Label          string     `json:"label"`
+	Description    *string    `json:"description"`
+	ValueType      string     `json:"value_type"`
+	DefaultValue   *string    `json:"default_value"`
+	EnumOptions    []byte     `json:"enum_options"`
+	MinValue       *string    `json:"min_value"`
+	MaxValue       *string    `json:"max_value"`
+	IsSystem       bool       `json:"is_system"`
+	ModuleID       *uuid.UUID `json:"module_id"`
+	ResourceID     *uuid.UUID `json:"resource_id"`
+	TenantValue    *string    `json:"tenant_value"`
+	EffectiveValue string     `json:"effective_value"`
+}
+
+// Used by settings screen schema builder — returns all settings for a module
+// with current tenant values so the form can pre-fill.
+func (q *Queries) ListSettingDefinitionsByModule(ctx context.Context, arg ListSettingDefinitionsByModuleParams) ([]*ListSettingDefinitionsByModuleRow, error) {
+	rows, err := q.db.Query(ctx, listSettingDefinitionsByModule, arg.TenantID, arg.Slug)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*ListSettingDefinitionsByModuleRow{}
+	for rows.Next() {
+		var i ListSettingDefinitionsByModuleRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.SettingKey,
+			&i.Label,
+			&i.Description,
+			&i.ValueType,
+			&i.DefaultValue,
+			&i.EnumOptions,
+			&i.MinValue,
+			&i.MaxValue,
+			&i.IsSystem,
+			&i.ModuleID,
+			&i.ResourceID,
+			&i.TenantValue,
+			&i.EffectiveValue,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTenantEffectiveConfigurations = `-- name: ListTenantEffectiveConfigurations :many
 WITH tenant_configs AS (
     SELECT 
@@ -909,6 +1088,58 @@ func (q *Queries) ListTenantEffectiveConfigurations(ctx context.Context, arg Lis
 			&i.ConfigKey,
 			&i.Value,
 			&i.Source,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const resolveAllSettingsForTenant = `-- name: ResolveAllSettingsForTenant :many
+
+SELECT
+    sd.setting_key,
+    sd.value_type,
+    sd.is_system,
+    COALESCE(ts.value, sd.default_value) AS effective_value
+FROM setting_definitions sd
+LEFT JOIN tenant_settings ts
+    ON ts.setting_id = sd.id AND ts.tenant_id = $1
+ORDER BY sd.setting_key
+`
+
+type ResolveAllSettingsForTenantRow struct {
+	SettingKey     string `json:"setting_key"`
+	ValueType      string `json:"value_type"`
+	IsSystem       bool   `json:"is_system"`
+	EffectiveValue string `json:"effective_value"`
+}
+
+// =====================================================================
+// IAM SPEC — setting_definitions + tenant_settings + user_preferences
+// These queries power SettingService.ResolveForTenant and are called
+// once at login; results stored in sessions.configuration.settings/prefs.
+// =====================================================================
+// THE core query. Called once at login. Returns effective value for every setting.
+// Result stored in sessions.configuration.settings for O(1) per-request access.
+func (q *Queries) ResolveAllSettingsForTenant(ctx context.Context, tenantID uuid.UUID) ([]*ResolveAllSettingsForTenantRow, error) {
+	rows, err := q.db.Query(ctx, resolveAllSettingsForTenant, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*ResolveAllSettingsForTenantRow{}
+	for rows.Next() {
+		var i ResolveAllSettingsForTenantRow
+		if err := rows.Scan(
+			&i.SettingKey,
+			&i.ValueType,
+			&i.IsSystem,
+			&i.EffectiveValue,
 		); err != nil {
 			return nil, err
 		}
@@ -1052,6 +1283,25 @@ func (q *Queries) SearchConfigurations(ctx context.Context, arg SearchConfigurat
 		return nil, err
 	}
 	return items, nil
+}
+
+const setUserPreference = `-- name: SetUserPreference :exec
+INSERT INTO user_preferences (user_id, pref_key, value)
+VALUES ($1, $2, $3)
+ON CONFLICT (user_id, pref_key)
+DO UPDATE SET value  = EXCLUDED.value,
+             set_at = NOW()
+`
+
+type SetUserPreferenceParams struct {
+	UserID  uuid.UUID `json:"user_id"`
+	PrefKey string    `json:"pref_key"`
+	Value   string    `json:"value"`
+}
+
+func (q *Queries) SetUserPreference(ctx context.Context, arg SetUserPreferenceParams) error {
+	_, err := q.db.Exec(ctx, setUserPreference, arg.UserID, arg.PrefKey, arg.Value)
+	return err
 }
 
 const updateConfigDefinition = `-- name: UpdateConfigDefinition :one
@@ -1225,5 +1475,33 @@ WHERE tenant_id = current_tenant_id()
 
 func (q *Queries) UpdateTenantTemplateInfo(ctx context.Context, templateID *uuid.UUID) error {
 	_, err := q.db.Exec(ctx, updateTenantTemplateInfo, templateID)
+	return err
+}
+
+const upsertTenantSetting = `-- name: UpsertTenantSetting :exec
+INSERT INTO tenant_settings (tenant_id, setting_id, setting_key, value, set_by)
+SELECT $1, sd.id, sd.setting_key, $2, $3
+FROM   setting_definitions sd
+WHERE  sd.setting_key = $4
+ON CONFLICT (tenant_id, setting_id)
+DO UPDATE SET value    = EXCLUDED.value,
+             set_by   = EXCLUDED.set_by,
+             set_at   = NOW()
+`
+
+type UpsertTenantSettingParams struct {
+	TenantID   uuid.UUID  `json:"tenant_id"`
+	Value      string     `json:"value"`
+	SetBy      *uuid.UUID `json:"set_by"`
+	SettingKey string     `json:"setting_key"`
+}
+
+func (q *Queries) UpsertTenantSetting(ctx context.Context, arg UpsertTenantSettingParams) error {
+	_, err := q.db.Exec(ctx, upsertTenantSetting,
+		arg.TenantID,
+		arg.Value,
+		arg.SetBy,
+		arg.SettingKey,
+	)
 	return err
 }

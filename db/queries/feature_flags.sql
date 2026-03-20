@@ -1,6 +1,75 @@
 -- =====================================================================
---  SIMPLIFIED FEATURE FLAG QUERIES
---  Matching the actual table schema from migrations
+--  FEATURE FLAG QUERIES
+--  Two sections:
+--    1. feature_flag_definitions + tenant_feature_flags  (IAM session pre-computation)
+--    2. feature_flags + tenant_feature_overrides         (legacy per-tenant flags)
+-- =====================================================================
+
+-- =====================================================================
+-- SECTION 1: IAM SPEC — feature_flag_definitions + tenant_feature_flags
+-- =====================================================================
+
+-- name: ResolveAllFlagsForTenant :many
+-- THE core query. Called once at login. Returns effective value for every flag.
+-- Result stored in sessions.configuration.flags for O(1) per-request lookups.
+SELECT
+    ffd.flag_key,
+    ffd.is_system,
+    COALESCE(tff.enabled, ffd.default_value) AS effective_value
+FROM feature_flag_definitions ffd
+LEFT JOIN tenant_feature_flags tff
+    ON tff.flag_id = ffd.id AND tff.tenant_id = $1
+ORDER BY ffd.flag_key;
+
+-- name: GetFlagDefinition :one
+SELECT * FROM feature_flag_definitions
+WHERE flag_key = $1;
+
+-- name: ListFlagDefinitions :many
+SELECT * FROM feature_flag_definitions
+WHERE ($1::boolean IS NULL OR is_system = $1)
+ORDER BY flag_key;
+
+-- name: ListTenantFlagsWithDefinitions :many
+-- Used by the tenant admin flags screen: returns all non-system flags with current tenant values.
+SELECT
+    ffd.id          AS definition_id,
+    ffd.flag_key,
+    ffd.label,
+    ffd.description,
+    ffd.default_value,
+    ffd.is_system,
+    ffd.module_id,
+    ffd.resource_id,
+    tff.id          AS override_id,
+    tff.enabled     AS tenant_enabled,
+    tff.set_by,
+    tff.set_at,
+    COALESCE(tff.enabled, ffd.default_value) AS effective_value
+FROM feature_flag_definitions ffd
+LEFT JOIN tenant_feature_flags tff
+    ON tff.flag_id = ffd.id AND tff.tenant_id = $1
+WHERE ($2::boolean IS NULL OR ffd.is_system = $2)
+ORDER BY ffd.flag_key;
+
+-- name: UpsertTenantFlag :exec
+-- Enable or disable a flag for a specific tenant.
+-- FlagService calls InvalidateSessionsByTenant after this for module/resource flags.
+INSERT INTO tenant_feature_flags (tenant_id, flag_id, flag_key, enabled, set_by)
+SELECT $1, ffd.id, ffd.flag_key, $2, $3
+FROM   feature_flag_definitions ffd
+WHERE  ffd.flag_key = $4
+ON CONFLICT (tenant_id, flag_id)
+DO UPDATE SET enabled = EXCLUDED.enabled,
+             set_by   = EXCLUDED.set_by,
+             set_at   = NOW();
+
+-- name: DeleteTenantFlagOverride :exec
+-- Removes tenant override — flag reverts to default_value.
+DELETE FROM tenant_feature_flags
+WHERE tenant_id = $1
+  AND flag_key  = $2;
+
 -- =====================================================================
 -- name: CreateFeatureFlag :one
 INSERT INTO

@@ -14,13 +14,83 @@ import (
 	"github.com/google/uuid"
 )
 
+const cleanupExpiredSessions = `-- name: CleanupExpiredSessions :exec
+DELETE FROM user_sessions
+WHERE expires_at < NOW()
+`
+
+// Run by background job to purge old rows.
+func (q *Queries) CleanupExpiredSessions(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, cleanupExpiredSessions)
+	return err
+}
+
+const countActiveSessionsByUser = `-- name: CountActiveSessionsByUser :one
+SELECT COUNT(*) FROM user_sessions
+WHERE user_id  = $1
+  AND is_active = TRUE
+  AND expires_at > NOW()
+`
+
+func (q *Queries) CountActiveSessionsByUser(ctx context.Context, userID uuid.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countActiveSessionsByUser, userID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const createAPIKey = `-- name: CreateAPIKey :one
+
+INSERT INTO api_keys (tenant_id, name, key_hash, scopes, created_by, expires_at)
+VALUES (current_tenant_id(), $1, $2, $3, $4, $5)
+RETURNING id, tenant_id, name, key_hash, scopes, created_by, expires_at, revoked_at, last_used_at, created_at
+`
+
+type CreateAPIKeyParams struct {
+	Name      string       `json:"name"`
+	KeyHash   string       `json:"key_hash"`
+	Scopes    []string     `json:"scopes"`
+	CreatedBy uuid.UUID    `json:"created_by"`
+	ExpiresAt sql.NullTime `json:"expires_at"`
+}
+
+// =====================================================================
+// API KEY QUERIES
+// =====================================================================
+func (q *Queries) CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (*ApiKey, error) {
+	row := q.db.QueryRow(ctx, createAPIKey,
+		arg.Name,
+		arg.KeyHash,
+		arg.Scopes,
+		arg.CreatedBy,
+		arg.ExpiresAt,
+	)
+	var i ApiKey
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.Name,
+		&i.KeyHash,
+		&i.Scopes,
+		&i.CreatedBy,
+		&i.ExpiresAt,
+		&i.RevokedAt,
+		&i.LastUsedAt,
+		&i.CreatedAt,
+	)
+	return &i, err
+}
+
 const createSession = `-- name: CreateSession :exec
 INSERT INTO user_sessions (
     tenant_id,
     user_id,
+    user_type,
     session_token,
     permissions,
     principal_id,
+    entity_scope,
+    configuration,
     ip_address,
     user_agent,
     expires_at,
@@ -28,35 +98,47 @@ INSERT INTO user_sessions (
     is_active
 ) VALUES (
     current_tenant_id(),
-    $1, -- user_id
-    $2, -- session_token  (sha256hex of raw token — never store raw)
-    $3, -- permissions    (JSONB map)
-    $4, -- principal_id   (nullable UUID)
-    $5, -- ip_address
-    $6, -- user_agent
-    $7, -- expires_at
-    $8, -- risk_score
+    $1,  -- user_id
+    $2,  -- user_type     (copied from users for SetDBPool without extra join)
+    $3,  -- session_token (sha256hex of raw token — raw token never stored)
+    $4,  -- permissions   (JSONB: {"finance.transactions.read": true, ...})
+    $5,  -- principal_id  (nullable UUID: portal users' business record)
+    $6,  -- entity_scope  (JSONB: pre-computed access scope)
+    $7,  -- configuration (JSONB: flags + settings + prefs)
+    $8,  -- ip_address
+    $9,  -- user_agent
+    $10, -- expires_at
+    $11, -- risk_score
     TRUE
 )
 `
 
 type CreateSessionParams struct {
-	UserID       uuid.UUID   `json:"user_id"`
-	SessionToken string      `json:"session_token"`
-	Permissions  []byte      `json:"permissions"`
-	PrincipalID  *uuid.UUID  `json:"principal_id"`
-	IpAddress    *netip.Addr `json:"ip_address"`
-	UserAgent    *string     `json:"user_agent"`
-	ExpiresAt    time.Time   `json:"expires_at"`
-	RiskScore    *int32      `json:"risk_score"`
+	UserID        uuid.UUID   `json:"user_id"`
+	UserType      *string     `json:"user_type"`
+	SessionToken  string      `json:"session_token"`
+	Permissions   []byte      `json:"permissions"`
+	PrincipalID   *uuid.UUID  `json:"principal_id"`
+	EntityScope   []byte      `json:"entity_scope"`
+	Configuration []byte      `json:"configuration"`
+	IpAddress     *netip.Addr `json:"ip_address"`
+	UserAgent     *string     `json:"user_agent"`
+	ExpiresAt     time.Time   `json:"expires_at"`
+	RiskScore     *int32      `json:"risk_score"`
 }
 
+// Inserts a fully pre-computed session at login.
+// configuration = {"flags":{...},"settings":{...},"prefs":{...}} built from 5 concurrent queries.
+// entity_scope  = {"type":"all"|"subtree"|"entity","entity_id":"uuid","path_prefix":"/.../"}.
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) error {
 	_, err := q.db.Exec(ctx, createSession,
 		arg.UserID,
+		arg.UserType,
 		arg.SessionToken,
 		arg.Permissions,
 		arg.PrincipalID,
+		arg.EntityScope,
+		arg.Configuration,
 		arg.IpAddress,
 		arg.UserAgent,
 		arg.ExpiresAt,
@@ -65,14 +147,55 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) er
 	return err
 }
 
+const getAPIKeyByHash = `-- name: GetAPIKeyByHash :one
+SELECT id, tenant_id, name, key_hash, scopes, created_by, expires_at, revoked_at, last_used_at
+FROM   api_keys
+WHERE  key_hash  = $1
+  AND  revoked_at IS NULL
+  AND  (expires_at IS NULL OR expires_at > NOW())
+`
+
+type GetAPIKeyByHashRow struct {
+	ID         uuid.UUID    `json:"id"`
+	TenantID   uuid.UUID    `json:"tenant_id"`
+	Name       string       `json:"name"`
+	KeyHash    string       `json:"key_hash"`
+	Scopes     []string     `json:"scopes"`
+	CreatedBy  uuid.UUID    `json:"created_by"`
+	ExpiresAt  sql.NullTime `json:"expires_at"`
+	RevokedAt  sql.NullTime `json:"revoked_at"`
+	LastUsedAt sql.NullTime `json:"last_used_at"`
+}
+
+// Called on every API-key-authenticated request. Returns nil if revoked or expired.
+func (q *Queries) GetAPIKeyByHash(ctx context.Context, keyHash string) (*GetAPIKeyByHashRow, error) {
+	row := q.db.QueryRow(ctx, getAPIKeyByHash, keyHash)
+	var i GetAPIKeyByHashRow
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.Name,
+		&i.KeyHash,
+		&i.Scopes,
+		&i.CreatedBy,
+		&i.ExpiresAt,
+		&i.RevokedAt,
+		&i.LastUsedAt,
+	)
+	return &i, err
+}
+
 const getSessionByToken = `-- name: GetSessionByToken :one
 SELECT
     id,
     user_id,
     tenant_id,
+    user_type,
     session_token,
     permissions,
     principal_id,
+    entity_scope,
+    configuration,
     ip_address,
     user_agent,
     expires_at,
@@ -89,9 +212,12 @@ type GetSessionByTokenRow struct {
 	ID             uuid.UUID    `json:"id"`
 	UserID         uuid.UUID    `json:"user_id"`
 	TenantID       uuid.UUID    `json:"tenant_id"`
+	UserType       *string      `json:"user_type"`
 	SessionToken   string       `json:"session_token"`
 	Permissions    []byte       `json:"permissions"`
 	PrincipalID    *uuid.UUID   `json:"principal_id"`
+	EntityScope    []byte       `json:"entity_scope"`
+	Configuration  []byte       `json:"configuration"`
 	IpAddress      *netip.Addr  `json:"ip_address"`
 	UserAgent      *string      `json:"user_agent"`
 	ExpiresAt      time.Time    `json:"expires_at"`
@@ -100,6 +226,7 @@ type GetSessionByTokenRow struct {
 	LastAccessedAt sql.NullTime `json:"last_accessed_at"`
 }
 
+// Validates and returns the full session. Used on every authenticated request.
 func (q *Queries) GetSessionByToken(ctx context.Context, sessionToken string) (*GetSessionByTokenRow, error) {
 	row := q.db.QueryRow(ctx, getSessionByToken, sessionToken)
 	var i GetSessionByTokenRow
@@ -107,9 +234,12 @@ func (q *Queries) GetSessionByToken(ctx context.Context, sessionToken string) (*
 		&i.ID,
 		&i.UserID,
 		&i.TenantID,
+		&i.UserType,
 		&i.SessionToken,
 		&i.Permissions,
 		&i.PrincipalID,
+		&i.EntityScope,
+		&i.Configuration,
 		&i.IpAddress,
 		&i.UserAgent,
 		&i.ExpiresAt,
@@ -126,9 +256,160 @@ SET    is_active = FALSE
 WHERE  session_token = $1
 `
 
+// Logout: immediately deactivates a single session.
 func (q *Queries) InvalidateSession(ctx context.Context, sessionToken string) error {
 	_, err := q.db.Exec(ctx, invalidateSession, sessionToken)
 	return err
+}
+
+const invalidateSessionsByTenant = `-- name: InvalidateSessionsByTenant :exec
+UPDATE user_sessions
+SET    is_active = FALSE
+WHERE  tenant_id = $1
+  AND  is_active = TRUE
+`
+
+// Called when a module flag changes (feature appears/disappears for all users).
+func (q *Queries) InvalidateSessionsByTenant(ctx context.Context, tenantID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, invalidateSessionsByTenant, tenantID)
+	return err
+}
+
+const invalidateSessionsByUser = `-- name: InvalidateSessionsByUser :exec
+UPDATE user_sessions
+SET    is_active = FALSE
+WHERE  user_id = $1
+  AND  is_active = TRUE
+`
+
+// Called on SuspendUser, TerminateEmployee, ChangePassword.
+// Forces fresh permission/flag recomputation at next login.
+func (q *Queries) InvalidateSessionsByUser(ctx context.Context, userID uuid.UUID) error {
+	_, err := q.db.Exec(ctx, invalidateSessionsByUser, userID)
+	return err
+}
+
+const listAPIKeys = `-- name: ListAPIKeys :many
+SELECT id, name, scopes, created_by, expires_at, revoked_at, last_used_at, created_at
+FROM   api_keys
+WHERE  tenant_id = current_tenant_id()
+ORDER  BY created_at DESC
+`
+
+type ListAPIKeysRow struct {
+	ID         uuid.UUID    `json:"id"`
+	Name       string       `json:"name"`
+	Scopes     []string     `json:"scopes"`
+	CreatedBy  uuid.UUID    `json:"created_by"`
+	ExpiresAt  sql.NullTime `json:"expires_at"`
+	RevokedAt  sql.NullTime `json:"revoked_at"`
+	LastUsedAt sql.NullTime `json:"last_used_at"`
+	CreatedAt  time.Time    `json:"created_at"`
+}
+
+func (q *Queries) ListAPIKeys(ctx context.Context) ([]*ListAPIKeysRow, error) {
+	rows, err := q.db.Query(ctx, listAPIKeys)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*ListAPIKeysRow{}
+	for rows.Next() {
+		var i ListAPIKeysRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Scopes,
+			&i.CreatedBy,
+			&i.ExpiresAt,
+			&i.RevokedAt,
+			&i.LastUsedAt,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const revokeAPIKey = `-- name: RevokeAPIKey :exec
+UPDATE api_keys
+SET    revoked_at = NOW()
+WHERE  id        = $1
+  AND  tenant_id = current_tenant_id()
+`
+
+func (q *Queries) RevokeAPIKey(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, revokeAPIKey, id)
+	return err
+}
+
+const touchAPIKeyLastUsed = `-- name: TouchAPIKeyLastUsed :exec
+UPDATE api_keys SET last_used_at = NOW() WHERE id = $1
+`
+
+func (q *Queries) TouchAPIKeyLastUsed(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, touchAPIKeyLastUsed, id)
+	return err
+}
+
+const touchAndGetSession = `-- name: TouchAndGetSession :one
+UPDATE user_sessions
+SET    last_accessed_at = NOW()
+WHERE  session_token = $1
+  AND  is_active = TRUE
+  AND  expires_at > NOW()
+RETURNING
+    id, user_id, tenant_id, user_type, session_token,
+    permissions, principal_id, entity_scope, configuration,
+    ip_address, user_agent, expires_at, risk_score, is_active, last_accessed_at
+`
+
+type TouchAndGetSessionRow struct {
+	ID             uuid.UUID    `json:"id"`
+	UserID         uuid.UUID    `json:"user_id"`
+	TenantID       uuid.UUID    `json:"tenant_id"`
+	UserType       *string      `json:"user_type"`
+	SessionToken   string       `json:"session_token"`
+	Permissions    []byte       `json:"permissions"`
+	PrincipalID    *uuid.UUID   `json:"principal_id"`
+	EntityScope    []byte       `json:"entity_scope"`
+	Configuration  []byte       `json:"configuration"`
+	IpAddress      *netip.Addr  `json:"ip_address"`
+	UserAgent      *string      `json:"user_agent"`
+	ExpiresAt      time.Time    `json:"expires_at"`
+	RiskScore      *int32       `json:"risk_score"`
+	IsActive       *bool        `json:"is_active"`
+	LastAccessedAt sql.NullTime `json:"last_accessed_at"`
+}
+
+// Atomically updates last_accessed_at and returns the session in one round-trip.
+// Use on every request instead of separate GetSession + UpdateLastSeen.
+func (q *Queries) TouchAndGetSession(ctx context.Context, sessionToken string) (*TouchAndGetSessionRow, error) {
+	row := q.db.QueryRow(ctx, touchAndGetSession, sessionToken)
+	var i TouchAndGetSessionRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.TenantID,
+		&i.UserType,
+		&i.SessionToken,
+		&i.Permissions,
+		&i.PrincipalID,
+		&i.EntityScope,
+		&i.Configuration,
+		&i.IpAddress,
+		&i.UserAgent,
+		&i.ExpiresAt,
+		&i.RiskScore,
+		&i.IsActive,
+		&i.LastAccessedAt,
+	)
+	return &i, err
 }
 
 const updateSessionLastSeen = `-- name: UpdateSessionLastSeen :exec
@@ -138,6 +419,7 @@ WHERE  session_token = $1
   AND  is_active = TRUE
 `
 
+// Async background touch — use when you don't need the session returned.
 func (q *Queries) UpdateSessionLastSeen(ctx context.Context, sessionToken string) error {
 	_, err := q.db.Exec(ctx, updateSessionLastSeen, sessionToken)
 	return err

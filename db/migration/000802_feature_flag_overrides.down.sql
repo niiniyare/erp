@@ -42,6 +42,7 @@ DROP INDEX IF EXISTS idx_tenant_overrides_feature_id;
 DROP INDEX IF EXISTS idx_tenant_overrides_tenant;
 
 -- =====================================================
--- DROP TABLE
+-- DROP TABLES
 -- =====================================================
 DROP TABLE IF EXISTS tenant_feature_overrides;
+DROP TABLE IF EXISTS tenant_feature_flags;

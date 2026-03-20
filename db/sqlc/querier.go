@@ -75,6 +75,8 @@ type Querier interface {
 	CleanupExpiredEvaluations(ctx context.Context) error
 	// For future use when we add expires_at to metadata
 	CleanupExpiredFeatureFlags(ctx context.Context) (int64, error)
+	// Run by background job to purge old rows.
+	CleanupExpiredSessions(ctx context.Context) error
 	// =====================================================================
 	// 7. MAINTENANCE AND CLEANUP QUERIES
 	// =====================================================================
@@ -87,6 +89,7 @@ type Querier interface {
 	CountAccountValidationRules(ctx context.Context, arg CountAccountValidationRulesParams) (int64, error)
 	CountAccounts(ctx context.Context, arg CountAccountsParams) (int64, error)
 	CountAccountsWithGroups(ctx context.Context, arg CountAccountsWithGroupsParams) (int64, error)
+	CountActiveSessionsByUser(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountAttributeDefinitions(ctx context.Context, arg CountAttributeDefinitionsParams) (int64, error)
 	CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error)
 	CountEntityStatesByEntity(ctx context.Context, entityID uuid.UUID) (int64, error)
@@ -98,6 +101,10 @@ type Querier interface {
 	CountTenantFeatureFlagsUser(ctx context.Context) (int64, error)
 	CountTenants(ctx context.Context) (int64, error)
 	CountTransactions(ctx context.Context, arg CountTransactionsParams) (int64, error)
+	// =====================================================================
+	// API KEY QUERIES
+	// =====================================================================
+	CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (*ApiKey, error)
 	CreateAccessRequest(ctx context.Context, arg CreateAccessRequestParams) (*AccessRequest, error)
 	// =====================================================================
 	// FINANCE MODULE - CHART OF ACCOUNTS QUERIES
@@ -137,9 +144,6 @@ type Querier interface {
 	// =====================================================================
 	CreateEntityState(ctx context.Context, arg CreateEntityStateParams) (*Entitystate, error)
 	// =====================================================================
-	//  SIMPLIFIED FEATURE FLAG QUERIES
-	//  Matching the actual table schema from migrations
-	// =====================================================================
 	CreateFeatureFlag(ctx context.Context, arg CreateFeatureFlagParams) (*FeatureFlag, error)
 	// Entity Hierarchy Operations
 	CreateHierarchyPath(ctx context.Context, arg CreateHierarchyPathParams) error
@@ -149,6 +153,9 @@ type Querier interface {
 	CreatePolicy(ctx context.Context, arg CreatePolicyParams) (*Policy, error)
 	CreatePolicyEvaluation(ctx context.Context, arg CreatePolicyEvaluationParams) (*PolicyEvaluation, error)
 	CreateResource(ctx context.Context, arg CreateResourceParams) (*Resource, error)
+	// Inserts a fully pre-computed session at login.
+	// configuration = {"flags":{...},"settings":{...},"prefs":{...}} built from 5 concurrent queries.
+	// entity_scope  = {"type":"all"|"subtree"|"entity","entity_id":"uuid","path_prefix":"/.../"}.
 	CreateSession(ctx context.Context, arg CreateSessionParams) error
 	// ==========================================
 	// Template Application Queries
@@ -229,6 +236,10 @@ type Querier interface {
 	// =====================================================
 	DeleteTenantConfiguration(ctx context.Context, arg DeleteTenantConfigurationParams) error
 	DeleteTenantConfigurationSettings(ctx context.Context, configPath []string) error
+	// Removes tenant override — flag reverts to default_value.
+	DeleteTenantFlagOverride(ctx context.Context, arg DeleteTenantFlagOverrideParams) error
+	// Removes tenant override — setting reverts to default_value.
+	DeleteTenantSetting(ctx context.Context, arg DeleteTenantSettingParams) error
 	DeleteTenantUsageStats(ctx context.Context, periodStart time.Time) error
 	DeleteTransactionEntries(ctx context.Context, transactionID uuid.UUID) error
 	DeleteTransactionEntry(ctx context.Context, id uuid.UUID) error
@@ -238,11 +249,14 @@ type Querier interface {
 	// Usage: Removes entity states for old fiscal years or inactive entities
 	// Use case: Data retention policy enforcement, database cleanup
 	DeleteUnusedEntityStates(ctx context.Context, arg DeleteUnusedEntityStatesParams) error
+	DeleteUserPreference(ctx context.Context, arg DeleteUserPreferenceParams) error
 	ExpireAttributeValue(ctx context.Context, arg ExpireAttributeValueParams) error
 	// =====================================================
 	// ADVANCED QUERIES WITH FILTERS
 	// =====================================================
 	FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]*FilterTenantsRow, error)
+	// Called on every API-key-authenticated request. Returns nil if revoked or expired.
+	GetAPIKeyByHash(ctx context.Context, keyHash string) (*GetAPIKeyByHashRow, error)
 	GetAccessRequestByID(ctx context.Context, id uuid.UUID) (*AccessRequest, error)
 	// =====================================================================
 	// ACCOUNT ACTIVITY VIEW QUERIES
@@ -404,6 +418,9 @@ type Querier interface {
 	GetCompleteUserProfile(ctx context.Context, id uuid.UUID) (*GetCompleteUserProfileRow, error)
 	// Get events with specific compliance flags
 	GetComplianceEvents(ctx context.Context, arg GetComplianceEventsParams) ([]*GetComplianceEventsRow, error)
+	// =====================================================================
+	// LEGACY CONFIG QUERIES (configuration_templates, config_definitions, etc.)
+	// =====================================================================
 	// This file contains type-safe SQL queries for the Settings Module
 	// ==========================================
 	// Configuration Definitions Queries
@@ -651,6 +668,7 @@ type Querier interface {
 	GetFinancialStatementBuilderUser(ctx context.Context) ([]*VFinancialStatementBuilder, error)
 	GetFinancialStatementData(ctx context.Context, arg GetFinancialStatementDataParams) ([]*GetFinancialStatementDataRow, error)
 	GetFinancialStatementStructure(ctx context.Context, arg GetFinancialStatementStructureParams) ([]*VFinancialStatementStructure, error)
+	GetFlagDefinition(ctx context.Context, flagKey string) (*FeatureFlagDefinition, error)
 	GetFullPasswordPolicy(ctx context.Context) ([]byte, error)
 	GetGroupBalanceSummary(ctx context.Context, arg GetGroupBalanceSummaryParams) ([]*GetGroupBalanceSummaryRow, error)
 	GetGroupsByCategory(ctx context.Context, arg GetGroupsByCategoryParams) ([]*FinanceAccountGroup, error)
@@ -673,6 +691,7 @@ type Querier interface {
 	// Get metadata about materialized views
 	GetMaterializedViewMetadata(ctx context.Context) ([]*GetMaterializedViewMetadataRow, error)
 	GetMaxSequenceByEntityAndKey(ctx context.Context, arg GetMaxSequenceByEntityAndKeyParams) (interface{}, error)
+	GetModuleBySlug(ctx context.Context, slug string) (*Module, error)
 	// Ensures positive sequence number
 	// =====================================================================
 	//  BULK OPERATIONS QUERIES
@@ -777,7 +796,9 @@ type Querier interface {
 	// Usage: Identifies missing sequence numbers (gaps in numbering)
 	// Use case: Audit compliance, finding deleted/voided documents, sequence integrity checks
 	GetSequenceGaps(ctx context.Context, arg GetSequenceGapsParams) ([]pgtype.Numeric, error)
+	// Validates and returns the full session. Used on every authenticated request.
 	GetSessionByToken(ctx context.Context, sessionToken string) (*GetSessionByTokenRow, error)
+	GetSettingDefinition(ctx context.Context, settingKey string) (*SettingDefinition, error)
 	// Find similar incident patterns for threat intelligence
 	GetSimilarIncidentPatterns(ctx context.Context, arg GetSimilarIncidentPatternsParams) ([]*GetSimilarIncidentPatternsRow, error)
 	GetSpecificSetting(ctx context.Context, key string) (interface{}, error)
@@ -867,6 +888,8 @@ type Querier interface {
 	GetUserFailedAttempts(ctx context.Context, id uuid.UUID) (*GetUserFailedAttemptsRow, error)
 	GetUserNotificationPreferences(ctx context.Context, userID uuid.UUID) (*NotificationPreference, error)
 	GetUserPasswordByID(ctx context.Context, id uuid.UUID) (*string, error)
+	// Called once at login — result stored in sessions.configuration.prefs.
+	GetUserPreferences(ctx context.Context, userID uuid.UUID) ([]*GetUserPreferencesRow, error)
 	// Get risk profile for a user
 	GetUserRiskProfile(ctx context.Context, arg GetUserRiskProfileParams) (*GetUserRiskProfileRow, error)
 	// Get audit events for a specific session
@@ -884,9 +907,16 @@ type Querier interface {
 	InvalidateAllEvaluations(ctx context.Context) error
 	InvalidatePolicyEvaluations(ctx context.Context, dollar_1 []uuid.UUID) error
 	InvalidateResourceEvaluations(ctx context.Context, arg InvalidateResourceEvaluationsParams) error
+	// Logout: immediately deactivates a single session.
 	InvalidateSession(ctx context.Context, sessionToken string) error
+	// Called when a module flag changes (feature appears/disappears for all users).
+	InvalidateSessionsByTenant(ctx context.Context, tenantID uuid.UUID) error
+	// Called on SuspendUser, TerminateEmployee, ChangePassword.
+	// Forces fresh permission/flag recomputation at next login.
+	InvalidateSessionsByUser(ctx context.Context, userID uuid.UUID) error
 	InvalidateUserEvaluations(ctx context.Context, userID uuid.UUID) error
 	IsEntityAncestor(ctx context.Context, arg IsEntityAncestorParams) (bool, error)
+	ListAPIKeys(ctx context.Context) ([]*ListAPIKeysRow, error)
 	ListAccessRequestsByStatus(ctx context.Context, arg ListAccessRequestsByStatusParams) ([]*AccessRequest, error)
 	ListAccountBalances(ctx context.Context, arg ListAccountBalancesParams) ([]*FinanceAccountBalance, error)
 	// List account groups with filtering and pagination
@@ -899,12 +929,26 @@ type Querier interface {
 	ListActiveFeatureFlagsAdmin(ctx context.Context, tenantID uuid.UUID) ([]*ListActiveFeatureFlagsAdminRow, error)
 	ListActiveFeatureFlagsUser(ctx context.Context) ([]*ListActiveFeatureFlagsUserRow, error)
 	ListActivePolicies(ctx context.Context) ([]*Policy, error)
+	// Returns roles that are currently active and not expired — used by permission computation.
+	ListActiveRoleAssignments(ctx context.Context, arg ListActiveRoleAssignmentsParams) ([]*ListActiveRoleAssignmentsRow, error)
+	ListActiveSystemModules(ctx context.Context) ([]*Module, error)
+	// Audit trail: all assignments including revoked/expired.
+	ListAssignmentHistory(ctx context.Context, arg ListAssignmentHistoryParams) ([]*ListAssignmentHistoryRow, error)
 	// Attribute Definition Listing and Filtering
 	ListAttributeDefinitions(ctx context.Context, arg ListAttributeDefinitionsParams) ([]*AttributeDefinition, error)
 	ListAttributeDefinitionsByCategory(ctx context.Context, category string) ([]*AttributeDefinition, error)
 	ListConfigDefinitions(ctx context.Context, moduleName *string) ([]*ConfigDefinition, error)
 	// Returns SYSTEM templates + current tenant's TENANT templates (RLS enforces the TENANT filter).
 	ListConfigurationTemplates(ctx context.Context, arg ListConfigurationTemplatesParams) ([]*ConfigurationTemplate, error)
+	// ============================================================
+	// NAV QUERY — powers BootService.BuildAppShell
+	// Returns only modules+resources that are enabled for the tenant
+	// (flag = true or no override and default_value = true).
+	// Permission filter is applied in Go after this returns.
+	// ============================================================
+	// Module flag: must be enabled for this tenant
+	// Resource flag: must be enabled (or have no override and default true)
+	ListEnabledModulesWithResources(ctx context.Context, tenantID uuid.UUID) ([]*ListEnabledModulesWithResourcesRow, error)
 	// Entity Listing and Filtering
 	ListEntities(ctx context.Context) ([]*Entity, error)
 	ListEntitiesByType(ctx context.Context, type_ string) ([]*Entity, error)
@@ -916,14 +960,24 @@ type Querier interface {
 	ListEntityStatesByEntityAndKey(ctx context.Context, arg ListEntityStatesByEntityAndKeyParams) ([]*Entitystate, error)
 	ListEntityStatesByEntityUnit(ctx context.Context, entityUnitID uuid.UUID) ([]*Entitystate, error)
 	ListEntityStatesByFiscalYear(ctx context.Context, fiscalYear int16) ([]*Entitystate, error)
+	// Returns all entities within the subtree rooted at the given path prefix.
+	// Used by business repos for subtree-scoped data queries.
+	ListEntitySubtree(ctx context.Context, dollar_1 *string) ([]*ListEntitySubtreeRow, error)
 	ListExpiredActiveRoleNames(ctx context.Context, arg ListExpiredActiveRoleNamesParams) ([]string, error)
 	ListFeatureFlags(ctx context.Context, arg ListFeatureFlagsParams) ([]*FeatureFlag, error)
+	ListFlagDefinitions(ctx context.Context, dollar_1 bool) ([]*FeatureFlagDefinition, error)
+	ListModules(ctx context.Context) ([]*Module, error)
 	// Policy Listing and Filtering
 	ListPolicies(ctx context.Context) ([]*Policy, error)
 	ListPoliciesByCategory(ctx context.Context, category *string) ([]*Policy, error)
 	ListPoliciesByEffect(ctx context.Context, effect *string) ([]*Policy, error)
 	ListRoleAssignments(ctx context.Context, arg ListRoleAssignmentsParams) ([]*RoleAssignment, error)
+	// Used by settings screen schema builder — returns all settings for a module
+	// with current tenant values so the form can pre-fill.
+	ListSettingDefinitionsByModule(ctx context.Context, arg ListSettingDefinitionsByModuleParams) ([]*ListSettingDefinitionsByModuleRow, error)
 	ListTenantEffectiveConfigurations(ctx context.Context, arg ListTenantEffectiveConfigurationsParams) ([]*ListTenantEffectiveConfigurationsRow, error)
+	// Used by the tenant admin flags screen: returns all non-system flags with current tenant values.
+	ListTenantFlagsWithDefinitions(ctx context.Context, arg ListTenantFlagsWithDefinitionsParams) ([]*ListTenantFlagsWithDefinitionsRow, error)
 	ListTenants(ctx context.Context, arg ListTenantsParams) ([]*Tenant, error)
 	ListTransactionEntries(ctx context.Context, transactionID uuid.UUID) ([]*FinanceTransactionEntry, error)
 	ListTransactions(ctx context.Context, arg ListTransactionsParams) ([]*FinanceTransaction, error)
@@ -956,6 +1010,30 @@ type Querier interface {
 	ResetAllEntitySequences(ctx context.Context, arg ResetAllEntitySequencesParams) error
 	ResetSequenceNumber(ctx context.Context, arg ResetSequenceNumberParams) (*Entitystate, error)
 	ResetTenantContext(ctx context.Context) error
+	// =====================================================================
+	//  FEATURE FLAG QUERIES
+	//  Two sections:
+	//    1. feature_flag_definitions + tenant_feature_flags  (IAM session pre-computation)
+	//    2. feature_flags + tenant_feature_overrides         (legacy per-tenant flags)
+	// =====================================================================
+	// =====================================================================
+	// SECTION 1: IAM SPEC — feature_flag_definitions + tenant_feature_flags
+	// =====================================================================
+	// THE core query. Called once at login. Returns effective value for every flag.
+	// Result stored in sessions.configuration.flags for O(1) per-request lookups.
+	ResolveAllFlagsForTenant(ctx context.Context, tenantID uuid.UUID) ([]*ResolveAllFlagsForTenantRow, error)
+	// =====================================================================
+	// IAM SPEC — setting_definitions + tenant_settings + user_preferences
+	// These queries power SettingService.ResolveForTenant and are called
+	// once at login; results stored in sessions.configuration.settings/prefs.
+	// =====================================================================
+	// THE core query. Called once at login. Returns effective value for every setting.
+	// Result stored in sessions.configuration.settings for O(1) per-request access.
+	ResolveAllSettingsForTenant(ctx context.Context, tenantID uuid.UUID) ([]*ResolveAllSettingsForTenantRow, error)
+	// Called once at login to build EntityScope for session pre-computation.
+	// Returns the entity with its path and level so the service layer can
+	// determine scope type: level=1 → "all", leaf (no children) → "entity", else → "subtree".
+	ResolveEntityScope(ctx context.Context, argUuid uuid.UUID) (*ResolveEntityScopeRow, error)
 	// =====================================================
 	// REPOSITORY INTERFACE REQUIRED QUERIES
 	// =====================================================
@@ -964,6 +1042,9 @@ type Querier interface {
 	RestoreEntity(ctx context.Context, argUuid uuid.UUID) error
 	RestoreSoftDeletedUser(ctx context.Context, id uuid.UUID) error
 	ReverseTransaction(ctx context.Context, arg ReverseTransactionParams) (*FinanceTransaction, error)
+	RevokeAPIKey(ctx context.Context, id uuid.UUID) error
+	// Explicit revocation — sets revoked_at + reason, distinct from expiry.
+	RevokeRoleAssignment(ctx context.Context, arg RevokeRoleAssignmentParams) error
 	RevokeUserRole(ctx context.Context, arg RevokeUserRoleParams) error
 	SearchAccountGroups(ctx context.Context, arg SearchAccountGroupsParams) ([]*FinanceAccountGroup, error)
 	SearchAccounts(ctx context.Context, arg SearchAccountsParams) ([]*FinanceAccount, error)
@@ -991,6 +1072,7 @@ type Querier interface {
 	// TENANT CONTEXT AND LIMITS QUERIES
 	// =====================================================
 	SetTenantContext(ctx context.Context, pTenantID uuid.UUID) error
+	SetUserPreference(ctx context.Context, arg SetUserPreferenceParams) error
 	SoftDeleteAccount(ctx context.Context, arg SoftDeleteAccountParams) (int64, error)
 	// Soft delete account group with proper tenant/entity isolation
 	SoftDeleteAccountGroup(ctx context.Context, arg SoftDeleteAccountGroupParams) error
@@ -1008,6 +1090,10 @@ type Querier interface {
 	TestViewPerformanceAdmin(ctx context.Context, tenantID uuid.UUID) error
 	// Test query for view performance with user access
 	TestViewPerformanceUser(ctx context.Context) error
+	TouchAPIKeyLastUsed(ctx context.Context, id uuid.UUID) error
+	// Atomically updates last_accessed_at and returns the session in one round-trip.
+	// Use on every request instead of separate GetSession + UpdateLastSeen.
+	TouchAndGetSession(ctx context.Context, sessionToken string) (*TouchAndGetSessionRow, error)
 	UnlockUser(ctx context.Context, id uuid.UUID) error
 	UpdateAccessRequestStatus(ctx context.Context, arg UpdateAccessRequestStatusParams) (*AccessRequest, error)
 	UpdateAccount(ctx context.Context, arg UpdateAccountParams) (*FinanceAccount, error)
@@ -1025,6 +1111,8 @@ type Querier interface {
 	UpdateDefaultSettings(ctx context.Context, settings []byte) error
 	UpdateEntity(ctx context.Context, arg UpdateEntityParams) (*Entity, error)
 	UpdateEntityConfiguration(ctx context.Context, arg UpdateEntityConfigurationParams) error
+	// Called by app after insert/reparent to maintain the materialized path.
+	UpdateEntityPath(ctx context.Context, arg UpdateEntityPathParams) error
 	// =====================================================================
 	//  NEW SEQUENCE MANAGEMENT QUERIES
 	// =====================================================================
@@ -1051,6 +1139,7 @@ type Querier interface {
 	UpdatePolicy(ctx context.Context, arg UpdatePolicyParams) (*Policy, error)
 	UpdatePolicyStatus(ctx context.Context, arg UpdatePolicyStatusParams) error
 	UpdateRecurringTransactionNextDate(ctx context.Context, arg UpdateRecurringTransactionNextDateParams) error
+	// Async background touch — use when you don't need the session returned.
 	UpdateSessionLastSeen(ctx context.Context, sessionToken string) error
 	UpdateSpecificPasswordPolicyField(ctx context.Context, arg UpdateSpecificPasswordPolicyFieldParams) error
 	UpdateSpecificSetting(ctx context.Context, arg UpdateSpecificSettingParams) error
@@ -1098,6 +1187,12 @@ type Querier interface {
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpsertAccountBalance(ctx context.Context, arg UpsertAccountBalanceParams) (*FinanceAccountBalance, error)
 	UpsertRoleAssignment(ctx context.Context, arg UpsertRoleAssignmentParams) error
+	// Enable or disable a flag for a specific tenant.
+	// FlagService calls InvalidateSessionsByTenant after this for module/resource flags.
+	UpsertTenantFlag(ctx context.Context, arg UpsertTenantFlagParams) error
+	UpsertTenantSetting(ctx context.Context, arg UpsertTenantSettingParams) error
+	// Guard 3 delegation check: does the granter hold this role?
+	UserHasRole(ctx context.Context, arg UserHasRoleParams) (bool, error)
 	// Validate if account group code is unique within entity/tenant
 	ValidateAccountGroupCode(ctx context.Context, arg ValidateAccountGroupCodeParams) (bool, error)
 	ValidateAccountHierarchy(ctx context.Context, parentAccountID *uuid.UUID) (bool, error)

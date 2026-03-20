@@ -1,6 +1,14 @@
--- Rollback the feature_flags table creation
+-- Rollback: feature_flags + feature_flag_definitions + auto-seed triggers
 -- =====================================================
--- DROP TRIGGERS
+-- DROP TRIGGERS (auto-seed)
+-- =====================================================
+DROP TRIGGER IF EXISTS trg_seed_resource_flag ON resources;
+DROP TRIGGER IF EXISTS trg_seed_module_flag   ON modules;
+DROP FUNCTION IF EXISTS seed_resource_flag_definition();
+DROP FUNCTION IF EXISTS seed_module_flag_definition();
+
+-- =====================================================
+-- DROP TRIGGERS (updated_at)
 -- =====================================================
 DROP TRIGGER IF EXISTS update_feature_flags_updated_at ON feature_flags;
 
@@ -35,6 +43,7 @@ DROP INDEX IF EXISTS idx_feature_flags_tenant_name;
 DROP INDEX IF EXISTS idx_feature_flags_tenant;
 
 -- =====================================================
--- DROP TABLE
+-- DROP TABLES
 -- =====================================================
 DROP TABLE IF EXISTS feature_flags;
+DROP TABLE IF EXISTS feature_flag_definitions;

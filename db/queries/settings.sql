@@ -1,3 +1,89 @@
+-- =====================================================================
+-- IAM SPEC — setting_definitions + tenant_settings + user_preferences
+-- These queries power SettingService.ResolveForTenant and are called
+-- once at login; results stored in sessions.configuration.settings/prefs.
+-- =====================================================================
+
+-- name: ResolveAllSettingsForTenant :many
+-- THE core query. Called once at login. Returns effective value for every setting.
+-- Result stored in sessions.configuration.settings for O(1) per-request access.
+SELECT
+    sd.setting_key,
+    sd.value_type,
+    sd.is_system,
+    COALESCE(ts.value, sd.default_value) AS effective_value
+FROM setting_definitions sd
+LEFT JOIN tenant_settings ts
+    ON ts.setting_id = sd.id AND ts.tenant_id = $1
+ORDER BY sd.setting_key;
+
+-- name: GetSettingDefinition :one
+SELECT * FROM setting_definitions
+WHERE setting_key = $1;
+
+-- name: ListSettingDefinitionsByModule :many
+-- Used by settings screen schema builder — returns all settings for a module
+-- with current tenant values so the form can pre-fill.
+SELECT
+    sd.id,
+    sd.setting_key,
+    sd.label,
+    sd.description,
+    sd.value_type,
+    sd.default_value,
+    sd.enum_options,
+    sd.min_value,
+    sd.max_value,
+    sd.is_system,
+    sd.module_id,
+    sd.resource_id,
+    ts.value AS tenant_value,
+    COALESCE(ts.value, sd.default_value) AS effective_value
+FROM setting_definitions sd
+LEFT JOIN tenant_settings ts
+    ON ts.setting_id = sd.id AND ts.tenant_id = $1
+WHERE sd.module_id = (SELECT id FROM modules WHERE slug = $2 AND scope = 'SYSTEM')
+ORDER BY sd.setting_key;
+
+-- name: UpsertTenantSetting :exec
+INSERT INTO tenant_settings (tenant_id, setting_id, setting_key, value, set_by)
+SELECT $1, sd.id, sd.setting_key, $2, $3
+FROM   setting_definitions sd
+WHERE  sd.setting_key = $4
+ON CONFLICT (tenant_id, setting_id)
+DO UPDATE SET value    = EXCLUDED.value,
+             set_by   = EXCLUDED.set_by,
+             set_at   = NOW();
+
+-- name: DeleteTenantSetting :exec
+-- Removes tenant override — setting reverts to default_value.
+DELETE FROM tenant_settings
+WHERE tenant_id   = $1
+  AND setting_key = $2;
+
+-- name: GetUserPreferences :many
+-- Called once at login — result stored in sessions.configuration.prefs.
+SELECT pref_key, value
+FROM   user_preferences
+WHERE  user_id = $1
+ORDER  BY pref_key;
+
+-- name: SetUserPreference :exec
+INSERT INTO user_preferences (user_id, pref_key, value)
+VALUES ($1, $2, $3)
+ON CONFLICT (user_id, pref_key)
+DO UPDATE SET value  = EXCLUDED.value,
+             set_at = NOW();
+
+-- name: DeleteUserPreference :exec
+DELETE FROM user_preferences
+WHERE user_id  = $1
+  AND pref_key = $2;
+
+-- =====================================================================
+-- LEGACY CONFIG QUERIES (configuration_templates, config_definitions, etc.)
+-- =====================================================================
+
 -- This file contains type-safe SQL queries for the Settings Module
 
 -- ==========================================

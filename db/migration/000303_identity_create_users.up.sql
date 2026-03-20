@@ -23,6 +23,8 @@ CREATE TABLE users (
     NULL,
     email VARCHAR(255) NOT NULL,
     username VARCHAR(100) NOT NULL,
+    display_name VARCHAR(200),             -- human-readable name stored in ResolvedSession
+    principal_id UUID,                     -- portal users: business record they represent; FK added after users table exists
     password_hash VARCHAR(255),
     user_type VARCHAR(20) NOT NULL DEFAULT 'INTERNAL' CHECK (
       user_type IN (
@@ -76,6 +78,10 @@ CREATE TABLE users (
 -- Add table and column comments
 COMMENT ON TABLE users IS 'System user accounts with authentication, authorization, and session management. Can be linked to persons/employees or exist independently for service accounts.';
 
+-- Self-referencing FK for principal_id (portal users pointing to their own user record or another)
+ALTER TABLE users ADD CONSTRAINT users_principal_id_fk
+    FOREIGN KEY (principal_id) REFERENCES users(id) ON DELETE SET NULL;
+
 COMMENT ON COLUMN users.id IS 'UUID primary key for the user record';
 
 COMMENT ON COLUMN users.tenant_id IS 'Foreign key to tenants table for multi-tenant isolation';
@@ -84,7 +90,9 @@ COMMENT ON COLUMN users.entity_id IS 'Foreign key to entities table for organiza
 
 COMMENT ON COLUMN users.person_id IS 'Optional foreign key to persons table (NULL for service accounts)';
 
-COMMENT ON COLUMN users.employee_id IS 'Optional foreign key to employees table (NULL for non-employee users)';
+COMMENT ON COLUMN users.employee_id   IS 'Optional foreign key to employees table (NULL for non-employee users)';
+COMMENT ON COLUMN users.display_name  IS 'Human-readable name shown in UI and stored in ResolvedSession.DisplayName at login. Falls back to username if not set.';
+COMMENT ON COLUMN users.principal_id  IS 'For portal users (CUSTOMER/VENDOR/PARTNER): UUID of the business record they represent. Always read from session — never from request params. NULL for INTERNAL/SYSADMIN accounts.';
 
 COMMENT ON COLUMN users.username IS 'Unique username for login (optional, email can be used instead)';
 
@@ -174,6 +182,11 @@ WHERE
 CREATE INDEX idx_users_mfa ON users(mfa_enabled)
 WHERE
   mfa_enabled = TRUE;
+
+-- Index for portal user principal lookups
+CREATE INDEX idx_users_principal ON users(principal_id)
+WHERE
+  principal_id IS NOT NULL;
 
 -- Index for soft delete queries
 CREATE INDEX idx_users_deleted_at ON users(deleted_at)
