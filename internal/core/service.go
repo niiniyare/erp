@@ -13,12 +13,14 @@ import (
 	"github.com/niiniyare/erp/internal/core/access"
 	"github.com/niiniyare/erp/internal/core/analytics"
 	"github.com/niiniyare/erp/internal/core/audit"
+	"github.com/niiniyare/erp/internal/core/authz"
 	"github.com/niiniyare/erp/internal/core/entity"
 	"github.com/niiniyare/erp/internal/core/featureflag"
 	financeRepo "github.com/niiniyare/erp/internal/core/finance/repository"
 	financeService "github.com/niiniyare/erp/internal/core/finance/service"
 	"github.com/niiniyare/erp/internal/core/iam"
 	"github.com/niiniyare/erp/internal/core/identity"
+	"github.com/niiniyare/erp/internal/core/identity/session"
 	"github.com/niiniyare/erp/internal/core/notification"
 	"github.com/niiniyare/erp/internal/core/settings"
 	"github.com/niiniyare/erp/internal/core/tenant"
@@ -59,15 +61,17 @@ func (d Dependencies) Validate() error {
 // ServiceContainer holds all initialized core services
 type ServiceContainer struct {
 	// Core Infrastructure Services
-	TenantService             tenant.Service
-	EntityService             entity.Service
-	IdentityService           identity.Service
+	TenantService   tenant.Service
+	EntityService   entity.Service
+	IdentityService identity.Service
 
 	// Security & Access Control
-	ABACService   abac.Service
-	IAMService    iam.Service
-	AccessService access.Service
-	AuditService  audit.Service
+	ABACService    abac.Service
+	AuthzService   authz.Service
+	IAMService     iam.Service
+	AccessService  access.Service
+	AuditService   audit.Service
+	SessionService session.Service
 
 	// Feature Management
 	FeatureFlagService      featureflag.Service
@@ -209,6 +213,31 @@ func (sc *ServiceContainer) initializeSecurityServices(ctx context.Context) erro
 		sc.deps.Tracing,
 	)
 
+	// Authz Service - Casbin-backed role/policy engine
+	authzSvc, err := authz.New(authz.Config{
+		Store:   sc.deps.Store,
+		Cache:   sc.deps.Cache,
+		Logger:  sc.deps.Logger,
+		Metrics: sc.deps.Metrics,
+		Tracer:  sc.deps.Tracing,
+	})
+	if err != nil {
+		return fmt.Errorf("authz service init: %w", err)
+	}
+	sc.AuthzService = authzSvc
+
+	// Session Service - Login / ValidateSession / Logout
+	sessionRepo := session.NewRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
+	sc.SessionService = session.New(
+		sc.IdentityService,
+		sc.AuthzService,
+		sessionRepo,
+		sc.deps.Cache,
+		sc.deps.Tracing,
+		sc.deps.Metrics,
+		sc.deps.Logger,
+	)
+
 	// IAM Service - Identity and Access Management (placeholder for now)
 	// TODO: Initialize IAM service properly when all dependencies are ready
 	// sc.IAMService = iam.NewService(...)
@@ -218,7 +247,7 @@ func (sc *ServiceContainer) initializeSecurityServices(ctx context.Context) erro
 	// sc.AccessService = access.NewService()
 
 	sc.logger.Info("✅ Security services initialized", logger.Fields{
-		"services": []string{"abac", "iam", "access"},
+		"services": []string{"abac", "authz", "session", "iam", "access"},
 	})
 
 	return nil
@@ -413,6 +442,14 @@ func (sc *ServiceContainer) GetIdentityService() identity.Service {
 
 func (sc *ServiceContainer) GetABACService() abac.Service {
 	return sc.ABACService
+}
+
+func (sc *ServiceContainer) GetAuthzService() authz.Service {
+	return sc.AuthzService
+}
+
+func (sc *ServiceContainer) GetSessionService() session.Service {
+	return sc.SessionService
 }
 
 func (sc *ServiceContainer) GetIAMService() iam.Service {

@@ -14,9 +14,13 @@ import (
 	db "github.com/niiniyare/erp/db/sqlc"
 	"github.com/niiniyare/erp/internal/api/handlers"
 	"github.com/niiniyare/erp/internal/api/middleware"
+	"github.com/niiniyare/erp/internal/core/authz"
 	financeService "github.com/niiniyare/erp/internal/core/finance/service"
 	"github.com/niiniyare/erp/internal/core/iam"
+	"github.com/niiniyare/erp/internal/core/identity"
+	"github.com/niiniyare/erp/internal/core/identity/session"
 	"github.com/niiniyare/erp/internal/core/tenant"
+	"github.com/niiniyare/erp/internal/platform/cache"
 	"github.com/niiniyare/erp/internal/platform/config"
 	"github.com/niiniyare/erp/internal/shared/logger"
 	"github.com/niiniyare/erp/internal/shared/metrics"
@@ -129,29 +133,74 @@ func NewTenantMiddleware(config middleware.TenantMiddlewareConfig) fiber.Handler
 }
 
 // ============================================================================
+// IDENTITY / AUTHZ / SESSION PROVIDERS
+// ============================================================================
+
+// NewIdentityRepository constructs the identity repository.
+func NewIdentityRepository(store db.Store, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) identity.Repository {
+	return identity.NewRepository(store, cacheSvc, tracer, m)
+}
+
+// NewIdentityService constructs the identity service.
+func NewIdentityService(repo identity.Repository, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) identity.Service {
+	return identity.NewService(repo, cacheSvc, tracer, m)
+}
+
+// NewAuthzService constructs the Casbin-backed authorization service.
+func NewAuthzService(store db.Store, cacheSvc cache.Service, log logger.Logger, m metrics.MetricsProvider, tracer tracing.Service) (authz.Service, error) {
+	return authz.New(authz.Config{
+		Store:   store,
+		Cache:   cacheSvc,
+		Logger:  log,
+		Metrics: m,
+		Tracer:  tracer,
+	})
+}
+
+// NewSessionRepository constructs the session repository.
+func NewSessionRepository(store db.Store, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) session.Repository {
+	return session.NewRepository(store, cacheSvc, tracer, m)
+}
+
+// NewSessionService constructs the session service.
+func NewSessionService(
+	identitySvc identity.Service,
+	authzSvc authz.Service,
+	repo session.Repository,
+	cacheSvc cache.Service,
+	tracer tracing.Service,
+	m metrics.MetricsProvider,
+	log logger.Logger,
+) session.Service {
+	return session.New(identitySvc, authzSvc, repo, cacheSvc, tracer, m, log)
+}
+
+// ============================================================================
 // HANDLER PROVIDERS
 // ============================================================================
 
 // NewHandlerDependencies creates handler dependencies
 func NewHandlerDependencies(
 	log logger.Logger,
-	metrics metrics.MetricsProvider,
+	m metrics.MetricsProvider,
 	tracer tracing.Service,
 	tenantService tenant.Service,
 	iamService iam.Service,
+	sessionSvc session.Service,
 	financeServices *financeService.Services,
 	tenantMiddleware fiber.Handler,
 ) *handlers.Dependencies {
+	authCfg := middleware.DefaultAuthConfig(sessionSvc)
 	return &handlers.Dependencies{
 		Logger:           log,
-		Metrics:          metrics,
+		Metrics:          m,
 		Tracer:           tracer,
 		TenantService:    tenantService,
-		UserService:      iamService.Authentication(), // Get authn service from IAM
+		UserService:      iamService.Authentication(),
 		FinanceServices:  financeServices,
 		TenantMiddleware: tenantMiddleware,
-		// TODO: Add SecurityManager when implemented
-		// TODO: Add health config when implemented
+		SessionService:   sessionSvc,
+		AuthConfig:       &authCfg,
 	}
 }
 

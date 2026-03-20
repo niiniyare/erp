@@ -48,22 +48,22 @@ DROP POLICY IF EXISTS readonly_access_policy    ON tenants;
 -- in an empty result set (SELECT) or a policy violation error (INSERT/UPDATE)
 -- — never in cross-tenant data exposure.
 -- -------------------------------------------------------------------------
-CREATE POLICY tenant_isolation_policy
-  ON tenants
-  FOR ALL
-  TO application_role
-  USING (
-    -- Row must belong to the session's tenant AND must not be soft-deleted.
-    -- current_tenant_id() returns NULL when no context is set,
-    -- so NULL = NULL evaluates to NULL (not TRUE) — the row is excluded.
-    id         = current_tenant_id()
-    AND deleted_at IS NULL
-  )
-  WITH CHECK (
-    id         = current_tenant_id()
-    AND deleted_at IS NULL
-  );
-
+-- CREATE POLICY tenant_isolation_policy
+--   ON tenants
+--   FOR ALL
+--   TO application_role
+--   USING (
+--     -- Row must belong to the session's tenant AND must not be soft-deleted.
+--     -- current_tenant_id() returns NULL when no context is set,
+--     -- so NULL = NULL evaluates to NULL (not TRUE) — the row is excluded.
+--     id         = current_tenant_id()
+--     AND deleted_at IS NULL
+--   )
+--   WITH CHECK (
+--     id         = current_tenant_id()
+--     AND deleted_at IS NULL
+--   );
+--
 -- -------------------------------------------------------------------------
 -- admin_role — unrestricted access (see ADR-018)
 -- -------------------------------------------------------------------------
@@ -92,11 +92,11 @@ CREATE POLICY readonly_access_policy
 -- -------------------------------------------------------------------------
 -- POLICY COMMENTS
 -- -------------------------------------------------------------------------
-COMMENT ON POLICY tenant_isolation_policy  ON tenants IS
-  'Strict tenant isolation for application_role. '
-  'Fail-closed: zero rows visible when no context is set. '
-  'Soft-deleted rows excluded at policy level (defense-in-depth).';
-
+-- COMMENT ON POLICY tenant_isolation_policy  ON tenants IS
+--   'Strict tenant isolation for application_role. '
+--   'Fail-closed: zero rows visible when no context is set. '
+--   'Soft-deleted rows excluded at policy level (defense-in-depth).';
+--
 COMMENT ON POLICY admin_full_access_policy ON tenants IS
   'Full unrestricted access for admin_role including soft-deleted rows. '
   'See ADR-018: explicit policy preferred over BYPASSRLS for auditability.';

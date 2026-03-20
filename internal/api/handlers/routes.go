@@ -11,7 +11,7 @@ import (
 	tenantHandler "github.com/niiniyare/erp/internal/api/handlers/tenant"
 	uiHandler "github.com/niiniyare/erp/internal/api/handlers/ui"
 	userHandler "github.com/niiniyare/erp/internal/api/handlers/user"
-	authHandler "github.com/niiniyare/erp/internal/api/handler"
+	authHandler "github.com/niiniyare/erp/internal/api/handlers/auth"
 	middlewarePkg "github.com/niiniyare/erp/internal/api/middleware"
 	financeService "github.com/niiniyare/erp/internal/core/finance/service"
 	"github.com/niiniyare/erp/internal/core/iam/authn"

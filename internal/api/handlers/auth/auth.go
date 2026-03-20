@@ -1,6 +1,7 @@
-package handler
+package auth
 
 import (
+	stderrors "errors"
 	"net/http"
 	"strings"
 	"time"
@@ -105,6 +106,14 @@ func LogoutHandler(svc session.Service, cookieName string) fiber.Handler {
 // mapAuthError converts identity/session errors to appropriate HTTP responses.
 // We deliberately use generic messages for auth failures to prevent oracle attacks.
 func mapAuthError(c *fiber.Ctx, err error) error {
+	// 423 Locked for brute-force lockouts (checked before generic ToHTTPError
+	// because ErrAccountLocked is registered as 403 in the shared errors package).
+	if stderrors.Is(err, sharedErrors.ErrAccountLocked) {
+		return c.Status(fiber.StatusLocked).JSON(fiber.Map{
+			"error": "account is temporarily locked, please try again later",
+		})
+	}
+
 	httpErr := sharedErrors.ToHTTPError(err)
 	if httpErr == nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -117,10 +126,6 @@ func mapAuthError(c *fiber.Ctx, err error) error {
 		// ErrInvalidCredentials / ErrAuthenticationFailed — no oracle
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "invalid email or password",
-		})
-	case http.StatusForbidden: // 403 — ErrAccountLocked
-		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-			"error": "account is temporarily locked, please try again later",
 		})
 	default:
 		return c.Status(httpErr.Status).JSON(fiber.Map{

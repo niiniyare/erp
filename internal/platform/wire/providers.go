@@ -48,6 +48,13 @@ var CoreServiceProviderSet = wire.NewSet(
 	NewTenantService,
 	NewTenantTemporalIntegration,
 
+	// Identity, authz, session
+	NewIdentityRepository,
+	NewIdentityService,
+	NewAuthzService,
+	NewSessionRepository,
+	NewSessionService,
+
 	// Simplified IAM services for startup
 	NewSimpleAuthenticationService,
 	NewSimpleIAMService,

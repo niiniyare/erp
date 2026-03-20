@@ -41,12 +41,20 @@ func InitializeApplication() (*Application, error) {
 		return nil, err
 	}
 	tenantService := wire.NewTenantService(store, cacheService, service, logger)
+	identityRepo := wire.NewIdentityRepository(store, cacheService, service, metricsProvider)
+	identityService := wire.NewIdentityService(identityRepo, cacheService, service, metricsProvider)
+	authzService, err := wire.NewAuthzService(store, cacheService, logger, metricsProvider, service)
+	if err != nil {
+		return nil, err
+	}
+	sessionRepo := wire.NewSessionRepository(store, cacheService, service, metricsProvider)
+	sessionService := wire.NewSessionService(identityService, authzService, sessionRepo, cacheService, service, metricsProvider, logger)
 	authnService := wire.NewSimpleAuthenticationService()
 	iamService := wire.NewSimpleIAMService(authnService)
 	services := wire.NewFinanceServices(store, logger, metricsProvider, service)
 	tenantMiddlewareConfig := wire.NewTenantMiddlewareConfig(tenantService, store)
 	v := wire.NewTenantMiddleware(tenantMiddlewareConfig)
-	dependencies := wire.NewHandlerDependencies(logger, metricsProvider, service, tenantService, iamService, services, v)
+	dependencies := wire.NewHandlerDependencies(logger, metricsProvider, service, tenantService, iamService, sessionService, services, v)
 	router, err := wire.NewRouter(dependencies)
 	if err != nil {
 		return nil, err
