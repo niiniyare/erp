@@ -1,4 +1,4 @@
-package identity
+package iam
 
 import (
 	"time"
@@ -136,7 +136,7 @@ type Employee struct {
 	PersonID         uuid.UUID        `json:"person_id"`
 	EmployeeNumber   string           `json:"employee_number"`
 	EntityID         uuid.UUID        `json:"entity_id"`
-	PositionTitle    *string          `json:"position_title,omite/mpty"`
+	PositionTitle    *string          `json:"position_title,omitempty"`
 	DepartmentID     *uuid.UUID       `json:"department_id,omitempty"`
 	ManagerID        *uuid.UUID       `json:"manager_id,omitempty"`
 	HireDate         time.Time        `json:"hire_date"`
@@ -290,8 +290,8 @@ func IsValidEmploymentStatus(status string) bool {
 	return false
 }
 
-// Role represents a user role assignment
-type Role struct {
+// UserRole represents a user role assignment
+type UserRole struct {
 	ID             uuid.UUID  `json:"id"`
 	Name           string     `json:"name"`
 	UserID         uuid.UUID  `json:"user_id"`

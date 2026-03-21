@@ -10,13 +10,12 @@ import (
 	"awo/internal/core/featureflag"
 	"awo/internal/core/finance/domain"
 	"awo/internal/core/iam"
-	"awo/internal/core/iam/authz"
-	"awo/internal/core/iam/model"
 	settingsService "awo/internal/core/settings/service"
 	"awo/internal/platform/cache"
 	"awo/internal/shared/logger"
 	"awo/internal/shared/metrics"
 	"awo/internal/shared/tracing"
+
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/worker"
 )
@@ -441,7 +440,7 @@ func (i *IntegrationActivities) GetUserContextActivity(ctx context.Context, user
 			"error": err.Error(),
 		})
 		// Continue without roles - not critical
-		userRoles = []*model.Role{}
+		userRoles = []*iam.Role{}
 	}
 
 	// Convert roles to strings
@@ -496,7 +495,7 @@ func (i *IntegrationActivities) ValidateEntityAccessActivity(ctx context.Context
 	i.metrics.Counter(domain.MetricActivityExecutions, "Total number of activity executions").Add(1, nil)
 
 	// Check if user has access to the entity by evaluating permissions
-	permissionReq := &authz.PermissionEvaluationRequest{
+	permissionReq := &iam.PermissionEvaluationRequest{
 		UserID:       userID,
 		ResourceType: "entity",
 		ResourceID:   &entityID,
@@ -517,7 +516,7 @@ func (i *IntegrationActivities) ValidateEntityAccessActivity(ctx context.Context
 		}, err
 	}
 
-	hasAccess := permissionResult.Decision == model.PolicyDecisionAllow
+	hasAccess := permissionResult.Decision == iam.PolicyDecisionAllow
 
 	activityLogger.InfoContext(ctx, "Entity access validation completed", logger.Fields{
 		"has_access": hasAccess,

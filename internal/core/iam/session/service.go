@@ -9,8 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"awo/internal/core/authz"
-	"awo/internal/core/identity"
+	"awo/internal/core/iam"
 	"awo/internal/platform/cache"
 	"awo/internal/shared/errors"
 	"awo/internal/shared/logger"
@@ -19,14 +18,11 @@ import (
 )
 
 // Config holds session-related settings.
-// TODO(settings): read MaxFailedAttempts, LockoutDuration from iam module settings (per-tenant)
 // TODO(settings): read SessionTTL from settings key "iam.session_ttl_hours" per tenant
-// FIXME(feature-flags): MFAEnabled should be read from feature-flag "iam.mfa_enabled" via condition.Evaluator
+// FIXME(feature-flags): MFAEnabled should be read from feature-flag "iam.mfa_enabled"
 type Config struct {
-	SessionTTL  time.Duration // default: 8h
-	CookieName  string        // default: "session"
-	// NOTE(settings): per-tenant overrides for identity.Config thresholds come from
-	// the Settings module — see docs/reference/modules/settings/15-service-integration.md §Pattern 1
+	SessionTTL time.Duration // default: 8h
+	CookieName string        // default: "session"
 }
 
 // DefaultConfig returns safe defaults for development.
@@ -44,10 +40,9 @@ type Service interface {
 	Logout(ctx context.Context, token string) error
 }
 
-// service is the concrete implementation.
 type service struct {
-	identity identity.Service
-	authz    authz.Service
+	identity iam.UserService
+	authz    iam.Service
 	repo     Repository
 	cache    cache.Service
 	tracer   tracing.Service
@@ -58,8 +53,8 @@ type service struct {
 
 // New constructs a session Service with default config.
 func New(
-	identitySvc identity.Service,
-	authzSvc authz.Service,
+	identitySvc iam.UserService,
+	authzSvc iam.Service,
 	repo Repository,
 	cacheSvc cache.Service,
 	tracer tracing.Service,
@@ -71,8 +66,8 @@ func New(
 
 // NewWithConfig constructs a session Service with explicit config.
 func NewWithConfig(
-	identitySvc identity.Service,
-	authzSvc authz.Service,
+	identitySvc iam.UserService,
+	authzSvc iam.Service,
 	repo Repository,
 	cacheSvc cache.Service,
 	tracer tracing.Service,
@@ -95,23 +90,19 @@ func NewWithConfig(
 // Login authenticates the user, computes their permission map, persists the
 // session, caches it, and returns the raw token to the caller.
 //
-// NOTE(tenant-context): ctx must carry tenant_id via cache.TenantIDKey — set
-// by the ResolveTenant middleware before this handler is called.
+// NOTE(tenant-context): ctx must carry tenant_id via cache.TenantIDKey.
 func (s *service) Login(ctx context.Context, email, password string) (*ResolvedSession, string, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "session.Login")
 	defer span.End()
 
-	// 1. Authenticate — handles lockout and brute-force tracking (identity S2).
 	user, err := s.identity.Authenticate(ctx, email, password)
 	if err != nil {
 		s.metrics.IncrementCounter("session.login.failure", nil)
 		return nil, "", err
 	}
 
-	// 2. Build the pre-computed permission map for O(1) per-request authz.
 	perms, err := s.buildPermissions(ctx, user)
 	if err != nil {
-		// Non-fatal: log and continue with empty map — Casbin fallback still works.
 		s.log.WarnContext(ctx, "session: buildPermissions failed, continuing with empty map", logger.Fields{
 			"user_id": user.ID.String(),
 			"error":   err.Error(),
@@ -119,23 +110,19 @@ func (s *service) Login(ctx context.Context, email, password string) (*ResolvedS
 		perms = make(map[string]bool)
 	}
 
-	// 3. Generate opaque token and compute its hash.
 	rawToken, hash, err := generateToken()
 	if err != nil {
 		return nil, "", fmt.Errorf("session: generate token: %w", err)
 	}
 
-	// 4. Determine tenant from context.
 	tenantID := tenantIDFromCtx(ctx)
 
-	// 5. Build the session row and persist it.
-	// TODO(entity-scope): compute real EntityScope from user's entity hierarchy once
-	// the entity service is wired in. Default to entity-only scope for now.
+	// TODO(entity-scope): compute real EntityScope from entity hierarchy when entity service is wired.
 	entityScope := EntityScope{
 		Type:     EntityScopeEntity,
 		EntityID: user.EntityID.String(),
 	}
-	// TODO(configuration): compute real flags+settings+prefs from feature-flag / settings services.
+	// TODO(configuration): compute real flags+settings+prefs once services are wired.
 	configuration := DefaultConfiguration()
 
 	now := time.Now()
@@ -156,7 +143,6 @@ func (s *service) Login(ctx context.Context, email, password string) (*ResolvedS
 		return nil, "", fmt.Errorf("session: persist session: %w", err)
 	}
 
-	// 6. Build the resolved view for the caller and the cache.
 	resolved := &ResolvedSession{
 		UserID:      user.ID,
 		UserType:    user.UserType,
@@ -165,9 +151,7 @@ func (s *service) Login(ctx context.Context, email, password string) (*ResolvedS
 		Permissions: perms,
 	}
 
-	// 7. Cache keyed by hash, TTL matches session expiry.
 	if err := s.cache.Set(ctx, sessionCacheKey(hash), resolved, s.cfg.SessionTTL); err != nil {
-		// Non-fatal: the session is in the DB; cache miss just costs a DB round-trip.
 		s.log.WarnContext(ctx, "session: cache.Set failed", logger.Fields{"error": err.Error()})
 	}
 
@@ -176,22 +160,18 @@ func (s *service) Login(ctx context.Context, email, password string) (*ResolvedS
 }
 
 // ValidateSession checks the cache first, then falls back to the DB.
-// It also fires an async last-seen update and re-populates the cache on miss.
 func (s *service) ValidateSession(ctx context.Context, token string) (*ResolvedSession, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "session.ValidateSession")
 	defer span.End()
 
 	hash := sha256hex(token)
 
-	// 1. Cache hit — fast path.
 	var resolved ResolvedSession
 	if err := s.cache.Get(ctx, sessionCacheKey(hash), &resolved); err == nil {
-		// Async update — do not block the request.
 		s.repo.UpdateLastSeen(ctx, hash)
 		return &resolved, nil
 	}
 
-	// 2. Cache miss — hit the DB.
 	sess, err := s.repo.GetByTokenHash(ctx, hash)
 	if err != nil {
 		return nil, fmt.Errorf("session: get by hash: %w", err)
@@ -200,8 +180,6 @@ func (s *service) ValidateSession(ctx context.Context, token string) (*ResolvedS
 		return nil, errors.ErrAuthenticationFailed
 	}
 
-	// 3. Re-hydrate ResolvedSession from DB row.
-	// user_type and permissions are pre-computed at login and stored in the session row.
 	r := &ResolvedSession{
 		UserID:      sess.UserID,
 		UserType:    sess.UserType,
@@ -210,9 +188,6 @@ func (s *service) ValidateSession(ctx context.Context, token string) (*ResolvedS
 		Permissions: sess.Permissions,
 	}
 
-	// 4. last_accessed_at already updated atomically by TouchAndGetSession in GetByTokenHash.
-
-	// 5. Re-populate cache.
 	ttl := time.Until(sess.ExpiresAt)
 	if ttl > 0 {
 		if err := s.cache.Set(ctx, sessionCacheKey(hash), r, ttl); err != nil {
@@ -234,40 +209,32 @@ func (s *service) Logout(ctx context.Context, token string) error {
 		return fmt.Errorf("session: logout invalidate: %w", err)
 	}
 	if err := s.cache.Delete(ctx, sessionCacheKey(hash)); err != nil {
-		// Non-fatal: session is already invalidated in DB.
 		s.log.WarnContext(ctx, "session: cache.Delete failed on logout", logger.Fields{"error": err.Error()})
 	}
 	return nil
 }
 
 // buildPermissions uses authz.GetRoles + authz.GetPolicies to compute a flat
-// permission map at login time. This map is stored in user_sessions.permissions
-// and drives O(1) authz checks on every subsequent request.
-//
-// See docs/reference/modules/authz/14-how-other-packages-use-authz.md §0 for the full design.
-func (s *service) buildPermissions(ctx context.Context, user *identity.User) (map[string]bool, error) {
+// permission map at login time.
+func (s *service) buildPermissions(ctx context.Context, user *iam.User) (map[string]bool, error) {
 	subject := subjectForUser(user)
 	domain := domainForUser(user)
 
-	// 1. Get the user's roles (g-rules) in this domain.
 	roles, err := s.authz.GetRoles(ctx, subject, domain)
 	if err != nil {
 		return nil, fmt.Errorf("buildPermissions: GetRoles: %w", err)
 	}
 
-	// 2. Get all p-rules for the domain (single call — not per-role).
 	policies, err := s.authz.GetPolicies(ctx, domain)
 	if err != nil {
 		return nil, fmt.Errorf("buildPermissions: GetPolicies: %w", err)
 	}
 
-	// 3. Index roles for O(1) membership checks.
 	roleSet := make(map[string]bool, len(roles))
 	for _, r := range roles {
 		roleSet[r] = true
 	}
 
-	// 4. Build flat "object.action" map — only allow-effect policies matching the user's roles.
 	perms := make(map[string]bool)
 	for _, p := range policies {
 		if roleSet[p.Subject] && p.Effect == "allow" {
@@ -281,8 +248,6 @@ func (s *service) buildPermissions(ctx context.Context, user *identity.User) (ma
 
 // --- helpers ---
 
-// generateToken creates a cryptographically random 32-byte token, returning
-// both the raw hex string (sent to the client) and its sha256 hash (stored in DB).
 func generateToken() (rawToken, hash string, err error) {
 	b := make([]byte, 32)
 	if _, err = rand.Read(b); err != nil {
@@ -293,14 +258,11 @@ func generateToken() (rawToken, hash string, err error) {
 	return rawToken, hash, nil
 }
 
-// sha256hex returns the lowercase hex-encoded sha256 digest of s.
 func sha256hex(s string) string {
 	sum := sha256.Sum256([]byte(s))
 	return hex.EncodeToString(sum[:])
 }
 
-// tenantIDFromCtx reads the tenant UUID from the context.
-// Returns uuid.Nil if absent (will be caught by RLS on DB write).
 func tenantIDFromCtx(ctx context.Context) uuid.UUID {
 	if v, ok := ctx.Value(cache.TenantIDKey).(string); ok && v != "" {
 		if id, err := uuid.Parse(v); err == nil {
@@ -310,32 +272,30 @@ func tenantIDFromCtx(ctx context.Context) uuid.UUID {
 	return uuid.Nil
 }
 
-// subjectForUser builds the Casbin subject string for a user.
-func subjectForUser(user *identity.User) string {
+func subjectForUser(user *iam.User) string {
 	id := user.ID.String()
 	switch user.UserType {
-	case string(authz.ActorPlatform):
-		return authz.PlatformSubject(id)
-	case string(authz.ActorPortal):
-		return authz.PortalSubject(id)
+	case string(iam.ActorPlatform):
+		return iam.PlatformSubject(id)
+	case string(iam.ActorPortal):
+		return iam.PortalSubject(id)
 	default:
-		return authz.TenantSubject(id)
+		return iam.TenantSubject(id)
 	}
 }
 
-// domainForUser builds the Casbin domain for a user.
-func domainForUser(user *identity.User) string {
+func domainForUser(user *iam.User) string {
 	switch user.UserType {
-	case string(authz.ActorPlatform):
-		return authz.DomainPlatform
+	case string(iam.ActorPlatform):
+		return iam.DomainPlatform
 	default:
-		return authz.TenantDomain(user.TenantID.String())
+		return iam.TenantDomain(user.TenantID.String())
 	}
 }
 
 // displayName returns a human-readable name for the user.
 // Prefers DisplayName, falls back to Username, then Email.
-func displayName(user *identity.User) string {
+func displayName(user *iam.User) string {
 	if user.DisplayName != nil && *user.DisplayName != "" {
 		return *user.DisplayName
 	}

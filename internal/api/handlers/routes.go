@@ -6,15 +6,15 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	authHandler "awo/internal/api/handlers/auth"
 	financeHandler "awo/internal/api/handlers/finance"
 	"awo/internal/api/handlers/health"
 	tenantHandler "awo/internal/api/handlers/tenant"
 	uiHandler "awo/internal/api/handlers/ui"
 	userHandler "awo/internal/api/handlers/user"
-	authHandler "awo/internal/api/handlers/auth"
 	middlewarePkg "awo/internal/api/middleware"
 	financeService "awo/internal/core/finance/service"
-	"awo/internal/core/iam/authn"
+	"awo/internal/core/iam"
 	"awo/internal/core/identity/session"
 	coreTenant "awo/internal/core/tenant"
 	"awo/internal/shared/errors"
@@ -198,7 +198,7 @@ type Dependencies struct {
 	Tracer           tracing.Service
 	conf             *health.Config
 	TenantService    coreTenant.Service
-	UserService      authn.Service
+	UserService      iam.Service
 	FinanceServices  *financeService.Services
 	TenantMiddleware fiber.Handler
 	SecurityManager  *middlewarePkg.RouteSecurityManager

@@ -1,4 +1,4 @@
-package identity
+package iam
 
 //go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
 import (
@@ -11,13 +11,13 @@ import (
 	"github.com/google/uuid"
 	db "awo/db/sqlc"
 	"awo/internal/platform/cache"
-	"awo/internal/shared/errors"
+	sharedErrors "awo/internal/shared/errors"
 	"awo/internal/shared/metrics"
 	"awo/internal/shared/tracing"
 )
 
-// Repository defines the interface for identity data persistence.
-type Repository interface {
+// UserRepository defines the interface for identity data persistence.
+type UserRepository interface {
 	// User operations
 	CreateUser(ctx context.Context, req *CreateUserRequest, hashedPassword string) (*User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
@@ -29,8 +29,7 @@ type Repository interface {
 	GetUserPassword(ctx context.Context, userID uuid.UUID) (string, error)
 	UpdatePassword(ctx context.Context, userID uuid.UUID, newPasswordHash string) error
 
-	// Brute-force protection — backed by SQLC queries in db/queries/users.sql
-	// Call after sqlc generate to get the generated method names.
+	// Brute-force protection
 	IncrementFailedAttempts(ctx context.Context, userID uuid.UUID) error
 	ResetFailedAttempts(ctx context.Context, userID uuid.UUID) error
 	LockAccount(ctx context.Context, userID uuid.UUID, until time.Time) error
@@ -51,17 +50,17 @@ type Repository interface {
 	RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
 }
 
-// repository implements the Repository interface
-type repository struct {
+// userRepository implements the UserRepository interface
+type userRepository struct {
 	store   db.Store
 	cache   cache.Service
 	tracing tracing.Service
 	metrics metrics.MetricsProvider
 }
 
-// NewRepository creates a new user repository
-func NewRepository(store db.Store, cache cache.Service, tracing tracing.Service, metrics metrics.MetricsProvider) Repository {
-	return &repository{
+// NewUserRepository creates a new user repository
+func NewUserRepository(store db.Store, cache cache.Service, tracing tracing.Service, metrics metrics.MetricsProvider) UserRepository {
+	return &userRepository{
 		store:   store,
 		cache:   cache,
 		tracing: tracing,
@@ -69,8 +68,7 @@ func NewRepository(store db.Store, cache cache.Service, tracing tracing.Service,
 	}
 }
 
-// CreateUser creates a new user
-func (r *repository) CreateUser(ctx context.Context, req *CreateUserRequest, hashedPassword string) (*User, error) {
+func (r *userRepository) CreateUser(ctx context.Context, req *CreateUserRequest, hashedPassword string) (*User, error) {
 	params, err := toSQLCCreateUserParams(req, hashedPassword)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert request to SQLC params: %w", err)
@@ -84,68 +82,61 @@ func (r *repository) CreateUser(ctx context.Context, req *CreateUserRequest, has
 	return fromSQLCUser(sqlcUser)
 }
 
-// GetUserByID retrieves a user by ID
-func (r *repository) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
+func (r *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	sqlcUser, err := r.store.GetUserByID(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.ErrUserNotFound
+			return nil, sharedErrors.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 	return fromSQLCUser(sqlcUser)
 }
 
-// GetUserByEmail retrieves a user by email
-func (r *repository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	sqlcUser, err := r.store.GetUserByEmail(ctx, email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.ErrUserNotFound
+			return nil, sharedErrors.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("failed to get user by email: %w", err)
 	}
 	return fromSQLCUser(sqlcUser)
 }
 
-// GetUserByUsername retrieves a user by username
-func (r *repository) GetUserByUsername(ctx context.Context, username string) (*User, error) {
+func (r *userRepository) GetUserByUsername(ctx context.Context, username string) (*User, error) {
 	sqlcUser, err := r.store.GetUserByUsername(ctx, username)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.ErrUserNotFound
+			return nil, sharedErrors.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("failed to get user by username: %w", err)
 	}
 	return fromSQLCUser(sqlcUser)
 }
 
-// UpdateUser updates an existing user
-func (r *repository) UpdateUser(ctx context.Context, id uuid.UUID, req *UpdateUserRequest) (*User, error) {
+func (r *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, req *UpdateUserRequest) (*User, error) {
 	params := db.UpdateUserParams{ID: id}
-	// Populate params from req...
 
 	sqlcUser, err := r.store.UpdateUser(ctx, params)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.ErrUserNotFound
+			return nil, sharedErrors.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("failed to update user: %w", err)
 	}
 	return fromSQLCUser(sqlcUser)
 }
 
-// DeleteUser soft-deletes a user
-func (r *repository) DeleteUser(ctx context.Context, id uuid.UUID) error {
+func (r *userRepository) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return r.store.SoftDeleteUser(ctx, id)
 }
 
-// GetUserWithDetails retrieves a user with person and employee details
-func (r *repository) GetUserWithDetails(ctx context.Context, id uuid.UUID) (*UserWithDetails, error) {
+func (r *userRepository) GetUserWithDetails(ctx context.Context, id uuid.UUID) (*UserWithDetails, error) {
 	sqlcProfile, err := r.store.GetCompleteUserProfile(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.ErrUserNotFound
+			return nil, sharedErrors.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("failed to get user with details: %w", err)
 	}
@@ -153,11 +144,11 @@ func (r *repository) GetUserWithDetails(ctx context.Context, id uuid.UUID) (*Use
 	return fromSQLCCompleteUserProfile(sqlcProfile)
 }
 
-func (r *repository) GetUserPassword(ctx context.Context, userID uuid.UUID) (string, error) {
+func (r *userRepository) GetUserPassword(ctx context.Context, userID uuid.UUID) (string, error) {
 	hash, err := r.store.GetUserPasswordByID(ctx, userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", errors.ErrUserNotFound
+			return "", sharedErrors.ErrUserNotFound
 		}
 		return "", err
 	}
@@ -167,72 +158,65 @@ func (r *repository) GetUserPassword(ctx context.Context, userID uuid.UUID) (str
 	return *hash, nil
 }
 
-func (r *repository) UpdatePassword(ctx context.Context, userID uuid.UUID, newPasswordHash string) error {
+func (r *userRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, newPasswordHash string) error {
 	return r.store.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{
 		ID:           userID,
 		PasswordHash: &newPasswordHash,
 	})
 }
 
-// ── Brute-force protection ────────────────────────────────────────────────────
-// These call the SQLC-generated methods from db/queries/users.sql.
-// Run `make sqlc` (or `sqlc generate`) to regenerate if methods are missing.
-// Mutations invalidate the user cache so Authenticate always sees fresh data.
-
-func (r *repository) IncrementFailedAttempts(ctx context.Context, userID uuid.UUID) error {
-	ctx, span := r.tracing.StartSpan(ctx, "identity.repo.IncrementFailedAttempts")
+func (r *userRepository) IncrementFailedAttempts(ctx context.Context, userID uuid.UUID) error {
+	ctx, span := r.tracing.StartSpan(ctx, "iam.repo.IncrementFailedAttempts")
 	defer span.End()
 
 	if err := r.store.IncrementFailedLogins(ctx, userID); err != nil {
-		return fmt.Errorf("identity repo: increment failed attempts: %w", err)
+		return fmt.Errorf("iam repo: increment failed attempts: %w", err)
 	}
 	r.invalidateUserCache(ctx, userID)
 	return nil
 }
 
-func (r *repository) ResetFailedAttempts(ctx context.Context, userID uuid.UUID) error {
-	ctx, span := r.tracing.StartSpan(ctx, "identity.repo.ResetFailedAttempts")
+func (r *userRepository) ResetFailedAttempts(ctx context.Context, userID uuid.UUID) error {
+	ctx, span := r.tracing.StartSpan(ctx, "iam.repo.ResetFailedAttempts")
 	defer span.End()
 
 	if err := r.store.UnlockUser(ctx, userID); err != nil {
-		return fmt.Errorf("identity repo: reset failed attempts: %w", err)
+		return fmt.Errorf("iam repo: reset failed attempts: %w", err)
 	}
 	r.invalidateUserCache(ctx, userID)
 	return nil
 }
 
-func (r *repository) LockAccount(ctx context.Context, userID uuid.UUID, until time.Time) error {
-	ctx, span := r.tracing.StartSpan(ctx, "identity.repo.LockAccount")
+func (r *userRepository) LockAccount(ctx context.Context, userID uuid.UUID, until time.Time) error {
+	ctx, span := r.tracing.StartSpan(ctx, "iam.repo.LockAccount")
 	defer span.End()
 
 	if err := r.store.LockAccount(ctx, db.LockAccountParams{
 		ID:           userID,
 		LockoutUntil: sql.NullTime{Time: until, Valid: true},
 	}); err != nil {
-		return fmt.Errorf("identity repo: lock account: %w", err)
+		return fmt.Errorf("iam repo: lock account: %w", err)
 	}
 	r.invalidateUserCache(ctx, userID)
 	return nil
 }
 
-func (r *repository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) error {
-	ctx, span := r.tracing.StartSpan(ctx, "identity.repo.UpdateLastLogin")
+func (r *userRepository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) error {
+	ctx, span := r.tracing.StartSpan(ctx, "iam.repo.UpdateLastLogin")
 	defer span.End()
 
 	if err := r.store.UpdateUserLastLogin(ctx, userID); err != nil {
-		return fmt.Errorf("identity repo: update last login: %w", err)
+		return fmt.Errorf("iam repo: update last login: %w", err)
 	}
 	r.invalidateUserCache(ctx, userID)
 	return nil
 }
 
-// invalidateUserCache removes all cache keys for a user after a mutation.
-func (r *repository) invalidateUserCache(ctx context.Context, userID uuid.UUID) {
+func (r *userRepository) invalidateUserCache(ctx context.Context, userID uuid.UUID) {
 	r.cache.Delete(ctx, fmt.Sprintf("user:id:%s", userID))
 }
 
-// Person operations
-func (r *repository) CreatePerson(ctx context.Context, req *CreatePersonRequest) (*Person, error) {
+func (r *userRepository) CreatePerson(ctx context.Context, req *CreatePersonRequest) (*Person, error) {
 	params, err := toSQLCCreatePersonParams(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert request: %w", err)
@@ -244,7 +228,7 @@ func (r *repository) CreatePerson(ctx context.Context, req *CreatePersonRequest)
 	return fromSQLCPerson(sqlcPerson)
 }
 
-func (r *repository) GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, error) {
+func (r *userRepository) GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, error) {
 	sqlcPerson, err := r.store.GetPersonByID(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -255,8 +239,7 @@ func (r *repository) GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, 
 	return fromSQLCPerson(sqlcPerson)
 }
 
-// Employee operations
-func (r *repository) CreateEmployee(ctx context.Context, req *CreateEmployeeRequest) (*Employee, error) {
+func (r *userRepository) CreateEmployee(ctx context.Context, req *CreateEmployeeRequest) (*Employee, error) {
 	params, err := toSQLCCreateEmployeeParams(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert request: %w", err)
@@ -268,7 +251,7 @@ func (r *repository) CreateEmployee(ctx context.Context, req *CreateEmployeeRequ
 	return fromSQLCEmployee(sqlcEmployee)
 }
 
-func (r *repository) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee, error) {
+func (r *userRepository) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee, error) {
 	sqlcEmployee, err := r.store.GetEmployeeByID(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -279,7 +262,7 @@ func (r *repository) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employ
 	return fromSQLCEmployee(sqlcEmployee)
 }
 
-func (r *repository) ListUsers(ctx context.Context, req *ListUsersRequest) ([]*User, error) {
+func (r *userRepository) ListUsers(ctx context.Context, req *ListUsersRequest) ([]*User, error) {
 	limit := int32(req.Limit)
 	offset := int32(req.Offset)
 	if limit == 0 {
@@ -292,7 +275,7 @@ func (r *repository) ListUsers(ctx context.Context, req *ListUsersRequest) ([]*U
 		Offset:        offset,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("identity repo: list users: %w", err)
+		return nil, fmt.Errorf("iam repo: list users: %w", err)
 	}
 	out := make([]*User, 0, len(rows))
 	for _, row := range rows {
@@ -305,14 +288,14 @@ func (r *repository) ListUsers(ctx context.Context, req *ListUsersRequest) ([]*U
 	return out, nil
 }
 
-func (r *repository) SearchUsers(ctx context.Context, query string, limit, offset int) ([]*User, error) {
+func (r *userRepository) SearchUsers(ctx context.Context, query string, limit, offset int) ([]*User, error) {
 	rows, err := r.store.SearchUsersAdvanced(ctx, db.SearchUsersAdvancedParams{
 		Query:  &query,
 		Limit:  int32(limit),
 		Offset: int32(offset),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("identity repo: search users: %w", err)
+		return nil, fmt.Errorf("iam repo: search users: %w", err)
 	}
 	out := make([]*User, 0, len(rows))
 	for _, row := range rows {
@@ -325,17 +308,17 @@ func (r *repository) SearchUsers(ctx context.Context, query string, limit, offse
 	return out, nil
 }
 
-func (r *repository) AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
+func (r *userRepository) AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
 	_, err := r.store.AssignUserRole(ctx, db.AssignUserRoleParams{
 		PUserID:     userID,
 		PRoleID:     roleID,
 		PEntityID:   entityID,
-		PAssignedBy: uuid.Nil, // caller can pass assigned_by via service layer if needed
+		PAssignedBy: uuid.Nil,
 	})
 	return err
 }
 
-func (r *repository) RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
+func (r *userRepository) RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
 	return r.store.RevokeUserRole(ctx, db.RevokeUserRoleParams{
 		PUserID:   userID,
 		PRoleID:   roleID,
@@ -353,8 +336,6 @@ func fromSQLCUser(sqlcUser *db.User) (*User, error) {
 	if err := json.Unmarshal(sqlcUser.Settings, &settings); err != nil && len(sqlcUser.Settings) > 0 {
 		return nil, err
 	}
-
-	username := sqlcUser.Username
 
 	var accountStatus AccountStatus
 	if sqlcUser.AccountStatus != nil {
@@ -383,7 +364,7 @@ func fromSQLCUser(sqlcUser *db.User) (*User, error) {
 		PersonID:              sqlcUser.PersonID,
 		EmployeeID:            sqlcUser.EmployeeID,
 		PrincipalID:           sqlcUser.PrincipalID,
-		Username:              username,
+		Username:              sqlcUser.Username,
 		Email:                 sqlcUser.Email,
 		DisplayName:           sqlcUser.DisplayName,
 		UserType:              sqlcUser.UserType,

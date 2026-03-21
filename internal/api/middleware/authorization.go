@@ -1,9 +1,10 @@
 package middleware
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"awo/internal/core/authz"
+	"awo/internal/core/iam"
 	"awo/internal/core/identity/session"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 // AuthorizationConfig configures legacy authorization middleware behaviour.
@@ -52,7 +53,7 @@ func Authorize(permission string) fiber.Handler {
 	}
 }
 
-// AuthorizeCasbin is a thin wrapper around authz.Service.Middleware for
+// AuthorizeCasbin is a thin wrapper around iam.Service.Middleware for
 // management operations that need the full Casbin engine (e.g. role assignment,
 // tenant admin panels). For normal request-path authz prefer Authorize().
 //
@@ -62,6 +63,6 @@ func Authorize(permission string) fiber.Handler {
 //	    middleware.Authenticate(authCfg),
 //	    middleware.AuthorizeCasbin(authzSvc, "role", "assign"),
 //	    handler.AssignRole)
-func AuthorizeCasbin(svc authz.Service, object, action string) fiber.Handler {
+func AuthorizeCasbin(svc iam.Service, object, action string) fiber.Handler {
 	return svc.Middleware(object, action)
 }

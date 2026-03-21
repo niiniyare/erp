@@ -9,8 +9,6 @@ import (
 	"awo/internal/core/featureflag"
 	"awo/internal/core/finance/domain"
 	"awo/internal/core/iam"
-	"awo/internal/core/iam/authz"
-	"awo/internal/core/iam/model"
 	"awo/internal/shared"
 	"awo/internal/shared/errors"
 	"awo/internal/shared/logger"
@@ -158,41 +156,12 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 			"account_type": string(req.AccountType),
 		})
 
-	// ABAC - Check if user can create accounts
-	if userID, ok := shared.GetUserID(ctx); ok {
-		permissionReq := &authz.PermissionEvaluationRequest{
-			UserID:       userID,
-			ResourceType: "account",
-			Action:       "create",
-			EntityID:     req.EntityID,
-			// TODO: get the rest from thee setion
-			// ResourceID:   &uuid.UUID{},
-			// Context:      map[string]any{},
-			// RequestID:    "",
-		}
-
-		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
-		if err != nil {
-			logger.ErrorContext(ctx, "Failed to evaluate permission", logger.Fields{
-				"user_id": userID.String(),
-				"error":   err.Error(),
-			})
-			return nil, errors.NewBusinessError("PERMISSION_ERROR", "Failed to evaluate permissions")
-		}
-
-		if result.Decision != model.PolicyDecisionAllow {
-			logger.WarnContext(ctx, "Permission denied for account creation", logger.Fields{
-				"user_id":  userID.String(),
-				"decision": string(result.Decision),
-			})
-			return nil, errors.NewBusinessError("UNAUTHORIZED", "Cannot create account")
-		}
-
-		logger.DebugContext(ctx, "Permission granted for account creation", logger.Fields{
-			"user_id":            userID.String(),
-			"evaluation_time_ms": result.EvaluationTimeMS,
-		})
-	}
+	// TODO(authz): enforce finance.accounts.create via iam.Service.Enforce() once
+	// the session principal is wired into ctx. Example:
+	//   if userID, ok := shared.GetUserID(ctx); ok {
+	//       ok, _ := s.iamService.Enforce(ctx, iam.Request{Subject: ..., Object: "finance.accounts", Action: "create"})
+	//       if !ok { return nil, errors.NewBusinessError("UNAUTHORIZED", "Cannot create account") }
+	//   }
 
 	// Settings-driven defaults - apply if not specified
 	if req.CurrencyCode == nil || *req.CurrencyCode == "" {

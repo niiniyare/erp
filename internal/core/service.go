@@ -13,14 +13,12 @@ import (
 	"awo/internal/core/access"
 	"awo/internal/core/analytics"
 	"awo/internal/core/audit"
-	"awo/internal/core/authz"
 	"awo/internal/core/entity"
 	"awo/internal/core/featureflag"
 	financeRepo "awo/internal/core/finance/repository"
 	financeService "awo/internal/core/finance/service"
 	"awo/internal/core/iam"
-	"awo/internal/core/identity"
-	"awo/internal/core/identity/session"
+	iamsession "awo/internal/core/iam/session"
 	"awo/internal/core/notification"
 	"awo/internal/core/settings"
 	"awo/internal/core/tenant"
@@ -63,15 +61,14 @@ type ServiceContainer struct {
 	// Core Infrastructure Services
 	TenantService   tenant.Service
 	EntityService   entity.Service
-	IdentityService identity.Service
+	IdentityService iam.UserService
 
 	// Security & Access Control
 	ABACService    abac.Service
-	AuthzService   authz.Service
 	IAMService     iam.Service
 	AccessService  access.Service
 	AuditService   audit.Service
-	SessionService session.Service
+	SessionService iamsession.Service
 
 	// Feature Management
 	FeatureFlagService      featureflag.Service
@@ -179,8 +176,8 @@ func (sc *ServiceContainer) initializeFoundationalServices(ctx context.Context) 
 	sc.EntityService = entity.NewService(entityRepo, sc.deps.Tracing, sc.deps.Metrics)
 
 	// Identity Service - User management
-	identityRepo := identity.NewRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
-	sc.IdentityService = identity.NewService(identityRepo, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
+	identityRepo := iam.NewUserRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
+	sc.IdentityService = iam.NewUserService(identityRepo, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
 
 	// Audit Service - Required by other services for logging
 	auditRepo := audit.NewRepository(sc.deps.Store, sc.deps.Logger, sc.deps.Tracing, sc.deps.Metrics)
@@ -213,8 +210,8 @@ func (sc *ServiceContainer) initializeSecurityServices(ctx context.Context) erro
 		sc.deps.Tracing,
 	)
 
-	// Authz Service - Casbin-backed role/policy engine
-	authzSvc, err := authz.New(authz.Config{
+	// IAM Service - Casbin-backed role/policy engine
+	iamSvc, err := iam.New(iam.Config{
 		Store:   sc.deps.Store,
 		Cache:   sc.deps.Cache,
 		Logger:  sc.deps.Logger,
@@ -222,25 +219,21 @@ func (sc *ServiceContainer) initializeSecurityServices(ctx context.Context) erro
 		Tracer:  sc.deps.Tracing,
 	})
 	if err != nil {
-		return fmt.Errorf("authz service init: %w", err)
+		return fmt.Errorf("iam service init: %w", err)
 	}
-	sc.AuthzService = authzSvc
+	sc.IAMService = iamSvc
 
 	// Session Service - Login / ValidateSession / Logout
-	sessionRepo := session.NewRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
-	sc.SessionService = session.New(
+	sessionRepo := iamsession.NewRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
+	sc.SessionService = iamsession.New(
 		sc.IdentityService,
-		sc.AuthzService,
+		sc.IAMService,
 		sessionRepo,
 		sc.deps.Cache,
 		sc.deps.Tracing,
 		sc.deps.Metrics,
 		sc.deps.Logger,
 	)
-
-	// IAM Service - Identity and Access Management (placeholder for now)
-	// TODO: Initialize IAM service properly when all dependencies are ready
-	// sc.IAMService = iam.NewService(...)
 
 	// Access Service - High-level access control
 	// TODO: Initialize access service properly
@@ -436,7 +429,7 @@ func (sc *ServiceContainer) GetEntityService() entity.Service {
 	return sc.EntityService
 }
 
-func (sc *ServiceContainer) GetIdentityService() identity.Service {
+func (sc *ServiceContainer) GetIdentityService() iam.UserService {
 	return sc.IdentityService
 }
 
@@ -444,11 +437,11 @@ func (sc *ServiceContainer) GetABACService() abac.Service {
 	return sc.ABACService
 }
 
-func (sc *ServiceContainer) GetAuthzService() authz.Service {
-	return sc.AuthzService
+func (sc *ServiceContainer) GetAuthzService() iam.Service {
+	return sc.IAMService
 }
 
-func (sc *ServiceContainer) GetSessionService() session.Service {
+func (sc *ServiceContainer) GetSessionService() iamsession.Service {
 	return sc.SessionService
 }
 

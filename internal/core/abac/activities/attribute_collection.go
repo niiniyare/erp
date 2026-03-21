@@ -11,7 +11,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"awo/internal/core/abac/repository"
-	"awo/internal/core/identity"
+	"awo/internal/core/iam"
 	"awo/internal/core/tenant"
 	"awo/internal/shared/errors"
 	"awo/internal/shared/logger"
@@ -23,7 +23,7 @@ import (
 // AttributeCollectionActivities handles attribute collection for ABAC evaluation
 type AttributeCollectionActivities struct {
 	attributeRepo   repository.AttributeRepository
-	identityService identity.Service
+	identityService iam.UserService
 	tenantService   tenant.Service
 	logger          logger.Logger
 	metrics         metrics.MetricsProvider
@@ -33,7 +33,7 @@ type AttributeCollectionActivities struct {
 // NewAttributeCollectionActivities creates a new AttributeCollectionActivities instance
 func NewAttributeCollectionActivities(
 	attributeRepo repository.AttributeRepository,
-	identityService identity.Service,
+	identityService iam.UserService,
 	tenantService tenant.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,

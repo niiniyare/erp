@@ -8,8 +8,7 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 
-	"awo/internal/core/iam/authn"
-	"awo/internal/core/iam/model"
+	"awo/internal/core/iam"
 	"awo/internal/shared/errors"
 	"awo/internal/shared/logger"
 	"awo/internal/shared/metrics"
@@ -18,7 +17,7 @@ import (
 
 // UserHandler handles user-related HTTP requests with centralized error handling
 type UserHandler struct {
-	service   authn.Service
+	service   iam.Service
 	logger    logger.Logger
 	metrics   metrics.MetricsProvider
 	tracer    tracing.Service
@@ -27,7 +26,7 @@ type UserHandler struct {
 
 // NewUserHandler creates a new user handler with dependencies
 func NewUserHandler(
-	userService authn.Service,
+	userService iam.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
 	tracer tracing.Service,
@@ -56,7 +55,7 @@ func NewUserHandler(
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param user body authn.CreateUserRequest true "User data"
+// @Param user body iam.CreateUserRequest true "User data"
 // @Success 201 {object} User
 // @Router /api/v1/users [post]
 func (h *UserHandler) Create(c *fiber.Ctx) error {
@@ -66,7 +65,7 @@ func (h *UserHandler) Create(c *fiber.Ctx) error {
 	c.SetUserContext(ctx)
 
 	// Step 2: Parse and validate request
-	var req authn.CreateUserRequest
+	var req iam.CreateUserRequest
 	if err := h.ValidateRequest(c, &req); err != nil {
 		return h.HandleError(c, err)
 	}
@@ -188,12 +187,12 @@ func (h *UserHandler) List(c *fiber.Ctx) error {
 
 	// Step 3: Delegate to service
 	// Note: The current service interface doesn't have a ListUsers method
-	// This would need to be added to the authn.Service interface
+	// This would need to be added to the iam.Service interface
 	// For now, we'll return an error indicating this feature needs implementation
 	return h.HandleError(c, errors.NewBusinessError("NOT_IMPLEMENTED", "User listing not yet implemented").
 		WithHTTPStatus(501).
 		WithCategory(errors.CategoryBusiness).
-		WithSuggestion("Add ListUsers method to authn.Service interface"))
+		WithSuggestion("Add ListUsers method to iam.Service interface"))
 }
 
 // Update handles user updates (PUT /api/v1/users/:id)
@@ -203,7 +202,7 @@ func (h *UserHandler) List(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param id path string true "User ID" format(uuid)
-// @Param user body authn.UpdateUserRequest true "User update data"
+// @Param user body iam.UpdateUserRequest true "User update data"
 // @Success 200 {object} User
 // @Router /api/v1/users/{id} [put]
 func (h *UserHandler) Update(c *fiber.Ctx) error {
@@ -219,7 +218,7 @@ func (h *UserHandler) Update(c *fiber.Ctx) error {
 	})
 
 	// Step 2: Parse and Validate
-	var req authn.UpdateUserRequest
+	var req iam.UpdateUserRequest
 	if err := c.BodyParser(&req); err != nil {
 		return h.HandleError(c, errors.NewBusinessError("INVALID_JSON", "Invalid JSON payload").
 			WithHTTPStatus(400).
@@ -311,8 +310,8 @@ func (h *UserHandler) Delete(c *fiber.Ctx) error {
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param credentials body authn.AuthenticationRequest true "Authentication credentials"
-// @Success 200 {object} authn.AuthenticationResult
+// @Param credentials body iam.AuthenticationRequest true "Authentication credentials"
+// @Success 200 {object} iam.AuthenticationResult
 // @Router /api/v1/users/authenticate [post]
 func (h *UserHandler) Authenticate(c *fiber.Ctx) error {
 	// Step 1: Start tracing
@@ -321,7 +320,7 @@ func (h *UserHandler) Authenticate(c *fiber.Ctx) error {
 	c.SetUserContext(ctx)
 
 	// Step 2: Parse and validate request
-	var req authn.AuthenticationRequest
+	var req iam.AuthenticationRequest
 	if err := h.ValidateRequest(c, &req); err != nil {
 		return h.HandleError(c, err)
 	}
@@ -350,7 +349,7 @@ func (h *UserHandler) Authenticate(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param id path string true "User ID" format(uuid)
-// @Param request body authn.ChangePasswordRequest true "Password change request"
+// @Param request body iam.ChangePasswordRequest true "Password change request"
 // @Success 200 {object} map[string]interface{}
 // @Router /api/v1/users/{id}/change-password [post]
 func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
@@ -362,7 +361,7 @@ func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
 	userID := c.Params("id")
 
 	// Step 2: Parse and validate request
-	var req authn.ChangePasswordRequest
+	var req iam.ChangePasswordRequest
 	if err := h.ValidateRequest(c, &req); err != nil {
 		return h.HandleError(c, err)
 	}
@@ -577,7 +576,7 @@ type User struct {
 }
 
 // userToAPIResponse converts a user entity to API user response
-func (h *UserHandler) userToAPIResponse(userEntity *model.User) *User {
+func (h *UserHandler) userToAPIResponse(userEntity *iam.User) *User {
 	if userEntity == nil {
 		return nil
 	}
@@ -622,7 +621,7 @@ func (h *UserHandler) userToAPIResponse(userEntity *model.User) *User {
 }
 
 // enhanceDetailedView adds additional fields for detailed view
-func (h *UserHandler) enhanceDetailedView(user *User, userEntity *model.User) *User {
+func (h *UserHandler) enhanceDetailedView(user *User, userEntity *iam.User) *User {
 	// Add MFA information
 	user.MFAEnabled = userEntity.MFAEnabled
 	if userEntity.MFAMethod != nil {
@@ -637,7 +636,7 @@ func (h *UserHandler) enhanceDetailedView(user *User, userEntity *model.User) *U
 }
 
 // enhanceSecurityView adds security-specific fields
-func (h *UserHandler) enhanceSecurityView(user *User, userEntity *model.User) *User {
+func (h *UserHandler) enhanceSecurityView(user *User, userEntity *iam.User) *User {
 	// Include security-relevant fields
 	user.MFAEnabled = userEntity.MFAEnabled
 	if userEntity.MFAMethod != nil {

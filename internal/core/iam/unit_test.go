@@ -1,4 +1,4 @@
-package authz
+package iam
 
 // unit_test.go — full business-logic coverage with zero DB dependency.
 //

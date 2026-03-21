@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"awo/internal/core/authz"
+	"awo/internal/core/iam"
 )
 
 // EntityScopeType identifies how broadly an entity-scoped session can see data.
@@ -98,30 +98,30 @@ func (s *ResolvedSession) Can(permission string) bool {
 	return s.Permissions[permission]
 }
 
-// ToPrincipal converts the session into an authz.Principal suitable for
+// ToPrincipal converts the session into an iam.Principal suitable for
 // Casbin-backed management operations (role assignment, policy evaluation).
-func (s *ResolvedSession) ToPrincipal() authz.Principal {
+func (s *ResolvedSession) ToPrincipal() iam.Principal {
 	userID := s.UserID.String()
 	switch s.UserType {
-	case string(authz.ActorPlatform):
-		return authz.Principal{
-			Subject: authz.PlatformSubject(userID),
-			Domain:  authz.DomainPlatform,
+	case string(iam.ActorPlatform):
+		return iam.Principal{
+			Subject: iam.PlatformSubject(userID),
+			Domain:  iam.DomainPlatform,
 		}
-	case string(authz.ActorPortal):
-		return authz.Principal{
-			Subject: authz.PortalSubject(userID),
-			Domain:  authz.PortalDomain(s.TenantID.String()),
+	case string(iam.ActorPortal):
+		return iam.Principal{
+			Subject: iam.PortalSubject(userID),
+			Domain:  iam.PortalDomain(s.TenantID.String()),
 		}
 	default: // "tenant"
-		return authz.Principal{
-			Subject: authz.TenantSubject(userID),
-			Domain:  authz.TenantDomain(s.TenantID.String()),
+		return iam.Principal{
+			Subject: iam.TenantSubject(userID),
+			Domain:  iam.TenantDomain(s.TenantID.String()),
 		}
 	}
 }
 
 // IsPortal reports whether the session belongs to a portal (external) user.
 func (s *ResolvedSession) IsPortal() bool {
-	return s.UserType == string(authz.ActorPortal)
+	return s.UserType == string(iam.ActorPortal)
 }

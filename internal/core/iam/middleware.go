@@ -1,4 +1,4 @@
-package authz
+package iam
 
 import (
 	"github.com/gofiber/fiber/v2"

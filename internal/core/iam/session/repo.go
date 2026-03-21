@@ -26,9 +26,6 @@ type Repository interface {
 }
 
 // sessionRepo implements Repository against user_sessions via SQLC.
-//
-// NOTE: Requires SQLC-generated methods from db/queries/sessions.sql.
-// Run `make sqlc` before compiling (migration 000305 must be applied first).
 type sessionRepo struct {
 	store   db.Store
 	cache   cache.Service
@@ -60,14 +57,12 @@ func (r *sessionRepo) CreateSession(ctx context.Context, s Session) error {
 	entityScopeJSON := marshalJSON(s.EntityScope)
 	configJSON := marshalJSON(s.Configuration)
 
-	// Nullable principal_id — *uuid.UUID matches the generated SQLC type.
 	var principalID *uuid.UUID
 	if s.PrincipalID != uuid.Nil {
 		id := s.PrincipalID
 		principalID = &id
 	}
 
-	// INET column → *netip.Addr in generated SQLC code.
 	var ipAddr *netip.Addr
 	if s.IPAddress != "" {
 		if parsed, err := netip.ParseAddr(s.IPAddress); err == nil {
@@ -106,7 +101,6 @@ func (r *sessionRepo) CreateSession(ctx context.Context, s Session) error {
 }
 
 // GetByTokenHash atomically touches last_accessed_at and retrieves the session.
-// Uses TouchAndGetSession for a single round-trip instead of get + separate update.
 // Returns nil, nil when not found or expired.
 func (r *sessionRepo) GetByTokenHash(ctx context.Context, hash string) (*Session, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "session.repo.GetByTokenHash")
@@ -115,7 +109,7 @@ func (r *sessionRepo) GetByTokenHash(ctx context.Context, hash string) (*Session
 	row, err := r.store.TouchAndGetSession(ctx, hash)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // session not found or expired
+			return nil, nil
 		}
 		return nil, fmt.Errorf("session repo: get session: %w", err)
 	}
@@ -149,7 +143,7 @@ func rowToSession(
 
 	var scope EntityScope
 	if len(entityScopeRaw) > 0 {
-		_ = json.Unmarshal(entityScopeRaw, &scope) // non-fatal; default zero value is safe
+		_ = json.Unmarshal(entityScopeRaw, &scope)
 	}
 
 	var cfg Configuration
@@ -217,12 +211,10 @@ func (r *sessionRepo) Invalidate(ctx context.Context, hash string) error {
 }
 
 // UpdateLastSeen fires an async last_accessed_at update — does not block the caller.
-// Errors are swallowed intentionally; this is best-effort observability only.
 func (r *sessionRepo) UpdateLastSeen(ctx context.Context, hash string) {
 	go func() {
-		// NOTE(tenant-context): ctx carries tenant_id for RLS.
 		if err := r.store.UpdateSessionLastSeen(ctx, hash); err != nil {
-			_ = err // best-effort: silently drop
+			_ = err
 		}
 	}()
 }
@@ -232,12 +224,10 @@ func sessionCacheKey(hash string) string {
 	return "session:" + hash
 }
 
-// cacheSession stores a ResolvedSession in the cache under the token hash.
 func (r *sessionRepo) cacheSession(ctx context.Context, hash string, resolved *ResolvedSession, ttl time.Duration) {
 	_ = r.cache.Set(ctx, sessionCacheKey(hash), resolved, ttl)
 }
 
-// getCachedSession attempts a cache lookup; returns nil on miss or error.
 func (r *sessionRepo) getCachedSession(ctx context.Context, hash string) *ResolvedSession {
 	var resolved ResolvedSession
 	if err := r.cache.Get(ctx, sessionCacheKey(hash), &resolved); err != nil {
@@ -246,7 +236,6 @@ func (r *sessionRepo) getCachedSession(ctx context.Context, hash string) *Resolv
 	return &resolved
 }
 
-// deleteCachedSession removes a session from the cache.
 func (r *sessionRepo) deleteCachedSession(ctx context.Context, hash string) {
 	_ = r.cache.Delete(ctx, sessionCacheKey(hash))
 }

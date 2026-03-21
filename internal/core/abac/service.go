@@ -13,7 +13,7 @@ import (
 	"awo/internal/core/abac/activities"
 	"awo/internal/core/abac/models"
 	"awo/internal/core/abac/repository"
-	"awo/internal/core/identity"
+	"awo/internal/core/iam"
 	"awo/internal/core/tenant"
 	"awo/internal/shared/errors"
 	"awo/internal/shared/logger"
@@ -55,7 +55,7 @@ type service struct {
 	policyEvaluationRepo repository.PolicyEvaluationRepository
 
 	// External services
-	identityService identity.Service
+	identityService iam.UserService
 	tenantService   tenant.Service
 
 	// Infrastructure
@@ -69,7 +69,7 @@ func NewService(
 	policyRepo repository.PolicyRepository,
 	attributeRepo repository.AttributeRepository,
 	policyEvaluationRepo repository.PolicyEvaluationRepository,
-	identityService identity.Service,
+	identityService iam.UserService,
 	tenantService tenant.Service,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,

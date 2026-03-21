@@ -1,4 +1,4 @@
-package authz
+package iam
 
 // casbinModel is the Casbin CONF model used by every enforcer in this package.
 //
