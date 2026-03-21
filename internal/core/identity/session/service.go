@@ -334,7 +334,11 @@ func domainForUser(user *identity.User) string {
 }
 
 // displayName returns a human-readable name for the user.
+// Prefers DisplayName, falls back to Username, then Email.
 func displayName(user *identity.User) string {
+	if user.DisplayName != nil && *user.DisplayName != "" {
+		return *user.DisplayName
+	}
 	if user.Username != "" {
 		return user.Username
 	}

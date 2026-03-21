@@ -79,8 +79,8 @@ Fiber HTTP Server
       │     → ResolvedSession carries: identity + permissions + flags + settings + entity scope
       │
       ├── SetDBPool()                 pool selection from session.UserType
-      │     platform user  → awo_platform (BYPASSRLS)
-      │     all others     → awo_app (RLS active, per-connection settings)
+      │     platform user  → admin_role (BYPASSRLS)
+      │     all others     → application_role (RLS active, per-connection settings)
       │
       ├── RequireTenantContext()      validates X-Tenant-ID header
       │
@@ -341,7 +341,7 @@ CREATE TABLE actions (
 );
 ```
 
-`GRANT SELECT ON modules, resources, actions TO awo_app;` — all tenants can read these tables. There is no RLS on them because they contain no tenant data.
+`GRANT SELECT ON modules, resources, actions TO application_role;` — all tenants can read these tables. There is no RLS on them because they contain no tenant data.
 
 ### 3.2 The Key Derivation Rule
 
@@ -706,7 +706,7 @@ CREATE TABLE users (
 ```
 
 **Scopes:**
-- `tenant_id = NULL` → platform scope: global admins, Awo operators. Use `awo_platform` pool.
+- `tenant_id = NULL` → platform scope: global admins, Awo operators. Use `admin_role` pool.
 - `tenant_id = <uuid>` → all other types: employees, portal contacts, API integrations. Immutable after creation. All queries RLS-scoped.
 
 **`principal_id`** — portal users' identity is their business record (a contact or employee). Portal handlers always read `principal_id` from session — never from query params. DB RLS enforces it as a second layer.
@@ -1042,28 +1042,28 @@ ALTER TABLE entities ENABLE ROW LEVEL SECURITY;
 -- Shared tables: no RLS, just GRANT
 GRANT SELECT ON modules, resources, actions, permissions,
                 feature_flag_definitions, setting_definitions
-    TO awo_app;
+    TO application_role;
 
 -- Tenant-scoped tables: RLS by tenant_id
-CREATE POLICY tenant_isolation ON tenant_feature_flags FOR ALL TO awo_app
+CREATE POLICY tenant_isolation ON tenant_feature_flags FOR ALL TO application_role
     USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
 
-CREATE POLICY tenant_isolation ON tenant_settings FOR ALL TO awo_app
+CREATE POLICY tenant_isolation ON tenant_settings FOR ALL TO application_role
     USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
 
 -- casbin_rule: no tenant RLS — Casbin loads all rules at startup
 -- Isolation enforced by r.dom==p.dom in Casbin's in-memory model
-CREATE POLICY application_full_access ON casbin_rule FOR ALL TO awo_app USING (TRUE);
+CREATE POLICY application_full_access ON casbin_rule FOR ALL TO application_role USING (TRUE);
 ```
 
 ### 8.4 The Two PostgreSQL Roles
 
 ```
-awo_app        All tenant/portal requests. Subject to RLS.
+application_role        All tenant/portal requests. Subject to RLS.
                Per-connection: app.tenant_id, app.user_id, app.user_type,
                                app.principal_id, app.entity_id
 
-awo_platform   Platform operators only. BYPASSRLS at PostgreSQL engine level.
+admin_role   Platform operators only. BYPASSRLS at PostgreSQL engine level.
                Accesses platform_views schema (cross-tenant aggregates).
 ```
 
@@ -1646,9 +1646,9 @@ Three independent layers enforce that Tenant A cannot access Tenant B's data:
 2. **DB RLS** — engine-level, `current_setting('app.tenant_id')` on every query
 3. **Service-layer `tenantID`** — explicit in every query's WHERE clause
 
-The `_platform_` domain is reserved. Platform operators inspecting a tenant pass `?tenant_id=<uuid>` for display context, but their permissions come from `_platform_` policies and the `awo_platform` pool bypasses RLS.
+The `_platform_` domain is reserved. Platform operators inspecting a tenant pass `?tenant_id=<uuid>` for display context, but their permissions come from `_platform_` policies and the `admin_role` pool bypasses RLS.
 
-Cross-tenant **writes** are never permitted. Cross-tenant reads are permitted only through the `awo_platform` pool for platform operators, using `platform_views` schema queries.
+Cross-tenant **writes** are never permitted. Cross-tenant reads are permitted only through the `admin_role` pool for platform operators, using `platform_views` schema queries.
 
 ---
 

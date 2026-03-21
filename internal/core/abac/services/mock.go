@@ -10,11 +10,11 @@
 package services
 
 import (
+	models "awo/internal/core/abac/models"
 	context "context"
 	reflect "reflect"
 	time "time"
 
-	models "awo/internal/core/abac/models"
 	gomock "go.uber.org/mock/gomock"
 )
 

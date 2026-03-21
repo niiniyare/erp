@@ -10,11 +10,11 @@
 package authn
 
 import (
+	model "awo/internal/core/iam/model"
 	context "context"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	model "awo/internal/core/iam/model"
 	gomock "go.uber.org/mock/gomock"
 )
 

@@ -10,12 +10,12 @@
 package repository
 
 import (
+	models "awo/internal/core/abac/models"
+	types "awo/internal/shared/types"
 	context "context"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	models "awo/internal/core/abac/models"
-	types "awo/internal/shared/types"
 	gomock "go.uber.org/mock/gomock"
 )
 

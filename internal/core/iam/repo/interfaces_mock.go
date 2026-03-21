@@ -10,13 +10,13 @@
 package repo
 
 import (
+	db "awo/db/sqlc"
+	model "awo/internal/core/iam/model"
 	context "context"
 	reflect "reflect"
 	time "time"
 
 	uuid "github.com/google/uuid"
-	db "awo/db/sqlc"
-	model "awo/internal/core/iam/model"
 	gomock "go.uber.org/mock/gomock"
 )
 

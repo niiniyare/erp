@@ -44,6 +44,9 @@ type Repository interface {
 	CreateEmployee(ctx context.Context, req *CreateEmployeeRequest) (*Employee, error)
 	GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employee, error)
 
+	ListUsers(ctx context.Context, req *ListUsersRequest) ([]*User, error)
+	SearchUsers(ctx context.Context, query string, limit, offset int) ([]*User, error)
+
 	AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
 	RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
 }
@@ -276,6 +279,52 @@ func (r *repository) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*Employ
 	return fromSQLCEmployee(sqlcEmployee)
 }
 
+func (r *repository) ListUsers(ctx context.Context, req *ListUsersRequest) ([]*User, error) {
+	limit := int32(req.Limit)
+	offset := int32(req.Offset)
+	if limit == 0 {
+		limit = 50
+	}
+	rows, err := r.store.ListUsers(ctx, db.ListUsersParams{
+		UserType:      req.UserType,
+		AccountStatus: req.AccountStatus,
+		Limit:         limit,
+		Offset:        offset,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("identity repo: list users: %w", err)
+	}
+	out := make([]*User, 0, len(rows))
+	for _, row := range rows {
+		u, err := fromSQLCUser(row)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, u)
+	}
+	return out, nil
+}
+
+func (r *repository) SearchUsers(ctx context.Context, query string, limit, offset int) ([]*User, error) {
+	rows, err := r.store.SearchUsersAdvanced(ctx, db.SearchUsersAdvancedParams{
+		Query:  &query,
+		Limit:  int32(limit),
+		Offset: int32(offset),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("identity repo: search users: %w", err)
+	}
+	out := make([]*User, 0, len(rows))
+	for _, row := range rows {
+		u, err := fromSQLCUser(row)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, u)
+	}
+	return out, nil
+}
+
 func (r *repository) AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
 	_, err := r.store.AssignUserRole(ctx, db.AssignUserRoleParams{
 		PUserID:     userID,
@@ -333,8 +382,10 @@ func fromSQLCUser(sqlcUser *db.User) (*User, error) {
 		EntityID:              sqlcUser.EntityID,
 		PersonID:              sqlcUser.PersonID,
 		EmployeeID:            sqlcUser.EmployeeID,
+		PrincipalID:           sqlcUser.PrincipalID,
 		Username:              username,
 		Email:                 sqlcUser.Email,
+		DisplayName:           sqlcUser.DisplayName,
 		UserType:              sqlcUser.UserType,
 		AccountStatus:         accountStatus,
 		IsActive:              sqlcUser.IsActive,
@@ -440,6 +491,8 @@ func fromSQLCCompleteUserProfile(row *db.GetCompleteUserProfileRow) (*UserWithDe
 		EntityID:              row.EntityID,
 		PersonID:              row.PersonID,
 		EmployeeID:            row.EmployeeID,
+		DisplayName:           row.DisplayName,
+		PrincipalID:           row.PrincipalID,
 		Username:              row.Username,
 		Email:                 row.Email,
 		PasswordHash:          row.PasswordHash,
@@ -547,6 +600,7 @@ func toSQLCCreateUserParams(req *CreateUserRequest, hashedPassword string) (db.C
 		EmployeeID:            req.EmployeeID,
 		Username:              req.Username,
 		Email:                 req.Email,
+		DisplayName:           req.DisplayName,
 		PasswordHash:          &hashedPassword,
 		UserType:              req.UserType,
 		AccountStatus:         &req.AccountStatus,

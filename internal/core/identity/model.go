@@ -47,8 +47,10 @@ type User struct {
 	EntityID              uuid.UUID      `json:"entity_id"`
 	PersonID              *uuid.UUID     `json:"person_id,omitempty"`
 	EmployeeID            *uuid.UUID     `json:"employee_id,omitempty"`
+	PrincipalID           *uuid.UUID     `json:"principal_id,omitempty"`
 	Username              string         `json:"username"`
 	Email                 string         `json:"email"`
+	DisplayName           *string        `json:"display_name,omitempty"`
 	UserType              string         `json:"user_type"`
 	AccountStatus         AccountStatus  `json:"account_status"`
 	IsActive              bool           `json:"is_active"`
@@ -163,6 +165,7 @@ type CreateUserRequest struct {
 	EmployeeID            *uuid.UUID     `json:"employee_id,omitempty"`
 	Username              string         `json:"username" validate:"required,min=3,max=50"`
 	Email                 string         `json:"email" validate:"required,email"`
+	DisplayName           *string        `json:"display_name,omitempty"`
 	Password              string         `json:"password" validate:"required,min=8"`
 	UserType              string         `json:"user_type" validate:"required"`
 	AccountStatus         string         `json:"account_status"`

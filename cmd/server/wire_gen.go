@@ -7,10 +7,10 @@
 package main
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"awo/internal/api/handlers"
 	"awo/internal/platform/config"
 	"awo/internal/platform/wire"
+	"github.com/gofiber/fiber/v2"
 )
 
 // Injectors from wire.go:
@@ -41,16 +41,16 @@ func InitializeApplication() (*Application, error) {
 		return nil, err
 	}
 	tenantService := wire.NewTenantService(store, cacheService, service, logger)
-	identityRepo := wire.NewIdentityRepository(store, cacheService, service, metricsProvider)
-	identityService := wire.NewIdentityService(identityRepo, cacheService, service, metricsProvider)
+	authnService := wire.NewSimpleAuthenticationService()
+	iamService := wire.NewSimpleIAMService(authnService)
+	repository := wire.NewIdentityRepository(store, cacheService, service, metricsProvider)
+	identityService := wire.NewIdentityService(repository, cacheService, service, metricsProvider)
 	authzService, err := wire.NewAuthzService(store, cacheService, logger, metricsProvider, service)
 	if err != nil {
 		return nil, err
 	}
-	sessionRepo := wire.NewSessionRepository(store, cacheService, service, metricsProvider)
-	sessionService := wire.NewSessionService(identityService, authzService, sessionRepo, cacheService, service, metricsProvider, logger)
-	authnService := wire.NewSimpleAuthenticationService()
-	iamService := wire.NewSimpleIAMService(authnService)
+	sessionRepository := wire.NewSessionRepository(store, cacheService, service, metricsProvider)
+	sessionService := wire.NewSessionService(identityService, authzService, sessionRepository, cacheService, service, metricsProvider, logger)
 	services := wire.NewFinanceServices(store, logger, metricsProvider, service)
 	tenantMiddlewareConfig := wire.NewTenantMiddlewareConfig(tenantService, store)
 	v := wire.NewTenantMiddleware(tenantMiddlewareConfig)

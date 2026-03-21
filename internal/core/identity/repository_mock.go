@@ -234,6 +234,21 @@ func (mr *MockRepositoryMockRecorder) IncrementFailedAttempts(ctx, userID any) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrementFailedAttempts", reflect.TypeOf((*MockRepository)(nil).IncrementFailedAttempts), ctx, userID)
 }
 
+// ListUsers mocks base method.
+func (m *MockRepository) ListUsers(ctx context.Context, req *ListUsersRequest) ([]*User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListUsers", ctx, req)
+	ret0, _ := ret[0].([]*User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListUsers indicates an expected call of ListUsers.
+func (mr *MockRepositoryMockRecorder) ListUsers(ctx, req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockRepository)(nil).ListUsers), ctx, req)
+}
+
 // LockAccount mocks base method.
 func (m *MockRepository) LockAccount(ctx context.Context, userID uuid.UUID, until time.Time) error {
 	m.ctrl.T.Helper()
@@ -274,6 +289,21 @@ func (m *MockRepository) RevokeUserRole(ctx context.Context, userID, roleID, ent
 func (mr *MockRepositoryMockRecorder) RevokeUserRole(ctx, userID, roleID, entityID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeUserRole", reflect.TypeOf((*MockRepository)(nil).RevokeUserRole), ctx, userID, roleID, entityID)
+}
+
+// SearchUsers mocks base method.
+func (m *MockRepository) SearchUsers(ctx context.Context, query string, limit, offset int) ([]*User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchUsers", ctx, query, limit, offset)
+	ret0, _ := ret[0].([]*User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SearchUsers indicates an expected call of SearchUsers.
+func (mr *MockRepositoryMockRecorder) SearchUsers(ctx, query, limit, offset any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchUsers", reflect.TypeOf((*MockRepository)(nil).SearchUsers), ctx, query, limit, offset)
 }
 
 // UpdateLastLogin mocks base method.

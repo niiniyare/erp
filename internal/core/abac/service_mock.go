@@ -10,11 +10,11 @@
 package abac
 
 import (
+	activities "awo/internal/core/abac/activities"
 	context "context"
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	activities "awo/internal/core/abac/activities"
 	gomock "go.uber.org/mock/gomock"
 )
 
