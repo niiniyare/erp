@@ -16,15 +16,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/niiniyare/erp/internal/api/handlers/{{.PackageName}}"
-	goa{{.ModuleNamePascal}} "github.com/niiniyare/erp/internal/api/gen/{{.PackageName}}"
-	"github.com/niiniyare/erp/internal/core/{{.PackageName}}/domain"
-	{{.PackageName}}Repository "github.com/niiniyare/erp/internal/core/{{.PackageName}}/repository"
-	{{.PackageName}}Service "github.com/niiniyare/erp/internal/core/{{.PackageName}}"
-	"github.com/niiniyare/erp/internal/platform/database"
-	"github.com/niiniyare/erp/internal/shared/auth"
-	"github.com/niiniyare/erp/internal/shared/testutil"
-	"github.com/niiniyare/erp/db/sqlc"
+	"awo/internal/api/handlers/{{.PackageName}}"
+	goa{{.ModuleNamePascal}} "awo/internal/api/gen/{{.PackageName}}"
+	"awo/internal/core/{{.PackageName}}/domain"
+	{{.PackageName}}Repository "awo/internal/core/{{.PackageName}}/repository"
+	{{.PackageName}}Service "awo/internal/core/{{.PackageName}}"
+	"awo/internal/platform/database"
+	"awo/internal/shared/auth"
+	"awo/internal/shared/testutil"
+	"awo/db/sqlc"
 )
 
 {{comment (printf "%s Integration Tests - Full end-to-end testing" .ModuleNamePascal)}}

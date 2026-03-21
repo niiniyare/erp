@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/niiniyare/erp/internal/core/access/request"
-	"github.com/niiniyare/erp/internal/core/featureflag"
-	"github.com/niiniyare/erp/internal/featureflag/workflow"
-	// "github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/core/access/request"
+	"awo/internal/core/featureflag"
+	"awo/internal/featureflag/workflow"
+	// "awo/internal/shared/logger"
 	"go.temporal.io/sdk/activity"
 )
 

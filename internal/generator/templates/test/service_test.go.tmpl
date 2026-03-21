@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"github.com/niiniyare/erp/internal/core/{{.PackageName}}/domain"
-	"github.com/niiniyare/erp/internal/core/{{.PackageName}}/mocks"
-	"github.com/niiniyare/erp/internal/shared/auth"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/logger"
+	"awo/internal/core/{{.PackageName}}/domain"
+	"awo/internal/core/{{.PackageName}}/mocks"
+	"awo/internal/shared/auth"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/logger"
 )
 
 {{comment (printf "Test%sService tests the %s service layer" .EntityName (lowerCase .EntityName))}}

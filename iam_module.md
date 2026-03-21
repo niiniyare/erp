@@ -858,8 +858,8 @@ Custom RBAC implementations grow from `if user.role == "admin"` to 2,000+ lines 
 |---|---|---|---|
 | Platform | `platform:` | `_platform_` | Awo staff |
 | Tenant | `tenant:` | `<tenant-uuid>` | Employee |
-| Portal | `portal:` | `<tenant-uuid>` | External contact |
-| Third-Party | `api:` | `<tenant-uuid>` | Integration |
+| Portal | `portal:` | `<tenant-uuid>:portal` | External contact |
+| Third-Party | `api:` | `<tenant-uuid>:api` | Integration |
 
 `_platform_` is reserved and hardcoded. UUIDs cannot produce it.
 
@@ -1046,10 +1046,10 @@ GRANT SELECT ON modules, resources, actions, permissions,
 
 -- Tenant-scoped tables: RLS by tenant_id
 CREATE POLICY tenant_isolation ON tenant_feature_flags FOR ALL TO application_role
-    USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+    USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
 
 CREATE POLICY tenant_isolation ON tenant_settings FOR ALL TO application_role
-    USING (tenant_id = current_setting('app.tenant_id', true)::uuid);
+    USING (tenant_id = current_setting('app.current_tenant_id', true)::uuid);
 
 -- casbin_rule: no tenant RLS — Casbin loads all rules at startup
 -- Isolation enforced by r.dom==p.dom in Casbin's in-memory model

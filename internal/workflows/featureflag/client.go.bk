@@ -7,8 +7,8 @@ package featureflag
 // 	//
 // 	// "github.com/docker/docker/registry/resumable"
 // 	// "github.com/google/uuid"
-// 	// "github.com/niiniyare/erp/internal/featureflag/workflow"
-// 	// "github.com/niiniyare/erp/internal/shared/logger"
+// 	// "awo/internal/featureflag/workflow"
+// 	// "awo/internal/shared/logger"
 // 	"go.temporal.io/sdk/client"
 // 	"go.temporal.io/sdk/workflow"
 // )

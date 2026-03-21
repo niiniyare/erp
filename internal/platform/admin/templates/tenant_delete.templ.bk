@@ -1,6 +1,6 @@
 package templates
 
-import "github.com/niiniyare/erp/internal/core/tenant"
+import "awo/internal/core/tenant"
 
 templ TenantDeleteModal(tenant tenant.Tenant) {
 	<!-- Delete Confirmation Modal -->

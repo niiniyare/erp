@@ -8,13 +8,13 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/niiniyare/erp/internal/core/{{.ModuleNameSnake}}/domain"
- db "github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/shared/errors"
-	"github.com/niiniyare/erp/internal/platform/cache"
+	"awo/internal/core/{{.ModuleNameSnake}}/domain"
+ db "awo/db/sqlc"
+	"awo/internal/shared/errors"
+	"awo/internal/platform/cache"
 
-	"github.com/niiniyare/erp/internal/shared/logging"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	"awo/internal/shared/logging"
+	"awo/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 )
 

@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	goa{{.ModuleNamePascal}} "github.com/niiniyare/erp/internal/api/gen/{{.PackageName}}"
-	{{.PackageName}}Service "github.com/niiniyare/erp/internal/core/{{.PackageName}}"
-	"github.com/niiniyare/erp/internal/shared/logger"
-	"github.com/niiniyare/erp/internal/shared/metrics"
-	"github.com/niiniyare/erp/internal/shared/tracing"
+	goa{{.ModuleNamePascal}} "awo/internal/api/gen/{{.PackageName}}"
+	{{.PackageName}}Service "awo/internal/core/{{.PackageName}}"
+	"awo/internal/shared/logger"
+	"awo/internal/shared/metrics"
+	"awo/internal/shared/tracing"
 )
 
 {{comment (printf "%sHandler implements the GOA %s service interface" .EntityName (lowerCase .PackageName))}}

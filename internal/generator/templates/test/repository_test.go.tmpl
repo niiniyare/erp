@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/niiniyare/erp/internal/core/{{.PackageName}}/domain"
-	"github.com/niiniyare/erp/internal/core/{{.PackageName}}/repository/mappers"
-	"github.com/niiniyare/erp/db/sqlc"
-	"github.com/niiniyare/erp/internal/platform/database"
-	"github.com/niiniyare/erp/internal/shared/testutil"
+	"awo/internal/core/{{.PackageName}}/domain"
+	"awo/internal/core/{{.PackageName}}/repository/mappers"
+	"awo/db/sqlc"
+	"awo/internal/platform/database"
+	"awo/internal/shared/testutil"
 )
 
 {{comment (printf "Test%sRepository tests the %s repository implementation" .EntityName (lowerCase .EntityName))}}
