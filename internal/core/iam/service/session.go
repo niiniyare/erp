@@ -26,6 +26,14 @@ type SessionService interface {
 	Login(ctx context.Context, email, password string) (*domain.ResolvedSession, string, error)
 	ValidateSession(ctx context.Context, token string) (*domain.ResolvedSession, error)
 	Logout(ctx context.Context, token string) error
+
+	// LogoutAllForUser invalidates all active DB sessions for the given user.
+	// Existing cache entries expire naturally within the session TTL window.
+	LogoutAllForUser(ctx context.Context, userID uuid.UUID) error
+
+	// LogoutAllForTenant invalidates all active DB sessions for the given tenant.
+	// Existing cache entries expire naturally within the session TTL window.
+	LogoutAllForTenant(ctx context.Context, tenantID uuid.UUID) error
 }
 
 //  Implementation
@@ -128,11 +136,13 @@ func (s *sessionService) Login(ctx context.Context, email, password string) (*do
 	}
 
 	resolved := &domain.ResolvedSession{
-		UserID:      user.ID,
-		UserType:    user.UserType,
-		TenantID:    tenantID,
-		DisplayName: displayName(user),
-		Permissions: perms,
+		UserID:        user.ID,
+		UserType:      user.UserType,
+		TenantID:      tenantID,
+		DisplayName:   displayName(user),
+		Permissions:   perms,
+		EntityScope:   entityScope,
+		Configuration: configuration,
 	}
 
 	// Populate cache with the full resolved session (including DisplayName).
@@ -176,9 +186,11 @@ func (s *sessionService) buildPermissions(ctx context.Context, user *domain.User
 	subject := subjectForUser(user)
 	domainName := domainForUser(user)
 
-	roles, err := s.authz.GetRoles(ctx, subject, domainName)
+	// GetImplicitRoles traverses the full role inheritance chain, unlike
+	// GetRoles which only returns directly-assigned roles.
+	roles, err := s.authz.GetImplicitRoles(ctx, subject, domainName)
 	if err != nil {
-		return nil, fmt.Errorf("buildPermissions: GetRoles: %w", err)
+		return nil, fmt.Errorf("buildPermissions: GetImplicitRoles: %w", err)
 	}
 
 	policies, err := s.authz.GetPolicies(ctx, domainName)
@@ -191,10 +203,26 @@ func (s *sessionService) buildPermissions(ctx context.Context, user *domain.User
 		roleSet[r] = true
 	}
 
-	perms := make(map[string]bool)
+	// Separate allows and denies; deny-override: one deny beats all allows.
+	allows := make(map[string]bool)
+	denies := make(map[string]bool)
 	for _, p := range policies {
-		if roleSet[p.Subject] && p.Effect == "allow" {
-			perms[p.Object+"."+p.Action] = true
+		if !roleSet[p.Subject] {
+			continue
+		}
+		key := p.Object + "." + p.Action
+		switch p.Effect {
+		case "allow":
+			allows[key] = true
+		case "deny":
+			denies[key] = true
+		}
+	}
+
+	perms := make(map[string]bool, len(allows))
+	for key := range allows {
+		if !denies[key] {
+			perms[key] = true
 		}
 	}
 
@@ -230,23 +258,42 @@ func tenantIDFromCtx(ctx context.Context) uuid.UUID {
 
 func subjectForUser(user *domain.User) string {
 	id := user.ID.String()
-	switch user.UserType {
-	case string(domain.ActorPlatform):
+	switch domain.ActorTypeFromUserType(user.UserType) {
+	case domain.ActorPlatform:
 		return domain.PlatformSubject(id)
-	case string(domain.ActorPortal):
+	case domain.ActorPortal:
 		return domain.PortalSubject(id)
+	case domain.ActorAPI:
+		return domain.APISubject(id)
 	default:
 		return domain.TenantSubject(id)
 	}
 }
 
 func domainForUser(user *domain.User) string {
-	switch user.UserType {
-	case string(domain.ActorPlatform):
+	tenantID := user.TenantID.String()
+	switch domain.ActorTypeFromUserType(user.UserType) {
+	case domain.ActorPlatform:
 		return domain.DomainPlatform
+	case domain.ActorPortal:
+		return domain.PortalDomain(tenantID)
+	case domain.ActorAPI:
+		return domain.APIDomain(tenantID)
 	default:
-		return domain.TenantDomain(user.TenantID.String())
+		return domain.TenantDomain(tenantID)
 	}
+}
+
+func (s *sessionService) LogoutAllForUser(ctx context.Context, userID uuid.UUID) error {
+	ctx, span := s.tracer.StartSpan(ctx, "session.LogoutAllForUser")
+	defer span.End()
+	return s.repo.InvalidateByUser(ctx, userID)
+}
+
+func (s *sessionService) LogoutAllForTenant(ctx context.Context, tenantID uuid.UUID) error {
+	ctx, span := s.tracer.StartSpan(ctx, "session.LogoutAllForTenant")
+	defer span.End()
+	return s.repo.InvalidateByTenant(ctx, tenantID)
 }
 
 func displayName(user *domain.User) string {

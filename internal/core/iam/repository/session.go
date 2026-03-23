@@ -35,6 +35,14 @@ type SessionRepository interface {
 	// Invalidate marks the DB session inactive and evicts the cache entry.
 	Invalidate(ctx context.Context, hash string) error
 
+	// InvalidateByUser marks all active sessions for the given user as inactive in the DB.
+	// Cache entries for those sessions expire naturally within the session TTL.
+	InvalidateByUser(ctx context.Context, userID uuid.UUID) error
+
+	// InvalidateByTenant marks all active sessions for the given tenant as inactive in the DB.
+	// Cache entries for those sessions expire naturally within the session TTL.
+	InvalidateByTenant(ctx context.Context, tenantID uuid.UUID) error
+
 	// UpdateLastSeen is fire-and-forget.
 	UpdateLastSeen(ctx context.Context, hash string)
 }
@@ -200,6 +208,24 @@ func (r *sessionRepo) Invalidate(ctx context.Context, hash string) error {
 		return fmt.Errorf("session repo: invalidate session: %w", err)
 	}
 	_ = r.cache.Delete(ctx, sessionCacheKey(hash))
+	return nil
+}
+
+func (r *sessionRepo) InvalidateByUser(ctx context.Context, userID uuid.UUID) error {
+	ctx, span := r.tracing.StartSpan(ctx, "session.repo.InvalidateByUser")
+	defer span.End()
+	if err := r.store.InvalidateSessionsByUser(ctx, userID); err != nil {
+		return fmt.Errorf("session repo: invalidate by user: %w", err)
+	}
+	return nil
+}
+
+func (r *sessionRepo) InvalidateByTenant(ctx context.Context, tenantID uuid.UUID) error {
+	ctx, span := r.tracing.StartSpan(ctx, "session.repo.InvalidateByTenant")
+	defer span.End()
+	if err := r.store.InvalidateSessionsByTenant(ctx, tenantID); err != nil {
+		return fmt.Errorf("session repo: invalidate by tenant: %w", err)
+	}
 	return nil
 }
 
