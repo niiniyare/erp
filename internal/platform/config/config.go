@@ -167,6 +167,11 @@ func setDefaults(v *viper.Viper) {
 
 	// Auth defaults
 	v.SetDefault("auth.jwt_secret", "")
+	v.SetDefault("auth.max_failed_attempts", 5)
+	v.SetDefault("auth.lockout_duration", 15*time.Minute)
+	v.SetDefault("auth.session_ttl", 8*time.Hour)
+	v.SetDefault("auth.cookie_name", "session")
+	v.SetDefault("auth.require_https", true)
 
 	// Feature defaults
 	v.SetDefault("features.enable_new_dashboard", false)
@@ -230,6 +235,11 @@ func bindEnvVars(v *viper.Viper) {
 
 	// Auth
 	v.BindEnv("auth.jwt_secret", "JWT_SECRET")
+	v.BindEnv("auth.max_failed_attempts", "AUTH_MAX_FAILED_ATTEMPTS")
+	v.BindEnv("auth.lockout_duration", "AUTH_LOCKOUT_DURATION")
+	v.BindEnv("auth.session_ttl", "AUTH_SESSION_TTL")
+	v.BindEnv("auth.cookie_name", "AUTH_COOKIE_NAME")
+	v.BindEnv("auth.require_https", "AUTH_REQUIRE_HTTPS")
 
 	// Features
 	v.BindEnv("features.enable_new_dashboard", "ENABLE_NEW_DASHBOARD")

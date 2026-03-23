@@ -58,8 +58,11 @@ CREATE TABLE IF NOT EXISTS config_definitions (
   -- KEY IDENTITY
   -- =========================================================================
 
+  module_id UUID NOT NULL references module(id),
   -- Module that owns this configuration key (e.g. 'finance', 'hr', 'inventory').
   -- Must match the module_name used in ConfigurationService calls.
+  -- TODO: module is stored at module table to
+  -- fetch the name or any info related it can be desided in the future how queried
   module_name  VARCHAR(50) NOT NULL
                CHECK (module_name ~* '^[a-z][a-z0-9_]*$'),
 
@@ -79,8 +82,9 @@ CREATE TABLE IF NOT EXISTS config_definitions (
   -- The ConfigurationService uses this to apply correct type casting and
   -- to populate the correct AsString() / AsDecimal() / AsBool() / AsInt()
   -- method on the ConfigValue value object.
-  config_type  VARCHAR(20) NOT NULL
-               CHECK (config_type IN ('string', 'integer', 'decimal', 'boolean', 'json')),
+config_type VARCHAR(20) NOT NULL
+      CHECK (
+    config_type IN ('STRING', 'INTEGER', 'DECIMAL', 'BOOLEAN', 'JSON')),
 
   -- System-level default value (Level 1 in the 3-level hierarchy).
   -- Stored as JSONB so it can hold any scalar or structured value consistently.

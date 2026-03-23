@@ -17,7 +17,7 @@ import (
 	"awo.so/internal/shared/tracing"
 )
 
-// ─── Port (interface) ─────────────────────────────────────────────────────────
+//  Port (interface)
 
 // SessionRepository defines the persistence port for sessions.
 // All cache operations are encapsulated here — callers never touch cache.
@@ -39,7 +39,7 @@ type SessionRepository interface {
 	UpdateLastSeen(ctx context.Context, hash string)
 }
 
-// ─── Adapter (implementation) ─────────────────────────────────────────────────
+//  Adapter (implementation)
 
 type sessionRepo struct {
 	store   db.Store
@@ -75,10 +75,11 @@ func (r *sessionRepo) Create(ctx context.Context, s domain.Session) error {
 	entityScopeJSON := domain.MarshalSessionJSON(s.EntityScope)
 	configJSON := domain.MarshalSessionJSON(s.Configuration)
 
+	// s.PrincipalID is already *uuid.UUID — nil means non-portal session.
+	// No indirection needed; assign directly.
 	var principalID *uuid.UUID
-	if s.PrincipalID != uuid.Nil {
-		id := s.PrincipalID
-		principalID = &id
+	if s.PrincipalID != nil {
+		principalID = s.PrincipalID
 	}
 
 	var ipAddr *netip.Addr
@@ -141,6 +142,7 @@ func (r *sessionRepo) ValidateToken(ctx context.Context, hash string) (*domain.R
 	}
 
 	// 3. Convert session row → ResolvedSession
+
 	perms := make(map[string]bool)
 	if len(row.Permissions) > 0 {
 		if err := json.Unmarshal(row.Permissions, &perms); err != nil {
@@ -148,23 +150,38 @@ func (r *sessionRepo) ValidateToken(ctx context.Context, hash string) (*domain.R
 		}
 	}
 
+	var entityScope domain.EntityScope
+	if len(row.EntityScope) > 0 {
+		_ = json.Unmarshal(row.EntityScope, &entityScope)
+	}
+
+	var config domain.Configuration = domain.DefaultConfiguration()
+	if len(row.Configuration) > 0 {
+		_ = json.Unmarshal(row.Configuration, &config)
+	}
+
 	var utype string
 	if row.UserType != nil {
 		utype = *row.UserType
 	}
 
+	// PrincipalID is *uuid.UUID — nil for all non-portal sessions.
+	// row.PrincipalID should be *uuid.UUID from the SQLC-generated type;
+	// assign directly without wrapping.
 	resolved := &domain.ResolvedSession{
-		UserID:      row.UserID,
-		UserType:    utype,
-		TenantID:    row.TenantID,
-		PrincipalID: uuid.Nil,
-		Permissions: perms,
-		// DisplayName not available from DB row — only present on cache hit from Login
+		UserID:        row.UserID,
+		UserType:      utype,
+		TenantID:      row.TenantID,
+		PrincipalID:   row.PrincipalID, // *uuid.UUID; nil for non-portal sessions
+		Permissions:   perms,
+		EntityScope:   entityScope,
+		Configuration: config,
+		// DisplayName is not stored on the session row — it is populated only
+		// on cache-hits that originate from the Login path.
 	}
 
 	// 4. Re-populate cache for future requests
-	ttl := time.Until(row.ExpiresAt)
-	if ttl > 0 {
+	if ttl := time.Until(row.ExpiresAt); ttl > 0 {
 		r.cacheResolved(ctx, hash, resolved, ttl)
 	}
 
@@ -192,7 +209,7 @@ func (r *sessionRepo) UpdateLastSeen(ctx context.Context, hash string) {
 	}()
 }
 
-// ─── Cache helpers (internal) ─────────────────────────────────────────────────
+//  Cache helpers (internal)
 
 func (r *sessionRepo) cacheResolved(ctx context.Context, hash string, resolved *domain.ResolvedSession, ttl time.Duration) {
 	_ = r.cache.Set(ctx, sessionCacheKey(hash), resolved, ttl)

@@ -145,6 +145,9 @@ type (
 // Config is the constructor config for the AuthzService (Casbin).
 type Config = iamservice.AuthzConfig
 
+// UserConfig holds brute-force protection thresholds for the UserService.
+type UserConfig = iamservice.UserConfig
+
 // ─── Constructors (wire entry points) ────────────────────────────────────────
 
 // NewUserRepository constructs a cache-backed Postgres UserRepository.
@@ -152,10 +155,15 @@ func NewUserRepository(store db.Store, cacheSvc cache.Service, tracer tracing.Se
 	return repository.NewUserRepository(store, cacheSvc, tracer, m)
 }
 
-// NewUserService constructs a UserService.
+// NewUserService constructs a UserService with default brute-force config.
 // Cache is handled by the repository — the service receives no cache dependency.
 func NewUserService(repo UserRepository, tracer tracing.Service, m metrics.MetricsProvider) UserService {
 	return iamservice.NewUserService(repo, tracer, m)
+}
+
+// NewUserServiceWithConfig constructs a UserService with explicit brute-force config.
+func NewUserServiceWithConfig(repo UserRepository, tracer tracing.Service, m metrics.MetricsProvider, cfg UserConfig) UserService {
+	return iamservice.NewUserServiceWithConfig(repo, tracer, m, cfg)
 }
 
 // New constructs a fully initialised AuthzService backed by PostgreSQL via Casbin.
@@ -175,7 +183,7 @@ func NewSessionRepository(store db.Store, cacheSvc cache.Service, tracer tracing
 	return repository.NewSessionRepository(store, cacheSvc, tracer, m)
 }
 
-// NewSessionService constructs a SessionService.
+// NewSessionService constructs a SessionService with default session config.
 // Cache is handled by the repository — the service receives no cache dependency.
 func NewSessionService(
 	identity UserService,
@@ -186,4 +194,17 @@ func NewSessionService(
 	log logger.Logger,
 ) SessionService {
 	return iamservice.NewSessionService(identity, authz, repo, tracer, m, log)
+}
+
+// NewSessionServiceWithConfig constructs a SessionService with explicit session config.
+func NewSessionServiceWithConfig(
+	identity UserService,
+	authz AuthzService,
+	repo SessionRepository,
+	tracer tracing.Service,
+	m metrics.MetricsProvider,
+	log logger.Logger,
+	cfg SessionConfig,
+) SessionService {
+	return iamservice.NewSessionServiceWithConfig(identity, authz, repo, tracer, m, log, cfg)
 }

@@ -10,7 +10,7 @@ This is a **shared foundation package** - it provides the building blocks for er
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ internal/shared/errors (Foundation Package)     │
+│ awo.so/internal/shared/errors (Foundation Package)     │
 │ - Core error types (BusinessError, etc.)       │
 │ - Utility functions (IsTemporary, etc.)        │ 
 │ - Common error codes and patterns               │
@@ -112,7 +112,7 @@ package finance
 
 import (
     "net/http"
-    "awo/internal/shared/errors"
+    "awo.so/internal/shared/errors"
 )
 
 // Finance-specific error codes
@@ -173,7 +173,7 @@ package iam
 
 import (
     "net/http"
-    "awo/internal/shared/errors"
+    "awo.so/internal/shared/errors"
 )
 
 // IAM-specific error codes
@@ -370,7 +370,7 @@ var ErrUserNotFound = errors.NewBusinessError("USER_NOT_FOUND", "User not found"
 
 ### Best Practices
 
-#### ✅ Do
+####  Do
 
 - Create module-specific `errors.go` files
 - Use contextual error constructors
@@ -436,7 +436,7 @@ This shared errors package provides a solid foundation for building consistent, 
 ### Your Existing Code Still Works
 
 ```go
-// ✅ All existing error checking continues to work
+//  All existing error checking continues to work
 func ExistingUserService(userID string) error {
     user, err := userRepo.GetUser(userID)
     if err != nil {
@@ -449,7 +449,7 @@ func ExistingUserService(userID string) error {
     return nil
 }
 
-// ✅ Existing error returns still work
+//  Existing error returns still work
 func ExistingAuthService(email, password string) error {
     if !validateCredentials(email, password) {
         return ErrInvalidCredentials // Still works exactly the same
@@ -461,7 +461,7 @@ func ExistingAuthService(email, password string) error {
 ### Simple Error Comparisons Continue Working
 
 ```go
-// ✅ All these patterns continue to work unchanged
+//  All these patterns continue to work unchanged
 func ErrorHandlingPatterns(err error) {
     // Direct comparison
     if err == ErrUserNotFound {
@@ -712,7 +712,7 @@ func DeleteEntityHandler(w http.ResponseWriter, r *http.Request) {
 ###  Error Checking
 
 ```go
-// ✅ Traditional checking still works
+//  Traditional checking still works
 func TraditionalChecking(err error) {
     if errors.Is(err, ErrUserNotFound) {
         // Handle user not found
@@ -1011,7 +1011,7 @@ func (w *legacyServiceWrapper) GetUser(ctx context.Context, userID string) (*Use
 ### Error Construction Patterns
 
 ```go
-// ✅ Good: Use contextual constructors
+//  Good: Use contextual constructors
 func GoodErrorUsage(ctx context.Context, userID string) error {
     return NewUserNotFoundError(userID).
         WithDetail("lookup_method", "id").
@@ -1023,7 +1023,7 @@ func BadErrorUsage() error {
     return ErrUserNotFound // Missing specific context
 }
 
-// ✅ Good: Chain error details
+//  Good: Chain error details
 func ChainErrorDetails(ctx context.Context, operation string) error {
     return ErrFeatureNotEnabled.
         WithDetail("operation", operation).
@@ -1035,7 +1035,7 @@ func ChainErrorDetails(ctx context.Context, operation string) error {
 ### Error Logging Patterns
 
 ```go
-// ✅ Good: Structured error logging
+//  Good: Structured error logging
 func StructuredErrorLogging(ctx context.Context, err error) {
     if be, ok := err.(*BusinessError); ok {
         log.WithFields(map[string]interface{}{
@@ -1051,7 +1051,7 @@ func StructuredErrorLogging(ctx context.Context, err error) {
     }
 }
 
-// ✅ Good: Error metrics collection
+//  Good: Error metrics collection
 func CollectErrorMetrics(err error) {
     errorCode := GetErrorCode(err)
     httpStatus := GetHTTPStatus(err)
@@ -1073,19 +1073,19 @@ func CollectErrorMetrics(err error) {
 
 ```go
 func TestErrors(t *testing.T) {
-    // ✅ Test error types
+    //  Test error types
     err := NewUserNotFoundError("user_123")
     assert.True(t, IsUserNotFound(err))
     assert.True(t, errors.Is(err, ErrUserNotFound))
     
-    // ✅ Test error details
+    //  Test error details
     be, ok := err.(*BusinessError)
     assert.True(t, ok)
     assert.Equal(t, "USER_NOT_FOUND", be.Code)
     assert.Equal(t, http.StatusNotFound, be.HTTPStatus)
     assert.Equal(t, "user_123", be.Details["user_id"])
     
-    // ✅ Test HTTP conversion
+    //  Test HTTP conversion
     httpErr := ToHTTPError(err)
     assert.Equal(t, http.StatusNotFound, httpErr.Status)
     assert.Equal(t, "USER_NOT_FOUND", httpErr.Code)

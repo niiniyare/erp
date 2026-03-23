@@ -42,13 +42,13 @@ func InitializeApplication() (*Application, error) {
 	}
 	tenantService := wire.NewTenantService(store, cacheService, service, logger)
 	v := wire.NewIdentityRepository(store, cacheService, service, metricsProvider)
-	v2 := wire.NewIdentityService(v, cacheService, service, metricsProvider)
+	v2 := wire.NewIdentityService(v, cacheService, service, metricsProvider, configConfig)
 	v3, err := wire.NewAuthzService(store, cacheService, logger, metricsProvider, service)
 	if err != nil {
 		return nil, err
 	}
 	v4 := wire.NewSessionRepository(store, cacheService, service, metricsProvider)
-	v5 := wire.NewSessionService(v2, v3, v4, service, metricsProvider, logger)
+	v5 := wire.NewSessionService(v2, v3, v4, service, metricsProvider, logger, configConfig)
 	services := wire.NewFinanceServices(store, logger, metricsProvider, service)
 	tenantMiddlewareConfig := wire.NewTenantMiddlewareConfig(tenantService, store)
 	v6 := wire.NewTenantMiddleware(tenantMiddlewareConfig)

@@ -19,7 +19,7 @@ import (
 	"awo.so/internal/shared/tracing"
 )
 
-// ─── Port (interface) ─────────────────────────────────────────────────────────
+//  Port (interface)
 
 // SessionService handles Login / ValidateSession / Logout.
 type SessionService interface {
@@ -28,11 +28,11 @@ type SessionService interface {
 	Logout(ctx context.Context, token string) error
 }
 
-// ─── Implementation ───────────────────────────────────────────────────────────
+//  Implementation
 
 type sessionService struct {
-	identity UserService             // same package — no import needed
-	authz    AuthzService            // same package
+	identity UserService  // same package — no import needed
+	authz    AuthzService // same package
 	repo     repository.SessionRepository
 	tracer   tracing.Service
 	metrics  metrics.MetricsProvider
@@ -170,7 +170,7 @@ func (s *sessionService) Logout(ctx context.Context, token string) error {
 	return nil
 }
 
-// ─── Permission computation ───────────────────────────────────────────────────
+//  Permission computation
 
 func (s *sessionService) buildPermissions(ctx context.Context, user *domain.User) (map[string]bool, error) {
 	subject := subjectForUser(user)
@@ -202,7 +202,7 @@ func (s *sessionService) buildPermissions(ctx context.Context, user *domain.User
 	return perms, nil
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+//  Helpers
 
 func generateToken() (rawToken, hash string, err error) {
 	b := make([]byte, 32)

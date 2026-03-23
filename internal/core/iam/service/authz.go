@@ -18,7 +18,7 @@ import (
 	"awo.so/internal/shared/tracing"
 )
 
-// ─── Port (interface) ─────────────────────────────────────────────────────────
+//  Port (interface)
 
 // AuthzService is the application service for authorization operations.
 // Note: HTTP middleware is NOT part of this interface — see api/middleware.
@@ -30,7 +30,11 @@ type AuthzService interface {
 	// Role management
 	AssignRole(ctx context.Context, tenantID, subject, role, domainName string, opts ...domain.AssignOpt) error
 	RevokeRole(ctx context.Context, subject, role, domainName string) error
+	// GetRoles returns directly-assigned roles only (no inheritance traversal).
 	GetRoles(ctx context.Context, subject, domainName string) ([]string, error)
+	// GetImplicitRoles returns all effective roles including those inherited
+	// through the role hierarchy. Use this for permission pre-computation at login.
+	GetImplicitRoles(ctx context.Context, subject, domainName string) ([]string, error)
 	HasRole(ctx context.Context, subject, role, domainName string) (bool, error)
 	GetAssignments(ctx context.Context, subject, domainName string) ([]domain.RoleAssignment, error)
 
@@ -43,18 +47,18 @@ type AuthzService interface {
 	InvalidateCache(ctx context.Context) error
 }
 
-// ─── Config ───────────────────────────────────────────────────────────────────
+//  Config
 
 // AuthzConfig holds the dependencies required to create an AuthzService.
 type AuthzConfig struct {
-	Store   db.Store               // required
-	Cache   cache.Service          // required (passed to repo)
-	Logger  logger.Logger          // required
+	Store   db.Store                // required
+	Cache   cache.Service           // required (passed to repo)
+	Logger  logger.Logger           // required
 	Metrics metrics.MetricsProvider // optional
-	Tracer  tracing.Service        // optional
+	Tracer  tracing.Service         // optional
 }
 
-// ─── Implementation ───────────────────────────────────────────────────────────
+//  Implementation
 
 type authzService struct {
 	enforcer *casbin.Enforcer
@@ -110,7 +114,7 @@ func NewInMemoryAuthzService(repo repository.AuthzRepository, log logger.Logger)
 	return &authzService{enforcer: e, repo: repo, log: log}, nil
 }
 
-// ─── Enforcement ─────────────────────────────────────────────────────────────
+//  Enforcement
 
 func (s *authzService) Enforce(ctx context.Context, r domain.Request) (bool, error) {
 	if r.Subject == "" || r.Domain == "" || r.Object == "" || r.Action == "" {
@@ -153,7 +157,7 @@ func (s *authzService) EnforceBatch(ctx context.Context, reqs []domain.Request) 
 	return results, nil
 }
 
-// ─── Role management ─────────────────────────────────────────────────────────
+// ── Role management ───────────────────────────────────────────────────────────
 
 func (s *authzService) AssignRole(ctx context.Context, tenantID, subject, role, domainName string, opts ...domain.AssignOpt) error {
 	if subject == "" || role == "" || domainName == "" {
@@ -165,8 +169,19 @@ func (s *authzService) AssignRole(ctx context.Context, tenantID, subject, role, 
 	}
 
 	tid, _ := uuid.Parse(tenantID)
-	expiresAt, assignedBy, delegatedBy := domain.ApplyAssignOpts(opts)
-	return s.repo.UpsertRoleAssignment(ctx, tid, subject, role, domainName, assignedBy, delegatedBy, expiresAt)
+	ao := domain.ApplyAssignOpts(opts)
+
+	// repo expects *string for nullable audit columns;
+	// empty string means not provided → pass nil.
+	var assignedBy, delegatedBy *string
+	if ao.AssignedBy != "" {
+		assignedBy = &ao.AssignedBy
+	}
+	if ao.DelegatedBy != "" {
+		delegatedBy = &ao.DelegatedBy
+	}
+
+	return s.repo.UpsertRoleAssignment(ctx, tid, subject, role, domainName, assignedBy, delegatedBy, ao.ExpiresAt)
 }
 
 func (s *authzService) RevokeRole(ctx context.Context, subject, role, domainName string) error {
@@ -181,9 +196,16 @@ func (s *authzService) GetRoles(_ context.Context, subject, domainName string) (
 	return s.enforcer.GetRolesForUserInDomain(subject, domainName), nil
 }
 
+func (s *authzService) GetImplicitRoles(_ context.Context, subject, domainName string) ([]string, error) {
+	roles, err := s.enforcer.GetImplicitRolesForUser(subject, domainName)
+	if err != nil {
+		return nil, fmt.Errorf("authz: get implicit roles: %w", err)
+	}
+	return roles, nil
+}
+
 func (s *authzService) HasRole(_ context.Context, subject, role, domainName string) (bool, error) {
-	roles := s.enforcer.GetRolesForUserInDomain(subject, domainName)
-	for _, r := range roles {
+	for _, r := range s.enforcer.GetRolesForUserInDomain(subject, domainName) {
 		if r == role {
 			return true, nil
 		}
@@ -195,7 +217,7 @@ func (s *authzService) GetAssignments(ctx context.Context, subject, domainName s
 	return s.repo.ListRoleAssignments(ctx, subject, domainName)
 }
 
-// ─── Policy management ────────────────────────────────────────────────────────
+//  Policy management
 
 func (s *authzService) AddPolicy(_ context.Context, p domain.Policy) error {
 	added, err := s.enforcer.AddPolicy(p.Subject, p.Domain, p.Object, p.Action, p.Effect)
@@ -238,7 +260,7 @@ func (s *authzService) GetPolicies(_ context.Context, domainName string) ([]doma
 	return out, nil
 }
 
-// ─── Cache ────────────────────────────────────────────────────────────────────
+//  Cache
 
 func (s *authzService) InvalidateCache(_ context.Context) error {
 	if err := s.enforcer.LoadPolicy(); err != nil {
@@ -247,7 +269,7 @@ func (s *authzService) InvalidateCache(_ context.Context) error {
 	return nil
 }
 
-// ─── Internal helpers ─────────────────────────────────────────────────────────
+//  Internal helpers
 
 // revokeExpiredRoles lazily removes roles whose expiry has passed.
 // Non-fatal: enforce proceeds even if cleanup fails.

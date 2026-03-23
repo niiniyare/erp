@@ -138,10 +138,13 @@ func NewIdentityRepository(store db.Store, cacheSvc cache.Service, tracer tracin
 	return iam.NewUserRepository(store, cacheSvc, tracer, m)
 }
 
-// NewIdentityService constructs the IAM user service.
+// NewIdentityService constructs the IAM user service with brute-force config from app config.
 // cacheSvc is accepted for wire compatibility but cache is handled by the repository.
-func NewIdentityService(repo iam.UserRepository, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) iam.UserService {
-	return iam.NewUserService(repo, tracer, m)
+func NewIdentityService(repo iam.UserRepository, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider, cfg *config.Config) iam.UserService {
+	return iam.NewUserServiceWithConfig(repo, tracer, m, iam.UserConfig{
+		MaxFailedAttempts: cfg.Auth.MaxFailedAttempts,
+		LockoutDuration:   cfg.Auth.LockoutDuration,
+	})
 }
 
 // NewAuthzService constructs the Casbin-backed authorization service.
@@ -160,7 +163,7 @@ func NewSessionRepository(store db.Store, cacheSvc cache.Service, tracer tracing
 	return iam.NewSessionRepository(store, cacheSvc, tracer, m)
 }
 
-// NewSessionService constructs the session service.
+// NewSessionService constructs the session service with TTL from app config.
 func NewSessionService(
 	identitySvc iam.UserService,
 	authzSvc iam.AuthzService,
@@ -168,8 +171,12 @@ func NewSessionService(
 	tracer tracing.Service,
 	m metrics.MetricsProvider,
 	log logger.Logger,
+	cfg *config.Config,
 ) iam.SessionService {
-	return iam.NewSessionService(identitySvc, authzSvc, repo, tracer, m, log)
+	return iam.NewSessionServiceWithConfig(identitySvc, authzSvc, repo, tracer, m, log, iam.SessionConfig{
+		SessionTTL: cfg.Auth.SessionTTL,
+		CookieName: cfg.Auth.CookieName,
+	})
 }
 
 // ============================================================================
