@@ -5,7 +5,7 @@ package wire
 
 import (
 	"github.com/google/wire"
-	"awo/internal/platform/config"
+	"awo.so/internal/platform/config"
 )
 
 // ============================================================================
@@ -54,10 +54,6 @@ var CoreServiceProviderSet = wire.NewSet(
 	NewAuthzService,
 	NewSessionRepository,
 	NewSessionService,
-
-	// Simplified IAM services for startup
-	NewSimpleAuthenticationService,
-	NewSimpleIAMService,
 
 	// Finance services
 	NewFinanceServices,

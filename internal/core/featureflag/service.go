@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "awo/db/sqlc"
-	"awo/internal/core/audit"
-	"awo/internal/core/tenant"
-	"awo/internal/shared/convert"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/audit"
+	"awo.so/internal/core/tenant"
+	"awo.so/internal/shared/convert"
 )
 
 // Servicedefines the business logic interface for feature flags

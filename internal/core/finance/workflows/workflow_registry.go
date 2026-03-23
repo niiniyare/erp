@@ -1,16 +1,16 @@
 package workflows
 
 import (
-	"awo/internal/core/audit"
-	"awo/internal/core/featureflag"
-	"awo/internal/core/finance/service"
-	"awo/internal/core/iam"
-	"awo/internal/core/notification"
-	settingsService "awo/internal/core/settings/service"
-	"awo/internal/platform/cache"
-	loggerPkg "awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/audit"
+	"awo.so/internal/core/featureflag"
+	"awo.so/internal/core/finance/service"
+	"awo.so/internal/core/iam"
+	"awo.so/internal/core/notification"
+	settingsService "awo.so/internal/core/settings/service"
+	"awo.so/internal/platform/cache"
+	loggerPkg "awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // WorkflowRegistry manages all finance-related Temporal workflows

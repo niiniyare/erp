@@ -14,10 +14,10 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	db "awo/db/sqlc"
-	"awo/internal/core/finance/domain"
-	"awo/internal/shared"
-	"awo/internal/shared/tracing"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/finance/domain"
+	"awo.so/internal/shared"
+	"awo.so/internal/shared/tracing"
 )
 
 // TransactionRepositoryUnitTestSuite defines unit test suite using mocks

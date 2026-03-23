@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// ─── CONTEXT HELPERS ─────────────────────────────────────────────
+//  CONTEXT HELPERS
 
 func getTenantIDFromContext(ctx context.Context) string {
 	if tenantID, ok := ctx.Value(TenantIDKey).(uuid.UUID); ok {
@@ -14,6 +14,16 @@ func getTenantIDFromContext(ctx context.Context) string {
 	}
 	if tenantID, ok := ctx.Value(TenantIDKey).(string); ok {
 		return tenantID
+	}
+	return ""
+}
+
+func getEntityIDFromContext(ctx context.Context) string {
+	if entityID, ok := ctx.Value(EntityIDKey).(uuid.UUID); ok {
+		return entityID.String()
+	}
+	if entityID, ok := ctx.Value(EntityIDKey).(string); ok {
+		return entityID
 	}
 	return ""
 }

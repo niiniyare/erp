@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"awo/internal/shared/errors"
+	"awo.so/internal/shared/errors"
 	"github.com/shopspring/decimal"
 )
 

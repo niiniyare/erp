@@ -1,8 +1,7 @@
 package middleware
 
 import (
-	"awo/internal/core/iam"
-	"awo/internal/core/identity/session"
+	"awo.so/internal/core/iam"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -23,39 +22,12 @@ func DefaultAuthorizationConfig() AuthorizationConfig {
 	}
 }
 
-// Authorize returns a Fiber handler that enforces a single permission string
-// using the pre-computed permission map stored in ResolvedSession.
+// AuthorizeCasbin is a Fiber middleware that enforces object+action using the
+// full Casbin engine. Reads the Principal from c.Locals(iam.LocalsKeyPrincipal).
 //
-// This is an O(1) map lookup — it never hits the database or the Casbin engine.
-// Use it on every protected route.
-//
-// Example:
-//
-//	app.Get("/finance/invoices",
-//	    middleware.Authenticate(authCfg),
-//	    middleware.Authorize("finance.receivables.invoices.read"),
-//	    handler.ListInvoices)
-func Authorize(permission string) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		sess, ok := c.Locals(session.LocalsKeySession).(*session.ResolvedSession)
-		if !ok || sess == nil {
-			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "authentication required",
-			})
-		}
-		if !sess.Can(permission) {
-			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
-				"error":      "access denied",
-				"permission": permission,
-			})
-		}
-		return c.Next()
-	}
-}
-
-// AuthorizeCasbin is a thin wrapper around iam.Service.Middleware for
-// management operations that need the full Casbin engine (e.g. role assignment,
-// tenant admin panels). For normal request-path authz prefer Authorize().
+// For normal request-path authz (O(1) permission map lookup) prefer Authorize()
+// from session_middleware.go. Use AuthorizeCasbin only for management operations
+// that require the Casbin rule engine (e.g. role assignment, admin panels).
 //
 // Example:
 //
@@ -63,6 +35,30 @@ func Authorize(permission string) fiber.Handler {
 //	    middleware.Authenticate(authCfg),
 //	    middleware.AuthorizeCasbin(authzSvc, "role", "assign"),
 //	    handler.AssignRole)
-func AuthorizeCasbin(svc iam.Service, object, action string) fiber.Handler {
-	return svc.Middleware(object, action)
+func AuthorizeCasbin(svc iam.AuthzService, object, action string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		p, ok := c.Locals(iam.LocalsKeyPrincipal).(iam.Principal)
+		if !ok || p.Subject == "" {
+			return fiber.NewError(fiber.StatusUnauthorized, iam.ErrUnauthorized.Error())
+		}
+
+		obj := object
+		if id := c.Params("id"); id != "" {
+			obj = object + "/" + id
+		}
+
+		allowed, err := svc.Enforce(c.Context(), iam.Request{
+			Subject: p.Subject,
+			Domain:  p.Domain,
+			Object:  obj,
+			Action:  action,
+		})
+		if err != nil {
+			return err
+		}
+		if !allowed {
+			return fiber.NewError(fiber.StatusForbidden, iam.ErrForbidden.Error())
+		}
+		return c.Next()
+	}
 }

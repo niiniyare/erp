@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
-	"awo/internal/platform/cache"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/token"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/platform/cache"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/token"
+	"awo.so/internal/shared/tracing"
 )
 
 // Helper function for string pointers
@@ -54,7 +54,11 @@ func TestRecord(t *testing.T) {
 	_ = uuid.New() // tenantID no longer needed for CreateAuditEvent
 
 	// 2. Expectations - using gomock expectations
-	mockRepo.EXPECT().CreateAuditEvent(gomock.Any(), gomock.Any()).Return(nil, nil).Times(1)
+	mockRepo.EXPECT().CreateAuditEvent(gomock.Any(), gomock.Any()).Return(&AuditEvent{
+		EventType:     event.EventType,
+		EventCategory: event.EventCategory,
+		Severity:      event.Severity,
+	}, nil).Times(1)
 
 	// Mock other dependencies that might be called
 	mockSpan := tracing.NewMockSpan(ctrl)

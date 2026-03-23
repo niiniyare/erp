@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"awo/internal/core/tenant"
+	"awo.so/internal/core/tenant"
 )
 
 // TestTenantExtraction_Basic tests the tenant extraction functions directly

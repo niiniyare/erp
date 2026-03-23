@@ -5,14 +5,14 @@ import (
 
 	"github.com/google/uuid"
 
-	"awo/internal/core/finance/domain"
-	"awo/internal/core/finance/service"
-	"awo/internal/core/iam"
-	settingsDomain "awo/internal/core/settings/domain"
-	settingsService "awo/internal/core/settings/service"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/finance/domain"
+	"awo.so/internal/core/finance/service"
+	"awo.so/internal/core/iam"
+	settingsDomain "awo.so/internal/core/settings/domain"
+	settingsService "awo.so/internal/core/settings/service"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/worker"
 )

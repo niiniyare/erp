@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"awo/internal/shared/logger"
+	"awo.so/internal/shared/logger"
 )
 
 //go:embed *

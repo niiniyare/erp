@@ -10,7 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"awo/internal/shared/logger"
+	"awo.so/internal/shared/logger"
 )
 
 // CompressionConfig defines compression middleware configuration

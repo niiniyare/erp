@@ -7,11 +7,11 @@ import (
 	"net/netip"
 	"time"
 
-	db "awo/db/sqlc"
-	"awo/internal/shared"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/shared"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 
 	"github.com/google/uuid"
 )

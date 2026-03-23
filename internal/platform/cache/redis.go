@@ -19,7 +19,7 @@ package cache
 //
 // 	"github.com/go-redis/redis/v8"
 // 	"github.com/google/uuid"
-// 	"awo/internal/platform/config"
+// 	"awo.so/internal/platform/config"
 // )
 //
 // // Context keys for tenant information.

@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"awo/internal/shared/logger"
+	"awo.so/internal/shared/logger"
 	"gopkg.in/yaml.v3"
 )
 

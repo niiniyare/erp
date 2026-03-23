@@ -8,15 +8,13 @@ import (
 	"testing"
 	"time"
 
-	casbin "github.com/casbin/casbin/v2"
-	casbinmodel "github.com/casbin/casbin/v2/model"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 
-	db "awo/db/sqlc"
-	"awo/internal/platform/cache"
-	"awo/internal/shared/logger"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/platform/cache"
+	"awo.so/internal/shared/logger"
 )
 
 // ---------------------------------------------------------------------------
@@ -146,41 +144,21 @@ func cleanTables(t *testing.T, pool *pgxpool.Pool) {
 // In-memory service — no database required.
 // ---------------------------------------------------------------------------
 
-// newMemService creates a *service backed by a pure in-memory Casbin enforcer.
-//
-// Uses noopRepo so that revokeExpiredRoles returns a non-fatal error rather
-// than requiring a database connection. Enforce() treats revokeExpiredRoles
-// failures as warnings and continues, so the in-memory enforcer is evaluated
-// normally.
-//
-// With EnableAutoSave(false), AddPolicy/RemovePolicy only update the in-memory
-// model (no adapter writes), making the entire Enforce → Policy lifecycle
-// testable without a database.
-//
-// To add roles in unit tests, call svc.enforcer.AddRoleForUserInDomain()
-// directly, because AssignRole writes to the DB.
-func newMemService(t *testing.T) *service {
+// newMemService creates an AuthzService backed by a pure in-memory Casbin
+// enforcer (no database). Uses noopRepo so AssignRole is a noop DB write.
+// AddPolicy/RemovePolicy only affect in-memory state (AutoSave disabled).
+func newMemService(t *testing.T) Service {
 	t.Helper()
-	m, err := casbinmodel.NewModelFromString(casbinModel)
+	svc, err := NewInMemoryAuthzService(noopRepo{}, noopLogger{})
 	require.NoError(t, err)
-
-	e, err := casbin.NewEnforcer(m)
-	require.NoError(t, err)
-	e.EnableAutoSave(false)
-
-	return &service{
-		enforcer: e,
-		repo:     noopRepo{},
-		log:      noopLogger{},
-	}
+	return svc
 }
 
-// memRole adds a Casbin g-rule directly to the in-memory enforcer.
-// Use this instead of AssignRole in unit tests (which needs a real DB).
-func memRole(t *testing.T, svc *service, subject, role, domain string) {
+// memRole adds a Casbin g-rule via AssignRole against the noop repo.
+// Uses a dummy tenantID since UpsertRoleAssignment is a noop in tests.
+func memRole(t *testing.T, svc Service, subject, role, domain string) {
 	t.Helper()
-	_, err := svc.enforcer.AddRoleForUserInDomain(subject, role, domain)
-	require.NoError(t, err)
+	require.NoError(t, svc.AssignRole(context.Background(), testTenantID, subject, role, domain))
 }
 
 // constants reused across integration tests

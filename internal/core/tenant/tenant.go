@@ -6,13 +6,13 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	db "awo/db/sqlc"
-	"awo/internal/core/tenant/domain"
-	"awo/internal/core/tenant/repository"
-	"awo/internal/core/tenant/service"
-	"awo/internal/platform/cache"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/tracing"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/tenant/domain"
+	"awo.so/internal/core/tenant/repository"
+	"awo.so/internal/core/tenant/service"
+	"awo.so/internal/platform/cache"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/tracing"
 )
 
 // Re-export domain types for backward compatibility.

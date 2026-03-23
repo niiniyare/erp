@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"os"
 
-	"awo/internal/platform/config"
-	loggerPkg "awo/internal/shared/logger"
+	"awo.so/internal/platform/config"
+	loggerPkg "awo.so/internal/shared/logger"
 	"go.temporal.io/api/workflowservice/v1"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/log"

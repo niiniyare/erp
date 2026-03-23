@@ -1,6 +1,6 @@
 package errors
 
-// ─── ERROR CODES ─────────────────────────────────────────────
+//  ERROR CODES
 
 // Tenant Error Codes
 const (

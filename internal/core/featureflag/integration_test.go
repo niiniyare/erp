@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"awo/internal/core/featureflag"
+	"awo.so/internal/core/featureflag"
 )
 
 // TestFeatureFlagIntegration tests the basic feature flag functionality

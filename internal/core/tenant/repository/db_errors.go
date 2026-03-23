@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"awo/internal/core/tenant/domain"
-	sharedErrors "awo/internal/shared/errors"
+	"awo.so/internal/core/tenant/domain"
+	sharedErrors "awo.so/internal/shared/errors"
 )
 
 // parseTenantDBError inspects a raw pgx/DB error and converts it into a meaningful

@@ -9,9 +9,9 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // ObservabilityConfig configures the observability middleware

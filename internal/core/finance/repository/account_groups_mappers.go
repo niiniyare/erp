@@ -9,9 +9,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 
-	db "awo/db/sqlc"
-	"awo/internal/core/finance/domain"
-	"awo/internal/shared/errors"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/finance/domain"
+	"awo.so/internal/shared/errors"
 )
 
 // Account Group Creation Mapping

@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"awo/internal/core/finance/domain"
-	"awo/internal/shared"
+	"awo.so/internal/core/finance/domain"
+	"awo.so/internal/shared"
 )
 
 // TestAccountServiceIntegration_Demo demonstrates the integration of all three systems

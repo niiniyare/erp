@@ -10,8 +10,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
 
-	db "awo/db/sqlc"
-	"awo/internal/core/finance/domain"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/finance/domain"
 )
 
 // Account Domain to SQLC mappings

@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
-	"awo/internal/core/identity"
+	"awo.so/internal/core/iam"
 )
 
 // AccessExecutionType represents the type of access execution
@@ -79,8 +79,8 @@ type AccessExecutionService interface {
 
 // accessExecutionService implements AccessExecutionService
 type accessExecutionService struct {
-	userRepo    identity.Repository
-	userService identity.Service
+	userRepo    iam.UserRepository
+	userService iam.UserService
 	tracing     tracing.Service
 	metrics     metrics.MetricsProvider
 	// TODO: Add temporary access repository when implemented
@@ -89,8 +89,8 @@ type accessExecutionService struct {
 
 // NewAccessExecutionService creates a new access execution service
 func NewAccessExecutionService(
-	userRepo identity.Repository,
-	userService identity.Service,
+	userRepo iam.UserRepository,
+	userService iam.UserService,
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 ) AccessExecutionService {
@@ -519,7 +519,7 @@ func (s *accessExecutionService) ValidateAccessExecution(ctx context.Context, re
 		return fmt.Errorf("target user not found: %w", err)
 	}
 
-	if !targetUser.IsActive || targetUser.AccountStatus != identity.AccountStatusActive {
+	if !targetUser.IsActive || targetUser.AccountStatus != iam.AccountStatusActive {
 		return fmt.Errorf("target user account is not active")
 	}
 

@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"awo/internal/core/settings/domain"
+	"awo.so/internal/core/settings/domain"
 )
 
 // ConfigDefinition represents a configuration definition in the database

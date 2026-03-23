@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"awo/internal/core/access/conditional"
-	"awo/internal/shared/types"
+	"awo.so/internal/core/access/conditional"
+	"awo.so/internal/shared/types"
 )
 
 // Service defines the access management service interface

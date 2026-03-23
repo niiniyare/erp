@@ -8,7 +8,7 @@ import (
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/google/uuid"
-	"awo/internal/platform/config"
+	"awo.so/internal/platform/config"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )

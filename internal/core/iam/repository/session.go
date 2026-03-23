@@ -1,0 +1,219 @@
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"net/netip"
+	"time"
+
+	"github.com/google/uuid"
+
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/iam/domain"
+	"awo.so/internal/platform/cache"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
+)
+
+// ─── Port (interface) ─────────────────────────────────────────────────────────
+
+// SessionRepository defines the persistence port for sessions.
+// All cache operations are encapsulated here — callers never touch cache.
+type SessionRepository interface {
+	Create(ctx context.Context, s domain.Session) error
+
+	// ValidateToken is cache-aside: cache hit → return; miss → DB → populate cache.
+	// Returns nil, nil when not found or expired.
+	ValidateToken(ctx context.Context, hash string) (*domain.ResolvedSession, error)
+
+	// CacheResolved stores a ResolvedSession built at Login (which has DisplayName).
+	// The service calls this after Create so the first ValidateToken hits cache.
+	CacheResolved(ctx context.Context, hash string, r *domain.ResolvedSession, ttl time.Duration)
+
+	// Invalidate marks the DB session inactive and evicts the cache entry.
+	Invalidate(ctx context.Context, hash string) error
+
+	// UpdateLastSeen is fire-and-forget.
+	UpdateLastSeen(ctx context.Context, hash string)
+}
+
+// ─── Adapter (implementation) ─────────────────────────────────────────────────
+
+type sessionRepo struct {
+	store   db.Store
+	cache   cache.Service
+	tracing tracing.Service
+	metrics metrics.MetricsProvider
+}
+
+// NewSessionRepository constructs a cache-backed Postgres SessionRepository.
+func NewSessionRepository(
+	store db.Store,
+	cacheSvc cache.Service,
+	tracer tracing.Service,
+	m metrics.MetricsProvider,
+) SessionRepository {
+	return &sessionRepo{
+		store:   store,
+		cache:   cacheSvc,
+		tracing: tracer,
+		metrics: m,
+	}
+}
+
+func (r *sessionRepo) Create(ctx context.Context, s domain.Session) error {
+	ctx, span := r.tracing.StartSpan(ctx, "session.repo.Create")
+	defer span.End()
+
+	permsJSON, err := json.Marshal(s.Permissions)
+	if err != nil {
+		return fmt.Errorf("session repo: marshal permissions: %w", err)
+	}
+
+	entityScopeJSON := domain.MarshalSessionJSON(s.EntityScope)
+	configJSON := domain.MarshalSessionJSON(s.Configuration)
+
+	var principalID *uuid.UUID
+	if s.PrincipalID != uuid.Nil {
+		id := s.PrincipalID
+		principalID = &id
+	}
+
+	var ipAddr *netip.Addr
+	if s.IPAddress != "" {
+		if parsed, err := netip.ParseAddr(s.IPAddress); err == nil {
+			ipAddr = &parsed
+		}
+	}
+
+	var userAgent *string
+	if s.UserAgent != "" {
+		userAgent = &s.UserAgent
+	}
+
+	var userType *string
+	if s.UserType != "" {
+		userType = &s.UserType
+	}
+
+	riskScore := int32(s.RiskScore)
+
+	if err := r.store.CreateSession(ctx, db.CreateSessionParams{
+		UserID:        s.UserID,
+		UserType:      userType,
+		SessionToken:  s.TokenHash,
+		Permissions:   permsJSON,
+		PrincipalID:   principalID,
+		EntityScope:   entityScopeJSON,
+		Configuration: configJSON,
+		IpAddress:     ipAddr,
+		UserAgent:     userAgent,
+		ExpiresAt:     s.ExpiresAt,
+		RiskScore:     &riskScore,
+	}); err != nil {
+		return fmt.Errorf("session repo: create session: %w", err)
+	}
+	return nil
+}
+
+func (r *sessionRepo) ValidateToken(ctx context.Context, hash string) (*domain.ResolvedSession, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "session.repo.ValidateToken")
+	defer span.End()
+
+	// 1. Cache hit
+	if cached := r.getCachedResolved(ctx, hash); cached != nil {
+		r.UpdateLastSeen(ctx, hash)
+		return cached, nil
+	}
+
+	// 2. DB fallback
+	row, err := r.store.TouchAndGetSession(ctx, hash)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("session repo: get session: %w", err)
+	}
+	if row == nil {
+		return nil, nil
+	}
+
+	// 3. Convert session row → ResolvedSession
+	perms := make(map[string]bool)
+	if len(row.Permissions) > 0 {
+		if err := json.Unmarshal(row.Permissions, &perms); err != nil {
+			return nil, fmt.Errorf("session repo: unmarshal permissions: %w", err)
+		}
+	}
+
+	var utype string
+	if row.UserType != nil {
+		utype = *row.UserType
+	}
+
+	resolved := &domain.ResolvedSession{
+		UserID:      row.UserID,
+		UserType:    utype,
+		TenantID:    row.TenantID,
+		PrincipalID: uuid.Nil,
+		Permissions: perms,
+		// DisplayName not available from DB row — only present on cache hit from Login
+	}
+
+	// 4. Re-populate cache for future requests
+	ttl := time.Until(row.ExpiresAt)
+	if ttl > 0 {
+		r.cacheResolved(ctx, hash, resolved, ttl)
+	}
+
+	return resolved, nil
+}
+
+func (r *sessionRepo) CacheResolved(ctx context.Context, hash string, resolved *domain.ResolvedSession, ttl time.Duration) {
+	r.cacheResolved(ctx, hash, resolved, ttl)
+}
+
+func (r *sessionRepo) Invalidate(ctx context.Context, hash string) error {
+	ctx, span := r.tracing.StartSpan(ctx, "session.repo.Invalidate")
+	defer span.End()
+
+	if err := r.store.InvalidateSession(ctx, hash); err != nil {
+		return fmt.Errorf("session repo: invalidate session: %w", err)
+	}
+	_ = r.cache.Delete(ctx, sessionCacheKey(hash))
+	return nil
+}
+
+func (r *sessionRepo) UpdateLastSeen(ctx context.Context, hash string) {
+	go func() {
+		_ = r.store.UpdateSessionLastSeen(ctx, hash)
+	}()
+}
+
+// ─── Cache helpers (internal) ─────────────────────────────────────────────────
+
+func (r *sessionRepo) cacheResolved(ctx context.Context, hash string, resolved *domain.ResolvedSession, ttl time.Duration) {
+	_ = r.cache.Set(ctx, sessionCacheKey(hash), resolved, ttl)
+}
+
+func (r *sessionRepo) getCachedResolved(ctx context.Context, hash string) *domain.ResolvedSession {
+	var resolved domain.ResolvedSession
+	if err := r.cache.Get(ctx, sessionCacheKey(hash), &resolved); err != nil {
+		return nil
+	}
+	return &resolved
+}
+
+func sessionCacheKey(hash string) string { return "session:" + hash }
+
+func derefInt32(p *int32) int32 {
+	if p == nil {
+		return 0
+	}
+	return *p
+}
+
+// keep compiler from complaining about unused derefInt32 if not otherwise used
+var _ = derefInt32

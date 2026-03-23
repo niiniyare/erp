@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"awo/internal/core/audit"
-	"awo/internal/core/settings/domain"
-	"awo/internal/core/settings/repository"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/audit"
+	"awo.so/internal/core/settings/domain"
+	"awo.so/internal/core/settings/repository"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // TemplateService provides business logic for template management

@@ -10,8 +10,8 @@ import (
 	"github.com/shopspring/decimal"
 	"go.opentelemetry.io/otel/attribute"
 
-	"awo/internal/core/finance/domain"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/finance/domain"
+	"awo.so/internal/shared/tracing"
 )
 
 // ExchangeRateEngine handles multi-currency exchange rate management and conversion

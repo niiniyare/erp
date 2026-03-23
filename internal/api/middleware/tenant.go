@@ -12,11 +12,11 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	db "awo/db/sqlc"
-	"awo/internal/core/tenant"
-	"awo/internal/shared"
-	sharedErrors "awo/internal/shared/errors"
-	"awo/internal/shared/logger"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/tenant"
+	"awo.so/internal/shared"
+	sharedErrors "awo.so/internal/shared/errors"
+	"awo.so/internal/shared/logger"
 )
 
 // Fiber context keys

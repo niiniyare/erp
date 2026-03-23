@@ -10,8 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"awo/internal/shared"
-	"awo/internal/shared/logger"
+	"awo.so/internal/shared"
+	"awo.so/internal/shared/logger"
 )
 
 // Store defines all functions to execute db queries and transactions

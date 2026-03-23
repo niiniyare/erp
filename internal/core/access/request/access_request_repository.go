@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "awo/db/sqlc"
-	"awo/internal/shared/errors"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/shared/errors"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )

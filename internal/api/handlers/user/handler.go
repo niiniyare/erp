@@ -8,16 +8,16 @@ import (
 	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 
-	"awo/internal/core/iam"
-	"awo/internal/shared/errors"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/iam"
+	"awo.so/internal/shared/errors"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // UserHandler handles user-related HTTP requests with centralized error handling
 type UserHandler struct {
-	service   iam.Service
+	service   iam.UserService
 	logger    logger.Logger
 	metrics   metrics.MetricsProvider
 	tracer    tracing.Service
@@ -26,7 +26,7 @@ type UserHandler struct {
 
 // NewUserHandler creates a new user handler with dependencies
 func NewUserHandler(
-	userService iam.Service,
+	userService iam.UserService,
 	logger logger.Logger,
 	metrics metrics.MetricsProvider,
 	tracer tracing.Service,
@@ -71,7 +71,7 @@ func (h *UserHandler) Create(c *fiber.Ctx) error {
 	}
 
 	// Step 3: Delegate to service
-	createdUser, err := h.service.CreateUser(c.Context(), &req)
+	createdUser, err := h.service.RegisterNewUser(c.Context(), &req)
 	if err != nil {
 		span.RecordError(err)
 		return h.HandleError(c, err)
@@ -130,7 +130,7 @@ func (h *UserHandler) Get(c *fiber.Ctx) error {
 			WithCategory(errors.CategoryValidation))
 	}
 
-	userEntity, err := h.service.GetUser(ctx, userUUID)
+	userEntity, err := h.service.GetUserByID(ctx, userUUID)
 	if err != nil {
 		return h.HandleError(c, err)
 	}
@@ -234,9 +234,6 @@ func (h *UserHandler) Update(c *fiber.Ctx) error {
 			WithCategory(errors.CategoryValidation))
 	}
 
-	// Set the user ID in the request
-	req.UserID = userUUID
-
 	// Validate the request
 	if err := h.validator.Struct(&req); err != nil {
 		return h.HandleError(c, err)
@@ -246,7 +243,7 @@ func (h *UserHandler) Update(c *fiber.Ctx) error {
 	// TODO: Extract tenant context and validate permissions
 
 	// Step 4: Delegate to Service
-	updatedUser, err := h.service.UpdateUser(ctx, &req)
+	updatedUser, err := h.service.UpdateUser(ctx, userUUID, &req)
 	if err != nil {
 		return h.HandleError(c, err)
 	}
@@ -310,8 +307,8 @@ func (h *UserHandler) Delete(c *fiber.Ctx) error {
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param credentials body iam.AuthenticationRequest true "Authentication credentials"
-// @Success 200 {object} iam.AuthenticationResult
+// @Param credentials body iam.AuthenticateRequest true "Authentication credentials"
+// @Success 200 {object} User
 // @Router /api/v1/users/authenticate [post]
 func (h *UserHandler) Authenticate(c *fiber.Ctx) error {
 	// Step 1: Start tracing
@@ -320,13 +317,13 @@ func (h *UserHandler) Authenticate(c *fiber.Ctx) error {
 	c.SetUserContext(ctx)
 
 	// Step 2: Parse and validate request
-	var req iam.AuthenticationRequest
+	var req iam.AuthenticateRequest
 	if err := h.ValidateRequest(c, &req); err != nil {
 		return h.HandleError(c, err)
 	}
 
 	// Step 3: Delegate to service
-	result, err := h.service.Authenticate(c.Context(), &req)
+	userEntity, err := h.service.Authenticate(c.Context(), req.Identifier, req.Password)
 	if err != nil {
 		span.RecordError(err)
 		return h.HandleError(c, err)
@@ -334,12 +331,11 @@ func (h *UserHandler) Authenticate(c *fiber.Ctx) error {
 
 	// Step 4: Set security attributes
 	span.SetAttributes(
-		attribute.String("user.email", req.Email),
-		attribute.Bool("mfa.required", result.MFARequired),
+		attribute.String("user.id", userEntity.ID.String()),
 	)
 
 	// Step 5: Return successful response
-	return h.Success(c, result)
+	return h.Success(c, h.userToAPIResponse(userEntity))
 }
 
 // ChangePassword handles password changes (POST /api/v1/users/:id/change-password)
@@ -374,11 +370,8 @@ func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
 			WithCategory(errors.CategoryValidation))
 	}
 
-	// Set the user ID in the request
-	req.UserID = userUUID
-
 	// Step 3: Delegate to service
-	if err := h.service.ChangePassword(c.Context(), &req); err != nil {
+	if err := h.service.ChangePassword(c.Context(), userUUID, req.CurrentPassword, req.NewPassword); err != nil {
 		span.RecordError(err)
 		return h.HandleError(c, err)
 	}
@@ -582,13 +575,12 @@ func (h *UserHandler) userToAPIResponse(userEntity *iam.User) *User {
 	}
 
 	apiUser := &User{
-		ID:            userEntity.ID.String(),
-		Email:         userEntity.Email,
-		UserType:      "user", // Default user type
-		Status:        string(userEntity.AccountStatus),
-		IsActive:      userEntity.IsActive(),
-		EmailVerified: userEntity.EmailVerified,
-		CreatedAt:     userEntity.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		ID:        userEntity.ID.String(),
+		Email:     userEntity.Email,
+		UserType:  "user", // Default user type
+		Status:    string(userEntity.AccountStatus),
+		IsActive:  userEntity.IsActive,
+		CreatedAt: userEntity.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 
 	// Optional fields
@@ -600,19 +592,13 @@ func (h *UserHandler) userToAPIResponse(userEntity *iam.User) *User {
 	if userEntity.EmployeeID != nil {
 		apiUser.EmployeeID = userEntity.EmployeeID.String()
 	}
-	if userEntity.PhoneNumber != nil {
-		apiUser.Phone = *userEntity.PhoneNumber
-		apiUser.PhoneVerified = userEntity.PhoneVerified
-	}
 	if userEntity.LastLoginAt != nil {
 		lastLoginStr := userEntity.LastLoginAt.Format("2006-01-02T15:04:05Z07:00")
 		apiUser.LastLoginAt = &lastLoginStr
 	}
-	// Note: LastLoginIP, Timezone, Language fields removed from model
-	if userEntity.Metadata != nil {
-		apiUser.Metadata = userEntity.Metadata
+	if userEntity.UserAttributes != nil {
+		apiUser.Metadata = userEntity.UserAttributes
 	}
-	// Note: Preferences field removed from model
 
 	updatedAtStr := userEntity.UpdatedAt.Format("2006-01-02T15:04:05Z07:00")
 	apiUser.UpdatedAt = &updatedAtStr
@@ -623,10 +609,7 @@ func (h *UserHandler) userToAPIResponse(userEntity *iam.User) *User {
 // enhanceDetailedView adds additional fields for detailed view
 func (h *UserHandler) enhanceDetailedView(user *User, userEntity *iam.User) *User {
 	// Add MFA information
-	user.MFAEnabled = userEntity.MFAEnabled
-	if userEntity.MFAMethod != nil {
-		user.MFAMethod = string(*userEntity.MFAMethod)
-	}
+	user.MFAEnabled = userEntity.MfaEnabled
 
 	// TODO: Add roles and permissions when available in the model
 	// user.Roles = userEntity.Roles
@@ -638,10 +621,7 @@ func (h *UserHandler) enhanceDetailedView(user *User, userEntity *iam.User) *Use
 // enhanceSecurityView adds security-specific fields
 func (h *UserHandler) enhanceSecurityView(user *User, userEntity *iam.User) *User {
 	// Include security-relevant fields
-	user.MFAEnabled = userEntity.MFAEnabled
-	if userEntity.MFAMethod != nil {
-		user.MFAMethod = string(*userEntity.MFAMethod)
-	}
+	user.MFAEnabled = userEntity.MfaEnabled
 
 	// Remove sensitive preferences and metadata for security view
 	user.Preferences = nil

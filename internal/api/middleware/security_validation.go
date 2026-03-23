@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 	"go.opentelemetry.io/otel/codes"
 )
 

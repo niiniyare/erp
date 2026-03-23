@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"awo/internal/core/finance/domain"
-	"awo/internal/shared/errors"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/finance/domain"
+	"awo.so/internal/shared/errors"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 	"github.com/shopspring/decimal"
 	"go.opentelemetry.io/otel/attribute"
 )

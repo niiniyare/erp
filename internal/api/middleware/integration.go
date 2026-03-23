@@ -6,11 +6,11 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"awo/internal/core/tenant"
-	"awo/internal/platform/cache"
-	loggerPkg "awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/tenant"
+	"awo.so/internal/platform/cache"
+	loggerPkg "awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // MiddlewareStack provides a complete middleware stack for the ERP system.

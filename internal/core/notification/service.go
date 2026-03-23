@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -175,6 +175,6 @@ func (s *notificationService) isInQuietHours(quietHours *QuietHours) bool {
 	if end.Before(start) { // Overnight period (e.g., 22:00 - 08:00)
 		return currentHour >= start.Hour() || currentHour < end.Hour()
 	}
-	// Same-day period
-	return currentHour >= start.Hour() && currentHour < end.Hour()
+	// Same-day period (end hour is inclusive)
+	return currentHour >= start.Hour() && currentHour <= end.Hour()
 }

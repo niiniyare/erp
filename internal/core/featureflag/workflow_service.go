@@ -5,11 +5,11 @@ package featureflag
 // import (
 // 	"context"
 //
-// 	db "awo/db/sqlc"
-// 	"awo/internal/core/access/request"
-// 	"awo/internal/core/tenant"
-// 	"awo/internal/featureflag/workflow"
-// 	"awo/internal/shared/logger"
+// 	db "awo.so/db/sqlc"
+// 	"awo.so/internal/core/access/request"
+// 	"awo.so/internal/core/tenant"
+// 	"awo.so/internal/featureflag/workflow"
+// 	"awo.so/internal/shared/logger"
 // )
 //
 // // WorkflowService handles feature flag workflows with approval processes.

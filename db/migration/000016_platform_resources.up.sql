@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS resources (
   name VARCHAR(100) NOT NULL,
   display_name VARCHAR(150),
   description TEXT,
+  icon         VARCHAR(100),            -- nav icon class: 'fa fa-calculator'
   nav_url      VARCHAR(500),             -- sidebar link: '/finance/transactions'
   nav_order    INTEGER NOT NULL DEFAULT 999,
   resource_type VARCHAR(50) NOT NULL CHECK (

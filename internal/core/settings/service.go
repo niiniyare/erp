@@ -3,12 +3,12 @@ package settings
 import (
 	"context"
 
-	"awo/internal/core/audit"
-	"awo/internal/core/settings/repository"
-	"awo/internal/core/settings/service"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/audit"
+	"awo.so/internal/core/settings/repository"
+	"awo.so/internal/core/settings/service"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // SettingsService combines all settings-related services into a single interface

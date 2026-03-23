@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
 )
 
 // SecurityHeadersConfig defines the configuration for security headers

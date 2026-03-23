@@ -13,11 +13,11 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/suite"
 
-	db "awo/db/sqlc"
-	"awo/internal/core/finance/domain"
-	"awo/internal/core/tenant"
-	"awo/internal/shared"
-	"awo/internal/shared/tracing"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/finance/domain"
+	"awo.so/internal/core/tenant"
+	"awo.so/internal/shared"
+	"awo.so/internal/shared/tracing"
 )
 
 // FinanceRepositoryIntegrationTestSuite tests integration between chart of accounts and transactions

@@ -5,17 +5,17 @@ import (
 	"strings"
 	"time"
 
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/iam"
+	"awo.so/internal/core/tenant"
+	"awo.so/internal/platform/config"
+	"awo.so/internal/shared"
+	sharedErrors "awo.so/internal/shared/errors"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	db "awo/db/sqlc"
-	"awo/internal/core/iam"
-	"awo/internal/core/tenant"
-	"awo/internal/platform/config"
-	"awo/internal/shared"
-	sharedErrors "awo/internal/shared/errors"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
 )
 
 // FiberMiddleware provides all middleware functions for Fiber
@@ -201,140 +201,140 @@ func (m *FiberMiddleware) TenantMiddleware() fiber.Handler {
 }
 
 // JWTAuthMiddleware handles JWT authentication for Fiber
-func (m *FiberMiddleware) JWTAuthMiddleware() fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		// Check if this is a public endpoint
-		if m.whitelist != nil && m.whitelist.IsPublicEndpoint(c.Method(), c.Path()) {
-			return c.Next()
-		}
-
-		// Extract token from Authorization header
-		authHeader := c.Get("Authorization")
-		if authHeader == "" {
-			return c.Status(401).JSON(fiber.Map{
-				"error": fiber.Map{
-					"code":    "unauthorized",
-					"message": "Authorization token required",
-				},
-				"metadata": fiber.Map{
-					"request_id": c.Locals("requestid"),
-					"timestamp":  time.Now(),
-					"version":    "1.0",
-				},
-			})
-		}
-
-		// Remove Bearer prefix
-		token := strings.TrimPrefix(authHeader, "Bearer ")
-		token = strings.TrimSpace(token)
-
-		if token == "" {
-			return c.Status(401).JSON(fiber.Map{
-				"error": fiber.Map{
-					"code":    "unauthorized",
-					"message": "Invalid authorization token format",
-				},
-				"metadata": fiber.Map{
-					"request_id": c.Locals("requestid"),
-					"timestamp":  time.Now(),
-					"version":    "1.0",
-				},
-			})
-		}
-
-		// Validate token using IAM service
-		result, err := m.iamService.Authentication().ValidateToken(c.Context(), token)
-		if err != nil {
-			m.logger.Warn("JWT token validation failed", logger.Fields{
-				"error": err.Error(),
-			})
-			return c.Status(401).JSON(fiber.Map{
-				"error": fiber.Map{
-					"code":    "unauthorized",
-					"message": "Invalid or expired token",
-				},
-				"metadata": fiber.Map{
-					"request_id": c.Locals("requestid"),
-					"timestamp":  time.Now(),
-					"version":    "1.0",
-				},
-			})
-		}
-
-		if !result.Valid {
-			return c.Status(401).JSON(fiber.Map{
-				"error": fiber.Map{
-					"code":    "unauthorized",
-					"message": "Invalid token",
-				},
-				"metadata": fiber.Map{
-					"request_id": c.Locals("requestid"),
-					"timestamp":  time.Now(),
-					"version":    "1.0",
-				},
-			})
-		}
-
-		// Get user details
-		user, err := m.iamService.Authentication().GetUser(c.Context(), result.UserID)
-		if err != nil {
-			m.logger.Warn("Failed to get user details", logger.Fields{
-				"user_id": result.UserID.String(),
-				"error":   err.Error(),
-			})
-			return c.Status(401).JSON(fiber.Map{
-				"error": fiber.Map{
-					"code":    "unauthorized",
-					"message": "User lookup failed",
-				},
-				"metadata": fiber.Map{
-					"request_id": c.Locals("requestid"),
-					"timestamp":  time.Now(),
-					"version":    "1.0",
-				},
-			})
-		}
-
-		// Check if account is locked
-		locked, err := m.iamService.Authentication().IsAccountLocked(c.Context(), user.ID)
-		if err != nil {
-			m.logger.Error("Failed to check account lock status", logger.Fields{
-				"user_id": user.ID.String(),
-				"error":   err.Error(),
-			})
-		}
-		if locked {
-			return c.Status(403).JSON(fiber.Map{
-				"error": fiber.Map{
-					"code":    "account_locked",
-					"message": "Account is locked",
-				},
-				"metadata": fiber.Map{
-					"request_id": c.Locals("requestid"),
-					"timestamp":  time.Now(),
-					"version":    "1.0",
-				},
-			})
-		}
-
-		// Store authentication information in Fiber locals
-		c.Locals("authenticated", true)
-		c.Locals("user_id", user.ID)
-		c.Locals("user", user)
-		c.Locals("user_email", user.Email)
-		c.Locals("auth_claims", result.Claims)
-		c.Locals("auth_token", token)
-		c.Locals("auth_time", time.Now())
-
-		m.logger.Debug("JWT authentication successful", logger.Fields{
-			"user_id":       user.ID.String(),
-			"email":         user.Email,
-			"authenticated": true,
-		})
-
-		return c.Next()
-	}
-}
+// func (m *FiberMiddleware) JWTAuthMiddleware() fiber.Handler {
+// 	return func(c *fiber.Ctx) error {
+// 		// Check if this is a public endpoint
+// 		if m.whitelist != nil && m.whitelist.IsPublicEndpoint(c.Method(), c.Path()) {
+// 			return c.Next()
+// 		}
+//
+// 		// Extract token from Authorization header
+// 		authHeader := c.Get("Authorization")
+// 		if authHeader == "" {
+// 			return c.Status(401).JSON(fiber.Map{
+// 				"error": fiber.Map{
+// 					"code":    "unauthorized",
+// 					"message": "Authorization token required",
+// 				},
+// 				"metadata": fiber.Map{
+// 					"request_id": c.Locals("requestid"),
+// 					"timestamp":  time.Now(),
+// 					"version":    "1.0",
+// 				},
+// 			})
+// 		}
+//
+// 		// Remove Bearer prefix
+// 		token := strings.TrimPrefix(authHeader, "Bearer ")
+// 		token = strings.TrimSpace(token)
+//
+// 		if token == "" {
+// 			return c.Status(401).JSON(fiber.Map{
+// 				"error": fiber.Map{
+// 					"code":    "unauthorized",
+// 					"message": "Invalid authorization token format",
+// 				},
+// 				"metadata": fiber.Map{
+// 					"request_id": c.Locals("requestid"),
+// 					"timestamp":  time.Now(),
+// 					"version":    "1.0",
+// 				},
+// 			})
+// 		}
+//
+// 		// Validate token using IAM service
+// 		result, err := m.iamService.Authentication().ValidateToken(c.Context(), token)
+// 		if err != nil {
+// 			m.logger.Warn("JWT token validation failed", logger.Fields{
+// 				"error": err.Error(),
+// 			})
+// 			return c.Status(401).JSON(fiber.Map{
+// 				"error": fiber.Map{
+// 					"code":    "unauthorized",
+// 					"message": "Invalid or expired token",
+// 				},
+// 				"metadata": fiber.Map{
+// 					"request_id": c.Locals("requestid"),
+// 					"timestamp":  time.Now(),
+// 					"version":    "1.0",
+// 				},
+// 			})
+// 		}
+//
+// 		if !result.Valid {
+// 			return c.Status(401).JSON(fiber.Map{
+// 				"error": fiber.Map{
+// 					"code":    "unauthorized",
+// 					"message": "Invalid token",
+// 				},
+// 				"metadata": fiber.Map{
+// 					"request_id": c.Locals("requestid"),
+// 					"timestamp":  time.Now(),
+// 					"version":    "1.0",
+// 				},
+// 			})
+// 		}
+//
+// 		// Get user details
+// 		user, err := m.iamService.Authentication().GetUser(c.Context(), result.UserID)
+// 		if err != nil {
+// 			m.logger.Warn("Failed to get user details", logger.Fields{
+// 				"user_id": result.UserID.String(),
+// 				"error":   err.Error(),
+// 			})
+// 			return c.Status(401).JSON(fiber.Map{
+// 				"error": fiber.Map{
+// 					"code":    "unauthorized",
+// 					"message": "User lookup failed",
+// 				},
+// 				"metadata": fiber.Map{
+// 					"request_id": c.Locals("requestid"),
+// 					"timestamp":  time.Now(),
+// 					"version":    "1.0",
+// 				},
+// 			})
+// 		}
+//
+// 		// Check if account is locked
+// 		locked, err := m.iamService.Authentication().IsAccountLocked(c.Context(), user.ID)
+// 		if err != nil {
+// 			m.logger.Error("Failed to check account lock status", logger.Fields{
+// 				"user_id": user.ID.String(),
+// 				"error":   err.Error(),
+// 			})
+// 		}
+// 		if locked {
+// 			return c.Status(403).JSON(fiber.Map{
+// 				"error": fiber.Map{
+// 					"code":    "account_locked",
+// 					"message": "Account is locked",
+// 				},
+// 				"metadata": fiber.Map{
+// 					"request_id": c.Locals("requestid"),
+// 					"timestamp":  time.Now(),
+// 					"version":    "1.0",
+// 				},
+// 			})
+// 		}
+//
+// 		// Store authentication information in Fiber locals
+// 		c.Locals("authenticated", true)
+// 		c.Locals("user_id", user.ID)
+// 		c.Locals("user", user)
+// 		c.Locals("user_email", user.Email)
+// 		c.Locals("auth_claims", result.Claims)
+// 		c.Locals("auth_token", token)
+// 		c.Locals("auth_time", time.Now())
+//
+// 		m.logger.Debug("JWT authentication successful", logger.Fields{
+// 			"user_id":       user.ID.String(),
+// 			"email":         user.Email,
+// 			"authenticated": true,
+// 		})
+//
+// 		return c.Next()
+// 	}
+// }
 
 // CORSMiddleware handles CORS for Fiber with multi-tenant support
 func (m *FiberMiddleware) CORSMiddleware() fiber.Handler {

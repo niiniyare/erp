@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "awo/db/sqlc"
+	db "awo.so/db/sqlc"
 )
 
 // Repository defines the data access interface for feature flags

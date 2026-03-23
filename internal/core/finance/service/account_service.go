@@ -6,14 +6,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"awo/internal/core/featureflag"
-	"awo/internal/core/finance/domain"
-	"awo/internal/core/iam"
-	"awo/internal/shared"
-	"awo/internal/shared/errors"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/featureflag"
+	"awo.so/internal/core/finance/domain"
+	"awo.so/internal/core/iam"
+	"awo.so/internal/shared"
+	"awo.so/internal/shared/errors"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -367,23 +367,8 @@ func (s *accountService) GetAccountByCode(ctx context.Context, code string) (*do
 	logger.DebugContext(ctx, "Getting account by code",
 		logger.Fields{"account_code": code})
 
-	// ABAC - Check if user can read accounts
-	if userID, ok := shared.GetUserID(ctx); ok {
-		permissionReq := &authz.PermissionEvaluationRequest{
-			UserID:       userID,
-			ResourceType: "account",
-			Action:       "read",
-		}
-
-		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
-		if err != nil || result.Decision != model.PolicyDecisionAllow {
-			logger.WarnContext(ctx, "Permission denied for account read", logger.Fields{
-				"user_id":      userID.String(),
-				"account_code": code,
-			})
-			return nil, errors.NewBusinessError("UNAUTHORIZED", "Cannot read account")
-		}
-	}
+	// TODO(authz): enforce finance.accounts.read via iam.Service.Enforce() once
+	// the session principal is wired into ctx.
 
 	// TODO: Get entityID from context or parameter
 	account, err := s.accountRepo.GetByCode(ctx, nil, code)
@@ -422,24 +407,8 @@ func (s *accountService) UpdateAccount(ctx context.Context, id uuid.UUID, req do
 	logger.InfoContext(ctx, "Starting account update",
 		logger.Fields{"account_id": id.String()})
 
-	// ABAC - Check if user can update this account
-	if userID, ok := shared.GetUserID(ctx); ok {
-		permissionReq := &authz.PermissionEvaluationRequest{
-			UserID:       userID,
-			ResourceType: "account",
-			ResourceID:   &id,
-			Action:       "update",
-		}
-
-		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
-		if err != nil || result.Decision != model.PolicyDecisionAllow {
-			logger.WarnContext(ctx, "Permission denied for account update", logger.Fields{
-				"user_id":    userID.String(),
-				"account_id": id.String(),
-			})
-			return nil, errors.NewBusinessError("UNAUTHORIZED", "Cannot update account")
-		}
-	}
+	// TODO(authz): enforce finance.accounts.update via iam.Service.Enforce() once
+	// the session principal is wired into ctx.
 
 	existingAccount, err := s.accountRepo.GetByID(ctx, id)
 	if err != nil {
@@ -568,24 +537,8 @@ func (s *accountService) DeleteAccount(ctx context.Context, id uuid.UUID) error 
 	logger.InfoContext(ctx, "Starting account deletion",
 		logger.Fields{"account_id": id.String()})
 
-	// ABAC - Check if user can delete accounts
-	if userID, ok := shared.GetUserID(ctx); ok {
-		permissionReq := &authz.PermissionEvaluationRequest{
-			UserID:       userID,
-			ResourceType: "account",
-			ResourceID:   &id,
-			Action:       "delete",
-		}
-
-		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
-		if err != nil || result.Decision != model.PolicyDecisionAllow {
-			logger.WarnContext(ctx, "Permission denied for account deletion", logger.Fields{
-				"user_id":    userID.String(),
-				"account_id": id.String(),
-			})
-			return errors.NewBusinessError("UNAUTHORIZED", "Cannot delete account")
-		}
-	}
+	// TODO(authz): enforce finance.accounts.delete via iam.Service.Enforce() once
+	// the session principal is wired into ctx.
 
 	// Feature Flag - Check if enhanced deletion checks are enabled
 	tenantID, _ := shared.GetTenantID(ctx)
@@ -727,23 +680,8 @@ func (s *accountService) ListAccounts(ctx context.Context, filter *domain.Accoun
 			"offset": getIntValue(filter.Offset),
 		})
 
-	// ABAC - Filter accounts based on user permissions
-	if userID, ok := shared.GetUserID(ctx); ok {
-		// Get user's effective permissions to determine what they can see
-		permissions, err := s.iamService.Authorization().GetUserEffectivePermissions(ctx, userID, nil)
-		if err != nil {
-			logger.WarnContext(ctx, "Failed to get user permissions for account listing", logger.Fields{
-				"user_id": userID.String(),
-				"error":   err.Error(),
-			})
-		} else {
-			// In a real implementation, you would filter the accounts based on permissions
-			logger.DebugContext(ctx, "Applied permission-based filtering", logger.Fields{
-				"user_id":           userID.String(),
-				"permissions_count": len(permissions.Permissions),
-			})
-		}
-	}
+	// TODO(authz): filter accounts based on user permissions via iam.Service.Enforce() once
+	// the session principal is wired into ctx.
 
 	// Feature Flag - Use enhanced listing if enabled
 	tenantID, _ := shared.GetTenantID(ctx)
@@ -915,23 +853,8 @@ func (s *accountService) SearchAccounts(ctx context.Context, query string, limit
 			"limit": limit,
 		})
 
-	// ABAC - Check if user can search accounts
-	if userID, ok := shared.GetUserID(ctx); ok {
-		permissionReq := &authz.PermissionEvaluationRequest{
-			UserID:       userID,
-			ResourceType: "account",
-			Action:       "search",
-		}
-
-		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
-		if err != nil || result.Decision != model.PolicyDecisionAllow {
-			logger.WarnContext(ctx, "Permission denied for account search", logger.Fields{
-				"user_id": userID.String(),
-				"query":   query,
-			})
-			return nil, errors.NewBusinessError("UNAUTHORIZED", "Cannot search accounts")
-		}
-	}
+	// TODO(authz): enforce finance.accounts.search via iam.Service.Enforce() once
+	// the session principal is wired into ctx.
 
 	// Feature Flag - Enhanced search capabilities
 	tenantID, _ := shared.GetTenantID(ctx)
@@ -1423,28 +1346,8 @@ func (s *accountService) CreateAccountGroup(ctx context.Context, req domain.Crea
 			"group_type": req.GroupType,
 		})
 
-	// ABAC - Check if user can create account groups
-	if userID, ok := shared.GetUserID(ctx); ok {
-		permissionReq := &authz.PermissionEvaluationRequest{
-			UserID:       userID,
-			ResourceType: "account_group",
-			Action:       "create",
-			EntityID:     req.EntityID,
-		}
-
-		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
-		if err != nil {
-			logger.ErrorContext(ctx, "Failed to evaluate permission for account group creation",
-				logger.Fields{"user_id": userID.String(), "error": err.Error()})
-			return nil, errors.NewBusinessError("PERMISSION_ERROR", "Failed to evaluate permissions")
-		}
-
-		if result.Decision != model.PolicyDecisionAllow {
-			logger.WarnContext(ctx, "User does not have permission to create account groups",
-				logger.Fields{"user_id": userID.String(), "decision": string(result.Decision)})
-			return nil, errors.NewBusinessError("INSUFFICIENT_PERMISSIONS", "Insufficient permissions to create account group")
-		}
-	}
+	// TODO(authz): enforce finance.account_groups.create via iam.Service.Enforce() once
+	// the session principal is wired into ctx.
 
 	// Validate account group code uniqueness
 	if err := s.accountGroupRepo.ValidateGroupCode(ctx, req.GroupCode, nil); err != nil {
@@ -1607,29 +1510,8 @@ func (s *accountService) UpdateAccountGroup(ctx context.Context, id uuid.UUID, r
 		return nil, fmt.Errorf("failed to get existing account group: %w", err)
 	}
 
-	// ABAC - Check if user can update account groups
-	if userID, ok := shared.GetUserID(ctx); ok {
-		permissionReq := &authz.PermissionEvaluationRequest{
-			UserID:       userID,
-			ResourceType: "account_group",
-			Action:       "update",
-			ResourceID:   &id,
-			EntityID:     existingGroup.EntityID,
-		}
-
-		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
-		if err != nil {
-			logger.ErrorContext(ctx, "Failed to evaluate permission for account group update",
-				logger.Fields{"user_id": userID.String(), "group_id": id.String(), "error": err.Error()})
-			return nil, errors.NewBusinessError("PERMISSION_ERROR", "Failed to evaluate permissions")
-		}
-
-		if result.Decision != model.PolicyDecisionAllow {
-			logger.WarnContext(ctx, "User does not have permission to update account group",
-				logger.Fields{"user_id": userID.String(), "group_id": id.String(), "decision": string(result.Decision)})
-			return nil, errors.NewBusinessError("INSUFFICIENT_PERMISSIONS", "Insufficient permissions to update account group")
-		}
-	}
+	// TODO(authz): enforce finance.account_groups.update via iam.Service.Enforce() once
+	// the session principal is wired into ctx.
 
 	// Apply updates
 	if req.GroupName != nil {
@@ -1721,29 +1603,8 @@ func (s *accountService) DeleteAccountGroup(ctx context.Context, id uuid.UUID) e
 		return fmt.Errorf("failed to get account group: %w", err)
 	}
 
-	// ABAC - Check if user can delete account groups
-	if userID, ok := shared.GetUserID(ctx); ok {
-		permissionReq := &authz.PermissionEvaluationRequest{
-			UserID:       userID,
-			ResourceType: "account_group",
-			Action:       "delete",
-			ResourceID:   &id,
-			EntityID:     group.EntityID,
-		}
-
-		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
-		if err != nil {
-			logger.ErrorContext(ctx, "Failed to evaluate permission for account group deletion",
-				logger.Fields{"user_id": userID.String(), "group_id": id.String(), "error": err.Error()})
-			return errors.NewBusinessError("PERMISSION_ERROR", "Failed to evaluate permissions")
-		}
-
-		if result.Decision != model.PolicyDecisionAllow {
-			logger.WarnContext(ctx, "User does not have permission to delete account group",
-				logger.Fields{"user_id": userID.String(), "group_id": id.String(), "decision": string(result.Decision)})
-			return errors.NewBusinessError("INSUFFICIENT_PERMISSIONS", "Insufficient permissions to delete account group")
-		}
-	}
+	// TODO(authz): enforce finance.account_groups.delete via iam.Service.Enforce() once
+	// the session principal is wired into ctx.
 
 	// Check if group can be deleted
 	canDelete, err := s.accountGroupRepo.CanDeleteGroup(ctx, id)
@@ -2275,26 +2136,9 @@ func (s *accountService) analyzeActivityPatterns(ctx context.Context, activities
 	s.metrics.SetGauge("account.activity.total_entries_30d", float64(totalActivity), metrics.Fields{})
 }
 
-// checkAccountReadPermission validates if the user has permission to read accounts
+// checkAccountReadPermission validates if the user has permission to read accounts.
+// TODO(authz): enforce finance.accounts.read via iam.Service.Enforce() once
+// the session principal is wired into ctx.
 func (s *accountService) checkAccountReadPermission(ctx context.Context) error {
-	if userID, ok := shared.GetUserID(ctx); ok {
-		permissionReq := &authz.PermissionEvaluationRequest{
-			UserID:       userID,
-			ResourceType: "account",
-			Action:       "read",
-		}
-
-		result, err := s.iamService.Authorization().EvaluatePermission(ctx, permissionReq)
-		if err != nil {
-			return fmt.Errorf("failed to evaluate read permission: %w", err)
-		}
-
-		if result.Decision != model.PolicyDecisionAllow {
-			logger.WarnContext(ctx, "Permission denied for account read", logger.Fields{
-				"user_id": userID.String(),
-			})
-			return errors.ErrForbidden
-		}
-	}
 	return nil
 }

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"awo/internal/core/tenant/domain"
-	"awo/internal/core/tenant/repository"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/tenant/domain"
+	"awo.so/internal/core/tenant/repository"
+	"awo.so/internal/shared/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )

@@ -10,13 +10,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	temporalclient "go.temporal.io/sdk/client"
 
-	db "awo/db/sqlc"
-	"awo/internal/platform/cache"
-	"awo/internal/platform/config"
-	"awo/internal/platform/temporal"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/platform/cache"
+	"awo.so/internal/platform/config"
+	"awo.so/internal/platform/temporal"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // ============================================================================

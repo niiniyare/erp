@@ -6,21 +6,20 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	authHandler "awo/internal/api/handlers/auth"
-	financeHandler "awo/internal/api/handlers/finance"
-	"awo/internal/api/handlers/health"
-	tenantHandler "awo/internal/api/handlers/tenant"
-	uiHandler "awo/internal/api/handlers/ui"
-	userHandler "awo/internal/api/handlers/user"
-	middlewarePkg "awo/internal/api/middleware"
-	financeService "awo/internal/core/finance/service"
-	"awo/internal/core/iam"
-	"awo/internal/core/identity/session"
-	coreTenant "awo/internal/core/tenant"
-	"awo/internal/shared/errors"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	authHandler "awo.so/internal/api/handlers/auth"
+	financeHandler "awo.so/internal/api/handlers/finance"
+	"awo.so/internal/api/handlers/health"
+	tenantHandler "awo.so/internal/api/handlers/tenant"
+	uiHandler "awo.so/internal/api/handlers/ui"
+	userHandler "awo.so/internal/api/handlers/user"
+	middlewarePkg "awo.so/internal/api/middleware"
+	financeService "awo.so/internal/core/finance/service"
+	"awo.so/internal/core/iam"
+	coreTenant "awo.so/internal/core/tenant"
+	"awo.so/internal/shared/errors"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // Module names as constants for consistency
@@ -198,14 +197,14 @@ type Dependencies struct {
 	Tracer           tracing.Service
 	conf             *health.Config
 	TenantService    coreTenant.Service
-	UserService      iam.Service
+	UserService      iam.UserService
 	FinanceServices  *financeService.Services
 	TenantMiddleware fiber.Handler
 	SecurityManager  *middlewarePkg.RouteSecurityManager
 
 	// Session-based auth (S6/S8 — replaces JWT+IAM approach)
 	// Set these to enable Authenticate/Authorize middleware on protected routes.
-	SessionService session.Service
+	SessionService iam.SessionService
 	AuthConfig     *middlewarePkg.AuthConfig // nil = auth middleware disabled
 }
 

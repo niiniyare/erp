@@ -5,8 +5,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"awo/internal/shared/errors"
-	"awo/internal/shared/logger"
+	"awo.so/internal/shared/errors"
+	"awo.so/internal/shared/logger"
 )
 
 // Activate handles the activation of a tenant.

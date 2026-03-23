@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "awo/db/sqlc"
-	"awo/internal/core/tenant/domain"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/tenant/domain"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )

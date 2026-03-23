@@ -14,13 +14,13 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/mock/gomock"
 
-	"awo/internal/core/tenant"
-	tenant_repo "awo/internal/core/tenant/repository"
-	"awo/internal/platform/cache"
-	"awo/internal/shared/errors"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/tenant"
+	tenant_repo "awo.so/internal/core/tenant/repository"
+	"awo.so/internal/platform/cache"
+	"awo.so/internal/shared/errors"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // RouterTestSuite tests the Router implementation with centralized route registration

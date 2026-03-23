@@ -8,7 +8,7 @@ package featureflag
 // 	"github.com/google/uuid"
 // 	"github.com/stretchr/testify/assert"
 //
-// 	"awo/internal/core/audit"
+// 	"awo.so/internal/core/audit"
 // )
 //
 // // SimpleAuditService for testing audit integration

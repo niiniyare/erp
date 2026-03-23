@@ -16,12 +16,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	db "awo/db/sqlc"
-	"awo/internal/api/handlers"
-	"awo/internal/core/tenant"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/api/handlers"
+	"awo.so/internal/core/tenant"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // APIIntegrationTestSuite defines API integration test suite

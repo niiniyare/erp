@@ -10,10 +10,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"go.opentelemetry.io/otel/attribute"
 
-	"awo/internal/shared/errors"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/shared/errors"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // Custom error types for HTTP handling

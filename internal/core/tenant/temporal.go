@@ -3,10 +3,10 @@ package tenant
 import (
 	"fmt"
 
-	"awo/internal/core/tenant/activities"
-	"awo/internal/core/tenant/workflow"
-	"awo/internal/platform/temporal"
-	loggerPkg "awo/internal/shared/logger"
+	"awo.so/internal/core/tenant/activities"
+	"awo.so/internal/core/tenant/workflow"
+	"awo.so/internal/platform/temporal"
+	loggerPkg "awo.so/internal/shared/logger"
 	"go.temporal.io/sdk/client"
 )
 

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"awo/internal/shared/logger"
+	"awo.so/internal/shared/logger"
 )
 
 // TimeoutConfig defines timeout middleware configuration

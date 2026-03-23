@@ -10,18 +10,19 @@ import (
 	"time"
 )
 
-// ─── CONTEXT KEYS ─────────────────────────────────────────────
+// CONTEXT KEYS
 
 type contextKey string
 
 const (
 	TenantIDKey  contextKey = "tenant_id"
+	EntityIDKey  contextKey = "entity_id"
 	UserIDKey    contextKey = "user_id"
 	RequestIDKey contextKey = "request_id"
 	OperationKey contextKey = "operation"
 )
 
-// ─── ERROR SEVERITY LEVELS ─────────────────────────────────────────────
+//  ERROR SEVERITY LEVELS
 
 type Severity string
 
@@ -32,7 +33,7 @@ const (
 	SeverityCritical Severity = "critical"
 )
 
-// ─── ERROR CATEGORIES ─────────────────────────────────────────────
+//  ERROR CATEGORIES
 
 type Category string
 
@@ -46,7 +47,7 @@ const (
 	CategoryTenant      Category = "tenant"
 )
 
-// ─── CORE ERROR TYPES ─────────────────────────────────────────────
+//  CORE ERROR TYPES
 
 // BusinessError represents domain-specific business logic errors
 type BusinessError struct {
@@ -398,7 +399,7 @@ func (ec *ErrorCollection) updateSeverity(err error) {
 	}
 }
 
-// ─── CONSTRUCTORS ─────────────────────────────────────────────
+//  CONSTRUCTORS
 
 // NewBusinessError creates a new business error
 func NewBusinessError(code, message string) *BusinessError {
@@ -480,7 +481,7 @@ func NewErrorCollectionWithContext(ctx context.Context, operation string) *Error
 	return ec
 }
 
-// ─── UTILITY FUNCTIONS ─────────────────────────────────────────────
+//  UTILITY FUNCTIONS
 
 // sanitizeValue removes sensitive information from values for logging
 func sanitizeValue(value any) any {

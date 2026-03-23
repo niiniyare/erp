@@ -22,7 +22,7 @@
 
 package errors
 
-// ─── RE-EXPORTS FOR BACKWARD COMPATIBILITY ─────────────────────────────────────────────
+//  RE-EXPORTS FOR BACKWARD COMPATIBILITY
 // This file ensures that all existing imports continue to work exactly as before
 
 // Types from types.go
@@ -46,12 +46,12 @@ package errors
 // Functions from tenant.go (existing file)
 // Tenant-specific functions are automatically available from tenant.go
 
-// ─── PACKAGE DOCUMENTATION ─────────────────────────────────────────────
+//  PACKAGE DOCUMENTATION
 
 /*
 Basic Usage:
 
-	import "project/erp/internal/shared/errors"
+	import "awo.so/internal/shared/errors"
 
 	// Check for specific errors (backward compatible)
 	if errors.IsUserNotFound(err) {
@@ -120,19 +120,19 @@ Migration Guide:
 
 Your existing code continues to work unchanged:
 
-	// ✅ All these patterns still work
+	//  All these patterns still work
 	if err == errors.ErrUserNotFound { ... }
 	if errors.Is(err, errors.ErrUserNotFound) { ... }
 	if errors.IsUserNotFound(err) { ... }
 
 New enhanced features are available:
 
-	// 🆕 Rich error context
+	//  Rich error context
 	err := errors.NewUserNotFoundError(userID).
 		WithDetail("lookup_method", "email").
 		WithSuggestion("Check the email address")
 
-	// 🆕 HTTP integration
+	//  HTTP integration
 	httpErr := errors.ToHTTPError(err)
 	// Returns structured HTTP response with status, suggestions, etc.
 

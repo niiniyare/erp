@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "awo/db/sqlc"
-	"awo/internal/core/settings/domain"
-	"awo/internal/shared"
-	"awo/internal/shared/metrics"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/settings/domain"
+	"awo.so/internal/shared"
+	"awo.so/internal/shared/metrics"
 )
 
 // Implement the remaining repository methods

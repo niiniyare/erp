@@ -3,7 +3,7 @@ package domain_test
 import (
 	"testing"
 
-	"awo/internal/core/tenant/domain"
+	"awo.so/internal/core/tenant/domain"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )

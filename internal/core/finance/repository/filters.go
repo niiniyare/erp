@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"awo/internal/core/finance/domain"
+	"awo.so/internal/core/finance/domain"
 )
 
 // AccountFilter defines filtering options for chart of accounts queries

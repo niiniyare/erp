@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"awo/internal/core/audit"
-	"awo/internal/shared/logger"
+	"awo.so/internal/core/audit"
+	"awo.so/internal/shared/logger"
 )
 
 // In-memory template storage (in production, this would be database-backed)

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "awo/db/sqlc"
+	db "awo.so/db/sqlc"
 )
 
 // FeatureFlag represents a feature flag in the system (domain model)

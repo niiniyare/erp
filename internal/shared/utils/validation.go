@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"awo/internal/shared/errors"
+	"awo.so/internal/shared/errors"
 )
 
 // validate holds the singleton validator instance.

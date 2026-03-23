@@ -6,12 +6,12 @@ import (
 	"time"
 )
 
-// ─── PREDEFINED BUSINESS ERRORS ─────────────────────────────────────────────
+//  PREDEFINED BUSINESS ERRORS
 // These replace the simple error variables with enhanced BusinessError instances
 // while maintaining backward compatibility
 
 var (
-	// ─── TENANT ERRORS ─────────────────────────────────────────────
+	//  TENANT ERRORS
 
 	// ErrTenantExists indicates a tenant already exists
 	ErrTenantExists = NewBusinessError(CodeTenantExists, "Tenant already exists").
@@ -56,7 +56,7 @@ var (
 				WithSuggestion("Upgrade your plan to access this feature").
 				WithSuggestion("Contact sales for more information about feature availability")
 
-	// ─── USER ERRORS ─────────────────────────────────────────────
+	//  USER ERRORS
 
 	// ErrUserNotFound indicates a user was not found
 	ErrUserNotFound = NewBusinessError(CodeUserNotFound, "User not found").
@@ -123,7 +123,7 @@ var (
 				WithSuggestion("Contact an administrator to unlock your account").
 				WithSuggestion("Wait for the automatic unlock period if applicable")
 
-	// ─── ROLE & PERMISSION ERRORS ─────────────────────────────────────────────
+	//  ROLE & PERMISSION ERRORS
 
 	// ErrRoleNotFound indicates a role was not found
 	ErrRoleNotFound = NewBusinessError(CodeRoleNotFound, "Role not found").
@@ -153,7 +153,7 @@ var (
 			WithSuggestion("Contact your administrator for access").
 			WithSuggestion("Verify you have the required permissions")
 
-	// ─── INVITATION ERRORS ─────────────────────────────────────────────
+	//  INVITATION ERRORS
 
 	// ErrInvitationNotFound indicates invitation was not found
 	ErrInvitationNotFound = NewBusinessError(CodeInvitationNotFound, "Invitation not found").
@@ -169,7 +169,7 @@ var (
 				WithSuggestion("Request a new invitation").
 				WithSuggestion("Contact an administrator for a fresh invitation link")
 
-	// ─── API KEY ERRORS ─────────────────────────────────────────────
+	//  API KEY ERRORS
 
 	// ErrAPIKeyNotFound indicates API key was not found
 	ErrAPIKeyNotFound = NewBusinessError(CodeAPIKeyNotFound, "API key not found").
@@ -178,7 +178,7 @@ var (
 				WithSuggestion("Verify your API key is correct").
 				WithSuggestion("Generate a new API key if the current one is invalid")
 
-	// ─── ENTITY ERRORS ─────────────────────────────────────────────
+	//  ENTITY ERRORS
 
 	// ErrEntityNotFound indicates an entity was not found
 	ErrEntityNotFound = NewBusinessError(CodeEntityNotFound, "Entity not found").
@@ -230,7 +230,7 @@ var (
 				WithSuggestion("Use a valid entity type (company, department, project, etc.)").
 				WithSuggestion("Check the API documentation for valid entity types")
 
-	// ─── ABAC ERRORS ─────────────────────────────────────────────
+	//  ABAC ERRORS
 
 	// Policy Errors
 	ErrPolicyNotFound = NewBusinessError(CodePolicyNotFound, "ABAC policy not found").
@@ -307,7 +307,7 @@ var (
 					WithSuggestion("Provide all required attributes for evaluation").
 					WithSuggestion("Check attribute collection sources")
 
-	// ─── GENERAL ERRORS ─────────────────────────────────────────────
+	//  GENERAL ERRORS
 
 	// ErrInvalidInput indicates general invalid input
 	ErrInvalidInput = NewBusinessError(CodeInvalidInput, "Invalid input provided").
@@ -324,7 +324,7 @@ var (
 			WithSuggestion("Check if the resource exists and you have access to it")
 )
 
-// ─── ENHANCED ERROR CONSTRUCTORS ─────────────────────────────────────────────
+//  ENHANCED ERROR CONSTRUCTORS
 // These functions create contextual variations of the base errors
 
 // NewUserNotFoundError creates a user not found error with specific user context
@@ -440,7 +440,7 @@ func NewFeatureNotEnabledError(feature string, planRequired string) *BusinessErr
 		WithSuggestion("Contact sales for more information about feature availability")
 }
 
-// ─── DOMAIN-SPECIFIC ERROR CONSTRUCTORS ─────────────────────────────────────────────
+//  DOMAIN-SPECIFIC ERROR CONSTRUCTORS
 
 // Accounting-specific errors
 func ErrInvalidAccountingPeriod(periodStart, periodEnd time.Time) *BusinessError {

@@ -1,5 +1,5 @@
 {
-	"Name": "process-item",
+ "Name": "process-item",
 	"SpanContext": {
 		"TraceID": "b100878116d7e6227daa8bcb468ff7da",
 		"SpanID": "ccd2ba7b91fb80ff",

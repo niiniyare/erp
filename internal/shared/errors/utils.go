@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// ─── ERROR TYPE CHECKING HELPERS ─────────────────────────────────────────────
+//  ERROR TYPE CHECKING HELPERS
 // These helpers maintain backward compatibility for error checking
 
 // IsUserNotFound checks if error is user not found
@@ -80,7 +80,7 @@ func IsTemporaryError(err error) bool {
 	return IsTemporary(err)
 }
 
-// ─── MIGRATION HELPERS ─────────────────────────────────────────────
+//  MIGRATION HELPERS
 // These help migrate from simple errors to enhanced errors
 
 // WrapSimpleError wraps a simple error with enhanced context
@@ -130,7 +130,7 @@ func UpgradeError(err error) error {
 	}
 }
 
-// ─── ERROR CATEGORIZATION HELPERS ─────────────────────────────────────────────
+//  ERROR CATEGORIZATION HELPERS
 
 // GetErrorsByCategory returns all errors of a specific category from a collection
 func GetErrorsByCategory(errs []error, category Category) []*BusinessError {
@@ -177,7 +177,7 @@ func GetMaxSeverity(errs []error) Severity {
 	return maxSeverity
 }
 
-// ─── ERROR FILTERING HELPERS ─────────────────────────────────────────────
+//  ERROR FILTERING HELPERS
 
 // FilterRetryableErrors returns only retryable errors from a collection
 func FilterRetryableErrors(errs []error) []error {
@@ -201,7 +201,7 @@ func FilterNonRetryableErrors(errs []error) []error {
 	return nonRetryable
 }
 
-// ─── ERROR FORMATTING HELPERS ─────────────────────────────────────────────
+//  ERROR FORMATTING HELPERS
 
 // FormatErrorCodes returns a comma-separated list of error codes
 func FormatErrorCodes(errs []error) string {
@@ -228,7 +228,7 @@ func FormatErrorMessages(errs []error, separator string) string {
 	return strings.Join(messages, separator)
 }
 
-// ─── BUSINESS LOGIC HELPERS ─────────────────────────────────────────────
+//  BUSINESS LOGIC HELPERS
 
 // IsNotFoundError checks if error represents any type of "not found" condition
 func IsNotFoundError(err error) bool {
@@ -277,7 +277,7 @@ func IsTenantError(err error) bool {
 	return false
 }
 
-// ─── DEBUGGING HELPERS ─────────────────────────────────────────────
+//  DEBUGGING HELPERS
 
 // GetErrorSummary returns a structured summary of an error for debugging
 func GetErrorSummary(err error) map[string]any {

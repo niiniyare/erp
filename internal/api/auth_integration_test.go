@@ -17,16 +17,16 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	db "awo/db/sqlc"
-	// "awo/internal/api/gen/auth"
-	"awo/internal/api/handlers"
-	"awo/internal/core/iam/authn"
-	"awo/internal/core/iam/model"
-	"awo/internal/core/iam/repo"
-	"awo/internal/core/tenant"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	db "awo.so/db/sqlc"
+	// "awo.so/internal/api/gen/auth"
+	"awo.so/internal/api/handlers"
+	"awo.so/internal/core/iam/authn"
+	"awo.so/internal/core/iam/model"
+	"awo.so/internal/core/iam/repo"
+	"awo.so/internal/core/tenant"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // AuthAPIIntegrationTestSuite defines authentication API integration tests

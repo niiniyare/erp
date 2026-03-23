@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"awo/internal/platform/config"
+	"awo.so/internal/platform/config"
 )
 
 func main() {

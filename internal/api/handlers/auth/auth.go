@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"awo/internal/core/identity/session"
-	sharedErrors "awo/internal/shared/errors"
+	"awo.so/internal/core/iam"
+	sharedErrors "awo.so/internal/shared/errors"
 )
 
 // LoginConfig holds tunable settings for the Login handler.
@@ -43,7 +43,7 @@ type loginRequest struct {
 // NOTE(tenant-context): The tenant must already be resolved by the
 // ResolveTenant middleware (which sets cache.TenantIDKey in ctx) before
 // this handler runs.
-func LoginHandler(svc session.Service, cfg LoginConfig) fiber.Handler {
+func LoginHandler(svc iam.SessionService, cfg LoginConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var req loginRequest
 		if err := c.BodyParser(&req); err != nil {
@@ -81,7 +81,7 @@ func LoginHandler(svc session.Service, cfg LoginConfig) fiber.Handler {
 
 // LogoutHandler handles POST /auth/logout.
 // It invalidates the session in the DB + cache and clears the cookie.
-func LogoutHandler(svc session.Service, cookieName string) fiber.Handler {
+func LogoutHandler(svc iam.SessionService, cookieName string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		token := c.Cookies(cookieName)
 		if token == "" {

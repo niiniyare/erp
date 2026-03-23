@@ -3,7 +3,7 @@ package service
 import (
 	"fmt"
 
-	"awo/internal/core/finance/domain"
+	"awo.so/internal/core/finance/domain"
 )
 
 // SettingsHelper provides helper functions for Finance module integration with Settings

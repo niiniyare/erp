@@ -6,13 +6,13 @@ import (
 
 	"github.com/google/uuid"
 
-	"awo/internal/core/audit"
-	"awo/internal/core/finance/domain"
-	"awo/internal/core/notification"
-	settingsService "awo/internal/core/settings/service"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/audit"
+	"awo.so/internal/core/finance/domain"
+	"awo.so/internal/core/notification"
+	settingsService "awo.so/internal/core/settings/service"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/worker"
 )

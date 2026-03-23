@@ -7,9 +7,9 @@
 package main
 
 import (
-	"awo/internal/api/handlers"
-	"awo/internal/platform/config"
-	"awo/internal/platform/wire"
+	"awo.so/internal/api/handlers"
+	"awo.so/internal/platform/config"
+	"awo.so/internal/platform/wire"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -41,20 +41,18 @@ func InitializeApplication() (*Application, error) {
 		return nil, err
 	}
 	tenantService := wire.NewTenantService(store, cacheService, service, logger)
-	authnService := wire.NewSimpleAuthenticationService()
-	iamService := wire.NewSimpleIAMService(authnService)
-	repository := wire.NewIdentityRepository(store, cacheService, service, metricsProvider)
-	identityService := wire.NewIdentityService(repository, cacheService, service, metricsProvider)
-	authzService, err := wire.NewAuthzService(store, cacheService, logger, metricsProvider, service)
+	v := wire.NewIdentityRepository(store, cacheService, service, metricsProvider)
+	v2 := wire.NewIdentityService(v, cacheService, service, metricsProvider)
+	v3, err := wire.NewAuthzService(store, cacheService, logger, metricsProvider, service)
 	if err != nil {
 		return nil, err
 	}
-	sessionRepository := wire.NewSessionRepository(store, cacheService, service, metricsProvider)
-	sessionService := wire.NewSessionService(identityService, authzService, sessionRepository, cacheService, service, metricsProvider, logger)
+	v4 := wire.NewSessionRepository(store, cacheService, service, metricsProvider)
+	v5 := wire.NewSessionService(v2, v3, v4, service, metricsProvider, logger)
 	services := wire.NewFinanceServices(store, logger, metricsProvider, service)
 	tenantMiddlewareConfig := wire.NewTenantMiddlewareConfig(tenantService, store)
-	v := wire.NewTenantMiddleware(tenantMiddlewareConfig)
-	dependencies := wire.NewHandlerDependencies(logger, metricsProvider, service, tenantService, iamService, sessionService, services, v)
+	v6 := wire.NewTenantMiddleware(tenantMiddlewareConfig)
+	dependencies := wire.NewHandlerDependencies(logger, metricsProvider, service, tenantService, v2, v5, services, v6)
 	router, err := wire.NewRouter(dependencies)
 	if err != nil {
 		return nil, err

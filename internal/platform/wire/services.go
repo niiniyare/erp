@@ -4,16 +4,16 @@ package wire
 import (
 	temporalclient "go.temporal.io/sdk/client"
 
-	"awo/internal/platform/cache"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/platform/cache"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 
 	// Core services
-	financeService "awo/internal/core/finance/service"
-	"awo/internal/core/tenant"
+	financeService "awo.so/internal/core/finance/service"
+	"awo.so/internal/core/tenant"
 
-	db "awo/db/sqlc"
+	db "awo.so/db/sqlc"
 )
 
 // ============================================================================

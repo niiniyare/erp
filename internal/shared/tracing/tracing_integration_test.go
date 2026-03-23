@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
-	"awo/internal/shared/tracing" // Replace with your actual module path
+	"awo.so/internal/shared/tracing" // Replace with your actual module path
 )
 
 // Flag to control JSON output

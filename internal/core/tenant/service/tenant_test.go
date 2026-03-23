@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"awo/internal/core/tenant/domain"
-	"awo/internal/core/tenant/service"
+	"awo.so/internal/core/tenant/domain"
+	"awo.so/internal/core/tenant/service"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )

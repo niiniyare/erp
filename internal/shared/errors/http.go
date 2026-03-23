@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// ─── HTTP ERROR HANDLING ─────────────────────────────────────────────
+//  HTTP ERROR HANDLING
 
 // HTTPError represents an error that can be directly returned as HTTP response
 type HTTPError struct {

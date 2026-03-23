@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"awo/internal/core/access/approval"
-	"awo/internal/core/access/execution"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/access/approval"
+	"awo.so/internal/core/access/execution"
+	"awo.so/internal/shared/tracing"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )

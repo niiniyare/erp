@@ -3,12 +3,12 @@
 package service
 
 import (
-	"awo/internal/core/featureflag"
-	"awo/internal/core/finance/domain"
-	"awo/internal/core/iam"
-	"awo/internal/shared/errors"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/featureflag"
+	"awo.so/internal/core/finance/domain"
+	"awo.so/internal/core/iam"
+	"awo.so/internal/shared/errors"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // Services aggregates all finance-related services

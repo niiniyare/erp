@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"awo/internal/core/tenant/domain"
-	"awo/internal/core/tenant/repository"
-	"awo/internal/platform/cache"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/tracing"
+	"awo.so/internal/core/tenant/domain"
+	"awo.so/internal/core/tenant/repository"
+	"awo.so/internal/platform/cache"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/tracing"
 )
 
 const analyticsCacheTTL = 5 * time.Minute

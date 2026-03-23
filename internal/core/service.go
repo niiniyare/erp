@@ -7,26 +7,22 @@ import (
 	"strings"
 	"sync"
 
-	db "awo/db/sqlc"
-	"awo/internal/core/abac"
-	abacRepo "awo/internal/core/abac/repository"
-	"awo/internal/core/access"
-	"awo/internal/core/analytics"
-	"awo/internal/core/audit"
-	"awo/internal/core/entity"
-	"awo/internal/core/featureflag"
-	financeRepo "awo/internal/core/finance/repository"
-	financeService "awo/internal/core/finance/service"
-	"awo/internal/core/iam"
-	iamsession "awo/internal/core/iam/session"
-	"awo/internal/core/notification"
-	"awo/internal/core/settings"
-	"awo/internal/core/tenant"
-	"awo/internal/platform/cache"
-	"awo/internal/platform/temporal"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/access"
+	"awo.so/internal/core/audit"
+	"awo.so/internal/core/entity"
+	"awo.so/internal/core/featureflag"
+	financeRepo "awo.so/internal/core/finance/repository"
+	financeService "awo.so/internal/core/finance/service"
+	"awo.so/internal/core/iam"
+	"awo.so/internal/core/notification"
+	"awo.so/internal/core/settings"
+	"awo.so/internal/core/tenant"
+	"awo.so/internal/platform/cache"
+	"awo.so/internal/platform/temporal"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // Dependencies represents all external dependencies needed by core services
@@ -64,11 +60,10 @@ type ServiceContainer struct {
 	IdentityService iam.UserService
 
 	// Security & Access Control
-	ABACService    abac.Service
-	IAMService     iam.Service
+	IAMService     iam.AuthzService
 	AccessService  access.Service
 	AuditService   audit.Service
-	SessionService iamsession.Service
+	SessionService iam.SessionService
 
 	// Feature Management
 	FeatureFlagService      featureflag.Service
@@ -78,7 +73,6 @@ type ServiceContainer struct {
 	FinanceService      *financeService.Services
 	NotificationService notification.NotificationService
 	SettingsService     settings.SettingsService
-	AnalyticsService    analytics.UserAnalyticsService
 
 	// Internal state
 	deps    Dependencies
@@ -177,7 +171,7 @@ func (sc *ServiceContainer) initializeFoundationalServices(ctx context.Context) 
 
 	// Identity Service - User management
 	identityRepo := iam.NewUserRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
-	sc.IdentityService = iam.NewUserService(identityRepo, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
+	sc.IdentityService = iam.NewUserService(identityRepo, sc.deps.Tracing, sc.deps.Metrics)
 
 	// Audit Service - Required by other services for logging
 	auditRepo := audit.NewRepository(sc.deps.Store, sc.deps.Logger, sc.deps.Tracing, sc.deps.Metrics)
@@ -195,20 +189,20 @@ func (sc *ServiceContainer) initializeSecurityServices(ctx context.Context) erro
 	sc.logger.Info("Phase 2: Initializing security services")
 
 	// ABAC Service - Advanced access control
-	policyRepo := abacRepo.NewPolicyRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Logger, sc.deps.Metrics, sc.deps.Tracing)
-	attributeRepo := abacRepo.NewAttributeRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Logger, sc.deps.Metrics, sc.deps.Tracing)
-	policyEvaluationRepo := abacRepo.NewPolicyEvaluationRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Logger, sc.deps.Metrics, sc.deps.Tracing)
+	// policyRepo := abacRepo.NewPolicyRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Logger, sc.deps.Metrics, sc.deps.Tracing)
+	// attributeRepo := abacRepo.NewAttributeRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Logger, sc.deps.Metrics, sc.deps.Tracing)
+	// policyEvaluationRepo := abacRepo.NewPolicyEvaluationRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Logger, sc.deps.Metrics, sc.deps.Tracing)
 
-	sc.ABACService = abac.NewService(
-		policyRepo,
-		attributeRepo,
-		policyEvaluationRepo,
-		sc.IdentityService,
-		sc.TenantService,
-		sc.deps.Logger,
-		sc.deps.Metrics,
-		sc.deps.Tracing,
-	)
+	// sc.ABACService = abac.NewService(
+	// 	policyRepo,
+	// 	attributeRepo,
+	// 	policyEvaluationRepo,
+	// 	sc.IdentityService,
+	// 	sc.TenantService,
+	// 	sc.deps.Logger,
+	// 	sc.deps.Metrics,
+	// 	sc.deps.Tracing,
+	// )
 
 	// IAM Service - Casbin-backed role/policy engine
 	iamSvc, err := iam.New(iam.Config{
@@ -224,12 +218,11 @@ func (sc *ServiceContainer) initializeSecurityServices(ctx context.Context) erro
 	sc.IAMService = iamSvc
 
 	// Session Service - Login / ValidateSession / Logout
-	sessionRepo := iamsession.NewRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
-	sc.SessionService = iamsession.New(
+	sessionRepo := iam.NewSessionRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
+	sc.SessionService = iam.NewSessionService(
 		sc.IdentityService,
 		sc.IAMService,
 		sessionRepo,
-		sc.deps.Cache,
 		sc.deps.Tracing,
 		sc.deps.Metrics,
 		sc.deps.Logger,
@@ -312,12 +305,12 @@ func (sc *ServiceContainer) initializeBusinessServices(ctx context.Context) erro
 	// sc.SettingsService = settings.NewSettingsService(ctx, repo, auditService, logger, metrics, tracing)
 
 	// Analytics Service
-	sc.AnalyticsService = analytics.NewUserAnalyticsService(
-		sc.deps.Tracing,
-		sc.deps.Metrics,
-		sc.AuditService,
-	)
-
+	// sc.AnalyticsService = analytics.NewUserAnalyticsService(
+	// 	sc.deps.Tracing,
+	// 	sc.deps.Metrics,
+	// 	sc.AuditService,
+	// )
+	//
 	sc.logger.Info("✅ Business services initialized", logger.Fields{
 		"services": []string{"featureflag", "admin_featureflag", "finance", "notification", "settings", "analytics"},
 	})
@@ -433,15 +426,15 @@ func (sc *ServiceContainer) GetIdentityService() iam.UserService {
 	return sc.IdentityService
 }
 
-func (sc *ServiceContainer) GetABACService() abac.Service {
-	return sc.ABACService
-}
+// func (sc *ServiceContainer) GetABACService() abac.Service {
+// 	return sc.ABACService
+// }
 
 func (sc *ServiceContainer) GetAuthzService() iam.Service {
 	return sc.IAMService
 }
 
-func (sc *ServiceContainer) GetSessionService() iamsession.Service {
+func (sc *ServiceContainer) GetSessionService() iam.SessionService {
 	return sc.SessionService
 }
 
@@ -477,9 +470,9 @@ func (sc *ServiceContainer) GetSettingsService() settings.SettingsService {
 	return sc.SettingsService
 }
 
-func (sc *ServiceContainer) GetAnalyticsService() analytics.UserAnalyticsService {
-	return sc.AnalyticsService
-}
+// func (sc *ServiceContainer) GetAnalyticsService() analytics.UserAnalyticsService {
+// 	return sc.AnalyticsService
+// }
 
 // IsReady returns whether all services are initialized and ready
 func (sc *ServiceContainer) IsReady() bool {

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"awo/internal/platform/config"
-	loggerPkg "awo/internal/shared/logger"
+	"awo.so/internal/platform/config"
+	loggerPkg "awo.so/internal/shared/logger"
 	"go.temporal.io/sdk/client"
 )
 

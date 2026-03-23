@@ -10,10 +10,10 @@
 package repository
 
 import (
-	domain "awo/internal/core/tenant/domain"
 	context "context"
 	reflect "reflect"
 
+	domain "awo.so/internal/core/tenant/domain"
 	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )

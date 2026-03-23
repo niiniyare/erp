@@ -11,20 +11,17 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 
-	db "awo/db/sqlc"
-	"awo/internal/api/handlers"
-	"awo/internal/api/middleware"
-	"awo/internal/core/authz"
-	financeService "awo/internal/core/finance/service"
-	"awo/internal/core/iam"
-	"awo/internal/core/identity"
-	"awo/internal/core/identity/session"
-	"awo/internal/core/tenant"
-	"awo/internal/platform/cache"
-	"awo/internal/platform/config"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/api/handlers"
+	"awo.so/internal/api/middleware"
+	financeService "awo.so/internal/core/finance/service"
+	"awo.so/internal/core/iam"
+	"awo.so/internal/core/tenant"
+	"awo.so/internal/platform/cache"
+	"awo.so/internal/platform/config"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // ============================================================================
@@ -136,19 +133,20 @@ func NewTenantMiddleware(config middleware.TenantMiddlewareConfig) fiber.Handler
 // IDENTITY / AUTHZ / SESSION PROVIDERS
 // ============================================================================
 
-// NewIdentityRepository constructs the identity repository.
-func NewIdentityRepository(store db.Store, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) identity.Repository {
-	return identity.NewRepository(store, cacheSvc, tracer, m)
+// NewIdentityRepository constructs the IAM user repository.
+func NewIdentityRepository(store db.Store, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) iam.UserRepository {
+	return iam.NewUserRepository(store, cacheSvc, tracer, m)
 }
 
-// NewIdentityService constructs the identity service.
-func NewIdentityService(repo identity.Repository, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) identity.Service {
-	return identity.NewService(repo, cacheSvc, tracer, m)
+// NewIdentityService constructs the IAM user service.
+// cacheSvc is accepted for wire compatibility but cache is handled by the repository.
+func NewIdentityService(repo iam.UserRepository, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) iam.UserService {
+	return iam.NewUserService(repo, tracer, m)
 }
 
 // NewAuthzService constructs the Casbin-backed authorization service.
-func NewAuthzService(store db.Store, cacheSvc cache.Service, log logger.Logger, m metrics.MetricsProvider, tracer tracing.Service) (authz.Service, error) {
-	return authz.New(authz.Config{
+func NewAuthzService(store db.Store, cacheSvc cache.Service, log logger.Logger, m metrics.MetricsProvider, tracer tracing.Service) (iam.AuthzService, error) {
+	return iam.New(iam.Config{
 		Store:   store,
 		Cache:   cacheSvc,
 		Logger:  log,
@@ -158,21 +156,20 @@ func NewAuthzService(store db.Store, cacheSvc cache.Service, log logger.Logger, 
 }
 
 // NewSessionRepository constructs the session repository.
-func NewSessionRepository(store db.Store, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) session.Repository {
-	return session.NewRepository(store, cacheSvc, tracer, m)
+func NewSessionRepository(store db.Store, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) iam.SessionRepository {
+	return iam.NewSessionRepository(store, cacheSvc, tracer, m)
 }
 
 // NewSessionService constructs the session service.
 func NewSessionService(
-	identitySvc identity.Service,
-	authzSvc authz.Service,
-	repo session.Repository,
-	cacheSvc cache.Service,
+	identitySvc iam.UserService,
+	authzSvc iam.AuthzService,
+	repo iam.SessionRepository,
 	tracer tracing.Service,
 	m metrics.MetricsProvider,
 	log logger.Logger,
-) session.Service {
-	return session.New(identitySvc, authzSvc, repo, cacheSvc, tracer, m, log)
+) iam.SessionService {
+	return iam.NewSessionService(identitySvc, authzSvc, repo, tracer, m, log)
 }
 
 // ============================================================================
@@ -185,8 +182,8 @@ func NewHandlerDependencies(
 	m metrics.MetricsProvider,
 	tracer tracing.Service,
 	tenantService tenant.Service,
-	iamService iam.Service,
-	sessionSvc session.Service,
+	userSvc iam.UserService,
+	sessionSvc iam.SessionService,
 	financeServices *financeService.Services,
 	tenantMiddleware fiber.Handler,
 ) *handlers.Dependencies {
@@ -196,7 +193,7 @@ func NewHandlerDependencies(
 		Metrics:          m,
 		Tracer:           tracer,
 		TenantService:    tenantService,
-		UserService:      iamService.Authentication(),
+		UserService:      userSvc,
 		FinanceServices:  financeServices,
 		TenantMiddleware: tenantMiddleware,
 		SessionService:   sessionSvc,

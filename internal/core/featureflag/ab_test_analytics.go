@@ -6,9 +6,9 @@ package featureflag
 // 	"time"
 //
 // 	"github.com/google/uuid"
-// 	db "awo/db/sqlc"
-// 	"awo/internal/shared/logger"
-// 	"awo/internal/shared/metrics"
+// 	db "awo.so/db/sqlc"
+// 	"awo.so/internal/shared/logger"
+// 	"awo.so/internal/shared/metrics"
 // )
 //
 // // ABTestAnalyticsService provides advanced statistical analysis for A/B testing

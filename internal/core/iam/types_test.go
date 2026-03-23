@@ -96,20 +96,20 @@ func (s *TypesSuite) TestWithExpiry_SetsExpiresAt() {
 	o := &assignOpts{}
 	WithExpiry(expiry)(o)
 
-	s.Require().NotNil(o.expiresAt)
-	s.Equal(expiry, *o.expiresAt)
+	s.Require().NotNil(o.ExpiresAt)
+	s.Equal(expiry, *o.ExpiresAt)
 }
 
 func (s *TypesSuite) TestWithAssignedBy_SetsField() {
 	o := &assignOpts{}
 	WithAssignedBy("tenant:usr_ceo_001")(o)
-	s.Equal("tenant:usr_ceo_001", o.assignedBy)
+	s.Equal("tenant:usr_ceo_001", o.AssignedBy)
 }
 
 func (s *TypesSuite) TestWithDelegatedBy_SetsField() {
 	o := &assignOpts{}
 	WithDelegatedBy("tenant:usr_cfo")(o)
-	s.Equal("tenant:usr_cfo", o.delegatedBy)
+	s.Equal("tenant:usr_cfo", o.DelegatedBy)
 }
 
 func (s *TypesSuite) TestMultipleOpts_AllApplied() {
@@ -124,23 +124,23 @@ func (s *TypesSuite) TestMultipleOpts_AllApplied() {
 		opt(o)
 	}
 
-	s.Require().NotNil(o.expiresAt)
-	s.Equal(expiry.Unix(), o.expiresAt.Unix())
-	s.Equal("assigner", o.assignedBy)
-	s.Equal("delegator", o.delegatedBy)
+	s.Require().NotNil(o.ExpiresAt)
+	s.Equal(expiry.Unix(), o.ExpiresAt.Unix())
+	s.Equal("assigner", o.AssignedBy)
+	s.Equal("delegator", o.DelegatedBy)
 }
 
 func (s *TypesSuite) TestLastOptWins_WhenSameFieldSetTwice() {
 	o := &assignOpts{}
 	WithAssignedBy("first")(o)
 	WithAssignedBy("second")(o)
-	s.Equal("second", o.assignedBy)
+	s.Equal("second", o.AssignedBy)
 }
 
 func (s *TypesSuite) TestWithExpiry_NilByDefault() {
 	o := &assignOpts{}
 	// No opts applied
-	s.Nil(o.expiresAt)
+	s.Nil(o.ExpiresAt)
 }
 
 // ---- nullableString helper ------------------------------------------------

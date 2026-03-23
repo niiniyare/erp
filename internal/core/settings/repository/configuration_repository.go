@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	db "awo/db/sqlc"
-	"awo/internal/core/settings/domain"
-	"awo/internal/platform/cache"
-	"awo/internal/shared"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/settings/domain"
+	"awo.so/internal/platform/cache"
+	"awo.so/internal/shared"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
 )
 
 // ConfigurationRepository provides data access for configuration management

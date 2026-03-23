@@ -10,10 +10,10 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/shopspring/decimal"
 
-	db "awo/db/sqlc"
-	"awo/internal/core/finance/domain"
-	"awo/internal/shared"
-	"awo/internal/shared/tracing"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/finance/domain"
+	"awo.so/internal/shared"
+	"awo.so/internal/shared/tracing"
 )
 
 type transactionRepository struct {

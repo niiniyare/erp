@@ -6,19 +6,19 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"awo/internal/core/identity"
-	"awo/internal/shared/logger"
-	"awo/internal/shared/metrics"
-	"awo/internal/shared/tracing"
-	"awo/internal/shared/types"
+	"awo.so/internal/core/iam"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
+	"awo.so/internal/shared/types"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )
 
 // Type aliases for external types
 type (
-	User          = identity.User
-	UserService   = identity.Service
+	User          = iam.User
+	UserService   = iam.UserService
 	AccessRequest = types.AccessRequest
 )
 

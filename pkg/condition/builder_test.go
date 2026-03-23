@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	cb "awo/pkg/condition"
+	cb "awo.so/pkg/condition"
 	"github.com/stretchr/testify/suite"
 )
 
