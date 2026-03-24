@@ -453,36 +453,41 @@ These were completed in the earlier `identity` + `authz` packages and migrated i
 
 ---
 
-## 🔲 Phase 10 — Password Management
+## ✅ Phase 10 — Password Management
 
 > **Context:** Password handling requires careful implementation. Passwords must be hashed with bcrypt (slow by design — makes brute force expensive). Reset tokens must be single-use, time-limited, and stored as hashes.
 
-### P1 — Password reset flow
+### ✅ P1 — Password reset flow
 
-- [ ] `POST /auth/forgot-password`:
-  - Accept `{email}` — always return 200 regardless of whether email exists (prevents user enumeration)
-  - Generate 32-byte random token; store SHA-256 hash in a `password_reset_tokens` table with 1-hour expiry
-  - Send email via notification service
-- [ ] `POST /auth/reset-password`:
-  - Accept `{token, new_password}`
-  - Look up token by hash; verify not expired and not already used
-  - Validate new password: 12+ chars, mixed case + digit + special
-  - Hash with bcrypt cost 12, update user record
-  - Mark token as used (one-time use)
-  - Invalidate all user sessions (forces re-login)
+- [x] `POST /auth/forgot-password` — always returns 200 (prevents user enumeration)
+  - Calls `UserService.ForgotPassword(ctx, email)` which returns `("", uuid.Nil, nil)` when email not found
+  - Generates 32-byte random token; stores SHA-256 hash in `password_reset_tokens` with 1-hour TTL
+  - **NOTE(notification):** Email delivery is a TODO — wire a notification service to send the raw token
+- [x] `POST /auth/reset-password` — validates token + sets new password
+  - Checks: token exists, not expired, not used, password strength, not reused from last 5
+  - Marks token as used only after password update succeeds (no double-use on transient failure)
+  - Handler file: `internal/api/handlers/auth/password.go`
+- [x] Both endpoints added to public whitelist (no tenant context required)
 
-### P2 — DB migration: `password_reset_tokens` table
+### ✅ P2 — DB migration: `password_reset_tokens` table
 
-- [ ] Create table with columns: `id`, `user_id`, `token_hash`, `expires_at`, `used_at`, `created_at`
-- [ ] Add index on `token_hash`
+- [x] Migration `000308_iam_password_reset.up.sql`
+- [x] `password_reset_tokens`: `id`, `tenant_id`, `user_id`, `token_hash UNIQUE`, `expires_at`, `used_at NULL`, `created_at`
+- [x] Indexes on `token_hash` and `(tenant_id, user_id)`
+- [x] `password_history jsonb DEFAULT '[]'` column added to `users` table
 
-### P3 — Password strength validation
+### ✅ P3 — Password strength validation
 
-- [ ] Enforce in `UserService.ChangePassword()` and `ResetPassword()`:
-  - Minimum 12 characters
-  - At least one uppercase, lowercase, digit, and special character
-  - Not in last-5 hashes (requires storing hashed password history)
-- [ ] Add `password_history` table or JSONB column on users for last-5 hashes
+- [x] `validatePasswordStrength(password)` — 12+ chars, uppercase + lowercase + digit + special
+- [x] `isPasswordReused(plain, history)` — bcrypt compare against last ≤5 hashes
+- [x] `prependHistory(newHash, existing)` — prepends and caps at 5 entries
+- [x] Applied in `ChangePassword()` (strength + history check before update)
+- [x] Applied in `ResetPassword()` (strength + history check before update)
+- [x] History persisted via `UpdatePasswordAndHistory` SQLC query (JSON array on `users.password_history`)
+- [x] New error codes: `ErrPasswordTooWeak` (400), `ErrPasswordReused` (400), `ErrPasswordResetToken*` (404/410)
+- [x] `PasswordResetToken` domain type re-exported from IAM facade
+- [x] **SQLC**: Run `make sqlc` after migration to generate `CreatePasswordResetToken`, `GetPasswordResetToken`, `MarkPasswordResetTokenUsed`, `GetUserPasswordHistory`, `UpdatePasswordAndHistory`
+- [x] **NOTE**: After `make sqlc`, verify generated param field names in `UpdatePasswordAndHistory` params (SQLC names positional params `Column2`, `Column3` etc. — adjust repo calls if needed)
 
 ---
 

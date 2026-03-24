@@ -74,6 +74,18 @@ type UserRepository interface {
 	// MFA — replay prevention
 	// Returns true if the code at the given TOTP window was already used.
 	CheckAndMarkMFAReplay(ctx context.Context, userID uuid.UUID, window int64) (bool, error)
+
+	// Password reset tokens (DB-backed)
+	CreatePasswordResetToken(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) error
+	GetPasswordResetToken(ctx context.Context, tokenHash string) (*domain.PasswordResetToken, error)
+	MarkPasswordResetTokenUsed(ctx context.Context, tokenHash string) error
+
+	// Password history (DB-backed)
+	// GetPasswordHistory returns the stored list of bcrypt hashes (last ≤5).
+	GetPasswordHistory(ctx context.Context, userID uuid.UUID) ([]string, error)
+	// UpdatePasswordAndHistory updates the password hash and prepends the new
+	// hash to the history list, capping at 5 entries.
+	UpdatePasswordAndHistory(ctx context.Context, userID uuid.UUID, newHash string, newHistory []string) error
 }
 
 // ─── Adapter (implementation) ─────────────────────────────────────────────────
@@ -483,6 +495,88 @@ func (r *userRepository) CheckAndMarkMFAReplay(ctx context.Context, userID uuid.
 	// Mark as used
 	_ = r.cache.Set(ctx, key, "1", mfaReplayCacheTTL)
 	return false, nil
+}
+
+// ─── Password reset tokens ────────────────────────────────────────────────────
+// NOTE: CreatePasswordResetToken / GetPasswordResetToken / MarkPasswordResetTokenUsed
+// require the SQLC-generated queries from db/queries/password_reset.sql.
+// Run `make sqlc` before using these methods.
+
+func (r *userRepository) CreatePasswordResetToken(ctx context.Context, userID uuid.UUID, tokenHash string, expiresAt time.Time) error {
+	if err := r.store.CreatePasswordResetToken(ctx, db.CreatePasswordResetTokenParams{
+		UserID:    userID,
+		TokenHash: tokenHash,
+		ExpiresAt: expiresAt,
+	}); err != nil {
+		return fmt.Errorf("iam repo: create password reset token: %w", err)
+	}
+	return nil
+}
+
+func (r *userRepository) GetPasswordResetToken(ctx context.Context, tokenHash string) (*domain.PasswordResetToken, error) {
+	row, err := r.store.GetPasswordResetToken(ctx, tokenHash)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sharedErrors.ErrPasswordResetTokenNotFound
+		}
+		return nil, fmt.Errorf("iam repo: get password reset token: %w", err)
+	}
+	t := &domain.PasswordResetToken{
+		ID:        row.ID,
+		UserID:    row.UserID,
+		TenantID:  row.TenantID,
+		ExpiresAt: row.ExpiresAt,
+	}
+	if row.UsedAt.Valid {
+		used := row.UsedAt.Time
+		t.UsedAt = &used
+	}
+	return t, nil
+}
+
+func (r *userRepository) MarkPasswordResetTokenUsed(ctx context.Context, tokenHash string) error {
+	if err := r.store.MarkPasswordResetTokenUsed(ctx, tokenHash); err != nil {
+		return fmt.Errorf("iam repo: mark password reset token used: %w", err)
+	}
+	return nil
+}
+
+// ─── Password history ─────────────────────────────────────────────────────────
+// NOTE: GetUserPasswordHistory / UpdatePasswordAndHistory require SQLC queries
+// from db/queries/password_reset.sql. Run `make sqlc`.
+
+func (r *userRepository) GetPasswordHistory(ctx context.Context, userID uuid.UUID) ([]string, error) {
+	raw, err := r.store.GetUserPasswordHistory(ctx, userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("iam repo: get password history: %w", err)
+	}
+	if len(raw) == 0 {
+		return nil, nil
+	}
+	var hashes []string
+	if err := json.Unmarshal(raw, &hashes); err != nil {
+		return nil, fmt.Errorf("iam repo: unmarshal password history: %w", err)
+	}
+	return hashes, nil
+}
+
+func (r *userRepository) UpdatePasswordAndHistory(ctx context.Context, userID uuid.UUID, newHash string, newHistory []string) error {
+	historyJSON, err := json.Marshal(newHistory)
+	if err != nil {
+		return fmt.Errorf("iam repo: marshal password history: %w", err)
+	}
+	if err := r.store.UpdatePasswordAndHistory(ctx, db.UpdatePasswordAndHistoryParams{
+		ID:           userID,
+		PasswordHash: &newHash,
+		Column3:      historyJSON,
+	}); err != nil {
+		return fmt.Errorf("iam repo: update password and history: %w", err)
+	}
+	r.invalidateUserByID(ctx, userID)
+	return nil
 }
 
 // ─── Cache helpers (internal) ─────────────────────────────────────────────────

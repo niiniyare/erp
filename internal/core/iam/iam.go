@@ -42,6 +42,9 @@ type (
 	AssignOpt      = domain.AssignOpt
 	AssignOpts     = domain.AssignOpts
 
+	// Password reset
+	PasswordResetToken = domain.PasswordResetToken
+
 	// MFA
 	MFASetup = domain.MFASetup
 

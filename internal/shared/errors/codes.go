@@ -43,11 +43,20 @@ const (
 
 // MFA Error Codes
 const (
-	CodeMFARequired      = "MFA_REQUIRED"
-	CodeMFAInvalid       = "MFA_INVALID"
-	CodeMFANotEnabled    = "MFA_NOT_ENABLED"
+	CodeMFARequired       = "MFA_REQUIRED"
+	CodeMFAInvalid        = "MFA_INVALID"
+	CodeMFANotEnabled     = "MFA_NOT_ENABLED"
 	CodeMFAAlreadyEnabled = "MFA_ALREADY_ENABLED"
-	CodeMFANotConfigured = "MFA_NOT_CONFIGURED"
+	CodeMFANotConfigured  = "MFA_NOT_CONFIGURED"
+)
+
+// Password Reset Error Codes
+const (
+	CodePasswordResetTokenNotFound = "PASSWORD_RESET_TOKEN_NOT_FOUND"
+	CodePasswordResetTokenExpired  = "PASSWORD_RESET_TOKEN_EXPIRED"
+	CodePasswordResetTokenUsed     = "PASSWORD_RESET_TOKEN_USED"
+	CodePasswordTooWeak            = "PASSWORD_TOO_WEAK"
+	CodePasswordReused             = "PASSWORD_REUSED"
 )
 
 // API Key Error Codes

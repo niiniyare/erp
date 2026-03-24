@@ -770,6 +770,17 @@ type NotificationPreference struct {
 	UpdatedAt  time.Time `json:"updated_at"`
 }
 
+// Single-use tokens for the forgot-password email flow. token_hash is SHA-256 of the raw token. used_at IS NOT NULL means the token has been consumed.
+type PasswordResetToken struct {
+	ID        uuid.UUID    `json:"id"`
+	TenantID  uuid.UUID    `json:"tenant_id"`
+	UserID    uuid.UUID    `json:"user_id"`
+	TokenHash string       `json:"token_hash"`
+	ExpiresAt time.Time    `json:"expires_at"`
+	UsedAt    sql.NullTime `json:"used_at"`
+	CreatedAt time.Time    `json:"created_at"`
+}
+
 // Granular permissions combining resources and actions with ABAC conditions, data filters, and field restrictions for fine-grained access control.
 type Permission struct {
 	ID          uuid.UUID `json:"id"`
@@ -1311,6 +1322,8 @@ type User struct {
 	UpdatedAt        time.Time `json:"updated_at"`
 	// Soft delete timestamp — NULL means record is active.
 	DeletedAt sql.NullTime `json:"deleted_at"`
+	// JSON array of the last 5 bcrypt hashes. Used to prevent password re-use. Capped at 5 entries.
+	PasswordHistory []byte `json:"password_history"`
 }
 
 // Partitioned table for user activity tracking and behavioral analytics supporting ABAC evaluation

@@ -123,6 +123,38 @@ var (
 				WithSuggestion("Contact an administrator to unlock your account").
 				WithSuggestion("Wait for the automatic unlock period if applicable")
 
+	// ── Password reset errors ──────────────────────────────────────────────────
+
+	// ErrPasswordResetTokenNotFound is returned when the reset token doesn't exist.
+	ErrPasswordResetTokenNotFound = NewBusinessError(CodePasswordResetTokenNotFound, "Password reset token not found").
+					WithHTTPStatus(http.StatusNotFound).
+					WithCategory(CategorySecurity).
+					WithSuggestion("Request a new password reset link")
+
+	// ErrPasswordResetTokenExpired is returned when the reset token has expired.
+	ErrPasswordResetTokenExpired = NewBusinessError(CodePasswordResetTokenExpired, "Password reset token has expired").
+					WithHTTPStatus(http.StatusGone).
+					WithCategory(CategorySecurity).
+					WithSuggestion("Request a new password reset link")
+
+	// ErrPasswordResetTokenUsed is returned when the reset token has already been consumed.
+	ErrPasswordResetTokenUsed = NewBusinessError(CodePasswordResetTokenUsed, "Password reset token has already been used").
+				WithHTTPStatus(http.StatusGone).
+				WithCategory(CategorySecurity).
+				WithSuggestion("Request a new password reset link")
+
+	// ErrPasswordTooWeak is returned when the new password does not meet strength requirements.
+	ErrPasswordTooWeak = NewBusinessError(CodePasswordTooWeak, "Password does not meet strength requirements").
+				WithHTTPStatus(http.StatusBadRequest).
+				WithCategory(CategoryValidation).
+				WithSuggestion("Use at least 12 characters including uppercase, lowercase, digit, and special character")
+
+	// ErrPasswordReused is returned when the new password matches a recent password.
+	ErrPasswordReused = NewBusinessError(CodePasswordReused, "Password was recently used").
+				WithHTTPStatus(http.StatusBadRequest).
+				WithCategory(CategorySecurity).
+				WithSuggestion("Choose a password that you have not used in the last 5 password changes")
+
 	// ErrMFARequired is returned during login when the user has MFA enabled.
 	// The caller must exchange the pending token via the MFA complete endpoint.
 	ErrMFARequired = NewBusinessError(CodeMFARequired, "Multi-factor authentication required").

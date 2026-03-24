@@ -233,6 +233,8 @@ func DefaultWhitelist() *EndpointWhitelist {
 	exactMatches := []string{
 		"POST /api/v1/auth/login",
 		"POST /api/v1/auth/mfa/complete",
+		"POST /api/v1/auth/forgot-password",
+		"POST /api/v1/auth/reset-password",
 		"POST /api/v1/auth/refresh",
 		"GET /api/v1/auth/validate",
 		"POST /api/v1/tenant/onboard",

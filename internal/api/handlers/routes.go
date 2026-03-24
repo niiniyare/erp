@@ -524,6 +524,12 @@ func (r *Router) registerAuthAPI(apiRouter fiber.Router) error {
 	authGroup.Post("/login", authHandler.LoginHandler(r.deps.SessionService, loginCfg))
 	authGroup.Post("/logout", authHandler.LogoutHandler(r.deps.SessionService, cookieName))
 
+	// Password reset — public endpoints (no session required)
+	if r.deps.UserService != nil {
+		authGroup.Post("/forgot-password", authHandler.ForgotPasswordHandler(r.deps.UserService))
+		authGroup.Post("/reset-password", authHandler.ResetPasswordHandler(r.deps.UserService))
+	}
+
 	// MFA endpoints — /auth/mfa/complete is public; the others require an active session.
 	mfaGroup := authGroup.Group("/mfa")
 	mfaGroup.Post("/complete", authHandler.MFACompleteHandler(r.deps.SessionService, loginCfg))

@@ -162,6 +162,7 @@ type Querier interface {
 	// Entity Hierarchy Operations
 	CreateHierarchyPath(ctx context.Context, arg CreateHierarchyPathParams) error
 	CreateModule(ctx context.Context, arg CreateModuleParams) (*Module, error)
+	CreatePasswordResetToken(ctx context.Context, arg CreatePasswordResetTokenParams) error
 	CreatePerson(ctx context.Context, arg CreatePersonParams) (*Person, error)
 	// Policies CRUD Operations
 	CreatePolicy(ctx context.Context, arg CreatePolicyParams) (*Policy, error)
@@ -765,6 +766,8 @@ type Querier interface {
 	GetOrCreateEntityState(ctx context.Context, arg GetOrCreateEntityStateParams) (*Entitystate, error)
 	GetOrphanedEntities(ctx context.Context) ([]*Entity, error)
 	GetPasswordPolicyMinLength(ctx context.Context) (int32, error)
+	// Returns the token row regardless of used_at so the caller can detect already-used tokens.
+	GetPasswordResetToken(ctx context.Context, tokenHash string) (*GetPasswordResetTokenRow, error)
 	GetPendingAccessRequests(ctx context.Context) ([]*AccessRequest, error)
 	GetPendingApprovalTransactions(ctx context.Context, arg GetPendingApprovalTransactionsParams) ([]*FinanceTransaction, error)
 	GetPeriodEndBalances(ctx context.Context, arg GetPeriodEndBalancesParams) ([]*FinanceAccountBalance, error)
@@ -909,6 +912,7 @@ type Querier interface {
 	GetUserMFASecret(ctx context.Context, id uuid.UUID) (*GetUserMFASecretRow, error)
 	GetUserNotificationPreferences(ctx context.Context, userID uuid.UUID) (*NotificationPreference, error)
 	GetUserPasswordByID(ctx context.Context, id uuid.UUID) (*string, error)
+	GetUserPasswordHistory(ctx context.Context, id uuid.UUID) ([]byte, error)
 	// Called once at login — result stored in sessions.configuration.prefs.
 	GetUserPreferences(ctx context.Context, userID uuid.UUID) ([]*GetUserPreferencesRow, error)
 	// Get risk profile for a user
@@ -1016,6 +1020,7 @@ type Querier interface {
 	ListVisibleEntities(ctx context.Context) ([]*Entity, error)
 	LockAccount(ctx context.Context, arg LockAccountParams) error
 	MarkEntriesReconciled(ctx context.Context, arg MarkEntriesReconciledParams) error
+	MarkPasswordResetTokenUsed(ctx context.Context, tokenHash string) error
 	// =====================================================================
 	// 3. HIERARCHY BULK OPERATIONS
 	// =====================================================================
@@ -1164,6 +1169,9 @@ type Querier interface {
 	UpdateFeatureFlag(ctx context.Context, arg UpdateFeatureFlagParams) (*FeatureFlag, error)
 	UpdateGroupHierarchyPath(ctx context.Context, arg UpdateGroupHierarchyPathParams) (*FinanceAccountGroup, error)
 	UpdateHierarchyPaths(ctx context.Context, dollar_1 uuid.UUID) error
+	// Updates the password hash and prepends the new hash to password_history,
+	// keeping only the last 5 entries.
+	UpdatePasswordAndHistory(ctx context.Context, arg UpdatePasswordAndHistoryParams) error
 	// =====================================================
 	// password_policy queries
 	// =====================================================

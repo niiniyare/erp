@@ -459,6 +459,23 @@ type CreatePersonRequest struct {
 	Metadata           map[string]any `json:"metadata,omitempty"`
 }
 
+// PasswordResetToken represents a single-use password reset token.
+// The raw token is emailed to the user; only the SHA-256 hash is stored.
+type PasswordResetToken struct {
+	ID        uuid.UUID  `json:"id"`
+	UserID    uuid.UUID  `json:"user_id"`
+	TenantID  uuid.UUID  `json:"tenant_id"`
+	ExpiresAt time.Time  `json:"expires_at"`
+	UsedAt    *time.Time `json:"used_at,omitempty"`
+	CreatedAt time.Time  `json:"created_at"`
+}
+
+// IsExpired reports whether the reset token is past its expiry time.
+func (t *PasswordResetToken) IsExpired() bool { return time.Now().After(t.ExpiresAt) }
+
+// IsUsed reports whether the token has already been consumed.
+func (t *PasswordResetToken) IsUsed() bool { return t.UsedAt != nil }
+
 // MFASetup is returned by UserService.InitiateMFA.
 // The Secret must be shown to the user exactly once so they can save it to
 // an authenticator app (Google Authenticator, Authy, etc.).

@@ -5,6 +5,9 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -20,6 +23,11 @@ import (
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
 )
+
+func sha256Hex(s string) string {
+	sum := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(sum[:])
+}
 
 // ─── Port (interface) ─────────────────────────────────────────────────────────
 
@@ -48,6 +56,17 @@ type UserService interface {
 	AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
 	RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
 	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*domain.UserRole, error)
+
+	// Password reset flow
+	// ForgotPassword generates a single-use reset token for the given email.
+	// It returns the raw token (caller is responsible for emailing it) and the
+	// target user ID. Returns ("", uuid.Nil, nil) when the email is not found —
+	// callers must ALWAYS return 200 to the user to prevent enumeration.
+	ForgotPassword(ctx context.Context, email string) (rawToken string, userID uuid.UUID, err error)
+	// ResetPassword validates the token and sets a new password.
+	// Returns ErrPasswordResetTokenNotFound, ErrPasswordResetTokenExpired,
+	// ErrPasswordResetTokenUsed, ErrPasswordTooWeak, or ErrPasswordReused.
+	ResetPassword(ctx context.Context, token, newPassword string) error
 
 	// MFA lifecycle
 	// InitiateMFA generates a fresh TOTP secret and caches it pending confirmation.
@@ -389,6 +408,10 @@ func (s *userService) ChangePassword(ctx context.Context, userID uuid.UUID, oldP
 	timer := s.metrics.Timer("iam_change_password_duration", nil)
 	defer timer.Stop()
 
+	if err := validatePasswordStrength(newPassword); err != nil {
+		return err
+	}
+
 	currentHash, err := s.repo.GetUserPassword(ctx, userID)
 	if err != nil {
 		span.RecordError(err)
@@ -396,6 +419,11 @@ func (s *userService) ChangePassword(ctx context.Context, userID uuid.UUID, oldP
 	}
 	if !verifyPassword(currentHash, oldPassword) {
 		return sharedErrors.ErrAuthenticationFailed
+	}
+
+	history, err := s.repo.GetPasswordHistory(ctx, userID)
+	if err == nil && isPasswordReused(newPassword, history) {
+		return sharedErrors.ErrPasswordReused
 	}
 
 	newHash, err := hashPassword(newPassword)
@@ -409,7 +437,8 @@ func (s *userService) ChangePassword(ctx context.Context, userID uuid.UUID, oldP
 		return fmt.Errorf("iam identity: hash new password: %w", err)
 	}
 
-	if err := s.repo.UpdatePassword(ctx, userID, newHash); err != nil {
+	newHistory := prependHistory(newHash, history)
+	if err := s.repo.UpdatePasswordAndHistory(ctx, userID, newHash, newHistory); err != nil {
 		span.RecordError(err)
 		s.log.ErrorContext(ctx, "failed to update password", logger.Fields{
 			"user_id":  userID.String(),
@@ -727,6 +756,90 @@ func (s *userService) DisableMFA(ctx context.Context, userID uuid.UUID, password
 	return nil
 }
 
+// ─── Password reset ───────────────────────────────────────────────────────────
+
+const passwordResetTTL = time.Hour
+
+func (s *userService) ForgotPassword(ctx context.Context, email string) (string, uuid.UUID, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.identity.ForgotPassword")
+	defer span.End()
+
+	user, err := s.repo.GetUserByEmail(ctx, email)
+	if err != nil {
+		// User not found — return empty strings (caller always returns 200)
+		return "", uuid.Nil, nil
+	}
+
+	rawToken, tokenHash, err := generatePasswordResetToken()
+	if err != nil {
+		span.RecordError(err)
+		return "", uuid.Nil, fmt.Errorf("iam identity: generate reset token: %w", err)
+	}
+
+	expiresAt := time.Now().Add(passwordResetTTL)
+	if err := s.repo.CreatePasswordResetToken(ctx, user.ID, tokenHash, expiresAt); err != nil {
+		span.RecordError(err)
+		return "", uuid.Nil, fmt.Errorf("iam identity: store reset token: %w", err)
+	}
+
+	s.metrics.IncrementCounter("iam.password.reset_requested", nil)
+	s.log.DebugContext(ctx, "password reset token generated", logger.Fields{"user_id": user.ID.String()})
+	return rawToken, user.ID, nil
+}
+
+func (s *userService) ResetPassword(ctx context.Context, rawToken, newPassword string) error {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.identity.ResetPassword")
+	defer span.End()
+
+	if err := validatePasswordStrength(newPassword); err != nil {
+		return err
+	}
+
+	tokenHash := sha256Hex(rawToken)
+	tok, err := s.repo.GetPasswordResetToken(ctx, tokenHash)
+	if err != nil {
+		return sharedErrors.ErrPasswordResetTokenNotFound
+	}
+	if tok.IsExpired() {
+		return sharedErrors.ErrPasswordResetTokenExpired
+	}
+	if tok.IsUsed() {
+		return sharedErrors.ErrPasswordResetTokenUsed
+	}
+
+	history, err := s.repo.GetPasswordHistory(ctx, tok.UserID)
+	if err != nil {
+		// Non-fatal: log and continue without history check
+		s.log.WarnContext(ctx, "failed to load password history, skipping reuse check", logger.Fields{
+			"user_id": tok.UserID.String(),
+			"error":   err.Error(),
+		})
+	} else {
+		if isPasswordReused(newPassword, history) {
+			return sharedErrors.ErrPasswordReused
+		}
+	}
+
+	newHash, err := hashPassword(newPassword)
+	if err != nil {
+		span.RecordError(err)
+		return fmt.Errorf("iam identity: hash password: %w", err)
+	}
+
+	newHistory := prependHistory(newHash, history)
+	if err := s.repo.UpdatePasswordAndHistory(ctx, tok.UserID, newHash, newHistory); err != nil {
+		span.RecordError(err)
+		return fmt.Errorf("iam identity: update password: %w", err)
+	}
+
+	// Mark token as used AFTER the password update succeeds.
+	_ = s.repo.MarkPasswordResetTokenUsed(ctx, tokenHash)
+
+	s.metrics.IncrementCounter("iam.password.reset_completed", nil)
+	s.log.DebugContext(ctx, "password reset completed", logger.Fields{"user_id": tok.UserID.String()})
+	return nil
+}
+
 // ─── Password helpers ─────────────────────────────────────────────────────────
 
 func hashPassword(password string) (string, error) {
@@ -739,4 +852,61 @@ func hashPassword(password string) (string, error) {
 
 func verifyPassword(hashed, plain string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain)) == nil
+}
+
+// validatePasswordStrength enforces the password policy:
+// minimum 12 characters, at least one uppercase, lowercase, digit, and special character.
+func validatePasswordStrength(password string) error {
+	if len(password) < 12 {
+		return sharedErrors.ErrPasswordTooWeak
+	}
+	var upper, lower, digit, special bool
+	for _, c := range password {
+		switch {
+		case c >= 'A' && c <= 'Z':
+			upper = true
+		case c >= 'a' && c <= 'z':
+			lower = true
+		case c >= '0' && c <= '9':
+			digit = true
+		default:
+			special = true
+		}
+	}
+	if !upper || !lower || !digit || !special {
+		return sharedErrors.ErrPasswordTooWeak
+	}
+	return nil
+}
+
+// isPasswordReused checks whether the plain-text password matches any of the
+// stored bcrypt hashes.  Returns true if there is a match (reuse detected).
+func isPasswordReused(plain string, history []string) bool {
+	for _, h := range history {
+		if verifyPassword(h, plain) {
+			return true
+		}
+	}
+	return false
+}
+
+// prependHistory prepends newHash to history and caps the slice at 5 entries.
+func prependHistory(newHash string, existing []string) []string {
+	combined := append([]string{newHash}, existing...)
+	if len(combined) > 5 {
+		combined = combined[:5]
+	}
+	return combined
+}
+
+// generatePasswordResetToken creates a random 32-byte raw token and returns
+// both the hex-encoded raw token and its SHA-256 hash.
+func generatePasswordResetToken() (rawToken, hash string, err error) {
+	b := make([]byte, 32)
+	if _, err = rand.Read(b); err != nil {
+		return "", "", err
+	}
+	rawToken = hex.EncodeToString(b)
+	hash = sha256Hex(rawToken)
+	return rawToken, hash, nil
 }
