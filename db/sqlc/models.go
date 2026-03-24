@@ -1056,6 +1056,23 @@ type SettingDefinition struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+// Per-tenant OAuth/OIDC SSO provider configurations. client_secret_enc is AES-256-GCM encrypted. extra_params holds provider-specific config (e.g. Azure AD tenant for Microsoft). auto_provision=true enables just-in-time user creation on first SSO login.
+type SsoProvider struct {
+	ID              uuid.UUID  `json:"id"`
+	TenantID        uuid.UUID  `json:"tenant_id"`
+	Provider        string     `json:"provider"`
+	ClientID        string     `json:"client_id"`
+	ClientSecretEnc string     `json:"client_secret_enc"`
+	Scopes          []string   `json:"scopes"`
+	RedirectUri     string     `json:"redirect_uri"`
+	ExtraParams     []byte     `json:"extra_params"`
+	AutoProvision   bool       `json:"auto_provision"`
+	DefaultEntityID *uuid.UUID `json:"default_entity_id"`
+	IsActive        bool       `json:"is_active"`
+	CreatedAt       time.Time  `json:"created_at"`
+	UpdatedAt       time.Time  `json:"updated_at"`
+}
+
 // History of template applications with detailed results and statistics
 type TemplateApplication struct {
 	// UUID primary key for the template application record

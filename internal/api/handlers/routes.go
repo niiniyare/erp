@@ -206,6 +206,10 @@ type Dependencies struct {
 	// Set these to enable Authenticate/Authorize middleware on protected routes.
 	SessionService iam.SessionService
 	AuthConfig     *middlewarePkg.AuthConfig // nil = auth middleware disabled
+
+	// SSOService enables OAuth/OIDC login routes.
+	// Optional — SSO routes are skipped when nil.
+	SSOService iam.SSOService
 }
 
 // Validate ensures all required dependencies are present.
@@ -538,6 +542,13 @@ func (r *Router) registerAuthAPI(apiRouter fiber.Router) error {
 		mfaGroup.Post("/initiate", r.authenticateMiddleware(), authHandler.MFAInitiateHandler(r.deps.UserService))
 		mfaGroup.Post("/confirm", r.authenticateMiddleware(), authHandler.MFAConfirmHandler(r.deps.UserService))
 		mfaGroup.Delete("/", r.authenticateMiddleware(), authHandler.MFADisableHandler(r.deps.UserService))
+	}
+
+	// OAuth/OIDC SSO endpoints — public (no session required for begin or callback).
+	if r.deps.SSOService != nil {
+		oauthGroup := authGroup.Group("/oauth")
+		oauthGroup.Get("/:provider", authHandler.OAuthBeginHandler(r.deps.SSOService))
+		oauthGroup.Get("/:provider/callback", authHandler.OAuthCallbackHandler(r.deps.SSOService, r.deps.SessionService, loginCfg))
 	}
 
 	r.deps.Logger.Info("registered auth API endpoints")

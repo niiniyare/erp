@@ -48,6 +48,12 @@ type (
 	// MFA
 	MFASetup = domain.MFASetup
 
+	// SSO
+	OAuthProvider          = domain.OAuthProvider
+	SSOProvider            = domain.SSOProvider
+	SSOUserInfo            = domain.SSOUserInfo
+	CreateSSOProviderRequest = domain.CreateSSOProviderRequest
+
 	// Session
 	SessionConfig    = domain.SessionConfig
 	EntityScopeType  = domain.EntityScopeType
@@ -85,6 +91,10 @@ const (
 	EntityScopeAll     = domain.EntityScopeAll
 	EntityScopeSubtree = domain.EntityScopeSubtree
 	EntityScopeEntity  = domain.EntityScopeEntity
+
+	// OAuth providers
+	OAuthProviderGoogle    = domain.OAuthProviderGoogle
+	OAuthProviderMicrosoft = domain.OAuthProviderMicrosoft
 
 	// Locals keys (Fiber context)
 	LocalsKeySession   = domain.LocalsKeySession
@@ -132,6 +142,7 @@ type (
 	UserService    = iamservice.UserService
 	AuthzService   = iamservice.AuthzService
 	SessionService = iamservice.SessionService
+	SSOService     = iamservice.SSOService
 
 	// Service is a backward-compatible alias for AuthzService.
 	// Prefer AuthzService in new code.
@@ -144,6 +155,7 @@ type (
 	UserRepository    = repository.UserRepository
 	AuthzRepository   = repository.AuthzRepository
 	SessionRepository = repository.SessionRepository
+	SSORepository     = repository.SSORepository
 )
 
 // ─── Re-export: AuthzConfig ───────────────────────────────────────────────────
@@ -153,6 +165,9 @@ type Config = iamservice.AuthzConfig
 
 // UserConfig holds brute-force protection thresholds for the UserService.
 type UserConfig = iamservice.UserConfig
+
+// SSOConfig is the constructor config for the SSOService.
+type SSOConfig = iamservice.SSOConfig
 
 // ─── Constructors (wire entry points) ────────────────────────────────────────
 
@@ -213,4 +228,23 @@ func NewSessionServiceWithConfig(
 	cfg SessionConfig,
 ) SessionService {
 	return iamservice.NewSessionServiceWithConfig(identity, authz, repo, tracer, m, log, cfg)
+}
+
+// NewSSORepository constructs a Postgres-backed SSORepository.
+// NOTE: Run `make sqlc` after applying migration 000309 to generate the
+// required Store methods for this repository.
+func NewSSORepository(store db.Store) SSORepository {
+	return repository.NewSSORepository(store)
+}
+
+// NewSSOService constructs an SSOService for OAuth/OIDC login flows.
+func NewSSOService(
+	repo SSORepository,
+	identity UserService,
+	tracer tracing.Service,
+	m metrics.MetricsProvider,
+	log logger.Logger,
+	cfg SSOConfig,
+) SSOService {
+	return iamservice.NewSSOService(repo, identity, tracer, m, log, cfg)
 }

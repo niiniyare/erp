@@ -228,6 +228,7 @@ func DefaultWhitelist() *EndpointWhitelist {
 		"GET /openapi*",
 		"GET /swagger-ui/*",
 		"GET /debug/*",
+		"GET /api/v1/auth/oauth/*", // OAuth begin + callback
 	}
 
 	exactMatches := []string{

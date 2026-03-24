@@ -236,6 +236,7 @@ type Querier interface {
 	DeactivateAction(ctx context.Context, id uuid.UUID) (*Action, error)
 	DeactivateConfigurationTemplate(ctx context.Context, templateID uuid.UUID) error
 	DeactivateRoleAssignment(ctx context.Context, arg DeactivateRoleAssignmentParams) error
+	DeactivateSSOProvider(ctx context.Context, provider string) error
 	DeleteAccountBalance(ctx context.Context, id uuid.UUID) error
 	DeleteAccountValidationRule(ctx context.Context, id uuid.UUID) error
 	DeleteAction(ctx context.Context, id uuid.UUID) error
@@ -814,6 +815,9 @@ type Querier interface {
 	GetResourceEvaluationHistory(ctx context.Context, arg GetResourceEvaluationHistoryParams) ([]*PolicyEvaluation, error)
 	GetRootAccounts(ctx context.Context) ([]*FinanceAccount, error)
 	GetRootAccountsView(ctx context.Context, arg GetRootAccountsViewParams) ([]*VFinanceAccountsHierarchy, error)
+	// SSO provider configuration queries.
+	// Run `make sqlc` after modifying this file.
+	GetSSOProvider(ctx context.Context, provider string) (*SsoProvider, error)
 	GetSecurityThreatDashboardAdmin(ctx context.Context, userID uuid.UUID) ([]*VSecurityThreatDashboard, error)
 	GetSecurityThreatDashboardUser(ctx context.Context) ([]*VSecurityThreatDashboard, error)
 	// Usage: Identifies missing sequence numbers (gaps in numbering)
@@ -1005,6 +1009,7 @@ type Querier interface {
 	ListPoliciesByCategory(ctx context.Context, category *string) ([]*Policy, error)
 	ListPoliciesByEffect(ctx context.Context, effect *string) ([]*Policy, error)
 	ListRoleAssignments(ctx context.Context, arg ListRoleAssignmentsParams) ([]*RoleAssignment, error)
+	ListSSOProviders(ctx context.Context) ([]*SsoProvider, error)
 	// Used by settings screen schema builder — returns all settings for a module
 	// with current tenant values so the form can pre-fill.
 	ListSettingDefinitionsByModule(ctx context.Context, arg ListSettingDefinitionsByModuleParams) ([]*ListSettingDefinitionsByModuleRow, error)
@@ -1229,6 +1234,7 @@ type Querier interface {
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpsertAccountBalance(ctx context.Context, arg UpsertAccountBalanceParams) (*FinanceAccountBalance, error)
 	UpsertRoleAssignment(ctx context.Context, arg UpsertRoleAssignmentParams) error
+	UpsertSSOProvider(ctx context.Context, arg UpsertSSOProviderParams) (*SsoProvider, error)
 	// Enable or disable a flag for a specific tenant.
 	// FlagService calls InvalidateSessionsByTenant after this for module/resource flags.
 	UpsertTenantFlag(ctx context.Context, arg UpsertTenantFlagParams) error

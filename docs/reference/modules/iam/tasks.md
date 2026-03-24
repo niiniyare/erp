@@ -491,24 +491,38 @@ These were completed in the earlier `identity` + `authz` packages and migrated i
 
 ---
 
-## 🔲 Phase 11 — OAuth / OIDC / SAML (SSO)
+## ✅ Phase 11 — OAuth / OIDC / SAML (SSO)
 
 > **Context:** Some companies use single sign-on (SSO) — instead of managing passwords in our system, they authenticate with Google Workspace, Azure AD, or their own identity provider. OIDC (OpenID Connect) is the modern protocol; SAML 2.0 is the older enterprise standard.
 >
 > **JIT Provisioning:** When an SSO user logs in for the first time, we automatically create a User record — this is "just-in-time provisioning", controlled by the `iam.sso.auto_provision` feature flag.
 
-### O1 — OAuth/OIDC handler
+### ✅ O1 — OAuth/OIDC handler
 
-- [ ] `GET /auth/oauth/:provider` — redirects to provider's authorize URL
-- [ ] `GET /auth/oauth/:provider/callback`:
-  - Exchange code for tokens
-  - Extract user info (email, name) from ID token
-  - If user exists: proceed to session construction
-  - If user doesn't exist and `iam.sso.auto_provision` flag is on: create user, then proceed
-  - If user doesn't exist and flag is off: return 403
-- [ ] Support providers: Google, Microsoft (Azure AD) as first targets
+- [x] `GET /auth/oauth/:provider` — redirects to provider's authorize URL
+  - Reads `tenant_id` from query param, looks up `sso_providers` config
+  - Generates 24-byte CSRF state, stores `sso:state:{state}` in Redis (10-min TTL)
+  - Builds provider-specific auth URL (Google, Microsoft)
+- [x] `GET /auth/oauth/:provider/callback`:
+  - Validates CSRF state (single-use — deleted immediately after lookup)
+  - Exchanges code for access token via POST to provider token endpoint
+  - Fetches user info from provider userinfo endpoint
+  - If user exists: calls `SessionService.LoginWithSSO` → full session
+  - If user doesn't exist and `provider.AutoProvision=true`: JIT-provisions user then proceeds
+  - If user doesn't exist and `AutoProvision=false`: returns 403
+- [x] `SessionService.LoginWithSSO(ctx, user)` added — skips MFA (IdP is the second factor)
+- [x] Support providers: Google, Microsoft (Azure AD)
+- [x] `sso_providers` table: `id`, `tenant_id`, `provider`, `client_id`, `client_secret_enc` (AES-256-GCM), `scopes`, `redirect_uri`, `extra_params` JSONB, `auto_provision`, `default_entity_id`, `is_active`
+- [x] Migration `000309_iam_sso_providers.up.sql` — RLS with tenant isolation + admin bypass
+- [x] SQLC queries: `GetSSOProvider`, `UpsertSSOProvider`, `DeactivateSSOProvider`, `ListSSOProviders` (run `make sqlc`)
+- [x] `SSOService` interface + `ssoService` implementation (`internal/core/iam/service/sso.go`)
+- [x] `SSORepository` interface + `ssoRepo` implementation (`internal/core/iam/repository/sso.go`)
+- [x] `GET /api/v1/auth/oauth/*` added to public whitelist
+- [x] `SSOService`, `SSORepository`, `SSOConfig`, `OAuthProvider*` constants re-exported from IAM facade
+- [x] `SSOService` optional field added to `handlers.Dependencies`
+- [x] **NOTE**: `default_entity_id` must be configured when `auto_provision=true`; JIT provisioning fails if nil
 
-### O2 — SAML 2.0 handler (later, enterprise requirement)
+### 🔲 O2 — SAML 2.0 handler (later, enterprise requirement)
 
 - [ ] `GET /auth/saml/:tenant/metadata` — returns SP metadata XML
 - [ ] `POST /auth/saml/:tenant/callback` — receives SAML assertion, validates, creates session

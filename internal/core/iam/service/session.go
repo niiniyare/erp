@@ -44,6 +44,12 @@ type SessionService interface {
 	// LogoutAllForTenant invalidates all active DB sessions for the given tenant.
 	// Existing cache entries expire naturally within the session TTL window.
 	LogoutAllForTenant(ctx context.Context, tenantID uuid.UUID) error
+
+	// LoginWithSSO creates a full session for a user that was authenticated via
+	// an external OAuth/OIDC provider.  The caller (SSOService) is responsible
+	// for verifying the OAuth exchange before calling this.
+	// MFA is intentionally skipped — the IdP is the second factor.
+	LoginWithSSO(ctx context.Context, user *domain.User) (*domain.ResolvedSession, string, error)
 }
 
 // ─── Implementation ───────────────────────────────────────────────────────────
@@ -168,8 +174,19 @@ func (s *sessionService) CompleteMFALogin(ctx context.Context, pendingToken, mfa
 	return s.buildAndPersistSession(ctx, user)
 }
 
+// LoginWithSSO creates a full session for an SSO-authenticated user.
+// MFA is intentionally skipped — the identity provider is the second factor.
+func (s *sessionService) LoginWithSSO(ctx context.Context, user *domain.User) (*domain.ResolvedSession, string, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.session.LoginWithSSO")
+	defer span.End()
+	span.SetAttributes(attribute.String("user.id", user.ID.String()))
+
+	s.metrics.IncrementCounter("iam.session.sso.login", nil)
+	return s.buildAndPersistSession(ctx, user)
+}
+
 // buildAndPersistSession creates the ResolvedSession and persists it.
-// Called by both Login (non-MFA path) and CompleteMFALogin.
+// Called by Login (non-MFA path), CompleteMFALogin, and LoginWithSSO.
 func (s *sessionService) buildAndPersistSession(ctx context.Context, user *domain.User) (*domain.ResolvedSession, string, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.session.buildAndPersistSession")
 	defer span.End()

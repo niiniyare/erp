@@ -40,3 +40,16 @@ COMMENT ON TABLE  password_reset_tokens IS
 COMMENT ON COLUMN users.password_history IS
     'JSON array of the last 5 bcrypt hashes. '
     'Used to prevent password re-use. Capped at 5 entries.';
+
+-- 3. Row-Level Security for password_reset_tokens
+ALTER TABLE password_reset_tokens ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY password_reset_tokens_tenant_isolation
+    ON password_reset_tokens FOR ALL TO application_role
+    USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+    WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
+
+CREATE POLICY password_reset_tokens_admin_access
+    ON password_reset_tokens FOR ALL TO admin_role
+    USING  (TRUE)
+    WITH CHECK (TRUE);
