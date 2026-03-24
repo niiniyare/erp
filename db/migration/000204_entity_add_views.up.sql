@@ -1,10 +1,11 @@
--- =====================================================================
--- ENTITIES VIEWS - Reporting and analytical views for entity management
--- =====================================================================
-
--- =====================================================================
--- v_tenant_hierarchy: Recursive path view for the org chart
--- =====================================================================
+-- ------------------------------------------------------------------------------------------------
+-- V_TENANT_HIERARCHY VIEW
+-- ------------------------------------------------------------------------------------------------
+-- Recursive path view that builds a full org-chart path (e.g. "Corp > Region > Dept") for every
+-- entity in the tree. Useful for breadcrumb rendering and path-aware reports.
+--
+-- NOTE: No ORDER BY — add ORDER BY in the calling query to avoid unnecessary materialisation.
+-- ------------------------------------------------------------------------------------------------
 CREATE VIEW v_tenant_hierarchy AS
 WITH RECURSIVE org_chart AS (
   SELECT
@@ -43,11 +44,14 @@ SELECT
 FROM org_chart oc
 JOIN tenants t ON oc.tenant_id = t.id;
 
--- =====================================================================
--- v_entity_structure: 4-level canonical view (COST_CENTER→DEPT→REGION→COMPANY)
--- NOTE: Documents the canonical 4-level hierarchy. Tenants with different
--- structures should query hierarchy_paths directly with the depth column.
--- =====================================================================
+-- ------------------------------------------------------------------------------------------------
+-- V_ENTITY_STRUCTURE VIEW
+-- ------------------------------------------------------------------------------------------------
+-- Canonical 4-level hierarchy flattened into a single row: COST_CENTER → DEPARTMENT → REGION →
+-- COMPANY. Intended for reports that assume the standard 4-level org model.
+--
+-- NOTE: Tenants with non-standard depth should query hierarchy_paths with the depth column instead.
+-- ------------------------------------------------------------------------------------------------
 CREATE VIEW v_entity_structure AS
 SELECT
   t.name   AS tenant_name,
@@ -70,9 +74,12 @@ WHERE cc.type = 'COST_CENTER'
   AND r.deleted_at  IS NULL
   AND c.deleted_at  IS NULL;
 
--- =====================================================================
--- v_cost_center_info: Cost centre with full 4-level context
--- =====================================================================
+-- ------------------------------------------------------------------------------------------------
+-- V_COST_CENTER_INFO VIEW
+-- ------------------------------------------------------------------------------------------------
+-- Cost centre record enriched with its full 4-level ancestor context (department, regional,
+-- company, tenant). Convenient for detail pages and exports.
+-- ------------------------------------------------------------------------------------------------
 CREATE VIEW v_cost_center_info AS
 SELECT
   t.name            AS tenant_name,
@@ -101,9 +108,12 @@ WHERE cc.type = 'COST_CENTER'
   AND r.deleted_at  IS NULL
   AND c.deleted_at  IS NULL;
 
--- =====================================================================
--- v_department_summary: Departments with cost-centre counts
--- =====================================================================
+-- ------------------------------------------------------------------------------------------------
+-- V_DEPARTMENT_SUMMARY VIEW
+-- ------------------------------------------------------------------------------------------------
+-- Department rows with aggregated cost-centre counts and their regional/company ancestors.
+-- Useful for dashboard tiles and org-overview reports.
+-- ------------------------------------------------------------------------------------------------
 CREATE VIEW v_department_summary AS
 SELECT
   t.name                      AS tenant_name,
@@ -136,9 +146,12 @@ GROUP BY
   r.uuid, r.name,
   c.uuid, c.name;
 
--- =====================================================================
--- v_company_structure: All entities under each company via closure table
--- =====================================================================
+-- ------------------------------------------------------------------------------------------------
+-- V_COMPANY_STRUCTURE VIEW
+-- ------------------------------------------------------------------------------------------------
+-- All entities under each company resolved via the hierarchy_paths closure table. Returns every
+-- descendant with its depth (levels from the company root).
+-- ------------------------------------------------------------------------------------------------
 CREATE VIEW v_company_structure AS
 SELECT
   t.name        AS tenant_name,
@@ -158,9 +171,12 @@ WHERE c.type         = 'COMPANY'
   AND c.deleted_at   IS NULL
   AND e.deleted_at   IS NULL;
 
--- =====================================================================
--- v_tenant_entity_summary: Entity counts per tenant
--- =====================================================================
+-- ------------------------------------------------------------------------------------------------
+-- V_TENANT_ENTITY_SUMMARY VIEW
+-- ------------------------------------------------------------------------------------------------
+-- Entity counts per tenant broken down by type (COMPANY, REGIONAL, DEPARTMENT, COST_CENTER,
+-- PROJECT) plus active and non-deleted totals. Used for tenant dashboard metrics.
+-- ------------------------------------------------------------------------------------------------
 CREATE VIEW v_tenant_entity_summary AS
 SELECT
   t.id          AS tenant_id,
@@ -178,13 +194,17 @@ FROM tenants t
 LEFT JOIN entities e ON e.tenant_id = t.id
 GROUP BY t.id, t.name, t."Status";
 
--- =====================================================================
--- v_active_entities: Active entities with their typed ancestors
+-- ------------------------------------------------------------------------------------------------
+-- V_ACTIVE_ENTITIES VIEW
+-- ------------------------------------------------------------------------------------------------
+-- Active (non-deleted, is_active=TRUE) entities enriched with their nearest typed ancestor names
+-- (company, regional, department) resolved via the hierarchy_paths closure table.
 --
--- Uses CTEs with DISTINCT ON to find the NEAREST ancestor of each type
--- via the closure table — avoids the CASE WHEN EXISTS correlated-subquery
--- anti-pattern that forces a per-row subquery evaluation.
--- =====================================================================
+-- Uses CTEs with DISTINCT ON to find the nearest ancestor of each type — avoids the
+-- CASE WHEN EXISTS correlated-subquery anti-pattern that forces a per-row subquery evaluation.
+--
+-- NOTE: No ORDER BY — add ORDER BY in the calling query.
+-- ------------------------------------------------------------------------------------------------
 CREATE VIEW v_active_entities AS
 WITH company_anc AS (
   -- Nearest COMPANY ancestor for each entity (depth ASC picks closest)
@@ -237,12 +257,15 @@ LEFT JOIN dept_anc     da ON da.descendant_id = e.uuid
 WHERE e.deleted_at IS NULL
   AND e.is_active  = TRUE;
 
--- =====================================================================
--- v_entity_changes: Lifecycle change log
--- NOTE: No ORDER BY — callers add ORDER BY as needed.
---       ORDER BY inside a view definition is not guaranteed to propagate
---       and forces a sort materialisation even when unused by the caller.
--- =====================================================================
+-- ------------------------------------------------------------------------------------------------
+-- V_ENTITY_CHANGES VIEW
+-- ------------------------------------------------------------------------------------------------
+-- Lifecycle change log classifying each entity row as CREATED, MODIFIED, or DELETED based on
+-- its timestamp fields.
+--
+-- NOTE: No ORDER BY — callers add ORDER BY as needed. ORDER BY inside a view definition is not
+--       guaranteed to propagate and forces a sort materialisation even when unused by the caller.
+-- ------------------------------------------------------------------------------------------------
 CREATE VIEW v_entity_changes AS
 SELECT
   t.name            AS tenant_name,
@@ -261,10 +284,14 @@ SELECT
 FROM entities e
 JOIN tenants t ON e.tenant_id = t.id;
 
--- =====================================================================
--- v_entity_paths: Flattened ancestor-descendant relationships
+-- ------------------------------------------------------------------------------------------------
+-- V_ENTITY_PATHS VIEW
+-- ------------------------------------------------------------------------------------------------
+-- Flattened ancestor-descendant relationships from the hierarchy_paths closure table enriched
+-- with entity names and types. Handy for path-based permission checks and tree traversals.
+--
 -- NOTE: No ORDER BY — sort in the calling query.
--- =====================================================================
+-- ------------------------------------------------------------------------------------------------
 CREATE VIEW v_entity_paths AS
 SELECT
   t.name        AS tenant_name,
@@ -282,9 +309,12 @@ JOIN tenants  t ON hp.tenant_id     = t.id
 WHERE a.deleted_at IS NULL
   AND d.deleted_at IS NULL;
 
--- =====================================================================
--- v_tenant_resource_utilization: Sequence state and entity counts per tenant
--- =====================================================================
+-- ------------------------------------------------------------------------------------------------
+-- V_TENANT_RESOURCE_UTILIZATION VIEW
+-- ------------------------------------------------------------------------------------------------
+-- Sequence state and entity counts per tenant. Combines entity stats with entitystate stats to
+-- give an overview of how many document types and sequence slots each tenant is using.
+-- ------------------------------------------------------------------------------------------------
 CREATE VIEW v_tenant_resource_utilization AS
 SELECT
   t.id                                                              AS tenant_id,

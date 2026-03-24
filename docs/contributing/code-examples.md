@@ -18,13 +18,13 @@ import (
     "strconv"
 
     "github.com/google/uuid"
-    goaTenant "awo/internal/api/gen/tenant"
+    goaTenant "awo.so/internal/api/gen/tenant"
     
-    "awo/internal/core/tenant"
-    "awo/internal/shared/logger"
-    "awo/internal/shared/tracing"
-    "awo/internal/shared/metrics"
-    "awo/internal/shared/errors"
+    "awo.so/internal/core/tenant"
+    "awo.so/internal/shared/logger"
+    "awo.so/internal/shared/tracing"
+    "awo.so/internal/shared/metrics"
+    "awo.so/internal/shared/errors"
     "go.opentelemetry.io/otel/attribute"
     "go.opentelemetry.io/otel/codes"
 )

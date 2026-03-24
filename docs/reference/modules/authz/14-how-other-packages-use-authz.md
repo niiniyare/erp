@@ -8,7 +8,7 @@ Every consumer of the authz module depends on the `Service` interface only — n
 
 ```go
 // In any module that needs authorization:
-import "awo/internal/core/authz"
+import "awo.so/internal/core/authz"
 
 type InvoiceService struct {
     repo  InvoiceRepository

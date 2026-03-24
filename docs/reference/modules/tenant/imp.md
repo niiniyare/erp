@@ -1039,7 +1039,7 @@ import (
     "context"
     "time"
     "github.com/google/uuid"
-    "awo/internal/core/tenant/domain"
+    "awo.so/internal/core/tenant/domain"
 )
 
 // TenantRepository defines tenant data access operations
@@ -1093,7 +1093,7 @@ import (
     
     "github.com/google/uuid"
     "github.com/jackc/pgx/v5/pgxpool"
-    "awo/internal/core/tenant/domain"
+    "awo.so/internal/core/tenant/domain"
 )
 
 type tenantRepository struct {
@@ -1349,8 +1349,8 @@ import (
     "time"
     
     "github.com/google/uuid"
-    "awo/internal/core/tenant/domain"
-    "awo/internal/core/tenant/repository"
+    "awo.so/internal/core/tenant/domain"
+    "awo.so/internal/core/tenant/repository"
     "go.temporal.io/sdk/client"
 )
 
@@ -1662,8 +1662,8 @@ import (
     
     "go.temporal.io/sdk/workflow"
     "github.com/google/uuid"
-    "awo/internal/core/tenant/activities"
-    "awo/internal/core/tenant/domain"
+    "awo.so/internal/core/tenant/activities"
+    "awo.so/internal/core/tenant/domain"
 )
 
 // ProvisionTenantWorkflowInput represents the input to the provisioning workflow
@@ -1804,7 +1804,7 @@ import (
     
     "go.temporal.io/sdk/workflow"
     "github.com/google/uuid"
-    "awo/internal/core/tenant/activities"
+    "awo.so/internal/core/tenant/activities"
 )
 
 // BulkSuspendTenantsInput represents bulk suspension input
@@ -1917,8 +1917,8 @@ import (
     "fmt"
     
     "github.com/google/uuid"
-    "awo/internal/core/tenant/domain"
-    "awo/internal/core/tenant/repository"
+    "awo.so/internal/core/tenant/domain"
+    "awo.so/internal/core/tenant/repository"
 )
 
 // TenantActivities contains all tenant-related activities
@@ -2368,8 +2368,8 @@ import (
     
     "go.temporal.io/sdk/client"
     "go.temporal.io/sdk/worker"
-    "awo/internal/core/tenant/activities"
-    "awo/internal/core/tenant/workflow"
+    "awo.so/internal/core/tenant/activities"
+    "awo.so/internal/core/tenant/workflow"
 )
 
 func main() {
@@ -2410,7 +2410,7 @@ import (
     
     "github.com/gin-gonic/gin"
     "github.com/google/uuid"
-    "awo/internal/core/tenant"
+    "awo.so/internal/core/tenant"
 )
 
 type TenantHandler struct {
@@ -2470,7 +2470,7 @@ import (
     
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/require"
-    "awo/internal/core/tenant/domain"
+    "awo.so/internal/core/tenant/domain"
 )
 
 func TestNewTenant(t *testing.T) {
@@ -2527,8 +2527,8 @@ import (
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/suite"
     "github.com/testcontainers/testcontainers-go"
-    "awo/internal/core/tenant/domain"
-    "awo/internal/core/tenant/repository"
+    "awo.so/internal/core/tenant/domain"
+    "awo.so/internal/core/tenant/repository"
 )
 
 type RepositoryTestSuite struct {

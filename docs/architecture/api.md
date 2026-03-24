@@ -185,8 +185,8 @@ package finance
 
 import (
     "github.com/gofiber/fiber/v2"
-    "awo/internal/api/gen/finance"
-    "awo/internal/core/account"
+    "awo.so/internal/api/gen/finance"
+    "awo.so/internal/core/account"
 )
 
 type AccountHandler struct {
@@ -1149,11 +1149,11 @@ package finance
 
 import (
     "github.com/gofiber/fiber/v2"
-    "awo/internal/api/gen"
-    accountsvc "awo/internal/core/finance/account"
-    "awo/internal/shared/logger"
-    "awo/internal/shared/metrics"
-    "awo/internal/shared/tracing"
+    "awo.so/internal/api/gen"
+    accountsvc "awo.so/internal/core/finance/account"
+    "awo.so/internal/shared/logger"
+    "awo.so/internal/shared/metrics"
+    "awo.so/internal/shared/tracing"
 )
 
 // Handler struct with dependencies
@@ -1926,7 +1926,7 @@ package account
 import (
     "fmt"
     "net/http"
-    "awo/internal/shared/errors"
+    "awo.so/internal/shared/errors"
 )
 
 // Error codes
@@ -2001,10 +2001,10 @@ package finance
 import (
     "strings"
     "github.com/gofiber/fiber/v2"
-    accounterrors "awo/internal/core/finance/account"
-    "awo/internal/shared/errors"
-    "awo/internal/shared/logger"
-    "awo/web/components"
+    accounterrors "awo.so/internal/core/finance/account"
+    "awo.so/internal/shared/errors"
+    "awo.so/internal/shared/logger"
+    "awo.so/web/components"
 )
 
 // handleError converts domain errors to HTTP responses
@@ -2362,7 +2362,7 @@ package middleware
 
 import (
     "github.com/gofiber/fiber/v2"
-    "awo/internal/db/sqlc"
+    "awo.so/internal/db/sqlc"
 )
 
 func TenantMiddleware(store db.Store) fiber.Handler {
@@ -2401,7 +2401,7 @@ package account
 
 import (
     "context"
-    "awo/internal/db/sqlc"
+    "awo.so/internal/db/sqlc"
 )
 
 type accountService struct {
@@ -2739,7 +2739,7 @@ web/components/
 // @internal/api/handlers/finance/account_handler.go
 
 import (
-    "awo/web/components"
+    "awo.so/web/components"
 )
 
 // renderComponent renders TemplUI components based on data type
@@ -3511,9 +3511,9 @@ import (
     "github.com/golang/mock/gomock"
     "github.com/stretchr/testify/assert"
     
-    "awo/internal/api/handlers/finance"
-    "awo/internal/core/finance/account"
-    "awo/internal/core/finance/account/mocks"
+    "awo.so/internal/api/handlers/finance"
+    "awo.so/internal/core/finance/account"
+    "awo.so/internal/core/finance/account/mocks"
 )
 
 func TestAccountHandler_Create(t *testing.T) {
@@ -3991,7 +3991,7 @@ isHTMX := c.Get("HX-Request") == "true"
 accept := c.Get("Accept")
 
 // Ensure component import
-import "awo/web/components"
+import "awo.so/web/components"
 ```
 
 ### Issue: Error messages showing technical details to users

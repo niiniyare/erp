@@ -1,56 +1,49 @@
--- =====================================================================
--- ENTITIES HIERARCHY TABLE - Closure table for entity relationships
--- =====================================================================
--- Closure table for entity hierarchy.
--- Stores all ancestor-descendant pairs (ancestor_id, descendant_id, depth).
--- This is the complete information set — no redundant entity_id column.
+-- ------------------------------------------------------------------------------------------------
+-- HIERARCHY_PATHS
+-- ------------------------------------------------------------------------------------------------
+-- Closure table for efficient entity hierarchy queries. Stores every ancestor-descendant pair
+-- (ancestor_id, descendant_id, depth) — including self-references at depth 0.
+-- This is the complete information set; no redundant entity_id column is needed.
+--
+-- NOTE: Depends on entities(uuid) and tenants(id) from migration 000201.
+--       The no_self_parent CHECK in 000201 prevents immediate self-reference; this table
+--       supplements that with full transitive closure.
+-- ------------------------------------------------------------------------------------------------
 CREATE TABLE hierarchy_paths (
-  tenant_id     UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-  ancestor_id   UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
-  descendant_id UUID NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
-  depth         INT  NOT NULL CHECK (depth >= 0),
+  tenant_id     UUID        NOT NULL REFERENCES tenants(id)  ON DELETE CASCADE,
+  ancestor_id   UUID        NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
+  descendant_id UUID        NOT NULL REFERENCES entities(uuid) ON DELETE CASCADE,
+  depth         INT         NOT NULL CHECK (depth >= 0),       -- 0 = self, 1 = direct parent-child, 2+ = deeper
   created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (tenant_id, ancestor_id, descendant_id)
 );
 
--- Table comments
-COMMENT ON TABLE hierarchy_paths IS
-  'Closure table for efficient entity hierarchy queries. '
-  'Stores all ancestor-descendant relationships with depth information. '
-  'Enables fast retrieval of entity trees, subtrees, and hierarchy levels without recursive queries.';
+COMMENT ON TABLE   hierarchy_paths              IS 'Closure table for efficient entity hierarchy queries. Stores all ancestor-descendant relationships with depth information. Enables fast retrieval of entity trees, subtrees, and hierarchy levels without recursive queries.';
+COMMENT ON COLUMN  hierarchy_paths.tenant_id    IS 'Tenant identifier — partitions hierarchy data by tenant for multi-tenancy.';
+COMMENT ON COLUMN  hierarchy_paths.ancestor_id  IS 'Ancestor entity in the relationship — references entities.uuid.';
+COMMENT ON COLUMN  hierarchy_paths.descendant_id IS 'Descendant entity in the relationship — references entities.uuid.';
+COMMENT ON COLUMN  hierarchy_paths.depth        IS 'Hierarchical distance: 0 = self-reference, 1 = direct parent-child, 2+ = deeper.';
 
-COMMENT ON COLUMN hierarchy_paths.tenant_id     IS 'Tenant identifier — partitions hierarchy data by tenant for multi-tenancy.';
-COMMENT ON COLUMN hierarchy_paths.ancestor_id   IS 'Ancestor entity in the relationship — references entities.uuid.';
-COMMENT ON COLUMN hierarchy_paths.descendant_id IS 'Descendant entity in the relationship — references entities.uuid.';
-COMMENT ON COLUMN hierarchy_paths.depth         IS 'Hierarchical distance: 0 = self-reference, 1 = direct parent-child, 2+ = deeper.';
+-- ------------------------------------------------------------------------------------------------
+-- INDEXES
+-- ------------------------------------------------------------------------------------------------
+CREATE INDEX idx_hierarchy_paths_descendant  ON hierarchy_paths(descendant_id);         -- Reverse traversal — find all ancestors of an entity
+CREATE INDEX idx_hierarchy_paths_depth       ON hierarchy_paths(tenant_id, depth);       -- Queries filtered by hierarchy depth
+CREATE INDEX idx_hierarchy_paths_tenant      ON hierarchy_paths(tenant_id);              -- Tenant-level scans
+CREATE INDEX idx_hierarchy_paths_ancestor    ON hierarchy_paths(ancestor_id);            -- Forward traversal — find all descendants
+CREATE INDEX idx_hierarchy_paths_desc_depth  ON hierarchy_paths(descendant_id, depth);  -- Find typed ancestor (e.g. nearest COMPANY above entity X)
 
--- =====================================================================
--- PERFORMANCE OPTIMIZATION INDEXES
--- =====================================================================
+COMMENT ON INDEX idx_hierarchy_paths_descendant IS 'Enables efficient reverse hierarchy traversal — finds all ancestors of a given entity.';
+COMMENT ON INDEX idx_hierarchy_paths_depth      IS 'Optimises queries filtering by hierarchy depth — useful for organisation-level reports.';
 
--- Reverse hierarchy lookups (finding ancestors of a descendant)
-CREATE INDEX idx_hierarchy_paths_descendant ON hierarchy_paths(descendant_id);
-COMMENT ON INDEX idx_hierarchy_paths_descendant IS
-  'Enables efficient reverse hierarchy traversal — finds all ancestors of a given entity.';
-
--- Depth-based queries
-CREATE INDEX idx_hierarchy_paths_depth ON hierarchy_paths(tenant_id, depth);
-COMMENT ON INDEX idx_hierarchy_paths_depth IS
-  'Optimizes queries filtering by hierarchy depth — useful for organisation level reports.';
-
--- Tenant and ancestor lookups
-CREATE INDEX idx_hierarchy_paths_tenant   ON hierarchy_paths(tenant_id);
-CREATE INDEX idx_hierarchy_paths_ancestor ON hierarchy_paths(ancestor_id);
-
--- Composite: finding typed ancestor (e.g. nearest COMPANY above entity X)
-CREATE INDEX idx_hierarchy_paths_desc_depth ON hierarchy_paths(descendant_id, depth);
-
--- =====================================================================
--- HIERARCHY DEPTH / CYCLE-PREVENTION TRIGGER ON entities
--- =====================================================================
--- The no_self_parent CHECK constraint in 000201 prevents immediate self-reference.
--- This trigger prevents A→B→A cycles and enforces a maximum depth of 8 levels.
+-- ------------------------------------------------------------------------------------------------
+-- CHECK_ENTITY_HIERARCHY_DEPTH
+-- ------------------------------------------------------------------------------------------------
+-- Trigger function that prevents A→B→A cycles and enforces a maximum hierarchy depth of 8 levels.
+-- The no_self_parent CHECK in 000201 handles the immediate self-reference case; this trigger
+-- catches multi-hop cycles and depth violations on every INSERT or UPDATE of parent_id.
+-- ------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION check_entity_hierarchy_depth()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -96,9 +89,9 @@ CREATE TRIGGER entities_check_hierarchy_depth
   WHEN (NEW.parent_id IS NOT NULL)
   EXECUTE FUNCTION check_entity_hierarchy_depth();
 
--- =====================================================================
--- ROW LEVEL SECURITY (RLS)
--- =====================================================================
+-- ------------------------------------------------------------------------------------------------
+-- ROW LEVEL SECURITY
+-- ------------------------------------------------------------------------------------------------
 ALTER TABLE hierarchy_paths ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY tenant_isolation_policy ON hierarchy_paths
@@ -115,4 +108,7 @@ CREATE POLICY tenant_isolation_policy ON hierarchy_paths
 CREATE POLICY admin_full_access_policy ON hierarchy_paths
   FOR ALL TO admin_role USING (TRUE);
 
+-- ------------------------------------------------------------------------------------------------
+-- PERMISSIONS
+-- ------------------------------------------------------------------------------------------------
 GRANT SELECT, INSERT, UPDATE, DELETE ON hierarchy_paths TO application_role;

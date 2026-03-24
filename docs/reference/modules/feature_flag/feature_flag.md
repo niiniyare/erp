@@ -1132,8 +1132,8 @@ import (
     "context"
     "log"
     
-    "awo/internal/core/featureflag"
-    db "awo/db/sqlc"
+    "awo.so/internal/core/featureflag"
+    db "awo.so/db/sqlc"
 )
 
 func main() {

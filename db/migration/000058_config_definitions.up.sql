@@ -58,7 +58,6 @@ CREATE TABLE IF NOT EXISTS config_definitions (
   -- KEY IDENTITY
   -- =========================================================================
 
-  module_id UUID NOT NULL references module(id),
   -- Module that owns this configuration key (e.g. 'finance', 'hr', 'inventory').
   -- Must match the module_name used in ConfigurationService calls.
   -- TODO: module is stored at module table to
@@ -227,87 +226,87 @@ INSERT INTO config_definitions
 VALUES
 
   -- FINANCE MODULE
-  ('finance', 'invoice_prefix',        'string',  '"INV-"',
+  ('finance', 'invoice_prefix',        'STRING',  '"INV-"',
    TRUE, TRUE,
    'Invoice Prefix', 'Prefix applied to all invoice document numbers.', NULL,
    '{"pattern": "^[A-Z0-9]{2,6}-$"}',
    'finance.admin'),
 
-  ('finance', 'payment_terms_default', 'string',  '"NET30"',
+  ('finance', 'payment_terms_default', 'STRING',  '"NET30"',
    TRUE, TRUE,
    'Default Payment Terms', 'Default payment terms applied to new invoices when not specified.', NULL,
    '{"enum": ["NET15","NET30","NET45","NET60","DUE_ON_RECEIPT"]}',
    'finance.admin'),
 
-  ('finance', 'auto_approval_limit',   'decimal', '1000',
+  ('finance', 'auto_approval_limit',   'DECIMAL', '1000',
    TRUE, TRUE,
    'Auto-Approval Limit', 'Transactions below this amount are automatically approved without manual review.', 'USD',
    '{"min": 0, "max": 1000000}',
    'finance.admin'),
 
-  ('finance', 'require_po_for_expense', 'boolean', 'false',
+  ('finance', 'require_po_for_expense', 'BOOLEAN', 'false',
    TRUE, TRUE,
    'Require PO for Expenses', 'When enabled, all expense reports must reference a Purchase Order.', NULL,
    NULL,
    'finance.admin'),
 
-  ('finance', 'invoice_pad_length',    'integer', '6',
+  ('finance', 'invoice_pad_length',    'INTEGER', '6',
    TRUE, TRUE,
    'Invoice Number Padding', 'Number of digits in the invoice sequence (e.g. 6 produces INV-000001).', 'digits',
    '{"min": 4, "max": 10}',
    'finance.admin'),
 
-  ('finance', 'invoice_reset_frequency', 'string', '"yearly"',
+  ('finance', 'invoice_reset_frequency', 'STRING', '"yearly"',
    TRUE, TRUE,
    'Invoice Sequence Reset', 'How often the invoice number sequence resets to 1.', NULL,
    '{"enum": ["never","yearly","monthly"]}',
    'finance.admin'),
 
   -- HR MODULE
-  ('hr', 'overtime_threshold',         'decimal', '40',
+  ('hr', 'overtime_threshold',         'DECIMAL', '40',
    TRUE, TRUE,
    'Overtime Threshold', 'Hours worked per week beyond which overtime rates apply.', 'hours',
    '{"min": 0, "max": 168}',
    'hr.admin'),
 
-  ('hr', 'overtime_multiplier',        'decimal', '1.5',
+  ('hr', 'overtime_multiplier',        'DECIMAL', '1.5',
    TRUE, TRUE,
    'Overtime Pay Multiplier', 'Multiplier applied to the base hourly rate for overtime hours.', 'x',
    '{"min": 1.0, "max": 5.0}',
    'hr.admin'),
 
-  ('hr', 'default_pay_frequency',      'string',  '"biweekly"',
+  ('hr', 'default_pay_frequency',      'STRING',  '"biweekly"',
    TRUE, TRUE,
    'Default Pay Frequency', 'Default payroll frequency applied to new employees.', NULL,
    '{"enum": ["weekly","biweekly","semimonthly","monthly"]}',
    'hr.admin'),
 
-  ('hr', 'probation_period_days',      'integer', '90',
+  ('hr', 'probation_period_days',      'INTEGER', '90',
    TRUE, TRUE,
    'Probation Period', 'Default probation period in days for new employees.', 'days',
    '{"min": 0, "max": 365}',
    'hr.admin'),
 
   -- INVENTORY MODULE
-  ('inventory', 'reorder_point_days',      'integer', '30',
+  ('inventory', 'reorder_point_days',      'INTEGER', '30',
    TRUE, TRUE,
    'Reorder Point (Days)', 'Trigger a reorder when current stock falls below this many days of supply.', 'days',
    '{"min": 1, "max": 365}',
    'inventory.admin'),
 
-  ('inventory', 'default_valuation_method', 'string', '"FIFO"',
+  ('inventory', 'default_valuation_method', 'STRING', '"FIFO"',
    TRUE, FALSE,
    'Default Valuation Method', 'Inventory cost flow assumption for new items. Entity-level override is not permitted — tenant policy is authoritative.', NULL,
    '{"enum": ["FIFO","LIFO","WEIGHTED_AVERAGE"]}',
    'inventory.admin'),
 
-  ('inventory', 'allow_negative_stock',     'boolean', 'false',
+  ('inventory', 'allow_negative_stock',     'BOOLEAN', 'false',
    TRUE, TRUE,
    'Allow Negative Stock', 'When enabled, stock levels may go below zero (e.g. for back-order scenarios).', NULL,
    NULL,
    'inventory.admin'),
 
-  ('inventory', 'require_lot_tracking',     'boolean', 'false',
+  ('inventory', 'require_lot_tracking',     'BOOLEAN', 'false',
    TRUE, TRUE,
    'Require Lot Tracking', 'When enabled, all inventory movements must reference a lot or batch number.', NULL,
    NULL,

@@ -19,7 +19,7 @@ import (
     "fmt"
     "log"
     
-    "awo/web/engine"
+    "awo.so/web/engine"
 )
 
 func main() {

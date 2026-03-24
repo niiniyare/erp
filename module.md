@@ -2421,7 +2421,7 @@ This is enforced structurally and with tooling. Every cross-module interaction i
 
 ### Mechanism 1 — Ports & Adapters (synchronous reads)
 
-When Module A needs a value owned by Module B, Module A defines a **port interface** in its own package. Module B provides an **adapter** struct that satisfies it. Wire injects the adapter at startup. Module A's source files never contain `import "awo/core/moduleB"`.
+When Module A needs a value owned by Module B, Module A defines a **port interface** in its own package. Module B provides an **adapter** struct that satisfies it. Wire injects the adapter at startup. Module A's source files never contain `import "awo.so/core/moduleB"`.
 
 ```go
 // awo/core/payroll/port.go

@@ -78,7 +78,7 @@ Advanced data table functionality with DataTables integration
 ### Using Flowbite Components in ERP
 ```go
 // 1. Import component props
-import "awo/pkg/ui/components"
+import "awo.so/pkg/ui/components"
 
 // 2. Create component props
 props := components.ButtonProps{

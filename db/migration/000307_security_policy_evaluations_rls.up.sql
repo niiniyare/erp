@@ -1,5 +1,10 @@
--- G4: Fix policy_evaluations RLS — replace raw current_setting() with current_tenant_id().
--- Guarded by DO $$ so the migration is a no-op when policy_evaluations does not exist.
+-- ------------------------------------------------------------------------------------------------
+-- POLICY_EVALUATIONS — FIX RLS TO USE CURRENT_TENANT_ID()
+-- ------------------------------------------------------------------------------------------------
+-- Replaces raw current_setting() calls in policy_evaluations RLS policies with the
+-- current_tenant_id() helper function for consistency with all other tables.
+-- Guarded by a DO $$ block so this migration is a no-op when policy_evaluations does not exist.
+-- ------------------------------------------------------------------------------------------------
 DO $$
 BEGIN
     IF EXISTS (

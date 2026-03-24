@@ -65,9 +65,9 @@ package infrastructure
 
 import (
     "context"
-    "awo/internal/platform/queue"
-    "awo/internal/platform/config"
-    "awo/internal/shared/logger"
+    "awo.so/internal/platform/queue"
+    "awo.so/internal/platform/config"
+    "awo.so/internal/shared/logger"
 )
 
 type MessageQueue struct {
@@ -114,13 +114,13 @@ func (mq *MessageQueue) Shutdown(ctx context.Context) error {
 package services
 
 import (
-    db "awo/db/sqlc"
-    "awo/internal/core/inventory/service"
-    "awo/internal/core/inventory/repository"
-    "awo/internal/platform/cache"
-    loggerPkg "awo/internal/shared/logger"
-    "awo/internal/shared/metrics"
-    "awo/internal/shared/tracing"
+    db "awo.so/db/sqlc"
+    "awo.so/internal/core/inventory/service"
+    "awo.so/internal/core/inventory/repository"
+    "awo.so/internal/platform/cache"
+    loggerPkg "awo.so/internal/shared/logger"
+    "awo.so/internal/shared/metrics"
+    "awo.so/internal/shared/tracing"
 )
 
 func InitializeInventoryServices(
@@ -185,8 +185,8 @@ func InitializeInventoryServices(
 1. **Import the generated types**:
 ```go
 import (
-    inventoryGen "awo/internal/api/gen/inventory"
-    inventorysvr "awo/internal/api/gen/http/inventory/server"
+    inventoryGen "awo.so/internal/api/gen/inventory"
+    inventorysvr "awo.so/internal/api/gen/http/inventory/server"
 )
 ```
 
@@ -263,8 +263,8 @@ package bootstrap
 
 import (
     "fmt"
-    "awo/internal/platform/config"
-    "awo/internal/shared/logger"
+    "awo.so/internal/platform/config"
+    "awo.so/internal/shared/logger"
 )
 
 type ValidationResult struct {

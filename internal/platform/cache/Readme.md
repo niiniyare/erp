@@ -665,9 +665,9 @@ This cache service is **multi-tenant native** - every operation automatically us
 package main
 
 import (
-    "awo/internal/platform/cache"
-    "awo/internal/platform/config"
-    "awo/middleware"
+    "awo.so/internal/platform/cache"
+    "awo.so/internal/platform/config"
+    "awo.so/middleware"
 )
 
 func main() {

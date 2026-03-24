@@ -6997,7 +6997,7 @@ import (
     "context"
     
     "github.com/stretchr/testify/suite"
-    "awo/ui/components"
+    "awo.so/ui/components"
 )
 
 type ButtonTestSuite struct {

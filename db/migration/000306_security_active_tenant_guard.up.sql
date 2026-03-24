@@ -1,14 +1,13 @@
--- ================================================================================================
--- G3: Guard set_tenant_context() against PENDING/SUSPENDED/ARCHIVED tenants.
+-- ------------------------------------------------------------------------------------------------
+-- SET_TENANT_CONTEXT — ACTIVE TENANT GUARD
+-- ------------------------------------------------------------------------------------------------
+-- Replaces the previous set_tenant_context() with a version that rejects non-ACTIVE tenants.
+-- Previously the function accepted any tenant UUID that existed in the tenants table, including
+-- PENDING tenants, allowing authentication before onboarding completed.
 --
--- Previously the function set the session tenant_id for any tenant UUID that
--- existed in the tenants table, including tenants in PENDING status.  This
--- meant an attacker could authenticate against a tenant that had not yet
--- completed onboarding.
---
--- Fix: raise an exception if the tenant's status is not 'ACTIVE'.
--- ================================================================================================
-
+-- Fix: raises restrict_violation (23001) if the tenant's status is not 'ACTIVE'.
+-- Must be called inside a transaction (set_config with is_local=true).
+-- ------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION set_tenant_context(p_tenant_id UUID)
 RETURNS VOID
 LANGUAGE plpgsql

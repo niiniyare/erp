@@ -1,5 +1,5 @@
 -- ------------------------------------------------------------------------------------------------
--- ACTIONS: FK to roles
+-- ACTIONS: FK TO ROLES
 -- ------------------------------------------------------------------------------------------------
 -- The actions.approver_role_id column was created in 000017 without a FK constraint because the
 -- roles table didn't exist yet. Now that roles exists (000405), we add the constraint.

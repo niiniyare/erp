@@ -45,6 +45,20 @@ type SessionRepository interface {
 
 	// UpdateLastSeen is fire-and-forget.
 	UpdateLastSeen(ctx context.Context, hash string)
+
+	// ── Login pre-computation ─────────────────────────────────────────────────
+
+	// LoadLoginConfig fetches the pre-computed login configuration snapshot:
+	// feature flags (ResolveAllFlagsForTenant), tenant settings
+	// (ResolveAllSettingsForTenant), and user preferences (GetUserPreferences).
+	// Called exactly once during Login; the result is embedded in the session row.
+	// Non-fatal: partial failures populate what's available and log warnings.
+	LoadLoginConfig(ctx context.Context, userID, tenantID uuid.UUID) (domain.Configuration, error)
+
+	// ResolveEntityScope derives the session's EntityScope from the user's entity.
+	// Called exactly once during Login; the result is embedded in the session row.
+	// Non-fatal: falls back to EntityScopeEntity on DB error.
+	ResolveEntityScope(ctx context.Context, entityID uuid.UUID) (domain.EntityScope, error)
 }
 
 //  Adapter (implementation)
@@ -235,7 +249,77 @@ func (r *sessionRepo) UpdateLastSeen(ctx context.Context, hash string) {
 	}()
 }
 
-//  Cache helpers (internal)
+// ── Login pre-computation ─────────────────────────────────────────────────────
+
+func (r *sessionRepo) LoadLoginConfig(ctx context.Context, userID, tenantID uuid.UUID) (domain.Configuration, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "session.repo.LoadLoginConfig")
+	defer span.End()
+
+	cfg := domain.DefaultConfiguration()
+
+	// Feature flags — resolves tenant overrides over system defaults.
+	flagRows, err := r.store.ResolveAllFlagsForTenant(ctx, tenantID)
+	if err == nil {
+		for _, row := range flagRows {
+			cfg.Flags[row.FlagKey] = row.EffectiveValue
+		}
+	}
+
+	// Tenant settings — resolves tenant overrides over system defaults.
+	settingRows, err := r.store.ResolveAllSettingsForTenant(ctx, tenantID)
+	if err == nil {
+		for _, row := range settingRows {
+			cfg.Settings[row.SettingKey] = row.EffectiveValue
+		}
+	}
+
+	// User preferences — personal UI/UX settings.
+	prefRows, err := r.store.GetUserPreferences(ctx, userID)
+	if err == nil {
+		for _, row := range prefRows {
+			cfg.Prefs[row.PrefKey] = row.Value
+		}
+	}
+
+	r.metrics.IncrementCounter("iam.session.login_config.loaded", nil)
+	return cfg, nil
+}
+
+func (r *sessionRepo) ResolveEntityScope(ctx context.Context, entityID uuid.UUID) (domain.EntityScope, error) {
+	// Platform/system users have no entity assignment — grant full tenant visibility.
+	if entityID == uuid.Nil {
+		return domain.EntityScope{Type: domain.EntityScopeAll}, nil
+	}
+
+	ctx, span := r.tracing.StartSpan(ctx, "session.repo.ResolveEntityScope")
+	defer span.End()
+
+	row, err := r.store.ResolveEntityScope(ctx, entityID)
+	if err != nil {
+		// Non-fatal: fall back to the narrowest safe scope.
+		return domain.EntityScope{Type: domain.EntityScopeEntity, EntityID: entityID.String()}, err
+	}
+
+	scope := domain.EntityScope{EntityID: entityID.String()}
+	switch {
+	case row.EntityLevel == 1:
+		// Root entity → full tenant visibility.
+		scope.Type = domain.EntityScopeAll
+		scope.EntityID = "" // EntityID is only meaningful for entity/subtree scopes.
+	case row.HasChildren:
+		// Branch entity → subtree visibility.
+		scope.Type = domain.EntityScopeSubtree
+		if row.EntityPath != nil {
+			scope.PathPrefix = *row.EntityPath
+		}
+	default:
+		// Leaf entity → own entity only.
+		scope.Type = domain.EntityScopeEntity
+	}
+	return scope, nil
+}
+
+// ── Cache helpers (internal) ──────────────────────────────────────────────────
 
 func (r *sessionRepo) cacheResolved(ctx context.Context, hash string, resolved *domain.ResolvedSession, ttl time.Duration) {
 	_ = r.cache.Set(ctx, sessionCacheKey(hash), resolved, ttl)

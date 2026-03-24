@@ -160,7 +160,7 @@ type AttributeValue struct {
 	UpdatedBy   *uuid.UUID   `json:"updated_by"`
 }
 
-// audit log with compliance tracking, risk scoring, and detailed context for security monitoring and regulatory compliance.
+// Immutable audit log with compliance tracking, risk scoring, and detailed context for security monitoring and regulatory compliance.
 type AuditLog struct {
 	ID        uuid.UUID `json:"id"`
 	TenantID  uuid.UUID `json:"tenant_id"`
@@ -297,102 +297,102 @@ type ConfigurationTemplate struct {
 
 // Employee records extending persons with employment-specific data, organizational hierarchy, and security levels for access control.
 type Employee struct {
-	// UUID primary key for the employee record
+	// UUID primary key for the employee record.
 	ID uuid.UUID `json:"id"`
-	// Foreign key to tenants table for multi-tenant isolation
+	// Foreign key to tenants table for multi-tenant isolation.
 	TenantID uuid.UUID `json:"tenant_id"`
-	// Foreign key to persons table linking to personal information
+	// Foreign key to persons table linking to personal information.
 	PersonID uuid.UUID `json:"person_id"`
-	// Unique employee identifier within tenant
+	// Unique employee identifier within tenant.
 	EmployeeNumber string `json:"employee_number"`
-	// Foreign key to entities table for organizational assignment
+	// Foreign key to entities table for organizational assignment.
 	EntityID uuid.UUID `json:"entity_id"`
-	// Employee's job title or position
+	// Employee's job title or position.
 	PositionTitle *string `json:"position_title"`
-	// Foreign key to entities table representing department
+	// Foreign key to entities table representing department.
 	DepartmentID *uuid.UUID `json:"department_id"`
-	// Self-referential foreign key for organizational hierarchy
+	// Self-referential foreign key for organizational hierarchy.
 	ManagerID *uuid.UUID `json:"manager_id"`
-	// Date when employee was hired
+	// Date when employee was hired.
 	HireDate time.Time `json:"hire_date"`
-	// Date when employee was terminated (if applicable)
+	// Date when employee was terminated (if applicable).
 	TerminationDate time.Time `json:"termination_date"`
-	// JSONB containing encrypted/sensitive salary and compensation data
+	// JSONB containing encrypted/sensitive salary and compensation data.
 	SalaryInfo []byte `json:"salary_info"`
-	// Current employment status: ACTIVE, INACTIVE, TERMINATED, ON_LEAVE, SUSPENDED
+	// Current employment status: ACTIVE, INACTIVE, TERMINATED, ON_LEAVE, SUSPENDED.
 	EmploymentStatus *string `json:"employment_status"`
-	// JSONB containing flexible work schedule definition
+	// JSONB containing flexible work schedule definition.
 	WorkSchedule []byte `json:"work_schedule"`
-	// Numeric security clearance level (0=lowest, higher numbers = higher clearance)
+	// Numeric security clearance level (0 = lowest; higher numbers = higher clearance).
 	SecurityLevel *int32 `json:"security_level"`
-	// JSONB containing employment-specific ABAC attributes for access control
+	// JSONB containing employment-specific ABAC attributes for access control.
 	AccessAttributes []byte    `json:"access_attributes"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
-	// Soft delete timestamp - NULL means record is active
+	// Soft delete timestamp — NULL means record is active.
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
-// Master table for business entities and organizational units. Supports hierarchical structures for companies, subsidiaries, departments, and other organizational divisions. Each entity can maintain its own accounting books, customers, vendors, and fiscal year settings.
+// Master table for business entities and organisational units. Supports hierarchical structures for companies, subsidiaries, departments, and other divisions. Each entity can maintain its own accounting books, customers, vendors, and fiscal year settings.
 type Entity struct {
-	// Primary key - Unique identifier for the entity
+	// Primary key — unique identifier for the entity.
 	Uuid uuid.UUID `json:"uuid"`
-	// Foreign key to tenants table - Associates entity with a specific tenant for multi-tenancy support
+	// FK to tenants — associates entity with a specific tenant for multi-tenancy.
 	TenantID uuid.UUID `json:"tenant_id"`
-	// Self-referencing foreign key - Creates hierarchical relationship between entities (e.g., subsidiary under parent company)
+	// Self-referencing FK — creates hierarchical relationship between entities (e.g., subsidiary under parent company).
 	ParentID *uuid.UUID `json:"parent_id"`
-	// Business name or title of the entity - Must be unique within tenant
+	// Business name or title of the entity — must be unique within tenant.
 	Name string `json:"name"`
-	// Optional internal reference code - Used for abbreviated identification and reporting
+	// Optional internal reference code — used for abbreviated identification and reporting.
 	Code *string `json:"code"`
-	// Classification of entity type - Defines the organizational level and purpose (company, department, project, etc.)
+	// Classification of entity type — defines the organisational level and purpose.
 	Type string `json:"type"`
-	// Active status flag - Indicates whether the entity is currently operational
+	// Active status flag — indicates whether the entity is currently operational.
 	IsActive bool `json:"is_active"`
-	// Visibility flag - Controls whether entity appears in user interfaces and reports
+	// Visibility flag — controls whether entity appears in UIs and reports.
 	Hidden bool `json:"hidden"`
-	// Accounting method indicator - TRUE for accrual accounting, FALSE for cash accounting
+	// Accounting method: TRUE = accrual, FALSE = cash.
 	AccrualMethod bool `json:"accrual_method"`
-	// Fiscal year start month - Numeric month (1-12) when fiscal year begins for this entity
+	// Fiscal year start month — numeric month (1–12) when fiscal year begins for this entity.
 	FyStartMonth int32 `json:"fy_start_month"`
-	// Physical address information - Stored as JSON object with flexible address components
+	// Physical address stored as a JSON object with flexible address components.
 	Address []byte `json:"address"`
-	// Entity logo or image reference - File path or URL to associated image
+	// Entity logo or image reference — file path or URL.
 	Picture *string `json:"picture"`
 	// Materialized path: /uuid1/uuid2/this_uuid/. Enables subtree queries via LIKE '/root/%'. Populated by app layer on create/reparent. Root entities: /uuid/.
 	EntityPath *string `json:"entity_path"`
 	// Hierarchy depth: 1 = root COMPANY, increments per level (max 8). Used to determine EntityScope: level 1 = all, leaf = entity, else = subtree.
 	EntityLevel int32 `json:"entity_level"`
-	// Entity-specific configuration - JSON object storing customizable settings and preferences
+	// Entity-specific configuration — JSON object storing customisable settings and preferences.
 	Settings          []byte       `json:"settings"`
 	Metadata          []byte       `json:"metadata"`
 	Version           int32        `json:"version"`
 	LastValidationRun sql.NullTime `json:"last_validation_run"`
 	ValidationStatus  *string      `json:"validation_status"`
 	ValidationErrors  []byte       `json:"validation_errors"`
-	// Record creation timestamp - Automatically set when entity is first created
+	// Record creation timestamp — automatically set when entity is first created.
 	CreatedAt time.Time `json:"created_at"`
-	// Last modification timestamp - Automatically updated when entity record is modified
+	// Last modification timestamp — automatically updated on every row change.
 	UpdatedAt time.Time `json:"updated_at"`
-	// Soft deletion timestamp - NULL for active records, timestamp when logically deleted
+	// Soft deletion timestamp — NULL for active records, set when logically deleted.
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
 // Manages sequential numbering for business documents within entities. Tracks next available sequence numbers for different document types (invoices, purchase orders, estimates, etc.) by fiscal year and entity.
 type Entitystate struct {
-	// Primary key - Unique identifier for the entity state record
+	// Primary key — unique identifier for the entity state record.
 	Uuid uuid.UUID `json:"uuid"`
-	// Foreign key to tenants table for multi-tenant isolation
+	// Foreign key to tenants table for multi-tenant isolation.
 	TenantID uuid.UUID `json:"tenant_id"`
-	// Fiscal year for sequence tracking - Allows separate numbering sequences per year
+	// Fiscal year for sequence tracking — allows separate numbering sequences per year.
 	FiscalYear *int16 `json:"fiscal_year"`
-	// Document type identifier - Specifies the type of document being numbered (invoice, po, estimate, bill, receipt, etc.)
+	// Document type identifier — specifies the type of document being numbered (invoice, po, estimate, bill, receipt, etc.).
 	Key string `json:"key"`
-	// Next sequence number - The next available sequential number for this document type
+	// Next sequence number — the next available sequential number for this document type.
 	Sequence int64 `json:"sequence"`
-	// Primary entity reference - The main entity that owns this sequence numbering
+	// Primary entity reference — the main entity that owns this sequence numbering.
 	EntityID uuid.UUID `json:"entity_id"`
-	// Sub-entity reference - Optional reference to a subsidiary or department within the main entity for more granular numbering
+	// Sub-entity reference — optional reference to a subsidiary or department within the main entity for more granular numbering.
 	EntityUnitID *uuid.UUID `json:"entity_unit_id"`
 	// Document sequence formatting config for this entity+doctype combination. Keys: prefix, suffix, pad_length (INT), reset_frequency (yearly|monthly|never), format_template (STRING). Overrides tenant_configurations.settings for sequences on this entity. Example: {"prefix":"NORTH-INV-","pad_length":6,"reset_frequency":"yearly"}
 	Config    []byte       `json:"config"`
@@ -443,31 +443,31 @@ type FinanceAccount struct {
 	ID       uuid.UUID  `json:"id"`
 	TenantID uuid.UUID  `json:"tenant_id"`
 	EntityID *uuid.UUID `json:"entity_id"`
-	// Unique account code within tenant - Used for transaction posting and reporting
+	// Unique account code within tenant — used for transaction posting and reporting.
 	AccountCode        string  `json:"account_code"`
 	AccountName        string  `json:"account_name"`
 	AccountDescription *string `json:"account_description"`
-	// Link to account group for organizational structure and reporting
+	// Link to account group for organizational structure and reporting.
 	AccountGroupID *uuid.UUID `json:"account_group_id"`
-	// Link to account header for financial statement presentation
+	// Link to account header for financial statement presentation.
 	AccountHeaderID *uuid.UUID `json:"account_header_id"`
 	ParentAccountID *uuid.UUID `json:"parent_account_id"`
 	AccountLevel    int32      `json:"account_level"`
-	// Materialized path for efficient hierarchy queries - Format: /root/parent/child/
+	// Materialized path for efficient hierarchy queries — format: /root/parent/child/.
 	AccountPath *string `json:"account_path"`
-	// Detailed category within account type (e.g., CURRENT_ASSETS, FIXED_ASSETS)
+	// Detailed category within account type (e.g., CURRENT_ASSETS, FIXED_ASSETS).
 	AccountCategory      *string `json:"account_category"`
 	SubCategory          *string `json:"sub_category"`
 	DisplayOrder         *int32  `json:"display_order"`
 	ShowInReports        *bool   `json:"show_in_reports"`
 	ConsolidationAccount *string `json:"consolidation_account"`
-	// Cash flow statement classification for proper statement presentation
+	// Cash flow statement classification for proper statement presentation.
 	CashFlowType *string `json:"cash_flow_type"`
-	// High-level account classification for balance sheet and income statement categorization
+	// High-level account classification for balance sheet and income statement categorization.
 	RootType       string  `json:"root_type"`
 	AccountType    string  `json:"account_type"`
 	AccountSubtype *string `json:"account_subtype"`
-	// Normal balance type - DEBIT for assets/expenses, CREDIT for liabilities/equity/revenue
+	// Normal balance type — DEBIT for assets/expenses, CREDIT for liabilities/equity/revenue.
 	NormalBalance               string         `json:"normal_balance"`
 	IsControlAccount            bool           `json:"is_control_account"`
 	ControlAccountID            *uuid.UUID     `json:"control_account_id"`
@@ -516,39 +516,44 @@ type FinanceAccountBalance struct {
 	CreatedBy      *uuid.UUID     `json:"created_by"`
 }
 
-// Account groups and headers for organizing chart of accounts into logical reporting structures
+// Account groups and headers for organizing chart of accounts into logical reporting structures.
 type FinanceAccountGroup struct {
-	ID                        uuid.UUID    `json:"id"`
-	TenantID                  uuid.UUID    `json:"tenant_id"`
-	EntityID                  *uuid.UUID   `json:"entity_id"`
-	GroupCode                 string       `json:"group_code"`
-	GroupName                 string       `json:"group_name"`
-	GroupDescription          *string      `json:"group_description"`
-	ParentGroupID             *uuid.UUID   `json:"parent_group_id"`
-	GroupLevel                int32        `json:"group_level"`
-	GroupPath                 *string      `json:"group_path"`
-	RootType                  string       `json:"root_type"`
-	GroupCategory             *string      `json:"group_category"`
-	FinancialStatementSection *string      `json:"financial_statement_section"`
-	StatementOrder            *int32       `json:"statement_order"`
-	ShowInSummary             *bool        `json:"show_in_summary"`
-	ConsolidationMethod       *string      `json:"consolidation_method"`
-	DisplayFormat             *string      `json:"display_format"`
-	IndentLevel               *int32       `json:"indent_level"`
-	ShowTotals                *bool        `json:"show_totals"`
-	BoldDisplay               *bool        `json:"bold_display"`
-	IsActive                  bool         `json:"is_active"`
-	IsSystemGroup             bool         `json:"is_system_group"`
-	AllowDirectPosting        *bool        `json:"allow_direct_posting"`
-	BudgetCategory            *string      `json:"budget_category"`
-	VarianceAnalysisGroup     *string      `json:"variance_analysis_group"`
-	CashFlowCategory          *string      `json:"cash_flow_category"`
-	GroupAttributes           []byte       `json:"group_attributes"`
-	CreatedAt                 time.Time    `json:"created_at"`
-	UpdatedAt                 time.Time    `json:"updated_at"`
-	DeletedAt                 sql.NullTime `json:"deleted_at"`
-	CreatedBy                 *uuid.UUID   `json:"created_by"`
-	UpdatedBy                 *uuid.UUID   `json:"updated_by"`
+	ID               uuid.UUID  `json:"id"`
+	TenantID         uuid.UUID  `json:"tenant_id"`
+	EntityID         *uuid.UUID `json:"entity_id"`
+	GroupCode        string     `json:"group_code"`
+	GroupName        string     `json:"group_name"`
+	GroupDescription *string    `json:"group_description"`
+	ParentGroupID    *uuid.UUID `json:"parent_group_id"`
+	GroupLevel       int32      `json:"group_level"`
+	// Materialized path for efficient hierarchy queries — maintained by trigger in 000906.
+	GroupPath *string `json:"group_path"`
+	// High-level classification: ASSET, LIABILITY, EQUITY, REVENUE, or EXPENSE.
+	RootType      string  `json:"root_type"`
+	GroupCategory *string `json:"group_category"`
+	// Target financial statement: Balance Sheet, Income Statement, or Cash Flow.
+	FinancialStatementSection *string `json:"financial_statement_section"`
+	StatementOrder            *int32  `json:"statement_order"`
+	ShowInSummary             *bool   `json:"show_in_summary"`
+	// How child balances are rolled up: SUM (default), AVERAGE, MAX, MIN, or CUSTOM.
+	ConsolidationMethod *string `json:"consolidation_method"`
+	DisplayFormat       *string `json:"display_format"`
+	IndentLevel         *int32  `json:"indent_level"`
+	ShowTotals          *bool   `json:"show_totals"`
+	BoldDisplay         *bool   `json:"bold_display"`
+	IsActive            bool    `json:"is_active"`
+	// TRUE for platform-seeded groups that cannot be deleted by tenants.
+	IsSystemGroup         bool         `json:"is_system_group"`
+	AllowDirectPosting    *bool        `json:"allow_direct_posting"`
+	BudgetCategory        *string      `json:"budget_category"`
+	VarianceAnalysisGroup *string      `json:"variance_analysis_group"`
+	CashFlowCategory      *string      `json:"cash_flow_category"`
+	GroupAttributes       []byte       `json:"group_attributes"`
+	CreatedAt             time.Time    `json:"created_at"`
+	UpdatedAt             time.Time    `json:"updated_at"`
+	DeletedAt             sql.NullTime `json:"deleted_at"`
+	CreatedBy             *uuid.UUID   `json:"created_by"`
+	UpdatedBy             *uuid.UUID   `json:"updated_by"`
 }
 
 // Configurable validation rules for accounts and transactions - enables business rule enforcement
@@ -577,95 +582,69 @@ type FinanceAccountValidationRule struct {
 
 // Header table for all financial transactions. Contains transaction metadata, approval workflow, and summary amounts.
 type FinanceTransaction struct {
-	// Primary key - UUID for the transaction
-	ID uuid.UUID `json:"id"`
-	// Foreign key to tenant - ensures data isolation in multi-tenant environment
-	TenantID uuid.UUID `json:"tenant_id"`
-	// Foreign key to entities table - links transaction to specific business entity/company
+	ID       uuid.UUID  `json:"id"`
+	TenantID uuid.UUID  `json:"tenant_id"`
 	EntityID *uuid.UUID `json:"entity_id"`
-	// Unique transaction number within tenant - Auto-generated or user-provided
+	// Unique transaction number within tenant — auto-generated or user-provided.
 	TransactionNumber string `json:"transaction_number"`
-	// Type of transaction - determines behavior and validation rules
+	// Type of transaction — determines behavior and validation rules.
 	TransactionType string `json:"transaction_type"`
-	// Current status in transaction lifecycle - controls what operations are allowed
+	// Current status in transaction lifecycle — controls what operations are allowed.
 	TransactionStatus string `json:"transaction_status"`
-	// Date when the transaction occurred - business date for accounting purposes
+	// Date when the transaction occurred — business date for accounting purposes.
 	TransactionDate time.Time `json:"transaction_date"`
-	// Date when transaction was posted to the general ledger - required when status is POSTED
+	// Date when transaction was posted to the general ledger — required when status is POSTED.
 	PostingDate time.Time `json:"posting_date"`
-	// Due date for payment transactions - used for AP/AR and cash management
-	DueDate time.Time `json:"due_date"`
-	// Main description of the transaction - required field for audit trail
-	Description string `json:"description"`
-	// Internal reference number - invoice number, check number, etc.
-	ReferenceNumber *string `json:"reference_number"`
-	// External reference from third-party systems - bank reference, vendor invoice number
-	ExternalReference *string `json:"external_reference"`
-	// Additional notes or memo about the transaction - free text field for additional context
-	Memo *string `json:"memo"`
-	// ISO 4217 currency code - defaults to USD but supports multi-currency
+	// Due date for payment transactions — used for AP/AR and cash management.
+	DueDate           time.Time `json:"due_date"`
+	Description       string    `json:"description"`
+	ReferenceNumber   *string   `json:"reference_number"`
+	ExternalReference *string   `json:"external_reference"`
+	Memo              *string   `json:"memo"`
+	// ISO 4217 currency code — defaults to USD but supports multi-currency.
 	CurrencyCode string `json:"currency_code"`
-	// Exchange rate from transaction currency to functional currency - defaults to 1.0 for same currency
+	// Exchange rate from transaction currency to functional currency — defaults to 1.0 for same currency.
 	ExchangeRate pgtype.Numeric `json:"exchange_rate"`
-	// Sum of all debit entries - Must equal total_credit_amount for balanced transactions
+	// Sum of all debit entries — must equal total_credit_amount for balanced transactions.
 	TotalDebitAmount pgtype.Numeric `json:"total_debit_amount"`
-	// Sum of all credit entries - Must equal total_debit_amount for balanced transactions
+	// Sum of all credit entries — must equal total_debit_amount for balanced transactions.
 	TotalCreditAmount pgtype.Numeric `json:"total_credit_amount"`
-	// Source module that created this transaction - AP, AR, GL, PAYROLL, etc.
+	// Source module that created this transaction: AP, AR, GL, PAYROLL, etc.
 	SourceModule *string `json:"source_module"`
-	// Type of source document - INVOICE, PAYMENT, JOURNAL_ENTRY, etc.
+	// Type of source document: INVOICE, PAYMENT, JOURNAL_ENTRY, etc.
 	SourceDocumentType *string `json:"source_document_type"`
-	// ID of the source document that generated this transaction
+	// ID of the source document that generated this transaction.
 	SourceDocumentID *uuid.UUID `json:"source_document_id"`
-	// Batch ID for grouping related transactions - useful for imports and bulk operations
-	BatchID *uuid.UUID `json:"batch_id"`
-	// Whether this transaction requires approval before posting
-	ApprovalRequired *bool `json:"approval_required"`
-	// Current approval status - tracks approval workflow progress
-	ApprovalStatus *string `json:"approval_status"`
-	// User who approved the transaction - required if approval_required is true
-	ApprovedBy *uuid.UUID `json:"approved_by"`
-	// Timestamp when transaction was approved
-	ApprovedAt sql.NullTime `json:"approved_at"`
-	// Notes from the approver - can include reasons for approval or rejection
-	ApprovalNotes *string `json:"approval_notes"`
-	// Whether this is a recurring transaction template
-	IsRecurring *bool `json:"is_recurring"`
-	// Frequency for recurring transactions - DAILY, WEEKLY, MONTHLY, QUARTERLY, YEARLY
-	RecurringFrequency *string `json:"recurring_frequency"`
-	// Next date when this recurring transaction should be generated
-	NextRecurringDate time.Time `json:"next_recurring_date"`
-	// Whether this transaction has been reversed
-	IsReversed *bool `json:"is_reversed"`
-	// ID of the reversing transaction - creates audit trail for reversals
-	ReversedByTransactionID *uuid.UUID `json:"reversed_by_transaction_id"`
-	// Reason for reversing the transaction - required for compliance
-	ReversalReason *string `json:"reversal_reason"`
-	// Version number for optimistic locking - prevents concurrent modifications
-	Version int32 `json:"version"`
-	// Status of transaction validation - PENDING, VALID, WARNING, ERROR
+	// Batch ID for grouping related transactions — useful for imports and bulk operations.
+	BatchID                 *uuid.UUID   `json:"batch_id"`
+	ApprovalRequired        *bool        `json:"approval_required"`
+	ApprovalStatus          *string      `json:"approval_status"`
+	ApprovedBy              *uuid.UUID   `json:"approved_by"`
+	ApprovedAt              sql.NullTime `json:"approved_at"`
+	ApprovalNotes           *string      `json:"approval_notes"`
+	IsRecurring             *bool        `json:"is_recurring"`
+	RecurringFrequency      *string      `json:"recurring_frequency"`
+	NextRecurringDate       time.Time    `json:"next_recurring_date"`
+	IsReversed              *bool        `json:"is_reversed"`
+	ReversedByTransactionID *uuid.UUID   `json:"reversed_by_transaction_id"`
+	ReversalReason          *string      `json:"reversal_reason"`
+	// Version number for optimistic locking — prevents concurrent modifications.
+	Version          int32   `json:"version"`
 	ValidationStatus *string `json:"validation_status"`
-	// JSON array of validation errors and warnings - helps with troubleshooting
-	ValidationErrors []byte `json:"validation_errors"`
-	// JSON object for additional transaction attributes - flexible extension point
+	// JSON array of validation errors and warnings — helps with troubleshooting.
+	ValidationErrors      []byte `json:"validation_errors"`
 	TransactionAttributes []byte `json:"transaction_attributes"`
-	// Array of attachment/document IDs - links to supporting documents
+	// Array of attachment/document IDs — links to supporting documents.
 	AttachmentIds []string `json:"attachment_ids"`
-	// Array of tags for categorization and filtering - max 25 chars each
-	Tags []string `json:"tags"`
-	// Timestamp when record was created - automatic timestamp
-	CreatedAt time.Time `json:"created_at"`
-	// Timestamp when record was last updated - updated by triggers
-	UpdatedAt time.Time `json:"updated_at"`
-	// Soft delete timestamp - NULL means record is active
+	// Array of tags for categorization and filtering — max 25 chars each.
+	Tags      []string     `json:"tags"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt time.Time    `json:"updated_at"`
 	DeletedAt sql.NullTime `json:"deleted_at"`
-	// User who created the transaction - required for audit trail
-	CreatedBy uuid.UUID `json:"created_by"`
-	// User who last updated the transaction
-	UpdatedBy *uuid.UUID `json:"updated_by"`
-	// User who posted the transaction to the general ledger
-	PostedBy *uuid.UUID `json:"posted_by"`
-	// Timestamp when transaction was posted - required when status is POSTED
+	CreatedBy uuid.UUID    `json:"created_by"`
+	UpdatedBy *uuid.UUID   `json:"updated_by"`
+	PostedBy  *uuid.UUID   `json:"posted_by"`
+	// Timestamp when transaction was posted — required when status is POSTED.
 	PostedAt sql.NullTime `json:"posted_at"`
 }
 
@@ -675,12 +654,12 @@ type FinanceTransactionEntry struct {
 	TenantID      uuid.UUID  `json:"tenant_id"`
 	EntityID      *uuid.UUID `json:"entity_id"`
 	TransactionID uuid.UUID  `json:"transaction_id"`
-	// Sequential entry number within transaction - Used for ordering and reference
+	// Sequential entry number within transaction — used for ordering and reference.
 	EntryNumber int32     `json:"entry_number"`
 	AccountID   uuid.UUID `json:"account_id"`
-	// Debit amount in functional currency - Must be 0 if credit_amount > 0
+	// Debit amount in functional currency — must be 0 if credit_amount > 0.
 	DebitAmount pgtype.Numeric `json:"debit_amount"`
-	// Credit amount in functional currency - Must be 0 if debit_amount > 0
+	// Credit amount in functional currency — must be 0 if debit_amount > 0.
 	CreditAmount     pgtype.Numeric `json:"credit_amount"`
 	Description      string         `json:"description"`
 	Reference        *string        `json:"reference"`
@@ -688,7 +667,7 @@ type FinanceTransactionEntry struct {
 	Department       *string        `json:"department"`
 	ProjectID        *uuid.UUID     `json:"project_id"`
 	OriginalCurrency *string        `json:"original_currency"`
-	// Original transaction amount in original currency before conversion
+	// Original transaction amount in original currency before conversion.
 	OriginalAmount          pgtype.Numeric `json:"original_amount"`
 	ExchangeRate            pgtype.Numeric `json:"exchange_rate"`
 	TaxCode                 *string        `json:"tax_code"`
@@ -814,37 +793,37 @@ type Permission struct {
 
 // Stores person entities with ABAC security attributes. Supports multiple person types including employees, customers, vendors, and contractors. Implements soft delete and tenant isolation.
 type Person struct {
-	// UUID primary key for the person record
+	// UUID primary key for the person record.
 	ID uuid.UUID `json:"id"`
-	// Foreign key to tenants table for multi-tenant isolation
+	// Foreign key to tenants table for multi-tenant isolation.
 	TenantID uuid.UUID `json:"tenant_id"`
-	// Foreign key to entities table for hierarchical organization
+	// Foreign key to entities table for hierarchical organization.
 	EntityID uuid.UUID `json:"entity_id"`
-	// Classification of person: INDIVIDUAL, EMPLOYEE, CONTACT, CUSTOMER, VENDOR, CONTRACTOR
+	// Classification of person: INDIVIDUAL, EMPLOYEE, CONTACT, CUSTOMER, VENDOR, CONTRACTOR.
 	PersonType string `json:"person_type"`
-	// Person's first/given name
+	// Person's first/given name.
 	FirstName string `json:"first_name"`
-	// Person's last/family name
+	// Person's last/family name.
 	LastName string `json:"last_name"`
-	// Person's middle name or initial (optional)
+	// Person's middle name or initial (optional).
 	MiddleName *string `json:"middle_name"`
-	// Person's email address (must be unique per tenant when not deleted)
+	// Person's email address (must be unique per tenant when not deleted).
 	Email *string `json:"email"`
-	// Person's primary phone number
+	// Person's primary phone number.
 	Phone *string `json:"phone"`
-	// Person's date of birth
+	// Person's date of birth.
 	BirthDate time.Time `json:"birth_date"`
-	// Government-issued national ID number (unique per tenant)
+	// Government-issued national ID number (unique per tenant).
 	NationalID *string `json:"national_id"`
-	// Tax identification number
+	// Tax identification number.
 	TaxID *string `json:"tax_id"`
-	// Person's address stored as JSONB for flexible structure
+	// Person's address stored as JSONB for flexible structure.
 	Address []byte `json:"address"`
-	// JSONB containing ABAC attributes like clearance level, department, location for access control
+	// JSONB containing ABAC attributes like clearance level, department, location for access control.
 	SecurityAttributes []byte `json:"security_attributes"`
-	// Flexible JSONB storage for additional person-related data
+	// Flexible JSONB storage for additional person-related data.
 	Metadata []byte `json:"metadata"`
-	// Whether the person record is currently active
+	// Whether the person record is currently active.
 	IsActive          bool         `json:"is_active"`
 	Version           int32        `json:"version"`
 	LastValidationRun sql.NullTime `json:"last_validation_run"`
@@ -852,7 +831,7 @@ type Person struct {
 	ValidationErrors  []byte       `json:"validation_errors"`
 	CreatedAt         time.Time    `json:"created_at"`
 	UpdatedAt         time.Time    `json:"updated_at"`
-	// Soft delete timestamp - NULL means record is active
+	// Soft delete timestamp — NULL means record is active.
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
@@ -925,7 +904,7 @@ type PolicyEvaluation struct {
 	ExpiresAt        sql.NullTime `json:"expires_at"`
 }
 
-// Subdomains tenants may not register. Enforcement is via trigger on tenants table (see migration 007). Ops can add rows here without a schema migration.
+// Subdomains tenants may not register. Enforcement is via trigger on the tenants table (migration 000057). Ops can add rows here without a schema migration.
 type ReservedSubdomain struct {
 	// DNS label — lowercase alphanumeric plus hyphens, max 63 chars.
 	Subdomain string `json:"subdomain"`
@@ -944,6 +923,7 @@ type Resource struct {
 	Name        string  `json:"name"`
 	DisplayName *string `json:"display_name"`
 	Description *string `json:"description"`
+	Icon        *string `json:"icon"`
 	// Browser navigation URL. e.g. '/finance/transactions'. Used by BootService to build sidebar links.
 	NavUrl *string `json:"nav_url"`
 	// Display order within the module section. Lower = higher. Default 999.
@@ -1096,7 +1076,7 @@ type TemplateApplication struct {
 type Tenant struct {
 	// Immutable UUID — used in all external API references and foreign keys.
 	ID uuid.UUID `json:"id"`
-	// URL-safe identifier. Auto-generated from name on INSERT. IMMUTABLE after creation (trigger-enforced).
+	// URL-safe identifier. Auto-generated from name on INSERT. IMMUTABLE after creation (trigger-enforced in migration 000057).
 	Slug string `json:"slug"`
 	// Human-readable display name. Must be globally unique.
 	Name string `json:"name"`
@@ -1106,7 +1086,7 @@ type Tenant struct {
 	BillingEmail *string `json:"billing_email"`
 	// Billing contact name printed on invoices. Optional.
 	BillingContactName *string `json:"billing_contact_name"`
-	// Vanity subdomain for tenant routing. NULL = use path-based routing. Reserved names blocked by trigger.
+	// Vanity subdomain for tenant routing. NULL = use path-based routing. Reserved names blocked by trigger (000057).
 	Subdomain *string `json:"subdomain"`
 	// Lifecycle state. New tenants start PENDING until email verification + payment setup complete.
 	Status string `json:"Status"`
@@ -1132,7 +1112,7 @@ type Tenant struct {
 	RegistrationNumber *string `json:"registration_number"`
 	// Legal structure (LLC, Ltd, PLC, GmbH etc.). Migrate to Compliance module when built.
 	LegalEntityType *string `json:"legal_entity_type"`
-	// Self-reference for enterprise org trees and reseller chains. NULL = root tenant. Max depth 3 (application-enforced). Circular refs blocked by trigger.
+	// Self-reference for enterprise org trees and reseller chains. NULL = root tenant. Max depth 5 (DB-enforced), 3 recommended (UI). Circular refs blocked by trigger (000057).
 	ParentTenantID *uuid.UUID `json:"parent_tenant_id"`
 	// UUID of the actor (user or service account) that created this tenant. NULL if seeded by migration.
 	CreatedBy *uuid.UUID `json:"created_by"`
@@ -1140,18 +1120,18 @@ type Tenant struct {
 	DeletedBy *uuid.UUID `json:"deleted_by"`
 	// Row creation timestamp.
 	CreatedAt time.Time `json:"created_at"`
-	// Last row modification timestamp. Maintained by trigger.
+	// Last row modification timestamp. Maintained by trigger (migration 000057).
 	UpdatedAt time.Time `json:"updated_at"`
 	// Soft-delete timestamp. NULL = tenant is active. Never hard-DELETE a tenant row.
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
-// Master table tracking bulk tenant management operations with progress monitoring and audit trail
+// Master table tracking bulk tenant management operations with progress monitoring and audit trail.
 type TenantBulkOperation struct {
 	ID uuid.UUID `json:"id"`
-	// Type of bulk operation: SUSPEND, REACTIVATE, ARCHIVE, UPDATE_LIMITS, UPDATE_FEATURES
+	// Type of bulk operation: SUSPEND, REACTIVATE, ARCHIVE, UPDATE_LIMITS, UPDATE_FEATURES.
 	OperationType string `json:"operation_type"`
-	// UUID of administrator who initiated the bulk operation
+	// UUID of the administrator who initiated the bulk operation.
 	ActorID         uuid.UUID    `json:"actor_id"`
 	ActorName       *string      `json:"actor_name"`
 	TotalTenants    int32        `json:"total_tenants"`
@@ -1160,23 +1140,23 @@ type TenantBulkOperation struct {
 	Status          string       `json:"status"`
 	StartedAt       time.Time    `json:"started_at"`
 	CompletedAt     sql.NullTime `json:"completed_at"`
-	// JSON parameters specific to operation type (reason, limits, features, retention policies, etc.)
+	// JSON parameters specific to operation type (reason, limits, features, retention policies, etc.).
 	Parameters []byte `json:"parameters"`
-	// High-level summary of errors if operation had failures
+	// High-level summary of errors if the operation had failures.
 	ErrorSummary *string   `json:"error_summary"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
-// Individual operation results for each tenant within a bulk operation
+// Individual operation results for each tenant within a bulk operation.
 type TenantBulkOperationResult struct {
 	OperationID uuid.UUID `json:"operation_id"`
 	TenantID    uuid.UUID `json:"tenant_id"`
-	// Individual tenant operation status: PENDING, PROCESSING, COMPLETED, FAILED, SKIPPED
+	// Individual tenant operation status: PENDING, PROCESSING, COMPLETED, FAILED, SKIPPED.
 	Status string `json:"status"`
-	// Success message or additional context for this tenant operation
+	// Success message or additional context for this tenant operation.
 	Message *string `json:"message"`
-	// Detailed error information specific to this tenant if operation failed
+	// Detailed error information specific to this tenant if the operation failed.
 	ErrorDetails *string      `json:"error_details"`
 	StartedAt    sql.NullTime `json:"started_at"`
 	CompletedAt  sql.NullTime `json:"completed_at"`
@@ -1277,59 +1257,59 @@ type TenantUsageStat struct {
 
 // System user accounts with authentication, authorization, and session management. Can be linked to persons/employees or exist independently for service accounts.
 type User struct {
-	// UUID primary key for the user record
+	// UUID primary key for the user record.
 	ID uuid.UUID `json:"id"`
-	// Foreign key to tenants table for multi-tenant isolation
+	// Foreign key to tenants table for multi-tenant isolation.
 	TenantID uuid.UUID `json:"tenant_id"`
-	// Foreign key to entities table for organizational assignment
+	// Foreign key to entities table for organizational assignment.
 	EntityID uuid.UUID `json:"entity_id"`
-	// Optional foreign key to persons table (NULL for service accounts)
+	// Optional foreign key to persons table (NULL for service accounts).
 	PersonID *uuid.UUID `json:"person_id"`
-	// Optional foreign key to employees table (NULL for non-employee users)
+	// Optional foreign key to employees table (NULL for non-employee users).
 	EmployeeID *uuid.UUID `json:"employee_id"`
-	// Email address for login and communication (must be unique per tenant)
+	// Email address for login and communication (must be unique per tenant).
 	Email string `json:"email"`
-	// Unique username for login (optional, email can be used instead)
+	// Unique username for login (optional, email can be used instead).
 	Username string `json:"username"`
 	// Human-readable name shown in UI and stored in ResolvedSession.DisplayName at login. Falls back to username if not set.
 	DisplayName *string `json:"display_name"`
 	// For portal users (CUSTOMER/VENDOR/PARTNER): UUID of the business record they represent. Always read from session — never from request params. NULL for INTERNAL/SYSADMIN accounts.
 	PrincipalID *uuid.UUID `json:"principal_id"`
-	// Hashed password for authentication
+	// Hashed password for authentication.
 	PasswordHash *string `json:"password_hash"`
-	// Classification of user account: INTERNAL, CUSTOMER, VENDOR, PARTNER, API, SERVICE, SYSADMIN
+	// Classification of user account: INTERNAL, CUSTOMER, VENDOR, PARTNER, API, SERVICE, SYSADMIN.
 	UserType string `json:"user_type"`
-	// Current account status affecting login ability
+	// Current account status affecting login ability.
 	AccountStatus *string `json:"account_status"`
-	// Whether the user account is currently active
+	// Whether the user account is currently active.
 	IsActive bool `json:"is_active"`
-	// Timestamp of last successful login
+	// Timestamp of last successful login.
 	LastLoginAt sql.NullTime `json:"last_login_at"`
-	// Timestamp of last password change
+	// Timestamp of last password change.
 	PasswordChangedAt sql.NullTime `json:"password_changed_at"`
-	// Counter for failed login attempts for security monitoring
+	// Counter for failed login attempts for security monitoring.
 	FailedLoginAttempts *int32 `json:"failed_login_attempts"`
-	// Timestamp until which account is locked due to failed attempts
+	// Timestamp until which account is locked due to failed attempts.
 	LockoutUntil sql.NullTime `json:"lockout_until"`
-	// Session timeout in minutes (default 480 = 8 hours)
+	// Session timeout in minutes (default 480 = 8 hours).
 	SessionTimeoutMinutes *int32 `json:"session_timeout_minutes"`
-	// Whether multi-factor authentication is enabled
+	// Whether multi-factor authentication is enabled.
 	MfaEnabled *bool `json:"mfa_enabled"`
-	// Secret key for MFA token generation
+	// Secret key for MFA token generation.
 	MfaSecret *string `json:"mfa_secret"`
-	// JSONB containing ABAC attributes for fine-grained access control
+	// JSONB containing ABAC attributes for fine-grained access control.
 	UserAttributes []byte `json:"user_attributes"`
-	// JSONB containing user preferences and application settings
+	// JSONB containing user preferences and application settings.
 	Settings []byte `json:"settings"`
-	// Password strength score (0-100) based on complexity
+	// Password strength score (0-100) based on complexity.
 	PasswordStrength *int32 `json:"password_strength"`
-	// Flag if password found in breach databases
+	// Flag if password found in breach databases.
 	Compromised *bool `json:"compromised"`
-	// Forces password change on next login
+	// Forces password change on next login.
 	RotationRequired *bool     `json:"rotation_required"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
-	// Soft delete timestamp - NULL means record is active
+	// Soft delete timestamp — NULL means record is active.
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 

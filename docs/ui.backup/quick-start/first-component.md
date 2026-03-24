@@ -36,7 +36,7 @@ import (
     "fmt"
     "log"
     
-    "awo/web/engine"
+    "awo.so/web/engine"
 )
 
 func main() {
@@ -80,7 +80,7 @@ go run cmd/test-button/main.go
 // In your page template
 package pages
 
-import "awo/web/engine"
+import "awo.so/web/engine"
 
 templ TestPage() {
     <!DOCTYPE html>

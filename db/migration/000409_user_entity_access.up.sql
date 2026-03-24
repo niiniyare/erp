@@ -1,1 +1,9 @@
--- User entity access is handled by the entity_id in the user_roles table.
+-- ------------------------------------------------------------------------------------------------
+-- USER ENTITY ACCESS
+-- ------------------------------------------------------------------------------------------------
+-- Entity-scoped access for users is handled via the entity_id column in the user_roles table.
+-- No additional table is needed; this migration is intentionally a no-op placeholder.
+--
+-- NOTE: See 000064_platform_iam.up.sql for the user_roles table definition and
+--       000412_user_roles_functions.up.sql for the FK and helper functions.
+-- ------------------------------------------------------------------------------------------------

@@ -2897,8 +2897,8 @@ type ActionButtonProps struct {
 package user_table
 
 import "fmt"
-import "awo/web/components/atoms/buttons"
-import "awo/web/components/atoms/badges"
+import "awo.so/web/components/atoms/buttons"
+import "awo.so/web/components/atoms/badges"
 
 // UserTable - User management table with sorting, filtering, and pagination
 //

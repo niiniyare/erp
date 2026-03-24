@@ -100,7 +100,7 @@ Each feature maintains its own payload and result types:
 package finance
 
 import (
-    . "awo/internal/api/design/types"
+    . "awo.so/internal/api/design/types"
     . "goa.design/goa/v3/dsl"
 )
 
@@ -196,7 +196,7 @@ import (
 // In feature-specific types files (services/finance/types_transactions.go)
 package finance
 import (
-    . "awo/internal/api/design/types"  // Access to reusable types
+    . "awo.so/internal/api/design/types"  // Access to reusable types
     . "goa.design/goa/v3/dsl"
 )
 

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 
 	"awo.so/internal/core/iam/domain"
 	"awo.so/internal/core/iam/repository"
@@ -19,7 +20,7 @@ import (
 	"awo.so/internal/shared/tracing"
 )
 
-//  Port (interface)
+// ─── Port (interface) ─────────────────────────────────────────────────────────
 
 // SessionService handles Login / ValidateSession / Logout.
 type SessionService interface {
@@ -36,11 +37,11 @@ type SessionService interface {
 	LogoutAllForTenant(ctx context.Context, tenantID uuid.UUID) error
 }
 
-//  Implementation
+// ─── Implementation ───────────────────────────────────────────────────────────
 
 type sessionService struct {
-	identity UserService  // same package — no import needed
-	authz    AuthzService // same package
+	identity UserService
+	authz    AuthzService
 	repo     repository.SessionRepository
 	tracer   tracing.Service
 	metrics  metrics.MetricsProvider
@@ -70,13 +71,14 @@ func NewSessionServiceWithConfig(
 	log logger.Logger,
 	cfg domain.SessionConfig,
 ) SessionService {
+	scopedLog := log.WithFields(logger.Fields{"component": "iam.session"})
 	return &sessionService{
 		identity: identitySvc,
 		authz:    authzSvc,
 		repo:     repo,
 		tracer:   tracer,
 		metrics:  m,
-		log:      log,
+		log:      scopedLog,
 		cfg:      cfg,
 	}
 }
@@ -86,37 +88,70 @@ func NewSessionServiceWithConfig(
 //
 // NOTE(tenant-context): ctx must carry tenant_id via cache.TenantIDKey.
 func (s *sessionService) Login(ctx context.Context, email, password string) (*domain.ResolvedSession, string, error) {
-	ctx, span := s.tracer.StartSpan(ctx, "session.Login")
+	ctx, span := s.tracer.StartSpan(ctx, "iam.session.Login")
 	defer span.End()
+
+	timer := s.metrics.Timer("iam_session_login_duration", nil)
+	defer timer.Stop()
 
 	user, err := s.identity.Authenticate(ctx, email, password)
 	if err != nil {
-		s.metrics.IncrementCounter("session.login.failure", nil)
+		// Authenticate already increments its own counter; no need to RecordError
+		// here since authentication failures are expected security events.
+		s.metrics.IncrementCounter("iam.session.login.failure", nil)
 		return nil, "", err
 	}
 
+	span.SetAttributes(
+		attribute.String("user.id", user.ID.String()),
+		attribute.String("user.type", user.UserType),
+	)
+
 	perms, err := s.buildPermissions(ctx, user)
 	if err != nil {
-		s.log.WarnContext(ctx, "session: buildPermissions failed, continuing with empty map", logger.Fields{
-			"user_id": user.ID.String(), "error": err.Error(),
+		s.log.WarnContext(ctx, "buildPermissions failed, proceeding with empty map", logger.Fields{
+			"user_id":  user.ID.String(),
+			"error":    err.Error(),
+			"trace_id": s.tracer.GetTraceID(ctx),
 		})
 		perms = make(map[string]bool)
 	}
 
 	rawToken, hash, err := generateToken()
 	if err != nil {
-		return nil, "", fmt.Errorf("session: generate token: %w", err)
+		span.RecordError(err)
+		s.log.ErrorContext(ctx, "failed to generate session token", logger.Fields{
+			"user_id":  user.ID.String(),
+			"error":    err.Error(),
+			"trace_id": s.tracer.GetTraceID(ctx),
+		})
+		return nil, "", fmt.Errorf("iam session: generate token: %w", err)
 	}
 
 	tenantID := tenantIDFromCtx(ctx)
 
-	// TODO(entity-scope): compute real EntityScope from entity hierarchy.
-	entityScope := domain.EntityScope{
-		Type:     domain.EntityScopeEntity,
-		EntityID: user.EntityID.String(),
+	// Phase C: resolve real EntityScope from the entity hierarchy.
+	entityScope, err := s.repo.ResolveEntityScope(ctx, user.EntityID)
+	if err != nil {
+		s.log.WarnContext(ctx, "failed to resolve entity scope, using entity fallback", logger.Fields{
+			"user_id":   user.ID.String(),
+			"entity_id": user.EntityID.String(),
+			"error":     err.Error(),
+			"trace_id":  s.tracer.GetTraceID(ctx),
+		})
+		entityScope = domain.EntityScope{Type: domain.EntityScopeEntity, EntityID: user.EntityID.String()}
 	}
-	// TODO(configuration): compute real flags+settings+prefs once wired.
-	configuration := domain.DefaultConfiguration()
+
+	// Phase C: load feature flags, tenant settings, and user preferences.
+	configuration, err := s.repo.LoadLoginConfig(ctx, user.ID, tenantID)
+	if err != nil {
+		s.log.WarnContext(ctx, "failed to load login config, using defaults", logger.Fields{
+			"user_id":  user.ID.String(),
+			"error":    err.Error(),
+			"trace_id": s.tracer.GetTraceID(ctx),
+		})
+		configuration = domain.DefaultConfiguration()
+	}
 
 	now := time.Now()
 	sess := domain.Session{
@@ -131,8 +166,15 @@ func (s *sessionService) Login(ctx context.Context, email, password string) (*do
 		ExpiresAt:     now.Add(s.cfg.SessionTTL),
 		LastSeenAt:    now,
 	}
+
 	if err := s.repo.Create(ctx, sess); err != nil {
-		return nil, "", fmt.Errorf("session: persist session: %w", err)
+		span.RecordError(err)
+		s.log.ErrorContext(ctx, "failed to persist session", logger.Fields{
+			"user_id":  user.ID.String(),
+			"error":    err.Error(),
+			"trace_id": s.tracer.GetTraceID(ctx),
+		})
+		return nil, "", fmt.Errorf("iam session: persist session: %w", err)
 	}
 
 	resolved := &domain.ResolvedSession{
@@ -145,56 +187,138 @@ func (s *sessionService) Login(ctx context.Context, email, password string) (*do
 		Configuration: configuration,
 	}
 
-	// Populate cache with the full resolved session (including DisplayName).
+	// Warm cache immediately so the first ValidateSession after Login is a hit.
 	s.repo.CacheResolved(ctx, hash, resolved, s.cfg.SessionTTL)
 
-	s.metrics.IncrementCounter("session.login.success", nil)
+	s.metrics.IncrementCounter("iam.session.login.success", nil)
+	s.log.DebugContext(ctx, "session created", logger.Fields{
+		"user_id":   user.ID.String(),
+		"user_type": user.UserType,
+		"ttl":       s.cfg.SessionTTL.String(),
+	})
 	return resolved, rawToken, nil
 }
 
 // ValidateSession checks the repo (which handles cache-aside internally).
 func (s *sessionService) ValidateSession(ctx context.Context, token string) (*domain.ResolvedSession, error) {
-	ctx, span := s.tracer.StartSpan(ctx, "session.ValidateSession")
+	ctx, span := s.tracer.StartSpan(ctx, "iam.session.ValidateSession")
 	defer span.End()
+
+	timer := s.metrics.Timer("iam_session_validate_duration", nil)
+	defer timer.Stop()
 
 	hash := sha256hex(token)
 	resolved, err := s.repo.ValidateToken(ctx, hash)
 	if err != nil {
-		return nil, fmt.Errorf("session: validate token: %w", err)
+		span.RecordError(err)
+		s.log.ErrorContext(ctx, "session validation error", logger.Fields{
+			"error":    err.Error(),
+			"trace_id": s.tracer.GetTraceID(ctx),
+		})
+		return nil, fmt.Errorf("iam session: validate token: %w", err)
 	}
 	if resolved == nil {
+		s.metrics.IncrementCounter("iam.session.validate.miss", nil)
 		return nil, errors.ErrAuthenticationFailed
 	}
+
+	s.metrics.IncrementCounter("iam.session.validate.hit", nil)
 	return resolved, nil
 }
 
 // Logout invalidates the session via the repo (DB + cache eviction).
 func (s *sessionService) Logout(ctx context.Context, token string) error {
-	ctx, span := s.tracer.StartSpan(ctx, "session.Logout")
+	ctx, span := s.tracer.StartSpan(ctx, "iam.session.Logout")
 	defer span.End()
+
+	timer := s.metrics.Timer("iam_session_logout_duration", nil)
+	defer timer.Stop()
 
 	hash := sha256hex(token)
 	if err := s.repo.Invalidate(ctx, hash); err != nil {
-		return fmt.Errorf("session: logout: %w", err)
+		span.RecordError(err)
+		s.log.ErrorContext(ctx, "failed to invalidate session", logger.Fields{
+			"error":    err.Error(),
+			"trace_id": s.tracer.GetTraceID(ctx),
+		})
+		return fmt.Errorf("iam session: logout: %w", err)
 	}
+
+	s.metrics.IncrementCounter("iam.session.logout", nil)
 	return nil
 }
 
-//  Permission computation
+func (s *sessionService) LogoutAllForUser(ctx context.Context, userID uuid.UUID) error {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.session.LogoutAllForUser")
+	defer span.End()
+	span.SetAttributes(attribute.String("user.id", userID.String()))
+
+	timer := s.metrics.Timer("iam_session_logout_all_duration", metrics.Fields{"scope": "user"})
+	defer timer.Stop()
+
+	if err := s.repo.InvalidateByUser(ctx, userID); err != nil {
+		span.RecordError(err)
+		s.log.ErrorContext(ctx, "failed to invalidate user sessions", logger.Fields{
+			"user_id":  userID.String(),
+			"error":    err.Error(),
+			"trace_id": s.tracer.GetTraceID(ctx),
+		})
+		return err
+	}
+
+	s.log.DebugContext(ctx, "all user sessions invalidated", logger.Fields{"user_id": userID.String()})
+	s.metrics.IncrementCounter("iam.session.logout.bulk", metrics.Fields{"scope": "user"})
+	return nil
+}
+
+func (s *sessionService) LogoutAllForTenant(ctx context.Context, tenantID uuid.UUID) error {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.session.LogoutAllForTenant")
+	defer span.End()
+	span.SetAttributes(attribute.String("tenant.id", tenantID.String()))
+
+	timer := s.metrics.Timer("iam_session_logout_all_duration", metrics.Fields{"scope": "tenant"})
+	defer timer.Stop()
+
+	if err := s.repo.InvalidateByTenant(ctx, tenantID); err != nil {
+		span.RecordError(err)
+		s.log.ErrorContext(ctx, "failed to invalidate tenant sessions", logger.Fields{
+			"tenant_id": tenantID.String(),
+			"error":     err.Error(),
+			"trace_id":  s.tracer.GetTraceID(ctx),
+		})
+		return err
+	}
+
+	s.log.DebugContext(ctx, "all tenant sessions invalidated", logger.Fields{"tenant_id": tenantID.String()})
+	s.metrics.IncrementCounter("iam.session.logout.bulk", metrics.Fields{"scope": "tenant"})
+	return nil
+}
+
+// ─── Permission computation ───────────────────────────────────────────────────
 
 func (s *sessionService) buildPermissions(ctx context.Context, user *domain.User) (map[string]bool, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.session.buildPermissions")
+	defer span.End()
+
 	subject := subjectForUser(user)
 	domainName := domainForUser(user)
+
+	span.SetAttributes(
+		attribute.String("authz.subject", subject),
+		attribute.String("authz.domain", domainName),
+	)
 
 	// GetImplicitRoles traverses the full role inheritance chain, unlike
 	// GetRoles which only returns directly-assigned roles.
 	roles, err := s.authz.GetImplicitRoles(ctx, subject, domainName)
 	if err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("buildPermissions: GetImplicitRoles: %w", err)
 	}
 
 	policies, err := s.authz.GetPolicies(ctx, domainName)
 	if err != nil {
+		span.RecordError(err)
 		return nil, fmt.Errorf("buildPermissions: GetPolicies: %w", err)
 	}
 
@@ -226,11 +350,15 @@ func (s *sessionService) buildPermissions(ctx context.Context, user *domain.User
 		}
 	}
 
-	s.metrics.IncrementCounter("session.permissions_computed", nil)
+	span.SetAttributes(
+		attribute.Int("authz.roles_count", len(roles)),
+		attribute.Int("authz.permissions_count", len(perms)),
+	)
+	s.metrics.IncrementCounter("iam.session.permissions_computed", nil)
 	return perms, nil
 }
 
-//  Helpers
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 func generateToken() (rawToken, hash string, err error) {
 	b := make([]byte, 32)
@@ -282,18 +410,6 @@ func domainForUser(user *domain.User) string {
 	default:
 		return domain.TenantDomain(tenantID)
 	}
-}
-
-func (s *sessionService) LogoutAllForUser(ctx context.Context, userID uuid.UUID) error {
-	ctx, span := s.tracer.StartSpan(ctx, "session.LogoutAllForUser")
-	defer span.End()
-	return s.repo.InvalidateByUser(ctx, userID)
-}
-
-func (s *sessionService) LogoutAllForTenant(ctx context.Context, tenantID uuid.UUID) error {
-	ctx, span := s.tracer.StartSpan(ctx, "session.LogoutAllForTenant")
-	defer span.End()
-	return s.repo.InvalidateByTenant(ctx, tenantID)
 }
 
 func displayName(user *domain.User) string {

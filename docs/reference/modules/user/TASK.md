@@ -314,13 +314,13 @@ import (
     "context"
     "github.com/google/uuid"
     
-    "awo/internal/core/iam/identity"
-    "awo/internal/core/iam/authorization" 
-    "awo/internal/core/iam/access"
-    "awo/internal/core/iam/analytics"
-    "awo/internal/shared/logger"
-    "awo/internal/shared/metrics"
-    "awo/internal/shared/tracing"
+    "awo.so/internal/core/iam/identity"
+    "awo.so/internal/core/iam/authorization" 
+    "awo.so/internal/core/iam/access"
+    "awo.so/internal/core/iam/analytics"
+    "awo.so/internal/shared/logger"
+    "awo.so/internal/shared/metrics"
+    "awo.so/internal/shared/tracing"
 )
 
 type Service interface {

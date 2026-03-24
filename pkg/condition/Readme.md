@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `condition` package provides a production-ready runtime condition evaluation engine for feature flags, attribute-based access control (ABAC) policies, and customer workflows. It offers a safe, performant, and flexible way to evaluate complex business logic without executing arbitrary code.
+The `condition` package provides a production-ready runtime condition evaluation engine for feature flags, attribute-based access control (ABAC) policies/Role Based Access Control RBAC, and customer workflows. It offers a safe, performant, and flexible way to evaluate complex business logic without executing arbitrary code.
 
 **Key Features:**
 - Safe condition evaluation with resource limits and timeout protection
@@ -30,7 +30,7 @@ package main
 
 import (
 	"context"
-	"awo/condition"
+	"awo.so/pkg/condition"
 )
 
 func main() {
@@ -722,6 +722,6 @@ When extending the package:
 4. Add tests for edge cases
 5. Update documentation
 
-## License
 
-[Your License Here]
+
+

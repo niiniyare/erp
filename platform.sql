@@ -1,18 +1,16 @@
 --db/migration/000015_platform_modules.up.sql-
--- ------------------------------------------------------------------------------------------------
+-- 
 -- MODULES TABLE
--- ------------------------------------------------------------------------------------------------
+-- 
 -- Organises system functionality into logical groups for permission management and feature control.
 -- scope IN ('SYSTEM', 'TENANT'):
 --   SYSTEM modules ship with the platform and are readable by all tenants.
 --   TENANT modules are custom modules created by a specific tenant (tenant_id NOT NULL).
 --
--- NOTE: FK constraint on tenant_id, updated_at trigger, and RLS policies are added in
---       migration 000062_platform_iam_constraints.up.sql (after tenants + trigger fn exist).
--- ------------------------------------------------------------------------------------------------
+-- 
 CREATE TABLE IF NOT EXISTS modules (
   id           UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id    UUID,        -- FK to tenants(id) added in 000062
+  -- tenant_id    UUID,        -- FK to tenants(id) added in 000062
   scope        VARCHAR(10)  NOT NULL DEFAULT 'SYSTEM'
                               CHECK (scope IN ('SYSTEM', 'TENANT')),
   name         VARCHAR(50)  NOT NULL,
@@ -41,9 +39,9 @@ COMMENT ON COLUMN  modules.module_type IS 'Helps categorise industry-specific ap
 COMMENT ON COLUMN  modules.version    IS 'Module version for tracking feature updates and compatibility.';
 COMMENT ON COLUMN  modules.updated_at IS 'Updated by trigger on every row change — use for cache invalidation.';
 
--- ------------------------------------------------------------------------------------------------
+-- 
 -- INDEXES
--- ------------------------------------------------------------------------------------------------
+-- 
 CREATE INDEX idx_modules_scope    ON modules(scope, is_active) WHERE is_active = TRUE;
 CREATE INDEX idx_modules_tenant   ON modules(tenant_id)        WHERE tenant_id IS NOT NULL;
 CREATE INDEX idx_modules_category ON modules(category)         WHERE is_active = TRUE;
@@ -51,14 +49,12 @@ CREATE INDEX idx_modules_category ON modules(category)         WHERE is_active =
 --
 --db/migration/0000016_platform_resources.up.
 --
--- ------------------------------------------------------------------------------------------------
+-- 
 -- RESOURCES TABLE
--- ------------------------------------------------------------------------------------------------
+-- 
 -- Defines system resources that can be protected by permissions (APIs, UI components, data, etc.).
 --
--- NOTE: updated_at trigger is added in 000062_platform_iam_constraints.up.sql
---       (after update_updated_at_column() exists in 000057).
--- ------------------------------------------------------------------------------------------------
+-- 
 CREATE TABLE IF NOT EXISTS resources (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   module_id UUID NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
@@ -98,21 +94,18 @@ COMMENT ON COLUMN resources.updated_at IS 'Updated by trigger on every row chang
 --
 --db/migration/0000017_platform_actions.up.sql
 --
--- ------------------------------------------------------------------------------------------------
+-- 
 -- ACTIONS TABLE
--- ------------------------------------------------------------------------------------------------
+-- 
 -- Defines actions that can be performed on resources, with risk and approval requirements.
 -- scope IN ('SYSTEM', 'TENANT'):
 --   SYSTEM actions are standard platform actions (CREATE, READ, APPROVE, etc.).
 --   TENANT actions are custom actions defined by a specific tenant.
 --
--- NOTE: FK constraints on tenant_id and approver_role_id, updated_at trigger, and RLS policies
---       are added in 000062_platform_iam_constraints.up.sql (after tenants, roles, and
---       trigger/RLS functions all exist).
--- ------------------------------------------------------------------------------------------------
+-- 
 CREATE TABLE IF NOT EXISTS actions (
   id           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id    UUID,        -- FK to tenants(id) added in 000062
+  -- tenant_id    UUID,        -- FK to tenants(id) added in 000062
   scope        VARCHAR(10) NOT NULL DEFAULT 'SYSTEM'
                              CHECK (scope IN ('SYSTEM', 'TENANT')),
   name         VARCHAR(100) NOT NULL,
@@ -158,9 +151,9 @@ COMMENT ON COLUMN actions.requires_approval IS 'Whether this action requires exp
 COMMENT ON COLUMN actions.approver_role_id  IS 'Role whose members can approve this action. Required when requires_approval=TRUE. FK enforced in 000062.';
 COMMENT ON COLUMN actions.updated_at        IS 'Updated by trigger on every row change — use for cache invalidation.';
 
--- ------------------------------------------------------------------------------------------------
+-- 
 -- INDEXES
--- ------------------------------------------------------------------------------------------------
+-- 
 CREATE INDEX idx_actions_scope    ON actions(scope, is_active)    WHERE is_active = TRUE;
 CREATE INDEX idx_actions_tenant   ON actions(tenant_id)           WHERE tenant_id IS NOT NULL;
 CREATE INDEX idx_actions_type     ON actions(action_type, scope);

@@ -89,8 +89,8 @@ import (
     "context"
     "fmt"
     
-    "awo/internal/core/settings/service"
-    "awo/internal/core/finance/domain"
+    "awo.so/internal/core/settings/service"
+    "awo.so/internal/core/finance/domain"
 )
 
 type FinanceSettingsIntegration struct {
