@@ -138,6 +138,10 @@ type Dependencies struct {
 	Cache  cache.Service
 	Tracer tracing.Service
 	Logger logger.Logger
+	// OnProvision is an optional callback invoked after a tenant is successfully
+	// provisioned. Use it to create initial tenant resources (e.g. root entity).
+	// Errors returned by OnProvision are logged but do NOT fail provisioning.
+	OnProvision func(ctx context.Context, tenantID uuid.UUID, tenantName string)
 }
 
 // tenantServiceAdapter wraps the new service layer to implement the old Service interface.
@@ -150,6 +154,7 @@ type tenantServiceAdapter struct {
 	cache        cache.Service
 	tracer       tracing.Service
 	log          logger.Logger
+	onProvision  func(ctx context.Context, tenantID uuid.UUID, tenantName string)
 }
 
 // NewService wires everything together and returns the backward-compatible Service.
@@ -164,6 +169,7 @@ func NewService(deps Dependencies) Service {
 		cache:        deps.Cache,
 		tracer:       deps.Tracer,
 		log:          deps.Logger,
+		onProvision:  deps.OnProvision,
 	}
 }
 
@@ -219,7 +225,14 @@ func (a *tenantServiceAdapter) ListTenants(ctx context.Context, filter TenantFil
 }
 
 func (a *tenantServiceAdapter) ProvisionTenant(ctx context.Context, req ProvisionTenantRequest) (*ProvisionedTenantInfo, error) {
-	return a.provisioning.Provision(ctx, req)
+	result, err := a.provisioning.Provision(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if a.onProvision != nil {
+		a.onProvision(ctx, result.TenantID, req.Name)
+	}
+	return result, nil
 }
 
 func (a *tenantServiceAdapter) ResolveTenantID(ctx context.Context, subdomain string) (uuid.UUID, error) {

@@ -337,7 +337,7 @@ These were completed in the earlier `identity` + `authz` packages and migrated i
 
 ---
 
-## 🔲 Phase 8 — Entity Module
+## ✅ Phase 8 — Entity Module
 
 > **Context:** The docs describe an entity hierarchy — a tree of org nodes (Company → Region → Branch → Department). Every user belongs to an entity. At login, the user's entity position determines their `EntityScope` (do they see all data, their subtree, or just their own entity?).
 >
@@ -345,46 +345,33 @@ These were completed in the earlier `identity` + `authz` packages and migrated i
 >
 > **Why it matters:** Without a real entity tree, all users default to `EntityScopeAll` which means everyone sees all data within their tenant — there's no org-level data partitioning.
 
-### E1 — DB migration: `entities` table
+### ✅ E1 — DB migration: `entities` table
 
-> This creates the organization tree. The `entity_path` is a materialized path (like `/root_id/parent_id/this_id/`) used for efficient subtree queries.
+> Already existed — richer schema than described: uuid PK, entity_path, entity_level, hierarchy_paths closure table, accrual settings, soft delete, etc.
 
-- [ ] Write migration `000XXX_create_entities.up.sql`:
-  ```sql
-  CREATE TABLE entities (
-    id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id    uuid NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
-    name         text NOT NULL,
-    entity_type  text NOT NULL,  -- 'company'|'subsidiary'|'department'|'region'|'branch'
-    parent_id    uuid REFERENCES entities(id) ON DELETE RESTRICT,
-    entity_path  text,           -- materialized path: /root_id/parent_id/this_id/
-    entity_level int  NOT NULL DEFAULT 1,
-    is_active    bool NOT NULL DEFAULT true,
-    created_at   timestamptz NOT NULL DEFAULT now()
-  );
-  CREATE INDEX idx_entities_tenant ON entities(tenant_id);
-  CREATE INDEX idx_entities_path ON entities(entity_path text_pattern_ops);
-  ```
-- [ ] Add trigger or service logic to auto-compute `entity_path` when a node is inserted
+- [x] `entities` table exists with all required columns including `entity_path` and `entity_level`
+- [x] `hierarchy_paths` closure table exists for efficient subtree queries
+- [x] `entity_path` computed in app layer on create (service sets `/parent_path/uuid/`)
 
-### E2 — SQLC queries: `db/queries/entities.sql`
+### ✅ E2 — SQLC queries: `db/queries/entities.sql`
 
-- [ ] `CreateEntity` — insert new node, auto-set entity_path from parent
-- [ ] `GetEntityByID` — fetch single node
-- [ ] `ListEntitiesByTenant` — list all nodes for a tenant (tree structure)
-- [ ] `GetEntityPath` — return the full path for an entity ID
-- [ ] `GetEntitySubtreeIDs` — return all IDs under a given path prefix (for subtree queries)
+> Already existed — full set of queries generated.
 
-### E3 — `internal/core/iam/repository/entity_repo.go`
+- [x] `CreateEntity` — inserts entity; app layer sets `entity_path` and `entity_level`
+- [x] `GetEntity` — fetch by UUID within current tenant (RLS)
+- [x] `ListEntities` — list all non-deleted for current tenant (RLS)
+- [x] `GetEntityPath` — full ancestor path via `hierarchy_paths`
+- [x] `GetEntitySubtree` / `GetEntityDescendants` — subtree queries
+- [x] `CreateHierarchyPath` — inserts closure table rows (app layer calls for self + parent→child)
 
-> The entity repository translates between the domain's EntityScope concept and the actual database rows.
+### ✅ E3 — `internal/core/entity/` bounded context
 
-- [ ] `EntityRepository` interface:
-  - `Create(ctx, tenantID uuid.UUID, params CreateEntityParams) (*EntityNode, error)`
-  - `GetByID(ctx, id uuid.UUID) (*EntityNode, error)`
-  - `ListByTenant(ctx, tenantID uuid.UUID) ([]*EntityNode, error)`
-  - `ResolveScope(ctx, entityID uuid.UUID) (EntityScope, error)` — returns all/subtree/entity scope based on position in tree
-- [ ] `entityRepo` implementation using sqlc queries
+> Placed as its own module (not inside IAM) per project conventions — each module is independent.
+
+- [x] `internal/core/entity/domain/entity.go` — `EntityNode`, `EntityType` enum (company/subsidiary/department/region/branch), `CreateEntityRequest`
+- [x] `internal/core/entity/repository/repository.go` — `Repository` interface + `postgresRepo` implementation using `store.CreateEntity`, `store.GetEntity`, `store.ListEntities`, `store.CreateHierarchyPath`
+- [x] `internal/core/entity/service/service.go` — `Service` interface + `entityService`; `CreateRoot` opens a dedicated `store.WithTenant` transaction so RLS is set correctly during provisioning
+- [x] `internal/core/entity/entity.go` — facade re-exporting types and `NewService`/`NewRepository` constructors
 
 ### ✅ E4 — Wire `EntityScope` into `SessionService.Login()`
 
@@ -398,12 +385,14 @@ These were completed in the earlier `identity` + `authz` packages and migrated i
 - [x] SQLC query `ResolveEntityScope` exists in `db/sqlc/querier.go`
 - [x] Non-fatal: falls back to `EntityScopeEntity` on DB error
 
-### E5 — Auto-create root entity when tenant is provisioned
+### ✅ E5 — Auto-create root entity when tenant is provisioned
 
 > Every tenant needs at least one entity (their company root) before any users can be created.
 
-- [ ] In `tenant.Service.Provision()` (or post-provision step), call `entityRepo.Create()` to create a company-root entity for the new tenant
-- [ ] Store the root entity ID on the tenant or return it from provisioning so the first admin user can be assigned to it
+- [x] Added `OnProvision func(ctx, tenantID, tenantName)` callback field to `tenant.Dependencies`
+- [x] `tenant.ProvisionTenant()` calls `OnProvision` after successful provisioning (best-effort, non-fatal)
+- [x] Callers wire it: `deps.OnProvision = func(ctx, id, name) { entitySvc.CreateRoot(ctx, id, name) }`
+- [x] Root entity ID is accessible via `entitySvc.List(ctx)` in the tenant context after provisioning
 
 ---
 
