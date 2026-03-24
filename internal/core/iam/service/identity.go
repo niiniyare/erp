@@ -48,15 +48,37 @@ type UserService interface {
 	AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
 	RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
 	GetUserRoles(ctx context.Context, userID uuid.UUID) ([]*domain.UserRole, error)
+
+	// MFA lifecycle
+	// InitiateMFA generates a fresh TOTP secret and caches it pending confirmation.
+	// The returned MFASetup.Secret must be shown to the user once (for their authenticator app).
+	// The secret is NOT saved to the DB until ConfirmMFA succeeds.
+	InitiateMFA(ctx context.Context, userID uuid.UUID) (*domain.MFASetup, error)
+	// ConfirmMFA validates the first TOTP code and if valid, persists the secret
+	// in the DB and marks MFA as enabled for the user.
+	ConfirmMFA(ctx context.Context, userID uuid.UUID, code string) error
+	// ValidateMFACode verifies a TOTP code for an already-enrolled user.
+	// Returns (false, nil) when the code is wrong or replayed.
+	ValidateMFACode(ctx context.Context, userID uuid.UUID, code string) (bool, error)
+	// DisableMFA requires password re-verification before clearing the secret.
+	DisableMFA(ctx context.Context, userID uuid.UUID, password string) error
 }
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-// UserConfig holds brute-force protection thresholds.
+// UserConfig holds brute-force protection thresholds and MFA settings.
 // TODO(settings): Replace hardcoded defaults with a settings.ConfigurationService lookup.
 type UserConfig struct {
 	MaxFailedAttempts int
 	LockoutDuration   time.Duration
+
+	// MFAEncryptionKey is the 32-byte AES-256 key used to encrypt TOTP secrets
+	// at rest.  MFA operations fail if this is not set.
+	// Set from a secure secret store (e.g. Vault, KMS) — do not hard-code.
+	MFAEncryptionKey []byte
+
+	// MFAIssuer is the issuer name shown in authenticator apps (default: "AWO ERP").
+	MFAIssuer string
 }
 
 // DefaultUserConfig returns safe production defaults.
@@ -64,6 +86,7 @@ func DefaultUserConfig() UserConfig {
 	return UserConfig{
 		MaxFailedAttempts: 5,
 		LockoutDuration:   15 * time.Minute,
+		MFAIssuer:         "AWO ERP",
 	}
 }
 
@@ -542,6 +565,166 @@ func (s *userService) GetUserRoles(_ context.Context, _ uuid.UUID) ([]*domain.Us
 	// TODO(task-15): implement via UserRepository.GetUserRoleAssignments once that
 	// query is added. Casbin-level roles are available via AuthzService.GetRoles.
 	return []*domain.UserRole{}, nil
+}
+
+// ─── MFA methods ──────────────────────────────────────────────────────────────
+
+func (s *userService) mfaKey() ([]byte, error) {
+	if len(s.cfg.MFAEncryptionKey) != 32 {
+		return nil, fmt.Errorf("iam identity: MFA not configured (encryption key must be 32 bytes)")
+	}
+	return s.cfg.MFAEncryptionKey, nil
+}
+
+func (s *userService) mfaIssuer() string {
+	if s.cfg.MFAIssuer != "" {
+		return s.cfg.MFAIssuer
+	}
+	return "AWO ERP"
+}
+
+func (s *userService) InitiateMFA(ctx context.Context, userID uuid.UUID) (*domain.MFASetup, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.identity.InitiateMFA")
+	defer span.End()
+
+	key, err := s.mfaKey()
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := s.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+
+	secret, err := generateTOTPSecret()
+	if err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("iam identity: generate totp secret: %w", err)
+	}
+
+	encrypted, err := encryptSecret(key, secret)
+	if err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("iam identity: encrypt mfa secret: %w", err)
+	}
+
+	if err := s.repo.StorePendingMFASetup(ctx, userID, encrypted); err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("iam identity: store pending mfa setup: %w", err)
+	}
+
+	s.metrics.IncrementCounter("iam.mfa.initiate", nil)
+	return &domain.MFASetup{
+		Secret: secret,
+		QRURI:  buildTOTPURI(s.mfaIssuer(), user.Email, secret),
+	}, nil
+}
+
+func (s *userService) ConfirmMFA(ctx context.Context, userID uuid.UUID, code string) error {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.identity.ConfirmMFA")
+	defer span.End()
+
+	key, err := s.mfaKey()
+	if err != nil {
+		return err
+	}
+
+	encrypted, err := s.repo.GetPendingMFASetup(ctx, userID)
+	if err != nil {
+		return sharedErrors.ErrMFAInvalid
+	}
+
+	secret, err := decryptSecret(key, encrypted)
+	if err != nil {
+		span.RecordError(err)
+		return sharedErrors.ErrMFAInvalid
+	}
+
+	_, ok := verifyTOTP(secret, code, 1)
+	if !ok {
+		return sharedErrors.ErrMFAInvalid
+	}
+
+	if err := s.repo.SetMFASecret(ctx, userID, encrypted); err != nil {
+		span.RecordError(err)
+		return fmt.Errorf("iam identity: save mfa secret: %w", err)
+	}
+	_ = s.repo.ClearPendingMFASetup(ctx, userID)
+
+	s.metrics.IncrementCounter("iam.mfa.confirmed", nil)
+	s.log.DebugContext(ctx, "MFA enabled", logger.Fields{"user_id": userID.String()})
+	return nil
+}
+
+func (s *userService) ValidateMFACode(ctx context.Context, userID uuid.UUID, code string) (bool, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.identity.ValidateMFACode")
+	defer span.End()
+
+	key, err := s.mfaKey()
+	if err != nil {
+		return false, err
+	}
+
+	encrypted, enabled, err := s.repo.GetMFASecret(ctx, userID)
+	if err != nil {
+		span.RecordError(err)
+		return false, err
+	}
+	if !enabled || encrypted == "" {
+		return false, nil
+	}
+
+	secret, err := decryptSecret(key, encrypted)
+	if err != nil {
+		span.RecordError(err)
+		return false, fmt.Errorf("iam identity: decrypt mfa secret: %w", err)
+	}
+
+	window, ok := verifyTOTP(secret, code, 1)
+	if !ok {
+		s.metrics.IncrementCounter("iam.mfa.invalid", nil)
+		return false, nil
+	}
+
+	// Replay prevention: reject if this window was already used.
+	replayed, err := s.repo.CheckAndMarkMFAReplay(ctx, userID, window)
+	if err != nil {
+		span.RecordError(err)
+		return false, fmt.Errorf("iam identity: replay check: %w", err)
+	}
+	if replayed {
+		s.metrics.IncrementCounter("iam.mfa.replay", nil)
+		s.log.WarnContext(ctx, "MFA replay attempt blocked", logger.Fields{"user_id": userID.String()})
+		return false, nil
+	}
+
+	s.metrics.IncrementCounter("iam.mfa.success", nil)
+	return true, nil
+}
+
+func (s *userService) DisableMFA(ctx context.Context, userID uuid.UUID, password string) error {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.identity.DisableMFA")
+	defer span.End()
+
+	currentHash, err := s.repo.GetUserPassword(ctx, userID)
+	if err != nil {
+		span.RecordError(err)
+		return sharedErrors.ErrAuthenticationFailed
+	}
+	if !verifyPassword(currentHash, password) {
+		return sharedErrors.ErrAuthenticationFailed
+	}
+
+	if err := s.repo.ClearMFASecret(ctx, userID); err != nil {
+		span.RecordError(err)
+		return fmt.Errorf("iam identity: disable mfa: %w", err)
+	}
+
+	s.metrics.IncrementCounter("iam.mfa.disabled", nil)
+	s.log.DebugContext(ctx, "MFA disabled", logger.Fields{"user_id": userID.String()})
+	return nil
 }
 
 // ─── Password helpers ─────────────────────────────────────────────────────────

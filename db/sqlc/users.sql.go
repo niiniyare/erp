@@ -175,6 +175,43 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (*User, 
 	return &i, err
 }
 
+const disableMFA = `-- name: DisableMFA :exec
+UPDATE users
+SET
+  mfa_secret = NULL,
+  mfa_enabled = FALSE,
+  updated_at = NOW()
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+`
+
+func (q *Queries) DisableMFA(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, disableMFA, id)
+	return err
+}
+
+const enableMFA = `-- name: EnableMFA :exec
+UPDATE users
+SET
+  mfa_secret = $2,
+  mfa_enabled = TRUE,
+  updated_at = NOW()
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+`
+
+type EnableMFAParams struct {
+	ID        uuid.UUID `json:"id"`
+	MfaSecret *string   `json:"mfa_secret"`
+}
+
+func (q *Queries) EnableMFA(ctx context.Context, arg EnableMFAParams) error {
+	_, err := q.db.Exec(ctx, enableMFA, arg.ID, arg.MfaSecret)
+	return err
+}
+
 const getCompleteUserProfile = `-- name: GetCompleteUserProfile :one
 SELECT
   u.id, u.tenant_id, u.entity_id, u.person_id, u.employee_id, u.email, u.username, u.display_name, u.principal_id, u.password_hash, u.user_type, u.account_status, u.is_active, u.last_login_at, u.password_changed_at, u.failed_login_attempts, u.lockout_until, u.session_timeout_minutes, u.mfa_enabled, u.mfa_secret, u.user_attributes, u.settings, u.password_strength, u.compromised, u.rotation_required, u.created_at, u.updated_at, u.deleted_at,
@@ -502,6 +539,30 @@ func (q *Queries) GetUserFailedAttempts(ctx context.Context, id uuid.UUID) (*Get
 	row := q.db.QueryRow(ctx, getUserFailedAttempts, id)
 	var i GetUserFailedAttemptsRow
 	err := row.Scan(&i.FailedLoginAttempts, &i.LockoutUntil)
+	return &i, err
+}
+
+const getUserMFASecret = `-- name: GetUserMFASecret :one
+SELECT
+  mfa_enabled,
+  mfa_secret
+FROM
+  users
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+`
+
+type GetUserMFASecretRow struct {
+	MfaEnabled *bool   `json:"mfa_enabled"`
+	MfaSecret  *string `json:"mfa_secret"`
+}
+
+func (q *Queries) GetUserMFASecret(ctx context.Context, id uuid.UUID) (*GetUserMFASecretRow, error) {
+	row := q.db.QueryRow(ctx, getUserMFASecret, id)
+	var i GetUserMFASecretRow
+	err := row.Scan(&i.MfaEnabled, &i.MfaSecret)
 	return &i, err
 }
 

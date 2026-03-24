@@ -15,6 +15,7 @@ import (
 
 type Querier interface {
 	ActivateAccountValidationRule(ctx context.Context, arg ActivateAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
+	ActivateAction(ctx context.Context, id uuid.UUID) (*Action, error)
 	AddTransactionAttachment(ctx context.Context, arg AddTransactionAttachmentParams) error
 	AddTransactionTag(ctx context.Context, arg AddTransactionTagParams) error
 	ApproveTransaction(ctx context.Context, arg ApproveTransactionParams) (*FinanceTransaction, error)
@@ -89,6 +90,8 @@ type Querier interface {
 	CountAccountValidationRules(ctx context.Context, arg CountAccountValidationRulesParams) (int64, error)
 	CountAccounts(ctx context.Context, arg CountAccountsParams) (int64, error)
 	CountAccountsWithGroups(ctx context.Context, arg CountAccountsWithGroupsParams) (int64, error)
+	// Summary of active action counts grouped by risk level — useful for dashboards.
+	CountActionsByRiskLevel(ctx context.Context, tenantID *uuid.UUID) ([]*CountActionsByRiskLevelRow, error)
 	CountActiveSessionsByUser(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountAttributeDefinitions(ctx context.Context, arg CountAttributeDefinitionsParams) (int64, error)
 	CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error)
@@ -117,6 +120,17 @@ type Querier interface {
 	// Create a new account group with proper entity isolation
 	CreateAccountGroup(ctx context.Context, arg CreateAccountGroupParams) (*FinanceAccountGroup, error)
 	CreateAccountValidationRule(ctx context.Context, arg CreateAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
+	// -- name: CreateAction :one
+	// INSERT INTO
+	//   actions (tenant_id, name, action_type)
+	// VALUES
+	//   (current_tenant_id(), $1, $2)
+	// RETURNING
+	//   *;
+	//
+	// ============================================================
+	// ACTIONS QUERIES
+	// ============================================================
 	CreateAction(ctx context.Context, arg CreateActionParams) (*Action, error)
 	// Attribute Definitions CRUD Operations
 	CreateAttributeDefinition(ctx context.Context, arg CreateAttributeDefinitionParams) (*AttributeDefinition, error)
@@ -218,10 +232,12 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (*User, error)
 	CreateUserNotificationPreferences(ctx context.Context, arg CreateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	DeactivateAccountValidationRule(ctx context.Context, arg DeactivateAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
+	DeactivateAction(ctx context.Context, id uuid.UUID) (*Action, error)
 	DeactivateConfigurationTemplate(ctx context.Context, templateID uuid.UUID) error
 	DeactivateRoleAssignment(ctx context.Context, arg DeactivateRoleAssignmentParams) error
 	DeleteAccountBalance(ctx context.Context, id uuid.UUID) error
 	DeleteAccountValidationRule(ctx context.Context, id uuid.UUID) error
+	DeleteAction(ctx context.Context, id uuid.UUID) error
 	DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
 	DeleteAttributeValue(ctx context.Context, arg DeleteAttributeValueParams) error
 	DeleteEntityConfiguration(ctx context.Context, arg DeleteEntityConfigurationParams) error
@@ -250,6 +266,8 @@ type Querier interface {
 	// Use case: Data retention policy enforcement, database cleanup
 	DeleteUnusedEntityStates(ctx context.Context, arg DeleteUnusedEntityStatesParams) error
 	DeleteUserPreference(ctx context.Context, arg DeleteUserPreferenceParams) error
+	DisableMFA(ctx context.Context, id uuid.UUID) error
+	EnableMFA(ctx context.Context, arg EnableMFAParams) error
 	ExpireAttributeValue(ctx context.Context, arg ExpireAttributeValueParams) error
 	// =====================================================
 	// ADVANCED QUERIES WITH FILTERS
@@ -351,6 +369,8 @@ type Querier interface {
 	// ENHANCED ACCOUNT ACTIVITY QUERIES
 	// =====================================================================
 	GetAccountsWithRecentActivity(ctx context.Context, arg GetAccountsWithRecentActivityParams) ([]*VFinanceAccountActivity, error)
+	GetActionByID(ctx context.Context, id uuid.UUID) (*Action, error)
+	GetActionByName(ctx context.Context, arg GetActionByNameParams) (*Action, error)
 	GetActiveAccounts(ctx context.Context, entityID *uuid.UUID) ([]*VFinanceAccountActivity, error)
 	GetActiveFeatureFlags(ctx context.Context) ([]*FeatureFlag, error)
 	GetActiveTenants(ctx context.Context) ([]*Tenant, error)
@@ -886,6 +906,7 @@ type Querier interface {
 	GetUserByUsername(ctx context.Context, username string) (*User, error)
 	GetUserEvaluationHistory(ctx context.Context, arg GetUserEvaluationHistoryParams) ([]*PolicyEvaluation, error)
 	GetUserFailedAttempts(ctx context.Context, id uuid.UUID) (*GetUserFailedAttemptsRow, error)
+	GetUserMFASecret(ctx context.Context, id uuid.UUID) (*GetUserMFASecretRow, error)
 	GetUserNotificationPreferences(ctx context.Context, userID uuid.UUID) (*NotificationPreference, error)
 	GetUserPasswordByID(ctx context.Context, id uuid.UUID) (*string, error)
 	// Called once at login — result stored in sessions.configuration.prefs.
@@ -925,6 +946,12 @@ type Querier interface {
 	ListAccounts(ctx context.Context, arg ListAccountsParams) ([]*FinanceAccount, error)
 	ListAccountsByParent(ctx context.Context, parentAccountID *uuid.UUID) ([]*FinanceAccount, error)
 	ListAccountsWithGroups(ctx context.Context, arg ListAccountsWithGroupsParams) ([]*VFinanceAccountsWithGroup, error)
+	// All actions a given role is responsible for approving.
+	ListActionsByApproverRole(ctx context.Context, approverRoleID *uuid.UUID) ([]*Action, error)
+	ListActionsByCategory(ctx context.Context, arg ListActionsByCategoryParams) ([]*Action, error)
+	ListActionsByRiskLevel(ctx context.Context, arg ListActionsByRiskLevelParams) ([]*Action, error)
+	ListActionsByType(ctx context.Context, arg ListActionsByTypeParams) ([]*Action, error)
+	ListActionsRequiringApproval(ctx context.Context, tenantID *uuid.UUID) ([]*Action, error)
 	ListActiveEntities(ctx context.Context) ([]*Entity, error)
 	ListActiveFeatureFlagsAdmin(ctx context.Context, tenantID uuid.UUID) ([]*ListActiveFeatureFlagsAdminRow, error)
 	ListActiveFeatureFlagsUser(ctx context.Context) ([]*ListActiveFeatureFlagsUserRow, error)
@@ -932,6 +959,8 @@ type Querier interface {
 	// Returns roles that are currently active and not expired — used by permission computation.
 	ListActiveRoleAssignments(ctx context.Context, arg ListActiveRoleAssignmentsParams) ([]*ListActiveRoleAssignmentsRow, error)
 	ListActiveSystemModules(ctx context.Context) ([]*Module, error)
+	// Returns all SYSTEM actions plus the given tenant's custom TENANT actions.
+	ListAllActionsForTenant(ctx context.Context, tenantID *uuid.UUID) ([]*Action, error)
 	// Audit trail: all assignments including revoked/expired.
 	ListAssignmentHistory(ctx context.Context, arg ListAssignmentHistoryParams) ([]*ListAssignmentHistoryRow, error)
 	// Attribute Definition Listing and Filtering
@@ -975,6 +1004,8 @@ type Querier interface {
 	// Used by settings screen schema builder — returns all settings for a module
 	// with current tenant values so the form can pre-fill.
 	ListSettingDefinitionsByModule(ctx context.Context, arg ListSettingDefinitionsByModuleParams) ([]*ListSettingDefinitionsByModuleRow, error)
+	ListSystemActions(ctx context.Context) ([]*Action, error)
+	ListTenantActions(ctx context.Context, tenantID *uuid.UUID) ([]*Action, error)
 	ListTenantEffectiveConfigurations(ctx context.Context, arg ListTenantEffectiveConfigurationsParams) ([]*ListTenantEffectiveConfigurationsRow, error)
 	// Used by the tenant admin flags screen: returns all non-system flags with current tenant values.
 	ListTenantFlagsWithDefinitions(ctx context.Context, arg ListTenantFlagsWithDefinitionsParams) ([]*ListTenantFlagsWithDefinitionsRow, error)
@@ -1064,6 +1095,8 @@ type Querier interface {
 	SearchTransactions(ctx context.Context, arg SearchTransactionsParams) ([]*FinanceTransaction, error)
 	SearchTransactionsByMemo(ctx context.Context, arg SearchTransactionsByMemoParams) ([]*FinanceTransaction, error)
 	SearchUsersAdvanced(ctx context.Context, arg SearchUsersAdvancedParams) ([]*User, error)
+	// Enable or disable approval requirement and assign/clear the approver role in one call.
+	SetActionApproval(ctx context.Context, arg SetActionApprovalParams) (*Action, error)
 	// Usage: Manually sets a specific sequence number (with validation)
 	// Use case: Data migration, manual sequence adjustments, importing from other systems
 	SetEntitySequence(ctx context.Context, arg SetEntitySequenceParams) error
@@ -1102,6 +1135,7 @@ type Querier interface {
 	// Update account group with proper tenant/entity isolation
 	UpdateAccountGroup(ctx context.Context, arg UpdateAccountGroupParams) (*FinanceAccountGroup, error)
 	UpdateAccountValidationRule(ctx context.Context, arg UpdateAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
+	UpdateAction(ctx context.Context, arg UpdateActionParams) (*Action, error)
 	UpdateAttributeDefinition(ctx context.Context, arg UpdateAttributeDefinitionParams) (*AttributeDefinition, error)
 	UpdateAttributeValue(ctx context.Context, arg UpdateAttributeValueParams) (*AttributeValue, error)
 	UpdateConfigDefinition(ctx context.Context, arg UpdateConfigDefinitionParams) (*ConfigDefinition, error)

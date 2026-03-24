@@ -459,6 +459,15 @@ type CreatePersonRequest struct {
 	Metadata           map[string]any `json:"metadata,omitempty"`
 }
 
+// MFASetup is returned by UserService.InitiateMFA.
+// The Secret must be shown to the user exactly once so they can save it to
+// an authenticator app (Google Authenticator, Authy, etc.).
+// The QRURI encodes all setup parameters for QR-code scanners.
+type MFASetup struct {
+	Secret string // Base32-encoded TOTP secret (RFC 4648, no padding)
+	QRURI  string // otpauth:// URI — scan with authenticator app
+}
+
 // CreateEmployeeRequest is the command object for the CreateEmployee use case.
 //
 // SecurityLevel defaults to 0 (unrestricted) when not supplied.  Callers

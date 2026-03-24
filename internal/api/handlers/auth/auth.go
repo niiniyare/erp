@@ -61,6 +61,14 @@ func LoginHandler(svc iam.SessionService, cfg LoginConfig) fiber.Handler {
 
 		resolved, rawToken, err := svc.Login(c.Context(), req.Email, req.Password)
 		if err != nil {
+			// MFA step 1: Login succeeded but a second factor is required.
+			// rawToken is a short-lived pending token (not a session token).
+			if stderrors.Is(err, sharedErrors.ErrMFARequired) {
+				return c.Status(fiber.StatusAccepted).JSON(fiber.Map{
+					"mfa_required":  true,
+					"pending_token": rawToken,
+				})
+			}
 			return mapAuthError(c, err)
 		}
 

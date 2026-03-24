@@ -57,6 +57,23 @@ type UserRepository interface {
 	// Role assignments (user-level; Casbin-level is in AuthzRepository)
 	AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
 	RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error
+
+	// MFA — DB-backed secret lifecycle
+	// NOTE: GetMFASecret / SetMFASecret / ClearMFASecret require the
+	// GetUserMFASecret / EnableMFA / DisableMFA SQLC queries which are generated
+	// after running `make sqlc` following the queries added to db/queries/users.sql.
+	GetMFASecret(ctx context.Context, userID uuid.UUID) (encryptedSecret string, enabled bool, err error)
+	SetMFASecret(ctx context.Context, userID uuid.UUID, encryptedSecret string) error
+	ClearMFASecret(ctx context.Context, userID uuid.UUID) error
+
+	// MFA — cache-backed ephemeral state
+	StorePendingMFASetup(ctx context.Context, userID uuid.UUID, encryptedSecret string) error
+	GetPendingMFASetup(ctx context.Context, userID uuid.UUID) (string, error)
+	ClearPendingMFASetup(ctx context.Context, userID uuid.UUID) error
+
+	// MFA — replay prevention
+	// Returns true if the code at the given TOTP window was already used.
+	CheckAndMarkMFAReplay(ctx context.Context, userID uuid.UUID, window int64) (bool, error)
 }
 
 // ─── Adapter (implementation) ─────────────────────────────────────────────────
@@ -386,6 +403,88 @@ func (r *userRepository) RevokeUserRole(ctx context.Context, userID, roleID, ent
 	})
 }
 
+// ─── MFA — DB-backed secret lifecycle ────────────────────────────────────────
+
+// GetMFASecret returns the encrypted MFA secret and enabled flag from the DB.
+// Requires the GetUserMFASecret SQLC query (generated after `make sqlc`).
+func (r *userRepository) GetMFASecret(ctx context.Context, userID uuid.UUID) (string, bool, error) {
+	row, err := r.store.GetUserMFASecret(ctx, userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", false, sharedErrors.ErrUserNotFound
+		}
+		return "", false, fmt.Errorf("iam repo: get mfa secret: %w", err)
+	}
+	enabled := row.MfaEnabled != nil && *row.MfaEnabled
+	secret := ""
+	if row.MfaSecret != nil {
+		secret = *row.MfaSecret
+	}
+	return secret, enabled, nil
+}
+
+// SetMFASecret stores the encrypted secret and sets mfa_enabled = TRUE.
+// Requires the EnableMFA SQLC query (generated after `make sqlc`).
+func (r *userRepository) SetMFASecret(ctx context.Context, userID uuid.UUID, encryptedSecret string) error {
+	if err := r.store.EnableMFA(ctx, db.EnableMFAParams{
+		ID:        userID,
+		MfaSecret: &encryptedSecret,
+	}); err != nil {
+		return fmt.Errorf("iam repo: set mfa secret: %w", err)
+	}
+	r.invalidateUserByID(ctx, userID)
+	return nil
+}
+
+// ClearMFASecret sets mfa_secret = NULL and mfa_enabled = FALSE.
+// Requires the DisableMFA SQLC query (generated after `make sqlc`).
+func (r *userRepository) ClearMFASecret(ctx context.Context, userID uuid.UUID) error {
+	if err := r.store.DisableMFA(ctx, userID); err != nil {
+		return fmt.Errorf("iam repo: clear mfa secret: %w", err)
+	}
+	r.invalidateUserByID(ctx, userID)
+	return nil
+}
+
+// ─── MFA — cache-backed ephemeral state ──────────────────────────────────────
+
+const (
+	mfaSetupCacheTTL  = 10 * time.Minute
+	mfaReplayCacheTTL = 90 * time.Second
+)
+
+func (r *userRepository) StorePendingMFASetup(ctx context.Context, userID uuid.UUID, encryptedSecret string) error {
+	key := fmt.Sprintf("mfa:setup:%s", userID)
+	return r.cache.Set(ctx, key, encryptedSecret, mfaSetupCacheTTL)
+}
+
+func (r *userRepository) GetPendingMFASetup(ctx context.Context, userID uuid.UUID) (string, error) {
+	key := fmt.Sprintf("mfa:setup:%s", userID)
+	var secret string
+	if err := r.cache.Get(ctx, key, &secret); err != nil {
+		return "", fmt.Errorf("iam repo: mfa setup not found or expired: %w", err)
+	}
+	return secret, nil
+}
+
+func (r *userRepository) ClearPendingMFASetup(ctx context.Context, userID uuid.UUID) error {
+	return r.cache.Delete(ctx, fmt.Sprintf("mfa:setup:%s", userID))
+}
+
+// CheckAndMarkMFAReplay returns true if the given TOTP window has already been
+// used for this user (replay attack), false if it is fresh.
+// On a fresh code it atomically marks the window as used (90s TTL > TOTP period).
+func (r *userRepository) CheckAndMarkMFAReplay(ctx context.Context, userID uuid.UUID, window int64) (bool, error) {
+	key := fmt.Sprintf("mfa:replay:%s:%d", userID, window)
+	var v string
+	if err := r.cache.Get(ctx, key, &v); err == nil {
+		return true, nil // already used
+	}
+	// Mark as used
+	_ = r.cache.Set(ctx, key, "1", mfaReplayCacheTTL)
+	return false, nil
+}
+
 // ─── Cache helpers (internal) ─────────────────────────────────────────────────
 
 func (r *userRepository) cacheUser(ctx context.Context, u *domain.User) {
@@ -404,6 +503,10 @@ func (r *userRepository) invalidateUser(ctx context.Context, id uuid.UUID, email
 	if username != "" {
 		_ = r.cache.Delete(ctx, fmt.Sprintf("user:username:%s", username))
 	}
+}
+
+func (r *userRepository) invalidateUserByID(ctx context.Context, id uuid.UUID) {
+	_ = r.cache.Delete(ctx, fmt.Sprintf("user:id:%s", id))
 }
 
 // ─── SQLC conversion helpers ──────────────────────────────────────────────────

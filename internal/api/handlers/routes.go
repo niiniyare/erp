@@ -518,9 +518,21 @@ func (r *Router) registerAuthAPI(apiRouter fiber.Router) error {
 		cookieName = r.deps.AuthConfig.CookieName
 	}
 
+	loginCfg := authHandler.DefaultLoginConfig()
+
 	authGroup := apiRouter.Group("/v1/auth")
-	authGroup.Post("/login", authHandler.LoginHandler(r.deps.SessionService, authHandler.DefaultLoginConfig()))
+	authGroup.Post("/login", authHandler.LoginHandler(r.deps.SessionService, loginCfg))
 	authGroup.Post("/logout", authHandler.LogoutHandler(r.deps.SessionService, cookieName))
+
+	// MFA endpoints — /auth/mfa/complete is public; the others require an active session.
+	mfaGroup := authGroup.Group("/mfa")
+	mfaGroup.Post("/complete", authHandler.MFACompleteHandler(r.deps.SessionService, loginCfg))
+
+	if r.deps.UserService != nil {
+		mfaGroup.Post("/initiate", r.authenticateMiddleware(), authHandler.MFAInitiateHandler(r.deps.UserService))
+		mfaGroup.Post("/confirm", r.authenticateMiddleware(), authHandler.MFAConfirmHandler(r.deps.UserService))
+		mfaGroup.Delete("/", r.authenticateMiddleware(), authHandler.MFADisableHandler(r.deps.UserService))
+	}
 
 	r.deps.Logger.Info("registered auth API endpoints")
 	return nil

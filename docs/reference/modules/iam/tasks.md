@@ -396,7 +396,7 @@ These were completed in the earlier `identity` + `authz` packages and migrated i
 
 ---
 
-## 🔲 Phase 9 — MFA (Multi-Factor Authentication)
+## ✅ Phase 9 — MFA (Multi-Factor Authentication)
 
 > **Context:** MFA is a second verification step after password. After entering their password, users with MFA enabled must also enter a 6-digit TOTP code from an authenticator app (Google Authenticator, Authy, etc.). The code changes every 30 seconds based on a shared secret.
 >
@@ -404,48 +404,52 @@ These were completed in the earlier `identity` + `authz` packages and migrated i
 >
 > **Who requires MFA:** Users with `finance.*` or `platform.*` permissions. Configurable for others via `iam.mfa.required` feature flag.
 
-### M1 — DB migration: MFA fields
+### ✅ M1 — DB migration: MFA fields
 
-- [ ] Add to `users` table (if not already present):
-  - `mfa_secret text NULL` — AES-256-GCM encrypted TOTP secret
-  - `mfa_enabled bool NOT NULL DEFAULT false`
-- [ ] Add `mfa_used_codes` Redis key pattern for replay prevention (documented, not a migration)
+- [x] `mfa_secret text NULL` — AES-256-GCM encrypted TOTP secret — already present in `users` table
+- [x] `mfa_enabled bool NOT NULL DEFAULT false` — already present in `users` table
+- [x] Replay prevention: Redis key `mfa:replay:{userID}:{window}` with 90s TTL (documented, no migration needed)
 
-### M2 — SQLC queries for MFA
+### ✅ M2 — SQLC queries for MFA
 
-- [ ] `GetUserMFASecret(ctx, userID)` — returns encrypted `mfa_secret` and `mfa_enabled`
-- [ ] `EnableMFA(ctx, userID, encryptedSecret)` — sets secret + `mfa_enabled = true`
-- [ ] `DisableMFA(ctx, userID)` — clears secret + sets `mfa_enabled = false`
+> Run `make sqlc` after these query additions to generate Go code.
 
-### M3 — `UserService` — MFA methods
+- [x] `GetUserMFASecret(userID)` — returns `mfa_enabled`, `mfa_secret` from `users`
+- [x] `EnableMFA(userID, encryptedSecret)` — sets `mfa_secret = $2`, `mfa_enabled = TRUE`
+- [x] `DisableMFA(userID)` — sets `mfa_secret = NULL`, `mfa_enabled = FALSE`
+- [x] Queries added to `db/queries/users.sql`
 
-> The service layer handles TOTP validation with replay prevention. The ±1 window allows for clock drift between client and server.
+### ✅ M3 — `UserService` — MFA methods
 
-- [ ] `InitiateMFA(ctx, userID) (*MFASetup, error)` — generates TOTP secret, returns secret + QR code URI
-- [ ] `ConfirmMFA(ctx, userID, code string) error` — validates first code, then stores encrypted secret and enables MFA
-- [ ] `ValidateMFACode(ctx, userID, code string) (bool, error)`:
-  - Decrypt stored secret
-  - Verify TOTP code with ±1 window tolerance
-  - Replay check: cache key `mfa_used:{userID}:{window}` with 90s TTL; reject if key exists
-  - Set cache key on success to prevent replay
-- [ ] `DisableMFA(ctx, userID, password string) error` — requires password re-verification before disabling
+> Pure-stdlib TOTP (RFC 6238/4226 HMAC-SHA1) and AES-256-GCM encryption in `service/mfa_totp.go`.
+> Secret lifecycle: generate → encrypt → cache (pending) → confirm → DB. Always encrypted at rest.
 
-### M4 — Wire MFA into `SessionService.Login()`
+- [x] `InitiateMFA(ctx, userID) (*domain.MFASetup, error)` — 20-byte random secret, base32-encoded, AES-256-GCM encrypted, cached 10 min under `mfa:setup:{userID}`; returns `{Secret, QRURI}`
+- [x] `ConfirmMFA(ctx, userID, code string) error` — get pending from cache → decrypt → verifyTOTP ±1 window → save to DB → clear cache
+- [x] `ValidateMFACode(ctx, userID, code string) (bool, error)` — get from DB → decrypt → verifyTOTP ±1 window → replay check via `CheckAndMarkMFAReplay(userID, window)` with 90s TTL
+- [x] `DisableMFA(ctx, userID, password string) error` — re-verify password with bcrypt, then clear DB secret
+- [x] `domain.MFASetup` struct added to `domain/identity.go`
+- [x] `UserConfig.MFAEncryptionKey []byte` and `UserConfig.MFAIssuer string` added
 
-> The login flow must handle MFA as a two-step process: first verify password, then if MFA is enabled, pause and wait for the TOTP code.
+### ✅ M4 — Wire MFA into `SessionService.Login()`
 
-- [ ] In `Login()`, after password passes, check `user.MfaEnabled`
-- [ ] If `true` and no `mfa_code` in request: return `{mfa_required: true, session_pending: "<temp_token>"}` without creating a full session
-- [ ] Add `CompleteMFALogin(ctx, pendingToken, mfaCode string) (*ResolvedSession, string, error)` to SessionService
-- [ ] Store pending (pre-MFA) state in Redis with 5-minute TTL
-- [ ] On MFA success: complete session construction and return full session
+- [x] `Login()` checks `user.MfaEnabled` after password passes
+- [x] If enabled: generate 32-byte pending token, store in Redis as `mfa:login:pending:{token}` with 5-min TTL, return `(nil, pendingToken, ErrMFARequired)`
+- [x] `CompleteMFALogin(ctx, pendingToken, mfaCode string) (*ResolvedSession, string, error)` added to `SessionService`
+- [x] Pending token is single-use: deleted immediately after lookup regardless of TOTP outcome
+- [x] On TOTP success: full session construction via `buildAndPersistSession()` helper
+- [x] `ErrMFARequired` (202 Accepted) and `ErrMFAInvalid` (401) added to `internal/shared/errors/business.go`
+- [x] MFA pending login methods (`StorePendingMFA`, `GetPendingMFA`, `DeletePendingMFA`) added to `SessionRepository`
 
-### M5 — MFA handler endpoints
+### ✅ M5 — MFA handler endpoints
 
-- [ ] `POST /auth/mfa/initiate` — returns QR code setup data (requires authenticated session)
-- [ ] `POST /auth/mfa/confirm` — confirms setup with first valid code
-- [ ] `POST /auth/mfa/complete` — exchanges pending token + code for full session (login step 2)
-- [ ] `DELETE /auth/mfa` — disables MFA (requires password)
+- [x] `POST /auth/mfa/initiate` — authenticated; calls `UserService.InitiateMFA`; returns `{qr_uri, secret}`
+- [x] `POST /auth/mfa/confirm` — authenticated; calls `UserService.ConfirmMFA`; activates MFA
+- [x] `POST /auth/mfa/complete` — public; exchanges `{pending_token, code}` for full session + cookie
+- [x] `DELETE /auth/mfa` — authenticated; calls `UserService.DisableMFA`; requires password in body
+- [x] `LoginHandler` updated to detect `ErrMFARequired` and return `{mfa_required: true, pending_token}`
+- [x] `/api/v1/auth/mfa/complete` added to public whitelist (no tenant context required)
+- [x] `iam.MFASetup` re-exported from facade in `internal/core/iam/iam.go`
 
 ---
 

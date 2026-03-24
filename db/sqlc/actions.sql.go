@@ -7,24 +7,775 @@ package db
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
+const activateAction = `-- name: ActivateAction :one
+UPDATE actions
+SET
+  is_active  = TRUE,
+  updated_at = NOW()
+WHERE id = $1
+RETURNING id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+`
+
+func (q *Queries) ActivateAction(ctx context.Context, id uuid.UUID) (*Action, error) {
+	row := q.db.QueryRow(ctx, activateAction, id)
+	var i Action
+	err := row.Scan(
+		&i.ID,
+		&i.ResourceID,
+		&i.TenantID,
+		&i.Scope,
+		&i.Slug,
+		&i.Name,
+		&i.DisplayName,
+		&i.Description,
+		&i.HttpMethod,
+		&i.ActionType,
+		&i.ActionCategory,
+		&i.RiskLevel,
+		&i.RequiresApproval,
+		&i.ApproverRoleID,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const countActionsByRiskLevel = `-- name: CountActionsByRiskLevel :many
+SELECT
+  risk_level,
+  COUNT(*) AS total
+FROM actions
+WHERE is_active = TRUE
+  AND (
+    scope = 'SYSTEM'
+    OR (scope = 'TENANT' AND tenant_id = $1)
+  )
+GROUP BY risk_level
+ORDER BY risk_level
+`
+
+type CountActionsByRiskLevelRow struct {
+	RiskLevel *string `json:"risk_level"`
+	Total     int64   `json:"total"`
+}
+
+// Summary of active action counts grouped by risk level — useful for dashboards.
+func (q *Queries) CountActionsByRiskLevel(ctx context.Context, tenantID *uuid.UUID) ([]*CountActionsByRiskLevelRow, error) {
+	rows, err := q.db.Query(ctx, countActionsByRiskLevel, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*CountActionsByRiskLevelRow{}
+	for rows.Next() {
+		var i CountActionsByRiskLevelRow
+		if err := rows.Scan(&i.RiskLevel, &i.Total); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createAction = `-- name: CreateAction :one
-INSERT INTO
-  actions (tenant_id, name, action_type)
-VALUES
-  (current_tenant_id(), $1, $2)
-RETURNING
-  id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+
+INSERT INTO actions (
+  scope,
+  name,
+  display_name,
+  description,
+  action_type,
+  action_category,
+  risk_level,
+  requires_approval,
+  approver_role_id,
+  is_active
+) VALUES (
+  $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+)
+RETURNING id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
 `
 
 type CreateActionParams struct {
-	Name       string `json:"name"`
-	ActionType string `json:"action_type"`
+	Scope            string     `json:"scope"`
+	Name             string     `json:"name"`
+	DisplayName      *string    `json:"display_name"`
+	Description      *string    `json:"description"`
+	ActionType       string     `json:"action_type"`
+	ActionCategory   *string    `json:"action_category"`
+	RiskLevel        *string    `json:"risk_level"`
+	RequiresApproval *bool      `json:"requires_approval"`
+	ApproverRoleID   *uuid.UUID `json:"approver_role_id"`
+	IsActive         *bool      `json:"is_active"`
 }
 
+// -- name: CreateAction :one
+// INSERT INTO
+//
+//	actions (tenant_id, name, action_type)
+//
+// VALUES
+//
+//	(current_tenant_id(), $1, $2)
+//
+// RETURNING
+//
+//	*;
+//
+// ============================================================
+// ACTIONS QUERIES
+// ============================================================
 func (q *Queries) CreateAction(ctx context.Context, arg CreateActionParams) (*Action, error) {
-	row := q.db.QueryRow(ctx, createAction, arg.Name, arg.ActionType)
+	row := q.db.QueryRow(ctx, createAction,
+		arg.Scope,
+		arg.Name,
+		arg.DisplayName,
+		arg.Description,
+		arg.ActionType,
+		arg.ActionCategory,
+		arg.RiskLevel,
+		arg.RequiresApproval,
+		arg.ApproverRoleID,
+		arg.IsActive,
+	)
+	var i Action
+	err := row.Scan(
+		&i.ID,
+		&i.ResourceID,
+		&i.TenantID,
+		&i.Scope,
+		&i.Slug,
+		&i.Name,
+		&i.DisplayName,
+		&i.Description,
+		&i.HttpMethod,
+		&i.ActionType,
+		&i.ActionCategory,
+		&i.RiskLevel,
+		&i.RequiresApproval,
+		&i.ApproverRoleID,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const deactivateAction = `-- name: DeactivateAction :one
+UPDATE actions
+SET
+  is_active  = FALSE,
+  updated_at = NOW()
+WHERE id = $1
+RETURNING id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+`
+
+func (q *Queries) DeactivateAction(ctx context.Context, id uuid.UUID) (*Action, error) {
+	row := q.db.QueryRow(ctx, deactivateAction, id)
+	var i Action
+	err := row.Scan(
+		&i.ID,
+		&i.ResourceID,
+		&i.TenantID,
+		&i.Scope,
+		&i.Slug,
+		&i.Name,
+		&i.DisplayName,
+		&i.Description,
+		&i.HttpMethod,
+		&i.ActionType,
+		&i.ActionCategory,
+		&i.RiskLevel,
+		&i.RequiresApproval,
+		&i.ApproverRoleID,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const deleteAction = `-- name: DeleteAction :exec
+DELETE FROM actions
+WHERE id = $1
+`
+
+func (q *Queries) DeleteAction(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, deleteAction, id)
+	return err
+}
+
+const getActionByID = `-- name: GetActionByID :one
+SELECT id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+FROM actions
+WHERE id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetActionByID(ctx context.Context, id uuid.UUID) (*Action, error) {
+	row := q.db.QueryRow(ctx, getActionByID, id)
+	var i Action
+	err := row.Scan(
+		&i.ID,
+		&i.ResourceID,
+		&i.TenantID,
+		&i.Scope,
+		&i.Slug,
+		&i.Name,
+		&i.DisplayName,
+		&i.Description,
+		&i.HttpMethod,
+		&i.ActionType,
+		&i.ActionCategory,
+		&i.RiskLevel,
+		&i.RequiresApproval,
+		&i.ApproverRoleID,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const getActionByName = `-- name: GetActionByName :one
+SELECT id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+FROM actions
+WHERE name  = $1
+  AND scope = $2
+  AND (
+    ($3::uuid IS NULL AND tenant_id IS NULL)
+    OR tenant_id = $3
+  )
+LIMIT 1
+`
+
+type GetActionByNameParams struct {
+	Name    string    `json:"name"`
+	Scope   string    `json:"scope"`
+	Column3 uuid.UUID `json:"column_3"`
+}
+
+func (q *Queries) GetActionByName(ctx context.Context, arg GetActionByNameParams) (*Action, error) {
+	row := q.db.QueryRow(ctx, getActionByName, arg.Name, arg.Scope, arg.Column3)
+	var i Action
+	err := row.Scan(
+		&i.ID,
+		&i.ResourceID,
+		&i.TenantID,
+		&i.Scope,
+		&i.Slug,
+		&i.Name,
+		&i.DisplayName,
+		&i.Description,
+		&i.HttpMethod,
+		&i.ActionType,
+		&i.ActionCategory,
+		&i.RiskLevel,
+		&i.RequiresApproval,
+		&i.ApproverRoleID,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const listActionsByApproverRole = `-- name: ListActionsByApproverRole :many
+SELECT id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+FROM actions
+WHERE approver_role_id  = $1
+  AND requires_approval = TRUE
+  AND is_active         = TRUE
+ORDER BY risk_level DESC, name
+`
+
+// All actions a given role is responsible for approving.
+func (q *Queries) ListActionsByApproverRole(ctx context.Context, approverRoleID *uuid.UUID) ([]*Action, error) {
+	rows, err := q.db.Query(ctx, listActionsByApproverRole, approverRoleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Action{}
+	for rows.Next() {
+		var i Action
+		if err := rows.Scan(
+			&i.ID,
+			&i.ResourceID,
+			&i.TenantID,
+			&i.Scope,
+			&i.Slug,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.HttpMethod,
+			&i.ActionType,
+			&i.ActionCategory,
+			&i.RiskLevel,
+			&i.RequiresApproval,
+			&i.ApproverRoleID,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listActionsByCategory = `-- name: ListActionsByCategory :many
+SELECT id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+FROM actions
+WHERE action_category = $1
+  AND is_active       = TRUE
+  AND (
+    scope = 'SYSTEM'
+    OR (scope = 'TENANT' AND tenant_id = $2)
+  )
+ORDER BY action_type, name
+`
+
+type ListActionsByCategoryParams struct {
+	ActionCategory *string    `json:"action_category"`
+	TenantID       *uuid.UUID `json:"tenant_id"`
+}
+
+func (q *Queries) ListActionsByCategory(ctx context.Context, arg ListActionsByCategoryParams) ([]*Action, error) {
+	rows, err := q.db.Query(ctx, listActionsByCategory, arg.ActionCategory, arg.TenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Action{}
+	for rows.Next() {
+		var i Action
+		if err := rows.Scan(
+			&i.ID,
+			&i.ResourceID,
+			&i.TenantID,
+			&i.Scope,
+			&i.Slug,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.HttpMethod,
+			&i.ActionType,
+			&i.ActionCategory,
+			&i.RiskLevel,
+			&i.RequiresApproval,
+			&i.ApproverRoleID,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listActionsByRiskLevel = `-- name: ListActionsByRiskLevel :many
+SELECT id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+FROM actions
+WHERE risk_level = $1
+  AND is_active  = TRUE
+  AND (
+    scope = 'SYSTEM'
+    OR (scope = 'TENANT' AND tenant_id = $2)
+  )
+ORDER BY action_type, name
+`
+
+type ListActionsByRiskLevelParams struct {
+	RiskLevel *string    `json:"risk_level"`
+	TenantID  *uuid.UUID `json:"tenant_id"`
+}
+
+func (q *Queries) ListActionsByRiskLevel(ctx context.Context, arg ListActionsByRiskLevelParams) ([]*Action, error) {
+	rows, err := q.db.Query(ctx, listActionsByRiskLevel, arg.RiskLevel, arg.TenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Action{}
+	for rows.Next() {
+		var i Action
+		if err := rows.Scan(
+			&i.ID,
+			&i.ResourceID,
+			&i.TenantID,
+			&i.Scope,
+			&i.Slug,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.HttpMethod,
+			&i.ActionType,
+			&i.ActionCategory,
+			&i.RiskLevel,
+			&i.RequiresApproval,
+			&i.ApproverRoleID,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listActionsByType = `-- name: ListActionsByType :many
+SELECT id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+FROM actions
+WHERE action_type = $1
+  AND is_active   = TRUE
+  AND (
+    scope = 'SYSTEM'
+    OR (scope = 'TENANT' AND tenant_id = $2)
+  )
+ORDER BY name
+`
+
+type ListActionsByTypeParams struct {
+	ActionType string     `json:"action_type"`
+	TenantID   *uuid.UUID `json:"tenant_id"`
+}
+
+func (q *Queries) ListActionsByType(ctx context.Context, arg ListActionsByTypeParams) ([]*Action, error) {
+	rows, err := q.db.Query(ctx, listActionsByType, arg.ActionType, arg.TenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Action{}
+	for rows.Next() {
+		var i Action
+		if err := rows.Scan(
+			&i.ID,
+			&i.ResourceID,
+			&i.TenantID,
+			&i.Scope,
+			&i.Slug,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.HttpMethod,
+			&i.ActionType,
+			&i.ActionCategory,
+			&i.RiskLevel,
+			&i.RequiresApproval,
+			&i.ApproverRoleID,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listActionsRequiringApproval = `-- name: ListActionsRequiringApproval :many
+SELECT id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+FROM actions
+WHERE requires_approval = TRUE
+  AND is_active         = TRUE
+  AND (
+    scope = 'SYSTEM'
+    OR (scope = 'TENANT' AND tenant_id = $1)
+  )
+ORDER BY risk_level DESC, action_type, name
+`
+
+func (q *Queries) ListActionsRequiringApproval(ctx context.Context, tenantID *uuid.UUID) ([]*Action, error) {
+	rows, err := q.db.Query(ctx, listActionsRequiringApproval, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Action{}
+	for rows.Next() {
+		var i Action
+		if err := rows.Scan(
+			&i.ID,
+			&i.ResourceID,
+			&i.TenantID,
+			&i.Scope,
+			&i.Slug,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.HttpMethod,
+			&i.ActionType,
+			&i.ActionCategory,
+			&i.RiskLevel,
+			&i.RequiresApproval,
+			&i.ApproverRoleID,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAllActionsForTenant = `-- name: ListAllActionsForTenant :many
+SELECT id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+FROM actions
+WHERE is_active = TRUE
+  AND (
+    scope = 'SYSTEM'
+    OR (scope = 'TENANT' AND tenant_id = $1)
+  )
+ORDER BY scope, action_type, name
+`
+
+// Returns all SYSTEM actions plus the given tenant's custom TENANT actions.
+func (q *Queries) ListAllActionsForTenant(ctx context.Context, tenantID *uuid.UUID) ([]*Action, error) {
+	rows, err := q.db.Query(ctx, listAllActionsForTenant, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Action{}
+	for rows.Next() {
+		var i Action
+		if err := rows.Scan(
+			&i.ID,
+			&i.ResourceID,
+			&i.TenantID,
+			&i.Scope,
+			&i.Slug,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.HttpMethod,
+			&i.ActionType,
+			&i.ActionCategory,
+			&i.RiskLevel,
+			&i.RequiresApproval,
+			&i.ApproverRoleID,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listSystemActions = `-- name: ListSystemActions :many
+SELECT id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+FROM actions
+WHERE scope     = 'SYSTEM'
+  AND is_active = TRUE
+ORDER BY action_type, name
+`
+
+func (q *Queries) ListSystemActions(ctx context.Context) ([]*Action, error) {
+	rows, err := q.db.Query(ctx, listSystemActions)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Action{}
+	for rows.Next() {
+		var i Action
+		if err := rows.Scan(
+			&i.ID,
+			&i.ResourceID,
+			&i.TenantID,
+			&i.Scope,
+			&i.Slug,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.HttpMethod,
+			&i.ActionType,
+			&i.ActionCategory,
+			&i.RiskLevel,
+			&i.RequiresApproval,
+			&i.ApproverRoleID,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTenantActions = `-- name: ListTenantActions :many
+SELECT id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+FROM actions
+WHERE tenant_id = $1
+  AND scope     = 'TENANT'
+  AND is_active = TRUE
+ORDER BY action_type, name
+`
+
+func (q *Queries) ListTenantActions(ctx context.Context, tenantID *uuid.UUID) ([]*Action, error) {
+	rows, err := q.db.Query(ctx, listTenantActions, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Action{}
+	for rows.Next() {
+		var i Action
+		if err := rows.Scan(
+			&i.ID,
+			&i.ResourceID,
+			&i.TenantID,
+			&i.Scope,
+			&i.Slug,
+			&i.Name,
+			&i.DisplayName,
+			&i.Description,
+			&i.HttpMethod,
+			&i.ActionType,
+			&i.ActionCategory,
+			&i.RiskLevel,
+			&i.RequiresApproval,
+			&i.ApproverRoleID,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const setActionApproval = `-- name: SetActionApproval :one
+UPDATE actions
+SET
+  requires_approval = $2,
+  approver_role_id  = $3,   -- must be NOT NULL when $2 = TRUE (enforced by DB constraint)
+  updated_at        = NOW()
+WHERE id = $1
+RETURNING id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+`
+
+type SetActionApprovalParams struct {
+	ID               uuid.UUID  `json:"id"`
+	RequiresApproval *bool      `json:"requires_approval"`
+	ApproverRoleID   *uuid.UUID `json:"approver_role_id"`
+}
+
+// Enable or disable approval requirement and assign/clear the approver role in one call.
+func (q *Queries) SetActionApproval(ctx context.Context, arg SetActionApprovalParams) (*Action, error) {
+	row := q.db.QueryRow(ctx, setActionApproval, arg.ID, arg.RequiresApproval, arg.ApproverRoleID)
+	var i Action
+	err := row.Scan(
+		&i.ID,
+		&i.ResourceID,
+		&i.TenantID,
+		&i.Scope,
+		&i.Slug,
+		&i.Name,
+		&i.DisplayName,
+		&i.Description,
+		&i.HttpMethod,
+		&i.ActionType,
+		&i.ActionCategory,
+		&i.RiskLevel,
+		&i.RequiresApproval,
+		&i.ApproverRoleID,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return &i, err
+}
+
+const updateAction = `-- name: UpdateAction :one
+UPDATE actions
+SET
+  display_name      = $2,
+  description       = $3,
+  action_type       = $4,
+  action_category   = $5,
+  risk_level        = $6,
+  requires_approval = $7,
+  approver_role_id  = $8,
+  is_active         = $9,
+  updated_at        = NOW()
+WHERE id = $1
+RETURNING id, resource_id, tenant_id, scope, slug, name, display_name, description, http_method, action_type, action_category, risk_level, requires_approval, approver_role_id, is_active, created_at, updated_at
+`
+
+type UpdateActionParams struct {
+	ID               uuid.UUID  `json:"id"`
+	DisplayName      *string    `json:"display_name"`
+	Description      *string    `json:"description"`
+	ActionType       string     `json:"action_type"`
+	ActionCategory   *string    `json:"action_category"`
+	RiskLevel        *string    `json:"risk_level"`
+	RequiresApproval *bool      `json:"requires_approval"`
+	ApproverRoleID   *uuid.UUID `json:"approver_role_id"`
+	IsActive         *bool      `json:"is_active"`
+}
+
+func (q *Queries) UpdateAction(ctx context.Context, arg UpdateActionParams) (*Action, error) {
+	row := q.db.QueryRow(ctx, updateAction,
+		arg.ID,
+		arg.DisplayName,
+		arg.Description,
+		arg.ActionType,
+		arg.ActionCategory,
+		arg.RiskLevel,
+		arg.RequiresApproval,
+		arg.ApproverRoleID,
+		arg.IsActive,
+	)
 	var i Action
 	err := row.Scan(
 		&i.ID,

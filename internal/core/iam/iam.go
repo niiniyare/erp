@@ -42,6 +42,9 @@ type (
 	AssignOpt      = domain.AssignOpt
 	AssignOpts     = domain.AssignOpts
 
+	// MFA
+	MFASetup = domain.MFASetup
+
 	// Session
 	SessionConfig    = domain.SessionConfig
 	EntityScopeType  = domain.EntityScopeType

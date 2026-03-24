@@ -25,7 +25,15 @@ import (
 
 // SessionService handles Login / ValidateSession / Logout.
 type SessionService interface {
+	// Login authenticates the user.  When MFA is enabled for the user, the
+	// returned error is ErrMFARequired and the token string is a short-lived
+	// pending token.  The caller must redirect to CompleteMFALogin.
 	Login(ctx context.Context, email, password string) (*domain.ResolvedSession, string, error)
+
+	// CompleteMFALogin exchanges a pending MFA token + TOTP code for a full
+	// session.  Call this after Login returns ErrMFARequired.
+	CompleteMFALogin(ctx context.Context, pendingToken, mfaCode string) (*domain.ResolvedSession, string, error)
+
 	ValidateSession(ctx context.Context, token string) (*domain.ResolvedSession, error)
 	Logout(ctx context.Context, token string) error
 
@@ -84,8 +92,10 @@ func NewSessionServiceWithConfig(
 	}
 }
 
-// Login authenticates the user, computes their permission map, persists the
-// session, caches it, and returns the raw token to the caller.
+// Login authenticates the user and either creates a full session or,
+// when MFA is enabled, returns (nil, pendingToken, ErrMFARequired).
+// In the MFA case, the caller must call CompleteMFALogin with the pending token
+// and the user's TOTP code.
 //
 // NOTE(tenant-context): ctx must carry tenant_id via cache.TenantIDKey.
 func (s *sessionService) Login(ctx context.Context, email, password string) (*domain.ResolvedSession, string, error) {
@@ -97,8 +107,6 @@ func (s *sessionService) Login(ctx context.Context, email, password string) (*do
 
 	user, err := s.identity.Authenticate(ctx, email, password)
 	if err != nil {
-		// Authenticate already increments its own counter; no need to RecordError
-		// here since authentication failures are expected security events.
 		s.metrics.IncrementCounter("iam.session.login.failure", nil)
 		return nil, "", err
 	}
@@ -107,6 +115,64 @@ func (s *sessionService) Login(ctx context.Context, email, password string) (*do
 		attribute.String("user.id", user.ID.String()),
 		attribute.String("user.type", user.UserType),
 	)
+
+	// MFA step 1: if enabled, return a short-lived pending token.
+	if user.MfaEnabled {
+		rawPending, _, err := generateToken()
+		if err != nil {
+			span.RecordError(err)
+			return nil, "", fmt.Errorf("iam session: generate mfa pending token: %w", err)
+		}
+		if err := s.repo.StorePendingMFA(ctx, rawPending, user.ID); err != nil {
+			span.RecordError(err)
+			return nil, "", fmt.Errorf("iam session: store mfa pending: %w", err)
+		}
+		s.metrics.IncrementCounter("iam.session.mfa.pending", nil)
+		return nil, rawPending, errors.ErrMFARequired
+	}
+
+	return s.buildAndPersistSession(ctx, user)
+}
+
+// CompleteMFALogin validates a TOTP code against a pending login token and,
+// on success, creates and returns a full session.
+func (s *sessionService) CompleteMFALogin(ctx context.Context, pendingToken, mfaCode string) (*domain.ResolvedSession, string, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.session.CompleteMFALogin")
+	defer span.End()
+
+	userID, err := s.repo.GetPendingMFA(ctx, pendingToken)
+	if err != nil {
+		return nil, "", errors.ErrAuthenticationFailed
+	}
+
+	ok, err := s.identity.ValidateMFACode(ctx, userID, mfaCode)
+	if err != nil {
+		span.RecordError(err)
+		return nil, "", fmt.Errorf("iam session: validate mfa code: %w", err)
+	}
+	if !ok {
+		s.metrics.IncrementCounter("iam.session.mfa.invalid", nil)
+		return nil, "", errors.ErrMFAInvalid
+	}
+
+	// Pending token is single-use — delete it regardless of subsequent errors.
+	_ = s.repo.DeletePendingMFA(ctx, pendingToken)
+
+	user, err := s.identity.GetUserByID(ctx, userID)
+	if err != nil {
+		span.RecordError(err)
+		return nil, "", fmt.Errorf("iam session: get user after mfa: %w", err)
+	}
+
+	s.metrics.IncrementCounter("iam.session.mfa.success", nil)
+	return s.buildAndPersistSession(ctx, user)
+}
+
+// buildAndPersistSession creates the ResolvedSession and persists it.
+// Called by both Login (non-MFA path) and CompleteMFALogin.
+func (s *sessionService) buildAndPersistSession(ctx context.Context, user *domain.User) (*domain.ResolvedSession, string, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.session.buildAndPersistSession")
+	defer span.End()
 
 	perms, err := s.buildPermissions(ctx, user)
 	if err != nil {
@@ -131,7 +197,6 @@ func (s *sessionService) Login(ctx context.Context, email, password string) (*do
 
 	tenantID := tenantIDFromCtx(ctx)
 
-	// Phase C: resolve real EntityScope from the entity hierarchy.
 	entityScope, err := s.repo.ResolveEntityScope(ctx, user.EntityID)
 	if err != nil {
 		s.log.WarnContext(ctx, "failed to resolve entity scope, using entity fallback", logger.Fields{
@@ -143,7 +208,6 @@ func (s *sessionService) Login(ctx context.Context, email, password string) (*do
 		entityScope = domain.EntityScope{Type: domain.EntityScopeEntity, EntityID: user.EntityID.String()}
 	}
 
-	// Phase C: load feature flags, tenant settings, and user preferences.
 	configuration, err := s.repo.LoadLoginConfig(ctx, user.ID, tenantID)
 	if err != nil {
 		s.log.WarnContext(ctx, "failed to load login config, using defaults", logger.Fields{
@@ -189,7 +253,6 @@ func (s *sessionService) Login(ctx context.Context, email, password string) (*do
 		Configuration: configuration,
 	}
 
-	// Warm cache immediately so the first ValidateSession after Login is a hit.
 	s.repo.CacheResolved(ctx, hash, resolved, ttl)
 
 	s.metrics.IncrementCounter("iam.session.login.success", nil)

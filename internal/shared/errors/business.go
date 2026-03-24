@@ -123,6 +123,20 @@ var (
 				WithSuggestion("Contact an administrator to unlock your account").
 				WithSuggestion("Wait for the automatic unlock period if applicable")
 
+	// ErrMFARequired is returned during login when the user has MFA enabled.
+	// The caller must exchange the pending token via the MFA complete endpoint.
+	ErrMFARequired = NewBusinessError(CodeMFARequired, "Multi-factor authentication required").
+				WithHTTPStatus(http.StatusAccepted).
+				WithCategory(CategorySecurity).
+				WithSuggestion("Provide the 6-digit code from your authenticator app at /auth/mfa/complete")
+
+	// ErrMFAInvalid is returned when the provided MFA code is incorrect or has already been used.
+	ErrMFAInvalid = NewBusinessError(CodeMFAInvalid, "Invalid or expired MFA code").
+				WithHTTPStatus(http.StatusUnauthorized).
+				WithCategory(CategorySecurity).
+				WithSuggestion("Enter the current 6-digit code from your authenticator app").
+				WithSuggestion("Ensure your device clock is synchronized")
+
 	//  ROLE & PERMISSION ERRORS
 
 	// ErrRoleNotFound indicates a role was not found

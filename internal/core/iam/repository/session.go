@@ -59,6 +59,11 @@ type SessionRepository interface {
 	// Called exactly once during Login; the result is embedded in the session row.
 	// Non-fatal: falls back to EntityScopeEntity on DB error.
 	ResolveEntityScope(ctx context.Context, entityID uuid.UUID) (domain.EntityScope, error)
+
+	// MFA pending login state — temporary (5 min) pre-session for MFA step 2.
+	StorePendingMFA(ctx context.Context, pendingToken string, userID uuid.UUID) error
+	GetPendingMFA(ctx context.Context, pendingToken string) (uuid.UUID, error)
+	DeletePendingMFA(ctx context.Context, pendingToken string) error
 }
 
 //  Adapter (implementation)
@@ -344,3 +349,29 @@ func derefInt32(p *int32) int32 {
 
 // keep compiler from complaining about unused derefInt32 if not otherwise used
 var _ = derefInt32
+
+// ── MFA pending login state ───────────────────────────────────────────────────
+
+const mfaLoginPendingTTL = 5 * time.Minute
+
+func (r *sessionRepo) StorePendingMFA(ctx context.Context, pendingToken string, userID uuid.UUID) error {
+	key := "mfa:login:pending:" + pendingToken
+	return r.cache.Set(ctx, key, userID.String(), mfaLoginPendingTTL)
+}
+
+func (r *sessionRepo) GetPendingMFA(ctx context.Context, pendingToken string) (uuid.UUID, error) {
+	key := "mfa:login:pending:" + pendingToken
+	var idStr string
+	if err := r.cache.Get(ctx, key, &idStr); err != nil {
+		return uuid.Nil, fmt.Errorf("session repo: mfa pending not found or expired")
+	}
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("session repo: mfa pending: invalid user id")
+	}
+	return id, nil
+}
+
+func (r *sessionRepo) DeletePendingMFA(ctx context.Context, pendingToken string) error {
+	return r.cache.Delete(ctx, "mfa:login:pending:"+pendingToken)
+}

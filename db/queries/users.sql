@@ -240,3 +240,34 @@ SELECT
 -- name: RevokeUserRole :exec
 SELECT
   revoke_user_role($1, $2, $3);
+
+-- name: GetUserMFASecret :one
+SELECT
+  mfa_enabled,
+  mfa_secret
+FROM
+  users
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL;
+
+-- name: EnableMFA :exec
+UPDATE users
+SET
+  mfa_secret = $2,
+  mfa_enabled = TRUE,
+  updated_at = NOW()
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id();
+
+-- name: DisableMFA :exec
+UPDATE users
+SET
+  mfa_secret = NULL,
+  mfa_enabled = FALSE,
+  updated_at = NOW()
+WHERE
+  id = $1
+  AND tenant_id = current_tenant_id();

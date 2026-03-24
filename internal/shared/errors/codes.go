@@ -41,6 +41,15 @@ const (
 	CodeInvitationExpired  = "INVITATION_EXPIRED"
 )
 
+// MFA Error Codes
+const (
+	CodeMFARequired      = "MFA_REQUIRED"
+	CodeMFAInvalid       = "MFA_INVALID"
+	CodeMFANotEnabled    = "MFA_NOT_ENABLED"
+	CodeMFAAlreadyEnabled = "MFA_ALREADY_ENABLED"
+	CodeMFANotConfigured = "MFA_NOT_CONFIGURED"
+)
+
 // API Key Error Codes
 const (
 	CodeAPIKeyNotFound = "API_KEY_NOT_FOUND"
