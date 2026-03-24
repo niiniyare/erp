@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// ---------------------------------------------------------------------------
+//
 // MiddlewareSuite — tests for service.Middleware(object, action).
 // Uses the real service backed by a test DB and Fiber's app.Test() helper.
 // Requires DATABASE_URL environment variable.
-// ---------------------------------------------------------------------------
+//
 
 type MiddlewareSuite struct {
 	suite.Suite
@@ -44,9 +44,9 @@ func (s *MiddlewareSuite) TearDownSuite() {
 	}
 }
 
-// ---------------------------------------------------------------------------
+//
 // helpers
-// ---------------------------------------------------------------------------
+//
 
 // fiberApp builds a minimal Fiber app with the given handler chain.
 func fiberApp(handlers ...fiber.Handler) *fiber.App {
@@ -87,13 +87,13 @@ func doGet(app *fiber.App, path string) int {
 	return resp.StatusCode
 }
 
-// ---------------------------------------------------------------------------
+//
 // Test cases
-// ---------------------------------------------------------------------------
+//
 
 func (s *MiddlewareSuite) TestMiddleware_NoPrincipal_Returns401() {
 	app := fiberApp(
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		okHandler,
 	)
 	s.Equal(fiber.StatusUnauthorized, doGet(app, "/test"))
@@ -102,7 +102,7 @@ func (s *MiddlewareSuite) TestMiddleware_NoPrincipal_Returns401() {
 func (s *MiddlewareSuite) TestMiddleware_EmptySubject_Returns401() {
 	app := fiberApp(
 		withPrincipal(Principal{Subject: "", Domain: testDomain}),
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		okHandler,
 	)
 	s.Equal(fiber.StatusUnauthorized, doGet(app, "/test"))
@@ -112,7 +112,7 @@ func (s *MiddlewareSuite) TestMiddleware_NoPolicyForUser_Returns403() {
 	// No policies or role assignments — default deny.
 	app := fiberApp(
 		withPrincipal(Principal{Subject: testSubject, Domain: testDomain}),
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		okHandler,
 	)
 	s.Equal(fiber.StatusForbidden, doGet(app, "/test"))
@@ -130,7 +130,7 @@ func (s *MiddlewareSuite) TestMiddleware_AllowPolicy_Returns200_AndCallsNext() {
 
 	app := fiberApp(
 		withPrincipal(Principal{Subject: testSubject, Domain: testDomain}),
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		okHandler,
 	)
 	s.Equal(fiber.StatusOK, doGet(app, "/test"))
@@ -150,7 +150,7 @@ func (s *MiddlewareSuite) TestMiddleware_ObjectExpansion_WithIDParam() {
 
 	app := fiberAppWithID(
 		withPrincipal(Principal{Subject: testSubject, Domain: testDomain}),
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		okHandler,
 	)
 	s.Equal(fiber.StatusOK, doGet(app, "/test/inv_123"))
@@ -169,7 +169,7 @@ func (s *MiddlewareSuite) TestMiddleware_ObjectExpansion_IDParamUsedAsResourceID
 
 	app := fiberAppWithID(
 		withPrincipal(Principal{Subject: testSubject, Domain: testDomain}),
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		okHandler,
 	)
 
@@ -193,7 +193,7 @@ func (s *MiddlewareSuite) TestMiddleware_NoIDParam_UsesPlainObject() {
 
 	app := fiberApp( // no :id route
 		withPrincipal(Principal{Subject: testSubject, Domain: testDomain}),
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		okHandler,
 	)
 	s.Equal(fiber.StatusOK, doGet(app, "/test"))
@@ -219,7 +219,7 @@ func (s *MiddlewareSuite) TestMiddleware_DenyRule_Returns403() {
 
 	app := fiberAppWithID(
 		withPrincipal(Principal{Subject: testSubject, Domain: testDomain}),
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		okHandler,
 	)
 	s.Equal(fiber.StatusForbidden, doGet(app, "/test/inv_001"))
@@ -234,7 +234,7 @@ func (s *MiddlewareSuite) TestMiddleware_LocalsKey_IsCaseSensitive() {
 
 	app := fiberApp(
 		wrongKey,
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		okHandler,
 	)
 	s.Equal(fiber.StatusUnauthorized, doGet(app, "/test"))

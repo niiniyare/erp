@@ -155,6 +155,12 @@ func (s *service) UpdateFeatureFlag(ctx context.Context, id uuid.UUID, request *
 	// Audit the update
 	s.auditFlagUpdated(ctx, flag, request)
 
+	// Invalidate all active sessions for this tenant so users receive fresh
+	// flags on their next login. Best-effort: failure does not block the update.
+	if t, _ := s.tenantService.GetCurrentTenant(ctx); t != nil {
+		_ = s.store.InvalidateSessionsByTenant(ctx, t.ID)
+	}
+
 	// Send WebSocket notification for flag change
 	if s.webSocketService != nil {
 		tenant, _ := s.tenantService.GetCurrentTenant(ctx)

@@ -102,6 +102,8 @@ func NewAuthzService(cfg AuthzConfig) (AuthzService, error) {
 // NewInMemoryAuthzService creates an AuthzService backed by a pure in-memory
 // Casbin enforcer with AutoSave disabled. Useful for unit tests that do not
 // need a database — writes (AddPolicy, AssignRole) only affect in-memory state.
+// No-op tracer and metrics are wired in so all methods are safe to call without
+// a real observability stack.
 func NewInMemoryAuthzService(repo repository.AuthzRepository, log logger.Logger) (AuthzService, error) {
 	m, err := casbinmodel.NewModelFromString(domain.CasbinModel)
 	if err != nil {
@@ -113,7 +115,13 @@ func NewInMemoryAuthzService(repo repository.AuthzRepository, log logger.Logger)
 	}
 	e.EnableAutoSave(false)
 	scopedLog := log.WithFields(logger.Fields{"component": "iam.authz"})
-	return &authzService{enforcer: e, repo: repo, log: scopedLog}, nil
+	return &authzService{
+		enforcer: e,
+		repo:     repo,
+		log:      scopedLog,
+		metrics:  metrics.NewNoOpMetricsProvider(),
+		tracer:   tracing.NewNoOpService(),
+	}, nil
 }
 
 // ─── Enforcement ──────────────────────────────────────────────────────────────
@@ -391,6 +399,13 @@ func (s *authzService) GetAssignments(ctx context.Context, subject, domainName s
 // ─── Policy management ────────────────────────────────────────────────────────
 
 func (s *authzService) AddPolicy(ctx context.Context, p domain.Policy) error {
+	if p.Subject == "" || p.Domain == "" || p.Object == "" || p.Action == "" {
+		return domain.ErrInvalidRequest
+	}
+	if p.Effect != "allow" && p.Effect != "deny" {
+		return fmt.Errorf("authz: invalid policy effect %q: must be \"allow\" or \"deny\"", p.Effect)
+	}
+
 	ctx, span := s.tracer.StartSpan(ctx, "iam.authz.AddPolicy")
 	defer span.End()
 
@@ -427,6 +442,10 @@ func (s *authzService) AddPolicy(ctx context.Context, p domain.Policy) error {
 }
 
 func (s *authzService) RemovePolicy(ctx context.Context, p domain.Policy) error {
+	if p.Subject == "" || p.Domain == "" || p.Object == "" || p.Action == "" {
+		return domain.ErrInvalidRequest
+	}
+
 	ctx, span := s.tracer.StartSpan(ctx, "iam.authz.RemovePolicy")
 	defer span.End()
 

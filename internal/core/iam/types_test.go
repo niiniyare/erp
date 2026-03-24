@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// ---------------------------------------------------------------------------
+//
 // TypesSuite — pure unit tests, no database required.
-// ---------------------------------------------------------------------------
+//
 
 type TypesSuite struct{ suite.Suite }
 

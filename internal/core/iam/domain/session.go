@@ -19,16 +19,12 @@ import (
 // from the settings store and embed the resolved values in Configuration.Settings
 // (key "iam.session_ttl_hours") before falling back to these defaults.
 //
-// TODO(settings): wire SessionTTL resolution from tenant settings key
-//
-//	"iam.session_ttl_hours" in the session service login path.
-//
-// FIXME(feature-flags): MFAEnabled must be derived from the feature flag
-//
-//	"iam.mfa_enabled" resolved into Configuration.Flags
-//	at login time, not from a static config struct.
+// SessionTTL is the process-level default. The session service overrides this
+// at login time by reading the tenant setting "iam.session_ttl_hours" from
+// the pre-computed Configuration.Settings map. If the setting is absent the
+// default is used.
 type SessionConfig struct {
-	SessionTTL time.Duration // default: 8h; overridden by tenant setting "iam.session_ttl_hours"
+	SessionTTL time.Duration // default: 8h; overridden per-tenant via "iam.session_ttl_hours"
 	CookieName string        // default: "session"
 }
 

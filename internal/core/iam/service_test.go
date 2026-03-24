@@ -10,11 +10,11 @@ import (
 	db "awo.so/db/sqlc"
 )
 
-// ---------------------------------------------------------------------------
+//
 // ServiceSuite — DB-backed integration tests for New(), Enforce,
 // EnforceBatch, AddPolicy, RemovePolicy, GetPolicies, InvalidateCache.
 // Requires DATABASE_URL environment variable.
-// ---------------------------------------------------------------------------
+//
 
 type ServiceSuite struct {
 	suite.Suite

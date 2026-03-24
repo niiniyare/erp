@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -153,6 +154,7 @@ func (s *sessionService) Login(ctx context.Context, email, password string) (*do
 		configuration = domain.DefaultConfiguration()
 	}
 
+	ttl := s.resolveTTL(configuration)
 	now := time.Now()
 	sess := domain.Session{
 		UserID:        user.ID,
@@ -163,7 +165,7 @@ func (s *sessionService) Login(ctx context.Context, email, password string) (*do
 		EntityScope:   entityScope,
 		Configuration: configuration,
 		IsActive:      true,
-		ExpiresAt:     now.Add(s.cfg.SessionTTL),
+		ExpiresAt:     now.Add(ttl),
 		LastSeenAt:    now,
 	}
 
@@ -188,13 +190,13 @@ func (s *sessionService) Login(ctx context.Context, email, password string) (*do
 	}
 
 	// Warm cache immediately so the first ValidateSession after Login is a hit.
-	s.repo.CacheResolved(ctx, hash, resolved, s.cfg.SessionTTL)
+	s.repo.CacheResolved(ctx, hash, resolved, ttl)
 
 	s.metrics.IncrementCounter("iam.session.login.success", nil)
 	s.log.DebugContext(ctx, "session created", logger.Fields{
 		"user_id":   user.ID.String(),
 		"user_type": user.UserType,
-		"ttl":       s.cfg.SessionTTL.String(),
+		"ttl":       ttl.String(),
 	})
 	return resolved, rawToken, nil
 }
@@ -410,6 +412,20 @@ func domainForUser(user *domain.User) string {
 	default:
 		return domain.TenantDomain(tenantID)
 	}
+}
+
+// resolveTTL returns the session TTL to use for this login.
+// It reads "iam.session_ttl_hours" from the pre-computed tenant settings
+// (already loaded into cfg.Settings by LoadLoginConfig) and converts it to a
+// Duration. Falls back to the process-level default when the setting is absent,
+// zero, or unparseable.
+func (s *sessionService) resolveTTL(cfg domain.Configuration) time.Duration {
+	if v, ok := cfg.Settings["iam.session_ttl_hours"]; ok && v != "" {
+		if hours, err := strconv.Atoi(v); err == nil && hours > 0 {
+			return time.Duration(hours) * time.Hour
+		}
+	}
+	return s.cfg.SessionTTL
 }
 
 func displayName(user *domain.User) string {

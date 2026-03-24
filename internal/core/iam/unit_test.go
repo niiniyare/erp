@@ -650,14 +650,14 @@ func testRequest(app *fiber.App, path string) int {
 // ---- 401 cases -------------------------------------------------------------
 
 func (s *MiddlewareUnitSuite) TestMiddleware_NoPrincipalInLocals_Returns401() {
-	app := makeApp(testMiddlewareHandler(s.svc,"invoice", "read"), respondOK)
+	app := makeApp(testMiddlewareHandler(s.svc, "invoice", "read"), respondOK)
 	s.Equal(fiber.StatusUnauthorized, testRequest(app, "/res"))
 }
 
 func (s *MiddlewareUnitSuite) TestMiddleware_EmptySubject_Returns401() {
 	app := makeApp(
 		injectPrincipal(Principal{Subject: "", Domain: "dom-1"}),
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		respondOK,
 	)
 	s.Equal(fiber.StatusUnauthorized, testRequest(app, "/res"))
@@ -669,7 +669,7 @@ func (s *MiddlewareUnitSuite) TestMiddleware_WrongLocalsKey_Returns401() {
 		c.Locals("WRONG_KEY", Principal{Subject: "tenant:usr", Domain: "dom-1"})
 		return c.Next()
 	})
-	app := makeApp(wrong, testMiddlewareHandler(s.svc,"invoice", "read"), respondOK)
+	app := makeApp(wrong, testMiddlewareHandler(s.svc, "invoice", "read"), respondOK)
 	s.Equal(fiber.StatusUnauthorized, testRequest(app, "/res"))
 }
 
@@ -678,7 +678,7 @@ func (s *MiddlewareUnitSuite) TestMiddleware_WrongLocalsKey_Returns401() {
 func (s *MiddlewareUnitSuite) TestMiddleware_NoPolicyForUser_Returns403() {
 	app := makeApp(
 		injectPrincipal(Principal{Subject: "tenant:usr_001", Domain: "dom-1"}),
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		respondOK,
 	)
 	s.Equal(fiber.StatusForbidden, testRequest(app, "/res"))
@@ -695,7 +695,7 @@ func (s *MiddlewareUnitSuite) TestMiddleware_DenyRuleWins_Returns403() {
 
 	app := makeAppWithID(
 		injectPrincipal(Principal{Subject: "tenant:usr_terminated", Domain: "dom-1"}),
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		respondOK,
 	)
 	s.Equal(fiber.StatusForbidden, testRequest(app, "/res/inv_001"))
@@ -711,7 +711,7 @@ func (s *MiddlewareUnitSuite) TestMiddleware_AllowPolicy_Returns200() {
 
 	app := makeApp(
 		injectPrincipal(Principal{Subject: "tenant:usr_001", Domain: "dom-1"}),
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		respondOK,
 	)
 	s.Equal(fiber.StatusOK, testRequest(app, "/res"))
@@ -731,7 +731,7 @@ func (s *MiddlewareUnitSuite) TestMiddleware_CallsNext_OnAllow() {
 
 	app := makeApp(
 		injectPrincipal(Principal{Subject: "tenant:usr", Domain: "dom-1"}),
-		testMiddlewareHandler(s.svc,"res", "read"),
+		testMiddlewareHandler(s.svc, "res", "read"),
 		downstream,
 	)
 	testRequest(app, "/res")
@@ -749,7 +749,7 @@ func (s *MiddlewareUnitSuite) TestMiddleware_ObjectExpandedWithID() {
 
 	app := makeAppWithID(
 		injectPrincipal(Principal{Subject: "tenant:usr_001", Domain: "dom-1"}),
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		respondOK,
 	)
 	s.Equal(fiber.StatusOK, testRequest(app, "/res/inv_abc"))
@@ -764,7 +764,7 @@ func (s *MiddlewareUnitSuite) TestMiddleware_NoIDParam_UsesPlainObject() {
 
 	app := makeApp( // no :id param in route
 		injectPrincipal(Principal{Subject: "tenant:usr_001", Domain: "dom-1"}),
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		respondOK,
 	)
 	s.Equal(fiber.StatusOK, testRequest(app, "/res"))
@@ -779,7 +779,7 @@ func (s *MiddlewareUnitSuite) TestMiddleware_IDParam_WrongResource_Returns403() 
 
 	app := makeAppWithID(
 		injectPrincipal(Principal{Subject: "tenant:usr_001", Domain: "dom-1"}),
-		testMiddlewareHandler(s.svc,"invoice", "read"),
+		testMiddlewareHandler(s.svc, "invoice", "read"),
 		respondOK,
 	)
 	s.Equal(fiber.StatusForbidden, testRequest(app, "/res/wrong_id"))

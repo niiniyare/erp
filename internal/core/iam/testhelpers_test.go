@@ -17,9 +17,9 @@ import (
 	"awo.so/internal/shared/logger"
 )
 
-// ---------------------------------------------------------------------------
+//
 // noopLogger satisfies logger.Logger for tests without any output.
-// ---------------------------------------------------------------------------
+//
 
 type noopLogger struct{}
 
@@ -37,42 +37,42 @@ func (noopLogger) WithContext(_ context.Context) logger.Logger                  
 func (noopLogger) SetLevel(_ logger.LogLevel)                                   {}
 func (noopLogger) Close() error                                                 { return nil }
 
-// ---------------------------------------------------------------------------
+//
 // noopCache satisfies cache.Service for unit tests (all ops are no-ops).
-// ---------------------------------------------------------------------------
+//
 
 type noopCache struct{}
 
 var errCacheMiss = errors.New("cache miss")
 
-func (noopCache) Get(_ context.Context, _ string, _ any) error                          { return errCacheMiss }
-func (noopCache) Set(_ context.Context, _ string, _ any, _ time.Duration) error         { return nil }
-func (noopCache) Delete(_ context.Context, _ string) error                              { return nil }
-func (noopCache) Flush(_ context.Context) error                                         { return nil }
-func (noopCache) MGet(_ context.Context, _ []string) ([]cache.Result, error)            { return nil, nil }
-func (noopCache) MSet(_ context.Context, _ map[string]any, _ time.Duration) error       { return nil }
-func (noopCache) MDelete(_ context.Context, _ []string) error                           { return nil }
-func (noopCache) DeletePattern(_ context.Context, _ string) error                       { return nil }
-func (noopCache) Keys(_ context.Context, _ string) ([]string, error)                    { return nil, nil }
-func (noopCache) Exists(_ context.Context, _ string) (bool, error)                      { return false, nil }
-func (noopCache) TTL(_ context.Context, _ string) (time.Duration, error)                { return 0, nil }
-func (noopCache) Expire(_ context.Context, _ string, _ time.Duration) error             { return nil }
-func (noopCache) GetMemory(_ context.Context, _ string, _ any) error                   { return errCacheMiss }
-func (noopCache) SetMemory(_ context.Context, _ string, _ any, _ time.Duration) error  { return nil }
-func (noopCache) DeleteMemory(_ context.Context, _ string) error                        { return nil }
-func (noopCache) GetGlobalMemory(_ string, _ any) error                                 { return errCacheMiss }
-func (noopCache) SetGlobalMemory(_ string, _ any, _ time.Duration) error                { return nil }
-func (noopCache) DeleteGlobalMemory(_ string) error                                     { return nil }
-func (noopCache) Ping(_ context.Context) error                                          { return nil }
-func (noopCache) Stats() cache.CacheStats                                               { return cache.CacheStats{} }
-func (noopCache) Reset()                                                                {}
-func (noopCache) Close() error                                                          { return nil }
+func (noopCache) Get(_ context.Context, _ string, _ any) error                        { return errCacheMiss }
+func (noopCache) Set(_ context.Context, _ string, _ any, _ time.Duration) error       { return nil }
+func (noopCache) Delete(_ context.Context, _ string) error                            { return nil }
+func (noopCache) Flush(_ context.Context) error                                       { return nil }
+func (noopCache) MGet(_ context.Context, _ []string) ([]cache.Result, error)          { return nil, nil }
+func (noopCache) MSet(_ context.Context, _ map[string]any, _ time.Duration) error     { return nil }
+func (noopCache) MDelete(_ context.Context, _ []string) error                         { return nil }
+func (noopCache) DeletePattern(_ context.Context, _ string) error                     { return nil }
+func (noopCache) Keys(_ context.Context, _ string) ([]string, error)                  { return nil, nil }
+func (noopCache) Exists(_ context.Context, _ string) (bool, error)                    { return false, nil }
+func (noopCache) TTL(_ context.Context, _ string) (time.Duration, error)              { return 0, nil }
+func (noopCache) Expire(_ context.Context, _ string, _ time.Duration) error           { return nil }
+func (noopCache) GetMemory(_ context.Context, _ string, _ any) error                  { return errCacheMiss }
+func (noopCache) SetMemory(_ context.Context, _ string, _ any, _ time.Duration) error { return nil }
+func (noopCache) DeleteMemory(_ context.Context, _ string) error                      { return nil }
+func (noopCache) GetGlobalMemory(_ string, _ any) error                               { return errCacheMiss }
+func (noopCache) SetGlobalMemory(_ string, _ any, _ time.Duration) error              { return nil }
+func (noopCache) DeleteGlobalMemory(_ string) error                                   { return nil }
+func (noopCache) Ping(_ context.Context) error                                        { return nil }
+func (noopCache) Stats() cache.CacheStats                                             { return cache.CacheStats{} }
+func (noopCache) Reset()                                                              {}
+func (noopCache) Close() error                                                        { return nil }
 
-// ---------------------------------------------------------------------------
+//
 // noopRepo satisfies Repository for in-memory unit tests.
 // ListExpiredActiveRoleNames returns an error to preserve the original
 // "non-fatal connection failure" behavior in newMemService.
-// ---------------------------------------------------------------------------
+//
 
 type noopRepo struct{}
 
@@ -83,13 +83,14 @@ func (noopRepo) DeactivateRoleAssignment(_ context.Context, _, _, _ string) erro
 func (noopRepo) ListRoleAssignments(_ context.Context, _, _ string) ([]RoleAssignment, error) {
 	return nil, nil
 }
+
 func (noopRepo) ListExpiredActiveRoleNames(_ context.Context, _, _ string) ([]string, error) {
 	return nil, fmt.Errorf("not connected")
 }
 
-// ---------------------------------------------------------------------------
+//
 // DB helpers — all DB-backed tests require DATABASE_URL.
-// ---------------------------------------------------------------------------
+//
 
 // testPool opens a connection pool.
 // The test is skipped if DATABASE_URL is not set.
@@ -140,9 +141,9 @@ func cleanTables(t *testing.T, pool *pgxpool.Pool) {
 	require.NoError(t, err)
 }
 
-// ---------------------------------------------------------------------------
+//
 // In-memory service — no database required.
-// ---------------------------------------------------------------------------
+//
 
 // newMemService creates an AuthzService backed by a pure in-memory Casbin
 // enforcer (no database). Uses noopRepo so AssignRole is a noop DB write.

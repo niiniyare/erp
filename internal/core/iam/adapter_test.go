@@ -6,10 +6,10 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// ---------------------------------------------------------------------------
+//
 // AdapterHelpersSuite — tests for unexported helper functions in adapter.go.
 // No database required.
-// ---------------------------------------------------------------------------
+//
 
 type AdapterHelpersSuite struct{ suite.Suite }
 

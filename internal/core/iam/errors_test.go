@@ -6,9 +6,9 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// ---------------------------------------------------------------------------
+//
 // ErrorsSuite — pure unit tests, no database required.
-// ---------------------------------------------------------------------------
+//
 
 type ErrorsSuite struct{ suite.Suite }
 
@@ -20,7 +20,7 @@ func (s *ErrorsSuite) TestErrorString_Format() {
 		Message:    "test message",
 		HTTPStatus: 418,
 	}
-	s.Equal("[authz] AUTHZ_TEST: test message", e.Error())
+	s.Equal("[iam] AUTHZ_TEST: test message", e.Error())
 }
 
 func (s *ErrorsSuite) TestSentinelErrors_Codes() {

@@ -584,6 +584,10 @@ func (t *otelTimer) Stop() time.Duration {
 	return duration
 }
 
+// NewNoOpMetricsProvider returns a MetricsProvider that silently discards all
+// operations. Intended for use in unit tests and NewInMemoryAuthzService.
+func NewNoOpMetricsProvider() MetricsProvider { return &noOpProvider{} }
+
 // No-op implementations
 type noOpProvider struct{}
 
