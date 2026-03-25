@@ -12,6 +12,9 @@ import (
 type AuthConfig struct {
 	// SessionService validates tokens and returns ResolvedSessions.
 	SessionService iam.SessionService
+	// APIKeyService validates "eak_" prefixed bearer tokens.
+	// Optional — API key auth is skipped when nil.
+	APIKeyService iam.APIKeyService
 	// CookieName is the HttpOnly cookie that carries the raw session token.
 	CookieName string
 }
@@ -41,6 +44,17 @@ func Authenticate(cfg AuthConfig) fiber.Handler {
 			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
 		}
 
+		// API key path: "eak_" prefix identifies a machine-to-machine bearer token.
+		if cfg.APIKeyService != nil && strings.HasPrefix(token, "eak_") {
+			resolved, err := cfg.APIKeyService.ValidateAPIKey(c.Context(), token)
+			if err != nil || resolved == nil {
+				return fiber.NewError(fiber.StatusUnauthorized, "invalid or revoked API key")
+			}
+			c.Locals(iam.LocalsKeySession, resolved)
+			return c.Next()
+		}
+
+		// Session cookie / bearer token path.
 		resolved, err := cfg.SessionService.ValidateSession(c.Context(), token)
 		if err != nil || resolved == nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "invalid or expired session")

@@ -25,11 +25,12 @@ func (q *Queries) DeactivateSSOProvider(ctx context.Context, provider string) er
 }
 
 const getSSOProvider = `-- name: GetSSOProvider :one
+
 SELECT id, tenant_id, provider, client_id, client_secret_enc, scopes, redirect_uri, extra_params, auto_provision, default_entity_id, is_active, created_at, updated_at
 FROM sso_providers
 WHERE tenant_id = current_tenant_id()
-  AND provider   = $1
-  AND is_active  = TRUE
+  AND provider  = $1
+  AND is_active = TRUE
 LIMIT 1
 `
 

@@ -7,12 +7,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	authHandler "awo.so/internal/api/handlers/auth"
+	auditHandler "awo.so/internal/api/handlers/audit"
 	financeHandler "awo.so/internal/api/handlers/finance"
 	"awo.so/internal/api/handlers/health"
+	schemaHandler "awo.so/internal/api/handlers/schema"
 	tenantHandler "awo.so/internal/api/handlers/tenant"
 	uiHandler "awo.so/internal/api/handlers/ui"
 	userHandler "awo.so/internal/api/handlers/user"
 	middlewarePkg "awo.so/internal/api/middleware"
+	db "awo.so/db/sqlc"
+	"awo.so/internal/core/audit"
 	financeService "awo.so/internal/core/finance/service"
 	"awo.so/internal/core/iam"
 	coreTenant "awo.so/internal/core/tenant"
@@ -210,6 +214,18 @@ type Dependencies struct {
 	// SSOService enables OAuth/OIDC login routes.
 	// Optional — SSO routes are skipped when nil.
 	SSOService iam.SSOService
+
+	// APIKeyService enables API key management routes and Bearer token validation.
+	// Optional — API key routes are skipped when nil.
+	APIKeyService iam.APIKeyService
+
+	// Store is the raw DB store used by schema endpoints (BootHandler).
+	// Optional — schema routes are skipped when nil.
+	Store db.Store
+
+	// AuditService enables the GET /api/v1/audit-logs endpoint.
+	// Optional — audit routes are skipped when nil.
+	AuditService audit.Service
 }
 
 // Validate ensures all required dependencies are present.
@@ -319,6 +335,8 @@ func (r *Router) registerAPIRoutes(app *fiber.App) error {
 		{ModuleTenant, r.registerTenantAPI},
 		{ModuleUser, r.registerUserAPI},
 		{ModuleFinance, r.registerFinanceAPI},
+		{"schema", r.registerSchemaAPI},
+		{"audit", r.registerAuditAPI},
 	}
 
 	// Register each API module
@@ -508,6 +526,23 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 	return nil
 }
 
+// registerSchemaAPI registers the AMIS schema endpoints.
+func (r *Router) registerSchemaAPI(apiRouter fiber.Router) error {
+	if r.deps.Store == nil {
+		r.deps.Logger.Warn("Store not configured, skipping schema route registration")
+		return nil
+	}
+
+	schemaGroup := apiRouter.Group("/v1/schema")
+	schemaGroup.Use(r.authenticateMiddleware())
+
+	// GET /api/v1/schema/boot — AMIS app shell (nav filtered by flags + permissions)
+	schemaGroup.Get("/boot", schemaHandler.BootHandler(r.deps.Store))
+
+	r.deps.Logger.Info("registered schema API endpoints")
+	return nil
+}
+
 // registerAuthAPI registers the login/logout endpoints.
 // These are public (no Authenticate middleware) — the handlers themselves
 // set the session cookie on success.
@@ -551,7 +586,31 @@ func (r *Router) registerAuthAPI(apiRouter fiber.Router) error {
 		oauthGroup.Get("/:provider/callback", authHandler.OAuthCallbackHandler(r.deps.SSOService, r.deps.SessionService, loginCfg))
 	}
 
+	// API key management — requires active session (not an API key itself).
+	if r.deps.APIKeyService != nil {
+		apiKeysGroup := authGroup.Group("/api-keys")
+		apiKeysGroup.Use(r.authenticateMiddleware())
+		apiKeysGroup.Post("/", authHandler.CreateAPIKeyHandler(r.deps.APIKeyService))
+		apiKeysGroup.Get("/", authHandler.ListAPIKeysHandler(r.deps.APIKeyService))
+		apiKeysGroup.Delete("/:id", authHandler.RevokeAPIKeyHandler(r.deps.APIKeyService))
+	}
+
 	r.deps.Logger.Info("registered auth API endpoints")
+	return nil
+}
+
+// registerAuditAPI registers the audit log read endpoint.
+func (r *Router) registerAuditAPI(apiRouter fiber.Router) error {
+	if r.deps.AuditService == nil {
+		r.deps.Logger.Warn("AuditService not configured, skipping audit route registration")
+		return nil
+	}
+
+	auditGroup := apiRouter.Group("/v1/audit-logs")
+	auditGroup.Use(r.authenticateMiddleware())
+	auditGroup.Get("/", auditHandler.ListAuditEventsHandler(r.deps.AuditService))
+
+	r.deps.Logger.Info("registered audit API endpoints")
 	return nil
 }
 
@@ -561,7 +620,9 @@ func (r *Router) authenticateMiddleware() fiber.Handler {
 	if r.deps.SessionService == nil || r.deps.AuthConfig == nil {
 		return func(c *fiber.Ctx) error { return c.Next() }
 	}
-	return middlewarePkg.Authenticate(*r.deps.AuthConfig)
+	cfg := *r.deps.AuthConfig
+	cfg.APIKeyService = r.deps.APIKeyService // inject if wired
+	return middlewarePkg.Authenticate(cfg)
 }
 
 // Future module registration examples:

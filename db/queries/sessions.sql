@@ -111,30 +111,30 @@ WHERE user_id  = $1
 -- API KEY QUERIES
 -- =====================================================================
 
--- name: CreateAPIKey :one
-INSERT INTO api_keys (tenant_id, name, key_hash, scopes, created_by, expires_at)
-VALUES (current_tenant_id(), $1, $2, $3, $4, $5)
-RETURNING *;
-
--- name: GetAPIKeyByHash :one
--- Called on every API-key-authenticated request. Returns nil if revoked or expired.
-SELECT id, tenant_id, name, key_hash, scopes, created_by, expires_at, revoked_at, last_used_at
-FROM   api_keys
-WHERE  key_hash  = $1
-  AND  revoked_at IS NULL
-  AND  (expires_at IS NULL OR expires_at > NOW());
-
--- name: TouchAPIKeyLastUsed :exec
-UPDATE api_keys SET last_used_at = NOW() WHERE id = $1;
+-- -- name: CreateAPIKey :one
+-- INSERT INTO api_keys (tenant_id, name, key_hash, scopes, created_by, expires_at)
+-- VALUES (current_tenant_id(), $1, $2, $3, $4, $5)
+-- RETURNING *;
+--
+-- -- name: GetAPIKeyByHash :one
+-- -- Called on every API-key-authenticated request. Returns nil if revoked or expired.
+-- SELECT id, tenant_id, name, key_hash, scopes, created_by, expires_at, revoked_at, last_used_at
+-- FROM   api_keys
+-- WHERE  key_hash  = $1
+--   AND  revoked_at IS NULL
+--   AND  (expires_at IS NULL OR expires_at > NOW());
+--
+-- -- name: TouchAPIKeyLastUsed :exec
+-- UPDATE api_keys SET last_used_at = NOW() WHERE id = $1;
 
 -- name: RevokeAPIKey :exec
-UPDATE api_keys
-SET    revoked_at = NOW()
-WHERE  id        = $1
-  AND  tenant_id = current_tenant_id();
+-- UPDATE api_keys
+-- SET    revoked_at = NOW()
+-- WHERE  id        = $1
+--   AND  tenant_id = current_tenant_id();
 
 -- name: ListAPIKeys :many
-SELECT id, name, scopes, created_by, expires_at, revoked_at, last_used_at, created_at
-FROM   api_keys
-WHERE  tenant_id = current_tenant_id()
-ORDER  BY created_at DESC;
+-- SELECT id, name, scopes, created_by, expires_at, revoked_at, last_used_at, created_at
+-- FROM   api_keys
+-- WHERE  tenant_id = current_tenant_id()
+-- ORDER  BY created_at DESC;

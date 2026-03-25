@@ -104,9 +104,14 @@ type Querier interface {
 	CountTenantFeatureFlagsUser(ctx context.Context) (int64, error)
 	CountTenants(ctx context.Context) (int64, error)
 	CountTransactions(ctx context.Context, arg CountTransactionsParams) (int64, error)
-	// =====================================================================
-	// API KEY QUERIES
-	// =====================================================================
+	// API key management queries.
+	// Run `make sqlc` after modifying this file.
+	//
+	// GetAPIKeyByHash intentionally omits key_hash from the SELECT list (no need
+	// to return the hash to Go code) and runs WITHOUT tenant context — the
+	// key_hash column is globally unique and the lookup must work cross-tenant
+	// during the authentication middleware.  This query MUST be executed by
+	// admin_role (or a BYPASSRLS role) at the DB layer.
 	CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (*ApiKey, error)
 	CreateAccessRequest(ctx context.Context, arg CreateAccessRequestParams) (*AccessRequest, error)
 	// =====================================================================
@@ -276,6 +281,7 @@ type Querier interface {
 	// =====================================================
 	FilterTenants(ctx context.Context, arg FilterTenantsParams) ([]*FilterTenantsRow, error)
 	// Called on every API-key-authenticated request. Returns nil if revoked or expired.
+	// NOTE: runs without tenant context (admin_role required); key_hash is globally unique.
 	GetAPIKeyByHash(ctx context.Context, keyHash string) (*GetAPIKeyByHashRow, error)
 	GetAccessRequestByID(ctx context.Context, id uuid.UUID) (*AccessRequest, error)
 	// =====================================================================
@@ -1133,7 +1139,6 @@ type Querier interface {
 	TestViewPerformanceAdmin(ctx context.Context, tenantID uuid.UUID) error
 	// Test query for view performance with user access
 	TestViewPerformanceUser(ctx context.Context) error
-	TouchAPIKeyLastUsed(ctx context.Context, id uuid.UUID) error
 	// Atomically updates last_accessed_at and returns the session in one round-trip.
 	// Use on every request instead of separate GetSession + UpdateLastSeen.
 	TouchAndGetSession(ctx context.Context, sessionToken string) (*TouchAndGetSessionRow, error)

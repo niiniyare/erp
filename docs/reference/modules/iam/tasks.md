@@ -530,7 +530,7 @@ These were completed in the earlier `identity` + `authz` packages and migrated i
 
 ---
 
-## 🔲 Phase 12 — API Key Authentication
+## ✅ Phase 12 — API Key Authentication
 
 > **Context:** Machine-to-machine integrations (mobile apps, accounting sync tools, webhooks) should not use browser sessions. They use API keys — a static credential that grants a specific, limited set of permissions.
 >
@@ -538,94 +538,97 @@ These were completed in the earlier `identity` + `authz` packages and migrated i
 >
 > The code has `ActorAPI` and `APIDomain` already defined in domain — this phase wires them up.
 
-### A1 — DB migration: `api_keys` table
+### ✅ A1 — DB migration: `api_keys` table
 
-- [ ] Create `api_keys` table: `id`, `tenant_id`, `name`, `key_hash` (SHA-256), `scopes text[]`, `expires_at`, `created_by`, `revoked_at`, `created_at`
-- [ ] Add index on `key_hash`
+- [x] `db/migration/000310_iam_api_keys.up.sql` — table with `id`, `tenant_id`, `name`, `key_hash`, `scopes TEXT[]`, `created_by`, `expires_at`, `revoked_at`, `last_used_at`, `created_at`
+- [x] Indexes on `key_hash` (UNIQUE) and `tenant_id`
+- [x] RLS: `application_role` full tenant isolation; `admin_role` bypass (required for cross-tenant hash lookup)
 
-### A2 — SQLC queries for API keys
+### ✅ A2 — SQLC queries: `db/queries/api_keys.sql`
 
-- [ ] `CreateAPIKey`, `GetAPIKeyByHash`, `RevokeAPIKey`, `ListAPIKeysByTenant`
+- [x] `CreateAPIKey` — inserts with `current_tenant_id()`; RETURNING *
+- [x] `GetAPIKeyByHash` — cross-tenant hash lookup (no tenant filter); excludes `key_hash` from SELECT; filters `revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())`
+- [x] `RevokeAPIKey` — sets `revoked_at = NOW()` for `current_tenant_id()`
+- [x] `ListAPIKeys` — all keys for `current_tenant_id()`, newest first; excludes `key_hash`
 
-### A3 — API key service
+### ✅ A3 — API key service: `internal/core/iam/service/apikey.go`
 
-- [ ] `CreateAPIKey(ctx, params) (*APIKey, string, error)` — returns key + plaintext secret (shown once only)
-- [ ] `ValidateAPIKey(ctx, rawKey string) (*ResolvedSession, error)`:
-  - Hash incoming key, look up in DB
-  - Verify not revoked, not expired
-  - Build a minimal `ResolvedSession` from the key's `scopes` (scopes are the ceiling of permissions)
-  - Cache the resolved session keyed by `sha256hex(rawKey)` with 5-minute TTL
-- [ ] `RevokeAPIKey(ctx, keyID uuid.UUID) error`
-- [ ] `ListAPIKeys(ctx, tenantID uuid.UUID) ([]*APIKey, error)`
+- [x] `CreateAPIKey` — generates `eak_{32-byte-hex}` bearer token, stores SHA-256 hash, returns plaintext once
+- [x] `ValidateAPIKey` — cache-aside (Redis 5-min TTL); DB fallback via hash lookup; builds minimal `ResolvedSession` from scopes
+- [x] `RevokeAPIKey` — sets revoked_at; cache entry expires naturally (TTL)
+- [x] `ListAPIKeys` — delegates to repo; no tenant param (uses ctx)
 
-### A4 — Wire into authentication middleware
+### ✅ A4 — Wire into authentication middleware
 
-- [ ] In `Authenticate` middleware: detect `Authorization: Bearer <key>` vs session cookie
-- [ ] If Bearer token does not match any session, try `apiKeySvc.ValidateAPIKey()`
-- [ ] Set `ActorAPI` domain in the resulting `Principal`
+- [x] `AuthConfig.APIKeyService` field added to `session_middleware.go`
+- [x] `Authenticate` detects `eak_` prefix on Bearer token → routes to `ValidateAPIKey`
+- [x] `authenticateMiddleware()` in routes injects `APIKeyService` from `Dependencies`
+- [x] Management routes: `POST/GET /api/v1/auth/api-keys`, `DELETE /api/v1/auth/api-keys/:id`
 
 ---
 
-## 🔲 Phase 13 — MRA Registry & BootService
+## ✅ Phase 13 — MRA Registry & BootService
 
 > **Context:** The docs describe a `Module / Resource / Action` (MRA) registry — three database tables that define every feature in the system. The `BootService` uses these tables + feature flags + permissions to generate the navigation sidebar that the AMIS frontend renders.
 >
 > Right now, navigation and feature registration happen manually. The MRA system makes it data-driven — adding a new module means inserting a row, and the UI picks it up automatically.
 
-### B1 — DB migration: `modules`, `resources`, `actions` tables
+### ✅ B1 — DB migration: `modules`, `resources`, `actions` tables
 
-- [ ] `modules` table: `id`, `slug` (unique), `label`, `icon`, `nav_order`, `is_active`
-- [ ] `resources` table: `id`, `module_id`, `slug`, `label`, `nav_url`, `nav_order`, unique `(module_id, slug)`
-- [ ] `actions` table: `id`, `resource_id`, `slug`, `label`, `http_method`, unique `(resource_id, slug)`
-- [ ] Auto-seed trigger: on `INSERT INTO modules`, auto-create a feature flag definition for the module
-- [ ] Auto-seed trigger: on `INSERT INTO resources`, auto-create a resource-level feature flag
+> Already existed in migrations 000015-000017 with a richer schema than originally planned.
 
-### B2 — Seed MRA rows for existing modules
+- [x] `modules`: `id`, `slug` (unique), `name`, `display_name`, `icon`, `nav_order`, `is_active`, `scope`, `category`, `module_type`
+- [x] `resources`: `id`, `module_id`, `slug`, `name`, `display_name`, `nav_url`, `nav_order`, `resource_type`, unique `(module_id, slug)`
+- [x] `actions`: `id`, `resource_id`, `slug`, `name`, `action_type`, `http_method`, `scope`, `risk_level`, `action_category`, unique `(resource_id, slug)`
 
-> Insert rows for every module/resource/action that already exists in the codebase. This is a one-time data migration.
+### ✅ B2 — Seed MRA rows for existing modules
 
-- [ ] Finance module: `finance` → `transactions`, `accounts`, `receivables`, `payables`, `reports`
-- [ ] People module: `people` → `employees`, `persons`
-- [ ] Settings module: `settings` → `iam`, `general`, `modules`
-- [ ] Each resource: seed standard actions (`read`, `create`, `update`, `delete`) + domain-specific actions (`approve`, `post`, `void`, `export` etc.)
+- [x] `db/migration/000018_platform_registry.up.sql` — seeds all four core modules:
+  - Finance: 5 resources + CRUD + domain-specific actions (approve, post, void, export)
+  - People: 2 resources + CRUD
+  - Settings: 3 resources + read/update
+  - IAM: 5 resources + CRUD + revoke (sessions)
 
-### B3 — `BootService` — build app shell schema
+### ✅ B3 — `BootHandler` — build app shell schema
 
-> The `BootService` is called when the AMIS frontend loads (`GET /schema/boot`). It returns the navigation structure and page schemas the frontend needs to render. It reads MRA rows, checks which flags are on for the tenant, and which permissions the user has.
+- [x] `GET /schema/boot` — `internal/api/handlers/schema/boot.go`
+  - Feature flag gate: `sess.Configuration.Flags["{slug}.enabled"]` — absent key = allowed
+  - Permission gate: `sess.Can("{module}.{resource}.read")`
+  - Returns AMIS `app` type JSON with `pages` array
+- [x] SQLC queries: `ListActiveSystemModules`, `ListActiveResourcesByModule` in `db/queries/boot.sql`
+- [x] Route wired under `GET /api/v1/schema/boot` (authenticated)
 
-- [ ] `BootService.Build(ctx, session *ResolvedSession) (*BootSchema, error)`:
-  - Query `modules` where `is_active = true` and module flag is enabled for tenant
-  - For each module, query its `resources` where resource flag is enabled
-  - Filter resources to those where user has at least `read` permission
-  - Return structured nav + page schema pointers
-- [ ] `GET /schema/boot` handler — returns `BootSchema` JSON for AMIS
+### ✅ B4 — Permission key derivation from MRA
 
-### B4 — Permission key derivation from MRA
-
-> Replace hardcoded permission strings like `"finance.receivables.invoices"` with keys derived from MRA slugs. This ensures the permission catalogue stays in sync with the MRA registry.
-
-- [ ] Add `permissions` table: `(module_slug, resource_slug, action_slug, full_key, description)`
-- [ ] Seed permission rows from the MRA `actions` table
-- [ ] Update `SeedDefaultRoles()` to derive permission keys from the `permissions` table instead of hardcoded strings
+- [x] `permissions` table in `000018_platform_registry.up.sql`:
+  - `full_key` is `GENERATED ALWAYS AS (module_slug || '.' || resource_slug || '.' || action_slug) STORED`
+  - Trigger `fn_auto_create_permission` — fires `AFTER INSERT ON actions`, auto-inserts permission row
+  - Unique constraint on `full_key` — canonical permission catalogue stays in sync automatically
 
 ---
 
-## 🔲 Phase 14 — Audit Trail
+## ✅ Phase 14 — Audit Trail
 
-> **Context:** Financial systems need an audit trail — a log of who did what, when, on which record. This is a compliance requirement. The IAM module should record all sensitive operations (login, role assignment, policy change, session invalidation).
+> **Context:** Financial systems need an audit trail — a log of who did what, when, on which record. This is a compliance requirement. The IAM module records sensitive operations via a universal DB trigger system (auto) + `CreateAuditEvent` for application-level events.
 
-### AU1 — DB migration: `audit_logs` table
+### ✅ AU1 — DB migration: `audit_log` table
 
-- [ ] Create `audit_logs`: `id`, `tenant_id`, `user_id`, `actor_type`, `action`, `resource_type`, `resource_id`, `changes jsonb`, `ip_address`, `user_agent`, `created_at`
-- [ ] Add index on `(tenant_id, created_at)` for tenant-scoped queries
-- [ ] RLS policy: tenants can read their own audit logs; platform can read all
+- [x] `000450_audit_log.up.sql` — rich schema: `id`, `tenant_id`, `user_id`, `event_type`, `event_category`, `severity`, `risk_score`, `context JSONB`, `compliance_flags JSONB`, `ip_address`, `user_agent`, `session_id`, plus FK columns for resource/action/role/permission
+- [x] RLS: tenant isolation for SELECT (application_role); full bypass for admin_role
+- [x] `000451_audit_funcs.up.sql` — universal trigger system: `audit_trigger_function()`, `enable_audit_on_table()`, `enable_audit_on_schema()`, `get_audit_statistics()`
 
-### AU2 — `AuditService`
+### ✅ AU2 — `AuditService` at `internal/core/audit/`
 
-- [ ] `AuditService` interface: `Log(ctx, event AuditEvent) error`
-- [ ] `AuditEvent` struct: `Action`, `ResourceType`, `ResourceID`, `Changes map[string]any`
-- [ ] Async implementation — write to audit log in a goroutine so it never blocks the request
-- [ ] Wire into IAM: log all `Login`, `Logout`, `AssignRole`, `RevokeRole`, `AddPolicy`, `RemovePolicy`, `CreateUser`, `SuspendUser` operations
+- [x] `Service` + `Repository` interfaces (`interface.go`) — full CRUD, analytics, forensics, bulk ops
+- [x] Domain types in `model.go` — `AuditEvent`, `CreateAuditEventRequest`, analytics structs
+- [x] `validation.go` — field-level validation helpers
+- [x] `service.go` + `repository.go` — `CreateAuditEvent` fully wired; analytics methods stubbed
+- [x] SQLC queries already generated (`db/sqlc/audit.sql.go`)
+- [x] `AuditService audit.Service` added to `handlers.Dependencies`
+- [x] `GET /api/v1/audit-logs` handler at `internal/api/handlers/audit/handler.go` — gated on `iam.sessions.read`
+- [x] Route registered in `registerAuditAPI`
+- [ ] **TODO**: `validation.go` uses lowercase category values (`authentication`) vs DB constraint uppercase (`AUTH`) — align before calling `Validate()` on server-generated events
+- [ ] **TODO**: Implement analytics repository stubs (`GetAuditStatsByCategory`, `GetUserRiskProfile`, etc.)
 
 ---
 

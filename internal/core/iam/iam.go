@@ -49,10 +49,14 @@ type (
 	MFASetup = domain.MFASetup
 
 	// SSO
-	OAuthProvider          = domain.OAuthProvider
-	SSOProvider            = domain.SSOProvider
-	SSOUserInfo            = domain.SSOUserInfo
+	OAuthProvider            = domain.OAuthProvider
+	SSOProvider              = domain.SSOProvider
+	SSOUserInfo              = domain.SSOUserInfo
 	CreateSSOProviderRequest = domain.CreateSSOProviderRequest
+
+	// API Keys
+	APIKey              = domain.APIKey
+	CreateAPIKeyRequest = domain.CreateAPIKeyRequest
 
 	// Session
 	SessionConfig    = domain.SessionConfig
@@ -143,6 +147,7 @@ type (
 	AuthzService   = iamservice.AuthzService
 	SessionService = iamservice.SessionService
 	SSOService     = iamservice.SSOService
+	APIKeyService  = iamservice.APIKeyService
 
 	// Service is a backward-compatible alias for AuthzService.
 	// Prefer AuthzService in new code.
@@ -156,6 +161,7 @@ type (
 	AuthzRepository   = repository.AuthzRepository
 	SessionRepository = repository.SessionRepository
 	SSORepository     = repository.SSORepository
+	APIKeyRepository  = repository.APIKeyRepository
 )
 
 // ─── Re-export: AuthzConfig ───────────────────────────────────────────────────
@@ -247,4 +253,21 @@ func NewSSOService(
 	cfg SSOConfig,
 ) SSOService {
 	return iamservice.NewSSOService(repo, identity, tracer, m, log, cfg)
+}
+
+// NewAPIKeyRepository constructs a Postgres-backed APIKeyRepository.
+// NOTE: Run `make sqlc` after applying migration 000310 to generate the
+// required Store methods for this repository.
+func NewAPIKeyRepository(store db.Store) APIKeyRepository {
+	return repository.NewAPIKeyRepository(store)
+}
+
+// NewAPIKeyService constructs an APIKeyService.
+func NewAPIKeyService(
+	repo APIKeyRepository,
+	cacheSvc cache.Service,
+	tracer tracing.Service,
+	m metrics.MetricsProvider,
+) APIKeyService {
+	return iamservice.NewAPIKeyService(repo, cacheSvc, tracer, m)
 }

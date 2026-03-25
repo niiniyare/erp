@@ -39,48 +39,6 @@ func (q *Queries) CountActiveSessionsByUser(ctx context.Context, userID uuid.UUI
 	return count, err
 }
 
-const createAPIKey = `-- name: CreateAPIKey :one
-
-INSERT INTO api_keys (tenant_id, name, key_hash, scopes, created_by, expires_at)
-VALUES (current_tenant_id(), $1, $2, $3, $4, $5)
-RETURNING id, tenant_id, name, key_hash, scopes, created_by, expires_at, revoked_at, last_used_at, created_at
-`
-
-type CreateAPIKeyParams struct {
-	Name      string       `json:"name"`
-	KeyHash   string       `json:"key_hash"`
-	Scopes    []string     `json:"scopes"`
-	CreatedBy uuid.UUID    `json:"created_by"`
-	ExpiresAt sql.NullTime `json:"expires_at"`
-}
-
-// =====================================================================
-// API KEY QUERIES
-// =====================================================================
-func (q *Queries) CreateAPIKey(ctx context.Context, arg CreateAPIKeyParams) (*ApiKey, error) {
-	row := q.db.QueryRow(ctx, createAPIKey,
-		arg.Name,
-		arg.KeyHash,
-		arg.Scopes,
-		arg.CreatedBy,
-		arg.ExpiresAt,
-	)
-	var i ApiKey
-	err := row.Scan(
-		&i.ID,
-		&i.TenantID,
-		&i.Name,
-		&i.KeyHash,
-		&i.Scopes,
-		&i.CreatedBy,
-		&i.ExpiresAt,
-		&i.RevokedAt,
-		&i.LastUsedAt,
-		&i.CreatedAt,
-	)
-	return &i, err
-}
-
 const createSession = `-- name: CreateSession :exec
 INSERT INTO user_sessions (
     tenant_id,
@@ -145,44 +103,6 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) er
 		arg.RiskScore,
 	)
 	return err
-}
-
-const getAPIKeyByHash = `-- name: GetAPIKeyByHash :one
-SELECT id, tenant_id, name, key_hash, scopes, created_by, expires_at, revoked_at, last_used_at
-FROM   api_keys
-WHERE  key_hash  = $1
-  AND  revoked_at IS NULL
-  AND  (expires_at IS NULL OR expires_at > NOW())
-`
-
-type GetAPIKeyByHashRow struct {
-	ID         uuid.UUID    `json:"id"`
-	TenantID   uuid.UUID    `json:"tenant_id"`
-	Name       string       `json:"name"`
-	KeyHash    string       `json:"key_hash"`
-	Scopes     []string     `json:"scopes"`
-	CreatedBy  uuid.UUID    `json:"created_by"`
-	ExpiresAt  sql.NullTime `json:"expires_at"`
-	RevokedAt  sql.NullTime `json:"revoked_at"`
-	LastUsedAt sql.NullTime `json:"last_used_at"`
-}
-
-// Called on every API-key-authenticated request. Returns nil if revoked or expired.
-func (q *Queries) GetAPIKeyByHash(ctx context.Context, keyHash string) (*GetAPIKeyByHashRow, error) {
-	row := q.db.QueryRow(ctx, getAPIKeyByHash, keyHash)
-	var i GetAPIKeyByHashRow
-	err := row.Scan(
-		&i.ID,
-		&i.TenantID,
-		&i.Name,
-		&i.KeyHash,
-		&i.Scopes,
-		&i.CreatedBy,
-		&i.ExpiresAt,
-		&i.RevokedAt,
-		&i.LastUsedAt,
-	)
-	return &i, err
 }
 
 const getSessionByToken = `-- name: GetSessionByToken :one
@@ -286,74 +206,6 @@ WHERE  user_id = $1
 // Forces fresh permission/flag recomputation at next login.
 func (q *Queries) InvalidateSessionsByUser(ctx context.Context, userID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, invalidateSessionsByUser, userID)
-	return err
-}
-
-const listAPIKeys = `-- name: ListAPIKeys :many
-SELECT id, name, scopes, created_by, expires_at, revoked_at, last_used_at, created_at
-FROM   api_keys
-WHERE  tenant_id = current_tenant_id()
-ORDER  BY created_at DESC
-`
-
-type ListAPIKeysRow struct {
-	ID         uuid.UUID    `json:"id"`
-	Name       string       `json:"name"`
-	Scopes     []string     `json:"scopes"`
-	CreatedBy  uuid.UUID    `json:"created_by"`
-	ExpiresAt  sql.NullTime `json:"expires_at"`
-	RevokedAt  sql.NullTime `json:"revoked_at"`
-	LastUsedAt sql.NullTime `json:"last_used_at"`
-	CreatedAt  time.Time    `json:"created_at"`
-}
-
-func (q *Queries) ListAPIKeys(ctx context.Context) ([]*ListAPIKeysRow, error) {
-	rows, err := q.db.Query(ctx, listAPIKeys)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*ListAPIKeysRow{}
-	for rows.Next() {
-		var i ListAPIKeysRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Scopes,
-			&i.CreatedBy,
-			&i.ExpiresAt,
-			&i.RevokedAt,
-			&i.LastUsedAt,
-			&i.CreatedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const revokeAPIKey = `-- name: RevokeAPIKey :exec
-UPDATE api_keys
-SET    revoked_at = NOW()
-WHERE  id        = $1
-  AND  tenant_id = current_tenant_id()
-`
-
-func (q *Queries) RevokeAPIKey(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, revokeAPIKey, id)
-	return err
-}
-
-const touchAPIKeyLastUsed = `-- name: TouchAPIKeyLastUsed :exec
-UPDATE api_keys SET last_used_at = NOW() WHERE id = $1
-`
-
-func (q *Queries) TouchAPIKeyLastUsed(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, touchAPIKeyLastUsed, id)
 	return err
 }
 
